@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any
 
+# NOTE: This functionality is duplicated in a newer, cleaner way in
+# dataclassio. We should consider deprecating this along with entity at
+# some point.
+
 # Special attr we included for our extended type information
 # (extended-json-type)
 TYPE_TAG = '_xjtp'

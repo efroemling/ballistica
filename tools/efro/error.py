@@ -54,6 +54,10 @@ class RemoteError(Exception):
     This occurs when communication succeeds but another type of error
     occurs remotely. The error string can consist of a remote stack
     trace or a simple message depending on the context.
+
+    Depending on the situation, more specific error types such as CleanError
+    may be raised due to the remote error, so this one is considered somewhat
+    of a catch-all.
     """
 
     def __str__(self) -> str:

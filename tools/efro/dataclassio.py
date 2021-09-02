@@ -302,6 +302,12 @@ def ioprepped(cls: Type[T]) -> Type[T]:
     return cls
 
 
+def is_ioprepped_dataclass(obj: Any) -> bool:
+    """Return whether the obj is an ioprepped dataclass type or instance."""
+    cls = obj if isinstance(obj, type) else type(obj)
+    return dataclasses.is_dataclass(cls) and hasattr(cls, PREP_ATTR)
+
+
 @dataclasses.dataclass
 class PrepData:
     """Data we prepare and cache for a class during prep.

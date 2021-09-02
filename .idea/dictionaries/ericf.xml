@@ -1401,6 +1401,7 @@
       <w>mpath</w>
       <w>mrmaxmeier</w>
       <w>msbuild</w>
+      <w>msgdict</w>
       <w>mshell</w>
       <w>msvccompiler</w>
       <w>msvcp</w>
@@ -1914,6 +1915,7 @@
       <w>rstr</w>
       <w>rtnetlink</w>
       <w>rtxt</w>
+      <w>rtypes</w>
       <w>runmypy</w>
       <w>runonly</w>
       <w>runpy</w>
@@ -2140,6 +2142,7 @@
       <w>storeitemui</w>
       <w>storename</w>
       <w>strftime</w>
+      <w>stringified</w>
       <w>stringprep</w>
       <w>stringptr</w>
       <w>strippable</w>

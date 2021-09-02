@@ -638,6 +638,7 @@
       <w>moreso</w>
       <w>mqrspec</w>
       <w>msaa</w>
+      <w>msgdict</w>
       <w>mult</w>
       <w>multing</w>
       <w>multipass</w>
@@ -882,6 +883,7 @@
       <w>rresult</w>
       <w>rscode</w>
       <w>rsgc</w>
+      <w>rtypes</w>
       <w>runnables</w>
       <w>rvec</w>
       <w>rvel</w>
@@ -990,6 +992,7 @@
       <w>strcpy</w>
       <w>strdup</w>
       <w>stringi</w>
+      <w>stringified</w>
       <w>strlen</w>
       <w>strs</w>
       <w>strtof</w>
