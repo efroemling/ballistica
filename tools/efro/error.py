@@ -35,8 +35,8 @@ class CleanError(Exception):
             print(f'{Clr.SRED}{errstr}{Clr.RST}', flush=flush)
 
 
-class TransportError(Exception):
-    """A transport-related communication error has occurred.
+class CommunicationError(Exception):
+    """A communication related error has occurred.
 
     This covers anything network-related going wrong in the sending
     of data or receiving of a response. This error does not imply

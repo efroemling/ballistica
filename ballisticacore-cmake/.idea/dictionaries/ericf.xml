@@ -44,6 +44,7 @@
       <w>aniso</w>
       <w>annarg</w>
       <w>annargs</w>
+      <w>anns</w>
       <w>anntype</w>
       <w>ansiwrap</w>
       <w>anyofallof</w>
@@ -639,6 +640,7 @@
       <w>mqrspec</w>
       <w>msaa</w>
       <w>msgdict</w>
+      <w>msgtype</w>
       <w>mult</w>
       <w>multing</w>
       <w>multipass</w>
@@ -867,6 +869,7 @@
       <w>resends</w>
       <w>resetbtn</w>
       <w>resetinput</w>
+      <w>responsetypes</w>
       <w>resync</w>
       <w>retrysecs</w>
       <w>retval</w>
@@ -980,6 +983,7 @@
       <w>startx</w>
       <w>starty</w>
       <w>staticdata</w>
+      <w>statictest</w>
       <w>stdint</w>
       <w>stepfast</w>
       <w>stephane</w>
@@ -1014,6 +1018,7 @@
       <w>tabtype</w>
       <w>tabtypes</w>
       <w>talloc</w>
+      <w>targs</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>
       <w>teleported</w>

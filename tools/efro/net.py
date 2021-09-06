@@ -10,11 +10,11 @@ if TYPE_CHECKING:
 
 
 def is_urllib_network_error(exc: BaseException) -> bool:
-    """Is the provided exception a network-related error?
+    """Is the provided exception from urllib a network-related error?
 
     This should be passed an exception which resulted from opening or
-    reading a urllib Request. It should return True for any errors that
-    could conceivably arise due to unavailable/poor network connections,
+    reading a urllib Request. It returns True for any errors that could
+    conceivably arise due to unavailable/poor network connections,
     firewall/connectivity issues, etc. These issues can often be safely
     ignored or presented to the user as general 'network-unavailable'
     states.

@@ -17,8 +17,9 @@ from efro.dataclassio import (ioprepped, is_ioprepped_dataclass, IOAttrs,
                               dataclass_to_dict)
 
 if TYPE_CHECKING:
-    from typing import Dict, Type, Tuple, List, Any, Callable, Optional, Set
-    from efro.error import TransportError
+    from typing import (Dict, Type, Tuple, List, Any, Callable, Optional, Set,
+                        Sequence)
+    from efro.error import CommunicationError
 
 TM = TypeVar('TM', bound='MessageSender')
 
@@ -101,6 +102,7 @@ class MessageProtocol:
             for m_id, m_type in message_types.items():
                 m_rtypes = m_type.get_response_types()
                 assert isinstance(m_rtypes, list)
+                assert len(set(m_rtypes)) == len(m_rtypes)  # check for dups
                 all_response_types.update(m_rtypes)
             for cls in all_response_types:
                 assert is_ioprepped_dataclass(cls) and issubclass(cls, Message)
@@ -117,7 +119,7 @@ class MessageProtocol:
 
         m_id = self._message_ids_by_type.get(type(message))
         if m_id is None:
-            raise TypeError(f'Message type is not registered in protocol:'
+            raise TypeError(f'Message type is not registered in Protocol:'
                             f' {type(message)}')
         msgdict = dataclass_to_dict(message)
 
@@ -154,6 +156,23 @@ class MessageProtocol:
         the protocol.
         """
 
+    def validate_message_type(self, msgtype: Type,
+                              responsetypes: Sequence[Type]) -> None:
+        """Ensure message type associated response types are valid.
+        Raises an exception if not.
+        """
+        if msgtype not in self._message_ids_by_type:
+            raise TypeError(f'Message type {msgtype} is not registered'
+                            f' in this Protocol.')
+
+        # Make sure the responses exactly matches what the message expects.
+        assert len(set(responsetypes)) == len(responsetypes)
+
+        for responsetype in responsetypes:
+            if responsetype not in self._message_ids_by_type:
+                raise TypeError(f'Response message type {responsetype} is'
+                                f' not registered in this Protocol.')
+
 
 class MessageSender:
     """Facilitates sending messages to a target and receiving responses.
@@ -179,18 +198,6 @@ class MessageSender:
         self._protocol = protocol
         self._send_raw_message_call: Optional[Callable[[Any, bytes],
                                                        bytes]] = None
-        self._bound_obj: Any = None
-
-    def __get__(self: TM, obj: Any, type_in: Any = None) -> TM:
-        if obj is None:
-            raise RuntimeError('Must be called on an instance, not a type.')
-
-        # Return a copy of ourself bound to the instance we were called from.
-        bound_sender = type(self)(self._protocol)
-        bound_sender._send_raw_message_call = self._send_raw_message_call
-        bound_sender._bound_obj = obj
-
-        return bound_sender
 
     def send_raw_handler(
             self, call: Callable[[Any, bytes],
@@ -200,25 +207,23 @@ class MessageSender:
         self._send_raw_message_call = call
         return call
 
-    def send(self, message: Message) -> Any:
+    def send(self, bound_obj: Any, message: Message) -> Any:
         """Send a message and receive a response.
         Will encode the message for transport and call dispatch_raw_message()
         """
         if self._send_raw_message_call is None:
             raise RuntimeError('send() is unimplemented for this type.')
-        if self._bound_obj is None:
-            raise RuntimeError('Cannot call on an unbound instance.')
         encoded = self._protocol.message_encode(message)
-        return self._send_raw_message_call(None, encoded)
+        return self._send_raw_message_call(bound_obj, encoded)
 
-    def send_bg(self, message: Any) -> Any:
+    def send_bg(self, bound_obj: Any, message: Message) -> Message:
         """Send a message asynchronously and receive a future.
         The message will be encoded for transport and passed to
         dispatch_raw_message from a background thread.
         """
         raise RuntimeError('Unimplemented!')
 
-    def send_async(self, message: Any) -> Any:
+    def send_async(self, bound_obj: Any, message: Message) -> Message:
         """Send a message asynchronously using asyncio.
         The message will be encoded for transport and passed to
         dispatch_raw_message_async.
@@ -253,12 +258,42 @@ class MessageReceiver:
     def __init__(self, protocol: MessageProtocol) -> None:
         self._protocol = protocol
 
-    def handler(
-        self, call: Callable[[Any, Message], Message]
-    ) -> Callable[[Any, Message], Message]:
-        """Decorator for registering calls to handle message types."""
-        print('WOULD REGISTER HANDLER TYPE')
-        return call
+    # noinspection PyProtectedMember
+    def register_handler(self, call: Callable) -> None:
+        """Register a handler call.
+        The message type handled by the call is determined by its
+        type annotation.
+        """
+        # TODO: can use types.GenericAlias in 3.9.
+        from typing import _GenericAlias  # type: ignore
+        from typing import Union, get_type_hints, get_args
+
+        # Return-type annotation can be a Union, but we probably don't
+        # have it available at runtime. Explicitly pull it in.
+        anns = get_type_hints(call, localns={'Union': Union})
+        msg = anns.get('msg')
+        if not isinstance(msg, type):
+            raise TypeError(
+                f'expected a type for "msg" annotation; got {type(msg)}.')
+        ret = anns.get('return')
+        rets: Tuple[Type, ...]
+
+        # Return types can be a single type or a union of types.
+        if isinstance(ret, _GenericAlias):
+            targs = get_args(ret)
+            if not all(isinstance(a, type) for a in targs):
+                raise TypeError(f'expected only types for "return" annotation;'
+                                f' got {targs}.')
+            rets = targs
+
+            print(f'LOOKED AT GENERIC ALIAS {targs}')
+        else:
+            if not isinstance(ret, type):
+                raise TypeError(f'expected one or more types for'
+                                f' "return" annotation; got a {type(ret)}.')
+            rets = (ret, )
+
+        print(f'WOULD REGISTER HANDLER! (got {msg} and {rets})')
 
     def handle_raw_message(self, msg: bytes) -> bytes:
         """Should be called when the receiver gets a message.

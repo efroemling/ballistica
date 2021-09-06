@@ -69,6 +69,7 @@
       <w>animcurve</w>
       <w>annarg</w>
       <w>annargs</w>
+      <w>anns</w>
       <w>anntype</w>
       <w>anota</w>
       <w>anroid</w>
@@ -1402,6 +1403,7 @@
       <w>mrmaxmeier</w>
       <w>msbuild</w>
       <w>msgdict</w>
+      <w>msgtype</w>
       <w>mshell</w>
       <w>msvccompiler</w>
       <w>msvcp</w>
@@ -1881,6 +1883,7 @@
       <w>respawned</w>
       <w>respawnicon</w>
       <w>responsetype</w>
+      <w>responsetypes</w>
       <w>resultstr</w>
       <w>retrysecs</w>
       <w>returncode</w>
@@ -2118,6 +2121,7 @@
       <w>startercache</w>
       <w>startscan</w>
       <w>starttime</w>
+      <w>statictest</w>
       <w>statictestfiles</w>
       <w>statictype</w>
       <w>stayin</w>
@@ -2217,6 +2221,7 @@
       <w>targetname</w>
       <w>targetpath</w>
       <w>targetpractice</w>
+      <w>targs</w>
       <w>tbtcolor</w>
       <w>tbtn</w>
       <w>tbttxt</w>
