@@ -332,6 +332,7 @@
       <w>exhash</w>
       <w>exhashstr</w>
       <w>expbool</w>
+      <w>expectedsig</w>
       <w>expl</w>
       <w>extrahash</w>
       <w>extrascale</w>
@@ -640,6 +641,7 @@
       <w>mqrspec</w>
       <w>msaa</w>
       <w>msgdict</w>
+      <w>msgfull</w>
       <w>msgtype</w>
       <w>mult</w>
       <w>multing</w>

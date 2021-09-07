@@ -9,10 +9,11 @@ from dataclasses import dataclass
 
 import pytest
 
+from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, MessageProtocol, MessageSender,
                           MessageReceiver)
-# from efrotools.statictest import static_type_equals
+from efrotools.statictest import static_type_equals
 
 if TYPE_CHECKING:
     from typing import List, Type, Any, Callable, Union
@@ -63,6 +64,7 @@ class _TestMessageR3(Message):
 
 class _TestMessageSender(MessageSender):
     """Testing type overrides for message sending.
+
     Normally this would be auto-generated based on the protocol.
     """
 
@@ -74,6 +76,7 @@ class _TestMessageSender(MessageSender):
 
 class _BoundTestMessageSender:
     """Testing type overrides for message sending.
+
     Normally this would be auto-generated based on the protocol.
     """
 
@@ -91,13 +94,14 @@ class _BoundTestMessageSender:
              message: _TestMessage2) -> Union[_TestMessageR1, _TestMessageR2]:
         ...
 
-    def send(self, message: Any) -> Any:
+    def send(self, message: Message) -> Message:
         """Send a particular message type."""
         return self._sender.send(self._obj, message)
 
 
 class _TestMessageReceiver(MessageReceiver):
     """Testing type overrides for message receiving.
+
     Normally this would be auto-generated based on the protocol.
     """
 
@@ -127,6 +131,7 @@ class _TestMessageReceiver(MessageReceiver):
 
 class _BoundTestMessageReceiver:
     """Testing type overrides for message receiving.
+
     Normally this would be auto-generated based on the protocol.
     """
 
@@ -135,13 +140,21 @@ class _BoundTestMessageReceiver:
         self._obj = obj
         self._receiver = receiver
 
+    def handle_raw_message(self, message: bytes) -> bytes:
+        """Handle a raw incoming message."""
+        return self._receiver.handle_raw_message(self._obj, message)
 
-TEST_PROTOCOL = MessageProtocol(message_types={
-    1: _TestMessage1,
-    2: _TestMessage2,
-    3: _TestMessageR1,
-    4: _TestMessageR2,
-})
+
+TEST_PROTOCOL = MessageProtocol(
+    message_types={
+        1: _TestMessage1,
+        2: _TestMessage2,
+        3: _TestMessageR1,
+        4: _TestMessageR2,
+    },
+    trusted_client=True,
+    log_remote_exceptions=False,
+)
 
 
 def test_protocol_creation() -> None:
@@ -159,6 +172,37 @@ def test_protocol_creation() -> None:
     })
 
 
+def test_receiver_creation() -> None:
+    """Test receiver creation"""
+
+    # This should fail due to the registered handler only specifying
+    # one response message type while the message type itself
+    # specifies two.
+    with pytest.raises(TypeError):
+
+        class _TestClassR:
+            """Test class incorporating receive functionality."""
+
+            receiver = _TestMessageReceiver(TEST_PROTOCOL)
+
+            @receiver.handler
+            def handle_test_message_2(self,
+                                      msg: _TestMessage2) -> _TestMessageR2:
+                """Test."""
+                del msg  # Unused
+                print('Hello from test message 1 handler!')
+                return _TestMessageR2(fval=1.2)
+
+    # Should fail because not all message types in the protocol are handled.
+    with pytest.raises(TypeError):
+
+        class _TestClassR2:
+            """Test class incorporating receive functionality."""
+
+            receiver = _TestMessageReceiver(TEST_PROTOCOL)
+            receiver.validate_handler_completeness()
+
+
 def test_message_sending() -> None:
     """Test simple message sending."""
 
@@ -168,14 +212,13 @@ def test_message_sending() -> None:
 
         msg = _TestMessageSender(TEST_PROTOCOL)
 
-        def __init__(self, receiver: TestClassR) -> None:
-            self._receiver = receiver
+        def __init__(self, target: TestClassR) -> None:
+            self._target = target
 
         @msg.send_raw_handler
         def _send_raw_message(self, data: bytes) -> bytes:
             """Test."""
-            print(f'WOULD SEND RAW MSG OF SIZE: {len(data)}')
-            return b''
+            return self._target.receiver.handle_raw_message(data)
 
     class TestClassR:
         """Test class incorporating receive functionality."""
@@ -185,8 +228,11 @@ def test_message_sending() -> None:
         @receiver.handler
         def handle_test_message_1(self, msg: _TestMessage1) -> _TestMessageR1:
             """Test."""
-            del msg  # Unused
             print('Hello from test message 1 handler!')
+            if msg.ival == 1:
+                raise CleanError('Testing Clean Error')
+            if msg.ival == 2:
+                raise RuntimeError('Testing Runtime Error')
             return _TestMessageR1(bval=True)
 
         @receiver.handler
@@ -195,14 +241,27 @@ def test_message_sending() -> None:
                 msg: _TestMessage2) -> Union[_TestMessageR1, _TestMessageR2]:
             """Test."""
             del msg  # Unused
-            print('Hello from test message 1 handler!')
+            print('Hello from test message 2 handler!')
             return _TestMessageR2(fval=1.2)
 
-    obj_r = TestClassR()
-    obj_s = TestClassS(receiver=obj_r)
+        receiver.validate_handler_completeness()
 
-    _result = obj_s.msg.send(_TestMessage1(ival=0))
-    _result2 = obj_s.msg.send(_TestMessage2(sval='rah'))
-    print('SKIPPING STATIC CHECK')
-    # assert static_type_equals(result, _TestMessageR1)
-    # assert isinstance(result, _TestMessageR1)
+    obj_r = TestClassR()
+    obj_s = TestClassS(target=obj_r)
+
+    response = obj_s.msg.send(_TestMessage1(ival=0))
+    response2 = obj_s.msg.send(_TestMessage2(sval='rah'))
+    assert static_type_equals(response, _TestMessageR1)
+    assert isinstance(response, _TestMessageR1)
+    assert isinstance(response2, (_TestMessageR1, _TestMessageR2))
+
+    # Remote CleanErrors should come across locally as the same.
+    try:
+        _response3 = obj_s.msg.send(_TestMessage1(ival=1))
+    except Exception as exc:
+        assert isinstance(exc, CleanError)
+        assert str(exc) == 'Testing Clean Error'
+
+    # Other remote errors should come across as RemoteError.
+    with pytest.raises(RemoteError):
+        _response4 = obj_s.msg.send(_TestMessage1(ival=2))

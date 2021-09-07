@@ -715,6 +715,7 @@
       <w>existables</w>
       <w>expatbuilder</w>
       <w>expatreader</w>
+      <w>expectedsig</w>
       <w>explodable</w>
       <w>explodey</w>
       <w>exportoptions</w>
@@ -1403,6 +1404,7 @@
       <w>mrmaxmeier</w>
       <w>msbuild</w>
       <w>msgdict</w>
+      <w>msgfull</w>
       <w>msgtype</w>
       <w>mshell</w>
       <w>msvccompiler</w>
