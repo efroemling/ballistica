@@ -10,11 +10,11 @@ from dataclasses import dataclass
 
 import pytest
 
+from efrotools.statictest import static_type_equals
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           MessageReceiver)
-from efrotools.statictest import static_type_equals
 
 if TYPE_CHECKING:
     from typing import List, Type, Any, Callable, Union
@@ -151,10 +151,12 @@ class _BoundTestMessageReceiver:
 
 TEST_PROTOCOL = MessageProtocol(
     message_types={
-        1: _TMessage1,
-        2: _TMessage2,
-        3: _TResponse1,
-        4: _TResponse2,
+        0: _TMessage1,
+        1: _TMessage2,
+    },
+    response_types={
+        0: _TResponse1,
+        1: _TResponse2,
     },
     trusted_client=True,
     log_remote_exceptions=False,
@@ -167,10 +169,16 @@ def test_protocol_creation() -> None:
     # This should fail because _TMessage1 can return _TResponse1 which
     # is not given an id here.
     with pytest.raises(ValueError):
-        _protocol = MessageProtocol(message_types={1: _TMessage1})
+        _protocol = MessageProtocol(
+            message_types={0: _TMessage1},
+            response_types={0: _TResponse2},
+        )
 
     # Now it should work.
-    _protocol = MessageProtocol(message_types={1: _TMessage1, 2: _TResponse1})
+    _protocol = MessageProtocol(
+        message_types={0: _TMessage1},
+        response_types={0: _TResponse1},
+    )
 
 
 def test_sender_module_creation() -> None:
