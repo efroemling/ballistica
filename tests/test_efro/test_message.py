@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, overload
 from dataclasses import dataclass
 
@@ -11,7 +12,7 @@ import pytest
 
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
-from efro.message import (Message, MessageProtocol, MessageSender,
+from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           MessageReceiver)
 from efrotools.statictest import static_type_equals
 
@@ -21,52 +22,52 @@ if TYPE_CHECKING:
 
 @ioprepped
 @dataclass
-class _TestMessage1(Message):
+class _TMessage1(Message):
     """Just testing."""
     ival: int
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Message]]:
-        return [_TestMessageR1]
+    def get_response_types(cls) -> List[Type[Response]]:
+        return [_TResponse1]
 
 
 @ioprepped
 @dataclass
-class _TestMessage2(Message):
+class _TMessage2(Message):
     """Just testing."""
     sval: str
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Message]]:
-        return [_TestMessageR1, _TestMessageR2]
+    def get_response_types(cls) -> List[Type[Response]]:
+        return [_TResponse1, _TResponse2]
 
 
 @ioprepped
 @dataclass
-class _TestMessageR1(Message):
+class _TResponse1(Response):
     """Just testing."""
     bval: bool
 
 
 @ioprepped
 @dataclass
-class _TestMessageR2(Message):
+class _TResponse2(Response):
     """Just testing."""
     fval: float
 
 
 @ioprepped
 @dataclass
-class _TestMessageR3(Message):
+class _TResponse3(Message):
     """Just testing."""
     fval: float
 
 
-class _TestMessageSender(MessageSender):
-    """Testing type overrides for message sending.
+# SEND_CODE_TEST_BEGIN
 
-    Normally this would be auto-generated based on the protocol.
-    """
+
+class _TestMessageSender(MessageSender):
+    """Protocol-specific sender."""
 
     def __get__(self,
                 obj: Any,
@@ -75,10 +76,7 @@ class _TestMessageSender(MessageSender):
 
 
 class _BoundTestMessageSender:
-    """Testing type overrides for message sending.
-
-    Normally this would be auto-generated based on the protocol.
-    """
+    """Protocol-specific bound sender."""
 
     def __init__(self, obj: Any, sender: _TestMessageSender) -> None:
         assert obj is not None
@@ -86,56 +84,60 @@ class _BoundTestMessageSender:
         self._sender = sender
 
     @overload
-    def send(self, message: _TestMessage1) -> _TestMessageR1:
+    def send(self, message: _TMessage1) -> _TResponse1:
         ...
 
     @overload
-    def send(self,
-             message: _TestMessage2) -> Union[_TestMessageR1, _TestMessageR2]:
+    def send(self, message: _TMessage2) -> Union[_TResponse1, _TResponse2]:
         ...
 
-    def send(self, message: Message) -> Message:
-        """Send a particular message type."""
+    def send(self, message: Message) -> Response:
+        """Send a message."""
         return self._sender.send(self._obj, message)
 
 
+# SEND_CODE_TEST_END
+# RCV_CODE_TEST_BEGIN
+
+
 class _TestMessageReceiver(MessageReceiver):
-    """Testing type overrides for message receiving.
+    """Protocol-specific receiver."""
 
-    Normally this would be auto-generated based on the protocol.
-    """
-
-    def __get__(self,
-                obj: Any,
-                type_in: Any = None) -> _BoundTestMessageReceiver:
+    def __get__(
+        self,
+        obj: Any,
+        type_in: Any = None,
+    ) -> _BoundTestMessageReceiver:
         return _BoundTestMessageReceiver(obj, self)
 
     @overload
     def handler(
-        self, call: Callable[[Any, _TestMessage1], _TestMessageR1]
-    ) -> Callable[[Any, _TestMessage1], _TestMessageR1]:
+        self,
+        call: Callable[[Any, _TMessage1], _TResponse1],
+    ) -> Callable[[Any, _TMessage1], _TResponse1]:
         ...
 
     @overload
     def handler(
-        self, call: Callable[[Any, _TestMessage2], Union[_TestMessageR1,
-                                                         _TestMessageR2]]
-    ) -> Callable[[Any, _TestMessage2], Union[_TestMessageR1, _TestMessageR2]]:
+        self,
+        call: Callable[[Any, _TMessage2], Union[_TResponse1, _TResponse2]],
+    ) -> Callable[[Any, _TMessage2], Union[_TResponse1, _TResponse2]]:
         ...
 
     def handler(self, call: Callable) -> Callable:
-        """Decorator to register a handler for a particular message type."""
+        """Decorator to register message handlers."""
         self.register_handler(call)
         return call
 
 
 class _BoundTestMessageReceiver:
-    """Testing type overrides for message receiving.
+    """Protocol-specific bound receiver."""
 
-    Normally this would be auto-generated based on the protocol.
-    """
-
-    def __init__(self, obj: Any, receiver: _TestMessageReceiver) -> None:
+    def __init__(
+        self,
+        obj: Any,
+        receiver: _TestMessageReceiver,
+    ) -> None:
         assert obj is not None
         self._obj = obj
         self._receiver = receiver
@@ -145,12 +147,14 @@ class _BoundTestMessageReceiver:
         return self._receiver.handle_raw_message(self._obj, message)
 
 
+# RCV_CODE_TEST_END
+
 TEST_PROTOCOL = MessageProtocol(
     message_types={
-        1: _TestMessage1,
-        2: _TestMessage2,
-        3: _TestMessageR1,
-        4: _TestMessageR2,
+        1: _TMessage1,
+        2: _TMessage2,
+        3: _TResponse1,
+        4: _TResponse2,
     },
     trusted_client=True,
     log_remote_exceptions=False,
@@ -160,20 +164,61 @@ TEST_PROTOCOL = MessageProtocol(
 def test_protocol_creation() -> None:
     """Test protocol creation."""
 
-    # This should fail because _TestMessage1 can return _TestMessageR1 which
+    # This should fail because _TMessage1 can return _TResponse1 which
     # is not given an id here.
     with pytest.raises(ValueError):
-        _protocol = MessageProtocol(message_types={1: _TestMessage1})
+        _protocol = MessageProtocol(message_types={1: _TMessage1})
 
     # Now it should work.
-    _protocol = MessageProtocol(message_types={
-        1: _TestMessage1,
-        2: _TestMessageR1
-    })
+    _protocol = MessageProtocol(message_types={1: _TMessage1, 2: _TResponse1})
+
+
+def test_sender_module_creation() -> None:
+    """Test generation of protocol-specific sender modules for typing/etc."""
+    smod = TEST_PROTOCOL.create_sender_module('Test', private=True)
+
+    # Clip everything up to our first class declaration.
+    lines = smod.splitlines()
+    classline = lines.index('class _TestMessageSender(MessageSender):')
+    clipped = '\n'.join(lines[classline:])
+
+    # This snippet should match what we've got embedded above;
+    # If not then we need to update our test code.
+    with open(__file__, encoding='utf-8') as infile:
+        ourcode = infile.read()
+
+    emb = f'# SEND_CODE_TEST_BEGIN\n\n\n{clipped}\n\n\n# SEND_CODE_TEST_END\n'
+    if emb not in ourcode:
+        print(f'EXPECTED EMBEDDED CODE:\n{emb}')
+        raise RuntimeError('Generated sender module does not match embedded;'
+                           ' test code needs to be updated.'
+                           ' See test stdout for new code.')
+
+
+def test_receiver_module_creation() -> None:
+    """Test generation of protocol-specific sender modules for typing/etc."""
+    smod = TEST_PROTOCOL.create_receiver_module('Test', private=True)
+
+    # Clip everything up to our first class declaration.
+    lines = smod.splitlines()
+    classline = lines.index('class _TestMessageReceiver(MessageReceiver):')
+    clipped = '\n'.join(lines[classline:])
+
+    # This snippet should match what we've got embedded above;
+    # If not then we need to update our test code.
+    with open(__file__, encoding='utf-8') as infile:
+        ourcode = infile.read()
+
+    emb = f'# RCV_CODE_TEST_BEGIN\n\n\n{clipped}\n\n\n# RCV_CODE_TEST_END\n'
+    if emb not in ourcode:
+        print(f'EXPECTED EMBEDDED CODE:\n{emb}')
+        raise RuntimeError('Generated sender module does not match embedded;'
+                           ' test code needs to be updated.'
+                           ' See test stdout for new code.')
 
 
 def test_receiver_creation() -> None:
-    """Test receiver creation"""
+    """Test receiver creation."""
 
     # This should fail due to the registered handler only specifying
     # one response message type while the message type itself
@@ -186,12 +231,10 @@ def test_receiver_creation() -> None:
             receiver = _TestMessageReceiver(TEST_PROTOCOL)
 
             @receiver.handler
-            def handle_test_message_2(self,
-                                      msg: _TestMessage2) -> _TestMessageR2:
+            def handle_test_message_2(self, msg: _TMessage2) -> _TResponse2:
                 """Test."""
                 del msg  # Unused
-                print('Hello from test message 1 handler!')
-                return _TestMessageR2(fval=1.2)
+                return _TResponse2(fval=1.2)
 
     # Should fail because not all message types in the protocol are handled.
     with pytest.raises(TypeError):
@@ -200,7 +243,7 @@ def test_receiver_creation() -> None:
             """Test class incorporating receive functionality."""
 
             receiver = _TestMessageReceiver(TEST_PROTOCOL)
-            receiver.validate_handler_completeness()
+            receiver.validate()
 
 
 def test_message_sending() -> None:
@@ -226,42 +269,40 @@ def test_message_sending() -> None:
         receiver = _TestMessageReceiver(TEST_PROTOCOL)
 
         @receiver.handler
-        def handle_test_message_1(self, msg: _TestMessage1) -> _TestMessageR1:
+        def handle_test_message_1(self, msg: _TMessage1) -> _TResponse1:
             """Test."""
-            print('Hello from test message 1 handler!')
             if msg.ival == 1:
                 raise CleanError('Testing Clean Error')
             if msg.ival == 2:
                 raise RuntimeError('Testing Runtime Error')
-            return _TestMessageR1(bval=True)
+            return _TResponse1(bval=True)
 
         @receiver.handler
         def handle_test_message_2(
-                self,
-                msg: _TestMessage2) -> Union[_TestMessageR1, _TestMessageR2]:
+                self, msg: _TMessage2) -> Union[_TResponse1, _TResponse2]:
             """Test."""
             del msg  # Unused
-            print('Hello from test message 2 handler!')
-            return _TestMessageR2(fval=1.2)
+            return _TResponse2(fval=1.2)
 
-        receiver.validate_handler_completeness()
+        receiver.validate()
 
     obj_r = TestClassR()
     obj_s = TestClassS(target=obj_r)
 
-    response = obj_s.msg.send(_TestMessage1(ival=0))
-    response2 = obj_s.msg.send(_TestMessage2(sval='rah'))
-    assert static_type_equals(response, _TestMessageR1)
-    assert isinstance(response, _TestMessageR1)
-    assert isinstance(response2, (_TestMessageR1, _TestMessageR2))
+    if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
+        response = obj_s.msg.send(_TMessage1(ival=0))
+        response2 = obj_s.msg.send(_TMessage2(sval='rah'))
+        assert static_type_equals(response, _TResponse1)
+        assert isinstance(response, _TResponse1)
+        assert isinstance(response2, (_TResponse1, _TResponse2))
 
     # Remote CleanErrors should come across locally as the same.
     try:
-        _response3 = obj_s.msg.send(_TestMessage1(ival=1))
+        _response3 = obj_s.msg.send(_TMessage1(ival=1))
     except Exception as exc:
         assert isinstance(exc, CleanError)
         assert str(exc) == 'Testing Clean Error'
 
     # Other remote errors should come across as RemoteError.
     with pytest.raises(RemoteError):
-        _response4 = obj_s.msg.send(_TestMessage1(ival=2))
+        _response4 = obj_s.msg.send(_TMessage1(ival=2))

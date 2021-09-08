@@ -179,6 +179,7 @@
       <w>chunksize</w>
       <w>cjief</w>
       <w>classdict</w>
+      <w>classline</w>
       <w>cleanupcheck</w>
       <w>clientid</w>
       <w>clientinfo</w>
@@ -493,6 +494,7 @@
       <w>illum</w>
       <w>ilock</w>
       <w>imagewidget</w>
+      <w>importlines</w>
       <w>incentivized</w>
       <w>inet</w>
       <w>infotxt</w>
@@ -533,6 +535,7 @@
       <w>jaxis</w>
       <w>jcjwf</w>
       <w>jmessage</w>
+      <w>jnames</w>
       <w>keepalives</w>
       <w>keyanntype</w>
       <w>keycode</w>
@@ -643,6 +646,9 @@
       <w>msgdict</w>
       <w>msgfull</w>
       <w>msgtype</w>
+      <w>msgtypes</w>
+      <w>msgtypevar</w>
+      <w>mtypenames</w>
       <w>mult</w>
       <w>multing</w>
       <w>multipass</w>
@@ -746,6 +752,7 @@
       <w>osis</w>
       <w>osssssssssss</w>
       <w>ostype</w>
+      <w>ourcode</w>
       <w>ourname</w>
       <w>ourself</w>
       <w>ourstanding</w>
@@ -781,6 +788,7 @@
       <w>postinit</w>
       <w>postrun</w>
       <w>powerup</w>
+      <w>ppre</w>
       <w>pptabcom</w>
       <w>precalc</w>
       <w>predeclare</w>
@@ -872,6 +880,7 @@
       <w>resetbtn</w>
       <w>resetinput</w>
       <w>responsetypes</w>
+      <w>responsetypevar</w>
       <w>resync</w>
       <w>retrysecs</w>
       <w>retval</w>
@@ -889,6 +898,7 @@
       <w>rscode</w>
       <w>rsgc</w>
       <w>rtypes</w>
+      <w>rtypevar</w>
       <w>runnables</w>
       <w>rvec</w>
       <w>rvel</w>
@@ -945,6 +955,7 @@
       <w>simpletype</w>
       <w>sisssssssss</w>
       <w>sixteenbits</w>
+      <w>smod</w>
       <w>smoothering</w>
       <w>smoothstep</w>
       <w>smoothy</w>
@@ -1053,6 +1064,7 @@
       <w>touchpad</w>
       <w>toucs</w>
       <w>toutf</w>
+      <w>tpimports</w>
       <w>tracebacks</w>
       <w>tracestr</w>
       <w>trackpad</w>

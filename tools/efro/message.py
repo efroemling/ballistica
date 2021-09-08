@@ -22,7 +22,7 @@ from efro.dataclassio import (ioprepped, is_ioprepped_dataclass, IOAttrs,
 
 if TYPE_CHECKING:
     from typing import (Dict, Type, Tuple, List, Any, Callable, Optional, Set,
-                        Sequence)
+                        Sequence, Union)
     from efro.error import CommunicationError
 
 TM = TypeVar('TM', bound='MessageSender')
@@ -35,21 +35,24 @@ class RemoteErrorType(Enum):
 
 
 class Message:
-    """Base class for messages and their responses."""
+    """Base class for messages."""
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Message]]:
+    def get_response_types(cls) -> List[Type[Response]]:
         """Return all message types this Message can result in when sent.
-        Messages intended only for response types can leave this empty.
         Note: RemoteErrorMessage is handled transparently and does not
         need to be specified here.
         """
         return []
 
 
+class Response:
+    """Base class for responses to messages."""
+
+
 @ioprepped
 @dataclass
-class RemoteErrorMessage(Message):
+class RemoteErrorMessage(Response):
     """Message saying some error has occurred on the other end."""
     error_message: Annotated[str, IOAttrs('m')]
     error_type: Annotated[RemoteErrorType, IOAttrs('t')]
@@ -64,14 +67,13 @@ class MessageProtocol:
     """
 
     def __init__(self,
-                 message_types: Dict[int, Type[Message]],
+                 message_types: Dict[int, Union[Type[Message],
+                                                Type[Response]]],
                  type_key: Optional[str] = None,
                  preserve_clean_errors: bool = True,
                  log_remote_exceptions: bool = True,
                  trusted_client: bool = False) -> None:
         """Create a protocol with a given configuration.
-        Each entry for message_types should contain an ID, a message type,
-        and all possible response types.
 
         If 'type_key' is provided, the message type ID is stored as the
         provided key in the message dict; otherwise it will be stored as
@@ -86,8 +88,10 @@ class MessageProtocol:
         be included in the RemoteError. This should only be enabled in cases
         where the client is trusted.
         """
-        self.message_types_by_id: Dict[int, Type[Message]] = {}
-        self.message_ids_by_type: Dict[Type[Message], int] = {}
+        self.message_types_by_id: Dict[int, Union[Type[Message],
+                                                  Type[Response]]] = {}
+        self.message_ids_by_type: Dict[Union[Type[Message], Type[Response]],
+                                       int] = {}
         for m_id, m_type in message_types.items():
 
             # Make sure only valid message types were passed and each
@@ -95,26 +99,39 @@ class MessageProtocol:
             assert isinstance(m_id, int)
             assert m_id >= 0
             assert (is_ioprepped_dataclass(m_type)
-                    and issubclass(m_type, Message))
+                    and issubclass(m_type, (Message, Response)))
             assert self.message_types_by_id.get(m_id) is None
 
             self.message_types_by_id[m_id] = m_type
             self.message_ids_by_type[m_type] = m_id
 
-        # Make sure all return types are valid and have been assigned
-        # an ID as well.
+        # Some extra-thorough validation in debug mode.
         if __debug__:
-            all_response_types: Set[Type[Message]] = set()
+            # Make sure all return types are valid and have been assigned
+            # an ID as well.
+            all_response_types: Set[Type[Response]] = set()
             for m_id, m_type in message_types.items():
-                m_rtypes = m_type.get_response_types()
-                assert isinstance(m_rtypes, list)
-                assert len(set(m_rtypes)) == len(m_rtypes)  # check for dups
-                all_response_types.update(m_rtypes)
+                if issubclass(m_type, Message):
+                    m_rtypes = m_type.get_response_types()
+                    assert isinstance(m_rtypes, list)
+                    assert m_rtypes  # make sure not empty
+                    assert len(set(m_rtypes)) == len(m_rtypes)  # check dups
+                    all_response_types.update(m_rtypes)
             for cls in all_response_types:
-                assert is_ioprepped_dataclass(cls) and issubclass(cls, Message)
+                assert is_ioprepped_dataclass(cls) and issubclass(
+                    cls, (Message, Response))
                 if cls not in self.message_ids_by_type:
                     raise ValueError(f'Possible response type {cls}'
                                      f' was not included in message_types.')
+
+            # Make sure all registered types have unique base names.
+            # We can take advantage of this to generate cleaner looking
+            # protocol modules. Can revisit if this is ever a problem.
+            mtypenames = set(tp.__name__ for tp in self.message_ids_by_type)
+            if len(mtypenames) != len(message_types):
+                raise ValueError(
+                    'message_types contains duplicate __name__s;'
+                    ' all types are required to have unique names.')
 
         self._type_key = type_key
         self.preserve_clean_errors = preserve_clean_errors
@@ -122,7 +139,7 @@ class MessageProtocol:
         self.trusted_client = trusted_client
 
     def message_encode(self,
-                       message: Message,
+                       message: Union[Message, Response],
                        is_error: bool = False) -> bytes:
         """Encode a message to bytes for transport."""
 
@@ -132,8 +149,9 @@ class MessageProtocol:
         else:
             m_id = self.message_ids_by_type.get(type(message))
             if m_id is None:
-                raise TypeError(f'Message type is not registered in Protocol:'
-                                f' {type(message)}')
+                raise TypeError(
+                    f'Message/Response type is not registered in Protocol:'
+                    f' {type(message)}')
         msgdict = dataclass_to_dict(message)
 
         # Encode type as part of the message dict if desired
@@ -148,7 +166,7 @@ class MessageProtocol:
             out = {'m': msgdict, 't': m_id}
         return json.dumps(out, separators=(',', ':')).encode()
 
-    def message_decode(self, data: bytes) -> Message:
+    def message_decode(self, data: bytes) -> Union[Message, Response]:
         """Decode a message from bytes.
 
         If the message represents a remote error, an Exception will
@@ -178,25 +196,200 @@ class MessageProtocol:
         # Decode this particular type and make sure its valid.
         msgtype = self.message_types_by_id.get(m_id)
         if msgtype is None:
-            raise TypeError(f'Got unregistered message type id of {m_id}.')
+            raise TypeError(
+                f'Got unregistered message/response type id of {m_id}.')
 
-        return dataclass_from_dict(msgtype, msgdict)
+        out = dataclass_from_dict(msgtype, msgdict)
+        assert isinstance(out, (Message, Response))
+        return out
 
-    def create_sender_module(self, classname: str) -> str:
+    def _get_module_header(self, part: str) -> str:
+        """Return common parts of generated modules."""
+        imports: Dict[str, List[str]] = {}
+        for msgtype in self.message_ids_by_type:
+            imports.setdefault(msgtype.__module__, []).append(msgtype.__name__)
+        importlines = ''
+        for module, names in sorted(imports.items()):
+            jnames = ', '.join(names)
+            line = f'from {module} import {jnames}'
+            if len(line) > 79:
+                # Recreate in a wrapping-friendly form.
+                line = f'from {module} import ({jnames})'
+            importlines += f'{line}\n'
+
+        if part == 'sender':
+            importlines = (
+                f'from efro.message import MessageSender\n{importlines}')
+            tpimports = 'from efro.message import Message, Response'
+        else:
+            importlines = (
+                f'from efro.message import MessageReceiver\n{importlines}')
+            tpimports = 'from efro.message import Message, Response'
+
+        out = ('# Released under the MIT License. See LICENSE for details.\n'
+               f'#\n'
+               f'"""Auto-generated {part} module."""\n'
+               f'\n'
+               f'from __future__ import annotations\n'
+               f'\n'
+               f'from typing import TYPE_CHECKING, overload\n'
+               f'\n'
+               f'{importlines}'
+               f'\n'
+               f'if TYPE_CHECKING:\n'
+               f'    from typing import Union\n'
+               f'    {tpimports}\n'
+               f'\n'
+               f'\n')
+        return out
+
+    def create_sender_module(self,
+                             classname: str,
+                             private: bool = False) -> str:
         """"Create a Python module defining a MessageSender subclass.
 
         This class is primarily for type checking and will contain overrides
         for the varieties of send calls for message/response types defined
         in the protocol.
+
+        Note that line lengths are not clipped, so output may need to be
+        run through a formatter to prevent lint warnings about excessive
+        line lengths.
         """
 
-    def create_receiver_module(self, classname: str) -> str:
+        ppre = '_' if private else ''
+        out = self._get_module_header('sender')
+        out += (f'class {ppre}{classname}MessageSender(MessageSender):\n'
+                f'    """Protocol-specific sender."""\n'
+                f'\n'
+                f'    def __get__(self,\n'
+                f'                obj: Any,\n'
+                f'                type_in: Any = None)'
+                f' -> {ppre}Bound{classname}MessageSender:\n'
+                f'        return {ppre}Bound{classname}MessageSender'
+                f'(obj, self)\n'
+                f'\n'
+                f'\n'
+                f'class {ppre}Bound{classname}MessageSender:\n'
+                f'    """Protocol-specific bound sender."""\n'
+                f'\n'
+                f'    def __init__(self, obj: Any,'
+                f' sender: {ppre}{classname}MessageSender) -> None:\n'
+                f'        assert obj is not None\n'
+                f'        self._obj = obj\n'
+                f'        self._sender = sender\n')
+
+        # Define handler() overloads for all registered message types.
+        msgtypes = [
+            t for t in self.message_ids_by_type if issubclass(t, Message)
+        ]
+
+        # Ew; @overload requires at least 2 different signatures so
+        # we need to simply write a single function if we have < 2.
+        if len(msgtypes) == 1:
+            raise RuntimeError('FIXME: currently require at least 2'
+                               ' message types.')
+        if len(msgtypes) > 1:
+            for msgtype in msgtypes:
+                msgtypevar = msgtype.__name__
+                rtypes = msgtype.get_response_types()
+                if len(rtypes) > 1:
+                    tps = ', '.join(t.__name__ for t in rtypes)
+                    responsetypevar = f'Union[{tps}]'
+                else:
+                    responsetypevar = rtypes[0].__name__
+                out += (f'\n'
+                        f'    @overload\n'
+                        f'    def send(self, message: {msgtypevar})'
+                        f' -> {responsetypevar}:\n'
+                        f'        ...\n')
+            out += ('\n'
+                    '    def send(self, message: Message) -> Response:\n'
+                    '        """Send a message."""\n'
+                    '        return self._sender.send(self._obj, message)\n')
+
+        return out
+
+    def create_receiver_module(self,
+                               classname: str,
+                               private: bool = False) -> str:
         """"Create a Python module defining a MessageReceiver subclass.
 
         This class is primarily for type checking and will contain overrides
         for the register method for message/response types defined in
         the protocol.
+
+        Note that line lengths are not clipped, so output may need to be
+        run through a formatter to prevent lint warnings about excessive
+        line lengths.
         """
+        ppre = '_' if private else ''
+        out = self._get_module_header('receiver')
+        out += (f'class {ppre}{classname}MessageReceiver(MessageReceiver):\n'
+                f'    """Protocol-specific receiver."""\n'
+                f'\n'
+                f'    def __get__(\n'
+                f'        self,\n'
+                f'        obj: Any,\n'
+                f'        type_in: Any = None,\n'
+                f'    ) -> {ppre}Bound{classname}MessageReceiver:\n'
+                f'        return {ppre}Bound{classname}MessageReceiver('
+                f'obj, self)\n')
+
+        # Define handler() overloads for all registered message types.
+        msgtypes = [
+            t for t in self.message_ids_by_type if issubclass(t, Message)
+        ]
+
+        # Ew; @overload requires at least 2 different signatures so
+        # we need to simply write a single function if we have < 2.
+        if len(msgtypes) == 1:
+            raise RuntimeError('FIXME: currently require at least 2'
+                               ' message types.')
+        if len(msgtypes) > 1:
+            for msgtype in msgtypes:
+                msgtypevar = msgtype.__name__
+                rtypes = msgtype.get_response_types()
+                if len(rtypes) > 1:
+                    tps = ', '.join(t.__name__ for t in rtypes)
+                    rtypevar = f'Union[{tps}]'
+                else:
+                    rtypevar = rtypes[0].__name__
+                out += (
+                    f'\n'
+                    f'    @overload\n'
+                    f'    def handler(\n'
+                    f'        self,\n'
+                    f'        call: Callable[[Any, {msgtypevar}], '
+                    f'{rtypevar}],\n'
+                    f'    ) -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
+                    f'        ...\n')
+            out += ('\n'
+                    '    def handler(self, call: Callable) -> Callable:\n'
+                    '        """Decorator to register message handlers."""\n'
+                    '        self.register_handler(call)\n'
+                    '        return call\n')
+
+        out += (f'\n'
+                f'\n'
+                f'class {ppre}Bound{classname}MessageReceiver:\n'
+                f'    """Protocol-specific bound receiver."""\n'
+                f'\n'
+                f'    def __init__(\n'
+                f'        self,\n'
+                f'        obj: Any,\n'
+                f'        receiver: _TestMessageReceiver,\n'
+                f'    ) -> None:\n'
+                f'        assert obj is not None\n'
+                f'        self._obj = obj\n'
+                f'        self._receiver = receiver\n'
+                f'\n'
+                f'    def handle_raw_message(self, message: bytes) -> bytes:\n'
+                f'        """Handle a raw incoming message."""\n'
+                f'        return self._receiver.handle_raw_message'
+                f'(self._obj, message)\n')
+
+        return out
 
 
 class MessageSender:
@@ -232,7 +425,7 @@ class MessageSender:
         self._send_raw_message_call = call
         return call
 
-    def send(self, bound_obj: Any, message: Message) -> Message:
+    def send(self, bound_obj: Any, message: Message) -> Response:
         """Send a message and receive a response.
 
         Will encode the message for transport and call dispatch_raw_message()
@@ -240,13 +433,10 @@ class MessageSender:
         if self._send_raw_message_call is None:
             raise RuntimeError('send() is unimplemented for this type.')
 
-        # Only types with possible response types should ever be sent.
-        assert type(message).get_response_types()
-
         msg_encoded = self._protocol.message_encode(message)
         response_encoded = self._send_raw_message_call(bound_obj, msg_encoded)
         response = self._protocol.message_decode(response_encoded)
-        assert isinstance(response, Message)
+        assert isinstance(response, Response)
         assert type(response) in type(message).get_response_types()
         return response
 
@@ -278,10 +468,10 @@ class MessageReceiver:
     class MyClass:
         receiver = MyMessageReceiver()
 
-        # MyMessageReceiver should provide overloads to register_handler()
-        # to ensure all registered handlers have valid types/return-types.
+        # MyMessageReceiver fills out handler() overloads to ensure all
+        # registered handlers have valid types/return-types.
         @receiver.handler
-        def handle_some_message_type(self, message: SomeType) -> AnotherType:
+        def handle_some_message_type(self, message: SomeMsg) -> SomeResponse:
             # Deal with this message type here.
 
     # This will trigger the registered handler being called.
@@ -298,7 +488,7 @@ class MessageReceiver:
 
     # noinspection PyProtectedMember
     def register_handler(self, call: Callable[[Any, Message],
-                                              Message]) -> None:
+                                              Response]) -> None:
         """Register a handler call.
 
         The message type handled by the call is determined by its
@@ -366,14 +556,10 @@ class MessageReceiver:
         # Ok; we're good!
         self._handlers[msgtype] = call
 
-    def validate_handler_completeness(self, warn_only: bool = False) -> None:
-        """Return whether this receiver handles all protocol messages.
-
-        Only messages having possible response types are considered, as
-        those are the only ones that can be sent to a receiver.
-        """
+    def validate(self, warn_only: bool = False) -> None:
+        """Check for handler completeness, valid types, etc."""
         for msgtype in self._protocol.message_ids_by_type.keys():
-            if not msgtype.get_response_types():
+            if issubclass(msgtype, Response):
                 continue
             if msgtype not in self._handlers:
                 msg = (f'Protocol message {msgtype} not handled'
@@ -388,6 +574,7 @@ class MessageReceiver:
             # Decode the incoming message.
             msg_decoded = self._protocol.message_decode(msg)
             msgtype = type(msg_decoded)
+            assert issubclass(msgtype, Message)
 
             # Call the proper handler.
             handler = self._handlers.get(msgtype)
@@ -396,7 +583,7 @@ class MessageReceiver:
             response = handler(bound_obj, msg_decoded)
 
             # Re-encode the response.
-            assert isinstance(response, Message)
+            assert isinstance(response, Response)
             assert type(response) in msgtype.get_response_types()
             return self._protocol.message_encode(response)
 

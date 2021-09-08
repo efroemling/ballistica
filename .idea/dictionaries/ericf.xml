@@ -361,6 +361,7 @@
       <w>chromebooks</w>
       <w>chunksize</w>
       <w>cjkcodecs</w>
+      <w>classline</w>
       <w>classmethod</w>
       <w>classmethods</w>
       <w>classname</w>
@@ -1060,6 +1061,7 @@
       <w>imgh</w>
       <w>imghdr</w>
       <w>imgw</w>
+      <w>importlines</w>
       <w>incentivized</w>
       <w>includetest</w>
       <w>incmd</w>
@@ -1135,6 +1137,7 @@
       <w>jisx</w>
       <w>jite</w>
       <w>jittering</w>
+      <w>jnames</w>
       <w>joedeshon</w>
       <w>johab</w>
       <w>joinable</w>
@@ -1406,6 +1409,8 @@
       <w>msgdict</w>
       <w>msgfull</w>
       <w>msgtype</w>
+      <w>msgtypes</w>
+      <w>msgtypevar</w>
       <w>mshell</w>
       <w>msvccompiler</w>
       <w>msvcp</w>
@@ -1414,6 +1419,7 @@
       <w>mtrans</w>
       <w>mtvos</w>
       <w>mtype</w>
+      <w>mtypenames</w>
       <w>mult</w>
       <w>multibytecodec</w>
       <w>multikillcount</w>
@@ -1570,6 +1576,7 @@
       <w>osval</w>
       <w>otherplayer</w>
       <w>otherspawn</w>
+      <w>ourcode</w>
       <w>ourhash</w>
       <w>ourname</w>
       <w>ourself</w>
@@ -1699,6 +1706,7 @@
       <w>poweruptype</w>
       <w>powervr</w>
       <w>ppos</w>
+      <w>ppre</w>
       <w>pproxy</w>
       <w>pptabcom</w>
       <w>pragmas</w>
@@ -1886,6 +1894,7 @@
       <w>respawnicon</w>
       <w>responsetype</w>
       <w>responsetypes</w>
+      <w>responsetypevar</w>
       <w>resultstr</w>
       <w>retrysecs</w>
       <w>returncode</w>
@@ -1921,6 +1930,7 @@
       <w>rtnetlink</w>
       <w>rtxt</w>
       <w>rtypes</w>
+      <w>rtypevar</w>
       <w>runmypy</w>
       <w>runonly</w>
       <w>runpy</w>
@@ -2053,6 +2063,7 @@
       <w>smag</w>
       <w>smallscale</w>
       <w>smlh</w>
+      <w>smod</w>
       <w>smoothstep</w>
       <w>smoothy</w>
       <w>smtpd</w>
@@ -2333,6 +2344,7 @@
       <w>touchpad</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
+      <w>tpimports</w>
       <w>tplayer</w>
       <w>tpos</w>
       <w>tproxy</w>
