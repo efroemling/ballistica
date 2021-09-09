@@ -189,11 +189,15 @@ def format_yapf(projroot: Path, full: bool) -> None:
           flush=True)
 
 
-def format_yapf_text(projroot: Path, code: str) -> str:
-    """Run yapf formatting on the provided code."""
-    del projroot  # Unused.
-    print('WOULD DO YAPF')
-    return code
+def format_yapf_str(projroot: Path, code: str) -> str:
+    """Run yapf formatting on the provided inline code."""
+    from efrotools import PYVER
+    out = subprocess.run([f'python{PYVER}', '-m', 'yapf'],
+                         capture_output=True,
+                         check=True,
+                         input=code.encode(),
+                         cwd=projroot)
+    return out.stdout.decode()
 
 
 def _should_include_script(fnamefull: str) -> bool:
