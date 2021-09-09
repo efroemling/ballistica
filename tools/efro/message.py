@@ -56,7 +56,11 @@ class Response:
 @ioprepped
 @dataclass
 class RemoteErrorResponse(Response):
-    """Message saying some error has occurred on the other end."""
+    """Message saying some error has occurred on the other end.
+
+    This type is unique in that it is not returned to the user; it
+    instead results in a local exception being raised.
+    """
     error_message: Annotated[str, IOAttrs('m')]
     error_type: Annotated[RemoteErrorType, IOAttrs('t')]
 
@@ -122,6 +126,13 @@ class MessageProtocol:
             self.response_types_by_id[r_id] = r_type
             self.response_ids_by_type[r_type] = r_id
 
+        # If they didn't register RemoteErrorResponse, do so with a special
+        # -1 id which ensures it will never conflict with user messages.
+        if RemoteErrorResponse not in self.response_ids_by_type:
+            assert self.response_types_by_id.get(-1) is None
+            self.response_types_by_id[-1] = RemoteErrorResponse
+            self.response_ids_by_type[RemoteErrorResponse] = -1
+
         # Some extra-thorough validation in debug mode.
         if __debug__:
             # Make sure all Message types' return types are valid
@@ -155,32 +166,22 @@ class MessageProtocol:
         self.log_remote_exceptions = log_remote_exceptions
         self.trusted_client = trusted_client
 
-    def encode_message(self,
-                       message: Message,
-                       is_error: bool = False) -> bytes:
+    def encode_message(self, message: Message) -> bytes:
         """Encode a message to bytes for transport."""
-        return self._encode(message, is_error, self.message_ids_by_type,
-                            'message')
+        return self._encode(message, self.message_ids_by_type, 'message')
 
-    def encode_response(self,
-                        response: Response,
-                        is_error: bool = False) -> bytes:
+    def encode_response(self, response: Response) -> bytes:
         """Encode a response to bytes for transport."""
-        return self._encode(response, is_error, self.response_ids_by_type,
-                            'response')
+        return self._encode(response, self.response_ids_by_type, 'response')
 
-    def _encode(self, message: Any, is_error: bool,
-                ids_by_type: Dict[Type, int], opname: str) -> bytes:
+    def _encode(self, message: Any, ids_by_type: Dict[Type, int],
+                opname: str) -> bytes:
         """Encode a message to bytes for transport."""
 
-        m_id: Optional[int]
-        if is_error:
-            m_id = -1
-        else:
-            m_id = ids_by_type.get(type(message))
-            if m_id is None:
-                raise TypeError(f'{opname} type is not registered in protocol:'
-                                f' {type(message)}')
+        m_id: Optional[int] = ids_by_type.get(type(message))
+        if m_id is None:
+            raise TypeError(f'{opname} type is not registered in protocol:'
+                            f' {type(message)}')
         msgdict = dataclass_to_dict(message)
 
         # Encode type as part of the message/response dict if desired
@@ -223,20 +224,22 @@ class MessageProtocol:
         assert isinstance(m_id, int)
         assert isinstance(msgdict, dict)
 
-        # Special case: a remote error occurred. Raise a local Exception.
-        if m_id == -1:
-            assert opname == 'response'
-            err = dataclass_from_dict(RemoteErrorResponse, msgdict)
-            if (self.preserve_clean_errors
-                    and err.error_type is RemoteErrorType.CLEAN):
-                raise CleanError(err.error_message)
-            raise RemoteError(err.error_message)
-
         # Decode this particular type.
         msgtype = types_by_id.get(m_id)
         if msgtype is None:
             raise TypeError(f'Got unregistered {opname} type id of {m_id}.')
-        return dataclass_from_dict(msgtype, msgdict)
+        out = dataclass_from_dict(msgtype, msgdict)
+
+        # Special case: a remote error occurred. Raise a local Exception
+        # instead of returning the message.
+        if isinstance(out, RemoteErrorResponse):
+            assert opname == 'response'
+            if (self.preserve_clean_errors
+                    and out.error_type is RemoteErrorType.CLEAN):
+                raise CleanError(out.error_message)
+            raise RemoteError(out.error_message)
+
+        return out
 
     def _get_module_header(self, part: str) -> str:
         """Return common parts of generated modules."""
@@ -640,7 +643,7 @@ class MessageReceiver:
                                    if self._protocol.trusted_client else
                                    'An unknown error has occurred.'),
                     error_type=RemoteErrorType.OTHER)
-            return self._protocol.encode_response(err_response, is_error=True)
+            return self._protocol.encode_response(err_response)
 
     async def handle_raw_message_async(self, msg: bytes) -> bytes:
         """Should be called when the receiver gets a message.
