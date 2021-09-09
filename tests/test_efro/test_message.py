@@ -14,7 +14,7 @@ from efrotools.statictest import static_type_equals
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
-                          MessageReceiver, EmptyResponse)
+                          MessageReceiver)
 
 if TYPE_CHECKING:
     from typing import List, Type, Any, Callable, Union, Optional
@@ -176,9 +176,8 @@ TEST_PROTOCOL = MessageProtocol(
     response_types={
         0: _TResponse1,
         1: _TResponse2,
-        2: EmptyResponse,
     },
-    trusted_client=True,
+    trusted_sender=True,
     log_remote_exceptions=False,
 )
 
