@@ -155,7 +155,7 @@ class StaticTestFile:
         return '\n'.join(lines_out) + '\n'
 
 
-def static_type_equals(value: Any, statictype: Union[Type, str]) -> bool:
+def static_type_equals(value: Any, statictype: Union[Type, None, str]) -> bool:
     """Check a type statically using mypy.
 
     If a string is passed as statictype, it is checked against the mypy

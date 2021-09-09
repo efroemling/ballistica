@@ -14,10 +14,10 @@ from efrotools.statictest import static_type_equals
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
-                          MessageReceiver)
+                          MessageReceiver, EmptyResponse)
 
 if TYPE_CHECKING:
-    from typing import List, Type, Any, Callable, Union
+    from typing import List, Type, Any, Callable, Union, Optional
 
 
 @ioprepped
@@ -40,6 +40,13 @@ class _TMessage2(Message):
     @classmethod
     def get_response_types(cls) -> List[Type[Response]]:
         return [_TResponse1, _TResponse2]
+
+
+@ioprepped
+@dataclass
+class _TMessage3(Message):
+    """Just testing."""
+    sval: str
 
 
 @ioprepped
@@ -91,7 +98,11 @@ class _BoundTestMessageSender:
     def send(self, message: _TMessage2) -> Union[_TResponse1, _TResponse2]:
         ...
 
-    def send(self, message: Message) -> Response:
+    @overload
+    def send(self, message: _TMessage3) -> None:
+        ...
+
+    def send(self, message: Message) -> Optional[Response]:
         """Send a message."""
         return self._sender.send(self._obj, message)
 
@@ -124,6 +135,13 @@ class _TestMessageReceiver(MessageReceiver):
     ) -> Callable[[Any, _TMessage2], Union[_TResponse1, _TResponse2]]:
         ...
 
+    @overload
+    def handler(
+        self,
+        call: Callable[[Any, _TMessage3], None],
+    ) -> Callable[[Any, _TMessage3], None]:
+        ...
+
     def handler(self, call: Callable) -> Callable:
         """Decorator to register message handlers."""
         self.register_handler(call)
@@ -153,10 +171,12 @@ TEST_PROTOCOL = MessageProtocol(
     message_types={
         0: _TMessage1,
         1: _TMessage2,
+        2: _TMessage3,
     },
     response_types={
         0: _TResponse1,
         1: _TResponse2,
+        2: EmptyResponse,
     },
     trusted_client=True,
     log_remote_exceptions=False,
@@ -292,17 +312,28 @@ def test_message_sending() -> None:
             del msg  # Unused
             return _TResponse2(fval=1.2)
 
+        @receiver.handler
+        def handle_test_message_3(self, msg: _TMessage3) -> None:
+            """Test."""
+            del msg  # Unused
+
         receiver.validate()
 
     obj_r = TestClassR()
     obj_s = TestClassS(target=obj_r)
 
+    response = obj_s.msg.send(_TMessage1(ival=0))
+    assert isinstance(response, _TResponse1)
+
+    response2 = obj_s.msg.send(_TMessage2(sval='rah'))
+    assert isinstance(response2, (_TResponse1, _TResponse2))
+
+    response3 = obj_s.msg.send(_TMessage3(sval='rah'))
+    assert response3 is None
+
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
-        response = obj_s.msg.send(_TMessage1(ival=0))
-        response2 = obj_s.msg.send(_TMessage2(sval='rah'))
         assert static_type_equals(response, _TResponse1)
-        assert isinstance(response, _TResponse1)
-        assert isinstance(response2, (_TResponse1, _TResponse2))
+        assert static_type_equals(response3, None)
 
     # Remote CleanErrors should come across locally as the same.
     try:

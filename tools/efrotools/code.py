@@ -189,6 +189,13 @@ def format_yapf(projroot: Path, full: bool) -> None:
           flush=True)
 
 
+def format_yapf_text(projroot: Path, code: str) -> str:
+    """Run yapf formatting on the provided code."""
+    del projroot  # Unused.
+    print('WOULD DO YAPF')
+    return code
+
+
 def _should_include_script(fnamefull: str) -> bool:
     fname = os.path.basename(fnamefull)
 
