@@ -125,7 +125,7 @@ def run(projroot: str, args: List[str]) -> None:
     # the project gradle file where we set it explicitly.
     if command == 'get-ndk-path':
         gradlepath = Path(projroot, 'ballisticacore-android/build.gradle')
-        with gradlepath.open() as infile:
+        with gradlepath.open(encoding='utf-8') as infile:
             lines = [
                 l for l in infile.readlines()
                 if l.strip().startswith('ext.ndk_version = ')

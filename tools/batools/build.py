@@ -31,7 +31,7 @@ class PipRequirement:
 # Note: we look directly for modules when possible instead of just pip
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 10, 2]),
+    PipRequirement(modulename='pylint', minversion=[2, 11, 1]),
     PipRequirement(modulename='mypy', minversion=[0, 910]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),

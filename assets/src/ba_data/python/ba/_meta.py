@@ -278,7 +278,7 @@ class DirectoryScan:
         else:
             fpath = pathlib.Path(moduledir, subpath, '__init__.py')
             ispackage = True
-        with fpath.open() as infile:
+        with fpath.open(encoding='utf-8') as infile:
             flines = infile.readlines()
         meta_lines = {
             lnum: l[1:].split()

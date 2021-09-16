@@ -256,6 +256,7 @@ class ColorPickerExact(PopupWindow):
 
         # We generate these procedurally, so pylint misses them.
         # FIXME: create static attrs instead.
+        # pylint: disable=consider-using-f-string
         ba.textwidget(edit=self._label_r, text='%.2f' % self._color[0])
         ba.textwidget(edit=self._label_g, text='%.2f' % self._color[1])
         ba.textwidget(edit=self._label_b, text='%.2f' % self._color[2])

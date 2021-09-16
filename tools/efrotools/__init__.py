@@ -60,7 +60,8 @@ def getconfig(projroot: Path) -> Dict[str, Any]:
 def setconfig(projroot: Path, config: Dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
-    with Path(projroot, 'config/config.json').open('w') as outfile:
+    with Path(projroot,
+              'config/config.json').open('w', encoding='utf-8') as outfile:
         outfile.write(json.dumps(config, indent=2))
 
 
@@ -200,7 +201,7 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
         # Let's use ' flycheck_*' for the name since pipeline scripts
         # are already set to ignore those files.
         tmppath = Path(filename.parent, 'flycheck_mp_' + filename.name)
-        with tmppath.open('w') as outfile:
+        with tmppath.open('w', encoding='utf-8') as outfile:
             outfile.write('\n'.join(flines))
         try:
             code.runmypy(projroot, [str(tmppath)], check=False)

@@ -784,12 +784,14 @@ class LeagueRankWindow(ba.Window):
                 ba.buttonwidget(edit=self._activity_mult_button,
                                 textcolor=(0.7, 0.7, 0.8, 1.0),
                                 icon_color=(0.5, 0, 0.5, 1.0))
+                # pylint: disable=consider-using-f-string
                 ba.textwidget(edit=self._activity_mult_text,
                               text='x ' + ('%.2f' % data['act']))
 
         have_pro = False if data is None else data['p']
         pro_mult = 1.0 + float(
             _ba.get_account_misc_read_val('proPowerRankingBoost', 0.0)) * 0.01
+        # pylint: disable=consider-using-f-string
         ba.textwidget(edit=self._pro_mult_text,
                       text='     -' if
                       (data is None or not have_pro) else 'x ' +

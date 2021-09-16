@@ -45,6 +45,8 @@ def enum_by_value(cls: Type[TENUM], value: Any) -> TENUM:
     to our objects sticking around longer than we want.
     This issue has been submitted to Python as a bug so hopefully we can
     remove this eventually if it gets fixed: https://bugs.python.org/issue42248
+    UPDATE: This has been fixed as of later 3.8 builds, so we can kill this
+    off once we are 3.9+ across the board.
     """
 
     # Note: we don't recreate *ALL* the functionality of the Enum constructor
@@ -56,6 +58,7 @@ def enum_by_value(cls: Type[TENUM], value: Any) -> TENUM:
         assert isinstance(out, cls)
         return out
     except KeyError:
+        # pylint: disable=consider-using-f-string
         raise ValueError('%r is not a valid %s' %
                          (value, cls.__name__)) from None
 
