@@ -47,6 +47,18 @@
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/text_widget.h"
 
+// Sanity test: our XCode, Android, and Windows builds should be
+// using a debug build of the python library.
+// Todo: could also verify this at runtime by checking for
+// existence of sys.gettotalrefcount(). (is that still valid in 3.8?)
+#if BA_DEBUG_BUILD
+#if BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
+#ifndef Py_DEBUG
+#error Expected Py_DEBUG to be defined for this build.
+#endif  // Py_DEBUG
+#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID
+#endif  // BA_DEBUG_BUILD
+
 namespace ballistica {
 
 // Ignore signed bitwise stuff; python macros do it quite a bit.
@@ -838,74 +850,6 @@ auto Python::GetPyVector3f(PyObject* o) -> Vector3f {
 
 Python::Python() = default;
 
-void Python::SetupInterpreterDebugState() {
-  // Go for python opt mode 1 if we're doing optimization
-  // (ignores __debug__ and asserts but keeps docstrings intact).
-#if !BA_DEBUG_BUILD
-  Py_OptimizeFlag = 1;
-#else
-  // const char* debug_msg;
-  // #ifdef Py_DEBUG
-  //   debug_msg = "Python Debug Mode Enabled (also Py_DEBUG build).";
-  // #else
-  //   debug_msg = "Python Debug Mode Enabled.";
-  // #endif
-  // ScreenMessage(debug_msg, {1.0, 1.0, 0.0});
-  // Log(debug_msg, true, false);
-
-  // Sanity test: our XCode, Android, and Windows builds should be
-  // using a debug build of the python library.
-  // Todo: could also verify this at runtime by checking for
-  // existence of sys.gettotalrefcount(). (is that still valid in 3.8?)
-#if BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
-#ifndef Py_DEBUG
-#error Expected Py_DEBUG to be defined for this build.
-#endif  // Py_DEBUG
-#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID
-
-#endif  // !BA_DEBUG_BUILD
-}
-
-void Python::SetupPythonHome() {
-  // For platforms where we package python ourself, we need to tell
-  // it where to find its stuff.
-
-  if (g_platform->ContainsPythonDist()) {
-    if (g_buildconfig.ostype_windows()) {
-      // Windows Python looks for Lib and DLLs dirs by default, along with some
-      // others, but we want to be more explicit in limiting to these. It also
-      // seems that windows Python's paths can be incorrect if we're in strange
-      // dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build setups.
-      std::string cwd = g_platform->GetCWD();
-
-      // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
-      // it seems the interpreter defaults point to ./lib (as of 3.8.5).
-      // Normally this doesn't matter since windows is case-insensitive but
-      // under WSL it does.
-      // So we currently bundle the dir as 'lib' and use that in our path so
-      // that everything is happy (both with us and with python.exe).
-      std::string libpath = cwd + BA_DIRSLASH + "lib";
-      std::string dllpath = cwd + BA_DIRSLASH + "DLLs";
-      std::string fullpath = libpath + ";" + dllpath;
-
-      // Py_DecodeLocale() allocs memory for a wide string which works out
-      // well since Python requires the pointers we pass to stick around.
-      Py_SetPath(Py_DecodeLocale(fullpath.c_str(), nullptr));
-
-    } else {
-      // Note: tried passing a relative path here
-      // (to keep tracebacks and other paths cleaner) but it seems
-      // to get converted to absolute under the hood.
-      std::string cwd = g_platform->GetCWD();
-      std::string libpath = cwd + BA_DIRSLASH + "pylib";
-
-      // Py_DecodeLocale() allocs memory for a wide string which works out
-      // well since Python requires the pointers we pass to stick around.
-      Py_SetPath(Py_DecodeLocale(libpath.c_str(), nullptr));
-    }
-  }
-}
-
 void Python::Reset(bool do_init) {
   assert(InGameThread());
   assert(g_python);
@@ -920,20 +864,80 @@ void Python::Reset(bool do_init) {
   }
 
   if (!was_inited && do_init) {
-    // Wrangle whether we'll compile our stuff in debug vs opt mode, etc.
-    SetupInterpreterDebugState();
+    // Flip on some extra runtime debugging options in debug builds.
+    // https://docs.python.org/3.9/library/devmode.html#devmode
+    int dev_mode{g_buildconfig.debug_build()};
+
+    // Pre-config as isolated if we include our own Python and as standard
+    // otherwise.
+    PyPreConfig preconfig;
+    if (g_platform->ContainsPythonDist()) {
+      PyPreConfig_InitIsolatedConfig(&preconfig);
+    } else {
+      PyPreConfig_InitPythonConfig(&preconfig);
+    }
+    preconfig.dev_mode = dev_mode;
 
     // We want consistent utf-8 everywhere (Python used to default to
     // windows-specific file encodings, etc.)
-    // Note: we have to do this before SetupPythonHome() because it affects
-    // the Py_DecodeLocale() calls there.
-    Py_UTF8Mode = 1;
+    preconfig.utf8_mode = 1;
 
-    // Set up system paths on our embedded platforms.
-    SetupPythonHome();
+    PyStatus status = Py_PreInitialize(&preconfig);
+    BA_PRECONDITION(!PyStatus_Exception(status));
+
+    // Configure as isolated if we include our own Python and as standard
+    // otherwise.
+    PyConfig config;
+    if (g_platform->ContainsPythonDist()) {
+      PyConfig_InitIsolatedConfig(&config);
+    } else {
+      PyConfig_InitPythonConfig(&config);
+    }
+    config.dev_mode = dev_mode;
+    if (!g_buildconfig.debug_build()) {
+      config.optimization_level = 1;
+    }
+
+    // In cases where we bundle Python, set up all paths explicitly.
+    // see https://docs.python.org/3.8/
+    //     c-api/init_config.html#path-configuration
+    if (g_platform->ContainsPythonDist()) {
+      PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
+      PyConfig_SetBytesString(&config, &config.base_executable, "");
+      PyConfig_SetBytesString(&config, &config.base_prefix, "");
+      PyConfig_SetBytesString(&config, &config.exec_prefix, "");
+      PyConfig_SetBytesString(&config, &config.executable, "");
+      PyConfig_SetBytesString(&config, &config.prefix, "");
+
+      // Interesting note: it seems we can pass relative paths here but
+      // they wind up in sys.path as absolute paths (unlike entries we add
+      // to sys.path after things are up and running).
+      if (g_buildconfig.ostype_windows()) {
+        // Windows Python looks for Lib and DLLs dirs by default, along with
+        // some others, but we want to be more explicit in limiting to these. It
+        // also seems that windows Python's paths can be incorrect if we're in
+        // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
+        // setups.
+
+        // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
+        // it seems the interpreter defaults point to ./lib (as of 3.8.5).
+        // Normally this doesn't matter since windows is case-insensitive but
+        // under WSL it does.
+        // So we currently bundle the dir as 'lib' and use that in our path so
+        // that everything is happy (both with us and with python.exe).
+        PyWideStringList_Append(&config.module_search_paths,
+                                Py_DecodeLocale("lib", nullptr));
+        PyWideStringList_Append(&config.module_search_paths,
+                                Py_DecodeLocale("DLLs", nullptr));
+      } else {
+        PyWideStringList_Append(&config.module_search_paths,
+                                Py_DecodeLocale("pylib", nullptr));
+      }
+      config.module_search_paths_set = 1;
+    }
 
     // Inits our _ba module and runs Py_Initialize().
-    AppInternalPyInitialize();
+    AppInternalPyInitialize(&config);
 
     PyObject* m;
     BA_PRECONDITION(m = PyImport_AddModule("__main__"));

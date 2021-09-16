@@ -136,15 +136,15 @@ class MessageProtocol:
         # Go ahead and auto-register a few common response types
         # if the user has not done so explicitly. Use unique IDs which
         # will never change or overlap with user ids.
-        def _reg(reg_tp: Type[Response], reg_id: int) -> None:
+        def _reg_if_not(reg_tp: Type[Response], reg_id: int) -> None:
             if reg_tp in self.response_ids_by_type:
                 return
             assert self.response_types_by_id.get(reg_id) is None
             self.response_types_by_id[reg_id] = reg_tp
             self.response_ids_by_type[reg_tp] = reg_id
 
-        _reg(ErrorResponse, -1)
-        _reg(EmptyResponse, -2)
+        _reg_if_not(ErrorResponse, -1)
+        _reg_if_not(EmptyResponse, -2)
 
         # Some extra-thorough validation in debug mode.
         if __debug__:
@@ -293,7 +293,7 @@ class MessageProtocol:
                f'{importlines1}\n'
                f'\n'
                f'if TYPE_CHECKING:\n'
-               f'    from typing import Union, Any, Optional\n'
+               f'    from typing import Union, Any, Optional, Callable\n'
                f'{importlines2}'
                f'\n'
                f'\n')
@@ -447,7 +447,7 @@ class MessageProtocol:
                 f'    def __init__(\n'
                 f'        self,\n'
                 f'        obj: Any,\n'
-                f'        receiver: _TestMessageReceiver,\n'
+                f'        receiver: {ppre}{classname}MessageReceiver,\n'
                 f'    ) -> None:\n'
                 f'        assert obj is not None\n'
                 f'        self._obj = obj\n'
@@ -557,8 +557,8 @@ class MessageReceiver:
         self._handlers: Dict[Type[Message], Callable] = {}
 
     # noinspection PyProtectedMember
-    def register_handler(self, call: Callable[[Any, Message],
-                                              Response]) -> None:
+    def register_handler(
+            self, call: Callable[[Any, Message], Optional[Response]]) -> None:
         """Register a handler call.
 
         The message type handled by the call is determined by its

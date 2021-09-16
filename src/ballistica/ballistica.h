@@ -156,7 +156,7 @@ auto IsBootstrapped() -> bool;
 
 /// Internal bits.
 auto CreateAppInternal() -> AppInternal*;
-auto AppInternalPyInitialize() -> void;
+auto AppInternalPyInitialize(void* pyconfig) -> void;
 auto AppInternalPythonPostInit() -> void;
 auto AppInternalHasBlessingHash() -> bool;
 auto AppInternalPutLog(bool fatal) -> bool;

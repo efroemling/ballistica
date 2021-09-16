@@ -138,6 +138,7 @@
       <w>asyncio</w>
       <w>asynciomodule</w>
       <w>asyncore</w>
+      <w>atest</w>
       <w>atexit</w>
       <w>attrdict</w>
       <w>attrdocs</w>

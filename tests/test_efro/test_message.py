@@ -188,19 +188,15 @@ def test_protocol_creation() -> None:
     # This should fail because _TMessage1 can return _TResponse1 which
     # is not given an id here.
     with pytest.raises(ValueError):
-        _protocol = MessageProtocol(
-            message_types={0: _TMessage1},
-            response_types={0: _TResponse2},
-        )
+        _protocol = MessageProtocol(message_types={0: _TMessage1},
+                                    response_types={0: _TResponse2})
 
     # Now it should work.
-    _protocol = MessageProtocol(
-        message_types={0: _TMessage1},
-        response_types={0: _TResponse1},
-    )
+    _protocol = MessageProtocol(message_types={0: _TMessage1},
+                                response_types={0: _TResponse1})
 
 
-def test_sender_module_creation() -> None:
+def test_sender_module_embedded() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     smod = TEST_PROTOCOL.create_sender_module('Test', private=True)
 
@@ -210,7 +206,7 @@ def test_sender_module_creation() -> None:
     clipped = '\n'.join(lines[classline:])
 
     # This snippet should match what we've got embedded above;
-    # If not then we need to update our test code.
+    # If not then we need to update our embedded version.
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
@@ -222,7 +218,7 @@ def test_sender_module_creation() -> None:
                            ' See test stdout for new code.')
 
 
-def test_receiver_module_creation() -> None:
+def test_receiver_module_embedded() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     smod = TEST_PROTOCOL.create_receiver_module('Test', private=True)
 
@@ -232,7 +228,7 @@ def test_receiver_module_creation() -> None:
     clipped = '\n'.join(lines[classline:])
 
     # This snippet should match what we've got embedded above;
-    # If not then we need to update our test code.
+    # If not then we need to update our embedded version.
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
@@ -245,7 +241,7 @@ def test_receiver_module_creation() -> None:
 
 
 def test_receiver_creation() -> None:
-    """Test receiver creation."""
+    """Test setting up receivers with handlers/etc."""
 
     # This should fail due to the registered handler only specifying
     # one response message type while the message type itself
@@ -263,18 +259,21 @@ def test_receiver_creation() -> None:
                 del msg  # Unused
                 return _TResponse2(fval=1.2)
 
-    # Should fail because not all message types in the protocol are handled.
+    # Validation should  fail because not all message types in the
+    # protocol are handled.
     with pytest.raises(TypeError):
 
         class _TestClassR2:
             """Test class incorporating receive functionality."""
 
             receiver = _TestMessageReceiver(TEST_PROTOCOL)
+
+            # Checks that we've added handlers for all message types, etc.
             receiver.validate()
 
 
-def test_message_sending() -> None:
-    """Test simple message sending."""
+def test_synchronous_messaging() -> None:
+    """Test the full pipeline."""
 
     # Define a class that can send messages and one that can receive them.
     class TestClassS:
@@ -319,28 +318,29 @@ def test_message_sending() -> None:
         receiver.validate()
 
     obj_r = TestClassR()
-    obj_s = TestClassS(target=obj_r)
+    obj = TestClassS(target=obj_r)
 
-    response = obj_s.msg.send(_TMessage1(ival=0))
+    response = obj.msg.send(_TMessage1(ival=0))
     assert isinstance(response, _TResponse1)
 
-    response2 = obj_s.msg.send(_TMessage2(sval='rah'))
+    response2 = obj.msg.send(_TMessage2(sval='rah'))
     assert isinstance(response2, (_TResponse1, _TResponse2))
 
-    response3 = obj_s.msg.send(_TMessage3(sval='rah'))
+    response3 = obj.msg.send(_TMessage3(sval='rah'))
     assert response3 is None
 
+    # Make sure static typing lines up too.
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
         assert static_type_equals(response, _TResponse1)
         assert static_type_equals(response3, None)
 
     # Remote CleanErrors should come across locally as the same.
     try:
-        _response3 = obj_s.msg.send(_TMessage1(ival=1))
+        _response4 = obj.msg.send(_TMessage1(ival=1))
     except Exception as exc:
         assert isinstance(exc, CleanError)
         assert str(exc) == 'Testing Clean Error'
 
-    # Other remote errors should come across as RemoteError.
+    # Other remote errors should result in RemoteError.
     with pytest.raises(RemoteError):
-        _response4 = obj_s.msg.send(_TMessage1(ival=2))
+        _response4 = obj.msg.send(_TMessage1(ival=2))

@@ -69,8 +69,8 @@ sys.stdout = _BAConsoleRedirect(sys.stdout, _ba.print_stdout)  # type: ignore
 sys.stderr = _BAConsoleRedirect(sys.stderr, _ba.print_stderr)  # type: ignore
 
 # Let's lookup mods first (so users can do whatever they want).
-# and then our bundled scripts last (don't want to encourage dists
-# overriding proper python functionality)
+# and then our bundled scripts last (don't want bundled site-package
+# stuff overwriting system versions)
 sys.path.insert(0, _ba.env()['python_directory_user'])
 sys.path.append(_ba.env()['python_directory_app'])
 sys.path.append(_ba.env()['python_directory_app_site'])
@@ -92,6 +92,13 @@ _ba.setup_sigint()
 if sys.flags.utf8_mode != 1:
     print('ERROR: Python\'s UTF-8 mode is not set.'
           ' This will likely result in errors.')
+
+debug_build = _ba.env()['debug_build']
+
+# We expect dev_mode on in debug builds and off otherwise.
+if debug_build != sys.flags.dev_mode:
+    print(f'WARNING: Mismatch in debug_build {debug_build}'
+          f' and sys.flags.dev_mode {sys.flags.dev_mode}')
 
 # FIXME: I think we should init Python in the main thread, which should
 #  also avoid these issues. (and also might help us play better with
@@ -116,7 +123,7 @@ if sys.flags.utf8_mode != 1:
 # to take more drastic measures like switching from std::threads
 # to pthreads.
 
-if _ba.env()['debug_build']:
+if debug_build:
 
     def _thread_func() -> None:
         # pylint: disable=unused-import
