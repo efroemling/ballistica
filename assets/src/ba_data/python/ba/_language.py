@@ -37,7 +37,7 @@ class LanguageSubsystem:
         # We don't yet support full unicode display on windows or linux :-(.
         if (language in {
                 'Chinese', 'ChineseTraditional', 'Persian', 'Korean', 'Arabic',
-                'Hindi', 'Vietnamese'
+                'Hindi', 'Vietnamese', 'Thai'
         } and not _ba.can_display_full_unicode()):
             return False
         return True
@@ -79,6 +79,7 @@ class LanguageSubsystem:
             'ar': 'Arabic',
             'zh': 'Chinese',
             'tr': 'Turkish',
+            'th': 'Thai',
             'id': 'Indonesian',
             'sr': 'Serbian',
             'uk': 'Ukrainian',

@@ -97,7 +97,7 @@ def get_binding_values() -> Tuple[Any, ...]:
         ba.OutOfBoundsMessage,  # kOutOfBoundsMessageClass
         ba.PickUpMessage,  # kPickUpMessageClass
         ba.DropMessage,  # kDropMessageClass
-        ba.app.on_app_launch,  # kOnAppLaunchCall
+        _hooks.finish_bootstrapping,  # kFinishBootstrappingCall
         _input.get_device_value,  # kGetDeviceValueCall
         _input.get_last_player_name_from_input_device,  # kGetLastPlayerNameFromInputDeviceCall
         copy.deepcopy,  # kDeepCopyCall

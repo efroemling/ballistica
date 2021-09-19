@@ -315,7 +315,7 @@ void Game::RunAppLaunchCommands() {
   {
     // Run this in the UI context.
     ScopedSetContext cp(GetUIContext());
-    g_python->obj(Python::ObjID::kOnAppLaunchCall).Call();
+    g_python->obj(Python::ObjID::kFinishBootstrappingCall).Call();
   }
   ran_app_launch_commands_ = true;
 

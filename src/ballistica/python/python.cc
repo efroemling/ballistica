@@ -939,12 +939,12 @@ void Python::Reset(bool do_init) {
     // Inits our _ba module and runs Py_Initialize().
     AppInternalPyInitialize(&config);
 
+    // Grab __main__ in case we need to use it later.
     PyObject* m;
     BA_PRECONDITION(m = PyImport_AddModule("__main__"));
     BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
 
     const char* ver = Py_GetVersion();
-
     if (strncmp(ver, "3.8", 3) != 0) {
       throw Exception("We require Python 3.8.x; instead found "
                       + std::string(ver));

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from enum import Enum
 import random
-import asyncio
 from typing import TYPE_CHECKING
 
 import _ba
@@ -293,8 +292,6 @@ class App:
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
-
-        self._setup_asyncio()
 
         cfg = self.config
 
@@ -590,37 +587,3 @@ class App:
             print('HTTPS TEST SUCCESS', len(val))
         except Exception as exc:
             print('HTTPS TEST FAIL:', exc)
-
-    def _setup_asyncio(self) -> None:
-        # from ba._generated.enums import TimeType
-
-        if bool(True):
-            return
-
-        try:
-            asyncio.get_running_loop()
-            print('Found running asyncio loop; unexpected.')
-        except RuntimeError:
-            pass
-        loop = asyncio.new_event_loop()
-        print('MADE', loop)
-        asyncio.set_event_loop(loop)
-        print('NOW LOOP IS', loop)
-        print('policy is', asyncio.get_event_loop_policy())
-        print('RUNNING IS NOW', asyncio.get_running_loop())
-
-        # def run_cycle() -> None:
-        #     loop.call_soon(loop.stop)
-        #     loop.run_forever()
-
-        # self._asyncio_timer = _ba.Timer(1.0 / 5.0,
-        #                                 run_cycle,
-        #                                 timetype=TimeType.REAL,
-        #                                 repeat=True)
-        async def _atest() -> None:
-            print('TASK STARTING')
-            await asyncio.sleep(2.0)
-            print('TASK ENDING')
-
-        asyncio.run(_atest())
-        #asyncio.create_task(_atest())

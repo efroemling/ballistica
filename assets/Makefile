@@ -145,6 +145,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_appmode.py \
   build/ba_data/python/ba/_apputils.py \
   build/ba_data/python/ba/_assetmanager.py \
+  build/ba_data/python/ba/_asyncio.py \
   build/ba_data/python/ba/_benchmark.py \
   build/ba_data/python/ba/_campaign.py \
   build/ba_data/python/ba/_collision.py \
@@ -390,6 +391,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_appmode.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_apputils.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_asyncio.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_collision.cpython-38.opt-1.pyc \
@@ -4757,6 +4759,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/slovak.json \
   build/ba_data/data/languages/spanish.json \
   build/ba_data/data/languages/swedish.json \
+  build/ba_data/data/languages/thai.json \
   build/ba_data/data/languages/turkish.json \
   build/ba_data/data/languages/ukrainian.json \
   build/ba_data/data/languages/venetian.json \

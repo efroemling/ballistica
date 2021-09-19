@@ -280,7 +280,7 @@ class Python {
     kCallClass,
     kGarbageCollectSessionEndCall,
     kConfig,
-    kOnAppLaunchCall,
+    kFinishBootstrappingCall,
     kClientInfoQueryResponseCall,
     kResetToMainMenuCall,
     kSetConfigFullscreenOnCall,

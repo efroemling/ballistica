@@ -22,6 +22,19 @@ if TYPE_CHECKING:
     import ba
 
 
+def finish_bootstrapping() -> None:
+    """Do final bootstrapping related bits."""
+    from ba._asyncio import setup_asyncio
+    assert _ba.in_game_thread()
+
+    # Kick off our asyncio event handling, allowing us to use coroutines
+    # in our game thread alongside our internal event handling.
+    setup_asyncio()
+
+    # Ok, bootstrapping is done; time to get the show started.
+    _ba.app.on_app_launch()
+
+
 def reset_to_main_menu() -> None:
     """Reset the game to the main menu gracefully."""
     _ba.app.return_to_main_menu_session_gracefully()

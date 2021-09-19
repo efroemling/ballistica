@@ -201,7 +201,9 @@ def get_master_asset_src_dir() -> None:
 
         # Also compare repo name to split version of itself to
         # see if we're outside of core (filtering will cause mismatch if so).
+        # pylint: disable=useless-suppression
         # pylint: disable=simplifiable-condition
+        # pylint: disable=condition-evals-to-constant
         if ('origin/master' in output.splitlines()[0]
                 and 'ballistica' + 'core' == 'ballisticacore'):
 
