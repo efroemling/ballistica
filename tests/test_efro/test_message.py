@@ -123,6 +123,11 @@ class _BoundTestMessageSender:
         """Send a message asynchronously."""
         return await self._sender.send_async(self._obj, message)
 
+    @property
+    def protocol(self) -> MessageProtocol:
+        """Protocol associated with this sender."""
+        return self._sender.protocol
+
 
 # SEND_CODE_TEST_END
 # RCVS_CODE_TEST_BEGIN
@@ -182,6 +187,11 @@ class _BoundTestSyncMessageReceiver:
     def handle_raw_message(self, message: str) -> str:
         """Synchronously handle a raw incoming message."""
         return self._receiver.handle_raw_message(self._obj, message)
+
+    @property
+    def protocol(self) -> MessageProtocol:
+        """Protocol associated with this receiver."""
+        return self._receiver.protocol
 
 
 # RCVS_CODE_TEST_END
@@ -243,6 +253,11 @@ class _BoundTestAsyncMessageReceiver:
         """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
             self._obj, message)
+
+    @property
+    def protocol(self) -> MessageProtocol:
+        """Protocol associated with this receiver."""
+        return self._receiver.protocol
 
 
 # RCVA_CODE_TEST_END
