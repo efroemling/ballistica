@@ -180,13 +180,8 @@ class _BoundTestSyncMessageReceiver:
         self._receiver = receiver
 
     def handle_raw_message(self, message: bytes) -> bytes:
-        """Handle a raw incoming synchronous message."""
+        """Synchronously handle a raw incoming message."""
         return self._receiver.handle_raw_message(self._obj, message)
-
-    async def handle_raw_message_async(self, message: bytes) -> bytes:
-        """Handle a raw incoming asynchronous message."""
-        return await self._receiver.handle_raw_message_async(
-            self._obj, message)
 
 
 # RCVS_CODE_TEST_END
@@ -244,12 +239,8 @@ class _BoundTestAsyncMessageReceiver:
         self._obj = obj
         self._receiver = receiver
 
-    def handle_raw_message(self, message: bytes) -> bytes:
-        """Handle a raw incoming synchronous message."""
-        return self._receiver.handle_raw_message(self._obj, message)
-
-    async def handle_raw_message_async(self, message: bytes) -> bytes:
-        """Handle a raw incoming asynchronous message."""
+    async def handle_raw_message(self, message: bytes) -> bytes:
+        """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
             self._obj, message)
 
@@ -419,7 +410,7 @@ def test_full_pipeline() -> None:
             # (we can do sync or async receivers)
             if isinstance(self._target, TestClassRSync):
                 return self._target.receiver.handle_raw_message(data)
-            return await self._target.receiver.handle_raw_message_async(data)
+            return await self._target.receiver.handle_raw_message(data)
 
     class TestClassRSync:
         """Test class incorporating synchronous receive functionality."""

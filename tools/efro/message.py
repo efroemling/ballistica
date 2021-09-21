@@ -279,8 +279,10 @@ class MessageProtocol:
 
         if part == 'sender':
             importlines1 = 'from efro.message import MessageSender'
+            tpimportex = ''
         else:
             importlines1 = 'from efro.message import MessageReceiver'
+            tpimportex = ', Awaitable'
 
         out = ('# Released under the MIT License. See LICENSE for details.\n'
                f'#\n'
@@ -293,7 +295,8 @@ class MessageProtocol:
                f'{importlines1}\n'
                f'\n'
                f'if TYPE_CHECKING:\n'
-               f'    from typing import Union, Any, Optional, Callable\n'
+               f'    from typing import Union, Any, Optional, Callable'
+               f'{tpimportex}\n'
                f'{importlines2}'
                f'\n'
                f'\n')
@@ -480,19 +483,23 @@ class MessageProtocol:
                 f'    ) -> None:\n'
                 f'        assert obj is not None\n'
                 f'        self._obj = obj\n'
-                f'        self._receiver = receiver\n'
-                f'\n'
-                f'    def handle_raw_message(self, message: bytes) -> bytes:\n'
-                f'        """Handle a raw incoming synchronous message."""\n'
-                f'        return self._receiver.handle_raw_message'
-                f'(self._obj, message)\n'
-                f'\n'
-                f'    async def handle_raw_message_async(self, message: bytes)'
-                f' -> bytes:\n'
-                f'        """Handle a raw incoming asynchronous message."""\n'
-                f'        return await'
-                f' self._receiver.handle_raw_message_async(\n'
-                f'            self._obj, message)\n')
+                f'        self._receiver = receiver\n')
+        if is_async:
+            out += (
+                '\n'
+                '    async def handle_raw_message(self, message: bytes)'
+                ' -> bytes:\n'
+                '        """Asynchronously handle a raw incoming message."""\n'
+                '        return await'
+                ' self._receiver.handle_raw_message_async(\n'
+                '            self._obj, message)\n')
+        else:
+            out += (
+                '\n'
+                '    def handle_raw_message(self, message: bytes) -> bytes:\n'
+                '        """Synchronously handle a raw incoming message."""\n'
+                '        return self._receiver.handle_raw_message'
+                '(self._obj, message)\n')
 
         return out
 
@@ -744,6 +751,7 @@ class MessageReceiver:
 
     def handle_raw_message(self, bound_obj: Any, msg: bytes) -> bytes:
         """Decode, handle, and return an encoded response for a message."""
+        assert not self.is_async, "can't call sync handler on async receiver"
         try:
             msg_decoded, msgtype = self._decode_incoming_message(msg)
             handler = self._handlers.get(msgtype)
@@ -761,6 +769,7 @@ class MessageReceiver:
 
         The return value is the raw response to the message.
         """
+        assert self.is_async, "can't call async handler on sync receiver"
         try:
             msg_decoded, msgtype = self._decode_incoming_message(msg)
             handler = self._handlers.get(msgtype)
