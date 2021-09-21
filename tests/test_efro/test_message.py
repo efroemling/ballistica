@@ -15,7 +15,8 @@ from efrotools.statictest import static_type_equals
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
-                          MessageReceiver)
+                          BoundMessageSender, MessageReceiver,
+                          BoundMessageReceiver)
 
 if TYPE_CHECKING:
     from typing import List, Type, Any, Callable, Union, Optional, Awaitable
@@ -83,13 +84,8 @@ class _TestMessageSender(MessageSender):
         return _BoundTestMessageSender(obj, self)
 
 
-class _BoundTestMessageSender:
+class _BoundTestMessageSender(BoundMessageSender):
     """Protocol-specific bound sender."""
-
-    def __init__(self, obj: Any, sender: _TestMessageSender) -> None:
-        assert obj is not None
-        self._obj = obj
-        self._sender = sender
 
     @overload
     def send(self, message: _TMsg1) -> _TResp1:
@@ -122,11 +118,6 @@ class _BoundTestMessageSender:
     async def send_async(self, message: Message) -> Optional[Response]:
         """Send a message asynchronously."""
         return await self._sender.send_async(self._obj, message)
-
-    @property
-    def protocol(self) -> MessageProtocol:
-        """Protocol associated with this sender."""
-        return self._sender.protocol
 
 
 # SEND_CODE_TEST_END
@@ -172,26 +163,12 @@ class _TestSyncMessageReceiver(MessageReceiver):
         return call
 
 
-class _BoundTestSyncMessageReceiver:
+class _BoundTestSyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
-
-    def __init__(
-        self,
-        obj: Any,
-        receiver: _TestSyncMessageReceiver,
-    ) -> None:
-        assert obj is not None
-        self._obj = obj
-        self._receiver = receiver
 
     def handle_raw_message(self, message: str) -> str:
         """Synchronously handle a raw incoming message."""
         return self._receiver.handle_raw_message(self._obj, message)
-
-    @property
-    def protocol(self) -> MessageProtocol:
-        """Protocol associated with this receiver."""
-        return self._receiver.protocol
 
 
 # RCVS_CODE_TEST_END
@@ -237,27 +214,13 @@ class _TestAsyncMessageReceiver(MessageReceiver):
         return call
 
 
-class _BoundTestAsyncMessageReceiver:
+class _BoundTestAsyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
-
-    def __init__(
-        self,
-        obj: Any,
-        receiver: _TestAsyncMessageReceiver,
-    ) -> None:
-        assert obj is not None
-        self._obj = obj
-        self._receiver = receiver
 
     async def handle_raw_message(self, message: str) -> str:
         """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
             self._obj, message)
-
-    @property
-    def protocol(self) -> MessageProtocol:
-        """Protocol associated with this receiver."""
-        return self._receiver.protocol
 
 
 # RCVA_CODE_TEST_END
