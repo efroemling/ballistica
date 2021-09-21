@@ -179,7 +179,7 @@ class _BoundTestSyncMessageReceiver:
         self._obj = obj
         self._receiver = receiver
 
-    def handle_raw_message(self, message: bytes) -> bytes:
+    def handle_raw_message(self, message: str) -> str:
         """Synchronously handle a raw incoming message."""
         return self._receiver.handle_raw_message(self._obj, message)
 
@@ -239,7 +239,7 @@ class _BoundTestAsyncMessageReceiver:
         self._obj = obj
         self._receiver = receiver
 
-    async def handle_raw_message(self, message: bytes) -> bytes:
+    async def handle_raw_message(self, message: str) -> str:
         """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
             self._obj, message)
@@ -396,16 +396,16 @@ def test_full_pipeline() -> None:
             self._target = target
 
         @msg.send_method
-        def _send_raw_message(self, data: bytes) -> bytes:
-            """Handle synchronous sending of raw message data."""
+        def _send_raw_message(self, data: str) -> str:
+            """Handle synchronous sending of raw json message data."""
             # Just talk directly to the receiver for this example.
             # (currently only support synchronous receivers)
             assert isinstance(self._target, TestClassRSync)
             return self._target.receiver.handle_raw_message(data)
 
         @msg.send_async_method
-        async def _send_raw_message_async(self, data: bytes) -> bytes:
-            """Handle asynchronous sending of raw message data."""
+        async def _send_raw_message_async(self, data: str) -> str:
+            """Handle asynchronous sending of raw json message data."""
             # Just talk directly to the receiver for this example.
             # (we can do sync or async receivers)
             if isinstance(self._target, TestClassRSync):
