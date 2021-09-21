@@ -69,6 +69,7 @@
       <w>availmins</w>
       <w>avel</w>
       <w>avels</w>
+      <w>awaitable</w>
       <w>axismotion</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
@@ -155,10 +156,12 @@
       <w>cancelbtn</w>
       <w>capitan</w>
       <w>cargs</w>
+      <w>cbgn</w>
       <w>cbtnoffs</w>
       <w>ccdd</w>
       <w>ccontext</w>
       <w>ccylinder</w>
+      <w>cend</w>
       <w>centiseconds</w>
       <w>cfgdir</w>
       <w>cfgpath</w>
@@ -860,6 +863,8 @@
       <w>rasterizer</w>
       <w>rawkey</w>
       <w>rcade</w>
+      <w>rcva</w>
+      <w>rcvs</w>
       <w>reaaaly</w>
       <w>readset</w>
       <w>realloc</w>
@@ -922,6 +927,7 @@
       <w>selwidget</w>
       <w>selwidgets</w>
       <w>sendable</w>
+      <w>sendmethod</w>
       <w>seqlen</w>
       <w>seqtype</w>
       <w>seqtypestr</w>

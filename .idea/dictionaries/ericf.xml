@@ -159,6 +159,7 @@
       <w>availmins</w>
       <w>availplug</w>
       <w>aval</w>
+      <w>awaitable</w>
       <w>axismotion</w>
       <w>bacfg</w>
       <w>backgrounded</w>
@@ -303,6 +304,7 @@
       <w>capturetheflag</w>
       <w>carentity</w>
       <w>cashregistersound</w>
+      <w>cbgn</w>
       <w>cbits</w>
       <w>cbot</w>
       <w>cbtn</w>
@@ -313,6 +315,7 @@
       <w>cdrk</w>
       <w>cdull</w>
       <w>cdval</w>
+      <w>cend</w>
       <w>centeuro</w>
       <w>centiseconds</w>
       <w>cfconfig</w>
@@ -1869,6 +1872,8 @@
       <w>rawpaths</w>
       <w>rcade</w>
       <w>rcfile</w>
+      <w>rcva</w>
+      <w>rcvs</w>
       <w>rdict</w>
       <w>rdir</w>
       <w>readline</w>
@@ -1997,6 +2002,7 @@
       <w>selwidget</w>
       <w>selwidgets</w>
       <w>sendable</w>
+      <w>sendmethod</w>
       <w>senze</w>
       <w>seqtype</w>
       <w>seqtypestr</w>
