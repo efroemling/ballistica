@@ -156,20 +156,17 @@ class CoopSession(Session):
         from ba._general import WeakCall
         super().on_player_leave(sessionplayer)
 
-        if _ba.app.server is not None:
-            # If we're in server mode, end game and show results.
-            _ba.timer(2.0, WeakCall(self._end_game_if_empty))
-        else:
-            # Otherwise, if all our players leave
-            # we wanna quit out of the session.
-            _ba.timer(2.0, WeakCall(self._end_session_if_empty))
+        _ba.timer(2.0, WeakCall(self._check_end_game))
 
-    def _end_game_if_empty(self) -> None:
+    def _check_end_game(self) -> None:
+        if not _ba.app.server:
+            self._end_session_if_empty()
+
         activity = self.getactivity()
         if activity is None:
             return  # Probably everything is already broken, why do something?
 
-        if activity.players:
+        if [player for player in activity.players if player.is_alive()]:
             return
 
         with _ba.Context(activity):
