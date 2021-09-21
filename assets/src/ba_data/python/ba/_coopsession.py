@@ -158,13 +158,13 @@ class CoopSession(Session):
 
         if _ba.app.server is not None:
             # If we're in server mode, end game and show results.
-            _ba.timer(2.0, WeakCall(self._end_activity_if_empty))
+            _ba.timer(2.0, WeakCall(self._end_game_if_empty))
         else:
             # Otherwise, if all our players leave
             # we wanna quit out of the session.
             _ba.timer(2.0, WeakCall(self._end_session_if_empty))
 
-    def _end_activity_if_empty(self) -> None:
+    def _end_game_if_empty(self) -> None:
         activity = self.getactivity()
         if activity is None:
             return  # Probably everything is already broken, why do something?
@@ -175,9 +175,8 @@ class CoopSession(Session):
         with _ba.Context(activity):
             from ba._gameactivity import GameActivity
 
-            # FIXME: rewrite this, doesn't cover all cases
-            assert isinstance(activity, GameActivity)
-            activity.end_game()
+            if isinstance(activity, GameActivity):
+                activity.end_game()
 
     def _end_session_if_empty(self) -> None:
         activity = self.getactivity()
