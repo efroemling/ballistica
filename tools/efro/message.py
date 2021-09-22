@@ -64,7 +64,7 @@ class ErrorResponse(Response):
     instead results in a local exception being raised.
     """
     error_message: Annotated[str, IOAttrs('m')]
-    error_type: Annotated[ErrorType, IOAttrs('t')]
+    error_type: Annotated[ErrorType, IOAttrs('e')]
 
 
 @ioprepped
@@ -580,6 +580,22 @@ class BoundMessageSender:
     def protocol(self) -> MessageProtocol:
         """Protocol associated with this sender."""
         return self._sender.protocol
+
+    def send_untyped(self, message: Message) -> Optional[Response]:
+        """Send a message synchronously.
+
+        Whenever possible, use the send() call provided by generated
+        subclasses instead of this; it will provide better type safety.
+        """
+        return self._sender.send(self._obj, message)
+
+    async def send_async_untyped(self, message: Message) -> Optional[Response]:
+        """Send a message asynchronously.
+
+        Whenever possible, use the send_async() call provided by generated
+        subclasses instead of this; it will provide better type safety.
+        """
+        return await self._sender.send_async(self._obj, message)
 
 
 class MessageReceiver:
