@@ -317,6 +317,8 @@ class MessageProtocol:
     def do_create_sender_module(self,
                                 basename: str,
                                 protocol_create_code: str,
+                                enable_sync_sends: bool,
+                                enable_async_sends: bool,
                                 private: bool = False) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
@@ -361,6 +363,10 @@ class MessageProtocol:
 
         if len(msgtypes) > 1:
             for async_pass in False, True:
+                if async_pass and not enable_async_sends:
+                    continue
+                if not async_pass and not enable_sync_sends:
+                    continue
                 pfx = 'async ' if async_pass else ''
                 sfx = '_async' if async_pass else ''
                 awt = 'await ' if async_pass else ''
@@ -823,6 +829,8 @@ class BoundMessageReceiver:
 
 def create_sender_module(basename: str,
                          protocol_create_code: str,
+                         enable_sync_sends: bool,
+                         enable_async_sends: bool,
                          private: bool = False) -> str:
     """Create a Python module defining a MessageSender subclass.
 
@@ -853,6 +861,8 @@ def create_sender_module(basename: str,
     return protocol.do_create_sender_module(
         basename=basename,
         protocol_create_code=protocol_create_code,
+        enable_sync_sends=enable_sync_sends,
+        enable_async_sends=enable_async_sends,
         private=private)
 
 
