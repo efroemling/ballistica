@@ -73,6 +73,16 @@ class EmptyResponse(Response):
     """The response equivalent of None."""
 
 
+# TODO: could allow handlers to deal in raw values for these
+# types similar to how we allow None in place of EmptyResponse.
+@ioprepped
+@dataclass
+class BoolResponse(Response):
+    """A simple bool value response."""
+
+    value: Annotated[bool, IOAttrs('v')]
+
+
 class MessageProtocol:
     """Wrangles a set of message types, formats, and response types.
     Both endpoints must be using a compatible Protocol for communication
@@ -144,6 +154,7 @@ class MessageProtocol:
 
         _reg_if_not(ErrorResponse, -1)
         _reg_if_not(EmptyResponse, -2)
+        _reg_if_not(BoolResponse, -3)
 
         # Some extra-thorough validation in debug mode.
         if __debug__:
@@ -303,30 +314,23 @@ class MessageProtocol:
                f'\n')
         return out
 
-    def create_sender_module(self,
-                             basename: str,
-                             private: bool = False) -> str:
-        """"Create a Python module defining a MessageSender subclass.
-
-        This class is primarily for type checking and will contain overrides
-        for the varieties of send calls for message/response types defined
-        in the protocol.
-
-        Class names are based on basename; a basename 'FooSender' will
-        result in classes FooSender and BoundFooSender.
-
-        If 'private' is True, class-names will be prefixed with an '_'.
-
-        Note that line lengths are not clipped, so output may need to be
-        run through a formatter to prevent lint warnings about excessive
-        line lengths.
-        """
+    def do_create_sender_module(self,
+                                basename: str,
+                                protocol_create_code: str,
+                                private: bool = False) -> str:
+        """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
+        import textwrap
 
         ppre = '_' if private else ''
         out = self._get_module_header('sender')
+        ccind = textwrap.indent(protocol_create_code, '        ')
         out += (f'class {ppre}{basename}(MessageSender):\n'
                 f'    """Protocol-specific sender."""\n'
+                f'\n'
+                f'    def __init__(self) -> None:\n'
+                f'{ccind}\n'
+                f'        super().__init__(protocol)\n'
                 f'\n'
                 f'    def __get__(self,\n'
                 f'                obj: Any,\n'
@@ -384,36 +388,27 @@ class MessageProtocol:
 
         return out
 
-    def create_receiver_module(self,
-                               basename: str,
-                               is_async: bool,
-                               private: bool = False) -> str:
-        """"Create a Python module defining a MessageReceiver subclass.
-
-        This class is primarily for type checking and will contain overrides
-        for the register method for message/response types defined in
-        the protocol.
-
-        Class names are based on basename; a basename 'FooReceiver' will
-        result in FooReceiver and BoundFooReceiver.
-
-        If 'is_async' is True, handle_raw_message() will be an async method
-        and the @handler decorator will expect async methods.
-
-        If 'private' is True, class-names will be prefixed with an '_'.
-
-        Note that line lengths are not clipped, so output may need to be
-        run through a formatter to prevent lint warnings about excessive
-        line lengths.
-        """
+    def do_create_receiver_module(self,
+                                  basename: str,
+                                  protocol_create_code: str,
+                                  is_async: bool,
+                                  private: bool = False) -> str:
+        """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
+        import textwrap
+
         desc = 'asynchronous' if is_async else 'synchronous'
         ppre = '_' if private else ''
         out = self._get_module_header('receiver')
+        ccind = textwrap.indent(protocol_create_code, '        ')
         out += (f'class {ppre}{basename}(MessageReceiver):\n'
                 f'    """Protocol-specific {desc} receiver."""\n'
                 f'\n'
                 f'    is_async = {is_async}\n'
+                f'\n'
+                f'    def __init__(self) -> None:\n'
+                f'{ccind}\n'
+                f'        super().__init__(protocol)\n'
                 f'\n'
                 f'    def __get__(\n'
                 f'        self,\n'
@@ -773,8 +768,8 @@ class MessageReceiver:
             handler = self._handlers.get(msgtype)
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
-            response = handler(bound_obj, msg_decoded)
-            return self._encode_response(response, msgtype)
+            result = handler(bound_obj, msg_decoded)
+            return self._encode_response(result, msgtype)
 
         except Exception as exc:
             return self.raw_response_for_error(exc)
@@ -790,8 +785,8 @@ class MessageReceiver:
             handler = self._handlers.get(msgtype)
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
-            response = await handler(bound_obj, msg_decoded)
-            return self._encode_response(response, msgtype)
+            result = await handler(bound_obj, msg_decoded)
+            return self._encode_response(result, msgtype)
 
         except Exception as exc:
             return self.raw_response_for_error(exc)
@@ -824,3 +819,84 @@ class BoundMessageReceiver:
         related error.
         """
         return self._receiver.raw_response_for_error(exc)
+
+
+def create_sender_module(basename: str,
+                         protocol_create_code: str,
+                         private: bool = False) -> str:
+    """Create a Python module defining a MessageSender subclass.
+
+    This class is primarily for type checking and will contain overrides
+    for the varieties of send calls for message/response types defined
+    in the protocol.
+
+    Code passed for 'protocol_create_code' should import necessary
+    modules and assign an instance of the Protocol to a 'protocol'
+    variable.
+
+    Class names are based on basename; a basename 'FooSender' will
+    result in classes FooSender and BoundFooSender.
+
+    If 'private' is True, class-names will be prefixed with an '_'.
+
+    Note that line lengths are not clipped, so output may need to be
+    run through a formatter to prevent lint warnings about excessive
+    line lengths.
+    """
+
+    # Exec the passed code to get a protocol which we then use to
+    # generate module code. The user could simply call
+    # MessageProtocol.do_create_sender_module() directly, but this allows
+    # us to verify that the create code works and yields the protocol used
+    # to generate the code.
+    protocol = _protocol_from_code(protocol_create_code)
+    return protocol.do_create_sender_module(
+        basename=basename,
+        protocol_create_code=protocol_create_code,
+        private=private)
+
+
+def create_receiver_module(basename: str,
+                           protocol_create_code: str,
+                           is_async: bool,
+                           private: bool = False) -> str:
+    """"Create a Python module defining a MessageReceiver subclass.
+
+    This class is primarily for type checking and will contain overrides
+    for the register method for message/response types defined in
+    the protocol.
+
+    Class names are based on basename; a basename 'FooReceiver' will
+    result in FooReceiver and BoundFooReceiver.
+
+    If 'is_async' is True, handle_raw_message() will be an async method
+    and the @handler decorator will expect async methods.
+
+    If 'private' is True, class-names will be prefixed with an '_'.
+
+    Note that line lengths are not clipped, so output may need to be
+    run through a formatter to prevent lint warnings about excessive
+    line lengths.
+    """
+    # Exec the passed code to get a protocol which we then use to
+    # generate module code. The user could simply call
+    # MessageProtocol.do_create_sender_module() directly, but this allows
+    # us to verify that the create code works and yields the protocol used
+    # to generate the code.
+    protocol = _protocol_from_code(protocol_create_code)
+    return protocol.do_create_receiver_module(
+        basename=basename,
+        protocol_create_code=protocol_create_code,
+        is_async=is_async,
+        private=private)
+
+
+def _protocol_from_code(protocol_create_code: str) -> MessageProtocol:
+    env: Dict = {}
+    exec(protocol_create_code, env)  # pylint: disable=exec-used
+    protocol = env.get('protocol')
+    if not isinstance(protocol, MessageProtocol):
+        raise RuntimeError(
+            f'protocol_create_code yielded'
+            f' a {type(protocol)}; expected a MessageProtocol instance.')
+    return protocol

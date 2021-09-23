@@ -78,6 +78,10 @@ class _TResp3(Message):
 class _TestMessageSender(MessageSender):
     """Protocol-specific sender."""
 
+    def __init__(self) -> None:
+        protocol = TEST_PROTOCOL
+        super().__init__(protocol)
+
     def __get__(self,
                 obj: Any,
                 type_in: Any = None) -> _BoundTestMessageSender:
@@ -129,6 +133,10 @@ class _TestSyncMessageReceiver(MessageReceiver):
 
     is_async = False
 
+    def __init__(self) -> None:
+        protocol = TEST_PROTOCOL
+        super().__init__(protocol)
+
     def __get__(
         self,
         obj: Any,
@@ -179,6 +187,10 @@ class _TestAsyncMessageReceiver(MessageReceiver):
     """Protocol-specific asynchronous receiver."""
 
     is_async = True
+
+    def __init__(self) -> None:
+        protocol = TEST_PROTOCOL
+        super().__init__(protocol)
 
     def __get__(
         self,
@@ -256,8 +268,15 @@ def test_protocol_creation() -> None:
 
 def test_sender_module_embedded() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
-    smod = TEST_PROTOCOL.create_sender_module('TestMessageSender',
-                                              private=True)
+    # NOTE: Ideally we should be testing efro.message.create_sender_module()
+    # here, but it requires us to pass code which imports this test module
+    # to get at the protocol, and that currently fails in our static mypy
+    # tests.
+    smod = TEST_PROTOCOL.do_create_sender_module(
+        'TestMessageSender',
+        'protocol = TEST_PROTOCOL',
+        private=True,
+    )
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
@@ -279,9 +298,16 @@ def test_sender_module_embedded() -> None:
 
 def test_receiver_module_sync_embedded() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
-    smod = TEST_PROTOCOL.create_receiver_module('TestSyncMessageReceiver',
-                                                is_async=False,
-                                                private=True)
+    # NOTE: Ideally we should be testing efro.message.create_receiver_module()
+    # here, but it requires us to pass code which imports this test module
+    # to get at the protocol, and that currently fails in our static mypy
+    # tests.
+    smod = TEST_PROTOCOL.do_create_receiver_module(
+        'TestSyncMessageReceiver',
+        'protocol = TEST_PROTOCOL',
+        is_async=False,
+        private=True,
+    )
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
@@ -304,9 +330,16 @@ def test_receiver_module_sync_embedded() -> None:
 
 def test_receiver_module_async_embedded() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
-    smod = TEST_PROTOCOL.create_receiver_module('TestAsyncMessageReceiver',
-                                                is_async=True,
-                                                private=True)
+    # NOTE: Ideally we should be testing efro.message.create_receiver_module()
+    # here, but it requires us to pass code which imports this test module
+    # to get at the protocol, and that currently fails in our static mypy
+    # tests.
+    smod = TEST_PROTOCOL.do_create_receiver_module(
+        'TestAsyncMessageReceiver',
+        'protocol = TEST_PROTOCOL',
+        is_async=True,
+        private=True,
+    )
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
@@ -339,7 +372,7 @@ def test_receiver_creation() -> None:
         class _TestClassR:
             """Test class incorporating receive functionality."""
 
-            receiver = _TestSyncMessageReceiver(TEST_PROTOCOL)
+            receiver = _TestSyncMessageReceiver()
 
             @receiver.handler
             def handle_test_message_2(self, msg: _TMsg2) -> _TResp2:
@@ -354,7 +387,7 @@ def test_receiver_creation() -> None:
         class _TestClassR2:
             """Test class incorporating receive functionality."""
 
-            receiver = _TestSyncMessageReceiver(TEST_PROTOCOL)
+            receiver = _TestSyncMessageReceiver()
 
             # Checks that we've added handlers for all message types, etc.
             receiver.validate()
@@ -367,7 +400,7 @@ def test_full_pipeline() -> None:
     class TestClassS:
         """Test class incorporating send functionality."""
 
-        msg = _TestMessageSender(TEST_PROTOCOL)
+        msg = _TestMessageSender()
 
         def __init__(self, target: Union[TestClassRSync,
                                          TestClassRAsync]) -> None:
@@ -393,7 +426,7 @@ def test_full_pipeline() -> None:
     class TestClassRSync:
         """Test class incorporating synchronous receive functionality."""
 
-        receiver = _TestSyncMessageReceiver(TEST_PROTOCOL)
+        receiver = _TestSyncMessageReceiver()
 
         @receiver.handler
         def handle_test_message_1(self, msg: _TMsg1) -> _TResp1:
@@ -421,7 +454,7 @@ def test_full_pipeline() -> None:
     class TestClassRAsync:
         """Test class incorporating asynchronous receive functionality."""
 
-        receiver = _TestAsyncMessageReceiver(TEST_PROTOCOL)
+        receiver = _TestAsyncMessageReceiver()
 
         @receiver.handler
         async def handle_test_message_1(self, msg: _TMsg1) -> _TResp1:
