@@ -350,18 +350,12 @@ class MessageProtocol:
             t for t in self.message_ids_by_type if issubclass(t, Message)
         ]
 
-        # Ew; @overload requires at least 2 different signatures so
-        # we need to simply write a single function if we have < 2.
-        if len(msgtypes) == 1:
-            raise RuntimeError('FIXME: currently we require at least 2'
-                               ' registered message types; found 1.')
-
         def _filt_tp_name(rtype: Type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
             # in the type annotation.
             return 'None' if rtype is EmptyResponse else rtype.__name__
 
-        if len(msgtypes) > 1:
+        if msgtypes:
             for async_pass in False, True:
                 if async_pass and not enable_async_sends:
                     continue
@@ -371,7 +365,11 @@ class MessageProtocol:
                 sfx = '_async' if async_pass else ''
                 awt = 'await ' if async_pass else ''
                 how = 'asynchronously' if async_pass else 'synchronously'
-                for msgtype in msgtypes:
+
+                if len(msgtypes) == 1:
+                    # Special case: with a single message types we don't
+                    # use overloads.
+                    msgtype = msgtypes[0]
                     msgtypevar = msgtype.__name__
                     rtypes = msgtype.get_response_types()
                     if len(rtypes) > 1:
@@ -380,17 +378,36 @@ class MessageProtocol:
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     out += (f'\n'
-                            f'    @overload\n'
                             f'    {pfx}def send{sfx}(self,'
                             f' message: {msgtypevar})'
                             f' -> {rtypevar}:\n'
-                            f'        ...\n')
-                out += (f'\n'
-                        f'    {pfx}def send{sfx}(self, message: Message)'
-                        f' -> Optional[Response]:\n'
-                        f'        """Send a message {how}."""\n'
-                        f'        return {awt}self._sender.'
-                        f'send{sfx}(self._obj, message)\n')
+                            f'        """Send a message {how}."""\n'
+                            f'        out = {awt}self._sender.'
+                            f'send{sfx}(self._obj, message)\n'
+                            f'        assert isinstance(out, {rtypevar})\n'
+                            f'        return out\n')
+                else:
+
+                    for msgtype in msgtypes:
+                        msgtypevar = msgtype.__name__
+                        rtypes = msgtype.get_response_types()
+                        if len(rtypes) > 1:
+                            tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                            rtypevar = f'Union[{tps}]'
+                        else:
+                            rtypevar = _filt_tp_name(rtypes[0])
+                        out += (f'\n'
+                                f'    @overload\n'
+                                f'    {pfx}def send{sfx}(self,'
+                                f' message: {msgtypevar})'
+                                f' -> {rtypevar}:\n'
+                                f'        ...\n')
+                    out += (f'\n'
+                            f'    {pfx}def send{sfx}(self, message: Message)'
+                            f' -> Optional[Response]:\n'
+                            f'        """Send a message {how}."""\n'
+                            f'        return {awt}self._sender.'
+                            f'send{sfx}(self._obj, message)\n')
 
         return out
 
@@ -429,21 +446,18 @@ class MessageProtocol:
             t for t in self.message_ids_by_type if issubclass(t, Message)
         ]
 
-        # Ew; @overload requires at least 2 different signatures so
-        # we need to simply write a single function if we have < 2.
-        if len(msgtypes) == 1:
-            raise RuntimeError('FIXME: currently require at least 2'
-                               ' registered message types; found 1.')
-
         def _filt_tp_name(rtype: Type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
             # in the type annotation.
             return 'None' if rtype is EmptyResponse else rtype.__name__
 
-        if len(msgtypes) > 1:
+        if msgtypes:
             cbgn = 'Awaitable[' if is_async else ''
             cend = ']' if is_async else ''
-            for msgtype in msgtypes:
+            if len(msgtypes) == 1:
+                # Special case: when we have a single message type we don't
+                # use overloads.
+                msgtype = msgtypes[0]
                 msgtypevar = msgtype.__name__
                 rtypes = msgtype.get_response_types()
                 if len(rtypes) > 1:
@@ -454,14 +468,38 @@ class MessageProtocol:
                 rtypevar = f'{cbgn}{rtypevar}{cend}'
                 out += (
                     f'\n'
-                    f'    @overload\n'
                     f'    def handler(\n'
                     f'        self,\n'
                     f'        call: Callable[[Any, {msgtypevar}], '
                     f'{rtypevar}],\n'
-                    f'    ) -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
-                    f'        ...\n')
-            out += ('\n'
+                    f'    )'
+                    f' -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
+                    f'        """Decorator to register message handlers."""\n'
+                    f'        from typing import cast, Callable, Any\n'
+                    f'        self.register_handler(cast(Callable'
+                    f'[[Any, Message], Response], call))\n'
+                    f'        return call\n')
+            else:
+                for msgtype in msgtypes:
+                    msgtypevar = msgtype.__name__
+                    rtypes = msgtype.get_response_types()
+                    if len(rtypes) > 1:
+                        tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                        rtypevar = f'Union[{tps}]'
+                    else:
+                        rtypevar = _filt_tp_name(rtypes[0])
+                    rtypevar = f'{cbgn}{rtypevar}{cend}'
+                    out += (f'\n'
+                            f'    @overload\n'
+                            f'    def handler(\n'
+                            f'        self,\n'
+                            f'        call: Callable[[Any, {msgtypevar}], '
+                            f'{rtypevar}],\n'
+                            f'    )'
+                            f' -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
+                            f'        ...\n')
+                out += (
+                    '\n'
                     '    def handler(self, call: Callable) -> Callable:\n'
                     '        """Decorator to register message handlers."""\n'
                     '        self.register_handler(call)\n'

@@ -72,6 +72,35 @@ class _TResp3(Message):
     fval: float
 
 
+# Generated sender with a single message type:
+# SEND_SINGLE_CODE_TEST_BEGIN
+
+
+class _TestMessageSenderSingle(MessageSender):
+    """Protocol-specific sender."""
+
+    def __init__(self) -> None:
+        protocol = TEST_PROTOCOL_SINGLE
+        super().__init__(protocol)
+
+    def __get__(self,
+                obj: Any,
+                type_in: Any = None) -> _BoundTestMessageSenderSingle:
+        return _BoundTestMessageSenderSingle(obj, self)
+
+
+class _BoundTestMessageSenderSingle(BoundMessageSender):
+    """Protocol-specific bound sender."""
+
+    def send(self, message: _TMsg1) -> _TResp1:
+        """Send a message synchronously."""
+        out = self._sender.send(self._obj, message)
+        assert isinstance(out, _TResp1)
+        return out
+
+
+# SEND_SINGLE_CODE_TEST_END
+
 # Generated sender supporting both sync and async sending:
 # SEND_SYNC_CODE_TEST_BEGIN
 
@@ -205,6 +234,46 @@ class _BoundTestMessageSenderBoth(BoundMessageSender):
 
 # SEND_BOTH_CODE_TEST_END
 
+# Generated receiver with a single message type:
+# RCV_SINGLE_CODE_TEST_BEGIN
+
+
+class _TestSingleMessageReceiver(MessageReceiver):
+    """Protocol-specific synchronous receiver."""
+
+    is_async = False
+
+    def __init__(self) -> None:
+        protocol = TEST_PROTOCOL_SINGLE
+        super().__init__(protocol)
+
+    def __get__(
+        self,
+        obj: Any,
+        type_in: Any = None,
+    ) -> _BoundTestSingleMessageReceiver:
+        return _BoundTestSingleMessageReceiver(obj, self)
+
+    def handler(
+        self,
+        call: Callable[[Any, _TMsg1], _TResp1],
+    ) -> Callable[[Any, _TMsg1], _TResp1]:
+        """Decorator to register message handlers."""
+        from typing import cast, Callable, Any
+        self.register_handler(cast(Callable[[Any, Message], Response], call))
+        return call
+
+
+class _BoundTestSingleMessageReceiver(BoundMessageReceiver):
+    """Protocol-specific bound receiver."""
+
+    def handle_raw_message(self, message: str) -> str:
+        """Synchronously handle a raw incoming message."""
+        return self._receiver.handle_raw_message(self._obj, message)
+
+
+# RCV_SINGLE_CODE_TEST_END
+
 # Generated receiver supporting sync handling:
 # RCV_SYNC_CODE_TEST_BEGIN
 
@@ -334,6 +403,17 @@ TEST_PROTOCOL = MessageProtocol(
     log_remote_exceptions=False,
 )
 
+TEST_PROTOCOL_SINGLE = MessageProtocol(
+    message_types={
+        0: _TMsg1,
+    },
+    response_types={
+        0: _TResp1,
+    },
+    trusted_sender=True,
+    log_remote_exceptions=False,
+)
+
 
 def test_protocol_creation() -> None:
     """Test protocol creation."""
@@ -347,6 +427,39 @@ def test_protocol_creation() -> None:
     # Now it should work.
     _protocol = MessageProtocol(message_types={0: _TMsg1},
                                 response_types={0: _TResp1})
+
+
+def test_sender_module_single_embedded() -> None:
+    """Test generation of protocol-specific sender modules for typing/etc."""
+    # NOTE: Ideally we should be testing efro.message.create_sender_module()
+    # here, but it requires us to pass code which imports this test module
+    # to get at the protocol, and that currently fails in our static mypy
+    # tests.
+    smod = TEST_PROTOCOL_SINGLE.do_create_sender_module(
+        'TestMessageSenderSingle',
+        protocol_create_code='protocol = TEST_PROTOCOL_SINGLE',
+        enable_sync_sends=True,
+        enable_async_sends=False,
+        private=True,
+    )
+
+    # Clip everything up to our first class declaration.
+    lines = smod.splitlines()
+    classline = lines.index('class _TestMessageSenderSingle(MessageSender):')
+    clipped = '\n'.join(lines[classline:])
+
+    # This snippet should match what we've got embedded above;
+    # If not then we need to update our embedded version.
+    with open(__file__, encoding='utf-8') as infile:
+        ourcode = infile.read()
+
+    emb = (f'# SEND_SINGLE_CODE_TEST_BEGIN'
+           f'\n\n\n{clipped}\n\n\n# SEND_SINGLE_CODE_TEST_END\n')
+    if emb not in ourcode:
+        print(f'EXPECTED EMBEDDED CODE:\n{emb}')
+        raise RuntimeError('Generated sender module does not match embedded;'
+                           ' test code needs to be updated.'
+                           ' See test stdout for new code.')
 
 
 def test_sender_module_sync_embedded() -> None:
@@ -446,6 +559,40 @@ def test_sender_module_both_embedded() -> None:
         raise RuntimeError('Generated sender module does not match embedded;'
                            ' test code needs to be updated.'
                            ' See test stdout for new code.')
+
+
+def test_receiver_module_single_embedded() -> None:
+    """Test generation of protocol-specific sender modules for typing/etc."""
+    # NOTE: Ideally we should be testing efro.message.create_receiver_module()
+    # here, but it requires us to pass code which imports this test module
+    # to get at the protocol, and that currently fails in our static mypy
+    # tests.
+    smod = TEST_PROTOCOL_SINGLE.do_create_receiver_module(
+        'TestSingleMessageReceiver',
+        'protocol = TEST_PROTOCOL_SINGLE',
+        is_async=False,
+        private=True,
+    )
+
+    # Clip everything up to our first class declaration.
+    lines = smod.splitlines()
+    classline = lines.index(
+        'class _TestSingleMessageReceiver(MessageReceiver):')
+    clipped = '\n'.join(lines[classline:])
+
+    # This snippet should match what we've got embedded above;
+    # If not then we need to update our embedded version.
+    with open(__file__, encoding='utf-8') as infile:
+        ourcode = infile.read()
+
+    emb = (f'# RCV_SINGLE_CODE_TEST_BEGIN'
+           f'\n\n\n{clipped}\n\n\n# RCV_SINGLE_CODE_TEST_END\n')
+    if emb not in ourcode:
+        print(f'EXPECTED SINGLE RECEIVER EMBEDDED CODE:\n{emb}')
+        raise RuntimeError(
+            'Generated single receiver module does not match embedded;'
+            ' test code needs to be updated.'
+            ' See test stdout for new code.')
 
 
 def test_receiver_module_sync_embedded() -> None:
