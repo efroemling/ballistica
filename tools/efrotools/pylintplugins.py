@@ -123,17 +123,20 @@ def func_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
 
     # Wipe out argument annotations.
 
-    # Special-case: functools.singledispatch and ba.dispatchmethod *do*
+    # Special-case: certain function decorators *do*
     # evaluate annotations at runtime so we want to leave theirs intact.
-    # Lets just look for a @XXX.register decorator used by both I guess.
+    # This includes functools.singledispatch, ba.dispatchmethod, and
+    # efro.MessageReceiver.
+    # Lets just look for a @XXX.register or @XXX.handler decorators for
+    # now; can get more specific if we get false positives.
     if node.decorators is not None:
         for dnode in node.decorators.nodes:
             if (isinstance(dnode, astroid.nodes.Name)
-                    and dnode.name in ('dispatchmethod', 'singledispatch')):
+                    and dnode.name in {'dispatchmethod', 'singledispatch'}):
                 return node  # Leave annotations intact.
 
             if (isinstance(dnode, astroid.nodes.Attribute)
-                    and dnode.attrname == 'register'):
+                    and dnode.attrname in {'register', 'handler'}):
                 return node  # Leave annotations intact.
 
     node.args.annotations = [None for _ in node.args.args]

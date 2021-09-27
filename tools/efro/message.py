@@ -75,12 +75,22 @@ class EmptyResponse(Response):
 
 # TODO: could allow handlers to deal in raw values for these
 # types similar to how we allow None in place of EmptyResponse.
+# Though not sure if they are widely used enough to warrant the
+# extra code complexity.
 @ioprepped
 @dataclass
 class BoolResponse(Response):
     """A simple bool value response."""
 
     value: Annotated[bool, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class StringResponse(Response):
+    """A simple string value response."""
+
+    value: Annotated[str, IOAttrs('v')]
 
 
 class MessageProtocol:
@@ -154,7 +164,7 @@ class MessageProtocol:
 
         _reg_if_not(ErrorResponse, -1)
         _reg_if_not(EmptyResponse, -2)
-        _reg_if_not(BoolResponse, -3)
+        # _reg_if_not(BoolResponse, -3)
 
         # Some extra-thorough validation in debug mode.
         if __debug__:
@@ -173,7 +183,8 @@ class MessageProtocol:
                 assert issubclass(cls, Response)
                 if cls not in self.response_ids_by_type:
                     raise ValueError(f'Possible response type {cls}'
-                                     f' was not included in response_types.')
+                                     f' needs to be included in response_types'
+                                     f' for this protocol.')
 
             # Make sure all registered types have unique base names.
             # We can take advantage of this to generate cleaner looking
@@ -270,46 +281,78 @@ class MessageProtocol:
 
     def _get_module_header(self, part: str) -> str:
         """Return common parts of generated modules."""
+        # pylint: disable=too-many-locals, too-many-branches
+        import textwrap
+        tpimports: Dict[str, List[str]] = {}
         imports: Dict[str, List[str]] = {}
+
+        single_message_type = len(self.message_ids_by_type) == 1
+
+        # Always import messages
         for msgtype in list(self.message_ids_by_type) + [Message]:
-            imports.setdefault(msgtype.__module__, []).append(msgtype.__name__)
+            tpimports.setdefault(msgtype.__module__,
+                                 []).append(msgtype.__name__)
         for rsp_tp in list(self.response_ids_by_type) + [Response]:
             # Skip these as they don't actually show up in code.
             if rsp_tp is EmptyResponse or rsp_tp is ErrorResponse:
                 continue
-            imports.setdefault(rsp_tp.__module__, []).append(rsp_tp.__name__)
-        importlines2 = ''
+            if (single_message_type and part == 'sender'
+                    and rsp_tp is not Response):
+                # We need to cast to the single supported response type
+                # in this case so need response types at runtime.
+                imports.setdefault(rsp_tp.__module__,
+                                   []).append(rsp_tp.__name__)
+            else:
+                tpimports.setdefault(rsp_tp.__module__,
+                                     []).append(rsp_tp.__name__)
+
+        import_lines = ''
+        tpimport_lines = ''
+
         for module, names in sorted(imports.items()):
             jnames = ', '.join(names)
             line = f'from {module} import {jnames}'
             if len(line) > 79:
                 # Recreate in a wrapping-friendly form.
                 line = f'from {module} import ({jnames})'
-            importlines2 += f'    {line}\n'
+            import_lines += f'{line}\n'
+        for module, names in sorted(tpimports.items()):
+            jnames = ', '.join(names)
+            line = f'from {module} import {jnames}'
+            if len(line) > 75:  # Account for indent
+                # Recreate in a wrapping-friendly form.
+                line = f'from {module} import ({jnames})'
+            tpimport_lines += f'{line}\n'
 
         if part == 'sender':
-            importlines1 = (
-                'from efro.message import MessageSender, BoundMessageSender')
-            tpimportex = ''
+            import_lines += ('from efro.message import MessageSender,'
+                             ' BoundMessageSender')
+            tpimport_typing_extras = ''
         else:
-            importlines1 = ('from efro.message import MessageReceiver,'
-                            ' BoundMessageReceiver')
-            tpimportex = ', Awaitable'
+            if single_message_type:
+                import_lines += ('from efro.message import (MessageReceiver,'
+                                 ' BoundMessageReceiver, Message, Response)')
+            else:
+                import_lines += ('from efro.message import MessageReceiver,'
+                                 ' BoundMessageReceiver')
+            tpimport_typing_extras = ', Awaitable'
 
+        ovld = ', overload' if not single_message_type else ''
+        tpimport_lines = textwrap.indent(tpimport_lines, '    ')
         out = ('# Released under the MIT License. See LICENSE for details.\n'
                f'#\n'
                f'"""Auto-generated {part} module. Do not edit by hand."""\n'
                f'\n'
                f'from __future__ import annotations\n'
                f'\n'
-               f'from typing import TYPE_CHECKING, overload\n'
+               f'from typing import TYPE_CHECKING{ovld}\n'
                f'\n'
-               f'{importlines1}\n'
+               f'{import_lines}\n'
                f'\n'
                f'if TYPE_CHECKING:\n'
                f'    from typing import Union, Any, Optional, Callable'
-               f'{tpimportex}\n'
-               f'{importlines2}'
+               f'{tpimport_typing_extras}\n'
+               f'{tpimport_lines}'
                f'\n'
                f'\n')
         return out
@@ -323,6 +366,8 @@ class MessageProtocol:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
+
+        msgtypes = list(self.message_ids_by_type.keys())
 
         ppre = '_' if private else ''
         out = self._get_module_header('sender')
@@ -345,16 +390,12 @@ class MessageProtocol:
                 f'class {ppre}Bound{basename}(BoundMessageSender):\n'
                 f'    """Protocol-specific bound sender."""\n')
 
-        # Define handler() overloads for all registered message types.
-        msgtypes = [
-            t for t in self.message_ids_by_type if issubclass(t, Message)
-        ]
-
         def _filt_tp_name(rtype: Type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
             # in the type annotation.
             return 'None' if rtype is EmptyResponse else rtype.__name__
 
+        # Define handler() overloads for all registered message types.
         if msgtypes:
             for async_pass in False, True:
                 if async_pass and not enable_async_sends:
@@ -422,6 +463,7 @@ class MessageProtocol:
 
         desc = 'asynchronous' if is_async else 'synchronous'
         ppre = '_' if private else ''
+        msgtypes = list(self.message_ids_by_type.keys())
         out = self._get_module_header('receiver')
         ccind = textwrap.indent(protocol_create_code, '        ')
         out += (f'class {ppre}{basename}(MessageReceiver):\n'
@@ -442,9 +484,6 @@ class MessageProtocol:
                 f'obj, self)\n')
 
         # Define handler() overloads for all registered message types.
-        msgtypes = [
-            t for t in self.message_ids_by_type if issubclass(t, Message)
-        ]
 
         def _filt_tp_name(rtype: Type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
@@ -539,7 +578,7 @@ class MessageSender:
     class MyClass:
         msg = MyMessageSender(some_protocol)
 
-        @msg.sendmethod
+        @msg.send_method
         def send_raw_message(self, message: str) -> str:
             # Actually send the message here.
 
@@ -676,10 +715,9 @@ class MessageReceiver:
         The message type handled by the call is determined by its
         type annotation.
         """
-        # pylint: disable=too-many-locals
         # TODO: can use types.GenericAlias in 3.9.
         from typing import _GenericAlias  # type: ignore
-        from typing import Union, get_type_hints, get_args
+        from typing import get_type_hints, get_args
 
         sig = inspect.getfullargspec(call)
 
@@ -700,7 +738,10 @@ class MessageReceiver:
         # Check annotation types to determine what message types we handle.
         # Return-type annotation can be a Union, but we probably don't
         # have it available at runtime. Explicitly pull it in.
-        anns = get_type_hints(call, localns={'Union': Union})
+        # UPDATE: we've updated our pylint filter to where we should
+        # have all annotations available.
+        # anns = get_type_hints(call, localns={'Union': Union})
+        anns = get_type_hints(call)
 
         msgtype = anns.get('msg')
         if not isinstance(msgtype, type):
@@ -758,11 +799,12 @@ class MessageReceiver:
             if issubclass(msgtype, Response):
                 continue
             if msgtype not in self._handlers:
-                msg = (f'Protocol message {msgtype} not handled'
-                       f' by receiver.')
+                msg = (f'Protocol message type {msgtype} is not handled'
+                       f' by receiver type {type(self)}.')
                 if warn_only:
                     logging.warning(msg)
-                raise TypeError(msg)
+                else:
+                    raise TypeError(msg)
 
     def _decode_incoming_message(self,
                                  msg: str) -> Tuple[Message, Type[Message]]:

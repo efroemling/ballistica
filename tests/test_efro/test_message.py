@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import asyncio
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, Union
 from dataclasses import dataclass
 
 import pytest
@@ -19,7 +19,7 @@ from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           BoundMessageReceiver)
 
 if TYPE_CHECKING:
-    from typing import List, Type, Any, Callable, Union, Optional, Awaitable
+    from typing import List, Type, Any, Callable, Optional, Awaitable
 
 
 @ioprepped

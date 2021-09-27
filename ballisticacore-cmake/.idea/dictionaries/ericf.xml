@@ -767,6 +767,7 @@
       <w>outval</w>
       <w>outvalue</w>
       <w>ouya</w>
+      <w>ovld</w>
       <w>parameteriv</w>
       <w>passcode</w>
       <w>pausable</w>
@@ -1075,6 +1076,7 @@
       <w>touchpad</w>
       <w>toucs</w>
       <w>toutf</w>
+      <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
       <w>tracebacks</w>
