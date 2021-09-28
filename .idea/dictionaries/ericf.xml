@@ -1620,6 +1620,7 @@
       <w>passthrough</w>
       <w>passwd</w>
       <w>patcomp</w>
+      <w>pathcapture</w>
       <w>pathlib</w>
       <w>pathnames</w>
       <w>pathstonames</w>

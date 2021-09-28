@@ -643,7 +643,12 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/servermanager.py \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/call.py \
-  build/ba_data/python/efro/dataclassio.py \
+  build/ba_data/python/efro/dataclassio/__init__.py \
+  build/ba_data/python/efro/dataclassio/_base.py \
+  build/ba_data/python/efro/dataclassio/_inputter.py \
+  build/ba_data/python/efro/dataclassio/_outputter.py \
+  build/ba_data/python/efro/dataclassio/_pathcapture.py \
+  build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/entity/__init__.py \
   build/ba_data/python/efro/entity/_base.py \
   build/ba_data/python/efro/entity/_entity.py \
@@ -665,7 +670,12 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/call.cpython-38.opt-1.pyc \
-  build/ba_data/python/efro/__pycache__/dataclassio.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_base.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_inputter.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_outputter.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/_base.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/_entity.cpython-38.opt-1.pyc \
