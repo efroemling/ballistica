@@ -15,14 +15,14 @@ from typing import TYPE_CHECKING, TypeVar
 from efro.dataclassio._outputter import _Outputter
 from efro.dataclassio._inputter import _Inputter
 from efro.dataclassio._base import Codec, IOAttrs
-from efro.dataclassio._prep import ioprepped, is_ioprepped_dataclass
+from efro.dataclassio._prep import ioprep, ioprepped, is_ioprepped_dataclass
 from efro.dataclassio._pathcapture import FieldStoragePathCapture
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Tuple, Optional, List, Set
 
 __all__ = [
-    'Codec', 'IOAttrs', 'ioprepped', 'is_ioprepped_dataclass',
+    'Codec', 'IOAttrs', 'ioprep', 'ioprepped', 'is_ioprepped_dataclass',
     'FieldStoragePathCapture', 'dataclass_to_dict', 'dataclass_to_json',
     'dataclass_from_dict', 'dataclass_from_json', 'dataclass_validate'
 ]

@@ -750,3 +750,22 @@ def test_datetime_limits() -> None:
     out['tval'][-1] += 1
     with pytest.raises(ValueError):
         dataclass_from_dict(_TestClass2, out)
+
+
+def test_nested() -> None:
+    """Test nesting dataclasses."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+
+        class _TestEnum(Enum):
+            VAL1 = 'val1'
+            VAL2 = 'val2'
+
+        @dataclass
+        class _TestSubClass:
+            ival: int = 0
+
+        subval: _TestSubClass = field(default_factory=_TestSubClass)
+        enval: _TestEnum = _TestEnum.VAL1

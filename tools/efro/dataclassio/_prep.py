@@ -1,12 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality for importing, exporting, and validating dataclasses.
-
-This allows complex nested dataclasses to be flattened to json-compatible
-data and restored from said data. It also gracefully handles and preserves
-unrecognized attribute data, allowing older clients to interact with newer
-data formats in a nondestructive manner.
-"""
+"""Functionality for prepping types for use with dataclassio."""
 
 # Note: We do lots of comparing of exact types here which is normally
 # frowned upon (stuff like isinstance() is usually encouraged).
@@ -127,17 +121,20 @@ class PrepSession:
                 ' @efro.dataclassio.ioprepped decorator).', cls)
 
         try:
-            # NOTE: perhaps we want to expose the globalns/localns args
-            # to this?
+            # NOTE: Now passing the class' __dict__ (vars()) as locals
+            # which allows us to pick up nested classes, etc.
             # pylint: disable=unexpected-keyword-arg
-            resolved_annotations = get_type_hints(cls, include_extras=True)
+            resolved_annotations = get_type_hints(cls,
+                                                  localns=vars(cls),
+                                                  include_extras=True)
             # pylint: enable=unexpected-keyword-arg
         except Exception as exc:
-            raise RuntimeError(
+            print('GOT', cls.__dict__)
+            raise TypeError(
                 f'dataclassio prep for {cls} failed with error: {exc}.'
                 f' Make sure all types used in annotations are defined'
-                f' at the module level or add them as part of an explicit'
-                f' prep call.') from exc
+                f' at the module or class level or add them as part of an'
+                f' explicit prep call.') from exc
 
         # noinspection PyDataclass
         fields = dataclasses.fields(cls)

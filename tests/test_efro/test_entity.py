@@ -263,7 +263,6 @@ def test_field_copies() -> None:
 
     # Type-checker currently allows this because both are Compounds
     # but should fail at runtime since their subfield arrangement differs.
-    # reveal_type(ent1.grp.blah)
     with pytest.raises(ValueError):
         ent2.grp = ent1.grp2
 
