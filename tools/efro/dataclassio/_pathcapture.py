@@ -55,7 +55,7 @@ class _PathCapture:
 class DataclassFieldLookup(Generic[T]):
     """Get info about nested dataclass fields in type-safe way."""
 
-    def __init__(self, cls: T) -> None:
+    def __init__(self, cls: Type[T]) -> None:
         self.cls = cls
 
     def path(self, callback: Callable[[T], Any]) -> str:
