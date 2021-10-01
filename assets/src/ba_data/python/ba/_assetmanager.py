@@ -4,7 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
+from dataclasses import dataclass, field
 from pathlib import Path
 import threading
 import urllib.request
@@ -14,21 +15,30 @@ import time
 import os
 import sys
 
-from efro import entity
+from typing_extensions import Annotated
+
+from efro.dataclassio import (ioprepped, IOAttrs, dataclass_from_json,
+                              dataclass_to_json)
 
 if TYPE_CHECKING:
     from bacommon.assets import AssetPackageFlavor
     from typing import List
 
 
-class FileValue(entity.CompoundValue):
+@ioprepped
+@dataclass
+class FileValue:
     """State for an individual file."""
 
 
-class State(entity.Entity):
+@ioprepped
+@dataclass
+class State:
     """Holds all persistent state for the asset-manager."""
 
-    files = entity.CompoundDictField('files', str, FileValue())
+    files: Annotated[Dict[str, FileValue],
+                     IOAttrs('files')] = field(default_factory=dict)
+    # files = entity.CompoundDictField('files', str, FileValue())
 
 
 class AssetManager:
@@ -102,7 +112,7 @@ class AssetManager:
             state_path = self.state_path
             if state_path.exists():
                 with open(self.state_path, encoding='utf-8') as infile:
-                    self._state = State.from_json_str(infile.read())
+                    self._state = dataclass_from_json(State, infile.read())
                     return
         except Exception:
             logging.exception('Error loading existing AssetManager state')
@@ -114,7 +124,7 @@ class AssetManager:
         print('ASSET-MANAGER SAVING STATE')
         try:
             with open(self.state_path, 'w', encoding='utf-8') as outfile:
-                outfile.write(self._state.to_json_str())
+                outfile.write(dataclass_to_json(self._state))
         except Exception:
             logging.exception('Error writing AssetManager state')
 

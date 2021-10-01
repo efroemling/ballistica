@@ -11,7 +11,6 @@ from enum import Enum
 from typing_extensions import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
-# from efro import entity
 
 if TYPE_CHECKING:
     pass

@@ -5,32 +5,45 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, Dict, Any, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from efro import entity
-from efro.dataclassio import ioprepped
+from typing_extensions import Annotated
+
+from efro.dataclassio import ioprepped, IOAttrs
 
 if TYPE_CHECKING:
     pass
 
 
-class ServerNodeEntry(entity.CompoundValue):
+@ioprepped
+@dataclass
+class ServerNodeEntry:
     """Information about a specific server."""
-    region = entity.Field('r', entity.StringValue())
-    address = entity.Field('a', entity.StringValue())
-    port = entity.Field('p', entity.IntValue())
+    region: Annotated[str, IOAttrs('r')]
+    # region = entity.Field('r', entity.StringValue())
+    address: Annotated[str, IOAttrs('a')]
+    # address = entity.Field('a', entity.StringValue())
+    port: Annotated[int, IOAttrs('p')]
+    # port = entity.Field('p', entity.IntValue())
 
 
-class ServerNodeQueryResponse(entity.Entity):
+@ioprepped
+@dataclass
+class ServerNodeQueryResponse:
     """A response to a query about server-nodes."""
 
     # If present, something went wrong, and this describes it.
-    error = entity.Field('e', entity.OptionalStringValue(store_default=False))
+    error: Annotated[Optional[str], IOAttrs('e', store_default=False)] = None
+    # error =
+    # entity.Field('e', entity.OptionalStringValue(store_default=False))
 
     # The set of servernodes.
-    servers = entity.CompoundListField('s',
-                                       ServerNodeEntry(),
-                                       store_default=False)
+    servers: Annotated[List[ServerNodeEntry],
+                       IOAttrs('s', store_default=False)] = field(
+                           default_factory=list)
+    # servers = entity.CompoundListField('s',
+    #                                    ServerNodeEntry(),
+    #                                    store_default=False)
 
 
 @ioprepped
