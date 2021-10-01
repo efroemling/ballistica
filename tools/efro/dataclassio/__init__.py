@@ -16,14 +16,14 @@ from efro.dataclassio._outputter import _Outputter
 from efro.dataclassio._inputter import _Inputter
 from efro.dataclassio._base import Codec, IOAttrs
 from efro.dataclassio._prep import ioprep, ioprepped, is_ioprepped_dataclass
-from efro.dataclassio._pathcapture import FieldStoragePathCapture
+from efro.dataclassio._pathcapture import DataclassFieldLookup
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Tuple, Optional, List, Set
 
 __all__ = [
     'Codec', 'IOAttrs', 'ioprep', 'ioprepped', 'is_ioprepped_dataclass',
-    'FieldStoragePathCapture', 'dataclass_to_dict', 'dataclass_to_json',
+    'DataclassFieldLookup', 'dataclass_to_dict', 'dataclass_to_json',
     'dataclass_from_dict', 'dataclass_from_json', 'dataclass_validate'
 ]
 
@@ -57,18 +57,20 @@ def dataclass_to_dict(obj: Any,
     return out
 
 
-def dataclass_to_json(obj: Any, coerce_to_float: bool = True) -> str:
+def dataclass_to_json(obj: Any,
+                      coerce_to_float: bool = True,
+                      pretty: bool = False) -> str:
     """Utility function; return a json string from a dataclass instance.
 
     Basically json.dumps(dataclass_to_dict(...)).
     """
     import json
-    return json.dumps(
-        dataclass_to_dict(obj=obj,
-                          coerce_to_float=coerce_to_float,
-                          codec=Codec.JSON),
-        separators=(',', ':'),
-    )
+    jdict = dataclass_to_dict(obj=obj,
+                              coerce_to_float=coerce_to_float,
+                              codec=Codec.JSON)
+    if pretty:
+        return json.dumps(jdict, indent=2, sort_keys=True)
+    return json.dumps(jdict, separators=(',', ':'))
 
 
 def dataclass_from_dict(cls: Type[T],

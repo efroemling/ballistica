@@ -16,7 +16,7 @@ import pytest
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
                               dataclass_to_dict, ioprepped, IOAttrs, Codec,
-                              FieldStoragePathCapture)
+                              DataclassFieldLookup)
 
 if TYPE_CHECKING:
     pass
@@ -697,20 +697,6 @@ class _SPTestClass2:
                      IOAttrs('s')] = field(default_factory=_SPTestClass1)
 
 
-def test_field_storage_path_capture() -> None:
-    """Test FieldStoragePathCapture functionality."""
-
-    obj = _SPTestClass2()
-
-    namecap = FieldStoragePathCapture(obj)
-    assert namecap.subc.barf == 'subc.barf'
-    assert namecap.subc2.barf == 's.barf'
-    assert namecap.subc2.barf2 == 's.b'
-
-    with pytest.raises(AttributeError):
-        assert namecap.nonexistent.barf == 's.barf'
-
-
 def test_datetime_limits() -> None:
     """Test limiting datetime values in various ways."""
     from efro.util import utc_today, utc_this_hour
@@ -750,6 +736,48 @@ def test_datetime_limits() -> None:
     out['tval'][-1] += 1
     with pytest.raises(ValueError):
         dataclass_from_dict(_TestClass2, out)
+
+
+def test_field_paths() -> None:
+    """Test type-safe field path evaluations."""
+
+    # Define a few nested dataclass types, some of which
+    # have storage names differing from their field names.
+    @ioprepped
+    @dataclass
+    class _TestClass:
+
+        @dataclass
+        class _TestSubClass:
+            val1: int = 0
+            val2: Annotated[int, IOAttrs('v2')] = 0
+
+        sub1: _TestSubClass = field(default_factory=_TestSubClass)
+        sub2: Annotated[_TestSubClass,
+                        IOAttrs('s2')] = field(default_factory=_TestSubClass)
+
+    # Now let's lookup various storage paths.
+    lookup = DataclassFieldLookup(_TestClass)
+
+    # Make sure lookups are returning correct storage paths.
+    assert lookup.path(lambda obj: obj.sub1) == 'sub1'
+    assert lookup.path(lambda obj: obj.sub1.val1) == 'sub1.val1'
+    assert lookup.path(lambda obj: obj.sub1.val2) == 'sub1.v2'
+    assert lookup.path(lambda obj: obj.sub2.val1) == 's2.val1'
+    assert lookup.path(lambda obj: obj.sub2.val2) == 's2.v2'
+
+    # Attempting to return fields that aren't there should fail
+    # in both type-checking and runtime.
+    with pytest.raises(AttributeError):
+        lookup.path(lambda obj: obj.sub1.val3)  # type: ignore
+
+    # Returning non-field objects will fail at runtime
+    # even if type-checking evaluates them as valid values.
+    with pytest.raises(TypeError):
+        lookup.path(lambda obj: 1)
+
+    with pytest.raises(TypeError):
+        lookup.path(lambda obj: obj.sub1.val1.real)
 
 
 def test_nested() -> None:

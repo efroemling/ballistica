@@ -540,6 +540,7 @@
       <w>janky</w>
       <w>jaxis</w>
       <w>jcjwf</w>
+      <w>jdict</w>
       <w>jmessage</w>
       <w>jnames</w>
       <w>keepalives</w>
@@ -771,6 +772,7 @@
       <w>parameteriv</w>
       <w>passcode</w>
       <w>pathcapture</w>
+      <w>pathparts</w>
       <w>pausable</w>
       <w>pcommands</w>
       <w>pdataclass</w>

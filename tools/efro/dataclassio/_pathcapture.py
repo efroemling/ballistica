@@ -5,39 +5,35 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Generic
 
 from efro.dataclassio._base import _parse_annotated, _get_origin
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any, Dict, Type, Tuple, Optional, List, Set, Callable
+
+T = TypeVar('T')
 
 
-class FieldStoragePathCapture:
-    """Utility for obtaining dataclass storage paths in a type safe way.
+class _PathCapture:
+    """Utility for obtaining dataclass storage paths in a type safe way."""
 
-    Given dataclass instance foo, FieldStoragePathCapture(foo).bar.eep
-    will return 'bar.eep' (or something like 'b.e' if storagenames are
-    overridden). This can be combined with type-checking tricks that
-    return foo in the type-checker's eyes while returning
-    FieldStoragePathCapture(foo) at runtime in order to grant a measure
-    of type safety to specifying field paths for things such as db
-    queries. Be aware, however, that the type-checker will incorrectly
-    think these lookups are returning actual attr values when they
-    are actually returning strings.
-    """
-
-    def __init__(self, obj: Any, path: List[str] = None):
-        if path is None:
-            path = []
-        if not dataclasses.is_dataclass(obj):
-            raise TypeError(f'Expected a dataclass type/instance;'
-                            f' got {type(obj)}.')
+    def __init__(self, obj: Any, pathparts: List[str] = None):
+        self._is_dataclass = dataclasses.is_dataclass(obj)
+        if pathparts is None:
+            pathparts = []
         self._cls = obj if isinstance(obj, type) else type(obj)
-        self._path = path
+        self._pathparts = pathparts
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> _PathCapture:
+
+        # We only allow diving into sub-objects if we are a dataclass.
+        if not self._is_dataclass:
+            raise TypeError(
+                f"Field path cannot include attribute '{name}' "
+                f'under parent {self._cls}; parent types must be dataclasses.')
+
         prep = PrepSession(explicit=False).prep_dataclass(self._cls,
                                                           recursion_level=0)
         try:
@@ -48,8 +44,43 @@ class FieldStoragePathCapture:
         storagename = (name if (ioattrs is None or ioattrs.storagename is None)
                        else ioattrs.storagename)
         origin = _get_origin(anntype)
-        path = self._path + [storagename]
+        return _PathCapture(origin, pathparts=self._pathparts + [storagename])
 
-        if dataclasses.is_dataclass(origin):
-            return FieldStoragePathCapture(origin, path=path)
-        return '.'.join(path)
+    @property
+    def path(self) -> str:
+        """The final output path."""
+        return '.'.join(self._pathparts)
+
+
+class DataclassFieldLookup(Generic[T]):
+    """Get info about nested dataclass fields in type-safe way."""
+
+    def __init__(self, cls: T) -> None:
+        self.cls = cls
+
+    def path(self, callback: Callable[[T], Any]) -> str:
+        """Look up a path on child dataclass fields.
+
+        example:
+          DataclassFieldLookup(MyType).path(lambda obj: obj.foo.bar)
+
+        The above example will return the string 'foo.bar' or something
+        like 'f.b' if the dataclasses have custom storage names set.
+        It will also be static-type-checked, triggering an error if
+        MyType.foo.bar is not a valid path. Note, however, that the
+        callback technically allows any return value but only nested
+        dataclasses and their fields will succeed.
+        """
+
+        # We tell the type system that we are returning an instance
+        # of our class, which allows it to perform type checking on
+        # member lookups. In reality, however, we are providing a
+        # special object which captures path lookups so we can build
+        # a string from them.
+        if not TYPE_CHECKING:
+            out = callback(_PathCapture(self.cls))
+            if not isinstance(out, _PathCapture):
+                raise TypeError(f'Expected a valid path under'
+                                f' the provided object; got a {type(out)}.')
+            return out.path
+        return ''

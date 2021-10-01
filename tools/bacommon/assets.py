@@ -4,10 +4,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Dict, Optional, List
 from enum import Enum
 
-from efro import entity
+from typing_extensions import Annotated
+
+from efro.dataclassio import ioprepped, IOAttrs
+# from efro import entity
 
 if TYPE_CHECKING:
     pass
@@ -33,26 +37,27 @@ class AssetType(Enum):
     COLLISION_MESH = 'collision_mesh'
 
 
-class AssetPackageFlavorManifestValue(entity.CompoundValue):
+@ioprepped
+@dataclass
+class AssetPackageFlavorManifest:
     """A manifest of asset info for a specific flavor of an asset package."""
-    assetfiles = entity.DictField('assetfiles', str, entity.StringValue())
+    assetfiles: Annotated[Dict[str, str],
+                          IOAttrs('assetfiles')] = field(default_factory=dict)
 
 
-class AssetPackageFlavorManifest(entity.EntityMixin,
-                                 AssetPackageFlavorManifestValue):
-    """A self contained AssetPackageFlavorManifestValue."""
-
-
-class AssetPackageBuildState(entity.Entity):
+@ioprepped
+@dataclass
+class AssetPackageBuildState:
     """Contains info about an in-progress asset cloud build."""
 
     # Asset names still being built.
-    in_progress_builds = entity.ListField('b', entity.StringValue())
+    in_progress_builds: Annotated[List[str],
+                                  IOAttrs('b')] = field(default_factory=list)
 
     # The initial number of assets needing to be built.
-    initial_build_count = entity.Field('c', entity.IntValue())
+    initial_build_count: Annotated[int, IOAttrs('c')] = 0
 
     # Build error string. If this is present, it should be presented
     # to the user and they should required to explicitly restart the build
     # in some way if desired.
-    error = entity.Field('e', entity.OptionalStringValue())
+    error: Annotated[Optional[str], IOAttrs('e')] = None

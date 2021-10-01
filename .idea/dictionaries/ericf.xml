@@ -1139,6 +1139,7 @@
       <w>janktastic</w>
       <w>janky</w>
       <w>jascha</w>
+      <w>jdict</w>
       <w>jenkinsfile</w>
       <w>jexport</w>
       <w>jisx</w>
@@ -1623,6 +1624,7 @@
       <w>pathcapture</w>
       <w>pathlib</w>
       <w>pathnames</w>
+      <w>pathparts</w>
       <w>pathstonames</w>
       <w>pathtmp</w>
       <w>patsubst</w>
