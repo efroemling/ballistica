@@ -102,7 +102,7 @@ class MasterServerCallThread(threading.Thread):
         import urllib.error
         import json
 
-        from efro.net import is_urllib_network_error
+        from efro.error import is_urllib_network_error
         from ba import _general
         try:
             self._data = _general.utf8_all(self._data)
