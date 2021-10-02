@@ -20,11 +20,8 @@ if TYPE_CHECKING:
 class ServerNodeEntry:
     """Information about a specific server."""
     region: Annotated[str, IOAttrs('r')]
-    # region = entity.Field('r', entity.StringValue())
     address: Annotated[str, IOAttrs('a')]
-    # address = entity.Field('a', entity.StringValue())
     port: Annotated[int, IOAttrs('p')]
-    # port = entity.Field('p', entity.IntValue())
 
 
 @ioprepped
@@ -34,16 +31,11 @@ class ServerNodeQueryResponse:
 
     # If present, something went wrong, and this describes it.
     error: Annotated[Optional[str], IOAttrs('e', store_default=False)] = None
-    # error =
-    # entity.Field('e', entity.OptionalStringValue(store_default=False))
 
     # The set of servernodes.
     servers: Annotated[List[ServerNodeEntry],
                        IOAttrs('s', store_default=False)] = field(
                            default_factory=list)
-    # servers = entity.CompoundListField('s',
-    #                                    ServerNodeEntry(),
-    #                                    store_default=False)
 
 
 @ioprepped

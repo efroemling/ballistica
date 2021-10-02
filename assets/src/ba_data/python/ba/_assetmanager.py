@@ -38,7 +38,6 @@ class State:
 
     files: Annotated[Dict[str, FileValue],
                      IOAttrs('files')] = field(default_factory=dict)
-    # files = entity.CompoundDictField('files', str, FileValue())
 
 
 class AssetManager:

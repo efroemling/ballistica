@@ -651,7 +651,6 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/dataclassio/extras.py \
   build/ba_data/python/efro/error.py \
-  build/ba_data/python/efro/json.py \
   build/ba_data/python/efro/message.py \
   build/ba_data/python/efro/net.py \
   build/ba_data/python/efro/terminal.py \
@@ -672,7 +671,6 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-38.opt-1.pyc \
-  build/ba_data/python/efro/__pycache__/json.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/message.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/net.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/terminal.cpython-38.opt-1.pyc \
