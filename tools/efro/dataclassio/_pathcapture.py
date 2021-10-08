@@ -84,3 +84,23 @@ class DataclassFieldLookup(Generic[T]):
                                 f' the provided object; got a {type(out)}.')
             return out.path
         return ''
+
+    def paths(self, callback: Callable[[T], List[Any]]) -> List[str]:
+        """Look up multiple paths on child dataclass fields.
+
+        Functionality is identical to path() but for multiple paths at once.
+
+        example:
+          DataclassFieldLookup(MyType).paths(lambda obj: [obj.foo, obj.bar])
+        """
+        outvals: List[str] = []
+        if not TYPE_CHECKING:
+            outs = callback(_PathCapture(self.cls))
+            assert isinstance(outs, list)
+            for out in outs:
+                if not isinstance(out, _PathCapture):
+                    raise TypeError(
+                        f'Expected a valid path under'
+                        f' the provided object; got a {type(out)}.')
+                outvals.append(out.path)
+        return outvals
