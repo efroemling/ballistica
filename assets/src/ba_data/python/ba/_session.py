@@ -63,10 +63,6 @@ class Session:
             team instead of their own profile colors. This only applies if
             use_teams is enabled.
 
-        allow_mid_activity_joins
-            Whether players should be allowed to join in the middle of
-            activities.
-
         customdata
             A shared dictionary for objects to use as storage on this session.
             Ensure that keys here are unique to avoid collisions.
@@ -74,7 +70,6 @@ class Session:
     """
     use_teams: bool = False
     use_team_colors: bool = True
-    allow_mid_activity_joins: bool = True
 
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
@@ -210,6 +205,15 @@ class Session:
             raise NodeNotFoundError()
         return node
 
+    def should_allow_mid_activity_joins(self, activity: ba.Activity) -> bool:
+        """Returned value is used by the Session to determine
+        whether to allow players to join in the middle of activity.
+
+        Activity.allow_mid_activity_joins is also required to allow these
+        joins."""
+        del activity  # Unused.
+        return True
+
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
         """Called when a new ba.Player wants to join the Session.
 
@@ -220,7 +224,6 @@ class Session:
         if _ba.app.stress_test_reset_timer is None:
 
             if len(self.sessionplayers) >= self.max_players:
-
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _ba.playsound(_ba.getsound('error'))
@@ -657,7 +660,8 @@ class Session:
         # However, if we're not allowing mid-game joins, don't actually pass;
         # just announce the arrival and say they'll partake next round.
         if pass_to_activity:
-            if not self.allow_mid_activity_joins:
+            if not (activity.allow_mid_activity_joins
+                    and self.should_allow_mid_activity_joins(activity)):
                 pass_to_activity = False
                 with _ba.Context(self):
                     _ba.screenmessage(

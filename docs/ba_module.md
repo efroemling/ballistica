@@ -1770,7 +1770,7 @@ and it should begin its actual game logic.</p>
     high score lists.</p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_CoopSession__campaign">campaign</a>, <a href="#attr_ba_CoopSession__sessionglobalsnode">sessionglobalsnode</a></h5>
 <dl>
@@ -1789,7 +1789,7 @@ there is no associated Campaign.</p>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
-<h5><a href="#method_ba_CoopSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_CoopSession__get_current_game_instance">get_current_game_instance()</a>, <a href="#method_ba_CoopSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_CoopSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_CoopSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_CoopSession__restart">restart()</a></h5>
+<h5><a href="#method_ba_CoopSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_CoopSession__get_current_game_instance">get_current_game_instance()</a>, <a href="#method_ba_CoopSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_CoopSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_CoopSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_CoopSession__restart">restart()</a>, <a href="#method_ba_CoopSession__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_CoopSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.CoopSession()</span></p>
@@ -1832,6 +1832,16 @@ is pressed.</p>
 <p><span>restart(self) -&gt; None</span></p>
 
 <p>Restart the current game activity.</p>
+
+</dd>
+<dt><h4><a name="method_ba_CoopSession__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></dt></h4><dd>
+<p><span>should_allow_mid_activity_joins(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; bool</span></p>
+
+<p>Returned value is used by the Session to determine
+whether to allow players to join in the middle of activity.</p>
+
+<p>Activity.allow_mid_activity_joins is also required to allow these
+joins.</p>
 
 </dd>
 </dl>
@@ -2128,7 +2138,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_DualTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -2138,7 +2148,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <dl>
 <dt><h4><a name="method_ba_DualTeamSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
@@ -2309,7 +2319,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_FreeForAllSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -2319,7 +2329,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_FreeForAllSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_FreeForAllSession__get_ffa_point_awards">get_ffa_point_awards()</a></h5>
 <dl>
@@ -3912,7 +3922,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_MultiTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -3922,7 +3932,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_MultiTeamSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a></h5>
 <dl>
@@ -5080,14 +5090,8 @@ Pass 0 or a negative number for no ban time.</p>
     maintaining state between them (players, teams, score tallies, etc).</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <dl>
-<dt><h4><a name="attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a></h4></dt><dd>
-<p><span>bool</span></p>
-<p>Whether players should be allowed to join in the middle of
-activities.</p>
-
-</dd>
 <dt><h4><a name="attr_ba_Session__customdata">customdata</a></h4></dt><dd>
 <p><span>dict</span></p>
 <p>A shared dictionary for objects to use as storage on this session.
@@ -5148,7 +5152,7 @@ player that joins.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a></h5>
+<h5><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Session____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Session(depsets: Sequence[<a href="#class_ba_DependencySet">ba.DependencySet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, min_players: int = 1, max_players: int = 8)</span></p>
@@ -5254,6 +5258,16 @@ another <a href="#class_ba_Activity">ba.Activity</a>.</p>
 Activity's. Code must be run in the new activity's methods
 (on_transition_in, etc) to get it. (so you can't do
 session.setactivity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>() to add a node to foo)</p>
+
+</dd>
+<dt><h4><a name="method_ba_Session__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></dt></h4><dd>
+<p><span>should_allow_mid_activity_joins(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; bool</span></p>
+
+<p>Returned value is used by the Session to determine
+whether to allow players to join in the middle of activity.</p>
+
+<p>Activity.allow_mid_activity_joins is also required to allow these
+joins.</p>
 
 </dd>
 </dl>
