@@ -27,8 +27,6 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     # We can assume our session is a CoopSession.
     session: ba.CoopSession
 
-    allow_mid_activity_joins = False
-
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         from ba._coopsession import CoopSession

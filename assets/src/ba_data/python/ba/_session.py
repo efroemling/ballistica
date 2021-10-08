@@ -205,6 +205,14 @@ class Session:
             raise NodeNotFoundError()
         return node
 
+    def should_allow_mid_activity_joins(self, activity: Activity) -> bool:
+        """Returned value is used by the Session to determine
+        whether to allow players to join in the middle of activity.
+
+        Activity.allow_mid_activity_joins is also required to allow these
+        joins."""
+        return True
+
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
         """Called when a new ba.Player wants to join the Session.
 
@@ -651,7 +659,8 @@ class Session:
         # However, if we're not allowing mid-game joins, don't actually pass;
         # just announce the arrival and say they'll partake next round.
         if pass_to_activity:
-            if not activity.allow_mid_activity_joins:
+            if not (activity.allow_mid_activity_joins
+                    and self.should_allow_mid_activity_joins(activity)):
                 pass_to_activity = False
                 with _ba.Context(self):
                     _ba.screenmessage(
