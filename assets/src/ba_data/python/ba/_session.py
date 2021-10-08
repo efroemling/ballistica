@@ -211,6 +211,7 @@ class Session:
 
         Activity.allow_mid_activity_joins is also required to allow these
         joins."""
+        del activity  # Unused.
         return True
 
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
