@@ -90,7 +90,7 @@ class CoopSession(Session):
         """Get the game instance currently being played."""
         return self._current_game_instance
 
-    def should_allow_mid_activity_joins(self, activity: Activity) -> bool:
+    def should_allow_mid_activity_joins(self, activity: ba.Activity) -> bool:
         # pylint: disable=cyclic-import
         from ba._gameactivity import GameActivity
 

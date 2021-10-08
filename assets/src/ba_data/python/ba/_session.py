@@ -205,7 +205,7 @@ class Session:
             raise NodeNotFoundError()
         return node
 
-    def should_allow_mid_activity_joins(self, activity: Activity) -> bool:
+    def should_allow_mid_activity_joins(self, activity: ba.Activity) -> bool:
         """Returned value is used by the Session to determine
         whether to allow players to join in the middle of activity.
 
