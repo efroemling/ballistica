@@ -179,6 +179,8 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
     # Show messages when players die since it's meaningful here.
     announce_player_deaths = True
 
+    allow_mid_activity_joins = False
+
     @classmethod
     def get_available_settings(
             cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
@@ -257,23 +259,6 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
             self.session, ba.DualTeamSession) else 'last one standing wins'
 
     def on_player_join(self, player: Player) -> None:
-
-        # No longer allowing mid-game joiners here; too easy to exploit.
-        if self.has_begun():
-
-            # Make sure their team has survival seconds set if they're all dead
-            # (otherwise blocked new ffa players are considered 'still alive'
-            # in score tallying).
-            if (self._get_total_team_lives(player.team) == 0
-                    and player.team.survival_seconds is None):
-                player.team.survival_seconds = 0
-            ba.screenmessage(
-                ba.Lstr(resource='playerDelayedJoinText',
-                        subs=[('${PLAYER}', player.getname(full=True))]),
-                color=(0, 1, 0),
-            )
-            return
-
         player.lives = self._lives_per_player
 
         if self._solo_mode:

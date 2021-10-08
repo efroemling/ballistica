@@ -112,6 +112,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     # transitions).
     inherits_tint = False
 
+    # Whether players should be allowed to join in the middle of
+    # activity.
+    allow_mid_activity_joins: bool = True
+
     # If the activity fades or transitions in, it should set the length of
     # time here so that previous activities will be kept alive for that
     # long (avoiding 'holes' in the screen)

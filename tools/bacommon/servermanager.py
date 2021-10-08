@@ -51,9 +51,13 @@ class ServerConfig:
     # exposed but I'll try to add that soon.
     max_party_size: int = 6
 
-    # Options here are 'ffa' (free-for-all) and 'teams'
+    # Options here are 'ffa' (free-for-all), 'teams' and 'coop' (cooperative)
     # This value is ignored if you supply a playlist_code (see below).
     session_type: str = 'ffa'
+
+    # There are unavailable co-op playlists now, so if you want to host a co-op
+    # game, pass level name here.
+    coop_game_name: Optional[str] = None
 
     # To host your own custom playlists, use the 'share' functionality in the
     # playlist editor in the regular version of the game.

@@ -16,6 +16,7 @@ import _ba
 from ba._generated.enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
+from ba._coopsession import CoopSession
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any, Type
@@ -96,6 +97,8 @@ class ServerController:
         self._playlist_fetch_sent_request = False
         self._playlist_fetch_got_response = False
         self._playlist_fetch_code = -1
+
+        self._coop_game_name = self._config.coop_game_name
 
         # Now sit around doing any pre-launch prep such as waiting for
         # account sign-in or fetching playlists; this will kick off the
@@ -289,11 +292,14 @@ class ServerController:
             return FreeForAllSession
         if self._config.session_type == 'teams':
             return DualTeamSession
+        if self._config.session_type == 'coop':
+            return CoopSession
         raise RuntimeError(
             f'Invalid session_type: "{self._config.session_type}"')
 
     def _launch_server_session(self) -> None:
         """Kick off a host-session based on the current server config."""
+        # pylint: disable=too-many-branches
         app = _ba.app
         appcfg = app.config
         sessiontype = self._get_session_type()
@@ -311,6 +317,8 @@ class ServerController:
                 ptypename = 'Free-for-All'
             elif sessiontype is DualTeamSession:
                 ptypename = 'Team Tournament'
+            elif sessiontype is CoopSession:
+                ptypename = 'Coop'
             else:
                 raise RuntimeError(f'Unknown session type {sessiontype}')
 
@@ -340,6 +348,13 @@ class ServerController:
             appcfg['Team Tournament Playlist Selection'] = self._playlist_name
             appcfg['Team Tournament Playlist Randomize'] = (
                 self._config.playlist_shuffle)
+        elif sessiontype is CoopSession:
+            gamename = self._coop_game_name or 'Default:Onslaught Training'
+            campaignname, levelname = gamename.split(':')
+            app.coop_session_args = {
+                'campaign': campaignname,
+                'level': levelname,
+            }
         else:
             raise RuntimeError(f'Unknown session type {sessiontype}')
 

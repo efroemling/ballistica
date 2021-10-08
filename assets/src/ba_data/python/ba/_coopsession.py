@@ -90,6 +90,16 @@ class CoopSession(Session):
         """Get the game instance currently being played."""
         return self._current_game_instance
 
+    def should_allow_mid_activity_joins(self, activity: ba.Activity) -> bool:
+        # pylint: disable=cyclic-import
+        from ba._gameactivity import GameActivity
+
+        # Disallow any joins in the middle of the game.
+        if isinstance(activity, GameActivity):
+            return False
+
+        return True
+
     def _update_on_deck_game_instances(self) -> None:
         # pylint: disable=cyclic-import
         from ba._gameactivity import GameActivity
@@ -156,8 +166,24 @@ class CoopSession(Session):
         from ba._general import WeakCall
         super().on_player_leave(sessionplayer)
 
-        # If all our players leave we wanna quit out of the session.
-        _ba.timer(2.0, WeakCall(self._end_session_if_empty))
+        _ba.timer(2.0, WeakCall(self._check_end_game))
+
+    def _check_end_game(self) -> None:
+        if not _ba.app.server:
+            self._end_session_if_empty()
+
+        activity = self.getactivity()
+        if activity is None:
+            return  # Probably everything is already broken, why do something?
+
+        if [player for player in activity.players if player.is_alive()]:
+            return
+
+        with _ba.Context(activity):
+            from ba._gameactivity import GameActivity
+
+            if isinstance(activity, GameActivity):
+                activity.end_game()
 
     def _end_session_if_empty(self) -> None:
         activity = self.getactivity()
@@ -250,10 +276,11 @@ class CoopSession(Session):
 
         # If at any point we have no in-game players, quit out of the session
         # (this can happen if someone leaves in the tutorial for instance).
-        active_players = [p for p in self.sessionplayers if p.in_game]
-        if not active_players:
-            self.end()
-            return
+        if isinstance(activity, TutorialActivity):
+            active_players = [p for p in self.sessionplayers if p.in_game]
+            if not active_players:
+                self.end()
+                return
 
         # If we're in a between-round activity or a restart-activity,
         # hop into a round.

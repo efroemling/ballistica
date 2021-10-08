@@ -118,6 +118,12 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._tournament_time_remaining_text: Optional[Text] = None
         self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
 
+        # Stuff for activity skip by pressing button
+        self._birth_time = ba.time()
+        self._min_view_time = 5.0
+        self._allow_server_transition = False
+        self._server_transitioning: Optional[bool] = None
+
         self._playerinfos: List[ba.PlayerInfo] = settings['playerinfos']
         assert isinstance(self._playerinfos, list)
         assert (isinstance(i, ba.PlayerInfo) for i in self._playerinfos)
@@ -485,6 +491,46 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if self._store_button_instance is not None:
             self._store_button_instance.set_position((pos_x + 100, pos_y))
 
+    def _player_press(self) -> None:
+        # (Only for headless builds).
+
+        # If this activity is a good 'end point', ask server-mode just once if
+        # it wants to do anything special like switch sessions or kill the app.
+        if (self._allow_server_transition and _ba.app.server is not None
+                and self._server_transitioning is None):
+            self._server_transitioning = _ba.app.server.handle_transition()
+            assert isinstance(self._server_transitioning, bool)
+
+        # If server-mode is handling this, don't do anything ourself.
+        if self._server_transitioning is True:
+            return
+
+        # Otherwise restart current level.
+        self._campaign.set_selected_level(self._level_name)
+        with ba.Context(self):
+            self.end({'outcome': 'restart'})
+
+    def _safe_assign(self, player: ba.Player) -> None:
+        # (Only for headless builds).
+
+        # Just to be extra careful, don't assign if we're transitioning out.
+        # (though theoretically that should be ok).
+        if not self.is_transitioning_out() and player:
+            player.assigninput(
+                (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
+                 ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
+                self._player_press)
+
+    def on_player_join(self, player: ba.Player) -> None:
+        super().on_player_join(player)
+
+        if ba.app.server is not None:
+            # Host can't press retry button, so anyone can do it instead.
+            time_till_assign = max(
+                0, self._birth_time + self._min_view_time - _ba.time())
+
+            ba.timer(time_till_assign, ba.WeakCall(self._safe_assign, player))
+
     def on_begin(self) -> None:
         # FIXME: Clean this up.
         # pylint: disable=too-many-statements
@@ -582,19 +628,35 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
              color=(0.5, 0.7, 0.5, 1),
              position=(0, 230)).autoretain()
 
-        adisp = _ba.get_account_display_string()
-        txt = Text(ba.Lstr(resource='waitingForHostText',
-                           subs=[('${HOST}', adisp)]),
-                   maxwidth=300,
-                   transition=Text.Transition.FADE_IN,
-                   transition_delay=8.0,
-                   scale=0.85,
-                   h_align=Text.HAlign.CENTER,
-                   v_align=Text.VAlign.CENTER,
-                   color=(1, 1, 0, 1),
-                   position=(0, -230)).autoretain()
-        assert txt.node
-        txt.node.client_only = True
+        if ba.app.server is None:
+            # If we're running in normal non-headless build, show this text
+            # because only host can continue the game.
+            adisp = _ba.get_account_display_string()
+            txt = Text(ba.Lstr(resource='waitingForHostText',
+                               subs=[('${HOST}', adisp)]),
+                       maxwidth=300,
+                       transition=Text.Transition.FADE_IN,
+                       transition_delay=8.0,
+                       scale=0.85,
+                       h_align=Text.HAlign.CENTER,
+                       v_align=Text.VAlign.CENTER,
+                       color=(1, 1, 0, 1),
+                       position=(0, -230)).autoretain()
+            assert txt.node
+            txt.node.client_only = True
+        else:
+            # In headless build, anyone can continue the game.
+            sval = ba.Lstr(resource='pressAnyButtonPlayAgainText')
+            Text(sval,
+                 v_attach=Text.VAttach.BOTTOM,
+                 h_align=Text.HAlign.CENTER,
+                 flash=True,
+                 vr_depth=50,
+                 position=(0, 60),
+                 scale=0.8,
+                 color=(0.5, 0.7, 0.5, 0.5),
+                 transition=Text.Transition.IN_BOTTOM_SLOW,
+                 transition_delay=self._min_view_time).autoretain()
 
         if self._score is not None:
             ba.timer(0.35,
