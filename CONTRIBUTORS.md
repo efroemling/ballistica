@@ -8,8 +8,8 @@
 - Modder
 - Fixed some game modes
 
-### Roman Trapeznikov
-- Bug fixes and code cleanup
+### Roman Trapeznikov (Dliwk)
+- Bug fixes and a few features.
 
 ### Benefit-Zebra
 - Unofficial BombSquad Bug Finder
