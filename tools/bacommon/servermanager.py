@@ -55,10 +55,7 @@ class ServerConfig:
     # This value is ignored if you supply a playlist_code (see below).
     session_type: str = 'ffa'
 
-    # There are unavailable co-op playlists now, so if you want to host a co-op
-    # game, pass level name here.
-    coop_game_name: Optional[str] = None
-
+    # Playlist-code for teams or free-for-all mode sessions.
     # To host your own custom playlists, use the 'share' functionality in the
     # playlist editor in the regular version of the game.
     # This will give you a numeric code you can enter here to host that
@@ -75,6 +72,15 @@ class ServerConfig:
     # If True, keeps team sizes equal by disallowing joining the largest team
     # (teams mode only).
     auto_balance_teams: bool = True
+
+    # The campaign used when in co-op session mode.
+    # Do print(ba.app.campaigns) to see available campaign names.
+    coop_campaign: str = 'Easy'
+
+    # The level name within the campaign used in co-op session mode.
+    # For campaign name FOO, do print(ba.app.campaigns['FOO'].levels) to see
+    # available level names.
+    coop_level: str = 'Onslaught Training'
 
     # Whether to enable telnet access.
     # IMPORTANT: This option is no longer available, as it was being used

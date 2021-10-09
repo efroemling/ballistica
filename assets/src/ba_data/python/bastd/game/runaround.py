@@ -561,7 +561,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = 'Reach wave 2 to rank.'
+            fail_message = ba.Lstr(resource='reachWave2Text')
 
         self.end(delay=delay,
                  results={

@@ -166,51 +166,44 @@ class CoopSession(Session):
         from ba._general import WeakCall
         super().on_player_leave(sessionplayer)
 
-        _ba.timer(2.0, WeakCall(self._check_end_game))
+        _ba.timer(2.0, WeakCall(self._handle_empty_activity))
 
-    def _check_end_game(self) -> None:
-        if not _ba.app.server:
-            self._end_session_if_empty()
+    def _handle_empty_activity(self) -> None:
+        """Handle cases where all players have left the current activity."""
 
-        activity = self.getactivity()
-        if activity is None:
-            return  # Probably everything is already broken, why do something?
-
-        if [player for player in activity.players if player.is_alive()]:
-            return
-
-        with _ba.Context(activity):
-            from ba._gameactivity import GameActivity
-
-            if isinstance(activity, GameActivity):
-                activity.end_game()
-
-    def _end_session_if_empty(self) -> None:
+        from ba._gameactivity import GameActivity
         activity = self.getactivity()
         if activity is None:
             return  # Hmm what should we do in this case?
 
-        # If there's still players in the current activity, we're good.
+        # If there are still players in the current activity, we're good.
         if activity.players:
             return
 
-        # If there's *no* players left in the current activity but there *is*
-        # in the session, restart the activity to pull them into the game
-        # (or quit if they're just in the lobby).
+        # If there are *not* players in the current activity but there
+        # *are* in the session:
         if not activity.players and self.sessionplayers:
 
-            # Special exception for tourney games; don't auto-restart these.
-            if self.tournament_id is not None:
-                self.end()
-            else:
-                # Don't restart joining activities; this probably means there's
-                # someone with a chooser up in that case.
-                if not activity.is_joining_activity:
+            # If we're in a game, we should restart to pull in players
+            # currently waiting in the session.
+            if isinstance(activity, GameActivity):
+
+                # Never restart tourney games however; just end the session
+                # if all players are gone.
+                if self.tournament_id is not None:
+                    self.end()
+                else:
                     self.restart()
 
-        # Hmm; no players anywhere. lets just end the session.
+        # Hmm; no players anywhere. Let's end the entire session if we're
+        # running a GUI (or just the current game if we're running headless).
         else:
-            self.end()
+            if not _ba.app.headless_mode:
+                self.end()
+            else:
+                if isinstance(activity, GameActivity):
+                    with _ba.Context(activity):
+                        activity.end_game()
 
     def _on_tournament_restart_menu_press(
             self, resume_callback: Callable[[], Any]) -> None:
@@ -274,9 +267,10 @@ class CoopSession(Session):
         else:
             outcome = '' if results is None else results.get('outcome', '')
 
-        # If at any point we have no in-game players, quit out of the session
-        # (this can happen if someone leaves in the tutorial for instance).
-        if isinstance(activity, TutorialActivity):
+        # If we're running with a gui and at any point we have no
+        # in-game players, quit out of the session (this can happen if
+        # someone leaves in the tutorial for instance).
+        if not _ba.app.headless_mode:
             active_players = [p for p in self.sessionplayers if p.in_game]
             if not active_players:
                 self.end()

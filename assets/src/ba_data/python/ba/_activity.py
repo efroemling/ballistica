@@ -112,8 +112,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     # transitions).
     inherits_tint = False
 
-    # Whether players should be allowed to join in the middle of
-    # activity.
+    # Whether players should be allowed to join in the middle of this
+    # activity. Note that Sessions may not allow mid-activity-joins even
+    # if the activity says its ok.
     allow_mid_activity_joins: bool = True
 
     # If the activity fades or transitions in, it should set the length of

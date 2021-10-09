@@ -98,8 +98,6 @@ class ServerController:
         self._playlist_fetch_got_response = False
         self._playlist_fetch_code = -1
 
-        self._coop_game_name = self._config.coop_game_name
-
         # Now sit around doing any pre-launch prep such as waiting for
         # account sign-in or fetching playlists; this will kick off the
         # session once done.
@@ -349,11 +347,9 @@ class ServerController:
             appcfg['Team Tournament Playlist Randomize'] = (
                 self._config.playlist_shuffle)
         elif sessiontype is CoopSession:
-            gamename = self._coop_game_name or 'Default:Onslaught Training'
-            campaignname, levelname = gamename.split(':')
             app.coop_session_args = {
-                'campaign': campaignname,
-                'level': levelname,
+                'campaign': self._config.coop_campaign,
+                'level': self._config.coop_level,
             }
         else:
             raise RuntimeError(f'Unknown session type {sessiontype}')

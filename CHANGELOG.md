@@ -1,4 +1,5 @@
 ### 1.6.5 (20388)
+- Added co-op support to server builds (thanks Dliwk!)
 
 ### 1.6.4 (20382)
 - Some cleanups in the Favorites tab of the gather window.

@@ -36,6 +36,10 @@ class Level:
         self._index: Optional[int] = None
         self._score_version_string: Optional[str] = None
 
+    def __repr__(self) -> str:
+        cls = type(self)
+        return f"<{cls.__module__}.{cls.__name__} '{self._name}'>"
+
     @property
     def name(self) -> str:
         """The unique name for this Level."""

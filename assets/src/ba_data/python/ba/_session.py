@@ -206,11 +206,12 @@ class Session:
         return node
 
     def should_allow_mid_activity_joins(self, activity: ba.Activity) -> bool:
-        """Returned value is used by the Session to determine
-        whether to allow players to join in the middle of activity.
+        """Ask ourself if we should allow joins during an Activity.
 
-        Activity.allow_mid_activity_joins is also required to allow these
-        joins."""
+        Note that for a join to be allowed, both the Session and Activity
+        have to be ok with it (via this function and the
+        Activity.allow_mid_activity_joins property.
+        """
         del activity  # Unused.
         return True
 

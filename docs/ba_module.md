@@ -1837,11 +1837,11 @@ is pressed.</p>
 <dt><h4><a name="method_ba_CoopSession__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></dt></h4><dd>
 <p><span>should_allow_mid_activity_joins(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; bool</span></p>
 
-<p>Returned value is used by the Session to determine
-whether to allow players to join in the middle of activity.</p>
+<p>Ask ourself if we should allow joins during an Activity.</p>
 
-<p>Activity.allow_mid_activity_joins is also required to allow these
-joins.</p>
+<p>Note that for a join to be allowed, both the Session and Activity
+have to be ok with it (via this function and the
+Activity.allow_mid_activity_joins property.</p>
 
 </dd>
 </dl>
@@ -5263,11 +5263,11 @@ session.setactivity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>(
 <dt><h4><a name="method_ba_Session__should_allow_mid_activity_joins">should_allow_mid_activity_joins()</a></dt></h4><dd>
 <p><span>should_allow_mid_activity_joins(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; bool</span></p>
 
-<p>Returned value is used by the Session to determine
-whether to allow players to join in the middle of activity.</p>
+<p>Ask ourself if we should allow joins during an Activity.</p>
 
-<p>Activity.allow_mid_activity_joins is also required to allow these
-joins.</p>
+<p>Note that for a join to be allowed, both the Session and Activity
+have to be ok with it (via this function and the
+Activity.allow_mid_activity_joins property.</p>
 
 </dd>
 </dl>
