@@ -281,7 +281,7 @@ class Session:
             assert isinstance(player, (Player, type(None)))
 
             # Remove them from any current Activity.
-            if activity is not None:
+            if player is not None and activity is not None:
                 if player in activity.players:
                     activity.remove_player(sessionplayer)
                 else:
