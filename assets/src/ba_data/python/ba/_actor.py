@@ -7,15 +7,15 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, TypeVar, overload
 
+import _ba
 from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
 from ba._error import print_exception, ActivityNotFoundError
-import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Literal
     import ba
 
-T = TypeVar('T', bound='Actor')
+TA = TypeVar('TA', bound='Actor')
 
 
 class Actor:
@@ -94,7 +94,7 @@ class Actor:
 
         return UNHANDLED
 
-    def autoretain(self: T) -> T:
+    def autoretain(self: TA) -> TA:
         """Keep this Actor alive without needing to hold a reference to it.
 
         This keeps the ba.Actor in existence by storing a reference to it

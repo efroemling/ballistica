@@ -498,3 +498,58 @@ def linearstep(edge0: float, edge1: float, x: float) -> float:
     Values outside of the range return 0 or 1.
     """
     return max(0.0, min(1.0, (x - edge0) / (edge1 - edge0)))
+
+
+def _compact_id(num: int, chars: str) -> str:
+    if num < 0:
+        raise ValueError('Negative integers not allowed.')
+
+    # Chars must be in sorted order for sorting to work correctly
+    # on our output.
+    assert ''.join(sorted(list(chars))) == chars
+
+    base = len(chars)
+    out = ''
+    while num:
+        out += chars[num % base]
+        num //= base
+    return out[::-1] or '0'
+
+
+def human_readable_compact_id(num: int) -> str:
+    """Given a positive int, return a compact string representation for it.
+
+    Handy for visualizing unique numeric ids using as few as possible chars.
+    This representation uses only lowercase letters and numbers (minus the
+    following letters for readability):
+     's' is excluded due to similarity to '5'.
+     'l' is excluded due to similarity to '1'.
+     'i' is excluded due to similarity to '1'.
+     'o' is excluded due to similarity to '0'.
+     'z' is excluded due to similarity to '2'.
+
+    When reading human input consisting of these IDs, it may be desirable
+    to map the disallowed chars to their corresponding allowed ones
+    ('o' -> '0', etc).
+
+    Sort order for these ids is the same as the original numbers.
+
+    If more compactness is desired at the expense of readability,
+    use compact_id() instead.
+    """
+    return _compact_id(num, '0123456789abcdefghjkmnpqrtuvwxy')
+
+
+def compact_id(num: int) -> str:
+    """Given a positive int, return a compact string representation for it.
+
+    Handy for visualizing unique numeric ids using as few as possible chars.
+    This version is more compact than human_readable_compact_id() but less
+    friendly to humans due to using both capital and lowercase letters,
+    both 'O' and '0', etc.
+
+    Sort order for these ids is the same as the original numbers.
+    """
+    return _compact_id(
+        num, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        'abcdefghijklmnopqrstuvwxyz')

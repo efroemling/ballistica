@@ -64,7 +64,7 @@ class ErrorResponse(Response):
     instead results in a local exception being raised.
     """
     error_message: Annotated[str, IOAttrs('m')]
-    error_type: Annotated[ErrorType, IOAttrs('e')]
+    error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.OTHER
 
 
 @ioprepped

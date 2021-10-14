@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2021-10-09 for Ballistica version 1.6.5 build 20393</em></h4>
+<h4><em>last updated on 2021-10-14 for Ballistica version 1.6.5 build 20393</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -753,7 +753,7 @@ is a convenient way to access this same functionality.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Actor__autoretain">autoretain()</a></dt></h4><dd>
-<p><span>autoretain(self: T) -&gt; T</span></p>
+<p><span>autoretain(self: TA) -&gt; TA</span></p>
 
 <p>Keep this Actor alive without needing to hold a reference to it.</p>
 
