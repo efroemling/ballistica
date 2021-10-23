@@ -113,7 +113,10 @@ def _windows_enable_color() -> bool:
         fdout = os.open('CONOUT$', os.O_RDWR)
         try:
             hout = msvcrt.get_osfhandle(fdout)  # type: ignore
-            old_mode = wintypes.DWORD()  # pylint: disable=E1120
+            # pylint: disable=useless-suppression
+            # pylint: disable=no-value-for-parameter
+            old_mode = wintypes.DWORD()
+            # pylint: enable=useless-suppression
             kernel32.GetConsoleMode(hout, ctypes.byref(old_mode))
             mode = (new_mode & mask) | (old_mode.value & ~mask)
             kernel32.SetConsoleMode(hout, mode)
