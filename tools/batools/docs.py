@@ -11,7 +11,7 @@ import datetime
 import inspect
 import subprocess
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Union, cast
+from typing import TYPE_CHECKING, Union, cast
 from enum import Enum
 
 from efro.error import CleanError
@@ -19,8 +19,7 @@ from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import (Type, Optional, Tuple, Callable, Dict, Any, Sequence,
-                        Set)
+    from typing import Optional, Callable, Any, Sequence
 
 CATEGORY_STRING = 'Category:'
 
@@ -61,15 +60,15 @@ class ClassInfo:
     """Info about a class of functions/classes."""
     name: str
     category: str
-    methods: List[FunctionInfo]
-    inherited_methods: List[FunctionInfo]
-    attributes: List[AttributeInfo]
-    parents: List[str]
+    methods: list[FunctionInfo]
+    inherited_methods: list[FunctionInfo]
+    attributes: list[AttributeInfo]
+    parents: list[str]
     docs: Optional[str]
-    enum_values: Optional[List[str]]
+    enum_values: Optional[list[str]]
 
 
-def parse_docs_attrs(attrs: List[AttributeInfo], docs: str) -> str:
+def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
     """Given a docs str, parses attribute descriptions contained within."""
     docs_lines = docs.splitlines()
     attr_line = None
@@ -115,14 +114,14 @@ def parse_docs_attrs(attrs: List[AttributeInfo], docs: str) -> str:
     return docs
 
 
-def _get_defining_class(cls: Type, name: str) -> Optional[Type]:
+def _get_defining_class(cls: type, name: str) -> Optional[type]:
     for i in cls.mro()[1:]:
         if hasattr(i, name):
             return i
     return None
 
 
-def _get_bases(cls: Type) -> List[str]:
+def _get_bases(cls: type) -> list[str]:
     bases = []
     for par in cls.mro()[1:]:
         if par is not object:
@@ -199,7 +198,7 @@ def _split_into_paragraphs(docs: str, filter_type: str, indent: int) -> str:
     return docs
 
 
-def _filter_type_settings(filter_type: str) -> Tuple[Optional[Callable], int]:
+def _filter_type_settings(filter_type: str) -> tuple[Optional[Callable], int]:
     get_category_href_func = None
     if filter_type == 'class':
         indent = 30
@@ -216,7 +215,7 @@ def _filter_type_settings(filter_type: str) -> Tuple[Optional[Callable], int]:
     return get_category_href_func, indent
 
 
-def _get_defining_class_backwards(cls: Type, name: str) -> Optional[Type]:
+def _get_defining_class_backwards(cls: type, name: str) -> Optional[type]:
     mro = cls.mro()
     mro.reverse()
     for i in mro:
@@ -225,7 +224,7 @@ def _get_defining_class_backwards(cls: Type, name: str) -> Optional[Type]:
     return None
 
 
-def _get_module_classes(module: ModuleType) -> List[Tuple[str, Type]]:
+def _get_module_classes(module: ModuleType) -> list[tuple[str, type]]:
     names = dir(module)
 
     # Look for all public classes in the provided module.
@@ -250,7 +249,7 @@ def _get_module_classes(module: ModuleType) -> List[Tuple[str, Type]]:
     return classes_by_name
 
 
-def _is_inherited(cls: Type, name: str) -> bool:
+def _is_inherited(cls: type, name: str) -> bool:
 
     method = getattr(cls, name)
 
@@ -314,7 +313,7 @@ def _get_category(docs: str, category_type: CategoryType) -> str:
     return category
 
 
-def _print_child_classes(category_classes: List[ClassInfo], parent: str,
+def _print_child_classes(category_classes: list[ClassInfo], parent: str,
                          indent: int) -> str:
     out = ''
     valid_classes = []
@@ -349,8 +348,8 @@ def _print_child_classes(category_classes: List[ClassInfo], parent: str,
     return out
 
 
-def _add_inner_classes(class_objs: Sequence[Type],
-                       classes_by_name: List[Tuple[str, Type]]) -> None:
+def _add_inner_classes(class_objs: Sequence[type],
+                       classes_by_name: list[tuple[str, type]]) -> None:
 
     # Ok, now go through all existing classes and look for classes
     # defined within.
@@ -371,21 +370,21 @@ class Generator:
     """class which handles docs generation."""
 
     def __init__(self) -> None:
-        self._index_keys: List[str] = []
+        self._index_keys: list[str] = []
 
         # Make a list of missing stuff so we can warn about it in one
         # big chunk at the end (so the user can batch their corrections).
-        self._errors: List[Any] = []
-        self._index: Dict[str, Tuple[str, Union[ClassInfo, FunctionInfo,
+        self._errors: list[Any] = []
+        self._index: dict[str, tuple[str, Union[ClassInfo, FunctionInfo,
                                                 AttributeInfo]]] = {}
         self._out = ''
-        self._classes: List[ClassInfo] = []
-        self._functions: List[FunctionInfo] = []
-        self._merged_categories: List[Tuple[str, str,
-                                            List[Union[ClassInfo,
+        self._classes: list[ClassInfo] = []
+        self._functions: list[FunctionInfo] = []
+        self._merged_categories: list[tuple[str, str,
+                                            list[Union[ClassInfo,
                                                        FunctionInfo]]]] = []
 
-    def name_variants(self, name: str) -> List[str]:
+    def name_variants(self, name: str) -> list[str]:
         """Return variants of a word (such as plural) for linking."""
         # Do 'ies' plural for words ending in y.
         # (but not things like foo.y or display or prey)
@@ -397,7 +396,7 @@ class Generator:
 
     def _add_index_links(self,
                          docs: str,
-                         ignore_links: Optional[List[str]] = None) -> str:
+                         ignore_links: Optional[list[str]] = None) -> str:
         """Add links to indexed classes/methods/etc found in a docstr."""
         sub_num = 0
         subs = {}
@@ -446,14 +445,14 @@ class Generator:
             docs = docs.replace(sub_name, sub_val)
         return docs
 
-    def _get_all_attrs_for_class(self, cls: Type,
-                                 docs: str) -> Tuple[str, List[AttributeInfo]]:
+    def _get_all_attrs_for_class(self, cls: type,
+                                 docs: str) -> tuple[str, list[AttributeInfo]]:
         """
         if there's an 'Attributes' section in the docs, strip it out and
         create attributes entries out of it.
         Returns the stripped down docs as well as detected attrs.
         """
-        attrs: List[AttributeInfo] = []
+        attrs: list[AttributeInfo] = []
 
         # Start by pulling any type info we find in the doc str.
         # (necessary in many non-property cases since there's no other way
@@ -473,7 +472,7 @@ class Generator:
         return docs, attrs
 
     def _get_class_level_types_for_doc_attrs(
-            self, cls: Type, attrs: List[AttributeInfo]) -> None:
+            self, cls: type, attrs: list[AttributeInfo]) -> None:
         # Take note of all the attrs that we're aware of already;
         # these are the ones we can potentially provide type info for.
         existing_attrs_by_name = {a.name: a for a in attrs}
@@ -494,8 +493,8 @@ class Generator:
                         ' should just have one')
                 existing_attrs_by_name[aname].attr_type = aval
 
-    def _get_property_attrs_for_class(self, cls: Type,
-                                      attrs: List[AttributeInfo]) -> None:
+    def _get_property_attrs_for_class(self, cls: type,
+                                      attrs: list[AttributeInfo]) -> None:
         for attrname in dir(cls):
             attr = getattr(cls, attrname)
 
@@ -527,7 +526,7 @@ class Generator:
                                       docs=attrdocs,
                                       attr_type=attrtype))
 
-    def _get_base_docs_for_class(self, cls: Type) -> str:
+    def _get_base_docs_for_class(self, cls: type) -> str:
         if cls.__doc__ is not None:
             docs = cls.__doc__
             docs_lines = docs.splitlines()
@@ -556,13 +555,13 @@ class Generator:
             self._errors.append(f'base docs for class {cls}')
         return docs
 
-    def _get_enum_values_for_class(self, cls: Type) -> Optional[List[str]]:
+    def _get_enum_values_for_class(self, cls: type) -> Optional[list[str]]:
         if issubclass(cls, Enum):
             return [val.name for val in cls]
         return None
 
     def _get_methods_for_class(
-            self, cls: Type) -> Tuple[List[FunctionInfo], List[FunctionInfo]]:
+            self, cls: type) -> tuple[list[FunctionInfo], list[FunctionInfo]]:
         import types
 
         method_types = [
@@ -576,8 +575,8 @@ class Generator:
             and '_no_init' not in name
         ]
 
-        methods: List[FunctionInfo] = []
-        inherited_methods: List[FunctionInfo] = []
+        methods: list[FunctionInfo] = []
+        inherited_methods: list[FunctionInfo] = []
         for mth in methods_raw:
 
             # Protocols seem to give this...
@@ -616,8 +615,8 @@ class Generator:
                                  is_class_method=is_class_method))
         return methods, inherited_methods
 
-    def _python_method_docs(self, cls: Type,
-                            mth: Callable) -> Tuple[str, bool]:
+    def _python_method_docs(self, cls: type,
+                            mth: Callable) -> tuple[str, bool]:
         import pydoc
         mdocs_lines = pydoc.plain(pydoc.render_doc(mth)).splitlines()[2:]
 
@@ -664,9 +663,9 @@ class Generator:
         mdocs = '\n'.join(mdocs_lines)
         return mdocs, is_class_method
 
-    def _handle_single_line_method_docs(self, cls: Type,
-                                        mdocs_lines: List[str],
-                                        mth: Callable) -> List[str]:
+    def _handle_single_line_method_docs(self, cls: type,
+                                        mdocs_lines: list[str],
+                                        mth: Callable) -> list[str]:
         import pydoc
         for testclass in cls.mro()[1:]:
             testm = getattr(testclass, mth.__name__, None)
@@ -734,7 +733,7 @@ class Generator:
         # ones are searched first (such as nested classes like ba.Foo.Bar).
         self._index_keys.reverse()
 
-    def _write_inherited_attrs(self, inherited_attrs: Dict[str, str]) -> None:
+    def _write_inherited_attrs(self, inherited_attrs: dict[str, str]) -> None:
         style = (' style="padding-left: 0px;"' if DO_STYLES else '')
         self._out += f'<h3{style}>Attributes Inherited:</h3>\n'
         style = (' style="padding-left: 30px;"' if DO_STYLES else '')
@@ -749,7 +748,7 @@ class Generator:
         self._out += '</h5>\n'
 
     def _write_attrs(self, cls: ClassInfo,
-                     attributes: List[AttributeInfo]) -> None:
+                     attributes: list[AttributeInfo]) -> None:
         # Include a block of links to our attrs if we have more
         # than one.
         if len(attributes) > 1:
@@ -788,8 +787,8 @@ class Generator:
         self._out += '</dl>\n'
 
     def _write_class_attrs_all(self, cls: ClassInfo,
-                               attributes: List[AttributeInfo],
-                               inherited_attrs: Dict[str, str]) -> None:
+                               attributes: list[AttributeInfo],
+                               inherited_attrs: dict[str, str]) -> None:
         # If this class has no non-inherited attrs, just print a link to
         # the base class instead of repeating everything.
         # Nevermind for now; we never have many attrs so this isn't as
@@ -852,7 +851,7 @@ class Generator:
                 self._out += '</h5>\n'
 
     def _write_methods_for_class(self, cls: ClassInfo,
-                                 methods: List[FunctionInfo]) -> None:
+                                 methods: list[FunctionInfo]) -> None:
         """Dump methods for a class."""
         if cls.methods:
             # Just say "methods" if we had no inherited ones.
@@ -973,8 +972,8 @@ class Generator:
                           '<em>&lt;top level class&gt;</em>\n')
 
     def _get_inherited_attrs(self, cls: ClassInfo,
-                             attr_name_set: Set[str]) -> Dict[str, str]:
-        inherited_attrs: Dict[str, str] = {}
+                             attr_name_set: set[str]) -> dict[str, str]:
+        inherited_attrs: dict[str, str] = {}
         for par in cls.parents:
             if par in self._index:
                 parent_class = self._index[par][1]
@@ -1110,7 +1109,7 @@ class Generator:
                 self._out += (f'<h4><a{cssclass} name="' +
                               _get_class_category_href(cname) + '">' + cname +
                               '</a></h4>\n')
-                classes_sorted = cast(List[ClassInfo], cmembers)
+                classes_sorted = cast(list[ClassInfo], cmembers)
                 classes_sorted.sort(key=lambda x: x.name.lower())
                 pcc = _print_child_classes(classes_sorted, '', 0)
                 self._out += pcc
@@ -1121,7 +1120,7 @@ class Generator:
                               _get_function_category_href(cname) + '">' +
                               cname + '</a></h4>\n'
                               '<ul>\n')
-                funcs = cast(List[FunctionInfo], cmembers)
+                funcs = cast(list[FunctionInfo], cmembers)
                 funcs.sort(key=lambda x: x.name.lower())
                 for fnc in funcs:
                     self._out += ('   <li><a href="#' +
@@ -1134,7 +1133,7 @@ class Generator:
     def _filter_docs(self,
                      docs: str,
                      filter_type: str,
-                     ignore_links: List[str] = None) -> str:
+                     ignore_links: list[str] = None) -> str:
         get_category_href_func, indent = _filter_type_settings(filter_type)
         docs = docs.replace('>', '&gt;')
         docs = docs.replace('<', '&lt;')
@@ -1189,7 +1188,7 @@ class Generator:
         self._create_index()
 
         # Build a sorted list of class categories.
-        c_categories: Dict[str, List[Union[ClassInfo, FunctionInfo]]] = {}
+        c_categories: dict[str, list[Union[ClassInfo, FunctionInfo]]] = {}
         self._classes.sort(key=lambda x: x.name.lower())
         for cls in self._classes:
             assert cls.category is not None
@@ -1202,7 +1201,7 @@ class Generator:
                                    for cname, cval in c_categories.items()]
 
         # Build sorted function category list.
-        f_categories: Dict[str, List[FunctionInfo]] = {}
+        f_categories: dict[str, list[FunctionInfo]] = {}
         for fnc in self._functions:
             if fnc.category is not None:
                 category = fnc.category
@@ -1213,11 +1212,11 @@ class Generator:
             f_categories[category].append(fnc)
 
         self._merged_categories += [(cname, 'function',
-                                     cast(List[Union[ClassInfo, FunctionInfo]],
+                                     cast(list[Union[ClassInfo, FunctionInfo]],
                                           cval))
                                     for cname, cval in f_categories.items()]
 
-        def sort_func(entry: Tuple[str, str, Any]) -> str:
+        def sort_func(entry: tuple[str, str, Any]) -> str:
             name = entry[0].lower()
 
             # Sort a few recognized categories somewhat manually.

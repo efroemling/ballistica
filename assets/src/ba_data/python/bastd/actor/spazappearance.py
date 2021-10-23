@@ -9,10 +9,10 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Tuple
+    from typing import Optional
 
 
-def get_appearances(include_locked: bool = False) -> List[str]:
+def get_appearances(include_locked: bool = False) -> list[str]:
     """Get the list of available spaz appearances."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
@@ -104,15 +104,15 @@ class Appearance:
         self.upper_leg_model = ''
         self.lower_leg_model = ''
         self.toes_model = ''
-        self.jump_sounds: List[str] = []
-        self.attack_sounds: List[str] = []
-        self.impact_sounds: List[str] = []
-        self.death_sounds: List[str] = []
-        self.pickup_sounds: List[str] = []
-        self.fall_sounds: List[str] = []
+        self.jump_sounds: list[str] = []
+        self.attack_sounds: list[str] = []
+        self.impact_sounds: list[str] = []
+        self.death_sounds: list[str] = []
+        self.pickup_sounds: list[str] = []
+        self.fall_sounds: list[str] = []
         self.style = 'spaz'
-        self.default_color: Optional[Tuple[float, float, float]] = None
-        self.default_highlight: Optional[Tuple[float, float, float]] = None
+        self.default_color: Optional[tuple[float, float, float]] = None
+        self.default_highlight: Optional[tuple[float, float, float]] = None
 
 
 def register_appearances() -> None:

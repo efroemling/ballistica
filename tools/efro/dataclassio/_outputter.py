@@ -21,7 +21,7 @@ from efro.dataclassio._base import (Codec, _parse_annotated, EXTRA_ATTRS_ATTR,
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any, Optional
     from efro.dataclassio._base import IOAttrs
 
 
@@ -39,13 +39,13 @@ class _Outputter:
         """Do the thing."""
         return self._process_dataclass(type(self._obj), self._obj, '')
 
-    def _process_dataclass(self, cls: Type, obj: Any, fieldpath: str) -> Any:
+    def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         prep = PrepSession(explicit=False).prep_dataclass(type(obj),
                                                           recursion_level=0)
         fields = dataclasses.fields(obj)
-        out: Optional[Dict[str, Any]] = {} if self._create else None
+        out: Optional[dict[str, Any]] = {} if self._create else None
         for field in fields:
             fieldname = field.name
             if fieldpath:
@@ -95,7 +95,7 @@ class _Outputter:
                 out.update(extra_attrs)
         return out
 
-    def _process_value(self, cls: Type, fieldpath: str, anntype: Any,
+    def _process_value(self, cls: type, fieldpath: str, anntype: Any,
                        value: Any, ioattrs: Optional[IOAttrs]) -> Any:
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
@@ -259,7 +259,7 @@ class _Outputter:
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
 
-    def _process_bytes(self, cls: Type, fieldpath: str, value: bytes) -> Any:
+    def _process_bytes(self, cls: type, fieldpath: str, value: bytes) -> Any:
         import base64
         if not isinstance(value, bytes):
             raise TypeError(
@@ -276,7 +276,7 @@ class _Outputter:
         assert self._codec is Codec.FIRESTORE
         return value
 
-    def _process_dict(self, cls: Type, fieldpath: str, anntype: Any,
+    def _process_dict(self, cls: type, fieldpath: str, anntype: Any,
                       value: dict, ioattrs: Optional[IOAttrs]) -> Any:
         # pylint: disable=too-many-branches
         if not isinstance(value, dict):
@@ -299,7 +299,7 @@ class _Outputter:
 
         # Ok; we've got a definite key type (which we verified as valid
         # during prep). Make sure all keys match it.
-        out: Optional[Dict] = {} if self._create else None
+        out: Optional[dict] = {} if self._create else None
         keyanntype, valanntype = childtypes
 
         # str keys we just export directly since that's supported by json.

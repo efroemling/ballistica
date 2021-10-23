@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Set
+    from typing import Optional
 
 
 @dataclass
@@ -18,10 +18,10 @@ class GradleFilterSection:
     lastline: int
 
 
-def filter_gradle_file(buildfilename: str, enabled_tags: Set[str]) -> None:
+def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
     """Filter 'EFRO_IF' sections in a gradle file."""
 
-    sections: List[GradleFilterSection] = []
+    sections: list[GradleFilterSection] = []
 
     with open(buildfilename, encoding='utf-8') as infile:
         original = infile.read()

@@ -9,7 +9,7 @@ from enum import Enum, unique
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, ClassVar, Type
+    from typing import Any, ClassVar
 
 
 @unique
@@ -113,7 +113,7 @@ def _windows_enable_color() -> bool:
         fdout = os.open('CONOUT$', os.O_RDWR)
         try:
             hout = msvcrt.get_osfhandle(fdout)  # type: ignore
-            old_mode = wintypes.DWORD()
+            old_mode = wintypes.DWORD()  # pylint: disable=E1120
             kernel32.GetConsoleMode(hout, ctypes.byref(old_mode))
             mode = (new_mode & mask) | (old_mode.value & ~mask)
             kernel32.SetConsoleMode(hout, mode)
@@ -298,7 +298,7 @@ class ClrNever(ClrBase):
 _envval = os.environ.get('EFRO_TERMCOLORS')
 _color_enabled: bool = (True if _envval == '1' else
                         False if _envval == '0' else _default_color_enabled())
-Clr: Type[ClrBase]
+Clr: type[ClrBase]
 if _color_enabled:
     Clr = ClrAlways
 else:

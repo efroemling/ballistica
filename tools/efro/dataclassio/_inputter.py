@@ -22,7 +22,7 @@ from efro.dataclassio._base import (Codec, _parse_annotated, EXTRA_ATTRS_ATTR,
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any, Optional
     from efro.dataclassio._base import IOAttrs
 
 T = TypeVar('T')
@@ -31,7 +31,7 @@ T = TypeVar('T')
 class _Inputter(Generic[T]):
 
     def __init__(self,
-                 cls: Type[T],
+                 cls: type[T],
                  codec: Codec,
                  coerce_to_float: bool,
                  allow_unknown_attrs: bool = True,
@@ -52,7 +52,7 @@ class _Inputter(Generic[T]):
         assert isinstance(out, self._cls)
         return out
 
-    def _value_from_input(self, cls: Type, fieldpath: str, anntype: Any,
+    def _value_from_input(self, cls: type, fieldpath: str, anntype: Any,
                           value: Any, ioattrs: Optional[IOAttrs]) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
         # pylint: disable=too-many-return-statements
@@ -122,7 +122,7 @@ class _Inputter(Generic[T]):
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
 
-    def _bytes_from_input(self, cls: Type, fieldpath: str,
+    def _bytes_from_input(self, cls: type, fieldpath: str,
                           value: Any) -> bytes:
         """Given input data, returns bytes."""
         import base64
@@ -142,7 +142,7 @@ class _Inputter(Generic[T]):
                             f' on {cls.__name__}; got a {type(value)}.')
         return base64.b64decode(value)
 
-    def _dataclass_from_input(self, cls: Type, fieldpath: str,
+    def _dataclass_from_input(self, cls: type, fieldpath: str,
                               values: dict) -> Any:
         """Given a dict, instantiates a dataclass of the given type.
 
@@ -165,7 +165,7 @@ class _Inputter(Generic[T]):
         # noinspection PyDataclass
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
-        args: Dict[str, Any] = {}
+        args: dict[str, Any] = {}
         for rawkey, value in values.items():
             key = prep.storage_names_to_attr_names.get(rawkey, rawkey)
             field = fields_by_name.get(key)
@@ -206,7 +206,7 @@ class _Inputter(Generic[T]):
             setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
         return out
 
-    def _dict_from_input(self, cls: Type, fieldpath: str, anntype: Any,
+    def _dict_from_input(self, cls: type, fieldpath: str, anntype: Any,
                          value: Any, ioattrs: Optional[IOAttrs]) -> Any:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -219,7 +219,7 @@ class _Inputter(Generic[T]):
         childtypes = typing.get_args(anntype)
         assert len(childtypes) in (0, 2)
 
-        out: Dict
+        out: dict
 
         # We treat 'Any' dicts simply as json; we don't do any translating.
         if not childtypes or childtypes[0] is typing.Any:
@@ -305,8 +305,8 @@ class _Inputter(Generic[T]):
 
         return out
 
-    def _sequence_from_input(self, cls: Type, fieldpath: str, anntype: Any,
-                             value: Any, seqtype: Type,
+    def _sequence_from_input(self, cls: type, fieldpath: str, anntype: Any,
+                             value: Any, seqtype: type,
                              ioattrs: Optional[IOAttrs]) -> Any:
 
         # Because we are json-centric, we expect a list for all sequences.
@@ -332,7 +332,7 @@ class _Inputter(Generic[T]):
             self._value_from_input(cls, fieldpath, childanntype, i, ioattrs)
             for i in value)
 
-    def _datetime_from_input(self, cls: Type, fieldpath: str, value: Any,
+    def _datetime_from_input(self, cls: type, fieldpath: str, value: Any,
                              ioattrs: Optional[IOAttrs]) -> Any:
 
         # For firestore we expect a datetime object.
@@ -364,10 +364,10 @@ class _Inputter(Generic[T]):
             ioattrs.validate_datetime(out, fieldpath)
         return out
 
-    def _tuple_from_input(self, cls: Type, fieldpath: str, anntype: Any,
+    def _tuple_from_input(self, cls: type, fieldpath: str, anntype: Any,
                           value: Any, ioattrs: Optional[IOAttrs]) -> Any:
 
-        out: List = []
+        out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:

@@ -9,7 +9,7 @@ import os
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Sequence
+    from typing import Optional, Sequence
 
 
 def get_human_readable_user_scripts_path() -> str:

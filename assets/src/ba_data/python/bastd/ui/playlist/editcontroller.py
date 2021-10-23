@@ -10,17 +10,17 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional
+    from typing import Any, Optional
 
 
 class PlaylistEditController:
     """Coordinates various UIs involved in playlist editing."""
 
     def __init__(self,
-                 sessiontype: Type[ba.Session],
+                 sessiontype: type[ba.Session],
                  existing_playlist_name: str = None,
                  transition: str = 'in_right',
-                 playlist: List[Dict[str, Any]] = None,
+                 playlist: list[dict[str, Any]] = None,
                  playlist_name: str = None):
         from ba.internal import preload_map_preview_media, filter_playlist
         from bastd.ui.playlist import PlaylistTypeVars
@@ -34,7 +34,7 @@ class PlaylistEditController:
         self._sessiontype = sessiontype
 
         self._editing_game = False
-        self._editing_game_type: Optional[Type[ba.GameActivity]] = None
+        self._editing_game_type: Optional[type[ba.GameActivity]] = None
         self._pvars = PlaylistTypeVars(sessiontype)
         self._existing_playlist_name = existing_playlist_name
         self._config_name_full = self._pvars.config_name + ' Playlists'
@@ -106,15 +106,15 @@ class PlaylistEditController:
         """(internal)"""
         self._name = name
 
-    def get_playlist(self) -> List[Dict[str, Any]]:
+    def get_playlist(self) -> list[dict[str, Any]]:
         """Return the current state of the edited playlist."""
         return copy.deepcopy(self._playlist)
 
-    def set_playlist(self, playlist: List[Dict[str, Any]]) -> None:
+    def set_playlist(self, playlist: list[dict[str, Any]]) -> None:
         """Set the playlist contents."""
         self._playlist = copy.deepcopy(playlist)
 
-    def get_session_type(self) -> Type[ba.Session]:
+    def get_session_type(self) -> type[ba.Session]:
         """Return the ba.Session type for this edit-session."""
         return self._sessiontype
 
@@ -155,19 +155,19 @@ class PlaylistEditController:
             PlaylistEditWindow(editcontroller=self,
                                transition='in_left').get_root_widget())
 
-    def _show_edit_ui(self, gametype: Type[ba.GameActivity],
-                      settings: Optional[Dict[str, Any]]) -> None:
+    def _show_edit_ui(self, gametype: type[ba.GameActivity],
+                      settings: Optional[dict[str, Any]]) -> None:
         self._editing_game = (settings is not None)
         self._editing_game_type = gametype
         assert self._sessiontype is not None
         gametype.create_settings_ui(self._sessiontype, copy.deepcopy(settings),
                                     self._edit_game_done)
 
-    def add_game_type_selected(self, gametype: Type[ba.GameActivity]) -> None:
+    def add_game_type_selected(self, gametype: type[ba.GameActivity]) -> None:
         """(internal)"""
         self._show_edit_ui(gametype=gametype, settings=None)
 
-    def _edit_game_done(self, config: Optional[Dict[str, Any]]) -> None:
+    def _edit_game_done(self, config: Optional[dict[str, Any]]) -> None:
         from bastd.ui.playlist.edit import PlaylistEditWindow
         from bastd.ui.playlist.addgame import PlaylistAddGameWindow
         from ba.internal import get_type_name

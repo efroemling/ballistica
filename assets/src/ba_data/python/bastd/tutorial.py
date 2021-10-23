@@ -23,8 +23,7 @@ import ba
 from bastd.actor import spaz as basespaz
 
 if TYPE_CHECKING:
-    from typing import (Any, Optional, Dict, List, Tuple, Callable, Sequence,
-                        Union)
+    from typing import Any, Optional, Callable, Sequence, Union
 
 
 def _safesetattr(node: Optional[ba.Node], attr: str, value: Any) -> None:
@@ -187,7 +186,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self.current_spaz: Optional[basespaz.Spaz] = None
         self._benchmark_type = getattr(ba.getsession(), 'benchmark_type', None)
         self.last_start_time: Optional[int] = None
-        self.cycle_times: List[int] = []
+        self.cycle_times: list[int] = []
         self.allow_pausing = True
         self.allow_kick_idle_players = False
         self._issued_warning = False
@@ -206,8 +205,8 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self._skip_text: Optional[ba.Node] = None
         self._skip_count_text: Optional[ba.Node] = None
         self._scale: Optional[float] = None
-        self._stick_base_position: Tuple[float, float] = (0.0, 0.0)
-        self._stick_nub_position: Tuple[float, float] = (0.0, 0.0)
+        self._stick_base_position: tuple[float, float] = (0.0, 0.0)
+        self._stick_nub_position: tuple[float, float] = (0.0, 0.0)
         self._stick_base_image_color: Sequence[float] = (1.0, 1.0, 1.0, 1.0)
         self._stick_nub_image_color: Sequence[float] = (1.0, 1.0, 1.0, 1.0)
         self._time: int = -1
@@ -220,10 +219,10 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self._stick_nub_image: Optional[ba.Node] = None
         self.bomb_image_color = (1.0, 1.0, 1.0)
         self.pickup_image_color = (1.0, 1.0, 1.0)
-        self.control_ui_nodes: List[ba.Node] = []
-        self.spazzes: Dict[int, basespaz.Spaz] = {}
+        self.control_ui_nodes: list[ba.Node] = []
+        self.spazzes: dict[int, basespaz.Spaz] = {}
         self.jump_image_color = (1.0, 1.0, 1.0)
-        self._entries: List[Any] = []
+        self._entries: list[Any] = []
         self._read_entries_timer: Optional[ba.Timer] = None
         self._entry_timer: Optional[ba.Timer] = None
 
@@ -300,7 +299,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         nub_size = 110.0 * scale
         p = (position[0] + center_offs, position[1] - offs)
 
-        def _sc(r: float, g: float, b: float) -> Tuple[float, float, float]:
+        def _sc(r: float, g: float, b: float) -> tuple[float, float, float]:
             return 0.6 * r, 0.6 * g, 0.6 * b
 
         self.jump_image_color = c = _sc(0.4, 1, 0.4)

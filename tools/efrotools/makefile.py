@@ -9,14 +9,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Tuple
+    from typing import Optional
 
 
 @dataclass
 class Section:
     """Represents a section of a Makefile."""
     name: Optional[str]
-    paragraphs: List[Paragraph]
+    paragraphs: list[Paragraph]
 
 
 @dataclass
@@ -24,7 +24,7 @@ class Paragraph:
     """Represents a continuous set of non-blank lines in a Makefile."""
     contents: str
 
-    def get_logical_lines(self) -> List[str]:
+    def get_logical_lines(self) -> list[str]:
         """Return contents broken into logical lines.
 
         Lines joined by continuation chars are considered a single line.
@@ -40,16 +40,16 @@ class Makefile:
 
     def __init__(self, contents: str):
 
-        self.sections: List[Section] = []
+        self.sections: list[Section] = []
 
         self._original = copy.copy(contents)
 
         lines = contents.splitlines()
 
-        paragraphs: List[Paragraph] = []
+        paragraphs: list[Paragraph] = []
 
         # First off, break into paragraphs (continuous sets of lines)
-        plines: List[str] = []
+        plines: list[str] = []
         for line in lines:
 
             if line.strip() == '':
@@ -81,12 +81,12 @@ class Makefile:
             else:
                 section.paragraphs.append(paragraph)
 
-    def find_assigns(self, name: str) -> List[Tuple[Section, int]]:
+    def find_assigns(self, name: str) -> list[tuple[Section, int]]:
         """Return section/index pairs for paragraphs containing an assign.
 
         Note that the paragraph may contain other statements as well.
         """
-        found: List[Tuple[Section, int]] = []
+        found: list[tuple[Section, int]] = []
         for section in self.sections:
             for i, paragraph in enumerate(section.paragraphs):
                 if any(
@@ -95,12 +95,12 @@ class Makefile:
                     found.append((section, i))
         return found
 
-    def find_targets(self, name: str) -> List[Tuple[Section, int]]:
+    def find_targets(self, name: str) -> list[tuple[Section, int]]:
         """Return section/index pairs for paragraphs containing a target.
 
         Note that the paragraph may contain other statements as well.
         """
-        found: List[Tuple[Section, int]] = []
+        found: list[tuple[Section, int]] = []
         for section in self.sections:
             for i, paragraph in enumerate(section.paragraphs):
                 if any(line.split()[0] == name + ':'

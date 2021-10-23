@@ -14,8 +14,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import (Any, Callable, Optional, Tuple, Dict, Union, Sequence,
-                        List)
+    from typing import Any, Callable, Optional, Union, Sequence
 
 
 class StoreBrowserWindow(ba.Window):
@@ -46,7 +45,7 @@ class StoreBrowserWindow(ba.Window):
 
         ba.set_analytics_screen('Store Window')
 
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
 
         # If they provided an origin-widget, scale up from that.
         if origin_widget is not None:
@@ -57,7 +56,7 @@ class StoreBrowserWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self.button_infos: Optional[Dict[str, Dict[str, Any]]] = None
+        self.button_infos: Optional[dict[str, dict[str, Any]]] = None
         self.update_buttons_timer: Optional[ba.Timer] = None
         self._status_textwidget_update_timer = None
 
@@ -185,8 +184,8 @@ class StoreBrowserWindow(ba.Window):
                                size=(self._width - tab_buffer_h, 50),
                                on_select_call=self._set_tab)
 
-        self._purchasable_count_widgets: Dict[StoreBrowserWindow.TabID,
-                                              Dict[str, Any]] = {}
+        self._purchasable_count_widgets: dict[StoreBrowserWindow.TabID,
+                                              dict[str, Any]] = {}
 
         # Create our purchasable-items tags and have them update over time.
         for tab_id, tab in self._tab_row.tabs.items():
@@ -388,7 +387,7 @@ class StoreBrowserWindow(ba.Window):
                          ba.WeakCall(self._on_response, data),
                          timetype=ba.TimeType.REAL)
 
-            def _on_response(self, data: Optional[Dict[str, Any]]) -> None:
+            def _on_response(self, data: Optional[dict[str, Any]]) -> None:
                 # FIXME: clean this up.
                 # pylint: disable=protected-access
                 window = self._window()
@@ -402,7 +401,7 @@ class StoreBrowserWindow(ba.Window):
 
     # Actually start the purchase locally.
     def _purchase_check_result(self, item: str, is_ticket_purchase: bool,
-                               result: Optional[Dict[str, Any]]) -> None:
+                               result: Optional[dict[str, Any]]) -> None:
         if result is None:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(
@@ -685,7 +684,7 @@ class StoreBrowserWindow(ba.Window):
                 ba.textwidget(edit=b_info['descriptionText'],
                               color=description_color)
 
-    def _on_response(self, data: Optional[Dict[str, Any]]) -> None:
+    def _on_response(self, data: Optional[dict[str, Any]]) -> None:
         # pylint: disable=too-many-statements
 
         # clear status text..
@@ -710,7 +709,7 @@ class StoreBrowserWindow(ba.Window):
             class _Store:
 
                 def __init__(self, store_window: StoreBrowserWindow,
-                             sdata: Dict[str, Any], width: float):
+                             sdata: dict[str, Any], width: float):
                     from ba.internal import (get_store_item_display_size,
                                              get_store_layout)
                     self._store_window = store_window
@@ -855,7 +854,7 @@ class StoreBrowserWindow(ba.Window):
                                       maxwidth=700,
                                       transition_delay=0.4)
 
-                    prev_row_buttons: Optional[List] = None
+                    prev_row_buttons: Optional[list] = None
                     this_row_buttons = []
 
                     delay = 0.3
@@ -881,7 +880,7 @@ class StoreBrowserWindow(ba.Window):
                             math.floor((self._width - boffs_h - 20) /
                                        (b_width + button_spacing)))
                         col = 0
-                        item: Dict[str, Any]
+                        item: dict[str, Any]
                         assert self._store_window.button_infos is not None
                         for i, item_name in enumerate(section['items']):
                             item = self._store_window.button_infos[

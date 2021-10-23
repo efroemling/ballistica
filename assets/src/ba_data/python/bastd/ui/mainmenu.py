@@ -11,7 +11,7 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Dict, Tuple, Optional, Union
+    from typing import Any, Callable, Optional, Union
 
 
 class MainMenuWindow(ba.Window):
@@ -190,7 +190,7 @@ class MainMenuWindow(ba.Window):
             input_device.is_connected_to_remote_player()
             if input_device else False)
 
-        positions: List[Tuple[float, float, float]] = []
+        positions: list[tuple[float, float, float]] = []
         self._p_index = 0
 
         if self._in_game:
@@ -412,8 +412,8 @@ class MainMenuWindow(ba.Window):
                 scale=3.0 * t_scale)
 
     def _refresh_not_in_game(
-        self, positions: List[Tuple[float, float,
-                                    float]]) -> Tuple[float, float, float]:
+        self, positions: list[tuple[float, float,
+                                    float]]) -> tuple[float, float, float]:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -675,12 +675,12 @@ class MainMenuWindow(ba.Window):
         return h, v, scale
 
     def _refresh_in_game(
-        self, positions: List[Tuple[float, float,
-                                    float]]) -> Tuple[float, float, float]:
+        self, positions: list[tuple[float, float,
+                                    float]]) -> tuple[float, float, float]:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        custom_menu_entries: List[Dict[str, Any]] = []
+        custom_menu_entries: list[dict[str, Any]] = []
         session = _ba.get_foreground_host_session()
         if session is not None:
             try:

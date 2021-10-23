@@ -19,7 +19,7 @@ from efro.dataclassio._prep import ioprep, ioprepped, is_ioprepped_dataclass
 from efro.dataclassio._pathcapture import DataclassFieldLookup
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any
 
 __all__ = [
     'Codec', 'IOAttrs', 'ioprep', 'ioprepped', 'is_ioprepped_dataclass',
@@ -73,7 +73,7 @@ def dataclass_to_json(obj: Any,
     return json.dumps(jdict, separators=(',', ':'))
 
 
-def dataclass_from_dict(cls: Type[T],
+def dataclass_from_dict(cls: type[T],
                         values: dict,
                         codec: Codec = Codec.JSON,
                         coerce_to_float: bool = True,
@@ -109,7 +109,7 @@ def dataclass_from_dict(cls: Type[T],
                      discard_unknown_attrs=discard_unknown_attrs).run(values)
 
 
-def dataclass_from_json(cls: Type[T],
+def dataclass_from_json(cls: type[T],
                         json_str: str,
                         coerce_to_float: bool = True,
                         allow_unknown_attrs: bool = True,

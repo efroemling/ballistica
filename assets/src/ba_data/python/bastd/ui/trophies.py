@@ -10,15 +10,15 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Dict, List
+    from typing import Any
 
 
 class TrophiesWindow(popup.PopupWindow):
     """Popup window for viewing trophies."""
 
     def __init__(self,
-                 position: Tuple[float, float],
-                 data: Dict[str, Any],
+                 position: tuple[float, float],
+                 data: dict[str, Any],
                  scale: float = None):
         self._data = data
         uiscale = ba.app.ui.uiscale
@@ -110,7 +110,7 @@ class TrophiesWindow(popup.PopupWindow):
     def _create_trophy_type_widgets(self, eq_text: str, incr: int,
                                     multi_txt: str, sub_height: int,
                                     sub_width: int,
-                                    trophy_types: List[List[str]]) -> int:
+                                    trophy_types: list[list[str]]) -> int:
         from ba.internal import get_trophy_string
         pts = 0
         for i, trophy_type in enumerate(trophy_types):

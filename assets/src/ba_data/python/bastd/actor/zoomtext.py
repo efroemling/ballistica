@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Tuple, Sequence
+    from typing import Any, Union, Sequence
 
 
 class ZoomText(ba.Actor):
@@ -23,8 +23,8 @@ class ZoomText(ba.Actor):
 
     def __init__(self,
                  text: Union[str, ba.Lstr],
-                 position: Tuple[float, float] = (0.0, 0.0),
-                 shiftposition: Tuple[float, float] = None,
+                 position: tuple[float, float] = (0.0, 0.0),
+                 shiftposition: tuple[float, float] = None,
                  shiftdelay: float = None,
                  lifespan: float = None,
                  flash: bool = True,
@@ -171,7 +171,7 @@ class ZoomText(ba.Actor):
             return None
         return super().handlemessage(msg)
 
-    def _jitter(self, position: Tuple[float, float],
+    def _jitter(self, position: tuple[float, float],
                 jitter_amount: float) -> None:
         if not self.node:
             return
@@ -187,8 +187,8 @@ class ZoomText(ba.Actor):
             ba.animate(cmb, attr, keys, loop=True)
         cmb.connectattr('output', self.node, 'position')
 
-    def _shift(self, position1: Tuple[float, float],
-               position2: Tuple[float, float]) -> None:
+    def _shift(self, position1: tuple[float, float],
+               position2: tuple[float, float]) -> None:
         if not self.node:
             return
         cmb = ba.newnode('combine', owner=self.node, attrs={'size': 2})

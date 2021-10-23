@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Optional, Sequence, Union
+    from typing import Any, Optional, Sequence, Union
 
 
 class ControlsGuide(ba.Actor):
@@ -24,7 +24,7 @@ class ControlsGuide(ba.Actor):
     """
 
     def __init__(self,
-                 position: Tuple[float, float] = (390.0, 120.0),
+                 position: tuple[float, float] = (390.0, 120.0),
                  scale: float = 1.0,
                  delay: float = 0.0,
                  lifespan: float = None,
@@ -57,8 +57,8 @@ class ControlsGuide(ba.Actor):
         self._update_timer: Optional[ba.Timer] = None
         self._title_text: Optional[ba.Node]
         clr: Sequence[float]
-        extra_pos_1: Optional[Tuple[float, float]]
-        extra_pos_2: Optional[Tuple[float, float]]
+        extra_pos_1: Optional[tuple[float, float]]
+        extra_pos_2: Optional[tuple[float, float]]
         if ba.app.iircade_mode:
             xtweak = 0.2
             ytweak = 0.2

@@ -19,7 +19,7 @@ from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           BoundMessageReceiver)
 
 if TYPE_CHECKING:
-    from typing import List, Type, Any, Callable, Optional, Awaitable
+    from typing import Any, Callable, Optional, Awaitable
 
 
 @ioprepped
@@ -29,7 +29,7 @@ class _TMsg1(Message):
     ival: int
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Response]]:
+    def get_response_types(cls) -> list[type[Response]]:
         return [_TResp1]
 
 
@@ -40,7 +40,7 @@ class _TMsg2(Message):
     sval: str
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Response]]:
+    def get_response_types(cls) -> list[type[Response]]:
         return [_TResp1, _TResp2]
 
 

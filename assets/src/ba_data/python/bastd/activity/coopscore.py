@@ -14,7 +14,7 @@ from bastd.actor.text import Text
 from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, List, Dict, Any, Sequence
+    from typing import Optional, Any, Sequence
     from bastd.ui.store.button import StoreButton
     from bastd.ui.league.rankbutton import LeagueRankButton
 
@@ -96,7 +96,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._game_config_str: Optional[str] = None
 
         # Ui bits.
-        self._corner_button_offs: Optional[Tuple[float, float]] = None
+        self._corner_button_offs: Optional[tuple[float, float]] = None
         self._league_rank_button: Optional[LeagueRankButton] = None
         self._store_button_instance: Optional[StoreButton] = None
         self._restart_button: Optional[ba.Widget] = None
@@ -110,7 +110,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._is_more_levels: Optional[bool] = None
         self._next_level_name: Optional[str] = None
         self._show_friend_scores: Optional[bool] = None
-        self._show_info: Optional[Dict[str, Any]] = None
+        self._show_info: Optional[dict[str, Any]] = None
         self._name_str: Optional[str] = None
         self._friends_loading_status: Optional[ba.Actor] = None
         self._score_loading_status: Optional[ba.Actor] = None
@@ -124,7 +124,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._allow_server_transition = False
         self._server_transitioning: Optional[bool] = None
 
-        self._playerinfos: List[ba.PlayerInfo] = settings['playerinfos']
+        self._playerinfos: list[ba.PlayerInfo] = settings['playerinfos']
         assert isinstance(self._playerinfos, list)
         assert (isinstance(i, ba.PlayerInfo) for i in self._playerinfos)
 
@@ -831,7 +831,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 scale = 0.65
             elif p_count == 4:
                 scale = 0.5
-            times: List[Tuple[float, float]] = []
+            times: list[tuple[float, float]] = []
             for i in range(display_count):
                 times.insert(random.randrange(0,
                                               len(times) + 1),
@@ -929,7 +929,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                            'loop': False
                        })).autoretain()
 
-    def _got_friend_score_results(self, results: Optional[List[Any]]) -> None:
+    def _got_friend_score_results(self, results: Optional[list[Any]]) -> None:
 
         # FIXME: tidy this up
         # pylint: disable=too-many-locals
@@ -990,7 +990,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         while len(results) < 5:
             results.append([0, '-', False])
         results = results[:5]
-        times: List[Tuple[float, float]] = []
+        times: list[tuple[float, float]] = []
         for i in range(len(results)):
             times.insert(random.randrange(0,
                                           len(times) + 1),
@@ -1044,7 +1044,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                  transition=Text.Transition.IN_RIGHT,
                  transition_delay=tdelay2).autoretain()
 
-    def _got_score_results(self, results: Optional[Dict[str, Any]]) -> None:
+    def _got_score_results(self, results: Optional[dict[str, Any]]) -> None:
 
         # FIXME: tidy this up
         # pylint: disable=too-many-locals
@@ -1142,7 +1142,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 while len(self._show_info['tops']) < 10:
                     self._show_info['tops'].append([0, '-'])
 
-                times: List[Tuple[float, float]] = []
+                times: list[tuple[float, float]] = []
                 for i in range(len(self._show_info['tops'])):
                     times.insert(
                         random.randrange(0,

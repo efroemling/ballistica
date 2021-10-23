@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional
+    from typing import Optional
 
 
 class AudioSettingsWindow(ba.Window):
@@ -28,7 +28,7 @@ class AudioSettingsWindow(ba.Window):
         music = ba.app.music
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

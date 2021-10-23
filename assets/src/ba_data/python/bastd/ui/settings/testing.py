@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any
 
 
 class TestingWindow(ba.Window):
@@ -19,7 +19,7 @@ class TestingWindow(ba.Window):
 
     def __init__(self,
                  title: ba.Lstr,
-                 entries: List[Dict[str, Any]],
+                 entries: list[dict[str, Any]],
                  transition: str = 'in_right'):
         uiscale = ba.app.ui.uiscale
         self._width = 600
@@ -146,7 +146,7 @@ class TestingWindow(ba.Window):
             right_widget=btn,
             on_activate_call=self._on_reset_press)
 
-    def _get_entry(self, name: str) -> Dict[str, Any]:
+    def _get_entry(self, name: str) -> dict[str, Any]:
         for entry in self._entries:
             if entry['name'] == name:
                 return entry

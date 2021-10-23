@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Tuple, Union, Dict
+    from typing import Any, Optional, Union
 
 
 class GetCurrencyWindow(ba.Window):
@@ -38,7 +38,7 @@ class GetCurrencyWindow(ba.Window):
         self._ad_time_text = None
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -102,8 +102,8 @@ class GetCurrencyWindow(ba.Window):
         self._ad_button = None
 
         def _add_button(item: str,
-                        position: Tuple[float, float],
-                        size: Tuple[float, float],
+                        position: tuple[float, float],
+                        size: tuple[float, float],
                         label: ba.Lstr,
                         price: str = None,
                         tex_name: str = None,
@@ -528,7 +528,7 @@ class GetCurrencyWindow(ba.Window):
                                                item))
 
     def _purchase_check_result(self, item: str,
-                               result: Optional[Dict[str, Any]]) -> None:
+                               result: Optional[dict[str, Any]]) -> None:
         if result is None:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(

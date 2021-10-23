@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 import astroid
 
 if TYPE_CHECKING:
+    from typing import Any
     from astroid import nodes as nc
-    from typing import Set, Dict, Any, List
 
 VERBOSE = False
 
@@ -20,7 +20,7 @@ def register(linter: Any) -> None:
     del linter  # Unused.
 
 
-failed_imports: Set[str] = set()
+failed_imports: set[str] = set()
 
 
 def failed_import_hook(modname: str) -> None:
@@ -248,7 +248,7 @@ def class_generics_filter(node: nc.NodeNG) -> nc.NodeNG:
         return node
 
     # Now strip subscripts from base classes.
-    new_bases: List[nc.NodeNG] = []
+    new_bases: list[nc.NodeNG] = []
     for base in node.bases:
         if _is_strippable_subscript(base):
             new_bases.append(base.value)

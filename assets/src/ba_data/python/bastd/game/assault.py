@@ -17,7 +17,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Sequence, Union
+    from typing import Any, Sequence, Union
 
 
 class Player(ba.Player['Team']):
@@ -72,11 +72,11 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
     ]
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('team_flag')
 
     def __init__(self, settings: dict):
@@ -84,7 +84,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         self._scoreboard = Scoreboard()
         self._last_score_time = 0.0
         self._score_sound = ba.getsound('score')
-        self._base_region_materials: Dict[int, ba.Material] = {}
+        self._base_region_materials: dict[int, ba.Material] = {}
         self._epic_mode = bool(settings['Epic Mode'])
         self._score_to_win = int(settings['Score to Win'])
         self._time_limit = float(settings['Time Limit'])

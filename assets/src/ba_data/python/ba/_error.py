@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, List
+    from typing import Any
     import ba
 
 
@@ -21,12 +21,12 @@ class DependencyError(Exception):
     (this will generally be missing assets).
     """
 
-    def __init__(self, deps: List[ba.Dependency]):
+    def __init__(self, deps: list[ba.Dependency]):
         super().__init__()
         self._deps = deps
 
     @property
-    def deps(self) -> List[ba.Dependency]:
+    def deps(self) -> list[ba.Dependency]:
         """The list of missing dependencies causing this error."""
         return self._deps
 

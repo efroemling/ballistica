@@ -6,7 +6,7 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, Annotated
 from dataclasses import dataclass
 from enum import Enum
 import inspect
@@ -14,15 +14,12 @@ import logging
 import json
 import traceback
 
-from typing_extensions import Annotated
-
 from efro.error import CleanError, RemoteError
 from efro.dataclassio import (ioprepped, is_ioprepped_dataclass, IOAttrs,
                               dataclass_to_dict, dataclass_from_dict)
 
 if TYPE_CHECKING:
-    from typing import (Dict, Type, Tuple, List, Any, Callable, Optional, Set,
-                        Sequence, Union, Awaitable)
+    from typing import Any, Callable, Optional, Sequence, Union, Awaitable
 
 TM = TypeVar('TM', bound='MessageSender')
 
@@ -31,7 +28,7 @@ class Message:
     """Base class for messages."""
 
     @classmethod
-    def get_response_types(cls) -> List[Type[Response]]:
+    def get_response_types(cls) -> list[type[Response]]:
         """Return all message types this Message can result in when sent.
 
         The default implementation specifies EmptyResponse, so messages with
@@ -102,8 +99,8 @@ class MessageProtocol:
     """
 
     def __init__(self,
-                 message_types: Dict[int, Type[Message]],
-                 response_types: Dict[int, Type[Response]],
+                 message_types: dict[int, type[Message]],
+                 response_types: dict[int, type[Response]],
                  type_key: Optional[str] = None,
                  preserve_clean_errors: bool = True,
                  log_remote_exceptions: bool = True,
@@ -127,10 +124,10 @@ class MessageProtocol:
         be included in the responses if errors occur.
         """
         # pylint: disable=too-many-locals
-        self.message_types_by_id: Dict[int, Type[Message]] = {}
-        self.message_ids_by_type: Dict[Type[Message], int] = {}
-        self.response_types_by_id: Dict[int, Type[Response]] = {}
-        self.response_ids_by_type: Dict[Type[Response], int] = {}
+        self.message_types_by_id: dict[int, type[Message]] = {}
+        self.message_ids_by_type: dict[type[Message], int] = {}
+        self.response_types_by_id: dict[int, type[Response]] = {}
+        self.response_ids_by_type: dict[type[Response], int] = {}
         for m_id, m_type in message_types.items():
 
             # Make sure only valid message types were passed and each
@@ -155,7 +152,7 @@ class MessageProtocol:
         # Go ahead and auto-register a few common response types
         # if the user has not done so explicitly. Use unique IDs which
         # will never change or overlap with user ids.
-        def _reg_if_not(reg_tp: Type[Response], reg_id: int) -> None:
+        def _reg_if_not(reg_tp: type[Response], reg_id: int) -> None:
             if reg_tp in self.response_ids_by_type:
                 return
             assert self.response_types_by_id.get(reg_id) is None
@@ -170,7 +167,7 @@ class MessageProtocol:
         if __debug__:
             # Make sure all Message types' return types are valid
             # and have been assigned an ID as well.
-            all_response_types: Set[Type[Response]] = set()
+            all_response_types: set[type[Response]] = set()
             for m_id, m_type in message_types.items():
                 m_rtypes = m_type.get_response_types()
                 assert isinstance(m_rtypes, list)
@@ -208,7 +205,7 @@ class MessageProtocol:
         """Encode a response to a json string for transport."""
         return self._encode(response, self.response_ids_by_type, 'response')
 
-    def _encode(self, message: Any, ids_by_type: Dict[Type, int],
+    def _encode(self, message: Any, ids_by_type: dict[type, int],
                 opname: str) -> str:
         """Encode a message to a json string for transport."""
 
@@ -242,7 +239,9 @@ class MessageProtocol:
         assert isinstance(out, (Response, type(None)))
         return out
 
-    def _decode(self, data: str, types_by_id: Dict[int, Type],
+    # Weeeird; we get mypy errors returning dict[int, type] but
+    # dict[int, typing.Type] or dict[int, type[Any]] works..
+    def _decode(self, data: str, types_by_id: dict[int, type[Any]],
                 opname: str) -> Any:
         """Decode a message from a json string."""
         msgfull = json.loads(data)
@@ -283,8 +282,8 @@ class MessageProtocol:
         """Return common parts of generated modules."""
         # pylint: disable=too-many-locals, too-many-branches
         import textwrap
-        tpimports: Dict[str, List[str]] = {}
-        imports: Dict[str, List[str]] = {}
+        tpimports: dict[str, list[str]] = {}
+        imports: dict[str, list[str]] = {}
 
         single_message_type = len(self.message_ids_by_type) == 1
 
@@ -390,7 +389,7 @@ class MessageProtocol:
                 f'class {ppre}Bound{basename}(BoundMessageSender):\n'
                 f'    """Protocol-specific bound sender."""\n')
 
-        def _filt_tp_name(rtype: Type[Response]) -> str:
+        def _filt_tp_name(rtype: type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
             # in the type annotation.
             return 'None' if rtype is EmptyResponse else rtype.__name__
@@ -485,7 +484,7 @@ class MessageProtocol:
 
         # Define handler() overloads for all registered message types.
 
-        def _filt_tp_name(rtype: Type[Response]) -> str:
+        def _filt_tp_name(rtype: type[Response]) -> str:
             # We accept None to equal EmptyResponse so reflect that
             # in the type annotation.
             return 'None' if rtype is EmptyResponse else rtype.__name__
@@ -705,7 +704,7 @@ class MessageReceiver:
 
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
-        self._handlers: Dict[Type[Message], Callable] = {}
+        self._handlers: dict[type[Message], Callable] = {}
 
     # noinspection PyProtectedMember
     def register_handler(
@@ -750,7 +749,7 @@ class MessageReceiver:
         assert issubclass(msgtype, Message)
 
         ret = anns.get('return')
-        responsetypes: Tuple[Union[Type[Any], Type[None]], ...]
+        responsetypes: tuple[Union[type[Any], type[None]], ...]
 
         # Return types can be a single type or a union of types.
         if isinstance(ret, _GenericAlias):
@@ -807,7 +806,7 @@ class MessageReceiver:
                     raise TypeError(msg)
 
     def _decode_incoming_message(self,
-                                 msg: str) -> Tuple[Message, Type[Message]]:
+                                 msg: str) -> tuple[Message, type[Message]]:
         # Decode the incoming message.
         msg_decoded = self.protocol.decode_message(msg)
         msgtype = type(msg_decoded)
@@ -815,7 +814,7 @@ class MessageReceiver:
         return msg_decoded, msgtype
 
     def _encode_response(self, response: Optional[Response],
-                         msgtype: Type[Message]) -> str:
+                         msgtype: type[Message]) -> str:
 
         # A return value of None equals EmptyResponse.
         if response is None:
@@ -982,7 +981,7 @@ def create_receiver_module(basename: str,
 
 
 def _protocol_from_code(protocol_create_code: str) -> MessageProtocol:
-    env: Dict = {}
+    env: dict = {}
     exec(protocol_create_code, env)  # pylint: disable=exec-used
     protocol = env.get('protocol')
     if not isinstance(protocol, MessageProtocol):

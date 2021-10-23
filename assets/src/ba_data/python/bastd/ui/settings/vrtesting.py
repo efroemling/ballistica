@@ -10,7 +10,7 @@ import ba
 from bastd.ui.settings import testing
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any
 
 
 class VRTestingWindow(testing.TestingWindow):
@@ -18,7 +18,7 @@ class VRTestingWindow(testing.TestingWindow):
 
     def __init__(self, transition: str = 'in_right'):
 
-        entries: List[Dict[str, Any]] = []
+        entries: list[dict[str, Any]] = []
         app = ba.app
         # these are gear-vr only
         if app.platform == 'android' and app.subplatform == 'oculus':

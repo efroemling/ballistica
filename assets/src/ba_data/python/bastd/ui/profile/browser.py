@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Tuple, List, Dict
+    from typing import Any, Optional
 
 
 class ProfileBrowserWindow(ba.Window):
@@ -39,7 +39,7 @@ class ProfileBrowserWindow(ba.Window):
             ba.app.pause()
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -162,9 +162,9 @@ class ProfileBrowserWindow(ba.Window):
                                              border=2,
                                              margin=0)
         v -= 255
-        self._profiles: Optional[Dict[str, Dict[str, Any]]] = None
+        self._profiles: Optional[dict[str, dict[str, Any]]] = None
         self._selected_profile = selected_profile
-        self._profile_widgets: List[ba.Widget] = []
+        self._profile_widgets: list[ba.Widget] = []
         self._refresh()
         self._restore_state()
 

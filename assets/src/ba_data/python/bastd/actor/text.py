@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Tuple, Sequence, Optional
+    from typing import Any, Union, Sequence, Optional
 
 
 class Text(ba.Actor):
@@ -50,7 +50,7 @@ class Text(ba.Actor):
 
     def __init__(self,
                  text: Union[str, ba.Lstr],
-                 position: Tuple[float, float] = (0.0, 0.0),
+                 position: tuple[float, float] = (0.0, 0.0),
                  h_align: HAlign = HAlign.LEFT,
                  v_align: VAlign = VAlign.NONE,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),

@@ -20,7 +20,7 @@ from bastd.actor.respawnicon import RespawnIcon
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Dict, List, Tuple, Optional
+    from typing import Any, Optional
 
 
 class Player(ba.Player['Team']):
@@ -49,12 +49,12 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     # We're currently hard-coded for one map.
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ['Tower D']
 
     # We support teams, free-for-all, and co-op sessions.
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return (issubclass(sessiontype, ba.CoopSession)
                 or issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
@@ -75,7 +75,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self.egg_material.add_actions(
             conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect', self._on_egg_player_collide), ))
-        self._eggs: List[Egg] = []
+        self._eggs: list[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
         self._bots: Optional[SpazBotSet] = None
@@ -224,7 +224,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 class Egg(ba.Actor):
     """A lovely egg that can be picked up for points."""
 
-    def __init__(self, position: Tuple[float, float, float] = (0.0, 1.0, 0.0)):
+    def __init__(self, position: tuple[float, float, float] = (0.0, 1.0, 0.0)):
         super().__init__()
         activity = self.activity
         assert isinstance(activity, EasterEggHuntGame)

@@ -11,7 +11,7 @@ from bastd.actor.text import Text
 from bastd.actor.image import Image
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Union
+    from typing import Optional, Union
 
 
 class MultiTeamScoreScreenActivity(ScoreScreenActivity):

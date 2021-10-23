@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from enum import Enum
 from dataclasses import field, dataclass
-from typing import TYPE_CHECKING, List, Optional, Tuple, Dict, Any
+from typing import TYPE_CHECKING, Optional, Any
 
 from efro.dataclassio import ioprepped
 
@@ -33,7 +33,7 @@ class ServerConfig:
     # IDs of server admins. Server admins are not kickable through the default
     # kick vote system and they are able to kick players without a vote. To get
     # your account id, enter 'getaccountid' in settings->advanced->enter-code.
-    admins: List[str] = field(default_factory=list)
+    admins: list[str] = field(default_factory=list)
 
     # Whether the default kick-voting system is enabled.
     enable_default_kick_voting: bool = True
@@ -64,7 +64,7 @@ class ServerConfig:
 
     # Alternately, you can embed playlist data here instead of using codes.
     # Make sure to set session_type to the correct type for the data here.
-    playlist_inline: Optional[List[Dict[str, Any]]] = None
+    playlist_inline: Optional[list[dict[str, Any]]] = None
 
     # Whether to shuffle the playlist or play its games in designated order.
     playlist_shuffle: bool = True
@@ -131,11 +131,11 @@ class ServerConfig:
     show_tutorial: bool = False
 
     # Team names (teams mode only).
-    team_names: Optional[Tuple[str, str]] = None
+    team_names: Optional[tuple[str, str]] = None
 
     # Team colors (teams mode only).
-    team_colors: Optional[Tuple[Tuple[float, float, float],
-                                Tuple[float, float, float]]] = None
+    team_colors: Optional[tuple[tuple[float, float, float],
+                                tuple[float, float, float]]] = None
 
     # (internal) stress-testing mode.
     stress_test_players: Optional[int] = None
@@ -171,15 +171,15 @@ class ShutdownCommand(ServerCommand):
 class ChatMessageCommand(ServerCommand):
     """Chat message from the server."""
     message: str
-    clients: Optional[List[int]]
+    clients: Optional[list[int]]
 
 
 @dataclass
 class ScreenMessageCommand(ServerCommand):
     """Screen-message from the server."""
     message: str
-    color: Optional[Tuple[float, float, float]]
-    clients: Optional[List[int]]
+    color: Optional[tuple[float, float, float]]
+    clients: Optional[list[int]]
 
 
 @dataclass

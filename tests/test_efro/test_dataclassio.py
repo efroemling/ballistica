@@ -7,10 +7,8 @@ from __future__ import annotations
 from enum import Enum
 import datetime
 from dataclasses import field, dataclass
-from typing import (TYPE_CHECKING, Optional, List, Set, Any, Dict, Sequence,
-                    Union, Tuple)
+from typing import TYPE_CHECKING, Optional, Any, Sequence, Union, Annotated
 
-from typing_extensions import Annotated
 import pytest
 
 from efro.util import utc_now
@@ -50,7 +48,7 @@ class _BadEnum2(Enum):
 class _NestedClass:
     ival: int = 0
     sval: str = 'foo'
-    dval: Dict[int, str] = field(default_factory=dict)
+    dval: dict[int, str] = field(default_factory=dict)
 
 
 def test_assign() -> None:
@@ -72,15 +70,15 @@ def test_assign() -> None:
         obval: Optional[bool] = None
         ofval: Optional[float] = None
         oenval: Optional[_EnumTest] = _EnumTest.TEST1
-        lsval: List[str] = field(default_factory=list)
-        lival: List[int] = field(default_factory=list)
-        lbval: List[bool] = field(default_factory=list)
-        lfval: List[float] = field(default_factory=list)
-        lenval: List[_EnumTest] = field(default_factory=list)
-        ssval: Set[str] = field(default_factory=set)
+        lsval: list[str] = field(default_factory=list)
+        lival: list[int] = field(default_factory=list)
+        lbval: list[bool] = field(default_factory=list)
+        lfval: list[float] = field(default_factory=list)
+        lenval: list[_EnumTest] = field(default_factory=list)
+        ssval: set[str] = field(default_factory=set)
         anyval: Any = 1
-        dictval: Dict[int, str] = field(default_factory=dict)
-        tupleval: Tuple[int, str, bool] = (1, 'foo', False)
+        dictval: dict[int, str] = field(default_factory=dict)
+        tupleval: tuple[int, str, bool] = (1, 'foo', False)
         datetimeval: Optional[datetime.datetime] = None
 
     class _TestClass2:
@@ -367,36 +365,36 @@ def test_prep() -> None:
         @ioprepped
         @dataclass
         class _TestClass7:
-            dval: Dict[float, int]
+            dval: dict[float, int]
 
     @ioprepped
     @dataclass
     class _TestClass8:
-        dval: Dict[str, int]
+        dval: dict[str, int]
 
     @ioprepped
     @dataclass
     class _TestClass9:
-        dval: Dict[_GoodEnum, int]
+        dval: dict[_GoodEnum, int]
 
     @ioprepped
     @dataclass
     class _TestClass10:
-        dval: Dict[_GoodEnum2, int]
+        dval: dict[_GoodEnum2, int]
 
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass11:
-            dval: Dict[_BadEnum1, int]
+            dval: dict[_BadEnum1, int]
 
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass12:
-            dval: Dict[_BadEnum2, int]
+            dval: dict[_BadEnum2, int]
 
 
 def test_validate() -> None:
@@ -468,7 +466,7 @@ def test_ioattrs() -> None:
     @ioprepped
     @dataclass
     class _TestClass:
-        dval: Annotated[Dict, IOAttrs('d')]
+        dval: Annotated[dict, IOAttrs('d')]
 
     obj = _TestClass(dval={'foo': 'bar'})
 
@@ -482,12 +480,12 @@ def test_ioattrs() -> None:
         @ioprepped
         @dataclass
         class _TestClass2:
-            dval: Annotated[Dict, IOAttrs('d', store_default=False)]
+            dval: Annotated[dict, IOAttrs('d', store_default=False)]
 
     @ioprepped
     @dataclass
     class _TestClass3:
-        dval: Annotated[Dict, IOAttrs('d', store_default=False)] = field(
+        dval: Annotated[dict, IOAttrs('d', store_default=False)] = field(
             default_factory=dict)
         ival: Annotated[int, IOAttrs('i', store_default=False)] = 123
 
@@ -584,7 +582,7 @@ def test_dict() -> None:
     @ioprepped
     @dataclass
     class _TestClass2:
-        dval: Dict[int, float]
+        dval: dict[int, float]
 
     obj2 = _TestClass2(dval={1: 2.34})
     out = dataclass_to_dict(obj2)
@@ -599,7 +597,7 @@ def test_dict() -> None:
     @ioprepped
     @dataclass
     class _TestClass3:
-        dval: Dict[_GoodEnum, int]
+        dval: dict[_GoodEnum, int]
 
     obj3 = _TestClass3(dval={_GoodEnum.VAL1: 123})
     out = dataclass_to_dict(obj3)
@@ -611,7 +609,7 @@ def test_dict() -> None:
     @ioprepped
     @dataclass
     class _TestClass4:
-        dval: Dict[_GoodEnum2, int]
+        dval: dict[_GoodEnum2, int]
 
     obj4 = _TestClass4(dval={_GoodEnum2.VAL1: 125})
     out = dataclass_to_dict(obj4)

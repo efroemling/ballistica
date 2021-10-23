@@ -11,7 +11,7 @@ from efro.dataclassio._base import _parse_annotated, _get_origin
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set, Callable
+    from typing import Any, Callable
 
 T = TypeVar('T')
 
@@ -19,7 +19,7 @@ T = TypeVar('T')
 class _PathCapture:
     """Utility for obtaining dataclass storage paths in a type safe way."""
 
-    def __init__(self, obj: Any, pathparts: List[str] = None):
+    def __init__(self, obj: Any, pathparts: list[str] = None):
         self._is_dataclass = dataclasses.is_dataclass(obj)
         if pathparts is None:
             pathparts = []
@@ -55,7 +55,7 @@ class _PathCapture:
 class DataclassFieldLookup(Generic[T]):
     """Get info about nested dataclass fields in type-safe way."""
 
-    def __init__(self, cls: Type[T]) -> None:
+    def __init__(self, cls: type[T]) -> None:
         self.cls = cls
 
     def path(self, callback: Callable[[T], Any]) -> str:
@@ -85,7 +85,7 @@ class DataclassFieldLookup(Generic[T]):
             return out.path
         return ''
 
-    def paths(self, callback: Callable[[T], List[Any]]) -> List[str]:
+    def paths(self, callback: Callable[[T], list[Any]]) -> list[str]:
         """Look up multiple paths on child dataclass fields.
 
         Functionality is identical to path() but for multiple paths at once.
@@ -93,7 +93,7 @@ class DataclassFieldLookup(Generic[T]):
         example:
           DataclassFieldLookup(MyType).paths(lambda obj: [obj.foo, obj.bar])
         """
-        outvals: List[str] = []
+        outvals: list[str] = []
         if not TYPE_CHECKING:
             outs = callback(_PathCapture(self.cls))
             assert isinstance(outs, list)

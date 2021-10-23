@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional, Dict
+    from typing import Optional
 
 
 class PluginSettingsWindow(ba.Window):
@@ -22,7 +22,7 @@ class PluginSettingsWindow(ba.Window):
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -98,7 +98,7 @@ class PluginSettingsWindow(ba.Window):
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
         pluglist = ba.app.plugins.potential_plugins
-        plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
+        plugstates: dict[str, dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         for i, availplug in enumerate(pluglist):
             active = availplug.class_path in ba.app.plugins.active_plugins
@@ -134,7 +134,7 @@ class PluginSettingsWindow(ba.Window):
         ba.screenmessage(
             ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
             color=(1.0, 0.5, 0.0))
-        plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
+        plugstates: dict[str, dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         plugstate = plugstates.setdefault(plug.class_path, {})
         plugstate['enabled'] = value

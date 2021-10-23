@@ -12,14 +12,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Optional, Tuple, List, Dict
+    from typing import Any, Optional
 
 
 class PlaylistCustomizeBrowserWindow(ba.Window):
     """Window for viewing a playlist."""
 
     def __init__(self,
-                 sessiontype: Type[ba.Session],
+                 sessiontype: type[ba.Session],
                  transition: str = 'in_right',
                  select_playlist: str = None,
                  origin_widget: ba.Widget = None):
@@ -28,7 +28,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui import playlist
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -86,7 +86,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         h = 41 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        self._lock_images: List[ba.Widget] = []
+        self._lock_images: list[ba.Widget] = []
         lock_tex = ba.gettexture('lock')
 
         scl = (1.1 if uiscale is ba.UIScale.SMALL else
@@ -236,7 +236,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
         self._selected_playlist_name: Optional[str] = None
         self._selected_playlist_index: Optional[int] = None
-        self._playlist_widgets: List[ba.Widget] = []
+        self._playlist_widgets: list[ba.Widget] = []
 
         self._refresh(select_playlist=select_playlist)
 
@@ -539,7 +539,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             return
         if self._selected_playlist_name is None:
             return
-        plst: Optional[List[Dict[str, Any]]]
+        plst: Optional[list[dict[str, Any]]]
         if self._selected_playlist_name == '__default__':
             plst = self._pvars.get_default_list_call()
         else:

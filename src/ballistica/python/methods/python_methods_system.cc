@@ -890,8 +890,8 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "Returns whether we're running the ouya-specific version"},
 
       {"set_internal_language_keys", PySetInternalLanguageKeys, METH_VARARGS,
-       "set_internal_language_keys(listobj: List[Tuple[str, str]],\n"
-       "  random_names_list: List[Tuple[str, str]]) -> None\n"
+       "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
+       "  random_names_list: list[tuple[str, str]]) -> None\n"
        "\n"
        "(internal)"},
 
@@ -987,7 +987,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_appconfig_builtin_keys", (PyCFunction)PyAppConfigGetBuiltinKeys,
        METH_VARARGS | METH_KEYWORDS,
-       "get_appconfig_builtin_keys() -> List[str]\n"
+       "get_appconfig_builtin_keys() -> list[str]\n"
        "\n"
        "(internal)"},
 

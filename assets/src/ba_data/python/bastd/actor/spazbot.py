@@ -13,7 +13,7 @@ import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, List, Tuple, Sequence, Type, Callable
+    from typing import Any, Optional, Sequence, Callable
     from bastd.actor.flag import Flag
 
 LITE_BOT_COLOR = (1.2, 0.9, 0.2)
@@ -125,7 +125,7 @@ class SpazBot(Spaz):
         self._map = weakref.ref(activity.map)
         self.last_player_attacked_by: Optional[ba.Player] = None
         self.last_attacked_time = 0.0
-        self.last_attacked_type: Optional[Tuple[str, str]] = None
+        self.last_attacked_type: Optional[tuple[str, str]] = None
         self.target_point_default: Optional[ba.Vec3] = None
         self.held_count = 0
         self.last_player_held_by: Optional[ba.Player] = None
@@ -141,7 +141,7 @@ class SpazBot(Spaz):
 
         self._throw_release_time: Optional[float] = None
         self._have_dropped_throw_bomb: Optional[bool] = None
-        self._player_pts: Optional[List[Tuple[ba.Vec3, ba.Vec3]]] = None
+        self._player_pts: Optional[list[tuple[ba.Vec3, ba.Vec3]]] = None
 
         # These cooldowns didn't exist when these bots were calibrated,
         # so take them out of the equation.
@@ -161,7 +161,7 @@ class SpazBot(Spaz):
         return mval
 
     def _get_target_player_pt(
-            self) -> Tuple[Optional[ba.Vec3], Optional[ba.Vec3]]:
+            self) -> tuple[Optional[ba.Vec3], Optional[ba.Vec3]]:
         """Returns the position and velocity of our target.
 
         Both values will be None in the case of no target.
@@ -189,7 +189,7 @@ class SpazBot(Spaz):
                     ba.Vec3(closest_vel[0], closest_vel[1], closest_vel[2]))
         return None, None
 
-    def set_player_points(self, pts: List[Tuple[ba.Vec3, ba.Vec3]]) -> None:
+    def set_player_points(self, pts: list[tuple[ba.Vec3, ba.Vec3]]) -> None:
         """Provide the spaz-bot with the locations of its enemies."""
         self._player_pts = pts
 
@@ -882,7 +882,7 @@ class SpazBotSet:
         self._bot_list_count = 5
         self._bot_add_list = 0
         self._bot_update_list = 0
-        self._bot_lists: List[List[SpazBot]] = [
+        self._bot_lists: list[list[SpazBot]] = [
             [] for _ in range(self._bot_list_count)
         ]
         self._spawn_sound = ba.getsound('spawn')
@@ -894,7 +894,7 @@ class SpazBotSet:
         self.clear()
 
     def spawn_bot(self,
-                  bot_type: Type[SpazBot],
+                  bot_type: type[SpazBot],
                   pos: Sequence[float],
                   spawn_time: float = 3.0,
                   on_spawn_call: Callable[[SpazBot], Any] = None) -> None:
@@ -907,7 +907,7 @@ class SpazBotSet:
                                                on_spawn_call))
         self._spawning_count += 1
 
-    def _spawn_bot(self, bot_type: Type[SpazBot], pos: Sequence[float],
+    def _spawn_bot(self, bot_type: type[SpazBot], pos: Sequence[float],
                    on_spawn_call: Optional[Callable[[SpazBot], Any]]) -> None:
         spaz = bot_type()
         ba.playsound(self._spawn_sound, position=pos)
@@ -925,9 +925,9 @@ class SpazBotSet:
         return (self._spawning_count > 0
                 or any(any(b.is_alive() for b in l) for l in self._bot_lists))
 
-    def get_living_bots(self) -> List[SpazBot]:
+    def get_living_bots(self) -> list[SpazBot]:
         """Get the living bots in the set."""
-        bots: List[SpazBot] = []
+        bots: list[SpazBot] = []
         for botlist in self._bot_lists:
             for bot in botlist:
                 if bot.is_alive():

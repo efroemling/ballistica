@@ -14,7 +14,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Callable, List, Tuple, Type
+    from typing import Any, Sequence, Optional, Callable
 
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
 
@@ -693,7 +693,7 @@ class Bomb(ba.Actor):
         elif self.bomb_type == 'tnt':
             self.blast_radius *= 1.45
 
-        self._explode_callbacks: List[Callable[[Bomb, Blast], Any]] = []
+        self._explode_callbacks: list[Callable[[Bomb, Blast], Any]] = []
 
         # The player this came from.
         self._source_player = source_player
@@ -716,7 +716,7 @@ class Bomb(ba.Actor):
         # since players carrying those things and thus touching footing
         # objects will think they're on solid ground.. perhaps we don't
         # wanna add this even in the tnt case?
-        materials: Tuple[ba.Material, ...]
+        materials: tuple[ba.Material, ...]
         if self.bomb_type == 'tnt':
             materials = (factory.bomb_material, shared.footing_material,
                          shared.object_material)
@@ -847,7 +847,7 @@ class Bomb(ba.Actor):
         })
 
     def get_source_player(
-            self, playertype: Type[PlayerType]) -> Optional[PlayerType]:
+            self, playertype: type[PlayerType]) -> Optional[PlayerType]:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
         return (player if isinstance(player, playertype) and player.exists()

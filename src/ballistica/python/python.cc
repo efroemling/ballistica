@@ -945,8 +945,8 @@ void Python::Reset(bool do_init) {
     BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
 
     const char* ver = Py_GetVersion();
-    if (strncmp(ver, "3.8", 3) != 0) {
-      throw Exception("We require Python 3.8.x; instead found "
+    if (strncmp(ver, "3.9", 3) != 0) {
+      throw Exception("We require Python 3.9.x; instead found "
                       + std::string(ver));
     }
 

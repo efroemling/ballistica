@@ -4,10 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, List, Dict, Any, Tuple
+from typing import TYPE_CHECKING, Optional, Any, Annotated
 from dataclasses import dataclass, field
-
-from typing_extensions import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
 
@@ -33,7 +31,7 @@ class ServerNodeQueryResponse:
     error: Annotated[Optional[str], IOAttrs('e', store_default=False)] = None
 
     # The set of servernodes.
-    servers: Annotated[List[ServerNodeEntry],
+    servers: Annotated[list[ServerNodeEntry],
                        IOAttrs('s', store_default=False)] = field(
                            default_factory=list)
 
@@ -57,10 +55,10 @@ class PrivateHostingConfig:
     playlist_name: str = 'Unknown'
     randomize: bool = False
     tutorial: bool = False
-    custom_team_names: Optional[Tuple[str, str]] = None
-    custom_team_colors: Optional[Tuple[Tuple[float, float, float],
-                                       Tuple[float, float, float]]] = None
-    playlist: Optional[List[Dict[str, Any]]] = None
+    custom_team_names: Optional[tuple[str, str]] = None
+    custom_team_colors: Optional[tuple[tuple[float, float, float],
+                                       tuple[float, float, float]]] = None
+    playlist: Optional[list[dict[str, Any]]] = None
     exit_minutes: float = 120.0
     exit_minutes_unclean: float = 180.0
     exit_minutes_idle: float = 10.0

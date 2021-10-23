@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, TypeVar, Generic
 from ba._error import print_exception
 
 if TYPE_CHECKING:
-    from weakref import ReferenceType
-    from typing import Dict, List, Sequence, Tuple, Union, Optional
+    from typing import Sequence, Union, Optional
     import ba
 
 
@@ -47,8 +46,8 @@ class SessionTeam:
 
     # Annotate our attr types at the class level so they're introspectable.
     name: Union[ba.Lstr, str]
-    color: Tuple[float, ...]  # FIXME: can't we make this fixed len?
-    players: List[ba.SessionPlayer]
+    color: tuple[float, ...]  # FIXME: can't we make this fixed len?
+    players: list[ba.SessionPlayer]
     customdata: dict
     id: int
 
@@ -88,11 +87,11 @@ class Team(Generic[PlayerType]):
 
     # Defining these types at the class level instead of in __init__ so
     # that types are introspectable (these are still instance attrs).
-    players: List[PlayerType]
+    players: list[PlayerType]
     id: int
     name: Union[ba.Lstr, str]
-    color: Tuple[float, ...]  # FIXME: can't we make this fixed length?
-    _sessionteam: ReferenceType[SessionTeam]
+    color: tuple[float, ...]  # FIXME: can't we make this fixed length?
+    _sessionteam: weakref.ref[SessionTeam]
     _expired: bool
     _postinited: bool
     _customdata: dict
@@ -127,7 +126,7 @@ class Team(Generic[PlayerType]):
         self._postinited = True
 
     def manual_init(self, team_id: int, name: Union[ba.Lstr, str],
-                    color: Tuple[float, ...]) -> None:
+                    color: tuple[float, ...]) -> None:
         """Manually init a team for uses such as bots."""
         self.id = team_id
         self.name = name

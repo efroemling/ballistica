@@ -15,7 +15,7 @@ from efro.terminal import Clr
 from efrotools import get_public_license
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Tuple
+    from typing import Optional
 
 
 def camel_case_convert(name: str) -> str:
@@ -26,7 +26,7 @@ def camel_case_convert(name: str) -> str:
 
 def _gen_enums(infilename: str) -> str:
     out = ''
-    enum_lnums: List[int] = []
+    enum_lnums: list[int] = []
     with open(infilename, encoding='utf-8') as infile:
         lines = infile.read().splitlines()
 
@@ -56,7 +56,7 @@ def _gen_enums(infilename: str) -> str:
                       for line in out.splitlines()) + '\n')
 
 
-def _parse_name(lines: List[str], lnum: int) -> str:
+def _parse_name(lines: list[str], lnum: int) -> str:
     bits = lines[lnum].split(' ')
     if (len(bits) != 4 or bits[0] != 'enum' or bits[1] != 'class'
             or bits[3] != '{'):
@@ -65,7 +65,7 @@ def _parse_name(lines: List[str], lnum: int) -> str:
     return enum_name
 
 
-def _parse_values(lines: List[str], lnum: int, lnumend: int, out: str) -> str:
+def _parse_values(lines: list[str], lnum: int, lnumend: int, out: str) -> str:
     val = 0
     for i in range(lnum + 1, lnumend):
         line = lines[i]
@@ -108,7 +108,7 @@ def _parse_values(lines: List[str], lnum: int, lnumend: int, out: str) -> str:
     return out
 
 
-def _find_enum_end(lines: List[str], lnum: int) -> int:
+def _find_enum_end(lines: list[str], lnum: int) -> int:
     lnumend = lnum + 1
     while True:
         if lnumend > len(lines) - 1:
@@ -119,10 +119,10 @@ def _find_enum_end(lines: List[str], lnum: int) -> int:
     return lnumend
 
 
-def _parse_doc_lines(lines: List[str], lnum: int) -> Tuple[List[str], int]:
+def _parse_doc_lines(lines: list[str], lnum: int) -> tuple[list[str], int]:
 
     # First parse the doc-string
-    doclines: List[str] = []
+    doclines: list[str] = []
     lnumorig = lnum
     while True:
         if lnum > len(lines) - 1:

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
+    from typing import Any
     import ba
 
 
@@ -601,14 +601,14 @@ def get_input_map_hash(inputdevice: ba.InputDevice) -> str:
 
 
 def get_input_device_config(device: ba.InputDevice,
-                            default: bool) -> Tuple[Dict, str]:
+                            default: bool) -> tuple[dict, str]:
     """Given an input device, return its config dict in the app config.
 
     The dict will be created if it does not exist.
     """
     cfg = _ba.app.config
     name = device.name
-    ccfgs: Dict[str, Any] = cfg.setdefault('Controllers', {})
+    ccfgs: dict[str, Any] = cfg.setdefault('Controllers', {})
     ccfgs.setdefault(name, {})
     unique_id = device.unique_identifier
     if default:

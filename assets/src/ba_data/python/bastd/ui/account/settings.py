@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, List, Union
+    from typing import Optional, Union
 
 
 class AccountSettingsWindow(ba.Window):
@@ -29,7 +29,7 @@ class AccountSettingsWindow(ba.Window):
         ba.set_analytics_screen('Account Window')
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -74,7 +74,7 @@ class AccountSettingsWindow(ba.Window):
         self._sub_width = self._scroll_width - 20
 
         # Determine which sign-in/sign-out buttons we should show.
-        self._show_sign_in_buttons: List[str] = []
+        self._show_sign_in_buttons: list[str] = []
 
         if app.platform == 'android' and app.subplatform == 'google':
             self._show_sign_in_buttons.append('Google Play')

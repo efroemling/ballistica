@@ -2372,7 +2372,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_chat_messages", (PyCFunction)PyGetChatMessages,
        METH_VARARGS | METH_KEYWORDS,
-       "get_chat_messages() -> List[str]\n"
+       "get_chat_messages() -> list[str]\n"
        "\n"
        "(internal)"},
 
@@ -2456,7 +2456,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "A workaround for some unintentional backgrounding that occurs on mac"},
 
       {"uibounds", (PyCFunction)PyUIBounds, METH_VARARGS | METH_KEYWORDS,
-       "uibounds() -> Tuple[float, float, float, float]\n"
+       "uibounds() -> tuple[float, float, float, float]\n"
        "\n"
        "(internal)\n"
        "\n"

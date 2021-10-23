@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import List, Any, Callable, Sequence
+    from typing import Any, Callable, Sequence
 
 
 def make_radio_group(check_boxes: Sequence[ba.Widget],
@@ -17,7 +17,7 @@ def make_radio_group(check_boxes: Sequence[ba.Widget],
                      value_change_call: Callable[[str], Any]) -> None:
     """Link the provided check_boxes together into a radio group."""
 
-    def _radio_press(check_string: str, other_check_boxes: List[ba.Widget],
+    def _radio_press(check_string: str, other_check_boxes: list[ba.Widget],
                      val: int) -> None:
         if val == 1:
             value_change_call(check_string)

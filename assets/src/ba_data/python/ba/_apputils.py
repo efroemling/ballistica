@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Any, Callable, Optional
+    from typing import Any
     import ba
 
 
@@ -186,9 +186,9 @@ def print_live_object_warnings(when: Any,
     from ba._actor import Actor
     from ba._activity import Activity
 
-    sessions: List[ba.Session] = []
-    activities: List[ba.Activity] = []
-    actors: List[ba.Actor] = []
+    sessions: list[ba.Session] = []
+    activities: list[ba.Activity] = []
+    actors: list[ba.Actor] = []
 
     # Once we come across leaked stuff, printing again is probably
     # redundant.

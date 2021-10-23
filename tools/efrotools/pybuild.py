@@ -10,10 +10,13 @@ from typing import TYPE_CHECKING
 from efrotools import PYVER, run, readfile, writefile, replace_one
 
 if TYPE_CHECKING:
-    from typing import List, Dict, Any, Optional
+    from typing import Any
 
 ENABLE_OPENSSL = True
-PY38 = True
+NEWER_PY_TEST = True
+
+PY_VER_EXACT_ANDROID = '3.9.7'
+PY_VER_EXACT_APPLE = '3.9.6'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
 PRUNE_LIB_NAMES = [
@@ -29,8 +32,6 @@ PRUNE_DLL_NAMES = ['*.ico']
 
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     import platform
     import subprocess
     from efro.error import CleanError
@@ -61,115 +62,12 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
     run(f'git checkout {PYVER}')
 
-    # On mac we currently have to add the _scproxy module or urllib will
-    # fail.
-    txt = readfile('patch/Python/Setup.embedded')
-    if arch == 'mac':
-        txt += ('\n'
-                '# ericf added - mac urllib needs this\n'
-                '_scproxy _scproxy.c '
-                '-framework SystemConfiguration '
-                '-framework CoreFoundation')
-
-    # Turn off sqlite module. (scratch that; leaving it in.)
-    # txt = replace_one(txt, '_sqlite3 -I$(', '#_sqlite3 -I$(')
-    # txt = txt.replace('    _sqlite/', '#    _sqlite/')
-
-    # Turn off xz compression module. (scratch that; leaving it in.)
-    # txt = replace_one(txt, '_lzma _', '#_lzma _')
-
-    # Turn off bzip2 module.
-    # txt = replace_one(txt, '_bz2 _b', '#_bz2 _b')
-
-    # Turn off openssl module (only if not doing openssl).
-    if not ENABLE_OPENSSL:
-        txt = replace_one(txt, '_hashlib _hashopenssl.c',
-                          '#_hashlib _hashopenssl.c')
-
-    # Turn off various other stuff we don't use.
-    for line in [
-            '_codecs _codecsmodule.c',
-            '_codecs_cn cjkcodecs/_codecs_cn.c',
-            '_codecs_hk cjkcodecs/_codecs_hk.c',
-            '_codecs_iso2022 cjkcodecs/',
-            '_codecs_jp cjkcodecs/_codecs_jp.c',
-            '_codecs_jp cjkcodecs/_codecs_jp.c',
-            '_codecs_kr cjkcodecs/_codecs_kr.c',
-            '_codecs_tw cjkcodecs/_codecs_tw.c',
-            '_lsprof _lsprof.c rotatingtree.c',
-            '_multibytecodec cjkcodecs/multibytecodec.c',
-            '_multiprocessing _multiprocessing/multiprocessing.c',
-            '_opcode _opcode.c',
-            'audioop audioop.c',
-            'grp grpmodule.c',
-            'mmap mmapmodule.c',
-            'parser parsermodule.c',
-            'pyexpat expat/xmlparse.c',
-            '    expat/xmlrole.c ',
-            '    expat/xmltok.c ',
-            '    pyexpat.c ',
-            '    -I$(srcdir)/Modules/expat ',
-            '    -DHAVE_EXPAT_CONFIG_H -DUSE_PYEXPAT_CAPI'
-            ' -DXML_DEV_URANDOM',
-            'resource resource.c',
-            'syslog syslogmodule.c',
-            'termios termios.c',
-            '_ctypes_test _ctypes/_ctypes_test.c',
-            '_testbuffer _testbuffer.c',
-            '_testimportmultiple _testimportmultiple.c',
-            '_crypt _cryptmodule.c',  # not on android so disabling here too
-    ]:
-        txt = replace_one(txt, line, '#' + line)
-
-    if ENABLE_OPENSSL:
-
-        # _md5 and _sha modules are normally only built if the
-        # system does not have the OpenSSL libs containing an optimized
-        # version.
-        # Note: seems we still need sha3 or we get errors
-        for line in [
-                '_md5 md5module.c',
-                '_sha1 sha1module.c',
-                # '_sha3 _sha3/sha3module.c',
-                '_sha256 sha256module.c',
-                '_sha512 sha512module.c',
-        ]:
-            txt = replace_one(txt, line, '#' + line)
-    else:
-        txt = replace_one(txt, '_ssl _ssl.c', '#_ssl _ssl.c')
-    writefile('patch/Python/Setup.embedded', txt)
-
     txt = readfile('Makefile')
 
     # Fix a bug where spaces in PATH cause errors (darn you vmware fusion!)
     txt = replace_one(
         txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) .',
         '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" .')
-
-    # Remove makefile dependencies so we don't build the
-    # libs we're not using.
-    srctxt = '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: '
-    if PY38:
-        # Note: now just keeping everything on.
-        assert ENABLE_OPENSSL
-        if bool(False):
-            txt = replace_one(
-                txt, srctxt,
-                '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: ' +
-                ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
-                'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
-    else:
-        txt = replace_one(
-            txt, srctxt,
-            '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: ' +
-            ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
-            'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
-    srctxt = ('dist/Python-$(PYTHON_VER)-$1-support.'
-              '$(BUILD_NUMBER).tar.gz: ')
-    txt = replace_one(
-        txt, srctxt,
-        'dist/Python-$(PYTHON_VER)-$1-support.$(BUILD_NUMBER).tar.gz:'
-        ' $$(PYTHON_FRAMEWORK-$1)\n#' + srctxt)
 
     # Turn doc strings on; looks like it only adds a few hundred k.
     txt = txt.replace('--without-doc-strings', '--with-doc-strings')
@@ -197,25 +95,50 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
         # Debug has a different name.
         # (Currently expect to replace 12 instances of this).
-        dline = 'python$(PYTHON_VER)' if PY38 else 'python$(PYTHON_VER)m'
+        dline = ('python$(PYTHON_VER)'
+                 if NEWER_PY_TEST else 'python$(PYTHON_VER)m')
         splitlen = len(txt.split(dline))
         if splitlen != 13:
             raise RuntimeError(f'Unexpected configure line count {splitlen}.')
         txt = txt.replace(
-            dline, 'python$(PYTHON_VER)d' if PY38 else 'python$(PYTHON_VER)dm')
+            dline, 'python$(PYTHON_VER)d'
+            if NEWER_PY_TEST else 'python$(PYTHON_VER)dm')
 
+    # Inject our custom modifications to fire before building.
+    txt = txt.replace(
+        '	# Configure target Python\n',
+        '	cd $$(PYTHON_DIR-$1) && '
+        f'../../../../../tools/pcommand python_apple_patch {arch}\n'
+        '	# Configure target Python\n',
+    )
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.
     # (we run these in parallel so limit to 1 job a piece;
     # otherwise they inherit the -j12 or whatever from the top level)
     # (also this build seems to fail with multiple threads)
-    run('make -j1 ' + {
-        'mac': 'Python-macOS',
-        'ios': 'Python-iOS',
-        'tvos': 'Python-tvOS'
-    }[arch])
+    run(
+        'make -j1 ' + {
+            'mac': 'Python-macOS',
+            # 'mac': 'build/macOS/Python-3.9.6-macOS/Makefile',
+            'ios': 'Python-iOS',
+            'tvos': 'Python-tvOS'
+        }[arch])
     print('python build complete! (apple/' + arch + ')')
+
+
+def apple_patch(arch: str) -> None:
+    """Run necessary patches on an apple archive before building."""
+
+    # Here's the deal: we want our custom static python libraries to
+    # be as similar as possible on apple platforms and android, so let's
+    # blow away all the tweaks that this setup does to Setup.local and
+    # instead apply our very similar ones directly to Setup, just as we
+    # do for android.
+    with open('Modules/Setup.local', 'w', encoding='utf-8') as outfile:
+        outfile.write('# cleared by efrotools build\n')
+
+    _patch_setup_file('apple', arch)
 
 
 def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
@@ -223,9 +146,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     (can be arm, arm64, x86, or x86_64)
     """
-    # pylint: disable=too-many-statements
     import subprocess
-    import platform
+
     builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
     run('rm -rf "' + builddir + '"')
     run('mkdir -p build')
@@ -233,228 +155,178 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         'https://github.com/yan12125/python3-android.git "' + builddir + '"')
     os.chdir(builddir)
 
-    # It seems we now need 'autopoint' as part of this build, but on mac it
-    # is not available on the normal path, but only as part of the keg-only
-    # gettext homebrew formula.
-    if platform.system() == 'Darwin':
-        if (subprocess.run('which autopoint', shell=True,
-                           check=False).returncode != 0):
-            print('Updating path for mac autopoint...')
-            appath = subprocess.run('brew ls gettext | grep bin/autopoint',
-                                    shell=True,
-                                    check=True,
-                                    capture_output=True)
-            appathout = os.path.dirname(appath.stdout.decode().strip())
-            os.environ['PATH'] += (':' + appathout)
-            print(f'ADDED "{appathout}" TO SYS PATH...')
-
-    # Commit from Jan 8, 2020. Right after this, the build system was switched
-    # a a completely new minimal one which will take some work to update here.
-    # Punting on that for now... (tentative plan is to try and adopt the new
-    # one when we update for Python 3.10 in a year or two).
-    if True:  # pylint: disable=using-constant-test
-        run('git checkout 9adbcfaca37f40b7a86381f83f0f6af4187233ae')
-    ftxt = readfile('pybuild/env.py')
-
-    # Set the packages we build.
-    ftxt = replace_one(
-        ftxt, 'packages = (', "packages = ('zlib', 'sqlite', 'xz'," +
-        (" 'openssl'" if ENABLE_OPENSSL else '') + ')\n# packages = (')
-
-    # Don't wanna bother with gpg signing stuff.
-    ftxt = replace_one(ftxt, 'verify_source = True', 'verify_source = False')
-
-    # Sub in the min api level we're targeting.
-    ftxt = replace_one(ftxt, 'android_api_level = 21',
-                       'android_api_level = 21')
-    ftxt = replace_one(ftxt, "target_arch = 'arm'",
-                       "target_arch = '" + arch + "'")
-    writefile('pybuild/env.py', ftxt)
-    ftxt = readfile('Makefile')
-
-    # This needs to be python3 for us.
-    ftxt = replace_one(ftxt, 'PYTHON?=python\n', 'PYTHON?=python3\n')
-    writefile('Makefile', ftxt)
-    ftxt = readfile('pybuild/packages/python.py')
-
-    # We currently build as a static lib.
-    ftxt = replace_one(ftxt, "            '--enable-shared',\n", '')
-    ftxt = replace_one(
-        ftxt, "super().__init__('https://github.com/python/cpython/')",
-        "super().__init__('https://github.com/python/cpython/'"
-        f", branch='{PYVER}')")
-
-    # Turn ipv6 on (curious why its turned off here?...)
-    # Also, turn on low level debugging features for our debug builds.
-    ftxt = replace_one(ftxt, "'--disable-ipv6',", "'--enable-ipv6',")
-    if debug:
-        ftxt = replace_one(ftxt, "'./configure',",
-                           "'./configure', '--with-pydebug',")
-
-    # We don't use this stuff so lets strip it out to simplify.
-    ftxt = replace_one(ftxt, "'--without-ensurepip',", '')
-
-    # This builds all modules as dynamic libs, but we want to be consistent
-    # with our other embedded builds and just static-build the ones we
-    # need... so to change that we'll need to add a hook for ourself after
-    # python is downloaded but before it is built so we can muck with it.
-    ftxt = replace_one(
-        ftxt, '    def build(self):',
-        '    def build(self):\n        import os\n'
-        '        if os.system(\'"' + rootdir +
-        '/tools/pcommand" python_android_patch "' + os.getcwd() +
-        '"\') != 0: raise Exception("patch apply failed")')
-
-    writefile('pybuild/packages/python.py', ftxt)
-
-    # Set these to particular releases to use those.
-    # py_commit = '580fbb018fd0844806119614d752b41fc69660f9'  # 3.8.5
-    # py_commit = '6503f05dd59e26a9986bdea097b3da9b3546f45b'  # 3.8.7
-    py_commit = 'c3ffbbdf3d5645ee07c22649f2028f9dffc762ba'  # 3.8.11
-
-    # cpython-source-deps stuff started failing for OpenSSL on Jan 8 2021.
-    # Pinning it to an older one for now.
-    if bool(False):
-        # From 6/12/20
-        py_ssl_commit: Optional[str] = (
-            '7f34c3085feb4692bbbb6c8b19d053ebc5049dad')
-    else:
-        py_ssl_commit = None
-
-    commit_lines = ''
-    if py_commit is not None:
-        commit_lines += ('        if self.source_url == '
-                         "'https://github.com/python/cpython/':\n"
-                         "            run_in_dir(['git', 'checkout', '" +
-                         py_commit + "'], self.source_dir)\n")
-    if py_ssl_commit is not None:
-        commit_lines += (f'        if self.source_url == '
-                         f"'https://github.com/python/cpython-source-deps'"
-                         f" and self.branch == 'openssl-1.1.1':\n"
-                         f"            run_in_dir(['git', 'checkout', '"
-                         f"{py_ssl_commit}'], self.source_dir)\n")
-
-    # Complaint about patch already being applied...
-    if bool(True):
-        ftxt = readfile('pybuild/packages/openssl.py')
-        ftxt = replace_one(
-            ftxt,
-            '        LocalPatch(\'lld-issue32518\'),\n',
-            '        # LocalPatch(\'lld-issue32518\'),\n',
-        )
-        writefile('pybuild/packages/openssl.py', ftxt)
-
-    ftxt = readfile('pybuild/source.py')
-
-    # Check out a particular commit right after the clone.
-    ftxt = replace_one(
-        ftxt, "'git', 'clone', '--single-branch', '-b',"
-        ' self.branch, self.source_url, self.dest])', "'git', 'clone', '-b',"
-        ' self.branch, self.source_url, self.dest])\n'
-        '        # efro: hack to get exact commits we want.\n'
-        "        print('DOING URL', self.source_url)\n" + commit_lines)
-    writefile('pybuild/source.py', ftxt)
-    ftxt = readfile('pybuild/util.py')
-
-    # Still don't wanna bother with gpg signing stuff.
-    ftxt = replace_one(
-        ftxt, 'def gpg_verify_file(sig_filename, filename, validpgpkeys):\n',
-        'def gpg_verify_file(sig_filename, filename, validpgpkeys):\n'
-        '    print("gpg-verify disabled by ericf")\n'
-        '    return\n')
-    writefile('pybuild/util.py', ftxt)
-
-    # These builds require ANDROID_NDK to be set, so make sure that's
-    # the case.
+    # These builds require ANDROID_NDK to be set; make sure that's the case.
     os.environ['ANDROID_NDK'] = subprocess.check_output(
         [f'{rootdir}/tools/pcommand', 'android_sdk_utils',
          'get-ndk-path']).decode().strip()
 
+    # Disable builds for dependencies we don't use.
+    ftxt = readfile('Android/build_deps.py')
+    # ftxt = replace_one(ftxt, '        NCurses,\n',
+    #                    '#        NCurses,\n',)
+    ftxt = replace_one(
+        ftxt,
+        '        '
+        'BZip2, GDBM, LibFFI, LibUUID, OpenSSL, Readline, SQLite, XZ, ZLib,\n',
+        '        '
+        'BZip2, LibUUID, OpenSSL, SQLite, XZ, ZLib,\n',
+    )
+
+    # Older ssl seems to choke on newer ndk layouts.
+    ftxt = replace_one(
+        ftxt,
+        "source = 'https://www.openssl.org/source/openssl-1.1.1h.tar.gz'",
+        "source = 'https://www.openssl.org/source/openssl-1.1.1l.tar.gz'")
+    writefile('Android/build_deps.py', ftxt)
+
+    # Tweak some things in the base build script; grab the right version
+    # of Python and also inject some code to modify bits of python
+    # after it is extracted.
+    ftxt = readfile('build.sh')
+    ftxt = replace_one(ftxt, 'PYVER=3.9.0', f'PYVER={PY_VER_EXACT_ANDROID}')
+    ftxt = replace_one(
+        ftxt, '    popd\n', f'    ../../../tools/pcommand'
+        f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n')
+    writefile('build.sh', ftxt)
+
     # Ok, let 'er rip
     # (we often run these builds in parallel so limit to 1 job a piece;
     # otherwise they each inherit the -j12 or whatever from the top level).
-    run('make -j1')
+    exargs = ' --with-pydebug' if debug else ''
+    run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}')
     print('python build complete! (android/' + arch + ')')
 
 
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
-    if PY38:
-        fname = 'src/cpython/Modules/Setup'
+    _patch_setup_file('android', '?')
+
+
+def _patch_setup_file(platform: str, arch: str) -> None:
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
+    fname = 'Modules/Setup'
+    ftxt = readfile(fname)
+
+    if platform == 'android':
+        prefix = '$(srcdir)/Android/sysroot/usr'
+        uuid_ex = f' -L{prefix}/lib -luuid'
+        zlib_ex = f' -I{prefix}/include -L{prefix}/lib -lz'
+        bz2_ex = f' -I{prefix}/include -L{prefix}/lib -lbz2'
+        ssl_ex = f' -DUSE_SSL -I{prefix}/include -L{prefix}/lib -lssl -lcrypto'
+        sqlite_ex = f' -I{prefix}/include -L{prefix}/lib'
+        hash_ex = ' -DUSE_SSL -lssl -lcrypto'
+        lzma_ex = ' -llzma'
+    elif platform == 'apple':
+        prefix = '$(srcdir)/Android/sysroot/usr'
+        uuid_ex = ''
+        zlib_ex = ' -I$(prefix)/include -lz'
+        bz2_ex = (' -I$(srcdir)/../Support/BZip2/Headers'
+                  ' -L$(srcdir)/../Support/BZip2 -lbzip2')
+        ssl_ex = (' -I$(srcdir)/../Support/OpenSSL/Headers'
+                  ' -L$(srcdir)/../Support/OpenSSL -lOpenSSL -DUSE_SSL')
+        sqlite_ex = ' -I$(srcdir)/Modules/_sqlite'
+        hash_ex = (' -I$(srcdir)/../Support/OpenSSL/Headers'
+                   ' -L$(srcdir)/../Support/OpenSSL -lOpenSSL -DUSE_SSL')
+        lzma_ex = (' -I$(srcdir)/../Support/XZ/Headers'
+                   ' -L$(srcdir)/../Support/XZ/ -lxz')
     else:
-        fname = 'src/cpython/Modules/Setup.dist'
-    txt = readfile(fname)
+        raise RuntimeError(f'Unknown platform {platform}')
 
-    # Need to switch some flags on this one.
-    txt = replace_one(txt, '#zlib zlibmodule.c',
-                      'zlib zlibmodule.c -lz\n#zlib zlibmodule.c')
-    # Just turn all these on.
-    for enable in [
-            '#array arraymodule.c',
-            '#cmath cmathmodule.c _math.c',
-            '#math mathmodule.c',
-            '#_contextvars _contextvarsmodule.c',
-            '#_struct _struct.c',
-            '#_weakref _weakref.c',
-            # '#_testcapi _testcapimodule.c',
-            '#_random _randommodule.c',
-            '#_elementtree -I',
-            '#_pickle _pickle.c',
-            '#_datetime _datetimemodule.c',
-            '#_bisect _bisectmodule.c',
-            '#_heapq _heapqmodule.c',
-            '#_asyncio _asynciomodule.c',
-            '#unicodedata unicodedata.c',
-            '#fcntl fcntlmodule.c',
-            '#select selectmodule.c',
-            '#_csv _csv.c',
-            '#_socket socketmodule.c',
-            '#_blake2 _blake2/blake2module.c',
-            '#binascii binascii.c',
-            '#_posixsubprocess _posixsubprocess.c',
-            '#_sha3 _sha3/sha3module.c'
-    ]:
-        txt = replace_one(txt, enable, enable[1:])
-    if ENABLE_OPENSSL:
-        txt = replace_one(txt, '#_ssl _ssl.c \\',
-                          '_ssl _ssl.c -DUSE_SSL -lssl -lcrypto')
-    else:
-        # Note that the _md5 and _sha modules are normally only built if the
-        # system does not have the OpenSSL libs containing an optimized
-        # version.
-        for enable in [
-                '#_md5 md5module.c', '#_sha1 sha1module.c',
-                '#_sha256 sha256module.c', '#_sha512 sha512module.c'
-        ]:
-            txt = replace_one(txt, enable, enable[1:])
+    # This list should contain all possible compiled modules to start.
+    # If any .so files are coming out of builds, their names should be
+    # added here to stop that.
+    cmodules = [
+        '_asyncio', '_bisect', '_blake2', '_codecs_cn', '_codecs_hk',
+        '_codecs_iso2022', '_codecs_jp', '_codecs_kr', '_codecs_tw',
+        '_contextvars', '_crypt', '_csv', '_ctypes_test', '_ctypes',
+        '_curses_panel', '_curses', '_datetime', '_decimal', '_elementtree',
+        '_heapq', '_json', '_lsprof', '_lzma', '_md5', '_multibytecodec',
+        '_multiprocessing', '_opcode', '_pickle', '_posixsubprocess', '_queue',
+        '_random', '_sha1', '_sha3', '_sha256', '_sha512', '_socket',
+        '_statistics', '_struct', '_testbuffer', '_testcapi',
+        '_testimportmultiple', '_testinternalcapi', '_testmultiphase', '_uuid',
+        '_xxsubinterpreters', '_xxtestfuzz', '_zoneinfo', 'array', 'audioop',
+        'binascii', 'cmath', 'fcntl', 'grp', 'math', 'mmap', 'ossaudiodev',
+        'parser', 'pyexpat', 'resource', 'select', 'syslog', 'termios',
+        'unicodedata', 'xxlimited', 'zlib'
+    ]
 
-    # Turn this off (its just an example module).
-    txt = replace_one(txt, 'xxsubtype xxsubtype.c', '#xxsubtype xxsubtype.c')
+    # Selectively uncomment some existing modules for static compilation.
+    enables = [
+        '_asyncio', 'array', 'cmath', 'math', '_contextvars', '_struct',
+        '_random', '_elementtree', '_pickle', '_datetime', '_zoneinfo',
+        '_bisect', '_heapq', '_json', '_statistics', 'unicodedata', 'fcntl',
+        'select', 'mmap', '_csv', '_socket', '_sha3', '_blake2', 'binascii',
+        '_posixsubprocess'
+    ]
+    # Note that the _md5 and _sha modules are normally only built if the
+    # system does not have the OpenSSL libs containing an optimized
+    # version.
+    if bool(False):
+        enables += ['_md5']
 
-    # For whatever reason this stuff isn't in there at all; add it.
-    txt += '\n_json _json.c\n'
+    for enable in enables:
+        ftxt = replace_one(ftxt, f'#{enable} ', f'{enable} ')
+        cmodules.remove(enable)
 
-    txt += '\n_lzma _lzmamodule.c -llzma\n'
+    # Disable ones that were enabled:
+    disables = ['xxsubtype']
+    for disable in disables:
+        ftxt = replace_one(ftxt, f'\n{disable} ', f'\n#{disable} ')
 
-    txt += ('\n_sqlite3 -I$(srcdir)/Modules/_sqlite'
-            ' -DMODULE_NAME=\'\\"sqlite3\\"\' -DSQLITE_OMIT_LOAD_EXTENSION'
-            ' -lsqlite3 \\\n'
-            '    _sqlite/cache.c \\\n'
-            '    _sqlite/connection.c \\\n'
-            '    _sqlite/cursor.c \\\n'
-            '    _sqlite/microprotocols.c \\\n'
-            '    _sqlite/module.c \\\n'
-            '    _sqlite/prepare_protocol.c \\\n'
-            '    _sqlite/row.c \\\n'
-            '    _sqlite/statement.c \\\n'
-            '    _sqlite/util.c\n')
+    # Additions:
+    ftxt += '\n# Additions by efrotools:\n'
 
-    if ENABLE_OPENSSL:
-        txt += '\n\n_hashlib _hashopenssl.c -DUSE_SSL -lssl -lcrypto\n'
+    if bool(True):
+        ftxt += f'_uuid _uuidmodule.c{uuid_ex}\n'
+        cmodules.remove('_uuid')
 
-    txt += '\n\n*disabled*\n_ctypes _crypt grp'
+    ftxt += f'zlib zlibmodule.c{zlib_ex}\n'
 
-    writefile(fname, txt)
+    cmodules.remove('zlib')
+
+    # Why isn't this getting built as a shared lib by default?
+    # Do we need it for sure?
+    ftxt += f'_hashlib _hashopenssl.c{hash_ex}\n'
+
+    ftxt += f'_lzma _lzmamodule.c{lzma_ex}\n'
+    cmodules.remove('_lzma')
+
+    ftxt += f'_bz2 _bz2module.c{bz2_ex}\n'
+
+    ftxt += f'_ssl _ssl.c{ssl_ex}\n'
+
+    ftxt += (f'_sqlite3'
+             f' _sqlite/cache.c'
+             f' _sqlite/connection.c'
+             f' _sqlite/cursor.c'
+             f' _sqlite/microprotocols.c'
+             f' _sqlite/module.c'
+             f' _sqlite/prepare_protocol.c'
+             f' _sqlite/row.c'
+             f' _sqlite/statement.c'
+             f' _sqlite/util.c'
+             f'{sqlite_ex}'
+             f' -DMODULE_NAME=\'\\"sqlite3\\"\''
+             f' -DSQLITE_OMIT_LOAD_EXTENSION'
+             f' -lsqlite3\n')
+
+    # Mac needs this:
+    if arch == 'mac':
+        ftxt += ('\n'
+                 '# efrotools: mac urllib needs this:\n'
+                 '_scproxy _scproxy.c '
+                 '-framework SystemConfiguration '
+                 '-framework CoreFoundation\n')
+
+    # Explicitly mark the remaining ones as disabled
+    # (so Python won't try to build them as dynamic libs).
+    remaining_disabled = ' '.join(cmodules)
+    ftxt += ('\n# Disabled by efrotools build:\n'
+             '*disabled*\n'
+             f'{remaining_disabled}\n')
+    writefile(fname, ftxt)
 
     # Ok, this is weird.
     # When applying the module Setup, python looks for any line containing *=*
@@ -462,61 +334,18 @@ def android_patch() -> None:
     # This breaks things for our static sqlite compile above.
     # The check used to look for [A-Z]*=* which didn't break, so let' just
     # change it back to that for now.
-    fname = 'src/cpython/Modules/makesetup'
+    # UPDATE: Currently this seems to only be necessary on Android;
+    # perhaps this broke between 3.9.6 and 3.9.7 or perhaps the apple
+    # bundle already patches it ¯\_(ツ)_/¯
+    fname = 'Modules/makesetup'
     txt = readfile(fname)
-    txt = replace_one(txt, '		*=*)'
-                      '	DEFS="$line$NL$DEFS"; continue;;',
-                      '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
-                      ' continue;;')
+    if platform == 'android':
+        txt = replace_one(txt, '		*=*)'
+                          '	DEFS="$line$NL$DEFS"; continue;;',
+                          '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
+                          ' continue;;')
+    assert txt.count('[A-Z]*=*') == 1
     writefile(fname, txt)
-
-    # Add custom callbacks to Python's PyParser_ParseFileObject
-    # and PyParser_ParseString calls to debug a crash.
-    fname = 'src/cpython/Parser/parsetok.c'
-    txt = readfile(fname)
-    txt = replace_one(
-        txt, 'node *\n'
-        'PyParser_ParseFileObject(FILE *fp, PyObject *filename,\n'
-        '                         const char *enc, grammar *g, int start,\n'
-        '                         const char *ps1, const char *ps2,\n'
-        '                         perrdetail *err_ret, int *flags)\n'
-        '{\n', 'void (*PyParser_ParseFileObject_EfroCB)'
-        '(FILE *fp, PyObject *filename,\n'
-        '                         const char *enc, grammar *g, int start,\n'
-        '                         const char *ps1, const char *ps2,\n'
-        '                         perrdetail *err_ret, int *flags) = NULL;\n'
-        'node *\n'
-        'PyParser_ParseFileObject(FILE *fp, PyObject *filename,\n'
-        '                         const char *enc, grammar *g, int start,\n'
-        '                         const char *ps1, const char *ps2,\n'
-        '                         perrdetail *err_ret, int *flags)\n'
-        '{\n'
-        '    if (PyParser_ParseFileObject_EfroCB != NULL) {\n'
-        '        PyParser_ParseFileObject_EfroCB(fp, filename, enc, g,\n'
-        '                                       start, ps1, ps2,\n'
-        '                                       err_ret, flags);\n'
-        '    }\n')
-    txt = replace_one(
-        txt, 'node *\n'
-        'PyParser_ParseStringObject(const char *s, PyObject *filename,\n'
-        '                           grammar *g, int start,\n'
-        '                           perrdetail *err_ret, int *flags)\n'
-        '{\n', 'void (*PyParser_ParseStringObject_EfroCB)'
-        '(const char *s, PyObject *filename,\n'
-        '                           grammar *g, int start,\n'
-        '                           perrdetail *err_ret, int *flags) = NULL;\n'
-        'node *\n'
-        'PyParser_ParseStringObject(const char *s, PyObject *filename,\n'
-        '                           grammar *g, int start,\n'
-        '                           perrdetail *err_ret, int *flags)\n'
-        '{\n'
-        '    if (PyParser_ParseStringObject_EfroCB != NULL) {\n'
-        '        PyParser_ParseStringObject_EfroCB(s, filename, g, start,\n'
-        '                                          err_ret, flags);\n'
-        '    }\n')
-    writefile(fname, txt)
-
-    print('APPLIED EFROTOOLS ANDROID BUILD PATCHES.')
 
 
 def winprune() -> None:
@@ -540,6 +369,8 @@ def gather() -> None:
     """
     # pylint: disable=too-many-locals
 
+    do_android = True
+
     # First off, clear out any existing output.
     existing_dirs = [
         os.path.join('src/external', d) for d in os.listdir('src/external')
@@ -549,44 +380,51 @@ def gather() -> None:
         os.path.join('assets/src', d) for d in os.listdir('assets/src')
         if d.startswith('pylib-')
     ]
+    if not do_android:
+        existing_dirs = [d for d in existing_dirs if 'android' not in d]
+
     for existing_dir in existing_dirs:
         run('rm -rf "' + existing_dir + '"')
 
+    apost2 = f'src/Python-{PY_VER_EXACT_ANDROID}/Android/sysroot'
     for buildtype in ['debug', 'release']:
         debug = buildtype == 'debug'
         bsuffix = '_debug' if buildtype == 'debug' else ''
         bsuffix2 = '-debug' if buildtype == 'debug' else ''
-
         libname = 'python' + PYVER + ('d' if debug else '')
 
         bases = {
-            'mac':
-                f'build/python_apple_mac{bsuffix}/build/macOS',
-            'ios':
-                f'build/python_apple_ios{bsuffix}/build/iOS',
-            'tvos':
-                f'build/python_apple_tvos{bsuffix}/build/tvOS',
-            'android_arm':
-                f'build/python_android_arm{bsuffix}/build/sysroot',
-            'android_arm64':
-                f'build/python_android_arm64{bsuffix}/build/sysroot',
-            'android_x86':
-                f'build/python_android_x86{bsuffix}/build/sysroot',
-            'android_x86_64':
-                f'build/python_android_x86_64{bsuffix}/build/sysroot'
+            'mac': f'build/python_apple_mac{bsuffix}/build/macOS',
+            'ios': f'build/python_apple_ios{bsuffix}/build/iOS',
+            'tvos': f'build/python_apple_tvos{bsuffix}/build/tvOS',
+            'android_arm': f'build/python_android_arm{bsuffix}/build',
+            'android_arm64': f'build/python_android_arm64{bsuffix}/build',
+            'android_x86': f'build/python_android_x86{bsuffix}/build',
+            'android_x86_64': f'build/python_android_x86_64{bsuffix}/build'
+        }
+        bases2 = {
+            'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
+            'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
+            'android_x86': f'build/python_android_x86{bsuffix}/{apost2}',
+            'android_x86_64': f'build/python_android_x86_64{bsuffix}/{apost2}'
         }
 
         # Note: only need pylib for the first in each group.
-        builds: List[Dict[str, Any]] = [{
-            'name': 'macos',
-            'group': 'apple',
-            'headers': bases['mac'] + '/Support/Python/Headers',
+        builds: list[dict[str, Any]] = [{
+            'name':
+                'macos',
+            'group':
+                'apple',
+            'headers':
+                bases['mac'] + '/Support/Python/Headers',
             'libs': [
                 bases['mac'] + '/Support/Python/libPython.a',
                 bases['mac'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['mac'] + '/Support/XZ/libxz.a'
+                bases['mac'] + '/Support/XZ/libxz.a',
+                bases['mac'] + '/Support/BZip2/libbzip2.a',
             ],
-            'pylib': (bases['mac'] + '/python/lib/python' + PYVER),
+            'pylib':
+                (bases['mac'] + f'/Python-{PY_VER_EXACT_APPLE}-macOS/lib'),
         }, {
             'name':
                 'ios',
@@ -597,7 +435,8 @@ def gather() -> None:
             'libs': [
                 bases['ios'] + '/Support/Python/libPython.a',
                 bases['ios'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['ios'] + '/Support/XZ/libxz.a'
+                bases['ios'] + '/Support/XZ/libxz.a',
+                bases['ios'] + '/Support/BZip2/libbzip2.a',
             ],
         }, {
             'name':
@@ -609,7 +448,8 @@ def gather() -> None:
             'libs': [
                 bases['tvos'] + '/Support/Python/libPython.a',
                 bases['tvos'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['tvos'] + '/Support/XZ/libxz.a'
+                bases['tvos'] + '/Support/XZ/libxz.a',
+                bases['tvos'] + '/Support/BZip2/libbzip2.a',
             ],
         }, {
             'name': 'android_arm',
@@ -617,10 +457,12 @@ def gather() -> None:
             'headers': bases['android_arm'] + f'/usr/include/{libname}',
             'libs': [
                 bases['android_arm'] + f'/usr/lib/lib{libname}.a',
-                bases['android_arm'] + '/usr/lib/libssl.a',
-                bases['android_arm'] + '/usr/lib/libcrypto.a',
-                bases['android_arm'] + '/usr/lib/liblzma.a',
-                bases['android_arm'] + '/usr/lib/libsqlite3.a'
+                bases2['android_arm'] + '/usr/lib/libssl.a',
+                bases2['android_arm'] + '/usr/lib/libcrypto.a',
+                bases2['android_arm'] + '/usr/lib/liblzma.a',
+                bases2['android_arm'] + '/usr/lib/libsqlite3.a',
+                bases2['android_arm'] + '/usr/lib/libbz2.a',
+                bases2['android_arm'] + '/usr/lib/libuuid.a',
             ],
             'libinst': 'android_armeabi-v7a',
             'pylib': (bases['android_arm'] + '/usr/lib/python' + PYVER),
@@ -630,10 +472,12 @@ def gather() -> None:
             'headers': bases['android_arm64'] + f'/usr/include/{libname}',
             'libs': [
                 bases['android_arm64'] + f'/usr/lib/lib{libname}.a',
-                bases['android_arm64'] + '/usr/lib/libssl.a',
-                bases['android_arm64'] + '/usr/lib/libcrypto.a',
-                bases['android_arm64'] + '/usr/lib/liblzma.a',
-                bases['android_arm64'] + '/usr/lib/libsqlite3.a'
+                bases2['android_arm64'] + '/usr/lib/libssl.a',
+                bases2['android_arm64'] + '/usr/lib/libcrypto.a',
+                bases2['android_arm64'] + '/usr/lib/liblzma.a',
+                bases2['android_arm64'] + '/usr/lib/libsqlite3.a',
+                bases2['android_arm64'] + '/usr/lib/libbz2.a',
+                bases2['android_arm64'] + '/usr/lib/libuuid.a',
             ],
             'libinst': 'android_arm64-v8a',
         }, {
@@ -642,10 +486,12 @@ def gather() -> None:
             'headers': bases['android_x86'] + f'/usr/include/{libname}',
             'libs': [
                 bases['android_x86'] + f'/usr/lib/lib{libname}.a',
-                bases['android_x86'] + '/usr/lib/libssl.a',
-                bases['android_x86'] + '/usr/lib/libcrypto.a',
-                bases['android_x86'] + '/usr/lib/liblzma.a',
-                bases['android_x86'] + '/usr/lib/libsqlite3.a'
+                bases2['android_x86'] + '/usr/lib/libssl.a',
+                bases2['android_x86'] + '/usr/lib/libcrypto.a',
+                bases2['android_x86'] + '/usr/lib/liblzma.a',
+                bases2['android_x86'] + '/usr/lib/libsqlite3.a',
+                bases2['android_x86'] + '/usr/lib/libbz2.a',
+                bases2['android_x86'] + '/usr/lib/libuuid.a',
             ],
             'libinst': 'android_x86',
         }, {
@@ -654,17 +500,20 @@ def gather() -> None:
             'headers': bases['android_x86_64'] + f'/usr/include/{libname}',
             'libs': [
                 bases['android_x86_64'] + f'/usr/lib/lib{libname}.a',
-                bases['android_x86_64'] + '/usr/lib/libssl.a',
-                bases['android_x86_64'] + '/usr/lib/libcrypto.a',
-                bases['android_x86_64'] + '/usr/lib/liblzma.a',
-                bases['android_x86_64'] + '/usr/lib/libsqlite3.a'
+                bases2['android_x86_64'] + '/usr/lib/libssl.a',
+                bases2['android_x86_64'] + '/usr/lib/libcrypto.a',
+                bases2['android_x86_64'] + '/usr/lib/liblzma.a',
+                bases2['android_x86_64'] + '/usr/lib/libsqlite3.a',
+                bases2['android_x86_64'] + '/usr/lib/libbz2.a',
+                bases2['android_x86_64'] + '/usr/lib/libuuid.a',
             ],
             'libinst': 'android_x86_64',
         }]
 
         for build in builds:
-
             grp = build['group']
+            if not do_android and grp == 'android':
+                continue
             builddir = f'src/external/python-{grp}{bsuffix2}'
             header_dst = os.path.join(builddir, 'include')
             lib_dst = os.path.join(builddir, 'lib')

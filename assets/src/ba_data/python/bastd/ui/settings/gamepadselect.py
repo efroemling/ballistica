@@ -10,10 +10,10 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Dict, Any
+    from typing import Any
 
 
-def gamepad_configure_callback(event: Dict[str, Any]) -> None:
+def gamepad_configure_callback(event: dict[str, Any]) -> None:
     """Respond to a gamepad button press during config selection."""
     from ba.internal import get_remote_app_name
     from bastd.ui.settings import gamepad

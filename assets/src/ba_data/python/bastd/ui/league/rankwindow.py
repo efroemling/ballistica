@@ -12,7 +12,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Tuple, List, Dict, Union
+    from typing import Any, Optional, Union
 
 
 class LeagueRankWindow(ba.Window):
@@ -24,11 +24,11 @@ class LeagueRankWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         ba.set_analytics_screen('League Rank Window')
 
-        self._league_rank_data: Optional[Dict[str, Any]] = None
+        self._league_rank_data: Optional[dict[str, Any]] = None
         self._modal = modal
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -111,7 +111,7 @@ class LeagueRankWindow(ba.Window):
         self._subcontainer: Optional[ba.Widget] = None
         self._subcontainerwidth = 800
         self._subcontainerheight = 483
-        self._power_ranking_score_widgets: List[ba.Widget] = []
+        self._power_ranking_score_widgets: list[ba.Widget] = []
 
         self._season_popup_menu: Optional[popup_ui.PopupMenu] = None
         self._requested_season: Optional[str] = None
@@ -192,7 +192,7 @@ class LeagueRankWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
 
     def _on_power_ranking_query_response(
-            self, data: Optional[Dict[str, Any]]) -> None:
+            self, data: Optional[dict[str, Any]]) -> None:
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
         if data is not None and data.get('s', None) is None:
@@ -587,7 +587,7 @@ class LeagueRankWindow(ba.Window):
                     '/highscores?list=powerRankings&v=2' + league_str +
                     season_str + '&player=' + our_login_id)
 
-    def _update_for_league_rank_data(self, data: Optional[Dict[str,
+    def _update_for_league_rank_data(self, data: Optional[dict[str,
                                                                Any]]) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches

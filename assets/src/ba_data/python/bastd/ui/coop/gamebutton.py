@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Tuple
+    from typing import Optional
     from bastd.ui.coop.browser import CoopBrowserWindow
 
 
@@ -98,7 +98,7 @@ class GameButton:
 
         starscale = 35.0 if self._achievements else 45.0
 
-        self._star_widgets: List[ba.Widget] = []
+        self._star_widgets: list[ba.Widget] = []
         for _i in range(stars):
             imw = ba.imagewidget(parent=parent,
                                  draw_controller=btn,
@@ -120,7 +120,7 @@ class GameButton:
         xach = x + 69
         yach = y + scly - 168
         a_scale = 30.0
-        self._achievement_widgets: List[Tuple[ba.Widget, ba.Widget]] = []
+        self._achievement_widgets: list[tuple[ba.Widget, ba.Widget]] = []
         for ach in self._achievements:
             a_complete = ach.complete
             imw = ba.imagewidget(

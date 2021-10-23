@@ -28,21 +28,21 @@ from bastd.actor.spazbot import (
     TriggerBotProShielded, BrawlerBotPro, BomberBotProShielded)
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Dict, Optional, List, Tuple, Union, Sequence
+    from typing import Any, Optional, Union, Sequence
     from bastd.actor.spazbot import SpazBot
 
 
 @dataclass
 class Wave:
     """A wave of enemies."""
-    entries: List[Union[Spawn, Spacing, Delay, None]]
+    entries: list[Union[Spawn, Spacing, Delay, None]]
     base_angle: float = 0.0
 
 
 @dataclass
 class Spawn:
     """A bot spawn event in a wave."""
-    bottype: Union[Type[SpazBot], str]
+    bottype: Union[type[SpazBot], str]
     point: Optional[Point] = None
     spacing: float = 5.0
 
@@ -123,7 +123,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     name = 'Onslaught'
     description = 'Defeat all enemies.'
 
-    tips: List[Union[str, ba.GameTip]] = [
+    tips: list[Union[str, ba.GameTip]] = [
         'Hold any button to run.'
         '  (Trigger buttons work well if you have them)',
         'Try tricking enemies into killing eachother or running off cliffs.',
@@ -179,8 +179,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._have_tnt = False
-        self._excluded_powerups: Optional[List[str]] = None
-        self._waves: List[Wave] = []
+        self._excluded_powerups: Optional[list[str]] = None
+        self._waves: list[Wave] = []
         self._tntspawner: Optional[TNTSpawner] = None
         self._bots: Optional[SpazBotSet] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
@@ -538,10 +538,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._bots = SpazBotSet()
         ba.timer(4.0, self._start_updating_waves)
 
-    def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
+    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
         self._show_standard_scores_to_beat_ui(scores)
 
-    def _get_dist_grp_totals(self, grps: List[Any]) -> Tuple[int, int]:
+    def _get_dist_grp_totals(self, grps: list[Any]) -> tuple[int, int]:
         totalpts = 0
         totaldudes = 0
         for grp in grps:
@@ -553,11 +553,11 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def _get_distribution(self, target_points: int, min_dudes: int,
                           max_dudes: int, group_count: int,
-                          max_level: int) -> List[List[Tuple[int, int]]]:
+                          max_level: int) -> list[list[tuple[int, int]]]:
         """Calculate a distribution of bad guys given some params."""
         max_iterations = 10 + max_dudes * 2
 
-        groups: List[List[Tuple[int, int]]] = []
+        groups: list[list[tuple[int, int]]] = []
         for _g in range(group_count):
             groups.append([])
         types = [1]
@@ -599,9 +599,9 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
         return groups
 
-    def _add_dist_entry_if_possible(self, groups: List[List[Tuple[int, int]]],
+    def _add_dist_entry_if_possible(self, groups: list[list[tuple[int, int]]],
                                     max_dudes: int, target_points: int,
-                                    types: List[int]) -> int:
+                                    types: list[int]) -> int:
         # See how much we're off our target by.
         total_points, total_dudes = self._get_dist_grp_totals(groups)
         diff = target_points - total_points
@@ -624,7 +624,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         return diff
 
     def _delete_smallest_dist_entry(
-            self, groups: List[List[Tuple[int, int]]]) -> None:
+            self, groups: list[list[tuple[int, int]]]) -> None:
         smallest_value = 9999
         smallest_entry = None
         smallest_entry_group = None
@@ -639,7 +639,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         smallest_entry_group.remove(smallest_entry)
 
     def _delete_biggest_dist_entry(
-            self, groups: List[List[Tuple[int, int]]]) -> None:
+            self, groups: list[list[tuple[int, int]]]) -> None:
         biggest_value = 9999
         biggest_entry = None
         biggest_entry_group = None
@@ -654,7 +654,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             biggest_entry_group.remove(biggest_entry)
 
     def _delete_random_dist_entry(self,
-                                  groups: List[List[Tuple[int, int]]]) -> None:
+                                  groups: list[list[tuple[int, int]]]) -> None:
         entry_count = 0
         for group in groups:
             for _ in group:
@@ -1025,7 +1025,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                            'text': wttxt
                        }))
 
-    def _bot_levels_for_wave(self) -> List[List[Type[SpazBot]]]:
+    def _bot_levels_for_wave(self) -> list[list[type[SpazBot]]]:
         level = self._wavenum
         bot_types = [
             BomberBot, BrawlerBot, TriggerBot, ChargerBot, BomberBotPro,
@@ -1068,10 +1068,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         return bot_levels
 
     def _add_entries_for_distribution_group(
-            self, group: List[Tuple[int, int]],
-            bot_levels: List[List[Type[SpazBot]]],
-            all_entries: List[Union[Spawn, Spacing, Delay, None]]) -> None:
-        entries: List[Union[Spawn, Spacing, Delay, None]] = []
+            self, group: list[tuple[int, int]],
+            bot_levels: list[list[type[SpazBot]]],
+            all_entries: list[Union[Spawn, Spacing, Delay, None]]) -> None:
+        entries: list[Union[Spawn, Spacing, Delay, None]] = []
         for entry in group:
             bot_level = bot_levels[entry[0] - 1]
             bot_type = bot_level[random.randrange(len(bot_level))]
@@ -1106,7 +1106,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         distribution = self._get_distribution(target_points, min_dudes,
                                               max_dudes, group_count,
                                               max_level)
-        all_entries: List[Union[Spawn, Spacing, Delay, None]] = []
+        all_entries: list[Union[Spawn, Spacing, Delay, None]] = []
         for group in distribution:
             self._add_entries_for_distribution_group(group, bot_levels,
                                                      all_entries)
@@ -1125,7 +1125,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def add_bot_at_point(self,
                          point: Point,
-                         spaz_type: Type[SpazBot],
+                         spaz_type: type[SpazBot],
                          spawn_time: float = 1.0) -> None:
         """Add a new bot at a specified named point."""
         if self._game_over:
@@ -1137,7 +1137,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def add_bot_at_angle(self,
                          angle: float,
-                         spaz_type: Type[SpazBot],
+                         spaz_type: type[SpazBot],
                          spawn_time: float = 1.0) -> None:
         """Add a new bot at a specified angle (for circular maps)."""
         if self._game_over:

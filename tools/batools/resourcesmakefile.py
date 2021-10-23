@@ -16,13 +16,13 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Dict
+    pass
 
 
 @dataclass
 class Target:
     """A target to be added to the Makefile."""
-    src: List[str]
+    src: list[str]
     dst: str
     cmd: str
     mkdir: bool = False
@@ -36,10 +36,10 @@ class Target:
         return out
 
 
-def _emit_group_build_lines(targets: List[Target], basename: str) -> List[str]:
+def _emit_group_build_lines(targets: list[Target], basename: str) -> list[str]:
     """Gen a group build target."""
     del basename  # Unused.
-    out: List[str] = []
+    out: list[str] = []
     if not targets:
         return out
     all_dsts = set()
@@ -50,9 +50,9 @@ def _emit_group_build_lines(targets: List[Target], basename: str) -> List[str]:
     return out
 
 
-def _emit_group_clean_lines(targets: List[Target], basename: str) -> List[str]:
+def _emit_group_clean_lines(targets: list[Target], basename: str) -> list[str]:
     """Gen a group clean target."""
-    out: List[str] = []
+    out: list[str] = []
     if not targets:
         return out
     out.append(f'clean: clean-{basename}\n')
@@ -65,9 +65,9 @@ def _emit_group_clean_lines(targets: List[Target], basename: str) -> List[str]:
     return out
 
 
-def _emit_group_efrocache_lines(targets: List[Target]) -> List[str]:
+def _emit_group_efrocache_lines(targets: list[Target]) -> list[str]:
     """Gen a group clean target."""
-    out: List[str] = []
+    out: list[str] = []
     if not targets:
         return out
     all_dsts = set()
@@ -94,7 +94,7 @@ RES_DIR = '.'
 RESIZE_CMD = os.path.join(TOOLS_DIR, 'pcommand resize_image')
 
 
-def _add_windows_icon(targets: List[Target], generic: bool, oculus: bool,
+def _add_windows_icon(targets: list[Target], generic: bool, oculus: bool,
                       inputs: bool) -> None:
 
     sizes = [256, 128, 96, 64, 48, 32, 16]
@@ -125,7 +125,7 @@ def _add_windows_icon(targets: List[Target], generic: bool, oculus: bool,
             targets.append(Target(src=all_icons, dst=path, cmd=cmd))
 
 
-def _add_ios_app_icon(targets: List[Target]) -> None:
+def _add_ios_app_icon(targets: list[Target]) -> None:
     sizes = [(20, 2), (20, 3), (29, 2), (29, 3), (40, 2), (40, 3), (60, 2),
              (60, 3), (20, 1), (29, 1), (40, 1), (76, 1), (76, 2), (83.5, 2),
              (1024, 1)]
@@ -143,7 +143,7 @@ def _add_ios_app_icon(targets: List[Target]) -> None:
         targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
-def _add_macos_app_icon(targets: List[Target]) -> None:
+def _add_macos_app_icon(targets: list[Target]) -> None:
     sizes = [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1),
              (256, 2), (512, 1), (512, 2)]
     for size in sizes:
@@ -164,7 +164,7 @@ def _add_macos_app_icon(targets: List[Target]) -> None:
         targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
-def _add_android_app_icon(targets: List[Target],
+def _add_android_app_icon(targets: list[Target],
                           src_name: str = 'icon_clipped.png',
                           variant_name: str = 'main') -> None:
     sizes = [('mdpi', 48), ('hdpi', 72), ('xhdpi', 96), ('xxhdpi', 144),
@@ -182,7 +182,7 @@ def _add_android_app_icon(targets: List[Target],
         targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
 
 
-def _add_android_app_icon_new(targets: List[Target],
+def _add_android_app_icon_new(targets: list[Target],
                               src_fg_name: str = 'icon_android_layered_fg.png',
                               src_bg_name: str = 'icon_android_layered_bg.png',
                               variant_name: str = 'main') -> None:
@@ -214,19 +214,19 @@ def _add_android_app_icon_new(targets: List[Target],
         targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
 
 
-def _add_android_cardboard_app_icon(targets: List[Target]) -> None:
+def _add_android_cardboard_app_icon(targets: list[Target]) -> None:
     _add_android_app_icon(targets=targets,
                           src_name='icon_clipped_vr.png',
                           variant_name='cardboard')
 
 
-def _add_android_cardboard_app_icon_new(targets: List[Target]) -> None:
+def _add_android_cardboard_app_icon_new(targets: list[Target]) -> None:
     _add_android_app_icon_new(targets=targets,
                               src_fg_name='icon_android_layered_fg_vr.png',
                               variant_name='cardboard')
 
 
-def _add_android_tv_banner(targets: List[Target]) -> None:
+def _add_android_tv_banner(targets: list[Target]) -> None:
     res = (320, 180)
     src = os.path.join(RES_DIR, 'src', 'banner', 'banner_16x9.png')
     dst = os.path.join(
@@ -247,7 +247,7 @@ def _add_android_tv_banner(targets: List[Target]) -> None:
     targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
 
 
-def _add_apple_tv_top_shelf(targets: List[Target]) -> None:
+def _add_apple_tv_top_shelf(targets: list[Target]) -> None:
     instances = [('24x9', '', '', 1920, 720),
                  ('29x9', ' Wide', '_wide', 2320, 720)]
     for instance in instances:
@@ -272,7 +272,7 @@ def _add_apple_tv_top_shelf(targets: List[Target]) -> None:
             targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
-def _add_apple_tv_3d_icon(targets: List[Target]) -> None:
+def _add_apple_tv_3d_icon(targets: list[Target]) -> None:
     res = (400, 240)
     for layer in ['Layer1', 'Layer2', 'Layer3', 'Layer4', 'Layer5']:
         for scale in [1, 2]:
@@ -297,7 +297,7 @@ def _add_apple_tv_3d_icon(targets: List[Target]) -> None:
             targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
-def _add_apple_tv_store_icon(targets: List[Target]) -> None:
+def _add_apple_tv_store_icon(targets: list[Target]) -> None:
     res = (1280, 768)
     for layer in ['Layer1', 'Layer2', 'Layer3', 'Layer4', 'Layer5']:
         for scale in [1]:
@@ -322,7 +322,7 @@ def _add_apple_tv_store_icon(targets: List[Target]) -> None:
             targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
-def _add_google_vr_icon(targets: List[Target]) -> None:
+def _add_google_vr_icon(targets: list[Target]) -> None:
     res = (512, 512)
     for layer in ['vr_icon_background', 'vr_icon']:
         src = os.path.join(RES_DIR, 'src', 'icon_googlevr', layer + '.png')
@@ -344,7 +344,7 @@ def _add_google_vr_icon(targets: List[Target]) -> None:
         targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
 
 
-def _empty_line_if(condition: bool) -> List[str]:
+def _empty_line_if(condition: bool) -> list[str]:
     return [''] if condition else []
 
 
@@ -372,7 +372,7 @@ def update(projroot: str, check: bool) -> None:
     auto_end_private = lines.index('#__AUTOGENERATED_PRIVATE_END__')
 
     # Public targets (full sources available in public)
-    targets: List[Target] = []
+    targets: list[Target] = []
     basename = 'public'
     our_lines_public = (_empty_line_if(bool(targets)) +
                         _emit_group_build_lines(targets, basename) +

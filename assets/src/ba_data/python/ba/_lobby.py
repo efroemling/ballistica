@@ -16,7 +16,7 @@ from ba._generated.enums import SpecialChar, InputType
 from ba._profile import get_player_profile_colors
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Dict, Any, Sequence, Union
+    from typing import Optional, Any, Sequence, Union
     import ba
 
 MAX_QUICK_CHANGE_COUNT = 30
@@ -152,11 +152,11 @@ class Chooser:
         self._dead = False
         self._text_node: Optional[ba.Node] = None
         self._profilename = ''
-        self._profilenames: List[str] = []
+        self._profilenames: list[str] = []
         self._ready: bool = False
-        self._character_names: List[str] = []
+        self._character_names: list[str] = []
         self._last_change: Sequence[Union[float, int]] = (0, 0)
-        self._profiles: Dict[str, Dict[str, Any]] = {}
+        self._profiles: dict[str, dict[str, Any]] = {}
 
         app = _ba.app
 
@@ -835,11 +835,11 @@ class Lobby:
             self._dummy_teams = SessionTeam()
             self._sessionteams = [weakref.ref(self._dummy_teams)]
         v_offset = (-150 if isinstance(session, CoopSession) else -50)
-        self.choosers: List[Chooser] = []
+        self.choosers: list[Chooser] = []
         self.base_v_offset = v_offset
         self.update_positions()
         self._next_add_team = 0
-        self.character_names_local_unlocked: List[str] = []
+        self.character_names_local_unlocked: list[str] = []
         self._vpos = 0
 
         # Grab available profiles.
@@ -861,7 +861,7 @@ class Lobby:
         return self._use_team_colors
 
     @property
-    def sessionteams(self) -> List[ba.SessionTeam]:
+    def sessionteams(self) -> list[ba.SessionTeam]:
         """ba.SessionTeams available in this lobby."""
         allteams = []
         for tref in self._sessionteams:
@@ -870,7 +870,7 @@ class Lobby:
             allteams.append(team)
         return allteams
 
-    def get_choosers(self) -> List[Chooser]:
+    def get_choosers(self) -> list[Chooser]:
         """Return the lobby's current choosers."""
         return self.choosers
 

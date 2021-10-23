@@ -11,14 +11,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Tuple, Dict
+    from typing import Any, Optional
 
 
 class AccountUnlinkWindow(ba.Window):
     """A window to kick off account unlinks."""
 
     def __init__(self, origin_widget: ba.Widget = None):
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -104,7 +104,7 @@ class AccountUnlinkWindow(ba.Window):
             if i == 0:
                 ba.widget(edit=txt, up_widget=self._cancel_button)
 
-    def _on_entry_selected(self, entry: Dict[str, Any]) -> None:
+    def _on_entry_selected(self, entry: dict[str, Any]) -> None:
         ba.screenmessage(ba.Lstr(resource='pleaseWaitText',
                                  fallback_resource='requestingText'),
                          color=(0, 1, 0))

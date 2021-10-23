@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional, Dict, Any
+    from typing import Sequence, Optional, Any
     import ba
 
 
@@ -339,7 +339,7 @@ def local_chat_message(msg: str) -> None:
         _ba.app.ui.party_window().on_chat_message(msg)
 
 
-def get_player_icon(sessionplayer: ba.SessionPlayer) -> Dict[str, Any]:
+def get_player_icon(sessionplayer: ba.SessionPlayer) -> dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {
         'texture': _ba.gettexture(info['texture']),

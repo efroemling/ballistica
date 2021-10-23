@@ -14,8 +14,7 @@ from ba._error import (print_exception, print_error, SessionTeamNotFoundError,
 
 if TYPE_CHECKING:
     import ba
-    from weakref import ReferenceType
-    from typing import Any, Dict, Optional, Sequence, Union, Tuple
+    from typing import Any, Optional, Sequence, Union
 
 
 @dataclass
@@ -58,7 +57,7 @@ class PlayerRecord:
         self._stats = weakref.ref(stats)
         self._last_sessionplayer: Optional[ba.SessionPlayer] = None
         self._sessionplayer: Optional[ba.SessionPlayer] = None
-        self._sessionteam: Optional[ReferenceType[ba.SessionTeam]] = None
+        self._sessionteam: Optional[weakref.ref[ba.SessionTeam]] = None
         self.streak = 0
         self.associate_with_sessionplayer(sessionplayer)
 
@@ -90,7 +89,7 @@ class PlayerRecord:
         """Return the player entry's name."""
         return self.name_full if full else self.name
 
-    def get_icon(self) -> Dict[str, Any]:
+    def get_icon(self) -> dict[str, Any]:
         """Get the icon for this instance's player."""
         player = self._last_sessionplayer
         assert player is not None
@@ -181,7 +180,7 @@ class PlayerRecord:
             sound = stats.orchestrahitsound4
 
         def _apply(name2: Lstr, score2: int, showpoints2: bool,
-                   color2: Tuple[float, float, float, float], scale2: float,
+                   color2: tuple[float, float, float, float], scale2: float,
                    sound2: Optional[ba.Sound]) -> None:
             from bastd.actor.popuptext import PopupText
 
@@ -237,8 +236,8 @@ class Stats:
     """
 
     def __init__(self) -> None:
-        self._activity: Optional[ReferenceType[ba.Activity]] = None
-        self._player_records: Dict[str, PlayerRecord] = {}
+        self._activity: Optional[weakref.ref[ba.Activity]] = None
+        self._player_records: dict[str, PlayerRecord] = {}
         self.orchestrahitsound1: Optional[ba.Sound] = None
         self.orchestrahitsound2: Optional[ba.Sound] = None
         self.orchestrahitsound3: Optional[ba.Sound] = None
@@ -303,7 +302,7 @@ class Stats:
             self._player_records[name] = PlayerRecord(name, name_full, player,
                                                       self)
 
-    def get_records(self) -> Dict[str, ba.PlayerRecord]:
+    def get_records(self) -> dict[str, ba.PlayerRecord]:
         """Get PlayerRecord corresponding to still-existing players."""
         records = {}
 

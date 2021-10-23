@@ -10,13 +10,13 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Tuple
+    pass
 
 
 class AchievementsWindow(popup.PopupWindow):
     """Popup window to view achievements."""
 
-    def __init__(self, position: Tuple[float, float], scale: float = None):
+    def __init__(self, position: tuple[float, float], scale: float = None):
         # pylint: disable=too-many-locals
         uiscale = ba.app.ui.uiscale
         if scale is None:

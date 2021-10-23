@@ -17,7 +17,7 @@ from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDiedMessage,
                               FlagPickedUpMessage)
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional, Sequence, Union
+    from typing import Any, Optional, Sequence, Union
 
 
 class FlagState(Enum):
@@ -81,12 +81,12 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
     default_music = ba.MusicType.KEEP_AWAY
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('keep_away')
 
     def __init__(self, settings: dict):
@@ -108,7 +108,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         }
         self._flag_spawn_pos: Optional[Sequence[float]] = None
         self._update_timer: Optional[ba.Timer] = None
-        self._holding_players: List[Player] = []
+        self._holding_players: list[Player] = []
         self._flag_state: Optional[FlagState] = None
         self._flag_light: Optional[ba.Node] = None
         self._scoring_team: Optional[Team] = None

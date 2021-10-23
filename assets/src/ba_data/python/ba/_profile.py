@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Any, Dict, Optional
+    from typing import Any, Optional
 
 # NOTE: player color options are enforced server-side for non-pro accounts
 # so don't change these or they won't stick...
@@ -20,7 +20,7 @@ PLAYER_COLORS = [(1, 0.15, 0.15), (0.2, 1, 0.2), (0.1, 0.1, 1), (0.2, 1, 1),
                  (0.5, 0.5, 0.5), (1, 1, 1)]
 
 
-def get_player_colors() -> List[Tuple[float, float, float]]:
+def get_player_colors() -> list[tuple[float, float, float]]:
     """Return user-selectable player colors."""
     return PLAYER_COLORS
 
@@ -50,8 +50,8 @@ def get_player_profile_icon(profilename: str) -> str:
 
 def get_player_profile_colors(
     profilename: Optional[str],
-    profiles: Dict[str, Dict[str, Any]] = None
-) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+    profiles: dict[str, dict[str, Any]] = None
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """Given a profile, return colors for them."""
     appconfig = _ba.app.config
     if profiles is None:

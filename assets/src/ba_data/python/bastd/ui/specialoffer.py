@@ -11,13 +11,13 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Union
+    from typing import Any, Optional, Union
 
 
 class SpecialOfferWindow(ba.Window):
     """Window for presenting sales/etc."""
 
-    def __init__(self, offer: Dict[str, Any], transition: str = 'in_right'):
+    def __init__(self, offer: dict[str, Any], transition: str = 'in_right'):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -159,7 +159,7 @@ class SpecialOfferWindow(ba.Window):
                  timetype=ba.TimeType.REAL)
 
         size = get_store_item_display_size(self._offer_item)
-        display: Dict[str, Any] = {}
+        display: dict[str, Any] = {}
         storeitemui.instantiate_store_item_display(
             self._offer_item,
             display,

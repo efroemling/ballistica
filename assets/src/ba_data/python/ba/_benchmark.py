@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, Sequence
+    from typing import Any, Sequence
     import ba
 
 
@@ -88,7 +88,7 @@ def stop_stress_test() -> None:
     _ba.app.stress_test_reset_timer = None
 
 
-def start_stress_test(args: Dict[str, Any]) -> None:
+def start_stress_test(args: dict[str, Any]) -> None:
     """(internal)"""
     from ba._general import Call
     from ba._dualteamsession import DualTeamSession
@@ -125,7 +125,7 @@ def start_stress_test(args: Dict[str, Any]) -> None:
         timeformat=TimeFormat.MILLISECONDS)
 
 
-def _reset_stress_test(args: Dict[str, Any]) -> None:
+def _reset_stress_test(args: dict[str, Any]) -> None:
     from ba._general import Call
     from ba._generated.enums import TimeType
     _ba.set_stress_testing(False, args['player_count'])

@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional, Union
+    from typing import Optional, Union
 
 
 class AllSettingsWindow(ba.Window):
@@ -28,7 +28,7 @@ class AllSettingsWindow(ba.Window):
         threading.Thread(target=self._preload_modules).start()
 
         ba.set_analytics_screen('Settings Window')
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

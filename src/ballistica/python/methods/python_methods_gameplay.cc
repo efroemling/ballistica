@@ -652,7 +652,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_game_roster", (PyCFunction)PyGetGameRoster,
        METH_VARARGS | METH_KEYWORDS,
-       "get_game_roster() -> List[Dict[str, Any]]\n"
+       "get_game_roster() -> list[dict[str, Any]]\n"
        "\n"
        "(internal)"},
 
@@ -667,7 +667,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
 
       {"set_map_bounds", (PyCFunction)PySetMapBounds,
        METH_VARARGS | METH_KEYWORDS,
-       "set_map_bounds(bounds: Tuple[float, float, float, float, float, "
+       "set_map_bounds(bounds: tuple[float, float, float, float, float, "
        "float])\n"
        "  -> None\n"
        "\n"

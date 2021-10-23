@@ -13,7 +13,7 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional
+    from typing import Any, Optional
 
 # FIXME: Clean this up if I ever revisit it.
 # pylint: disable=attribute-defined-outside-init
@@ -34,7 +34,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         random.seed(123)
         self._logo_node: Optional[ba.Node] = None
         self._custom_logo_tex_name: Optional[str] = None
-        self._word_actors: List[ba.Actor] = []
+        self._word_actors: list[ba.Actor] = []
         app = ba.app
 
         # FIXME: We shouldn't be doing things conditionally based on whether
@@ -364,7 +364,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                     return
                 with ba.Context(activity):
 
-                    self._phrases: List[str] = []
+                    self._phrases: list[str] = []
 
                     # Show upcoming achievements in non-vr versions
                     # (currently too hard to read in vr).

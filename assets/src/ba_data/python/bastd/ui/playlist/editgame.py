@@ -12,20 +12,20 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type, Any, Dict, Callable, Optional, Union, List
+    from typing import Any, Callable, Optional, Union
 
 
 class PlaylistEditGameWindow(ba.Window):
     """Window for editing a game config."""
 
     def __init__(self,
-                 gametype: Type[ba.GameActivity],
-                 sessiontype: Type[ba.Session],
-                 config: Optional[Dict[str, Any]],
-                 completion_call: Callable[[Optional[Dict[str, Any]]], Any],
+                 gametype: type[ba.GameActivity],
+                 sessiontype: type[ba.Session],
+                 config: Optional[dict[str, Any]],
+                 completion_call: Callable[[Optional[dict[str, Any]]], Any],
                  default_selection: str = None,
                  transition: str = 'in_right',
-                 edit_info: Dict[str, Any] = None):
+                 edit_info: dict[str, Any] = None):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -86,7 +86,7 @@ class PlaylistEditGameWindow(ba.Window):
         else:
             self._settings = {}
 
-        self._choice_selections: Dict[str, int] = {}
+        self._choice_selections: dict[str, int] = {}
 
         uiscale = ba.app.ui.uiscale
         width = 720 if uiscale is ba.UIScale.SMALL else 620
@@ -176,7 +176,7 @@ class PlaylistEditGameWindow(ba.Window):
 
         # Keep track of all the selectable widgets we make so we can wire
         # them up conveniently.
-        widget_column: List[List[ba.Widget]] = []
+        widget_column: list[list[ba.Widget]] = []
 
         # Map select button.
         ba.textwidget(parent=self._subcontainer,
@@ -392,7 +392,7 @@ class PlaylistEditGameWindow(ba.Window):
         # Ok now wire up the column.
         try:
             # pylint: disable=unsubscriptable-object
-            prev_widgets: Optional[List[ba.Widget]] = None
+            prev_widgets: Optional[list[ba.Widget]] = None
             for cwdg in widget_column:
                 if prev_widgets is not None:
                     # Wire our rightmost to their rightmost.
@@ -458,7 +458,7 @@ class PlaylistEditGameWindow(ba.Window):
                           resource='offText'))
         self._settings[setting_name] = value
 
-    def _getconfig(self) -> Dict[str, Any]:
+    def _getconfig(self) -> dict[str, Any]:
         settings = copy.deepcopy(self._settings)
         settings['map'] = self._map
         return {'settings': settings}
@@ -468,7 +468,7 @@ class PlaylistEditGameWindow(ba.Window):
 
     def _inc(self, ctrl: ba.Widget, min_val: Union[int, float],
              max_val: Union[int, float], increment: Union[int, float],
-             setting_type: Type, setting_name: str) -> None:
+             setting_type: type, setting_name: str) -> None:
         if setting_type == float:
             val = float(cast(str, ba.textwidget(query=ctrl)))
         else:

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Dict, Union
+    from typing import Any, Optional, Sequence, Union
 
 
 class _Entry:
@@ -334,7 +334,7 @@ class Scoreboard:
         show up on boards if provided.
         """
         self._flat_tex = ba.gettexture('null')
-        self._entries: Dict[int, _Entry] = {}
+        self._entries: dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split
 

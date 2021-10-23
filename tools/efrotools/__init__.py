@@ -19,10 +19,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Union, Sequence, Optional, Any, Literal
+    from typing import Union, Sequence, Optional, Any, Literal
 
 # Python major version we're using for all this stuff.
-PYVER = '3.8'
+PYVER = '3.9'
 
 # Python binary assumed by these tools.
 PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'
@@ -33,9 +33,9 @@ def explicit_bool(value: bool) -> bool:
     return value
 
 
-def getlocalconfig(projroot: Path) -> Dict[str, Any]:
+def getlocalconfig(projroot: Path) -> dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
-    localconfig: Dict[str, Any]
+    localconfig: dict[str, Any]
     try:
         with open(Path(projroot, 'config/localconfig.json'),
                   encoding='utf-8') as infile:
@@ -45,9 +45,9 @@ def getlocalconfig(projroot: Path) -> Dict[str, Any]:
     return localconfig
 
 
-def getconfig(projroot: Path) -> Dict[str, Any]:
+def getconfig(projroot: Path) -> dict[str, Any]:
     """Return a project's config contents (or default if missing)."""
-    config: Dict[str, Any]
+    config: dict[str, Any]
     try:
         with open(Path(projroot, 'config/config.json'),
                   encoding='utf-8') as infile:
@@ -57,7 +57,7 @@ def getconfig(projroot: Path) -> Dict[str, Any]:
     return config
 
 
-def setconfig(projroot: Path, config: Dict[str, Any]) -> None:
+def setconfig(projroot: Path, config: dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot,

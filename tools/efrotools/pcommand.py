@@ -15,13 +15,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, List
+    from typing import Any
 
 # Absolute path of the project root.
 PROJROOT = Path(__file__).resolve().parents[2]
 
 
-def pcommand_main(globs: Dict[str, Any]) -> None:
+def pcommand_main(globs: dict[str, Any]) -> None:
     """Run a snippet contained in the pcommand script.
 
     We simply look for all public functions and call
@@ -114,7 +114,7 @@ def _trim_docstring(docstring: str) -> str:
     return '\n'.join(trimmed)
 
 
-def _spelling(words: List[str]) -> None:
+def _spelling(words: list[str]) -> None:
     import os
     num_modded_dictionaries = 0
     for fname in [
@@ -600,7 +600,7 @@ def makefile_target_list() -> None:
     with open(sys.argv[2], encoding='utf-8') as infile:
         lines = infile.readlines()
 
-    def _docstr(lines2: List[str], linenum: int) -> str:
+    def _docstr(lines2: list[str], linenum: int) -> str:
         doc = ''
         j = linenum - 1
         while j >= 0 and lines2[j].startswith('#'):
@@ -614,7 +614,7 @@ def makefile_target_list() -> None:
           'Available Make Targets\n'
           '----------------------')
 
-    entries: List[_Entry] = []
+    entries: list[_Entry] = []
     for i, line in enumerate(lines):
 
         # Targets.
@@ -648,7 +648,7 @@ def echo() -> None:
     from efro.terminal import Clr
     clrnames = {n for n in dir(Clr) if n.isupper() and not n.startswith('_')}
     first = True
-    out: List[str] = []
+    out: list[str] = []
     for arg in sys.argv[2:]:
         if arg in clrnames:
             out.append(getattr(Clr, arg))

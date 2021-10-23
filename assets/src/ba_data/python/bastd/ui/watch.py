@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Tuple, Dict
+    from typing import Any, Optional
 
 
 class WatchWindow(ba.Window):
@@ -30,7 +30,7 @@ class WatchWindow(ba.Window):
         # pylint: disable=too-many-statements
         from bastd.ui.tabs import TabRow
         ba.set_analytics_screen('Watch Window')
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -39,7 +39,7 @@ class WatchWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
         ba.app.ui.set_main_menu_location('Watch')
-        self._tab_data: Dict[str, Any] = {}
+        self._tab_data: dict[str, Any] = {}
         self._my_replays_scroll_width: Optional[float] = None
         self._my_replays_watch_replay_button: Optional[ba.Widget] = None
         self._scrollwidget: Optional[ba.Widget] = None

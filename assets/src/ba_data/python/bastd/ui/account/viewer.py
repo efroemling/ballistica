@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Dict, Optional
+    from typing import Any, Optional
 
 
 class AccountViewerWindow(popup.PopupWindow):
@@ -20,9 +20,9 @@ class AccountViewerWindow(popup.PopupWindow):
     def __init__(self,
                  account_id: str,
                  profile_id: str = None,
-                 position: Tuple[float, float] = (0.0, 0.0),
+                 position: tuple[float, float] = (0.0, 0.0),
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0)):
+                 offset: tuple[float, float] = (0.0, 0.0)):
         from ba.internal import is_browser_likely_available, master_server_get
 
         self._account_id = account_id
@@ -169,7 +169,7 @@ class AccountViewerWindow(popup.PopupWindow):
         ba.open_url(_ba.get_master_server_address() + '/highscores?profile=' +
                     self._account_id)
 
-    def _on_query_response(self, data: Optional[Dict[str, Any]]) -> None:
+    def _on_query_response(self, data: Optional[dict[str, Any]]) -> None:
         # FIXME: Tidy this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches

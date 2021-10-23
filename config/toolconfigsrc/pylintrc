@@ -5,6 +5,8 @@ load-plugins=efrotools.pylintplugins
 
 persistent=no
 
+extension-pkg-allow-list=math, readline, zlib, binascii
+
 __EFRO_PYLINT_INIT__
 
 [REPORTS]

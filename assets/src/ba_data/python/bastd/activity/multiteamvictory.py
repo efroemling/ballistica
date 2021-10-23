@@ -10,7 +10,7 @@ import ba
 from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple, Optional
+    from typing import Optional
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -51,7 +51,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         ba.timer(4.6, ba.Call(ba.playsound, self._score_display_sound))
 
         # Score / Name / Player-record.
-        player_entries: List[Tuple[int, str, ba.PlayerRecord]] = []
+        player_entries: list[tuple[int, str, ba.PlayerRecord]] = []
 
         # Note: for ffa, exclude players who haven't entered the game yet.
         if self._is_ffa:

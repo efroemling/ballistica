@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 # Released under the MIT License. See LICENSE for details.
 #
 """A collection of commands for use with this project.
@@ -31,12 +31,12 @@ from batools.pcommand import (
     gen_fulltest_buildfile_android, gen_fulltest_buildfile_windows,
     gen_fulltest_buildfile_apple, gen_fulltest_buildfile_linux,
     python_build_apple, python_build_apple_debug, python_build_android,
-    python_build_android_debug, python_android_patch, python_gather,
-    python_winprune, capitalize, upper, efrocache_update, efrocache_get,
-    get_modern_make, warm_start_asset_build, gendocs, update_docs_md,
-    list_pip_reqs, install_pip_reqs, checkenv, ensure_prefab_platform,
-    prefab_run_var, make_prefab, update_makebob, lazybuild,
-    android_archive_unstripped_libs, efro_gradle, stage_assets,
+    python_build_android_debug, python_android_patch, python_apple_patch,
+    python_gather, python_winprune, capitalize, upper, efrocache_update,
+    efrocache_get, get_modern_make, warm_start_asset_build, gendocs,
+    update_docs_md, list_pip_reqs, install_pip_reqs, checkenv,
+    ensure_prefab_platform, prefab_run_var, make_prefab, update_makebob,
+    lazybuild, android_archive_unstripped_libs, efro_gradle, stage_assets,
     update_assets_makefile, update_project, update_cmake_prefab_lib,
     cmake_prep_dir, gen_binding_code, gen_flat_data_code, wsl_path_to_win,
     wsl_build_check_win_drive, win_ci_binary_build, genchangelog,

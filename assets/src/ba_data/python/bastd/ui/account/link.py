@@ -12,14 +12,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Optional, Dict
+    from typing import Any, Optional
 
 
 class AccountLinkWindow(ba.Window):
     """Window for linking accounts."""
 
     def __init__(self, origin_widget: ba.Widget = None):
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -111,7 +111,7 @@ class AccountLinkWindow(ba.Window):
 class AccountLinkCodeWindow(ba.Window):
     """Window showing code for account-linking."""
 
-    def __init__(self, data: Dict[str, Any]):
+    def __init__(self, data: dict[str, Any]):
         self._width = 350
         self._height = 200
         uiscale = ba.app.ui.uiscale

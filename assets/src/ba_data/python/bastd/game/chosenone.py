@@ -16,7 +16,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional, Sequence, Union
+    from typing import Any, Optional, Sequence, Union
 
 
 class Player(ba.Player['Team']):
@@ -81,7 +81,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     scoreconfig = ba.ScoreConfig(label='Time Held')
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('keep_away')
 
     def __init__(self, settings: dict):
@@ -89,7 +89,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Optional[Player] = None
         self._swipsound = ba.getsound('swip')
-        self._countdownsounds: Dict[int, ba.Sound] = {
+        self._countdownsounds: dict[int, ba.Sound] = {
             10: ba.getsound('announceTen'),
             9: ba.getsound('announceNine'),
             8: ba.getsound('announceEight'),

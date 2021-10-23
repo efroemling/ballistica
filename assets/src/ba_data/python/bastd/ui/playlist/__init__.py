@@ -9,17 +9,17 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type
+    pass
 
 
 # FIXME: Could change this to be a classmethod of session types?
 class PlaylistTypeVars:
     """Defines values for a playlist type (config names to use, etc)."""
 
-    def __init__(self, sessiontype: Type[ba.Session]):
+    def __init__(self, sessiontype: type[ba.Session]):
         from ba.internal import (get_default_teams_playlist,
                                  get_default_free_for_all_playlist)
-        self.sessiontype: Type[ba.Session]
+        self.sessiontype: type[ba.Session]
 
         if issubclass(sessiontype, ba.DualTeamSession):
             play_mode_name = ba.Lstr(resource='playModes.teamsText',

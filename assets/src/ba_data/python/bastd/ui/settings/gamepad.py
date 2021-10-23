@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, Optional, Union, Tuple, Callable
+    from typing import Any, Optional, Union, Callable
 
 
 class GamepadSettingsWindow(ba.Window):
@@ -62,7 +62,7 @@ class GamepadSettingsWindow(ba.Window):
         for widget in self._root_widget.get_children():
             widget.delete()
 
-        self._textwidgets: Dict[str, ba.Widget] = {}
+        self._textwidgets: dict[str, ba.Widget] = {}
 
         # If we were supplied with settings, we're a secondary joystick and
         # just operate on that. in the other (normal) case we make our own.
@@ -348,7 +348,7 @@ class GamepadSettingsWindow(ba.Window):
         """(internal)"""
         return self._is_secondary
 
-    def get_settings(self) -> Dict[str, Any]:
+    def get_settings(self) -> dict[str, Any]:
         """(internal)"""
         assert self._settings is not None
         return self._settings
@@ -528,7 +528,7 @@ class GamepadSettingsWindow(ba.Window):
             return self._input.get_button_name(self._settings[control])
         return ba.Lstr(resource=self._r + '.unsetText')
 
-    def _gamepad_event(self, control: str, event: Dict[str, Any],
+    def _gamepad_event(self, control: str, event: dict[str, Any],
                        dialog: AwaitGamepadInputWindow) -> None:
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=too-many-branches
@@ -647,8 +647,8 @@ class GamepadSettingsWindow(ba.Window):
                 dialog.die()
 
     def _capture_button(self,
-                        pos: Tuple[float, float],
-                        color: Tuple[float, float, float],
+                        pos: tuple[float, float],
+                        color: tuple[float, float, float],
                         texture: ba.Texture,
                         button: str,
                         scale: float = 1.0,
@@ -713,7 +713,7 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if self._input:
             dst = get_input_device_config(self._input, default=True)
-            dst2: Dict[str, Any] = dst[0][dst[1]]
+            dst2: dict[str, Any] = dst[0][dst[1]]
             dst2.clear()
 
             # Store any values that aren't -1.
@@ -752,7 +752,7 @@ class AwaitGamepadInputWindow(ba.Window):
             self,
             gamepad: ba.InputDevice,
             button: str,
-            callback: Callable[[str, Dict[str, Any], AwaitGamepadInputWindow],
+            callback: Callable[[str, dict[str, Any], AwaitGamepadInputWindow],
                                Any],
             message: ba.Lstr = None,
             message2: ba.Lstr = None):
@@ -815,7 +815,7 @@ class AwaitGamepadInputWindow(ba.Window):
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_scale')
 
-    def _event_callback(self, event: Dict[str, Any]) -> None:
+    def _event_callback(self, event: dict[str, Any]) -> None:
         input_device = event['input_device']
         assert isinstance(input_device, ba.InputDevice)
 

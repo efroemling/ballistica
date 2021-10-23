@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Dict
+    from typing import Any, Optional
     from bastd.ui.profile.edit import EditProfileWindow
 
 
@@ -134,7 +134,7 @@ class ProfileUpgradeWindow(ba.Window):
                                       repeat=True)
         self._update()
 
-    def _profile_check_result(self, result: Optional[Dict[str, Any]]) -> None:
+    def _profile_check_result(self, result: Optional[dict[str, Any]]) -> None:
         if result is None:
             ba.textwidget(
                 edit=self._status_text,

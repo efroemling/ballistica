@@ -21,23 +21,23 @@ from efrotools import get_files_hash
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import Sequence, Any, Tuple, List
+    from typing import Sequence, Any
     from batools.docs import AttributeInfo
 
 
-def _get_varying_func_info(sig_in: str) -> Tuple[str, str]:
+def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
     """Return overloaded signatures and return statements for varying funcs."""
     returns = 'return None'
-    if sig_in == ('getdelegate(self, type: Type,'
+    if sig_in == ('getdelegate(self, type: type,'
                   ' doraise: bool = False) -> <varies>'):
         sig = ('# Show that ur return type varies based on "doraise" value:\n'
                '@overload\n'
-               'def getdelegate(self, type: Type[_T],'
+               'def getdelegate(self, type: type[_T],'
                ' doraise: Literal[False] = False) -> Optional[_T]:\n'
                '    ...\n'
                '\n'
                '@overload\n'
-               'def getdelegate(self, type: Type[_T],'
+               'def getdelegate(self, type: type[_T],'
                ' doraise: Literal[True]) -> _T:\n'
                '    ...\n'
                '\n'
@@ -210,29 +210,29 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 # We use 'object' when we mean "can vary"
                 # don't want pylint making assumptions in this case.
                 returnstr = 'return _uninferrable()'
-            elif returns == 'Tuple[float, float]':
+            elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
             elif returns == 'Optional[str]':
                 returnstr = "return ''"
-            elif returns == 'Tuple[float, float, float, float]':
+            elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'Optional[ba.Widget]':
                 returnstr = 'return Widget()'
             elif returns == 'Optional[ba.InputDevice]':
                 returnstr = 'return InputDevice()'
-            elif returns == 'List[ba.Widget]':
+            elif returns == 'list[ba.Widget]':
                 returnstr = 'return [Widget()]'
-            elif returns == 'Tuple[float, ...]':
+            elif returns == 'tuple[float, ...]':
                 returnstr = 'return (0.0, 0.0, 0.0)'
-            elif returns == 'List[str]':
+            elif returns == 'list[str]':
                 returnstr = "return ['blah', 'blah2']"
             elif returns == 'Union[float, int]':
                 returnstr = 'return 0.0'
-            elif returns == 'Dict[str, Any]':
+            elif returns == 'dict[str, Any]':
                 returnstr = "return {'foo': 'bar'}"
-            elif returns in ('Optional[Tuple[int, int]]', 'Tuple[int, int]'):
+            elif returns in ('Optional[tuple[int, int]]', 'tuple[int, int]'):
                 returnstr = 'return (0, 0)'
-            elif returns == 'List[Dict[str, Any]]':
+            elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns in [
                     'session.Session', 'team.Team', '_app.App',
@@ -531,7 +531,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 
         # Scan its doc-string for attribute info; drop in typed
         # declarations for any that we find.
-        attrs: List[AttributeInfo] = []
+        attrs: list[AttributeInfo] = []
         parse_docs_attrs(attrs, docstr)
         if attrs:
             for attr in attrs:
@@ -628,8 +628,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
            'from ba._generated.enums import TimeFormat, TimeType\n'
            '\n'
            'if TYPE_CHECKING:\n'
-           '    from typing import (Any, Dict, Callable, Tuple, '
-           '        List, Optional, Union, List, Type, Literal)\n'
+           '    from typing import Any, Callable, Optional, Union, Literal\n'
            '    from ba._app import App\n'
            '    import ba\n'
            '\n'
@@ -663,7 +662,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
                    check=True)
 
 
-def _dummy_module_dirty() -> Tuple[bool, str]:
+def _dummy_module_dirty() -> tuple[bool, str]:
     """Test hashes on the dummy module to see if it needs updates."""
 
     # Let's generate a hash from all sources under the python source dir.

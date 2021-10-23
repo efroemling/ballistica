@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Dict, Tuple, Optional, Any
+    from typing import Optional, Any
     from bastd.ui.settings import gamepad as gpsui
 
 
@@ -27,7 +27,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         self._width = 900 if uiscale is ba.UIScale.SMALL else 700
         self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = 402 if uiscale is ba.UIScale.SMALL else 512
-        self._textwidgets: Dict[str, ba.Widget] = {}
+        self._textwidgets: dict[str, ba.Widget] = {}
         super().__init__(root_widget=ba.containerwidget(
             transition='in_scale',
             size=(self._width, self._height),
@@ -331,10 +331,10 @@ class GamepadAdvancedSettingsWindow(ba.Window):
 
     def _capture_button(
             self,
-            pos: Tuple[float, float],
+            pos: tuple[float, float],
             name: ba.Lstr,
             control: str,
-            message: Optional[ba.Lstr] = None) -> Tuple[ba.Widget, ba.Widget]:
+            message: Optional[ba.Lstr] = None) -> tuple[ba.Widget, ba.Widget]:
         if message is None:
             message = ba.Lstr(resource=self._parent_window.get_r() +
                               '.pressAnyButtonText')
@@ -398,13 +398,13 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             self,
             name: ba.Lstr,
             control: str,
-            position: Tuple[float, float],
+            position: tuple[float, float],
             min_val: float = 0.0,
             max_val: float = 100.0,
             increment: float = 1.0,
             change_sound: bool = True,
             x_offset: float = 0.0,
-            displayname: ba.Lstr = None) -> Tuple[ba.Widget, ba.Widget]:
+            displayname: ba.Lstr = None) -> tuple[ba.Widget, ba.Widget]:
 
         if displayname is None:
             displayname = name
@@ -455,7 +455,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         ba.textwidget(edit=self._textwidgets[control],
                       text=self._parent_window.get_control_value_name(control))
 
-    def _gamepad_event(self, control: str, event: Dict[str, Any],
+    def _gamepad_event(self, control: str, event: dict[str, Any],
                        dialog: gpsui.AwaitGamepadInputWindow) -> None:
         ext = self._parent_window.get_ext()
         if control in ['triggerRun1' + ext, 'triggerRun2' + ext]:

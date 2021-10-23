@@ -12,7 +12,7 @@ import _ba
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any
+    from typing import Optional, Any
     from bastd.ui.gather import GatherWindow
 
 
@@ -30,7 +30,7 @@ class NetScanner:
                                              left_border=10)
         ba.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
-        self._last_selected_host: Optional[Dict[str, Any]] = None
+        self._last_selected_host: Optional[dict[str, Any]] = None
 
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self.update),
@@ -44,10 +44,10 @@ class NetScanner:
     def __del__(self) -> None:
         _ba.end_host_scanning()
 
-    def _on_select(self, host: Dict[str, Any]) -> None:
+    def _on_select(self, host: dict[str, Any]) -> None:
         self._last_selected_host = host
 
-    def _on_activate(self, host: Dict[str, Any]) -> None:
+    def _on_activate(self, host: dict[str, Any]) -> None:
         _ba.connect_to_party(host['address'])
 
     def update(self) -> None:

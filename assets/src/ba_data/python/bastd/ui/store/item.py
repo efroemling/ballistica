@@ -9,13 +9,13 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Dict, Optional
+    from typing import Any, Optional
 
 
 def instantiate_store_item_display(item_name: str,
-                                   item: Dict[str, Any],
+                                   item: dict[str, Any],
                                    parent_widget: ba.Widget,
-                                   b_pos: Tuple[float, float],
+                                   b_pos: tuple[float, float],
                                    b_width: float,
                                    b_height: float,
                                    boffs_h: float = 0.0,

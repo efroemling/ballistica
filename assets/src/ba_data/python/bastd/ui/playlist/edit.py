@@ -10,7 +10,7 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional
     from bastd.ui.playlist.editcontroller import PlaylistEditController
 
 
@@ -106,7 +106,7 @@ class PlaylistEditWindow(ba.Window):
             on_return_press_call=self._save_press_with_sound)
         ba.widget(edit=cancel_button, down_widget=self._text_field)
 
-        self._list_widgets: List[ba.Widget] = []
+        self._list_widgets: list[ba.Widget] = []
 
         h = 40 + x_inset
         v = self._height - 172.0

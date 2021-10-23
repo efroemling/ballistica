@@ -12,14 +12,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type, Optional, Tuple, Union
+    from typing import Optional, Union
 
 
 class PlaylistBrowserWindow(ba.Window):
     """Window for starting teams games."""
 
     def __init__(self,
-                 sessiontype: Type[ba.Session],
+                 sessiontype: type[ba.Session],
                  transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
@@ -27,7 +27,7 @@ class PlaylistBrowserWindow(ba.Window):
         from bastd.ui.playlist import PlaylistTypeVars
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -432,7 +432,7 @@ class PlaylistBrowserWindow(ba.Window):
                                                mark_unowned=True)
                     for entry in playlist:
                         mapname = entry['settings']['map']
-                        maptype: Optional[Type[ba.Map]]
+                        maptype: Optional[type[ba.Map]]
                         try:
                             maptype = get_map_class(mapname)
                         except ba.NotFoundError:

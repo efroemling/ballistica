@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Dict, Tuple, Set
+    pass
 
 BASE_URL = 'https://files.ballistica.net/cache/ba1/'
 
@@ -172,13 +172,13 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
     return '\n'.join(lines) + '\n'
 
 
-def update_cache(makefile_dirs: List[str]) -> None:
+def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
 
     import multiprocessing
     cpus = multiprocessing.cpu_count()
-    fnames1: List[str] = []
-    fnames2: List[str] = []
+    fnames1: list[str] = []
+    fnames2: list[str] = []
     for path in makefile_dirs:
         cdp = f'cd {path} && ' if path else ''
 
@@ -238,13 +238,13 @@ def update_cache(makefile_dirs: List[str]) -> None:
         outfile.write(hashes)
 
 
-def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
+def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
                   hashes_existing_str: str) -> None:
     from efrotools import run
 
     # First, if we've run before, print the files causing us to re-run:
     if hashes_existing_str != '':
-        changed_files: Set[str] = set()
+        changed_files: set[str] = set()
         hashes = json.loads(hashes_str)
         hashes_existing = json.loads(hashes_existing_str)
         for fname, ftime in hashes.items():
@@ -281,10 +281,10 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
 
 
-def _gen_hashes(fnames: List[str]) -> str:
+def _gen_hashes(fnames: list[str]) -> str:
     import hashlib
 
-    def _get_file_hash(fname: str) -> Tuple[str, str]:
+    def _get_file_hash(fname: str) -> tuple[str, str]:
         md5 = hashlib.md5()
         with open(fname, mode='rb') as infile:
             md5.update(infile.read())
@@ -297,12 +297,12 @@ def _gen_hashes(fnames: List[str]) -> str:
     return json.dumps(hashes, separators=(',', ':'))
 
 
-def _write_cache_files(fnames1: List[str], fnames2: List[str],
+def _write_cache_files(fnames1: list[str], fnames2: list[str],
                        staging_dir: str, mapping_file: str) -> None:
     import functools
-    fhashes1: Set[str] = set()
-    fhashes2: Set[str] = set()
-    mapping: Dict[str, str] = {}
+    fhashes1: set[str] = set()
+    fhashes2: set[str] = set()
+    mapping: dict[str, str] = {}
     call = functools.partial(_write_cache_file, staging_dir)
 
     # Do the first set.
@@ -360,7 +360,7 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
 
-def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
+def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     import hashlib
     from efrotools import run
     print(f'Caching {fname}')
@@ -386,7 +386,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
     return fname, hashpath
 
 
-def _check_warm_start_entry(entry: Tuple[str, str]) -> None:
+def _check_warm_start_entry(entry: tuple[str, str]) -> None:
     import hashlib
     fname, filehash = entry
     md5 = hashlib.md5()
@@ -401,7 +401,7 @@ def _check_warm_start_entry(entry: Tuple[str, str]) -> None:
         os.utime(fname, None)
 
 
-def _check_warm_start_entries(entries: List[Tuple[str, str]]) -> None:
+def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         # Converting this to a list pulls results and propagates errors)
         list(executor.map(_check_warm_start_entry, entries))
@@ -437,12 +437,12 @@ def warm_start_cache() -> None:
     # second per file, it adds up when done for thousands of assets
     # each time the cache map changes. It is much more efficient to do
     # it in one go here.
-    cachemap: Dict[str, str]
+    cachemap: dict[str, str]
     with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
         cachemap = json.loads(infile.read())
     assert isinstance(cachemap, dict)
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
-    entries: List[Tuple[str, str]] = []
+    entries: list[tuple[str, str]] = []
     for fname, url in cachemap.items():
 
         # File hasn't been pulled from cache yet = ignore.

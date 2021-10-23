@@ -18,8 +18,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import (Any, Type, Tuple, List, Sequence, Optional, Dict,
-                        Union)
+    from typing import Any, Sequence, Optional, Union
     from bastd.actor.onscreentimer import OnScreenTimer
 
 
@@ -83,7 +82,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     @classmethod
     def get_available_settings(
-            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
+            cls, sessiontype: type[ba.Session]) -> list[ba.Setting]:
         settings = [
             ba.IntSetting('Laps', min_value=1, default=3, increment=1),
             ba.IntChoiceSetting(
@@ -129,11 +128,11 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         return settings
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return issubclass(sessiontype, ba.MultiTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('race')
 
     def __init__(self, settings: dict):
@@ -148,15 +147,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._beep_1_sound = ba.getsound('raceBeep1')
         self._beep_2_sound = ba.getsound('raceBeep2')
         self.race_region_material: Optional[ba.Material] = None
-        self._regions: List[RaceRegion] = []
+        self._regions: list[RaceRegion] = []
         self._team_finish_pts: Optional[int] = None
         self._time_text: Optional[ba.Actor] = None
         self._timer: Optional[OnScreenTimer] = None
-        self._race_mines: Optional[List[RaceMine]] = None
+        self._race_mines: Optional[list[RaceMine]] = None
         self._race_mine_timer: Optional[ba.Timer] = None
         self._scoreboard_timer: Optional[ba.Timer] = None
         self._player_order_update_timer: Optional[ba.Timer] = None
-        self._start_lights: Optional[List[ba.Node]] = None
+        self._start_lights: Optional[list[ba.Node]] = None
         self._bomb_spawn_timer: Optional[ba.Timer] = None
         self._laps = int(settings['Laps'])
         self._entire_team_must_finish = bool(

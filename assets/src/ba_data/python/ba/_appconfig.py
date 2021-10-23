@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, List, Tuple
+    from typing import Any
 
 
 class AppConfig(dict):
@@ -57,7 +57,7 @@ class AppConfig(dict):
         """
         return _ba.get_appconfig_default_value(key)
 
-    def builtin_keys(self) -> List[str]:
+    def builtin_keys(self) -> list[str]:
         """Return the list of valid key names recognized by ba.AppConfig.
 
         This set of keys can be used with resolve(), default_value(), etc.
@@ -93,7 +93,7 @@ class AppConfig(dict):
         self.commit()
 
 
-def read_config() -> Tuple[AppConfig, bool]:
+def read_config() -> tuple[AppConfig, bool]:
     """Read the game config."""
     import os
     import json

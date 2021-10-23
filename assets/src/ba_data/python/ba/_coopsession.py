@@ -9,7 +9,7 @@ import _ba
 from ba._session import Session
 
 if TYPE_CHECKING:
-    from typing import Any, List, Dict, Optional, Callable, Sequence
+    from typing import Any, Optional, Callable, Sequence
     import ba
 
 TEAM_COLORS = [(0.2, 0.4, 1.6)]
@@ -77,7 +77,7 @@ class CoopSession(Session):
 
         self._ran_tutorial_activity = False
         self._tutorial_activity: Optional[ba.Activity] = None
-        self._custom_menu_ui: List[Dict[str, Any]] = []
+        self._custom_menu_ui: list[dict[str, Any]] = []
 
         # Start our joining screen.
         self.setactivity(_ba.newactivity(CoopJoinActivity))
@@ -159,7 +159,7 @@ class CoopSession(Session):
             from bastd.tutorial import TutorialActivity
             self._tutorial_activity = _ba.newactivity(TutorialActivity)
 
-    def get_custom_menu_entries(self) -> List[Dict[str, Any]]:
+    def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         return self._custom_menu_ui
 
     def on_player_leave(self, sessionplayer: ba.SessionPlayer) -> None:
@@ -341,7 +341,7 @@ class CoopSession(Session):
             self.setactivity(_ba.newactivity(TransitionActivity))
         else:
 
-            playerinfos: List[ba.PlayerInfo]
+            playerinfos: list[ba.PlayerInfo]
 
             # Generic team games.
             if isinstance(results, GameResults):

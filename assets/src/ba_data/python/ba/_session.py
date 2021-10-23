@@ -12,7 +12,7 @@ from ba._language import Lstr
 from ba._player import Player
 
 if TYPE_CHECKING:
-    from typing import Sequence, List, Dict, Any, Optional, Set
+    from typing import Sequence, Any, Optional
     import ba
 
 
@@ -76,9 +76,9 @@ class Session:
     lobby: ba.Lobby
     max_players: int
     min_players: int
-    sessionplayers: List[ba.SessionPlayer]
+    sessionplayers: list[ba.SessionPlayer]
     customdata: dict
-    sessionteams: List[ba.SessionTeam]
+    sessionteams: list[ba.SessionTeam]
 
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],
@@ -108,7 +108,7 @@ class Session:
         # If things are missing, we'll try to gather them into a single
         # missing-deps exception if possible to give the caller a clean
         # path to download missing stuff and try again.
-        missing_asset_packages: Set[str] = set()
+        missing_asset_packages: set[str] = set()
         for depset in depsets:
             try:
                 depset.resolve()
@@ -133,7 +133,7 @@ class Session:
 
         # Ok; looks like our dependencies check out.
         # Now give the engine a list of asset-set-ids to pass along to clients.
-        required_asset_packages: Set[str] = set()
+        required_asset_packages: set[str] = set()
         for depset in depsets:
             required_asset_packages.update(depset.get_asset_package_ids())
 
@@ -495,7 +495,7 @@ class Session:
         """Return the current foreground activity for this session."""
         return self._activity_weak()
 
-    def get_custom_menu_entries(self) -> List[Dict[str, Any]]:
+    def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         """Subclasses can override this to provide custom menu entries.
 
         The returned value should be a list of dicts, each containing

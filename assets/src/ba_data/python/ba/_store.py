@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Type, List, Dict, Tuple, Optional, Any
+    from typing import Optional, Any
     import ba
 
 
-def get_store_item(item: str) -> Dict[str, Any]:
+def get_store_item(item: str) -> dict[str, Any]:
     """(internal)"""
     return get_store_items()[item]
 
@@ -32,17 +32,17 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
                               subs=[('${APP_NAME}',
                                      _language.Lstr(resource='titleText'))])
     if item_name.startswith('maps.'):
-        map_type: Type[ba.Map] = item_info['map_type']
+        map_type: type[ba.Map] = item_info['map_type']
         return _map.get_map_display_string(map_type.name)
     if item_name.startswith('games.'):
-        gametype: Type[ba.GameActivity] = item_info['gametype']
+        gametype: type[ba.GameActivity] = item_info['gametype']
         return gametype.get_display_string()
     if item_name.startswith('icons.'):
         return _language.Lstr(resource='editProfileWindow.iconText')
     raise ValueError('unrecognized item: ' + item_name)
 
 
-def get_store_item_display_size(item_name: str) -> Tuple[float, float]:
+def get_store_item_display_size(item_name: str) -> tuple[float, float]:
     """(internal)"""
     if item_name.startswith('characters.'):
         return 340 * 0.6, 430 * 0.6
@@ -55,7 +55,7 @@ def get_store_item_display_size(item_name: str) -> Tuple[float, float]:
     return 450 * 0.6, 450 * 0.6
 
 
-def get_store_items() -> Dict[str, Dict]:
+def get_store_items() -> dict[str, dict]:
     """Returns info about purchasable items.
 
     (internal)
@@ -285,7 +285,7 @@ def get_store_items() -> Dict[str, Dict]:
     return store_items
 
 
-def get_store_layout() -> Dict[str, List[Dict[str, Any]]]:
+def get_store_layout() -> dict[str, list[dict[str, Any]]]:
     """Return what's available in the store at a given time.
 
         Categorized by tab and by section."""
@@ -421,7 +421,7 @@ def get_available_purchase_count(tab: str = None) -> int:
         return 0
 
 
-def _calc_count_for_tab(tabval: List[Dict[str, Any]], our_tickets: int,
+def _calc_count_for_tab(tabval: list[dict[str, Any]], our_tickets: int,
                         count: int) -> int:
     for section in tabval:
         for item in section['items']:
@@ -442,7 +442,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
         import datetime
         from ba._generated.enums import TimeType, TimeFormat
         app = _ba.app
-        sale_times: List[Optional[int]] = []
+        sale_times: list[Optional[int]] = []
 
         # Calc time for our pro sale (old special case).
         if tab == 'extras':

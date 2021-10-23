@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Optional, Callable, Dict, Union
+    from typing import Any, Optional, Callable, Union
 
 
 class LeagueRankButton:
@@ -18,13 +18,13 @@ class LeagueRankButton:
 
     def __init__(self,
                  parent: ba.Widget,
-                 position: Tuple[float, float],
-                 size: Tuple[float, float],
+                 position: tuple[float, float],
+                 size: tuple[float, float],
                  scale: float,
                  on_activate_call: Callable[[], Any] = None,
                  transition_delay: float = None,
-                 color: Tuple[float, float, float] = None,
-                 textcolor: Tuple[float, float, float] = None,
+                 color: tuple[float, float, float] = None,
+                 textcolor: tuple[float, float, float] = None,
                  smooth_update_delay: float = None):
         if on_activate_call is None:
             on_activate_call = ba.WeakCall(self._default_on_activate_call)
@@ -42,7 +42,7 @@ class LeagueRankButton:
         self._textcolor = textcolor
         self._header_color = (0.8, 0.8, 2.0)
         self._parent = parent
-        self._position: Tuple[float, float] = (0.0, 0.0)
+        self._position: tuple[float, float] = (0.0, 0.0)
 
         self._button = ba.buttonwidget(parent=parent,
                                        size=size,
@@ -211,7 +211,7 @@ class LeagueRankButton:
             ba.print_exception('Error doing smooth update.')
             self._smooth_update_timer = None
 
-    def _update_for_league_rank_data(self, data: Optional[Dict[str,
+    def _update_for_league_rank_data(self, data: Optional[dict[str,
                                                                Any]]) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -325,7 +325,7 @@ class LeagueRankButton:
         ba.textwidget(edit=self._value_text, text=status_text)
 
     def _on_power_ranking_query_response(
-            self, data: Optional[Dict[str, Any]]) -> None:
+            self, data: Optional[dict[str, Any]]) -> None:
         self._doing_power_ranking_query = False
         ba.app.accounts.cache_league_rank_data(data)
         self._update_for_league_rank_data(data)
@@ -357,7 +357,7 @@ class LeagueRankButton:
         from bastd.ui.league.rankwindow import LeagueRankWindow
         LeagueRankWindow(modal=True, origin_widget=self._button)
 
-    def set_position(self, position: Tuple[float, float]) -> None:
+    def set_position(self, position: tuple[float, float]) -> None:
         """Set the button's position."""
         self._position = position
         if not self._button:

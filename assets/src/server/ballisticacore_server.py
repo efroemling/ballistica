@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 # Released under the MIT License. See LICENSE for details.
 #
 """BallisticaCore server manager."""
@@ -28,7 +28,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Dict, Union, Tuple
+    from typing import Optional, Union
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
@@ -81,7 +81,7 @@ class ServerManagerApp:
         self._interactive = sys.stdin.isatty()
         self._wrapper_shutdown_desired = False
         self._done = False
-        self._subprocess_commands: List[Union[str, ServerCommand]] = []
+        self._subprocess_commands: list[Union[str, ServerCommand]] = []
         self._subprocess_commands_lock = Lock()
         self._subprocess_force_kill_time: Optional[float] = None
         self._auto_restart = True
@@ -251,8 +251,8 @@ class ServerManagerApp:
 
     def screenmessage(self,
                       message: str,
-                      color: Optional[Tuple[float, float, float]] = None,
-                      clients: Optional[List[int]] = None) -> None:
+                      color: Optional[tuple[float, float, float]] = None,
+                      clients: Optional[list[int]] = None) -> None:
         """Display a screen-message.
 
         This will have no name attached and not show up in chat history.
@@ -265,7 +265,7 @@ class ServerManagerApp:
 
     def chatmessage(self,
                     message: str,
-                    clients: Optional[List[int]] = None) -> None:
+                    clients: Optional[list[int]] = None) -> None:
         """Send a chat message from the server.
 
         This will have the server's name attached and will be logged
@@ -533,7 +533,7 @@ class ServerManagerApp:
                   flush=True)
         return out
 
-    def _enable_tab_completion(self, locs: Dict) -> None:
+    def _enable_tab_completion(self, locs: dict) -> None:
         """Enable tab-completion on platforms where available (linux/mac)."""
         try:
             import readline

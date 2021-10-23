@@ -26,7 +26,7 @@ from bastd.actor.spazbot import (SpazBotDiedMessage, SpazBotPunchedMessage,
                                  StickyBot, ExplodeyBot)
 
 if TYPE_CHECKING:
-    from typing import Any, List, Type, Dict, Sequence, Optional, Union
+    from typing import Any, Sequence, Optional, Union
     from bastd.actor.spaz import Spaz
     from bastd.actor.spazbot import SpazBot
 
@@ -110,12 +110,12 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     default_music = ba.MusicType.FOOTBALL
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         # We only support two-team play.
         return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('football')
 
     def __init__(self, settings: dict):
@@ -137,7 +137,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
                 ('call', 'at_connect', self._handle_score),
             ))
         self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: List[ba.NodeActor] = []
+        self._score_regions: list[ba.NodeActor] = []
         self._flag: Optional[FootballFlag] = None
         self._flag_respawn_timer: Optional[ba.Timer] = None
         self._flag_respawn_light: Optional[ba.NodeActor] = None
@@ -377,12 +377,12 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         self._player_has_punched = False
         self._scoreboard: Optional[Scoreboard] = None
         self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: List[ba.NodeActor] = []
-        self._exclude_powerups: List[str] = []
+        self._score_regions: list[ba.NodeActor] = []
+        self._exclude_powerups: list[str] = []
         self._have_tnt = False
-        self._bot_types_initial: Optional[List[Type[SpazBot]]] = None
-        self._bot_types_7: Optional[List[Type[SpazBot]]] = None
-        self._bot_types_14: Optional[List[Type[SpazBot]]] = None
+        self._bot_types_initial: Optional[list[type[SpazBot]]] = None
+        self._bot_types_7: Optional[list[type[SpazBot]]] = None
+        self._bot_types_14: Optional[list[type[SpazBot]]] = None
         self._bot_team: Optional[Team] = None
         self._starttime_ms: Optional[int] = None
         self._time_text: Optional[ba.NodeActor] = None
@@ -436,9 +436,9 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             controlsguide.ControlsGuide(delay=3.0, lifespan=10.0,
                                         bright=True).autoretain()
         assert self.initialplayerinfos is not None
-        abot: Type[SpazBot]
-        bbot: Type[SpazBot]
-        cbot: Type[SpazBot]
+        abot: type[SpazBot]
+        bbot: type[SpazBot]
+        cbot: type[SpazBot]
         if self._preset in ['rookie', 'rookie_easy']:
             self._exclude_powerups = ['curse']
             self._have_tnt = False
@@ -467,7 +467,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             self._bot_types_initial = [ChargerBot] * len(
                 self.initialplayerinfos)
             abot = (BrawlerBot if self._preset == 'pro' else BrawlerBotLite)
-            typed_bot_list: List[Type[SpazBot]] = []
+            typed_bot_list: list[type[SpazBot]] = []
             self._bot_types_7 = (
                 typed_bot_list + [abot] + [BomberBot] *
                 (1 if len(self.initialplayerinfos) < 3 else 2))
@@ -479,7 +479,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             self._have_tnt = True
             abot = (BrawlerBotPro if self._preset == 'uber' else BrawlerBot)
             bbot = (TriggerBotPro if self._preset == 'uber' else TriggerBot)
-            typed_bot_list_2: List[Type[SpazBot]] = []
+            typed_bot_list_2: list[type[SpazBot]] = []
             self._bot_types_initial = (typed_bot_list_2 + [StickyBot] +
                                        [abot] * len(self.initialplayerinfos))
             self._bot_types_7 = (
@@ -542,7 +542,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         for bottype in self._bot_types_initial:
             self._spawn_bot(bottype)
 
-    def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
+    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
         self._show_standard_scores_to_beat_ui(scores)
 
     def _on_bot_spawn(self, spaz: SpazBot) -> None:
@@ -550,7 +550,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         spaz.target_point_default = ba.Vec3(0, 0, 0)
 
     def _spawn_bot(self,
-                   spaz_type: Type[SpazBot],
+                   spaz_type: type[SpazBot],
                    immediate: bool = False) -> None:
         assert self._bot_team is not None
         pos = self.map.get_start_position(self._bot_team.id)

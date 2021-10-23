@@ -10,14 +10,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional
+    from typing import Any, Optional
 
 
 class PurchaseWindow(ba.Window):
     """Window for purchasing one or more items."""
 
     def __init__(self,
-                 items: List[str],
+                 items: list[str],
                  transition: str = 'in_right',
                  header_text: ba.Lstr = None):
         from ba.internal import get_store_item_display_size
@@ -50,7 +50,7 @@ class PurchaseWindow(ba.Window):
                                          scale=1.2,
                                          color=(1, 0.8, 0.3, 1))
         size = get_store_item_display_size(items[0])
-        display: Dict[str, Any] = {}
+        display: dict[str, Any] = {}
         storeitemui.instantiate_store_item_display(
             items[0],
             display,

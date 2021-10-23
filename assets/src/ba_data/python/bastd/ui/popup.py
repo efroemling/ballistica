@@ -11,20 +11,20 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Any, Sequence, Callable, Optional, List, Union
+    from typing import Any, Sequence, Callable, Optional, Union
 
 
 class PopupWindow:
     """A transient window that positions and scales itself for visibility."""
 
     def __init__(self,
-                 position: Tuple[float, float],
-                 size: Tuple[float, float],
+                 position: tuple[float, float],
+                 size: tuple[float, float],
                  scale: float = 1.0,
-                 offset: Tuple[float, float] = (0, 0),
-                 bg_color: Tuple[float, float, float] = (0.35, 0.55, 0.15),
-                 focus_position: Tuple[float, float] = (0, 0),
-                 focus_size: Tuple[float, float] = None,
+                 offset: tuple[float, float] = (0, 0),
+                 bg_color: tuple[float, float, float] = (0.35, 0.55, 0.15),
+                 focus_position: tuple[float, float] = (0, 0),
+                 focus_size: tuple[float, float] = None,
                  toolbar_visibility: str = 'menu_minimal_no_back'):
         # pylint: disable=too-many-locals
         if focus_size is None:
@@ -101,7 +101,7 @@ class PopupMenuWindow(PopupWindow):
     """A menu built using popup-window functionality."""
 
     def __init__(self,
-                 position: Tuple[float, float],
+                 position: tuple[float, float],
                  choices: Sequence[str],
                  current_choice: str,
                  delegate: Any = None,
@@ -121,7 +121,7 @@ class PopupMenuWindow(PopupWindow):
 
         # FIXME: For the moment we base our width on these strings so
         #  we need to flatten them.
-        choices_display_fin: List[str] = []
+        choices_display_fin: list[str] = []
         for choice_display in choices_display:
             choices_display_fin.append(choice_display.evaluate())
 
@@ -264,7 +264,7 @@ class PopupMenu:
 
     def __init__(self,
                  parent: ba.Widget,
-                 position: Tuple[float, float],
+                 position: tuple[float, float],
                  choices: Sequence[str],
                  current_choice: str = None,
                  on_value_change_call: Callable[[str], Any] = None,
@@ -275,7 +275,7 @@ class PopupMenu:
                  scale: float = None,
                  choices_disabled: Sequence[str] = None,
                  choices_display: Sequence[ba.Lstr] = None,
-                 button_size: Tuple[float, float] = (160.0, 50.0),
+                 button_size: tuple[float, float] = (160.0, 50.0),
                  autoselect: bool = True):
         # pylint: disable=too-many-locals
         if choices_disabled is None:

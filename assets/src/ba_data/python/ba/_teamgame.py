@@ -13,7 +13,7 @@ from ba._gameresults import GameResults
 from ba._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Sequence
+    from typing import Any, Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
@@ -31,7 +31,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     """
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         """
         Class method override;
         returns True for ba.DualTeamSessions and ba.FreeForAllSessions;

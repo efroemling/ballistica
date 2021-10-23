@@ -8,15 +8,15 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type, Any, Dict, Callable, Optional
+    from typing import Any, Callable, Optional
 
 
 class AppDelegate(ba.AppDelegate):
     """Defines handlers for high level app functionality."""
 
     def create_default_game_settings_ui(
-            self, gameclass: Type[ba.GameActivity],
-            sessiontype: Type[ba.Session], settings: Optional[dict],
+            self, gameclass: type[ba.GameActivity],
+            sessiontype: type[ba.Session], settings: Optional[dict],
             completion_call: Callable[[Optional[dict]], Any]) -> None:
         """(internal)"""
 

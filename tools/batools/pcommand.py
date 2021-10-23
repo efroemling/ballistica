@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efrotools.pcommand import PROJROOT
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set, Dict
+    from typing import Optional
 
 
 def stage_server_file() -> None:
@@ -361,6 +361,13 @@ def python_android_patch() -> None:
     pybuild.android_patch()
 
 
+def python_apple_patch() -> None:
+    """Patches Python to prep for building for Apple platforms."""
+    from efrotools import pybuild
+    arch = sys.argv[2]
+    pybuild.apple_patch(arch)
+
+
 def python_gather() -> None:
     """Gather build python components into the project.
 
@@ -685,7 +692,7 @@ def android_archive_unstripped_libs() -> None:
             subprocess.run(['rm', dstpath], check=True)
 
 
-def _camel_case_split(string: str) -> List[str]:
+def _camel_case_split(string: str) -> list[str]:
     words = [[string[0]]]
     for char in string[1:]:
         if words[-1][-1].islower() and char.isupper():
@@ -702,7 +709,7 @@ def efro_gradle() -> None:
     from efrotools.android import filter_gradle_file
     args = ['./gradlew'] + sys.argv[2:]
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
-    enabled_tags: Set[str] = {'true'}
+    enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
         enabled_tags = {'google', 'crashlytics'}
@@ -859,7 +866,7 @@ def win_ci_install_prereqs() -> None:
     # build to succeed. Normally this would happen through our Makefile
     # targets but we can't use them under raw window so we need to just
     # hard-code whatever we need here.
-    needed_targets: Set[str] = {
+    needed_targets: set[str] = {
         'build/prefab/lib/windows/Debug_Win32/'
         'BallisticaCoreGenericInternal.lib',
         'build/prefab/lib/windows/Debug_Win32/'
@@ -871,10 +878,10 @@ def win_ci_install_prereqs() -> None:
     # and pick out anything we need for our basic builds/tests.
     with open('src/meta/.meta_manifest_public.json',
               encoding='utf-8') as infile:
-        meta_public: List[str] = json.loads(infile.read())
+        meta_public: list[str] = json.loads(infile.read())
     with open('src/meta/.meta_manifest_private.json',
               encoding='utf-8') as infile:
-        meta_private: List[str] = json.loads(infile.read())
+        meta_private: list[str] = json.loads(infile.read())
     for target in meta_public + meta_private:
         if (target.startswith('src/ballistica/generated/') or
                 target.startswith('assets/src/ba_data/python/ba/_generated/')):

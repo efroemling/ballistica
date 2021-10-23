@@ -8,7 +8,7 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any, Optional
 
 
 def dataclass_diff(obj1: Any, obj2: Any) -> str:
@@ -42,7 +42,7 @@ def _diff(obj1: Any, obj2: Any, indent: int) -> str:
     if type(obj1) is not type(obj2):
         raise TypeError(f'Passed objects are not of the same'
                         f' type ({type(obj1)} and {type(obj2)}).')
-    bits: List[str] = []
+    bits: list[str] = []
     indentstr = ' ' * indent
     fields = dataclasses.fields(obj1)
     for field in fields:

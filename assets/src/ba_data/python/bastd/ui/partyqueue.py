@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, List, Dict
+    from typing import Any, Optional, Sequence
 
 
 class PartyQueueWindow(ba.Window):
@@ -181,8 +181,8 @@ class PartyQueueWindow(ba.Window):
         self._boost_price: Optional[ba.Widget] = None
         self._boost_label: Optional[ba.Widget] = None
         self._field_shown = False
-        self._dudes: List[PartyQueueWindow.Dude] = []
-        self._dudes_by_id: Dict[int, PartyQueueWindow.Dude] = {}
+        self._dudes: list[PartyQueueWindow.Dude] = []
+        self._dudes_by_id: dict[int, PartyQueueWindow.Dude] = {}
         self._line_left = 40.0
         self._line_width = self._width - 190
         self._line_bottom = self._height * 0.4
@@ -292,7 +292,7 @@ class PartyQueueWindow(ba.Window):
         """Close the ui."""
         ba.containerwidget(edit=self._root_widget, transition='out_scale')
 
-    def _update_field(self, response: Dict[str, Any]) -> None:
+    def _update_field(self, response: dict[str, Any]) -> None:
         if self._angry_computer_image is None:
             self._angry_computer_image = ba.imagewidget(
                 parent=self._root_widget,
@@ -356,7 +356,7 @@ class PartyQueueWindow(ba.Window):
         self._dudes = []
         self._dudes_by_id = {}
 
-    def on_update_response(self, response: Optional[Dict[str, Any]]) -> None:
+    def on_update_response(self, response: Optional[dict[str, Any]]) -> None:
         """We've received a response from an update to the server."""
         # pylint: disable=too-many-branches
         if not self._root_widget:

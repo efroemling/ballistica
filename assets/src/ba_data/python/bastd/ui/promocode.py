@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple
+    from typing import Optional
 
 
 class PromoCodeWindow(ba.Window):
@@ -19,7 +19,7 @@ class PromoCodeWindow(ba.Window):
 
     def __init__(self, modal: bool = False, origin_widget: ba.Widget = None):
 
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

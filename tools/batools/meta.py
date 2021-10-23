@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional, Any, Dict
+    from typing import Optional
 
 
 def gen_flat_data_code(projroot: str, in_path: str, out_path: str,

@@ -27,10 +27,10 @@ from bastd.ui.onscreenkeyboard import OnScreenKeyboardWindow
 from bastd.ui import party
 
 if TYPE_CHECKING:
-    from typing import Tuple, Any
+    from typing import Any
 
 
-def get_binding_values() -> Tuple[Any, ...]:
+def get_binding_values() -> tuple[Any, ...]:
     return (
         ba.app,  # kApp
         tuple(),  # kEmptyTuple

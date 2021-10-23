@@ -11,7 +11,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, List, Dict
+    from typing import Any
 
 
 class HockeyStadium(ba.Map):
@@ -21,7 +21,7 @@ class HockeyStadium(ba.Map):
     name = 'Hockey Stadium'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'hockey', 'team_flag', 'keep_away']
 
@@ -31,7 +31,7 @@ class HockeyStadium(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'models': (ba.getmodel('hockeyStadiumOuter'),
                        ba.getmodel('hockeyStadiumInner'),
                        ba.getmodel('hockeyStadiumStands')),
@@ -106,7 +106,7 @@ class FootballStadium(ba.Map):
     name = 'Football Stadium'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'football', 'team_flag', 'keep_away']
 
@@ -116,7 +116,7 @@ class FootballStadium(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('footballStadium'),
             'vr_fill_model': ba.getmodel('footballStadiumVRFill'),
             'collide_model': ba.getcollidemodel('footballStadiumCollide'),
@@ -170,7 +170,7 @@ class Bridgit(ba.Map):
     dataname = 'bridgit'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         # print('getting playtypes', cls._getdata()['play_types'])
         return ['melee', 'team_flag', 'keep_away']
@@ -181,7 +181,7 @@ class Bridgit(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model_top': ba.getmodel('bridgitLevelTop'),
             'model_bottom': ba.getmodel('bridgitLevelBottom'),
             'model_bg': ba.getmodel('natureBackground'),
@@ -264,7 +264,7 @@ class BigG(ba.Map):
     name = 'Big G'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
             'race', 'melee', 'keep_away', 'team_flag', 'king_of_the_hill',
@@ -277,7 +277,7 @@ class BigG(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model_top': ba.getmodel('bigG'),
             'model_bottom': ba.getmodel('bigGBottom'),
             'model_bg': ba.getmodel('natureBackground'),
@@ -361,7 +361,7 @@ class Roundabout(ba.Map):
     name = 'Roundabout'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
@@ -371,7 +371,7 @@ class Roundabout(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('roundaboutLevel'),
             'model_bottom': ba.getmodel('roundaboutLevelBottom'),
             'model_bg': ba.getmodel('natureBackground'),
@@ -455,7 +455,7 @@ class MonkeyFace(ba.Map):
     name = 'Monkey Face'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
@@ -465,7 +465,7 @@ class MonkeyFace(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('monkeyFaceLevel'),
             'bottom_model': ba.getmodel('monkeyFaceLevelBottom'),
             'model_bg': ba.getmodel('natureBackground'),
@@ -549,7 +549,7 @@ class ZigZag(ba.Map):
     name = 'Zigzag'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
             'melee', 'keep_away', 'team_flag', 'conquest', 'king_of_the_hill'
@@ -561,7 +561,7 @@ class ZigZag(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('zigZagLevel'),
             'model_bottom': ba.getmodel('zigZagLevelBottom'),
             'model_bg': ba.getmodel('natureBackground'),
@@ -643,7 +643,7 @@ class ThePad(ba.Map):
     name = 'The Pad'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'king_of_the_hill']
 
@@ -653,7 +653,7 @@ class ThePad(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('thePadLevel'),
             'bottom_model': ba.getmodel('thePadLevelBottom'),
             'collide_model': ba.getcollidemodel('thePadLevelCollide'),
@@ -724,7 +724,7 @@ class DoomShroom(ba.Map):
     name = 'Doom Shroom'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
@@ -734,7 +734,7 @@ class DoomShroom(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('doomShroomLevel'),
             'collide_model': ba.getcollidemodel('doomShroomLevelCollide'),
             'tex': ba.gettexture('doomShroomLevelColor'),
@@ -814,7 +814,7 @@ class LakeFrigid(ba.Map):
     name = 'Lake Frigid'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'race']
 
@@ -824,7 +824,7 @@ class LakeFrigid(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('lakeFrigid'),
             'model_top': ba.getmodel('lakeFrigidTop'),
             'model_reflections': ba.getmodel('lakeFrigidReflections'),
@@ -895,7 +895,7 @@ class TipTop(ba.Map):
     name = 'Tip Top'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'king_of_the_hill']
 
@@ -905,7 +905,7 @@ class TipTop(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('tipTopLevel'),
             'bottom_model': ba.getmodel('tipTopLevelBottom'),
             'collide_model': ba.getcollidemodel('tipTopLevelCollide'),
@@ -967,7 +967,7 @@ class CragCastle(ba.Map):
     name = 'Crag Castle'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'conquest']
 
@@ -977,7 +977,7 @@ class CragCastle(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('cragCastleLevel'),
             'bottom_model': ba.getmodel('cragCastleLevelBottom'),
             'collide_model': ba.getcollidemodel('cragCastleLevelCollide'),
@@ -1052,7 +1052,7 @@ class TowerD(ba.Map):
     name = 'Tower D'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return []
 
@@ -1062,7 +1062,7 @@ class TowerD(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model':
                 ba.getmodel('towerDLevel'),
             'model_bottom':
@@ -1169,7 +1169,7 @@ class HappyThoughts(ba.Map):
     name = 'Happy Thoughts'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
             'melee', 'keep_away', 'team_flag', 'conquest', 'king_of_the_hill'
@@ -1181,7 +1181,7 @@ class HappyThoughts(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('alwaysLandLevel'),
             'bottom_model': ba.getmodel('alwaysLandLevelBottom'),
             'bgmodel': ba.getmodel('alwaysLandBG'),
@@ -1275,7 +1275,7 @@ class StepRightUp(ba.Map):
     name = 'Step Right Up'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'conquest']
 
@@ -1285,7 +1285,7 @@ class StepRightUp(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('stepRightUpLevel'),
             'model_bottom': ba.getmodel('stepRightUpLevelBottom'),
             'collide_model': ba.getcollidemodel('stepRightUpLevelCollide'),
@@ -1350,7 +1350,7 @@ class Courtyard(ba.Map):
     name = 'Courtyard'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
@@ -1360,7 +1360,7 @@ class Courtyard(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('courtyardLevel'),
             'model_bottom': ba.getmodel('courtyardLevelBottom'),
             'collide_model': ba.getcollidemodel('courtyardLevelCollide'),
@@ -1456,7 +1456,7 @@ class Rampage(ba.Map):
     name = 'Rampage'
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
@@ -1466,7 +1466,7 @@ class Rampage(ba.Map):
 
     @classmethod
     def on_preload(cls) -> Any:
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             'model': ba.getmodel('rampageLevel'),
             'bottom_model': ba.getmodel('rampageLevelBottom'),
             'collide_model': ba.getcollidemodel('rampageLevelCollide'),

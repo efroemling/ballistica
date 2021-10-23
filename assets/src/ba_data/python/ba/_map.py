@@ -11,7 +11,7 @@ from ba import _math
 from ba._actor import Actor
 
 if TYPE_CHECKING:
-    from typing import Set, List, Type, Optional, Sequence, Any, Tuple
+    from typing import Optional, Sequence, Any
     import ba
 
 
@@ -52,7 +52,7 @@ def get_map_display_string(name: str) -> ba.Lstr:
     return _language.Lstr(translate=('mapsNames', name))
 
 
-def getmaps(playtype: str) -> List[str]:
+def getmaps(playtype: str) -> list[str]:
     """Return a list of ba.Map types supporting a playtype str.
 
     Category: Asset Functions
@@ -101,13 +101,13 @@ def getmaps(playtype: str) -> List[str]:
                   if playtype in val.get_play_types())
 
 
-def get_unowned_maps() -> List[str]:
+def get_unowned_maps() -> list[str]:
     """Return the list of local maps not owned by the current account.
 
     Category: Asset Functions
     """
     from ba import _store
-    unowned_maps: Set[str] = set()
+    unowned_maps: set[str] = set()
     if not _ba.app.headless_mode:
         for map_section in _store.get_store_layout()['maps']:
             for mapitem in map_section['items']:
@@ -117,7 +117,7 @@ def get_unowned_maps() -> List[str]:
     return sorted(unowned_maps)
 
 
-def get_map_class(name: str) -> Type[ba.Map]:
+def get_map_class(name: str) -> type[ba.Map]:
     """Return a map type given a name.
 
     Category: Asset Functions
@@ -140,7 +140,7 @@ class Map(Actor):
     """
     defs: Any = None
     name = 'Map'
-    _playtypes: List[str] = []
+    _playtypes: list[str] = []
 
     @classmethod
     def preload(cls) -> None:
@@ -156,7 +156,7 @@ class Map(Actor):
             activity.preloads[cls] = cls.on_preload()
 
     @classmethod
-    def get_play_types(cls) -> List[str]:
+    def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return []
 
@@ -296,7 +296,7 @@ class Map(Actor):
 
     def get_def_bound_box(
         self, name: str
-    ) -> Optional[Tuple[float, float, float, float, float, float]]:
+    ) -> Optional[tuple[float, float, float, float, float, float]]:
         """Return a 6 member bounds tuple or None if it is not defined."""
         try:
             box = self.defs.boxes[name]
@@ -312,7 +312,7 @@ class Map(Actor):
         return (None if val is None else
                 _math.vec3validate(val) if __debug__ else val)
 
-    def get_def_points(self, name: str) -> List[Sequence[float]]:
+    def get_def_points(self, name: str) -> list[Sequence[float]]:
         """Return a list of named points.
 
         Return as many sequential ones are defined (flag1, flag2, flag3), etc.
@@ -408,7 +408,7 @@ class Map(Actor):
         return None
 
 
-def register_map(maptype: Type[Map]) -> None:
+def register_map(maptype: type[Map]) -> None:
     """Register a map class with the game."""
     if maptype.name in _ba.app.maps:
         raise RuntimeError('map "' + maptype.name + '" already registered')

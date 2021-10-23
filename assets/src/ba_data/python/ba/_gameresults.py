@@ -12,8 +12,7 @@ from efro.util import asserttype
 from ba._team import Team, SessionTeam
 
 if TYPE_CHECKING:
-    from weakref import ReferenceType
-    from typing import Sequence, Tuple, Any, Optional, Dict, List, Union
+    from typing import Sequence, Optional
     import ba
 
 
@@ -36,11 +35,10 @@ class GameResults:
 
     def __init__(self) -> None:
         self._game_set = False
-        self._scores: Dict[int, Tuple[ReferenceType[ba.SessionTeam],
+        self._scores: dict[int, tuple[weakref.ref[ba.SessionTeam],
                                       Optional[int]]] = {}
-        self._sessionteams: Optional[List[ReferenceType[
-            ba.SessionTeam]]] = None
-        self._playerinfos: Optional[List[ba.PlayerInfo]] = None
+        self._sessionteams: Optional[list[weakref.ref[ba.SessionTeam]]] = None
+        self._playerinfos: Optional[list[ba.PlayerInfo]] = None
         self._lower_is_better: Optional[bool] = None
         self._score_label: Optional[str] = None
         self._none_is_winner: Optional[bool] = None
@@ -83,7 +81,7 @@ class GameResults:
         return None
 
     @property
-    def sessionteams(self) -> List[ba.SessionTeam]:
+    def sessionteams(self) -> list[ba.SessionTeam]:
         """Return all ba.SessionTeams in the results."""
         if not self._game_set:
             raise RuntimeError("Can't get teams until game is set.")
@@ -127,7 +125,7 @@ class GameResults:
         return Lstr(value='-')
 
     @property
-    def playerinfos(self) -> List[ba.PlayerInfo]:
+    def playerinfos(self) -> list[ba.PlayerInfo]:
         """Get info about the players represented by the results."""
         if not self._game_set:
             raise RuntimeError("Can't get player-info until game is set.")
@@ -169,13 +167,13 @@ class GameResults:
         return None
 
     @property
-    def winnergroups(self) -> List[WinnerGroup]:
+    def winnergroups(self) -> list[WinnerGroup]:
         """Get an ordered list of winner groups."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
 
         # Group by best scoring teams.
-        winners: Dict[int, List[ba.SessionTeam]] = {}
+        winners: dict[int, list[ba.SessionTeam]] = {}
         scores = [
             score for score in self._scores.values()
             if score[0]() is not None and score[1] is not None
@@ -186,13 +184,13 @@ class GameResults:
             team = score[0]()
             assert team is not None
             sval.append(team)
-        results: List[Tuple[Optional[int],
-                            List[ba.SessionTeam]]] = list(winners.items())
+        results: list[tuple[Optional[int],
+                            list[ba.SessionTeam]]] = list(winners.items())
         results.sort(reverse=not self._lower_is_better,
                      key=lambda x: asserttype(x[0], int))
 
         # Also group the 'None' scores.
-        none_sessionteams: List[ba.SessionTeam] = []
+        none_sessionteams: list[ba.SessionTeam] = []
         for score in self._scores.values():
             scoreteam = score[0]()
             if scoreteam is not None and score[1] is None:
@@ -201,7 +199,7 @@ class GameResults:
         # Add the Nones to the list (either as winners or losers
         # depending on the rules).
         if none_sessionteams:
-            nones: List[Tuple[Optional[int], List[ba.SessionTeam]]] = [
+            nones: list[tuple[Optional[int], list[ba.SessionTeam]]] = [
                 (None, none_sessionteams)
             ]
             if self._none_is_winner:

@@ -13,7 +13,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Sequence, List, Optional
+    from typing import Any, Callable, Sequence, Optional
 
 
 class FileSelectorWindow(ba.Window):
@@ -34,7 +34,7 @@ class FileSelectorWindow(ba.Window):
         self._callback = callback
         self._base_path = path
         self._path: Optional[str] = None
-        self._recent_paths: List[str] = []
+        self._recent_paths: list[str] = []
         self._show_base_path = show_base_path
         self._valid_file_extensions = [
             '.' + ext for ext in valid_file_extensions
@@ -173,7 +173,7 @@ class FileSelectorWindow(ba.Window):
     class _RefreshThread(threading.Thread):
 
         def __init__(self, path: str,
-                     callback: Callable[[List[str], Optional[str]], Any]):
+                     callback: Callable[[list[str], Optional[str]], Any]):
             super().__init__()
             self._callback = callback
             self._path = path
@@ -195,7 +195,7 @@ class FileSelectorWindow(ba.Window):
                 # Ignore permission-denied.
                 if 'Errno 13' not in str(exc):
                     ba.print_exception()
-                nofiles: List[str] = []
+                nofiles: list[str] = []
                 ba.pushcall(ba.Call(self._callback, nofiles, str(exc)),
                             from_other_thread=True)
 
@@ -205,7 +205,7 @@ class FileSelectorWindow(ba.Window):
             self._recent_paths.append(path)
         self._RefreshThread(path, self._refresh).start()
 
-    def _refresh(self, file_names: List[str], error: Optional[str]) -> None:
+    def _refresh(self, file_names: list[str], error: Optional[str]) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals

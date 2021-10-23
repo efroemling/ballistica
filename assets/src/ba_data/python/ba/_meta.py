@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Tuple, Union, Optional, Type, Set
+    from typing import Union, Optional
     import ba
 
 # The meta api version of this build of the game.
@@ -27,9 +27,9 @@ CURRENT_API_VERSION = 6
 @dataclass
 class ScanResults:
     """Final results from a metadata scan."""
-    games: List[str] = field(default_factory=list)
-    plugins: List[str] = field(default_factory=list)
-    keyboards: List[str] = field(default_factory=list)
+    games: list[str] = field(default_factory=list)
+    plugins: list[str] = field(default_factory=list)
+    keyboards: list[str] = field(default_factory=list)
     errors: str = ''
     warnings: str = ''
 
@@ -89,7 +89,7 @@ class MetadataSubsystem:
         plugs = _ba.app.plugins
         config_changed = False
         found_new = False
-        plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
+        plugstates: dict[str, dict] = _ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
 
         # Create a potential-plugin for each class we found in the scan.
@@ -151,7 +151,7 @@ class MetadataSubsystem:
                         'timeout waiting for meta scan to complete.')
         return self.metascan
 
-    def get_game_types(self) -> List[Type[ba.GameActivity]]:
+    def get_game_types(self) -> list[type[ba.GameActivity]]:
         """Return available game types."""
         from ba._general import getclass
         from ba._gameactivity import GameActivity
@@ -167,11 +167,11 @@ class MetadataSubsystem:
         unowned = self.get_unowned_game_types()
         return [cls for cls in gameclasses if cls not in unowned]
 
-    def get_unowned_game_types(self) -> Set[Type[ba.GameActivity]]:
+    def get_unowned_game_types(self) -> set[type[ba.GameActivity]]:
         """Return present game types not owned by the current account."""
         try:
             from ba import _store
-            unowned_games: Set[Type[ba.GameActivity]] = set()
+            unowned_games: set[type[ba.GameActivity]] = set()
             if not _ba.app.headless_mode:
                 for section in _store.get_store_layout()['minigames']:
                     for mname in section['items']:
@@ -188,7 +188,7 @@ class MetadataSubsystem:
 class ScanThread(threading.Thread):
     """Thread to scan script dirs for metadata."""
 
-    def __init__(self, dirs: List[str]):
+    def __init__(self, dirs: list[str]):
         super().__init__()
         self._dirs = dirs
 
@@ -215,7 +215,7 @@ class ScanThread(threading.Thread):
 class DirectoryScan:
     """Handles scanning directories for metadata."""
 
-    def __init__(self, paths: List[str]):
+    def __init__(self, paths: list[str]):
         """Given one or more paths, parses available meta information.
 
         It is assumed that these paths are also in PYTHONPATH.
@@ -228,7 +228,7 @@ class DirectoryScan:
 
     def _get_path_module_entries(
             self, path: pathlib.Path, subpath: Union[str, pathlib.Path],
-            modules: List[Tuple[pathlib.Path, pathlib.Path]]) -> None:
+            modules: list[tuple[pathlib.Path, pathlib.Path]]) -> None:
         """Scan provided path and add module entries to provided list."""
         try:
             # Special case: let's save some time and skip the whole 'ba'
@@ -254,7 +254,7 @@ class DirectoryScan:
 
     def scan(self) -> None:
         """Scan provided paths."""
-        modules: List[Tuple[pathlib.Path, pathlib.Path]] = []
+        modules: list[tuple[pathlib.Path, pathlib.Path]] = []
         for path in self.paths:
             self._get_path_module_entries(path, '', modules)
         for moduledir, subpath in modules:
@@ -305,7 +305,7 @@ class DirectoryScan:
         # If its a package, recurse into its subpackages.
         if ispackage:
             try:
-                submodules: List[Tuple[pathlib.Path, pathlib.Path]] = []
+                submodules: list[tuple[pathlib.Path, pathlib.Path]] = []
                 self._get_path_module_entries(moduledir, subpath, submodules)
                 for submodule in submodules:
                     if submodule[1].name != '__init__.py':
@@ -316,8 +316,8 @@ class DirectoryScan:
                     f"Error scanning '{subpath}': {traceback.format_exc()}\n")
 
     def _process_module_meta_tags(self, subpath: pathlib.Path,
-                                  flines: List[str],
-                                  meta_lines: Dict[int, List[str]]) -> None:
+                                  flines: list[str],
+                                  meta_lines: dict[int, list[str]]) -> None:
         """Pull data from a module based on its ba_meta tags."""
         for lindex, mline in meta_lines.items():
             # meta_lines is just anything containing '# ba_meta '; make sure
@@ -360,7 +360,7 @@ class DirectoryScan:
                             ': unrecognized export type "' + exporttype +
                             '" on line ' + str(lindex + 1) + '.\n')
 
-    def _get_export_class_name(self, subpath: pathlib.Path, lines: List[str],
+    def _get_export_class_name(self, subpath: pathlib.Path, lines: list[str],
                                lindex: int) -> Optional[str]:
         """Given line num of an export tag, returns its operand class name."""
         lindexorig = lindex
@@ -387,7 +387,7 @@ class DirectoryScan:
         return classname
 
     def get_api_requirement(self, subpath: pathlib.Path,
-                            meta_lines: Dict[int, List[str]],
+                            meta_lines: dict[int, list[str]],
                             toplevel: bool) -> Optional[int]:
         """Return an API requirement integer or None if none present.
 

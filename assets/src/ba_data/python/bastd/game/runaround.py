@@ -26,7 +26,7 @@ from bastd.actor.spazbot import (
     BomberBotPro, BrawlerBotPro)
 
 if TYPE_CHECKING:
-    from typing import Type, Any, List, Dict, Tuple, Sequence, Optional, Union
+    from typing import Any, Sequence, Optional, Union
 
 
 class Preset(Enum):
@@ -51,7 +51,7 @@ class Point(Enum):
 @dataclass
 class Spawn:
     """Defines a bot spawn event."""
-    type: Type[SpazBot]
+    type: type[SpazBot]
     path: int = 0
     point: Optional[Point] = None
 
@@ -65,7 +65,7 @@ class Spacing:
 @dataclass
 class Wave:
     """Defines a wave of enemies."""
-    entries: List[Union[Spawn, Spacing, None]]
+    entries: list[Union[Spawn, Spacing, None]]
 
 
 class Player(ba.Player['Team']):
@@ -93,7 +93,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     default_music = ba.MusicType.MARCHING
 
     # How fast our various bot types walk.
-    _bot_speed_map: Dict[Type[SpazBot], float] = {
+    _bot_speed_map: dict[type[SpazBot], float] = {
         BomberBot: 0.48,
         BomberBotPro: 0.48,
         BomberBotProShielded: 0.48,
@@ -152,9 +152,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         self._score_region: Optional[ba.Actor] = None
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
-        self._exclude_powerups: Optional[List[str]] = None
+        self._exclude_powerups: Optional[list[str]] = None
         self._have_tnt: Optional[bool] = None
-        self._waves: Optional[List[Wave]] = None
+        self._waves: Optional[list[Wave]] = None
         self._bots = SpazBotSet()
         self._tntspawner: Optional[TNTSpawner] = None
         self._lives_bg: Optional[ba.NodeActor] = None
@@ -571,7 +571,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                      'playerinfos': self.initialplayerinfos
                  })
 
-    def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
+    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
         self._show_standard_scores_to_beat_ui(scores)
 
     def _update_waves(self) -> None:
@@ -722,14 +722,14 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         t_sec = 0.0
         base_delay = 0.5
         delay = 0.0
-        bot_types: List[Union[Spawn, Spacing, None]] = []
+        bot_types: list[Union[Spawn, Spacing, None]] = []
 
         if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             level = self._wavenum
             target_points = (level + 1) * 8.0
             group_count = random.randint(1, 3)
-            entries: List[Union[Spawn, Spacing, None]] = []
-            spaz_types: List[Tuple[Type[SpazBot], float]] = []
+            entries: list[Union[Spawn, Spacing, None]] = []
+            spaz_types: list[tuple[type[SpazBot], float]] = []
             if level < 6:
                 spaz_types += [(BomberBot, 5.0)]
             if level < 10:
@@ -751,7 +751,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                                ] * (1 + (level - 7) // 3)
 
             # Bot type, their effect on target points.
-            defender_types: List[Tuple[Type[SpazBot], float]] = [
+            defender_types: list[tuple[type[SpazBot], float]] = [
                 (BomberBot, 0.9),
                 (BrawlerBot, 0.9),
                 (TriggerBot, 0.85),
@@ -815,8 +815,8 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 elif path == 6:
                     this_target_point_s *= 0.7
 
-                def _add_defender(defender_type: Tuple[Type[SpazBot], float],
-                                  pnt: Point) -> Tuple[float, Spawn]:
+                def _add_defender(defender_type: tuple[type[SpazBot], float],
+                                  pnt: Point) -> tuple[float, Spawn]:
                     # This is ok because we call it immediately.
                     # pylint: disable=cell-var-from-loop
                     return this_target_point_s * defender_type[1], Spawn(
@@ -979,7 +979,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
     def add_bot_at_point(self,
                          point: Point,
-                         spaztype: Type[SpazBot],
+                         spaztype: type[SpazBot],
                          path: int,
                          spawn_time: float = 0.1) -> None:
         """Add the given type bot with the given delay (in seconds)."""
@@ -1152,7 +1152,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             return super().handlemessage(msg)
         return None
 
-    def _get_bot_speed(self, bot_type: Type[SpazBot]) -> float:
+    def _get_bot_speed(self, bot_type: type[SpazBot]) -> float:
         speed = self._bot_speed_map.get(bot_type)
         if speed is None:
             raise TypeError('Invalid bot type to _get_bot_speed(): ' +

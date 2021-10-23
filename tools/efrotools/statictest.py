@@ -11,7 +11,7 @@ import subprocess
 import logging
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Dict, Optional, List, Union
+    from typing import Any, Optional, Union
 
 # Global state:
 # We maintain a single temp dir where our mypy cache and our temp
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 # filter it a bit to add reveal_type() statements, and run mypy on it.
 # The temp dir should tear itself down when Python exits.
 _tempdir: Optional[tempfile.TemporaryDirectory] = None
-_statictestfiles: Dict[str, StaticTestFile] = {}
+_statictestfiles: dict[str, StaticTestFile] = {}
 _nextfilenum: int = 1
 
 
@@ -40,10 +40,10 @@ class StaticTestFile:
         _nextfilenum += 1
 
         # Types we *want* for lines
-        self.linetypes_wanted: Dict[int, str] = {}
+        self.linetypes_wanted: dict[int, str] = {}
 
         # Types Mypy gave us for lines
-        self.linetypes_mypy: Dict[int, str] = {}
+        self.linetypes_mypy: dict[int, str] = {}
 
         print(f'Running Mypy static testing on "{filename}"...')
         with open(filename, 'r', encoding='utf-8') as infile:
@@ -95,7 +95,7 @@ class StaticTestFile:
         """Filter the provided file contents and take note of type checks."""
         import ast
         lines = contents.splitlines()
-        lines_out: List[str] = []
+        lines_out: list[str] = []
         for lineno, line in enumerate(lines):
             if 'static_type_equals(' not in line:
                 lines_out.append(line)
@@ -155,7 +155,7 @@ class StaticTestFile:
         return '\n'.join(lines_out) + '\n'
 
 
-def static_type_equals(value: Any, statictype: Union[Type, None, str]) -> bool:
+def static_type_equals(value: Any, statictype: Union[type, None, str]) -> bool:
     """Check a type statically using mypy.
 
     If a string is passed as statictype, it is checked against the mypy

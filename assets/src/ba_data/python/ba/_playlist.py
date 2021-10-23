@@ -5,17 +5,17 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, TYPE_CHECKING, Dict, List
+from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Type, Sequence
+    from typing import Sequence
     from ba import _session
 
-PlaylistType = List[Dict[str, Any]]
+PlaylistType = list[dict[str, Any]]
 
 
 def filter_playlist(playlist: PlaylistType,
-                    sessiontype: Type[_session.Session],
+                    sessiontype: type[_session.Session],
                     add_resolved_type: bool = False,
                     remove_unowned: bool = True,
                     mark_unowned: bool = False) -> PlaylistType:
@@ -32,7 +32,7 @@ def filter_playlist(playlist: PlaylistType,
     from ba import _map
     from ba import _general
     from ba import _gameactivity
-    goodlist: List[Dict] = []
+    goodlist: list[dict] = []
     unowned_maps: Sequence[str]
     if remove_unowned or mark_unowned:
         unowned_maps = _map.get_unowned_maps()

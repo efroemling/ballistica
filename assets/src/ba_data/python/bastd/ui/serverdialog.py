@@ -10,13 +10,13 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional
+    from typing import Any, Optional
 
 
 class ServerDialogWindow(ba.Window):
     """A dialog window driven by the master-server."""
 
-    def __init__(self, data: Dict[str, Any]):
+    def __init__(self, data: dict[str, Any]):
         self._dialog_id = data['dialogID']
         txt = ba.Lstr(translate=('serverResponses', data['text']),
                       subs=data.get('subs', [])).evaluate()

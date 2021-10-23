@@ -13,8 +13,7 @@ from ba._error import (SessionPlayerNotFoundError, print_exception,
 from ba._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
-    from typing import (Type, Optional, Sequence, Dict, Any, Union, Tuple,
-                        Callable)
+    from typing import Optional, Sequence, Any, Union, Callable
     import ba
 
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
@@ -245,8 +244,8 @@ class Player(Generic[TeamType]):
         assert not self._expired
         return self.actor is not None and self.actor.is_alive()
 
-    def get_icon(self) -> Dict[str, Any]:
-        """get_icon() -> Dict[str, Any]
+    def get_icon(self) -> dict[str, Any]:
+        """get_icon() -> dict[str, Any]
 
         Returns the character's icon (images, colors, etc contained in a dict)
         """
@@ -254,7 +253,7 @@ class Player(Generic[TeamType]):
         assert not self._expired
         return self._sessionplayer.get_icon()
 
-    def assigninput(self, inputtype: Union[ba.InputType, Tuple[ba.InputType,
+    def assigninput(self, inputtype: Union[ba.InputType, tuple[ba.InputType,
                                                                ...]],
                     call: Callable) -> None:
         """assigninput(type: Union[ba.InputType, Tuple[ba.InputType, ...]],
@@ -302,7 +301,7 @@ class EmptyPlayer(Player['ba.EmptyTeam']):
 # instead of requiring extra work by them.
 
 
-def playercast(totype: Type[PlayerType], player: ba.Player) -> PlayerType:
+def playercast(totype: type[PlayerType], player: ba.Player) -> PlayerType:
     """Cast a ba.Player to a specific ba.Player subclass.
 
     Category: Gameplay Functions
@@ -320,7 +319,7 @@ def playercast(totype: Type[PlayerType], player: ba.Player) -> PlayerType:
 # NOTE: ideally we should have a single playercast() call and use overloads
 # for the optional variety, but that currently seems to not be working.
 # See: https://github.com/python/mypy/issues/8800
-def playercast_o(totype: Type[PlayerType],
+def playercast_o(totype: type[PlayerType],
                  player: Optional[ba.Player]) -> Optional[PlayerType]:
     """A variant of ba.playercast() for use with optional ba.Player values.
 

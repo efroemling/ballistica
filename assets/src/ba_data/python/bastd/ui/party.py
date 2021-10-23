@@ -13,7 +13,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional, Dict, Any
+    from typing import Sequence, Optional, Any
 
 
 class PartyWindow(ba.Window):
@@ -113,7 +113,7 @@ class PartyWindow(ba.Window):
             h_align='center',
             v_align='center',
             text=ba.Lstr(resource='chatMutedText'))
-        self._chat_texts: List[ba.Widget] = []
+        self._chat_texts: list[ba.Widget] = []
 
         # add all existing messages if chat is not muted
         if not ba.app.config.resolve('Chat Muted'):
@@ -153,8 +153,8 @@ class PartyWindow(ba.Window):
                               position=(self._width - 70, 35),
                               on_activate_call=self._send_chat_message)
         ba.textwidget(edit=txt, on_return_press_call=btn.activate)
-        self._name_widgets: List[ba.Widget] = []
-        self._roster: Optional[List[Dict[str, Any]]] = None
+        self._name_widgets: list[ba.Widget] = []
+        self._roster: Optional[list[dict[str, Any]]] = None
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       repeat=True,

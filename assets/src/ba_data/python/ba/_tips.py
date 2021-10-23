@@ -3,11 +3,15 @@
 """Functionality related to game tips.
 
 These can be shown at opportune times such as between rounds."""
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import random
-from typing import List
 
 import _ba
+
+if TYPE_CHECKING:
+    pass
 
 
 def get_next_tip() -> str:
@@ -20,7 +24,7 @@ def get_next_tip() -> str:
     return tip
 
 
-def get_all_tips() -> List[str]:
+def get_all_tips() -> list[str]:
     """Return the complete list of tips."""
     tips = [
         ('If you are short on controllers, install the \'${REMOTE_APP_NAME}\' '

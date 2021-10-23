@@ -18,8 +18,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from weakref import ReferenceType
-    from typing import Any, Type, List, Dict, Optional, Sequence, Union
+    from typing import Any, Optional, Sequence, Union
 
 
 class FlagState(Enum):
@@ -84,11 +83,11 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
     scoreconfig = ba.ScoreConfig(label='Time Held')
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return issubclass(sessiontype, ba.MultiTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('king_of_the_hill')
 
     def __init__(self, settings: dict):
@@ -113,7 +112,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         self._flag_state: Optional[FlagState] = None
         self._flag: Optional[Flag] = None
         self._flag_light: Optional[ba.Node] = None
-        self._scoring_team: Optional[ReferenceType[Team]] = None
+        self._scoring_team: Optional[weakref.ref[Team]] = None
         self._hold_time = int(settings['Hold Time'])
         self._time_limit = float(settings['Time Limit'])
         self._flag_region_material = ba.Material()

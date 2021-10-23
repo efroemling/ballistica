@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2021-10-14 for Ballistica version 1.6.5 build 20393</em></h4>
+<h4><em>last updated on 2021-10-23 for Ballistica version 1.6.5 build 20395</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -323,7 +323,7 @@
 
 </dd>
 <dt><h4><a name="method_ba_Achievement__create_display">create_display()</a></dt></h4><dd>
-<p><span>create_display(self, x: 'float', y: 'float', delay: 'float', outdelay: 'float' = None, color: 'Sequence[float]' = None, style: 'str' = 'post_game') -&gt; 'List[<a href="#class_ba_Actor">ba.Actor</a>]'</span></p>
+<p><span>create_display(self, x: 'float', y: 'float', delay: 'float', outdelay: 'float' = None, color: 'Sequence[float]' = None, style: 'str' = 'post_game') -&gt; 'list[<a href="#class_ba_Actor">ba.Actor</a>]'</span></p>
 
 <p>Create a display for the Achievement.</p>
 
@@ -383,7 +383,7 @@ actually award achievements.</p>
 
 </dd>
 <dt><h4><a name="method_ba_AchievementSubsystem__achievements_for_coop_level">achievements_for_coop_level()</a></dt></h4><dd>
-<p><span>achievements_for_coop_level(self, level_name: str) -&gt; List[Achievement]</span></p>
+<p><span>achievements_for_coop_level(self, level_name: str) -&gt; list[Achievement]</span></p>
 
 <p>Given a level name, return achievements available for it.</p>
 
@@ -439,14 +439,14 @@ actually award achievements.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__players">players</a></h4></dt><dd>
-<p><span>List[PlayerType]</span></p>
+<p><span>list[PlayerType]</span></p>
 <p>The list of <a href="#class_ba_Player">ba.Players</a> in the Activity. This gets populated just
 before on_begin() is called and is updated automatically as players
 join or leave the game.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__playertype">playertype</a></h4></dt><dd>
-<p><span>Type[PlayerType]</span></p>
+<p><span>type[PlayerType]</span></p>
 <p>The type of <a href="#class_ba_Player">ba.Player</a> this Activity is using.</p>
 
 </dd>
@@ -458,7 +458,7 @@ join or leave the game.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__settings_raw">settings_raw</a></h4></dt><dd>
-<p><span>Dict[str, Any]</span></p>
+<p><span>dict[str, Any]</span></p>
 <p>The settings dict passed in when the activity was made.
 This attribute is deprecated and should be avoided when possible;
 activities should pull all values they need from the 'settings' arg
@@ -473,7 +473,7 @@ passed to the Activity __init__ call.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__teams">teams</a></h4></dt><dd>
-<p><span>List[TeamType]</span></p>
+<p><span>list[TeamType]</span></p>
 <p>The list of <a href="#class_ba_Team">ba.Teams</a> in the Activity. This gets populated just before
 before on_begin() is called and is updated automatically as players
 join or leave the game. (at least in free-for-all mode where every
@@ -482,7 +482,7 @@ regardless of the player count).</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__teamtype">teamtype</a></h4></dt><dd>
-<p><span>Type[TeamType]</span></p>
+<p><span>type[TeamType]</span></p>
 <p>The type of <a href="#class_ba_Team">ba.Team</a> this Activity is using.</p>
 
 </dd>
@@ -939,7 +939,7 @@ likely result in errors.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__ui_bounds">ui_bounds</a></h4></dt><dd>
-<p><span>Tuple[float, float, float, float]</span></p>
+<p><span>tuple[float, float, float, float]</span></p>
 <p>Bounds of the 'safe' screen area in ui space.</p>
 
 <p>        This tuple contains: (x-min, x-max, y-min, y-max)</p>
@@ -975,7 +975,7 @@ likely result in errors.</p>
 
 </dd>
 <dt><h4><a name="method_ba_App__launch_coop_game">launch_coop_game()</a></dt></h4><dd>
-<p><span>launch_coop_game(self, game: str, force: bool = False, args: Dict = None) -&gt; bool</span></p>
+<p><span>launch_coop_game(self, game: str, force: bool = False, args: dict = None) -&gt; bool</span></p>
 
 <p>High level way to launch a local co-op session.</p>
 
@@ -1065,7 +1065,7 @@ to resume.</p>
 
 </dd>
 <dt><h4><a name="method_ba_AppConfig__builtin_keys">builtin_keys()</a></dt></h4><dd>
-<p><span>builtin_keys(self) -&gt; List[str]</span></p>
+<p><span>builtin_keys(self) -&gt; list[str]</span></p>
 
 <p>Return the list of valid key names recognized by <a href="#class_ba_AppConfig">ba.AppConfig</a>.</p>
 
@@ -1134,7 +1134,7 @@ manually.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_AppDelegate__create_default_game_settings_ui">create_default_game_settings_ui()</a></dt></h4><dd>
-<p><span>create_default_game_settings_ui(self, gameclass: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None</span></p>
+<p><span>create_default_game_settings_ui(self, gameclass: type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessiontype: type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None</span></p>
 
 <p>Launch a UI to configure the given game config.</p>
 
@@ -1274,12 +1274,12 @@ mycall()</pre>
 <h5><a href="#attr_ba_Campaign__configdict">configdict</a>, <a href="#attr_ba_Campaign__levels">levels</a>, <a href="#attr_ba_Campaign__name">name</a>, <a href="#attr_ba_Campaign__sequential">sequential</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Campaign__configdict">configdict</a></h4></dt><dd>
-<p><span>Dict[str, Any]</span></p>
+<p><span>dict[str, Any]</span></p>
 <p>Return the live config dict for this campaign.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Campaign__levels">levels</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_Level">ba.Level</a>]</span></p>
+<p><span>list[<a href="#class_ba_Level">ba.Level</a>]</span></p>
 <p>The list of <a href="#class_ba_Level">ba.Levels</a> in the Campaign.</p>
 
 </dd>
@@ -1366,7 +1366,7 @@ mycall()</pre>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_ChoiceSetting____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.ChoiceSetting(name: str, default: Any, choices: List[Tuple[str, Any]])</span></p>
+<p><span>ba.ChoiceSetting(name: str, default: Any, choices: list[tuple[str, Any]])</span></p>
 
 </dd>
 </dl>
@@ -1672,7 +1672,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 
 </dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__playertype">playertype</a></h4></dt><dd>
-<p><span>Type[PlayerType]</span></p>
+<p><span>type[PlayerType]</span></p>
 <p>The type of <a href="#class_ba_Player">ba.Player</a> this Activity is using.</p>
 
 </dd>
@@ -1691,7 +1691,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 
 </dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__teamtype">teamtype</a></h4></dt><dd>
-<p><span>Type[TeamType]</span></p>
+<p><span>type[TeamType]</span></p>
 <p>The type of <a href="#class_ba_Team">ba.Team</a> this Activity is using.</p>
 
 </dd>
@@ -1752,7 +1752,7 @@ and it should begin its actual game logic.</p>
 </dd>
 <dt><h4><a name="method_ba_CoopGameActivity__supports_session_type">supports_session_type()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>supports_session_type(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
+<p><span>supports_session_type(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
 
 <p>Return whether this game supports the provided Session type.</p>
 
@@ -1804,7 +1804,7 @@ there is no associated Campaign.</p>
 
 </dd>
 <dt><h4><a name="method_ba_CoopSession__get_custom_menu_entries">get_custom_menu_entries()</a></dt></h4><dd>
-<p><span>get_custom_menu_entries(self) -&gt; List[Dict[str, Any]]</span></p>
+<p><span>get_custom_menu_entries(self) -&gt; list[dict[str, Any]]</span></p>
 
 <p>Subclasses can override this to provide custom menu entries.</p>
 
@@ -1918,7 +1918,7 @@ the data object is requested and when it's value is accessed.</p>
 <h5><a href="#method_ba_Dependency____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Dependency__get_hash">get_hash()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Dependency____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Dependency(cls: Type[T], config: Any = None)</span></p>
+<p><span>ba.Dependency(cls: type[T], config: Any = None)</span></p>
 
 <p>Instantiate a Dependency given a <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a> type.</p>
 
@@ -1960,7 +1960,7 @@ influence dependency calculation for the target class.</p>
 </dd>
 <dt><h4><a name="method_ba_DependencyComponent__get_dynamic_deps">get_dynamic_deps()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_dynamic_deps(config: Any = None) -&gt; List[Dependency] </span></p>
+<p><span>get_dynamic_deps(config: Any = None) -&gt; list[Dependency] </span></p>
 
 <p>Return any dynamically-calculated deps for this component/config.</p>
 
@@ -1983,7 +1983,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 <h3>Attributes:</h3>
 <dl>
 <dt><h4><a name="attr_ba_DependencyError__deps">deps</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_Dependency">ba.Dependency</a>]</span></p>
+<p><span>list[<a href="#class_ba_Dependency">ba.Dependency</a>]</span></p>
 <p>The list of missing dependencies causing this error.</p>
 
 </dd>
@@ -1993,7 +1993,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 <h3>Methods Defined or Overridden:</h3>
 <dl>
 <dt><h4><a name="method_ba_DependencyError____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.DependencyError(deps: List[<a href="#class_ba_Dependency">ba.Dependency</a>])</span></p>
+<p><span>ba.DependencyError(deps: list[<a href="#class_ba_Dependency">ba.Dependency</a>])</span></p>
 
 </dd>
 </dl>
@@ -2031,7 +2031,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 
 </dd>
 <dt><h4><a name="method_ba_DependencySet__get_asset_package_ids">get_asset_package_ids()</a></dt></h4><dd>
-<p><span>get_asset_package_ids(self) -&gt; Set[str]</span></p>
+<p><span>get_asset_package_ids(self) -&gt; set[str]</span></p>
 
 <p>Return the set of asset-package-ids required by this dep-set.</p>
 
@@ -2291,7 +2291,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_FloatChoiceSetting____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.FloatChoiceSetting(name: str, default: float, choices: List[Tuple[str, float]])</span></p>
+<p><span>ba.FloatChoiceSetting(name: str, default: float, choices: list[tuple[str, float]])</span></p>
 
 </dd>
 </dl>
@@ -2340,7 +2340,7 @@ its time with lingering corpses, sound effects, etc.</p>
 
 </dd>
 <dt><h4><a name="method_ba_FreeForAllSession__get_ffa_point_awards">get_ffa_point_awards()</a></dt></h4><dd>
-<p><span>get_ffa_point_awards(self) -&gt; Dict[int, int]</span></p>
+<p><span>get_ffa_point_awards(self) -&gt; dict[int, int]</span></p>
 
 <p>Return the number of points awarded for different rankings.</p>
 
@@ -2410,7 +2410,7 @@ its time with lingering corpses, sound effects, etc.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameActivity__playertype">playertype</a></h4></dt><dd>
-<p><span>Type[PlayerType]</span></p>
+<p><span>type[PlayerType]</span></p>
 <p>The type of <a href="#class_ba_Player">ba.Player</a> this Activity is using.</p>
 
 </dd>
@@ -2429,7 +2429,7 @@ its time with lingering corpses, sound effects, etc.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameActivity__teamtype">teamtype</a></h4></dt><dd>
-<p><span>Type[TeamType]</span></p>
+<p><span>type[TeamType]</span></p>
 <p>The type of <a href="#class_ba_Team">ba.Team</a> this Activity is using.</p>
 
 </dd>
@@ -2454,7 +2454,7 @@ and calls either end_game or continue_game depending on the result</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__create_settings_ui">create_settings_ui()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>create_settings_ui(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None </span></p>
+<p><span>create_settings_ui(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None </span></p>
 
 <p>Launch an in-game UI to configure settings for a game type.</p>
 
@@ -2496,7 +2496,7 @@ yet; this way things like the standard time-limit
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_available_settings">get_available_settings()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_available_settings(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; List[<a href="#class_ba_Setting">ba.Setting</a>] </span></p>
+<p><span>get_available_settings(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; list[<a href="#class_ba_Setting">ba.Setting</a>] </span></p>
 
 <p>Return a list of settings relevant to this game type when
 running under the provided session type.</p>
@@ -2504,7 +2504,7 @@ running under the provided session type.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_description">get_description()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_description(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; str </span></p>
+<p><span>get_description(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; str </span></p>
 
 <p>Get a str description of this game type.</p>
 
@@ -2515,7 +2515,7 @@ can override this method.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_description_display_string">get_description_display_string()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_description_display_string(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
+<p><span>get_description_display_string(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
 
 <p>Return a translated version of get_description().</p>
 
@@ -2524,7 +2524,7 @@ can override this method.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_display_string">get_display_string()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_display_string(settings: Optional[Dict] = None) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
+<p><span>get_display_string(settings: Optional[dict] = None) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
 
 <p>Return a descriptive name for this game/settings combo.</p>
 
@@ -2602,7 +2602,7 @@ of the screen, so it should be as concise as possible.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_settings_display_string(config: Dict[str, Any]) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
+<p><span>get_settings_display_string(config: dict[str, Any]) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a> </span></p>
 
 <p>Given a game config dict, return a short description for it.</p>
 
@@ -2612,7 +2612,7 @@ is up next in a series.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_supported_maps">get_supported_maps()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_supported_maps(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; List[str] </span></p>
+<p><span>get_supported_maps(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; list[str] </span></p>
 
 <p>Called by the default <a href="#method_ba_GameActivity__create_settings_ui">ba.GameActivity.create_settings_ui</a>()
 implementation; should return a list of map names valid
@@ -2748,7 +2748,7 @@ If the time-limit expires, end_game() will be called.</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__supports_session_type">supports_session_type()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>supports_session_type(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
+<p><span>supports_session_type(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
 
 <p>Return whether this game supports the provided Session type.</p>
 
@@ -2775,7 +2775,7 @@ Results for a completed game.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameResults__playerinfos">playerinfos</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
+<p><span>list[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
 <p>Get info about the players represented by the results.</p>
 
 </dd>
@@ -2790,12 +2790,12 @@ Results for a completed game.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameResults__sessionteams">sessionteams</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p><span>list[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
 <p>Return all <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the results.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameResults__winnergroups">winnergroups</a></h4></dt><dd>
-<p><span>List[WinnerGroup]</span></p>
+<p><span>list[WinnerGroup]</span></p>
 <p>Get an ordered list of winner groups.</p>
 
 </dd>
@@ -2886,7 +2886,7 @@ Results for a completed game.</p>
 
 </dd>
 <dt><h4><a name="method_ba_HitMessage__get_source_player">get_source_player()</a></dt></h4><dd>
-<p><span>get_source_player(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
+<p><span>get_source_player(self, playertype: type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
 
 <p>Return the source-player if one exists and is the provided type.</p>
 
@@ -3077,7 +3077,7 @@ prefs, etc.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_IntChoiceSetting____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.IntChoiceSetting(name: str, default: int, choices: List[Tuple[str, int]])</span></p>
+<p><span>ba.IntChoiceSetting(name: str, default: int, choices: list[tuple[str, int]])</span></p>
 
 </dd>
 </dl>
@@ -3112,7 +3112,7 @@ prefs, etc.</p>
 <h5><a href="#attr_ba_Keyboard__chars">chars</a>, <a href="#attr_ba_Keyboard__name">name</a>, <a href="#attr_ba_Keyboard__nums">nums</a>, <a href="#attr_ba_Keyboard__pages">pages</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Keyboard__chars">chars</a></h4></dt><dd>
-<p><span>List[Tuple[str, ...]]</span></p>
+<p><span>list[tuple[str, ...]]</span></p>
 <p>Used for row/column lengths.</p>
 
 </dd>
@@ -3122,12 +3122,12 @@ prefs, etc.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Keyboard__nums">nums</a></h4></dt><dd>
-<p><span>Tuple[str, ...]</span></p>
+<p><span>tuple[str, ...]</span></p>
 <p>The 'num' page.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Keyboard__pages">pages</a></h4></dt><dd>
-<p><span>Dict[str, Tuple[str, ...]]</span></p>
+<p><span>dict[str, tuple[str, ...]]</span></p>
 <p>Extra chars like emojis.</p>
 
 </dd>
@@ -3147,7 +3147,7 @@ prefs, etc.</p>
 <h5><a href="#attr_ba_LanguageSubsystem__available_languages">available_languages</a>, <a href="#attr_ba_LanguageSubsystem__language">language</a>, <a href="#attr_ba_LanguageSubsystem__locale">locale</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_LanguageSubsystem__available_languages">available_languages</a></h4></dt><dd>
-<p><span>List[str]</span></p>
+<p><span>list[str]</span></p>
 <p>A list of all available languages.</p>
 
 <p>        Note that languages that may be present in game assets but which
@@ -3239,7 +3239,7 @@ prefs, etc.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Level__gametype">gametype</a></h4></dt><dd>
-<p><span>Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]</span></p>
+<p><span>type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]</span></p>
 <p>The type of game used for this Level.</p>
 
 </dd>
@@ -3271,7 +3271,7 @@ prefs, etc.</p>
 <h5><a href="#method_ba_Level____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Level__get_high_scores">get_high_scores()</a>, <a href="#method_ba_Level__get_preview_texture">get_preview_texture()</a>, <a href="#method_ba_Level__get_score_version_string">get_score_version_string()</a>, <a href="#method_ba_Level__get_settings">get_settings()</a>, <a href="#method_ba_Level__set_complete">set_complete()</a>, <a href="#method_ba_Level__set_high_scores">set_high_scores()</a>, <a href="#method_ba_Level__set_rating">set_rating()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Level____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Level(name: str, gametype: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], settings: dict, preview_texture_name: str, displayname: str = None)</span></p>
+<p><span>ba.Level(name: str, gametype: type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], settings: dict, preview_texture_name: str, displayname: str = None)</span></p>
 
 </dd>
 <dt><h4><a name="method_ba_Level__get_high_scores">get_high_scores()</a></dt></h4><dd>
@@ -3296,7 +3296,7 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Level__get_settings">get_settings()</a></dt></h4><dd>
-<p><span>get_settings(self) -&gt; Dict[str, Any]</span></p>
+<p><span>get_settings(self) -&gt; dict[str, Any]</span></p>
 
 <p>Returns the settings for this Level.</p>
 
@@ -3308,7 +3308,7 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Level__set_high_scores">set_high_scores()</a></dt></h4><dd>
-<p><span>set_high_scores(self, high_scores: Dict) -&gt; None</span></p>
+<p><span>set_high_scores(self, high_scores: dict) -&gt; None</span></p>
 
 <p>Set high scores for this level.</p>
 
@@ -3333,7 +3333,7 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 <h5><a href="#attr_ba_Lobby__sessionteams">sessionteams</a>, <a href="#attr_ba_Lobby__use_team_colors">use_team_colors</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Lobby__sessionteams">sessionteams</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p><span>list[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
 <p><a href="#class_ba_SessionTeam">ba.SessionTeams</a> available in this lobby.</p>
 
 </dd>
@@ -3374,7 +3374,7 @@ Intended for use in initial joining-screens.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Lobby__get_choosers">get_choosers()</a></dt></h4><dd>
-<p><span>get_choosers(self) -&gt; List[Chooser]</span></p>
+<p><span>get_choosers(self) -&gt; list[Chooser]</span></p>
 
 <p>Return the lobby's current choosers.</p>
 
@@ -3558,7 +3558,7 @@ even if myactor is set to None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Map__get_def_bound_box">get_def_bound_box()</a></dt></h4><dd>
-<p><span>get_def_bound_box(self, name: str) -&gt; Optional[Tuple[float, float, float, float, float, float]]</span></p>
+<p><span>get_def_bound_box(self, name: str) -&gt; Optional[tuple[float, float, float, float, float, float]]</span></p>
 
 <p>Return a 6 member bounds tuple or None if it is not defined.</p>
 
@@ -3570,7 +3570,7 @@ even if myactor is set to None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Map__get_def_points">get_def_points()</a></dt></h4><dd>
-<p><span>get_def_points(self, name: str) -&gt; List[Sequence[float]]</span></p>
+<p><span>get_def_points(self, name: str) -&gt; list[Sequence[float]]</span></p>
 
 <p>Return a list of named points.</p>
 
@@ -3607,7 +3607,7 @@ as far from these players as possible.</p>
 </dd>
 <dt><h4><a name="method_ba_Map__get_play_types">get_play_types()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_play_types() -&gt; List[str] </span></p>
+<p><span>get_play_types() -&gt; list[str] </span></p>
 
 <p>Return valid play types for this map.</p>
 
@@ -3706,7 +3706,7 @@ add_actions() method to define what the material does.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_Material__add_actions">add_actions()</a></dt></h4><dd>
-<p><span>add_actions(actions: Tuple, conditions: Optional[Tuple] = None)
+<p><span>add_actions(actions: tuple, conditions: Optional[tuple] = None)
   -&gt; None</span></p>
 
 <p>Add one or more actions to the material, optionally with conditions.</p>
@@ -3861,7 +3861,7 @@ m.add_actions(conditions=('they_have_material',
 
 </dd>
 <dt><h4><a name="method_ba_MetadataSubsystem__get_game_types">get_game_types()</a></dt></h4><dd>
-<p><span>get_game_types(self) -&gt; List[Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
+<p><span>get_game_types(self) -&gt; list[type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
 
 <p>Return available game types.</p>
 
@@ -3873,7 +3873,7 @@ m.add_actions(conditions=('they_have_material',
 
 </dd>
 <dt><h4><a name="method_ba_MetadataSubsystem__get_unowned_game_types">get_unowned_game_types()</a></dt></h4><dd>
-<p><span>get_unowned_game_types(self) -&gt; Set[Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
+<p><span>get_unowned_game_types(self) -&gt; set[type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
 
 <p>Return present game types not owned by the current account.</p>
 
@@ -4114,7 +4114,7 @@ signify that the default soundtrack should be used..</p>
 
 </dd>
 <dt><h4><a name="method_ba_MusicSubsystem__do_play_music">do_play_music()</a></dt></h4><dd>
-<p><span>do_play_music(self, musictype: Union[MusicType, str, None], continuous: bool = False, mode: MusicPlayMode = &lt;MusicPlayMode.REGULAR: regular&gt;, testsoundtrack: Dict[str, Any] = None) -&gt; None</span></p>
+<p><span>do_play_music(self, musictype: Union[MusicType, str, None], continuous: bool = False, mode: MusicPlayMode = &lt;MusicPlayMode.REGULAR: regular&gt;, testsoundtrack: dict[str, Any] = None) -&gt; None</span></p>
 
 <p>Plays the requested music type/mode.</p>
 
@@ -4290,7 +4290,7 @@ the right thing both for Node objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Node__getdelegate">getdelegate()</a></dt></h4><dd>
-<p><span>getdelegate(type: Type, doraise: bool = False) -&gt; &lt;varies&gt;</span></p>
+<p><span>getdelegate(type: type, doraise: bool = False) -&gt; &lt;varies&gt;</span></p>
 
 <p>Return the node's current delegate object if it matches a certain type.</p>
 
@@ -4552,7 +4552,7 @@ even if myactor is set to None.</p>
 <h5><a href="#method_ba_Player__assigninput">assigninput()</a>, <a href="#method_ba_Player__exists">exists()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__getname">getname()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__on_expire">on_expire()</a>, <a href="#method_ba_Player__resetinput">resetinput()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Player__assigninput">assigninput()</a></dt></h4><dd>
-<p><span>assigninput(self, inputtype: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]], call: Callable) -&gt; None</span></p>
+<p><span>assigninput(self, inputtype: Union[<a href="#class_ba_InputType">ba.InputType</a>, tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]], call: Callable) -&gt; None</span></p>
 
 <p>assigninput(type: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]],
   call: Callable) -&gt; None</p>
@@ -4575,9 +4575,9 @@ the right thing both for Player objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Player__get_icon">get_icon()</a></dt></h4><dd>
-<p><span>get_icon(self) -&gt; Dict[str, Any]</span></p>
+<p><span>get_icon(self) -&gt; dict[str, Any]</span></p>
 
-<p>get_icon() -&gt; Dict[str, Any]</p>
+<p>get_icon() -&gt; dict[str, Any]</p>
 
 <p>Returns the character's icon (images, colors, etc contained in a dict)</p>
 
@@ -4653,7 +4653,7 @@ If False, they left the game or the round ended.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerDiedMessage__getkillerplayer">getkillerplayer()</a></dt></h4><dd>
-<p><span>getkillerplayer(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
+<p><span>getkillerplayer(self, playertype: type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
 
 <p>Return the <a href="#class_ba_Player">ba.Player</a> responsible for the killing, if any.</p>
 
@@ -4661,7 +4661,7 @@ If False, they left the game or the round ended.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerDiedMessage__getplayer">getplayer()</a></dt></h4><dd>
-<p><span>getplayer(self, playertype: Type[PlayerType]) -&gt; PlayerType</span></p>
+<p><span>getplayer(self, playertype: type[PlayerType]) -&gt; PlayerType</span></p>
 
 <p>Return the <a href="#class_ba_Player">ba.Player</a> that died.</p>
 
@@ -4749,7 +4749,7 @@ the type-checker properly identifies the returned value as one.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerRecord__get_icon">get_icon()</a></dt></h4><dd>
-<p><span>get_icon(self) -&gt; Dict[str, Any]</span></p>
+<p><span>get_icon(self) -&gt; dict[str, Any]</span></p>
 
 <p>Get the icon for this instance's player.</p>
 
@@ -5123,7 +5123,7 @@ to proceed past the initial joining screen.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__sessionplayers">sessionplayers</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
+<p><span>list[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
 <p>All <a href="#class_ba_SessionPlayer">ba.SessionPlayers</a> in the Session. Most things should use the
 list of <a href="#class_ba_Player">ba.Players</a> in <a href="#class_ba_Activity">ba.Activity</a>; not this. Some players, such as
 those who have not yet selected a character, will only be
@@ -5131,7 +5131,7 @@ found on this list.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__sessionteams">sessionteams</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p><span>list[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
 <p>All the <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the Session. Most things should use the
 list of <a href="#class_ba_Team">ba.Teams</a> in <a href="#class_ba_Activity">ba.Activity</a>; not this.</p>
 
@@ -5192,7 +5192,7 @@ will replace the old.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a></dt></h4><dd>
-<p><span>get_custom_menu_entries(self) -&gt; List[Dict[str, Any]]</span></p>
+<p><span>get_custom_menu_entries(self) -&gt; list[dict[str, Any]]</span></p>
 
 <p>Subclasses can override this to provide custom menu entries.</p>
 
@@ -5357,7 +5357,7 @@ is still in its lobby selecting a team/etc. then a
 <h5><a href="#method_ba_SessionPlayer__assigninput">assigninput()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__getname">getname()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__resetinput">resetinput()</a>, <a href="#method_ba_SessionPlayer__setname">setname()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_SessionPlayer__assigninput">assigninput()</a></dt></h4><dd>
-<p><span>assigninput(type: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]],
+<p><span>assigninput(type: Union[<a href="#class_ba_InputType">ba.InputType</a>, tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]],
   call: Callable) -&gt; None</span></p>
 
 <p>Set the python callable to be run for one or more types of input.</p>
@@ -5381,7 +5381,7 @@ joins (while verification occurs).</p>
 
 </dd>
 <dt><h4><a name="method_ba_SessionPlayer__get_icon">get_icon()</a></dt></h4><dd>
-<p><span>get_icon() -&gt; Dict[str, Any]</span></p>
+<p><span>get_icon() -&gt; dict[str, Any]</span></p>
 
 <p>Returns the character's icon (images, colors, etc contained in a dict)</p>
 
@@ -5441,7 +5441,7 @@ other players.</p>
 <h5><a href="#attr_ba_SessionTeam__color">color</a>, <a href="#attr_ba_SessionTeam__customdata">customdata</a>, <a href="#attr_ba_SessionTeam__id">id</a>, <a href="#attr_ba_SessionTeam__name">name</a>, <a href="#attr_ba_SessionTeam__players">players</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionTeam__color">color</a></h4></dt><dd>
-<p><span>Tuple[float, ...]</span></p>
+<p><span>tuple[float, ...]</span></p>
 <p>The team's color.</p>
 
 </dd>
@@ -5464,7 +5464,7 @@ of the session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_SessionTeam__players">players</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
+<p><span>list[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
 <p>The list of <a href="#class_ba_SessionPlayer">ba.SessionPlayers</a> on the team.</p>
 
 </dd>
@@ -5698,7 +5698,7 @@ of the session.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__get_records">get_records()</a></dt></h4><dd>
-<p><span>get_records(self) -&gt; Dict[str, <a href="#class_ba_PlayerRecord">ba.PlayerRecord</a>]</span></p>
+<p><span>get_records(self) -&gt; dict[str, <a href="#class_ba_PlayerRecord">ba.PlayerRecord</a>]</span></p>
 
 <p>Get PlayerRecord corresponding to still-existing players.</p>
 
@@ -5787,7 +5787,7 @@ of the session.</p>
 <h5><a href="#method_ba_Team__manual_init">manual_init()</a>, <a href="#method_ba_Team__on_expire">on_expire()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Team__manual_init">manual_init()</a></dt></h4><dd>
-<p><span>manual_init(self, team_id: int, name: Union[<a href="#class_ba_Lstr">ba.Lstr</a>, str], color: Tuple[float, ...]) -&gt; None</span></p>
+<p><span>manual_init(self, team_id: int, name: Union[<a href="#class_ba_Lstr">ba.Lstr</a>, str], color: tuple[float, ...]) -&gt; None</span></p>
 
 <p>Manually init a team for uses such as bots.</p>
 
@@ -5846,7 +5846,7 @@ of the session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__playertype">playertype</a></h4></dt><dd>
-<p><span>Type[PlayerType]</span></p>
+<p><span>type[PlayerType]</span></p>
 <p>The type of <a href="#class_ba_Player">ba.Player</a> this Activity is using.</p>
 
 </dd>
@@ -5865,7 +5865,7 @@ of the session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__teamtype">teamtype</a></h4></dt><dd>
-<p><span>Type[TeamType]</span></p>
+<p><span>type[TeamType]</span></p>
 <p>The type of <a href="#class_ba_Team">ba.Team</a> this Activity is using.</p>
 
 </dd>
@@ -5921,7 +5921,7 @@ on the <a href="#class_ba_Player">ba.Player</a> and their <a href="#class_ba_Tea
 </dd>
 <dt><h4><a name="method_ba_TeamGameActivity__supports_session_type">supports_session_type()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>supports_session_type(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
+<p><span>supports_session_type(sessiontype: type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
 
 <p>Class method override;
 returns True for <a href="#class_ba_DualTeamSession">ba.DualTeamSessions</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSessions</a>;
@@ -6331,13 +6331,13 @@ the right thing both for Widget objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Widget__get_children">get_children()</a></dt></h4><dd>
-<p><span>get_children() -&gt; List[<a href="#class_ba_Widget">ba.Widget</a>]</span></p>
+<p><span>get_children() -&gt; list[<a href="#class_ba_Widget">ba.Widget</a>]</span></p>
 
 <p>Returns any child Widgets of this Widget.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Widget__get_screen_space_center">get_screen_space_center()</a></dt></h4><dd>
-<p><span>get_screen_space_center() -&gt; Tuple[float, float]</span></p>
+<p><span>get_screen_space_center() -&gt; tuple[float, float]</span></p>
 
 <p>Returns the coords of the Widget center relative to the center of the
 screen. This can be useful for placing pop-up windows and other special
@@ -6394,7 +6394,7 @@ widgets.</p>
 </dl>
 <hr>
 <h2><strong><a name="function_ba_animate">ba.animate()</a></strong></h3>
-<p><span>animate(node: <a href="#class_ba_Node">ba.Node</a>, attr: str, keys: Dict[float, float], loop: bool = False, offset: float = 0, timetype: <a href="#class_ba_TimeType">ba.TimeType</a> = &lt;TimeType.SIM: 0&gt;, timeformat: <a href="#class_ba_TimeFormat">ba.TimeFormat</a> = &lt;TimeFormat.SECONDS: 0&gt;, suppress_format_warning: bool = False) -&gt; <a href="#class_ba_Node">ba.Node</a></span></p>
+<p><span>animate(node: <a href="#class_ba_Node">ba.Node</a>, attr: str, keys: dict[float, float], loop: bool = False, offset: float = 0, timetype: <a href="#class_ba_TimeType">ba.TimeType</a> = &lt;TimeType.SIM: 0&gt;, timeformat: <a href="#class_ba_TimeFormat">ba.TimeFormat</a> = &lt;TimeFormat.SECONDS: 0&gt;, suppress_format_warning: bool = False) -&gt; <a href="#class_ba_Node">ba.Node</a></span></p>
 
 <p>Animate values on a target <a href="#class_ba_Node">ba.Node</a>.</p>
 
@@ -6409,7 +6409,7 @@ but timeformat can also be set to MILLISECONDS to recreate the old behavior
 
 <hr>
 <h2><strong><a name="function_ba_animate_array">ba.animate_array()</a></strong></h3>
-<p><span>animate_array(node: <a href="#class_ba_Node">ba.Node</a>, attr: str, size: int, keys: Dict[float, Sequence[float]], loop: bool = False, offset: float = 0, timetype: <a href="#class_ba_TimeType">ba.TimeType</a> = &lt;TimeType.SIM: 0&gt;, timeformat: <a href="#class_ba_TimeFormat">ba.TimeFormat</a> = &lt;TimeFormat.SECONDS: 0&gt;, suppress_format_warning: bool = False) -&gt; None</span></p>
+<p><span>animate_array(node: <a href="#class_ba_Node">ba.Node</a>, attr: str, size: int, keys: dict[float, Sequence[float]], loop: bool = False, offset: float = 0, timetype: <a href="#class_ba_TimeType">ba.TimeType</a> = &lt;TimeType.SIM: 0&gt;, timeformat: <a href="#class_ba_TimeFormat">ba.TimeFormat</a> = &lt;TimeFormat.SECONDS: 0&gt;, suppress_format_warning: bool = False) -&gt; None</span></p>
 
 <p>Animate an array of values on a target <a href="#class_ba_Node">ba.Node</a>.</p>
 
@@ -6724,7 +6724,7 @@ If doraise is False, None will be returned instead in that case.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getclass">ba.getclass()</a></strong></h3>
-<p><span>getclass(name: str, subclassof: Type[T]) -&gt; Type[T]</span></p>
+<p><span>getclass(name: str, subclassof: type[T]) -&gt; type[T]</span></p>
 
 <p>Given a full class name such as foo.bar.MyClass, return the class.</p>
 
@@ -6759,7 +6759,7 @@ in the background if necessary.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getmaps">ba.getmaps()</a></strong></h3>
-<p><span>getmaps(playtype: str) -&gt; List[str]</span></p>
+<p><span>getmaps(playtype: str) -&gt; list[str]</span></p>
 
 <p>Return a list of <a href="#class_ba_Map">ba.Map</a> types supporting a playtype str.</p>
 
@@ -6948,7 +6948,7 @@ so in most cases you can just use that.</p>
 
 <hr>
 <h2><strong><a name="function_ba_newactivity">ba.newactivity()</a></strong></h3>
-<p><span>newactivity(activity_type: Type[<a href="#class_ba_Activity">ba.Activity</a>],
+<p><span>newactivity(activity_type: type[<a href="#class_ba_Activity">ba.Activity</a>],
   settings: dict = None) -&gt; <a href="#class_ba_Activity">ba.Activity</a></span></p>
 
 <p>Instantiates a <a href="#class_ba_Activity">ba.Activity</a> given a type object.</p>
@@ -6984,7 +6984,7 @@ object dies. 'owner' can be another node or a <a href="#class_ba_Actor">ba.Actor
 
 <hr>
 <h2><strong><a name="function_ba_normalized_color">ba.normalized_color()</a></strong></h3>
-<p><span>normalized_color(color: Sequence[float]) -&gt; Tuple[float, ...]</span></p>
+<p><span>normalized_color(color: Sequence[float]) -&gt; tuple[float, ...]</span></p>
 
 <p>Scale a color so its largest value is 1; useful for coloring lights.</p>
 
@@ -7110,7 +7110,7 @@ are applied to the Widget.</p>
 <hr>
 <h2><strong><a name="function_ba_safecolor">ba.safecolor()</a></strong></h3>
 <p><span>safecolor(color: Sequence[float], target_intensity: float = 0.6)
-  -&gt; Tuple[float, ...]</span></p>
+  -&gt; tuple[float, ...]</span></p>
 
 <p>Given a color tuple, return a color safe to display as text.</p>
 
@@ -7123,7 +7123,7 @@ dark colors, etc.</p>
 <h2><strong><a name="function_ba_screenmessage">ba.screenmessage()</a></strong></h3>
 <p><span>screenmessage(message: Union[str, <a href="#class_ba_Lstr">ba.Lstr</a>],
   color: Sequence[float] = None, top: bool = False,
-  image: Dict[str, Any] = None, log: bool = False,
+  image: dict[str, Any] = None, log: bool = False,
   clients: Sequence[int] = None, transient: bool = False) -&gt; None</span></p>
 
 <p>Print a message to the local client's screen, in a given color.</p>

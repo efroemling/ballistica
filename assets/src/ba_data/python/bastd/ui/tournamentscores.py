@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence, Callable, Dict, Optional, List
+    from typing import Any, Sequence, Callable, Optional
 
 
 class TournamentScoresWindow(popup_ui.PopupWindow):
@@ -20,9 +20,9 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
     def __init__(self,
                  tournament_id: str,
                  tournament_activity: ba.GameActivity = None,
-                 position: Tuple[float, float] = (0.0, 0.0),
+                 position: tuple[float, float] = (0.0, 0.0),
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0),
+                 offset: tuple[float, float] = (0.0, 0.0),
                  tint_color: Sequence[float] = (1.0, 1.0, 1.0),
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
                  selected_character: str = None,
@@ -107,11 +107,11 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
                              callback=ba.WeakCall(
                                  self._on_tournament_query_response))
 
-    def _on_tournament_query_response(self, data: Optional[Dict[str,
+    def _on_tournament_query_response(self, data: Optional[dict[str,
                                                                 Any]]) -> None:
         if data is not None:
             # this used to be the whole payload
-            data_t: List[Dict[str, Any]] = data['t']
+            data_t: list[dict[str, Any]] = data['t']
             # kill our loading text if we've got scores.. otherwise just
             # replace it with 'no scores yet'
             if data_t[0]['scores']:

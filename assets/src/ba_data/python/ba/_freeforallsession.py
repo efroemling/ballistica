@@ -10,7 +10,6 @@ import _ba
 from ba._multiteamsession import MultiTeamSession
 
 if TYPE_CHECKING:
-    from typing import Dict
     import ba
 
 
@@ -25,12 +24,12 @@ class FreeForAllSession(MultiTeamSession):
     _playlist_randomize_var = 'Free-for-All Playlist Randomize'
     _playlists_var = 'Free-for-All Playlists'
 
-    def get_ffa_point_awards(self) -> Dict[int, int]:
+    def get_ffa_point_awards(self) -> dict[int, int]:
         """Return the number of points awarded for different rankings.
 
         This is based on the current number of players.
         """
-        point_awards: Dict[int, int]
+        point_awards: dict[int, int]
         if len(self.sessionplayers) == 1:
             point_awards = {}
         elif len(self.sessionplayers) == 2:

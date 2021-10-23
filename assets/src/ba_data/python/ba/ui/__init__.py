@@ -14,8 +14,7 @@ from ba._generated.enums import TimeType
 from ba._general import print_active_refs
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Any
-    from weakref import ReferenceType
+    from typing import Optional, Any
 
     import ba
 
@@ -45,7 +44,7 @@ class Window:
 @dataclass
 class UICleanupCheck:
     """Holds info about a uicleanupcheck target."""
-    obj: ReferenceType
+    obj: weakref.ref
     widget: ba.Widget
     widget_death_time: Optional[float]
 
@@ -126,15 +125,15 @@ class UIController:
     def __init__(self) -> None:
 
         # FIXME: document why we have separate stacks for game and menu...
-        self._main_stack_game: List[UIEntry] = []
-        self._main_stack_menu: List[UIEntry] = []
+        self._main_stack_game: list[UIEntry] = []
+        self._main_stack_menu: list[UIEntry] = []
 
         # This points at either the game or menu stack.
-        self._main_stack: Optional[List[UIEntry]] = None
+        self._main_stack: Optional[list[UIEntry]] = None
 
         # There's only one of these since we don't need to preserve its state
         # between sessions.
-        self._dialog_stack: List[UIEntry] = []
+        self._dialog_stack: list[UIEntry] = []
 
     def show_main_menu(self, in_game: bool = True) -> None:
         """Show the main menu, clearing other UIs from location stacks."""

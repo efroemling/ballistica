@@ -11,7 +11,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import List, Any, Optional, Sequence
+    from typing import Any, Optional, Sequence
 
 DEFAULT_POWERUP_INTERVAL = 8.0
 
@@ -133,14 +133,14 @@ class PowerupBoxFactory:
             actions=('impact_sound', self.drop_sound, 0.5, 0.1),
         )
 
-        self._powerupdist: List[str] = []
+        self._powerupdist: list[str] = []
         for powerup, freq in get_default_powerup_distribution():
             for _i in range(int(freq)):
                 self._powerupdist.append(powerup)
 
     def get_random_powerup_type(self,
                                 forcetype: str = None,
-                                excludetypes: List[str] = None) -> str:
+                                excludetypes: list[str] = None) -> str:
         """Returns a random powerup type (string).
 
         See ba.Powerup.poweruptype for available type values.

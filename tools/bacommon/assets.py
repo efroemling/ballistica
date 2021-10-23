@@ -5,10 +5,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, Optional, List
+from typing import TYPE_CHECKING, Optional, Annotated
 from enum import Enum
-
-from typing_extensions import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
 
@@ -40,7 +38,7 @@ class AssetType(Enum):
 @dataclass
 class AssetPackageFlavorManifest:
     """A manifest of asset info for a specific flavor of an asset package."""
-    assetfiles: Annotated[Dict[str, str],
+    assetfiles: Annotated[dict[str, str],
                           IOAttrs('assetfiles')] = field(default_factory=dict)
 
 
@@ -50,7 +48,7 @@ class AssetPackageBuildState:
     """Contains info about an in-progress asset cloud build."""
 
     # Asset names still being built.
-    in_progress_builds: Annotated[List[str],
+    in_progress_builds: Annotated[list[str],
                                   IOAttrs('b')] = field(default_factory=list)
 
     # The initial number of assets needing to be built.

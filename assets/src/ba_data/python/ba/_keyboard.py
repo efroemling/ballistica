@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Dict
+    pass
 
 
 class Keyboard:
@@ -30,6 +30,6 @@ class Keyboard:
     """
 
     name: str
-    chars: List[Tuple[str, ...]]
-    pages: Dict[str, Tuple[str, ...]]
-    nums: Tuple[str, ...]
+    chars: list[tuple[str, ...]]
+    pages: dict[str, tuple[str, ...]]
+    nums: tuple[str, ...]

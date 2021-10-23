@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional, List
+    from typing import Optional
     from bastd.ui.colorpicker import ColorPicker
 
 
@@ -38,9 +38,9 @@ class EditProfileWindow(ba.Window):
         self._in_main_menu = in_main_menu
         self._existing_profile = existing_profile
         self._r = 'editProfileWindow'
-        self._spazzes: List[str] = []
-        self._icon_textures: List[ba.Texture] = []
-        self._icon_tint_textures: List[ba.Texture] = []
+        self._spazzes: list[str] = []
+        self._icon_textures: list[ba.Texture] = []
+        self._icon_tint_textures: list[ba.Texture] = []
 
         # Grab profile colors or pick random ones.
         self._color, self._highlight = get_player_profile_colors(
@@ -523,7 +523,7 @@ class EditProfileWindow(ba.Window):
             tint_color=self._color,
             tint2_color=self._highlight)
 
-    def _make_picker(self, picker_type: str, origin: Tuple[float,
+    def _make_picker(self, picker_type: str, origin: tuple[float,
                                                            float]) -> None:
         from bastd.ui import colorpicker
         if picker_type == 'color':
@@ -550,12 +550,12 @@ class EditProfileWindow(ba.Window):
                 selected_profile=self._existing_profile,
                 in_main_menu=self._in_main_menu).get_root_widget())
 
-    def _set_color(self, color: Tuple[float, float, float]) -> None:
+    def _set_color(self, color: tuple[float, float, float]) -> None:
         self._color = color
         if self._color_button:
             ba.buttonwidget(edit=self._color_button, color=color)
 
-    def _set_highlight(self, color: Tuple[float, float, float]) -> None:
+    def _set_highlight(self, color: tuple[float, float, float]) -> None:
         self._highlight = color
         if self._highlight_button:
             ba.buttonwidget(edit=self._highlight_button, color=color)
@@ -575,7 +575,7 @@ class EditProfileWindow(ba.Window):
             print('color_picker_closing got unknown tag ' + str(tag))
 
     def color_picker_selected_color(self, picker: ColorPicker,
-                                    color: Tuple[float, float, float]) -> None:
+                                    color: tuple[float, float, float]) -> None:
         """Called when a color is selected in a color picker."""
         if not self._root_widget:
             return

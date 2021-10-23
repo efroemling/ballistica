@@ -16,7 +16,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional, Any, Dict
+    from typing import Sequence, Optional, Any
 
 
 # Python pip packages we require for this project.
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class PipRequirement:
     """A pip package required by our project."""
     modulename: Optional[str] = None
-    minversion: Optional[List[int]] = None  # None implies no min version.
+    minversion: Optional[list[int]] = None  # None implies no min version.
     pipname: Optional[str] = None  # None implies same as modulename.
 
 
@@ -50,7 +50,7 @@ PIP_REQUIREMENTS = [
 # Parts of full-tests suite we only run on particular days.
 # (This runs in listed order so should be randomized by hand to avoid
 # clustering similar tests too much)
-SPARSE_TEST_BUILDS: List[List[str]] = [
+SPARSE_TEST_BUILDS: list[list[str]] = [
     ['ios.pylibs.debug', 'android.pylibs.arm'],
     ['linux.package', 'android.pylibs.arm64'],
     ['windows.package', 'mac.pylibs'],
@@ -88,7 +88,7 @@ class PrefabTarget(Enum):
     SERVER_RELEASE = 'server-release'
 
 
-def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
+def _lazybuild_check_paths(inpaths: list[str], category: SourceCategory,
                            target: str) -> bool:
     # pylint: disable=too-many-branches
 
@@ -170,7 +170,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     Note that target's mod-time will *always* be updated to match the newest
     source regardless of whether the build itself was triggered.
     """
-    paths: List[str]
+    paths: list[str]
 
     # Everything possibly affecting meta builds.
     if category is SourceCategory.META:
@@ -214,7 +214,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
 
 
 def archive_old_builds(ssh_server: str, builds_dir: str,
-                       ssh_args: List[str]) -> None:
+                       ssh_args: list[str]) -> None:
     """Stuff our old public builds into the 'old' dir.
 
     (called after we push newer ones)
@@ -295,7 +295,8 @@ def gen_fulltest_buildfile_android() -> None:
         cspre = 'tools/cloudshell linbeast --env android --'
 
         # This is currently broken; turning off.
-        do_py_android = False
+        # Update: should be working again; hooray!
+        do_py_android = True
 
         for extra in extras:
             if extra == 'android.pylibs.arm':
@@ -347,7 +348,7 @@ def gen_fulltest_buildfile_windows() -> None:
 
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
-    lines: List[str] = []
+    lines: list[str] = []
 
     # We want to do one regular, one headless, and one oculus build,
     # but let's switch up 32 or 64 bit based on the day.
@@ -571,7 +572,7 @@ def checkenv() -> None:
     assert 'Package' in piplist[0] and 'Version' in piplist[0]
     assert '--------' in piplist[1]
     piplist = piplist[2:]
-    pipvers: Dict[str, List[int]] = {}
+    pipvers: dict[str, list[int]] = {}
     for line in piplist:
         pname, pverraw = line.split()[:2]
         pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
@@ -648,9 +649,9 @@ def checkenv() -> None:
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
 
 
-def get_pip_reqs() -> List[str]:
+def get_pip_reqs() -> list[str]:
     """Return the pip requirements needed to build/run stuff."""
-    out: List[str] = []
+    out: list[str] = []
     for req in PIP_REQUIREMENTS:
         name = req.modulename if req.pipname is None else req.pipname
         assert isinstance(name, str)
@@ -712,7 +713,7 @@ def _get_server_config_template_yaml(projroot: str) -> str:
     # pylint: disable=too-many-branches
     import yaml
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
-    lines_out: List[str] = []
+    lines_out: list[str] = []
     ignore_vars = {'stress_test_players'}
     for line in lines_in:
         if any(line.startswith(f'{var}:') for var in ignore_vars):
@@ -869,7 +870,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         name: str
         current_value: str
 
-    entries: List[Entry] = []
+    entries: list[Entry] = []
 
     # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(['cmake', '--version'],
@@ -911,7 +912,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     verfilename = os.path.join(dirname, '.ba_cmake_env')
     title = 'cmake_prep_dir'
 
-    versions: Dict[str, str]
+    versions: dict[str, str]
     if os.path.isfile(verfilename):
         with open(verfilename, encoding='utf-8') as infile:
             versions = json.loads(infile.read())

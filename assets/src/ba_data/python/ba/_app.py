@@ -21,7 +21,7 @@ from ba._net import NetworkSubsystem
 if TYPE_CHECKING:
     import ba
     from bastd.actor import spazappearance
-    from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
+    from typing import Optional, Any, Callable
 
 
 class App:
@@ -167,7 +167,7 @@ class App:
         return self._env['vr_mode']
 
     @property
-    def ui_bounds(self) -> Tuple[float, float, float, float]:
+    def ui_bounds(self) -> tuple[float, float, float, float]:
         """Bounds of the 'safe' screen area in ui space.
 
         This tuple contains: (x-min, x-max, y-min, y-max)
@@ -208,7 +208,7 @@ class App:
         self.allow_ticket_purchases: bool = not self.iircade_mode
 
         # Misc.
-        self.tips: List[str] = []
+        self.tips: list[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
         self.did_weak_call_warning = False
 
@@ -225,7 +225,7 @@ class App:
         self.input_map_hash: Optional[str] = None
 
         # Co-op Campaigns.
-        self.campaigns: Dict[str, ba.Campaign] = {}
+        self.campaigns: dict[str, ba.Campaign] = {}
 
         # Server Mode.
         self.server: Optional[ba.ServerController] = None
@@ -250,27 +250,27 @@ class App:
         self.main_menu_last_news_fetch_time: Optional[float] = None
 
         # Spaz.
-        self.spaz_appearances: Dict[str, spazappearance.Appearance] = {}
+        self.spaz_appearances: dict[str, spazappearance.Appearance] = {}
         self.last_spaz_turbo_warn_time: float = -99999.0
 
         # Maps.
-        self.maps: Dict[str, Type[ba.Map]] = {}
+        self.maps: dict[str, type[ba.Map]] = {}
 
         # Gameplay.
         self.teams_series_length = 7
         self.ffa_series_length = 24
-        self.coop_session_args: Dict = {}
+        self.coop_session_args: dict = {}
 
         self.value_test_defaults: dict = {}
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.main_menu_resume_callbacks: list = []  # Can probably go away.
-        self.special_offer: Optional[Dict] = None
+        self.special_offer: Optional[dict] = None
         self.ping_thread_count = 0
-        self.invite_confirm_windows: List[Any] = []  # FIXME: Don't use Any.
-        self.store_layout: Optional[Dict[str, List[Dict[str, Any]]]] = None
-        self.store_items: Optional[Dict[str, Dict]] = None
+        self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
+        self.store_layout: Optional[dict[str, list[dict[str, Any]]]] = None
+        self.store_items: Optional[dict[str, dict]] = None
         self.pro_sale_start_time: Optional[int] = None
         self.pro_sale_start_val: Optional[int] = None
 
@@ -518,7 +518,7 @@ class App:
     def launch_coop_game(self,
                          game: str,
                          force: bool = False,
-                         args: Dict = None) -> bool:
+                         args: dict = None) -> bool:
         """High level way to launch a local co-op session."""
         # pylint: disable=cyclic-import
         from ba._campaign import getcampaign

@@ -15,7 +15,7 @@ from bastd.actor.spazbot import SpazBotSet, ChargerBot, SpazBotDiedMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Dict, List, Optional
+    from typing import Any, Optional
 
 
 class Player(ba.Player['Team']):
@@ -41,14 +41,14 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     default_music = ba.MusicType.TO_THE_DEATH
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         # For now we're hard-coding spawn positions and whatnot
         # so we need to be sure to specify that we only support
         # a specific map.
         return ['Courtyard']
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         # We currently support Co-Op only.
         return issubclass(sessiontype, ba.CoopSession)
 

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efrotools.code import format_yapf_str
 
 if TYPE_CHECKING:
-    from typing import Set, List, Dict, Any, Union, Optional
+    pass
 
 
 def standard_message_sender_gen_pcommand(

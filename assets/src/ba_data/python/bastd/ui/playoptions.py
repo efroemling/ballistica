@@ -11,16 +11,16 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Tuple, Optional, Union
+    from typing import Any, Optional, Union
 
 
 class PlayOptionsWindow(popup.PopupWindow):
     """A popup window for configuring play options."""
 
     def __init__(self,
-                 sessiontype: Type[ba.Session],
+                 sessiontype: type[ba.Session],
                  playlist: str,
-                 scale_origin: Tuple[float, float],
+                 scale_origin: tuple[float, float],
                  delegate: Any = None):
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
@@ -90,7 +90,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             game_count = len(plst)
             for entry in plst:
                 mapname = entry['settings']['map']
-                maptype: Optional[Type[ba.Map]]
+                maptype: Optional[type[ba.Map]]
                 try:
                     maptype = get_map_class(mapname)
                 except ba.NotFoundError:

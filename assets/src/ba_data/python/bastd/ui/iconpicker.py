@@ -12,7 +12,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence
+    from typing import Any, Sequence
 
 
 class IconPicker(popup.PopupWindow):
@@ -20,10 +20,10 @@ class IconPicker(popup.PopupWindow):
 
     def __init__(self,
                  parent: ba.Widget,
-                 position: Tuple[float, float] = (0.0, 0.0),
+                 position: tuple[float, float] = (0.0, 0.0),
                  delegate: Any = None,
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0),
+                 offset: tuple[float, float] = (0.0, 0.0),
                  tint_color: Sequence[float] = (1.0, 1.0, 1.0),
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
                  selected_icon: str = None):

@@ -11,14 +11,14 @@ from typing import TYPE_CHECKING, cast
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Union, Optional
+    from typing import Any, Union, Optional
 
 
 class SoundtrackEditWindow(ba.Window):
     """Window for editing a soundtrack."""
 
     def __init__(self,
-                 existing_soundtrack: Optional[Union[str, Dict[str, Any]]],
+                 existing_soundtrack: Optional[Union[str, dict[str, Any]]],
                  transition: str = 'in_right'):
         # pylint: disable=too-many-statements
         appconfig = ba.app.config
@@ -147,7 +147,7 @@ class SoundtrackEditWindow(ba.Window):
                                     claims_tab=True,
                                     selection_loops_to_parent=True)
 
-        self._song_type_buttons: Dict[str, ba.Widget] = {}
+        self._song_type_buttons: dict[str, ba.Widget] = {}
         self._refresh()
         ba.buttonwidget(edit=cancel_button, on_activate_call=self._cancel)
         ba.containerwidget(edit=self._root_widget, cancel_button=cancel_button)
@@ -266,7 +266,7 @@ class SoundtrackEditWindow(ba.Window):
             prev_test_button = btn
 
     @classmethod
-    def _restore_editor(cls, state: Dict[str, Any], musictype: str,
+    def _restore_editor(cls, state: dict[str, Any], musictype: str,
                         entry: Any) -> None:
         music = ba.app.music
 

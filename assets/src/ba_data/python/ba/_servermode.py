@@ -19,7 +19,7 @@ from ba._dualteamsession import DualTeamSession
 from ba._coopsession import CoopSession
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, Type
+    from typing import Optional, Any
 
     import ba
     from bacommon.servermanager import ServerConfig
@@ -198,7 +198,7 @@ class ServerController:
             callback=self._access_check_response,
         )
 
-    def _access_check_response(self, data: Optional[Dict[str, Any]]) -> None:
+    def _access_check_response(self, data: Optional[dict[str, Any]]) -> None:
         import os
         if data is None:
             print('error on UDP port access check (internet down?)')
@@ -267,7 +267,7 @@ class ServerController:
 
     def _on_playlist_fetch_response(
         self,
-        result: Optional[Dict[str, Any]],
+        result: Optional[dict[str, Any]],
     ) -> None:
         if result is None:
             print('Error fetching playlist; aborting.')
@@ -283,7 +283,7 @@ class ServerController:
         self._config.session_type = typename
         self._playlist_name = (result['playlistName'])
 
-    def _get_session_type(self) -> Type[ba.Session]:
+    def _get_session_type(self) -> type[ba.Session]:
         # Convert string session type to the class.
         # Hmm should we just keep this as a string?
         if self._config.session_type == 'ffa':

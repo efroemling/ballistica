@@ -19,8 +19,7 @@ from ba._player import PlayerInfo
 from ba import _map
 
 if TYPE_CHECKING:
-    from typing import (List, Optional, Dict, Type, Any, Callable, Sequence,
-                        Tuple, Union)
+    from typing import Optional, Any, Callable, Sequence, Union
     from bastd.actor.playerspaz import PlayerSpaz
     from bastd.actor.bomb import TNTSpawner
     import ba
@@ -37,7 +36,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     # pylint: disable=too-many-public-methods
 
     # Tips to be presented to the user at the start of the game.
-    tips: List[Union[str, ba.GameTip]] = []
+    tips: list[Union[str, ba.GameTip]] = []
 
     # Default getname() will return this if not None.
     name: Optional[str] = None
@@ -46,7 +45,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     description: Optional[str] = None
 
     # Default get_available_settings() will return this if not None.
-    available_settings: Optional[List[ba.Setting]] = None
+    available_settings: Optional[list[ba.Setting]] = None
 
     # Default getscoreconfig() will return this if not None.
     scoreconfig: Optional[ba.ScoreConfig] = None
@@ -65,7 +64,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     @classmethod
     def create_settings_ui(
         cls,
-        sessiontype: Type[ba.Session],
+        sessiontype: type[ba.Session],
         settings: Optional[dict],
         completion_call: Callable[[Optional[dict]], None],
     ) -> None:
@@ -104,7 +103,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return cls.name if cls.name is not None else 'Untitled Game'
 
     @classmethod
-    def get_display_string(cls, settings: Optional[Dict] = None) -> ba.Lstr:
+    def get_display_string(cls, settings: Optional[dict] = None) -> ba.Lstr:
         """Return a descriptive name for this game/settings combo.
 
         Subclasses should override getname(); not this.
@@ -130,7 +129,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return Lstr(translate=('teamNames', name))
 
     @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
+    def get_description(cls, sessiontype: type[ba.Session]) -> str:
         """Get a str description of this game type.
 
         The default implementation simply returns the 'description' class var.
@@ -142,7 +141,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     @classmethod
     def get_description_display_string(
-            cls, sessiontype: Type[ba.Session]) -> ba.Lstr:
+            cls, sessiontype: type[ba.Session]) -> ba.Lstr:
         """Return a translated version of get_description().
 
         Sub-classes should override get_description(); not this.
@@ -152,7 +151,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     @classmethod
     def get_available_settings(
-            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
+            cls, sessiontype: type[ba.Session]) -> list[ba.Setting]:
         """Return a list of settings relevant to this game type when
         running under the provided session type.
         """
@@ -160,7 +159,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return [] if cls.available_settings is None else cls.available_settings
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         """
         Called by the default ba.GameActivity.create_settings_ui()
         implementation; should return a list of map names valid
@@ -170,7 +169,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return _map.getmaps('melee')
 
     @classmethod
-    def get_settings_display_string(cls, config: Dict[str, Any]) -> ba.Lstr:
+    def get_settings_display_string(cls, config: dict[str, Any]) -> ba.Lstr:
         """Given a game config dict, return a short description for it.
 
         This is used when viewing game-lists or showing what game
@@ -200,7 +199,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return sval
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         """Return whether this game supports the provided Session type."""
         from ba._multiteamsession import MultiTeamSession
 
@@ -213,7 +212,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
-        self.initialplayerinfos: Optional[List[ba.PlayerInfo]] = None
+        self.initialplayerinfos: Optional[list[ba.PlayerInfo]] = None
 
         # Go ahead and get our map loading.
         self._map_type = _map.get_map_class(self._calc_map_name(settings))
@@ -222,7 +221,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
-        self._tnt_spawners: Optional[Dict[int, TNTSpawner]] = None
+        self._tnt_spawners: Optional[dict[int, TNTSpawner]] = None
         self._tnt_drop_timer: Optional[ba.Timer] = None
         self._game_scoreboard_name_text: Optional[ba.Actor] = None
         self._game_scoreboard_description_text: Optional[ba.Actor] = None
@@ -235,7 +234,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         self._tournament_time_limit_title_text: Optional[ba.NodeActor] = None
         self._tournament_time_limit_text: Optional[ba.NodeActor] = None
         self._tournament_time_limit_text_input: Optional[ba.NodeActor] = None
-        self._zoom_message_times: Dict[int, float] = {}
+        self._zoom_message_times: dict[int, float] = {}
         self._is_waiting_for_continue = False
 
         self._continue_cost = _ba.get_account_misc_read_val(
@@ -459,7 +458,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 callback=WeakCall(self._on_tournament_query_response),
             )
 
-    def _on_tournament_query_response(self, data: Optional[Dict[str,
+    def _on_tournament_query_response(self, data: Optional[dict[str,
                                                                 Any]]) -> None:
         if data is not None:
             data_t = data['t']  # This used to be the whole payload.
@@ -1154,7 +1153,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
             # If settings doesn't specify a map, pick a random one from the
             # list of supported ones.
             unowned_maps = _map.get_unowned_maps()
-            valid_maps: List[str] = [
+            valid_maps: list[str] = [
                 m for m in self.get_supported_maps(type(self.session))
                 if m not in unowned_maps
             ]

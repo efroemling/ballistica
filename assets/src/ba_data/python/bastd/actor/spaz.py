@@ -15,8 +15,7 @@ from bastd.actor.spazfactory import SpazFactory
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import (Any, Sequence, Optional, Dict, List, Union, Callable,
-                        Tuple, Set)
+    from typing import Any, Sequence, Optional, Union, Callable
     from bastd.actor.spazfactory import SpazFactory
 
 POWERUP_WEAR_OFF_TIME = 20000
@@ -104,7 +103,7 @@ class Spaz(ba.Actor):
             self._hockey = activity.map.is_hockey
         else:
             self._hockey = False
-        self._punched_nodes: Set[ba.Node] = set()
+        self._punched_nodes: set[ba.Node] = set()
         self._cursed = False
         self._connected_to_player: Optional[ba.Player] = None
         materials = [
@@ -203,9 +202,9 @@ class Spaz(ba.Actor):
         self.last_run_time_ms = -9999
         self._last_run_value = 0.0
         self.last_bomb_time_ms = -9999
-        self._turbo_filter_times: Dict[str, int] = {}
+        self._turbo_filter_times: dict[str, int] = {}
         self._turbo_filter_time_bucket = 0
-        self._turbo_filter_counts: Dict[str, int] = {}
+        self._turbo_filter_counts: dict[str, int] = {}
         self.frozen = False
         self.shattered = False
         self._last_hit_time: Optional[int] = None
@@ -213,7 +212,7 @@ class Spaz(ba.Actor):
         self._bomb_held = False
         if self.default_shields:
             self.equip_shields()
-        self._dropped_bomb_callbacks: List[Callable[[Spaz, ba.Actor],
+        self._dropped_bomb_callbacks: list[Callable[[Spaz, ba.Actor],
                                                     Any]] = []
 
         self._score_text: Optional[ba.Node] = None
@@ -561,7 +560,7 @@ class Spaz(ba.Actor):
     def on_punched(self, damage: int) -> None:
         """Called when this spaz gets punched."""
 
-    def get_death_points(self, how: ba.DeathType) -> Tuple[int, int]:
+    def get_death_points(self, how: ba.DeathType) -> tuple[int, int]:
         """Get the points awarded for killing this spaz."""
         del how  # Unused.
         num_hits = float(max(1, self._num_times_hit))

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from efrotools.filecache import FileCache
 
 if TYPE_CHECKING:
-    from typing import Set, List, Dict, Any, Union, Optional
+    from typing import Any, Union, Optional
 
 
 def format_clang_format(projroot: Path, full: bool) -> None:
@@ -35,7 +35,7 @@ def format_clang_format(projroot: Path, full: bool) -> None:
 
     dirtyfiles = cache.get_dirty_files()
 
-    def format_file(filename: str) -> Dict[str, Any]:
+    def format_file(filename: str) -> dict[str, Any]:
         start_time = time.time()
 
         # Note: seems os.system does not unlock the gil;
@@ -78,7 +78,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
             raise Exception(f'Found space in path {fpath}; unexpected.')
 
     # Check the config for a list of ones to ignore.
-    code_blacklist: List[str] = getconfig(projroot).get(
+    code_blacklist: list[str] = getconfig(projroot).get(
         'cpplint_blacklist', [])
 
     # Just pretend blacklisted ones don't exist.
@@ -99,7 +99,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         print(f'{Clr.BLU}CppLint checking'
               f' {len(dirtyfiles)} file(s)...{Clr.RST}')
 
-    disabled_filters: List[str] = [
+    disabled_filters: list[str] = [
         'build/include_what_you_use',
         'build/c++11',
         'readability/nolint',
@@ -128,7 +128,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         flush=True)
 
 
-def get_code_filenames(projroot: Path) -> List[str]:
+def get_code_filenames(projroot: Path) -> list[str]:
     """Return the list of files to lint-check or auto-formatting."""
     from efrotools import getconfig
     exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
@@ -219,7 +219,7 @@ def _should_include_script(fnamefull: str) -> bool:
     return False
 
 
-def get_script_filenames(projroot: Path) -> List[str]:
+def get_script_filenames(projroot: Path) -> list[str]:
     """Return the Python filenames to lint-check or auto-format."""
     from efrotools import getconfig
     filenames = set()
@@ -238,7 +238,7 @@ def get_script_filenames(projroot: Path) -> List[str]:
     return sorted(list(f for f in filenames if 'flycheck_' not in f))
 
 
-def runpylint(projroot: Path, filenames: List[str]) -> None:
+def runpylint(projroot: Path, filenames: list[str]) -> None:
     """Run Pylint explicitly on files."""
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -266,7 +266,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
 
     if any(' ' in name for name in filenames):
         raise Exception('found space in path; unexpected')
-    script_blacklist: List[str] = []
+    script_blacklist: list[str] = []
     filenames = [f for f in filenames if f not in script_blacklist]
 
     cachebasename = 'check_pylint_fast' if fast else 'check_pylint'
@@ -280,7 +280,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
 
     # Do a recursive dependency check and mark all files who are
     # either dirty or have a dependency that is dirty.
-    filestates: Dict[str, bool] = {}
+    filestates: dict[str, bool] = {}
     for fname in filenames:
         _dirty_dep_check(fname, filestates, cache, fast, 0)
 
@@ -306,7 +306,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
     cache.write()
 
 
-def _dirty_dep_check(fname: str, filestates: Dict[str, bool], cache: FileCache,
+def _dirty_dep_check(fname: str, filestates: dict[str, bool], cache: FileCache,
                      fast: bool, recursion: int) -> bool:
     """Recursively check a file's deps and return whether it is dirty."""
     # pylint: disable=too-many-branches
@@ -366,8 +366,8 @@ def _dirty_dep_check(fname: str, filestates: Dict[str, bool], cache: FileCache,
 
 
 def _run_pylint(projroot: Path, pylintrc: Union[Path, str],
-                cache: Optional[FileCache], dirtyfiles: List[str],
-                allfiles: Optional[List[str]]) -> Dict[str, Any]:
+                cache: Optional[FileCache], dirtyfiles: list[str],
+                allfiles: Optional[list[str]]) -> dict[str, Any]:
     import time
     from pylint import lint
     from efro.error import CleanError
@@ -402,8 +402,8 @@ def _run_pylint(projroot: Path, pylintrc: Union[Path, str],
     return {'f': dirtyfiles, 't': duration}
 
 
-def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
-                               allfiles: List[str], cache: FileCache) -> int:
+def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: list[str],
+                               allfiles: list[str], cache: FileCache) -> int:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
@@ -413,8 +413,8 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
 
     # First off, build a map of dirtyfiles to module names
     # (and the corresponding reverse map).
-    paths_to_names: Dict[str, str] = {}
-    names_to_paths: Dict[str, str] = {}
+    paths_to_names: dict[str, str] = {}
+    names_to_paths: dict[str, str] = {}
     for fname in allfiles:
         try:
             mpath = modutils.modpath_from_file(fname)
@@ -447,7 +447,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     for key, val in run.linter.stats['dependencies'].items():
         sval = [_filter_module_name(m) for m in val]
         reversedeps[_filter_module_name(key)] = sval
-    deps: Dict[str, Set[str]] = {}
+    deps: dict[str, set[str]] = {}
     untracked_deps = set()
     for mname, mallimportedby in reversedeps.items():
         for mimportedby in mallimportedby:
@@ -456,11 +456,29 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
             else:
                 untracked_deps.add(mname)
 
-    ignored_untracked_deps: List[str] = getconfig(projroot).get(
-        'pylint_ignored_untracked_deps', [])
+    ignored_untracked_deps: set[str] = set(
+        getconfig(projroot).get('pylint_ignored_untracked_deps', []))
 
     # Add a few that this package itself triggers.
-    ignored_untracked_deps += ['pylint.lint', 'astroid.modutils', 'astroid']
+    ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
+
+    # EW; as of Python 3.9, suddenly I'm seeing system modules showing up
+    # here where I wasn't before. I wonder what changed. Anyway, explicitly
+    # suppressing them here but should come up with a more robust system
+    # as I feel this will get annoying fast.
+    ignored_untracked_deps |= {
+        're', 'importlib', 'os', 'xml.dom', 'weakref', 'random',
+        'collections.abc', 'textwrap', 'webbrowser', 'signal', 'pathlib',
+        'zlib', 'json', 'pydoc', 'base64', 'functools', 'asyncio', 'xml',
+        '__future__', 'traceback', 'typing', 'urllib.parse', 'ctypes.wintypes',
+        'code', 'urllib.error', 'threading', 'xml.etree.ElementTree', 'pickle',
+        'dataclasses', 'enum', 'py_compile', 'urllib.request', 'math',
+        'multiprocessing', 'socket', 'getpass', 'hashlib', 'ctypes', 'inspect',
+        'rlcompleter', 'http.client', 'readline', 'platform', 'datetime',
+        'copy', 'concurrent.futures', 'ast', 'subprocess', 'numbers',
+        'logging', 'xml.dom.minidom', 'uuid', 'types', 'tempfile', 'shutil',
+        'shlex', 'stat', 'wave', 'html', 'binascii'
+    }
 
     # Ignore some specific untracked deps; complain about any others.
     untracked_deps = set(dep for dep in untracked_deps
@@ -481,7 +499,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
             # Since this code is a bit flaky, lets always announce when we
             # come up empty and keep a whitelist of expected values to ignore.
             no_deps_modules.add(fmod)
-            depsval: List[str] = []
+            depsval: list[str] = []
         else:
             # Our deps here are module names; store paths.
             depsval = [names_to_paths[dep] for dep in deps[fmod]]
@@ -499,7 +517,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     # error info for them in the run stats.
 
     # Once again need to convert any foo.bar.__init__ to foo.bar.
-    stats_by_module: Dict[str, Any] = {
+    stats_by_module: dict[str, Any] = {
         _filter_module_name(key): val
         for key, val in run.linter.stats['by_module'].items()
     }
@@ -536,7 +554,7 @@ def _filter_module_name(mpath: str) -> str:
 
 
 def runmypy(projroot: Path,
-            filenames: List[str],
+            filenames: list[str],
             full: bool = False,
             check: bool = True) -> None:
     """Run MyPy on provided filenames."""
@@ -631,7 +649,7 @@ def _parse_idea_results(path: Path) -> int:
 
 
 def _run_idea_inspections(projroot: Path,
-                          scripts: List[str],
+                          scripts: list[str],
                           displayname: str,
                           inspect: Path,
                           verbose: bool,
@@ -702,7 +720,7 @@ def _run_idea_inspections(projroot: Path,
 
 
 def _run_idea_inspections_cached(cachepath: Path,
-                                 filenames: List[str],
+                                 filenames: list[str],
                                  full: bool,
                                  projroot: Path,
                                  displayname: str,

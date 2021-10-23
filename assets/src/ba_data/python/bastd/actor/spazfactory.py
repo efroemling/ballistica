@@ -11,7 +11,7 @@ from bastd.gameutils import SharedObjects
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any
 
 
 class SpazFactory:
@@ -206,7 +206,7 @@ class SpazFactory:
             actions=('modify_node_collision', 'collide', False),
         )
 
-        self.spaz_media: Dict[str, Any] = {}
+        self.spaz_media: dict[str, Any] = {}
 
         # Lets load some basic rules.
         # (allows them to be tweaked from the master server)
@@ -227,7 +227,7 @@ class SpazFactory:
         """
         return ba.app.spaz_appearances[character].style
 
-    def get_media(self, character: str) -> Dict[str, Any]:
+    def get_media(self, character: str) -> dict[str, Any]:
         """Return the set of media used by this variant of spaz."""
         char = ba.app.spaz_appearances[character]
         if character not in self.spaz_media:

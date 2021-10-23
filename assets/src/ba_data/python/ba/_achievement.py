@@ -9,7 +9,7 @@ import _ba
 from ba._error import print_exception
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, List, Dict, Union, Optional, Tuple, Set
+    from typing import Any, Sequence, Union, Optional
     import ba
 
 # This could use some cleanup.
@@ -71,11 +71,11 @@ class AchievementSubsystem:
     """
 
     def __init__(self) -> None:
-        self.achievements: List[Achievement] = []
-        self.achievements_to_display: (List[Tuple[ba.Achievement, bool]]) = []
+        self.achievements: list[Achievement] = []
+        self.achievements_to_display: (list[tuple[ba.Achievement, bool]]) = []
         self.achievement_display_timer: Optional[_ba.Timer] = None
         self.last_achievement_display_time: float = 0.0
-        self.achievement_completion_banner_slots: Set[int] = set()
+        self.achievement_completion_banner_slots: set[int] = set()
         self._init_achievements()
 
     def _init_achievements(self) -> None:
@@ -374,7 +374,7 @@ class AchievementSubsystem:
         return achs[0]
 
     def achievements_for_coop_level(self,
-                                    level_name: str) -> List[Achievement]:
+                                    level_name: str) -> list[Achievement]:
         """Given a level name, return achievements available for it."""
 
         # For the Easy campaign we return achievements for the Default
@@ -612,7 +612,7 @@ class Achievement:
                        delay: float,
                        outdelay: float = None,
                        color: Sequence[float] = None,
-                       style: str = 'post_game') -> List[ba.Actor]:
+                       style: str = 'post_game') -> list[ba.Actor]:
         """Create a display for the Achievement.
 
         Shows the Achievement icon, name, and description.
@@ -663,7 +663,7 @@ class Achievement:
                 print_exception('Error determining campaign.')
                 hmo = False
 
-        objs: List[ba.Actor]
+        objs: list[ba.Actor]
 
         if in_game_colors:
             objs = []
@@ -898,12 +898,12 @@ class Achievement:
                      transition_out_delay=None).autoretain())
         return objs
 
-    def _getconfig(self) -> Dict[str, Any]:
+    def _getconfig(self) -> dict[str, Any]:
         """
         Return the sub-dict in settings where this achievement's
         state is stored, creating it if need be.
         """
-        val: Dict[str, Any] = (_ba.app.config.setdefault(
+        val: dict[str, Any] = (_ba.app.config.setdefault(
             'Achievements', {}).setdefault(self._name, {'Complete': False}))
         assert isinstance(val, dict)
         return val
@@ -971,7 +971,7 @@ class Achievement:
             i += 1
         assert self._completion_banner_slot is not None
         y_offs = 110 * self._completion_banner_slot
-        objs: List[ba.Actor] = []
+        objs: list[ba.Actor] = []
         obj = Image(_ba.gettexture('shadow'),
                     position=(-30, 30 + y_offs),
                     front=True,

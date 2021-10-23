@@ -11,18 +11,18 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type, Any, Callable, Dict, List, Tuple, Optional
+    from typing import Any, Callable, Optional
 
 
 class PlaylistMapSelectWindow(ba.Window):
     """Window to select a map."""
 
     def __init__(self,
-                 gametype: Type[ba.GameActivity],
-                 sessiontype: Type[ba.Session],
-                 config: Dict[str, Any],
-                 edit_info: Dict[str, Any],
-                 completion_call: Callable[[Optional[Dict[str, Any]]], Any],
+                 gametype: type[ba.GameActivity],
+                 sessiontype: type[ba.Session],
+                 config: dict[str, Any],
+                 edit_info: dict[str, Any],
+                 completion_call: Callable[[Optional[dict[str, Any]]], Any],
                  transition: str = 'in_right'):
         from ba.internal import get_filtered_map_name
         self._gametype = gametype
@@ -30,7 +30,7 @@ class PlaylistMapSelectWindow(ba.Window):
         self._config = config
         self._completion_call = completion_call
         self._edit_info = edit_info
-        self._maps: List[Tuple[str, ba.Texture]] = []
+        self._maps: list[tuple[str, ba.Texture]] = []
         try:
             self._previous_map = get_filtered_map_name(
                 config['settings']['map'])

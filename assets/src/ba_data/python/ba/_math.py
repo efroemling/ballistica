@@ -8,7 +8,7 @@ from collections import abc
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Tuple, Sequence
+    from typing import Sequence
 
 
 def vec3validate(value: Sequence[float]) -> Sequence[float]:
@@ -45,7 +45,7 @@ def is_point_in_box(pnt: Sequence[float], box: Sequence[float]) -> bool:
             and (abs(pnt[2] - box[2]) <= box[8] * 0.5))
 
 
-def normalized_color(color: Sequence[float]) -> Tuple[float, ...]:
+def normalized_color(color: Sequence[float]) -> tuple[float, ...]:
     """Scale a color so its largest value is 1; useful for coloring lights.
 
     category: General Utility Functions

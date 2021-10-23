@@ -10,7 +10,7 @@ import ba
 from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Set, Tuple
+    from typing import Any, Optional
 
 
 class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -71,7 +71,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                                 scale=1.2,
                                 x_offset=-110.0)
 
-        sound_times: Set[float] = set()
+        sound_times: set[float] = set()
 
         def _scoretxt(text: str,
                       x_offs: float,
@@ -260,7 +260,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             v_offs -= spacing
 
     def _safe_animate(self, node: Optional[ba.Node], attr: str,
-                      keys: Dict[float, float]) -> None:
+                      keys: dict[float, float]) -> None:
         """Run an animation on a node if the node still exists."""
         if node:
             ba.animate(node, attr, keys)

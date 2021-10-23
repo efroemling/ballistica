@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple
+    from typing import Optional
 
 
 class PlayWindow(ba.Window):
@@ -37,7 +37,7 @@ class PlayWindow(ba.Window):
         height = 550
         button_width = 400
 
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -476,8 +476,8 @@ class PlayWindow(ba.Window):
                 sessiontype=ba.FreeForAllSession).get_root_widget())
 
     def _draw_dude(self, i: int, btn: ba.Widget, hoffs: float, v: float,
-                   scl: float, position: Tuple[float, float],
-                   color: Tuple[float, float, float]) -> None:
+                   scl: float, position: tuple[float, float],
+                   color: tuple[float, float, float]) -> None:
         h_extra = -100
         v_extra = 130
         eye_color = (0.7 * 1.0 + 0.3 * color[0], 0.7 * 1.0 + 0.3 * color[1],

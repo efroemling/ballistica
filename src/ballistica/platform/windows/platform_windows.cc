@@ -18,9 +18,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #if BA_DEBUG_BUILD
-#pragma comment(lib, "python38_d.lib")
+#pragma comment(lib, "python39_d.lib")
 #else
-#pragma comment(lib, "python38.lib")
+#pragma comment(lib, "python39.lib")
 #endif
 
 #if !BA_HEADLESS_BUILD

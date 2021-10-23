@@ -11,7 +11,7 @@ from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    pass
 
 
 class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):

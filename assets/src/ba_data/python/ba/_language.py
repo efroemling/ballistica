@@ -11,7 +11,7 @@ import _ba
 
 if TYPE_CHECKING:
     import ba
-    from typing import Any, Dict, List, Optional, Tuple, Union, Sequence
+    from typing import Any, Optional, Union, Sequence
 
 
 class LanguageSubsystem:
@@ -109,7 +109,7 @@ class LanguageSubsystem:
         return _ba.app.config.get('Lang', self.default_language)
 
     @property
-    def available_languages(self) -> List[str]:
+    def available_languages(self) -> list[str]:
         """A list of all available languages.
 
         Note that languages that may be present in game assets but which
@@ -402,7 +402,7 @@ class Lstr:
                  resource: str,
                  fallback_resource: str = '',
                  fallback_value: str = '',
-                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr from a string resource."""
         ...
 
@@ -410,8 +410,8 @@ class Lstr:
     @overload
     def __init__(self,
                  *,
-                 translate: Tuple[str, str],
-                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+                 translate: tuple[str, str],
+                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr by translating a string in a category."""
         ...
 
@@ -420,7 +420,7 @@ class Lstr:
     def __init__(self,
                  *,
                  value: str,
-                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr from a raw string value."""
         ...
 
@@ -531,7 +531,7 @@ class Lstr:
         return lstr
 
 
-def _add_to_attr_dict(dst: AttrDict, src: Dict) -> None:
+def _add_to_attr_dict(dst: AttrDict, src: dict) -> None:
     for key, value in list(src.items()):
         if isinstance(value, dict):
             try:

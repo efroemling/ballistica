@@ -11,14 +11,14 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, TextIO, Callable, List
+    from typing import Any, TextIO, Callable
 
 
 class _BAConsoleRedirect:
 
     def __init__(self, original: TextIO, call: Callable[[str], None]) -> None:
         self._lock = threading.Lock()
-        self._linebits: List[str] = []
+        self._linebits: list[str] = []
         self._original = original
         self._call = call
         self._pending_ship = False

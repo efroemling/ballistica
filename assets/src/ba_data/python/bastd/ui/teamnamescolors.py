@@ -10,14 +10,14 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Tuple, List, Sequence
+    from typing import Sequence
     from bastd.ui.colorpicker import ColorPicker
 
 
 class TeamNamesColorsWindow(popup.PopupWindow):
     """A popup window for customizing team names and colors."""
 
-    def __init__(self, scale_origin: Tuple[float, float]):
+    def __init__(self, scale_origin: tuple[float, float]):
         from ba.internal import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
         self._width = 500
         self._height = 330
@@ -44,8 +44,8 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         self._colors = list(
             appconfig.get('Custom Team Colors', DEFAULT_TEAM_COLORS))
 
-        self._color_buttons: List[ba.Widget] = []
-        self._color_text_fields: List[ba.Widget] = []
+        self._color_buttons: list[ba.Widget] = []
+        self._color_text_fields: list[ba.Widget] = []
 
         resetbtn = ba.buttonwidget(
             parent=self.root_widget,
@@ -145,7 +145,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         # either the default raw value or its translation we consider it
         # default. (the fact that team names get translated makes this
         # situation a bit sloppy)
-        new_names: List[str] = []
+        new_names: list[str] = []
         is_default = True
         for i in range(2):
             name = cast(str, ba.textwidget(query=self._color_text_fields[i]))

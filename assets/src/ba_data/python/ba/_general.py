@@ -17,9 +17,8 @@ from ba._generated.enums import TimeType
 
 if TYPE_CHECKING:
     from types import FrameType
-    from typing import Any, Type, Optional
+    from typing import Any, Optional
     from efro.call import Call as Call  # 'as Call' so we re-export.
-    from weakref import ReferenceType
 
 
 class Existable(Protocol):
@@ -57,7 +56,7 @@ def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
     return obj if obj is not None and obj.exists() else None
 
 
-def getclass(name: str, subclassof: Type[T]) -> Type[T]:
+def getclass(name: str, subclassof: type[T]) -> type[T]:
     """Given a full class name such as foo.bar.MyClass, return the class.
 
     Category: General Utility Functions
@@ -70,7 +69,7 @@ def getclass(name: str, subclassof: Type[T]) -> Type[T]:
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
     module = importlib.import_module(modulename)
-    cls: Type = getattr(module, classname)
+    cls: type = getattr(module, classname)
 
     if not issubclass(cls, subclassof):
         raise TypeError(f'{name} is not a subclass of {subclassof}.')
@@ -133,7 +132,7 @@ def print_refs(obj: Any) -> None:
         i += 1
 
 
-def get_type_name(cls: Type) -> str:
+def get_type_name(cls: type) -> str:
     """Return a full type name including module for a class."""
     return cls.__module__ + '.' + cls.__name__
 
@@ -343,7 +342,7 @@ def print_active_refs(obj: Any) -> None:
                                           f' {ref4}{Clr.RST}')
 
 
-def _verify_object_death(wref: ReferenceType) -> None:
+def _verify_object_death(wref: weakref.ref) -> None:
     obj = wref()
     if obj is None:
         return

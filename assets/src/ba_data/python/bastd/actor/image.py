@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence, Union, Dict, Optional
+    from typing import Any, Sequence, Union, Optional
 
 
 class Image(ba.Actor):
@@ -33,13 +33,13 @@ class Image(ba.Actor):
         BOTTOM_CENTER = 'bottomCenter'
 
     def __init__(self,
-                 texture: Union[ba.Texture, Dict[str, Any]],
-                 position: Tuple[float, float] = (0, 0),
+                 texture: Union[ba.Texture, dict[str, Any]],
+                 position: tuple[float, float] = (0, 0),
                  transition: Optional[Transition] = None,
                  transition_delay: float = 0.0,
                  attach: Attach = Attach.CENTER,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
-                 scale: Tuple[float, float] = (100.0, 100.0),
+                 scale: tuple[float, float] = (100.0, 100.0),
                  transition_out_delay: float = None,
                  model_opaque: ba.Model = None,
                  model_transparent: ba.Model = None,

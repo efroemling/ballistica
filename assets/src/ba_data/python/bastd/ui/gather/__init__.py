@@ -13,8 +13,7 @@ import ba
 from bastd.ui.tabs import TabRow
 
 if TYPE_CHECKING:
-    from typing import (Any, Optional, Tuple, Dict, List, Union, Callable,
-                        Type)
+    from typing import Optional
 
 
 class GatherTab:
@@ -80,7 +79,7 @@ class GatherWindow(ba.Window):
         from bastd.ui.gather.nearbytab import NearbyGatherTab
 
         ba.set_analytics_screen('Gather Window')
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -149,7 +148,7 @@ class GatherWindow(ba.Window):
         tab_buffer_h = ((320 if condensed else 250) + 2 * x_offs)
 
         # Build up the set of tabs we want.
-        tabdefs: List[Tuple[GatherWindow.TabID, ba.Lstr]] = [
+        tabdefs: list[tuple[GatherWindow.TabID, ba.Lstr]] = [
             (self.TabID.ABOUT, ba.Lstr(resource=self._r + '.aboutText'))
         ]
         if _ba.get_account_misc_read_val('enablePublicParties', True):
@@ -173,14 +172,14 @@ class GatherWindow(ba.Window):
                                on_select_call=ba.WeakCall(self._set_tab))
 
         # Now instantiate handlers for these tabs.
-        tabtypes: Dict[GatherWindow.TabID, Type[GatherTab]] = {
+        tabtypes: dict[GatherWindow.TabID, type[GatherTab]] = {
             self.TabID.ABOUT: AboutGatherTab,
             self.TabID.MANUAL: ManualGatherTab,
             self.TabID.PRIVATE: PrivateGatherTab,
             self.TabID.INTERNET: PublicGatherTab,
             self.TabID.NEARBY: NearbyGatherTab
         }
-        self._tabs: Dict[GatherWindow.TabID, GatherTab] = {}
+        self._tabs: dict[GatherWindow.TabID, GatherTab] = {}
         for tab_id in self._tab_row.tabs:
             tabtype = tabtypes.get(tab_id)
             if tabtype is not None:

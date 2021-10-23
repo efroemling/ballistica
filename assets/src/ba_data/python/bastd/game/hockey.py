@@ -16,7 +16,7 @@ from bastd.actor.powerupbox import PowerupBoxFactory
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Dict, Type, List, Optional, Union
+    from typing import Any, Sequence, Optional, Union
 
 
 class PuckDiedMessage:
@@ -36,7 +36,7 @@ class Puck(ba.Actor):
 
         # Spawn just above the provided point.
         self._spawn_pos = (position[0], position[1] + 1.0, position[2])
-        self.last_players_to_touch: Dict[int, Player] = {}
+        self.last_players_to_touch: dict[int, Player] = {}
         self.scored = False
         assert activity is not None
         assert isinstance(activity, HockeyGame)
@@ -141,11 +141,11 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
     default_music = ba.MusicType.HOCKEY
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('hockey')
 
     def __init__(self, settings: dict):
@@ -199,7 +199,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
                       True), ('modify_part_collision', 'physical', False),
                      ('call', 'at_connect', self._handle_score)))
         self._puck_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: Optional[List[ba.NodeActor]] = None
+        self._score_regions: Optional[list[ba.NodeActor]] = None
         self._puck: Optional[Puck] = None
         self._score_to_win = int(settings['Score to Win'])
         self._time_limit = float(settings['Time Limit'])

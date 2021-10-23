@@ -16,8 +16,7 @@ from ba._general import Call, verify_object_death
 from ba._messages import UNHANDLED
 
 if TYPE_CHECKING:
-    from weakref import ReferenceType
-    from typing import Optional, Type, Any, Dict, List
+    from typing import Optional, Any
     import ba
     from bastd.actor.respawnicon import RespawnIcon
 
@@ -58,9 +57,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     # pylint: disable=too-many-public-methods
 
     # Annotating attr types at the class level lets us introspect at runtime.
-    settings_raw: Dict[str, Any]
-    teams: List[TeamType]
-    players: List[PlayerType]
+    settings_raw: dict[str, Any]
+    teams: list[TeamType]
+    players: list[PlayerType]
 
     # Whether to print every time a player dies. This can be pertinent
     # in games such as Death-Match but can be annoying in games where it
@@ -150,8 +149,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         # Player/Team types should have been specified as type args;
         # grab those.
-        self._playertype: Type[PlayerType]
-        self._teamtype: Type[TeamType]
+        self._playertype: type[PlayerType]
+        self._teamtype: type[TeamType]
         self._setup_player_and_team_types()
 
         # FIXME: Relocate or remove the need for this stuff.
@@ -160,7 +159,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._session = weakref.ref(_ba.getsession())
 
         # Preloaded data for actors, maps, etc; indexed by type.
-        self.preloads: Dict[Type, Any] = {}
+        self.preloads: dict[type, Any] = {}
 
         # Hopefully can eventually kill this; activities should
         # validate/store whatever settings they need at init time
@@ -172,17 +171,17 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._has_ended = False
         self._activity_death_check_timer: Optional[ba.Timer] = None
         self._expired = False
-        self._delay_delete_players: List[PlayerType] = []
-        self._delay_delete_teams: List[TeamType] = []
-        self._players_that_left: List[ReferenceType[PlayerType]] = []
-        self._teams_that_left: List[ReferenceType[TeamType]] = []
+        self._delay_delete_players: list[PlayerType] = []
+        self._delay_delete_teams: list[TeamType] = []
+        self._players_that_left: list[weakref.ref[PlayerType]] = []
+        self._teams_that_left: list[weakref.ref[TeamType]] = []
         self._transitioning_out = False
 
         # A handy place to put most actors; this list is pruned of dead
         # actors regularly and these actors are insta-killed as the activity
         # is dying.
-        self._actor_refs: List[ba.Actor] = []
-        self._actor_weak_refs: List[ReferenceType[ba.Actor]] = []
+        self._actor_refs: list[ba.Actor] = []
+        self._actor_weak_refs: list[weakref.ref[ba.Actor]] = []
         self._last_prune_dead_actors_time = _ba.time()
         self._prune_dead_actors_timer: Optional[ba.Timer] = None
 
@@ -262,12 +261,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         return self._expired
 
     @property
-    def playertype(self) -> Type[PlayerType]:
+    def playertype(self) -> type[PlayerType]:
         """The type of ba.Player this Activity is using."""
         return self._playertype
 
     @property
-    def teamtype(self) -> Type[TeamType]:
+    def teamtype(self) -> type[TeamType]:
         """The type of ba.Team this Activity is using."""
         return self._teamtype
 
@@ -709,8 +708,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         assert issubclass(self._teamtype, Team)
 
     @classmethod
-    def _check_activity_death(cls, activity_ref: ReferenceType[Activity],
-                              counter: List[int]) -> None:
+    def _check_activity_death(cls, activity_ref: weakref.ref[Activity],
+                              counter: list[int]) -> None:
         """Sanity check to make sure an Activity was destroyed properly.
 
         Receives a weakref to a ba.Activity which should have torn itself

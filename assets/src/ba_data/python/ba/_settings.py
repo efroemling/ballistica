@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from typing import Any, List, Tuple
+    from typing import Any
 
 
 @dataclass
@@ -61,7 +61,7 @@ class ChoiceSetting(Setting):
 
     Category: Settings Classes
     """
-    choices: List[Tuple[str, Any]]
+    choices: list[tuple[str, Any]]
 
 
 @dataclass
@@ -71,7 +71,7 @@ class IntChoiceSetting(ChoiceSetting):
     Category: Settings Classes
     """
     default: int
-    choices: List[Tuple[str, int]]
+    choices: list[tuple[str, int]]
 
 
 @dataclass
@@ -81,4 +81,4 @@ class FloatChoiceSetting(ChoiceSetting):
     Category: Settings Classes
     """
     default: float
-    choices: List[Tuple[str, float]]
+    choices: list[tuple[str, float]]

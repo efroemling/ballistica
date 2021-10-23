@@ -256,11 +256,11 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "\n"
      "Activates a widget; the same as if it had been clicked."},
     {"get_children", (PyCFunction)GetChildren, METH_NOARGS,
-     "get_children() -> List[ba.Widget]\n"
+     "get_children() -> list[ba.Widget]\n"
      "\n"
      "Returns any child Widgets of this Widget."},
     {"get_screen_space_center", (PyCFunction)GetScreenSpaceCenter, METH_NOARGS,
-     "get_screen_space_center() -> Tuple[float, float]\n"
+     "get_screen_space_center() -> tuple[float, float]\n"
      "\n"
      "Returns the coords of the Widget center relative to the center of the\n"
      "screen. This can be useful for placing pop-up windows and other special\n"

@@ -17,7 +17,7 @@ import ba
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Optional, Dict, Union, Tuple, List
+    from typing import Callable, Any, Optional, Union
     from bastd.ui.gather import GatherWindow
 
 # Print a bit of info about pings, queries, etc.
@@ -182,7 +182,7 @@ class UIRow:
 class State:
     """State saved/restored only while the app is running."""
     sub_tab: SubTabType = SubTabType.JOIN
-    parties: Optional[List[Tuple[str, PartyEntry]]] = None
+    parties: Optional[list[tuple[str, PartyEntry]]] = None
     next_entry_index: int = 0
     filter_value: str = ''
     have_server_list_response: bool = False
@@ -312,26 +312,26 @@ class PublicGatherTab(GatherTab):
         self._host_max_party_size_plus_button: (Optional[ba.Widget]) = None
         self._host_status_text: Optional[ba.Widget] = None
         self._signed_in = False
-        self._ui_rows: List[UIRow] = []
+        self._ui_rows: list[UIRow] = []
         self._refresh_ui_row = 0
         self._have_user_selected_row = False
         self._first_valid_server_list_time: Optional[float] = None
 
         # Parties indexed by id:
-        self._parties: Dict[str, PartyEntry] = {}
+        self._parties: dict[str, PartyEntry] = {}
 
         # Parties sorted in display order:
-        self._parties_sorted: List[Tuple[str, PartyEntry]] = []
+        self._parties_sorted: list[tuple[str, PartyEntry]] = []
         self._party_lists_dirty = True
 
         # Sorted parties with filter applied:
-        self._parties_displayed: Dict[str, PartyEntry] = {}
+        self._parties_displayed: dict[str, PartyEntry] = {}
 
         self._next_entry_index = 0
         self._have_server_list_response = False
         self._have_valid_server_list = False
         self._filter_value = ''
-        self._pending_party_infos: List[Dict[str, Any]] = []
+        self._pending_party_infos: list[dict[str, Any]] = []
         self._last_sub_scroll_height = 0.0
 
     def on_activate(
@@ -715,7 +715,7 @@ class PublicGatherTab(GatherTab):
             self._do_status_check()
 
     def _on_public_party_query_result(
-            self, result: Optional[Dict[str, Any]]) -> None:
+            self, result: Optional[dict[str, Any]]) -> None:
         starttime = time.time()
         self._have_server_list_response = True
 
@@ -1100,7 +1100,7 @@ class PublicGatherTab(GatherTab):
         self._local_address = str(val)
 
     def _on_public_party_accessible_response(
-            self, data: Optional[Dict[str, Any]]) -> None:
+            self, data: Optional[dict[str, Any]]) -> None:
 
         # If we've got status text widgets, update them.
         text = self._host_status_text

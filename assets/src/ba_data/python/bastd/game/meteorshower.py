@@ -15,7 +15,7 @@ from bastd.actor.bomb import Bomb
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, List, Dict, Type, Type
+    from typing import Any, Sequence, Optional
 
 
 class Player(ba.Player['Team']):
@@ -50,12 +50,12 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
     # We're currently hard-coded for one map.
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ['Rampage']
 
     # We support teams, free-for-all, and co-op sessions.
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession)
                 or issubclass(sessiontype, ba.CoopSession))

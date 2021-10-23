@@ -16,7 +16,7 @@ import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, Optional
+    from typing import Any, Optional
 
 
 def project_build_path(projroot: str, project_path: str,
@@ -26,7 +26,7 @@ def project_build_path(projroot: str, project_path: str,
 
     config_path = os.path.join(projroot, '.cache', 'xcode_build_path')
     out_path = None
-    config: Dict[str, Dict[str, Any]] = {}
+    config: dict[str, dict[str, Any]] = {}
 
     build_dir: Optional[str] = None
 

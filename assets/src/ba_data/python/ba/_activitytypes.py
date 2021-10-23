@@ -14,7 +14,7 @@ from ba._player import EmptyPlayer  # pylint: disable=W0611
 from ba._team import EmptyTeam  # pylint: disable=W0611
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional
+    from typing import Optional
     import ba
     from ba._lobby import JoinInfo
 

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional
+    from typing import Optional
 
 
 class SharedObjects:

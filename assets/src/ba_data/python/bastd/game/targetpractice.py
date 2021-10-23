@@ -17,7 +17,7 @@ from bastd.actor.bomb import Bomb
 from bastd.actor.popuptext import PopupText
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional, Sequence
+    from typing import Any, Optional, Sequence
     from bastd.actor.bomb import Blast
 
 
@@ -49,11 +49,11 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     default_music = ba.MusicType.FORWARD_MARCH
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ['Doom Shroom']
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         # We support any teams or versus sessions.
         return (issubclass(sessiontype, ba.CoopSession)
                 or issubclass(sessiontype, ba.MultiTeamSession))
@@ -61,7 +61,7 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._targets: List[Target] = []
+        self._targets: list[Target] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
         self._target_count = int(settings['Target Count'])
@@ -280,7 +280,7 @@ class Target(ba.Actor):
             # Inform our activity that we were hit
             self._hit = True
             activity.handlemessage(self.TargetHitMessage())
-            keys: Dict[float, Sequence[float]] = {
+            keys: dict[float, Sequence[float]] = {
                 0.0: (1.0, 0.0, 0.0),
                 0.049: (1.0, 0.0, 0.0),
                 0.05: (1.0, 1.0, 1.0),

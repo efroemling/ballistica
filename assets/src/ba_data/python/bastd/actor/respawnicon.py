@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Tuple
+    from typing import Optional
 
 
 class RespawnIcon:
@@ -116,7 +116,7 @@ class RespawnIcon:
         """Is this icon still visible?"""
         return self._visible
 
-    def _get_context(self, player: ba.Player) -> Tuple[bool, float, Dict]:
+    def _get_context(self, player: ba.Player) -> tuple[bool, float, dict]:
         """Return info on where we should be shown and stored."""
         activity = ba.getactivity()
 

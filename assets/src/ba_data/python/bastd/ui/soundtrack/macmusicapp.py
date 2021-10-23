@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Callable
+    from typing import Any, Optional, Callable
 
 
 class MacMusicAppPlaylistSelectWindow(ba.Window):
@@ -66,7 +66,7 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
 
-    def _playlists_cb(self, playlists: List[str]) -> None:
+    def _playlists_cb(self, playlists: list[str]) -> None:
         if self._column:
             for widget in self._column.get_children():
                 widget.delete()

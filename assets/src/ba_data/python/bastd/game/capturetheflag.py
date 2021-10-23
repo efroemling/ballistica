@@ -16,7 +16,7 @@ from bastd.actor.flag import (FlagFactory, Flag, FlagPickedUpMessage,
                               FlagDroppedMessage, FlagDiedMessage)
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Sequence, Union, Optional
+    from typing import Any, Sequence, Union, Optional
 
 
 class CTFFlag(Flag):
@@ -132,11 +132,11 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     ]
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('team_flag')
 
     def __init__(self, settings: dict):
@@ -491,10 +491,10 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         player = spaz.getplayer(Player, True)
         team: Team = player.team
         player.touching_own_flag = 0
-        no_physical_mats: List[ba.Material] = [
+        no_physical_mats: list[ba.Material] = [
             team.spaz_material_no_flag_physical
         ]
-        no_collide_mats: List[ba.Material] = [
+        no_collide_mats: list[ba.Material] = [
             team.spaz_material_no_flag_collide
         ]
 

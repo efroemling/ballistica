@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, List, Dict
+    from typing import Any
     import ba
 
 
@@ -30,7 +30,7 @@ class Campaign:
 
     def __init__(self, name: str, sequential: bool = True):
         self._name = name
-        self._levels: List[ba.Level] = []
+        self._levels: list[ba.Level] = []
         self._sequential = sequential
 
     @property
@@ -51,7 +51,7 @@ class Campaign:
         self._levels.append(level)
 
     @property
-    def levels(self) -> List[ba.Level]:
+    def levels(self) -> list[ba.Level]:
         """The list of ba.Levels in the Campaign."""
         return self._levels
 
@@ -80,9 +80,9 @@ class Campaign:
         return self.configdict.get('Selection', self._levels[0].name)
 
     @property
-    def configdict(self) -> Dict[str, Any]:
+    def configdict(self) -> dict[str, Any]:
         """Return the live config dict for this campaign."""
-        val: Dict[str, Any] = (_ba.app.config.setdefault('Campaigns',
+        val: dict[str, Any] = (_ba.app.config.setdefault('Campaigns',
                                                          {}).setdefault(
                                                              self._name, {}))
         assert isinstance(val, dict)

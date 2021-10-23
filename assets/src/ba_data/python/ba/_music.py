@@ -11,7 +11,7 @@ from enum import Enum
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Optional, Dict, Union, Type
+    from typing import Callable, Any, Optional, Union
     import ba
 
 
@@ -69,7 +69,7 @@ class AssetSoundtrackEntry:
 
 
 # What gets played by default for our different music types:
-ASSET_SOUNDTRACK_ENTRIES: Dict[MusicType, AssetSoundtrackEntry] = {
+ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
     MusicType.MENU:
         AssetSoundtrackEntry('menuMusic'),
     MusicType.VICTORY:
@@ -130,8 +130,8 @@ class MusicSubsystem:
         self._music_node: Optional[_ba.Node] = None
         self._music_mode: MusicPlayMode = MusicPlayMode.REGULAR
         self._music_player: Optional[MusicPlayer] = None
-        self._music_player_type: Optional[Type[MusicPlayer]] = None
-        self.music_types: Dict[MusicPlayMode, Optional[MusicType]] = {
+        self._music_player_type: Optional[type[MusicPlayer]] = None
+        self.music_types: dict[MusicPlayMode, Optional[MusicType]] = {
             MusicPlayMode.REGULAR: None,
             MusicPlayMode.TEST: None
         }
@@ -273,7 +273,7 @@ class MusicSubsystem:
                       musictype: Union[MusicType, str, None],
                       continuous: bool = False,
                       mode: MusicPlayMode = MusicPlayMode.REGULAR,
-                      testsoundtrack: Dict[str, Any] = None) -> None:
+                      testsoundtrack: dict[str, Any] = None) -> None:
         """Plays the requested music type/mode.
 
         For most cases, setmusic() is the proper call to use, which itself
@@ -329,10 +329,10 @@ class MusicSubsystem:
             else:
                 self._play_internal_music(musictype)
 
-    def _get_user_soundtrack(self) -> Dict[str, Any]:
+    def _get_user_soundtrack(self) -> dict[str, Any]:
         """Return current user soundtrack or empty dict otherwise."""
         cfg = _ba.app.config
-        soundtrack: Dict[str, Any] = {}
+        soundtrack: dict[str, Any] = {}
         soundtrackname = cfg.get('Soundtrack')
         if soundtrackname is not None and soundtrackname != '__default__':
             try:

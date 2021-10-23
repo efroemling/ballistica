@@ -8,10 +8,9 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING
-# Note: can pull this from typing once we update to Python 3.9+
+from typing import TYPE_CHECKING, get_args
 # noinspection PyProtectedMember
-from typing_extensions import get_args, _AnnotatedAlias
+from typing import _AnnotatedAlias  # type: ignore
 
 _pytz_utc: Any
 
@@ -23,7 +22,7 @@ except ModuleNotFoundError:
     _pytz_utc = None  # pylint: disable=invalid-name
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any, Optional
 
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
@@ -41,8 +40,8 @@ def _ensure_datetime_is_timezone_aware(value: datetime.datetime) -> None:
             'datetime values must have timezone set as timezone.utc')
 
 
-def _raise_type_error(fieldpath: str, valuetype: Type,
-                      expected: Tuple[Type, ...]) -> None:
+def _raise_type_error(fieldpath: str, valuetype: type,
+                      expected: tuple[type, ...]) -> None:
     """Raise an error when a field value's type does not match expected."""
     assert isinstance(expected, tuple)
     assert all(isinstance(e, type) for e in expected)
@@ -121,7 +120,7 @@ class IOAttrs:
         if whole_hours != cls.whole_hours:
             self.whole_hours = whole_hours
 
-    def validate_for_field(self, cls: Type, field: dataclasses.Field) -> None:
+    def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
 
         # Turning off store_default requires the field to have either
@@ -161,7 +160,7 @@ def _get_origin(anntype: Any) -> Any:
     return anntype if origin is None else origin
 
 
-def _parse_annotated(anntype: Any) -> Tuple[Any, Optional[IOAttrs]]:
+def _parse_annotated(anntype: Any) -> tuple[Any, Optional[IOAttrs]]:
     """Parse Annotated() constructs, returning annotated type & IOAttrs."""
     # If we get an Annotated[foo, bar, eep] we take
     # foo as the actual type and we look for IOAttrs instances in

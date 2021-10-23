@@ -14,6 +14,7 @@
       <w>aaak</w>
       <w>aarch</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
+      <w>abcdefghjkmnpqrtuvwxy</w>
       <w>abeb</w>
       <w>abishort</w>
       <w>abot</w>
@@ -81,6 +82,7 @@
       <w>apichanges</w>
       <w>apis</w>
       <w>apks</w>
+      <w>apost</w>
       <w>appath</w>
       <w>appathout</w>
       <w>appcfg</w>
@@ -235,6 +237,7 @@
       <w>bombsquadgame</w>
       <w>bools</w>
       <w>bootlocale</w>
+      <w>bootsubprocess</w>
       <w>borhani</w>
       <w>bot's</w>
       <w>botdist</w>
@@ -394,10 +397,12 @@
       <w>clrred</w>
       <w>cmakelists</w>
       <w>cmakeserver</w>
+      <w>cmath</w>
       <w>cmathmodule</w>
       <w>cmds</w>
       <w>cmembers</w>
       <w>cmodel</w>
+      <w>cmodules</w>
       <w>cmpf</w>
       <w>cnode</w>
       <w>codecsmodule</w>
@@ -564,6 +569,7 @@
       <w>distroot</w>
       <w>distros</w>
       <w>dline</w>
+      <w>dliwk</w>
       <w>dlldir</w>
       <w>dlls</w>
       <w>dmake</w>
@@ -710,6 +716,7 @@
       <w>eventid</w>
       <w>ewww</w>
       <w>ewwww</w>
+      <w>exargs</w>
       <w>excludepowerups</w>
       <w>excludetypes</w>
       <w>excstr</w>
@@ -745,6 +752,7 @@
       <w>fbase</w>
       <w>fclose</w>
       <w>fcmd</w>
+      <w>fcntl</w>
       <w>fcntlmodule</w>
       <w>fcode</w>
       <w>fcontents</w>
@@ -977,6 +985,7 @@
       <w>gpsui</w>
       <w>gradlepath</w>
       <w>gradlew</w>
+      <w>graphlib</w>
       <w>gravis</w>
       <w>grpentry</w>
       <w>grpkey</w>
@@ -1202,6 +1211,7 @@
       <w>lbits</w>
       <w>lbld</w>
       <w>lbval</w>
+      <w>lbzip</w>
       <w>lcfg</w>
       <w>lcolor</w>
       <w>lcrypto</w>
@@ -1217,6 +1227,8 @@
       <w>lfull</w>
       <w>lfval</w>
       <w>libballisticacore</w>
+      <w>libbz</w>
+      <w>libbzip</w>
       <w>libcrypto</w>
       <w>libdir</w>
       <w>libegl</w>
@@ -1235,6 +1247,7 @@
       <w>libsdl</w>
       <w>libsqlite</w>
       <w>libssl</w>
+      <w>libuuid</w>
       <w>libvorbi</w>
       <w>libvorbis</w>
       <w>libvorbisfile</w>
@@ -1313,6 +1326,7 @@
       <w>ltex</w>
       <w>ltypes</w>
       <w>lubyte</w>
+      <w>luuid</w>
       <w>lzma</w>
       <w>lzmamodule</w>
       <w>macappstore</w>
@@ -1580,6 +1594,7 @@
       <w>ortho</w>
       <w>osascript</w>
       <w>osmusic</w>
+      <w>ossaudiodev</w>
       <w>ostype</w>
       <w>osval</w>
       <w>otherplayer</w>
@@ -1695,6 +1710,7 @@
       <w>pogotron</w>
       <w>pointpos</w>
       <w>policybase</w>
+      <w>popd</w>
       <w>popen</w>
       <w>poplib</w>
       <w>popupcolor</w>
@@ -2294,6 +2310,7 @@
       <w>testfull</w>
       <w>testhelpers</w>
       <w>testimportmultiple</w>
+      <w>testinternalcapi</w>
       <w>testm</w>
       <w>testmagicmethods</w>
       <w>testmock</w>
@@ -2405,6 +2422,7 @@
       <w>typestr</w>
       <w>tzdiff</w>
       <w>tzinfos</w>
+      <w>tzpath</w>
       <w>uadfc</w>
       <w>uber</w>
       <w>ucrtbased</w>
@@ -2463,6 +2481,7 @@
       <w>userfunctions</w>
       <w>utcnow</w>
       <w>utimensat</w>
+      <w>uuidmodule</w>
       <w>uval</w>
       <w>valanntype</w>
       <w>validpgpkeys</w>
@@ -2521,6 +2540,7 @@
       <w>webbrowser</w>
       <w>webpage</w>
       <w>webpages</w>
+      <w>weeeird</w>
       <w>whatevs</w>
       <w>wheee</w>
       <w>whos</w>
@@ -2593,7 +2613,10 @@
       <w>xval</w>
       <w>xxdiff</w>
       <w>xxhdpi</w>
+      <w>xxlimited</w>
+      <w>xxsubinterpreters</w>
       <w>xxsubtype</w>
+      <w>xxtestfuzz</w>
       <w>xxxhdpi</w>
       <w>yach</w>
       <w>yapf</w>
@@ -2610,6 +2633,7 @@
       <w>zipapp</w>
       <w>zlib</w>
       <w>zlibmodule</w>
+      <w>zoneinfo</w>
       <w>zoomtext</w>
       <w>zpos</w>
       <w>zval</w>

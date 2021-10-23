@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Union, Callable
+    from typing import Any, Union, Callable
 
 
 class ConfigCheckBox:
@@ -27,8 +27,8 @@ class ConfigCheckBox:
     def __init__(self,
                  parent: ba.Widget,
                  configkey: str,
-                 position: Tuple[float, float],
-                 size: Tuple[float, float],
+                 position: tuple[float, float],
+                 size: tuple[float, float],
                  displayname: Union[str, ba.Lstr] = None,
                  scale: float = None,
                  maxwidth: float = None,
@@ -84,7 +84,7 @@ class ConfigNumberEdit:
     def __init__(self,
                  parent: ba.Widget,
                  configkey: str,
-                 position: Tuple[float, float],
+                 position: tuple[float, float],
                  minval: float = 0.0,
                  maxval: float = 100.0,
                  increment: float = 1.0,

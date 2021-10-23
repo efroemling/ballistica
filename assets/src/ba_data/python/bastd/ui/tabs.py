@@ -10,15 +10,15 @@ from typing import TYPE_CHECKING, TypeVar, Generic
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Tuple, List, Sequence, Optional
+    from typing import Any, Callable, Optional
 
 
 @dataclass
 class Tab:
     """Info for an individual tab in a TabRow"""
     button: ba.Widget
-    position: Tuple[float, float]
-    size: Tuple[float, float]
+    position: tuple[float, float]
+    size: tuple[float, float]
 
 
 T = TypeVar('T')
@@ -32,13 +32,13 @@ class TabRow(Generic[T]):
 
     def __init__(self,
                  parent: ba.Widget,
-                 tabdefs: List[Tuple[T, ba.Lstr]],
-                 pos: Tuple[float, float],
-                 size: Tuple[float, float],
+                 tabdefs: list[tuple[T, ba.Lstr]],
+                 pos: tuple[float, float],
+                 size: tuple[float, float],
                  on_select_call: Callable[[T], None] = None) -> None:
         if not tabdefs:
             raise ValueError('At least one tab def is required')
-        self.tabs: Dict[T, Tab] = {}
+        self.tabs: dict[T, Tab] = {}
         tab_pos_v = pos[1]
         tab_button_width = float(size[0]) / len(tabdefs)
         tab_spacing = (250.0 - tab_button_width) * 0.06

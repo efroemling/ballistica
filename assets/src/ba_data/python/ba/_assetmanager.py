@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Annotated
 from dataclasses import dataclass, field
 from pathlib import Path
 import threading
@@ -15,14 +15,11 @@ import time
 import os
 import sys
 
-from typing_extensions import Annotated
-
 from efro.dataclassio import (ioprepped, IOAttrs, dataclass_from_json,
                               dataclass_to_json)
 
 if TYPE_CHECKING:
     from bacommon.assets import AssetPackageFlavor
-    from typing import List
 
 
 @ioprepped
@@ -36,7 +33,7 @@ class FileValue:
 class State:
     """Holds all persistent state for the asset-manager."""
 
-    files: Annotated[Dict[str, FileValue],
+    files: Annotated[dict[str, FileValue],
                      IOAttrs('files')] = field(default_factory=dict)
 
 
@@ -63,7 +60,7 @@ class AssetManager:
 
     def launch_gather(
         self,
-        packages: List[str],
+        packages: list[str],
         flavor: AssetPackageFlavor,
         account_token: str,
     ) -> AssetGather:

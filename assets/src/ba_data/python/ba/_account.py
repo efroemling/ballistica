@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Dict, List, Tuple
+    from typing import Any, Optional
     import ba
 
 
@@ -24,16 +24,16 @@ class AccountSubsystem:
     """
 
     def __init__(self) -> None:
-        self.account_tournament_list: Optional[Tuple[int, List[str]]] = None
+        self.account_tournament_list: Optional[tuple[int, list[str]]] = None
 
         # FIXME: should abstract/structure these.
-        self.tournament_info: Dict = {}
-        self.league_rank_cache: Dict = {}
+        self.tournament_info: dict = {}
+        self.league_rank_cache: dict = {}
         self.last_post_purchase_message_time: Optional[float] = None
 
         # If we try to run promo-codes due to launch-args/etc we might
         # not be signed in yet; go ahead and queue them up in that case.
-        self.pending_promo_codes: List[str] = []
+        self.pending_promo_codes: list[str] = []
 
     def on_app_launch(self) -> None:
         """Called when the app is done bootstrapping."""
@@ -74,7 +74,7 @@ class AccountSubsystem:
         return self.league_rank_cache.get('info', None)
 
     def get_league_rank_points(self,
-                               data: Optional[Dict[str, Any]],
+                               data: Optional[dict[str, Any]],
                                subset: str = None) -> int:
         """(internal)"""
         if data is None:
@@ -132,7 +132,7 @@ class AccountSubsystem:
                                                    TimeFormat.MILLISECONDS)
             cache_entry['valid'] = True
 
-    def get_purchased_icons(self) -> List[str]:
+    def get_purchased_icons(self) -> list[str]:
         """(internal)"""
         # pylint: disable=cyclic-import
         from ba import _store

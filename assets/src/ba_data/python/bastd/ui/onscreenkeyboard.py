@@ -12,7 +12,7 @@ from ba import charstr
 from ba import SpecialChar as SpCh
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Optional
+    from typing import Optional
 
 
 class OnScreenKeyboardWindow(ba.Window):
@@ -78,14 +78,14 @@ class OnScreenKeyboardWindow(ba.Window):
         self._double_press_shift = False
         self._num_mode_button: Optional[ba.Widget] = None
         self._emoji_button: Optional[ba.Widget] = None
-        self._char_keys: List[ba.Widget] = []
+        self._char_keys: list[ba.Widget] = []
         self._keyboard_index = 0
         self._last_space_press = 0.0
         self._double_space_interval = 0.3
 
         self._keyboard: ba.Keyboard
-        self._chars: List[str]
-        self._modes: List[str]
+        self._chars: list[str]
+        self._modes: list[str]
         self._mode: str
         self._mode_index: int
         self._load_keyboard()
@@ -116,7 +116,7 @@ class OnScreenKeyboardWindow(ba.Window):
 
         # dummy data just used for row/column lengths... we don't actually
         # set things until refresh
-        chars: List[Tuple[str, ...]] = self._keyboard.chars
+        chars: list[tuple[str, ...]] = self._keyboard.chars
 
         for row_num, row in enumerate(chars):
             h = row_starts[row_num]
@@ -244,7 +244,7 @@ class OnScreenKeyboardWindow(ba.Window):
         return kbclass()
 
     def _refresh(self) -> None:
-        chars: Optional[List[str]] = None
+        chars: Optional[list[str]] = None
         if self._mode in ['normal', 'caps']:
             chars = list(self._chars)
             if self._mode == 'caps':

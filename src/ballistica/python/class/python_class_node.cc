@@ -402,7 +402,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "\n"
      "Return the name assigned to a Node; used mainly for debugging"},
     {"getdelegate", (PyCFunction)GetDelegate, METH_VARARGS | METH_KEYWORDS,
-     "getdelegate(type: Type, doraise: bool = False) -> <varies>\n"
+     "getdelegate(type: type, doraise: bool = False) -> <varies>\n"
      "\n"
      "Return the node's current delegate object if it matches a certain type.\n"
      "\n"

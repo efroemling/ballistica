@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 # Released under the MIT License. See LICENSE for details.
 #
 """Stage assets for a build."""
@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from efrotools import PYVER
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional
     from pathlib import Path
 
 # Suffix for the pyc files we include in stagings.
@@ -53,7 +53,7 @@ class Config:
         self.is_payload_full = False
         self.debug: Optional[bool] = None
 
-    def _parse_android_args(self, args: List[str]) -> None:
+    def _parse_android_args(self, args: list[str]) -> None:
         # On Android we get nitpicky with what
         # we want to copy in since we can speed up
         # iterations by installing stripped down
@@ -100,7 +100,7 @@ class Config:
             elif arg == '-audio':
                 self.include_audio = True
 
-    def _parse_win_platform(self, platform: str, args: List[str]) -> None:
+    def _parse_win_platform(self, platform: str, args: list[str]) -> None:
         """Parse sub-args in the windows platform string."""
         winempty, wintype, winplt, wincfg = platform.split('-')
         self.win_platform = winplt
@@ -133,7 +133,7 @@ class Config:
         else:
             raise RuntimeError(f'Invalid wincfg: "{wincfg}"')
 
-    def parse_args(self, args: List[str]) -> None:
+    def parse_args(self, args: list[str]) -> None:
         """Parse args and apply to the cfg."""
         if len(args) < 1:
             raise RuntimeError('Expected a platform argument.')
@@ -275,7 +275,7 @@ def _sync_windows_extras(cfg: Config) -> None:
     # We could technically copy everything over but this keeps staging
     # dirs a bit tidier.
     dbgsfx = '_d' if cfg.debug else ''
-    toplevelfiles: List[str] = [f'python38{dbgsfx}.dll']
+    toplevelfiles: list[str] = [f'python39{dbgsfx}.dll']
 
     if cfg.win_type == 'win':
         toplevelfiles += [
@@ -469,7 +469,7 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
         raise RuntimeError(f"Unknown server file for staging: '{basename}'.")
 
 
-def main(projroot: str, args: Optional[List[str]] = None) -> None:
+def main(projroot: str, args: Optional[list[str]] = None) -> None:
     """Stage assets for a build."""
 
     if args is None:

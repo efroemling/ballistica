@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from typing import Sequence, Tuple, Optional
+    from typing import Sequence, Optional
     import ba
 
 
@@ -47,7 +47,7 @@ class PowerupAcceptMessage:
     """
 
 
-def get_default_powerup_distribution() -> Sequence[Tuple[str, int]]:
+def get_default_powerup_distribution() -> Sequence[tuple[str, int]]:
     """Standard set of powerups."""
     return (('triple_bombs', 3), ('ice_bombs', 3), ('punch', 3),
             ('impact_bombs', 3), ('land_mines', 2), ('sticky_bombs', 3),

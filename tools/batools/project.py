@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 # Released under the MIT License. See LICENSE for details.
 #
 """General project related functionality."""
@@ -15,7 +15,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, List, Dict, Set
+    from typing import Optional
 
 
 def project_centric_path(projroot: str, path: str) -> str:
@@ -52,23 +52,23 @@ class Updater:
         self._check = check
         self._fix = fix
         self._checkarg = ' --check' if self._check else ''
-        self._checkarglist: List[str] = ['--check'] if self._check else []
+        self._checkarglist: list[str] = ['--check'] if self._check else []
 
         # We behave differently in the public repo
         self._public = getconfig(Path('.'))['public']
         assert isinstance(self._public, bool)
 
-        self._source_files: List[str] = []
-        self._header_files: List[str] = []
+        self._source_files: list[str] = []
+        self._header_files: list[str] = []
 
-        self._line_corrections: Dict[str, List[LineChange]] = {}
-        self._file_changes: Dict[str, str] = {}
+        self._line_corrections: dict[str, list[LineChange]] = {}
+        self._file_changes: dict[str, str] = {}
 
         self._license_line_checks = bool(
             getlocalconfig(Path('.')).get('license_line_checks', True))
 
-        self._internal_source_dirs: Optional[Set[str]] = None
-        self._internal_source_files: Optional[Set[str]] = None
+        self._internal_source_dirs: Optional[set[str]] = None
+        self._internal_source_files: Optional[set[str]] = None
 
     def run(self) -> None:
         """Do the thing."""
@@ -118,13 +118,13 @@ class Updater:
         else:
             print(f'{Clr.GRN}Update-Project: SUCCESS!{Clr.RST}')
 
-    def _get_internal_source_files(self) -> Set[str]:
+    def _get_internal_source_files(self) -> set[str]:
         from pathlib import Path
         from efrotools import getconfig
 
         # Fetch/calc just once and cache results.
         if self._internal_source_files is None:
-            sources: List[str]
+            sources: list[str]
             if self._public:
                 sources = []
             else:
@@ -135,13 +135,13 @@ class Updater:
             self._internal_source_files = set(sources)
         return self._internal_source_files
 
-    def _get_internal_source_dirs(self) -> Set[str]:
+    def _get_internal_source_dirs(self) -> set[str]:
         from pathlib import Path
         from efrotools import getconfig
 
         # Fetch/calc just once and cache results.
         if self._internal_source_dirs is None:
-            sources: List[str]
+            sources: list[str]
             if self._public:
                 sources = []
             else:
@@ -181,8 +181,8 @@ class Updater:
     def _apply_line_changes(self) -> None:
 
         # Build a flat list of entries that can and can-not be auto applied.
-        manual_changes: List[Tuple[str, LineChange]] = []
-        auto_changes: List[Tuple[str, LineChange]] = []
+        manual_changes: list[tuple[str, LineChange]] = []
+        auto_changes: list[tuple[str, LineChange]] = []
         for fname, entries in self._line_corrections.items():
             for entry in entries:
                 if entry.can_auto_update:
@@ -271,7 +271,7 @@ class Updater:
                        expected=expected,
                        can_auto_update=can_auto_update))
 
-    def _check_c_license(self, fname: str, lines: List[str]) -> None:
+    def _check_c_license(self, fname: str, lines: list[str]) -> None:
         from efrotools import get_public_license
 
         # Look for public license line (public or private repo)
@@ -493,11 +493,11 @@ class Updater:
 
         self._update_visual_studio_project_filters(filtered, fname, src_root)
 
-    def _update_visual_studio_project_filters(self, lines_in: List[str],
+    def _update_visual_studio_project_filters(self, lines_in: list[str],
                                               fname: str,
                                               src_root: str) -> None:
-        filterpaths: Set[str] = set()
-        filterlines: List[str] = [
+        filterpaths: set[str] = set()
+        filterlines: list[str] = [
             '<?xml version="1.0" encoding="utf-8"?>',
             '<Project ToolsVersion="4.0"'
             ' xmlns="http://schemas.microsoft.com/developer/msbuild/2003">',

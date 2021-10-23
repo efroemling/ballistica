@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Dict, Tuple, Any, Optional
+    from typing import Any, Optional
 
 
 class ConfigKeyboardWindow(ba.Window):
@@ -47,7 +47,7 @@ class ConfigKeyboardWindow(ba.Window):
             widget.delete()
 
         # Fill our temp config with present values.
-        self._settings: Dict[str, int] = {}
+        self._settings: dict[str, int] = {}
         for button in [
                 'buttonJump', 'buttonPunch', 'buttonBomb', 'buttonPickUp',
                 'buttonStart', 'buttonStart2', 'buttonUp', 'buttonDown',
@@ -165,8 +165,8 @@ class ConfigKeyboardWindow(ba.Window):
                              scale=1.0)
 
     def _capture_button(self,
-                        pos: Tuple[float, float],
-                        color: Tuple[float, float, float],
+                        pos: tuple[float, float],
+                        color: tuple[float, float, float],
                         texture: ba.Texture,
                         button: str,
                         scale: float = 1.0) -> None:
@@ -224,7 +224,7 @@ class ConfigKeyboardWindow(ba.Window):
             return
 
         dst = get_input_device_config(self._input, default=False)
-        dst2: Dict[str, Any] = dst[0][dst[1]]
+        dst2: dict[str, Any] = dst[0][dst[1]]
         dst2.clear()
 
         # Store any values that aren't -1.
@@ -292,7 +292,7 @@ class AwaitKeyboardInputWindow(ba.Window):
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_left')
 
-    def _button_callback(self, event: Dict[str, Any]) -> None:
+    def _button_callback(self, event: dict[str, Any]) -> None:
         self._settings[self._capture_button] = event['button']
         if event['type'] == 'BUTTONDOWN':
             bname = event['input_device'].get_button_name(event['button'])

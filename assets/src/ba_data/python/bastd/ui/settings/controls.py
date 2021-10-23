@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional
+    from typing import Optional
 
 
 class ControlsSettingsWindow(ba.Window):
@@ -27,7 +27,7 @@ class ControlsSettingsWindow(ba.Window):
         from bastd.ui import popup as popup_ui
         self._have_selected_child = False
 
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
 
         # If they provided an origin-widget, scale up from that.
         if origin_widget is not None:

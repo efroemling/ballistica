@@ -10,7 +10,6 @@ from dataclasses import dataclass
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Dict
     import ba
 
 
@@ -23,8 +22,8 @@ class PluginSubsystem:
     """
 
     def __init__(self) -> None:
-        self.potential_plugins: List[ba.PotentialPlugin] = []
-        self.active_plugins: Dict[str, ba.Plugin] = {}
+        self.potential_plugins: list[ba.PotentialPlugin] = []
+        self.active_plugins: dict[str, ba.Plugin] = {}
 
     def on_app_launch(self) -> None:
         """Should be called at app launch time."""
@@ -73,9 +72,9 @@ class PluginSubsystem:
         # plugins, but that is only used to give the user a list of plugins
         # that they can enable. (we wouldn't want to look at meta-scan here
         # anyway because it may not be done yet at this point in the launch)
-        plugstates: Dict[str, Dict] = _ba.app.config.get('Plugins', {})
+        plugstates: dict[str, dict] = _ba.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
-        plugkeys: List[str] = sorted(key for key, val in plugstates.items()
+        plugkeys: list[str] = sorted(key for key, val in plugstates.items()
                                      if val.get('enabled', False))
         for plugkey in plugkeys:
             try:

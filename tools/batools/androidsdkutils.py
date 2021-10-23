@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 
 if TYPE_CHECKING:
-    from typing import List
+    pass
 
 
 def _parse_lprop_file(local_properties_path: str) -> str:
@@ -76,7 +76,7 @@ def _gen_lprop_file(local_properties_path: str) -> str:
     return sdk_dir
 
 
-def run(projroot: str, args: List[str]) -> None:
+def run(projroot: str, args: list[str]) -> None:
     """Main script entry point."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals

@@ -10,7 +10,7 @@ from ba._gameactivity import GameActivity
 from ba._general import WeakCall
 
 if TYPE_CHECKING:
-    from typing import Type, Dict, Any, Set, List, Sequence, Optional
+    from typing import Any, Sequence, Optional
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
@@ -28,7 +28,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     session: ba.CoopSession
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         from ba._coopsession import CoopSession
         return issubclass(sessiontype, CoopSession)
 
@@ -36,7 +36,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         super().__init__(settings)
 
         # Cache these for efficiency.
-        self._achievements_awarded: Set[str] = set()
+        self._achievements_awarded: set[str] = set()
 
         self._life_warning_beep: Optional[ba.Actor] = None
         self._life_warning_beep_timer: Optional[ba.Timer] = None
@@ -62,11 +62,11 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         _ba.get_scores_to_beat(levelname, config_str,
                                WeakCall(self._on_got_scores_to_beat))
 
-    def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
+    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
         pass
 
     def _show_standard_scores_to_beat_ui(self,
-                                         scores: List[Dict[str, Any]]) -> None:
+                                         scores: list[dict[str, Any]]) -> None:
         from efro.util import asserttype
         from ba._gameutils import timestring, animate
         from ba._nodeactor import NodeActor

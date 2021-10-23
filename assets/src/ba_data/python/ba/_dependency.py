@@ -10,8 +10,7 @@ from typing import (Generic, TypeVar, TYPE_CHECKING)
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Dict, List, Set, Type
-    from weakref import ReferenceType
+    from typing import Optional, Any
     import ba
 
 T = TypeVar('T', bound='DependencyComponent')
@@ -32,13 +31,13 @@ class Dependency(Generic[T]):
     methods via self.floofcls().
     """
 
-    def __init__(self, cls: Type[T], config: Any = None):
+    def __init__(self, cls: type[T], config: Any = None):
         """Instantiate a Dependency given a ba.DependencyComponent type.
 
         Optionally, an arbitrary object can be passed as 'config' to
         influence dependency calculation for the target class.
         """
-        self.cls: Type[T] = cls
+        self.cls: type[T] = cls
         self.config = config
         self._hash: Optional[int] = None
 
@@ -91,7 +90,7 @@ class DependencyComponent:
     category: Dependency Classes
     """
 
-    _dep_entry: ReferenceType[DependencyEntry]
+    _dep_entry: weakref.ref[DependencyEntry]
 
     def __init__(self) -> None:
         """Instantiate a DependencyComponent."""
@@ -110,7 +109,7 @@ class DependencyComponent:
         return True
 
     @classmethod
-    def get_dynamic_deps(cls, config: Any = None) -> List[Dependency]:
+    def get_dynamic_deps(cls, config: Any = None) -> list[Dependency]:
         """Return any dynamically-calculated deps for this component/config.
 
         Deps declared statically as part of the class do not need to be
@@ -180,7 +179,7 @@ class DependencySet(Generic[T]):
         self._loaded = False
 
         # Dependency data indexed by hash.
-        self.entries: Dict[int, DependencyEntry] = {}
+        self.entries: dict[int, DependencyEntry] = {}
 
     # def __del__(self) -> None:
     #     print("~DepSet()")
@@ -220,12 +219,12 @@ class DependencySet(Generic[T]):
         """Whether this set has been successfully resolved."""
         return self._resolved
 
-    def get_asset_package_ids(self) -> Set[str]:
+    def get_asset_package_ids(self) -> set[str]:
         """Return the set of asset-package-ids required by this dep-set.
 
         Must be called on a resolved dep-set.
         """
-        ids: Set[str] = set()
+        ids: set[str] = set()
         if not self._resolved:
             raise Exception('Must be called on a resolved dep-set.')
         for entry in self.entries.values():

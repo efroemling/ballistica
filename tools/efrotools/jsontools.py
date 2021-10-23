@@ -8,7 +8,7 @@ import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Any
+    from typing import Any
 
 
 class NoIndent:
@@ -28,7 +28,7 @@ class NoIndentEncoder(json.JSONEncoder):
         super().__init__(*args, **kwargs)
         self.kwargs = dict(kwargs)
         del self.kwargs['indent']
-        self._replacement_map: Dict = {}
+        self._replacement_map: dict = {}
 
     def default(self, o: Any) -> Any:
         import uuid

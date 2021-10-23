@@ -37,8 +37,7 @@ from typing import TYPE_CHECKING, overload, Sequence, TypeVar
 from ba._generated.enums import TimeFormat, TimeType
 
 if TYPE_CHECKING:
-    from typing import (Any, Dict, Callable, Tuple, List, Optional, Union,
-                        List, Type, Literal)
+    from typing import Any, Callable, Optional, Union, Literal
     from ba._app import App
     import ba
 
@@ -386,9 +385,9 @@ class Material:
     label: str
 
     def add_actions(self,
-                    actions: Tuple,
-                    conditions: Optional[Tuple] = None) -> None:
-        """add_actions(actions: Tuple, conditions: Optional[Tuple] = None)
+                    actions: tuple,
+                    conditions: Optional[tuple] = None) -> None:
+        """add_actions(actions: tuple, conditions: Optional[tuple] = None)
           -> None
 
         Add one or more actions to the material, optionally with conditions.
@@ -724,16 +723,16 @@ class Node:
     # Show that ur return type varies based on "doraise" value:
     @overload
     def getdelegate(self,
-                    type: Type[_T],
+                    type: type[_T],
                     doraise: Literal[False] = False) -> Optional[_T]:
         ...
 
     @overload
-    def getdelegate(self, type: Type[_T], doraise: Literal[True]) -> _T:
+    def getdelegate(self, type: type[_T], doraise: Literal[True]) -> _T:
         ...
 
     def getdelegate(self, type: Any, doraise: bool = False) -> Any:
-        """getdelegate(type: Type, doraise: bool = False) -> <varies>
+        """getdelegate(type: type, doraise: bool = False) -> <varies>
 
         Return the node's current delegate object if it matches a certain type.
 
@@ -849,9 +848,9 @@ class SessionPlayer:
     character: str
     activityplayer: Optional[ba.Player]
 
-    def assigninput(self, type: Union[ba.InputType, Tuple[ba.InputType, ...]],
+    def assigninput(self, type: Union[ba.InputType, tuple[ba.InputType, ...]],
                     call: Callable) -> None:
-        """assigninput(type: Union[ba.InputType, Tuple[ba.InputType, ...]],
+        """assigninput(type: Union[ba.InputType, tuple[ba.InputType, ...]],
           call: Callable) -> None
 
         Set the python callable to be run for one or more types of input.
@@ -877,15 +876,15 @@ class SessionPlayer:
         """
         return str()
 
-    def get_icon(self) -> Dict[str, Any]:
-        """get_icon() -> Dict[str, Any]
+    def get_icon(self) -> dict[str, Any]:
+        """get_icon() -> dict[str, Any]
 
         Returns the character's icon (images, colors, etc contained in a dict)
         """
         return {'foo': 'bar'}
 
-    def get_icon_info(self) -> Dict[str, Any]:
-        """get_icon_info() -> Dict[str, Any]
+    def get_icon_info(self) -> dict[str, Any]:
+        """get_icon_info() -> dict[str, Any]
 
         (internal)
         """
@@ -1203,15 +1202,15 @@ class Widget:
         """
         return bool()
 
-    def get_children(self) -> List[ba.Widget]:
-        """get_children() -> List[ba.Widget]
+    def get_children(self) -> list[ba.Widget]:
+        """get_children() -> list[ba.Widget]
 
         Returns any child Widgets of this Widget.
         """
         return [Widget()]
 
-    def get_screen_space_center(self) -> Tuple[float, float]:
-        """get_screen_space_center() -> Tuple[float, float]
+    def get_screen_space_center(self) -> tuple[float, float]:
+        """get_screen_space_center() -> tuple[float, float]
 
         Returns the coords of the Widget center relative to the center of the
         screen. This can be useful for placing pop-up windows and other special
@@ -1993,8 +1992,8 @@ def get_account_type() -> str:
     return str()
 
 
-def get_appconfig_builtin_keys() -> List[str]:
-    """get_appconfig_builtin_keys() -> List[str]
+def get_appconfig_builtin_keys() -> list[str]:
+    """get_appconfig_builtin_keys() -> list[str]
 
     (internal)
     """
@@ -2009,8 +2008,8 @@ def get_appconfig_default_value(key: str) -> Any:
     return _uninferrable()
 
 
-def get_chat_messages() -> List[str]:
-    """get_chat_messages() -> List[str]
+def get_chat_messages() -> list[str]:
+    """get_chat_messages() -> list[str]
 
     (internal)
     """
@@ -2050,8 +2049,8 @@ def get_connection_to_host_info() -> dict:
     return dict()
 
 
-def get_display_resolution() -> Optional[Tuple[int, int]]:
-    """get_display_resolution() -> Optional[Tuple[int, int]]
+def get_display_resolution() -> Optional[tuple[int, int]]:
+    """get_display_resolution() -> Optional[tuple[int, int]]
 
     (internal)
 
@@ -2095,8 +2094,8 @@ def get_game_port() -> int:
     return int()
 
 
-def get_game_roster() -> List[Dict[str, Any]]:
-    """get_game_roster() -> List[Dict[str, Any]]
+def get_game_roster() -> list[dict[str, Any]]:
+    """get_game_roster() -> list[dict[str, Any]]
 
     (internal)
     """
@@ -2895,8 +2894,8 @@ def mac_music_app_get_library_source() -> None:
     return None
 
 
-def mac_music_app_get_playlists() -> List[str]:
-    """mac_music_app_get_playlists() -> List[str]
+def mac_music_app_get_playlists() -> list[str]:
+    """mac_music_app_get_playlists() -> list[str]
 
     (internal)
     """
@@ -3001,9 +3000,9 @@ def music_player_stop() -> None:
     return None
 
 
-def new_host_session(sessiontype: Type[ba.Session],
+def new_host_session(sessiontype: type[ba.Session],
                      benchmark_type: str = None) -> None:
-    """new_host_session(sessiontype: Type[ba.Session],
+    """new_host_session(sessiontype: type[ba.Session],
       benchmark_type: str = None) -> None
 
     (internal)
@@ -3019,9 +3018,9 @@ def new_replay_session(file_name: str) -> None:
     return None
 
 
-def newactivity(activity_type: Type[ba.Activity],
+def newactivity(activity_type: type[ba.Activity],
                 settings: dict = None) -> ba.Activity:
-    """newactivity(activity_type: Type[ba.Activity],
+    """newactivity(activity_type: type[ba.Activity],
       settings: dict = None) -> ba.Activity
 
     Instantiates a ba.Activity given a type object.
@@ -3370,9 +3369,9 @@ def run_transactions() -> None:
 
 
 def safecolor(color: Sequence[float],
-              target_intensity: float = 0.6) -> Tuple[float, ...]:
+              target_intensity: float = 0.6) -> tuple[float, ...]:
     """safecolor(color: Sequence[float], target_intensity: float = 0.6)
-      -> Tuple[float, ...]
+      -> tuple[float, ...]
 
     Given a color tuple, return a color safe to display as text.
 
@@ -3387,13 +3386,13 @@ def safecolor(color: Sequence[float],
 def screenmessage(message: Union[str, ba.Lstr],
                   color: Sequence[float] = None,
                   top: bool = False,
-                  image: Dict[str, Any] = None,
+                  image: dict[str, Any] = None,
                   log: bool = False,
                   clients: Sequence[int] = None,
                   transient: bool = False) -> None:
     """screenmessage(message: Union[str, ba.Lstr],
       color: Sequence[float] = None, top: bool = False,
-      image: Dict[str, Any] = None, log: bool = False,
+      image: dict[str, Any] = None, log: bool = False,
       clients: Sequence[int] = None, transient: bool = False) -> None
 
     Print a message to the local client's screen, in a given color.
@@ -3456,8 +3455,8 @@ def scrollwidget(edit: ba.Widget = None,
     return ba.Widget()
 
 
-def set_admins(admins: List[str]) -> None:
-    """set_admins(admins: List[str]) -> None
+def set_admins(admins: list[str]) -> None:
+    """set_admins(admins: list[str]) -> None
 
     (internal)
     """
@@ -3513,10 +3512,10 @@ def set_have_mods(have_mods: bool) -> None:
 
 
 def set_internal_language_keys(
-        listobj: List[Tuple[str, str]],
-        random_names_list: List[Tuple[str, str]]) -> None:
-    """set_internal_language_keys(listobj: List[Tuple[str, str]],
-      random_names_list: List[Tuple[str, str]]) -> None
+        listobj: list[tuple[str, str]],
+        random_names_list: list[tuple[str, str]]) -> None:
+    """set_internal_language_keys(listobj: list[tuple[str, str]],
+      random_names_list: list[tuple[str, str]]) -> None
 
     (internal)
     """
@@ -3532,8 +3531,8 @@ def set_low_level_config_value(key: str, value: int) -> None:
 
 
 def set_map_bounds(
-        bounds: Tuple[float, float, float, float, float, float]) -> None:
-    """set_map_bounds(bounds: Tuple[float, float, float, float, float, float])
+        bounds: tuple[float, float, float, float, float, float]) -> None:
+    """set_map_bounds(bounds: tuple[float, float, float, float, float, float])
       -> None
 
     (internal)
@@ -4020,18 +4019,18 @@ def timer(time: float,
     return None
 
 
-def tournament_query(callback: Callable[[Optional[Dict]], None],
-                     args: Dict) -> None:
-    """tournament_query(callback: Callable[[Optional[Dict]], None],
-      args: Dict) -> None
+def tournament_query(callback: Callable[[Optional[dict]], None],
+                     args: dict) -> None:
+    """tournament_query(callback: Callable[[Optional[dict]], None],
+      args: dict) -> None
 
     (internal)
     """
     return None
 
 
-def uibounds() -> Tuple[float, float, float, float]:
-    """uibounds() -> Tuple[float, float, float, float]
+def uibounds() -> tuple[float, float, float, float]:
+    """uibounds() -> tuple[float, float, float, float]
 
     (internal)
 

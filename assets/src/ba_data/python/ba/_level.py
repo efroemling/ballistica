@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from weakref import ReferenceType
-    from typing import Type, Any, Dict, Optional
+    from typing import Any, Optional
     import ba
 
 
@@ -23,7 +22,7 @@ class Level:
 
     def __init__(self,
                  name: str,
-                 gametype: Type[ba.GameActivity],
+                 gametype: type[ba.GameActivity],
                  settings: dict,
                  preview_texture_name: str,
                  displayname: str = None):
@@ -32,7 +31,7 @@ class Level:
         self._settings = settings
         self._preview_texture_name = preview_texture_name
         self._displayname = displayname
-        self._campaign: Optional[ReferenceType[ba.Campaign]] = None
+        self._campaign: Optional[weakref.ref[ba.Campaign]] = None
         self._index: Optional[int] = None
         self._score_version_string: Optional[str] = None
 
@@ -45,7 +44,7 @@ class Level:
         """The unique name for this Level."""
         return self._name
 
-    def get_settings(self) -> Dict[str, Any]:
+    def get_settings(self) -> dict[str, Any]:
         """Returns the settings for this Level."""
         settings = copy.deepcopy(self._settings)
 
@@ -74,7 +73,7 @@ class Level:
                    self._gametype.get_display_string(self._settings))])
 
     @property
-    def gametype(self) -> Type[ba.GameActivity]:
+    def gametype(self) -> type[ba.GameActivity]:
         """The type of game used for this Level."""
         return self._gametype
 
@@ -117,7 +116,7 @@ class Level:
             return {}
         return copy.deepcopy(config[high_scores_key])
 
-    def set_high_scores(self, high_scores: Dict) -> None:
+    def set_high_scores(self, high_scores: dict) -> None:
         """Set high scores for this level."""
         config = self._get_config_dict()
         high_scores_key = 'High Scores' + self.get_score_version_string()
@@ -148,7 +147,7 @@ class Level:
         config = self._get_config_dict()
         config['Rating'] = max(old_rating, rating)
 
-    def _get_config_dict(self) -> Dict[str, Any]:
+    def _get_config_dict(self) -> dict[str, Any]:
         """Return/create the persistent state dict for this level.
 
         The referenced dict exists under the game's config dict and
@@ -157,7 +156,7 @@ class Level:
         if campaign is None:
             raise RuntimeError('Level is not in a campaign.')
         configdict = campaign.configdict
-        val: Dict[str, Any] = configdict.setdefault(self._name, {
+        val: dict[str, Any] = configdict.setdefault(self._name, {
             'Rating': 0.0,
             'Complete': False
         })

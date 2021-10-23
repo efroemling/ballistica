@@ -13,15 +13,13 @@ from enum import Enum
 import dataclasses
 import typing
 import datetime
-from typing import TYPE_CHECKING, TypeVar
-# Note: can pull this from typing once we update to Python 3.9+
-# noinspection PyProtectedMember
-from typing_extensions import get_type_hints
+from typing import TYPE_CHECKING, TypeVar, get_type_hints
 
+# noinspection PyProtectedMember
 from efro.dataclassio._base import _parse_annotated, _get_origin, SIMPLE_TYPES
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List, Set
+    from typing import Any
 
 T = TypeVar('T')
 
@@ -33,7 +31,7 @@ MAX_RECURSION = 10
 PREP_ATTR = '_DCIOPREP'
 
 
-def ioprep(cls: Type) -> None:
+def ioprep(cls: type) -> None:
     """Prep a dataclass type for use with this module's functionality.
 
     Prepping ensures that all types contained in a data class as well as
@@ -53,7 +51,7 @@ def ioprep(cls: Type) -> None:
     PrepSession(explicit=True).prep_dataclass(cls, recursion_level=0)
 
 
-def ioprepped(cls: Type[T]) -> Type[T]:
+def ioprepped(cls: type[T]) -> type[T]:
     """Class decorator for easily prepping a dataclass at definition time.
 
     Note that in some cases it may not be possible to prep a dataclass
@@ -80,10 +78,10 @@ class PrepData:
     """
 
     # Resolved annotation data with 'live' classes.
-    annotations: Dict[str, Any]
+    annotations: dict[str, Any]
 
     # Map of storage names to attr names.
-    storage_names_to_attr_names: Dict[str, str]
+    storage_names_to_attr_names: dict[str, str]
 
 
 class PrepSession:
@@ -92,7 +90,7 @@ class PrepSession:
     def __init__(self, explicit: bool):
         self.explicit = explicit
 
-    def prep_dataclass(self, cls: Type, recursion_level: int) -> PrepData:
+    def prep_dataclass(self, cls: type, recursion_level: int) -> PrepData:
         """Run prep on a dataclass if necessary and return its prep data."""
 
         # We should only need to do this once per dataclass.
@@ -123,7 +121,6 @@ class PrepSession:
         try:
             # NOTE: Now passing the class' __dict__ (vars()) as locals
             # which allows us to pick up nested classes, etc.
-            # pylint: disable=unexpected-keyword-arg
             resolved_annotations = get_type_hints(cls,
                                                   localns=vars(cls),
                                                   include_extras=True)
@@ -140,8 +137,8 @@ class PrepSession:
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
-        all_storage_names: Set[str] = set()
-        storage_names_to_attr_names: Dict[str, str] = {}
+        all_storage_names: set[str] = set()
+        storage_names_to_attr_names: dict[str, str] = {}
 
         # Ok; we've resolved actual types for this dataclass.
         # now recurse through them, verifying that we support all contained
@@ -180,7 +177,7 @@ class PrepSession:
         setattr(cls, PREP_ATTR, prepdata)
         return prepdata
 
-    def prep_type(self, cls: Type, attrname: str, anntype: Any,
+    def prep_type(self, cls: type, attrname: str, anntype: Any,
                   recursion_level: int) -> None:
         """Run prep on a dataclass."""
         # pylint: disable=too-many-return-statements
@@ -301,7 +298,7 @@ class PrepSession:
                         f" type '{anntype}'"
                         f' which is not supported by dataclassio.')
 
-    def prep_union(self, cls: Type, attrname: str, anntype: Any,
+    def prep_union(self, cls: type, attrname: str, anntype: Any,
                    recursion_level: int) -> None:
         """Run prep on a Union type."""
         typeargs = typing.get_args(anntype)
@@ -317,7 +314,7 @@ class PrepSession:
                            childtype,
                            recursion_level=recursion_level + 1)
 
-    def prep_enum(self, enumtype: Type[Enum]) -> None:
+    def prep_enum(self, enumtype: type[Enum]) -> None:
         """Run prep on an enum type."""
 
         valtype: Any = None

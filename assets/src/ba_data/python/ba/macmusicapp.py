@@ -10,7 +10,7 @@ import _ba
 from ba._music import MusicPlayer
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Callable, Any
+    from typing import Optional, Callable, Any
 
 
 class MacMusicAppMusicPlayer(MusicPlayer):
@@ -60,7 +60,7 @@ class _MacMusicAppThread(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self._commands_available = threading.Event()
-        self._commands: List[List] = []
+        self._commands: list[list] = []
         self._volume = 1.0
         self._current_playlist: Optional[str] = None
         self._orig_volume: Optional[int] = None
@@ -153,7 +153,7 @@ class _MacMusicAppThread(threading.Thread):
         self._commands_available.set()
 
     def _handle_get_playlists_command(
-            self, target: Callable[[List[str]], None]) -> None:
+            self, target: Callable[[list[str]], None]) -> None:
         from ba._general import Call
         try:
             playlists = _ba.mac_music_app_get_playlists()

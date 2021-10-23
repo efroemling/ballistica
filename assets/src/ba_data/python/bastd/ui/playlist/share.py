@@ -12,7 +12,7 @@ import ba
 from bastd.ui import promocode
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Optional, Tuple
+    from typing import Any, Callable, Optional
 
 
 class SharePlaylistImportWindow(promocode.PromoCodeWindow):
@@ -26,7 +26,7 @@ class SharePlaylistImportWindow(promocode.PromoCodeWindow):
                                            origin_widget=origin_widget)
         self._on_success_callback = on_success_callback
 
-    def _on_import_response(self, response: Optional[Dict[str, Any]]) -> None:
+    def _on_import_response(self, response: Optional[dict[str, Any]]) -> None:
         if response is None:
             ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -67,7 +67,7 @@ class SharePlaylistResultsWindow(ba.Window):
     def __init__(self,
                  name: str,
                  data: str,
-                 origin: Tuple[float, float] = (0.0, 0.0)):
+                 origin: tuple[float, float] = (0.0, 0.0)):
         del origin  # unused arg
         self._width = 450
         self._height = 300

@@ -696,7 +696,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "\n"
      "Return whether the underlying player is still in the game."},
     {"assigninput", (PyCFunction)AssignInputCall, METH_VARARGS | METH_KEYWORDS,
-     "assigninput(type: Union[ba.InputType, Tuple[ba.InputType, ...]],\n"
+     "assigninput(type: Union[ba.InputType, tuple[ba.InputType, ...]],\n"
      "  call: Callable) -> None\n"
      "\n"
      "Set the python callable to be run for one or more types of input."},
@@ -732,11 +732,11 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "\n"
      "(internal)"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
-     "get_icon() -> Dict[str, Any]\n"
+     "get_icon() -> dict[str, Any]\n"
      "\n"
      "Returns the character's icon (images, colors, etc contained in a dict)"},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
-     "get_icon_info() -> Dict[str, Any]\n"
+     "get_icon_info() -> dict[str, Any]\n"
      "\n"
      "(internal)"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,

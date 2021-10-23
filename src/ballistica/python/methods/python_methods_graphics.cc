@@ -225,7 +225,7 @@ auto PyGetDisplayResolution(PyObject* self, PyObject* args) -> PyObject* {
 auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
   return {
       {"get_display_resolution", PyGetDisplayResolution, METH_VARARGS,
-       "get_display_resolution() -> Optional[Tuple[int, int]]\n"
+       "get_display_resolution() -> Optional[tuple[int, int]]\n"
        "\n"
        "(internal)\n"
        "\n"
@@ -290,7 +290,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
 
       {"safecolor", (PyCFunction)PySafeColor, METH_VARARGS | METH_KEYWORDS,
        "safecolor(color: Sequence[float], target_intensity: float = 0.6)\n"
-       "  -> Tuple[float, ...]\n"
+       "  -> tuple[float, ...]\n"
        "\n"
        "Given a color tuple, return a color safe to display as text.\n"
        "\n"

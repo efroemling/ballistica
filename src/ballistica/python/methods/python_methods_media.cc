@@ -412,7 +412,7 @@ auto PythonMethodsMedia::GetMethods() -> std::vector<PyMethodDef> {
 
       {"mac_music_app_get_playlists", (PyCFunction)PyMacMusicAppGetPlaylists,
        METH_VARARGS | METH_KEYWORDS,
-       "mac_music_app_get_playlists() -> List[str]\n"
+       "mac_music_app_get_playlists() -> list[str]\n"
        "\n"
        "(internal)"},
 

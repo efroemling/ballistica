@@ -21,7 +21,7 @@ from bastd.actor.spazbot import (SpazBotSet, SpazBotDiedMessage, BomberBot,
                                  ChargerBot, StickyBot, ExplodeyBot)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, List, Optional, Sequence
+    from typing import Any, Optional, Sequence
     from bastd.actor.spazbot import SpazBot
 
 
@@ -70,7 +70,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._powerup_center = (0, 7, -4.14)
         self._powerup_spread = (7, 2)
         self._preset = str(settings.get('preset', 'default'))
-        self._excludepowerups: List[str] = []
+        self._excludepowerups: list[str] = []
         self._scoreboard: Optional[Scoreboard] = None
         self._score = 0
         self._bots = SpazBotSet()
@@ -185,11 +185,11 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._bot_update_interval = max(0.5, self._bot_update_interval * 0.98)
         self._bot_update_timer = ba.Timer(self._bot_update_interval,
                                           ba.WeakCall(self._update_bots))
-        botspawnpts: List[Sequence[float]] = [[-5.0, 5.5, -4.14],
+        botspawnpts: list[Sequence[float]] = [[-5.0, 5.5, -4.14],
                                               [0.0, 5.5, -4.14],
                                               [5.0, 5.5, -4.14]]
         dists = [0.0, 0.0, 0.0]
-        playerpts: List[Sequence[float]] = []
+        playerpts: list[Sequence[float]] = []
         for player in self.players:
             try:
                 if player.is_alive():
@@ -220,7 +220,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # Now go back through and see where this value falls.
         total = 0
-        bottype: Optional[Type[SpazBot]] = None
+        bottype: Optional[type[SpazBot]] = None
         for spawntype, spawninfo in self._bot_spawn_types.items():
             total += spawninfo.spawnrate
             if randval <= total:
@@ -284,7 +284,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
-    def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
+    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
         self._show_standard_scores_to_beat_ui(scores)
 
     def end_game(self) -> None:

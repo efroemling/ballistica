@@ -12,7 +12,7 @@ from ba._session import Session
 from ba._error import NotFoundError, print_error
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Dict, List, Type, Sequence
+    from typing import Optional, Any, Sequence
     import ba
 
 DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
@@ -105,9 +105,9 @@ class MultiTeamSession(Session):
                                      shuffle=self._playlist_randomize)
 
         # Get a game on deck ready to go.
-        self._current_game_spec: Optional[Dict[str, Any]] = None
-        self._next_game_spec: Dict[str, Any] = self._playlist.pull_next()
-        self._next_game: Type[ba.GameActivity] = (
+        self._current_game_spec: Optional[dict[str, Any]] = None
+        self._next_game_spec: dict[str, Any] = self._playlist.pull_next()
+        self._next_game: type[ba.GameActivity] = (
             self._next_game_spec['resolved_type'])
 
         # Go ahead and instantiate the next game we'll
@@ -129,7 +129,7 @@ class MultiTeamSession(Session):
         """Returns a description of the next game on deck."""
         # pylint: disable=cyclic-import
         from ba._gameactivity import GameActivity
-        gametype: Type[GameActivity] = self._next_game_spec['resolved_type']
+        gametype: type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
         return gametype.get_settings_display_string(self._next_game_spec)
 
@@ -274,13 +274,13 @@ class ShuffleList:
     (avoids repeats in maps or game types)
     """
 
-    def __init__(self, items: List[Dict[str, Any]], shuffle: bool = True):
+    def __init__(self, items: list[dict[str, Any]], shuffle: bool = True):
         self.source_list = items
         self.shuffle = shuffle
-        self.shuffle_list: List[Dict[str, Any]] = []
-        self.last_gotten: Optional[Dict[str, Any]] = None
+        self.shuffle_list: list[dict[str, Any]] = []
+        self.last_gotten: Optional[dict[str, Any]] = None
 
-    def pull_next(self) -> Dict[str, Any]:
+    def pull_next(self) -> dict[str, Any]:
         """Pull and return the next item on the shuffle-list."""
 
         # Refill our list if its empty.

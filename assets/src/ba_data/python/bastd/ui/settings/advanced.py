@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Tuple, Any, Optional, List, Dict
+    from typing import Any, Optional
 
 
 class AdvancedSettingsWindow(ba.Window):
@@ -31,7 +31,7 @@ class AdvancedSettingsWindow(ba.Window):
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -57,8 +57,8 @@ class AdvancedSettingsWindow(ba.Window):
                    1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
             stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._prev_lang = ''
-        self._prev_lang_list: List[str] = []
-        self._complete_langs_list: Optional[List] = None
+        self._prev_lang_list: list[str] = []
+        self._complete_langs_list: Optional[list] = None
         self._complete_langs_error = False
         self._language_popup: Optional[popup_ui.PopupMenu] = None
 
@@ -693,7 +693,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._save_state()
         ba.timer(0.1, ba.WeakCall(self._rebuild), timetype=ba.TimeType.REAL)
 
-    def _completed_langs_cb(self, results: Optional[Dict[str, Any]]) -> None:
+    def _completed_langs_cb(self, results: Optional[dict[str, Any]]) -> None:
         if results is not None and results['langs'] is not None:
             self._complete_langs_list = results['langs']
             self._complete_langs_error = False

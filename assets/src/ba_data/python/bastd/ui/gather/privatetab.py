@@ -20,7 +20,7 @@ from bastd.ui.gather import GatherTab
 from bastd.ui import getcurrency
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, List, Type
+    from typing import Optional, Any
     from bastd.ui.gather import GatherWindow
 
 # Print a bit of info about queries, etc.
@@ -160,7 +160,7 @@ class PrivateGatherTab(GatherTab):
             raise RuntimeError(f'Invalid sessiontype {sessiontypestr}')
         hcfg.session_type = sessiontypestr
 
-        sessiontype: Type[ba.Session]
+        sessiontype: type[ba.Session]
         if hcfg.session_type == 'ffa':
             sessiontype = ba.FreeForAllSession
         elif hcfg.session_type == 'teams':
@@ -177,7 +177,7 @@ class PrivateGatherTab(GatherTab):
                               if playlist_name == '__default__' else
                               playlist_name)
 
-        playlist: Optional[List[Dict[str, Any]]] = None
+        playlist: Optional[list[dict[str, Any]]] = None
         if playlist_name != '__default__':
             playlist = (cfg.get(f'{pvars.config_name} Playlists',
                                 {}).get(playlist_name))
@@ -197,7 +197,7 @@ class PrivateGatherTab(GatherTab):
         hcfg.tutorial = tutorial
 
         if hcfg.session_type == 'teams':
-            ctn: Optional[List[str]] = cfg.get('Custom Team Names')
+            ctn: Optional[list[str]] = cfg.get('Custom Team Names')
             if ctn is not None:
                 if (isinstance(ctn, (list, tuple)) and len(ctn) == 2
                         and all(isinstance(x, str) for x in ctn)):
@@ -205,7 +205,7 @@ class PrivateGatherTab(GatherTab):
                 else:
                     print(f'Found invalid custom-team-names data: {ctn}')
 
-            ctc: Optional[List[List[float]]] = cfg.get('Custom Team Colors')
+            ctc: Optional[list[list[float]]] = cfg.get('Custom Team Colors')
             if ctc is not None:
                 if (isinstance(ctc, (list, tuple)) and len(ctc) == 2
                         and all(isinstance(x, (list, tuple)) for x in ctc)
@@ -269,7 +269,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_hosting_state_query_time = now
 
     def _hosting_state_idle_response(self,
-                                     result: Optional[Dict[str, Any]]) -> None:
+                                     result: Optional[dict[str, Any]]) -> None:
 
         # This simply passes through to our standard response handler.
         # The one exception is if we've recently sent an action to the
@@ -284,7 +284,7 @@ class PrivateGatherTab(GatherTab):
             return
         self._hosting_state_response(result)
 
-    def _hosting_state_response(self, result: Optional[Dict[str,
+    def _hosting_state_response(self, result: Optional[dict[str,
                                                             Any]]) -> None:
 
         # Its possible for this to come back to us after our UI is dead;
@@ -344,7 +344,7 @@ class PrivateGatherTab(GatherTab):
         # Kick off an update to get any needed messages sent/etc.
         ba.pushcall(self._update)
 
-    def _selwidgets(self) -> List[Optional[ba.Widget]]:
+    def _selwidgets(self) -> list[Optional[ba.Widget]]:
         """An indexed list of widgets we can use for saving/restoring sel."""
         return [
             self._host_playlist_button, self._host_copy_button,
@@ -844,7 +844,7 @@ class PrivateGatherTab(GatherTab):
 
         self._connect_to_party_code(code)
 
-    def _connect_response(self, result: Optional[Dict[str, Any]]) -> None:
+    def _connect_response(self, result: Optional[dict[str, Any]]) -> None:
         try:
             self._connect_press_time = None
             if result is None:

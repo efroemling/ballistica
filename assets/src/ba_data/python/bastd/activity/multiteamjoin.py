@@ -11,7 +11,7 @@ from ba.internal import JoinActivity
 from bastd.actor.text import Text
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional
+    from typing import Optional
 
 
 class MultiTeamJoinActivity(JoinActivity):

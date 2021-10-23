@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 # Released under the MIT License. See LICENSE for details.
 #
 """A tool for interacting with ballistica's cloud services.
@@ -22,7 +22,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Tuple, List, BinaryIO
+    from typing import Optional, BinaryIO
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
@@ -86,16 +86,16 @@ class Response:
     login: Optional[str] = None
     logout: bool = False
     dir_manifest: Optional[str] = None
-    uploads: Optional[Tuple[List[str], str, Dict]] = None
-    uploads_inline: Optional[List[str]] = None
-    downloads_inline: Optional[Dict[str, str]] = None
-    deletes: Optional[List[str]] = None
+    uploads: Optional[tuple[list[str], str, dict]] = None
+    uploads_inline: Optional[list[str]] = None
+    downloads_inline: Optional[dict[str, str]] = None
+    deletes: Optional[list[str]] = None
     dir_prune_empty: Optional[str] = None
     open_url: Optional[str] = None
-    input_prompt: Optional[Tuple[str, bool]] = None
+    input_prompt: Optional[tuple[str, bool]] = None
     end_message: Optional[str] = None
     end_message_end: str = '\n'
-    end_command: Optional[Tuple[str, Dict]] = None
+    end_command: Optional[tuple[str, dict]] = None
 
 
 def get_tz_offset_seconds() -> float:
@@ -120,7 +120,7 @@ class DirManifest:
 
     def __init__(self) -> None:
         self.path = Path('')
-        self.files: Dict[str, DirManifestFile] = {}
+        self.files: dict[str, DirManifestFile] = {}
 
     @classmethod
     def load_from_disk(cls, path: Path) -> DirManifest:
@@ -129,7 +129,7 @@ class DirManifest:
 
         package.path = path
         packagepathstr = str(path)
-        paths: List[str] = []
+        paths: list[str] = []
 
         # Simply return empty manifests if the given path isn't a dir.
         # (the server may intend to create it and is just asking what's
@@ -146,7 +146,7 @@ class DirManifest:
         from concurrent.futures import ThreadPoolExecutor
         from multiprocessing import cpu_count
 
-        def _get_file_info(filepath: str) -> Tuple[str, DirManifestFile]:
+        def _get_file_info(filepath: str) -> tuple[str, DirManifestFile]:
             sha = hashlib.sha256()
             fullfilepath = os.path.join(packagepathstr, filepath)
             if not os.path.isfile(fullfilepath):
@@ -172,7 +172,7 @@ class App:
     def __init__(self) -> None:
         self._state = StateData()
         self._project_root: Optional[Path] = None
-        self._end_command_args: Dict = {}
+        self._end_command_args: dict = {}
 
     def run(self) -> None:
         """Run the tool."""
@@ -231,8 +231,8 @@ class App:
 
     def _servercmd(self,
                    cmd: str,
-                   data: Dict,
-                   files: Dict[str, BinaryIO] = None) -> Response:
+                   data: dict,
+                   files: dict[str, BinaryIO] = None) -> Response:
         """Issue a command to the server and get a response."""
 
         response_raw_2 = requests.post(
@@ -267,7 +267,7 @@ class App:
 
         return response
 
-    def _upload_file(self, filename: str, call: str, args: Dict) -> None:
+    def _upload_file(self, filename: str, call: str, args: dict) -> None:
         print(f'{Clr.BLU}Uploading {filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
@@ -276,7 +276,7 @@ class App:
                            shell=True,
                            check=True)
             with open(gzpath, 'rb') as infile:
-                putfiles: Dict = {'file': infile}
+                putfiles: dict = {'file': infile}
                 _response = self._servercmd(
                     call,
                     args,
@@ -293,7 +293,7 @@ class App:
                       for key, val in manifest.files.items()}
         }
 
-    def _handle_uploads(self, uploads: Tuple[List[str], str, Dict]) -> None:
+    def _handle_uploads(self, uploads: tuple[list[str], str, dict]) -> None:
         from concurrent.futures import ThreadPoolExecutor
         assert len(uploads) == 3
         filenames, uploadcmd, uploadargs = uploads
@@ -312,7 +312,7 @@ class App:
             # exceptions that occurred.
             list(executor.map(_do_filename, filenames))
 
-    def _handle_downloads_inline(self, downloads_inline: Dict[str,
+    def _handle_downloads_inline(self, downloads_inline: dict[str,
                                                               str]) -> None:
         """Handle inline file data to be saved to the client."""
         import base64
@@ -326,16 +326,16 @@ class App:
             with open(fname, 'wb') as outfile:
                 outfile.write(data)
 
-    def _handle_deletes(self, deletes: List[str]) -> None:
+    def _handle_deletes(self, deletes: list[str]) -> None:
         """Handle file deletes."""
         for fname in deletes:
             os.unlink(fname)
 
-    def _handle_uploads_inline(self, uploads_inline: List[str]) -> None:
+    def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
         """Handle uploading files inline."""
         import base64
         import zlib
-        files: Dict[str, str] = {}
+        files: dict[str, str] = {}
         for filepath in uploads_inline:
             if not os.path.exists(filepath):
                 raise CleanError(f'File not found: {filepath}')
@@ -373,11 +373,11 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def run_user_command(self, args: List[str]) -> None:
+    def run_user_command(self, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
 
-        nextcall: Optional[Tuple[str, Dict]] = ('user', {'a': args})
+        nextcall: Optional[tuple[str, dict]] = ('user', {'a': args})
 
         # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:

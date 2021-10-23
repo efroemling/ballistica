@@ -10,7 +10,7 @@ import _ba
 from ba._generated.enums import UIScale
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, Callable, List, Type
+    from typing import Optional, Any, Callable
     from ba.ui import UICleanupCheck
     import ba
 
@@ -43,13 +43,13 @@ class UISubsystem:
         else:
             raise RuntimeError(f'Invalid UIScale value: {interfacetype}')
 
-        self.window_states: Dict[Type, Any] = {}  # FIXME: Kill this.
+        self.window_states: dict[type, Any] = {}  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
         self.have_party_queue_window = False
         self.quit_window: Any = None
         self.dismiss_wii_remotes_window_call: (Optional[Callable[[],
                                                                  Any]]) = None
-        self.cleanupchecks: List[UICleanupCheck] = []
+        self.cleanupchecks: list[UICleanupCheck] = []
         self.upkeeptimer: Optional[ba.Timer] = None
         self.use_toolbars = env.get('toolbar_test', True)
         self.party_window: Any = None  # FIXME: Don't use Any.

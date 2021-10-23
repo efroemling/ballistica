@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Dict, Union
+    from typing import Any, Optional, Union
 
 
 class AppInviteWindow(ba.Window):
@@ -20,7 +20,7 @@ class AppInviteWindow(ba.Window):
 
     def __init__(self) -> None:
         ba.set_analytics_screen('AppInviteWindow')
-        self._data: Optional[Dict[str, Any]] = None
+        self._data: Optional[dict[str, Any]] = None
         self._width = 650
         self._height = 400
 
@@ -114,7 +114,7 @@ class AppInviteWindow(ba.Window):
             callback=ba.WeakCall(self._on_code_result))
         _ba.run_transactions()
 
-    def _on_code_result(self, result: Optional[Dict[str, Any]]) -> None:
+    def _on_code_result(self, result: Optional[dict[str, Any]]) -> None:
         if result is not None:
             self._data = result
 
@@ -151,7 +151,7 @@ class AppInviteWindow(ba.Window):
 class ShowFriendCodeWindow(ba.Window):
     """Window showing a code for sharing with friends."""
 
-    def __init__(self, data: Dict[str, Any]):
+    def __init__(self, data: dict[str, Any]):
         from ba.internal import is_browser_likely_available
         ba.set_analytics_screen('Friend Promo Code')
         self._width = 650
@@ -317,7 +317,7 @@ def handle_app_invites_press(force_code: bool = False) -> None:
             ba.Lstr(resource='gatherWindow.requestingAPromoCodeText'),
             color=(0, 1, 0))
 
-        def handle_result(result: Optional[Dict[str, Any]]) -> None:
+        def handle_result(result: Optional[dict[str, Any]]) -> None:
             with ba.Context('ui'):
                 if result is None:
                     ba.screenmessage(ba.Lstr(resource='errorText'),

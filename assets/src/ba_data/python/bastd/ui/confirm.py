@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Callable, Tuple, Optional
+    from typing import Any, Union, Callable, Optional
 
 
 class ConfirmWindow:
@@ -23,7 +23,7 @@ class ConfirmWindow:
                  height: float = 100.0,
                  cancel_button: bool = True,
                  cancel_is_selected: bool = False,
-                 color: Tuple[float, float, float] = (1, 1, 1),
+                 color: tuple[float, float, float] = (1, 1, 1),
                  text_scale: float = 1.0,
                  ok_text: Union[str, ba.Lstr] = None,
                  cancel_text: Union[str, ba.Lstr] = None,
@@ -39,7 +39,7 @@ class ConfirmWindow:
 
         # if they provided an origin-widget, scale up from that
         self._transition_out: Optional[str]
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

@@ -12,7 +12,7 @@ import _ba
 from ba._music import MusicPlayer
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Union, List, Optional
+    from typing import Callable, Any, Union, Optional
 
 
 class OSMusicPlayer(MusicPlayer):
@@ -26,7 +26,7 @@ class OSMusicPlayer(MusicPlayer):
         self._actually_playing = False
 
     @classmethod
-    def get_valid_music_file_extensions(cls) -> List[str]:
+    def get_valid_music_file_extensions(cls) -> list[str]:
         """Return file extensions for types playable on this device."""
         # FIXME: should ask the C++ layer for these; just hard-coding for now.
         return ['mp3', 'ogg', 'm4a', 'wav', 'flac', 'mid']
@@ -60,7 +60,7 @@ class OSMusicPlayer(MusicPlayer):
                                   self._on_play_folder_cb).start()
 
     def _on_play_folder_cb(self,
-                           result: Union[str, List[str]],
+                           result: Union[str, list[str]],
                            error: Optional[str] = None) -> None:
         from ba import _language
         if error is not None:
@@ -94,8 +94,8 @@ class OSMusicPlayer(MusicPlayer):
 
 class _PickFolderSongThread(threading.Thread):
 
-    def __init__(self, path: str, valid_extensions: List[str],
-                 callback: Callable[[Union[str, List[str]], Optional[str]],
+    def __init__(self, path: str, valid_extensions: list[str],
+                 callback: Callable[[Union[str, list[str]], Optional[str]],
                                     None]):
         super().__init__()
         self._valid_extensions = valid_extensions
@@ -108,7 +108,7 @@ class _PickFolderSongThread(threading.Thread):
         do_print_error = True
         try:
             _ba.set_thread_name('BA_PickFolderSongThread')
-            all_files: List[str] = []
+            all_files: list[str] = []
             valid_extensions = ['.' + x for x in self._valid_extensions]
             for root, _subdirs, filenames in os.walk(self._path):
                 for fname in filenames:

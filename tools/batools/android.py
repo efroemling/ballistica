@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import efrotools
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Set
+    pass
 
 
 def androidaddr(archive_dir: str, arch: str, addr: str) -> None:

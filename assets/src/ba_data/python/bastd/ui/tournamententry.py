@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Callable, Optional, Dict
+    from typing import Any, Callable, Optional
 
 
 class TournamentEntryWindow(popup.PopupWindow):
@@ -20,10 +20,10 @@ class TournamentEntryWindow(popup.PopupWindow):
     def __init__(self,
                  tournament_id: str,
                  tournament_activity: ba.Activity = None,
-                 position: Tuple[float, float] = (0.0, 0.0),
+                 position: tuple[float, float] = (0.0, 0.0),
                  delegate: Any = None,
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0),
+                 offset: tuple[float, float] = (0.0, 0.0),
                  on_close_call: Callable[[], Any] = None):
         # Needs some tidying.
         # pylint: disable=too-many-branches
@@ -302,7 +302,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._update()
         self._restore_state()
 
-    def _on_tournament_query_response(self, data: Optional[Dict[str,
+    def _on_tournament_query_response(self, data: Optional[dict[str,
                                                                 Any]]) -> None:
         accounts = ba.app.accounts
         self._running_query = False

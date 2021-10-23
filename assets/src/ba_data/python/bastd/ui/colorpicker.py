@@ -10,7 +10,7 @@ import ba
 from bastd.ui.popup import PopupWindow
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence, List, Optional
+    from typing import Any, Sequence, Optional
 
 
 class ColorPicker(PopupWindow):
@@ -21,11 +21,11 @@ class ColorPicker(PopupWindow):
 
     def __init__(self,
                  parent: ba.Widget,
-                 position: Tuple[float, float],
+                 position: tuple[float, float],
                  initial_color: Sequence[float] = (1.0, 1.0, 1.0),
                  delegate: Any = None,
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0),
+                 offset: tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
         from ba.internal import get_player_colors
@@ -56,11 +56,11 @@ class ColorPicker(PopupWindow):
                              focus_size=(190, 220),
                              bg_color=(0.5, 0.5, 0.5),
                              offset=offset)
-        rows: List[List[ba.Widget]] = []
+        rows: list[list[ba.Widget]] = []
         closest_dist = 9999.0
         closest = (0, 0)
         for y in range(4):
-            row: List[ba.Widget] = []
+            row: list[ba.Widget] = []
             rows.append(row)
             for x in range(4):
                 color = self.colors[y][x]
@@ -159,11 +159,11 @@ class ColorPickerExact(PopupWindow):
 
     def __init__(self,
                  parent: ba.Widget,
-                 position: Tuple[float, float],
+                 position: tuple[float, float],
                  initial_color: Sequence[float] = (1.0, 1.0, 1.0),
                  delegate: Any = None,
                  scale: float = None,
-                 offset: Tuple[float, float] = (0.0, 0.0),
+                 offset: tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
         del parent  # Unused var.

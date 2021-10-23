@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Optional, Sequence
+    from typing import Optional, Sequence
 
 
 class Mode(Enum):
@@ -98,10 +98,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
     if not (src.is_dir() or src.is_file()):
         raise ValueError(f'src path is not a dir or file: {src}')
 
-    changed_error_dst_files: List[Path] = []
+    changed_error_dst_files: list[Path] = []
 
     # Build a list of all valid source files and their equivalent paths in dst.
-    allpaths: List[Tuple[Path, Path]] = []
+    allpaths: list[tuple[Path, Path]] = []
 
     if src.is_file():
         if not _valid_filename(src.name):
@@ -199,7 +199,7 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
     # Now, if dst is a dir, iterate through and kill anything not in src.
     if dst.is_dir():
-        killpaths: List[Path] = []
+        killpaths: list[Path] = []
         for root, dirnames, fnames in os.walk(dst):
             for name in dirnames + fnames:
                 if (name.startswith('.') or '__pycache__' in root
@@ -235,7 +235,7 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
 def check_path(dst: Path) -> int:
     """Verify files under dst have not changed from their last sync."""
-    allpaths: List[Path] = []
+    allpaths: list[Path] = []
     for root, _dirs, fnames in os.walk(dst):
         for fname in fnames:
             if _valid_filename(fname):
@@ -285,7 +285,7 @@ def string_hash(data: str) -> str:
     return str(int.from_bytes(md5.digest(), byteorder='big'))
 
 
-def get_dst_file_info(dstfile: Path) -> Tuple[str, str, str]:
+def get_dst_file_info(dstfile: Path) -> tuple[str, str, str]:
     """Given a path, returns embedded marker hash and its actual hash."""
     with dstfile.open() as infile:
         dstdata = infile.read()

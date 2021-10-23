@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, List, Tuple, Dict
+    from typing import Any, Optional
 
 
 class SoundtrackBrowserWindow(ba.Window):
@@ -24,7 +24,7 @@ class SoundtrackBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[Tuple[float, float]]
+        scale_origin: Optional[tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -81,7 +81,7 @@ class SoundtrackBrowserWindow(ba.Window):
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
         lock_tex = ba.gettexture('lock')
-        self._lock_images: List[ba.Widget] = []
+        self._lock_images: list[ba.Widget] = []
 
         scl = (1.0 if uiscale is ba.UIScale.SMALL else
                1.13 if uiscale is ba.UIScale.MEDIUM else 1.4)
@@ -195,10 +195,10 @@ class SoundtrackBrowserWindow(ba.Window):
                   if ba.app.ui.use_toolbars else self._scrollwidget)
         self._col = ba.columnwidget(parent=scrollwidget, border=2, margin=0)
 
-        self._soundtracks: Optional[Dict[str, Any]] = None
+        self._soundtracks: Optional[dict[str, Any]] = None
         self._selected_soundtrack: Optional[str] = None
         self._selected_soundtrack_index: Optional[int] = None
-        self._soundtrack_widgets: List[ba.Widget] = []
+        self._soundtrack_widgets: list[ba.Widget] = []
         self._allow_changing_soundtracks = False
         self._refresh()
         if self._back_button is not None:
@@ -259,7 +259,7 @@ class SoundtrackBrowserWindow(ba.Window):
 
         if self._selected_soundtrack is None:
             return
-        sdtk: Dict[str, Any]
+        sdtk: dict[str, Any]
         if self._selected_soundtrack == '__default__':
             sdtk = {}
         else:

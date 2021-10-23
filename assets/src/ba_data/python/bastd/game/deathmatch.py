@@ -14,7 +14,7 @@ from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Tuple, Union, Sequence, Optional
+    from typing import Any, Union, Sequence, Optional
 
 
 class Player(ba.Player['Team']):
@@ -40,7 +40,7 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
 
     @classmethod
     def get_available_settings(
-            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
+            cls, sessiontype: type[ba.Session]) -> list[ba.Setting]:
         settings = [
             ba.IntSetting(
                 'Kills to Win Per Player',
@@ -86,12 +86,12 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         return settings
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+    def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+    def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
         return ba.getmaps('melee')
 
     def __init__(self, settings: dict):

@@ -64,7 +64,7 @@
       <excludePattern pattern=".pytest_cache" />
       <excludePattern pattern=".editorconfig" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
