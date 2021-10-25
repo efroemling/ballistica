@@ -2,6 +2,7 @@
 - Added co-op support to server builds (thanks Dliwk!)
 - Updated everything from Python 3.8 to Python 3.9. The biggest immediate impact to our code is that basic types such as list, dict, and tuple can be used in annotations, eliminating the need to import typing.Dict, typing.List, etc. See python.org for more changes.
 - Note: accessing mods on external storage on Android will not work in this release. This functionality has not been working in recent versions of Android due to increased security features anyway and I am in the process of replacing it with a cloud based system for installing mods. More on this soon.
+- Python 3.9 no longer supports Windows 7 or earlier (according to https://www.python.org/downloads/windows/) so if you are running such a version of Windows you will need to stick to older builds.
 
 ### 1.6.4 (20382)
 - Some cleanups in the Favorites tab of the gather window.

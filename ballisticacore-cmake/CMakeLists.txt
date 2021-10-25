@@ -312,6 +312,7 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/game.cc
   ${BA_SRC_ROOT}/ballistica/game/game.h
   ${BA_SRC_ROOT}/ballistica/game/game_stream.h
+  ${BA_SRC_ROOT}/ballistica/game/host_activity.cc
   ${BA_SRC_ROOT}/ballistica/game/host_activity.h
   ${BA_SRC_ROOT}/ballistica/game/player.cc
   ${BA_SRC_ROOT}/ballistica/game/player.h
