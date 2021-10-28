@@ -1,6 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #include "ballistica/python/methods/python_methods_graphics.h"
+#include "ballistica/graphics/camera.h"
 
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics.h"
@@ -15,6 +16,84 @@ namespace ballistica {
 // Ignore signed bitwise stuff; python macros do it quite a bit.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
+
+auto PyGetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("get_camera_position");
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  Camera* cam = g_graphics->camera();
+  cam->get_position(&x, &y, &z);
+  return Py_BuildValue("(fff)", x, y, z);
+  BA_PYTHON_CATCH;
+}
+
+auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("get_camera_target");
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  Camera* cam = g_graphics->camera();
+  cam->target_smoothed(&x, &y, &z);
+  return Py_BuildValue("(fff)", x, y, z);
+  BA_PYTHON_CATCH;
+}
+
+auto PySetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("set_camera_position");
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  static const char* kwlist[] = {"x", "y", "z", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "fff",
+                                   const_cast<char**>(kwlist), &x, &y, &z)) {
+    return nullptr;
+  }
+  assert(g_game);
+  g_graphics->camera()->SetPosition(x, y, z);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("set_camera_target");
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  static const char* kwlist[] = { "x", "y", "z", nullptr };
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "fff",
+    const_cast<char**>(kwlist), &x, &y, &z)) {
+    return nullptr;
+  }
+  assert(g_game);
+  g_graphics->camera()->SetTarget(x, y, z);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PySetCameraManual(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("set_camera_manual");
+  bool value = false;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "b",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+  assert(g_game);
+  g_graphics->camera()->SetManual(value);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
 
 auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -231,6 +310,36 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Return the currently selected display resolution for fullscreen\n"
        "display. Returns None if resolutions cannot be directly set."},
+
+      {"get_camera_position", (PyCFunction)PyGetCameraPosition,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_camera_position() -> tuple[float, float, float]\n"
+       "\n"
+       "(internal)"},
+
+      {"get_camera_target", (PyCFunction)PyGetCameraTarget,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_camera_target() -> tuple[float, float, float]\n"
+       "\n"
+       "(internal)"},
+
+      {"set_camera_position", (PyCFunction)PySetCameraPosition,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_camera_position(x: float, y: float, z: float) -> None\n"
+       "\n"
+       "(internal)"},
+
+      {"set_camera_target", (PyCFunction)PySetCameraTarget,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_camera_target(x: float, y: float, z: float) -> None\n"
+       "\n"
+       "(internal)"},
+
+      {"set_camera_manual", (PyCFunction)PySetCameraManual,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_camera_manual(value: bool) -> None\n"
+       "\n"
+       "(internal)"},
 
       {"has_gamma_control", PyHasGammaControl, METH_VARARGS,
        "has_gamma_control() -> bool\n"
