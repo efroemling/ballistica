@@ -1,9 +1,9 @@
 // Released under the MIT License. See LICENSE for details.
 
 #include "ballistica/python/methods/python_methods_graphics.h"
-#include "ballistica/graphics/camera.h"
 
 #include "ballistica/game/game.h"
+#include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/platform/platform.h"
@@ -68,9 +68,9 @@ auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
-  static const char* kwlist[] = { "x", "y", "z", nullptr };
+  static const char* kwlist[] = {"x", "y", "z", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "fff",
-    const_cast<char**>(kwlist), &x, &y, &z)) {
+                                   const_cast<char**>(kwlist), &x, &y, &z)) {
     return nullptr;
   }
   assert(g_game);
