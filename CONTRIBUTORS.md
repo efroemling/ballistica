@@ -26,3 +26,6 @@
 
 ### Ritiek Malhotra
 - Just <3 BombSquad
+
+### Ivan Ms
+- Few camera features
