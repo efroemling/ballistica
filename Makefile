@@ -188,11 +188,11 @@ RUN_PREFAB_MAC_ARM64_GUI_DEBUG = cd build/prefab/full/mac_arm64_gui/debug \
   && ./ballisticacore
 
 prefab-mac-x86-64-gui-debug: prefab-mac-x86-64-gui-debug-build
-	@tools/pcommand ensure_build_platform mac_x86_64
+	@tools/pcommand ensure_prefab_platform mac_x86_64
 	@${RUN_PREFAB_MAC_X86_64_GUI_DEBUG}
 
 prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
-	@tools/pcommand ensure_build_platform mac_arm64
+	@tools/pcommand ensure_prefab_platform mac_arm64
 	@${RUN_PREFAB_MAC_ARM64_GUI_DEBUG}
 
 prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
@@ -855,7 +855,7 @@ cmake-build: assets-cmake resources meta
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
       ${PWD}/ballisticacore-cmake
-	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS)
+	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticacore
 
 cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)

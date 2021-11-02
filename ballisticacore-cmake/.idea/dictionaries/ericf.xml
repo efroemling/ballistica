@@ -79,6 +79,7 @@
       <w>ballistica</w>
       <w>ballisticacore</w>
       <w>bamasteraddr</w>
+      <w>bamasterlegacy</w>
       <w>bameta</w>
       <w>bametainternal</w>
       <w>barebones</w>
@@ -799,6 +800,7 @@
       <w>piplist</w>
       <w>pipvers</w>
       <w>pixelformat</w>
+      <w>platstr</w>
       <w>playpause</w>
       <w>playsound</w>
       <w>plen</w>

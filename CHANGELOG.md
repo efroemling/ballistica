@@ -1,3 +1,6 @@
+### 1.6.6 (20394)
+- Beginning work on moving to new asset system.
+
 ### 1.6.5 (20394)
 - Added co-op support to server builds (thanks Dliwk!)
 - Updated everything from Python 3.8 to Python 3.9. The biggest immediate impact to our code is that basic types such as list, dict, and tuple can be used in annotations, eliminating the need to import typing.Dict, typing.List, etc. See python.org for more changes.

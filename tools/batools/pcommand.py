@@ -589,7 +589,13 @@ def wsl_path_to_win() -> None:
 
 
 def ensure_prefab_platform() -> None:
-    """Ensure we are building on a particular platform."""
+    """Ensure we are running on a particular prefab platform.
+
+    Note that prefab platform may not exactly match hardware/os.
+    For example, when running in Linux under a WSL environment,
+    the prefab platform may be Windows; not Linux. Also, a 64-bit
+    os may be targeting a 32-bit platform.
+    """
     import batools.build
     from efro.error import CleanError
 
@@ -630,12 +636,6 @@ def make_prefab() -> None:
         if str(exc):
             print(f'make_prefab failed with error: {exc}')
         sys.exit(-1)
-
-
-def update_makebob() -> None:
-    """Build fresh make_bob binaries for all relevant platforms."""
-    import batools.build
-    batools.build.update_makebob()
 
 
 def lazybuild() -> None:

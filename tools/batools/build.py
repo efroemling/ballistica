@@ -495,7 +495,6 @@ def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
             return 'mac_x86_64'
         if machine == 'arm64':
             return 'mac_arm64'
-        # TODO: add support for arm macs.
         raise RuntimeError(f'make_prefab: unsupported mac machine type:'
                            f' {machine}.')
     if system == 'Linux':
@@ -659,29 +658,29 @@ def get_pip_reqs() -> list[str]:
     return out
 
 
-def update_makebob() -> None:
-    """Build fresh make_bob binaries for all relevant platforms."""
-    print('Building mac_x86_64...', flush=True)
-    env = dict(os.environ)
-    env['CMAKE_BUILD_TYPE'] = 'Release'
-    subprocess.run(['make', 'cmake-build'], check=True, env=env)
-    subprocess.run(
-        [
-            'cp', '-v', 'build/cmake/release/make_bob',
-            'tools/make_bob/mac_x86_64/'
-        ],
-        check=True,
-    )
-    print('Building linux_x86_64...', flush=True)
-    subprocess.run(['make', 'linux-vm-build'], check=True, env=env)
-    subprocess.run(
-        [
-            'cp', '-v', 'build/linux-release/make_bob',
-            'tools/make_bob/linux_x86_64/'
-        ],
-        check=True,
-    )
-    print('All builds complete!', flush=True)
+# def update_makebob() -> None:
+#     """Build fresh make_bob binaries for all relevant platforms."""
+#     print('Building mac_x86_64...', flush=True)
+#     env = dict(os.environ)
+#     env['CMAKE_BUILD_TYPE'] = 'Release'
+#     subprocess.run(['make', 'cmake-build'], check=True, env=env)
+#     subprocess.run(
+#         [
+#             'cp', '-v', 'build/cmake/release/make_bob',
+#             'tools/make_bob/mac_x86_64/'
+#         ],
+#         check=True,
+#     )
+#     print('Building linux_x86_64...', flush=True)
+#     subprocess.run(['make', 'linux-vm-build'], check=True, env=env)
+#     subprocess.run(
+#         [
+#             'cp', '-v', 'build/linux-release/make_bob',
+#             'tools/make_bob/linux_x86_64/'
+#         ],
+#         check=True,
+#     )
+#     print('All builds complete!', flush=True)
 
 
 def _get_server_config_raw_contents(projroot: str) -> str:

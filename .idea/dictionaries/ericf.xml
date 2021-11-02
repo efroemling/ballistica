@@ -177,6 +177,7 @@
       <w>ballisticacorecb</w>
       <w>bamaster</w>
       <w>bamasteraddr</w>
+      <w>bamasterlegacy</w>
       <w>bameta</w>
       <w>bametainternal</w>
       <w>barcolor</w>
@@ -1671,6 +1672,7 @@
       <w>pipvers</w>
       <w>pkey</w>
       <w>pkgutil</w>
+      <w>platstr</w>
       <w>playercast</w>
       <w>playerdata</w>
       <w>playerinfos</w>

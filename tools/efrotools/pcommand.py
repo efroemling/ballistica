@@ -307,7 +307,7 @@ def pylint() -> None:
     efrotools.code.pylint(PROJROOT, full, fast)
 
 
-def runpylint() -> None:
+def pylint_files() -> None:
     """Run pylint checks on provided filenames."""
     from efro.terminal import Clr
     from efro.error import CleanError
@@ -415,8 +415,8 @@ def _filter_tool_config(cfg: str) -> str:
     short_names = {
         'ballistica-internal': 'ba-int',
         'ballistica': 'ba',
-        'ballistica-master-server-2.0': 'bamaster2',
         'ballistica-master-server': 'bamaster',
+        'ballistica-master-server-legacy': 'bamasterlegacy',
         'ballistica-server-node': 'baservnode',
     }
     shortname = short_names.get(PROJROOT.name, PROJROOT.name)

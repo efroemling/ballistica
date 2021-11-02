@@ -393,7 +393,8 @@ def valuedispatchmethod(
     # To the type checker's eyes we return a ValueDispatchMethod instance;
     # this lets it know about our register func and type-check its usage.
     # In reality we just return a raw function call (for reasons listed above).
-    if TYPE_CHECKING:  # pylint: disable=no-else-return
+    # pylint: disable=undefined-variable, no-else-return
+    if TYPE_CHECKING:
         return ValueDispatcherMethod[TVAL, TRET]()
     else:
         return _call_wrapper
