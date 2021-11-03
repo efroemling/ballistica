@@ -1,5 +1,6 @@
 ### 1.6.6 (20394)
 - Beginning work on moving to new asset system.
+- Added methods for changing camera attributes to the _ba module.
 
 ### 1.6.5 (20394)
 - Added co-op support to server builds (thanks Dliwk!)
