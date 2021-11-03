@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 # pylint: disable=unused-import
 from efrotools.pcommand import (
     PROJROOT, pcommand_main, formatcode, formatscripts, formatmakefile,
-    cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
+    cpplint, pylint, pylint_files, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
     makefile_target_list, spelling, spelling_all, pytest, echo,
     compile_python_files, pyver, try_repeat)
@@ -35,8 +35,8 @@ from batools.pcommand import (
     python_gather, python_winprune, capitalize, upper, efrocache_update,
     efrocache_get, get_modern_make, warm_start_asset_build, gendocs,
     update_docs_md, list_pip_reqs, install_pip_reqs, checkenv,
-    ensure_prefab_platform, prefab_run_var, make_prefab, update_makebob,
-    lazybuild, android_archive_unstripped_libs, efro_gradle, stage_assets,
+    ensure_prefab_platform, prefab_run_var, make_prefab, lazybuild,
+    android_archive_unstripped_libs, efro_gradle, stage_assets,
     update_assets_makefile, update_project, update_cmake_prefab_lib,
     cmake_prep_dir, gen_binding_code, gen_flat_data_code, wsl_path_to_win,
     wsl_build_check_win_drive, win_ci_binary_build, genchangelog,

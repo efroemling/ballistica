@@ -35,31 +35,47 @@ def failed_import_hook(modname: str) -> None:
     raise astroid.AstroidBuildingError(modname=modname)
 
 
-def ignore_type_check_filter(node: nc.NodeNG) -> nc.NodeNG:
+def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
     """Ignore stuff under 'if TYPE_CHECKING:' block at module level."""
 
     # Look for a non-nested 'if TYPE_CHECKING:'
-    if (isinstance(node.test, astroid.Name)
-            and node.test.name == 'TYPE_CHECKING'
-            and isinstance(node.parent, astroid.Module)):
+    if (isinstance(if_node.test, astroid.Name)
+            and if_node.test.name == 'TYPE_CHECKING'
+            and isinstance(if_node.parent, astroid.Module)):
 
-        # Find the module node.
-        mnode = node
-        while mnode.parent is not None:
-            mnode = mnode.parent
+        module_node = if_node.parent
 
-        # First off, remove any names that are getting defined
-        # in this block from the module locals.
-        for cnode in node.body:
-            _strip_import(cnode, mnode)
+        # Remove any locals getting defined under this if statement.
+        # (ideally should recurse in case we have nested if statements/etc
+        # but keeping it simple for now).
+        for name, locations in list(module_node.locals.items()):
+            # Calc which remaining name locations are outside of the if
+            # block. Update or delete the list as needed.
+            new_locs = [l for l in locations if not _under_if(l, if_node)]
+            if len(new_locs) == len(locations):
+                continue
+            if new_locs:
+                module_node.locals[name] = new_locs
+                continue
+            del module_node.locals[name]
 
-        # Now replace the body with a simple 'pass'. This will
-        # keep pylint from complaining about grouped imports/etc.
-        passnode = astroid.Pass(parent=node,
-                                lineno=node.lineno + 1,
-                                col_offset=node.col_offset + 1)
-        node.body = [passnode]
-    return node
+        # Now replace its children with a simple pass statement.
+        passnode = astroid.Pass(parent=if_node,
+                                lineno=if_node.lineno + 1,
+                                col_offset=if_node.col_offset + 1)
+        if_node.body = [passnode]
+    return if_node
+
+
+def _under_if(node: nc.NodeNG, if_node: nc.NodeNG) -> bool:
+    """Return whether the node is under the if statement.
+
+    (This returns False if it is under an elif/else portion)
+    """
+    # Quick out:
+    if node.parent is not if_node:
+        return False
+    return node in if_node.body
 
 
 def ignore_reveal_type_call(node: nc.NodeNG) -> nc.NodeNG:
@@ -76,19 +92,6 @@ def ignore_reveal_type_call(node: nc.NodeNG) -> nc.NodeNG:
         node.func.name = 'print'
         return node
     return node
-
-
-def _strip_import(cnode: nc.NodeNG, mnode: nc.NodeNG) -> None:
-    if isinstance(cnode, (astroid.Import, astroid.ImportFrom)):
-        for name, val in list(mnode.locals.items()):
-            if cnode in val:
-
-                # Pull us out of the list.
-                valnew = [v for v in val if v is not cnode]
-                if valnew:
-                    mnode.locals[name] = valnew
-                else:
-                    del mnode.locals[name]
 
 
 def using_future_annotations(node: nc.NodeNG) -> nc.NodeNG:
