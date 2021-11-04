@@ -32,10 +32,8 @@ TOOL_NAME = 'bacloud'
 
 # Set BACLOUD_SERVER env var to LOCAL to talk to a locally-run master-server.
 # Set it to TEST to talk to the 'test' app-engine service.
-MASTER_SERVER_ADDRESS = (
-    'http://localhost:23524' if os.environ.get('BACLOUD_SERVER') == 'LOCAL'
-    else 'https://1-dot-test-dot-bamaster.appspot.com' if os.environ.get(
-        'BACLOUD_SERVER') == 'TEST' else 'https://bamaster.appspot.com')
+MASTER_SERVER_URL = os.getenv('BACLOUD_SERVER_URL',
+                              'https://bamaster.appspot.com')
 
 
 @dataclass
@@ -236,7 +234,7 @@ class App:
         """Issue a command to the server and get a response."""
 
         response_raw_2 = requests.post(
-            (MASTER_SERVER_ADDRESS + '/bacloudcmd'),
+            (MASTER_SERVER_URL + '/bacloudcmd'),
             data={
                 'c': cmd,
                 'v': VERSION,
