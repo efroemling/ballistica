@@ -2012,6 +2012,10 @@ def get_camera_position() -> tuple[float, ...]:
     """get_camera_position() -> tuple[float, ...]
 
     (internal)
+
+    WARNING: these camera controls will not apply to network clients
+    and may behave unpredicably in other ways. Use them only for
+    tinkering.
     """
     return (0.0, 0.0, 0.0)
 
@@ -2020,6 +2024,10 @@ def get_camera_target() -> tuple[float, ...]:
     """get_camera_target() -> tuple[float, ...]
 
     (internal)
+
+    WARNING: these camera controls will not apply to network clients
+    and may behave unpredicably in other ways. Use them only for
+    tinkering.
     """
     return (0.0, 0.0, 0.0)
 
@@ -3505,6 +3513,10 @@ def set_camera_manual(value: bool) -> None:
     """set_camera_manual(value: bool) -> None
 
     (internal)
+
+    WARNING: these camera controls will not apply to network clients
+    and may behave unpredicably in other ways. Use them only for
+    tinkering.
     """
     return None
 
@@ -3513,6 +3525,10 @@ def set_camera_position(x: float, y: float, z: float) -> None:
     """set_camera_position(x: float, y: float, z: float) -> None
 
     (internal)
+
+    WARNING: these camera controls will not apply to network clients
+    and may behave unpredicably in other ways. Use them only for
+    tinkering.
     """
     return None
 
@@ -3521,6 +3537,10 @@ def set_camera_target(x: float, y: float, z: float) -> None:
     """set_camera_target(x: float, y: float, z: float) -> None
 
     (internal)
+
+    WARNING: these camera controls will not apply to network clients
+    and may behave unpredicably in other ways. Use them only for
+    tinkering.
     """
     return None
 

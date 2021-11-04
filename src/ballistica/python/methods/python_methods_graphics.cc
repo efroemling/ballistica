@@ -315,31 +315,51 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        METH_VARARGS | METH_KEYWORDS,
        "get_camera_position() -> tuple[float, ...]\n"
        "\n"
-       "(internal)"},
+       "(internal)\n"
+       "\n"
+       "WARNING: these camera controls will not apply to network clients\n"
+       "and may behave unpredicably in other ways. Use them only for\n"
+       "tinkering."},
 
       {"get_camera_target", (PyCFunction)PyGetCameraTarget,
        METH_VARARGS | METH_KEYWORDS,
        "get_camera_target() -> tuple[float, ...]\n"
        "\n"
-       "(internal)"},
+       "(internal)\n"
+       "\n"
+       "WARNING: these camera controls will not apply to network clients\n"
+       "and may behave unpredicably in other ways. Use them only for\n"
+       "tinkering."},
 
       {"set_camera_position", (PyCFunction)PySetCameraPosition,
        METH_VARARGS | METH_KEYWORDS,
        "set_camera_position(x: float, y: float, z: float) -> None\n"
        "\n"
-       "(internal)"},
+       "(internal)\n"
+       "\n"
+       "WARNING: these camera controls will not apply to network clients\n"
+       "and may behave unpredicably in other ways. Use them only for\n"
+       "tinkering."},
 
       {"set_camera_target", (PyCFunction)PySetCameraTarget,
        METH_VARARGS | METH_KEYWORDS,
        "set_camera_target(x: float, y: float, z: float) -> None\n"
        "\n"
-       "(internal)"},
+       "(internal)\n"
+       "\n"
+       "WARNING: these camera controls will not apply to network clients\n"
+       "and may behave unpredicably in other ways. Use them only for\n"
+       "tinkering."},
 
       {"set_camera_manual", (PyCFunction)PySetCameraManual,
        METH_VARARGS | METH_KEYWORDS,
        "set_camera_manual(value: bool) -> None\n"
        "\n"
-       "(internal)"},
+       "(internal)\n"
+       "\n"
+       "WARNING: these camera controls will not apply to network clients\n"
+       "and may behave unpredicably in other ways. Use them only for\n"
+       "tinkering."},
 
       {"has_gamma_control", PyHasGammaControl, METH_VARARGS,
        "has_gamma_control() -> bool\n"
