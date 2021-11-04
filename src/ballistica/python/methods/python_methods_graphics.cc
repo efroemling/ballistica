@@ -318,7 +318,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "WARNING: these camera controls will not apply to network clients\n"
-       "and may behave unpredicably in other ways. Use them only for\n"
+       "and may behave unpredictably in other ways. Use them only for\n"
        "tinkering."},
 
       {"get_camera_target", (PyCFunction)PyGetCameraTarget,
@@ -328,7 +328,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "WARNING: these camera controls will not apply to network clients\n"
-       "and may behave unpredicably in other ways. Use them only for\n"
+       "and may behave unpredictably in other ways. Use them only for\n"
        "tinkering."},
 
       {"set_camera_position", (PyCFunction)PySetCameraPosition,
@@ -338,7 +338,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "WARNING: these camera controls will not apply to network clients\n"
-       "and may behave unpredicably in other ways. Use them only for\n"
+       "and may behave unpredictably in other ways. Use them only for\n"
        "tinkering."},
 
       {"set_camera_target", (PyCFunction)PySetCameraTarget,
@@ -348,7 +348,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "WARNING: these camera controls will not apply to network clients\n"
-       "and may behave unpredicably in other ways. Use them only for\n"
+       "and may behave unpredictably in other ways. Use them only for\n"
        "tinkering."},
 
       {"set_camera_manual", (PyCFunction)PySetCameraManual,
@@ -358,7 +358,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "WARNING: these camera controls will not apply to network clients\n"
-       "and may behave unpredicably in other ways. Use them only for\n"
+       "and may behave unpredictably in other ways. Use them only for\n"
        "tinkering."},
 
       {"has_gamma_control", PyHasGammaControl, METH_VARARGS,
