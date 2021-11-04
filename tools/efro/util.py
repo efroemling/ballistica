@@ -92,6 +92,17 @@ def utc_this_hour() -> datetime.datetime:
                              tzinfo=now.tzinfo)
 
 
+def utc_this_minute() -> datetime.datetime:
+    """Get offset-aware beginning of current minute in the utc time zone."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime(year=now.year,
+                             month=now.month,
+                             day=now.day,
+                             hour=now.hour,
+                             minute=now.minute,
+                             tzinfo=now.tzinfo)
+
+
 def empty_weakref(objtype: type[T]) -> weakref.ref[T]:
     """Return an invalidated weak-reference for the specified type."""
     # At runtime, all weakrefs are the same; our type arg is just

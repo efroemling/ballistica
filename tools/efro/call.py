@@ -266,10 +266,8 @@ if TYPE_CHECKING:
     def Call(*_args: Any, **_keywds: Any) -> Any:
         ...
 
+    # A convenient wrapper around functools.partial which adds type-safety
+    # (though it does not support keyword arguments).
     partial = Call
 else:
     partial = functools.partial
-
-# A convenient wrapper around functools.partial which adds type-safety
-# (though it does not support keyword arguments).
-# partial = Call if TYPE_CHECKING else functools.partial

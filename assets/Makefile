@@ -4809,6 +4809,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/slovak.json \
   build/ba_data/data/languages/spanish.json \
   build/ba_data/data/languages/swedish.json \
+  build/ba_data/data/languages/tamil.json \
   build/ba_data/data/languages/thai.json \
   build/ba_data/data/languages/turkish.json \
   build/ba_data/data/languages/ukrainian.json \
