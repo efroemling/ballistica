@@ -672,8 +672,9 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_lr_);
           dpad_right_held_ = (e->type == SDL_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
-              dpad_right_held_ ? (dpad_left_held_ ? 0 : 32767)
-                               : dpad_left_held_ ? -32767 : 0);
+              dpad_right_held_  ? (dpad_left_held_ ? 0 : 32767)
+              : dpad_left_held_ ? -32767
+                                : 0);
           e = &e2;
         } else if (e->jbutton.button == left_button_
                    || e->jbutton.button == left_button2_) {
@@ -681,8 +682,9 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_lr_);
           dpad_left_held_ = (e->type == SDL_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
-              dpad_right_held_ ? (dpad_left_held_ ? 0 : 32767)
-                               : dpad_left_held_ ? -32767 : 0);
+              dpad_right_held_  ? (dpad_left_held_ ? 0 : 32767)
+              : dpad_left_held_ ? -32767
+                                : 0);
           e = &e2;
         } else if (e->jbutton.button == up_button_
                    || e->jbutton.button == up_button2_) {
@@ -690,8 +692,9 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_ud_);
           dpad_up_held_ = (e->type == SDL_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
-              dpad_up_held_ ? (dpad_down_held_ ? 0 : -32767)
-                            : dpad_down_held_ ? 32767 : 0);
+              dpad_up_held_     ? (dpad_down_held_ ? 0 : -32767)
+              : dpad_down_held_ ? 32767
+                                : 0);
           e = &e2;
         } else if (e->jbutton.button == down_button_
                    || e->jbutton.button == down_button2_) {
@@ -699,8 +702,9 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_ud_);
           dpad_down_held_ = (e->type == SDL_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
-              dpad_up_held_ ? (dpad_down_held_ ? 0 : -32767)
-                            : dpad_down_held_ ? 32767 : 0);
+              dpad_up_held_     ? (dpad_down_held_ ? 0 : -32767)
+              : dpad_down_held_ ? 32767
+                                : 0);
           e = &e2;
         }
         break;

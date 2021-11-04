@@ -214,8 +214,8 @@ void ImageNode::Draw(FrameDef* frame_def) {
   }
 
   RenderPass& pass(*(vr_use_fixed ? frame_def->GetOverlayFixedPass()
-                                  : front_ ? frame_def->overlay_front_pass()
-                                           : frame_def->overlay_pass()));
+                     : front_     ? frame_def->overlay_front_pass()
+                                  : frame_def->overlay_pass()));
 
   // If the pass we're drawing into changes dimensions, recalc.
   // Otherwise we break if a window is resized.
