@@ -2008,6 +2008,22 @@ def get_appconfig_default_value(key: str) -> Any:
     return _uninferrable()
 
 
+def get_camera_position() -> tuple[float, ...]:
+    """get_camera_position() -> tuple[float, ...]
+
+    (internal)
+    """
+    return (0.0, 0.0, 0.0)
+
+
+def get_camera_target() -> tuple[float, ...]:
+    """get_camera_target() -> tuple[float, ...]
+
+    (internal)
+    """
+    return (0.0, 0.0, 0.0)
+
+
 def get_chat_messages() -> list[str]:
     """get_chat_messages() -> list[str]
 
@@ -3479,6 +3495,30 @@ def set_analytics_screen(screen: str) -> None:
 
 def set_authenticate_clients(enable: bool) -> None:
     """set_authenticate_clients(enable: bool) -> None
+
+    (internal)
+    """
+    return None
+
+
+def set_camera_manual(value: bool) -> None:
+    """set_camera_manual(value: bool) -> None
+
+    (internal)
+    """
+    return None
+
+
+def set_camera_position(x: float, y: float, z: float) -> None:
+    """set_camera_position(x: float, y: float, z: float) -> None
+
+    (internal)
+    """
+    return None
+
+
+def set_camera_target(x: float, y: float, z: float) -> None:
+    """set_camera_target(x: float, y: float, z: float) -> None
 
     (internal)
     """

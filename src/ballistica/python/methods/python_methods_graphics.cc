@@ -313,13 +313,13 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_camera_position", (PyCFunction)PyGetCameraPosition,
        METH_VARARGS | METH_KEYWORDS,
-       "get_camera_position() -> tuple[float, float, float]\n"
+       "get_camera_position() -> tuple[float, ...]\n"
        "\n"
        "(internal)"},
 
       {"get_camera_target", (PyCFunction)PyGetCameraTarget,
        METH_VARARGS | METH_KEYWORDS,
-       "get_camera_target() -> tuple[float, float, float]\n"
+       "get_camera_target() -> tuple[float, ...]\n"
        "\n"
        "(internal)"},
 

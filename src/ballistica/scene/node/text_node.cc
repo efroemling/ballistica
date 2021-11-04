@@ -379,11 +379,11 @@ void TextNode::Draw(FrameDef* frame_def) {
 
   // make sure we're up to date
   Update();
-  RenderPass& pass(*(in_world_
-                         ? frame_def->overlay_3d_pass()
-                         : (vr_use_fixed ? frame_def->GetOverlayFixedPass()
-                            : front_     ? frame_def->overlay_front_pass()
-                                         : frame_def->overlay_pass())));
+  RenderPass& pass(
+      *(in_world_ ? frame_def->overlay_3d_pass()
+                  : (vr_use_fixed ? frame_def->GetOverlayFixedPass()
+                                  : front_ ? frame_def->overlay_front_pass()
+                                           : frame_def->overlay_pass())));
   if (big_) {
     if (text_group_dirty_) {
       TextMesh::HAlign h_align;
