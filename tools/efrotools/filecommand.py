@@ -32,9 +32,11 @@ class _FileBatchesRun:
         self._include_mac_packages = include_mac_packages
 
         if self._include_mac_packages:
-            # pylint: disable=no-name-in-module
+            # pylint: disable=useless-suppression
+            # pylint: disable=no-name-in-module, import-error
             from Cocoa import NSWorkspace
             self._shared_nsworkspace = NSWorkspace.sharedWorkspace()
+            # pylint: enable=useless-suppression
         else:
             self._shared_nsworkspace = None
 
