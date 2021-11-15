@@ -32,7 +32,8 @@
     "typing_extensions",
     "cpplint",
     "ansiwrap",
-    "filelock"
+    "filelock",
+    "Cocoa"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

@@ -726,6 +726,7 @@
       <w>nowtickets</w>
       <w>nptr</w>
       <w>nsize</w>
+      <w>nsworkspace</w>
       <w>ntoa</w>
       <w>ntohl</w>
       <w>numargs</w>
@@ -894,6 +895,7 @@
       <w>reallocations</w>
       <w>realtimers</w>
       <w>recalc</w>
+      <w>recursed</w>
       <w>recv</w>
       <w>recvfrom</w>
       <w>redundants</w>

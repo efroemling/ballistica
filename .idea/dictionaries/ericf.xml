@@ -1545,6 +1545,7 @@
       <w>nowtickets</w>
       <w>npos</w>
       <w>nprocessors</w>
+      <w>nsworkspace</w>
       <w>ntpath</w>
       <w>ntriple</w>
       <w>nturl</w>
@@ -1905,6 +1906,7 @@
       <w>realpath</w>
       <w>realsies</w>
       <w>recache</w>
+      <w>recursed</w>
       <w>recv</w>
       <w>redist</w>
       <w>redistributables</w>

@@ -30,8 +30,7 @@ VERSION = 1
 
 TOOL_NAME = 'bacloud'
 
-# Set BACLOUD_SERVER env var to LOCAL to talk to a locally-run master-server.
-# Set it to TEST to talk to the 'test' app-engine service.
+# Server we talk to (can override via env var).
 MASTER_SERVER_URL = os.getenv('BACLOUD_SERVER_URL',
                               'https://bamaster.appspot.com')
 
@@ -55,11 +54,11 @@ class Response:
         with subsequent commands.
       logout: If True, any existing client-side token should be discarded.
       dir_manifest: If present, client should generate a manifest of this dir.
-        It should be added to endcommand args as 'manifest'.
+        It should be added to end_command args as 'manifest'.
       uploads: If present, client should upload the requested files (arg1)
         individually to a server command (arg2) with provided args (arg3).
       uploads_inline: If present, a list of pathnames that should be base64
-        gzipped and uploaded to an 'uploads_inline' dict in endcommand args.
+        gzipped and uploaded to an 'uploads_inline' dict in end_command args.
         This should be limited to relatively small files.
       downloads_inline: If present, pathnames mapped to base64 gzipped data to
         be written to the client. This should only be used for relatively
@@ -69,7 +68,7 @@ class Response:
         removed.
       open_url: If present, url to display to the user.
       input_prompt: If present, a line of input is read and placed into
-        endcommand args as 'input'. The first value is the prompt printed
+        end_command args as 'input'. The first value is the prompt printed
         before reading and the second is whether it should be read as a
         password (without echoing to the terminal).
       end_message: If present, a message that should be printed after all other
