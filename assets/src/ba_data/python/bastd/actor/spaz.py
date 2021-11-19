@@ -199,6 +199,7 @@ class Spaz(ba.Actor):
             self.equip_boxing_gloves()
         self.last_punch_time_ms = -9999
         self.last_pickup_time_ms = -9999
+        self.last_jump_time_ms = -9999
         self.last_run_time_ms = -9999
         self._last_run_value = 0.0
         self.last_bomb_time_ms = -9999
@@ -363,7 +364,11 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
-        self.node.jump_pressed = True
+        t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
+        assert isinstance(t_ms, int)
+        if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
+            self.node.jump_pressed = True
+            self.last_jump_time_ms = t_ms
         self._turbo_filter_add_press('jump')
 
     def on_jump_release(self) -> None:

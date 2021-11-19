@@ -1,5 +1,6 @@
 ### 1.6.8 (20444)
 - Added Filipino language (Thanks David!)
+- Restored pre-v1.5 jump behaviour.
 
 ### 1.6.7 (20436)
 - Fixed a vulnerability which could expose device-account uuids.
