@@ -432,7 +432,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: list[str],
     # If there's any cyclic-import errors, just mark all deps as dirty;
     # don't want to add the logic to figure out which ones the cycles cover
     # since they all seems to appear as errors for the last file in the list.
-    cycles: int = run.linter.stats.get('by_msg', {}).get('cyclic-import', 0)
+    cycles: int = run.linter.stats.by_msg.get('cyclic-import', 0)
     have_dep_cycles: bool = cycles > 0
     if have_dep_cycles:
         print(f'Found {cycles} cycle-errors; keeping all dirty files dirty.')
@@ -444,7 +444,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: list[str],
     reversedeps = {}
 
     # Make sure these are all proper module names; no foo.bar.__init__ stuff.
-    for key, val in run.linter.stats['dependencies'].items():
+    for key, val in run.linter.stats.dependencies.items():
         sval = [_filter_module_name(m) for m in val]
         reversedeps[_filter_module_name(key)] = sval
     deps: dict[str, set[str]] = {}
@@ -519,7 +519,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: list[str],
     # Once again need to convert any foo.bar.__init__ to foo.bar.
     stats_by_module: dict[str, Any] = {
         _filter_module_name(key): val
-        for key, val in run.linter.stats['by_module'].items()
+        for key, val in run.linter.stats.by_module.items()
     }
     errcount = 0
 

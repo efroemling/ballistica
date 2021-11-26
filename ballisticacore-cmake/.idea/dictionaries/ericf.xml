@@ -439,6 +439,7 @@
       <w>getinputdevice</w>
       <w>getline</w>
       <w>getlog</w>
+      <w>getlogin</w>
       <w>getmodel</w>
       <w>getname</w>
       <w>getnodes</w>
@@ -820,6 +821,7 @@
       <w>ppre</w>
       <w>pptabcom</w>
       <w>precalc</w>
+      <w>preconfig</w>
       <w>predeclare</w>
       <w>prefs</w>
       <w>preloaded</w>
@@ -1100,6 +1102,7 @@
       <w>touchpad</w>
       <w>toucs</w>
       <w>toutf</w>
+      <w>tpartial</w>
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>

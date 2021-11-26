@@ -940,6 +940,7 @@
       <w>getlevels</w>
       <w>getlocalconfig</w>
       <w>getlog</w>
+      <w>getlogin</w>
       <w>getmaps</w>
       <w>getmodel</w>
       <w>getname</w>
@@ -1744,6 +1745,7 @@
       <w>prch</w>
       <w>prec</w>
       <w>precommand</w>
+      <w>preconfig</w>
       <w>preexec</w>
       <w>prefablib</w>
       <w>preflightfast</w>
@@ -2382,6 +2384,7 @@
       <w>touchpad</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
+      <w>tpartial</w>
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>

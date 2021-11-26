@@ -571,8 +571,8 @@ class Generator:
             getattr(cls, name) for name in dir(cls)
             if any(isinstance(getattr(cls, name), t)
                    for t in method_types) and (
-                       not name.startswith('_') or name == '__init__')
-            and '_no_init' not in name
+                       not name.startswith('_') or name == '__init__') and
+            '_no_init' not in name and '_no_init_or_replace_init' not in name
         ]
 
         methods: list[FunctionInfo] = []
@@ -580,7 +580,7 @@ class Generator:
         for mth in methods_raw:
 
             # Protocols seem to give this...
-            if mth.__name__ == '_no_init':
+            if mth.__name__ in {'_no_init', '_no_init_or_replace_init'}:
                 continue
 
             # Keep a list of inherited methods but don't do a full

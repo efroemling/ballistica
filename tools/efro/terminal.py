@@ -75,6 +75,10 @@ def _default_color_enabled() -> bool:
     if not sys.__stdout__.isatty():
         return False
 
+    # Another common way to say the terminal can't do fancy stuff like color:
+    if os.environ.get('TERM') == 'dumb':
+        return False
+
     # On windows, try to enable ANSI color mode.
     if platform.system() == 'Windows':
         return _windows_enable_color()

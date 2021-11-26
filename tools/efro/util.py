@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, cast, TypeVar, Generic
 if TYPE_CHECKING:
     import asyncio
     from efro.call import Call as Call  # 'as Call' so we re-export.
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable, Optional, NoReturn
 
 T = TypeVar('T')
 TVAL = TypeVar('TVAL')
@@ -604,3 +604,11 @@ def compact_id(num: int) -> str:
     return _compact_id(
         num, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         'abcdefghijklmnopqrstuvwxyz')
+
+
+def assert_never(value: NoReturn) -> NoReturn:
+    """Trick for checking exhaustive handling of Enums, etc.
+
+    See https://github.com/python/typing/issues/735
+    """
+    assert False, f'Unhandled value: {value} ({type(value).__name__})'
