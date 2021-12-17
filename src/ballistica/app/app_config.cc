@@ -144,6 +144,10 @@ AppConfig::AppConfig() {
   SetupEntries();
 }
 
+// Clion think all calls of this are unreachable.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCallsOfFunction"
+
 template <typename T>
 void AppConfig::CompleteMap(const T& entry_map) {
   for (auto&& i : entry_map) {
@@ -164,6 +168,8 @@ void AppConfig::CompleteMap(const T& entry_map) {
   }
 #endif
 }
+
+#pragma clang diagnostic pop
 
 void AppConfig::SetupEntries() {
   // Register all our typed entries.

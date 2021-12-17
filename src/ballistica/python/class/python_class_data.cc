@@ -52,6 +52,11 @@ auto PythonClassData::GetData(bool doraise) const -> Data* {
   }
   return data;
 }
+// Clion makes some incorrect inferences here.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+#pragma ide diagnostic ignored "ConstantFunctionResult"
 
 auto PythonClassData::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     -> PyObject* {
@@ -65,10 +70,6 @@ auto PythonClassData::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
           + GetCurrentThreadName() + ").");
     }
 
-    // Clion incorrectly things s_create_empty will always be false.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
-#pragma ide diagnostic ignored "ConstantConditionsOC"
     if (!s_create_empty_) {
       throw Exception(
           "Can't instantiate Datas directly; use ba.getdata() to get "
@@ -76,10 +77,10 @@ auto PythonClassData::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     }
     self->data_ = new Object::Ref<Data>();
     BA_PYTHON_NEW_CATCH;
-#pragma clang diagnostic pop
   }
   return reinterpret_cast<PyObject*>(self);
 }
+#pragma clang diagnostic pop
 
 void PythonClassData::Delete(Object::Ref<Data>* ref) {
   assert(InGameThread());

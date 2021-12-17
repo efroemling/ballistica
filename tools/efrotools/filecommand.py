@@ -10,7 +10,7 @@ from threading import Condition, Thread
 import os
 
 if TYPE_CHECKING:
-    from typing import Generator, Optional, Callable
+    from typing import Iterable, Optional, Callable
 
 
 class _FileBatchesRun:
@@ -107,7 +107,7 @@ def file_batches(
     batch_size: int = 1,
     file_filter: Optional[Callable[[str], bool]] = None,
     include_mac_packages: bool = False,
-) -> Generator[list[str], None, None]:
+) -> Iterable[list[str]]:
     """Efficiently yield batches of files to operate on.
 
     Accepts a list of paths which can be files or directories to be recursed.

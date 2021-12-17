@@ -172,8 +172,8 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
         symbol = (selection if selection is not None else _py_symbol_at_column(
             flines[line - 1], column))
 
-        # Insert a line after the provided one which is just the symbol so we
-        # can ask for its value alone.
+        # Insert a line after the provided one which is just the symbol so
+        # that we can ask for its value alone.
         match = re.match(r'\s*', flines[line - 1])
         whitespace = match.group() if match is not None else ''
         sline = whitespace + symbol + ' #@'
@@ -187,8 +187,8 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
         symbol = (selection if selection is not None else _py_symbol_at_column(
             flines[line - 1], column))
 
-        # Insert a line after the provided one which is just the symbol so we
-        # can ask for its value alone.
+        # Insert a line after the provided one which is just the symbol so
+        # that we can ask for its value alone.
         match = re.match(r'\s*', flines[line - 1])
         whitespace = match.group() if match is not None else ''
         if operation == 'mypy_infer':

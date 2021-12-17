@@ -766,7 +766,7 @@ class MessageReceiver:
 
         # Return type of None translates to EmptyResponse.
         responsetypes = tuple(EmptyResponse if r is type(None) else r
-                              for r in responsetypes)
+                              for r in responsetypes)  # noqa
 
         # Make sure our protocol has this message type registered and our
         # return types exactly match. (Technically we could return a subset

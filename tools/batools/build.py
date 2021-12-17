@@ -32,7 +32,7 @@ class PipRequirement:
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 12, 1]),
-    PipRequirement(modulename='mypy', minversion=[0, 910]),
+    PipRequirement(modulename='mypy', minversion=[0, 920]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
     PipRequirement(modulename='pytest', minversion=[6, 2, 4]),
@@ -788,7 +788,7 @@ def filter_server_config(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
     with open(infilepath, encoding='utf-8') as infile:
         cfg = infile.read()
-    return cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
+    return cfg.replace('# __CONFIG_TEMPLATE_VALUES__',
                        _get_server_config_template_yaml(projroot))
 
 

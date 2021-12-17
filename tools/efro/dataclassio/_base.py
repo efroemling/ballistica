@@ -14,7 +14,7 @@ from typing import _AnnotatedAlias  # type: ignore
 
 _pytz_utc: Any
 
-# We don't *require* pytz but we want to support it for tzinfos if available.
+# We don't *require* pytz, but we want to support it for tzinfos if available.
 try:
     import pytz
     _pytz_utc = pytz.utc
@@ -126,7 +126,7 @@ class IOAttrs:
         # Turning off store_default requires the field to have either
         # a default_factory or a default
         if not self.store_default:
-            default_factory: Any = field.default_factory  # type: ignore
+            default_factory: Any = field.default_factory
             if (default_factory is dataclasses.MISSING
                     and field.default is dataclasses.MISSING):
                 raise TypeError(f'Field {field.name} of {cls} has'
@@ -163,7 +163,7 @@ def _get_origin(anntype: Any) -> Any:
 def _parse_annotated(anntype: Any) -> tuple[Any, Optional[IOAttrs]]:
     """Parse Annotated() constructs, returning annotated type & IOAttrs."""
     # If we get an Annotated[foo, bar, eep] we take
-    # foo as the actual type and we look for IOAttrs instances in
+    # foo as the actual type, and we look for IOAttrs instances in
     # bar/eep to affect our behavior.
     ioattrs: Optional[IOAttrs] = None
     if isinstance(anntype, _AnnotatedAlias):

@@ -303,7 +303,7 @@ class PrepSession:
         """Run prep on a Union type."""
         typeargs = typing.get_args(anntype)
         if (len(typeargs) != 2
-                or len([c for c in typeargs if c is type(None)]) != 1):
+                or len([c for c in typeargs if c is type(None)]) != 1):  # noqa
             raise TypeError(f'Union {anntype} for attr \'{attrname}\' on'
                             f' {cls.__name__} is not supported by dataclassio;'
                             f' only 2 member Unions with one type being None'

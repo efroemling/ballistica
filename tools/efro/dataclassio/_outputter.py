@@ -60,7 +60,7 @@ class _Outputter:
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
             if ioattrs is not None and not ioattrs.store_default:
-                default_factory: Any = field.default_factory  # type: ignore
+                default_factory: Any = field.default_factory
                 if default_factory is not dataclasses.MISSING:
                     if default_factory() == value:
                         continue
@@ -113,14 +113,14 @@ class _Outputter:
             return value if self._create else None
 
         if origin is typing.Union:
-            # Currently the only unions we support are None/Value
+            # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.
             # So let's treat this as a simple optional case.
             if value is None:
                 return None
             childanntypes_l = [
                 c for c in typing.get_args(anntype) if c is not type(None)
-            ]
+            ]  # noqa (pycodestyle complains about *is* with type)
             assert len(childanntypes_l) == 1
             return self._process_value(cls, fieldpath, childanntypes_l[0],
                                        value, ioattrs)

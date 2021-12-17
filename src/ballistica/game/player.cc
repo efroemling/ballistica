@@ -291,12 +291,12 @@ void Player::RunInput(InputType type, float value) {
         }
       } else {
         if (arg >= threshold) {
-          if (!left_held_ && !up_held_ && !down_held_) {
+          if (!up_held_ && !down_held_) {
             right_held_ = true;
             RunInput(InputType::kRightPress);
           }
         } else if (arg <= -threshold) {
-          if (!right_held_ && !up_held_ && !down_held_) {
+          if (!up_held_ && !down_held_) {
             left_held_ = true;
             RunInput(InputType::kLeftPress);
           }
@@ -319,12 +319,12 @@ void Player::RunInput(InputType type, float value) {
         }
       } else {
         if (arg <= -threshold) {
-          if (!left_held_ && !right_held_ && !up_held_) {
+          if (!left_held_ && !right_held_) {
             down_held_ = true;
             RunInput(InputType::kDownPress);
           }
         } else if (arg >= threshold) {
-          if (!left_held_ && !up_held_ && !right_held_) {
+          if (!left_held_ && !right_held_) {
             up_held_ = true;
             RunInput(InputType::kUpPress);
           }

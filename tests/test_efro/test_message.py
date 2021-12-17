@@ -429,7 +429,7 @@ def test_protocol_creation() -> None:
                                 response_types={0: _TResp1})
 
 
-def test_sender_module_single_embedded() -> None:
+def test_sender_module_single_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module
@@ -462,7 +462,7 @@ def test_sender_module_single_embedded() -> None:
                            ' See test stdout for new code.')
 
 
-def test_sender_module_sync_embedded() -> None:
+def test_sender_module_sync_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module
@@ -495,7 +495,7 @@ def test_sender_module_sync_embedded() -> None:
                            ' See test stdout for new code.')
 
 
-def test_sender_module_async_embedded() -> None:
+def test_sender_module_async_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module
@@ -528,7 +528,7 @@ def test_sender_module_async_embedded() -> None:
                            ' See test stdout for new code.')
 
 
-def test_sender_module_both_embedded() -> None:
+def test_sender_module_both_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module
@@ -561,7 +561,7 @@ def test_sender_module_both_embedded() -> None:
                            ' See test stdout for new code.')
 
 
-def test_receiver_module_single_embedded() -> None:
+def test_receiver_module_single_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_receiver_module()
     # here, but it requires us to pass code which imports this test module
@@ -595,7 +595,7 @@ def test_receiver_module_single_embedded() -> None:
             ' See test stdout for new code.')
 
 
-def test_receiver_module_sync_embedded() -> None:
+def test_receiver_module_sync_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_receiver_module()
     # here, but it requires us to pass code which imports this test module
@@ -628,7 +628,7 @@ def test_receiver_module_sync_embedded() -> None:
             ' See test stdout for new code.')
 
 
-def test_receiver_module_async_embedded() -> None:
+def test_receiver_module_async_emb() -> None:
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_receiver_module()
     # here, but it requires us to pass code which imports this test module

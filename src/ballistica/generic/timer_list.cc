@@ -176,8 +176,14 @@ auto TimerList::NewTimer(TimerMedium current_time, TimerMedium length,
   auto* t = new Timer(this, next_timer_id_++, current_time, length, offset,
                       repeat_count);
   t->runnable_ = runnable;
+
+  // Clion (correctly) points out that t may get deallocated in this call,
+  // but the call returns nullptr in that case.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "DanglingPointer"
   t = SubmitTimer(t);
   return t;
+#pragma clang diagnostic pop
 }
 
 auto TimerList::GetTimeToNextExpire(TimerMedium current_time) -> TimerMedium {
@@ -229,7 +235,9 @@ auto TimerList::SubmitTimer(Timer* t) -> Timer* {
     return nullptr;
   } else {
     // Its still alive. Shove it back in line and tell it to keep working.
-    if (!t->initial_ && t->repeat_count_ > 0) t->repeat_count_--;
+    if (!t->initial_ && t->repeat_count_ > 0) {
+      t->repeat_count_--;
+    }
     t->initial_ = false;
 
     // No drift.

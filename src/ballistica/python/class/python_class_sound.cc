@@ -52,6 +52,12 @@ auto PythonClassSound::GetSound(bool doraise) const -> Sound* {
   return sound;
 }
 
+// Clion makes some incorrect inferences here.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
                               PyObject* kwds) -> PyObject* {
   auto* self = reinterpret_cast<PythonClassSound*>(type->tp_alloc(type, 0));
@@ -63,10 +69,6 @@ auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
           + " objects must only be created in the game thread (current is ("
           + GetCurrentThreadName() + ").");
     }
-    // Clion incorrectly things s_create_empty will always be false.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
-#pragma ide diagnostic ignored "ConstantConditionsOC"
     if (!s_create_empty_) {
       throw Exception(
           "Can't instantiate Sounds directly; use ba.getsound() to get "
@@ -74,10 +76,11 @@ auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
     }
     self->sound_ = new Object::Ref<Sound>();
     BA_PYTHON_NEW_CATCH;
-#pragma clang diagnostic pop
   }
   return reinterpret_cast<PyObject*>(self);
 }
+
+#pragma clang diagnostic pop
 
 void PythonClassSound::Delete(Object::Ref<Sound>* ref) {
   assert(InGameThread());

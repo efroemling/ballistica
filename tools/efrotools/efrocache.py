@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 BASE_URL = 'https://files.ballistica.net/cache/ba1/'
 
-TARGET_TAG = '#__EFROCACHE_TARGET__'
+TARGET_TAG = '# __EFROCACHE_TARGET__'
 
 CACHE_DIR_NAME = '.efrocache'
 CACHE_MAP_NAME = '.efrocachemap'

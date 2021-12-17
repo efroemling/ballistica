@@ -139,7 +139,13 @@ auto PythonClassWidget::GetChildren(PythonClassWidget* self) -> PyObject* {
   }
   PyObject* py_list = PyList_New(0);
   auto* cw = dynamic_cast<ContainerWidget*>(w);
+
+  // Clion seems to think dynamic_casting a Widget* to a ContainerWidget*
+  // will always succeed. Go home Clion; you're drunk.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
   if (cw) {
+#pragma clang diagnostic pop
     for (auto&& i : cw->widgets()) {
       assert(i.exists());
       PyList_Append(py_list, i->BorrowPyRef());
@@ -156,7 +162,13 @@ auto PythonClassWidget::GetSelectedChild(PythonClassWidget* self) -> PyObject* {
     throw Exception(PyExcType::kWidgetNotFound);
   }
   auto* cw = dynamic_cast<ContainerWidget*>(w);
+
+  // Clion seems to think dynamic_casting a Widget* to a ContainerWidget*
+  // will always succeed. Go home Clion; you're drunk.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
   if (cw) {
+#pragma clang diagnostic pop
     Widget* selected_widget = cw->selected_widget();
     if (selected_widget) return selected_widget->NewPyRef();
   }

@@ -45,7 +45,7 @@ def dataclass_to_dict(obj: Any,
     the ability to do a lossless round-trip with data).
 
     If coerce_to_float is True, integer values present on float typed fields
-    will be converted to floats in the dict output. If False, a TypeError
+    will be converted to float in the dict output. If False, a TypeError
     will be triggered.
     """
 
@@ -94,10 +94,10 @@ def dataclass_from_dict(cls: type[T],
     (as this would break the ability to do a lossless round-trip with data).
 
     If coerce_to_float is True, int values passed for float typed fields
-    will be converted to float values. Otherwise a TypeError is raised.
+    will be converted to float values. Otherwise, a TypeError is raised.
 
     If allow_unknown_attrs is False, AttributeErrors will be raised for
-    attributes present in the dict but not on the data class. Otherwise they
+    attributes present in the dict but not on the data class. Otherwise, they
     will be preserved as part of the instance and included if it is
     exported back to a dict, unless discard_unknown_attrs is True, in which
     case they will simply be discarded.

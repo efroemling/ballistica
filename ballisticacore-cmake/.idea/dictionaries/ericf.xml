@@ -330,6 +330,7 @@
       <w>envval</w>
       <w>ericf</w>
       <w>ericsson</w>
+      <w>ericsson's</w>
       <w>errname</w>
       <w>erroring</w>
       <w>etcdec</w>
@@ -553,6 +554,7 @@
       <w>jdict</w>
       <w>jmessage</w>
       <w>jnames</w>
+      <w>json's</w>
       <w>keepalives</w>
       <w>keyanntype</w>
       <w>keycode</w>
@@ -713,6 +715,7 @@
       <w>nlpos</w>
       <w>nmemb</w>
       <w>noassets</w>
+      <w>nodename</w>
       <w>nodetype</w>
       <w>nofilename</w>
       <w>noglobs</w>
@@ -946,6 +949,7 @@
       <w>scenetime</w>
       <w>screenmessage</w>
       <w>scrollwidget</w>
+      <w>scutil</w>
       <w>sdkcheck</w>
       <w>sdl's</w>
       <w>sdlk</w>

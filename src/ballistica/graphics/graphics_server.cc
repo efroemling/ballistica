@@ -127,21 +127,31 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
   assert(InGraphicsThread());
 
   // Now let the renderer do any preprocess passes (shadows, etc).
-  renderer_->PreprocessFrameDef(frame_def);
+  assert(renderer_);
+  if (renderer_ != nullptr) {
+    renderer_->PreprocessFrameDef(frame_def);
+  }
 }
 
 // Does the default drawing to the screen, either from the left or right stereo
 // eye or in mono.
 void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
-  renderer_->RenderFrameDef(frame_def);
+  assert(renderer_);
+  if (renderer_) {
+    renderer_->RenderFrameDef(frame_def);
+  }
 }
 
 // Clean up the frame_def once done drawing it.
 void GraphicsServer::FinishRenderFrameDef(FrameDef* frame_def) {
-  renderer_->FinishFrameDef(frame_def);
+  assert(renderer_);
+  if (renderer_) {
+    renderer_->FinishFrameDef(frame_def);
 
-  // Let the app know a frame render is complete (it may need to do a swap/etc).
-  g_app->DidFinishRenderingFrame(frame_def);
+    // Let the app know a frame render is complete (it may need to do a
+    // swap/etc).
+    g_app->DidFinishRenderingFrame(frame_def);
+  }
 }
 
 void GraphicsServer::TryRender() {
@@ -514,6 +524,10 @@ void GraphicsServer::VideoResize(float h, float v) {
 // FIXME: Shouldn't have android-specific code in here.
 void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
   if (g_buildconfig.ostype_android()) {
+    assert(renderer_);
+    if (renderer_ == nullptr) {
+      return;
+    }
     // We push android res to the java layer here.  We don't actually worry
     // about screen-size-changed callbacks and whatnot, since those will happen
     // automatically once things actually change. We just want to be sure that

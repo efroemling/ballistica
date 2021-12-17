@@ -549,7 +549,8 @@ class ServerManagerApp:
         while not self._done:
             self._run_server_cycle()
 
-    def _handle_term_signal(self, sig: int, frame: FrameType) -> None:
+    def _handle_term_signal(self, sig: int,
+                            frame: Optional[FrameType]) -> None:
         """Handle signals (will always run in the main thread)."""
         del sig, frame  # Unused.
         sys.exit(1 if self._should_report_subprocess_error else 0)

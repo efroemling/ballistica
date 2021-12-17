@@ -20,18 +20,18 @@ https://github.com/efroemling/ballistica/wiki/Contributing
 
 ## Type of Changes
 <!-- Leave the corresponding lines for the applicable type of change: -->
-|   | Type |
-| ------------- | ------------- |
-| ✓  | :bug: Bug fix  |
-| ✓  | :sparkles: New feature |
-| ✓  | :hammer: Refactoring  |
-| ✓  | :scroll: Docs |
+|     | Type                   |
+|-----|------------------------|
+| ✓   | :bug: Bug fix          |
+| ✓   | :sparkles: New feature |
+| ✓   | :hammer: Refactoring   |
+| ✓   | :scroll: Docs          |
 
 ## Related Issue
 
-<!-- 
+<!--
 If this PR fixes a particular issue, use the following to automatically close that issue
 once this PR gets merged:
 
-Closes #XXX 
+Closes #XXX
 -->

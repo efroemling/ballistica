@@ -579,6 +579,8 @@ def human_readable_compact_id(num: int) -> str:
      'o' is excluded due to similarity to '0'.
      'z' is excluded due to similarity to '2'.
 
+    Therefore for n chars this can store values of 21^n.
+
     When reading human input consisting of these IDs, it may be desirable
     to map the disallowed chars to their corresponding allowed ones
     ('o' -> '0', etc).
@@ -599,6 +601,8 @@ def compact_id(num: int) -> str:
     friendly to humans due to using both capital and lowercase letters,
     both 'O' and '0', etc.
 
+    Therefore for n chars this can store values of 62^n.
+
     Sort order for these ids is the same as the original numbers.
     """
     return _compact_id(
@@ -612,3 +616,24 @@ def assert_never(value: NoReturn) -> NoReturn:
     See https://github.com/python/typing/issues/735
     """
     assert False, f'Unhandled value: {value} ({type(value).__name__})'
+
+
+def unchanging_hostname() -> str:
+    """Return an unchanging name for the local device.
+
+    Similar to the `hostname` call (or os.uname().nodename in Python)
+    except attempts to give a name that doesn't change depending on
+    network conditions. (A Mac will tend to go from Foo to Foo.local,
+    Foo.lan etc. throughout its various adventures)
+    """
+    import os
+    import platform
+    import subprocess
+
+    # On Mac, this should give the computer name assigned in System Prefs.
+    if platform.system() == 'Darwin':
+        return subprocess.run(
+            ['scutil', '--get', 'ComputerName'],
+            check=True,
+            capture_output=True).stdout.decode().strip().replace(' ', '-')
+    return os.uname().nodename

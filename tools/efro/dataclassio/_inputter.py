@@ -70,14 +70,14 @@ class _Inputter(Generic[T]):
             return value
 
         if origin is typing.Union:
-            # Currently the only unions we support are None/Value
+            # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.
             # So let's treat this as a simple optional case.
             if value is None:
                 return None
             childanntypes_l = [
                 c for c in typing.get_args(anntype) if c is not type(None)
-            ]
+            ]  # noqa (pycodestyle complains about *is* with type)
             assert len(childanntypes_l) == 1
             return self._value_from_input(cls, fieldpath, childanntypes_l[0],
                                           value, ioattrs)
@@ -127,7 +127,7 @@ class _Inputter(Generic[T]):
         """Given input data, returns bytes."""
         import base64
 
-        # For firestore, bytes are passed as-is. Otherwise they're encoded
+        # For firestore, bytes are passed as-is. Otherwise, they're encoded
         # as base64.
         if self._codec is Codec.FIRESTORE:
             if not isinstance(value, bytes):
@@ -268,7 +268,7 @@ class _Inputter(Generic[T]):
                         cls, fieldpath, valanntype, val, ioattrs)
 
             elif issubclass(keyanntype, Enum):
-                # In prep we verified that all these enums' values have
+                # In prep, we verified that all these enums' values have
                 # the same type, so we can just look at the first to see if
                 # this is a string enum or an int enum.
                 enumvaltype = type(next(iter(keyanntype)).value)

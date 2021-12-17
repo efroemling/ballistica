@@ -148,7 +148,7 @@ class DependencyEntry:
             instance = self.cls.__new__(self.cls)
             # pylint: disable=protected-access
             instance._dep_entry = weakref.ref(self)
-            instance.__init__()
+            instance.__init__()  # type: ignore
 
             assert self.depset
             depset = self.depset()
