@@ -134,4 +134,5 @@ def get_binding_values() -> tuple[Any, ...]:
         _player.Player,  # kPlayerClass
         _hooks.get_player_icon,  # kGetPlayerIconCall
         _language.Lstr.from_json,  # kLstrFromJsonCall
+        _hooks.uuid_str,  # kUUIDStrCall
     )  # yapf: disable

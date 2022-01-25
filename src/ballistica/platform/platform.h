@@ -153,10 +153,12 @@ class Platform {
   // Return a string *reasonably* likely to be unique and consistent for this
   // device. Do not assume this is globally unique and *do not* assume that it
   // will never ever change (hardware upgrades may affect it, etc).
+  // IMPORTANT: This value should NEVER be sent over the wire to peers.
   virtual auto GetUniqueDeviceIdentifier() -> const std::string&;
 
   // Returns the ID to use for the device account
   auto GetDeviceAccountID() -> std::string;
+
   auto GetConfigDirectory() -> std::string;
   auto GetConfigFilePath() -> std::string;
   auto GetUserPythonDirectory() -> std::string;

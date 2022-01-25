@@ -181,8 +181,8 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
                     for dec in fnode.decorators.nodes:
 
                         # Look for dataclassio.ioprepped.
-                        if (isinstance(dec, astroid.nodes.Attribute)
-                                and dec.attrname == 'ioprepped'
+                        if (isinstance(dec, astroid.nodes.Attribute) and
+                                dec.attrname in {'ioprepped', 'will_ioprep'}
                                 and isinstance(dec.expr, astroid.nodes.Name)
                                 and dec.expr.name == 'dataclassio'):
                             found_ioprepped = True
@@ -190,7 +190,7 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
 
                         # Look for simply 'ioprepped'.
                         if (isinstance(dec, astroid.nodes.Name)
-                                and dec.name == 'ioprepped'):
+                                and dec.name in {'ioprepped', 'will_ioprep'}):
                             found_ioprepped = True
                             break
 

@@ -14,10 +14,11 @@ import typing
 import datetime
 from typing import TYPE_CHECKING
 
+from efro.util import check_utc
 from efro.dataclassio._base import (Codec, _parse_annotated, EXTRA_ATTRS_ATTR,
                                     _is_valid_for_codec, _get_origin,
                                     SIMPLE_TYPES, _raise_type_error,
-                                    _ensure_datetime_is_timezone_aware)
+                                    IOExtendedData)
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
@@ -37,6 +38,11 @@ class _Outputter:
 
     def run(self) -> Any:
         """Do the thing."""
+
+        # For special extended data types, call their 'will_output' callback.
+        if isinstance(self._obj, IOExtendedData):
+            self._obj.will_output()
+
         return self._process_dataclass(type(self._obj), self._obj, '')
 
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
@@ -44,6 +50,7 @@ class _Outputter:
         # pylint: disable=too-many-branches
         prep = PrepSession(explicit=False).prep_dataclass(type(obj),
                                                           recursion_level=0)
+        assert prep is not None
         fields = dataclasses.fields(obj)
         out: Optional[dict[str, Any]] = {} if self._create else None
         for field in fields:
@@ -242,7 +249,7 @@ class _Outputter:
             if not isinstance(value, origin):
                 raise TypeError(f'Expected a {origin} for {fieldpath};'
                                 f' found a {type(value)}.')
-            _ensure_datetime_is_timezone_aware(value)
+            check_utc(value)
             if ioattrs is not None:
                 ioattrs.validate_datetime(value, fieldpath)
             if self._codec is Codec.FIRESTORE:

@@ -12,15 +12,6 @@ from typing import TYPE_CHECKING, get_args
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
 
-_pytz_utc: Any
-
-# We don't *require* pytz, but we want to support it for tzinfos if available.
-try:
-    import pytz
-    _pytz_utc = pytz.utc
-except ModuleNotFoundError:
-    _pytz_utc = None  # pylint: disable=invalid-name
-
 if TYPE_CHECKING:
     from typing import Any, Optional
 
@@ -30,14 +21,6 @@ SIMPLE_TYPES = {int, bool, str, float, type(None)}
 # Attr name for dict of extra attributes included on dataclass instances.
 # Note that this is only added if extra attributes are present.
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
-
-
-def _ensure_datetime_is_timezone_aware(value: datetime.datetime) -> None:
-    # We only support timezone-aware utc times.
-    if (value.tzinfo is not datetime.timezone.utc
-            and (_pytz_utc is None or value.tzinfo is not _pytz_utc)):
-        raise ValueError(
-            'datetime values must have timezone set as timezone.utc')
 
 
 def _raise_type_error(fieldpath: str, valuetype: type,
@@ -65,6 +48,24 @@ class Codec(Enum):
     # Mostly like JSON but passes bytes and datetime objects through
     # as-is instead of converting them to json-friendly types.
     FIRESTORE = 'firestore'
+
+
+class IOExtendedData:
+    """A class that data types can inherit from for extra functionality."""
+
+    def will_output(self) -> None:
+        """Called before data is sent to an outputter.
+
+        Can be overridden to validate or filter data before
+        sending it on its way.
+        """
+
+    @classmethod
+    def will_input(cls, data: dict) -> None:
+        """Called on raw data before a class instance is created from it.
+
+        Can be overridden to migrate old data formats to new, etc.
+        """
 
 
 def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:

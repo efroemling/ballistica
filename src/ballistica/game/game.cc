@@ -253,14 +253,10 @@ void Game::PushMediaPruneCall(int level) {
   });
 }
 
-void Game::PushSetAccountTokenCall(const std::string& account_id,
-                                   const std::string& token) {
-  PushCall([account_id, token] { g_account->SetToken(account_id, token); });
-}
-
-void Game::PushSetLoginCall(AccountType account_type, LoginState account_state,
-                            const std::string& account_name,
-                            const std::string& account_id) {
+void Game::PushSetV1LoginCall(V1AccountType account_type,
+                              V1LoginState account_state,
+                              const std::string& account_name,
+                              const std::string& account_id) {
   PushCall([this, account_type, account_state, account_name, account_id] {
     g_account->SetLogin(account_type, account_state, account_name, account_id);
   });
@@ -964,7 +960,6 @@ void Game::PushInterruptSignalCall() {
       return;
     }
 
-    // Just go through _ba.quit()
     // FIXME: Shouldn't need to go out to the Python layer here...
     g_python->obj(Python::ObjID::kQuitCall).Call();
   });
@@ -979,11 +974,10 @@ void Game::PushAskUserForTelnetAccessCall() {
 }
 
 void Game::HandleThreadPause() {
-  // Give userspace python stuff a chance to pause.
   ScopedSetContext cp(GetUIContextTarget());
-  g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
 
-  // Tell our account client to commit any outstanding changes to disk.
+  // Let Python and internal layers do their thing.
+  g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
   AppInternalOnGameThreadPause();
 }
 
@@ -1831,23 +1825,24 @@ void Game::CleanUpBeforeConnectingToHost() {
   SetPublicPartyEnabled(false);
 }
 
-void Game::PushPartyInviteCall(const std::string& name,
-                               const std::string& invite_id) {
-  PushCall([this, name, invite_id] { PartyInvite(name, invite_id); });
+void Game::PushV1PartyInviteCall(const std::string& name,
+                                 const std::string& invite_id) {
+  PushCall([this, name, invite_id] { V1PartyInvite(name, invite_id); });
 }
 
-void Game::PartyInvite(const std::string& name, const std::string& invite_id) {
+void Game::V1PartyInvite(const std::string& name,
+                         const std::string& invite_id) {
   assert(InGameThread());
-  g_python->PartyInvite(name, invite_id);
+  g_python->V1PartyInvite(name, invite_id);
 }
 
-void Game::PushPartyInviteRevokeCall(const std::string& invite_id) {
-  PushCall([this, invite_id] { PartyInviteRevoke(invite_id); });
+void Game::PushV1PartyInviteRevokeCall(const std::string& invite_id) {
+  PushCall([this, invite_id] { V1PartyInviteRevoke(invite_id); });
 }
 
-void Game::PartyInviteRevoke(const std::string& invite_id) {
+void Game::V1PartyInviteRevoke(const std::string& invite_id) {
   assert(InGameThread());
-  g_python->PartyInviteRevoke(invite_id);
+  g_python->V1PartyInviteRevoke(invite_id);
 }
 
 auto Game::GetPartySize() const -> int {

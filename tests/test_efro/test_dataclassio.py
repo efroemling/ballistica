@@ -13,8 +13,8 @@ import pytest
 
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, ioprepped, IOAttrs, Codec,
-                              DataclassFieldLookup)
+                              dataclass_to_dict, ioprepped, ioprep, IOAttrs,
+                              Codec, DataclassFieldLookup, IOExtendedData)
 
 if TYPE_CHECKING:
     pass
@@ -220,11 +220,11 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, {'ssval': {}})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'ssval': set()})
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         dataclass_from_dict(_TestClass, {'tupleval': []})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'tupleval': [1, 1, 1]})
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         dataclass_from_dict(_TestClass, {'tupleval': [2, 'foof', True, True]})
 
     # Fields with type Any should accept all types which are directly
@@ -652,6 +652,36 @@ def test_name_clashes() -> None:
             ival2: Annotated[int, IOAttrs('ival')] = 5
 
 
+@dataclass
+class _RecursiveTest:
+    val: int
+    child: Optional[_RecursiveTest] = None
+
+
+def test_recursive() -> None:
+    """Test recursive classes."""
+
+    # Can't use ioprepped on this since it refers to its own name which
+    # doesn't exist yet. Have to explicitly prep it after.
+    ioprep(_RecursiveTest)
+
+    rtest = _RecursiveTest(val=1)
+    rtest.child = _RecursiveTest(val=2)
+    rtest.child.child = _RecursiveTest(val=3)
+    expected_output = {
+        'val': 1,
+        'child': {
+            'val': 2,
+            'child': {
+                'val': 3,
+                'child': None
+            }
+        }
+    }
+    assert dataclass_to_dict(rtest) == expected_output
+    assert dataclass_from_dict(_RecursiveTest, expected_output) == rtest
+
+
 def test_any() -> None:
     """Test data included with type Any."""
 
@@ -795,3 +825,51 @@ def test_nested() -> None:
 
         subval: _TestSubClass = field(default_factory=_TestSubClass)
         enval: _TestEnum = _TestEnum.VAL1
+
+
+def test_extended_data() -> None:
+    """Test IOExtendedData functionality."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        vals: tuple[int, int]
+
+    # This data lines up.
+    indata = {'vals': [0, 0]}
+    _obj = dataclass_from_dict(_TestClass, indata)
+
+    # This data doesn't.
+    indata = {'vals': [0, 0, 0]}
+    with pytest.raises(ValueError):
+        _obj = dataclass_from_dict(_TestClass, indata)
+
+    # Now define the same data but give it an adapter
+    # so it can work with our incorrectly-formatted data.
+    @ioprepped
+    @dataclass
+    class _TestClass2(IOExtendedData):
+        vals: tuple[int, int]
+
+        @classmethod
+        def will_input(cls, data: dict) -> None:
+            data['vals'] = data['vals'][:2]
+
+        def will_output(self) -> None:
+            self.vals = (0, 0)
+
+    # This data lines up.
+    indata = {'vals': [0, 0]}
+    _obj2 = dataclass_from_dict(_TestClass2, indata)
+
+    # Now this data will too via our custom input filter.
+    indata = {'vals': [0, 0, 0]}
+    _obj2 = dataclass_from_dict(_TestClass2, indata)
+
+    # Ok, now test output:
+
+    # Does the expected thing.
+    assert dataclass_to_dict(_TestClass(vals=(1, 2))) == {'vals': [1, 2]}
+
+    # Uses our output filter.
+    assert dataclass_to_dict(_TestClass2(vals=(1, 2))) == {'vals': [0, 0]}

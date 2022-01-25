@@ -248,6 +248,7 @@
       <w>dbias</w>
       <w>dcioexattrs</w>
       <w>dcioprep</w>
+      <w>dcioprepsession</w>
       <w>dcol</w>
       <w>ddcaps</w>
       <w>ddpf</w>
@@ -513,6 +514,7 @@
       <w>imagewidget</w>
       <w>importlines</w>
       <w>incentivized</w>
+      <w>indata</w>
       <w>inet</w>
       <w>infotxt</w>
       <w>inides</w>
@@ -935,6 +937,7 @@
       <w>rresult</w>
       <w>rscode</w>
       <w>rsgc</w>
+      <w>rtest</w>
       <w>rtypes</w>
       <w>rtypevar</w>
       <w>runnables</w>
@@ -1073,6 +1076,7 @@
       <w>tabtypes</w>
       <w>talloc</w>
       <w>targs</w>
+      <w>tcls</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>
       <w>teleported</w>

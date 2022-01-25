@@ -21,8 +21,8 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20416;
-const char* kAppVersion = "1.6.6";
+const int kAppBuildNumber = 20427;
+const char* kAppVersion = "1.6.7";
 
 // Our standalone globals.
 // These are separated out for easy access.
@@ -213,13 +213,24 @@ auto FatalError(const std::string& message) -> void {
 auto GetUniqueSessionIdentifier() -> const std::string& {
   static std::string session_id;
   static bool have_session_id = false;
+
   if (!have_session_id) {
-    srand(static_cast<unsigned int>(
-        Platform::GetCurrentMilliseconds()));   // NOLINT
-    auto tval = static_cast<uint32_t>(rand());  // NOLINT
-    assert(g_platform);
-    session_id = g_platform->GetUniqueDeviceIdentifier() + std::to_string(tval);
-    have_session_id = true;
+    if (g_python) {
+      Python::ScopedInterpreterLock gil;
+      auto uuid = g_python->obj(Python::ObjID::kUUIDStrCall).Call();
+      if (uuid.exists()) {
+        session_id = uuid.ValueAsString().c_str();
+        have_session_id = true;
+      }
+    }
+    if (!have_session_id) {
+      // As an emergency fallback simply use a single random number.
+      Log("WARNING: GetUniqueSessionIdentifier() using rand fallback.");
+      srand(static_cast<unsigned int>(
+          Platform::GetCurrentMilliseconds()));                    // NOLINT
+      session_id = std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
+      have_session_id = true;
+    }
     if (session_id.size() >= 100) {
       Log("WARNING: session id longer than it should be.");
     }

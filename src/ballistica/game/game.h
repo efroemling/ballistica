@@ -32,14 +32,13 @@ class Game : public Module {
   auto LaunchClientSession() -> void;
   auto LaunchReplaySession(const std::string& file_name) -> void;
 
-  auto PushSetLoginCall(AccountType account_type, LoginState account_state,
-                        const std::string& account_name,
-                        const std::string& account_id) -> void;
-  auto PushSetAccountTokenCall(const std::string& account_id,
-                               const std::string& token) -> void;
-  auto PushPartyInviteCall(const std::string& name,
-                           const std::string& invite_id) -> void;
-  auto PushPartyInviteRevokeCall(const std::string& invite_id) -> void;
+  auto PushSetV1LoginCall(V1AccountType account_type,
+                          V1LoginState account_state,
+                          const std::string& account_name,
+                          const std::string& account_id) -> void;
+  auto PushV1PartyInviteCall(const std::string& name,
+                             const std::string& invite_id) -> void;
+  auto PushV1PartyInviteRevokeCall(const std::string& invite_id) -> void;
   auto PushInitialScreenCreatedCall() -> void;
   auto PushApplyConfigCall() -> void;
   auto PushRemoveGraphicsServerRenderHoldCall() -> void;
@@ -253,9 +252,9 @@ class Game : public Module {
   auto HandleQuitOnIdle() -> void;
   auto InitSpecialChars() -> void;
   auto Draw() -> void;
-  auto PartyInvite(const std::string& name, const std::string& invite_id)
+  auto V1PartyInvite(const std::string& name, const std::string& invite_id)
       -> void;
-  auto PartyInviteRevoke(const std::string& invite_id) -> void;
+  auto V1PartyInviteRevoke(const std::string& invite_id) -> void;
   auto InitialScreenCreated() -> void;
   auto MainMenuPress(InputDevice* device) -> void;
   auto ScreenResize(float virtual_width, float virtual_height,

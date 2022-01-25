@@ -36,6 +36,7 @@ class _PathCapture:
 
         prep = PrepSession(explicit=False).prep_dataclass(self._cls,
                                                           recursion_level=0)
+        assert prep is not None
         try:
             anntype = prep.annotations[name]
         except KeyError as exc:

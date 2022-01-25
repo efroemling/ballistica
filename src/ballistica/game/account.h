@@ -16,9 +16,9 @@ namespace ballistica {
 class Account {
  public:
   Account();
-  static auto AccountTypeFromString(const std::string& val) -> AccountType;
-  static auto AccountTypeToString(AccountType type) -> std::string;
-  static auto AccountTypeToIconString(AccountType type) -> std::string;
+  static auto AccountTypeFromString(const std::string& val) -> V1AccountType;
+  static auto AccountTypeToString(V1AccountType type) -> std::string;
+  static auto AccountTypeToIconString(V1AccountType type) -> std::string;
 
   auto GetLoginName() -> std::string;
   auto GetLoginID() -> std::string;
@@ -28,7 +28,7 @@ class Account {
 
   /// Return the current account state.
   /// If an int pointer is passed, state-num will also be returned.
-  auto GetLoginState(int* state_num = nullptr) -> LoginState;
+  auto GetLoginState(int* state_num = nullptr) -> V1LoginState;
 
   // An extra value included when passing our account info to the server
   // ...(can be used for platform-specific install-signature stuff, etc.).
@@ -37,7 +37,7 @@ class Account {
   auto SetToken(const std::string& account_id, const std::string& token)
       -> void;
 
-  auto SetLogin(AccountType account_type, LoginState login_state,
+  auto SetLogin(V1AccountType account_type, V1LoginState login_state,
                 const std::string& login_name, const std::string& login_id)
       -> void;
 
@@ -57,7 +57,7 @@ class Account {
   std::string token_;
   std::string extra_;
   std::string extra_2_;
-  LoginState login_state_{LoginState::kSignedOut};
+  V1LoginState login_state_{V1LoginState::kSignedOut};
   int login_state_num_{};
 };
 

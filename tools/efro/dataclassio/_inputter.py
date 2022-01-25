@@ -14,11 +14,11 @@ import typing
 import datetime
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from efro.util import enum_by_value
+from efro.util import enum_by_value, check_utc
 from efro.dataclassio._base import (Codec, _parse_annotated, EXTRA_ATTRS_ATTR,
                                     _is_valid_for_codec, _get_origin,
                                     SIMPLE_TYPES, _raise_type_error,
-                                    _ensure_datetime_is_timezone_aware)
+                                    IOExtendedData)
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
@@ -48,6 +48,12 @@ class _Inputter(Generic[T]):
 
     def run(self, values: dict) -> T:
         """Do the thing."""
+
+        # For special extended data types, call their 'will_output' callback.
+        tcls = self._cls
+        if issubclass(tcls, IOExtendedData):
+            tcls.will_input(values)
+
         out = self._dataclass_from_input(self._cls, '', values)
         assert isinstance(out, self._cls)
         return out
@@ -159,6 +165,7 @@ class _Inputter(Generic[T]):
 
         prep = PrepSession(explicit=False).prep_dataclass(cls,
                                                           recursion_level=0)
+        assert prep is not None
 
         extra_attrs = {}
 
@@ -344,7 +351,7 @@ class _Inputter(Generic[T]):
                     f'Invalid input value for "{fieldpath}" on'
                     f' "{cls.__name__}";'
                     f' expected a datetime, got a {type(value).__name__}')
-            _ensure_datetime_is_timezone_aware(value)
+            check_utc(value)
             return value
 
         assert self._codec is Codec.JSON
@@ -355,9 +362,9 @@ class _Inputter(Generic[T]):
                 f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
                 f' expected a list, got a {type(value).__name__}')
         if len(value) != 7 or not all(isinstance(x, int) for x in value):
-            raise TypeError(
+            raise ValueError(
                 f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 7 ints.')
+                f' expected a list of 7 ints, got {[type(v) for v in value]}.')
         out = datetime.datetime(  # type: ignore
             *value, tzinfo=datetime.timezone.utc)
         if ioattrs is not None:
@@ -380,9 +387,9 @@ class _Inputter(Generic[T]):
         assert childanntypes
 
         if len(value) != len(childanntypes):
-            raise TypeError(f'Invalid tuple input for "{fieldpath}";'
-                            f' expected {len(childanntypes)} values,'
-                            f' found {len(value)}.')
+            raise ValueError(f'Invalid tuple input for "{fieldpath}";'
+                             f' expected {len(childanntypes)} values,'
+                             f' found {len(value)}.')
 
         for i, childanntype in enumerate(childanntypes):
             childval = value[i]

@@ -38,8 +38,8 @@ class AssetType(Enum):
 @dataclass
 class AssetPackageFlavorManifest:
     """A manifest of asset info for a specific flavor of an asset package."""
-    assetfiles: Annotated[dict[str, str],
-                          IOAttrs('assetfiles')] = field(default_factory=dict)
+    cloudfiles: Annotated[dict[str, str],
+                          IOAttrs('cloudfiles')] = field(default_factory=dict)
 
 
 @ioprepped

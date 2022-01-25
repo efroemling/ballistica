@@ -34,7 +34,7 @@ PlayerSpec::PlayerSpec(const std::string& s) {
     Log("Error creating PlayerSpec from string: '" + s + "'");
     name_ = "<error>";
     short_name_ = "";
-    account_type_ = AccountType::kInvalid;
+    account_type_ = V1AccountType::kInvalid;
   }
 }
 
@@ -75,7 +75,7 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   PlayerSpec spec;
-  if (g_account->GetLoginState() == LoginState::kSignedIn) {
+  if (g_account->GetLoginState() == V1LoginState::kSignedIn) {
     spec.account_type_ = g_app_globals->account_type;
     spec.name_ =
         Utils::GetValidUTF8(g_account->GetLoginName().c_str(), "bsgaps");

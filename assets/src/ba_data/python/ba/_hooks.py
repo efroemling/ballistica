@@ -119,6 +119,11 @@ def gear_vr_controller_warning() -> None:
                       color=(1, 0, 0))
 
 
+def uuid_str() -> str:
+    import uuid
+    return str(uuid.uuid4())
+
+
 def orientation_reset_cb_message() -> None:
     from ba._language import Lstr
     _ba.screenmessage(

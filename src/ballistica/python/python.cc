@@ -2322,8 +2322,8 @@ auto Python::ObjToString(PyObject* obj) -> std::string {
   }
 }
 
-void Python::PartyInvite(const std::string& player,
-                         const std::string& invite_id) {
+void Python::V1PartyInvite(const std::string& player,
+                           const std::string& invite_id) {
   ScopedSetContext cp(g_game->GetUIContext());
   PythonRef args(
       Py_BuildValue(
@@ -2336,7 +2336,7 @@ void Python::PartyInvite(const std::string& player,
   obj(ObjID::kHandlePartyInviteCall).Call(args);
 }
 
-void Python::PartyInviteRevoke(const std::string& invite_id) {
+void Python::V1PartyInviteRevoke(const std::string& invite_id) {
   ScopedSetContext cp(g_game->GetUIContext());
   PythonRef args(
       Py_BuildValue("(O)", PythonRef(PyUnicode_FromString(invite_id.c_str()),

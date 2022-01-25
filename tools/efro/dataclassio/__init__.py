@@ -15,17 +15,19 @@ from typing import TYPE_CHECKING, TypeVar
 
 from efro.dataclassio._outputter import _Outputter
 from efro.dataclassio._inputter import _Inputter
-from efro.dataclassio._base import Codec, IOAttrs
-from efro.dataclassio._prep import ioprep, ioprepped, is_ioprepped_dataclass
+from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData
+from efro.dataclassio._prep import (ioprep, ioprepped, will_ioprep,
+                                    is_ioprepped_dataclass)
 from efro.dataclassio._pathcapture import DataclassFieldLookup
 
 if TYPE_CHECKING:
     from typing import Any, Optional
 
 __all__ = [
-    'Codec', 'IOAttrs', 'ioprep', 'ioprepped', 'is_ioprepped_dataclass',
-    'DataclassFieldLookup', 'dataclass_to_dict', 'dataclass_to_json',
-    'dataclass_from_dict', 'dataclass_from_json', 'dataclass_validate'
+    'Codec', 'IOAttrs', 'IOExtendedData', 'ioprep', 'ioprepped', 'will_ioprep',
+    'is_ioprepped_dataclass', 'DataclassFieldLookup', 'dataclass_to_dict',
+    'dataclass_to_json', 'dataclass_from_dict', 'dataclass_from_json',
+    'dataclass_validate'
 ]
 
 T = TypeVar('T')

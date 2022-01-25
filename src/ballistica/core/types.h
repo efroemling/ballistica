@@ -852,7 +852,7 @@ enum class NodeMessageType {
   kFooting
 };
 
-enum class LoginState { kSignedOut, kSigningIn, kSignedIn };
+enum class V1LoginState { kSignedOut, kSigningIn, kSignedIn };
 
 enum class CameraMode { kFollow, kOrbit };
 
@@ -1007,7 +1007,7 @@ enum class ThreadIdentifier {
   kBGDynamics
 };
 
-enum class AccountType {
+enum class V1AccountType {
   kInvalid,
   kTest,
   kGameCenter,

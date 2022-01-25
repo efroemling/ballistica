@@ -1,3 +1,6 @@
+### 1.6.7 (20394)
+- Fixed a vulnerability which could expose device-account uuids.
+
 ### 1.6.6 (20394)
 - Beginning work on moving to new asset system.
 - Added Tamil language (Thanks Ryan!)

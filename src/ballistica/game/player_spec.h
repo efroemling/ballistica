@@ -48,7 +48,7 @@ class PlayerSpec {
  private:
   std::string name_;
   std::string short_name_;
-  AccountType account_type_{AccountType::kInvalid};
+  V1AccountType account_type_{V1AccountType::kInvalid};
 };
 
 }  // namespace ballistica

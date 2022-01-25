@@ -524,6 +524,7 @@
       <w>dbpath</w>
       <w>dcioexattrs</w>
       <w>dcioprep</w>
+      <w>dcioprepsession</w>
       <w>dcls</w>
       <w>dcmake</w>
       <w>deathmatch</w>
@@ -1086,6 +1087,7 @@
       <w>incmd</w>
       <w>incr</w>
       <w>incrementbuild</w>
+      <w>indata</w>
       <w>indentfilter</w>
       <w>indentstr</w>
       <w>indexfile</w>
@@ -1966,6 +1968,7 @@
       <w>rsdr</w>
       <w>rsms</w>
       <w>rstr</w>
+      <w>rtest</w>
       <w>rtnetlink</w>
       <w>rtxt</w>
       <w>rtypes</w>
@@ -2284,6 +2287,7 @@
       <w>tcall</w>
       <w>tchar</w>
       <w>tclass</w>
+      <w>tcls</w>
       <w>tcombine</w>
       <w>tdelay</w>
       <w>tdval</w>

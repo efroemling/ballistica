@@ -142,8 +142,8 @@ class Python {
   /// is useful as an object identifier/etc.
   static auto GetPythonFileLocation(bool pretty = true) -> std::string;
 
-  void PartyInvite(const std::string& player, const std::string& invite_id);
-  void PartyInviteRevoke(const std::string& invite_id);
+  void V1PartyInvite(const std::string& player, const std::string& invite_id);
+  void V1PartyInviteRevoke(const std::string& invite_id);
   void set_env_obj(PyObject* obj) { env_ = obj; }
   auto env_obj() const -> PyObject* {
     assert(env_);
@@ -351,6 +351,7 @@ class Python {
     kPlayerClass,
     kGetPlayerIconCall,
     kLstrFromJsonCall,
+    kUUIDStrCall,
     kLast  // Sentinel; must be at end.
   };
 
