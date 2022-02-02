@@ -868,6 +868,7 @@
       <w>fstab</w>
       <w>fstat</w>
       <w>fstrs</w>
+      <w>fsum</w>
       <w>ftime</w>
       <w>ftmp</w>
       <w>ftplib</w>
@@ -935,6 +936,7 @@
       <w>getcwd</w>
       <w>getdata</w>
       <w>gethostbyname</w>
+      <w>getifaddr</w>
       <w>getinputdevice</w>
       <w>getkillerplayer</w>
       <w>getlevel</w>
@@ -1018,6 +1020,7 @@
       <w>hattach</w>
       <w>hcalc</w>
       <w>hcfg</w>
+      <w>hdiutil</w>
       <w>hdpi</w>
       <w>headercheckline</w>
       <w>headerregistry</w>
@@ -1308,6 +1311,7 @@
       <w>locktype</w>
       <w>locs</w>
       <w>logcat</w>
+      <w>logincode</w>
       <w>logintoken</w>
       <w>logitech</w>
       <w>logput</w>
@@ -1338,6 +1342,7 @@
       <w>macbuild</w>
       <w>macmusicapp</w>
       <w>macos</w>
+      <w>macpackage</w>
       <w>macpath</w>
       <w>mailcap</w>
       <w>mainmenu</w>
@@ -1365,6 +1370,7 @@
       <w>masktexstorename</w>
       <w>masterhash</w>
       <w>masterver</w>
+      <w>mastervers</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -1546,7 +1552,10 @@
       <w>nosyncfiles</w>
       <w>nosynctool</w>
       <w>nosynctools</w>
+      <w>notarytool</w>
       <w>notdir</w>
+      <w>notorize</w>
+      <w>notorized</w>
       <w>nowtickets</w>
       <w>npos</w>
       <w>nprocessors</w>
@@ -1843,6 +1852,7 @@
       <w>pvval</w>
       <w>pybee</w>
       <w>pybuild</w>
+      <w>pybuildapple</w>
       <w>pycache</w>
       <w>pycharm's</w>
       <w>pycharmbin</w>
@@ -1888,6 +1898,7 @@
       <w>pyver</w>
       <w>qrcode</w>
       <w>qrencode</w>
+      <w>qroffs</w>
       <w>qual</w>
       <w>qualname</w>
       <w>quoprimime</w>
@@ -2083,6 +2094,7 @@
       <w>sharedctypes</w>
       <w>sharedobj</w>
       <w>sharedobjs</w>
+      <w>shasum</w>
       <w>shellapi</w>
       <w>shiftdelay</w>
       <w>shiftposition</w>
@@ -2160,6 +2172,7 @@
       <w>srcattr</w>
       <w>srcdata</w>
       <w>srcdir</w>
+      <w>srcfolder</w>
       <w>srcjson</w>
       <w>srcnode</w>
       <w>srcpath</w>
@@ -2440,6 +2453,8 @@
       <w>uadfc</w>
       <w>uber</w>
       <w>ucrtbased</w>
+      <w>udbz</w>
+      <w>udif</w>
       <w>ugrade</w>
       <w>uibounds</w>
       <w>uicleanup</w>
@@ -2602,6 +2617,7 @@
       <w>xcodebuild</w>
       <w>xcpretty</w>
       <w>xcprojpath</w>
+      <w>xcrun</w>
       <w>xcscheme</w>
       <w>xcsettings</w>
       <w>xcworkspacedata</w>

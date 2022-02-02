@@ -348,7 +348,7 @@ class App:
 
         # Debugging - make note if we're using the local test server so we
         # don't accidentally leave it on in a release.
-        # FIXME - should move this to the native layer.
+        # FIXME - should move these sort of warnings to the C++ layer.
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
@@ -391,6 +391,8 @@ class App:
 
         # from ba._dependency import test_depset
         # test_depset()
+        if bool(False):
+            self._test_https()
 
     def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
@@ -584,6 +586,8 @@ class App:
         try:
             with urllib.request.urlopen('https://example.com') as url:
                 val = url.read()
+            _ba.screenmessage('HTTPS SUCCESS!')
             print('HTTPS TEST SUCCESS', len(val))
         except Exception as exc:
+            _ba.screenmessage('HTTPS FAIL.')
             print('HTTPS TEST FAIL:', exc)

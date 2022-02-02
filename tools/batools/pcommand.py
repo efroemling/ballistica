@@ -171,9 +171,8 @@ def lazy_increment_build() -> None:
         if not update_hash_only:
             # Just go ahead and bless; this will increment the build as needed.
             # subprocess.run(['make', 'bless'], check=True)
-            subprocess.run(
-                ['tools/pcommand', 'version_utils', 'incrementbuild'],
-                check=True)
+            subprocess.run(['tools/pcommand', 'version', 'incrementbuild'],
+                           check=True)
 
         # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)
@@ -187,7 +186,7 @@ def get_master_asset_src_dir() -> None:
     import subprocess
     import os
 
-    master_assets_dir = '/Users/ericf/Dropbox/ballisticacore_master_assets'
+    master_assets_dir = '/Users/ericf/Documents/ballisticacore_master_assets'
     dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
 
     # Only apply this on my setup

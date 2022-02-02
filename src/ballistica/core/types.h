@@ -398,6 +398,7 @@ enum class SpecialChar {
   kFlagPhilippines,
   kFlagChile,
   kMikirog,
+  kV2Logo,
   kLast  // Sentinel
 };
 

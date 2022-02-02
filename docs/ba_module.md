@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2022-01-25 for Ballistica version 1.6.7 build 20427</em></h4>
+<h4><em>last updated on 2022-02-01 for Ballistica version 1.6.7 build 20436</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -5633,6 +5633,7 @@ of the session.</p>
 <li>FLAG_PHILIPPINES</li>
 <li>FLAG_CHILE</li>
 <li>MIKIROG</li>
+<li>V2_LOGO</li>
 </ul>
 <hr>
 <h2><strong><a name="class_ba_StandLocation">ba.StandLocation</a></strong></h3>

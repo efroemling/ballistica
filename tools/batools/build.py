@@ -31,20 +31,20 @@ class PipRequirement:
 # Note: we look directly for modules when possible instead of just pip
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 12, 1]),
-    PipRequirement(modulename='mypy', minversion=[0, 930]),
-    PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
+    PipRequirement(modulename='pylint', minversion=[2, 12, 2]),
+    PipRequirement(modulename='mypy', minversion=[0, 931]),
+    PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
-    PipRequirement(modulename='pytest', minversion=[6, 2, 4]),
+    PipRequirement(modulename='pytest', minversion=[6, 2, 5]),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
-    PipRequirement(pipname='typing_extensions', minversion=[4, 0, 0]),
-    PipRequirement(pipname='types-filelock', minversion=[0, 1, 5]),
-    PipRequirement(pipname='types-requests', minversion=[2, 25, 6]),
-    PipRequirement(pipname='types-pytz', minversion=[2021, 1, 2]),
-    PipRequirement(pipname='types-PyYAML', minversion=[5, 4, 6]),
+    PipRequirement(pipname='typing_extensions', minversion=[4, 0, 1]),
+    PipRequirement(pipname='types-filelock', minversion=[3, 2, 5]),
+    PipRequirement(pipname='types-requests', minversion=[2, 27, 7]),
+    PipRequirement(pipname='types-pytz', minversion=[2021, 3, 4]),
+    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 3]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -178,7 +178,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
             'Makefile', 'tools/batoolsinternal/meta.py',
             'tools/batoolsinternal/pcommand.py', 'tools/batools/meta.py',
             'tools/batools/pcommand.py', 'src/meta',
-            'tools/batools/pythonenumsmodule.py'
+            'tools/batools/pythonenumsmodule.py', 'src/ballistica/core/types.h'
         ]
 
     # Everything possibly affecting asset builds.
@@ -398,6 +398,10 @@ def gen_fulltest_buildfile_apple() -> None:
     # noinspection PyListCreation
     lines = []
 
+    # pybuildapple = 'tools/pcommand python_build_apple'
+    pybuildapple = ('tools/cloudshell --env tools fromini -- '
+                    'tools/pcommand python_build_apple')
+
     # iOS stuff
     lines.append('make ios-build')
     lines.append('make ios-new-build')
@@ -406,9 +410,9 @@ def gen_fulltest_buildfile_apple() -> None:
         extras = [e for e in extras if e.startswith('ios.')]
         for extra in extras:
             if extra == 'ios.pylibs':
-                lines.append('tools/pcommand python_build_apple ios')
+                lines.append(f'{pybuildapple} ios')
             elif extra == 'ios.pylibs.debug':
-                lines.append('tools/pcommand python_build_apple_debug ios')
+                lines.append(f'{pybuildapple}_debug ios')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -419,9 +423,9 @@ def gen_fulltest_buildfile_apple() -> None:
         extras = [e for e in extras if e.startswith('tvos.')]
         for extra in extras:
             if extra == 'tvos.pylibs':
-                lines.append('tools/pcommand python_build_apple tvos')
+                lines.append(f'{pybuildapple} tvos')
             elif extra == 'tvos.pylibs.debug':
-                lines.append('tools/pcommand python_build_apple_debug tvos')
+                lines.append(f'{pybuildapple}_debug tvos')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -439,13 +443,13 @@ def gen_fulltest_buildfile_apple() -> None:
             if extra == 'mac.package':
                 lines.append('make mac-package')
             elif extra == 'mac.package.server.x86_64':
-                lines.append('make mac-cloud-server-package-x86-64')
+                lines.append('make mac-server-package-x86-64')
             elif extra == 'mac.package.server.arm64':
-                lines.append('make mac-cloud-server-package-arm64')
+                lines.append('make mac-server-package-arm64')
             elif extra == 'mac.pylibs':
-                lines.append('tools/pcommand python_build_apple mac')
+                lines.append(f'{pybuildapple} mac')
             elif extra == 'mac.pylibs.debug':
-                lines.append('tools/pcommand python_build_apple_debug mac')
+                lines.append(f'{pybuildapple}_debug mac')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 

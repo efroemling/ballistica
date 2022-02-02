@@ -25,6 +25,10 @@ class AccountSettingsWindow(ba.Window):
                  close_once_signed_in: bool = False):
         # pylint: disable=too-many-statements
 
+        self._sign_in_game_circle_button: Optional[ba.Widget] = None
+        self._sign_in_v2_button: Optional[ba.Widget] = None
+        self._sign_in_device_button: Optional[ba.Widget] = None
+
         self._close_once_signed_in = close_once_signed_in
         ba.set_analytics_screen('Account Window')
 
@@ -85,6 +89,10 @@ class AccountSettingsWindow(ba.Window):
         # Local accounts are generally always available with a few key
         # exceptions.
         self._show_sign_in_buttons.append('Local')
+
+        # Ditto with shiny new V2 ones.
+        if bool(False):
+            self._show_sign_in_buttons.append('V2')
 
         top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
@@ -206,12 +214,10 @@ class AccountSettingsWindow(ba.Window):
         show_game_circle_sign_in_button = (account_state == 'signed_out'
                                            and 'Game Circle'
                                            in self._show_sign_in_buttons)
-        show_ali_sign_in_button = (account_state == 'signed_out'
-                                   and 'Ali' in self._show_sign_in_buttons)
-        show_test_sign_in_button = (account_state == 'signed_out'
-                                    and 'Test' in self._show_sign_in_buttons)
         show_device_sign_in_button = (account_state == 'signed_out' and 'Local'
                                       in self._show_sign_in_buttons)
+        show_v2_sign_in_button = (account_state == 'signed_out'
+                                  and 'V2' in self._show_sign_in_buttons)
         sign_in_button_space = 70.0
 
         show_game_service_button = (self._signed_in and account_type
@@ -223,9 +229,9 @@ class AccountSettingsWindow(ba.Window):
                                          'allowAccountLinking2', False))
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = (self._signed_in and account_type
-                                    in ('Google Play', 'Alibaba', 'Local',
-                                        'OUYA', 'Test'))
+        show_achievements_button = (
+            self._signed_in
+            and account_type in ('Google Play', 'Alibaba', 'Local', 'OUYA'))
         achievements_button_space = 60.0
 
         show_achievements_text = (self._signed_in
@@ -255,8 +261,8 @@ class AccountSettingsWindow(ba.Window):
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_sign_out_button = (self._signed_in and account_type
-                                in ['Test', 'Local', 'Google Play'])
+        show_sign_out_button = (self._signed_in
+                                and account_type in ['Local', 'Google Play'])
         sign_out_button_space = 70.0
 
         if self._subcontainer is not None:
@@ -272,11 +278,9 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += sign_in_button_space
         if show_game_circle_sign_in_button:
             self._sub_height += sign_in_button_space
-        if show_ali_sign_in_button:
-            self._sub_height += sign_in_button_space
-        if show_test_sign_in_button:
-            self._sub_height += sign_in_button_space
         if show_device_sign_in_button:
+            self._sub_height += sign_in_button_space
+        if show_v2_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_game_service_button:
             self._sub_height += game_service_button_space
@@ -462,21 +466,42 @@ class AccountSettingsWindow(ba.Window):
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
 
-        if show_ali_sign_in_button:
+        if show_v2_sign_in_button:
             button_width = 350
             v -= sign_in_button_space
-            self._sign_in_ali_button = btn = ba.buttonwidget(
+            self._sign_in_v2_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
-                label=ba.Lstr(value='${A}${B}',
-                              subs=[('${A}',
-                                     ba.charstr(ba.SpecialChar.ALIBABA_LOGO)),
-                                    ('${B}',
-                                     ba.Lstr(resource=self._r + '.signInText'))
-                                    ]),
-                on_activate_call=lambda: self._sign_in_press('Ali'))
+                label='',
+                on_activate_call=self._v2_sign_in_press)
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 17),
+                text=ba.Lstr(
+                    value='${A}${B}',
+                    subs=[('${A}', ba.charstr(ba.SpecialChar.V2_LOGO)),
+                          ('${B}',
+                           ba.Lstr(resource=self._r + '.signInWithV2Text'))]),
+                maxwidth=button_width * 0.8,
+                color=(0.75, 1.0, 0.7))
+            ba.textwidget(parent=self._subcontainer,
+                          draw_controller=btn,
+                          h_align='center',
+                          v_align='center',
+                          size=(0, 0),
+                          position=(self._sub_width * 0.5, v - 4),
+                          text=ba.Lstr(resource=self._r +
+                                       '.signInWithV2InfoText'),
+                          flatness=1.0,
+                          scale=0.57,
+                          maxwidth=button_width * 0.9,
+                          color=(0.55, 0.8, 0.5))
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
@@ -519,53 +544,6 @@ class AccountSettingsWindow(ba.Window):
                           position=(self._sub_width * 0.5, v - 4),
                           text=ba.Lstr(resource=self._r +
                                        '.signInWithDeviceInfoText'),
-                          flatness=1.0,
-                          scale=0.57,
-                          maxwidth=button_width * 0.9,
-                          color=(0.55, 0.8, 0.5))
-            if first_selectable is None:
-                first_selectable = btn
-            if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
-            ba.widget(edit=btn, left_widget=bbtn)
-            ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
-            self._sign_in_text = None
-
-        # Old test-account option.
-        if show_test_sign_in_button:
-            button_width = 350
-            v -= sign_in_button_space
-            self._sign_in_test_button = btn = ba.buttonwidget(
-                parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v - 20),
-                autoselect=True,
-                size=(button_width, 60),
-                label='',
-                on_activate_call=lambda: self._sign_in_press('Test'))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v + 17),
-                          text=ba.Lstr(
-                              value='${A}${B}',
-                              subs=[('${A}',
-                                     ba.charstr(ba.SpecialChar.TEST_ACCOUNT)),
-                                    ('${B}',
-                                     ba.Lstr(resource=self._r +
-                                             '.signInWithTestAccountText'))]),
-                          maxwidth=button_width * 0.8,
-                          color=(0.75, 1.0, 0.7))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v - 4),
-                          text=ba.Lstr(resource=self._r +
-                                       '.signInWithTestAccountInfoText'),
                           flatness=1.0,
                           scale=0.57,
                           maxwidth=button_width * 0.9,
@@ -1050,6 +1028,12 @@ class AccountSettingsWindow(ba.Window):
         cfg.commit()
         self._needs_refresh = True
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
+
+    def _v2_sign_in_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bastd.ui.account.v2 import V2SignInWindow
+        assert self._sign_in_v2_button is not None
+        V2SignInWindow(origin_widget=self._sign_in_v2_button)
 
     def _reset_progress(self) -> None:
         try:

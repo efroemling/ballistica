@@ -2170,8 +2170,11 @@ def get_low_level_config_value(key: str, default_value: int) -> int:
     return int()
 
 
-def get_master_server_address(source: int = -1, version: int = 1) -> str:
-    """get_master_server_address(source: int = -1, version: int = 1) -> str
+def get_master_server_address(source: int = -1,
+                              version: int = 1,
+                              internal: bool = False) -> str:
+    """get_master_server_address(source: int = -1, version: int = 1,
+      internal: bool = False) -> str
 
     (internal)
 
@@ -2390,6 +2393,14 @@ def get_ui_input_device() -> ba.InputDevice:
     """
     import ba  # pylint: disable=cyclic-import
     return ba.InputDevice()
+
+
+def get_v2_fleet() -> str:
+    """get_v2_fleet() -> str
+
+    (internal)
+    """
+    return str()
 
 
 # Show that our return type varies based on "doraise" value:

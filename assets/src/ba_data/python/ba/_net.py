@@ -111,14 +111,15 @@ class MasterServerCallThread(threading.Thread):
             if self._request_type == 'get':
                 response = urllib.request.urlopen(
                     urllib.request.Request(
-                        (_ba.get_master_server_address() + '/' +
+                        (_ba.get_master_server_address(internal=True) + '/' +
                          self._request + '?' + parse.urlencode(self._data)),
                         None, {'User-Agent': _ba.app.user_agent_string}),
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             elif self._request_type == 'post':
                 response = urllib.request.urlopen(
                     urllib.request.Request(
-                        _ba.get_master_server_address() + '/' + self._request,
+                        _ba.get_master_server_address(internal=True) + '/' +
+                        self._request,
                         parse.urlencode(self._data).encode(),
                         {'User-Agent': _ba.app.user_agent_string}),
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)

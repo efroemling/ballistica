@@ -279,6 +279,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/account/link.py \
   build/ba_data/python/bastd/ui/account/settings.py \
   build/ba_data/python/bastd/ui/account/unlink.py \
+  build/ba_data/python/bastd/ui/account/v2.py \
   build/ba_data/python/bastd/ui/account/viewer.py \
   build/ba_data/python/bastd/ui/achievements.py \
   build/ba_data/python/bastd/ui/appinvite.py \
@@ -525,6 +526,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/account/__pycache__/link.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/settings.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/unlink.cpython-39.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/v2.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/viewer.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/achievements.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/appinvite.cpython-39.opt-1.pyc \

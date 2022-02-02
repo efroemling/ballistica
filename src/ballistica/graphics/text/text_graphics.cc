@@ -63,7 +63,7 @@ TextGraphics::TextGraphics() {
         }
 
         // Same with the logo and all the icons on sheets 3 and 4.
-        if (index == 30 || (index >= 50 && index < 100)) {
+        if (index == 30 || (index >= 50 && index < 99)) {
           // A few are *extra* big
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
@@ -79,6 +79,13 @@ TextGraphics::TextGraphics() {
             g.x_size *= 0.55f;
             g.y_size *= 0.55f;
           }
+        }
+        // Special case for v2 logo.
+        if (index == 99) {
+          g.pen_offset_y += 0.25f;
+          extra_advance += 0.12f;
+          g.x_size *= 0.75f;
+          g.y_size *= 0.75f;
         }
         g.advance = g.x_size - 0.09f + extra_advance;
 

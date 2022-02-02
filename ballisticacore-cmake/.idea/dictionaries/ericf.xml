@@ -409,6 +409,7 @@
       <w>fromini</w>
       <w>frompos</w>
       <w>frontmost</w>
+      <w>fsum</w>
       <w>ftos</w>
       <w>ftou</w>
       <w>fullpath</w>
@@ -437,6 +438,7 @@
       <w>getcollidemodel</w>
       <w>getdata</w>
       <w>gethostbyname</w>
+      <w>getifaddr</w>
       <w>getifaddrs</w>
       <w>getinputdevice</w>
       <w>getline</w>
@@ -482,6 +484,7 @@
       <w>haveint</w>
       <w>havn't</w>
       <w>havnt</w>
+      <w>hdiutil</w>
       <w>healthcare</w>
       <w>hexval</w>
       <w>highp</w>
@@ -599,6 +602,7 @@
       <w>lockpath</w>
       <w>lockstr</w>
       <w>locktype</w>
+      <w>logincode</w>
       <w>logmsg</w>
       <w>logpath</w>
       <w>logprefix</w>
@@ -627,6 +631,7 @@
       <w>macmusicappsetvolume</w>
       <w>macmusicappstop</w>
       <w>macos</w>
+      <w>macpackage</w>
       <w>magoogan</w>
       <w>magua</w>
       <w>mainmenu</w>
@@ -639,6 +644,7 @@
       <w>maskhigh</w>
       <w>maskuv</w>
       <w>masterver</w>
+      <w>mastervers</w>
       <w>maximus</w>
       <w>maxtries</w>
       <w>maxwidth</w>
@@ -728,7 +734,10 @@
       <w>noninteractively</w>
       <w>nonlint</w>
       <w>noone</w>
+      <w>notarytool</w>
       <w>nothin</w>
+      <w>notorize</w>
+      <w>notorized</w>
       <w>nowtickets</w>
       <w>nptr</w>
       <w>nsize</w>
@@ -868,6 +877,7 @@
       <w>pver</w>
       <w>pverraw</w>
       <w>pvrtc</w>
+      <w>pybuildapple</w>
       <w>pycommand</w>
       <w>pyconfig</w>
       <w>pycontext</w>
@@ -883,6 +893,7 @@
       <w>qrel</w>
       <w>qrencode</w>
       <w>qrinput</w>
+      <w>qroffs</w>
       <w>qrspec</w>
       <w>quadtreespace</w>
       <w>qual</w>
@@ -990,6 +1001,7 @@
       <w>setsockopt</w>
       <w>sgis</w>
       <w>sharedobj</w>
+      <w>shasum</w>
       <w>shhh</w>
       <w>shifthigh</w>
       <w>shouldnt</w>
@@ -1017,6 +1029,7 @@
       <w>spinup</w>
       <w>spivak</w>
       <w>srcattr</w>
+      <w>srcfolder</w>
       <w>srcpath</w>
       <w>srcsz</w>
       <w>sresult</w>
@@ -1138,6 +1151,8 @@
       <w>typestr</w>
       <w>tzpath</w>
       <w>uber</w>
+      <w>udbz</w>
+      <w>udif</w>
       <w>uibounds</w>
       <w>uiid</w>
       <w>unblessed</w>
@@ -1221,6 +1236,7 @@
       <w>wunused</w>
       <w>wvmpth</w>
       <w>xclamped</w>
+      <w>xcrun</w>
       <w>xdiff</w>
       <w>xdist</w>
       <w>xinput</w>

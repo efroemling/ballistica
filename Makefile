@@ -897,8 +897,8 @@ clion-staging: assets-cmake resources meta
 # if using this on other platforms.
 CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
 PROJ_DIR = ${abspath ${CURDIR}}
-VERSION = $(shell tools/pcommand version_utils version)
-BUILD_NUMBER = $(shell tools/pcommand version_utils build)
+VERSION = $(shell tools/pcommand version version)
+BUILD_NUMBER = $(shell tools/pcommand version build)
 BUILD_DIR = ${PROJ_DIR}/build
 LAZYBUILDDIR = .cache/lazybuild
 STAGE_ASSETS = ${PROJ_DIR}/tools/pcommand stage_assets

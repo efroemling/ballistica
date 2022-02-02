@@ -224,6 +224,7 @@ void Game::InitSpecialChars() {
   special_char_strings_[SpecialChar::kFlagChile] = "\xee\x81\xA1";
 
   special_char_strings_[SpecialChar::kMikirog] = "\xee\x81\xA2";
+  special_char_strings_[SpecialChar::kV2Logo] = "\xee\x81\xA3";
 }
 
 void Game::SetGameRoster(cJSON* r) {
