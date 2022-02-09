@@ -7,4 +7,10 @@
                                    "--sys-path" "__EFRO_PROJECT_ROOT__/assets/src/ba_data/python")))
  ;; Shorter name in projectile status bar to save valuable space.
  (nil . ((projectile-project-name . "__EFRO_PROJECT_SHORTNAME__")))
+
+ ;; Projectile indexing and search will ignore the following
+ ;; (in addition to git-ignored stuff which it ignores by default)
+ (nil . ((projectile-globally-ignored-directories . ("docs"
+                                                     "src/external"))))
+ 
  )

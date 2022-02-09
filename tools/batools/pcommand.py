@@ -982,3 +982,9 @@ def update_dummy_module() -> None:
     update(projroot=str(PROJROOT),
            check='--check' in sys.argv,
            force='--force' in sys.argv)
+
+
+def version() -> None:
+    """Check app versions."""
+    from batools.version import run
+    run(projroot=str(PROJROOT), args=sys.argv[2:])

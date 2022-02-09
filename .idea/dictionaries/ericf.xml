@@ -129,6 +129,7 @@
       <w>assetpackputmanifest</w>
       <w>assetpackputupload</w>
       <w>assetpath</w>
+      <w>assetsmakefile</w>
       <w>assettype</w>
       <w>assettypestr</w>
       <w>assigninput</w>
@@ -192,6 +193,9 @@
       <w>baseval</w>
       <w>basew</w>
       <w>basn</w>
+      <w>basnmessagereceiver</w>
+      <w>basnmessagesender</w>
+      <w>basntoclient</w>
       <w>bastd</w>
       <w>batools</w>
       <w>batoolsinternal</w>
@@ -381,6 +385,7 @@
       <w>cleanupchecks</w>
       <w>clientid</w>
       <w>clientlist</w>
+      <w>clienttobasn</w>
       <w>clionbin</w>
       <w>clioncode</w>
       <w>clionroot</w>
@@ -472,6 +477,7 @@
       <w>cpus</w>
       <w>cpython</w>
       <w>crashlytics</w>
+      <w>createtime</w>
       <w>creationflags</w>
       <w>creditslist</w>
       <w>cresult</w>
@@ -723,6 +729,7 @@
       <w>excludepowerups</w>
       <w>excludetypes</w>
       <w>excstr</w>
+      <w>exec'ed</w>
       <w>execcode</w>
       <w>execing</w>
       <w>execlocals</w>
@@ -917,6 +924,7 @@
       <w>gbytecount</w>
       <w>gearvr</w>
       <w>genchangelog</w>
+      <w>gencmd</w>
       <w>gendocs</w>
       <w>gendummymodule</w>
       <w>genericpath</w>
@@ -1103,6 +1111,7 @@
       <w>infilename</w>
       <w>infilepath</w>
       <w>infos</w>
+      <w>infoset</w>
       <w>infotextcolor</w>
       <w>infotxt</w>
       <w>inidividual</w>
@@ -1928,6 +1937,7 @@
       <w>redist</w>
       <w>redistributables</w>
       <w>regtp</w>
+      <w>reimported</w>
       <w>relpath</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
@@ -2174,6 +2184,7 @@
       <w>srcdir</w>
       <w>srcfolder</w>
       <w>srcjson</w>
+      <w>srcname</w>
       <w>srcnode</w>
       <w>srcpath</w>
       <w>srcpathfull</w>

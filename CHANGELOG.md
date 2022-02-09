@@ -1,4 +1,4 @@
-### 1.6.7 (20435)
+### 1.6.7 (20436)
 - Fixed a vulnerability which could expose device-account uuids.
 - Now generating Linux Arm64 server and test builds (currently built against Ubuntu 20).
 - Mac test builds are now Universal binaries (Arm64 & x86-64 versions bundled together).

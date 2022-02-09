@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import os
-import datetime
 import inspect
 import subprocess
 from dataclasses import dataclass
@@ -1170,9 +1169,8 @@ class Generator:
 
         # Start with our list of classes and functions.
         app = ba.app
-        self._out += ('<h4><em>last updated on ' + str(datetime.date.today()) +
-                      ' for Ballistica version ' + app.version + ' build ' +
-                      str(app.build_number) + '</em></h4>\n')
+        self._out += (f'<h4><em>last updated for Ballistica version '
+                      f'{app.version} build {app.build_number}</em></h4>\n')
         self._out += (
             '<p>This page documents the Python classes'
             ' and functions in the \'ba\' module,\n'

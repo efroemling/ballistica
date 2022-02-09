@@ -35,7 +35,7 @@ PREP_ATTR = '_DCIOPREP'
 PREP_SESSION_ATTR = '_DCIOPREPSESSION'
 
 
-def ioprep(cls: type) -> None:
+def ioprep(cls: type, globalns: dict = None) -> None:
     """Prep a dataclass type for use with this module's functionality.
 
     Prepping ensures that all types contained in a data class as well as
@@ -49,10 +49,14 @@ def ioprep(cls: type) -> None:
 
     Prepping a dataclass involves evaluating its type annotations, which,
     as of PEP 563, are stored simply as strings. This evaluation is done
-    in the module namespace containing the class, so all referenced types
-    must be defined at that level.
+    with localns set to the class dict (so that types defined in the class
+    can be used) and globalns set to the containing module's class.
+    It is possible to override globalns for special cases such as when
+    prepping happens as part of an exec'ed string instead of within a
+    module.
     """
-    PrepSession(explicit=True).prep_dataclass(cls, recursion_level=0)
+    PrepSession(explicit=True,
+                globalns=globalns).prep_dataclass(cls, recursion_level=0)
 
 
 def ioprepped(cls: type[T]) -> type[T]:
@@ -108,8 +112,9 @@ class PrepData:
 class PrepSession:
     """Context for a prep."""
 
-    def __init__(self, explicit: bool):
+    def __init__(self, explicit: bool, globalns: Optional[dict] = None):
         self.explicit = explicit
+        self.globalns = globalns
 
     def prep_dataclass(self, cls: type,
                        recursion_level: int) -> Optional[PrepData]:
@@ -164,6 +169,7 @@ class PrepSession:
             # which allows us to pick up nested classes, etc.
             resolved_annotations = get_type_hints(cls,
                                                   localns=vars(cls),
+                                                  globalns=self.globalns,
                                                   include_extras=True)
             # pylint: enable=unexpected-keyword-arg
         except Exception as exc:

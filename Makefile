@@ -40,7 +40,7 @@ help:
 
 PREREQS = .cache/checkenv $(PREREQ_IRONY) .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
-  ballisticacore-cmake/.clang-format .projectile .editorconfig
+  ballisticacore-cmake/.clang-format .editorconfig
 
 # Target that should be built before running most any other build.
 # This installs tool config files, runs environment checks, etc.

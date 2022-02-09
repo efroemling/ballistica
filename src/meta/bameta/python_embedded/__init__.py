@@ -1,3 +1,3 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Meta source files."""
+"""Sources used to embed code in the c++ layer."""
