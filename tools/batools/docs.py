@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 import datetime
 import inspect
@@ -13,6 +14,8 @@ import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Union, cast
 from enum import Enum
+import types
+import pydoc
 
 from efro.error import CleanError
 from efro.terminal import Clr
@@ -366,11 +369,25 @@ def _add_inner_classes(class_objs: Sequence[type],
                 (cls.__module__ + '.' + cls.__name__ + '.' + name, obj))
 
 
-class Generator:
-    """class which handles docs generation."""
+class BaseGenerator:
+    """Base class which handles docs generation.
+
+    Some generation options and target module set up in inherited classes."""
+
+    # This should be overridden by inherited classes.
+
+    # Top-level module (e.g. 'ba')
+    top_module_name: str
+
+    # Modules NOT to generate docs for. Example: ['ba.internal']
+    ignored_modules: list[str]
 
     def __init__(self) -> None:
         self._index_keys: list[str] = []
+
+        # All modules where we will search functions and classes to
+        # generate docs for (including top-level module).
+        self._submodules: set[ModuleType] = set()
 
         # Make a list of missing stuff so we can warn about it in one
         # big chunk at the end (so the user can batch their corrections).
@@ -433,13 +450,6 @@ class Generator:
                     else:
                         docs += index_entry_actual  # Keep original.
                     docs += bits[i]
-
-        # Misc replacements:
-        docs = docs.replace(
-            'General message handling; can be passed any message object.',
-            'General message handling; can be passed any <a href="#' +
-            _get_class_category_href('Message Classes') +
-            '">message object</a>.')
 
         for sub_name, sub_val in list(subs.items()):
             docs = docs.replace(sub_name, sub_val)
@@ -562,7 +572,6 @@ class Generator:
 
     def _get_methods_for_class(
             self, cls: type) -> tuple[list[FunctionInfo], list[FunctionInfo]]:
-        import types
 
         method_types = [
             types.MethodDescriptorType, types.FunctionType, types.MethodType
@@ -617,7 +626,6 @@ class Generator:
 
     def _python_method_docs(self, cls: type,
                             mth: Callable) -> tuple[str, bool]:
-        import pydoc
         mdocs_lines = pydoc.plain(pydoc.render_doc(mth)).splitlines()[2:]
 
         # Remove ugly 'method of builtins.type instance'
@@ -666,7 +674,6 @@ class Generator:
     def _handle_single_line_method_docs(self, cls: type,
                                         mdocs_lines: list[str],
                                         mth: Callable) -> list[str]:
-        import pydoc
         for testclass in cls.mro()[1:]:
             testm = getattr(testclass, mth.__name__, None)
             if testm is not None:
@@ -1029,21 +1036,45 @@ class Generator:
                 self._write_inherited_methods_for_class(cls)
                 self._write_methods_for_class(cls, methods)
 
-    def _gather_funcs(self, module: ModuleType) -> None:
-        import types
-        import pydoc
+    def _collect_submodules(self, module: ModuleType) -> None:
+        # In case we somehow met one module twice.
+        if module in self._submodules:
+            return
 
-        # Function, build-in-function.
+        if module.__name__ in self.ignored_modules:
+            return
+
+        if not module.__name__.startswith(self.top_module_name):
+            return
+
+        self._submodules.add(module)
+
+        names = dir(module)
+        objects = [
+            getattr(module, name) for name in names if not name.startswith('_')
+        ]
+        submodules = [
+            obj for obj in objects if isinstance(obj, types.ModuleType)
+        ]
+        for submodule in submodules:
+            self._collect_submodules(submodule)
+
+    def _gather_funcs(self, module: ModuleType) -> None:
         func_types = [types.FunctionType, types.BuiltinMethodType]
 
         names = dir(module)
-        funcs = [
+        objects = [
             getattr(module, name) for name in names if not name.startswith('_')
         ]
-        funcs = [f for f in funcs if any(isinstance(f, t) for t in func_types)]
+        funcs = [
+            obj for obj in objects if any(isinstance(obj, t) for t in func_types)
+        ]
+        # Or should we take care of this in modules itself?..
+        funcs = [
+            f for f in funcs if f.__name__.startswith(self.top_module_name)
+        ]
 
         for fnc in funcs:
-
             # For non-builtin funcs, use the pydoc rendering since it includes
             # args.
             # Chop off the first line which is just "Python Library
@@ -1082,6 +1113,10 @@ class Generator:
                 self._functions.append(f_info)
 
     def _process_classes(self, module: ModuleType) -> None:
+        # We don't want generate docs not for our submodules.
+        if not module.__name__.startswith(f'{self.top_module_name}'):
+            return
+
         classes_by_name = _get_module_classes(module)
         for c_name, cls in classes_by_name:
             docs = self._get_base_docs_for_class(cls)
@@ -1161,12 +1196,19 @@ class Generator:
         docs = self._add_index_links(docs, ignore_links)
         return docs
 
+    def get_top_module(self) -> ModuleType:
+        """Returns top-level module we generating docs for"""
+        return importlib.import_module(self.top_module_name)
+
     def run(self, outfilename: str) -> None:
         """Generate docs from within the game."""
         import ba
 
-        self._gather_funcs(ba)
-        self._process_classes(ba)
+        self._collect_submodules(self.get_top_module())
+        print([sm.__name__ for sm in self._submodules])
+        for module in sorted(self._submodules, key=lambda m: m.__name__):
+            self._gather_funcs(module)
+            self._process_classes(module)
 
         # Start with our list of classes and functions.
         app = ba.app
@@ -1268,7 +1310,36 @@ class Generator:
 
         print(f"Generated docs file: '{Clr.BLU}{outfilename}.{Clr.RST}'")
 
-        ba.quit()
+
+class BaModuleGenerator(BaseGenerator):
+    """Generates docs for 'ba' module."""
+
+    top_module_name = 'ba'
+    # Ignore them as they are already shown in ba.__init__.
+    ignored_modules = ['ba.internal', 'ba.ui']
+
+    def _add_index_links(self,
+                         docs: str,
+                         ignore_links: Optional[list[str]] = None) -> str:
+        docs = super()._add_index_links(docs, ignore_links=ignore_links)
+
+        # Misc replacements:
+        docs = docs.replace(
+            'General message handling; can be passed any message object.',
+            'General message handling; can be passed any <a href="#' +
+            _get_class_category_href('Message Classes') +
+            '">message object</a>.')
+
+        return docs
+
+
+class BastdModuleGenerator(BaseGenerator):
+    """Generates docs for 'bastd' module and all submodules."""
+
+    top_module_name = 'bastd'
+    # Mypy complains if there is no type annotation
+    # (though it is in base class).
+    ignored_modules: list[str] = []
 
 
 def generate(projroot: str) -> None:
@@ -1278,7 +1349,8 @@ def generate(projroot: str) -> None:
     # Make sure we're running from the dir above this script.
     os.chdir(projroot)
 
-    outfilename = os.path.abspath('build/docs.html')
+    ba_out_file_name = os.path.abspath('build/docs_ba.html')
+    bastd_out_file_name = os.path.abspath('build/docs_bastd.html')
 
     # Let's build the cmake version; no sandboxing issues to contend
     # with there. Also going with the headless build; will need to revisit
@@ -1298,7 +1370,8 @@ def generate(projroot: str) -> None:
                 f'    import ba\n'
                 f'    sys.path.append("{toolsdir}")\n'
                 f'    import batools.docs\n'
-                f'    batools.docs.Generator().run("{outfilename}")\n'
+                f'    batools.docs.BaModuleGenerator().run("{ba_out_file_name}")\n'
+                f'    batools.docs.BastdModuleGenerator().run("{bastd_out_file_name}")\n'
                 f'    ba.quit()\n'
                 f'except Exception:\n'
                 f'    import sys\n'
