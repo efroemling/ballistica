@@ -4797,6 +4797,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/dutch.json \
   build/ba_data/data/languages/english.json \
   build/ba_data/data/languages/esperanto.json \
+  build/ba_data/data/languages/filipino.json \
   build/ba_data/data/languages/french.json \
   build/ba_data/data/languages/german.json \
   build/ba_data/data/languages/gibberish.json \

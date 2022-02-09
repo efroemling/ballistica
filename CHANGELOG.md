@@ -1,3 +1,6 @@
+### 1.6.8 (20444)
+- Added Filipino language (Thanks David!)
+
 ### 1.6.7 (20436)
 - Fixed a vulnerability which could expose device-account uuids.
 - Now generating Linux Arm64 server and test builds (currently built against Ubuntu 20).
