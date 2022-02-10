@@ -253,7 +253,6 @@ def _get_module_classes(module: ModuleType) -> list[tuple[str, type]]:
 
 
 def _is_inherited(cls: type, name: str) -> bool:
-
     method = getattr(cls, name)
 
     # Classmethods are already bound with the class as self.
@@ -353,7 +352,6 @@ def _print_child_classes(category_classes: list[ClassInfo], parent: str,
 
 def _add_inner_classes(class_objs: Sequence[type],
                        classes_by_name: list[tuple[str, type]]) -> None:
-
     # Ok, now go through all existing classes and look for classes
     # defined within.
     for cls in class_objs:
@@ -376,11 +374,14 @@ class BaseGenerator:
 
     # This should be overridden by inherited classes.
 
-    # Top-level module (e.g. 'ba')
+    # Top-level module (e.g. 'ba').
     top_module_name: str
 
-    # Modules NOT to generate docs for. Example: ['ba.internal']
+    # Modules NOT to generate docs for. Example: ['ba.internal'].
     ignored_modules: list[str]
+
+    # Docs file header.
+    header: str = ''
 
     def __init__(self) -> None:
         self._index_keys: list[str] = []
@@ -701,13 +702,13 @@ class BaseGenerator:
         return mdocs_lines
 
     def _create_index(self) -> None:
-
         # Create an index of everything we can link to in classes and
         # functions.
         for cls in self._classes:
             key = cls.name
             if key in self._index:
-                print('duplicate index entry:', key)
+                # print('duplicate index entry:', key)
+                continue
             self._index[key] = (_get_class_href(cls.name), cls)
             self._index_keys.append(key)
 
@@ -715,7 +716,8 @@ class BaseGenerator:
             for mth in cls.methods:
                 key = cls.name + '.' + mth.name
                 if key in self._index:
-                    print('duplicate index entry:', key)
+                    # print('duplicate index entry:', key)
+                    continue
                 self._index[key] = (_get_method_href(cls.name, mth.name), mth)
                 self._index_keys.append(key)
 
@@ -723,7 +725,8 @@ class BaseGenerator:
             for attr in cls.attributes:
                 key = cls.name + '.' + attr.name
                 if key in self._index:
-                    print('duplicate index entry:', key)
+                    # print('duplicate index entry:', key)
+                    continue
                 self._index[key] = (_get_attribute_href(cls.name,
                                                         attr.name), attr)
                 self._index_keys.append(key)
@@ -732,7 +735,8 @@ class BaseGenerator:
         for fnc in self._functions:
             key = fnc.name
             if key in self._index:
-                print('duplicate index entry:', key)
+                # print('duplicate index entry:', key)
+                continue
             self._index[key] = (_get_function_href(fnc.name), fnc)
             self._index_keys.append(key)
 
@@ -1067,7 +1071,8 @@ class BaseGenerator:
             getattr(module, name) for name in names if not name.startswith('_')
         ]
         funcs = [
-            obj for obj in objects if any(isinstance(obj, t) for t in func_types)
+            obj for obj in objects if any(
+                isinstance(obj, t) for t in func_types)
         ]
         # Or should we take care of this in modules itself?..
         funcs = [
@@ -1113,10 +1118,6 @@ class BaseGenerator:
                 self._functions.append(f_info)
 
     def _process_classes(self, module: ModuleType) -> None:
-        # We don't want generate docs not for our submodules.
-        if not module.__name__.startswith(f'{self.top_module_name}'):
-            return
-
         classes_by_name = _get_module_classes(module)
         for c_name, cls in classes_by_name:
             docs = self._get_base_docs_for_class(cls)
@@ -1202,11 +1203,14 @@ class BaseGenerator:
 
     def run(self, outfilename: str) -> None:
         """Generate docs from within the game."""
+        # pylint: disable=too-many-locals
+
         import ba
 
         self._collect_submodules(self.get_top_module())
-        print([sm.__name__ for sm in self._submodules])
-        for module in sorted(self._submodules, key=lambda m: m.__name__):
+        submodules = list(sorted(self._submodules, key=lambda x: x.__name__))
+        print([sm.__name__ for sm in submodules])
+        for module in submodules:
             self._gather_funcs(module)
             self._process_classes(module)
 
@@ -1215,15 +1219,7 @@ class BaseGenerator:
         self._out += ('<h4><em>last updated on ' + str(datetime.date.today()) +
                       ' for Ballistica version ' + app.version + ' build ' +
                       str(app.build_number) + '</em></h4>\n')
-        self._out += (
-            '<p>This page documents the Python classes'
-            ' and functions in the \'ba\' module,\n'
-            ' which are the ones most relevant to modding in Ballistica.'
-            ' If you come across something you feel'
-            ' should be included here or could'
-            ' be better explained, please '
-            '<a href="mailto:support@froemling.net">'
-            'let me know</a>. Happy modding!</p>\n')
+        self._out += self.header
         self._out += '<hr>\n'
         self._out += '<h2>Table of Contents</h2>\n'
 
@@ -1315,8 +1311,15 @@ class BaModuleGenerator(BaseGenerator):
     """Generates docs for 'ba' module."""
 
     top_module_name = 'ba'
-    # Ignore them as they are already shown in ba.__init__.
     ignored_modules = ['ba.internal', 'ba.ui']
+    header = ('<p>This page documents the Python classes'
+              ' and functions in the \'ba\' module,\n'
+              ' which are the ones most relevant to modding in Ballistica.'
+              ' If you come across something you feel'
+              ' should be included here or could'
+              ' be better explained, please '
+              '<a href="mailto:support@froemling.net">'
+              'let me know</a>. Happy modding!</p>\n')
 
     def _add_index_links(self,
                          docs: str,
@@ -1340,6 +1343,14 @@ class BastdModuleGenerator(BaseGenerator):
     # Mypy complains if there is no type annotation
     # (though it is in base class).
     ignored_modules: list[str] = []
+    header = ('<p>This page documents the Python classes'
+              ' and functions in the \'bastd\' module,\n'
+              ' which are also often needed to modding.'
+              ' If you come across something you feel'
+              ' should be included here or could'
+              ' be better explained, please '
+              '<a href="mailto:support@froemling.net">'
+              'let me know</a>. Happy modding!</p>\n')
 
 
 def generate(projroot: str) -> None:
