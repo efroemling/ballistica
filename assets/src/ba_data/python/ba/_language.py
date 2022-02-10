@@ -87,6 +87,7 @@ class LanguageSubsystem:
             'vec': 'Venetian',
             'hi': 'Hindi',
             'ta': 'Tamil',
+            'fil': 'Filipino',
         }
 
         # Special case for Chinese: map specific variations to traditional.

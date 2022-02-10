@@ -60,6 +60,7 @@
       <w>appstate</w>
       <w>argsjoined</w>
       <w>asci</w>
+      <w>assetsmakefile</w>
       <w>assigninput</w>
       <w>atest</w>
       <w>athome</w>
@@ -86,6 +87,9 @@
       <w>basetype</w>
       <w>basicsize</w>
       <w>basn</w>
+      <w>basnmessagereceiver</w>
+      <w>basnmessagesender</w>
+      <w>basntoclient</w>
       <w>bastd</w>
       <w>batoolsinternal</w>
       <w>bbbb</w>
@@ -192,6 +196,7 @@
       <w>cleanupcheck</w>
       <w>clientid</w>
       <w>clientinfo</w>
+      <w>clienttobasn</w>
       <w>clipcount</w>
       <w>cmath</w>
       <w>cmds</w>
@@ -219,6 +224,7 @@
       <w>cpuid</w>
       <w>crashenv</w>
       <w>crashlytics</w>
+      <w>createtime</w>
       <w>cresult</w>
       <w>crom</w>
       <w>crosswire</w>
@@ -342,6 +348,7 @@
       <w>ewwwww</w>
       <w>exargs</w>
       <w>exctype</w>
+      <w>exec'ed</w>
       <w>execinfo</w>
       <w>execing</w>
       <w>exhash</w>
@@ -428,6 +435,7 @@
       <w>gcc's</w>
       <w>gearvr</w>
       <w>genchangelog</w>
+      <w>gencmd</w>
       <w>getactivity</w>
       <w>getattro</w>
       <w>getattrofunc</w>
@@ -519,6 +527,7 @@
       <w>incentivized</w>
       <w>indata</w>
       <w>inet</w>
+      <w>infoset</w>
       <w>infotxt</w>
       <w>inides</w>
       <w>initguid</w>
@@ -921,6 +930,7 @@
       <w>refl</w>
       <w>regtp</w>
       <w>rehel</w>
+      <w>reimported</w>
       <w>reloadmedia</w>
       <w>rendererdata</w>
       <w>renormalize</w>
@@ -1030,6 +1040,7 @@
       <w>spivak</w>
       <w>srcattr</w>
       <w>srcfolder</w>
+      <w>srcname</w>
       <w>srcpath</w>
       <w>srcsz</w>
       <w>sresult</w>

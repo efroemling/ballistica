@@ -346,27 +346,6 @@ class App:
         for key in ('lc14173', 'lc14292'):
             cfg.setdefault(key, launch_count)
 
-        # Debugging - make note if we're using the local test server so we
-        # don't accidentally leave it on in a release.
-        # FIXME - should move these sort of warnings to the C++ layer.
-        server_addr = _ba.get_master_server_address()
-        if 'localhost' in server_addr:
-            _ba.timer(2.0,
-                      lambda: _ba.screenmessage(
-                          'Note: using local server',
-                          (1, 1, 0),
-                          log=True,
-                      ),
-                      timetype=TimeType.REAL)
-        elif 'test' in server_addr:
-            _ba.timer(2.0,
-                      lambda: _ba.screenmessage(
-                          'Note: using test server-module',
-                          (1, 1, 0),
-                          log=True,
-                      ),
-                      timetype=TimeType.REAL)
-
         cfg['launchCount'] = launch_count
         cfg.commit()
 

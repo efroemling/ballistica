@@ -137,6 +137,7 @@ def _lazybuild_check_paths(inpaths: list[str], category: SourceCategory,
             # Ignore python cache files.
             if '__pycache__' in root:
                 continue
+
             for fname in fnames:
                 # Ignore dot files
                 if fname.startswith('.'):
@@ -441,7 +442,10 @@ def gen_fulltest_buildfile_apple() -> None:
         extras = [e for e in extras if e.startswith('mac.')]
         for extra in extras:
             if extra == 'mac.package':
-                lines.append('make mac-package')
+                # FIXME; Currently skipping notarization because it requires us
+                # to be logged in via the gui to succeed.
+                lines.append('BA_MAC_DISK_IMAGE_SKIP_NOTARIZATION=1'
+                             ' make mac-package')
             elif extra == 'mac.package.server.x86_64':
                 lines.append('make mac-server-package-x86-64')
             elif extra == 'mac.package.server.arm64':

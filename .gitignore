@@ -122,6 +122,7 @@ xcuserdata/
 # Generated sources
 /src/ballistica/generated
 /assets/src/ba_data/python/ba/_generated
+/src/meta/bametainternal/generated
 
 # Dynamically generated resource files
 /ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/vr_icon.png

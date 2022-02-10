@@ -45,9 +45,8 @@ class Target:
         return out
 
 
-def _emit_group_build_lines(targets: list[Target], basename: str) -> list[str]:
-    """Gen a group build target."""
-    del basename  # Unused.
+def _emit_sources_lines(targets: list[Target]) -> list[str]:
+    """Gen lines to build provided targets."""
     out: list[str] = []
     if not targets:
         return out
@@ -59,8 +58,8 @@ def _emit_group_build_lines(targets: list[Target], basename: str) -> list[str]:
     return out
 
 
-def _emit_group_efrocache_lines(targets: list[Target]) -> list[str]:
-    """Gen a group clean target."""
+def _emit_efrocache_lines(targets: list[Target]) -> list[str]:
+    """Gen lines to cache provided targets."""
     out: list[str] = []
     if not targets:
         return out
@@ -93,11 +92,11 @@ def _add_enums_module_target(targets: list[Target]) -> None:
         ))
 
 
-def _add_init_module_target(targets: list[Target]) -> None:
+def _add_init_module_target(targets: list[Target], moduledir: str) -> None:
     targets.append(
         Target(
             src=[os.path.join(TOOLS_DIR, 'batools', 'pcommand.py')],
-            dst=os.path.join(OUT_DIR_PYTHON, '__init__.py'),
+            dst=os.path.join(moduledir, '__init__.py'),
             cmd='$(PCOMMAND) gen_python_init_module $@',
         ))
 
@@ -136,15 +135,52 @@ def _add_python_embedded_targets_internal(targets: list[Target]) -> None:
                 or 'flycheck' in fname):
             continue
         name = os.path.splitext(fname)[0]
-        src = [
-            f'{pkg}/python_embedded/{name}.py',
-            os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
-        ]
-        dst = os.path.join(OUT_DIR_CPP, 'python_embedded', f'{name}.inc')
         targets.append(
-            Target(src=src,
-                   dst=dst,
-                   cmd='$(PCOMMAND) gen_encrypted_python_code $< $@'))
+            Target(
+                src=[
+                    f'{pkg}/python_embedded/{name}.py',
+                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                ],
+                dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
+                                 f'{name}.inc'),
+                cmd='$(PCOMMAND) gen_encrypted_python_code $< $@',
+            ))
+
+
+def _add_extra_targets_internal(targets: list[Target]) -> None:
+
+    # Add targets to generate message sender/receiver classes for
+    # our basn/client protocols. Their outputs go to 'generated' so they
+    # don't get added to git.
+    _add_init_module_target(targets, moduledir='bametainternal/generated')
+    for srcname, dstname, gencmd in [
+        ('clienttobasn', 'basnmessagesender', 'gen_basn_msg_sender'),
+        ('basntoclient', 'basnmessagereceiver', 'gen_basn_msg_receiver'),
+    ]:
+        targets.append(
+            Target(
+                src=[
+                    f'bametainternal/python_embedded/{srcname}.py',
+                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                ],
+                dst=f'bametainternal/generated/{dstname}.py',
+                cmd=f'$(PCOMMAND) {gencmd} $@',
+            ))
+
+    # Now add explicit targets to generate embedded code for the resulting
+    # classes. We can't simply place them in a scanned dir like
+    # python_embedded because they might not exist yet at update time.
+    for name in ['basnmessagesender', 'basnmessagereceiver']:
+        targets.append(
+            Target(
+                src=[
+                    f'bametainternal/generated/{name}.py',
+                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                ],
+                dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
+                                 f'{name}.inc'),
+                cmd='$(PCOMMAND) gen_encrypted_python_code $< $@',
+            ))
 
 
 def _empty_line_if(condition: bool) -> list[str]:
@@ -199,12 +235,11 @@ def update(projroot: str, check: bool) -> None:
     # Public targets (full sources available in public)
     targets: list[Target] = []
     pubtargets = targets
-    basename = 'public'
     _add_python_embedded_targets(targets)
-    _add_init_module_target(targets)
+    _add_init_module_target(targets, moduledir=OUT_DIR_PYTHON)
     _add_enums_module_target(targets)
     our_lines_public = (_empty_line_if(bool(targets)) +
-                        _emit_group_build_lines(targets, basename) +
+                        _emit_sources_lines(targets) +
                         [t.emit() for t in targets])
     all_dsts_public.update(t.dst for t in targets)
 
@@ -215,25 +250,23 @@ def update(projroot: str, check: bool) -> None:
     else:
         # Private targets (available in public through efrocache)
         targets = []
-        basename = 'private'
         our_lines_private_1 = (
-            _empty_line_if(bool(targets)) +
-            _emit_group_build_lines(targets, basename) +
+            _empty_line_if(bool(targets)) + _emit_sources_lines(targets) +
             ['# __EFROCACHE_TARGET__\n' + t.emit() for t in targets] + [
                 '\n# Note: we include our public targets in efrocache even\n'
                 '# though they are buildable in public. This allows us to\n'
-                '# fetch them on Windows to bootstrap binary CI builds in\n'
-                '# cases where we can\'t use our full Makefiles.\n'
-            ] + _emit_group_efrocache_lines(pubtargets + targets))
+                '# fetch them to bootstrap binary builds in cases where\n'
+                '# we can\'t use our full Makefiles (like Windows CI).\n'
+            ] + _emit_efrocache_lines(pubtargets + targets))
         all_dsts_private.update(t.dst for t in targets)
 
         # Private-internal targets (not available at all in public)
         targets = []
-        basename = 'private-internal'
         _add_python_embedded_targets_internal(targets)
+        _add_extra_targets_internal(targets)
         our_lines_private_2 = (['# __PUBSYNC_STRIP_BEGIN__'] +
                                _empty_line_if(bool(targets)) +
-                               _emit_group_build_lines(targets, basename) +
+                               _emit_sources_lines(targets) +
                                [t.emit() for t in targets] +
                                ['# __PUBSYNC_STRIP_END__'])
         our_lines_private = our_lines_private_1 + our_lines_private_2
