@@ -29,102 +29,102 @@ class BombFactory:
 
     Attributes:
 
-       bomb_model
+       bomb_model: ba.Model
           The ba.Model of a standard or ice bomb.
 
-       sticky_bomb_model
+       sticky_bomb_model: ba.Model
           The ba.Model of a sticky-bomb.
 
-       impact_bomb_model
+       impact_bomb_model: ba.Model
           The ba.Model of an impact-bomb.
 
-       land_mine_model
+       land_mine_model: ba.Model
           The ba.Model of a land-mine.
 
-       tnt_model
+       tnt_model: ba.Model
           The ba.Model of a tnt box.
 
-       regular_tex
+       regular_tex: ba.Texture
           The ba.Texture for regular bombs.
 
-       ice_tex
+       ice_tex: ba.Texture
           The ba.Texture for ice bombs.
 
-       sticky_tex
+       sticky_tex: ba.Texture
           The ba.Texture for sticky bombs.
 
-       impact_tex
+       impact_tex: ba.Texture
           The ba.Texture for impact bombs.
 
-       impact_lit_tex
+       impact_lit_tex: ba.Texture
           The ba.Texture for impact bombs with lights lit.
 
-       land_mine_tex
+       land_mine_tex: ba.Texture
           The ba.Texture for land-mines.
 
-       land_mine_lit_tex
+       land_mine_lit_tex: ba.Texture
           The ba.Texture for land-mines with the light lit.
 
-       tnt_tex
+       tnt_tex: ba.Texture
           The ba.Texture for tnt boxes.
 
-       hiss_sound
+       hiss_sound: ba.Sound
           The ba.Sound for the hiss sound an ice bomb makes.
 
-       debris_fall_sound
+       debris_fall_sound: ba.Sound
           The ba.Sound for random falling debris after an explosion.
 
-       wood_debris_fall_sound
+       wood_debris_fall_sound: ba.Sound
           A ba.Sound for random wood debris falling after an explosion.
 
-       explode_sounds
+       explode_sounds: Sequence[ba.Sound]
           A tuple of ba.Sounds for explosions.
 
-       freeze_sound
+       freeze_sound: ba.Sound
           A ba.Sound of an ice bomb freezing something.
 
-       fuse_sound
+       fuse_sound: ba.Sound
           A ba.Sound of a burning fuse.
 
-       activate_sound
+       activate_sound: ba.Sound
           A ba.Sound for an activating impact bomb.
 
-       warn_sound
+       warn_sound: ba.Sound
           A ba.Sound for an impact bomb about to explode due to time-out.
 
-       bomb_material
+       bomb_material: ba.Material
           A ba.Material applied to all bombs.
 
-       normal_sound_material
+       normal_sound_material: ba.Material
           A ba.Material that generates standard bomb noises on impacts, etc.
 
-       sticky_material
+       sticky_material: ba.Material
           A ba.Material that makes 'splat' sounds and makes collisions softer.
 
-       land_mine_no_explode_material
+       land_mine_no_explode_material: ba.Material
           A ba.Material that keeps land-mines from blowing up.
           Applied to land-mines when they are created to allow land-mines to
           touch without exploding.
 
-       land_mine_blast_material
+       land_mine_blast_material: ba.Material
           A ba.Material applied to activated land-mines that causes them to
           explode on impact.
 
-       impact_blast_material
+       impact_blast_material: ba.Material
           A ba.Material applied to activated impact-bombs that causes them to
           explode on impact.
 
-       blast_material
+       blast_material: ba.Material
           A ba.Material applied to bomb blast geometry which triggers impact
           events with what it touches.
 
-       dink_sounds
+       dink_sounds: Sequence[ba.Sound]
           A tuple of ba.Sounds for when bombs hit the ground.
 
-       sticky_impact_sound
+       sticky_impact_sound: ba.Sound
           The ba.Sound for a squish made by a sticky bomb hitting something.
 
-       roll_sound
+       roll_sound: ba.Sound
           ba.Sound for a rolling bomb.
     """
 

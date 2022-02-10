@@ -31,10 +31,10 @@ class SpazBotPunchedMessage:
 
     Attributes:
 
-       spazbot
+       spazbot: ba.SpazBot
           The ba.SpazBot that got punched.
 
-       damage
+       damage: int
           How much damage was done to the ba.SpazBot.
     """
 
@@ -51,13 +51,13 @@ class SpazBotDiedMessage:
 
     Attributes:
 
-       spazbot
+       spazbot: ba.SpazBot
           The ba.SpazBot that was killed.
 
-       killerplayer
+       killerplayer: ba.Player
           The ba.Player that killed it (or None).
 
-       how
+       how: ba.DeathType
           The particular type of death.
     """
 

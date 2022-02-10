@@ -25,55 +25,55 @@ class SpazFactory:
 
     Attributes:
 
-       impact_sounds_medium
+       impact_sounds_medium: Sequence[ba.Sound]
           A tuple of ba.Sounds for when a ba.Spaz hits something kinda hard.
 
-       impact_sounds_hard
+       impact_sounds_hard: Sequence[ba.Sound]
           A tuple of ba.Sounds for when a ba.Spaz hits something really hard.
 
-       impact_sounds_harder
+       impact_sounds_harder: Sequence[ba.Sound]
           A tuple of ba.Sounds for when a ba.Spaz hits something really
           really hard.
 
-       single_player_death_sound
+       single_player_death_sound: ba.Sound
           The sound that plays for an 'important' spaz death such as in
           co-op games.
 
-       punch_sound
+       punch_sound: ba.Sound
           A standard punch ba.Sound.
 
-       punch_sound_strong
+       punch_sound_strong: Sequence[ba.Sound]
           A tuple of stronger sounding punch ba.Sounds.
 
-       punch_sound_stronger
+       punch_sound_stronger: ba.Sound
           A really really strong sounding punch ba.Sound.
 
-       swish_sound
+       swish_sound: ba.Sound
           A punch swish ba.Sound.
 
-       block_sound
+       block_sound: ba.Sound
           A ba.Sound for when an attack is blocked by invincibility.
 
-       shatter_sound
+       shatter_sound: ba.Sound
           A ba.Sound for when a frozen ba.Spaz shatters.
 
-       splatter_sound
+       splatter_sound: ba.Sound
           A ba.Sound for when a ba.Spaz blows up via curse.
 
-       spaz_material
+       spaz_material: ba.Material
           A ba.Material applied to all of parts of a ba.Spaz.
 
-       roller_material
+       roller_material: ba.Material
           A ba.Material applied to the invisible roller ball body that
           a ba.Spaz uses for locomotion.
 
-       punch_material
+       punch_material: ba.Material
           A ba.Material applied to the 'fist' of a ba.Spaz.
 
-       pickup_material
+       pickup_material: ba.Material
           A ba.Material applied to the 'grabber' body of a ba.Spaz.
 
-       curse_material
+       curse_material: ba.Material
           A ba.Material applied to a cursed ba.Spaz that triggers an explosion.
     """
 

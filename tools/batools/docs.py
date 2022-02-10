@@ -397,7 +397,9 @@ class BaseGenerator:
                                                 AttributeInfo]]] = {}
         self._out = ''
         self._classes: list[ClassInfo] = []
+        self._class_names: set[str] = set()
         self._functions: list[FunctionInfo] = []
+        self._function_names: set[str] = set()
         self._merged_categories: list[tuple[str, str,
                                             list[Union[ClassInfo,
                                                        FunctionInfo]]]] = []
@@ -707,8 +709,7 @@ class BaseGenerator:
         for cls in self._classes:
             key = cls.name
             if key in self._index:
-                # print('duplicate index entry:', key)
-                continue
+                print(f'WARNING: duplicate index entry: {key}')
             self._index[key] = (_get_class_href(cls.name), cls)
             self._index_keys.append(key)
 
@@ -716,8 +717,7 @@ class BaseGenerator:
             for mth in cls.methods:
                 key = cls.name + '.' + mth.name
                 if key in self._index:
-                    # print('duplicate index entry:', key)
-                    continue
+                    print(f'WARNING: duplicate index entry: {key}')
                 self._index[key] = (_get_method_href(cls.name, mth.name), mth)
                 self._index_keys.append(key)
 
@@ -725,8 +725,7 @@ class BaseGenerator:
             for attr in cls.attributes:
                 key = cls.name + '.' + attr.name
                 if key in self._index:
-                    # print('duplicate index entry:', key)
-                    continue
+                    print(f'WARNING: duplicate index entry: {key}')
                 self._index[key] = (_get_attribute_href(cls.name,
                                                         attr.name), attr)
                 self._index_keys.append(key)
@@ -735,8 +734,7 @@ class BaseGenerator:
         for fnc in self._functions:
             key = fnc.name
             if key in self._index:
-                # print('duplicate index entry:', key)
-                continue
+                print(f'WARNING: duplicate index entry: {key}')
             self._index[key] = (_get_function_href(fnc.name), fnc)
             self._index_keys.append(key)
 
@@ -1114,8 +1112,9 @@ class BaseGenerator:
                                   category=_get_category(
                                       docs, CategoryType.FUNCTION),
                                   docs=docs)
-            if '(internal)' not in docs:
+            if '(internal)' not in docs and f_info.name not in self._function_names:
                 self._functions.append(f_info)
+                self._function_names.add(f_info.name)
 
     def _process_classes(self, module: ModuleType) -> None:
         classes_by_name = _get_module_classes(module)
@@ -1135,7 +1134,9 @@ class BaseGenerator:
                                category=_get_category(docs,
                                                       CategoryType.CLASS),
                                attributes=attrs)
-            self._classes.append(c_info)
+            if c_info.name not in self._class_names:
+                self._classes.append(c_info)
+                self._class_names.add(c_info.name)
 
     def _write_category_list(self) -> None:
         for cname, ctype, cmembers in self._merged_categories:
@@ -1207,12 +1208,34 @@ class BaseGenerator:
 
         import ba
 
+        print(f"Generating docs file: '{Clr.BLU}{outfilename}{Clr.RST}'...")
+
+        # Collect everything we want to generate docs for.
         self._collect_submodules(self.get_top_module())
         submodules = list(sorted(self._submodules, key=lambda x: x.__name__))
-        print([sm.__name__ for sm in submodules])
+        print(f'{self.top_module_name} submodules:\n -->',
+              '\n --> '.join([sm.__name__ for sm in submodules]))
         for module in submodules:
             self._gather_funcs(module)
             self._process_classes(module)
+
+        # Remove duplicates. This probably should be handled at
+        # self._gather_funcs/self._process_classes level (i.e. just not to add
+        # already existing things), but the main problem is unhashable
+        # ClassInfo dataclass which leads to O(N^2) asymptotic (though I didn't
+        # check how exactly slow it would be).
+        # funcs = self._functions
+        # funcs.sort(key=lambda x: x.name)
+        # f_last: Optional[FunctionInfo] = None
+        # self._functions = []
+        # for func in funcs:
+        #     if func.name == f_last.name:
+        #         continue
+        #     f_last = func
+        #     self._functions.append(func)
+
+        self._functions.sort(key=lambda x: x.name)
+        self._classes.sort(key=lambda x: x.name)
 
         # Start with our list of classes and functions.
         app = ba.app
@@ -1304,7 +1327,7 @@ class BaseGenerator:
         with open(outfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(self._out)
 
-        print(f"Generated docs file: '{Clr.BLU}{outfilename}.{Clr.RST}'")
+        print(f"Generated docs file: '{Clr.BLU}{outfilename}{Clr.RST}'.")
 
 
 class BaModuleGenerator(BaseGenerator):

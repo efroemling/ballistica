@@ -52,7 +52,7 @@ class Spaz(ba.Actor):
 
     Attributes:
 
-       node
+       node: ba.Node
           The 'spaz' ba.Node.
     """
 

@@ -30,52 +30,52 @@ class PowerupBoxFactory:
 
     Attributes:
 
-       model
+       model: ba.Model
           The ba.Model of the powerup box.
 
-       model_simple
+       model_simple: ba.Model
           A simpler ba.Model of the powerup box, for use in shadows, etc.
 
-       tex_bomb
+       tex_bomb: ba.Texture
           Triple-bomb powerup ba.Texture.
 
-       tex_punch
+       tex_punch: ba.Texture
           Punch powerup ba.Texture.
 
-       tex_ice_bombs
+       tex_ice_bombs: ba.Texture
           Ice bomb powerup ba.Texture.
 
-       tex_sticky_bombs
+       tex_sticky_bombs: ba.Texture
           Sticky bomb powerup ba.Texture.
 
-       tex_shield
+       tex_shield: ba.Texture
           Shield powerup ba.Texture.
 
-       tex_impact_bombs
+       tex_impact_bombs: ba.Texture
           Impact-bomb powerup ba.Texture.
 
-       tex_health
+       tex_health: ba.Texture
           Health powerup ba.Texture.
 
-       tex_land_mines
+       tex_land_mines: ba.Texture
           Land-mine powerup ba.Texture.
 
-       tex_curse
+       tex_curse: ba.Texture
           Curse powerup ba.Texture.
 
-       health_powerup_sound
+       health_powerup_sound: ba.Sound
           ba.Sound played when a health powerup is accepted.
 
-       powerup_sound
+       powerup_sound: ba.Sound
           ba.Sound played when a powerup is accepted.
 
-       powerdown_sound
+       powerdown_sound: ba.Sound
           ba.Sound that can be used when powerups wear off.
 
-       powerup_material
+       powerup_material: ba.Material
           ba.Material applied to powerup boxes.
 
-       powerup_accept_material
+       powerup_accept_material: ba.Material
           Powerups will send a ba.PowerupMessage to anything they touch
           that has this ba.Material applied.
     """
@@ -194,12 +194,12 @@ class PowerupBox(ba.Actor):
 
     Attributes:
 
-       poweruptype
+       poweruptype: str
           The string powerup type.  This can be 'triple_bombs', 'punch',
           'ice_bombs', 'impact_bombs', 'land_mines', 'sticky_bombs', 'shield',
           'health', or 'curse'.
 
-       node
+       node: ba.Node
           The 'prop' ba.Node representing this box.
     """
 

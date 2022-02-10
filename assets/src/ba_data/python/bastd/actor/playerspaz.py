@@ -23,7 +23,7 @@ class PlayerSpazHurtMessage:
 
     Attributes:
 
-       spaz
+       spaz: ba.PlayerSpaz
           The ba.PlayerSpaz that was hurt
     """
 

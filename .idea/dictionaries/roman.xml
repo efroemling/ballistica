@@ -4,6 +4,7 @@
       <w>gamename</w>
       <w>maxlen</w>
       <w>pagename</w>
+      <w>unhashable</w>
     </words>
   </dictionary>
 </component>

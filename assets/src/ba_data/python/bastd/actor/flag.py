@@ -24,20 +24,20 @@ class FlagFactory:
 
     Attributes:
 
-       flagmaterial
+       flagmaterial: ba.Material
           The ba.Material applied to all ba.Flags.
 
-       impact_sound
+       impact_sound: ba.Sound
           The ba.Sound used when a ba.Flag hits the ground.
 
-       skid_sound
+       skid_sound: ba.Sound
           The ba.Sound used when a ba.Flag skids along the ground.
 
-       no_hit_material
+       no_hit_material: ba.Material
           A ba.Material that prevents contact with most objects;
           applied to 'non-touchable' flags.
 
-       flag_texture
+       flag_texture: ba.Texture
           The ba.Texture for flags.
     """
 
