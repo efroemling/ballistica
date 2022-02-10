@@ -15,7 +15,9 @@ if TYPE_CHECKING:
 
 
 class PopupWindow:
-    """A transient window that positions and scales itself for visibility."""
+    """A transient window that positions and scales itself for visibility.
+
+    Category: UI Classes"""
 
     def __init__(self,
                  position: tuple[float, float],

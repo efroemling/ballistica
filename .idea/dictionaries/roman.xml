@@ -3,7 +3,9 @@
     <words>
       <w>gamename</w>
       <w>maxlen</w>
+      <w>outdirname</w>
       <w>pagename</w>
+      <w>pythondir</w>
       <w>unhashable</w>
     </words>
   </dictionary>
