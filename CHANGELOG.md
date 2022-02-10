@@ -11,7 +11,7 @@
 ### 1.6.6 (20394)
 - Beginning work on moving to new asset system.
 - Added Tamil language (Thanks Ryan!)
-- Added methods for changing camera attributes to the _ba module.
+- Added methods for changing camera attributes to the `_ba` module.
 
 ### 1.6.5 (20394)
 - Added co-op support to server builds (thanks Dliwk!)
@@ -22,8 +22,8 @@
 ### 1.6.4 (20382)
 - Some cleanups in the Favorites tab of the gather window.
 - Reorganized prefab target names; some targets such as `prefab-debug` are now `prefab-gui-debug` (more consistent with the existing `prefab-server-debug` targets).
-- Windows builds now go to build/windows instead of ballisticacore_windows/build.
-- Lots of project reorganization to allow things such as documentation or the dummy _ba.py module to be rebuilt from the public repo.
+- Windows builds now go to build/windows instead of `ballisticacore_windows/build`.
+- Lots of project reorganization to allow things such as documentation or the dummy `_ba.py` module to be rebuilt from the public repo.
 - Added network flood attack mitigation.
 
 ### 1.6.3 (20366)

@@ -45,7 +45,7 @@ if (HEADLESS)
       set(SDL2_LIBRARIES "SDL2::SDL2")
     endif ()
     # Getting complaint about space at the end of this on ubuntu16.
-    string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
+    string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
   else ()
     message(FATAL_ERROR "SDL2 not found")
   endif ()

@@ -1209,6 +1209,7 @@ class PublicGatherTab(GatherTab):
 
     def on_public_party_activate(self, party: PartyEntry) -> None:
         """Called when a party is clicked or otherwise activated."""
+        self.save_state()
         if party.queue is not None:
             from bastd.ui.partyqueue import PartyQueueWindow
             ba.playsound(ba.getsound('swish'))
