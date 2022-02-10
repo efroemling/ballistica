@@ -26,7 +26,7 @@ class SharedObjects:
 
     def __init__(self) -> None:
         activity = ba.getactivity()
-        if hasattr(activity, self._STORENAME):
+        if self._STORENAME in activity.customdata:
             raise RuntimeError('Use SharedObjects.get() to fetch the'
                                ' shared instance for this activity.')
         self._object_material: Optional[ba.Material] = None
