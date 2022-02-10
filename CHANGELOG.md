@@ -7,7 +7,7 @@
 - Now generating Linux Arm64 server and test builds (currently built against Ubuntu 20).
 - Mac test builds are now Universal binaries (Arm64 & x86-64 versions bundled together).
 - Mac test builds are now notarized and distributed via a snazzy .dmg instead of a zip file, so the OS should no longer try to prevent you from running them.
-- Now, when pushing new builds to https://files.ballistica.net/bombsquad/builds , corresponding checksums are written to a different server and can be accessed via https://tools.ballistica.net/checksums
+- Now, when pushing new builds to https://files.ballistica.net/bombsquad/builds , corresponding checksums are written to a different server and can be accessed via https://tools.ballistica.net/builds.
 
 ### 1.6.6 (20394)
 - Beginning work on moving to new asset system.
