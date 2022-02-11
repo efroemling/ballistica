@@ -235,41 +235,41 @@ class InputDevice:
 
     Attributes:
 
-       allows_configuring: bool
+       allows_configuring
           Whether the input-device can be configured.
 
-       has_meaningful_button_names: bool
+       has_meaningful_button_names
           Whether button names returned by this instance match labels
           on the actual device. (Can be used to determine whether to show
-          them in controls-overlays, etc.)
+          them in controls-overlays, etc.).
 
-       player: Optional[ba.SessionPlayer]
+       player
           The player associated with this input device.
 
-       client_id: int
+       client_id
           The numeric client-id this device is associated with.
           This is only meaningful for remote client inputs; for
           all local devices this will be -1.
 
-       name: str
+       name
           The name of the device.
 
-       unique_identifier: str
+       unique_identifier
           A string that can be used to persistently identify the device,
           even among other devices of the same type. Used for saving
           prefs, etc.
 
-       id: int
+       id
           The unique numeric id of this device.
 
-       instance_number: int
+       instance_number
           The number of this device among devices of the same type.
 
-       is_controller_app: bool
+       is_controller_app
           Whether this input-device represents a locally-connected
           controller-app.
 
-       is_remote_client: bool
+       is_remote_client
           Whether this input-device represents a remotely-connected
           client.
 
@@ -375,7 +375,7 @@ class Material:
 
     Attributes:
 
-        label: str
+        label
             A label for the material; only used for debugging.
     """
 
@@ -839,14 +839,6 @@ class SessionPlayer:
         activityplayer: Optional[ba.Player]
             The current game-specific instance for this player.
     """
-    id: int
-    in_game: bool
-    sessionteam: ba.SessionTeam
-    inputdevice: ba.InputDevice
-    color: Sequence[float]
-    highlight: Sequence[float]
-    character: str
-    activityplayer: Optional[ba.Player]
 
     def assigninput(self, type: Union[ba.InputType, tuple[ba.InputType, ...]],
                     call: Callable) -> None:
@@ -1056,9 +1048,6 @@ class Vec3(Sequence[float]):
        z: float
           The vector's Z component.
     """
-    x: float
-    y: float
-    z: float
 
     # pylint: disable=function-redefined
 

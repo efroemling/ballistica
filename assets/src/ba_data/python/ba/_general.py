@@ -150,24 +150,25 @@ class _WeakCall:
     Think of this as a handy way to tell an object to do something
     at some point in the future if it happens to still exist.
 
-    # EXAMPLE A: this code will create a FooClass instance and call its
-    # bar() method 5 seconds later; it will be kept alive even though
-    # we overwrite its variable with None because the bound method
-    # we pass as a timer callback (foo.bar) strong-references it
-    foo = FooClass()
-    ba.timer(5.0, foo.bar)
-    foo = None
+    Examples:
+        EXAMPLE A: this code will create a FooClass instance and call its
+        bar() method 5 seconds later; it will be kept alive even though
+        we overwrite its variable with None because the bound method
+        we pass as a timer callback (foo.bar) strong-references it
+        >>> foo = FooClass()
+        ... ba.timer(5.0, foo.bar)
+        ... foo = None
 
-    # EXAMPLE B: this code will *not* keep our object alive; it will die
-    # when we overwrite it with None and the timer will be a no-op when it
-    # fires
-    foo = FooClass()
-    ba.timer(5.0, ba.WeakCall(foo.bar))
-    foo = None
+        EXAMPLE B: this code will *not* keep our object alive; it will die
+        when we overwrite it with None and the timer will be a no-op when it
+        fires
+        >>> foo = FooClass()
+        ... ba.timer(5.0, ba.WeakCall(foo.bar))
+        ... foo = None
 
-    Note: additional args and keywords you provide to the WeakCall()
-    constructor are stored as regular strong-references; you'll need
-    to wrap them in weakrefs manually if desired.
+        Note: additional args and keywords you provide to the WeakCall()
+        constructor are stored as regular strong-references; you'll need
+        to wrap them in weakrefs manually if desired.
     """
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
@@ -176,14 +177,16 @@ class _WeakCall:
         Pass a callable as the first arg, followed by any number of
         arguments or keywords.
 
-        # Example: wrap a method call with some positional and
-        # keyword args:
-        myweakcall = ba.WeakCall(myobj.dostuff, argval1, namedarg=argval2)
-
-        # Now we have a single callable to run that whole mess.
-        # The same as calling myobj.dostuff(argval1, namedarg=argval2)
-        # (provided my_obj still exists; this will do nothing otherwise)
-        myweakcall()
+        Examples:
+            Example: wrap a method call with some positional and
+            keyword args:
+            >>> myweakcall = ba.WeakCall(myobj.dostuff, argval1,
+            ...                          namedarg=argval2)
+            ... # Now we have a single callable to run that whole mess.
+            ... # The same as calling myobj.dostuff(argval1, namedarg=argval2)
+            ... # (provided my_obj still exists; this will do nothing
+            ... # otherwise).
+            ... myweakcall()
         """
         if hasattr(args[0], '__func__'):
             self._call = WeakMethod(args[0])
@@ -217,8 +220,8 @@ class _Call:
     The callable is strong-referenced so it won't die until this
     object does.
 
-    Note that a bound method (ex: myobj.dosomething) contains a reference
-    to 'self' (myobj in that case), so you will be keeping that object
+    Note that a bound method (ex: ``myobj.dosomething``) contains a reference
+    to ``self`` (``myobj`` in that case), so you will be keeping that object
     alive too. Use ba.WeakCall if you want to pass a method to callback
     without keeping its object alive.
     """
@@ -248,6 +251,7 @@ class _Call:
                 str(self._args) + ' _keywds=' + str(self._keywds) + '>')
 
 
+# Hack: pdoc won't run this
 if TYPE_CHECKING:
     WeakCall = Call
     Call = Call

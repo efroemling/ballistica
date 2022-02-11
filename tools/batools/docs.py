@@ -33,8 +33,8 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
         if line.strip() in ['Attributes:', 'Attrs:']:
             attr_line = i
             break
-    if attr_line is not None:
 
+    if attr_line is not None:
         # Docs is now everything *up to* this.
         docs = '\n'.join(docs_lines[:attr_line])
 
@@ -45,14 +45,16 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
 
             # A line with a single alphanumeric word preceding a colon
             # is a new attr.
-            splits = line.split(':')
-            if (len(splits) in (1, 2) and splits[0]
+            splits = line.split(' ')
+            if (len(splits) in (1, 2)
                     and splits[0].replace('_', '').isalnum()):
                 if cur_attr is not None:
                     attrs.append(cur_attr)
                 cur_attr = AttributeInfo(name=splits[0])
                 if len(splits) == 2:
-                    cur_attr.attr_type = splits[1]
+                    # Remove brackets and convert from
+                    # (type): to type.
+                    cur_attr.attr_type = splits[1][1:-2]
 
             # Any other line gets tacked onto the current attr.
             else:
@@ -84,6 +86,9 @@ def generate(projroot: str) -> None:
     outdirname = Path('build', 'docs_html').absolute()
 
     try:
+        pdoc.render.configure(docformat='google',
+                              search=True,
+                              show_source=True)
         pdoc.pdoc('ba', 'bastd', output_directory=outdirname)
     except Exception as exc:
         import traceback

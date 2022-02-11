@@ -69,7 +69,7 @@ void PythonClassMaterial::SetupType(PyTypeObject* obj) {
       "\n"
       "Attributes:\n"
       "\n"
-      "    " ATTR_LABEL ": str\n"
+      "    " ATTR_LABEL " (str):\n"
       "        A label for the material; only used for debugging.\n";
   // clang-format on
 
