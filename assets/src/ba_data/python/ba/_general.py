@@ -166,6 +166,15 @@ class _WeakCall:
         ... ba.timer(5.0, ba.WeakCall(foo.bar))
         ... foo = None
 
+        EXAMPLE C: Wrap a method call with some positional and keyword args:
+        >>> myweakcall = ba.WeakCall(self.dostuff, argval1,
+        ...                          namedarg=argval2)
+        ... # Now we have a single callable to run that whole mess.
+        ... # The same as calling myobj.dostuff(argval1, namedarg=argval2)
+        ... # (provided my_obj still exists; this will do nothing
+        ... # otherwise).
+        ... myweakcall()
+
         Note: additional args and keywords you provide to the WeakCall()
         constructor are stored as regular strong-references; you'll need
         to wrap them in weakrefs manually if desired.
@@ -176,17 +185,6 @@ class _WeakCall:
 
         Pass a callable as the first arg, followed by any number of
         arguments or keywords.
-
-        Examples:
-            Example: wrap a method call with some positional and
-            keyword args:
-            >>> myweakcall = ba.WeakCall(myobj.dostuff, argval1,
-            ...                          namedarg=argval2)
-            ... # Now we have a single callable to run that whole mess.
-            ... # The same as calling myobj.dostuff(argval1, namedarg=argval2)
-            ... # (provided my_obj still exists; this will do nothing
-            ... # otherwise).
-            ... myweakcall()
         """
         if hasattr(args[0], '__func__'):
             self._call = WeakMethod(args[0])
@@ -232,12 +230,12 @@ class _Call:
         Pass a callable as the first arg, followed by any number of
         arguments or keywords.
 
-        # Example: wrap a method call with 1 positional and 1 keyword arg:
-        mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)
-
-        # Now we have a single callable to run that whole mess.
-        # ..the same as calling myobj.dostuff(argval1, namedarg=argval2)
-        mycall()
+        Example:
+            Wrap a method call with 1 positional and 1 keyword arg:
+            >>> mycall = ba.Call(myobj.dostuff, argval, namedarg=argval2)
+            ... # Now we have a single callable to run that whole mess.
+            ... # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
+            ... mycall()
         """
         self._call = args[0]
         self._args = args[1:]
@@ -251,7 +249,6 @@ class _Call:
                 str(self._args) + ' _keywds=' + str(self._keywds) + '>')
 
 
-# Hack: pdoc won't run this
 if TYPE_CHECKING:
     WeakCall = Call
     Call = Call
@@ -375,15 +372,18 @@ def storagename(suffix: str = None) -> str:
 
     Note that this will function even if called in the class definition.
 
-    # Example: generate a unique name for storage purposes:
-    class MyThingie:
-
-        # This will give something like '_mymodule_submodule_mythingie_data'.
-        _STORENAME = ba.storagename('data')
-
-        # Use that name to store some data in the Activity we were passed.
-        def __init__(self, activity):
-            activity.customdata[self._STORENAME] = {}
+    Examples:
+        Generate a unique name for storage purposes:
+        ```python
+        >>> class MyThingie:
+        ...     # This will give something like
+        ...     # '_mymodule_submodule_mythingie_data'.
+        ...     _STORENAME = ba.storagename('data')
+        ...
+        ...     # Use that name to store some data in the Activity we were passed.
+        ...     def __init__(self, activity):
+        ...         activity.customdata[self._STORENAME] = {}
+        ```
     """
     frame = inspect.currentframe()
     if frame is None:

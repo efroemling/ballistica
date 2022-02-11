@@ -45,16 +45,19 @@ void PythonClassTimer::SetupType(PyTypeObject* obj) {
       "timeformat: A ba.TimeFormat value determining how the passed time is\n"
       "interpreted.\n"
       "\n"
-      "# Example: use a Timer object to print repeatedly for a few seconds:\n"
-      "def say_it():\n"
-      "    ba.screenmessage('BADGER!')\n"
-      "def stop_saying_it():\n"
-      "    self.t = None\n"
-      "    ba.screenmessage('MUSHROOM MUSHROOM!')\n"
-      "# Create our timer; it will run as long as we have the self.t ref.\n"
-      "self.t = ba.Timer(0.3, say_it, repeat=True)\n"
-      "# Now fire off a one-shot timer to kill it.\n"
-      "ba.timer(3.89, stop_saying_it)";
+      "Example:\n"
+      "    Use a Timer object to print repeatedly for a few seconds:\n"
+      "    ```python\n"
+      "    >>> def say_it():\n"
+      "    ...     ba.screenmessage('BADGER!')\n"
+      "    ... def stop_saying_it():\n"
+      "    ...     self.t = None\n"
+      "    ... ba.screenmessage('MUSHROOM MUSHROOM!')\n"
+      "    ... # Create our timer; it will run as long as we have the self.t ref.\n"
+      "    ... self.t = ba.Timer(0.3, say_it, repeat=True)\n"
+      "    ... # Now fire off a one-shot timer to kill it.\n"
+      "    ... ba.timer(3.89, stop_saying_it)\n"
+      "    ```\n";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
 }

@@ -38,17 +38,21 @@ void PythonClassContextCall::SetupType(PyTypeObject* obj) {
       "shutdown, whereas ba.WeakCall simply looks at whether the target\n"
       "object still exists.\n"
       "\n"
-      "# Example A: code like this can inadvertently prevent our activity\n"
-      "# (self) from ending until the operation completes, since the bound\n"
-      "# method we're passing (self.dosomething) contains a strong-reference\n"
-      "# to self).\n"
-      "start_some_long_action(callback_when_done=self.dosomething)\n"
+      "Examples:\n"
+      "    Example A: code like this can inadvertently prevent our activity\n"
+      "    (self) from ending until the operation completes, since the bound\n"
+      "    method we're passing (self.dosomething) contains a strong-reference\n"
+      "    to self).\n"
+      "    >>> start_some_long_action(callback_when_done=self.dosomething)\n"
       "\n"
-      "# Example B: in this case our activity (self) can still die\n"
-      "# properly; the callback will clear itself when the activity starts\n"
-      "# shutting down, becoming a harmless no-op and releasing the reference\n"
-      "# to our activity.\n"
-      "start_long_action(callback_when_done=ba.ContextCall(self.mycallback))\n";
+      "    Example B: in this case our activity (self) can still die\n"
+      "    properly; the callback will clear itself when the activity starts\n"
+      "    shutting down, becoming a harmless no-op and releasing the reference\n"
+      "    to our activity.\n"
+      "    ```python\n"
+      "    >>> start_long_action(\n"
+      "    ...     callback_when_done=ba.ContextCall(self.mycallback))\n"
+      "    ```\n";
 
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;

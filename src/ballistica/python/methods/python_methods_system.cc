@@ -846,10 +846,13 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "The call is made from.  Returns True if this location has not been\n"
        "registered already, and False if it has.\n"
        "\n"
-       "# Example: this print will only fire for the first loop iteration:\n"
-       "for i in range(10):\n"
-       "    if ba.do_once():\n"
-       "        print('Hello once from loop!')"},
+       "Example:\n"
+       "    This print will only fire for the first loop iteration:\n"
+       "    ```python\n"
+       "    >>> for i in range(10):\n"
+       "    ... if ba.do_once():\n"
+       "    ...     print('Hello once from loop!')\n"
+       "    ```\n"},
 
       {"_app", (PyCFunction)PyApp, METH_VARARGS | METH_KEYWORDS,
        "_app() -> ba.App\n"

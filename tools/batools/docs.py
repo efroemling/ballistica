@@ -89,7 +89,7 @@ def generate(projroot: str) -> None:
         pdoc.render.configure(docformat='google',
                               search=True,
                               show_source=True)
-        pdoc.pdoc('ba', 'bastd', output_directory=outdirname)
+        pdoc.pdoc('ba', output_directory=outdirname)
     except Exception as exc:
         import traceback
         traceback.print_exc()

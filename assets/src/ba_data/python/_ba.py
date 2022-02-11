@@ -102,7 +102,7 @@ class Context:
 
     Category: General Utility Classes
 
-    Many operations such as ba.newnode() or ba.gettexture() operate
+    Many operations such as ba.newnode or ba.gettexture operate
     implicitly on the current context. Each ba.Activity has its own
     Context and objects within that activity (nodes, media, etc) can only
     interact with other objects from that context.
@@ -114,17 +114,17 @@ class Context:
     the UI (there is a special 'ui' context for all user-interface-related
     functionality)
 
-    When instantiating a ba.Context instance, a single 'source' argument
+    When instantiating a ba.Context instance, a single ``'source'`` argument
     is passed, which can be one of the following strings/objects:
 
-    'empty':
+    ``'empty'``:
       Gives an empty context; it can be handy to run code here to ensure
       it does no loading of media, creation of nodes, etc.
 
-    'current':
+    ``'current'``:
       Sets the context object to the current context.
 
-    'ui':
+    ``'ui'``:
       Sets to the UI context. UI functions as well as loading of media to
       be used in said functions must happen in the UI context.
 
@@ -138,16 +138,18 @@ class Context:
 
 
     Usage:
+        Contexts are generally used with the python 'with' statement, which
+        sets the context as current on entry and resets it to the previous
+        value on exit.
 
-    Contexts are generally used with the python 'with' statement, which
-    sets the context as current on entry and resets it to the previous
-    value on exit.
-
-    # Example: load a few textures into the UI context
-    # (for use in widgets, etc):
-    with ba.Context('ui'):
-       tex1 = ba.gettexture('foo_tex_1')
-       tex2 = ba.gettexture('foo_tex_2')
+    Example:
+        Load a few textures into the UI context
+        (for use in widgets, etc):
+        ```python
+        >>> with ba.Context('ui'):
+        ...     tex1 = ba.gettexture('foo_tex_1')
+        ...     tex2 = ba.gettexture('foo_tex_2')
+        ```
     """
 
     def __init__(self, source: Any):
@@ -189,17 +191,21 @@ class ContextCall:
     shutdown, whereas ba.WeakCall simply looks at whether the target
     object still exists.
 
-    # Example A: code like this can inadvertently prevent our activity
-    # (self) from ending until the operation completes, since the bound
-    # method we're passing (self.dosomething) contains a strong-reference
-    # to self).
-    start_some_long_action(callback_when_done=self.dosomething)
+    Examples:
+        Example A: code like this can inadvertently prevent our activity
+        (self) from ending until the operation completes, since the bound
+        method we're passing (self.dosomething) contains a strong-reference
+        to self).
+        >>> start_some_long_action(callback_when_done=self.dosomething)
 
-    # Example B: in this case our activity (self) can still die
-    # properly; the callback will clear itself when the activity starts
-    # shutting down, becoming a harmless no-op and releasing the reference
-    # to our activity.
-    start_long_action(callback_when_done=ba.ContextCall(self.mycallback))
+        Example B: in this case our activity (self) can still die
+        properly; the callback will clear itself when the activity starts
+        shutting down, becoming a harmless no-op and releasing the reference
+        to our activity.
+        ```python
+        >>> start_long_action(
+        ...     callback_when_done=ba.ContextCall(self.mycallback))
+        ```
     """
 
     def __init__(self, call: Callable):
@@ -235,41 +241,41 @@ class InputDevice:
 
     Attributes:
 
-       allows_configuring
+       allows_configuring (bool):
           Whether the input-device can be configured.
 
-       has_meaningful_button_names
+       has_meaningful_button_names (bool):
           Whether button names returned by this instance match labels
           on the actual device. (Can be used to determine whether to show
           them in controls-overlays, etc.).
 
-       player
+       player (Optional[ba.SessionPlayer]):
           The player associated with this input device.
 
-       client_id
+       client_id (int):
           The numeric client-id this device is associated with.
           This is only meaningful for remote client inputs; for
           all local devices this will be -1.
 
-       name
+       name (str):
           The name of the device.
 
-       unique_identifier
+       unique_identifier (str):
           A string that can be used to persistently identify the device,
           even among other devices of the same type. Used for saving
           prefs, etc.
 
-       id
+       id (int):
           The unique numeric id of this device.
 
-       instance_number
+       instance_number (int):
           The number of this device among devices of the same type.
 
-       is_controller_app
+       is_controller_app (bool):
           Whether this input-device represents a locally-connected
           controller-app.
 
-       is_remote_client
+       is_remote_client (bool):
           Whether this input-device represents a remotely-connected
           client.
 
@@ -362,20 +368,20 @@ class Material:
     A material can affect physical characteristics, generate sounds,
     or trigger callback functions when collisions occur.
 
-    Materials are applied to 'parts', which are groups of one or more
-    rigid bodies created as part of a ba.Node.  Nodes can have any number
+    Materials are applied to ``'parts'``, which are groups of one or more
+    rigid bodies created as part of a ba.Node. Nodes can have any number
     of parts, each with its own set of materials. Generally materials are
-    specified as array attributes on the Node. The 'spaz' node, for
-    example, has various attributes such as 'materials',
-    'roller_materials', and 'punch_materials', which correspond to the
+    specified as array attributes on the Node. The ``'spaz'`` node, for
+    example, has various attributes such as ``'materials'``,
+    ``'roller_materials'``, and ``'punch_materials'``, which correspond to the
     various parts it creates.
 
-    Use ba.Material() to instantiate a blank material, and then use its
-    add_actions() method to define what the material does.
+    Use ba.Material to instantiate a blank material, and then use its
+    ba.Material.add_actions method to define what the material does.
 
     Attributes:
 
-        label
+        label (str):
             A label for the material; only used for debugging.
     """
 
@@ -393,133 +399,139 @@ class Material:
         Add one or more actions to the material, optionally with conditions.
 
         Conditions:
+            Conditions are provided as tuples which can be combined to form boolean
+            logic. A single condition might look like ``('condition_name', cond_arg)``,
+            or a more complex nested one might look like ``(('some_condition',
+            cond_arg), 'or', ('another_condition', cond2_arg))``.
 
-        Conditions are provided as tuples which can be combined to form boolean
-        logic. A single condition might look like ('condition_name', cond_arg),
-        or a more complex nested one might look like (('some_condition',
-        cond_arg), 'or', ('another_condition', cond2_arg)).
-
-        'and', 'or', and 'xor' are available to chain together 2 conditions, as
-          seen above.
+            ``'and'``, ``'or'``, and ``'xor'`` are available to chain together 2 conditions, as
+            seen above.
 
         Available Conditions:
+            ``('they_have_material', material)`` - does the part we're hitting have a
+            given ba.Material?
 
-        ('they_have_material', material) - does the part we're hitting have a
-          given ba.Material?
+            ``('they_dont_have_material', material)`` - does the part we're hitting
+            not have a given ba.Material?
 
-        ('they_dont_have_material', material) - does the part we're hitting
-          not have a given ba.Material?
+            ``('eval_colliding')`` - is ``'collide'`` true at this point in material
+            evaluation? (see the modify_part_collision action)
 
-        ('eval_colliding') - is 'collide' true at this point in material
-          evaluation? (see the modify_part_collision action)
+            ``('eval_not_colliding')`` - is 'collide' false at this point in material
+            evaluation? (see the modify_part_collision action)
 
-        ('eval_not_colliding') - is 'collide' false at this point in material
-          evaluation? (see the modify_part_collision action)
+            ``('we_are_younger_than', age)`` - is our part younger than ``'age'``
+            (in milliseconds)?
 
-        ('we_are_younger_than', age) - is our part younger than 'age'
-          (in milliseconds)?
+            ``('we_are_older_than', age)`` - is our part older than ``'age'``
+            (in milliseconds)?
 
-        ('we_are_older_than', age) - is our part older than 'age'
-          (in milliseconds)?
+            ``('they_are_younger_than', age)`` - is the part we're hitting younger than
+            ``'age'`` (in milliseconds)?
 
-        ('they_are_younger_than', age) - is the part we're hitting younger than
-          'age' (in milliseconds)?
+            ``('they_are_older_than', age)`` - is the part we're hitting older than
+            ``'age'`` (in milliseconds)?
 
-        ('they_are_older_than', age) - is the part we're hitting older than
-          'age' (in milliseconds)?
+            ``('they_are_same_node_as_us')`` - does the part we're hitting belong to
+            the same ba.Node as us?
 
-        ('they_are_same_node_as_us') - does the part we're hitting belong to
-          the same ba.Node as us?
-
-        ('they_are_different_node_than_us') - does the part we're hitting
-          belong to a different ba.Node than us?
+            ``('they_are_different_node_than_us')`` - does the part we're hitting
+            belong to a different ba.Node than us?
 
         Actions:
-
-        In a similar manner, actions are specified as tuples. Multiple actions
-        can be specified by providing a tuple of tuples.
+            In a similar manner, actions are specified as tuples. Multiple actions
+            can be specified by providing a tuple of tuples.
 
         Available Actions:
+            ``('call', when, callable)`` - calls the provided callable; ``'when'`` can be
+            either ``'at_connect'`` or ``'at_disconnect'``. ``'at_connect'`` means to fire
+            when the two parts first come in contact; ``'at_disconnect'`` means to
+            fire once they cease being in contact.
 
-        ('call', when, callable) - calls the provided callable; 'when' can be
-          either 'at_connect' or 'at_disconnect'. 'at_connect' means to fire
-          when the two parts first come in contact; 'at_disconnect' means to
-          fire once they cease being in contact.
+            ``('message', who, when, message_obj)`` - sends a message object; ``'who'`` can
+            be either ``'our_node'`` or ``'their_node'``, ``'when'`` can be ``'at_connect'`` or
+            ``'at_disconnect'``, and message_obj is the message object to send.
+            This has the same effect as calling the node's ba.Node.handlemessage
+            method.
 
-        ('message', who, when, message_obj) - sends a message object; 'who' can
-          be either 'our_node' or 'their_node', 'when' can be 'at_connect' or
-          'at_disconnect', and message_obj is the message object to send.
-          This has the same effect as calling the node's handlemessage()
-          method.
+            ``('modify_part_collision', attr, value)`` - changes some characteristic
+            of the physical collision that will occur between our part and their
+            part. This change will remain in effect as long as the two parts
+            remain overlapping. This means if you have a part with a material
+            that turns ``'collide'`` off against parts younger than 100ms, and it
+            touches another part that is 50ms old, it will continue to not
+            collide with that part until they separate, even if the 100ms
+            threshold is passed. Options for attr/value are: ``'physical'`` (boolean
+            value; whether a *physical* response will occur at all), ``'friction'``
+            (float value; how friction-y the physical response will be),
+            ``'collide'`` (boolean value; whether *any* collision will occur at all,
+            including non-physical stuff like callbacks), ``'use_node_collide'``
+            (boolean value; whether to honor modify_node_collision overrides for
+            this collision), ``'stiffness'`` (float value, how springy the physical
+            response is), ``'damping'`` (float value, how damped the physical
+            response is), ``'bounce'`` (float value; how bouncy the physical response
+            is).
 
-        ('modify_part_collision', attr, value) - changes some characteristic
-          of the physical collision that will occur between our part and their
-          part.  This change will remain in effect as long as the two parts
-          remain overlapping. This means if you have a part with a material
-          that turns 'collide' off against parts younger than 100ms, and it
-          touches another part that is 50ms old, it will continue to not
-          collide with that part until they separate, even if the 100ms
-          threshold is passed. Options for attr/value are: 'physical' (boolean
-          value; whether a *physical* response will occur at all), 'friction'
-          (float value; how friction-y the physical response will be),
-          'collide' (boolean value; whether *any* collision will occur at all,
-          including non-physical stuff like callbacks), 'use_node_collide'
-          (boolean value; whether to honor modify_node_collision overrides for
-          this collision), 'stiffness' (float value, how springy the physical
-          response is), 'damping' (float value, how damped the physical
-          response is), 'bounce' (float value; how bouncy the physical response
-          is).
+            ``('modify_node_collision', attr, value)`` - similar to
+            ``modify_part_collision``, but operates at a node-level.
+            collision attributes set here will remain in effect as long as
+            *anything* from our part's node and their part's node overlap.
+            A key use of this functionality is to prevent new nodes from
+            colliding with each other if they appear overlapped;
+            if ``modify_part_collision`` is used, only the individual parts that
+            were overlapping would avoid contact, but other parts could still
+            contact leaving the two nodes 'tangled up'.  Using
+            ``modify_node_collision ensures`` that the nodes must completely
+            separate before they can start colliding.  Currently the only attr
+            available here is ``'collide'`` (a boolean value).
 
-        ('modify_node_collision', attr, value) - similar to
-          modify_part_collision, but operates at a node-level.
-          collision attributes set here will remain in effect as long as
-          *anything* from our part's node and their part's node overlap.
-          A key use of this functionality is to prevent new nodes from
-          colliding with each other if they appear overlapped;
-          if modify_part_collision is used, only the individual parts that
-          were overlapping would avoid contact, but other parts could still
-          contact leaving the two nodes 'tangled up'.  Using
-          modify_node_collision ensures that the nodes must completely
-          separate before they can start colliding.  Currently the only attr
-          available here is 'collide' (a boolean value).
+            ``('sound', sound, volume)`` - plays a ba.Sound when a collision occurs, at
+            a given volume, regardless of the collision speed/etc.
 
-        ('sound', sound, volume) - plays a ba.Sound when a collision occurs, at
-          a given volume, regardless of the collision speed/etc.
+            ``('impact_sound', sound, targetImpulse, volume)`` - plays a sound when a
+            collision occurs, based on the speed of impact. Provide a ba.Sound, a
+            target-impulse, and a volume.
 
-        ('impact_sound', sound, targetImpulse, volume) - plays a sound when a
-          collision occurs, based on the speed of impact. Provide a ba.Sound, a
-          target-impulse, and a volume.
+            ``('skid_sound', sound, targetImpulse, volume)`` - plays a sound during a
+            collision when parts are 'scraping' against each other. Provide a
+            ba.Sound, a target-impulse, and a volume.
 
-        ('skid_sound', sound, targetImpulse, volume) - plays a sound during a
-          collision when parts are 'scraping' against each other. Provide a
-          ba.Sound, a target-impulse, and a volume.
+          ``('roll_sound', sound, targetImpulse, volume)`` - plays a sound during a
+            collision when parts are 'rolling' against each other. Provide a
+            ba.Sound, a target-impulse, and a volume.
 
-        ('roll_sound', sound, targetImpulse, volume) - plays a sound during a
-          collision when parts are 'rolling' against each other. Provide a
-          ba.Sound, a target-impulse, and a volume.
+        Examples:
+            example 1: create a material that lets us ignore
+            collisions against any nodes we touch in the first
+            100 ms of our existence; handy for preventing us from
+            exploding outward if we spawn on top of another object:
+            ```python
+            >>> m = ba.Material()
+            ... m.add_actions(
+            ...     conditions=(('we_are_younger_than', 100),
+            ...                 'or', ('they_are_younger_than', 100)),
+            ...     actions=('modify_node_collision', 'collide', False))
+            ```
 
-        # example 1: create a material that lets us ignore
-        # collisions against any nodes we touch in the first
-        # 100 ms of our existence; handy for preventing us from
-        # exploding outward if we spawn on top of another object:
-        m = ba.Material()
-        m.add_actions(conditions=(('we_are_younger_than', 100),
-                                 'or',('they_are_younger_than', 100)),
-                     actions=('modify_node_collision', 'collide', False))
+            example 2: send a ba.DieMessage to anything we touch, but cause
+            no physical response. This should cause any ba.Actor to drop dead:
+            ```python
+            >>> m = ba.Material()
+            ... m.add_actions(
+            ...     actions=(('modify_part_collision', 'physical', False),
+            ...              ('message', 'their_node', 'at_connect',
+            ...                  ba.DieMessage())))
+            ```
 
-        # example 2: send a DieMessage to anything we touch, but cause
-        # no physical response.  This should cause any ba.Actor to drop dead:
-        m = ba.Material()
-        m.add_actions(actions=(('modify_part_collision', 'physical', False),
-                              ('message', 'their_node', 'at_connect',
-                               ba.DieMessage())))
-
-        # example 3: play some sounds when we're contacting the ground:
-        m = ba.Material()
-        m.add_actions(conditions=('they_have_material',
-                                  shared.footing_material),
-                      actions=(('impact_sound', ba.getsound('metalHit'), 2, 5),
-                               ('skid_sound', ba.getsound('metalSkid'), 2, 5)))
+            example 3: play some sounds when we're contacting the ground:
+            ```python
+            >>> m = ba.Material()
+            ... m.add_actions(
+            ...     conditions=('they_have_material',
+                                shared.footing_material),
+            ...     actions=(('impact_sound', ba.getsound('metalHit'), 2, 5),
+            ...              ('skid_sound', ba.getsound('metalSkid'), 2, 5)))
+            ```
 
         """
         return None
@@ -688,14 +700,17 @@ class Node:
         Connect one of this node's attributes to an attribute on another node.
         This will immediately set the target attribute's value to that of the
         source attribute, and will continue to do so once per step as long as
-        the two nodes exist.  The connection can be severed by setting the
+        the two nodes exist. The connection can be severed by setting the
         target attribute to any value or connecting another node attribute
         to it.
 
-        # Example: create a locator and attach a light to it:
-        light = ba.newnode('light')
-        loc = ba.newnode('locator', attrs={'position': (0,10,0)})
-        loc.connectattr('position', light, 'position')
+        Example:
+            Create a locator and attach a light to it:
+            ```python
+            >>> light = ba.newnode('light')
+            ... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})
+            ... loc.connectattr('position', light, 'position')
+            ```
         """
         return None
 
@@ -1005,16 +1020,19 @@ class Timer:
     timeformat: A ba.TimeFormat value determining how the passed time is
     interpreted.
 
-    # Example: use a Timer object to print repeatedly for a few seconds:
-    def say_it():
-        ba.screenmessage('BADGER!')
-    def stop_saying_it():
-        self.t = None
-        ba.screenmessage('MUSHROOM MUSHROOM!')
-    # Create our timer; it will run as long as we have the self.t ref.
-    self.t = ba.Timer(0.3, say_it, repeat=True)
-    # Now fire off a one-shot timer to kill it.
-    ba.timer(3.89, stop_saying_it)
+    Example:
+        Use a Timer object to print repeatedly for a few seconds:
+        ```python
+        >>> def say_it():
+        ...     ba.screenmessage('BADGER!')
+        ... def stop_saying_it():
+        ...     self.t = None
+        ... ba.screenmessage('MUSHROOM MUSHROOM!')
+        ... # Create our timer; it will run as long as we have the self.t ref.
+        ... self.t = ba.Timer(0.3, say_it, repeat=True)
+        ... # Now fire off a one-shot timer to kill it.
+        ... ba.timer(3.89, stop_saying_it)
+        ```
     """
 
     def __init__(self,
@@ -1797,10 +1815,13 @@ def do_once() -> bool:
     The call is made from.  Returns True if this location has not been
     registered already, and False if it has.
 
-    # Example: this print will only fire for the first loop iteration:
-    for i in range(10):
-        if ba.do_once():
-            print('Hello once from loop!')
+    Example:
+        This print will only fire for the first loop iteration:
+        ```python
+        >>> for i in range(10):
+        ... if ba.do_once():
+        ...     print('Hello once from loop!')
+        ```
     """
     return bool()
 
@@ -3572,8 +3593,8 @@ def set_have_mods(have_mods: bool) -> None:
 
 
 def set_internal_language_keys(
-        listobj: list[tuple[str, str]],
-        random_names_list: list[tuple[str, str]]) -> None:
+    listobj: list[tuple[str, str]],
+    random_names_list: list[tuple[str, str]]) -> None:
     """set_internal_language_keys(listobj: list[tuple[str, str]],
       random_names_list: list[tuple[str, str]]) -> None
 
@@ -3591,7 +3612,7 @@ def set_low_level_config_value(key: str, value: int) -> None:
 
 
 def set_map_bounds(
-        bounds: tuple[float, float, float, float, float, float]) -> None:
+    bounds: tuple[float, float, float, float, float, float]) -> None:
     """set_map_bounds(bounds: tuple[float, float, float, float, float, float])
       -> None
 
@@ -3943,8 +3964,8 @@ def textwidget(edit: ba.Widget = None,
 
 @overload
 def time(
-        timetype: ba.TimeType = TimeType.SIM,
-        timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS) -> float:
+    timetype: ba.TimeType = TimeType.SIM,
+    timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS) -> float:
     ...
 
 
@@ -4037,45 +4058,53 @@ def timer(time: float,
     This timer cannot be canceled or modified once created. If you
      require the ability to do so, use the ba.Timer class instead.
 
-    time: length of time (in seconds by default) that the timer will wait
-    before firing. Note that the actual delay experienced may vary
-     depending on the timetype. (see below)
+    Arguments:
+        time (float):
+            Length of time (in seconds by default) that the timer will wait
+            before firing. Note that the actual delay experienced may vary
+             depending on the timetype. (see below)
 
-    call: A callable Python object. Note that the timer will retain a
-    strong reference to the callable for as long as it exists, so you
-    may want to look into concepts such as ba.WeakCall if that is not
-    desired.
+        call (Callable[[], Any]):
+            A callable Python object. Note that the timer will retain a
+            strong reference to the callable for as long as it exists, so you
+            may want to look into concepts such as ba.WeakCall if that is not
+            desired.
 
-    repeat: if True, the timer will fire repeatedly, with each successive
-    firing having the same delay as the first.
+        repeat (bool):
+            If True, the timer will fire repeatedly, with each successive
+            firing having the same delay as the first.
 
-    timetype can be either 'sim', 'base', or 'real'. It defaults to
-    'sim'. Types are explained below:
 
-    'sim' time maps to local simulation time in ba.Activity or ba.Session
+        timetype (ba.TimeType):
+            Can be either ``SIM``, ``BASE``, or ``REAL``. It defaults to
+            ``SIM``.
+
+        timeformat (ba.TimeFormat):
+            Defaults to seconds but can also be milliseconds.
+
+    - SIM time maps to local simulation time in ba.Activity or ba.Session
     Contexts. This means that it may progress slower in slow-motion play
     modes, stop when the game is paused, etc.  This time type is not
     available in UI contexts.
-
-    'base' time is also linked to gameplay in ba.Activity or ba.Session
+    - BASE time is also linked to gameplay in ba.Activity or ba.Session
     Contexts, but it progresses at a constant rate regardless of
      slow-motion states or pausing.  It can, however, slow down or stop
     in certain cases such as network outages or game slowdowns due to
     cpu load. Like 'sim' time, this is unavailable in UI contexts.
-
-    'real' time always maps to actual clock time with a bit of filtering
-    added, regardless of Context.  (the filtering prevents it from going
+    - REAL time always maps to actual clock time with a bit of filtering
+    added, regardless of Context. (The filtering prevents it from going
     backwards or jumping forward by large amounts due to the app being
     backgrounded, system time changing, etc.)
     Real time timers are currently only available in the UI context.
 
-    the 'timeformat' arg defaults to seconds but can also be milliseconds.
-
-    # timer example: print some stuff through time:
-    ba.screenmessage('hello from now!')
-    ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))
-    ba.timer(2.0, ba.Call(ba.screenmessage, 'hello from the future 2!'))
-    """
+    Examples:
+        Print some stuff through time:
+        ```python
+        >>> ba.screenmessage('hello from now!')
+        >>> ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))
+        >>> ba.timer(2.0, ba.Call(ba.screenmessage,
+        ...                       'hello from the future 2!'))
+        ```"""
     return None
 
 

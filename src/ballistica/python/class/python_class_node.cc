@@ -440,14 +440,17 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "Connect one of this node's attributes to an attribute on another node.\n"
      "This will immediately set the target attribute's value to that of the\n"
      "source attribute, and will continue to do so once per step as long as\n"
-     "the two nodes exist.  The connection can be severed by setting the\n"
+     "the two nodes exist. The connection can be severed by setting the\n"
      "target attribute to any value or connecting another node attribute\n"
      "to it.\n"
      "\n"
-     "# Example: create a locator and attach a light to it:\n"
-     "light = ba.newnode('light')\n"
-     "loc = ba.newnode('locator', attrs={'position': (0,10,0)})\n"
-     "loc.connectattr('position', light, 'position')"},
+     "Example:\n"
+     "    Create a locator and attach a light to it:\n"
+     "    ```python\n"
+     "    >>> light = ba.newnode('light')\n"
+     "    ... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})\n"
+     "    ... loc.connectattr('position', light, 'position')\n"
+     "    ```\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};
