@@ -78,7 +78,7 @@ class BombFactory:
           A ba.Sound for random wood debris falling after an explosion.
 
        explode_sounds: Sequence[ba.Sound]
-          A tuple of ba.Sounds for explosions.
+          A tuple of ba.Sound-s for explosions.
 
        freeze_sound: ba.Sound
           A ba.Sound of an ice bomb freezing something.
@@ -119,7 +119,7 @@ class BombFactory:
           events with what it touches.
 
        dink_sounds: Sequence[ba.Sound]
-          A tuple of ba.Sounds for when bombs hit the ground.
+          A tuple of ba.Sound-s for when bombs hit the ground.
 
        sticky_impact_sound: ba.Sound
           The ba.Sound for a squish made by a sticky bomb hitting something.

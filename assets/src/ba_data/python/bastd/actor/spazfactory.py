@@ -26,13 +26,13 @@ class SpazFactory:
     Attributes:
 
        impact_sounds_medium: Sequence[ba.Sound]
-          A tuple of ba.Sounds for when a ba.Spaz hits something kinda hard.
+          A tuple of ba.Sound-s for when a ba.Spaz hits something kinda hard.
 
        impact_sounds_hard: Sequence[ba.Sound]
-          A tuple of ba.Sounds for when a ba.Spaz hits something really hard.
+          A tuple of ba.Sound-s for when a ba.Spaz hits something really hard.
 
        impact_sounds_harder: Sequence[ba.Sound]
-          A tuple of ba.Sounds for when a ba.Spaz hits something really
+          A tuple of ba.Sound-s for when a ba.Spaz hits something really
           really hard.
 
        single_player_death_sound: ba.Sound

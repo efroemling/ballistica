@@ -380,7 +380,8 @@ def storagename(suffix: str = None) -> str:
         ...     # '_mymodule_submodule_mythingie_data'.
         ...     _STORENAME = ba.storagename('data')
         ...
-        ...     # Use that name to store some data in the Activity we were passed.
+        ...     # Use that name to store some data in the Activity we were
+        ...     # passed.
         ...     def __init__(self, activity):
         ...         activity.customdata[self._STORENAME] = {}
         ```

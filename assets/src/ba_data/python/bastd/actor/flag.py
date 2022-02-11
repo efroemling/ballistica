@@ -189,7 +189,7 @@ class Flag(ba.Actor):
         useful for things like king-of-the-hill where players should
         not be moving the flag around.
 
-        'materials can be a list of extra ba.Materials to apply to the flag.
+        'materials can be a list of extra ba.Material-s to apply to the flag.
 
         If 'dropped_timeout' is provided (in seconds), the flag will die
         after remaining untouched for that long once it has been moved

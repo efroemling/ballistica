@@ -384,7 +384,8 @@ class Lstr:
         value; if a translated value is available, it will be used; otherwise
         the english value will be. To see available translation categories,
         look under the 'translations' resource section.
-        >>> mynode.text = ba.Lstr(translate=('gameDescriptions', 'Defeat all enemies'))
+        >>> mynode.text = ba.Lstr(translate=('gameDescriptions',
+        ...                                  'Defeat all enemies'))
 
         EXAMPLE 3: specify a raw value and some substitutions. Substitutions
         can be used with resource and translate modes as well.

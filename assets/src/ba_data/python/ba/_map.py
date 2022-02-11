@@ -345,7 +345,7 @@ class Map(Actor):
             self, players: Sequence[ba.Player]) -> Sequence[float]:
         """Return a random starting position in one of the FFA spawn areas.
 
-        If a list of ba.Players is provided; the returned points will be
+        If a list of ba.Player-s is provided; the returned points will be
         as far from these players as possible.
         """
 

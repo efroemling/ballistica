@@ -115,7 +115,7 @@ class Actor:
         return self
 
     def on_expire(self) -> None:
-        """Called for remaining ba.Actors when their ba.Activity shuts down.
+        """Called for remaining ba.Actor-s when their ba.Activity shuts down.
 
         Actors can use this opportunity to clear callbacks or other
         references which have the potential of keeping the ba.Activity

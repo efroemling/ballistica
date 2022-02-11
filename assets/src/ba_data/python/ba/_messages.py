@@ -52,7 +52,7 @@ class DieMessage:
 
     Category: Message Classes
 
-    Most ba.Actors respond to this.
+    Most ba.Actor-s respond to this.
 
     Attributes:
 

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class Session:
-    """Defines a high level series of ba.Activities with a common purpose.
+    """Defines a high level series of ba.Activity-es with a common purpose.
 
     category: Gameplay Classes
 
@@ -32,11 +32,11 @@ class Session:
 
         sessionteams
             All the ba.SessionTeams in the Session. Most things should use the
-            list of ba.Teams in ba.Activity; not this.
+            list of ba.Team-s in ba.Activity; not this.
 
         sessionplayers
             All ba.SessionPlayers in the Session. Most things should use the
-            list of ba.Players in ba.Activity; not this. Some players, such as
+            list of ba.Player-s in ba.Activity; not this. Some players, such as
             those who have not yet selected a character, will only be
             found on this list.
 
@@ -48,7 +48,7 @@ class Session:
             The maximum number of players allowed in the Session.
 
         lobby
-            The ba.Lobby instance where new ba.Players go to select a
+            The ba.Lobby instance where new ba.Player-s go to select a
             Profile/Team/etc. before being added to games.
             Be aware this value may be None if a Session does not allow
             any such selection.

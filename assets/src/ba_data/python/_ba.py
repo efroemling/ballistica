@@ -399,106 +399,111 @@ class Material:
         Add one or more actions to the material, optionally with conditions.
 
         Conditions:
-            Conditions are provided as tuples which can be combined to form boolean
-            logic. A single condition might look like ``('condition_name', cond_arg)``,
-            or a more complex nested one might look like ``(('some_condition',
-            cond_arg), 'or', ('another_condition', cond2_arg))``.
+            Conditions are provided as tuples which can be combined
+            to form boolean logic. A single condition might look like
+            ``('condition_name', cond_arg)``, or a more complex nested one
+            might look like ``(('some_condition', cond_arg), 'or',
+            ('another_condition', cond2_arg))``.
 
-            ``'and'``, ``'or'``, and ``'xor'`` are available to chain together 2 conditions, as
-            seen above.
+            ``'and'``, ``'or'``, and ``'xor'`` are available to chain
+           together 2 conditions, as seen above.
 
         Available Conditions:
-            ``('they_have_material', material)`` - does the part we're hitting have a
-            given ba.Material?
+            ``('they_have_material', material)`` - does the part we're
+            hitting have a given ba.Material?
 
-            ``('they_dont_have_material', material)`` - does the part we're hitting
-            not have a given ba.Material?
+            ``('they_dont_have_material', material)`` - does the part we're
+            hitting not have a given ba.Material?
 
-            ``('eval_colliding')`` - is ``'collide'`` true at this point in material
-            evaluation? (see the modify_part_collision action)
+            ``('eval_colliding')`` - is ``'collide'`` true at this point
+            in material evaluation? (see the modify_part_collision action)
 
-            ``('eval_not_colliding')`` - is 'collide' false at this point in material
-            evaluation? (see the modify_part_collision action)
+            ``('eval_not_colliding')`` - is 'collide' false at this point
+         in material evaluation? (see the modify_part_collision action)
 
-            ``('we_are_younger_than', age)`` - is our part younger than ``'age'``
-            (in milliseconds)?
+            ``('we_are_younger_than', age)`` - is our part younger than
+            ``'age'`` (in milliseconds)?
 
             ``('we_are_older_than', age)`` - is our part older than ``'age'``
             (in milliseconds)?
 
-            ``('they_are_younger_than', age)`` - is the part we're hitting younger than
-            ``'age'`` (in milliseconds)?
+            ``('they_are_younger_than', age)`` - is the part we're hitting
+            younger than ``'age'`` (in milliseconds)?
 
-            ``('they_are_older_than', age)`` - is the part we're hitting older than
-            ``'age'`` (in milliseconds)?
+            ``('they_are_older_than', age)`` - is the part we're hitting
+            older than ``'age'`` (in milliseconds)?
 
-            ``('they_are_same_node_as_us')`` - does the part we're hitting belong to
-            the same ba.Node as us?
+            ``('they_are_same_node_as_us')`` - does the part we're hitting
+            belong to the same ba.Node as us?
 
-            ``('they_are_different_node_than_us')`` - does the part we're hitting
-            belong to a different ba.Node than us?
+            ``('they_are_different_node_than_us')`` - does the part we're
+            hitting belong to a different ba.Node than us?
 
         Actions:
-            In a similar manner, actions are specified as tuples. Multiple actions
-            can be specified by providing a tuple of tuples.
+            In a similar manner, actions are specified as tuples.
+            Multiple actions can be specified by providing a tuple
+            of tuples.
 
         Available Actions:
-            ``('call', when, callable)`` - calls the provided callable; ``'when'`` can be
-            either ``'at_connect'`` or ``'at_disconnect'``. ``'at_connect'`` means to fire
-            when the two parts first come in contact; ``'at_disconnect'`` means to
-            fire once they cease being in contact.
+            ``('call', when, callable)`` - calls the provided callable;
+            ``'when'`` can be either ``'at_connect'`` or ``'at_disconnect'``.
+            ``'at_connect'`` means to fire
+            when the two parts first come in contact; ``'at_disconnect'``
+            means to fire once they cease being in contact.
 
-            ``('message', who, when, message_obj)`` - sends a message object; ``'who'`` can
-            be either ``'our_node'`` or ``'their_node'``, ``'when'`` can be ``'at_connect'`` or
+            ``('message', who, when, message_obj)`` - sends a message object;
+            ``'who'`` can
+            be either ``'our_node'`` or ``'their_node'``, ``'when'`` can be
+            ``'at_connect'`` or
             ``'at_disconnect'``, and message_obj is the message object to send.
-            This has the same effect as calling the node's ba.Node.handlemessage
-            method.
+            This has the same effect as calling the node's
+            ba.Node.handlemessage method.
 
-            ``('modify_part_collision', attr, value)`` - changes some characteristic
-            of the physical collision that will occur between our part and their
-            part. This change will remain in effect as long as the two parts
-            remain overlapping. This means if you have a part with a material
-            that turns ``'collide'`` off against parts younger than 100ms, and it
-            touches another part that is 50ms old, it will continue to not
-            collide with that part until they separate, even if the 100ms
-            threshold is passed. Options for attr/value are: ``'physical'`` (boolean
-            value; whether a *physical* response will occur at all), ``'friction'``
-            (float value; how friction-y the physical response will be),
-            ``'collide'`` (boolean value; whether *any* collision will occur at all,
-            including non-physical stuff like callbacks), ``'use_node_collide'``
-            (boolean value; whether to honor modify_node_collision overrides for
-            this collision), ``'stiffness'`` (float value, how springy the physical
-            response is), ``'damping'`` (float value, how damped the physical
-            response is), ``'bounce'`` (float value; how bouncy the physical response
-            is).
-
+            ``('modify_part_collision', attr, value)`` - changes some
+            characteristic of the physical collision that will occur between
+            our part and their part. This change will remain in effect as
+            long as the two parts remain overlapping. This means if you have a
+            part with a material that turns ``'collide'`` off against parts
+            younger than 100ms, and it touches another part that is 50ms old,
+            it will continue to not collide with that part until they separate,
+            even if the 100ms threshold is passed. Options for attr/value are:
+            ``'physical'`` (boolean value; whether a *physical* response will
+            occur at all), ``'friction'`` (float value; how friction-y the
+            physical response will be), ``'collide'`` (boolean value;
+            whether *any* collision will occur at all, including non-physical
+            stuff like callbacks), ``'use_node_collide'``
+            (boolean value; whether to honor modify_node_collision
+            overrides for this collision), ``'stiffness'`` (float value,
+            how springy the physical response is), ``'damping'`` (float
+            value, how damped the physical response is), ``'bounce'`` (float
+            value; how bouncy the physical response is).
             ``('modify_node_collision', attr, value)`` - similar to
             ``modify_part_collision``, but operates at a node-level.
             collision attributes set here will remain in effect as long as
             *anything* from our part's node and their part's node overlap.
             A key use of this functionality is to prevent new nodes from
             colliding with each other if they appear overlapped;
-            if ``modify_part_collision`` is used, only the individual parts that
-            were overlapping would avoid contact, but other parts could still
-            contact leaving the two nodes 'tangled up'.  Using
+            if ``modify_part_collision`` is used, only the individual
+            parts that were overlapping would avoid contact, but other parts
+            could still contact leaving the two nodes 'tangled up'. Using
             ``modify_node_collision ensures`` that the nodes must completely
             separate before they can start colliding.  Currently the only attr
             available here is ``'collide'`` (a boolean value).
 
-            ``('sound', sound, volume)`` - plays a ba.Sound when a collision occurs, at
-            a given volume, regardless of the collision speed/etc.
+            ``('sound', sound, volume)`` - plays a ba.Sound when a collision
+            occurs, at a given volume, regardless of the collision speed/etc.
 
-            ``('impact_sound', sound, targetImpulse, volume)`` - plays a sound when a
-            collision occurs, based on the speed of impact. Provide a ba.Sound, a
-            target-impulse, and a volume.
+            ``('impact_sound', sound, targetImpulse, volume)`` - plays a sound
+            when a collision occurs, based on the speed of impact.
+            Provide a ba.Sound, a target-impulse, and a volume.
 
-            ``('skid_sound', sound, targetImpulse, volume)`` - plays a sound during a
-            collision when parts are 'scraping' against each other. Provide a
-            ba.Sound, a target-impulse, and a volume.
+            ``('skid_sound', sound, targetImpulse, volume)`` - plays a sound
+            during a collision when parts are 'scraping' against each other.
+            Provide a ba.Sound, a target-impulse, and a volume.
 
-          ``('roll_sound', sound, targetImpulse, volume)`` - plays a sound during a
-            collision when parts are 'rolling' against each other. Provide a
-            ba.Sound, a target-impulse, and a volume.
+          ``('roll_sound', sound, targetImpulse, volume)`` - plays a sound
+            during a collision when parts are 'rolling' against each other.
+            Provide a ba.Sound, a target-impulse, and a volume.
 
         Examples:
             example 1: create a material that lets us ignore
@@ -818,42 +823,49 @@ class SessionPlayer:
     for any length of time.
 
     Attributes:
-
-        id: int
+        id (int):
             The unique numeric ID of the Player.
 
             Note that you can also use the boolean operator for this same
             functionality, so a statement such as "if player" will do
             the right thing both for Player objects and values of None.
 
-        in_game: bool
+        in_game (bool):
             This bool value will be True once the Player has completed
             any lobby character/team selection.
 
-        sessionteam: ba.SessionTeam
+        sessionteam (ba.SessionTeam):
             The ba.SessionTeam this Player is on. If the SessionPlayer
             is still in its lobby selecting a team/etc. then a
             ba.SessionTeamNotFoundError will be raised.
 
-        inputdevice: ba.InputDevice
+        inputdevice (ba.InputDevice):
             The input device associated with the player.
 
-        color: Sequence[float]
+        color (Sequence[float]):
             The base color for this Player.
             In team games this will match the ba.SessionTeam's color.
 
-        highlight: Sequence[float]
+        highlight (Sequence[float]):
             A secondary color for this player.
             This is used for minor highlights and accents
             to allow a player to stand apart from his teammates
             who may all share the same team (primary) color.
 
-        character: str
+        character (str):
             The character this player has selected in their profile.
 
-        activityplayer: Optional[ba.Player]
+        activityplayer (Optional[ba.Player]):
             The current game-specific instance for this player.
     """
+    id: int
+    in_game: bool
+    sessionteam: ba.SessionTeam
+    inputdevice: ba.InputDevice
+    color: Sequence[float]
+    highlight: Sequence[float]
+    character: str
+    activityplayer: Optional[ba.Player]
 
     def assigninput(self, type: Union[ba.InputType, tuple[ba.InputType, ...]],
                     call: Callable) -> None:
@@ -1056,16 +1068,18 @@ class Vec3(Sequence[float]):
     - with a single three-member sequence arg, sequence values are copied
     - otherwise assumes individual x/y/z args (positional or keywords)
     Attributes:
-
-       x: float
+       x (float):
           The vector's X component.
 
-       y: float
+       y (float):
           The vector's Y component.
 
-       z: float
+       z (float):
           The vector's Z component.
     """
+    x: float
+    y: float
+    z: float
 
     # pylint: disable=function-redefined
 
@@ -3593,8 +3607,8 @@ def set_have_mods(have_mods: bool) -> None:
 
 
 def set_internal_language_keys(
-    listobj: list[tuple[str, str]],
-    random_names_list: list[tuple[str, str]]) -> None:
+        listobj: list[tuple[str, str]],
+        random_names_list: list[tuple[str, str]]) -> None:
     """set_internal_language_keys(listobj: list[tuple[str, str]],
       random_names_list: list[tuple[str, str]]) -> None
 
@@ -3612,7 +3626,7 @@ def set_low_level_config_value(key: str, value: int) -> None:
 
 
 def set_map_bounds(
-    bounds: tuple[float, float, float, float, float, float]) -> None:
+        bounds: tuple[float, float, float, float, float, float]) -> None:
     """set_map_bounds(bounds: tuple[float, float, float, float, float, float])
       -> None
 
@@ -3964,8 +3978,8 @@ def textwidget(edit: ba.Widget = None,
 
 @overload
 def time(
-    timetype: ba.TimeType = TimeType.SIM,
-    timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS) -> float:
+        timetype: ba.TimeType = TimeType.SIM,
+        timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS) -> float:
     ...
 
 
@@ -4104,7 +4118,8 @@ def timer(time: float,
         >>> ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))
         >>> ba.timer(2.0, ba.Call(ba.screenmessage,
         ...                       'hello from the future 2!'))
-        ```"""
+        ```
+    """
     return None
 
 

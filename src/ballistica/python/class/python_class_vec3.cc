@@ -38,14 +38,13 @@ void PythonClassVec3::SetupType(PyTypeObject* obj) {
       "- otherwise assumes individual x/y/z args (positional or keywords)"
       "\n"
       "Attributes:\n"
-      "\n"
-      "   x: float\n"
+      "   x (float):\n"
       "      The vector's X component.\n"
       "\n"
-      "   y: float\n"
+      "   y (float):\n"
       "      The vector's Y component.\n"
       "\n"
-      "   z: float\n"
+      "   z (float):\n"
       "      The vector's Z component.\n";
 
   obj->tp_new = tp_new;
