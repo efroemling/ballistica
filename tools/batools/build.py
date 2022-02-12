@@ -40,6 +40,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
+    PipRequirement(modulename='pdoc'),
     PipRequirement(pipname='typing_extensions', minversion=[4, 0, 1]),
     PipRequirement(pipname='types-filelock', minversion=[3, 2, 5]),
     PipRequirement(pipname='types-requests', minversion=[2, 27, 7]),
