@@ -417,7 +417,8 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
     {"exists", (PyCFunction)Exists, METH_NOARGS,
      "exists() -> bool\n"
      "\n"
-     "Return whether the underlying device for this object is still present."},
+     "Return whether the underlying device for this object is\n"
+     "still present.\n"},
     {"get_button_name", (PyCFunction)GetButtonName,
      METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise ops)
      "get_button_name(button_id: int) -> ba.Lstr\n"

@@ -733,7 +733,8 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Returns the character's icon (images, colors, etc contained in a dict)"},
+     "Returns the character's icon (images, colors, etc contained\n"
+     "in a dict."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"

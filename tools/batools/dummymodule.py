@@ -21,7 +21,7 @@ from efrotools import get_files_hash
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import Sequence, Any
+    from typing import Sequence, Any, Optional
     from batools.docs import AttributeInfo
 
 
@@ -252,7 +252,7 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                     f'unknown returns value: {returns} for {funcname}')
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
-        docstr_out = _formatdoc(docstr, indent + 4)
+        docstr_out = _formatdoc(docstr, indent + 4, funcname=funcname)
         out += spcstr + defsline + docstr_out + f'{returnspc}{returnstr}\n'
     return out
 
@@ -470,10 +470,20 @@ def _special_class_cases(classname: str) -> str:
     return out
 
 
-def _formatdoc(docstr: str, indent: int) -> str:
+def _formatdoc(docstr: str,
+               indent: int,
+               funcname: Optional[str] = None) -> str:
     out = ''
     indentstr = indent * ' '
     docslines = docstr.splitlines()
+
+    if (funcname and docslines and docslines[0]
+            and docslines[0].startswith(funcname)):
+        # Remove this signature from python docstring
+        # as not to repeat ourselves.
+        _, docstr = docstr.split('\n\n', maxsplit=1)
+        docslines = docstr.splitlines()
+
     if len(docslines) == 1:
         out += '\n' + indentstr + '"""' + docslines[0] + '"""\n'
     else:
@@ -503,7 +513,8 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             out += f'class {classname}:\n'
 
         docstr = cls.__doc__
-        out += _formatdoc(docstr, 4)
+        # classname is constructor name
+        out += _formatdoc(docstr, 4, funcname=classname)
 
         # Create a public constructor if it has one.
         # If the first docs line appears to be a function signature
