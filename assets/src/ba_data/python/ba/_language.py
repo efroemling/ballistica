@@ -378,19 +378,25 @@ class Lstr:
 
     Examples:
         EXAMPLE 1: specify a string from a resource path
+        ```python
         >>> mynode.text = ba.Lstr(resource='audioSettingsWindow.titleText')
+        ```
 
         EXAMPLE 2: specify a translated string via a category and english
         value; if a translated value is available, it will be used; otherwise
         the english value will be. To see available translation categories,
         look under the 'translations' resource section.
+        ```python
         >>> mynode.text = ba.Lstr(translate=('gameDescriptions',
         ...                                  'Defeat all enemies'))
+        ```
 
         EXAMPLE 3: specify a raw value and some substitutions. Substitutions
         can be used with resource and translate modes as well.
+        ```python
         >>> mynode.text = ba.Lstr(value='${A} / ${B}',
         ...               subs=[('${A}', str(score)), ('${B}', str(total))])
+        ```
 
         EXAMPLE 4: ba.Lstr's can be nested. This example would display the
         resource at res_a but replace ${NAME} with the value of the

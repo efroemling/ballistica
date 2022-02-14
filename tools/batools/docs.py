@@ -80,15 +80,17 @@ def generate(projroot: str) -> None:
     # Make sure we're running from the dir above this script.
     os.chdir(projroot)
 
-    pythondir = str(
-        Path(projroot, 'assets', 'src', 'ba_data', 'python').absolute())
-    sys.path.append(pythondir)
-    outdirname = Path('build', 'docs_html').absolute()
+    templatesdir = (Path(projroot) / 'assets' / 'src' / 'pdoc' /
+                    'templates').absolute()
+    pythondir = (Path(projroot) / 'assets' / 'src' / 'ba_data' /
+                 'python').absolute()
+    outdirname = (Path(projroot) / 'build' / 'docs_html').absolute()
+    sys.path.append(str(pythondir))
 
     try:
-        pdoc.render.configure(docformat='google',
-                              search=True,
-                              show_source=True)
+        pdoc.render.configure(search=True,
+                              show_source=True,
+                              template_directory=templatesdir)
         pdoc.pdoc('ba', 'bastd', output_directory=outdirname)
     except Exception as exc:
         import traceback

@@ -24,7 +24,7 @@ void PythonClassModel::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A reference to a model.\n"
       "\n"
-      "Category: Asset Classes\n"
+      "Category: **Asset Classes**\n"
       "\n"
       "Models are used for drawing.\n"
       "Use ba.getmodel() to instantiate one.";

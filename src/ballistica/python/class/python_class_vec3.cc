@@ -29,7 +29,7 @@ void PythonClassVec3::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A vector of 3 floats.\n"
       "\n"
-      "Category: General Utility Classes\n"
+      "Category: **General Utility Classes**\n"
       "\n"
       "These can be created the following ways (checked in this order):\n"
       "- with no args, all values are set to 0\n"

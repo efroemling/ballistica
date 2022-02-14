@@ -791,7 +791,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Return whether this platform supports clipboard operations at all.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "If this returns False, UIs should not show 'copy to clipboard'\n"
        "buttons, etc."},
@@ -800,7 +800,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Return whether there is currently text on the clipboard.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "This will return False if no system clipboard is available; no need\n"
        " to call ba.clipboard_available() separately."},
@@ -810,18 +810,18 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Copy a string to the system clipboard.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
-       "Ensure that ba.clipboard_available() returns True before adding\n"
+       "Ensure that ba.clipboard_available returns True before adding\n"
        " buttons/etc. that make use of this functionality."},
       {"clipboard_get_text", (PyCFunction)PyClipboardGetText, METH_NOARGS,
        "clipboard_get_text() -> str\n"
        "\n"
        "Return text currently on the system clipboard.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
-       "Ensure that ba.clipboard_has_text() returns True before calling\n"
+       "Ensure that ba.clipboard_has_text returns True before calling\n"
        " this function."},
       {"printobjects", (PyCFunction)PyPrintObjects,
        METH_VARARGS | METH_KEYWORDS,
@@ -829,7 +829,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Print debugging info about game objects.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "This call only functions in debug builds of the game.\n"
        "It prints various info about the current object count, etc."},
@@ -839,20 +839,18 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Return whether this is the first time running a line of code.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "This is used by 'print_once()' type calls to keep from overflowing\n"
        "logs. The call functions by registering the filename and line where\n"
        "The call is made from.  Returns True if this location has not been\n"
        "registered already, and False if it has.\n"
        "\n"
-       "Example:\n"
-       "    This print will only fire for the first loop iteration:\n"
-       "    ```python\n"
-       "    >>> for i in range(10):\n"
-       "    ... if ba.do_once():\n"
-       "    ...     print('Hello once from loop!')\n"
-       "    ```\n"},
+       "##### Example\n"
+       "This print will only fire for the first loop iteration:\n"
+       ">>> for i in range(10):\n"
+       "... if ba.do_once():\n"
+       "...     print('Hello once from loop!')\n"},
 
       {"_app", (PyCFunction)PyApp, METH_VARARGS | METH_KEYWORDS,
        "_app() -> ba.App\n"
@@ -904,7 +902,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Used for analytics to see where in the app players spend their time.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "Generally called when opening a new window or entering some UI.\n"
        "'screen' should be a string description of an app location\n"
@@ -1006,7 +1004,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Category: General Utility Functions"},
+       "Category: **General Utility Functions**"},
 
       {"print_context", (PyCFunction)PyPrintContext,
        METH_VARARGS | METH_KEYWORDS,

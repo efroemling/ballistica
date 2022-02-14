@@ -22,13 +22,10 @@ class PlayerScoredMessage:
     """Informs something that a ba.Player scored.
 
     Category: Message Classes
-
-    Attributes:
-
-        score
-            The score value.
     """
+
     score: int
+    """The score value."""
 
 
 class PlayerRecord:
@@ -232,7 +229,7 @@ class PlayerRecord:
 class Stats:
     """Manages scores and statistics for a ba.Session.
 
-    category: Gameplay Classes
+    Category: Gameplay Classes
     """
 
     def __init__(self) -> None:

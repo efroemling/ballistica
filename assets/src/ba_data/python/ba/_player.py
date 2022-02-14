@@ -48,18 +48,15 @@ class Player(Generic[TeamType]):
     These correspond to ba.SessionPlayer objects, but are associated with a
     single ba.Activity instance. This allows activities to specify their
     own custom ba.Player types.
-
-    Attributes:
-
-      actor
-        The ba.Actor associated with the player.
-
     """
 
     # These are instance attrs but we define them at the type level so
     # their type annotations are introspectable (for docs generation).
     character: str
+
     actor: Optional[ba.Actor]
+    """The ba.Actor associated with the player."""
+
     color: Sequence[float]
     highlight: Sequence[float]
 

@@ -34,8 +34,8 @@ void PythonClassNode::SetupType(PyTypeObject* obj) {
       "to a game node; *not* the node itself. This means a Node's\n"
       "lifecycle is completely independent of how many Python references\n"
       "to it exist. To explicitly add a new node to the game, use\n"
-      "ba.newnode(), and to explicitly delete one, use ba.Node.delete().\n"
-      "ba.Node.exists() can be used to determine if a Node still points to\n"
+      "ba.newnode, and to explicitly delete one, use ba.Node.delete.\n"
+      "ba.Node.exists can be used to determine if a Node still points to\n"
       "a live node in the game.\n"
       "\n"
       "You can use ba.Node(None) to instantiate an invalid\n"
@@ -413,7 +413,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"
-     "Delete the node.  Ignores already-deleted nodes if ignore_missing\n"
+     "Delete the node. Ignores already-deleted nodes if `ignore_missing`\n"
      "is True; otherwise a ba.NodeNotFoundError is thrown."},
     {"handlemessage", (PyCFunction)HandleMessage, METH_VARARGS,
      "handlemessage(*args: Any) -> None\n"
@@ -423,7 +423,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "All standard message objects are forwarded along to the ba.Node's\n"
      "delegate for handling (generally the ba.Actor that made the node).\n"
      "\n"
-     "ba.Nodes are unique, however, in that they can be passed a second\n"
+     "ba.Node-s are unique, however, in that they can be passed a second\n"
      "form of message; 'node-messages'.  These consist of a string type-name\n"
      "as a first argument along with the args specific to that type name\n"
      "as additional arguments.\n"
@@ -445,13 +445,11 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "setting the target attribute to any value or connecting another\n"
      "node attribute to it.\n"
      "\n"
-     "Example:\n"
-     "    Create a locator and attach a light to it:\n"
-     "    ```python\n"
-     "    >>> light = ba.newnode('light')\n"
-     "    ... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})\n"
-     "    ... loc.connectattr('position', light, 'position')\n"
-     "    ```\n"},
+     "##### Example\n"
+     "Create a locator and attach a light to it:\n"
+     ">>> light = ba.newnode('light')\n"
+     "... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})\n"
+     "... loc.connectattr('position', light, 'position')\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

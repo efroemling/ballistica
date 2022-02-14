@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class Session:
     """Defines a high level series of ba.Activity-es with a common purpose.
 
-    category: Gameplay Classes
+    Category: Gameplay Classes
 
     Examples of sessions are ba.FreeForAllSession, ba.DualTeamSession, and
     ba.CoopSession.
@@ -27,58 +27,48 @@ class Session:
     A Session is responsible for wrangling and transitioning between various
     ba.Activity instances such as mini-games and score-screens, and for
     maintaining state between them (players, teams, score tallies, etc).
-
-    Attributes:
-
-        sessionteams
-            All the ba.SessionTeams in the Session. Most things should use the
-            list of ba.Team-s in ba.Activity; not this.
-
-        sessionplayers
-            All ba.SessionPlayers in the Session. Most things should use the
-            list of ba.Player-s in ba.Activity; not this. Some players, such as
-            those who have not yet selected a character, will only be
-            found on this list.
-
-        min_players
-            The minimum number of players who must be present for the Session
-            to proceed past the initial joining screen.
-
-        max_players
-            The maximum number of players allowed in the Session.
-
-        lobby
-            The ba.Lobby instance where new ba.Player-s go to select a
-            Profile/Team/etc. before being added to games.
-            Be aware this value may be None if a Session does not allow
-            any such selection.
-
-        use_teams
-            Whether this session groups players into an explicit set of
-            teams. If this is off, a unique team is generated for each
-            player that joins.
-
-        use_team_colors
-            Whether players on a team should all adopt the colors of that
-            team instead of their own profile colors. This only applies if
-            use_teams is enabled.
-
-        customdata
-            A shared dictionary for objects to use as storage on this session.
-            Ensure that keys here are unique to avoid collisions.
-
     """
-    use_teams: bool = False
-    use_team_colors: bool = True
 
-    # Note: even though these are instance vars, we annotate them at the
-    # class level so that docs generation can access their types.
+    use_teams: bool = False
+    """Whether this session groups players into an explicit set of
+       teams. If this is off, a unique team is generated for each
+       player that joins."""
+
+    use_team_colors: bool = True
+    """Whether players on a team should all adopt the colors of that
+       team instead of their own profile colors. This only applies if
+       use_teams is enabled."""
+
+    # Note: even though these are instance vars, we annotate and document them
+    # at the class level so that looks better and nobody get lost while
+    # reading large __init__
+
     lobby: ba.Lobby
+    """The ba.Lobby instance where new ba.Player-s go to select a
+       Profile/Team/etc. before being added to games.
+       Be aware this value may be None if a Session does not allow
+       any such selection."""
+
     max_players: int
+    """The maximum number of players allowed in the Session."""
+
     min_players: int
+    """The minimum number of players who must be present for the Session
+       to proceed past the initial joining screen"""
+
     sessionplayers: list[ba.SessionPlayer]
+    """All ba.SessionPlayers in the Session. Most things should use the
+       list of ba.Player-s in ba.Activity; not this. Some players, such as
+       those who have not yet selected a character, will only be
+       found on this list."""
+
     customdata: dict
+    """A shared dictionary for objects to use as storage on this session.
+       Ensure that keys here are unique to avoid collisions."""
+
     sessionteams: list[ba.SessionTeam]
+    """All the ba.SessionTeams in the Session. Most things should use the
+       list of ba.Team-s in ba.Activity; not this."""
 
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],

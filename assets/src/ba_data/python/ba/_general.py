@@ -155,18 +155,23 @@ class _WeakCall:
         bar() method 5 seconds later; it will be kept alive even though
         we overwrite its variable with None because the bound method
         we pass as a timer callback (foo.bar) strong-references it
+        ```python
         >>> foo = FooClass()
         ... ba.timer(5.0, foo.bar)
         ... foo = None
+        ```
 
         EXAMPLE B: this code will *not* keep our object alive; it will die
         when we overwrite it with None and the timer will be a no-op when it
         fires
+        ```python
         >>> foo = FooClass()
         ... ba.timer(5.0, ba.WeakCall(foo.bar))
         ... foo = None
+        ```
 
         EXAMPLE C: Wrap a method call with some positional and keyword args:
+        ```python
         >>> myweakcall = ba.WeakCall(self.dostuff, argval1,
         ...                          namedarg=argval2)
         ... # Now we have a single callable to run that whole mess.
@@ -174,6 +179,7 @@ class _WeakCall:
         ... # (provided my_obj still exists; this will do nothing
         ... # otherwise).
         ... myweakcall()
+        ```
 
         Note: additional args and keywords you provide to the WeakCall()
         constructor are stored as regular strong-references; you'll need
@@ -232,10 +238,12 @@ class _Call:
 
         Example:
             Wrap a method call with 1 positional and 1 keyword arg:
+            ```python
             >>> mycall = ba.Call(myobj.dostuff, argval, namedarg=argval2)
             ... # Now we have a single callable to run that whole mess.
             ... # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
             ... mycall()
+            ```
         """
         self._call = args[0]
         self._args = args[1:]

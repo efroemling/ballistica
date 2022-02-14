@@ -19,7 +19,7 @@ void PythonClassInputDevice::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "An input-device such as a gamepad, touchscreen, or keyboard.\n"
       "\n"
-      "Category: Gameplay Classes\n"
+      "Category: **Gameplay Classes**\n"
       "\n"
       "Attributes:\n"
       "\n"

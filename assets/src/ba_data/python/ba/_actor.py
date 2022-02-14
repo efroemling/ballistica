@@ -36,14 +36,14 @@ class Actor:
     Example:
         ```python
         >>> # Create a flag Actor in our game activity:
-        >>> from bastd.actor.flag import Flag
-        >>> self.flag = Flag(position=(0, 10, 0))
-        >>>
-        >>> # Later, destroy the flag.
-        >>> # (provided nothing else is holding a reference to it)
-        >>> # We could also just assign a new flag to this value.
-        >>> # Either way, the old flag disappears.
-        >>> self.flag = None
+        ... from bastd.actor.flag import Flag
+        ... self.flag = Flag(position=(0, 10, 0))
+        ...
+        ... # Later, destroy the flag.
+        ... # (provided nothing else is holding a reference to it)
+        ... # We could also just assign a new flag to this value.
+        ... # Either way, the old flag disappears.
+        ... self.flag = None
         ```
 
     This is in contrast to the behavior of the more low level ba.Nodes,
@@ -65,7 +65,9 @@ class Actor:
     (though its not guaranteed to always have a meaningful effect).
     In this case the Actor instance will still be around, but its exists()
     and is_alive() methods will both return False.
+    ```python
     >>> self.flag.handlemessage(ba.DieMessage())
+    ```
     """
 
     def __init__(self) -> None:

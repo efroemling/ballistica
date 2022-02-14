@@ -81,13 +81,14 @@ from ba._collision import Collision, getcollision
 
 app: App
 
+__all__: list[str] = []
+
 
 # Change everything's listed module to simply 'ba' (instead of 'ba.foo.bar').
 def _simplify_module_names() -> None:
-    for attr, obj in globals().items():
+    for attr, _obj in globals().items():
         if not attr.startswith('_'):
-            if getattr(obj, '__module__', None) not in [None, 'ba']:
-                obj.__module__ = 'ba'
+            __all__.append(attr)
 
 
 _simplify_module_names()

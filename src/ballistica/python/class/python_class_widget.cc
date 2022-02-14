@@ -22,11 +22,11 @@ void PythonClassWidget::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "Internal type for low level UI elements; buttons, windows, etc.\n"
       "\n"
-      "Category: User Interface Classes\n"
+      "Category: **User Interface Classes**\n"
       "\n"
       "This class represents a weak reference to a widget object\n"
-      "in the internal c++ layer. Currently, functions such as\n"
-      "ba.buttonwidget() must be used to instantiate or edit these.";
+      "in the internal C++ layer. Currently, functions such as\n"
+      "ba.buttonwidget must be used to instantiate or edit these.";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
   obj->tp_repr = (reprfunc)tp_repr;

@@ -6,6 +6,7 @@
       <w>outdirname</w>
       <w>pagename</w>
       <w>pythondir</w>
+      <w>templatesdir</w>
       <w>unhashable</w>
     </words>
   </dictionary>

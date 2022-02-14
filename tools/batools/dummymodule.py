@@ -252,7 +252,8 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                     f'unknown returns value: {returns} for {funcname}')
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
-        docstr_out = _formatdoc(docstr, indent + 4, funcname=funcname)
+        docstr_out = _formatdoc(_filterdoc(docstr, funcname=funcname),
+                                indent + 4)
         out += spcstr + defsline + docstr_out + f'{returnspc}{returnstr}\n'
     return out
 
@@ -470,11 +471,7 @@ def _special_class_cases(classname: str) -> str:
     return out
 
 
-def _formatdoc(docstr: str,
-               indent: int,
-               funcname: Optional[str] = None) -> str:
-    out = ''
-    indentstr = indent * ' '
+def _filterdoc(docstr: str, funcname: Optional[str] = None) -> str:
     docslines = docstr.splitlines()
 
     if (funcname and docslines and docslines[0]
@@ -484,14 +481,48 @@ def _formatdoc(docstr: str,
         _, docstr = docstr.split('\n\n', maxsplit=1)
         docslines = docstr.splitlines()
 
+    # Assuming that each line between 'Attributes:' and '\n\n' belongs to
+    # attrs descriptions.
+    empty_lines_count = 0
+    attributes_line: Optional[int] = None
+    attrs_definitions_last_line: Optional[int] = None
+    for i, line in enumerate(docslines):
+        if line.strip() in ['Attrs:', 'Attributes:']:
+            if attributes_line is not None:
+                raise Exception("Multiple 'Attributes:' lines found")
+            attributes_line = i
+        if not line.strip():
+            empty_lines_count += 1
+        else:
+            empty_lines_count = 0
+        if empty_lines_count >= 2 and attributes_line is not None:
+            # It seems attribute definitions ended.
+            attrs_definitions_last_line = i
+            break
+    if attrs_definitions_last_line is None:
+        attrs_definitions_last_line = len(docslines) - 1
+
+    return '\n'.join(docslines[:attributes_line] +
+                     docslines[attrs_definitions_last_line + 1:])
+
+
+def _formatdoc(docstr: str,
+               indent: int,
+               no_end_newline: bool = False,
+               inner_indent: int = 0) -> str:
+    out = ''
+    indentstr = indent * ' '
+    inner_indent_str = inner_indent * ' '
+    docslines = docstr.splitlines()
+
     if len(docslines) == 1:
         out += '\n' + indentstr + '"""' + docslines[0] + '"""\n'
     else:
         for i, line in enumerate(docslines):
             if i != 0 and line != '':
-                docslines[i] = indentstr + line
-        out += ('\n' + indentstr + '"""' + '\n'.join(docslines) + '\n' +
-                indentstr + '"""\n')
+                docslines[i] = indentstr + inner_indent_str + line
+        out += ('\n' + indentstr + '"""' + '\n'.join(docslines) +
+                ('' if no_end_newline else '\n' + indentstr) + '"""\n')
     return out
 
 
@@ -514,7 +545,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 
         docstr = cls.__doc__
         # classname is constructor name
-        out += _formatdoc(docstr, 4, funcname=classname)
+        out += _formatdoc(_filterdoc(docstr, funcname=classname), 4)
 
         # Create a public constructor if it has one.
         # If the first docs line appears to be a function signature
@@ -548,6 +579,12 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             for attr in attrs:
                 if attr.attr_type is not None:
                     out += f'    {attr.name}: {attr.attr_type}\n'
+                    if attr.docs:
+                        out += _formatdoc(_filterdoc(attr.docs),
+                                          indent=4,
+                                          inner_indent=3,
+                                          no_end_newline=True)
+                        out += '\n'
                 else:
                     raise Exception(f'Found untyped attr in'
                                     f' {classname} docs: {attr.name}')

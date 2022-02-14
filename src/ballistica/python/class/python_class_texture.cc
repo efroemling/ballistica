@@ -24,7 +24,7 @@ void PythonClassTexture::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A reference to a texture.\n"
       "\n"
-      "Category: Asset Classes\n"
+      "Category: **Asset Classes**\n"
       "\n"
       "Use ba.gettexture() to instantiate one.";
   obj->tp_repr = (reprfunc)tp_repr;

@@ -24,9 +24,9 @@ void PythonClassSound::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A reference to a sound.\n"
       "\n"
-      "Category: Asset Classes\n"
+      "Category: **Asset Classes**\n"
       "\n"
-      "Use ba.getsound() to instantiate one.";
+      "Use ba.getsound to instantiate one.";
   obj->tp_repr = (reprfunc)tp_repr;
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
