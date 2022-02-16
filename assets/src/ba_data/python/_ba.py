@@ -1768,6 +1768,14 @@ def containerwidget(edit: ba.Widget = None,
     return ba.Widget()
 
 
+def contains_python_dist() -> bool:
+    """contains_python_dist() -> bool
+
+    (internal)
+    """
+    return bool()
+
+
 def debug_print_py_err() -> None:
     """debug_print_py_err() -> None
 
