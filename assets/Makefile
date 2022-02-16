@@ -2475,6 +2475,9 @@ $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/_yaml/__init__.py \
+  build/ba_data/python-site-packages/certifi/__init__.py \
+  build/ba_data/python-site-packages/certifi/__main__.py \
+  build/ba_data/python-site-packages/certifi/core.py \
   build/ba_data/python-site-packages/typing_extensions.py \
   build/ba_data/python-site-packages/yaml/__init__.py \
   build/ba_data/python-site-packages/yaml/composer.py \
@@ -2496,6 +2499,9 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/core.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-39.opt-1.pyc \
@@ -4784,6 +4790,9 @@ FONT_TARGETS = \
   build/ba_data/fonts/fontSmall5.fdata \
   build/ba_data/fonts/fontSmall6.fdata \
   build/ba_data/fonts/fontSmall7.fdata
+
+PEM_TARGETS = \
+  build/ba_data/python-site-packages/certifi/cacert.pem
 
 DATA_TARGETS = \
   build/ba_data/data/langdata.json \
@@ -7075,6 +7084,9 @@ build/%.ogg : ../.efrocachemap
 build/%.fdata : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
+build/%.pem : ../.efrocachemap
+	@cd .. && tools/pcommand efrocache_get assets/$@
+
 # Langdata one-off json file.
 build/ba_data/data/langdata.json : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
@@ -7155,7 +7167,7 @@ SCRIPT_TARGETS_ANDROID = $(SCRIPT_TARGETS_PY_PRIVATE_ANDROID) \
 SCRIPT_TARGETS_COMMON = $(SCRIPT_TARGETS_PY_PUBLIC) \
  $(SCRIPT_TARGETS_PYC_PUBLIC) $(SCRIPT_TARGETS_PY_PUBLIC_TOOLS) \
  $(SCRIPT_TARGETS_PYC_PUBLIC_TOOLS) $(SCRIPT_TARGETS_PY_PRIVATE_COMMON) \
- $(SCRIPT_TARGETS_PYC_PRIVATE_COMMON)
+ $(SCRIPT_TARGETS_PYC_PRIVATE_COMMON) $(PEM_TARGETS)
 
 # Build scripts for a specific platform.
 scripts-cmake: $(SCRIPT_TARGETS_CMAKE) $(SCRIPT_TARGETS_COMMON)

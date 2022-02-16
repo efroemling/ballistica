@@ -337,7 +337,8 @@ def _sync_standard_game_data(cfg: Config) -> None:
            ' --prune-empty-dirs')
 
     if cfg.include_scripts:
-        cmd += " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
+        cmd += (f" --include '*.py' --include '*.pem'"
+                f" --include '*.{OPT_PYC_SUFFIX}'")
 
     if cfg.include_textures:
         assert cfg.tex_suffix is not None

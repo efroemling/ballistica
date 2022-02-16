@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 import signal
 import threading
@@ -100,6 +101,20 @@ if debug_build != sys.flags.dev_mode:
     print(f'WARNING: Mismatch in debug_build {debug_build}'
           f' and sys.flags.dev_mode {sys.flags.dev_mode}')
 
+# In embedded situations (when we're providing our own Python) let's
+# also provide our own root certs so ssl works. We can consider overriding
+# this in particular embedded cases if we can verify that system certs
+# are working.
+# (We also allow forcing this via an env var if the user desires)
+# pylint: disable=wrong-import-position
+if (_ba.contains_python_dist()
+        or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'):
+    import certifi
+
+    # Let both OpenSSL and requests (if present) know to use this.
+    os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
+        certifi.where())
+
 # FIXME: I think we should init Python in the main thread, which should
 #  also avoid these issues. (and also might help us play better with
 #  Python debuggers?)
@@ -136,7 +151,6 @@ if debug_build:
     del testthread
 
 # Clear out the standard quit/exit messages since they don't work for us.
-# pylint: disable=wrong-import-position
 # pylint: disable=c-extension-no-member
 if not TYPE_CHECKING:
     import __main__

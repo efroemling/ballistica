@@ -3,8 +3,9 @@
 """Functionality related to the high level state of the app."""
 from __future__ import annotations
 
-from enum import Enum
 import random
+import logging
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import _ba
@@ -183,6 +184,9 @@ class App:
         # pylint: disable=too-many-statements
 
         self.state = self.State.LAUNCHING
+
+        self._app_launched = False
+        self._app_paused = False
 
         # Config.
         self.config_file_healthy = False
@@ -366,22 +370,40 @@ class App:
         self.accounts.on_app_launch()
         self.plugins.on_app_launch()
 
-        self.state = self.State.RUNNING
+        # See note below in on_app_pause.
+        if self.state != self.State.LAUNCHING:
+            logging.error('on_app_launch found state %s; expected LAUNCHING.',
+                          self.state)
+
+        self._app_launched = True
+        self._update_state()
 
         # from ba._dependency import test_depset
         # test_depset()
         if bool(False):
             self._test_https()
 
+    def _update_state(self) -> None:
+        if self._app_paused:
+            self.state = self.State.PAUSED
+        else:
+            if self._app_launched:
+                self.state = self.State.RUNNING
+            else:
+                self.state = self.State.LAUNCHING
+
     def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
-        self.state = self.State.PAUSED
+
+        self._app_paused = True
+        self._update_state()
         self.plugins.on_app_pause()
 
     def on_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
 
-        self.state = self.State.RUNNING
+        self._app_paused = False
+        self._update_state()
         self.fg_state += 1
         self.accounts.on_app_resume()
         self.music.on_app_resume()

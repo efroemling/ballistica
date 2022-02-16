@@ -33,7 +33,8 @@
     "cpplint",
     "ansiwrap",
     "filelock",
-    "Cocoa"
+    "Cocoa",
+    "certifi"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

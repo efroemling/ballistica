@@ -1,13 +1,14 @@
-### 1.6.8 (20444)
+### 1.6.8 (20449)
 - Added Filipino language (Thanks David!)
 - Restored pre-v1.5 jump behaviour.
+- All communication with the master-server should now be secure (https) using root certificates from the [certifi](https://github.com/certifi/python-certifi) project. Please holler if you run into any connection issues with this version.
 
 ### 1.6.7 (20436)
 - Fixed a vulnerability which could expose device-account uuids.
 - Now generating Linux Arm64 server and test builds (currently built against Ubuntu 20).
 - Mac test builds are now Universal binaries (Arm64 & x86-64 versions bundled together).
 - Mac test builds are now notarized and distributed via a snazzy .dmg instead of a zip file, so the OS should no longer try to prevent you from running them.
-- Now, when pushing new builds to https://files.ballistica.net/bombsquad/builds , corresponding checksums are written to a different server and can be accessed via https://tools.ballistica.net/checksums
+- Test builds can now be found at <https://ballistica.net/builds> - this page shows more info about the builds, including file checksums (stored on a separate server from the actual files for increased security).
 
 ### 1.6.6 (20394)
 - Beginning work on moving to new asset system.
@@ -18,7 +19,7 @@
 - Added co-op support to server builds (thanks Dliwk!)
 - Updated everything from Python 3.8 to Python 3.9. The biggest immediate impact to our code is that basic types such as list, dict, and tuple can be used in annotations, eliminating the need to import typing.Dict, typing.List, etc. See python.org for more changes.
 - Note: accessing mods on external storage on Android will not work in this release. This functionality has not been working in recent versions of Android due to increased security features anyway and I am in the process of replacing it with a cloud based system for installing mods. More on this soon.
-- Python 3.9 no longer supports Windows 7 or earlier (according to https://www.python.org/downloads/windows/) so if you are running such a version of Windows you will need to stick to older builds.
+- Python 3.9 no longer supports Windows 7 or earlier (according to <https://www.python.org/downloads/windows/>) so if you are running such a version of Windows you will need to stick to older builds.
 
 ### 1.6.4 (20382)
 - Some cleanups in the Favorites tab of the gather window.

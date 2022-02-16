@@ -25,6 +25,9 @@ class NetworkSubsystem:
     """Network related app subsystem."""
 
     def __init__(self) -> None:
+
+        # Anyone accessing/modifying region_pings should hold this lock.
+        self.region_pings_lock = threading.Lock()
         self.region_pings: dict[str, float] = {}
 
 

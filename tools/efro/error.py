@@ -84,6 +84,12 @@ def is_urllib_network_error(exc: BaseException) -> bool:
             exc,
         (urllib.error.URLError, ConnectionError, http.client.IncompleteRead,
          http.client.BadStatusLine, socket.timeout)):
+        # Special case: although an HTTPError is a subclass of URLError,
+        # we don't return True for it. It means we have successfully
+        # communicated with the server but what we are asking for is
+        # not there/etc.
+        if isinstance(exc, urllib.error.HTTPError):
+            return False
         return True
     if isinstance(exc, OSError):
         if exc.errno == 10051:  # Windows unreachable network error.

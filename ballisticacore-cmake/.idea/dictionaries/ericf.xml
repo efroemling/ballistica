@@ -152,6 +152,7 @@
       <w>buttonup</w>
       <w>buttonwidget</w>
       <w>bwst</w>
+      <w>cacert</w>
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
@@ -172,6 +173,7 @@
       <w>ccylinder</w>
       <w>cend</w>
       <w>centiseconds</w>
+      <w>certifi</w>
       <w>cfgdir</w>
       <w>cfgpath</w>
       <w>changeme</w>
@@ -210,6 +212,7 @@
       <w>collidable</w>
       <w>collider</w>
       <w>columnwidget</w>
+      <w>comms</w>
       <w>connectattr</w>
       <w>containerwidget</w>
       <w>controlfp</w>
@@ -229,6 +232,7 @@
       <w>crom</w>
       <w>crosswire</w>
       <w>crvel</w>
+      <w>cryptosimple</w>
       <w>csize</w>
       <w>cspr</w>
       <w>cspre</w>
@@ -349,6 +353,7 @@
       <w>exargs</w>
       <w>exctype</w>
       <w>exec'ed</w>
+      <w>execed</w>
       <w>execinfo</w>
       <w>execing</w>
       <w>exhash</w>
@@ -423,6 +428,7 @@
       <w>funcname</w>
       <w>fval</w>
       <w>fvals</w>
+      <w>fwefocjwerj</w>
       <w>gamecenter</w>
       <w>gamedata</w>
       <w>gamepacket</w>
@@ -545,6 +551,7 @@
       <w>iometa</w>
       <w>ioprep</w>
       <w>ioprepped</w>
+      <w>ioprepping</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
@@ -566,6 +573,7 @@
       <w>jaxis</w>
       <w>jcjwf</w>
       <w>jdict</w>
+      <w>jfwe</w>
       <w>jmessage</w>
       <w>jnames</w>
       <w>json's</w>
@@ -928,6 +936,7 @@
       <w>redundants</w>
       <w>refcounted</w>
       <w>refl</w>
+      <w>regionid</w>
       <w>regtp</w>
       <w>rehel</w>
       <w>reimported</w>
@@ -962,6 +971,7 @@
       <w>rtypes</w>
       <w>rtypevar</w>
       <w>runnables</w>
+      <w>runseconds</w>
       <w>rvec</w>
       <w>rvel</w>
       <w>safecolor</w>
@@ -1145,6 +1155,7 @@
       <w>tradeoff</w>
       <w>trailcolor</w>
       <w>transobj</w>
+      <w>transportagentrequest</w>
       <w>treturn</w>
       <w>trifunovic</w>
       <w>trilinear</w>
@@ -1166,6 +1177,7 @@
       <w>udif</w>
       <w>uibounds</w>
       <w>uiid</w>
+      <w>unbased</w>
       <w>unblessed</w>
       <w>uncas</w>
       <w>unchecking</w>
