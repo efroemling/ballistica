@@ -1,4 +1,4 @@
-### 1.6.8 (20449)
+### 1.6.8 (20458, 2022-02-16)
 - Added Filipino language (Thanks David!)
 - Restored pre-v1.5 jump behaviour.
 - All communication with the master-server should now be secure (https) using root certificates from the [certifi](https://github.com/certifi/python-certifi) project. Please holler if you run into any connection issues with this version.
