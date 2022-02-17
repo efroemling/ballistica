@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """A nice collection of ready-to-use pcommands for this package."""
 from __future__ import annotations
 
@@ -301,6 +302,18 @@ def gen_fulltest_buildfile_linux() -> None:
     batools.build.gen_fulltest_buildfile_linux()
 
 
+def python_version_android() -> None:
+    """Print Android embedded Python version."""
+    from efrotools.pybuild import PY_VER_EXACT_ANDROID
+    print(PY_VER_EXACT_ANDROID, end='')
+
+
+def python_version_apple() -> None:
+    """Print Apple embedded Python version."""
+    from efrotools.pybuild import PY_VER_EXACT_APPLE
+    print(PY_VER_EXACT_APPLE, end='')
+
+
 def python_build_apple() -> None:
     """Build an embeddable python for mac/ios/tvos."""
     _python_build_apple(debug=False)
@@ -358,6 +371,12 @@ def python_android_patch() -> None:
     from efrotools import pybuild
     os.chdir(sys.argv[2])
     pybuild.android_patch()
+
+
+def python_android_patch_ssl() -> None:
+    """Patches Python ssl to prep for building for Android."""
+    from efrotools import pybuild
+    pybuild.android_patch_ssl()
 
 
 def python_apple_patch() -> None:

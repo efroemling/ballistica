@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 ENABLE_OPENSSL = True
 NEWER_PY_TEST = True
 
-PY_VER_EXACT_ANDROID = '3.9.7'
+PY_VER_EXACT_ANDROID = '3.9.10'
 PY_VER_EXACT_APPLE = '3.9.6'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
@@ -177,6 +177,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         ftxt,
         "source = 'https://www.openssl.org/source/openssl-1.1.1h.tar.gz'",
         "source = 'https://www.openssl.org/source/openssl-1.1.1l.tar.gz'")
+
+    # Give ourselves a handle to patch the OpenSSL build.
+    ftxt = replace_one(
+        ftxt,
+        '        # OpenSSL handles NDK internal paths by itself',
+        '        # Ericf addition: do some patching:\n'
+        '        self.run(["../../../../../../../tools/pcommand",'
+        ' "python_android_patch_ssl"])\n'
+        '        # OpenSSL handles NDK internal paths by itself',
+    )
+
     writefile('Android/build_deps.py', ftxt)
 
     # Tweak some things in the base build script; grab the right version
@@ -190,8 +201,6 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     writefile('build.sh', ftxt)
 
     # Ok, let 'er rip
-    # (we often run these builds in parallel so limit to 1 job a piece;
-    # otherwise they each inherit the -j12 or whatever from the top level).
     exargs = ' --with-pydebug' if debug else ''
     run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}')
     print('python build complete! (android/' + arch + ')')
@@ -345,6 +354,30 @@ def _patch_setup_file(platform: str, arch: str) -> None:
                           '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
                           ' continue;;')
     assert txt.count('[A-Z]*=*') == 1
+    writefile(fname, txt)
+
+
+def android_patch_ssl() -> None:
+    """Run necessary patches on an android ssl before building."""
+
+    # We bundle our own SSL root certificates on various platforms and use
+    # the OpenSSL 'SSL_CERT_FILE' env var override to get them to be used
+    # by default. However, OpenSSL is picky about allowing env-vars to be
+    # used and something about the Android environment makes it disallow
+    # them. So we need to force the issue. Alternately we could explicitly
+    # pass 'cafile' args to SSLContexts whenever we do network-y stuff
+    # but it seems cleaner to just have things work by default.
+    fname = 'crypto/getenv.c'
+    txt = readfile(fname)
+    txt = replace_one(
+        txt,
+        ('char *ossl_safe_getenv(const char *name)\n'
+         '{\n'),
+        ('char *ossl_safe_getenv(const char *name)\n'
+         '{\n'
+         '    // ERICF TWEAK: ALWAYS ALLOW GETENV.\n'
+         '    return getenv(name);\n'),
+    )
     writefile(fname, txt)
 
 

@@ -153,6 +153,7 @@
       <w>buttonwidget</w>
       <w>bwst</w>
       <w>cacert</w>
+      <w>cafile</w>
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
@@ -451,6 +452,7 @@
       <w>getbitshigh</w>
       <w>getcollidemodel</w>
       <w>getdata</w>
+      <w>getenv</w>
       <w>gethostbyname</w>
       <w>getifaddr</w>
       <w>getifaddrs</w>

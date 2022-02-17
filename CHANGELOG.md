@@ -1,3 +1,7 @@
+### 1.6.9 (20461, 2022-02-17)
+- Upgraded Android Python to 3.9.10
+- Fixed an issue with SSL in Android builds that was preventing communication with the master-server in 1.6.8
+
 ### 1.6.8 (20458, 2022-02-16)
 - Added Filipino language (Thanks David!)
 - Restored pre-v1.5 jump behaviour.

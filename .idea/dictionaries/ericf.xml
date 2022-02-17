@@ -299,6 +299,7 @@
       <w>cachefile</w>
       <w>cachemap</w>
       <w>cachepath</w>
+      <w>cafile</w>
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
@@ -949,6 +950,7 @@
       <w>getcurrency</w>
       <w>getcwd</w>
       <w>getdata</w>
+      <w>getenv</w>
       <w>gethostbyname</w>
       <w>getifaddr</w>
       <w>getinputdevice</w>
