@@ -77,6 +77,7 @@
       <w>backgrounded</w>
       <w>backgrounding</w>
       <w>backtraces</w>
+      <w>backwin</w>
       <w>ballistica</w>
       <w>ballisticacore</w>
       <w>bamasteraddr</w>
@@ -84,6 +85,7 @@
       <w>bameta</w>
       <w>bametainternal</w>
       <w>barebones</w>
+      <w>baseaddr</w>
       <w>basetype</w>
       <w>basicsize</w>
       <w>basn</w>
@@ -167,6 +169,7 @@
       <w>capitan</w>
       <w>cargs</w>
       <w>cbgn</w>
+      <w>cbresults</w>
       <w>cbtnoffs</w>
       <w>ccdd</w>
       <w>ccind</w>
@@ -720,6 +723,7 @@
       <w>nameval</w>
       <w>ndebug</w>
       <w>nearbytab</w>
+      <w>nearstr</w>
       <w>nearval</w>
       <w>needwindow</w>
       <w>negativex</w>
@@ -1169,6 +1173,7 @@
       <w>tval</w>
       <w>tvos</w>
       <w>tweakage</w>
+      <w>twidth</w>
       <w>twotimer</w>
       <w>twst</w>
       <w>typeobj</w>
@@ -1241,6 +1246,7 @@
       <w>wdeprecated</w>
       <w>weakref</w>
       <w>weakthis</w>
+      <w>weakwin</w>
       <w>weeeird</w>
       <w>welp</w>
       <w>whaaaaaaa</w>

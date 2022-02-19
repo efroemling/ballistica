@@ -42,15 +42,12 @@ auto FatalError::ReportFatalError(const std::string& message,
   if (!dialog_msg.empty()) {
     dialog_msg += "\n";
   }
-  // (No longer adding this note; individual errors to which the log is
-  // relevant can do to themselves).
-  // dialog_msg += "See BallisticaCore log for details.";
 
   auto starttime = time(nullptr);
 
   // Launch a thread and give it a chance to directly send our logs to the
   // master-server. The standard mechanism probably won't get the job done
-  // since it relies on the game thread loop and we're likely blocking that.
+  // since it relies on the logic thread loop and we're likely blocking that.
   // But generally we want to stay in this function and call abort() or whatnot
   // from here so that our stack trace makes it into platform logs.
   int result{};

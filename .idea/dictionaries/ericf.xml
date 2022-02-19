@@ -167,6 +167,7 @@
       <w>bacfg</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backwin</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
       <w>bacommon</w>
@@ -183,6 +184,7 @@
       <w>bametainternal</w>
       <w>barcolor</w>
       <w>barebones</w>
+      <w>baseaddr</w>
       <w>baseh</w>
       <w>basemult</w>
       <w>basepos</w>
@@ -317,6 +319,7 @@
       <w>cbgn</w>
       <w>cbits</w>
       <w>cbot</w>
+      <w>cbresults</w>
       <w>cbtn</w>
       <w>cbtnoffs</w>
       <w>ccfgs</w>
@@ -1523,6 +1526,7 @@
       <w>ndbm</w>
       <w>ndkpath</w>
       <w>nearbytab</w>
+      <w>nearstr</w>
       <w>neededsettings</w>
       <w>ness</w>
       <w>netcode</w>
@@ -2456,6 +2460,7 @@
       <w>tval</w>
       <w>tvalue</w>
       <w>tvos</w>
+      <w>twidth</w>
       <w>twrths</w>
       <w>txtactor</w>
       <w>txtl</w>
@@ -2591,6 +2596,7 @@
       <w>weakref</w>
       <w>weakrefs</w>
       <w>weakrefset</w>
+      <w>weakwin</w>
       <w>webbrowser</w>
       <w>webpage</w>
       <w>webpages</w>
