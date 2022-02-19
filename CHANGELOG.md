@@ -1,4 +1,4 @@
-### 1.6.9 (20466, 2022-02-18)
+### 1.6.9 (20469, 2022-02-19)
 - Upgraded Android Python to 3.9.10
 - Fixed an issue with SSL in Android builds that was preventing communication with the master-server in 1.6.8
 - Added a new network-diagnostics tool at 'Settings->Advanced->Network Testing'. Can be used to diagnose issues talking to master-servers/etc. (especially useful now that SSL can factor in)

@@ -123,6 +123,7 @@ class NetTestingWindow(ba.Window):
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
+    # pylint: disable=too-many-statements
 
     from efro.util import utc_now
 
@@ -146,10 +147,11 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             call()
             duration = time.monotonic() - starttime
             _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
-        except Exception as exc:
+        except Exception:
+            import traceback
             duration = time.monotonic() - starttime
-            _print(f'Failed in {duration:.2f}s. Error={exc!r}',
-                   color=(1, 0, 0))
+            _print(traceback.format_exc(), color=(1.0, 1.0, 0.3))
+            _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
 
     try:
