@@ -1479,7 +1479,9 @@ auto Platform::DoClipboardGetText() -> std::string {
   if (out == nullptr) {
     throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
   }
-  return out;
+  std::string out_s{out};
+  SDL_free(out);
+  return out_s;
 #else
   // Shouldn't get here since we default to no clipboard support.
   FatalError("Shouldn't get here.");

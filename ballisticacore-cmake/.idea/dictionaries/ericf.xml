@@ -304,6 +304,7 @@
       <w>downsample</w>
       <w>dpad</w>
       <w>dpads</w>
+      <w>dpos</w>
       <w>drpt</w>
       <w>dsize</w>
       <w>dsound</w>
@@ -412,6 +413,7 @@
       <w>fovs</w>
       <w>fovx</w>
       <w>fovy</w>
+      <w>fpath</w>
       <w>framebuffers</w>
       <w>framedef</w>
       <w>frameldefs</w>
@@ -1203,6 +1205,7 @@
       <w>unsynchronized</w>
       <w>uppercased</w>
       <w>userspace</w>
+      <w>usid</w>
       <w>uther</w>
       <w>uuidmodule</w>
       <w>uuids</w>

@@ -614,6 +614,7 @@
       <w>downmix</w>
       <w>dpad</w>
       <w>dpath</w>
+      <w>dpos</w>
       <w>dprofilename</w>
       <w>drawscore</w>
       <w>drawscreen</w>
@@ -2538,6 +2539,7 @@
       <w>useragentstring</w>
       <w>userbase</w>
       <w>userfunctions</w>
+      <w>usid</w>
       <w>utcnow</w>
       <w>utimensat</w>
       <w>uuidmodule</w>

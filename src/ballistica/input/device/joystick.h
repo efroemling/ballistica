@@ -115,7 +115,6 @@ class Joystick : public InputDevice {
   bool is_remote_app_{};
   bool is_mfi_controller_{};
   bool is_mac_ps3_controller_{};
-  bool is_mac_wiimote_{};
 
   millisecs_t ps3_last_joy_press_time_{-10000};
 

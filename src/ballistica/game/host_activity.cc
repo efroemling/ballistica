@@ -385,7 +385,7 @@ auto HostActivity::Update(millisecs_t time_advance) -> millisecs_t {
 
   // If we haven't been told to start yet, don't do anything more.
   if (!_started) {
-    return 1000;
+    return 100;
   }
 
   // Advance base time by the specified amount, stopping at all timers along the
@@ -426,7 +426,9 @@ void HostActivity::GraphicsQualityChanged(GraphicsQuality q) {
 }
 
 void HostActivity::Draw(FrameDef* frame_def) {
-  if (!_started) return;
+  if (!_started) {
+    return;
+  }
   scene()->Draw(frame_def);
 }
 
