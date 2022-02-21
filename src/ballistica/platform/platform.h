@@ -169,7 +169,7 @@ class Platform {
   // Return en_US or whatnot.
   virtual auto GetLocale() -> std::string;
   virtual void SetupDataDirectory();
-  virtual auto GetUserAgentString() -> std::string;
+  auto GetUserAgentString() -> std::string;
   virtual auto GetOSVersionString() -> std::string;
 
   /// Set an environment variable as utf8, overwriting if it already exists.

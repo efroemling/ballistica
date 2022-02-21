@@ -1219,9 +1219,6 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
   // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
   // Command-Q or Control-Q quits.
-  if (!repeat_press && keysym->sym == SDLK_v) {
-    printf("PASTE?");
-  }
   if (!repeat_press && keysym->sym == SDLK_v
       && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
     g_ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));

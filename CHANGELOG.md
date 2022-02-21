@@ -1,8 +1,9 @@
-### 1.6.9 (20472, 2022-02-20)
+### 1.6.9 (20477, 2022-02-21)
 - Upgraded Android Python to 3.9.10
 - Fixed an issue with SSL in Android builds that was preventing communication with the master-server in 1.6.8
 - Added a new network-diagnostics tool at 'Settings->Advanced->Network Testing'. Can be used to diagnose issues talking to master-servers/etc. (especially useful now that SSL can factor in)
 - Added clipboard support to Mac test build (thought pasting currently requires ctrl-v instead of cmd-v).
+- Fixed an issue where non-ascii characters in device names could break network communication.
 
 ### 1.6.8 (20458, 2022-02-16)
 - Added Filipino language (Thanks David!)

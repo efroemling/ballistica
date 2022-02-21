@@ -40,6 +40,10 @@ class Utils {
   static auto GetRandomNameList() -> const std::list<std::string>&;
   static void SetRandomNameList(const std::list<std::string>& names);
 
+  /// Strip non-ascii chars from a utf-8 string (the full chars; not just
+  /// control characters).
+  static auto StripNonAsciiFromUTF8(const std::string& s) -> std::string;
+
   static auto UnicodeFromUTF8(const std::string& s, const char* loc)
       -> std::vector<uint32_t>;
   static auto UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string;
