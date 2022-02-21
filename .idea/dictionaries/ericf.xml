@@ -509,6 +509,7 @@
       <w>curstate</w>
       <w>curtime</w>
       <w>curtimestr</w>
+      <w>curv</w>
       <w>customdata</w>
       <w>customizebrowser</w>
       <w>cutscenes</w>
@@ -1178,6 +1179,7 @@
       <w>janktastic</w>
       <w>janky</w>
       <w>jascha</w>
+      <w>jcrc</w>
       <w>jdict</w>
       <w>jenkinsfile</w>
       <w>jexport</w>
@@ -2408,6 +2410,7 @@
       <w>timetype</w>
       <w>tipstext</w>
       <w>titletext</w>
+      <w>tlog</w>
       <w>tmpdir</w>
       <w>tmpf</w>
       <w>tmppath</w>

@@ -248,6 +248,7 @@
       <w>ctracker</w>
       <w>cubemap</w>
       <w>curtime</w>
+      <w>curv</w>
       <w>cutef</w>
       <w>cvar</w>
       <w>data</w>
@@ -579,6 +580,7 @@
       <w>janky</w>
       <w>jaxis</w>
       <w>jcjwf</w>
+      <w>jcrc</w>
       <w>jdict</w>
       <w>jfwe</w>
       <w>jmessage</w>
@@ -1146,6 +1148,7 @@
       <w>timesteps</w>
       <w>timetype</w>
       <w>timetypes</w>
+      <w>tlog</w>
       <w>tmpmat</w>
       <w>tomer</w>
       <w>topos</w>

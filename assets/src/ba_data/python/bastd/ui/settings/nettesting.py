@@ -180,6 +180,11 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         _print(f'\nContacting V1 alt master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
+        _print(f'\nV1-test-log: {ba.app.net.v1_test_log}')
+
+        curv1addr = _ba.get_master_server_address(internal=True, version=1)
+        _print(f'\nCurrent V1 address: {curv1addr}')
+
         _print('\nRunning V1 transaction...')
         _print_test_results(_test_v1_transaction)
 

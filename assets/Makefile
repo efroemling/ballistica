@@ -351,12 +351,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/keyboard.py \
   build/ba_data/python/bastd/ui/settings/nettesting.py \
   build/ba_data/python/bastd/ui/settings/plugins.py \
-  build/ba_data/python/bastd/ui/settings/ps3controller.py \
   build/ba_data/python/bastd/ui/settings/remoteapp.py \
   build/ba_data/python/bastd/ui/settings/testing.py \
   build/ba_data/python/bastd/ui/settings/touchscreen.py \
   build/ba_data/python/bastd/ui/settings/vrtesting.py \
-  build/ba_data/python/bastd/ui/settings/wiimote.py \
   build/ba_data/python/bastd/ui/settings/xbox360controller.py \
   build/ba_data/python/bastd/ui/soundtrack/__init__.py \
   build/ba_data/python/bastd/ui/soundtrack/browser.py \
@@ -598,12 +596,10 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/plugins.cpython-39.opt-1.pyc \
-  build/ba_data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-39.opt-1.pyc \
-  build/ba_data/python/bastd/ui/settings/__pycache__/wiimote.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-39.opt-1.pyc \

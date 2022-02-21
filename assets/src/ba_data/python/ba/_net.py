@@ -30,6 +30,9 @@ class NetworkSubsystem:
         self.region_pings_lock = threading.Lock()
         self.region_pings: dict[str, float] = {}
 
+        # For debugging.
+        self.v1_test_log: str = ''
+
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
     """Return socket.AF_INET6 or socket.AF_INET4 for the provided address."""
