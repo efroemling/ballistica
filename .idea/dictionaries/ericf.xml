@@ -2202,6 +2202,7 @@
       <w>srcdata</w>
       <w>srcdir</w>
       <w>srcfolder</w>
+      <w>srcid</w>
       <w>srcjson</w>
       <w>srcname</w>
       <w>srcnode</w>
@@ -2246,6 +2247,7 @@
       <w>storedhash</w>
       <w>storeitemui</w>
       <w>storename</w>
+      <w>stot</w>
       <w>strftime</w>
       <w>stringified</w>
       <w>stringprep</w>

@@ -1060,6 +1060,7 @@
       <w>spivak</w>
       <w>srcattr</w>
       <w>srcfolder</w>
+      <w>srcid</w>
       <w>srcname</w>
       <w>srcpath</w>
       <w>srcsz</w>
@@ -1092,6 +1093,7 @@
       <w>stepsize</w>
       <w>storagenames</w>
       <w>storecmd</w>
+      <w>stot</w>
       <w>strcasecmp</w>
       <w>strchr</w>
       <w>strcpy</w>

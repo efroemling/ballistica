@@ -80,10 +80,6 @@ class PlatformApple : public Platform {
   auto DoClipboardSetText(const std::string& text) -> void override;
   auto DoClipboardGetText() -> std::string override;
 
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
-
  private:
   // std::mutex log_mutex_;
   // std::string log_line_;

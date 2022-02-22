@@ -32,6 +32,7 @@ class NetworkSubsystem:
 
         # For debugging.
         self.v1_test_log: str = ''
+        self.v1_ctest_results: dict[int, str] = {}
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
