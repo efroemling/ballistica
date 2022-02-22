@@ -1,0 +1,29 @@
+{% extends "default/index.html.jinja2" %}
+
+{% block content %}
+    <header class="pdoc">
+        {% block logo %}
+            <a href="https://ballistica.net">
+                <img src="https://files.ballistica.net/ballistica_media/ballistica_logo_half.png"
+                     alt="project logo"/>
+            </a>
+        {% endblock %}
+        {% if search %}
+            <input type="search" placeholder="Search Ballistica Python API Documentation..." aria-label="search box">
+        {% endif %}
+    </header>
+    <main class="pdoc">
+        <h1>header woo-hoo</h1>
+        Welcome to blah blah blah, some <b>bold</b> text, create an
+        <a href="https://github.com/efroemling/ballistica/issues/">issue</a>
+        if something in this docs feels incorrect or can be improved blah blah
+        <code>
+            some code hooray
+        </code>
+        <br/>
+        TODO: add some normal text here.
+    </main>
+    {% if search %}
+        {% include "search.html.jinja2" %}
+    {% endif %}
+{% endblock %}
