@@ -26,7 +26,7 @@ void PythonClassWidget::SetupType(PyTypeObject* obj) {
       "\n"
       "This class represents a weak reference to a widget object\n"
       "in the internal C++ layer. Currently, functions such as\n"
-      "ba.buttonwidget must be used to instantiate or edit these.";
+      "ba.buttonwidget() must be used to instantiate or edit these.";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
   obj->tp_repr = (reprfunc)tp_repr;

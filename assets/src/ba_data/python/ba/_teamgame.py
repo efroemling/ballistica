@@ -24,7 +24,7 @@ TeamType = TypeVar('TeamType', bound='ba.Team')
 class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for teams and free-for-all mode games.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     (Free-for-all is essentially just a special case where every
     ba.Player has their own ba.Team)

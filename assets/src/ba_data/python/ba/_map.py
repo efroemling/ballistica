@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def preload_map_preview_media() -> None:
     """Preload media needed for map preview UIs.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
     """
     _ba.getmodel('level_select_button_opaque')
     _ba.getmodel('level_select_button_transparent')
@@ -31,7 +31,7 @@ def preload_map_preview_media() -> None:
 def get_filtered_map_name(name: str) -> str:
     """Filter a map name to account for name changes, etc.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     This can be used to support old playlists, etc.
     """
@@ -46,7 +46,7 @@ def get_filtered_map_name(name: str) -> str:
 def get_map_display_string(name: str) -> ba.Lstr:
     """Return a ba.Lstr for displaying a given map\'s name.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
     """
     from ba import _language
     return _language.Lstr(translate=('mapsNames', name))
@@ -55,7 +55,7 @@ def get_map_display_string(name: str) -> ba.Lstr:
 def getmaps(playtype: str) -> list[str]:
     """Return a list of ba.Map types supporting a playtype str.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Maps supporting a given playtype must provide a particular set of
     features and lend themselves to a certain style of play.
@@ -104,7 +104,7 @@ def getmaps(playtype: str) -> list[str]:
 def get_unowned_maps() -> list[str]:
     """Return the list of local maps not owned by the current account.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
     """
     from ba import _store
     unowned_maps: set[str] = set()
@@ -120,7 +120,7 @@ def get_unowned_maps() -> list[str]:
 def get_map_class(name: str) -> type[ba.Map]:
     """Return a map type given a name.
 
-    Category: Asset Functions
+    Category: **Asset Functions**
     """
     name = get_filtered_map_name(name)
     try:
@@ -133,7 +133,7 @@ def get_map_class(name: str) -> type[ba.Map]:
 class Map(Actor):
     """A game map.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Consists of a collection of terrain nodes, metadata, and other
     functionality comprising a game map.

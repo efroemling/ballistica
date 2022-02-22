@@ -79,7 +79,7 @@ class CollideModel:
 
     Category: **Asset Classes**
 
-    Use ba.getcollidemodel to instantiate one.
+    Use ba.getcollidemodel() to instantiate one.
     """
     pass
 
@@ -89,7 +89,7 @@ class Context:
 
     Category: **General Utility Classes**
 
-    Many operations such as ba.newnode or ba.gettexture operate
+    Many operations such as ba.newnode() or ba.gettexture() operate
     implicitly on the current context. Each ba.Activity has its own
     Context and objects within that activity (nodes, media, etc) can only
     interact with other objects from that context.
@@ -104,7 +104,7 @@ class Context:
     When instantiating a ba.Context instance, a single `'source'` argument
     is passed, which can be one of the following strings/objects:
 
-    `'empty'`:
+    ###### `'empty'`
     > Gives an empty context; it can be handy to run code here to ensure
     it does no loading of media, creation of nodes, etc.
 
@@ -199,7 +199,7 @@ class Data:
 
     Category: **Asset Classes**
 
-    Use ba.getdata to instantiate one.
+    Use ba.getdata() to instantiate one.
     """
 
     def getvalue(self) -> Any:
@@ -309,21 +309,21 @@ class InputDevice:
 class Material:
     """An entity applied to game objects to modify collision behavior.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     A material can affect physical characteristics, generate sounds,
     or trigger callback functions when collisions occur.
 
-    Materials are applied to ``'parts'``, which are groups of one or more
+    Materials are applied to 'parts', which are groups of one or more
     rigid bodies created as part of a ba.Node. Nodes can have any number
     of parts, each with its own set of materials. Generally materials are
-    specified as array attributes on the Node. The ``'spaz'`` node, for
-    example, has various attributes such as ``'materials'``,
-    ``'roller_materials'``, and ``'punch_materials'``, which correspond
+    specified as array attributes on the Node. The `spaz` node, for
+    example, has various attributes such as `materials`,
+    `roller_materials`, and `punch_materials`, which correspond
     to the various parts it creates.
 
     Use ba.Material to instantiate a blank material, and then use its
-    ba.Material.add_actions method to define what the material does.
+    ba.Material.add_actions() method to define what the material does.
     """
 
     def __init__(self, label: str = None):
@@ -399,7 +399,7 @@ class Material:
         `'at_connect'` or `'at_disconnect'`, and `message_obj` is the message
         object to send.
         This has the same effect as calling the node's
-        ba.Node.handlemessage method.
+        ba.Node.handlemessage() method.
 
         ###### `('modify_part_collision', attr, value)`
         > Changes some
@@ -420,6 +420,7 @@ class Material:
         how springy the physical response is), `'damping'` (float
         value, how damped the physical response is), `'bounce'` (float
         value; how bouncy the physical response is).
+
         ###### `('modify_node_collision', attr, value)`
         > Similar to
         `modify_part_collision`, but operates at a node-level.
@@ -466,7 +467,6 @@ class Material:
 
         **Example 2:** send a ba.DieMessage to anything we touch, but cause
         no physical response. This should cause any ba.Actor to drop dead:
-        ```python
         >>> m = ba.Material()
         ... m.add_actions(
         ...     actions=(('modify_part_collision', 'physical', False),
@@ -474,7 +474,6 @@ class Material:
         ...                  ba.DieMessage())))
 
         **Example 3:** play some sounds when we're contacting the ground:
-        ```python
         >>> m = ba.Material()
         ... m.add_actions(
         ...     conditions=('they_have_material',
@@ -499,7 +498,7 @@ class Model:
 class Node:
     """Reference to a Node; the low level building block of the game.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     At its core, a game is nothing more than a scene of Nodes
     with attributes getting interconnected or set over time.
@@ -508,8 +507,8 @@ class Node:
     to a game node; *not* the node itself. This means a Node's
     lifecycle is completely independent of how many Python references
     to it exist. To explicitly add a new node to the game, use
-    ba.newnode, and to explicitly delete one, use ba.Node.delete.
-    ba.Node.exists can be used to determine if a Node still points to
+    ba.newnode(), and to explicitly delete one, use ba.Node.delete().
+    ba.Node.exists() can be used to determine if a Node still points to
     a live node in the game.
 
     You can use ba.Node(None) to instantiate an invalid
@@ -741,7 +740,7 @@ class SessionPlayer:
     Be aware that, like ba.Nodes, ba.SessionPlayer objects are 'weak'
     references under-the-hood; a player can leave the game at
      any point. For this reason, you should make judicious use of the
-    ba.SessionPlayer.exists method (or boolean operator) to ensure
+    ba.SessionPlayer.exists() method (or boolean operator) to ensure
     that a SessionPlayer is still present if retaining references to one
     for any length of time.
     """
@@ -858,7 +857,7 @@ class Sound:
 
     Category: **Asset Classes**
 
-    Use ba.getsound to instantiate one.
+    Use ba.getsound() to instantiate one.
     """
     pass
 
@@ -1044,7 +1043,7 @@ class Widget:
 
     This class represents a weak reference to a widget object
     in the internal C++ layer. Currently, functions such as
-    ba.buttonwidget must be used to instantiate or edit these.
+    ba.buttonwidget() must be used to instantiate or edit these.
     """
 
     def activate(self) -> None:
@@ -1319,7 +1318,7 @@ def clipboard_get_text() -> str:
 
     Category: **General Utility Functions**
 
-    Ensure that ba.clipboard_has_text returns True before calling
+    Ensure that ba.clipboard_has_text() returns True before calling
      this function.
     """
     return str()
@@ -1352,7 +1351,7 @@ def clipboard_set_text(value: str) -> None:
 
     Category: **General Utility Functions**
 
-    Ensure that ba.clipboard_available returns True before adding
+    Ensure that ba.clipboard_available() returns True before adding
      buttons/etc. that make use of this functionality.
     """
     return None
@@ -3145,7 +3144,7 @@ def timer(time: float,
      require the ability to do so, use the ba.Timer class instead.
 
     ##### Arguments
-    ###### time (float):
+    ###### time (float)
     > Length of time (in seconds by default) that the timer will wait
     before firing. Note that the actual delay experienced may vary
      depending on the timetype. (see below)

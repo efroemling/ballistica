@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class ScoreType(Enum):
     """Type of scores.
 
-    Category: Enums
+    Category: **Enums**
     """
     SECONDS = 's'
     MILLISECONDS = 'ms'
@@ -27,7 +27,7 @@ class ScoreType(Enum):
 class ScoreConfig:
     """Settings for how a game handles scores.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     label: str = 'Score'

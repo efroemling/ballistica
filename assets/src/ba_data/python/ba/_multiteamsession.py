@@ -22,7 +22,7 @@ DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 class MultiTeamSession(Session):
     """Common base class for ba.DualTeamSession and ba.FreeForAllSession.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Free-for-all-mode is essentially just teams-mode with each ba.Player having
     their own ba.Team, so there is much overlap in functionality.

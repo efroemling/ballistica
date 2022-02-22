@@ -42,22 +42,20 @@ class Spaz(ba.Actor):
     """
     Base class for various Spazzes.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     A Spaz is the standard little humanoid character in the game.
     It can be controlled by a player or by AI, and can have
     various different appearances.  The name 'Spaz' is not to be
     confused with the 'Spaz' character in the game, which is just
     one of the skins available for instances of this class.
-
-    Attributes:
-
-       node: ba.Node
-          The 'spaz' ba.Node.
     """
 
     # pylint: disable=too-many-public-methods
     # pylint: disable=too-many-locals
+
+    node: ba.Node
+    """The 'spaz' ba.Node."""
 
     points_mult = 1
     curse_time: Optional[float] = 5.0

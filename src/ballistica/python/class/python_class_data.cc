@@ -26,7 +26,7 @@ void PythonClassData::SetupType(PyTypeObject* obj) {
       "\n"
       "Category: **Asset Classes**\n"
       "\n"
-      "Use ba.getdata to instantiate one.";
+      "Use ba.getdata() to instantiate one.";
   obj->tp_repr = (reprfunc)tp_repr;
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;

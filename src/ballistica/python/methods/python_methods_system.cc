@@ -812,7 +812,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Category: **General Utility Functions**\n"
        "\n"
-       "Ensure that ba.clipboard_available returns True before adding\n"
+       "Ensure that ba.clipboard_available() returns True before adding\n"
        " buttons/etc. that make use of this functionality."},
       {"clipboard_get_text", (PyCFunction)PyClipboardGetText, METH_NOARGS,
        "clipboard_get_text() -> str\n"
@@ -821,7 +821,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Category: **General Utility Functions**\n"
        "\n"
-       "Ensure that ba.clipboard_has_text returns True before calling\n"
+       "Ensure that ba.clipboard_has_text() returns True before calling\n"
        " this function."},
       {"printobjects", (PyCFunction)PyPrintObjects,
        METH_VARARGS | METH_KEYWORDS,

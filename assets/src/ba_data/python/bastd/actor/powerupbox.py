@@ -23,69 +23,67 @@ class _TouchedMessage:
 class PowerupBoxFactory:
     """A collection of media and other resources used by ba.Powerups.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     A single instance of this is shared between all powerups
     and can be retrieved via ba.Powerup.get_factory().
-
-    Attributes:
-
-       model: ba.Model
-          The ba.Model of the powerup box.
-
-       model_simple: ba.Model
-          A simpler ba.Model of the powerup box, for use in shadows, etc.
-
-       tex_bomb: ba.Texture
-          Triple-bomb powerup ba.Texture.
-
-       tex_punch: ba.Texture
-          Punch powerup ba.Texture.
-
-       tex_ice_bombs: ba.Texture
-          Ice bomb powerup ba.Texture.
-
-       tex_sticky_bombs: ba.Texture
-          Sticky bomb powerup ba.Texture.
-
-       tex_shield: ba.Texture
-          Shield powerup ba.Texture.
-
-       tex_impact_bombs: ba.Texture
-          Impact-bomb powerup ba.Texture.
-
-       tex_health: ba.Texture
-          Health powerup ba.Texture.
-
-       tex_land_mines: ba.Texture
-          Land-mine powerup ba.Texture.
-
-       tex_curse: ba.Texture
-          Curse powerup ba.Texture.
-
-       health_powerup_sound: ba.Sound
-          ba.Sound played when a health powerup is accepted.
-
-       powerup_sound: ba.Sound
-          ba.Sound played when a powerup is accepted.
-
-       powerdown_sound: ba.Sound
-          ba.Sound that can be used when powerups wear off.
-
-       powerup_material: ba.Material
-          ba.Material applied to powerup boxes.
-
-       powerup_accept_material: ba.Material
-          Powerups will send a ba.PowerupMessage to anything they touch
-          that has this ba.Material applied.
     """
+
+    model: ba.Model
+    """The ba.Model of the powerup box."""
+
+    model_simple: ba.Model
+    """A simpler ba.Model of the powerup box, for use in shadows, etc."""
+
+    tex_bomb: ba.Texture
+    """Triple-bomb powerup ba.Texture."""
+
+    tex_punch: ba.Texture
+    """Punch powerup ba.Texture."""
+
+    tex_ice_bombs: ba.Texture
+    """Ice bomb powerup ba.Texture."""
+
+    tex_sticky_bombs: ba.Texture
+    """Sticky bomb powerup ba.Texture."""
+
+    tex_shield: ba.Texture
+    """Shield powerup ba.Texture."""
+
+    tex_impact_bombs: ba.Texture
+    """Impact-bomb powerup ba.Texture."""
+
+    tex_health: ba.Texture
+    """Health powerup ba.Texture."""
+
+    tex_land_mines: ba.Texture
+    """Land-mine powerup ba.Texture."""
+
+    tex_curse: ba.Texture
+    """Curse powerup ba.Texture."""
+
+    health_powerup_sound: ba.Sound
+    """ba.Sound played when a health powerup is accepted."""
+
+    powerup_sound: ba.Sound
+    """ba.Sound played when a powerup is accepted."""
+
+    powerdown_sound: ba.Sound
+    """ba.Sound that can be used when powerups wear off."""
+
+    powerup_material: ba.Material
+    """ba.Material applied to powerup boxes."""
+
+    powerup_accept_material: ba.Material
+    """Powerups will send a ba.PowerupMessage to anything they touch
+       that has this ba.Material applied."""
 
     _STORENAME = ba.storagename()
 
     def __init__(self) -> None:
         """Instantiate a PowerupBoxFactory.
 
-        You shouldn't need to do this; call ba.Powerup.get_factory()
+        You shouldn't need to do this; call Powerup.get_factory()
         to get a shared instance.
         """
         from ba.internal import get_default_powerup_distribution
@@ -191,17 +189,15 @@ class PowerupBox(ba.Actor):
 
     This will deliver a ba.PowerupMessage to anything that touches it
     which has the ba.PowerupBoxFactory.powerup_accept_material applied.
-
-    Attributes:
-
-       poweruptype: str
-          The string powerup type.  This can be 'triple_bombs', 'punch',
-          'ice_bombs', 'impact_bombs', 'land_mines', 'sticky_bombs', 'shield',
-          'health', or 'curse'.
-
-       node: ba.Node
-          The 'prop' ba.Node representing this box.
     """
+
+    poweruptype: str
+    """The string powerup type.  This can be 'triple_bombs', 'punch',
+       'ice_bombs', 'impact_bombs', 'land_mines', 'sticky_bombs', 'shield',
+       'health', or 'curse'."""
+
+    node: ba.Node
+    """The 'prop' ba.Node representing this box."""
 
     def __init__(self,
                  position: Sequence[float] = (0.0, 1.0, 0.0),

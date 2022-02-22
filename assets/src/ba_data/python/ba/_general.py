@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class Existable(Protocol):
     """A Protocol for objects supporting an exists() method.
 
-    Category: Protocols
+    Category: **Protocols**
     """
 
     def exists(self) -> bool:
@@ -39,7 +39,7 @@ T = TypeVar('T')
 def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
     """Convert invalid references to None for any ba.Existable object.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     To best support type checking, it is important that invalid references
     not be passed around and instead get converted to values of None.
@@ -59,7 +59,7 @@ def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
 def getclass(name: str, subclassof: type[T]) -> type[T]:
     """Given a full class name such as foo.bar.MyClass, return the class.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     The class will be checked to make sure it is a subclass of the provided
     'subclassof' class, and a TypeError will be raised if not.
@@ -140,7 +140,7 @@ def get_type_name(cls: type) -> str:
 class _WeakCall:
     """Wrap a callable and arguments into a single callable object.
 
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     When passed a bound method as the callable, the instance portion
     of it is weak-referenced, meaning the underlying instance is
@@ -150,40 +150,34 @@ class _WeakCall:
     Think of this as a handy way to tell an object to do something
     at some point in the future if it happens to still exist.
 
-    Examples:
-        EXAMPLE A: this code will create a FooClass instance and call its
-        bar() method 5 seconds later; it will be kept alive even though
-        we overwrite its variable with None because the bound method
-        we pass as a timer callback (foo.bar) strong-references it
-        ```python
-        >>> foo = FooClass()
-        ... ba.timer(5.0, foo.bar)
-        ... foo = None
-        ```
+    ##### Examples
+    **EXAMPLE A:** this code will create a FooClass instance and call its
+    bar() method 5 seconds later; it will be kept alive even though
+    we overwrite its variable with None because the bound method
+    we pass as a timer callback (foo.bar) strong-references it
+    >>> foo = FooClass()
+    ... ba.timer(5.0, foo.bar)
+    ... foo = None
 
-        EXAMPLE B: this code will *not* keep our object alive; it will die
-        when we overwrite it with None and the timer will be a no-op when it
-        fires
-        ```python
-        >>> foo = FooClass()
-        ... ba.timer(5.0, ba.WeakCall(foo.bar))
-        ... foo = None
-        ```
+    **EXAMPLE B:** This code will *not* keep our object alive; it will die
+    when we overwrite it with None and the timer will be a no-op when it
+    fires
+    >>> foo = FooClass()
+    ... ba.timer(5.0, ba.WeakCall(foo.bar))
+    ... foo = None
 
-        EXAMPLE C: Wrap a method call with some positional and keyword args:
-        ```python
-        >>> myweakcall = ba.WeakCall(self.dostuff, argval1,
-        ...                          namedarg=argval2)
-        ... # Now we have a single callable to run that whole mess.
-        ... # The same as calling myobj.dostuff(argval1, namedarg=argval2)
-        ... # (provided my_obj still exists; this will do nothing
-        ... # otherwise).
-        ... myweakcall()
-        ```
+    **EXAMPLE C:** Wrap a method call with some positional and keyword args:
+    >>> myweakcall = ba.WeakCall(self.dostuff, argval1,
+    ...                          namedarg=argval2)
+    ... # Now we have a single callable to run that whole mess.
+    ... # The same as calling myobj.dostuff(argval1, namedarg=argval2)
+    ... # (provided my_obj still exists; this will do nothing
+    ... # otherwise).
+    ... myweakcall()
 
-        Note: additional args and keywords you provide to the WeakCall()
-        constructor are stored as regular strong-references; you'll need
-        to wrap them in weakrefs manually if desired.
+    Note: additional args and keywords you provide to the WeakCall()
+    constructor are stored as regular strong-references; you'll need
+    to wrap them in weakrefs manually if desired.
     """
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
@@ -219,7 +213,7 @@ class _WeakCall:
 class _Call:
     """Wraps a callable and arguments into a single callable object.
 
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     The callable is strong-referenced so it won't die until this
     object does.
@@ -236,14 +230,12 @@ class _Call:
         Pass a callable as the first arg, followed by any number of
         arguments or keywords.
 
-        Example:
-            Wrap a method call with 1 positional and 1 keyword arg:
-            ```python
-            >>> mycall = ba.Call(myobj.dostuff, argval, namedarg=argval2)
-            ... # Now we have a single callable to run that whole mess.
-            ... # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
-            ... mycall()
-            ```
+        ##### Example
+        Wrap a method call with 1 positional and 1 keyword arg:
+        >>> mycall = ba.Call(myobj.dostuff, argval, namedarg=argval2)
+        ... # Now we have a single callable to run that whole mess.
+        ... # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
+        ... mycall()
         """
         self._call = args[0]
         self._args = args[1:]
@@ -292,7 +284,7 @@ class WeakMethod:
 def verify_object_death(obj: object) -> None:
     """Warn if an object does not get freed within a short period.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This can be handy to detect and prevent memory/resource leaks.
     """
@@ -313,7 +305,7 @@ def verify_object_death(obj: object) -> None:
 def print_active_refs(obj: Any) -> None:
     """Print info about things referencing a given object.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Useful for tracking down cyclical references and causes for zombie objects.
     """
@@ -370,7 +362,7 @@ def _verify_object_death(wref: weakref.ref) -> None:
 def storagename(suffix: str = None) -> str:
     """Generate a unique name for storing class data in shared places.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This consists of a leading underscore, the module path at the
     call site with dots replaced by underscores, the containing class's
@@ -380,19 +372,17 @@ def storagename(suffix: str = None) -> str:
 
     Note that this will function even if called in the class definition.
 
-    Examples:
-        Generate a unique name for storage purposes:
-        ```python
-        >>> class MyThingie:
-        ...     # This will give something like
-        ...     # '_mymodule_submodule_mythingie_data'.
-        ...     _STORENAME = ba.storagename('data')
-        ...
-        ...     # Use that name to store some data in the Activity we were
-        ...     # passed.
-        ...     def __init__(self, activity):
-        ...         activity.customdata[self._STORENAME] = {}
-        ```
+    ##### Examples
+    Generate a unique name for storage purposes:
+    >>> class MyThingie:
+    ...     # This will give something like
+    ...     # '_mymodule_submodule_mythingie_data'.
+    ...     _STORENAME = ba.storagename('data')
+    ...
+    ...     # Use that name to store some data in the Activity we were
+    ...     # passed.
+    ...     def __init__(self, activity):
+    ...         activity.customdata[self._STORENAME] = {}
     """
     frame = inspect.currentframe()
     if frame is None:

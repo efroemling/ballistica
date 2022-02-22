@@ -11,71 +11,69 @@ from bastd.gameutils import SharedObjects
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Sequence
 
 
 class SpazFactory:
     """Wraps up media and other resources used by ba.Spaz instances.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Generally one of these is created per ba.Activity and shared
-    between all spaz instances.  Use ba.Spaz.get_factory() to return
+    between all spaz instances. Use ba.Spaz.get_factory() to return
     the shared factory for the current activity.
-
-    Attributes:
-
-       impact_sounds_medium: Sequence[ba.Sound]
-          A tuple of ba.Sound-s for when a ba.Spaz hits something kinda hard.
-
-       impact_sounds_hard: Sequence[ba.Sound]
-          A tuple of ba.Sound-s for when a ba.Spaz hits something really hard.
-
-       impact_sounds_harder: Sequence[ba.Sound]
-          A tuple of ba.Sound-s for when a ba.Spaz hits something really
-          really hard.
-
-       single_player_death_sound: ba.Sound
-          The sound that plays for an 'important' spaz death such as in
-          co-op games.
-
-       punch_sound: ba.Sound
-          A standard punch ba.Sound.
-
-       punch_sound_strong: Sequence[ba.Sound]
-          A tuple of stronger sounding punch ba.Sounds.
-
-       punch_sound_stronger: ba.Sound
-          A really really strong sounding punch ba.Sound.
-
-       swish_sound: ba.Sound
-          A punch swish ba.Sound.
-
-       block_sound: ba.Sound
-          A ba.Sound for when an attack is blocked by invincibility.
-
-       shatter_sound: ba.Sound
-          A ba.Sound for when a frozen ba.Spaz shatters.
-
-       splatter_sound: ba.Sound
-          A ba.Sound for when a ba.Spaz blows up via curse.
-
-       spaz_material: ba.Material
-          A ba.Material applied to all of parts of a ba.Spaz.
-
-       roller_material: ba.Material
-          A ba.Material applied to the invisible roller ball body that
-          a ba.Spaz uses for locomotion.
-
-       punch_material: ba.Material
-          A ba.Material applied to the 'fist' of a ba.Spaz.
-
-       pickup_material: ba.Material
-          A ba.Material applied to the 'grabber' body of a ba.Spaz.
-
-       curse_material: ba.Material
-          A ba.Material applied to a cursed ba.Spaz that triggers an explosion.
     """
+
+    impact_sounds_medium: Sequence[ba.Sound]
+    """A tuple of ba.Sound-s for when a ba.Spaz hits something kinda hard."""
+
+    impact_sounds_hard: Sequence[ba.Sound]
+    """A tuple of ba.Sound-s for when a ba.Spaz hits something really hard."""
+
+    impact_sounds_harder: Sequence[ba.Sound]
+    """A tuple of ba.Sound-s for when a ba.Spaz hits something really
+       really hard."""
+
+    single_player_death_sound: ba.Sound
+    """The sound that plays for an 'important' spaz death such as in
+       co-op games."""
+
+    punch_sound: ba.Sound
+    """A standard punch ba.Sound."""
+
+    punch_sound_strong: Sequence[ba.Sound]
+    """A tuple of stronger sounding punch ba.Sounds."""
+
+    punch_sound_stronger: ba.Sound
+    """A really really strong sounding punch ba.Sound."""
+
+    swish_sound: ba.Sound
+    """A punch swish ba.Sound."""
+
+    block_sound: ba.Sound
+    """A ba.Sound for when an attack is blocked by invincibility."""
+
+    shatter_sound: ba.Sound
+    """A ba.Sound for when a frozen ba.Spaz shatters."""
+
+    splatter_sound: ba.Sound
+    """A ba.Sound for when a ba.Spaz blows up via curse."""
+
+    spaz_material: ba.Material
+    """A ba.Material applied to all of parts of a ba.Spaz."""
+
+    roller_material: ba.Material
+    """A ba.Material applied to the invisible roller ball body that
+       a ba.Spaz uses for locomotion."""
+
+    punch_material: ba.Material
+    """A ba.Material applied to the 'fist' of a ba.Spaz."""
+
+    pickup_material: ba.Material
+    """A ba.Material applied to the 'grabber' body of a ba.Spaz."""
+
+    curse_material: ba.Material
+    """A ba.Material applied to a cursed ba.Spaz that triggers an explosion."""
 
     _STORENAME = ba.storagename()
 

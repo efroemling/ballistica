@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class Level:
     """An entry in a ba.Campaign consisting of a name, game type, and settings.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     def __init__(self,

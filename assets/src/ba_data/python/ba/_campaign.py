@@ -25,7 +25,7 @@ def getcampaign(name: str) -> ba.Campaign:
 class Campaign:
     """Represents a unique set or series of ba.Level-s.
 
-    Category: App Classes
+    Category: **App Classes**
     """
 
     def __init__(self, name: str, sequential: bool = True):

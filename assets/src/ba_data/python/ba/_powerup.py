@@ -16,31 +16,27 @@ if TYPE_CHECKING:
 class PowerupMessage:
     """A message telling an object to accept a powerup.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
     This message is normally received by touching a ba.PowerupBox.
-
-    Attributes:
-
-       poweruptype
-          The type of powerup to be granted (a string).
-          See ba.Powerup.poweruptype for available type values.
-
-       sourcenode
-          The node the powerup game from, or None otherwise.
-          If a powerup is accepted, a ba.PowerupAcceptMessage should be sent
-          back to the sourcenode to inform it of the fact. This will generally
-          cause the powerup box to make a sound and disappear or whatnot.
     """
+
     poweruptype: str
+    """The type of powerup to be granted (a string).
+       See ba.Powerup.poweruptype for available type values."""
+
     sourcenode: Optional[ba.Node] = None
+    """The node the powerup game from, or None otherwise.
+       If a powerup is accepted, a ba.PowerupAcceptMessage should be sent
+       back to the sourcenode to inform it of the fact. This will generally
+       cause the powerup box to make a sound and disappear or whatnot."""
 
 
 @dataclass
 class PowerupAcceptMessage:
     """A message informing a ba.Powerup that it was accepted.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
     This is generally sent in response to a ba.PowerupMessage
     to inform the box (or whoever granted it) that it can go away.

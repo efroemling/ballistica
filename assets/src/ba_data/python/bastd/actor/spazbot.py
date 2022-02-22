@@ -27,16 +27,14 @@ PRO_BOT_HIGHLIGHT = (0.6, 0.1, 0.05)
 class SpazBotPunchedMessage:
     """A message saying a ba.SpazBot got punched.
 
-    category: Message Classes
-
-    Attributes:
-
-       spazbot: ba.SpazBot
-          The ba.SpazBot that got punched.
-
-       damage: int
-          How much damage was done to the ba.SpazBot.
+    Category: **Message Classes**
     """
+
+    spazbot: SpazBot
+    """The ba.SpazBot that got punched."""
+
+    damage: int
+    """How much damage was done to the SpazBot."""
 
     def __init__(self, spazbot: SpazBot, damage: int):
         """Instantiate a message with the given values."""
@@ -47,19 +45,17 @@ class SpazBotPunchedMessage:
 class SpazBotDiedMessage:
     """A message saying a ba.SpazBot has died.
 
-    category: Message Classes
-
-    Attributes:
-
-       spazbot: ba.SpazBot
-          The ba.SpazBot that was killed.
-
-       killerplayer: ba.Player
-          The ba.Player that killed it (or None).
-
-       how: ba.DeathType
-          The particular type of death.
+    Category: **Message Classes**
     """
+
+    spazbot: SpazBot
+    """The SpazBot that was killed."""
+
+    killerplayer: ba.Player
+    """The ba.Player that killed it (or None)."""
+
+    how: ba.DeathType
+    """The particular type of death."""
 
     def __init__(self, spazbot: SpazBot, killerplayer: Optional[ba.Player],
                  how: ba.DeathType):
@@ -72,7 +68,7 @@ class SpazBotDiedMessage:
 class SpazBot(Spaz):
     """A really dumb AI version of ba.Spaz.
 
-    category: Bot Classes
+    Category: **Bot Classes**
 
     Add these to a ba.BotSet to use them.
 

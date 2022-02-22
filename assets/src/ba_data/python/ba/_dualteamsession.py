@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class DualTeamSession(MultiTeamSession):
     """ba.Session type for teams mode games.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     # Base class overrides:

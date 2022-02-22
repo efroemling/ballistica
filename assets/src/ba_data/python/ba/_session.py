@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class Session:
     """Defines a high level series of ba.Activity-es with a common purpose.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Examples of sessions are ba.FreeForAllSession, ba.DualTeamSession, and
     ba.CoopSession.

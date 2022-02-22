@@ -1034,7 +1034,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          " require the ability to do so, use the ba.Timer class instead.\n"
          "\n"
          "##### Arguments\n"
-         "###### time (float):\n"
+         "###### time (float)\n"
          "> Length of time (in seconds by default) that the timer will wait\n"
          "before firing. Note that the actual delay experienced may vary\n "
          "depending on the timetype. (see below)\n"

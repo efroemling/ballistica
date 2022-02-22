@@ -53,7 +53,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* obj) {
       "Be aware that, like ba.Nodes, ba.SessionPlayer objects are 'weak'\n"
       "references under-the-hood; a player can leave the game at\n"
       " any point. For this reason, you should make judicious use of the\n"
-      "ba.SessionPlayer.exists method (or boolean operator) to ensure\n"
+      "ba.SessionPlayer.exists() method (or boolean operator) to ensure\n"
       "that a SessionPlayer is still present if retaining references to one\n"
       "for any length of time.\n"
       "\n"

@@ -362,7 +362,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     def on_transition_out(self) -> None:
         """Called when your activity begins transitioning out.
 
-        Note that this may happen at any time even if ba.Activity.end has
+        Note that this may happen at any time even if ba.Activity.end() has
         not been called.
         """
 
@@ -379,11 +379,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         return UNHANDLED
 
     def has_transitioned_in(self) -> bool:
-        """Return whether ba.Activity.on_transition_in has been called."""
+        """Return whether ba.Activity.on_transition_in()
+         has been called."""
         return self._has_transitioned_in
 
     def has_begun(self) -> bool:
-        """Return whether ba.Activity.on_begin has been called."""
+        """Return whether ba.Activity.on_begin() has been called."""
         return self._has_begun
 
     def has_ended(self) -> bool:
@@ -391,7 +392,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         return self._has_ended
 
     def is_transitioning_out(self) -> bool:
-        """Return whether ba.Activity.on_transition_out has been called."""
+        """Return whether ba.Activity.on_transition_out() has been called."""
         return self._transitioning_out
 
     def transition_in(self, prev_globals: Optional[ba.Node]) -> None:

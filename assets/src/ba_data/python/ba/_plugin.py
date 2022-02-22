@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class PluginSubsystem:
     """Subsystem for plugin handling in the app.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Access the single shared instance of this class at 'ba.app.plugins'.
     """
@@ -96,7 +96,7 @@ class PluginSubsystem:
 class PotentialPlugin:
     """Represents a ba.Plugin which can potentially be loaded.
 
-    Category: App Classes
+    Category: **App Classes**
 
     These generally represent plugins which were detected by the
     meta-tag scan. However they may also represent plugins which
@@ -111,7 +111,7 @@ class PotentialPlugin:
 class Plugin:
     """A plugin to alter app behavior in some way.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Plugins are discoverable by the meta-tag system
     and the user can select which ones they want to activate.

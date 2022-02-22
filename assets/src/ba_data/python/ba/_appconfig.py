@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class AppConfig(dict):
     """A special dict that holds the game's persistent configuration values.
 
-    Category: App Classes
+    Category: **App Classes**
 
     It also provides methods for fetching values with app-defined fallback
     defaults, applying contained values to the game, and committing the
@@ -155,7 +155,7 @@ def read_config() -> tuple[AppConfig, bool]:
 def commit_app_config(force: bool = False) -> None:
     """Commit the config to persistent storage.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     (internal)
     """

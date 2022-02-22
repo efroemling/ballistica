@@ -21,7 +21,7 @@ TA = TypeVar('TA', bound='Actor')
 class Actor:
     """High level logical entities in a ba.Activity.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Actors act as controllers, combining some number of ba.Nodes,
     ba.Textures, ba.Sounds, etc. into a high-level cohesive unit.
@@ -33,18 +33,16 @@ class Actor:
     (killing off or transitioning out their nodes) when the last Python
     reference to them disappears, so you can use logic such as:
 
-    Example:
-        ```python
-        >>> # Create a flag Actor in our game activity:
-        ... from bastd.actor.flag import Flag
-        ... self.flag = Flag(position=(0, 10, 0))
-        ...
-        ... # Later, destroy the flag.
-        ... # (provided nothing else is holding a reference to it)
-        ... # We could also just assign a new flag to this value.
-        ... # Either way, the old flag disappears.
-        ... self.flag = None
-        ```
+    ##### Example
+    >>> # Create a flag Actor in our game activity:
+    ... from bastd.actor.flag import Flag
+    ... self.flag = Flag(position=(0, 10, 0))
+    ...
+    ... # Later, destroy the flag.
+    ... # (provided nothing else is holding a reference to it)
+    ... # We could also just assign a new flag to this value.
+    ... # Either way, the old flag disappears.
+    ... self.flag = None
 
     This is in contrast to the behavior of the more low level ba.Nodes,
     which are always explicitly created and destroyed and don't care
@@ -54,20 +52,18 @@ class Actor:
     if you want an Actor to stick around until explicitly killed
     regardless of references.
 
-    Another key feature of ba.Actor is its ba.Actor.handlemessage method, which
+    Another key feature of ba.Actor is its ba.Actor.handlemessage() method, which
     takes a single arbitrary object as an argument. This provides a safe way
     to communicate between ba.Actor, ba.Activity, ba.Session, and any other
-    class providing a handlemessage() method.  The most universally handled
+    class providing a handlemessage() method. The most universally handled
     message type for Actors is the ba.DieMessage.
 
     Another way to kill the flag from the example above:
     We can safely call this on any type with a 'handlemessage' method
     (though its not guaranteed to always have a meaningful effect).
-    In this case the Actor instance will still be around, but its exists()
-    and is_alive() methods will both return False.
-    ```python
+    In this case the Actor instance will still be around, but its
+    ba.Actor.exists() and ba.Actor.is_alive() methods will both return False.
     >>> self.flag.handlemessage(ba.DieMessage())
-    ```
     """
 
     def __init__(self) -> None:

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class LanguageSubsystem:
     """Wraps up language related app functionality.
 
-    Category: App Classes
+    Category: **App Classes**
 
     To use this class, access the single instance of it at 'ba.app.lang'.
     """
@@ -367,7 +367,7 @@ class LanguageSubsystem:
 class Lstr:
     """Used to define strings in a language-independent way.
 
-    category: General Utility Classes
+    Category: **General Utility Classes**
 
     These should be used whenever possible in place of hard-coded strings
     so that in-game or UI elements show up correctly on all clients in their
@@ -376,36 +376,28 @@ class Lstr:
     To see available resource keys, look at any of the bs_language_*.py files
     in the game or the translations pages at bombsquadgame.com/translate.
 
-    Examples:
-        EXAMPLE 1: specify a string from a resource path
-        ```python
-        >>> mynode.text = ba.Lstr(resource='audioSettingsWindow.titleText')
-        ```
+    ##### Examples
+    EXAMPLE 1: specify a string from a resource path
+    >>> mynode.text = ba.Lstr(resource='audioSettingsWindow.titleText')
 
-        EXAMPLE 2: specify a translated string via a category and english
-        value; if a translated value is available, it will be used; otherwise
-        the english value will be. To see available translation categories,
-        look under the 'translations' resource section.
-        ```python
-        >>> mynode.text = ba.Lstr(translate=('gameDescriptions',
-        ...                                  'Defeat all enemies'))
-        ```
+    EXAMPLE 2: specify a translated string via a category and english
+    value; if a translated value is available, it will be used; otherwise
+    the english value will be. To see available translation categories,
+    look under the 'translations' resource section.
+    >>> mynode.text = ba.Lstr(translate=('gameDescriptions',
+    ...                                  'Defeat all enemies'))
 
-        EXAMPLE 3: specify a raw value and some substitutions. Substitutions
-        can be used with resource and translate modes as well.
-        ```python
-        >>> mynode.text = ba.Lstr(value='${A} / ${B}',
-        ...               subs=[('${A}', str(score)), ('${B}', str(total))])
-        ```
+    EXAMPLE 3: specify a raw value and some substitutions. Substitutions
+    can be used with resource and translate modes as well.
+    >>> mynode.text = ba.Lstr(value='${A} / ${B}',
+    ...               subs=[('${A}', str(score)), ('${B}', str(total))])
 
-        EXAMPLE 4: ba.Lstr's can be nested. This example would display the
-        resource at res_a but replace ${NAME} with the value of the
-        resource at res_b
-        ```python
-        >>> mytextnode.text = ba.Lstr(
-        ...     resource='res_a',
-        ...     subs=[('${NAME}', ba.Lstr(resource='res_b'))])
-        ```
+    EXAMPLE 4: ba.Lstr's can be nested. This example would display the
+    resource at res_a but replace ${NAME} with the value of the
+    resource at res_b
+    >>> mytextnode.text = ba.Lstr(
+    ...     resource='res_a',
+    ...     subs=[('${NAME}', ba.Lstr(resource='res_b'))])
     """
 
     # pylint: disable=dangerous-default-value
