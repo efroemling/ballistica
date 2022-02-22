@@ -34,7 +34,8 @@
     "ansiwrap",
     "filelock",
     "Cocoa",
-    "pdoc"
+    "pdoc",
+    "certifi"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

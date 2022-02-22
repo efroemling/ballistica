@@ -52,7 +52,7 @@ def ioprep(cls: type, globalns: dict = None) -> None:
     with localns set to the class dict (so that types defined in the class
     can be used) and globalns set to the containing module's class.
     It is possible to override globalns for special cases such as when
-    prepping happens as part of an exec'ed string instead of within a
+    prepping happens as part of an execed string instead of within a
     module.
     """
     PrepSession(explicit=True,

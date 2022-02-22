@@ -351,12 +351,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/keyboard.py \
   build/ba_data/python/bastd/ui/settings/nettesting.py \
   build/ba_data/python/bastd/ui/settings/plugins.py \
-  build/ba_data/python/bastd/ui/settings/ps3controller.py \
   build/ba_data/python/bastd/ui/settings/remoteapp.py \
   build/ba_data/python/bastd/ui/settings/testing.py \
   build/ba_data/python/bastd/ui/settings/touchscreen.py \
   build/ba_data/python/bastd/ui/settings/vrtesting.py \
-  build/ba_data/python/bastd/ui/settings/wiimote.py \
   build/ba_data/python/bastd/ui/settings/xbox360controller.py \
   build/ba_data/python/bastd/ui/soundtrack/__init__.py \
   build/ba_data/python/bastd/ui/soundtrack/browser.py \
@@ -598,12 +596,10 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/plugins.cpython-39.opt-1.pyc \
-  build/ba_data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-39.opt-1.pyc \
-  build/ba_data/python/bastd/ui/settings/__pycache__/wiimote.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-39.opt-1.pyc \
@@ -2475,6 +2471,9 @@ $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/_yaml/__init__.py \
+  build/ba_data/python-site-packages/certifi/__init__.py \
+  build/ba_data/python-site-packages/certifi/__main__.py \
+  build/ba_data/python-site-packages/certifi/core.py \
   build/ba_data/python-site-packages/typing_extensions.py \
   build/ba_data/python-site-packages/yaml/__init__.py \
   build/ba_data/python-site-packages/yaml/composer.py \
@@ -2496,6 +2495,9 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-39.opt-1.pyc \
+  build/ba_data/python-site-packages/certifi/__pycache__/core.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-39.opt-1.pyc \
@@ -4784,6 +4786,9 @@ FONT_TARGETS = \
   build/ba_data/fonts/fontSmall5.fdata \
   build/ba_data/fonts/fontSmall6.fdata \
   build/ba_data/fonts/fontSmall7.fdata
+
+PEM_TARGETS = \
+  build/ba_data/python-site-packages/certifi/cacert.pem
 
 DATA_TARGETS = \
   build/ba_data/data/langdata.json \
@@ -7075,6 +7080,9 @@ build/%.ogg : ../.efrocachemap
 build/%.fdata : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
+build/%.pem : ../.efrocachemap
+	@cd .. && tools/pcommand efrocache_get assets/$@
+
 # Langdata one-off json file.
 build/ba_data/data/langdata.json : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
@@ -7155,7 +7163,7 @@ SCRIPT_TARGETS_ANDROID = $(SCRIPT_TARGETS_PY_PRIVATE_ANDROID) \
 SCRIPT_TARGETS_COMMON = $(SCRIPT_TARGETS_PY_PUBLIC) \
  $(SCRIPT_TARGETS_PYC_PUBLIC) $(SCRIPT_TARGETS_PY_PUBLIC_TOOLS) \
  $(SCRIPT_TARGETS_PYC_PUBLIC_TOOLS) $(SCRIPT_TARGETS_PY_PRIVATE_COMMON) \
- $(SCRIPT_TARGETS_PYC_PRIVATE_COMMON)
+ $(SCRIPT_TARGETS_PYC_PRIVATE_COMMON) $(PEM_TARGETS)
 
 # Build scripts for a specific platform.
 scripts-cmake: $(SCRIPT_TARGETS_CMAKE) $(SCRIPT_TARGETS_COMMON)

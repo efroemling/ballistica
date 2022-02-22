@@ -30,6 +30,12 @@ class PipRequirement:
 
 # Note: we look directly for modules when possible instead of just pip
 # entries; this accounts for manual installations or other nonstandard setups.
+
+# Note 2: We can probably just replace this with a simple requirements.txt
+# file, can't we? Feels like we're mostly reinventing the wheel here.
+# We just need a clean way to check/list missing stuff without necessarily
+# installing it. And as far as manually-installed bits, pip itself must
+# have some way to allow for that, right?...
 PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 12, 2]),
     PipRequirement(modulename='mypy', minversion=[0, 931]),
@@ -46,6 +52,8 @@ PIP_REQUIREMENTS = [
     PipRequirement(pipname='types-requests', minversion=[2, 27, 7]),
     PipRequirement(pipname='types-pytz', minversion=[2021, 3, 4]),
     PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 3]),
+    PipRequirement(pipname='certifi', minversion=[2021, 10, 8]),
+    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 1]),
 ]
 
 # Parts of full-tests suite we only run on particular days.

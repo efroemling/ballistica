@@ -99,7 +99,6 @@ Joystick::Joystick(int sdl_joystick_id, const std::string& custom_device_name,
     sdl_joystick_ = nullptr;
 
     is_mfi_controller_ = (custom_device_name_ == kMFiControllerName);
-    is_mac_wiimote_ = (custom_device_name_ == "Wiimote");
 
     // Hard code a few remote controls.
     // The newer way to do this is just set 'UI-Only' on the device config
@@ -297,27 +296,6 @@ Joystick::~Joystick() {
     child_joy_stick_ = nullptr;
   }
 
-  // If we're a wiimote, announce our departure.
-  if (g_buildconfig.ostype_macos() && is_mac_wiimote_) {
-    char msg[255];
-
-    int num = device_number();
-
-    // If we disconnected before any events came through, treat it as an error.
-    snprintf(msg, sizeof(msg), "Wii Remote #%d", num);
-
-    // Ask the user to try again if the disconnect was immediate.
-    std::string s;
-    if (GetRealTime() - creation_time_ < 5000) {
-      s = g_game->GetResourceString("controllerDisconnectedTryAgainText");
-    } else {
-      s = g_game->GetResourceString("controllerDisconnectedText");
-    }
-    Utils::StringReplaceOne(&s, "${CONTROLLER}", msg);
-    ScreenMessage(s);
-    g_audio->PlaySound(g_media->GetSound(SystemSoundID::kCorkPop));
-  }
-
   // Have SDL actually close the joystick in the main thread.
   // Send a message back to the main thread to close this SDL Joystick.
   // HMMM - can we just have the main thread close the joystick immediately
@@ -342,25 +320,7 @@ auto Joystick::GetDefaultPlayerName() -> std::string {
   return InputDevice::GetDefaultPlayerName();
 }
 
-void Joystick::ConnectionComplete() {
-  assert(InGameThread());
-
-  // Special case for mac wiimotes.
-  if (g_buildconfig.ostype_macos() && is_mac_wiimote_) {
-    char msg[128];
-
-    int num = device_number();
-
-    snprintf(msg, sizeof(msg), "Wii Remote #%d", num);
-    g_audio->PlaySound(g_media->GetSound(SystemSoundID::kGunCock));
-
-    // Replace ${CONTROLLER} with it in our message.
-    std::string s = g_game->GetResourceString("controllerConnectedText");
-    Utils::StringReplaceOne(&s, "${CONTROLLER}", msg);
-    ScreenMessage(s);
-    return;
-  }
-}
+void Joystick::ConnectionComplete() { assert(InGameThread()); }
 
 auto Joystick::ShouldBeHiddenFromUser() -> bool {
   std::string d_name = GetDeviceName();

@@ -787,10 +787,7 @@ auto Platform::IsStdinATerminal() -> bool {
 auto Platform::GetOSVersionString() -> std::string { return ""; }
 
 auto Platform::GetUserAgentString() -> std::string {
-  // Fetch our device name here from main thread so it'll be safe
-  // to from other threads later (it gets cached as a string)
   std::string device = GetDeviceName();
-
   std::string version = GetOSVersionString();
   if (!version.empty()) {
     version = " " + version;
@@ -832,10 +829,17 @@ auto Platform::GetUserAgentString() -> std::string {
   if (IsRunningOnTV()) {
     subplatform += " OnTV";
   }
-  return std::string("BallisticaCore ") + kAppVersion + subplatform + " ("
-         + std::to_string(kAppBuildNumber) + ") ("
-         + g_buildconfig.platform_string() + version + "; " + device + "; "
-         + GetLocale() + ")";
+
+  std::string out{std::string("BallisticaCore ") + kAppVersion + subplatform
+                  + " (" + std::to_string(kAppBuildNumber) + ") ("
+                  + g_buildconfig.platform_string() + version + "; " + device
+                  + "; " + GetLocale() + ")"};
+
+  // This gets shipped to various places which might choke on fancy unicode
+  // characers, so let's limit to simple ascii.
+  out = Utils::StripNonAsciiFromUTF8(out);
+
+  return out;
 }
 
 auto Platform::GetCWD() -> std::string {
@@ -1479,7 +1483,9 @@ auto Platform::DoClipboardGetText() -> std::string {
   if (out == nullptr) {
     throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
   }
-  return out;
+  std::string out_s{out};
+  SDL_free(out);
+  return out_s;
 #else
   // Shouldn't get here since we default to no clipboard support.
   FatalError("Shouldn't get here.");

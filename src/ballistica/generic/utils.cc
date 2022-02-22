@@ -515,4 +515,12 @@ auto Utils::BaseName(const std::string& val) -> std::string {
   return lastvalid;
 }
 
+auto Utils::StripNonAsciiFromUTF8(const std::string& str) -> std::string {
+  auto uni = UnicodeFromUTF8(str, "wGcwe87");
+  uni.erase(
+      std::remove_if(uni.begin(), uni.end(), [](int i) { return i > 127; }),
+      uni.end());
+  return UTF8FromUnicode(uni);
+}
+
 }  // namespace ballistica

@@ -238,6 +238,16 @@ auto PyHasUserMods(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PyContainsPythonDist(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("contains_python_dist");
+  if (g_platform->ContainsPythonDist()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
 auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -1037,6 +1047,11 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
 
       {"has_user_run_commands", PyHasUserRunCommands, METH_VARARGS,
        "has_user_run_commands() -> bool\n"
+       "\n"
+       "(internal)"},
+
+      {"contains_python_dist", PyContainsPythonDist, METH_VARARGS,
+       "contains_python_dist() -> bool\n"
        "\n"
        "(internal)"},
 

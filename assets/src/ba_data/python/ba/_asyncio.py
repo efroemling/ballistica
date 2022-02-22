@@ -60,12 +60,13 @@ def setup_asyncio() -> None:
                                timetype=TimeType.REAL,
                                repeat=True)
 
-    async def aio_test() -> None:
-        print('TEST AIO TASK STARTING')
-        assert _asyncio_event_loop is not None
-        assert asyncio.get_running_loop() is _asyncio_event_loop
-        await asyncio.sleep(2.0)
-        print('TEST AIO TASK ENDING')
-
     if bool(False):
+
+        async def aio_test() -> None:
+            print('TEST AIO TASK STARTING')
+            assert _asyncio_event_loop is not None
+            assert asyncio.get_running_loop() is _asyncio_event_loop
+            await asyncio.sleep(2.0)
+            print('TEST AIO TASK ENDING')
+
         _asyncio_event_loop.create_task(aio_test())

@@ -91,21 +91,6 @@ class ControlsSettingsWindow(ba.Window):
         else:
             show_remote = False
 
-        show_ps3 = False
-        # if platform == 'mac':
-        #     show_ps3 = True
-        #     height += spacing
-
-        show360 = False
-        # if platform == 'mac' or is_fire_tv:
-        #     show360 = True
-        #     height += spacing
-
-        show_mac_wiimote = False
-        # if platform == 'mac' and _ba.is_xcode_build():
-        #     show_mac_wiimote = True
-        #     height += spacing
-
         # On windows (outside of oculus/vr), show an option to disable xinput.
         show_xinput_toggle = False
         if platform == 'windows' and not app.vr_mode:
@@ -152,9 +137,6 @@ class ControlsSettingsWindow(ba.Window):
         self._keyboard_button: Optional[ba.Widget] = None
         self._keyboard_2_button: Optional[ba.Widget] = None
         self._idevices_button: Optional[ba.Widget] = None
-        self._ps3_button: Optional[ba.Widget] = None
-        self._xbox_360_button: Optional[ba.Widget] = None
-        self._wiimotes_button: Optional[ba.Widget] = None
 
         ba.textwidget(parent=self._root_widget,
                       position=(0, height - 49),
@@ -261,42 +243,6 @@ class ControlsSettingsWindow(ba.Window):
                           down_widget=self._idevices_button)
                 self._have_selected_child = True
             v -= spacing
-        if show_ps3:
-            self._ps3_button = btn = ba.buttonwidget(
-                parent=self._root_widget,
-                position=((width - button_width) / 2 + 5, v),
-                size=(button_width, 43),
-                autoselect=True,
-                label=ba.Lstr(resource=self._r + '.ps3Text'),
-                on_activate_call=self._do_ps3_controllers)
-            if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
-            v -= spacing
-        if show360:
-            self._xbox_360_button = btn = ba.buttonwidget(
-                parent=self._root_widget,
-                position=((width - button_width) / 2 - 1, v),
-                size=(button_width, 43),
-                autoselect=True,
-                label=ba.Lstr(resource=self._r + '.xbox360Text'),
-                on_activate_call=self._do_360_controllers)
-            if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
-            v -= spacing
-        if show_mac_wiimote:
-            self._wiimotes_button = btn = ba.buttonwidget(
-                parent=self._root_widget,
-                position=((width - button_width) / 2 + 5, v),
-                size=(button_width, 43),
-                autoselect=True,
-                label=ba.Lstr(resource=self._r + '.wiimotesText'),
-                on_activate_call=self._do_wiimotes)
-            if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
-            v -= spacing
 
         if show_xinput_toggle:
 
@@ -397,31 +343,6 @@ class ControlsSettingsWindow(ba.Window):
         ba.app.ui.set_main_menu_window(
             RemoteAppSettingsWindow().get_root_widget())
 
-    def _do_ps3_controllers(self) -> None:
-        # pylint: disable=cyclic-import
-        from bastd.ui.settings.ps3controller import PS3ControllerSettingsWindow
-        self._save_state()
-        ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.ui.set_main_menu_window(
-            PS3ControllerSettingsWindow().get_root_widget())
-
-    def _do_360_controllers(self) -> None:
-        # pylint: disable=cyclic-import
-        from bastd.ui.settings.xbox360controller import (
-            XBox360ControllerSettingsWindow)
-        self._save_state()
-        ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.ui.set_main_menu_window(
-            XBox360ControllerSettingsWindow().get_root_widget())
-
-    def _do_wiimotes(self) -> None:
-        # pylint: disable=cyclic-import
-        from bastd.ui.settings.wiimote import WiimoteSettingsWindow
-        self._save_state()
-        ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.ui.set_main_menu_window(
-            WiimoteSettingsWindow().get_root_widget())
-
     def _do_gamepads(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.gamepadselect import GamepadSelectWindow
@@ -449,12 +370,6 @@ class ControlsSettingsWindow(ba.Window):
             sel_name = 'Keyboard2'
         elif sel == self._idevices_button:
             sel_name = 'iDevices'
-        elif sel == self._ps3_button:
-            sel_name = 'PS3'
-        elif sel == self._xbox_360_button:
-            sel_name = 'xbox360'
-        elif sel == self._wiimotes_button:
-            sel_name = 'Wiimotes'
         else:
             sel_name = 'Back'
         ba.app.ui.window_states[type(self)] = sel_name
@@ -471,12 +386,6 @@ class ControlsSettingsWindow(ba.Window):
             sel = self._keyboard_2_button
         elif sel_name == 'iDevices':
             sel = self._idevices_button
-        elif sel_name == 'PS3':
-            sel = self._ps3_button
-        elif sel_name == 'xbox360':
-            sel = self._xbox_360_button
-        elif sel_name == 'Wiimotes':
-            sel = self._wiimotes_button
         elif sel_name == 'Back':
             sel = self._back_button
         else:

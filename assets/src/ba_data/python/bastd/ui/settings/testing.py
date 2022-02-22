@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable, Optional
 
 
 class TestingWindow(ba.Window):
@@ -20,11 +20,13 @@ class TestingWindow(ba.Window):
     def __init__(self,
                  title: ba.Lstr,
                  entries: list[dict[str, Any]],
-                 transition: str = 'in_right'):
+                 transition: str = 'in_right',
+                 back_call: Optional[Callable[[], ba.Window]] = None):
         uiscale = ba.app.ui.uiscale
         self._width = 600
         self._height = 324 if uiscale is ba.UIScale.SMALL else 400
         self._entries = copy.deepcopy(entries)
+        self._back_call = back_call
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
@@ -176,8 +178,8 @@ class TestingWindow(ba.Window):
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        import bastd.ui.settings.advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.ui.set_main_menu_window(
-            bastd.ui.settings.advanced.AdvancedSettingsWindow(
-                transition='in_left').get_root_widget())
+        backwin = (self._back_call() if self._back_call is not None else
+                   AdvancedSettingsWindow(transition='in_left'))
+        ba.app.ui.set_main_menu_window(backwin.get_root_widget())

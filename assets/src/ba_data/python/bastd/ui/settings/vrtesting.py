@@ -7,13 +7,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.ui.settings import testing
+from bastd.ui.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class VRTestingWindow(testing.TestingWindow):
+class VRTestingWindow(TestingWindow):
     """Window for testing vr settings."""
 
     def __init__(self, transition: str = 'in_right'):

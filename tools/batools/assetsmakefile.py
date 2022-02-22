@@ -331,6 +331,7 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
                          all_targets_private),
             _get_targets('FONT_TARGETS', '.fdata', '.fdata',
                          all_targets_private),
+            _get_targets('PEM_TARGETS', '.pem', '.pem', all_targets_private),
             _get_targets('DATA_TARGETS',
                          '.json',
                          '.json',

@@ -167,6 +167,7 @@
       <w>bacfg</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backwin</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
       <w>bacommon</w>
@@ -183,6 +184,7 @@
       <w>bametainternal</w>
       <w>barcolor</w>
       <w>barebones</w>
+      <w>baseaddr</w>
       <w>baseh</w>
       <w>basemult</w>
       <w>basepos</w>
@@ -292,12 +294,14 @@
       <w>bylw</w>
       <w>bytecount</w>
       <w>byteswap</w>
+      <w>cacert</w>
       <w>cachable</w>
       <w>cachebasename</w>
       <w>cacheentry</w>
       <w>cachefile</w>
       <w>cachemap</w>
       <w>cachepath</w>
+      <w>cafile</w>
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
@@ -315,6 +319,7 @@
       <w>cbgn</w>
       <w>cbits</w>
       <w>cbot</w>
+      <w>cbresults</w>
       <w>cbtn</w>
       <w>cbtnoffs</w>
       <w>ccfgs</w>
@@ -327,6 +332,7 @@
       <w>cend</w>
       <w>centeuro</w>
       <w>centiseconds</w>
+      <w>certifi</w>
       <w>cfconfig</w>
       <w>cfenv</w>
       <w>cfgdir</w>
@@ -426,6 +432,7 @@
       <w>columnwidget</w>
       <w>colw</w>
       <w>commitconfig</w>
+      <w>comms</w>
       <w>compat</w>
       <w>compileall</w>
       <w>compilelocations</w>
@@ -482,6 +489,7 @@
       <w>creditslist</w>
       <w>cresult</w>
       <w>cryptmodule</w>
+      <w>cryptosimple</w>
       <w>cspbd</w>
       <w>cspnf</w>
       <w>cspre</w>
@@ -501,6 +509,7 @@
       <w>curstate</w>
       <w>curtime</w>
       <w>curtimestr</w>
+      <w>curv</w>
       <w>customdata</w>
       <w>customizebrowser</w>
       <w>cutscenes</w>
@@ -606,6 +615,7 @@
       <w>downmix</w>
       <w>dpad</w>
       <w>dpath</w>
+      <w>dpos</w>
       <w>dprofilename</w>
       <w>drawscore</w>
       <w>drawscreen</w>
@@ -731,6 +741,7 @@
       <w>excstr</w>
       <w>exec'ed</w>
       <w>execcode</w>
+      <w>execed</w>
       <w>execing</w>
       <w>execlocals</w>
       <w>executils</w>
@@ -898,6 +909,7 @@
       <w>futimens</w>
       <w>fval</w>
       <w>fverts</w>
+      <w>fwefocjwerj</w>
       <w>gameactivity</w>
       <w>gamebutton</w>
       <w>gameclass</w>
@@ -943,6 +955,7 @@
       <w>getcurrency</w>
       <w>getcwd</w>
       <w>getdata</w>
+      <w>getenv</w>
       <w>gethostbyname</w>
       <w>getifaddr</w>
       <w>getinputdevice</w>
@@ -1145,6 +1158,7 @@
       <w>iometa</w>
       <w>ioprep</w>
       <w>ioprepped</w>
+      <w>ioprepping</w>
       <w>ipaddress</w>
       <w>ipos</w>
       <w>iprof</w>
@@ -1165,9 +1179,11 @@
       <w>janktastic</w>
       <w>janky</w>
       <w>jascha</w>
+      <w>jcrc</w>
       <w>jdict</w>
       <w>jenkinsfile</w>
       <w>jexport</w>
+      <w>jfwe</w>
       <w>jisx</w>
       <w>jite</w>
       <w>jittering</w>
@@ -1513,6 +1529,7 @@
       <w>ndbm</w>
       <w>ndkpath</w>
       <w>nearbytab</w>
+      <w>nearstr</w>
       <w>neededsettings</w>
       <w>ness</w>
       <w>netcode</w>
@@ -1936,6 +1953,7 @@
       <w>recv</w>
       <w>redist</w>
       <w>redistributables</w>
+      <w>regionid</w>
       <w>regtp</w>
       <w>reimported</w>
       <w>relpath</w>
@@ -1998,6 +2016,7 @@
       <w>runonly</w>
       <w>runpy</w>
       <w>runpylint</w>
+      <w>runseconds</w>
       <w>runswindows</w>
       <w>rval</w>
       <w>safecolor</w>
@@ -2391,6 +2410,7 @@
       <w>timetype</w>
       <w>tipstext</w>
       <w>titletext</w>
+      <w>tlog</w>
       <w>tmpdir</w>
       <w>tmpf</w>
       <w>tmppath</w>
@@ -2426,6 +2446,7 @@
       <w>tracemalloc</w>
       <w>tradeoff</w>
       <w>trailcolor</w>
+      <w>transportagentrequest</w>
       <w>transtime</w>
       <w>trapeznikov</w>
       <w>tref</w>
@@ -2443,6 +2464,7 @@
       <w>tval</w>
       <w>tvalue</w>
       <w>tvos</w>
+      <w>twidth</w>
       <w>twrths</w>
       <w>txtactor</w>
       <w>txtl</w>
@@ -2477,6 +2499,7 @@
       <w>uiupkeeptimer</w>
       <w>unallowed</w>
       <w>uname</w>
+      <w>unbased</w>
       <w>unbounds</w>
       <w>uncollectible</w>
       <w>underruns</w>
@@ -2519,6 +2542,7 @@
       <w>useragentstring</w>
       <w>userbase</w>
       <w>userfunctions</w>
+      <w>usid</w>
       <w>utcnow</w>
       <w>utimensat</w>
       <w>uuidmodule</w>
@@ -2577,6 +2601,7 @@
       <w>weakref</w>
       <w>weakrefs</w>
       <w>weakrefset</w>
+      <w>weakwin</w>
       <w>webbrowser</w>
       <w>webpage</w>
       <w>webpages</w>

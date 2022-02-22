@@ -6,13 +6,13 @@
 
 ![](https://github.com/efroemling/ballistica/workflows/CI/badge.svg)
 
-The Ballistica project is the foundation for the next generation of [BombSquad](http://bombsquadgame.com). It will be debuting with the upcoming 1.5 release of the game and lays the foundation for some of the big changes coming in 2.0.
+The Ballistica project is the foundation for the next generation of [BombSquad](http://bombsquadgame.com). It debuted with version 1.5 of the game and lays the foundation for some of the big changes coming in 2.0.
 
 [Head to the project wiki to get started](https://github.com/efroemling/ballistica/wiki), or learn more about the project below.
 
 ### Project Goals
 * Cleanup
-  * BombSquad's codebase, and especially its scripting layer, have grown a lot over its lifetime, but not always in a 'designed' way. It was overdue for a major refactoring, which should keep it more maintainable for years to come. Examples of this include breaking up the monstrous twenty-six-thousand-line bsUI.py file into a much cleaner individual subpackages, updating all code from Python 2.7 to 3.7, and adding type annotations to the entire codebase.
+  * BombSquad's codebase, and especially its scripting layer, have grown a lot over its lifetime, but not always in a 'designed' way. It was overdue for a major refactoring, which should keep it more maintainable for years to come. Examples of this include breaking up the monstrous twenty-six-thousand-line bsUI.py file into a much cleaner individual subpackages, updating all code from Python 2.7 to the latest 3.X versions, and adding type annotations to the entire codebase.
 * Provide modders and tinkerers with the best possible development environment
   * I've spent a lot of time incorporating auto-formatters, type-checkers, linters, and smart IDEs into my development workflow and have found them to be an enormous help. By sharing my setup here I hope to make them easily accessible to everyone.
 * Improve transparency
