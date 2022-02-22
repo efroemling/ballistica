@@ -511,7 +511,7 @@ class Node:
     ba.Node.exists() can be used to determine if a Node still points to
     a live node in the game.
 
-    You can use ba.Node(None) to instantiate an invalid
+    You can use `ba.Node(None)` to instantiate an invalid
     Node reference (sometimes used as attr values/etc).
     """
 
@@ -1330,7 +1330,7 @@ def clipboard_has_text() -> bool:
     Category: **General Utility Functions**
 
     This will return False if no system clipboard is available; no need
-     to call ba.clipboard_available() separately.
+     to call ba.clipboard_is_supported() separately.
     """
     return bool()
 
@@ -1351,7 +1351,7 @@ def clipboard_set_text(value: str) -> None:
 
     Category: **General Utility Functions**
 
-    Ensure that ba.clipboard_available() returns True before adding
+    Ensure that ba.clipboard_is_supported() returns True before adding
      buttons/etc. that make use of this functionality.
     """
     return None

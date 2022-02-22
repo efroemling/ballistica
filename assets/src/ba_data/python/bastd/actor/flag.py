@@ -249,8 +249,8 @@ class Flag(ba.Actor):
             if not self._has_moved:
                 nodepos = self.node.position
                 if (max(
-                    abs(nodepos[i] - self._initial_position[i])
-                    for i in list(range(3))) > 1.0):
+                        abs(nodepos[i] - self._initial_position[i])
+                        for i in list(range(3))) > 1.0):
                     self._has_moved = True
 
             if self._held_count > 0 or not self._has_moved:

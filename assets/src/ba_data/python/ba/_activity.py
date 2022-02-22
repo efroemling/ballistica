@@ -356,7 +356,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         Upon this call, the Activity should fade in backgrounds,
         start playing music, etc. It does not yet have access to players
         or teams, however. They remain owned by the previous Activity
-        up until ba.Activity.on_begin is called.
+        up until ba.Activity.on_begin() is called.
         """
 
     def on_transition_out(self) -> None:

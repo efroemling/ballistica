@@ -18,7 +18,7 @@ class PluginSubsystem:
 
     Category: **App Classes**
 
-    Access the single shared instance of this class at 'ba.app.plugins'.
+    Access the single shared instance of this class at `ba.app.plugins`.
     """
 
     def __init__(self) -> None:

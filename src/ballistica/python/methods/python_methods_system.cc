@@ -803,7 +803,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "Category: **General Utility Functions**\n"
        "\n"
        "This will return False if no system clipboard is available; no need\n"
-       " to call ba.clipboard_available() separately."},
+       " to call ba.clipboard_is_supported() separately."},
       {"clipboard_set_text", (PyCFunction)PyClipboardSetText,
        METH_VARARGS | METH_KEYWORDS,
        "clipboard_set_text(value: str) -> None\n"
@@ -812,7 +812,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Category: **General Utility Functions**\n"
        "\n"
-       "Ensure that ba.clipboard_available() returns True before adding\n"
+       "Ensure that ba.clipboard_is_supported() returns True before adding\n"
        " buttons/etc. that make use of this functionality."},
       {"clipboard_get_text", (PyCFunction)PyClipboardGetText, METH_NOARGS,
        "clipboard_get_text() -> str\n"

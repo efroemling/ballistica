@@ -52,9 +52,9 @@ class Actor:
     if you want an Actor to stick around until explicitly killed
     regardless of references.
 
-    Another key feature of ba.Actor is its ba.Actor.handlemessage() method, which
-    takes a single arbitrary object as an argument. This provides a safe way
-    to communicate between ba.Actor, ba.Activity, ba.Session, and any other
+    Another key feature of ba.Actor is its ba.Actor.handlemessage() method,
+    which takes a single arbitrary object as an argument. This provides a safe
+    way to communicate between ba.Actor, ba.Activity, ba.Session, and any other
     class providing a handlemessage() method. The most universally handled
     message type for Actors is the ba.DieMessage.
 
@@ -113,7 +113,7 @@ class Actor:
         return self
 
     def on_expire(self) -> None:
-        """Called for remaining ba.Actor-s when their ba.Activity shuts down.
+        """Called for remaining `ba.Actor`s when their ba.Activity shuts down.
 
         Actors can use this opportunity to clear callbacks or other
         references which have the potential of keeping the ba.Activity

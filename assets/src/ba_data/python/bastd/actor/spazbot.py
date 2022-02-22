@@ -51,7 +51,7 @@ class SpazBotDiedMessage:
     spazbot: SpazBot
     """The SpazBot that was killed."""
 
-    killerplayer: ba.Player
+    killerplayer: Optional[ba.Player]
     """The ba.Player that killed it (or None)."""
 
     how: ba.DeathType

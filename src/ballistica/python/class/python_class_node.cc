@@ -38,7 +38,7 @@ void PythonClassNode::SetupType(PyTypeObject* obj) {
       "ba.Node.exists() can be used to determine if a Node still points to\n"
       "a live node in the game.\n"
       "\n"
-      "You can use ba.Node(None) to instantiate an invalid\n"
+      "You can use `ba.Node(None)` to instantiate an invalid\n"
       "Node reference (sometimes used as attr values/etc).";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
