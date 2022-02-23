@@ -18,7 +18,7 @@ from _ba import (
     newnode, playsound, printnodes, printobjects, pushcall, quit, rowwidget,
     safecolor, screenmessage, scrollwidget, set_analytics_screen, charstr,
     textwidget, time, timer, open_url, widget, clipboard_is_supported,
-    clipboard_has_text, clipboard_get_text, clipboard_set_text)
+    clipboard_has_text, clipboard_get_text, clipboard_set_text, getdata)
 from ba._activity import Activity
 from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor

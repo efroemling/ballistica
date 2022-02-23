@@ -75,6 +75,7 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
 
 def generate(projroot: str) -> None:
     """Main entry point."""
+    from batools.version import get_current_version
     import pdoc
 
     # Make sure we're running from the dir above this script.
@@ -87,7 +88,11 @@ def generate(projroot: str) -> None:
     outdirname = (Path(projroot) / 'build' / 'docs_html').absolute()
     sys.path.append(str(pythondir))
 
+    version, build_number = get_current_version()
+
     try:
+        pdoc.render.env.globals['ba_version'] = version
+        pdoc.render.env.globals['ba_build'] = build_number
         pdoc.render.configure(search=True,
                               show_source=True,
                               template_directory=templatesdir)

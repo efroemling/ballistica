@@ -9,19 +9,29 @@
             </a>
         {% endblock %}
         {% if search %}
-            <input type="search" placeholder="Search Ballistica Python API Documentation..." aria-label="search box">
+            <input type="search"
+                   placeholder="Search Python API Documentation..."
+                   aria-label="search box">
         {% endif %}
     </header>
     <main class="pdoc">
-        <h1>header woo-hoo</h1>
-        Welcome to blah blah blah, some <b>bold</b> text, create an
-        <a href="https://github.com/efroemling/ballistica/issues/">issue</a>
-        if something in this docs feels incorrect or can be improved blah blah
-        <code>
-            some code hooray
-        </code>
-        <br/>
-        TODO: add some normal text here.
+        <h1>Welcome to Ballistica Documentations!</h1>
+        <i>Last updated for Ballistica {{ ba_version }}
+            (build {{ ba_build }})</i>
+        <hr/>
+        <p>
+            Here you can find information about Python classes/functions
+            used by Ballistica.
+            Fell free to create an
+            <a href="https://github.com/efroemling/ballistica/issues/">
+                issue</a>
+            or send a
+            <a href="https://github.com/efroemling/ballistica/pulls/">PR</a>
+            if something in this docs feels incorrect or can be improved.
+            Note that <code>bastd</code>'s docs may look a little terrible
+            right
+            now, hope that's temporary. :)
+        </p>
     </main>
     {% if search %}
         {% include "search.html.jinja2" %}
