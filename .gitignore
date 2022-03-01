@@ -31,6 +31,9 @@ _fulltest_buildfile_*
 ballistica_files/
 **/.#*
 
+# Environment files
+/venv
+
 # Project/tool files
 config/localconfig.json
 config/.*
