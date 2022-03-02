@@ -1244,14 +1244,6 @@ def _app() -> ba.App:
     return ba.App()
 
 
-def accept_party_invitation(invite_id: str) -> None:
-    """accept_party_invitation(invite_id: str) -> None
-
-    (internal)
-    """
-    return None
-
-
 def add_clean_frame_callback(call: Callable) -> None:
     """add_clean_frame_callback(call: Callable) -> None
 
@@ -2048,6 +2040,22 @@ def get_chat_messages() -> list[str]:
     return ['blah', 'blah2']
 
 
+def get_client_public_device_uuid(client_id: int) -> Optional[str]:
+    """get_client_public_device_uuid(client_id: int) -> Optional[str]
+
+    (internal)
+
+    Category: General Utility Functions
+
+    Return a public device UUID for a client. If the client does not
+    exist or is running a version older than 1.6.10, returns None.
+    Public device UUID uniquely identifies the device the client is
+    using in a semi-permanent way. The UUID value will change
+    periodically with updates to the game or operating system.
+    """
+    return ''
+
+
 def get_collision_info(*args: Any) -> Any:
     """get_collision_info(*args: Any) -> Any
 
@@ -2132,14 +2140,6 @@ def get_game_roster() -> list[dict[str, Any]]:
     (internal)
     """
     return [{'foo': 'bar'}]
-
-
-def get_google_play_party_client_count() -> int:
-    """get_google_play_party_client_count() -> int
-
-    (internal)
-    """
-    return int()
 
 
 def get_idle_time() -> int:
@@ -2809,15 +2809,6 @@ def increment_analytics_counts_raw(name: str, increment: int = 1) -> None:
     """increment_analytics_counts_raw(name: str, increment: int = 1) -> None
 
     (internal)
-    """
-    return None
-
-
-def invite_players() -> None:
-    """invite_players() -> None
-
-    (internal)
-    Category: General Utility Functions
     """
     return None
 
@@ -3784,16 +3775,6 @@ def show_app_invite(title: Union[str, ba.Lstr], message: Union[str, ba.Lstr],
     return None
 
 
-def show_invites_ui() -> None:
-    """show_invites_ui() -> None
-
-    (internal)
-
-    Category: General Utility Functions
-    """
-    return None
-
-
 def show_online_score_ui(show: str = 'general',
                          game: str = None,
                          game_version: str = None) -> None:
@@ -3831,26 +3812,6 @@ def sign_out() -> None:
     (internal)
 
     Category: General Utility Functions
-    """
-    return None
-
-
-def start_listening_for_wii_remotes() -> None:
-    """start_listening_for_wii_remotes() -> None
-
-    (internal)
-
-    Start listening for connections from wii remotes.
-    """
-    return None
-
-
-def stop_listening_for_wii_remotes() -> None:
-    """stop_listening_for_wii_remotes() -> None
-
-    (internal)
-
-    Stop listening for connections from wii remotes.
     """
     return None
 

@@ -200,7 +200,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
 
     # Everything possibly affecting Windows binary builds.
     elif category is SourceCategory.WIN:
-        paths = ['Makefile', 'src', 'resources/src']
+        paths = ['Makefile', 'src', 'resources/src', 'ballisticacore-windows']
 
     # Everything possibly affecting resource builds.
     elif category is SourceCategory.RESOURCES:

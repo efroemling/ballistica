@@ -460,7 +460,7 @@ class Updater:
 
         src_root = '..\\..\\src'
 
-        public_project = 'Internal' in basename
+        public_project = 'Internal' not in basename
 
         all_files = sorted([
             f for f in (self._source_files + self._header_files)
