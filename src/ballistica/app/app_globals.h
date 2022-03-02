@@ -77,8 +77,6 @@ class AppGlobals {
   int delay_bucket_samples{60};
 
   bool vr_mode{g_buildconfig.vr_build()};
-  // Temp dirty way to do some shutdown stuff (FIXME: move to an App method).
-  void (*temp_cleanup_callback)() = nullptr;
   millisecs_t real_time{};
   millisecs_t last_real_time_ticks{};
   std::mutex real_time_mutex;

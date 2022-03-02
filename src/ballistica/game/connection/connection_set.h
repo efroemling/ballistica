@@ -94,19 +94,6 @@ class ConnectionSet {
                                           const std::vector<int>& clients)
       -> void;
 
-#if BA_GOOGLE_BUILD
-  auto PushClientDisconnectedGooglePlayCall(int id) -> void;
-  int GetGooglePlayClientCount() const;
-  auto PushHostConnectedGooglePlayCall() -> void;
-  auto PushClientConnectedGooglePlayCall(int id) -> void;
-  auto PushCompressedGamePacketFromHostGooglePlayCall(
-      const std::vector<uint8_t>& data) -> void;
-  auto PushCompressedGamePacketFromClientGooglePlayCall(
-      int google_client_id, const std::vector<uint8_t>& data) -> void;
-  auto ClientIDFromGooglePlayClientID(int google_id) -> int;
-  auto GooglePlayClientIDFromClientID(int client_id) -> int;
-#endif
-
   auto UDPConnectionPacket(const std::vector<uint8_t>& data,
                            const SockAddr& addr) -> void;
   auto PushClientDisconnectedCall(int id) -> void;
@@ -125,11 +112,6 @@ class ConnectionSet {
 
   // Prevents us from printing multiple 'you got disconnected' messages.
   bool printed_host_disconnect_{};
-
-#if BA_GOOGLE_BUILD
-  std::unordered_map<int, int> google_play_id_to_client_id_map_;
-  std::unordered_map<int, int> client_id_to_google_play_id_map_;
-#endif
 };
 
 }  // namespace ballistica

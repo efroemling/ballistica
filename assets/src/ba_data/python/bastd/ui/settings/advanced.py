@@ -322,8 +322,8 @@ class AdvancedSettingsWindow(ba.Window):
                           subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
                                 ]),
             autoselect=True,
-            on_activate_call=ba.Call(ba.open_url,
-                                     'http://bombsquadgame.com/translate'))
+            on_activate_call=ba.Call(
+                ba.open_url, 'https://legacy.ballistica.net/translate'))
 
         self._lang_status_text = ba.textwidget(parent=self._subcontainer,
                                                position=(self._sub_width * 0.5,

@@ -396,7 +396,7 @@ void Game::UpdateKickVote() {
     kick_vote_in_progress_ = false;
     return;
   }
-  millisecs_t current_time = GetRealTime();
+  millisecs_t current_time{GetRealTime()};
   int total_client_count = 0;
   int yes_votes = 0;
   int no_votes = 0;
@@ -405,8 +405,8 @@ void Game::UpdateKickVote() {
   // the update and possibly perform the kick.
   for (ConnectionToClient* client : connections()->GetConnectionsToClients()) {
     ++total_client_count;
-    if (client->kick_voted_) {
-      if (client->kick_vote_choice_) {
+    if (client->kick_voted()) {
+      if (client->kick_vote_choice()) {
         ++yes_votes;
       } else {
         ++no_votes;
@@ -437,8 +437,8 @@ void Game::UpdateKickVote() {
       if (client == kick_vote_starter) {
         delay += kKickVoteFailRetryDelayInitiatorExtra;
       }
-      client->next_kick_vote_allow_time_ =
-          std::max(client->next_kick_vote_allow_time_, current_time + delay);
+      client->set_next_kick_vote_allow_time(
+          std::max(client->next_kick_vote_allow_time(), current_time + delay));
     }
   } else {
     int votes_required;
@@ -1826,26 +1826,6 @@ void Game::CleanUpBeforeConnectingToHost() {
   SetPublicPartyEnabled(false);
 }
 
-void Game::PushV1PartyInviteCall(const std::string& name,
-                                 const std::string& invite_id) {
-  PushCall([this, name, invite_id] { V1PartyInvite(name, invite_id); });
-}
-
-void Game::V1PartyInvite(const std::string& name,
-                         const std::string& invite_id) {
-  assert(InGameThread());
-  g_python->V1PartyInvite(name, invite_id);
-}
-
-void Game::PushV1PartyInviteRevokeCall(const std::string& invite_id) {
-  PushCall([this, invite_id] { V1PartyInviteRevoke(invite_id); });
-}
-
-void Game::V1PartyInviteRevoke(const std::string& invite_id) {
-  assert(InGameThread());
-  g_python->V1PartyInviteRevoke(invite_id);
-}
-
 auto Game::GetPartySize() const -> int {
   assert(InGameThread());
   assert(game_roster_ != nullptr);
@@ -1897,7 +1877,6 @@ auto Game::GetGameRosterMessage() -> std::vector<uint8_t> {
   // This message is simply a flattened json string of our roster (including
   // terminating char).
   char* s = cJSON_PrintUnformatted(game_roster_);
-  // printf("ROSTER MESSAGE %s\n", s);
   auto s_len = strlen(s);
   std::vector<uint8_t> msg(1 + s_len + 1);
   msg[0] = BA_MESSAGE_PARTY_ROSTER;
@@ -1965,13 +1944,13 @@ void Game::StartKickVote(ConnectionToClient* starter,
     starter->SendScreenMessage(R"({"r":"kickVoteFailedNotEnoughVotersText",)"
                                R"("f":"kickVoteFailedText"})",
                                1, 0, 0);
-  } else if (current_time < starter->next_kick_vote_allow_time_) {
+  } else if (current_time < starter->next_kick_vote_allow_time()) {
     // Not yet allowed error.
     starter->SendScreenMessage(
         R"({"r":"voteDelayText","s":[["${NUMBER}",")"
             + std::to_string(std::max(
                 millisecs_t{1},
-                (starter->next_kick_vote_allow_time_ - current_time) / 1000))
+                (starter->next_kick_vote_allow_time() - current_time) / 1000))
             + "\"]]}",
         1, 0, 0);
   } else {
@@ -2014,10 +1993,10 @@ void Game::StartKickVote(ConnectionToClient* starter,
     for (ConnectionToClient* client :
          connections()->GetConnectionsToClients()) {
       if (client == starter) {
-        client->kick_voted_ = true;
-        client->kick_vote_choice_ = true;
+        client->set_kick_voted(true);
+        client->set_kick_vote_choice(true);
       } else {
-        client->kick_voted_ = false;
+        client->set_kick_voted(false);
       }
     }
   }

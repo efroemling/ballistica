@@ -21,8 +21,8 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20486;
-const char* kAppVersion = "1.6.9";
+const int kAppBuildNumber = 20501;
+const char* kAppVersion = "1.6.10";
 
 // Our standalone globals.
 // These are separated out for easy access.
@@ -138,9 +138,9 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 3/4: Create a screen and/or kick off game (in other threads).
     // -------------------------------------------------------------------------
 
-    if (g_app->UsesEventLoop()) {
-      // On our event-loop using platforms we now simply sit in our event loop
-      // until the app is quit.
+    if (g_app->ManagesEventLoop()) {
+      // On our event-loop-managing platforms we now simply sit in our event
+      // loop until the app is quit.
       g_main_thread->RunEventLoop(false);
     } else {
       // In this case we'll now simply return and let the OS feed us events
@@ -156,8 +156,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
         std::string("Unhandled exception in BallisticaMain(): ") + exc.what();
 
     // Exiting the app via an exception tends to trigger crash reports
-    // on various platforms. If it doesn't appear that we're an official live
-    // build then we'd rather just  exit cleanly with an error code and avoid
+    // on various platforms. If it seems we're not on an official live
+    // build then we'd rather just exit cleanly with an error code and avoid
     // polluting crash report logs from dev builds.
     FatalError::ReportFatalError(error_msg, true);
     bool exit_cleanly = !IsUnmodifiedBlessedBuild();
@@ -210,7 +210,7 @@ auto FatalError(const std::string& message) -> void {
   assert(handled);
 }
 
-auto GetUniqueSessionIdentifier() -> const std::string& {
+auto GetAppInstanceUUID() -> const std::string& {
   static std::string session_id;
   static bool have_session_id = false;
 
@@ -225,7 +225,7 @@ auto GetUniqueSessionIdentifier() -> const std::string& {
     }
     if (!have_session_id) {
       // As an emergency fallback simply use a single random number.
-      Log("WARNING: GetUniqueSessionIdentifier() using rand fallback.");
+      Log("WARNING: GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           Platform::GetCurrentMilliseconds()));                    // NOLINT
       session_id = std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
@@ -256,11 +256,7 @@ auto InAudioThread() -> bool {
 }
 
 auto InBGDynamicsThread() -> bool {
-#if !BA_HEADLESS_BUILD
   return (g_bg_dynamics_server && g_bg_dynamics_server->thread()->IsCurrent());
-#else
-  return false;
-#endif
 }
 
 auto InMediaThread() -> bool {

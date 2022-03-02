@@ -22,7 +22,7 @@
 #include "ballistica/ui/widget/scroll_widget.h"
 
 #if !BA_HEADLESS_BUILD
-extern "C" void SDL_ericf_focus();
+extern "C" void SDL_ericf_focus(void);
 #endif
 
 namespace ballistica {
@@ -2010,20 +2010,6 @@ auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-auto PyShowInvitesUI(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("show_invites_ui");
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  g_platform->AndroidGPGSPartyShowInvites();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
 auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -2388,14 +2374,6 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "set_party_icon_always_visible(value: bool) -> None\n"
        "\n"
        "(internal)"},
-
-      {"show_invites_ui", (PyCFunction)PyShowInvitesUI,
-       METH_VARARGS | METH_KEYWORDS,
-       "show_invites_ui() -> None\n"
-       "\n"
-       "(internal)\n"
-       "\n"
-       "Category: General Utility Functions"},
 
       {"show_progress_bar", (PyCFunction)PyShowProgressBar,
        METH_VARARGS | METH_KEYWORDS,

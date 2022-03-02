@@ -39,7 +39,7 @@ void App::PostInit() {
 
 App::~App() = default;
 
-auto App::UsesEventLoop() const -> bool {
+auto App::ManagesEventLoop() const -> bool {
   // We have 2 redundant values for essentially the same thing;
   // should get rid of IsEventPushMode() once we've created
   // App subclasses for our various platforms.
@@ -48,8 +48,8 @@ auto App::UsesEventLoop() const -> bool {
 
 void App::RunRenderUpkeepCycle() {
   // This should only be used in cases where the OS is handling the event loop.
-  assert(!UsesEventLoop());
-  if (UsesEventLoop()) {
+  assert(!ManagesEventLoop());
+  if (ManagesEventLoop()) {
     return;
   }
 
@@ -111,13 +111,10 @@ void App::ShutdownComplete() {
   assert(InMainThread());
   assert(g_platform);
 
-  // Need to call our cleanup stuff that would otherwise get called in main.
-  g_platform->FinalCleanup();
-
   done_ = true;
 
   // Kill our own event loop (or tell the OS to kill its).
-  if (UsesEventLoop()) {
+  if (ManagesEventLoop()) {
     thread()->Quit();
   } else {
     g_platform->QuitApp();
@@ -249,7 +246,7 @@ void App::ResumeApp() {
 void App::DidFinishRenderingFrame(FrameDef* frame) {}
 
 void App::PrimeEventPump() {
-  assert(!UsesEventLoop());
+  assert(!ManagesEventLoop());
 
   // Pump events manually until a screen gets created.
   // At that point we use frame-draws to drive our event loop.

@@ -110,33 +110,27 @@ auto Platform::Create() -> Platform* {
   return platform;
 }
 
-void Platform::FinalCleanup() {
-  if (g_app_globals->temp_cleanup_callback) {
-    g_app_globals->temp_cleanup_callback();
-  }
-}
-
 Platform::Platform() : starttime_(GetCurrentMilliseconds()) {}
 
 auto Platform::PostInit() -> void {}
 
 Platform::~Platform() = default;
 
-auto Platform::GetUniqueDeviceIdentifier() -> const std::string& {
+auto Platform::GetLegacyDeviceUUID() -> const std::string& {
   if (!have_device_uuid_) {
-    device_uuid_ = GetDeviceUUIDPrefix();
+    legacy_device_uuid_ = GetDeviceAccountUUIDPrefix();
 
     std::string real_unique_uuid;
-    bool have_real_unique_uuid = GetRealDeviceUUID(&real_unique_uuid);
+    bool have_real_unique_uuid = GetRealLegacyDeviceUUID(&real_unique_uuid);
     if (have_real_unique_uuid) {
-      device_uuid_ += real_unique_uuid;
+      legacy_device_uuid_ += real_unique_uuid;
     }
 
     // Keep demo/arcade uuids unique.
     if (g_buildconfig.demo_build()) {
-      device_uuid_ += "_d";
+      legacy_device_uuid_ += "_d";
     } else if (g_buildconfig.arcade_build()) {
-      device_uuid_ += "_a";
+      legacy_device_uuid_ += "_a";
     }
 
     // Ok, as a fallback on platforms where we don't yet have a way to get a
@@ -153,13 +147,13 @@ auto Platform::GetUniqueDeviceIdentifier() -> const std::string& {
         if (size >= 0) {
           assert(size < 100);
           buffer[size] = 0;
-          device_uuid_ += buffer;
+          legacy_device_uuid_ += buffer;
         }
         fclose(f);
       } else {
         // No existing one; generate it.
         std::string val = GenerateUUID();
-        device_uuid_ += val;
+        legacy_device_uuid_ += val;
         if (FILE* f2 = FOpen(path.c_str(), "wb")) {
           size_t result = fwrite(val.c_str(), val.size(), 1, f2);
           if (result != 1) Log("unable to write bsuuid file.");
@@ -171,18 +165,48 @@ auto Platform::GetUniqueDeviceIdentifier() -> const std::string& {
     }
     have_device_uuid_ = true;
   }
-  return device_uuid_;
+  return legacy_device_uuid_;
 }
 
-auto Platform::GetDeviceUUIDPrefix() -> std::string {
-  Log("GetDeviceUUIDPrefix() unimplemented");
+auto Platform::GetDeviceAccountUUIDPrefix() -> std::string {
+  Log("GetDeviceAccountUUIDPrefix() unimplemented");
   return "u";
 }
 
-auto Platform::GetRealDeviceUUID(std::string* uuid) -> bool { return false; }
+auto Platform::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
+  return false;
+}
 
 auto Platform::GenerateUUID() -> std::string {
   throw Exception("GenerateUUID() unimplemented");
+}
+
+auto Platform::GetPublicDeviceUUID() -> std::string {
+  assert(g_python);
+  if (public_device_uuid_.empty()) {
+    std::list<std::string> inputs{GetPublicDeviceUUIDInputs()};
+
+    // This UUID is supposed to change periodically, so let's plug in
+    // some stuff to enforce that.
+    inputs.emplace_back(GetOSVersionString());
+    inputs.emplace_back(kAppVersion);
+    inputs.emplace_back("kerploople");
+    // int i{};
+    // for (auto&& input : inputs) {
+    //   printf("INPUT %d IS %s\n", i + 1, input.c_str());
+    // }
+    auto gil{Python::ScopedInterpreterLock()};
+    auto pylist{g_python->StringList(inputs)};
+    auto args{g_python->SingleMemberTuple(pylist)};
+    auto result = g_python->obj(Python::ObjID::kHashStringsCall).Call(args);
+    assert(result.UnicodeCheck());
+    public_device_uuid_ = result.Str();
+  }
+  return public_device_uuid_;
+}
+
+auto Platform::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
+  throw Exception("GetPublicDeviceUUIDInputs unimplemented");
 }
 
 auto Platform::GetDefaultConfigDir() -> std::string {
@@ -301,7 +325,7 @@ auto Platform::GetReplaysDir() -> std::string {
 
 // rename() supporting UTF8 strings.
 auto Platform::Rename(const char* oldname, const char* newname) -> int {
-  // this covers non-windows platforms
+  // This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -310,7 +334,7 @@ auto Platform::Rename(const char* oldname, const char* newname) -> int {
 }
 
 auto Platform::Remove(const char* path) -> int {
-  // this covers non-windows platforms
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -320,7 +344,7 @@ auto Platform::Remove(const char* path) -> int {
 
 // stat() supporting UTF8 strings.
 auto Platform::Stat(const char* path, struct BA_STAT* buffer) -> int {
-  // this covers non-windows platforms
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -330,7 +354,7 @@ auto Platform::Stat(const char* path, struct BA_STAT* buffer) -> int {
 
 // fopen() supporting UTF8 strings.
 auto Platform::FOpen(const char* path, const char* mode) -> FILE* {
-  // this covers non-windows platforms
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -349,12 +373,12 @@ auto Platform::GetSocketErrorString() -> std::string {
 }
 
 auto Platform::GetSocketError() -> int {
-  // by default this is simply errno
+  // By default this is simply errno.
   return errno;
 }
 
 auto Platform::GetErrnoString() -> std::string {
-  // this covers non-windows platforms
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #elif BA_OSTYPE_LINUX
@@ -419,7 +443,7 @@ auto Platform::DoGetUserPythonDirectory() -> std::string {
 }
 
 void Platform::DoMakeDir(const std::string& dir, bool quiet) {
-  // Default case here covers all non-windows platforms.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -740,7 +764,7 @@ auto Platform::BlockingFatalErrorDialog(const std::string& message) -> void {
 }
 
 void Platform::SetupDataDirectory() {
-// This covers non-windows cases.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -763,7 +787,7 @@ void Platform::SetupDataDirectory() {
 }
 
 void Platform::SetEnv(const std::string& name, const std::string& value) {
-// This covers non-windows cases.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -784,7 +808,7 @@ auto Platform::IsStdinATerminal() -> bool {
 #endif
 }
 
-auto Platform::GetOSVersionString() -> std::string { return ""; }
+auto Platform::GetOSVersionString() -> std::string { return "?"; }
 
 auto Platform::GetUserAgentString() -> std::string {
   std::string device = GetDeviceName();
@@ -843,7 +867,7 @@ auto Platform::GetUserAgentString() -> std::string {
 }
 
 auto Platform::GetCWD() -> std::string {
-// Covers non-windows cases.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -931,15 +955,15 @@ void Platform::AndroidQuitActivity() {
 
 auto Platform::GetDeviceAccountID() -> std::string {
   if (HeadlessMode()) {
-    return "S-" + GetUniqueDeviceIdentifier();
+    return "S-" + GetLegacyDeviceUUID();
   }
 
   // Everything else is just considered a 'local' account, though we may
   // give unique ids for unique builds..
   if (g_buildconfig.iircade_build()) {
-    return "L-iRc" + GetUniqueDeviceIdentifier();
+    return "L-iRc" + GetLegacyDeviceUUID();
   }
-  return "L-" + GetUniqueDeviceIdentifier();
+  return "L-" + GetLegacyDeviceUUID();
 }
 
 auto Platform::DemangleCXXSymbol(const std::string& s) -> std::string {
@@ -969,17 +993,6 @@ auto Platform::DemangleCXXSymbol(const std::string& s) -> std::string {
 auto Platform::NewAutoReleasePool() -> void* { throw Exception(); }
 
 void Platform::DrainAutoReleasePool(void* pool) { throw Exception(); }
-
-auto Platform::AndroidGPGSNewConnectionToClient(int id) -> ConnectionToClient* {
-  throw Exception();
-}
-auto Platform::AndroidGPGSNewConnectionToHost() -> ConnectionToHost* {
-  throw Exception();
-}
-
-auto Platform::AndroidIsGPGSConnectionToClient(ConnectionToClient* c) -> bool {
-  throw Exception();
-}
 
 void Platform::OpenURL(const std::string& url) {
   // Can't open URLs in VR - just tell the game thread to show the url.
@@ -1064,18 +1077,6 @@ auto Platform::GetHasVideoAds() -> bool {
   return GetHasAds();
 }
 
-void Platform::AndroidGPGSPartyInvitePlayers() {
-  Log("AndroidGPGSPartyInvitePlayers() unimplemented");
-}
-
-void Platform::AndroidGPGSPartyShowInvites() {
-  Log("AndroidGPGSPartyShowInvites() unimplemented");
-}
-
-void Platform::AndroidGPGSPartyInviteAccept(const std::string& invite_id) {
-  Log("AndroidGPGSPartyInviteAccept() unimplemented");
-}
-
 void Platform::SignIn(const std::string& account_type) {
   Log("SignIn() unimplemented");
 }
@@ -1140,14 +1141,6 @@ auto Platform::MacMusicAppGetPlaylists() -> std::list<std::string> {
   return {};
 }
 
-void Platform::StartListeningForWiiRemotes() {
-  Log("StartListeningForWiiRemotes() unimplemented");
-}
-
-void Platform::StopListeningForWiiRemotes() {
-  Log("StopListeningForWiiRemotes() unimplemented");
-}
-
 void Platform::SetCurrentThreadName(const std::string& name) {
   // Currently we leave the main thread alone, otherwise we show up as
   // "BallisticaMainThread" under "top" on linux (should check other platforms).
@@ -1162,7 +1155,7 @@ void Platform::SetCurrentThreadName(const std::string& name) {
 }
 
 void Platform::Unlink(const char* path) {
-  // This covers all but windows.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -1199,7 +1192,7 @@ auto Platform::IsEventPushMode() -> bool { return false; }
 auto Platform::GetDisplayResolution(int* x, int* y) -> bool { return false; }
 
 void Platform::CloseSocket(int socket) {
-// This covers all but windows.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -1207,18 +1200,8 @@ void Platform::CloseSocket(int socket) {
 #endif
 }
 
-auto Platform::SocketPair(int domain, int type, int protocol, int socks[2])
-    -> int {
-  // This covers all but windows.
-#if BA_OSTYPE_WINDOWS
-  throw Exception();
-#else
-  return socketpair(domain, type, protocol, socks);
-#endif
-}
-
 auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
-// This covers all but windows.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -1252,7 +1235,7 @@ auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
 }
 
 auto Platform::SetSocketNonBlocking(int sd) -> bool {
-// This covers all but windows.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
@@ -1363,7 +1346,7 @@ static void HandleSIGINT(int s) {
 #endif
 
 void Platform::SetupInterruptHandling() {
-  // For non-windows platforms, set up posix-y SIGINT handling.
+// This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else

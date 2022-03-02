@@ -167,16 +167,12 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print_test_results(_dummy_fail)
 
         # V1 ping
-        baseaddr = _ba.get_master_server_address(internal=True,
-                                                 source=0,
-                                                 version=1)
+        baseaddr = _ba.get_master_server_address(source=0, version=1)
         _print(f'\nContacting V1 master-server src0 ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
         # V1 alternate ping
-        baseaddr = _ba.get_master_server_address(internal=True,
-                                                 source=1,
-                                                 version=1)
+        baseaddr = _ba.get_master_server_address(source=1, version=1)
         _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
@@ -185,14 +181,14 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         for srcid, result in sorted(ba.app.net.v1_ctest_results.items()):
             _print(f'\nV1 src{srcid} result: {result}')
 
-        curv1addr = _ba.get_master_server_address(internal=True, version=1)
+        curv1addr = _ba.get_master_server_address(version=1)
         _print(f'\nUsing V1 address: {curv1addr}')
 
         _print('\nRunning V1 transaction...')
         _print_test_results(_test_v1_transaction)
 
         # V2 ping
-        baseaddr = _ba.get_master_server_address(internal=True, version=2)
+        baseaddr = _ba.get_master_server_address(version=2)
         _print(f'\nContacting V2 master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 

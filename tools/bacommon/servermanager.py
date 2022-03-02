@@ -104,7 +104,7 @@ class ServerConfig:
     # if ${ACCOUNT} is present in the string, it will be replaced by the
     # currently-signed-in account's id. To fetch info about an account,
     # your back-end server can use the following url:
-    # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
+    # https://legacy.ballistica.net/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
     # If present, the server subprocess will attempt to gracefully exit after

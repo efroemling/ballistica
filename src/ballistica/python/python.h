@@ -142,8 +142,6 @@ class Python {
   /// is useful as an object identifier/etc.
   static auto GetPythonFileLocation(bool pretty = true) -> std::string;
 
-  void V1PartyInvite(const std::string& player, const std::string& invite_id);
-  void V1PartyInviteRevoke(const std::string& invite_id);
   void set_env_obj(PyObject* obj) { env_ = obj; }
   auto env_obj() const -> PyObject* {
     assert(env_);
@@ -270,7 +268,6 @@ class Python {
     kOnScreenKeyboardClass,
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
-    kHandlePartyInviteCall,
     kHandlePartyInviteRevokeCall,
     kDoPlayMusicCall,
     kDeepLinkCall,
@@ -352,6 +349,7 @@ class Python {
     kGetPlayerIconCall,
     kLstrFromJsonCall,
     kUUIDStrCall,
+    kHashStringsCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -372,6 +370,12 @@ class Python {
     assert(id < ObjID::kLast);
     return objs_[static_cast<int>(id)].exists();
   }
+
+  /// Create a Python list of strings.
+  auto StringList(const std::list<std::string>& values) -> PythonRef;
+
+  /// Create a Python single-member tuple.
+  auto SingleMemberTuple(const PythonRef& member) -> PythonRef;
 
   /// Push a call to a preset obj to the game thread
   /// (will be run in the UI context).

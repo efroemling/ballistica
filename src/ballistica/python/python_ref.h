@@ -107,6 +107,9 @@ class PythonRef {
   /// Returns whether the underlying PyObject is callable.
   auto CallableCheck() const -> bool;
 
+  /// Return whether the underlying PyObject is unicode.
+  auto UnicodeCheck() const -> bool;
+
   /// Call the PyObject. On error, (optionally) prints errors and returns empty
   /// ref.
   auto Call(PyObject* args, PyObject* keywds = nullptr,

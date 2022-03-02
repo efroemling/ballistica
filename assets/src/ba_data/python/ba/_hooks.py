@@ -352,3 +352,13 @@ def get_player_icon(sessionplayer: ba.SessionPlayer) -> dict[str, Any]:
         'tint_color': info['tint_color'],
         'tint2_color': info['tint2_color']
     }
+
+
+def hash_strings(inputs: list[str]) -> str:
+    """Hash provided strings into a short output string."""
+    import hashlib
+    sha = hashlib.sha1()
+    for inp in inputs:
+        sha.update(inp.encode())
+
+    return sha.hexdigest()

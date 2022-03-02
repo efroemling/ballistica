@@ -15,7 +15,8 @@ class PlatformWindows : public Platform {
  public:
   PlatformWindows();
   void SetupInterruptHandling() override;
-  auto GetDeviceUUIDPrefix() -> std::string override { return "w"; }
+  auto GetDeviceAccountUUIDPrefix() -> std::string override { return "w"; }
+  auto GetPublicDeviceUUIDInputs() -> std::list<std::string> override;
   auto GenerateUUID() -> std::string override;
   auto GetDefaultConfigDir() -> std::string override;
   auto Remove(const char* path) -> int;
@@ -42,8 +43,6 @@ class PlatformWindows : public Platform {
   void OpenDirExternally(const std::string& path) override;
   void Unlink(const char* path) override;
   void CloseSocket(int socket) override;
-  auto SocketPair(int domain, int type, int protocol, int socks[2])
-      -> int override;
   auto GetBroadcastAddrs() -> std::vector<uint32_t> override;
   auto SetSocketNonBlocking(int sd) -> bool override;
   auto GetPlatformName() -> std::string override;

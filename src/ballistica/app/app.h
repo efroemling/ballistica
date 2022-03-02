@@ -30,7 +30,7 @@ class App : public Module {
   /// If false, BallisticaMain returns immediately and it is assumed
   /// that the OS handles the app lifecycle and pushes events to the app
   /// via callbacks/etc.
-  auto UsesEventLoop() const -> bool;
+  auto ManagesEventLoop() const -> bool;
 
   /// Called for non-event-loop apps to give them an opportunity to
   /// ensure they are self-sustaining. For instance, an app relying on

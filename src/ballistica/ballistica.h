@@ -147,9 +147,9 @@ extern Utils* g_utils;
 /// Main ballistica entry point.
 auto BallisticaMain(int argc, char** argv) -> int;
 
-/// Return a string that should be universally unique to this device and
+/// Return a string that should be universally unique to this particular
 /// running instance of the app.
-auto GetUniqueSessionIdentifier() -> const std::string&;
+auto GetAppInstanceUUID() -> const std::string&;
 
 /// Have our main threads/modules all been inited yet?
 auto IsBootstrapped() -> bool;
@@ -242,7 +242,7 @@ inline auto HeadlessMode() -> bool {
 /// by significant amounts (even if the app has been sleeping or whatnot).
 auto GetRealTime() -> millisecs_t;
 
-/// Return a random float value.  Not guaranteed to be deterministic or
+/// Return a random float value. Not guaranteed to be deterministic or
 /// consistent across platforms.
 inline auto RandomFloat() -> float {
   // FIXME: should convert this to something thread-safe.

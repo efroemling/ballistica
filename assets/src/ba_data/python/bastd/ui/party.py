@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import math
-import weakref
 from typing import TYPE_CHECKING, cast
 
 import _ba
@@ -413,53 +412,3 @@ class PartyWindow(ba.Window):
         """Close the window and make a lovely sound."""
         ba.playsound(ba.getsound('swish'))
         self.close()
-
-
-def handle_party_invite(name: str, invite_id: str) -> None:
-    """Handle an incoming party invitation."""
-    from bastd import mainmenu
-    from bastd.ui import confirm
-    ba.playsound(ba.getsound('fanfare'))
-
-    # if we're not in the main menu, just print the invite
-    # (don't want to screw up an in-progress game)
-    in_game = not isinstance(_ba.get_foreground_host_session(),
-                             mainmenu.MainMenuSession)
-    if in_game:
-        ba.screenmessage(ba.Lstr(
-            value='${A}\n${B}',
-            subs=[('${A}',
-                   ba.Lstr(resource='gatherWindow.partyInviteText',
-                           subs=[('${NAME}', name)])),
-                  ('${B}',
-                   ba.Lstr(
-                       resource='gatherWindow.partyInviteGooglePlayExtraText'))
-                  ]),
-                         color=(0.5, 1, 0))
-    else:
-
-        def do_accept(inv_id: str) -> None:
-            _ba.accept_party_invitation(inv_id)
-
-        conf = confirm.ConfirmWindow(
-            ba.Lstr(resource='gatherWindow.partyInviteText',
-                    subs=[('${NAME}', name)]),
-            ba.Call(do_accept, invite_id),
-            width=500,
-            height=150,
-            color=(0.75, 1.0, 0.0),
-            ok_text=ba.Lstr(resource='gatherWindow.partyInviteAcceptText'),
-            cancel_text=ba.Lstr(resource='gatherWindow.partyInviteIgnoreText'))
-
-        # FIXME: Ugly.
-        # Let's store the invite-id away on the confirm window so we know if
-        # we need to kill it later.
-        conf.party_invite_id = invite_id  # type: ignore
-
-        # store a weak-ref so we can get at this later
-        ba.app.invite_confirm_windows.append(weakref.ref(conf))
-
-        # go ahead and prune our weak refs while we're here.
-        ba.app.invite_confirm_windows = [
-            w for w in ba.app.invite_confirm_windows if w() is not None
-        ]
