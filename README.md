@@ -31,3 +31,5 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 
 * **Q: Will my existing BombSquad 1.4.x mods still work?**
 * A: Not 'out of the box'. All mods will need to be explicitly updated to work with the new ballistica apis in 1.5+. This may or may not be a significant amount of work depending on the mod. I would highly suggest tinkering around with some of the new features in 1.5 such as type-safe Python and dynamic assets before attempting to port any old mods, as some things are done significantly differently now. You may also want to consider simply sticking with 1.4 builds for a while longer, especially for server duties, since they will remain fully compatible with clients running 1.5. The new ballistica APIs may be changing significantly for at least a while as the dust settles, but they will be worth switching to in the end, I promise!
+
+testing PRIV (ignore this)
