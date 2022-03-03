@@ -10,7 +10,7 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 
 [Head to the project wiki to get started](https://github.com/efroemling/ballistica/wiki), or learn more about the project below.
 
-testing PUB (ignore this)
+testing PUB B (ignore this)
 
 ### Project Goals
 * Cleanup
