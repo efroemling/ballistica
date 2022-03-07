@@ -10,8 +10,6 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 
 [Head to the project wiki to get started](https://github.com/efroemling/ballistica/wiki), or learn more about the project below.
 
-Test Pub C (Ignore this)
-
 ### Project Goals
 * Cleanup
   * BombSquad's codebase, and especially its scripting layer, have grown a lot over its lifetime, but not always in a 'designed' way. It was overdue for a major refactoring, which should keep it more maintainable for years to come. Examples of this include breaking up the monstrous twenty-six-thousand-line bsUI.py file into a much cleaner individual subpackages, updating all code from Python 2.7 to the latest 3.X versions, and adding type annotations to the entire codebase.
@@ -33,5 +31,3 @@ Test Pub C (Ignore this)
 
 * **Q: Will my existing BombSquad 1.4.x mods still work?**
 * A: Not 'out of the box'. All mods will need to be explicitly updated to work with the new ballistica apis in 1.5+. This may or may not be a significant amount of work depending on the mod. I would highly suggest tinkering around with some of the new features in 1.5 such as type-safe Python and dynamic assets before attempting to port any old mods, as some things are done significantly differently now. You may also want to consider simply sticking with 1.4 builds for a while longer, especially for server duties, since they will remain fully compatible with clients running 1.5. The new ballistica APIs may be changing significantly for at least a while as the dust settles, but they will be worth switching to in the end, I promise!
-
-Test Priv C (Ignore this)
