@@ -629,7 +629,8 @@ def generate(sources_hash: str, outfilename: str) -> None:
             # Ignore _ba.app.
             continue
         else:
-            raise Exception(f'found unknown obj {entry}')
+            raise Exception(
+                f'found unknown obj {entry}, {getattr(module, entry)}')
     funcnames.sort()
     classnames.sort()
     out = (get_public_license('python')

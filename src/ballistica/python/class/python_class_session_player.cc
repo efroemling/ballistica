@@ -50,7 +50,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* obj) {
       "\n"
       "These are created and managed internally and\n"
       "provided to your ba.Session/ba.Activity instances.\n"
-      "Be aware that, like ba.Nodes, ba.SessionPlayer objects are 'weak'\n"
+      "Be aware that, like `ba.Node`s, ba.SessionPlayer objects are 'weak'\n"
       "references under-the-hood; a player can leave the game at\n"
       " any point. For this reason, you should make judicious use of the\n"
       "ba.SessionPlayer.exists() method (or boolean operator) to ensure\n"

@@ -728,7 +728,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
       {"getnodes", PyGetNodes, METH_VARARGS,
        "getnodes() -> list\n"
        "\n"
-       "Return all nodes in the current ba.Context."
+       "Return all nodes in the current ba.Context.\n"
        "\n"
        "Category: **Gameplay Functions**"},
 

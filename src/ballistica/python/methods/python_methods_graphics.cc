@@ -439,7 +439,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
        "them elsewhere will be meaningless.\n"
        "\n"
-       "see ba.SpecialChar for the list of available characters."},
+       "See ba.SpecialChar for the list of available characters."},
   };
 }
 

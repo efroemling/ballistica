@@ -1654,9 +1654,7 @@ def get_chat_messages() -> list[str]:
 
 
 def get_client_public_device_uuid(client_id: int) -> Optional[str]:
-    """get_client_public_device_uuid(client_id: int) -> Optional[str]
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
 
