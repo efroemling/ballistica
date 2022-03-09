@@ -217,6 +217,9 @@
     <ClInclude Include="..\..\src\ballistica\ballistica.h" />
     <ClInclude Include="..\..\src\ballistica\config\config_cmake.h" />
     <ClInclude Include="..\..\src\ballistica\config\config_common.h" />
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_common.h" />
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_generic.h" />
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_headless.h" />
     <ClCompile Include="..\..\src\ballistica\core\context.cc" />
     <ClInclude Include="..\..\src\ballistica\core\context.h" />
     <ClCompile Include="..\..\src\ballistica\core\exception.cc" />
@@ -300,6 +303,7 @@
     <ClCompile Include="..\..\src\ballistica\game\game.cc" />
     <ClInclude Include="..\..\src\ballistica\game\game.h" />
     <ClInclude Include="..\..\src\ballistica\game\game_stream.h" />
+    <ClCompile Include="..\..\src\ballistica\game\host_activity.cc" />
     <ClInclude Include="..\..\src\ballistica\game\host_activity.h" />
     <ClCompile Include="..\..\src\ballistica\game\player.cc" />
     <ClInclude Include="..\..\src\ballistica\game\player.h" />
@@ -491,6 +495,8 @@
     <ClInclude Include="..\..\src\ballistica\platform\platform.h" />
     <ClCompile Include="..\..\src\ballistica\platform\sdl\sdl_app.cc" />
     <ClInclude Include="..\..\src\ballistica\platform\sdl\sdl_app.h" />
+    <ClCompile Include="..\..\src\ballistica\platform\windows\platform_windows.cc" />
+    <ClInclude Include="..\..\src\ballistica\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\python\class\python_class.cc" />
     <ClInclude Include="..\..\src\ballistica\python\class\python_class.h" />
     <ClCompile Include="..\..\src\ballistica\python\class\python_class_activity_data.cc" />

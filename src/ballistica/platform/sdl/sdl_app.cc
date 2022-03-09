@@ -325,7 +325,7 @@ SDLApp::SDLApp(Thread* thread) : App(thread) {
   // SDL events the moment they're generated and we process them immediately.
   // This way we don't have to poll for events and can be purely callback-based,
   // which fits in nicely with most modern event models.
-  if (!UsesEventLoop()) {
+  if (!ManagesEventLoop()) {
 #if BA_SDL2_BUILD
     SDL_SetEventFilter(FilterSDL2Event, nullptr);
 #else

@@ -408,6 +408,7 @@ auto Utils::PtrToString(const void* val) -> std::string {
   return buffer;
 }
 
+// FIXME: This should not live here.
 static const char* g_default_random_names[] = {
     "Flopsy",  "Skippy",    "Boomer",   "Jolly",    "Zeus",     "Garth",
     "Dizzy",   "Mullet",    "Ogre",     "Ginger",   "Nippy",    "Murphy",

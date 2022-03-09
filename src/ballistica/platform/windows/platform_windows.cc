@@ -127,6 +127,28 @@ void PlatformWindows::SetupInterruptHandling() {
   }
 }
 
+auto PlatformWindows::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
+  std::list<std::string> out;
+
+  std::string ret;
+  char value[64];
+  DWORD size = _countof(value);
+  DWORD type = REG_SZ;
+  HKEY key;
+  LONG retKey =
+      ::RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography",
+                      0, KEY_READ | KEY_WOW64_64KEY, &key);
+  LONG retVal = ::RegQueryValueExA(key, "MachineGuid", nullptr, &type,
+                                   (LPBYTE)value, &size);
+  if (retKey == ERROR_SUCCESS && retVal == ERROR_SUCCESS) {
+    ret = value;
+  }
+  ::RegCloseKey(key);
+
+  out.push_back(ret);
+  return out;
+}
+
 std::string PlatformWindows::GenerateUUID() {
   std::string val;
   UUID uuid;
@@ -827,87 +849,6 @@ void PlatformWindows::OpenDirExternally(const std::string& path) {
 void PlatformWindows::Unlink(const char* path) { _unlink(path); }
 
 void PlatformWindows::CloseSocket(int socket) { closesocket(socket); }
-
-int PlatformWindows::SocketPair(int domain, int type, int protocol,
-                                int socks_out[2]) {
-  assert(type == SOCK_STREAM);
-
-  int make_overlapped = false;
-  union {
-    struct sockaddr_in inaddr;
-    struct sockaddr addr;
-  } a;
-  SOCKET listener;
-  int e;
-  socklen_t addrlen = sizeof(a.inaddr);
-  DWORD flags = 0;
-  int reuse = 1;
-  int nodelay = 1;
-
-  listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (listener < 0) {
-    return SOCKET_ERROR;
-  }
-
-  memset(&a, 0, sizeof(a));
-  a.inaddr.sin_family = AF_INET;
-  a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  a.inaddr.sin_port = 0;
-
-  SOCKET socks[2];
-  socks[0] = socks[1] = INVALID_SOCKET;
-  do {
-    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-                   reinterpret_cast<char*>(&reuse), (socklen_t)sizeof(reuse))
-        == -1) {
-      break;
-    }
-    if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR) {
-      break;
-    }
-    if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR) {
-      break;
-    }
-    if (listen(listener, 1) == SOCKET_ERROR) {
-      break;
-    }
-    socks[0] = socket(AF_INET, SOCK_STREAM, 0);
-    if (socks[0] < 0) {
-      break;
-    }
-    if (connect(socks[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR) {
-      break;
-    }
-    socks[1] = accept(listener, nullptr, nullptr);
-
-    // not sure if this helps but what the hey...
-    if (setsockopt(socks[0], IPPROTO_TCP, TCP_NODELAY,
-                   reinterpret_cast<char*>(&nodelay),
-                   (socklen_t)sizeof(nodelay))
-        == -1)
-      break;
-    if (setsockopt(socks[1], IPPROTO_TCP, TCP_NODELAY,
-                   reinterpret_cast<char*>(&nodelay),
-                   (socklen_t)sizeof(nodelay))
-        == -1) {
-      break;
-    }
-
-    if (socks[1] < 0) break;
-
-    closesocket(listener);
-    socks_out[0] = static_cast_check_fit<int>(socks[0]);
-    socks_out[1] = static_cast_check_fit<int>(socks[1]);
-    return 0;
-  } while (0);
-
-  e = WSAGetLastError();
-  closesocket(listener);
-  closesocket(socks[0]);
-  closesocket(socks[1]);
-  WSASetLastError(e);
-  return SOCKET_ERROR;
-}
 
 std::vector<uint32_t> PlatformWindows::GetBroadcastAddrs() {
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))

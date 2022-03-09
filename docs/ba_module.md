@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated for Ballistica version 1.6.9 build 20480</em></h4>
+<h4><em>last updated for Ballistica version 1.6.10 build 20501</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -3428,7 +3428,7 @@ needs a chooser.</p>
     currently-active language.</p>
 
 <p>    To see available resource keys, look at any of the bs_language_*.py files
-    in the game or the translations pages at bombsquadgame.com/translate.</p>
+    in the game or the translations pages at legacy.ballistica.net/translate.</p>
 
 <pre><span><em><small>    # EXAMPLE 1: specify a string from a resource path</small></em></span>
     mynode.text = <a href="#class_ba_Lstr">ba.Lstr</a>(resource='audioSettingsWindow.titleText')</pre>

@@ -15,12 +15,12 @@ namespace ballistica {
 
 /// For capturing and printing stack-traces and related errors.
 /// Platforms should subclass this and return instances in GetStackTrace().
+/// Stack trace classes should capture the stack state immediately upon
+/// construction but should do the bare minimum amount of work to store it.
+/// Any expensive operations such as symbolification should be deferred until
+/// GetDescription().
 class PlatformStackTrace {
  public:
-  // The stack trace should capture the stack state immediately upon
-  // construction but should do the bare minimum amount of work to store it. Any
-  // expensive operations such as symbolification should be deferred until
-  // GetDescription().
   virtual ~PlatformStackTrace() = default;
 
   // Return a human readable version of the trace (with symbolification if
@@ -32,9 +32,9 @@ class PlatformStackTrace {
   virtual auto copy() const noexcept -> PlatformStackTrace* = 0;
 };
 
-// This class attempts to abstract away most platform-specific functionality.
-// Ideally we should need to pull in no platform-specific system headers outside
-// of the platform*.cc files and can just go through this.
+/// This class attempts to abstract away most platform-specific functionality.
+/// Ideally we should need to pull in no platform-specific system headers
+/// outside of the platform*.cc files and can just go through this.
 class Platform {
  public:
   static auto Create() -> Platform*;
@@ -49,60 +49,58 @@ class Platform {
   virtual auto PostInit() -> void;
 
   /// Create the proper App module and add it to the main_thread.
-  void CreateApp();
+  auto CreateApp() -> void;
 
   /// Create the appropriate Graphics subclass for the app.
-  Graphics* CreateGraphics();
+  auto CreateGraphics() -> Graphics*;
 
-  virtual void CreateAuxiliaryModules();
-  virtual void WillExitMain(bool errored);
+  virtual auto CreateAuxiliaryModules() -> void;
+  virtual auto WillExitMain(bool errored) -> void;
 
-  // Inform the platform that all subsystems are up and running and it can
-  // start talking to them.
-  virtual void OnBootstrapComplete();
+  /// Inform the platform that all subsystems are up and running and it can
+  /// start talking to them.
+  virtual auto OnBootstrapComplete() -> void;
 
   // Get/set values before standard game settings are available
   // (for values needed before SDL init/etc).
   // FIXME: We should have some sort of 'bootconfig.json' file for these.
-  // (or simply read the regular config in via c++ immediately)
+  //  (or simply read the regular config in via c++ immediately)
   auto GetLowLevelConfigValue(const char* key, int default_value) -> int;
-  void SetLowLevelConfigValue(const char* key, int value);
+  auto SetLowLevelConfigValue(const char* key, int value) -> void;
 
-  // Called when the app config is being read/applied.
-  virtual void ApplyConfig();
+  /// Called when the app config is being read/applied.
+  virtual auto ApplyConfig() -> void;
 
-  // Called when the app should set itself up to intercept ctrl-c presses.
-  virtual void SetupInterruptHandling();
-
-  void FinalCleanup();
+  /// Called when the app should set itself up to intercept ctrl-c presses.
+  virtual auto SetupInterruptHandling() -> void;
 
 #pragma mark FILES -------------------------------------------------------------
 
-  // remove() support UTF8 strings.
+  /// remove() support UTF8 strings.
   virtual auto Remove(const char* path) -> int;
 
-  // stat() supporting UTF8 strings.
+  /// stat() supporting UTF8 strings.
   virtual auto Stat(const char* path, struct BA_STAT* buffer) -> int;
 
-  // fopen() supporting UTF8 strings.
+  /// fopen() supporting UTF8 strings.
   virtual auto FOpen(const char* path, const char* mode) -> FILE*;
 
-  // rename() supporting UTF8 strings.
-  // For cross-platform consistency, this should also remove any file that
-  // exists at the target location first.
+  /// rename() supporting UTF8 strings.
+  /// For cross-platform consistency, this should also remove any file that
+  /// exists at the target location first.
   virtual auto Rename(const char* oldname, const char* newname) -> int;
 
-  // Simple cross-platform check for existence of a file.
+  /// Simple cross-platform check for existence of a file.
   auto FilePathExists(const std::string& name) -> bool;
 
   /// Attempt to make a directory; raise an Exception if unable,
   /// unless quiet is true.
-  void MakeDir(const std::string& dir, bool quiet = false);
+  auto MakeDir(const std::string& dir, bool quiet = false) -> void;
 
-  // Return the current working directory.
+  /// Return the current working directory.
   virtual auto GetCWD() -> std::string;
 
-  // Unlink a file.
+  /// Unlink a file.
   virtual auto Unlink(const char* path) -> void;
 
   /// Return the absolute path for the provided path. Note that this requires
@@ -132,7 +130,7 @@ class Platform {
   // Send a message to the default platform handler.
   // IMPORTANT: No Object::Refs should be created or destroyed within this call,
   // or deadlock can occur.
-  virtual void HandleLog(const std::string& msg);
+  virtual auto HandleLog(const std::string& msg) -> void;
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
@@ -149,15 +147,6 @@ class Platform {
 
   // Return the interface type based on the environment (phone, tablet, etc).
   virtual auto GetUIScale() -> UIScale;
-
-  // Return a string *reasonably* likely to be unique and consistent for this
-  // device. Do not assume this is globally unique and *do not* assume that it
-  // will never ever change (hardware upgrades may affect it, etc).
-  // IMPORTANT: This value should NEVER be sent over the wire to peers.
-  virtual auto GetUniqueDeviceIdentifier() -> const std::string&;
-
-  // Returns the ID to use for the device account
-  auto GetDeviceAccountID() -> std::string;
 
   auto GetConfigDirectory() -> std::string;
   auto GetConfigFilePath() -> std::string;
@@ -176,36 +165,62 @@ class Platform {
   /// Raises an exception on errors.
   virtual void SetEnv(const std::string& name, const std::string& value);
 
-  // Are we being run from a terminal? (should we show prompts, etc?).
+  /// Are we being run from a terminal? (should we show prompts, etc?).
   virtual auto IsStdinATerminal() -> bool;
 
-  // Return hostname or other id suitable for network searches, etc.
+  /// Return hostname or other id suitable for displaying in network search
+  /// results, etc.
   auto GetDeviceName() -> std::string;
 
-  // Are we running on a tv?
+  /// Get a UUID for use with things like device-accounts. This function
+  /// should not be used for other purposes, should not be modified, and
+  /// eventually should go away after device accounts are phased out.
+  /// Also, this value should never be shared beyond the local device.
+  auto GetLegacyDeviceUUID() -> const std::string&;
+
+  /// Get a UUID for the current device that is meant to be publicly shared.
+  /// This value will change occasionally due to OS updates, app updates, or
+  /// other factors, so it can not be used as a permanent identifier, but it
+  /// should remain constant over short periods and should not be easily
+  /// changeable by the user, making it useful for purposes such as temporary
+  /// server bans or spam prevention.
+  auto GetPublicDeviceUUID() -> std::string;
+
+  /// Return values which will be hashed to create a public device uuid.
+  /// These values may include things that may change periodically such
+  /// as minor os version numbers, but they should not include things
+  /// that change constantly or that can be changed easily by the user.
+  /// Only hashed versions of these values should ever be shared beyond
+  /// the local device.
+  virtual auto GetPublicDeviceUUIDInputs() -> std::list<std::string>;
+
+  /// Return whether there is an actual legacy-device-uuid value for
+  /// this platform, and also return it if so.
+  virtual auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool;
+
+  /// Are we running on a tv?
   virtual auto IsRunningOnTV() -> bool;
 
-  // Are we on a daydream enabled android device?
+  /// Are we on a daydream-enabled Android device?
   virtual auto IsRunningOnDaydream() -> bool;
 
-  // Do we have touchscreen hardware?
+  /// Do we have touchscreen hardware?
   auto HasTouchScreen() -> bool;
 
-  // Are we running on a desktop setup in general?
+  /// Are we running on a desktop setup in general?
   virtual auto IsRunningOnDesktop() -> bool;
 
-  // Are we running on fireTV hardware?
+  /// Are we running on fireTV hardware?
   virtual auto IsRunningOnFireTV() -> bool;
 
-  // Return the external storage path (currently only relevant on android).
+  /// Return the external storage path (currently only relevant on Android).
   virtual auto GetExternalStoragePath() -> std::string;
 
   // For enabling some special hardware optimizations for nvidia.
   auto is_tegra_k1() const -> bool { return is_tegra_k1_; }
-  void set_is_tegra_k1(bool val) { is_tegra_k1_ = val; }
+  auto set_is_tegra_k1(bool val) -> void { is_tegra_k1_ = val; }
 
-  // Return true if this platform includes its own python distribution
-  // (defaults to false).
+  /// Return whether this platform includes its own Python distribution
   virtual auto ContainsPythonDist() -> bool;
 
 #pragma mark INPUT DEVICES -----------------------------------------------------
@@ -215,32 +230,26 @@ class Platform {
 
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
-  virtual void Purchase(const std::string& item);
+  virtual auto Purchase(const std::string& item) -> void;
 
-  // Restore purchases (currently only relevant on apple platforms).
-  virtual void RestorePurchases();
+  // Restore purchases (currently only relevant on Apple platforms).
+  virtual auto RestorePurchases() -> void;
 
-  // purchase ack'ed by the master-server (so can consume)
-  virtual void PurchaseAck(const std::string& purchase,
-                           const std::string& order_id);
+  // Purchase was ack'ed by the master-server (so can consume).
+  virtual auto PurchaseAck(const std::string& purchase,
+                           const std::string& order_id) -> void;
 
 #pragma mark ANDROID -----------------------------------------------------------
 
   virtual auto GetAndroidExecArg() -> std::string;
-  virtual void AndroidSetResString(const std::string& res);
-  virtual auto AndroidIsGPGSConnectionToClient(ConnectionToClient* c) -> bool;
-  virtual auto AndroidGPGSNewConnectionToClient(int id) -> ConnectionToClient*;
-  virtual auto AndroidGPGSNewConnectionToHost() -> ConnectionToHost*;
-  virtual void AndroidSynthesizeBackPress();
-  virtual void AndroidQuitActivity();
-  virtual void AndroidShowAppInvite(const std::string& title,
+  virtual auto AndroidSetResString(const std::string& res) -> void;
+  virtual auto AndroidSynthesizeBackPress() -> void;
+  virtual auto AndroidQuitActivity() -> void;
+  virtual auto AndroidShowAppInvite(const std::string& title,
                                     const std::string& message,
-                                    const std::string& code);
-  virtual void AndroidRefreshFile(const std::string& file);
-  virtual void AndroidGPGSPartyInvitePlayers();
-  virtual void AndroidGPGSPartyShowInvites();
-  virtual void AndroidGPGSPartyInviteAccept(const std::string& invite_id);
-  virtual void AndroidShowWifiSettings();
+                                    const std::string& code) -> void;
+  virtual auto AndroidRefreshFile(const std::string& file) -> void;
+  virtual auto AndroidShowWifiSettings() -> void;
 
 #pragma mark PERMISSIONS -------------------------------------------------------
 
@@ -249,7 +258,7 @@ class Platform {
   /// then this may also present a message or pop-up instructing the user how
   /// to manually grant the permission (up to individual platforms to
   /// implement).
-  virtual void RequestPermission(Permission p);
+  virtual auto RequestPermission(Permission p) -> void;
 
   /// Returns true if this permission has been granted (or if asking is not
   /// required for it).
@@ -257,24 +266,26 @@ class Platform {
 
 #pragma mark ANALYTICS ---------------------------------------------------------
 
-  virtual void SetAnalyticsScreen(const std::string& screen);
-  virtual void IncrementAnalyticsCount(const std::string& name, int increment);
-  virtual void IncrementAnalyticsCountRaw(const std::string& name,
-                                          int increment);
-  virtual void IncrementAnalyticsCountRaw2(const std::string& name,
-                                           int uses_increment, int increment);
-  virtual void SubmitAnalyticsCounts();
+  virtual auto SetAnalyticsScreen(const std::string& screen) -> void;
+  virtual auto IncrementAnalyticsCount(const std::string& name, int increment)
+      -> void;
+  virtual auto IncrementAnalyticsCountRaw(const std::string& name,
+                                          int increment) -> void;
+  virtual auto IncrementAnalyticsCountRaw2(const std::string& name,
+                                           int uses_increment, int increment)
+      -> void;
+  virtual auto SubmitAnalyticsCounts() -> void;
 
 #pragma mark APPLE -------------------------------------------------------------
 
   virtual auto NewAutoReleasePool() -> void*;
-  virtual void DrainAutoReleasePool(void* pool);
+  virtual auto DrainAutoReleasePool(void* pool) -> void;
   // FIXME: Can we consolidate these with the general music playback calls?
-  virtual void MacMusicAppInit();
+  virtual auto MacMusicAppInit() -> void;
   virtual auto MacMusicAppGetVolume() -> int;
-  virtual void MacMusicAppSetVolume(int volume);
-  virtual void MacMusicAppGetLibrarySource();
-  virtual void MacMusicAppStop();
+  virtual auto MacMusicAppSetVolume(int volume) -> void;
+  virtual auto MacMusicAppGetLibrarySource() -> void;
+  virtual auto MacMusicAppStop() -> void;
   virtual auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool;
   virtual auto MacMusicAppGetPlaylists() -> std::list<std::string>;
 
@@ -282,9 +293,9 @@ class Platform {
 
   // Set bounds/width info for a bit of text.
   // (will only be called in BA_ENABLE_OS_FONT_RENDERING is set)
-  virtual void GetTextBoundsAndWidth(const std::string& text, Rect* r,
-                                     float* width);
-  virtual void FreeTextTexture(void* tex);
+  virtual auto GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                                     float* width) -> void;
+  virtual auto FreeTextTexture(void* tex) -> void;
   virtual auto CreateTextTexture(int width, int height,
                                  const std::vector<std::string>& strings,
                                  const std::vector<float>& positions,
@@ -296,21 +307,28 @@ class Platform {
 
   virtual auto SignIn(const std::string& account_type) -> void;
   virtual auto SignOut() -> void;
+
   virtual auto GameCenterLogin() -> void;
   virtual auto LoginDidChange() -> void;
 
+  /// Returns the ID to use for the device account.
+  auto GetDeviceAccountID() -> std::string;
+
+  /// Return the prefix to use for device-account ids on this platform.
+  virtual auto GetDeviceAccountUUIDPrefix() -> std::string;
+
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 
-  // FIXME: currently these are wired up on android; need to generalize
+  // FIXME: currently these are wired up on Android; need to generalize
   //  to support mac/itunes or other music player types.
-  virtual void MusicPlayerPlay(PyObject* target);
-  virtual void MusicPlayerStop();
-  virtual void MusicPlayerShutdown();
-  virtual void MusicPlayerSetVolume(float volume);
+  virtual auto MusicPlayerPlay(PyObject* target) -> void;
+  virtual auto MusicPlayerStop() -> void;
+  virtual auto MusicPlayerShutdown() -> void;
+  virtual auto MusicPlayerSetVolume(float volume) -> void;
 
 #pragma mark ADS ---------------------------------------------------------------
 
-  virtual void ShowAd(const std::string& purpose);
+  virtual auto ShowAd(const std::string& purpose) -> void;
 
   // Return whether we have the ability to show *any* ads.
   virtual auto GetHasAds() -> bool;
@@ -327,62 +345,60 @@ class Platform {
   virtual auto ConvertIncomingLeaderboardScore(
       const std::string& leaderboard_id, int score) -> int;
 
-  virtual void GetFriendScores(const std::string& game,
+  virtual auto GetFriendScores(const std::string& game,
                                const std::string& game_version,
-                               void* py_callback);
-  virtual void SubmitScore(const std::string& game, const std::string& version,
-                           int64_t score);
-  virtual void ReportAchievement(const std::string& achievement);
+                               void* py_callback) -> void;
+  virtual auto SubmitScore(const std::string& game, const std::string& version,
+                           int64_t score) -> void;
+  virtual auto ReportAchievement(const std::string& achievement) -> void;
   virtual auto HaveLeaderboard(const std::string& game,
                                const std::string& config) -> bool;
 
-  virtual void ShowOnlineScoreUI(const std::string& show,
+  virtual auto ShowOnlineScoreUI(const std::string& show,
                                  const std::string& game,
-                                 const std::string& game_version);
-  virtual void ResetAchievements();
+                                 const std::string& game_version) -> void;
+  virtual auto ResetAchievements() -> void;
 
 #pragma mark NETWORKING --------------------------------------------------------
 
-  virtual void CloseSocket(int socket);
-  virtual auto SocketPair(int domain, int type, int protocol, int socks[2])
-      -> int;
+  virtual auto CloseSocket(int socket) -> void;
   virtual auto GetBroadcastAddrs() -> std::vector<uint32_t>;
   virtual auto SetSocketNonBlocking(int sd) -> bool;
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  // Should return a subclass of PlatformStackTrace allocated via new.
-  // Platforms with no meaningful stack trace functionality can return nullptr.
+  /// Should return a subclass of PlatformStackTrace allocated via new.
+  /// Platforms with no meaningful stack trace functionality can return nullptr.
   virtual auto GetStackTrace() -> PlatformStackTrace*;
 
   // Called during stress testing.
   virtual auto GetMemUsageInfo() -> std::string;
 
-  // Optionally override fatal error reporting. If true is returned, default
-  // fatal error reporting will not run.
+  /// Optionally override fatal error reporting. If true is returned, default
+  /// fatal error reporting will not run.
   virtual auto ReportFatalError(const std::string& message,
                                 bool in_top_level_exception_handler) -> bool;
 
-  // Optionally override fatal error handling. If true is returned, default
-  // fatal error handling will not run.
+  /// Optionally override fatal error handling. If true is returned, default
+  /// fatal error handling will not run.
   virtual auto HandleFatalError(bool exit_cleanly,
                                 bool in_top_level_exception_handler) -> bool;
 
-  // If this platform has the ability to show a blocking dialog on the main
-  // thread for fatal errors, return true here.
+  /// If this platform has the ability to show a blocking dialog on the main
+  /// thread for fatal errors, return true here.
   virtual auto CanShowBlockingFatalErrorDialog() -> bool;
 
-  // Called on the main thread when a fatal error occurs.
-  // Will only be called if CanShowBlockingFatalErrorDialog() is true.
+  /// Called on the main thread when a fatal error occurs.
+  /// Will only be called if CanShowBlockingFatalErrorDialog() is true.
   virtual auto BlockingFatalErrorDialog(const std::string& message) -> void;
 
-  // Use this instead of looking at errno (translates winsock errors to errno).
+  /// Use this instead of looking at errno (translates winsock errors to errno).
   virtual auto GetSocketError() -> int;
 
-  // Return a string for the current value of errno.
+  /// Return a string for the current value of errno.
   virtual auto GetErrnoString() -> std::string;
 
-  // Return a description of errno (unix) or WSAGetLastError() (windows).
+  /// Return a description of errno (unix) or WSAGetLastError() (windows).
   virtual auto GetSocketErrorString() -> std::string;
 
   /// Set a key to be included in crash logs or other debug cases.
@@ -426,60 +442,58 @@ class Platform {
   static auto GetCurrentMilliseconds() -> millisecs_t;
   static auto GetCurrentSeconds() -> int64_t;
 
-  static void SleepMS(millisecs_t ms);
+  static auto SleepMS(millisecs_t ms) -> void;
 
-  // Pop up a text edit dialog.
-  virtual void EditText(const std::string& title, const std::string& value,
-                        int max_chars);
+  /// Pop up a text edit dialog.
+  virtual auto EditText(const std::string& title, const std::string& value,
+                        int max_chars) -> void;
 
-  // Open the provided URL in a browser or whatnot.
-  void OpenURL(const std::string& url);
+  /// Open the provided URL in a browser or whatnot.
+  auto OpenURL(const std::string& url) -> void;
+
+  /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;
 
-  // Called each time through the main event loop; for custom pumping/handling.
-  virtual void RunEvents();
+  /// Called each time through the main event loop;
+  /// for custom pumping/handling.
+  virtual auto RunEvents() -> void;
 
-  // Called when the app module is pausing.
-  // Note: only app-thread (main thread) stuff should happen here.
-  // (don't push calls to other threads/etc).
-  virtual void OnAppPause();
+  /// Called when the app module is pausing.
+  /// Note: only app-thread (main thread) stuff should happen here.
+  /// (don't push calls to other threads/etc).
+  virtual auto OnAppPause() -> void;
 
-  // Called when the app module is resuming.
-  virtual void OnAppResume();
+  /// Called when the app module is resuming.
+  virtual auto OnAppResume() -> void;
 
-  // Is the OS currently playing music? (so we can avoid doing so).
+  /// Is the OS currently playing music? (so we can avoid doing so).
   virtual auto IsOSPlayingMusic() -> bool;
 
-  // Pass platform-specific misc-read-vals along to the OS (as a json string).
-  virtual void SetPlatformMiscReadVals(const std::string& vals);
+  /// Pass platform-specific misc-read-vals along to the OS (as a json string).
+  virtual auto SetPlatformMiscReadVals(const std::string& vals) -> void;
 
-  // Show/hide the hardware cursor.
-  virtual void SetHardwareCursorVisible(bool visible);
+  /// Show/hide the hardware cursor.
+  virtual auto SetHardwareCursorVisible(bool visible) -> void;
 
-  // Get the most up-to-date cursor position.
-  virtual void GetCursorPosition(float* x, float* y);
+  /// Get the most up-to-date cursor position.
+  virtual auto GetCursorPosition(float* x, float* y) -> void;
 
-  // Quit the app (can be immediate or via posting some high level event).
-  virtual void QuitApp();
+  /// Quit the app (can be immediate or via posting some high level event).
+  virtual auto QuitApp() -> void;
 
-  // Do we want to deprecate this?...
-  virtual void GetScoresToBeat(const std::string& level,
-                               const std::string& config, void* py_callback);
+  // Note to self: do we want to deprecate this?...
+  virtual auto GetScoresToBeat(const std::string& level,
+                               const std::string& config, void* py_callback)
+      -> void;
 
-  // Open a file using the system default method (in another app, etc.)
-  virtual void OpenFileExternally(const std::string& path);
+  /// Open a file using the system default method (in another app, etc.)
+  virtual auto OpenFileExternally(const std::string& path) -> void;
 
-  // Open a directory using the system default method (Finder, etc.)
-  virtual void OpenDirExternally(const std::string& path);
+  /// Open a directory using the system default method (Finder, etc.)
+  virtual auto OpenDirExternally(const std::string& path) -> void;
 
-  // Currently mac-only (could be generalized though).
-  virtual void StartListeningForWiiRemotes();
-
-  // Currently mac-only (could be generalized though).
-  virtual void StopListeningForWiiRemotes();
-
-  // Set the name of the current thread (for debugging).
-  virtual void SetCurrentThreadName(const std::string& name);
+  /// Set the name of the current thread (for debugging).
+  virtual auto SetCurrentThreadName(const std::string& name) -> void;
 
   // If display-resolution can be directly set on this platform,
   // return true and set the native full res here.  Otherwise return false;
@@ -490,36 +504,32 @@ class Platform {
   }
 
  protected:
-  // Open the provided URL in a browser or whatnot.
-  virtual void DoOpenURL(const std::string& url);
+  /// Open the provided URL in a browser or whatnot.
+  virtual auto DoOpenURL(const std::string& url) -> void;
 
-  // Called once per platform to determine touchscreen presence.
+  /// Called once per platform to determine touchscreen presence.
   virtual auto DoHasTouchScreen() -> bool;
+
+  /// Platforms should override this to provide device name.
   virtual auto DoGetDeviceName() -> std::string;
 
-  // Attempt to actually create a directory.
-  // Should not except if it already exists or if quiet is true.
-  virtual void DoMakeDir(const std::string& dir, bool quiet);
+  /// Attempt to actually create a directory.
+  /// Should not raise Exceptions if it already exists or
+  /// if quiet is true.
+  virtual auto DoMakeDir(const std::string& dir, bool quiet) -> void;
 
-  // Attempt to actually get an abs path. This will only be called if
-  // the path is valid and exists.
+  /// Attempt to actually get an abs path. This will only be called if
+  /// the path is valid and exists.
   virtual auto DoAbsPath(const std::string& path, std::string* outpath) -> bool;
 
-  // Calc the user scripts dir path for this platform.
-  // This will be called once and the path cached.
+  /// Calc the user scripts dir path for this platform.
+  /// This will be called once and the path cached.
   virtual auto DoGetUserPythonDirectory() -> std::string;
 
-  // Return the default config directory for this platform.
+  /// Return the default config directory for this platform.
   virtual auto GetDefaultConfigDir() -> std::string;
 
-  // Return the prefix to use for device UUIDs on this platform.
-  virtual auto GetDeviceUUIDPrefix() -> std::string;
-
-  // Return whether there is an actual unique UUID available for this platform,
-  // and also return it if so.
-  virtual auto GetRealDeviceUUID(std::string* uuid) -> bool;
-
-  // Generate a random UUID string.
+  /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
 
   virtual auto DoClipboardIsSupported() -> bool;
@@ -537,13 +547,14 @@ class Platform {
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
   millisecs_t starttime_{};
-  std::string device_uuid_;
+  std::string legacy_device_uuid_;
   bool have_device_uuid_{};
   std::string config_dir_;
   std::string user_scripts_dir_;
   std::string app_python_dir_;
   std::string site_python_dir_;
   std::string replays_dir_;
+  std::string public_device_uuid_;
 };
 
 }  // namespace ballistica

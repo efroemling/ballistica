@@ -43,23 +43,6 @@ auto PyHaveTouchScreenInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PyStartListeningForWiiRemotes(PyObject* self, PyObject* args)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("start_listening_for_wii_remotes");
-  g_platform->StartListeningForWiiRemotes();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-auto PyStopListeningForWiiRemotes(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("stop_listening_for_wii_remotes");
-  g_platform->StopListeningForWiiRemotes();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
 auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   Platform::SetLastPyCall("set_touchscreen_editing");
@@ -313,22 +296,6 @@ auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
        "set_touchscreen_editing(editing: bool) -> None\n"
        "\n"
        "(internal)"},
-
-      {"stop_listening_for_wii_remotes", PyStopListeningForWiiRemotes,
-       METH_VARARGS,
-       "stop_listening_for_wii_remotes() -> None\n"
-       "\n"
-       "(internal)\n"
-       "\n"
-       "Stop listening for connections from wii remotes."},
-
-      {"start_listening_for_wii_remotes", PyStartListeningForWiiRemotes,
-       METH_VARARGS,
-       "start_listening_for_wii_remotes() -> None\n"
-       "\n"
-       "(internal)\n"
-       "\n"
-       "Start listening for connections from wii remotes."},
 
       {"have_touchscreen_input", PyHaveTouchScreenInput, METH_VARARGS,
        "have_touchscreen_input() -> bool\n"

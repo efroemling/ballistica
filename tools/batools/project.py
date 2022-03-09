@@ -448,23 +448,24 @@ class Updater:
 
     def _update_visual_studio_project(self, basename: str) -> None:
 
-        fname = f'ballisticacore-windows/{basename}/{basename}.vcxproj'
+        fname = (f'ballisticacore-windows/{basename}/'
+                 f'BallisticaCore{basename}.vcxproj')
 
         # Currently just silently skipping if not found (for public repo).
         if not os.path.exists(fname):
-            return
+            raise CleanError(f'Visual Studio project not found: {fname}')
 
         with open(fname, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
 
         src_root = '..\\..\\src'
 
-        public = 'Internal' not in basename
+        public_project = 'Internal' not in basename
 
         all_files = sorted([
             f for f in (self._source_files + self._header_files)
-            if not f.endswith('.m') and not f.endswith('.mm') and
-            not f.endswith('.c') and self._is_public_source_file(f) == public
+            if not f.endswith('.m') and not f.endswith('.mm') and not f.
+            endswith('.c') and self._is_public_source_file(f) == public_project
         ])
 
         # Find the ItemGroup containing stdafx.cpp. This is where we'll dump
@@ -491,6 +492,7 @@ class Updater:
             + src_root + '\\ballistica' + src.replace('/', '\\') + '" />'
             for src in all_files
         ] + group_lines
+
         filtered = lines[:begin_index + 1] + group_lines + lines[end_index:]
         self._file_changes[fname] = '\r\n'.join(filtered) + '\r\n'
 
@@ -537,12 +539,13 @@ class Updater:
                            '.filters'] = '\r\n'.join(filterlines) + '\r\n'
 
     def _update_visual_studio_projects(self) -> None:
-        self._update_visual_studio_project('BallisticaCoreGeneric')
-        self._update_visual_studio_project('BallisticaCoreGenericInternal')
-        self._update_visual_studio_project('BallisticaCoreHeadless')
-        self._update_visual_studio_project('BallisticaCoreHeadlessInternal')
-        self._update_visual_studio_project('BallisticaCoreOculus')
-        self._update_visual_studio_project('BallisticaCoreOculusInternal')
+        self._update_visual_studio_project('Generic')
+        self._update_visual_studio_project('Headless')
+        if not self._public:
+            self._update_visual_studio_project('GenericInternal')
+            self._update_visual_studio_project('HeadlessInternal')
+            self._update_visual_studio_project('Oculus')
+            self._update_visual_studio_project('OculusInternal')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')

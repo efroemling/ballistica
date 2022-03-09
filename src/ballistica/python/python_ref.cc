@@ -140,6 +140,12 @@ auto PythonRef::CallableCheck() const -> bool {
   return static_cast<bool>(PyCallable_Check(obj_));
 }
 
+auto PythonRef::UnicodeCheck() const -> bool {
+  BA_PRECONDITION(obj_);
+  assert(Python::HaveGIL());
+  return static_cast<bool>(PyUnicode_Check(obj_));
+}
+
 auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
     -> PythonRef {
   assert(obj_);

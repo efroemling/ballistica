@@ -16,8 +16,8 @@ namespace ballistica {
 class PlatformApple : public Platform {
  public:
   PlatformApple();
-  auto GetDeviceUUIDPrefix() -> std::string override;
-  auto GetRealDeviceUUID(std::string* uuid) -> bool override;
+  auto GetDeviceAccountUUIDPrefix() -> std::string override;
+  auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
   auto GenerateUUID() -> std::string override;
   auto GetDefaultConfigDir() -> std::string override;
   auto GetLocale() -> std::string override;
@@ -68,8 +68,6 @@ class PlatformApple : public Platform {
   auto MacMusicAppStop() -> void override;
   auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool override;
   auto MacMusicAppGetPlaylists() -> std::list<std::string> override;
-  auto StartListeningForWiiRemotes() -> void override;
-  auto StopListeningForWiiRemotes() -> void override;
   auto IsEventPushMode() -> bool override;
   auto ContainsPythonDist() -> bool override;
   auto GetPlatformName() -> std::string override;
@@ -79,14 +77,9 @@ class PlatformApple : public Platform {
   auto DoClipboardHasText() -> bool override;
   auto DoClipboardSetText(const std::string& text) -> void override;
   auto DoClipboardGetText() -> std::string override;
-
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
+  auto GetPublicDeviceUUIDInputs() -> std::list<std::string> override;
 
  private:
-  // std::mutex log_mutex_;
-  // std::string log_line_;
 };
 
 }  // namespace ballistica

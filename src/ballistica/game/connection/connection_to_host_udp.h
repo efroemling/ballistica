@@ -28,21 +28,20 @@ class ConnectionToHostUDP : public ConnectionToHost {
   auto SwitchProtocol() -> bool;
   void RequestDisconnect() override;
 
- protected:
+  void SendGamePacketCompressed(const std::vector<uint8_t>& data) override;
+  void Error(const std::string& error_msg) override;
+  void Die();
+  void SendDisconnectRequest();
+
+ private:
+  void GetRequestID();
   uint8_t request_id_{};
   std::unique_ptr<SockAddr> addr_;
   bool did_die_{};
-  void Die();
-  void SendDisconnectRequest();
   millisecs_t last_client_id_request_time_{};
   millisecs_t last_disconnect_request_time_{};
   int client_id_{};
   millisecs_t last_host_response_time_{};
-  void SendGamePacketCompressed(const std::vector<uint8_t>& data) override;
-  void Error(const std::string& error_msg) override;
-
- private:
-  void GetRequestID();
 };
 
 }  // namespace ballistica

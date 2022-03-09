@@ -13,14 +13,15 @@ namespace ballistica {
 class PlatformLinux : public Platform {
  public:
   PlatformLinux();
-  std::string GetDeviceUUIDPrefix() override { return "l"; }
-  std::string GenerateUUID() override;
-  bool DoHasTouchScreen() override;
-  void DoOpenURL(const std::string& url) override;
-  void OpenFileExternally(const std::string& path) override;
-  void OpenDirExternally(const std::string& path) override;
-  std::string GetPlatformName() override;
-  std::string GetSubplatformName() override;
+  auto GetDeviceAccountUUIDPrefix() -> std::string override { return "l"; }
+  auto GenerateUUID() -> std::string override;
+  auto DoHasTouchScreen() -> bool override;
+  auto DoOpenURL(const std::string& url) -> void override;
+  auto OpenFileExternally(const std::string& path) -> void override;
+  auto OpenDirExternally(const std::string& path) -> void override;
+  auto GetPlatformName() -> std::string override;
+  auto GetSubplatformName() -> std::string override;
+  auto GetPublicDeviceUUIDInputs() -> std::list<std::string> override;
 };
 
 }  // namespace ballistica

@@ -24,7 +24,6 @@ import _ba
 # FIXME: There should be no bastd in here;
 #  should pull in bases from ba which get overridden by bastd (or other).
 from bastd.ui.onscreenkeyboard import OnScreenKeyboardWindow
-from bastd.ui import party
 
 if TYPE_CHECKING:
     from typing import Any
@@ -107,7 +106,6 @@ def get_binding_values() -> tuple[Any, ...]:
         json.dumps,  # kJsonDumpsCall
         json.loads,  # kJsonLoadsCall
         OnScreenKeyboardWindow,  # kOnScreenKeyboardClass
-        party.handle_party_invite,  # kHandlePartyInviteCall
         _music.do_play_music,  # kDoPlayMusicCall
         ba.app.handle_deep_link,  # kDeepLinkCall
         ba.app.lang.get_resource,  # kGetResourceCall
@@ -135,4 +133,5 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.get_player_icon,  # kGetPlayerIconCall
         _language.Lstr.from_json,  # kLstrFromJsonCall
         _hooks.uuid_str,  # kUUIDStrCall
+        _hooks.hash_strings,  # kHashStringsCall
     )  # yapf: disable

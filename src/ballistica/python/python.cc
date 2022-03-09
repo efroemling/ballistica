@@ -1182,6 +1182,24 @@ void Python::ShowURL(const std::string& url) {
   }
 }
 
+auto Python::StringList(const std::list<std::string>& values) -> PythonRef {
+  assert(HaveGIL());
+  PythonRef pylist{PyList_New(values.size()), PythonRef::kSteal};
+  int i{};
+  for (auto&& value : values) {
+    PyObject* item{PyUnicode_FromString(value.c_str())};
+    assert(item);
+    PyList_SET_ITEM(pylist.get(), i, item);
+    ++i;
+  }
+  return pylist;
+}
+
+auto Python::SingleMemberTuple(const PythonRef& member) -> PythonRef {
+  assert(HaveGIL());
+  return PythonRef(Py_BuildValue("(O)", member.NewRef()), PythonRef::kSteal);
+}
+
 auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
   assert(message);
   ScopedSetContext cp(g_game->GetUIContext());
@@ -2320,30 +2338,6 @@ auto Python::ObjToString(PyObject* obj) -> std::string {
   } else {
     return "<nullptr PyObject*>";
   }
-}
-
-void Python::V1PartyInvite(const std::string& player,
-                           const std::string& invite_id) {
-  ScopedSetContext cp(g_game->GetUIContext());
-  PythonRef args(
-      Py_BuildValue(
-          "(OO)",
-          PythonRef(PyUnicode_FromString(player.c_str()), PythonRef::kSteal)
-              .get(),
-          PythonRef(PyUnicode_FromString(invite_id.c_str()), PythonRef::kSteal)
-              .get()),
-      PythonRef::kSteal);
-  obj(ObjID::kHandlePartyInviteCall).Call(args);
-}
-
-void Python::V1PartyInviteRevoke(const std::string& invite_id) {
-  ScopedSetContext cp(g_game->GetUIContext());
-  PythonRef args(
-      Py_BuildValue("(O)", PythonRef(PyUnicode_FromString(invite_id.c_str()),
-                                     PythonRef::kSteal)
-                               .get()),
-      PythonRef::kSteal);
-  obj(ObjID::kHandlePartyInviteRevokeCall).Call(args);
 }
 
 void Python::StoreObj(ObjID id, PyObject* pyobj, bool incref) {

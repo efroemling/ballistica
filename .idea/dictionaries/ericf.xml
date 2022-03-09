@@ -1159,6 +1159,7 @@
       <w>ioprep</w>
       <w>ioprepped</w>
       <w>ioprepping</w>
+      <w>ioreg</w>
       <w>ipaddress</w>
       <w>ipos</w>
       <w>iprof</w>
@@ -1203,6 +1204,7 @@
       <w>keepalives</w>
       <w>keepaway</w>
       <w>keeprefs</w>
+      <w>kerploople</w>
       <w>keyanntype</w>
       <w>keyfilt</w>
       <w>keyint</w>
@@ -2202,6 +2204,7 @@
       <w>srcdata</w>
       <w>srcdir</w>
       <w>srcfolder</w>
+      <w>srcid</w>
       <w>srcjson</w>
       <w>srcname</w>
       <w>srcnode</w>
@@ -2246,6 +2249,7 @@
       <w>storedhash</w>
       <w>storeitemui</w>
       <w>storename</w>
+      <w>stot</w>
       <w>strftime</w>
       <w>stringified</w>
       <w>stringprep</w>

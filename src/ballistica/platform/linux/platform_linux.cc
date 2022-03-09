@@ -29,6 +29,26 @@ std::string PlatformLinux::GenerateUUID() {
   return val;
 }
 
+auto PlatformLinux::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
+  std::list<std::string> out;
+
+  // For now let's just go with machine-id.
+  // Perhaps can add kernel version or something later.
+  char buffer[100];
+  if (FILE* infile = fopen("/etc/machine-id", "r")) {
+    int size = fread(buffer, 1, 99, infile);
+    fclose(infile);
+    if (size < 10) {
+      throw Exception("unexpected machine-id value");
+    }
+    buffer[size] = 0;
+    out.push_back(buffer);
+  } else {
+    throw Exception("/etc/machine-id not accessible");
+  }
+  return out;
+};
+
 bool PlatformLinux::DoHasTouchScreen() { return false; }
 
 void PlatformLinux::DoOpenURL(const std::string& url) {

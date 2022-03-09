@@ -36,9 +36,6 @@ class Game : public Module {
                           V1LoginState account_state,
                           const std::string& account_name,
                           const std::string& account_id) -> void;
-  auto PushV1PartyInviteCall(const std::string& name,
-                             const std::string& invite_id) -> void;
-  auto PushV1PartyInviteRevokeCall(const std::string& invite_id) -> void;
   auto PushInitialScreenCreatedCall() -> void;
   auto PushApplyConfigCall() -> void;
   auto PushRemoveGraphicsServerRenderHoldCall() -> void;
@@ -252,9 +249,6 @@ class Game : public Module {
   auto HandleQuitOnIdle() -> void;
   auto InitSpecialChars() -> void;
   auto Draw() -> void;
-  auto V1PartyInvite(const std::string& name, const std::string& invite_id)
-      -> void;
-  auto V1PartyInviteRevoke(const std::string& invite_id) -> void;
   auto InitialScreenCreated() -> void;
   auto MainMenuPress(InputDevice* device) -> void;
   auto ScreenResize(float virtual_width, float virtual_height,

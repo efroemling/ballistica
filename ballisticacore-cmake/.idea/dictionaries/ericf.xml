@@ -560,6 +560,7 @@
       <w>ioprep</w>
       <w>ioprepped</w>
       <w>ioprepping</w>
+      <w>ioreg</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
@@ -587,6 +588,7 @@
       <w>jnames</w>
       <w>json's</w>
       <w>keepalives</w>
+      <w>kerploople</w>
       <w>keyanntype</w>
       <w>keycode</w>
       <w>keyfilt</w>
@@ -1060,6 +1062,7 @@
       <w>spivak</w>
       <w>srcattr</w>
       <w>srcfolder</w>
+      <w>srcid</w>
       <w>srcname</w>
       <w>srcpath</w>
       <w>srcsz</w>
@@ -1092,6 +1095,7 @@
       <w>stepsize</w>
       <w>storagenames</w>
       <w>storecmd</w>
+      <w>stot</w>
       <w>strcasecmp</w>
       <w>strchr</w>
       <w>strcpy</w>

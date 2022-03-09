@@ -85,6 +85,15 @@
     <ClInclude Include="..\..\src\ballistica\config\config_common.h">
       <Filter>ballistica\config</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_common.h">
+      <Filter>ballistica\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_generic.h">
+      <Filter>ballistica\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\config\config_windows_headless.h">
+      <Filter>ballistica\config</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\core\context.cc">
       <Filter>ballistica\core</Filter>
     </ClCompile>
@@ -334,6 +343,9 @@
     <ClInclude Include="..\..\src\ballistica\game\game_stream.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\host_activity.cc">
+      <Filter>ballistica\game</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\host_activity.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
@@ -906,6 +918,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\platform\sdl\sdl_app.h">
       <Filter>ballistica\platform\sdl</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\platform\windows\platform_windows.cc">
+      <Filter>ballistica\platform\windows</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\platform\windows\platform_windows.h">
+      <Filter>ballistica\platform\windows</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\python\class\python_class.cc">
       <Filter>ballistica\python\class</Filter>
@@ -1604,6 +1622,7 @@
     <Filter Include="ballistica\platform\apple" />
     <Filter Include="ballistica\platform\linux" />
     <Filter Include="ballistica\platform\sdl" />
+    <Filter Include="ballistica\platform\windows" />
     <Filter Include="ballistica\python" />
     <Filter Include="ballistica\python\class" />
     <Filter Include="ballistica\python\methods" />

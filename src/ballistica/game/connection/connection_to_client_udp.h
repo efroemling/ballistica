@@ -20,19 +20,20 @@ class ConnectionToClientUDP : public ConnectionToClient {
   ~ConnectionToClientUDP() override;
   void Update() override;
   void HandleGamePacket(const std::vector<uint8_t>& buffer) override;
-  auto client_name() const -> const std::string& { return client_name_; }
+  auto client_instance_uuid() const { return client_instance_uuid_; }
   auto GetAsUDP() -> ConnectionToClientUDP* override;
   void RequestDisconnect() override;
-
- protected:
-  uint8_t request_id_;
-  std::unique_ptr<SockAddr> addr_;
-  std::string client_name_;
-  bool did_die_;
   void Die();
   void SendDisconnectRequest();
+  auto SendGamePacketCompressed(const std::vector<uint8_t>& data)
+      -> void override;
+
+ private:
+  uint8_t request_id_;
+  std::unique_ptr<SockAddr> addr_;
+  std::string client_instance_uuid_;
+  bool did_die_;
   millisecs_t last_client_response_time_;
-  void SendGamePacketCompressed(const std::vector<uint8_t>& data) override;
 };
 
 }  // namespace ballistica
