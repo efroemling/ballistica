@@ -737,7 +737,7 @@ class SessionPlayer:
 
     These are created and managed internally and
     provided to your ba.Session/ba.Activity instances.
-    Be aware that, like ba.Nodes, ba.SessionPlayer objects are 'weak'
+    Be aware that, like `ba.Node`s, ba.SessionPlayer objects are 'weak'
     references under-the-hood; a player can leave the game at
      any point. For this reason, you should make judicious use of the
     ba.SessionPlayer.exists() method (or boolean operator) to ensure
@@ -1264,7 +1264,7 @@ def charstr(char_id: ba.SpecialChar) -> str:
     (U+E000-U+F8FF) and are specific to the game; exporting or rendering
     them elsewhere will be meaningless.
 
-    see ba.SpecialChar for the list of available characters.
+    See ba.SpecialChar for the list of available characters.
     """
     return str()
 
@@ -2026,6 +2026,7 @@ def getmodel(name: str) -> ba.Model:
 
 def getnodes() -> list:
     """Return all nodes in the current ba.Context.
+
     Category: **Gameplay Functions**
     """
     return list()
