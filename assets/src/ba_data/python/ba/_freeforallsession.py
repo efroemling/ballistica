@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class FreeForAllSession(MultiTeamSession):
     """ba.Session type for free-for-all mode games.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
     use_teams = False
     use_team_colors = False

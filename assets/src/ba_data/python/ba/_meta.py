@@ -37,7 +37,7 @@ class ScanResults:
 class MetadataSubsystem:
     """Subsystem for working with script metadata in the app.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Access the single shared instance of this class at 'ba.app.meta'.
     """

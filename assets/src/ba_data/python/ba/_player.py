@@ -48,18 +48,15 @@ class Player(Generic[TeamType]):
     These correspond to ba.SessionPlayer objects, but are associated with a
     single ba.Activity instance. This allows activities to specify their
     own custom ba.Player types.
-
-    Attributes:
-
-      actor
-        The ba.Actor associated with the player.
-
     """
 
     # These are instance attrs but we define them at the type level so
     # their type annotations are introspectable (for docs generation).
     character: str
+
     actor: Optional[ba.Actor]
+    """The ba.Actor associated with the player."""
+
     color: Sequence[float]
     highlight: Sequence[float]
 
@@ -225,8 +222,7 @@ class Player(Generic[TeamType]):
         return self._sessionplayer.exists() and not self._expired
 
     def getname(self, full: bool = False, icon: bool = True) -> str:
-        """getname(full: bool = False, icon: bool = True) -> str
-
+        """
         Returns the player's name. If icon is True, the long version of the
         name may include an icon.
         """
@@ -235,8 +231,7 @@ class Player(Generic[TeamType]):
         return self._sessionplayer.getname(full=full, icon=icon)
 
     def is_alive(self) -> bool:
-        """is_alive() -> bool
-
+        """
         Returns True if the player has a ba.Actor assigned and its
         is_alive() method return True. False is returned otherwise.
         """
@@ -245,8 +240,7 @@ class Player(Generic[TeamType]):
         return self.actor is not None and self.actor.is_alive()
 
     def get_icon(self) -> dict[str, Any]:
-        """get_icon() -> dict[str, Any]
-
+        """
         Returns the character's icon (images, colors, etc contained in a dict)
         """
         assert self._postinited
@@ -256,9 +250,7 @@ class Player(Generic[TeamType]):
     def assigninput(self, inputtype: Union[ba.InputType, tuple[ba.InputType,
                                                                ...]],
                     call: Callable) -> None:
-        """assigninput(type: Union[ba.InputType, Tuple[ba.InputType, ...]],
-          call: Callable) -> None
-
+        """
         Set the python callable to be run for one or more types of input.
         """
         assert self._postinited
@@ -266,8 +258,7 @@ class Player(Generic[TeamType]):
         return self._sessionplayer.assigninput(type=inputtype, call=call)
 
     def resetinput(self) -> None:
-        """resetinput() -> None
-
+        """
         Clears out the player's assigned input actions.
         """
         assert self._postinited

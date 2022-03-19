@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class ScoreType(Enum):
     """Type of scores.
 
-    Category: Enums
+    Category: **Enums**
     """
     SECONDS = 's'
     MILLISECONDS = 'ms'
@@ -27,30 +27,22 @@ class ScoreType(Enum):
 class ScoreConfig:
     """Settings for how a game handles scores.
 
-    Category: Gameplay Classes
-
-    Attributes:
-
-       label
-          A label show to the user for scores; 'Score', 'Time Survived', etc.
-
-       scoretype
-          How the score value should be displayed.
-
-       lower_is_better
-          Whether lower scores are preferable. Higher scores are by default.
-
-       none_is_winner
-          Whether a value of None is considered better than other scores.
-          By default it is not.
-
-       version
-          To change high-score lists used by a game without renaming the game,
-          change this. Defaults to an empty string.
-
+    Category: **Gameplay Classes**
     """
+
     label: str = 'Score'
+    """A label show to the user for scores; 'Score', 'Time Survived', etc."""
+
     scoretype: ba.ScoreType = ScoreType.POINTS
+    """How the score value should be displayed."""
+
     lower_is_better: bool = False
+    """Whether lower scores are preferable. Higher scores are by default."""
+
     none_is_winner: bool = False
+    """Whether a value of None is considered better than other scores.
+       By default it is not."""
+
     version: str = ''
+    """To change high-score lists used by a game without renaming the game,
+       change this. Defaults to an empty string."""

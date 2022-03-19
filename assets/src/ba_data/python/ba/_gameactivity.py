@@ -31,7 +31,7 @@ TeamType = TypeVar('TeamType', bound='ba.Team')
 class GameActivity(Activity[PlayerType, TeamType]):
     """Common base class for all game ba.Activities.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
     # pylint: disable=too-many-public-methods
 

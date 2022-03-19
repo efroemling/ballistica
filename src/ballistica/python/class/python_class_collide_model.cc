@@ -25,7 +25,7 @@ void PythonClassCollideModel::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A reference to a collide-model.\n"
       "\n"
-      "Category: Asset Classes\n"
+      "Category: **Asset Classes**\n"
       "\n"
       "Use ba.getcollidemodel() to instantiate one.";
   obj->tp_repr = (reprfunc)tp_repr;

@@ -16,28 +16,26 @@ if TYPE_CHECKING:
 class Spawner:
     """Utility for delayed spawning of objects.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
-    Creates a light flash and sends a ba.Spawner.SpawnMessage
+    Creates a light flash and sends a Spawner.SpawnMessage
     to the current activity after a delay.
     """
 
     class SpawnMessage:
-        """Spawn message sent by a ba.Spawner after its delay has passed.
+        """Spawn message sent by a Spawner after its delay has passed.
 
-        category: Message Classes
-
-        Attributes:
-
-           spawner
-              The ba.Spawner we came from.
-
-           data
-              The data object passed by the user.
-
-           pt
-              The spawn position.
+        Category: **Message Classes**
         """
+
+        spawner: Spawner
+        """The ba.Spawner we came from."""
+
+        data: Any
+        """The data object passed by the user."""
+
+        pt: Sequence[float]
+        """The spawn position."""
 
         def __init__(
                 self,

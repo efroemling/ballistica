@@ -1,0 +1,39 @@
+{% extends "default/index.html.jinja2" %}
+
+{% block content %}
+    <header class="pdoc">
+        {% block logo %}
+            <a href="https://ballistica.net">
+                <img src="https://files.ballistica.net/ballistica_media/ballistica_logo_half.png"
+                     alt="project logo"/>
+            </a>
+        {% endblock %}
+        {% if search %}
+            <input type="search"
+                   placeholder="Search Python API Documentation..."
+                   aria-label="search box">
+        {% endif %}
+    </header>
+    <main class="pdoc">
+        <h1>Welcome to Ballistica Documentations!</h1>
+        <i>Last updated for Ballistica {{ ba_version }}
+            (build {{ ba_build }})</i>
+        <hr/>
+        <p>
+            Here you can find information about Python classes/functions
+            used by Ballistica.
+            Fell free to create an
+            <a href="https://github.com/efroemling/ballistica/issues/">
+                issue</a>
+            or send a
+            <a href="https://github.com/efroemling/ballistica/pulls/">PR</a>
+            if something in this docs feels incorrect or can be improved.
+            Note that <code>bastd</code>'s docs may look a little terrible
+            right
+            now, hope that's temporary. :)
+        </p>
+    </main>
+    {% if search %}
+        {% include "search.html.jinja2" %}
+    {% endif %}
+{% endblock %}

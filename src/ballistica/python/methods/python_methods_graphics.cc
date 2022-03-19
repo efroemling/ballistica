@@ -423,7 +423,7 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Given a color tuple, return a color safe to display as text.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "Accepts tuples of length 3 or 4. This will slightly brighten very\n"
        "dark colors, etc."},
@@ -433,13 +433,13 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Get a unicode string representing a special character.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "Note that these utilize the private-use block of unicode characters\n"
        "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
        "them elsewhere will be meaningless.\n"
        "\n"
-       "see ba.SpecialChar for the list of available characters."},
+       "See ba.SpecialChar for the list of available characters."},
   };
 }
 

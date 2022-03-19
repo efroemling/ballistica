@@ -685,7 +685,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Emit particles, smoke, etc. into the fx sim layer.\n"
        "\n"
-       "Category: Gameplay Functions\n"
+       "Category: **Gameplay Functions**\n"
        "\n"
        "The fx sim layer is a secondary dynamics simulation that runs in\n"
        "the background and just looks pretty; it does not affect gameplay.\n"
@@ -698,17 +698,17 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Play a ba.Sound a single time.\n"
        "\n"
-       "Category: Gameplay Functions\n"
+       "Category: **Gameplay Functions**\n"
        "\n"
        "If position is not provided, the sound will be at a constant volume\n"
-       "everywhere.  Position should be a float tuple of size 3."},
+       "everywhere. Position should be a float tuple of size 3."},
 
       {"camerashake", (PyCFunction)PyCameraShake, METH_VARARGS | METH_KEYWORDS,
        "camerashake(intensity: float = 1.0) -> None\n"
        "\n"
        "Shake the camera.\n"
        "\n"
-       "Category: Gameplay Functions\n"
+       "Category: **Gameplay Functions**\n"
        "\n"
        "Note that some cameras and/or platforms (such as VR) may not display\n"
        "camera-shake, so do not rely on this always being visible to the\n"
@@ -719,7 +719,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Return collision related values\n"
        "\n"
-       "Category: Gameplay Functions\n"
+       "Category: **Gameplay Functions**\n"
        "\n"
        "Returns a single collision value or tuple of values such as location,\n"
        "depth, nodes involved, etc. Only call this in the handler of a\n"
@@ -728,16 +728,16 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
       {"getnodes", PyGetNodes, METH_VARARGS,
        "getnodes() -> list\n"
        "\n"
-       "Return all nodes in the current ba.Context."
+       "Return all nodes in the current ba.Context.\n"
        "\n"
-       "Category: Gameplay Functions"},
+       "Category: **Gameplay Functions**"},
 
       {"printnodes", PyPrintNodes, METH_VARARGS,
        "printnodes() -> None\n"
        "\n"
        "Print various info about existing nodes; useful for debugging.\n"
        "\n"
-       "Category: Gameplay Functions"},
+       "Category: **Gameplay Functions**"},
 
       {"newnode", (PyCFunction)PyNewNode, METH_VARARGS | METH_KEYWORDS,
        "newnode(type: str, owner: ba.Node = None,\n"
@@ -746,7 +746,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Add a node of the given type to the game.\n"
        "\n"
-       "Category: Gameplay Functions\n"
+       "Category: **Gameplay Functions**\n"
        "\n"
        "If a dict is provided for 'attributes', the node's initial attributes\n"
        "will be set based on them.\n"

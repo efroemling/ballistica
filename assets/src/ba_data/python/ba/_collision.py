@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class Collision:
     """A class providing info about occurring collisions.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     @property
@@ -67,6 +67,6 @@ _collision = Collision()
 def getcollision() -> Collision:
     """Return the in-progress collision.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
     """
     return _collision

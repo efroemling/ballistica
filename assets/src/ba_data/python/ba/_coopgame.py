@@ -21,7 +21,7 @@ TeamType = TypeVar('TeamType', bound='ba.Team')
 class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for cooperative-mode games.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     # We can assume our session is a CoopSession.

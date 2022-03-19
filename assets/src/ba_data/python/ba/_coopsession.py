@@ -19,25 +19,23 @@ TEAM_NAMES = ['Good Guys']
 class CoopSession(Session):
     """A ba.Session which runs cooperative-mode games.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     These generally consist of 1-4 players against
     the computer and include functionality such as
     high score lists.
-
-    Attributes:
-
-        campaign
-            The ba.Campaign instance this Session represents, or None if
-            there is no associated Campaign.
     """
+
     use_teams = True
     use_team_colors = False
     allow_mid_activity_joins = False
 
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
+
     campaign: Optional[ba.Campaign]
+    """The ba.Campaign instance this Session represents, or None if
+       there is no associated Campaign."""
 
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""

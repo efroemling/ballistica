@@ -1,0 +1,9 @@
+{% extends "default/module.html.jinja2" %}
+
+{% macro is_public(doc) %}
+    {% if "(internal)" in doc.docstring %}
+        {# Returning no text is interpreted as false #}
+    {% else %}
+        {{ default_is_public(doc) }}
+    {% endif %}
+{% endmacro %}

@@ -2318,7 +2318,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Open a provided URL.\n"
        "\n"
-       "Category: General Utility Functions\n"
+       "Category: **General Utility Functions**\n"
        "\n"
        "Open the provided url in a web-browser, or display the URL\n"
        "string in a window if that isn't possible.\n"},
@@ -2382,7 +2382,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Category: General Utility Functions"},
+       "Category: **General Utility Functions**"},
 
       {"show_app_invite", (PyCFunction)PyShowAppInvite,
        METH_VARARGS | METH_KEYWORDS,
@@ -2392,7 +2392,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Category: General Utility Functions"},
+       "Category: **General Utility Functions**"},
 
       {"show_ad", (PyCFunction)PyShowAd, METH_VARARGS | METH_KEYWORDS,
        "show_ad(purpose: str, on_completion_call: Callable[[], None] = None)\n"
@@ -2487,7 +2487,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a button widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2513,7 +2513,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a check-box widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2534,7 +2534,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit an image widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2562,7 +2562,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a column widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2604,7 +2604,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a container widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2622,7 +2622,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a row widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2645,7 +2645,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a scroll widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2667,7 +2667,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a horizontal scroll widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2698,7 +2698,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Create or edit a text widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
        "a new one is created and returned. Arguments that are not set to None\n"
@@ -2713,7 +2713,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Edit common attributes of any widget.\n"
        "\n"
-       "Category: User Interface Functions\n"
+       "Category: **User Interface Functions**\n"
        "\n"
        "Unlike other UI calls, this can only be used to edit, not to "
        "create.\n"},

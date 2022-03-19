@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class App:
     """A class for high level app functionality and state.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Use ba.app to access the single shared instance of this class.
 

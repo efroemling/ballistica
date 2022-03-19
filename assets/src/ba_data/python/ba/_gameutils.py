@@ -29,7 +29,7 @@ TROPHY_CHARS = {
 class GameTip:
     """Defines a tip presentable to the user at the start of a game.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
     text: str
     icon: Optional[ba.Texture] = None
@@ -53,7 +53,7 @@ def animate(node: ba.Node,
             suppress_format_warning: bool = False) -> ba.Node:
     """Animate values on a target ba.Node.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     Creates an 'animcurve' node with the provided values and time as an input,
     connect it to the provided attribute, and set it to die with the target.
@@ -127,9 +127,9 @@ def animate_array(node: ba.Node,
                   suppress_format_warning: bool = False) -> None:
     """Animate an array of values on a target ba.Node.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
-    Like ba.animate(), but operates on array attributes.
+    Like ba.animate, but operates on array attributes.
     """
     # pylint: disable=too-many-locals
     combine = _ba.newnode('combine', owner=node, attrs={'size': size})
@@ -198,7 +198,7 @@ def show_damage_count(damage: str, position: Sequence[float],
                       direction: Sequence[float]) -> None:
     """Pop up a damage count at a position in space.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
     """
     lifespan = 1.0
     app = _ba.app
@@ -253,7 +253,7 @@ def timestring(timeval: float,
                suppress_format_warning: bool = False) -> ba.Lstr:
     """Generate a ba.Lstr for displaying a time value.
 
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Given a time value, returns a ba.Lstr with:
     (hours if > 0 ) : minutes : seconds : (centiseconds if centi=True).
@@ -321,7 +321,7 @@ def timestring(timeval: float,
 def cameraflash(duration: float = 999.0) -> None:
     """Create a strobing camera flash effect.
 
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     (as seen when a team wins a game)
     Duration is in seconds.

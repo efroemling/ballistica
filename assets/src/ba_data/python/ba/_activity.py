@@ -32,104 +32,97 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     Examples of Activities include games, score-screens, cutscenes, etc.
     A ba.Session has one 'current' Activity at any time, though their existence
     can overlap during transitions.
-
-    Attributes:
-
-       settings_raw
-          The settings dict passed in when the activity was made.
-          This attribute is deprecated and should be avoided when possible;
-          activities should pull all values they need from the 'settings' arg
-          passed to the Activity __init__ call.
-
-       teams
-          The list of ba.Teams in the Activity. This gets populated just before
-          before on_begin() is called and is updated automatically as players
-          join or leave the game. (at least in free-for-all mode where every
-          player gets their own team; in teams mode there are always 2 teams
-          regardless of the player count).
-
-       players
-          The list of ba.Players in the Activity. This gets populated just
-          before on_begin() is called and is updated automatically as players
-          join or leave the game.
     """
 
     # pylint: disable=too-many-public-methods
 
-    # Annotating attr types at the class level lets us introspect at runtime.
     settings_raw: dict[str, Any]
+    """The settings dict passed in when the activity was made.
+       This attribute is deprecated and should be avoided when possible;
+       activities should pull all values they need from the 'settings' arg
+       passed to the Activity __init__ call."""
+
     teams: list[TeamType]
+    """The list of ba.Team-s in the Activity. This gets populated just
+       before on_begin() is called and is updated automatically as players
+       join or leave the game. (at least in free-for-all mode where every
+       player gets their own team; in teams mode there are always 2 teams
+       regardless of the player count)."""
+
     players: list[PlayerType]
+    """The list of ba.Player-s in the Activity. This gets populated just
+       before on_begin() is called and is updated automatically as players
+       join or leave the game."""
 
-    # Whether to print every time a player dies. This can be pertinent
-    # in games such as Death-Match but can be annoying in games where it
-    # doesn't matter.
     announce_player_deaths = False
+    """Whether to print every time a player dies. This can be pertinent
+       in games such as Death-Match but can be annoying in games where it
+       doesn't matter."""
 
-    # Joining activities are for waiting for initial player joins.
-    # They are treated slightly differently than regular activities,
-    # mainly in that all players are passed to the activity at once
-    # instead of as each joins.
     is_joining_activity = False
+    """Joining activities are for waiting for initial player joins.
+       They are treated slightly differently than regular activities,
+       mainly in that all players are passed to the activity at once
+       instead of as each joins."""
 
-    # Whether game-time should still progress when in menus/etc.
     allow_pausing = False
+    """Whether game-time should still progress when in menus/etc."""
 
-    # Whether idle players can potentially be kicked (should not happen in
-    # menus/etc).
     allow_kick_idle_players = True
+    """Whether idle players can potentially be kicked (should not happen in
+       menus/etc)."""
 
-    # In vr mode, this determines whether overlay nodes (text, images, etc)
-    # are created at a fixed position in space or one that moves based on
-    # the current map. Generally this should be on for games and off for
-    # transitions/score-screens/etc. that persist between maps.
     use_fixed_vr_overlay = False
+    """In vr mode, this determines whether overlay nodes (text, images, etc)
+       are created at a fixed position in space or one that moves based on
+       the current map. Generally this should be on for games and off for
+       transitions/score-screens/etc. that persist between maps."""
 
-    # If True, runs in slow motion and turns down sound pitch.
     slow_motion = False
+    """If True, runs in slow motion and turns down sound pitch."""
 
-    # Set this to True to inherit slow motion setting from previous
-    # activity (useful for transitions to avoid hitches).
     inherits_slow_motion = False
+    """Set this to True to inherit slow motion setting from previous
+       activity (useful for transitions to avoid hitches)."""
 
-    # Set this to True to keep playing the music from the previous activity
-    # (without even restarting it).
     inherits_music = False
+    """Set this to True to keep playing the music from the previous activity
+       (without even restarting it)."""
 
-    # Set this to true to inherit VR camera offsets from the previous
-    # activity (useful for preventing sporadic camera movement
-    # during transitions).
     inherits_vr_camera_offset = False
+    """Set this to true to inherit VR camera offsets from the previous
+       activity (useful for preventing sporadic camera movement
+       during transitions)."""
 
-    # Set this to true to inherit (non-fixed) VR overlay positioning from
-    # the previous activity (useful for prevent sporadic overlay jostling
-    # during transitions).
     inherits_vr_overlay_center = False
+    """Set this to true to inherit (non-fixed) VR overlay positioning from
+       the previous activity (useful for prevent sporadic overlay jostling
+       during transitions)."""
 
-    # Set this to true to inherit screen tint/vignette colors from the
-    # previous activity (useful to prevent sudden color changes during
-    # transitions).
     inherits_tint = False
+    """Set this to true to inherit screen tint/vignette colors from the
+       previous activity (useful to prevent sudden color changes during
+       transitions)."""
 
-    # Whether players should be allowed to join in the middle of this
-    # activity. Note that Sessions may not allow mid-activity-joins even
-    # if the activity says its ok.
     allow_mid_activity_joins: bool = True
+    """Whether players should be allowed to join in the middle of this
+       activity. Note that Sessions may not allow mid-activity-joins even
+       if the activity says its ok."""
 
-    # If the activity fades or transitions in, it should set the length of
-    # time here so that previous activities will be kept alive for that
-    # long (avoiding 'holes' in the screen)
-    # This value is given in real-time seconds.
     transition_time = 0.0
+    """If the activity fades or transitions in, it should set the length of
+       time here so that previous activities will be kept alive for that
+       long (avoiding 'holes' in the screen)
+       This value is given in real-time seconds."""
 
-    # Is it ok to show an ad after this activity ends before showing
-    # the next activity?
     can_show_ad_on_death = False
+    """Is it ok to show an ad after this activity ends before showing
+       the next activity?"""
 
     def __init__(self, settings: dict):
         """Creates an Activity in the current ba.Session.
 
-        The activity will not be actually run until ba.Session.setactivity()
+        The activity will not be actually run until ba.Session.setactivity
         is called. 'settings' should be a dict of key/value pairs specific
         to the activity.
 
@@ -369,8 +362,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     def on_transition_out(self) -> None:
         """Called when your activity begins transitioning out.
 
-        Note that this may happen at any time even if end() has not been
-        called.
+        Note that this may happen at any time even if ba.Activity.end() has
+        not been called.
         """
 
     def on_begin(self) -> None:
@@ -386,11 +379,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         return UNHANDLED
 
     def has_transitioned_in(self) -> bool:
-        """Return whether on_transition_in() has been called."""
+        """Return whether ba.Activity.on_transition_in()
+         has been called."""
         return self._has_transitioned_in
 
     def has_begun(self) -> bool:
-        """Return whether on_begin() has been called."""
+        """Return whether ba.Activity.on_begin() has been called."""
         return self._has_begun
 
     def has_ended(self) -> bool:
@@ -398,7 +392,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         return self._has_ended
 
     def is_transitioning_out(self) -> bool:
-        """Return whether on_transition_out() has been called."""
+        """Return whether ba.Activity.on_transition_out() has been called."""
         return self._transitioning_out
 
     def transition_in(self, prev_globals: Optional[ba.Node]) -> None:
@@ -517,8 +511,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         Subclasses can override this if the activity's player class
         requires a custom constructor; otherwise it will be called with
         no args. Note that the player object should not be used at this
-        point as it is not yet fully wired up; wait for on_player_join()
-        for that.
+        point as it is not yet fully wired up; wait for
+        ba.Activity.on_player_join() for that.
         """
         del sessionplayer  # Unused.
         player = self._playertype()

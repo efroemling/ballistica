@@ -15,38 +15,36 @@ if TYPE_CHECKING:
 
 
 class FlagFactory:
-    """Wraps up media and other resources used by ba.Flags.
+    """Wraps up media and other resources used by `Flag`s.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     A single instance of this is shared between all flags
-    and can be retrieved via bastd.actor.flag.get_factory().
-
-    Attributes:
-
-       flagmaterial
-          The ba.Material applied to all ba.Flags.
-
-       impact_sound
-          The ba.Sound used when a ba.Flag hits the ground.
-
-       skid_sound
-          The ba.Sound used when a ba.Flag skids along the ground.
-
-       no_hit_material
-          A ba.Material that prevents contact with most objects;
-          applied to 'non-touchable' flags.
-
-       flag_texture
-          The ba.Texture for flags.
+    and can be retrieved via FlagFactory.get().
     """
+
+    flagmaterial: ba.Material
+    """The ba.Material applied to all `Flag`s."""
+
+    impact_sound: ba.Sound
+    """The ba.Sound used when a `Flag` hits the ground."""
+
+    skid_sound: ba.Sound
+    """The ba.Sound used when a `Flag` skids along the ground."""
+
+    no_hit_material: ba.Material
+    """A ba.Material that prevents contact with most objects;
+       applied to 'non-touchable' flags."""
+
+    flag_texture: ba.Texture
+    """The ba.Texture for flags."""
 
     _STORENAME = ba.storagename()
 
     def __init__(self) -> None:
-        """Instantiate a FlagFactory.
+        """Instantiate a `FlagFactory`.
 
-        You shouldn't need to do this; call bastd.actor.flag.get_factory() to
+        You shouldn't need to do this; call FlagFactory.get() to
         get a shared instance.
         """
         shared = SharedObjects.get()
@@ -109,7 +107,7 @@ class FlagFactory:
 
     @classmethod
     def get(cls) -> FlagFactory:
-        """Get/create a shared FlagFactory instance."""
+        """Get/create a shared `FlagFactory` instance."""
         activity = ba.getactivity()
         factory = activity.customdata.get(cls._STORENAME)
         if factory is None:
@@ -121,58 +119,47 @@ class FlagFactory:
 
 @dataclass
 class FlagPickedUpMessage:
-    """A message saying a ba.Flag has been picked up.
+    """A message saying a `Flag` has been picked up.
 
-        category: Message Classes
+    Category: **Message Classes**
+    """
 
-        Attributes:
-
-           flag
-              The ba.Flag that has been picked up.
-
-           node
-              The ba.Node doing the picking up.
-        """
     flag: Flag
+    """The `Flag` that has been picked up."""
+
     node: ba.Node
+    """The ba.Node doing the picking up."""
 
 
 @dataclass
 class FlagDiedMessage:
-    """A message saying a ba.Flag has died.
+    """A message saying a `Flag` has died.
 
-    category: Message Classes
-
-    Attributes:
-
-       flag
-          The ba.Flag that died.
+    Category: **Message Classes**
     """
+
     flag: Flag
+    """The `Flag` that died."""
 
 
 @dataclass
 class FlagDroppedMessage:
-    """A message saying a ba.Flag has been dropped.
+    """A message saying a `Flag` has been dropped.
 
-    category: Message Classes
-
-    Attributes:
-
-       flag
-          The ba.Flag that was dropped.
-
-       node
-          The ba.Node that was holding it.
+    Category: **Message Classes**
     """
+
     flag: Flag
+    """The `Flag` that was dropped."""
+
     node: ba.Node
+    """The ba.Node that was holding it."""
 
 
 class Flag(ba.Actor):
     """A flag; used in games such as capture-the-flag or king-of-the-hill.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Can be stationary or carry-able by players.
     """
@@ -189,7 +176,7 @@ class Flag(ba.Actor):
         useful for things like king-of-the-hill where players should
         not be moving the flag around.
 
-        'materials can be a list of extra ba.Materials to apply to the flag.
+        'materials can be a list of extra `ba.Material`s to apply to the flag.
 
         If 'dropped_timeout' is provided (in seconds), the flag will die
         after remaining untouched for that long once it has been moved

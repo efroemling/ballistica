@@ -29,7 +29,7 @@ void PythonClassVec3::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "A vector of 3 floats.\n"
       "\n"
-      "Category: General Utility Classes\n"
+      "Category: **General Utility Classes**\n"
       "\n"
       "These can be created the following ways (checked in this order):\n"
       "- with no args, all values are set to 0\n"
@@ -38,14 +38,13 @@ void PythonClassVec3::SetupType(PyTypeObject* obj) {
       "- otherwise assumes individual x/y/z args (positional or keywords)"
       "\n"
       "Attributes:\n"
-      "\n"
-      "   x: float\n"
+      "   x (float):\n"
       "      The vector's X component.\n"
       "\n"
-      "   y: float\n"
+      "   y (float):\n"
       "      The vector's Y component.\n"
       "\n"
-      "   z: float\n"
+      "   z (float):\n"
       "      The vector's Z component.\n";
 
   obj->tp_new = tp_new;

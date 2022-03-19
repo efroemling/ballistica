@@ -56,39 +56,28 @@ class ActivityData:
     """(internal)"""
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Returns whether the ActivityData still exists.
+        """Returns whether the ActivityData still exists.
         Most functionality will fail on a nonexistent instance.
         """
         return bool()
 
     def expire(self) -> None:
-        """expire() -> None
-
-        Expires the internal data for the activity
-        """
+        """Expires the internal data for the activity"""
         return None
 
     def make_foreground(self) -> None:
-        """make_foreground() -> None
-
-        Sets this activity as the foreground one in its session.
-        """
+        """Sets this activity as the foreground one in its session."""
         return None
 
     def start(self) -> None:
-        """start() -> None
-
-        Begins the activity running
-        """
+        """Begins the activity running"""
         return None
 
 
 class CollideModel:
     """A reference to a collide-model.
 
-    Category: Asset Classes
+    Category: **Asset Classes**
 
     Use ba.getcollidemodel() to instantiate one.
     """
@@ -96,11 +85,9 @@ class CollideModel:
 
 
 class Context:
-    """Context(source: Any)
+    """A game context state.
 
-    A game context state.
-
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     Many operations such as ba.newnode() or ba.gettexture() operate
     implicitly on the current context. Each ba.Activity has its own
@@ -111,43 +98,43 @@ class Context:
     since timers and other callbacks will take care of saving and
     restoring the context automatically, but there may be rare cases where
     you need to deal with them, such as when loading media in for use in
-    the UI (there is a special 'ui' context for all user-interface-related
-    functionality)
+    the UI (there is a special `'ui'` context for all
+    user-interface-related functionality).
 
-    When instantiating a ba.Context instance, a single 'source' argument
+    When instantiating a ba.Context instance, a single `'source'` argument
     is passed, which can be one of the following strings/objects:
 
-    'empty':
-      Gives an empty context; it can be handy to run code here to ensure
-      it does no loading of media, creation of nodes, etc.
+    ###### `'empty'`
+    > Gives an empty context; it can be handy to run code here to ensure
+    it does no loading of media, creation of nodes, etc.
 
-    'current':
-      Sets the context object to the current context.
+    ###### `'current'`
+    > Sets the context object to the current context.
 
-    'ui':
-      Sets to the UI context. UI functions as well as loading of media to
-      be used in said functions must happen in the UI context.
+    ###### `'ui'`
+    > Sets to the UI context. UI functions as well as loading of media to
+    be used in said functions must happen in the UI context.
 
-    A ba.Activity instance:
-      Gives the context for the provided ba.Activity.
+    ###### A ba.Activity instance
+    > Gives the context for the provided ba.Activity.
       Most all code run during a game happens in an Activity's Context.
 
-    A ba.Session instance:
-      Gives the context for the provided ba.Session.
-      Generally a user should not need to run anything here.
+    ###### A ba.Session instance
+    > Gives the context for the provided ba.Session.
+    Generally a user should not need to run anything here.
 
 
-    Usage:
-
+    ##### Usage
     Contexts are generally used with the python 'with' statement, which
     sets the context as current on entry and resets it to the previous
     value on exit.
 
-    # Example: load a few textures into the UI context
-    # (for use in widgets, etc):
-    with ba.Context('ui'):
-       tex1 = ba.gettexture('foo_tex_1')
-       tex2 = ba.gettexture('foo_tex_2')
+    ##### Example
+    Load a few textures into the UI context
+    (for use in widgets, etc):
+    >>> with ba.Context('ui'):
+    ...     tex1 = ba.gettexture('foo_tex_1')
+    ...     tex2 = ba.gettexture('foo_tex_2')
     """
 
     def __init__(self, source: Any):
@@ -163,11 +150,9 @@ class Context:
 
 
 class ContextCall:
-    """ContextCall(call: Callable)
+    """A context-preserving callable.
 
-    A context-preserving callable.
-
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     A ContextCall wraps a callable object along with a reference
     to the current context (see ba.Context); it handles restoring the
@@ -189,17 +174,20 @@ class ContextCall:
     shutdown, whereas ba.WeakCall simply looks at whether the target
     object still exists.
 
-    # Example A: code like this can inadvertently prevent our activity
-    # (self) from ending until the operation completes, since the bound
-    # method we're passing (self.dosomething) contains a strong-reference
-    # to self).
-    start_some_long_action(callback_when_done=self.dosomething)
+    ##### Examples
+    **Example A:** code like this can inadvertently prevent our activity
+    (self) from ending until the operation completes, since the bound
+    method we're passing (self.dosomething) contains a strong-reference
+    to self).
+    >>> start_some_long_action(callback_when_done=self.dosomething)
 
-    # Example B: in this case our activity (self) can still die
-    # properly; the callback will clear itself when the activity starts
-    # shutting down, becoming a harmless no-op and releasing the reference
-    # to our activity.
-    start_long_action(callback_when_done=ba.ContextCall(self.mycallback))
+    **Example B:** in this case our activity (self) can still die
+    properly; the callback will clear itself when the activity starts
+    shutting down, becoming a harmless no-op and releasing the reference
+    to our activity.
+
+    >>> start_long_action(
+    ...     callback_when_done=ba.ContextCall(self.mycallback))
     """
 
     def __init__(self, call: Callable):
@@ -209,15 +197,13 @@ class ContextCall:
 class Data:
     """A reference to a data object.
 
-    Category: Asset Classes
+    Category: **Asset Classes**
 
     Use ba.getdata() to instantiate one.
     """
 
     def getvalue(self) -> Any:
-        """getvalue() -> Any
-
-        Return the data object's value.
+        """Return the data object's value.
 
         This can consist of anything representable by json (dicts, lists,
         numbers, bools, None, etc).
@@ -231,89 +217,68 @@ class Data:
 class InputDevice:
     """An input-device such as a gamepad, touchscreen, or keyboard.
 
-    Category: Gameplay Classes
-
-    Attributes:
-
-       allows_configuring: bool
-          Whether the input-device can be configured.
-
-       has_meaningful_button_names: bool
-          Whether button names returned by this instance match labels
-          on the actual device. (Can be used to determine whether to show
-          them in controls-overlays, etc.)
-
-       player: Optional[ba.SessionPlayer]
-          The player associated with this input device.
-
-       client_id: int
-          The numeric client-id this device is associated with.
-          This is only meaningful for remote client inputs; for
-          all local devices this will be -1.
-
-       name: str
-          The name of the device.
-
-       unique_identifier: str
-          A string that can be used to persistently identify the device,
-          even among other devices of the same type. Used for saving
-          prefs, etc.
-
-       id: int
-          The unique numeric id of this device.
-
-       instance_number: int
-          The number of this device among devices of the same type.
-
-       is_controller_app: bool
-          Whether this input-device represents a locally-connected
-          controller-app.
-
-       is_remote_client: bool
-          Whether this input-device represents a remotely-connected
-          client.
-
+    Category: **Gameplay Classes**
     """
     allows_configuring: bool
+    """Whether the input-device can be configured."""
+
     has_meaningful_button_names: bool
+    """Whether button names returned by this instance match labels
+       on the actual device. (Can be used to determine whether to show
+       them in controls-overlays, etc.)."""
+
     player: Optional[ba.SessionPlayer]
+    """The player associated with this input device."""
+
     client_id: int
+    """The numeric client-id this device is associated with.
+       This is only meaningful for remote client inputs; for
+       all local devices this will be -1."""
+
     name: str
+    """The name of the device."""
+
     unique_identifier: str
+    """A string that can be used to persistently identify the device,
+       even among other devices of the same type. Used for saving
+       prefs, etc."""
+
     id: int
+    """The unique numeric id of this device."""
+
     instance_number: int
+    """The number of this device among devices of the same type."""
+
     is_controller_app: bool
+    """Whether this input-device represents a locally-connected
+       controller-app."""
+
     is_remote_client: bool
+    """Whether this input-device represents a remotely-connected
+       client."""
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Return whether the underlying device for this object is still present.
+        """Return whether the underlying device for this object is
+        still present.
         """
         return bool()
 
     def get_account_name(self, full: bool) -> str:
-        """get_account_name(full: bool) -> str
-
-        Returns the account name associated with this device.
+        """Returns the account name associated with this device.
 
         (can be used to get account names for remote players)
         """
         return str()
 
     def get_axis_name(self, axis_id: int) -> str:
-        """get_axis_name(axis_id: int) -> str
-
-        Given an axis ID, return the name of the axis on this device.
+        """Given an axis ID, return the name of the axis on this device.
 
         Can return an empty string if the value is not meaningful to humans.
         """
         return str()
 
     def get_button_name(self, button_id: int) -> ba.Lstr:
-        """get_button_name(button_id: int) -> ba.Lstr
-
-        Given a button ID, return a human-readable name for that key/button.
+        """Given a button ID, return a human-readable name for that key/button.
 
         Can return an empty string if the value is not meaningful to humans.
         """
@@ -321,9 +286,7 @@ class InputDevice:
         return ba.Lstr(value='')
 
     def get_default_player_name(self) -> str:
-        """get_default_player_name() -> str
-
-        (internal)
+        """(internal)
 
         Returns the default player name for this device. (used for the 'random'
         profile)
@@ -331,196 +294,192 @@ class InputDevice:
         return str()
 
     def get_player_profiles(self) -> dict:
-        """get_player_profiles() -> dict
-
-        (internal)
-        """
+        """(internal)"""
         return dict()
 
     def is_connected_to_remote_player(self) -> bool:
-        """is_connected_to_remote_player() -> bool
-
-        (internal)
-        """
+        """(internal)"""
         return bool()
 
     def remove_remote_player_from_game(self) -> None:
-        """remove_remote_player_from_game() -> None
-
-        (internal)
-        """
+        """(internal)"""
         return None
 
 
 class Material:
-    """Material(label: str = None)
+    """An entity applied to game objects to modify collision behavior.
 
-    An entity applied to game objects to modify collision behavior.
-
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     A material can affect physical characteristics, generate sounds,
     or trigger callback functions when collisions occur.
 
     Materials are applied to 'parts', which are groups of one or more
-    rigid bodies created as part of a ba.Node.  Nodes can have any number
+    rigid bodies created as part of a ba.Node. Nodes can have any number
     of parts, each with its own set of materials. Generally materials are
-    specified as array attributes on the Node. The 'spaz' node, for
-    example, has various attributes such as 'materials',
-    'roller_materials', and 'punch_materials', which correspond to the
-    various parts it creates.
+    specified as array attributes on the Node. The `spaz` node, for
+    example, has various attributes such as `materials`,
+    `roller_materials`, and `punch_materials`, which correspond
+    to the various parts it creates.
 
-    Use ba.Material() to instantiate a blank material, and then use its
-    add_actions() method to define what the material does.
-
-    Attributes:
-
-        label: str
-            A label for the material; only used for debugging.
+    Use ba.Material to instantiate a blank material, and then use its
+    ba.Material.add_actions() method to define what the material does.
     """
 
     def __init__(self, label: str = None):
         pass
 
     label: str
+    """A label for the material; only used for debugging."""
 
     def add_actions(self,
                     actions: tuple,
                     conditions: Optional[tuple] = None) -> None:
-        """add_actions(actions: tuple, conditions: Optional[tuple] = None)
-          -> None
+        """Add one or more actions to the material, optionally with conditions.
 
-        Add one or more actions to the material, optionally with conditions.
+        ##### Conditions
+        Conditions are provided as tuples which can be combined
+        to form boolean logic. A single condition might look like
+        `('condition_name', cond_arg)`, or a more complex nested one
+        might look like `(('some_condition', cond_arg), 'or',
+        ('another_condition', cond2_arg))`.
 
-        Conditions:
+        `'and'`, `'or'`, and `'xor'` are available to chain
+        together 2 conditions, as seen above.
 
-        Conditions are provided as tuples which can be combined to form boolean
-        logic. A single condition might look like ('condition_name', cond_arg),
-        or a more complex nested one might look like (('some_condition',
-        cond_arg), 'or', ('another_condition', cond2_arg)).
+        ##### Available Conditions
+        ###### `('they_have_material', material)`
+        > Does the part we're hitting have a given ba.Material?
 
-        'and', 'or', and 'xor' are available to chain together 2 conditions, as
-          seen above.
+        ###### `('they_dont_have_material', material)`
+        > Does the part we're hitting not have a given ba.Material?
 
-        Available Conditions:
+        ###### `('eval_colliding')`
+        > Is `'collide'` true at this point
+        in material evaluation? (see the `modify_part_collision` action)
 
-        ('they_have_material', material) - does the part we're hitting have a
-          given ba.Material?
+        ###### `('eval_not_colliding')`
+        > Is 'collide' false at this point
+        in material evaluation? (see the `modify_part_collision` action)
 
-        ('they_dont_have_material', material) - does the part we're hitting
-          not have a given ba.Material?
+        ###### `('we_are_younger_than', age)`
+        > Is our part younger than `age` (in milliseconds)?
 
-        ('eval_colliding') - is 'collide' true at this point in material
-          evaluation? (see the modify_part_collision action)
+        ###### `('we_are_older_than', age)`
+        > Is our part older than `age` (in milliseconds)?
 
-        ('eval_not_colliding') - is 'collide' false at this point in material
-          evaluation? (see the modify_part_collision action)
+        ###### `('they_are_younger_than', age)`
+        > Is the part we're hitting younger than `age` (in milliseconds)?
 
-        ('we_are_younger_than', age) - is our part younger than 'age'
-          (in milliseconds)?
+        ###### `('they_are_older_than', age)`
+        > Is the part we're hitting older than `age` (in milliseconds)?
 
-        ('we_are_older_than', age) - is our part older than 'age'
-          (in milliseconds)?
+        ###### `('they_are_same_node_as_us')`
+        > Does the part we're hitting belong to the same ba.Node as us?
 
-        ('they_are_younger_than', age) - is the part we're hitting younger than
-          'age' (in milliseconds)?
+        ###### `('they_are_different_node_than_us')`
+        > Does the part we're hitting belong to a different ba.Node than us?
 
-        ('they_are_older_than', age) - is the part we're hitting older than
-          'age' (in milliseconds)?
+        ##### Actions
+        In a similar manner, actions are specified as tuples.
+        Multiple actions can be specified by providing a tuple
+        of tuples.
 
-        ('they_are_same_node_as_us') - does the part we're hitting belong to
-          the same ba.Node as us?
+        ##### Available Actions
+        ###### `('call', when, callable)`
+        > Calls the provided callable;
+        `when` can be either `'at_connect'` or `'at_disconnect'`.
+        `'at_connect'` means to fire
+        when the two parts first come in contact; `'at_disconnect'`
+        means to fire once they cease being in contact.
 
-        ('they_are_different_node_than_us') - does the part we're hitting
-          belong to a different ba.Node than us?
+        ###### `('message', who, when, message_obj)`
+        > Sends a message object;
+        `who` can be either `'our_node'` or `'their_node'`, `when` can be
+        `'at_connect'` or `'at_disconnect'`, and `message_obj` is the message
+        object to send.
+        This has the same effect as calling the node's
+        ba.Node.handlemessage() method.
 
-        Actions:
+        ###### `('modify_part_collision', attr, value)`
+        > Changes some
+        characteristic of the physical collision that will occur between
+        our part and their part. This change will remain in effect as
+        long as the two parts remain overlapping. This means if you have a
+        part with a material that turns `'collide'` off against parts
+        younger than 100ms, and it touches another part that is 50ms old,
+        it will continue to not collide with that part until they separate,
+        even if the 100ms threshold is passed. Options for attr/value are:
+        `'physical'` (boolean value; whether a *physical* response will
+        occur at all), `'friction'` (float value; how friction-y the
+        physical response will be), `'collide'` (boolean value;
+        whether *any* collision will occur at all, including non-physical
+        stuff like callbacks), `'use_node_collide'`
+        (boolean value; whether to honor modify_node_collision
+        overrides for this collision), `'stiffness'` (float value,
+        how springy the physical response is), `'damping'` (float
+        value, how damped the physical response is), `'bounce'` (float
+        value; how bouncy the physical response is).
 
-        In a similar manner, actions are specified as tuples. Multiple actions
-        can be specified by providing a tuple of tuples.
+        ###### `('modify_node_collision', attr, value)`
+        > Similar to
+        `modify_part_collision`, but operates at a node-level.
+        collision attributes set here will remain in effect as long as
+        *anything* from our part's node and their part's node overlap.
+        A key use of this functionality is to prevent new nodes from
+        colliding with each other if they appear overlapped;
+        if `modify_part_collision` is used, only the individual
+        parts that were overlapping would avoid contact, but other parts
+        could still contact leaving the two nodes 'tangled up'. Using
+        `modify_node_collision` ensures that the nodes must completely
+        separate before they can start colliding. Currently the only attr
+        available here is `'collide'` (a boolean value).
 
-        Available Actions:
+        ###### `('sound', sound, volume)`
+        > Plays a ba.Sound when a collision
+        occurs, at a given volume, regardless of the collision speed/etc.
 
-        ('call', when, callable) - calls the provided callable; 'when' can be
-          either 'at_connect' or 'at_disconnect'. 'at_connect' means to fire
-          when the two parts first come in contact; 'at_disconnect' means to
-          fire once they cease being in contact.
+        ###### `('impact_sound', sound, targetImpulse, volume)`
+        > Plays a sound
+        when a collision occurs, based on the speed of impact.
+        Provide a ba.Sound, a target-impulse, and a volume.
 
-        ('message', who, when, message_obj) - sends a message object; 'who' can
-          be either 'our_node' or 'their_node', 'when' can be 'at_connect' or
-          'at_disconnect', and message_obj is the message object to send.
-          This has the same effect as calling the node's handlemessage()
-          method.
+        ###### `('skid_sound', sound, targetImpulse, volume)`
+        > Plays a sound
+        during a collision when parts are 'scraping' against each other.
+        Provide a ba.Sound, a target-impulse, and a volume.
 
-        ('modify_part_collision', attr, value) - changes some characteristic
-          of the physical collision that will occur between our part and their
-          part.  This change will remain in effect as long as the two parts
-          remain overlapping. This means if you have a part with a material
-          that turns 'collide' off against parts younger than 100ms, and it
-          touches another part that is 50ms old, it will continue to not
-          collide with that part until they separate, even if the 100ms
-          threshold is passed. Options for attr/value are: 'physical' (boolean
-          value; whether a *physical* response will occur at all), 'friction'
-          (float value; how friction-y the physical response will be),
-          'collide' (boolean value; whether *any* collision will occur at all,
-          including non-physical stuff like callbacks), 'use_node_collide'
-          (boolean value; whether to honor modify_node_collision overrides for
-          this collision), 'stiffness' (float value, how springy the physical
-          response is), 'damping' (float value, how damped the physical
-          response is), 'bounce' (float value; how bouncy the physical response
-          is).
+        ###### `('roll_sound', sound, targetImpulse, volume)`
+        > Plays a sound
+        during a collision when parts are 'rolling' against each other.
+        Provide a ba.Sound, a target-impulse, and a volume.
 
-        ('modify_node_collision', attr, value) - similar to
-          modify_part_collision, but operates at a node-level.
-          collision attributes set here will remain in effect as long as
-          *anything* from our part's node and their part's node overlap.
-          A key use of this functionality is to prevent new nodes from
-          colliding with each other if they appear overlapped;
-          if modify_part_collision is used, only the individual parts that
-          were overlapping would avoid contact, but other parts could still
-          contact leaving the two nodes 'tangled up'.  Using
-          modify_node_collision ensures that the nodes must completely
-          separate before they can start colliding.  Currently the only attr
-          available here is 'collide' (a boolean value).
+        ##### Examples
+        **Example 1:** create a material that lets us ignore
+        collisions against any nodes we touch in the first
+        100 ms of our existence; handy for preventing us from
+        exploding outward if we spawn on top of another object:
+        >>> m = ba.Material()
+        ... m.add_actions(
+        ...     conditions=(('we_are_younger_than', 100),
+        ...                 'or', ('they_are_younger_than', 100)),
+        ...     actions=('modify_node_collision', 'collide', False))
 
-        ('sound', sound, volume) - plays a ba.Sound when a collision occurs, at
-          a given volume, regardless of the collision speed/etc.
+        **Example 2:** send a ba.DieMessage to anything we touch, but cause
+        no physical response. This should cause any ba.Actor to drop dead:
+        >>> m = ba.Material()
+        ... m.add_actions(
+        ...     actions=(('modify_part_collision', 'physical', False),
+        ...              ('message', 'their_node', 'at_connect',
+        ...                  ba.DieMessage())))
 
-        ('impact_sound', sound, targetImpulse, volume) - plays a sound when a
-          collision occurs, based on the speed of impact. Provide a ba.Sound, a
-          target-impulse, and a volume.
-
-        ('skid_sound', sound, targetImpulse, volume) - plays a sound during a
-          collision when parts are 'scraping' against each other. Provide a
-          ba.Sound, a target-impulse, and a volume.
-
-        ('roll_sound', sound, targetImpulse, volume) - plays a sound during a
-          collision when parts are 'rolling' against each other. Provide a
-          ba.Sound, a target-impulse, and a volume.
-
-        # example 1: create a material that lets us ignore
-        # collisions against any nodes we touch in the first
-        # 100 ms of our existence; handy for preventing us from
-        # exploding outward if we spawn on top of another object:
-        m = ba.Material()
-        m.add_actions(conditions=(('we_are_younger_than', 100),
-                                 'or',('they_are_younger_than', 100)),
-                     actions=('modify_node_collision', 'collide', False))
-
-        # example 2: send a DieMessage to anything we touch, but cause
-        # no physical response.  This should cause any ba.Actor to drop dead:
-        m = ba.Material()
-        m.add_actions(actions=(('modify_part_collision', 'physical', False),
-                              ('message', 'their_node', 'at_connect',
-                               ba.DieMessage())))
-
-        # example 3: play some sounds when we're contacting the ground:
-        m = ba.Material()
-        m.add_actions(conditions=('they_have_material',
-                                  shared.footing_material),
-                      actions=(('impact_sound', ba.getsound('metalHit'), 2, 5),
-                               ('skid_sound', ba.getsound('metalSkid'), 2, 5)))
-
+        **Example 3:** play some sounds when we're contacting the ground:
+        >>> m = ba.Material()
+        ... m.add_actions(
+        ...     conditions=('they_have_material',
+        ...                 shared.footing_material),
+        ...     actions=(('impact_sound', ba.getsound('metalHit'), 2, 5),
+        ...              ('skid_sound', ba.getsound('metalSkid'), 2, 5)))
         """
         return None
 
@@ -528,7 +487,7 @@ class Material:
 class Model:
     """A reference to a model.
 
-    Category: Asset Classes
+    Category: **Asset Classes**
 
     Models are used for drawing.
     Use ba.getmodel() to instantiate one.
@@ -539,7 +498,7 @@ class Model:
 class Node:
     """Reference to a Node; the low level building block of the game.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     At its core, a game is nothing more than a scene of Nodes
     with attributes getting interconnected or set over time.
@@ -552,7 +511,7 @@ class Node:
     ba.Node.exists() can be used to determine if a Node still points to
     a live node in the game.
 
-    You can use ba.Node(None) to instantiate an invalid
+    You can use `ba.Node(None)` to instantiate an invalid
     Node reference (sometimes used as attr values/etc).
     """
 
@@ -675,42 +634,35 @@ class Node:
     tint: Sequence[float] = (1.0, 1.0, 1.0)
 
     def add_death_action(self, action: Callable[[], None]) -> None:
-        """add_death_action(action: Callable[[], None]) -> None
-
-        Add a callable object to be called upon this node's death.
+        """Add a callable object to be called upon this node's death.
         Note that these actions are run just after the node dies, not before.
         """
         return None
 
     def connectattr(self, srcattr: str, dstnode: Node, dstattr: str) -> None:
-        """connectattr(srcattr: str, dstnode: Node, dstattr: str) -> None
+        """Connect one of this node's attributes to an attribute on another
+        node. This will immediately set the target attribute's value to that
+        of the source attribute, and will continue to do so once per step
+        as long as the two nodes exist. The connection can be severed by
+        setting the target attribute to any value or connecting another
+        node attribute to it.
 
-        Connect one of this node's attributes to an attribute on another node.
-        This will immediately set the target attribute's value to that of the
-        source attribute, and will continue to do so once per step as long as
-        the two nodes exist.  The connection can be severed by setting the
-        target attribute to any value or connecting another node attribute
-        to it.
-
-        # Example: create a locator and attach a light to it:
-        light = ba.newnode('light')
-        loc = ba.newnode('locator', attrs={'position': (0,10,0)})
-        loc.connectattr('position', light, 'position')
+        ##### Example
+        Create a locator and attach a light to it:
+        >>> light = ba.newnode('light')
+        ... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})
+        ... loc.connectattr('position', light, 'position')
         """
         return None
 
     def delete(self, ignore_missing: bool = True) -> None:
-        """delete(ignore_missing: bool = True) -> None
-
-        Delete the node.  Ignores already-deleted nodes if ignore_missing
+        """Delete the node. Ignores already-deleted nodes if `ignore_missing`
         is True; otherwise a ba.NodeNotFoundError is thrown.
         """
         return None
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Returns whether the Node still exists.
+        """Returns whether the Node still exists.
         Most functionality will fail on a nonexistent Node, so it's never a bad
         idea to check this.
 
@@ -732,9 +684,8 @@ class Node:
         ...
 
     def getdelegate(self, type: Any, doraise: bool = False) -> Any:
-        """getdelegate(type: type, doraise: bool = False) -> <varies>
-
-        Return the node's current delegate object if it matches a certain type.
+        """Return the node's current delegate object if it matches
+        a certain type.
 
         If the node has no delegate or it is not an instance of the passed
         type, then None will be returned. If 'doraise' is True, then an
@@ -743,29 +694,22 @@ class Node:
         return None
 
     def getname(self) -> str:
-        """getname() -> str
-
-        Return the name assigned to a Node; used mainly for debugging
-        """
+        """Return the name assigned to a Node; used mainly for debugging"""
         return str()
 
     def getnodetype(self) -> str:
-        """getnodetype() -> str
-
-        Return the type of Node referenced by this object as a string.
+        """Return the type of Node referenced by this object as a string.
         (Note this is different from the Python type which is always ba.Node)
         """
         return str()
 
     def handlemessage(self, *args: Any) -> None:
-        """handlemessage(*args: Any) -> None
-
-        General message handling; can be passed any message object.
+        """General message handling; can be passed any message object.
 
         All standard message objects are forwarded along to the ba.Node's
         delegate for handling (generally the ba.Actor that made the node).
 
-        ba.Nodes are unique, however, in that they can be passed a second
+        ba.Node-s are unique, however, in that they can be passed a second
         form of message; 'node-messages'.  These consist of a string type-name
         as a first argument along with the args specific to that type name
         as additional arguments.
@@ -780,9 +724,7 @@ class SessionData:
     """(internal)"""
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Returns whether the SessionData still exists.
+        """Returns whether the SessionData still exists.
         Most functionality will fail on a nonexistent instance.
         """
         return bool()
@@ -791,83 +733,63 @@ class SessionData:
 class SessionPlayer:
     """A reference to a player in the ba.Session.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     These are created and managed internally and
-    provided to your Session/Activity instances.
-    Be aware that, like ba.Nodes, ba.SessionPlayer objects are 'weak'
+    provided to your ba.Session/ba.Activity instances.
+    Be aware that, like `ba.Node`s, ba.SessionPlayer objects are 'weak'
     references under-the-hood; a player can leave the game at
      any point. For this reason, you should make judicious use of the
     ba.SessionPlayer.exists() method (or boolean operator) to ensure
     that a SessionPlayer is still present if retaining references to one
     for any length of time.
-
-    Attributes:
-
-        id: int
-            The unique numeric ID of the Player.
-
-            Note that you can also use the boolean operator for this same
-            functionality, so a statement such as "if player" will do
-            the right thing both for Player objects and values of None.
-
-        in_game: bool
-            This bool value will be True once the Player has completed
-            any lobby character/team selection.
-
-        sessionteam: ba.SessionTeam
-            The ba.SessionTeam this Player is on. If the SessionPlayer
-            is still in its lobby selecting a team/etc. then a
-            ba.SessionTeamNotFoundError will be raised.
-
-        inputdevice: ba.InputDevice
-            The input device associated with the player.
-
-        color: Sequence[float]
-            The base color for this Player.
-            In team games this will match the ba.SessionTeam's color.
-
-        highlight: Sequence[float]
-            A secondary color for this player.
-            This is used for minor highlights and accents
-            to allow a player to stand apart from his teammates
-            who may all share the same team (primary) color.
-
-        character: str
-            The character this player has selected in their profile.
-
-        activityplayer: Optional[ba.Player]
-            The current game-specific instance for this player.
     """
     id: int
+    """The unique numeric ID of the Player.
+
+       Note that you can also use the boolean operator for this same
+       functionality, so a statement such as "if player" will do
+       the right thing both for Player objects and values of None."""
+
     in_game: bool
+    """This bool value will be True once the Player has completed
+       any lobby character/team selection."""
+
     sessionteam: ba.SessionTeam
+    """The ba.SessionTeam this Player is on. If the SessionPlayer
+       is still in its lobby selecting a team/etc. then a
+       ba.SessionTeamNotFoundError will be raised."""
+
     inputdevice: ba.InputDevice
+    """The input device associated with the player."""
+
     color: Sequence[float]
+    """The base color for this Player.
+       In team games this will match the ba.SessionTeam's color."""
+
     highlight: Sequence[float]
+    """A secondary color for this player.
+       This is used for minor highlights and accents
+       to allow a player to stand apart from his teammates
+       who may all share the same team (primary) color."""
+
     character: str
+    """The character this player has selected in their profile."""
+
     activityplayer: Optional[ba.Player]
+    """The current game-specific instance for this player."""
 
     def assigninput(self, type: Union[ba.InputType, tuple[ba.InputType, ...]],
                     call: Callable) -> None:
-        """assigninput(type: Union[ba.InputType, tuple[ba.InputType, ...]],
-          call: Callable) -> None
-
-        Set the python callable to be run for one or more types of input.
-        """
+        """Set the python callable to be run for one or more types of input."""
         return None
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Return whether the underlying player is still in the game.
-        """
+        """Return whether the underlying player is still in the game."""
         return bool()
 
     def get_account_id(self) -> str:
-        """get_account_id() -> str
-
-        Return the Account ID this player is signed in under, if
+        """Return the Account ID this player is signed in under, if
         there is one and it can be determined with relative certainty.
         Returns None otherwise. Note that this may require an active
         internet connection (especially for network-connected players)
@@ -877,92 +799,63 @@ class SessionPlayer:
         return str()
 
     def get_icon(self) -> dict[str, Any]:
-        """get_icon() -> dict[str, Any]
-
-        Returns the character's icon (images, colors, etc contained in a dict)
+        """Returns the character's icon (images, colors, etc contained
+        in a dict.
         """
         return {'foo': 'bar'}
 
     def get_icon_info(self) -> dict[str, Any]:
-        """get_icon_info() -> dict[str, Any]
-
-        (internal)
-        """
+        """(internal)"""
         return {'foo': 'bar'}
 
     def getname(self, full: bool = False, icon: bool = True) -> str:
-        """getname(full: bool = False, icon: bool = True) -> str
-
-        Returns the player's name. If icon is True, the long version of the
+        """Returns the player's name. If icon is True, the long version of the
         name may include an icon.
         """
         return str()
 
     def remove_from_game(self) -> None:
-        """remove_from_game() -> None
-
-        Removes the player from the game.
-        """
+        """Removes the player from the game."""
         return None
 
     def resetinput(self) -> None:
-        """resetinput() -> None
-
-        Clears out the player's assigned input actions.
-        """
+        """Clears out the player's assigned input actions."""
         return None
 
     def set_icon_info(self, texture: str, tint_texture: str,
                       tint_color: Sequence[float],
                       tint2_color: Sequence[float]) -> None:
-        """set_icon_info(texture: str, tint_texture: str,
-          tint_color: Sequence[float], tint2_color: Sequence[float]) -> None
-
-        (internal)
-        """
+        """(internal)"""
         return None
 
     def setactivity(self, activity: Optional[ba.Activity]) -> None:
-        """setactivity(activity: Optional[ba.Activity]) -> None
-
-        (internal)
-        """
+        """(internal)"""
         return None
 
     def setdata(self, team: ba.SessionTeam, character: str,
                 color: Sequence[float], highlight: Sequence[float]) -> None:
-        """setdata(team: ba.SessionTeam, character: str,
-          color: Sequence[float], highlight: Sequence[float]) -> None
-
-        (internal)
-        """
+        """(internal)"""
         return None
 
     def setname(self,
                 name: str,
                 full_name: str = None,
                 real: bool = True) -> None:
-        """setname(name: str, full_name: str = None, real: bool = True)
-          -> None
-
-        Set the player's name to the provided string.
+        """Set the player's name to the provided string.
         A number will automatically be appended if the name is not unique from
         other players.
         """
         return None
 
     def setnode(self, node: Optional[Node]) -> None:
-        """setnode(node: Optional[Node]) -> None
-
-        (internal)
-        """
+        """(internal)"""
         return None
 
 
 class Sound:
     """A reference to a sound.
 
-    Category: Asset Classes
+    Category: **Asset Classes**
 
     Use ba.getsound() to instantiate one.
     """
@@ -972,7 +865,7 @@ class Sound:
 class Texture:
     """A reference to a texture.
 
-    Category: Asset Classes
+    Category: **Asset Classes**
 
     Use ba.gettexture() to instantiate one.
     """
@@ -980,14 +873,9 @@ class Texture:
 
 
 class Timer:
-    """Timer(time: float, call: Callable[[], Any], repeat: bool = False,
-      timetype: ba.TimeType = TimeType.SIM,
-      timeformat: ba.TimeFormat = TimeFormat.SECONDS,
-      suppress_format_warning: bool = False)
+    """Timers are used to run code at later points in time.
 
-    Timers are used to run code at later points in time.
-
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     This class encapsulates a timer in the current ba.Context.
     The underlying timer will be destroyed when either this object is
@@ -995,34 +883,41 @@ class Timer:
     do not want to worry about keeping a reference to your timer around,
     you should use the ba.timer() function instead.
 
-    time: length of time (in seconds by default) that the timer will wait
+    ###### time
+    > Length of time (in seconds by default) that the timer will wait
     before firing. Note that the actual delay experienced may vary
     depending on the timetype. (see below)
 
-    call: A callable Python object. Note that the timer will retain a
+    ###### call
+    > A callable Python object. Note that the timer will retain a
     strong reference to the callable for as long as it exists, so you
     may want to look into concepts such as ba.WeakCall if that is not
     desired.
 
-    repeat: if True, the timer will fire repeatedly, with each successive
+    ###### repeat
+    > If True, the timer will fire repeatedly, with each successive
     firing having the same delay as the first.
 
-    timetype: A ba.TimeType value determining which timeline the timer is
+    ###### timetype
+    > A ba.TimeType value determining which timeline the timer is
     placed onto.
 
-    timeformat: A ba.TimeFormat value determining how the passed time is
+    ###### timeformat
+    > A ba.TimeFormat value determining how the passed time is
     interpreted.
 
-    # Example: use a Timer object to print repeatedly for a few seconds:
-    def say_it():
-        ba.screenmessage('BADGER!')
-    def stop_saying_it():
-        self.t = None
-        ba.screenmessage('MUSHROOM MUSHROOM!')
-    # Create our timer; it will run as long as we have the self.t ref.
-    self.t = ba.Timer(0.3, say_it, repeat=True)
-    # Now fire off a one-shot timer to kill it.
-    ba.timer(3.89, stop_saying_it)
+    ##### Example
+
+    Use a Timer object to print repeatedly for a few seconds:
+    >>> def say_it():
+    ...     ba.screenmessage('BADGER!')
+    ... def stop_saying_it():
+    ...     self.t = None
+    ... ba.screenmessage('MUSHROOM MUSHROOM!')
+    ... # Create our timer; it will run as long as we have the self.t ref.
+    ... self.t = ba.Timer(0.3, say_it, repeat=True)
+    ... # Now fire off a one-shot timer to kill it.
+    ... ba.timer(3.89, stop_saying_it)
     """
 
     def __init__(self,
@@ -1038,27 +933,22 @@ class Timer:
 class Vec3(Sequence[float]):
     """A vector of 3 floats.
 
-    Category: General Utility Classes
+    Category: **General Utility Classes**
 
     These can be created the following ways (checked in this order):
     - with no args, all values are set to 0
     - with a single numeric arg, all values are set to that value
     - with a single three-member sequence arg, sequence values are copied
     - otherwise assumes individual x/y/z args (positional or keywords)
-    Attributes:
-
-       x: float
-          The vector's X component.
-
-       y: float
-          The vector's Y component.
-
-       z: float
-          The vector's Z component.
     """
     x: float
+    """The vector's X component."""
+
     y: float
+    """The vector's Y component."""
+
     z: float
+    """The vector's Z component."""
 
     # pylint: disable=function-redefined
 
@@ -1130,70 +1020,48 @@ class Vec3(Sequence[float]):
         pass
 
     def cross(self, other: Vec3) -> Vec3:
-        """cross(other: Vec3) -> Vec3
-
-        Returns the cross product of this vector and another.
-        """
+        """Returns the cross product of this vector and another."""
         return Vec3()
 
     def dot(self, other: Vec3) -> float:
-        """dot(other: Vec3) -> float
-
-        Returns the dot product of this vector and another.
-        """
+        """Returns the dot product of this vector and another."""
         return float()
 
     def length(self) -> float:
-        """length() -> float
-
-        Returns the length of the vector.
-        """
+        """Returns the length of the vector."""
         return float()
 
     def normalized(self) -> Vec3:
-        """normalized() -> Vec3
-
-        Returns a normalized version of the vector.
-        """
+        """Returns a normalized version of the vector."""
         return Vec3()
 
 
 class Widget:
     """Internal type for low level UI elements; buttons, windows, etc.
 
-    Category: User Interface Classes
+    Category: **User Interface Classes**
 
     This class represents a weak reference to a widget object
-    in the internal c++ layer. Currently, functions such as
+    in the internal C++ layer. Currently, functions such as
     ba.buttonwidget() must be used to instantiate or edit these.
     """
 
     def activate(self) -> None:
-        """activate() -> None
-
-        Activates a widget; the same as if it had been clicked.
-        """
+        """Activates a widget; the same as if it had been clicked."""
         return None
 
     def add_delete_callback(self, call: Callable) -> None:
-        """add_delete_callback(call: Callable) -> None
-
-        Add a call to be run immediately after this widget is destroyed.
-        """
+        """Add a call to be run immediately after this widget is destroyed."""
         return None
 
     def delete(self, ignore_missing: bool = True) -> None:
-        """delete(ignore_missing: bool = True) -> None
-
-        Delete the Widget.  Ignores already-deleted Widgets if ignore_missing
-          is True; otherwise an Exception is thrown.
+        """Delete the Widget. Ignores already-deleted Widgets if ignore_missing
+        is True; otherwise an Exception is thrown.
         """
         return None
 
     def exists(self) -> bool:
-        """exists() -> bool
-
-        Returns whether the Widget still exists.
+        """Returns whether the Widget still exists.
         Most functionality will fail on a nonexistent widget.
 
         Note that you can also use the boolean operator for this same
@@ -1203,51 +1071,36 @@ class Widget:
         return bool()
 
     def get_children(self) -> list[ba.Widget]:
-        """get_children() -> list[ba.Widget]
-
-        Returns any child Widgets of this Widget.
-        """
+        """Returns any child Widgets of this Widget."""
         return [Widget()]
 
     def get_screen_space_center(self) -> tuple[float, float]:
-        """get_screen_space_center() -> tuple[float, float]
-
-        Returns the coords of the Widget center relative to the center of the
-        screen. This can be useful for placing pop-up windows and other special
-        cases.
+        """Returns the coords of the ba.Widget center relative to the center
+        of the screen. This can be useful for placing pop-up windows and other
+        special cases.
         """
         return (0.0, 0.0)
 
     def get_selected_child(self) -> Optional[ba.Widget]:
-        """get_selected_child() -> Optional[ba.Widget]
-
-        Returns the selected child Widget or None if nothing is selected.
-        """
+        """Returns the selected child Widget or None if nothing is selected."""
         return Widget()
 
     def get_widget_type(self) -> str:
-        """get_widget_type() -> str
-
-        Return the internal type of the Widget as a string.  Note that this is
-        different from the Python ba.Widget type, which is the same for all
-        widgets.
+        """Return the internal type of the Widget as a string. Note that this
+        is different from the Python ba.Widget type, which is the same for
+        all widgets.
         """
         return str()
 
 
 def _app() -> ba.App:
-    """_app() -> ba.App
-
-    (internal)
-    """
+    """(internal)"""
     import ba  # pylint: disable=cyclic-import
     return ba.App()
 
 
 def add_clean_frame_callback(call: Callable) -> None:
-    """add_clean_frame_callback(call: Callable) -> None
-
-    (internal)
+    """(internal)
 
     Provide an object to be called once the next non-progress-bar-frame has
     been rendered. Useful for queueing things to load in the background
@@ -1257,17 +1110,12 @@ def add_clean_frame_callback(call: Callable) -> None:
 
 
 def add_transaction(transaction: dict, callback: Callable = None) -> None:
-    """add_transaction(transaction: dict, callback: Callable = None) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def android_get_external_storage_path() -> str:
-    """android_get_external_storage_path() -> str
-
-    (internal)
+    """(internal)
 
     Returns the android external storage path, or None if there is none on
     this device
@@ -1276,9 +1124,7 @@ def android_get_external_storage_path() -> str:
 
 
 def android_media_scan_file(file_name: str) -> None:
-    """android_media_scan_file(file_name: str) -> None
-
-    (internal)
+    """(internal)
 
     Refreshes Android MTP Index for a file; use this to get file
     modifications to be reflected in Android File Transfer.
@@ -1287,33 +1133,22 @@ def android_media_scan_file(file_name: str) -> None:
 
 
 def android_show_wifi_settings() -> None:
-    """android_show_wifi_settings() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def apply_config() -> None:
-    """apply_config() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def appname() -> str:
-    """appname() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def appnameupper() -> str:
-    """appnameupper() -> str
-
-    (internal)
+    """(internal)
 
     Return whether this build of the game can display full unicode such as
     Emoji, Asian languages, etc.
@@ -1322,18 +1157,12 @@ def appnameupper() -> str:
 
 
 def back_press() -> None:
-    """back_press() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def bless() -> None:
-    """bless() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
@@ -1374,47 +1203,9 @@ def buttonwidget(edit: ba.Widget = None,
                  text_flatness: float = None,
                  text_res_scale: float = None,
                  enabled: bool = None) -> ba.Widget:
-    """buttonwidget(edit: ba.Widget = None,
-      parent: ba.Widget = None,
-      size: Sequence[float] = None,
-      position: Sequence[float] = None,
-      on_activate_call: Callable = None,
-      label: Union[str, ba.Lstr] = None,
-      color: Sequence[float] = None,
-      down_widget: ba.Widget = None,
-      up_widget: ba.Widget = None,
-      left_widget: ba.Widget = None,
-      right_widget: ba.Widget = None,
-      texture: ba.Texture = None,
-      text_scale: float = None,
-      textcolor: Sequence[float] = None,
-      enable_sound: bool = None,
-      model_transparent: ba.Model = None,
-      model_opaque: ba.Model = None,
-      repeat: bool = None,
-      scale: float = None,
-      transition_delay: float = None,
-      on_select_call: Callable = None,
-      button_type: str = None,
-      extra_touch_border_scale: float = None,
-      selectable: bool = None,
-      show_buffer_top: float = None,
-      icon: ba.Texture = None,
-      iconscale: float = None,
-      icon_tint: float = None,
-      icon_color: Sequence[float] = None,
-      autoselect: bool = None,
-      mask_texture: ba.Texture = None,
-      tint_texture: ba.Texture = None,
-      tint_color: Sequence[float] = None,
-      tint2_color: Sequence[float] = None,
-      text_flatness: float = None,
-      text_res_scale: float = None,
-      enabled: bool = None) -> ba.Widget
+    """Create or edit a button widget.
 
-    Create or edit a button widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -1425,11 +1216,9 @@ def buttonwidget(edit: ba.Widget = None,
 
 
 def camerashake(intensity: float = 1.0) -> None:
-    """camerashake(intensity: float = 1.0) -> None
+    """Shake the camera.
 
-    Shake the camera.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     Note that some cameras and/or platforms (such as VR) may not display
     camera-shake, so do not rely on this always being visible to the
@@ -1439,25 +1228,17 @@ def camerashake(intensity: float = 1.0) -> None:
 
 
 def can_display_full_unicode() -> bool:
-    """can_display_full_unicode() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def can_show_ad() -> bool:
-    """can_show_ad() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def capture_gamepad_input(call: Callable[[dict], None]) -> None:
-    """capture_gamepad_input(call: Callable[[dict], None]) -> None
-
-    (internal)
+    """(internal)
 
     Add a callable to be called for subsequent gamepad events.
     The method is passed a dict containing info about the event.
@@ -1466,9 +1247,7 @@ def capture_gamepad_input(call: Callable[[dict], None]) -> None:
 
 
 def capture_keyboard_input(call: Callable[[dict], None]) -> None:
-    """capture_keyboard_input(call: Callable[[dict], None]) -> None
-
-    (internal)
+    """(internal)
 
     Add a callable to be called for subsequent keyboard-game-pad events.
     The method is passed a dict containing info about the event.
@@ -1477,17 +1256,15 @@ def capture_keyboard_input(call: Callable[[dict], None]) -> None:
 
 
 def charstr(char_id: ba.SpecialChar) -> str:
-    """charstr(char_id: ba.SpecialChar) -> str
+    """Get a unicode string representing a special character.
 
-    Get a unicode string representing a special character.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Note that these utilize the private-use block of unicode characters
     (U+E000-U+F8FF) and are specific to the game; exporting or rendering
     them elsewhere will be meaningless.
 
-    see ba.SpecialChar for the list of available characters.
+    See ba.SpecialChar for the list of available characters.
     """
     return str()
 
@@ -1495,12 +1272,7 @@ def charstr(char_id: ba.SpecialChar) -> str:
 def chatmessage(message: Union[str, ba.Lstr],
                 clients: Sequence[int] = None,
                 sender_override: str = None) -> None:
-    """chatmessage(message: Union[str, ba.Lstr],
-      clients: Sequence[int] = None,
-      sender_override: str = None) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
@@ -1519,25 +1291,9 @@ def checkboxwidget(edit: ba.Widget = None,
                    maxwidth: float = None,
                    autoselect: bool = None,
                    color: Sequence[float] = None) -> ba.Widget:
-    """checkboxwidget(edit: ba.Widget = None,
-      parent: ba.Widget = None,
-      size: Sequence[float] = None,
-      position: Sequence[float] = None,
-      text: Union[ba.Lstr, str] = None,
-      value: bool = None,
-      on_value_change_call: Callable[[bool], None] = None,
-      on_select_call: Callable[[], None] = None,
-      text_scale: float = None,
-      textcolor: Sequence[float] = None,
-      scale: float = None,
-      is_radio_button: bool = None,
-      maxwidth: float = None,
-      autoselect: bool = None,
-      color: Sequence[float] = None) -> ba.Widget
+    """Create or edit a check-box widget.
 
-    Create or edit a check-box widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -1548,19 +1304,14 @@ def checkboxwidget(edit: ba.Widget = None,
 
 
 def client_info_query_response(token: str, response: Any) -> None:
-    """client_info_query_response(token: str, response: Any) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def clipboard_get_text() -> str:
-    """clipboard_get_text() -> str
+    """Return text currently on the system clipboard.
 
-    Return text currently on the system clipboard.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Ensure that ba.clipboard_has_text() returns True before calling
      this function.
@@ -1569,24 +1320,20 @@ def clipboard_get_text() -> str:
 
 
 def clipboard_has_text() -> bool:
-    """clipboard_has_text() -> bool
+    """Return whether there is currently text on the clipboard.
 
-    Return whether there is currently text on the clipboard.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This will return False if no system clipboard is available; no need
-     to call ba.clipboard_available() separately.
+     to call ba.clipboard_is_supported() separately.
     """
     return bool()
 
 
 def clipboard_is_supported() -> bool:
-    """clipboard_is_supported() -> bool
+    """Return whether this platform supports clipboard operations at all.
 
-    Return whether this platform supports clipboard operations at all.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     If this returns False, UIs should not show 'copy to clipboard'
     buttons, etc.
@@ -1595,13 +1342,11 @@ def clipboard_is_supported() -> bool:
 
 
 def clipboard_set_text(value: str) -> None:
-    """clipboard_set_text(value: str) -> None
+    """Copy a string to the system clipboard.
 
-    Copy a string to the system clipboard.
+    Category: **General Utility Functions**
 
-    Category: General Utility Functions
-
-    Ensure that ba.clipboard_available() returns True before adding
+    Ensure that ba.clipboard_is_supported() returns True before adding
      buttons/etc. that make use of this functionality.
     """
     return None
@@ -1624,27 +1369,9 @@ def columnwidget(edit: ba.Widget = None,
                  margin: float = None,
                  claims_left_right: bool = None,
                  claims_tab: bool = None) -> ba.Widget:
-    """columnwidget(edit: ba.Widget = None,
-      parent: ba.Widget = None,
-      size: Sequence[float] = None,
-      position: Sequence[float] = None,
-      background: bool = None,
-      selected_child: ba.Widget = None,
-      visible_child: ba.Widget = None,
-      single_depth: bool = None,
-      print_list_exit_instructions: bool = None,
-      left_border: float = None,
-      top_border: float = None,
-      bottom_border: float = None,
-      selection_loops_to_parent: bool = None,
-      border: float = None,
-      margin: float = None,
-      claims_left_right: bool = None,
-      claims_tab: bool = None) -> ba.Widget
+    """Create or edit a column widget.
 
-    Create or edit a column widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -1655,28 +1382,19 @@ def columnwidget(edit: ba.Widget = None,
 
 
 def commit_config(config: str) -> None:
-    """commit_config(config: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def connect_to_party(address: str,
                      port: int = None,
                      print_progress: bool = True) -> None:
-    """connect_to_party(address: str, port: int = None,
-      print_progress: bool = True) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def console_print(*args: Any) -> None:
-    """console_print(*args: Any) -> None
-
-    (internal)
+    """(internal)
 
     Print the provided args to the game console (using str()).
     For most debugging/info purposes you should just use Python's standard
@@ -1716,41 +1434,9 @@ def containerwidget(edit: ba.Widget = None,
                     on_select_call: Callable[[], None] = None,
                     claim_outside_clicks: bool = None,
                     claims_up_down: bool = None) -> ba.Widget:
-    """containerwidget(edit: ba.Widget = None,
-      parent: ba.Widget = None,
-      size: Sequence[float] = None,
-      position: Sequence[float] = None,
-      background: bool = None,
-      selected_child: ba.Widget = None,
-      transition: str = None,
-      cancel_button: ba.Widget = None,
-      start_button: ba.Widget = None,
-      root_selectable: bool = None,
-      on_activate_call: Callable[[], None] = None,
-      claims_left_right: bool = None,
-      claims_tab: bool = None,
-      selection_loops: bool = None,
-      selection_loops_to_parent: bool = None,
-      scale: float = None,
-      on_outside_click_call: Callable[[], None] = None,
-      single_depth: bool = None,
-      visible_child: ba.Widget = None,
-      stack_offset: Sequence[float] = None,
-      color: Sequence[float] = None,
-      on_cancel_call: Callable[[], None] = None,
-      print_list_exit_instructions: bool = None,
-      click_activate: bool = None,
-      always_highlight: bool = None,
-      selectable: bool = None,
-      scale_origin_stack_offset: Sequence[float] = None,
-      toolbar_visibility: str = None,
-      on_select_call: Callable[[], None] = None,
-      claim_outside_clicks: bool = None,
-      claims_up_down: bool = None) -> ba.Widget
+    """Create or edit a container widget.
 
-    Create or edit a container widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -1761,17 +1447,12 @@ def containerwidget(edit: ba.Widget = None,
 
 
 def contains_python_dist() -> bool:
-    """contains_python_dist() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def debug_print_py_err() -> None:
-    """debug_print_py_err() -> None
-
-    (internal)
+    """(internal)
 
     Debugging func for tracking leaked Python errors in the C++ layer..
     """
@@ -1779,17 +1460,12 @@ def debug_print_py_err() -> None:
 
 
 def disconnect_client(client_id: int, ban_time: int = 300) -> bool:
-    """disconnect_client(client_id: int, ban_time: int = 300) -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def disconnect_from_host() -> None:
-    """disconnect_from_host() -> None
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -1797,30 +1473,26 @@ def disconnect_from_host() -> None:
 
 
 def do_once() -> bool:
-    """do_once() -> bool
+    """Return whether this is the first time running a line of code.
 
-    Return whether this is the first time running a line of code.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This is used by 'print_once()' type calls to keep from overflowing
     logs. The call functions by registering the filename and line where
     The call is made from.  Returns True if this location has not been
     registered already, and False if it has.
 
-    # Example: this print will only fire for the first loop iteration:
-    for i in range(10):
-        if ba.do_once():
-            print('Hello once from loop!')
+    ##### Example
+    This print will only fire for the first loop iteration:
+    >>> for i in range(10):
+    ... if ba.do_once():
+    ...     print('Hello once from loop!')
     """
     return bool()
 
 
 def ehv() -> None:
-    """ehv() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
@@ -1832,15 +1504,9 @@ def emitfx(position: Sequence[float],
            chunk_type: str = 'rock',
            emit_type: str = 'chunks',
            tendril_type: str = 'smoke') -> None:
-    """emitfx(position: Sequence[float],
-      velocity: Optional[Sequence[float]] = None,
-      count: int = 10, scale: float = 1.0, spread: float = 1.0,
-      chunk_type: str = 'rock', emit_type: str ='chunks',
-      tendril_type: str = 'smoke') -> None
+    """Emit particles, smoke, etc. into the fx sim layer.
 
-    Emit particles, smoke, etc. into the fx sim layer.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     The fx sim layer is a secondary dynamics simulation that runs in
     the background and just looks pretty; it does not affect gameplay.
@@ -1851,9 +1517,7 @@ def emitfx(position: Sequence[float],
 
 
 def end_host_scanning() -> None:
-    """end_host_scanning() -> None
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -1861,9 +1525,7 @@ def end_host_scanning() -> None:
 
 
 def env() -> dict:
-    """env() -> dict
-
-    (internal)
+    """(internal)
 
     Returns a dict containing general info about the operating environment
     such as version, platform, etc.
@@ -1874,20 +1536,14 @@ def env() -> dict:
 
 
 def evaluate_lstr(value: str) -> str:
-    """evaluate_lstr(value: str) -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def fade_screen(to: int = 0,
                 time: float = 0.25,
                 endcall: Optional[Callable[[], None]] = None) -> None:
-    """fade_screen(to: int = 0, time: float = 0.25,
-      endcall: Optional[Callable[[], None]] = None) -> None
-
-    (internal)
+    """(internal)
 
     Fade the local game screen in our out from black over a duration of
     time. if "to" is 0, the screen will fade out to black.  Otherwise it
@@ -1898,9 +1554,7 @@ def fade_screen(to: int = 0,
 
 
 def focus_window() -> None:
-    """focus_window() -> None
-
-    (internal)
+    """(internal)
 
     A workaround for some unintentional backgrounding that occurs on mac
     """
@@ -1908,9 +1562,7 @@ def focus_window() -> None:
 
 
 def game_service_has_leaderboard(game: str, config: str) -> bool:
-    """game_service_has_leaderboard(game: str, config: str) -> bool
-
-    (internal)
+    """(internal)
 
     Given a game and config string, returns whether there is a leaderboard
     for it on the game service.
@@ -1919,65 +1571,42 @@ def game_service_has_leaderboard(game: str, config: str) -> bool:
 
 
 def get_account_display_string(full: bool = True) -> str:
-    """get_account_display_string(full: bool = True) -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_account_misc_read_val(name: str, default_value: Any) -> Any:
-    """get_account_misc_read_val(name: str, default_value: Any) -> Any
-
-    (internal)
-    """
+    """(internal)"""
     return _uninferrable()
 
 
 def get_account_misc_read_val_2(name: str, default_value: Any) -> Any:
-    """get_account_misc_read_val_2(name: str, default_value: Any) -> Any
-
-    (internal)
-    """
+    """(internal)"""
     return _uninferrable()
 
 
 def get_account_misc_val(name: str, default_value: Any) -> Any:
-    """get_account_misc_val(name: str, default_value: Any) -> Any
-
-    (internal)
-    """
+    """(internal)"""
     return _uninferrable()
 
 
 def get_account_name() -> str:
-    """get_account_name() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_account_state() -> str:
-    """get_account_state() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_account_state_num() -> int:
-    """get_account_state_num() -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def get_account_ticket_count() -> int:
-    """get_account_ticket_count() -> int
-
-    (internal)
+    """(internal)
 
     Returns the number of tickets for the current account.
     """
@@ -1985,33 +1614,22 @@ def get_account_ticket_count() -> int:
 
 
 def get_account_type() -> str:
-    """get_account_type() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_appconfig_builtin_keys() -> list[str]:
-    """get_appconfig_builtin_keys() -> list[str]
-
-    (internal)
-    """
+    """(internal)"""
     return ['blah', 'blah2']
 
 
 def get_appconfig_default_value(key: str) -> Any:
-    """get_appconfig_default_value(key: str) -> Any
-
-    (internal)
-    """
+    """(internal)"""
     return _uninferrable()
 
 
 def get_camera_position() -> tuple[float, ...]:
-    """get_camera_position() -> tuple[float, ...]
-
-    (internal)
+    """(internal)
 
     WARNING: these camera controls will not apply to network clients
     and may behave unpredictably in other ways. Use them only for
@@ -2021,9 +1639,7 @@ def get_camera_position() -> tuple[float, ...]:
 
 
 def get_camera_target() -> tuple[float, ...]:
-    """get_camera_target() -> tuple[float, ...]
-
-    (internal)
+    """(internal)
 
     WARNING: these camera controls will not apply to network clients
     and may behave unpredictably in other ways. Use them only for
@@ -2033,17 +1649,12 @@ def get_camera_target() -> tuple[float, ...]:
 
 
 def get_chat_messages() -> list[str]:
-    """get_chat_messages() -> list[str]
-
-    (internal)
-    """
+    """(internal)"""
     return ['blah', 'blah2']
 
 
 def get_client_public_device_uuid(client_id: int) -> Optional[str]:
-    """get_client_public_device_uuid(client_id: int) -> Optional[str]
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
 
@@ -2057,11 +1668,9 @@ def get_client_public_device_uuid(client_id: int) -> Optional[str]:
 
 
 def get_collision_info(*args: Any) -> Any:
-    """get_collision_info(*args: Any) -> Any
+    """Return collision related values
 
-    Return collision related values
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     Returns a single collision value or tuple of values such as location,
     depth, nodes involved, etc. Only call this in the handler of a
@@ -2071,9 +1680,7 @@ def get_collision_info(*args: Any) -> Any:
 
 
 def get_configurable_game_pads() -> list:
-    """get_configurable_game_pads() -> list
-
-    (internal)
+    """(internal)
 
     Returns a list of the currently connected gamepads that can be
     configured.
@@ -2082,17 +1689,12 @@ def get_configurable_game_pads() -> list:
 
 
 def get_connection_to_host_info() -> dict:
-    """get_connection_to_host_info() -> dict
-
-    (internal)
-    """
+    """(internal)"""
     return dict()
 
 
 def get_display_resolution() -> Optional[tuple[int, int]]:
-    """get_display_resolution() -> Optional[tuple[int, int]]
-
-    (internal)
+    """(internal)
 
     Return the currently selected display resolution for fullscreen
     display. Returns None if resolutions cannot be directly set.
@@ -2101,9 +1703,7 @@ def get_display_resolution() -> Optional[tuple[int, int]]:
 
 
 def get_foreground_host_activity() -> Optional[ba.Activity]:
-    """get_foreground_host_activity() -> Optional[ba.Activity]
-
-    (internal)
+    """(internal)
 
     Returns the ba.Activity currently in the foreground, or None if there
     is none.
@@ -2113,9 +1713,7 @@ def get_foreground_host_activity() -> Optional[ba.Activity]:
 
 
 def get_foreground_host_session() -> Optional[ba.Session]:
-    """get_foreground_host_session() -> Optional[ba.Session]
-
-    (internal)
+    """(internal)
 
     Return the ba.Session currently being displayed, or None if there is
     none.
@@ -2125,9 +1723,7 @@ def get_foreground_host_session() -> Optional[ba.Session]:
 
 
 def get_game_port() -> int:
-    """get_game_port() -> int
-
-    (internal)
+    """(internal)
 
     Return the port ballistica is hosting on.
     """
@@ -2135,17 +1731,12 @@ def get_game_port() -> int:
 
 
 def get_game_roster() -> list[dict[str, Any]]:
-    """get_game_roster() -> list[dict[str, Any]]
-
-    (internal)
-    """
+    """(internal)"""
     return [{'foo': 'bar'}]
 
 
 def get_idle_time() -> int:
-    """get_idle_time() -> int
-
-    (internal)
+    """(internal)
 
     Returns the amount of time since any game input has been received.
     """
@@ -2153,17 +1744,12 @@ def get_idle_time() -> int:
 
 
 def get_local_active_input_devices_count() -> int:
-    """get_local_active_input_devices_count() -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def get_log_file_path() -> str:
-    """get_log_file_path() -> str
-
-    (internal)
+    """(internal)
 
     Return the path to the app log file.
     """
@@ -2171,20 +1757,14 @@ def get_log_file_path() -> str:
 
 
 def get_low_level_config_value(key: str, default_value: int) -> int:
-    """get_low_level_config_value(key: str, default_value: int) -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def get_master_server_address(source: int = -1,
                               version: int = 1,
                               internal: bool = False) -> str:
-    """get_master_server_address(source: int = -1, version: int = 1,
-      internal: bool = False) -> str
-
-    (internal)
+    """(internal)
 
     Return the address of the master server.
     """
@@ -2192,9 +1772,7 @@ def get_master_server_address(source: int = -1,
 
 
 def get_max_graphics_quality() -> str:
-    """get_max_graphics_quality() -> str
-
-    (internal)
+    """(internal)
 
     Return the max graphics-quality supported on the current hardware.
     """
@@ -2202,121 +1780,79 @@ def get_max_graphics_quality() -> str:
 
 
 def get_news_show() -> str:
-    """get_news_show() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_package_collide_model(package: ba.AssetPackage,
                               name: str) -> ba.CollideModel:
-    """get_package_collide_model(package: ba.AssetPackage, name: str)
-    -> ba.CollideModel
-
-    (internal)
-    """
+    """(internal)"""
     import ba  # pylint: disable=cyclic-import
     return ba.CollideModel()
 
 
 def get_package_data(package: ba.AssetPackage, name: str) -> ba.Data:
-    """get_package_data(package: ba.AssetPackage, name: str) -> ba.Data
-
-    (internal).
-    """
+    """(internal)."""
     import ba  # pylint: disable=cyclic-import
     return ba.Data()
 
 
 def get_package_model(package: ba.AssetPackage, name: str) -> ba.Model:
-    """get_package_model(package: ba.AssetPackage, name: str) -> ba.Model
-
-    (internal)
-    """
+    """(internal)"""
     import ba  # pylint: disable=cyclic-import
     return ba.Model()
 
 
 def get_package_sound(package: ba.AssetPackage, name: str) -> ba.Sound:
-    """get_package_sound(package: ba.AssetPackage, name: str) -> ba.Sound
-
-    (internal).
-    """
+    """(internal)."""
     import ba  # pylint: disable=cyclic-import
     return ba.Sound()
 
 
 def get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture:
-    """get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture
-
-    (internal)
-    """
+    """(internal)"""
     import ba  # pylint: disable=cyclic-import
     return ba.Texture()
 
 
 def get_price(item: str) -> Optional[str]:
-    """get_price(item: str) -> Optional[str]
-
-    (internal)
-    """
+    """(internal)"""
     return ''
 
 
 def get_public_login_id() -> Optional[str]:
-    """get_public_login_id() -> Optional[str]
-
-    (internal)
-    """
+    """(internal)"""
     return ''
 
 
 def get_public_party_enabled() -> bool:
-    """get_public_party_enabled() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def get_public_party_max_size() -> int:
-    """get_public_party_max_size() -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def get_purchased(item: str) -> bool:
-    """get_purchased(item: str) -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def get_purchases_state() -> int:
-    """get_purchases_state() -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def get_qrcode_texture(url: str) -> ba.Texture:
-    """get_qrcode_texture(url: str) -> ba.Texture
-
-    (internal)
-    """
+    """(internal)"""
     import ba  # pylint: disable=cyclic-import
     return ba.Texture()
 
 
 def get_random_names() -> list:
-    """get_random_names() -> list
-
-    (internal)
+    """(internal)
 
     Returns the random names used by the game.
     """
@@ -2324,9 +1860,7 @@ def get_random_names() -> list:
 
 
 def get_replay_speed_exponent() -> int:
-    """get_replay_speed_exponent() -> int
-
-    (internal)
+    """(internal)
 
     Returns current replay speed value. Actual displayed speed is pow(2,speed).
     """
@@ -2334,33 +1868,22 @@ def get_replay_speed_exponent() -> int:
 
 
 def get_replays_dir() -> str:
-    """get_replays_dir() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def get_scores_to_beat(level: str, config: str, callback: Callable) -> None:
-    """get_scores_to_beat(level: str, config: str, callback: Callable) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def get_special_widget(name: str) -> Widget:
-    """get_special_widget(name: str) -> Widget
-
-    (internal)
-    """
+    """(internal)"""
     return Widget()
 
 
 def get_string_height(string: str, suppress_warning: bool = False) -> float:
-    """get_string_height(string: str, suppress_warning: bool = False) -> float
-
-    (internal)
+    """(internal)
 
     Given a string, returns its height using the standard small app
     font.
@@ -2369,9 +1892,7 @@ def get_string_height(string: str, suppress_warning: bool = False) -> float:
 
 
 def get_string_width(string: str, suppress_warning: bool = False) -> float:
-    """get_string_width(string: str, suppress_warning: bool = False) -> float
-
-    (internal)
+    """(internal)
 
     Given a string, returns its width using the standard small app
     font.
@@ -2380,9 +1901,7 @@ def get_string_width(string: str, suppress_warning: bool = False) -> float:
 
 
 def get_thread_name() -> str:
-    """get_thread_name() -> str
-
-    (internal)
+    """(internal)
 
     Returns the name of the current thread.
     This may vary depending on platform and should not be used in logic;
@@ -2392,9 +1911,7 @@ def get_thread_name() -> str:
 
 
 def get_ui_input_device() -> ba.InputDevice:
-    """get_ui_input_device() -> ba.InputDevice
-
-    (internal)
+    """(internal)
 
     Returns the input-device that currently owns the user interface, or
     None if there is none.
@@ -2404,10 +1921,7 @@ def get_ui_input_device() -> ba.InputDevice:
 
 
 def get_v2_fleet() -> str:
-    """get_v2_fleet() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
@@ -2423,11 +1937,9 @@ def getactivity(doraise: Literal[False]) -> Optional[ba.Activity]:
 
 
 def getactivity(doraise: bool = True) -> Optional[ba.Activity]:
-    """getactivity(doraise: bool = True) -> <varies>
+    """Return the current ba.Activity instance.
 
-    Return the current ba.Activity instance.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     Note that this is based on context; thus code run in a timer generated
     in Activity 'foo' will properly return 'foo' here, even if another
@@ -2439,11 +1951,9 @@ def getactivity(doraise: bool = True) -> Optional[ba.Activity]:
 
 
 def getcollidemodel(name: str) -> ba.CollideModel:
-    """getcollidemodel(name: str) -> ba.CollideModel
+    """Return a collide-model, loading it if necessary.
 
-    Return a collide-model, loading it if necessary.
-
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Collide-models are used in physics calculations for such things as
     terrain.
@@ -2458,11 +1968,9 @@ def getcollidemodel(name: str) -> ba.CollideModel:
 
 
 def getdata(name: str) -> ba.Data:
-    """getdata(name: str) -> ba.Data
+    """Return a data, loading it if necessary.
 
-    Return a data, loading it if necessary.
-
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Note that this function returns immediately even if the media has yet
     to be loaded. To avoid hitches, instantiate your media objects in
@@ -2488,10 +1996,7 @@ def getinputdevice(name: str, unique_id: str,
 
 
 def getinputdevice(name: str, unique_id: str, doraise: bool = True) -> Any:
-    """getinputdevice(name: str, unique_id: str, doraise: bool = True)
-      -> <varies>
-
-    (internal)
+    """(internal)
 
     Given a type name and a unique identifier, returns an InputDevice.
     Throws an Exception if the input-device is not found, or returns None
@@ -2501,19 +2006,14 @@ def getinputdevice(name: str, unique_id: str, doraise: bool = True) -> Any:
 
 
 def getlog() -> str:
-    """getlog() -> str
-
-    (internal)
-    """
+    """(internal)"""
     return str()
 
 
 def getmodel(name: str) -> ba.Model:
-    """getmodel(name: str) -> ba.Model
+    """Return a model, loading it if necessary.
 
-    Return a model, loading it if necessary.
-
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Note that this function returns immediately even if the media has yet
     to be loaded. To avoid hitches, instantiate your media objects in
@@ -2525,10 +2025,9 @@ def getmodel(name: str) -> ba.Model:
 
 
 def getnodes() -> list:
-    """getnodes() -> list
+    """Return all nodes in the current ba.Context.
 
-    Return all nodes in the current ba.Context.
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
     """
     return list()
 
@@ -2545,9 +2044,7 @@ def getsession(doraise: Literal[False]) -> Optional[ba.Session]:
 
 
 def getsession(doraise: bool = True) -> Optional[ba.Session]:
-    """getsession(doraise: bool = True) -> <varies>
-
-    Category: Gameplay Functions
+    """Category: **Gameplay Functions**
 
     Returns the current ba.Session instance.
     Note that this is based on context; thus code being run in the UI
@@ -2559,11 +2056,9 @@ def getsession(doraise: bool = True) -> Optional[ba.Session]:
 
 
 def getsound(name: str) -> ba.Sound:
-    """getsound(name: str) -> ba.Sound
+    """Return a sound, loading it if necessary.
 
-    Return a sound, loading it if necessary.
-
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Note that this function returns immediately even if the media has yet
     to be loaded. To avoid hitches, instantiate your media objects in
@@ -2575,11 +2070,9 @@ def getsound(name: str) -> ba.Sound:
 
 
 def gettexture(name: str) -> ba.Texture:
-    """gettexture(name: str) -> ba.Texture
+    """Return a texture, loading it if necessary.
 
-    Return a texture, loading it if necessary.
-
-    Category: Asset Functions
+    Category: **Asset Functions**
 
     Note that this function returns immediately even if the media has yet
     to be loaded. To avoid hitches, instantiate your media objects in
@@ -2591,9 +2084,7 @@ def gettexture(name: str) -> ba.Texture:
 
 
 def has_gamma_control() -> bool:
-    """has_gamma_control() -> bool
-
-    (internal)
+    """(internal)
 
     Returns whether the system can adjust overall screen gamma)
     """
@@ -2601,9 +2092,7 @@ def has_gamma_control() -> bool:
 
 
 def has_user_mods() -> bool:
-    """has_user_mods() -> bool
-
-    (internal)
+    """(internal)
 
     Returns whether the system varies from default configuration
     (by user mods, etc)
@@ -2612,33 +2101,22 @@ def has_user_mods() -> bool:
 
 
 def has_user_run_commands() -> bool:
-    """has_user_run_commands() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def has_video_ads() -> bool:
-    """has_video_ads() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def have_chars(text: str) -> bool:
-    """have_chars(text: str) -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def have_connected_clients() -> bool:
-    """have_connected_clients() -> bool
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -2646,33 +2124,22 @@ def have_connected_clients() -> bool:
 
 
 def have_incentivized_ad() -> bool:
-    """have_incentivized_ad() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def have_outstanding_transactions() -> bool:
-    """have_outstanding_transactions() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def have_permission(permission: ba.Permission) -> bool:
-    """have_permission(permission: ba.Permission) -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def have_touchscreen_input() -> bool:
-    """have_touchscreen_input() -> bool
-
-    (internal)
+    """(internal)
 
     Returns whether or not a touch-screen input is present
     """
@@ -2680,10 +2147,7 @@ def have_touchscreen_input() -> bool:
 
 
 def host_scan_cycle() -> list:
-    """host_scan_cycle() -> list
-
-    (internal)
-    """
+    """(internal)"""
     return list()
 
 
@@ -2703,21 +2167,9 @@ def hscrollwidget(edit: ba.Widget = None,
                   claims_left_right: bool = None,
                   claims_up_down: bool = None,
                   claims_tab: bool = None) -> ba.Widget:
-    """hscrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
-      size: Sequence[float] = None, position: Sequence[float] = None,
-      background: bool = None, selected_child: ba.Widget = None,
-      capture_arrows: bool = None,
-      on_select_call: Callable[[], None] = None,
-      center_small_content: bool = None, color: Sequence[float] = None,
-      highlight: bool = None, border_opacity: float = None,
-      simple_culling_h: float = None,
-      claims_left_right: bool = None,
-      claims_up_down: bool = None,
-      claims_tab: bool = None)  -> ba.Widget
+    """Create or edit a horizontal scroll widget.
 
-    Create or edit a horizontal scroll widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -2745,20 +2197,9 @@ def imagewidget(edit: ba.Widget = None,
                 tilt_scale: float = None,
                 mask_texture: ba.Texture = None,
                 radial_amount: float = None) -> ba.Widget:
-    """imagewidget(edit: ba.Widget = None, parent: ba.Widget = None,
-      size: Sequence[float] = None, position: Sequence[float] = None,
-      color: Sequence[float] = None, texture: ba.Texture = None,
-      opacity: float = None, model_transparent: ba.Model = None,
-      model_opaque: ba.Model = None, has_alpha_channel: bool = True,
-      tint_texture: ba.Texture = None, tint_color: Sequence[float] = None,
-      transition_delay: float = None, draw_controller: ba.Widget = None,
-      tint2_color: Sequence[float] = None, tilt_scale: float = None,
-      mask_texture: ba.Texture = None, radial_amount: float = None)
-      -> ba.Widget
+    """Create or edit an image widget.
 
-    Create or edit an image widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -2769,17 +2210,12 @@ def imagewidget(edit: ba.Widget = None,
 
 
 def in_game_purchase(item: str, price: int) -> None:
-    """in_game_purchase(item: str, price: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def in_game_thread() -> bool:
-    """in_game_thread() -> bool
-
-    (internal)
+    """(internal)
 
     Returns whether or not the current thread is the game thread.
     """
@@ -2787,60 +2223,39 @@ def in_game_thread() -> bool:
 
 
 def increment_analytics_count(name: str, increment: int = 1) -> None:
-    """increment_analytics_count(name: str, increment: int = 1) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def increment_analytics_count_raw_2(name: str,
                                     uses_increment: bool = True,
                                     increment: int = 1) -> None:
-    """increment_analytics_count_raw_2(name: str,
-      uses_increment: bool = True, increment: int = 1) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def increment_analytics_counts_raw(name: str, increment: int = 1) -> None:
-    """increment_analytics_counts_raw(name: str, increment: int = 1) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def is_blessed() -> bool:
-    """is_blessed() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_in_replay() -> bool:
-    """is_in_replay() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_log_full() -> bool:
-    """is_log_full() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_os_playing_music() -> bool:
-    """is_os_playing_music() -> bool
-
-    (internal)
+    """(internal)
 
     Tells whether the OS is currently playing music of some sort.
 
@@ -2850,9 +2265,7 @@ def is_os_playing_music() -> bool:
 
 
 def is_ouya_build() -> bool:
-    """is_ouya_build() -> bool
-
-    (internal)
+    """(internal)
 
     Returns whether we're running the ouya-specific version
     """
@@ -2860,41 +2273,27 @@ def is_ouya_build() -> bool:
 
 
 def is_party_icon_visible() -> bool:
-    """is_party_icon_visible() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_running_on_fire_tv() -> bool:
-    """is_running_on_fire_tv() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_running_on_ouya() -> bool:
-    """is_running_on_ouya() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def is_xcode_build() -> bool:
-    """is_xcode_build() -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def lock_all_input() -> None:
-    """lock_all_input() -> None
-
-    (internal)
+    """(internal)
 
     Prevents all keyboard, mouse, and gamepad events from being processed.
     """
@@ -2902,10 +2301,7 @@ def lock_all_input() -> None:
 
 
 def log(message: str, to_stdout: bool = True, to_server: bool = True) -> None:
-    """log(message: str, to_stdout: bool = True,
-        to_server: bool = True) -> None
-
-    Category: General Utility Functions
+    """Category: **General Utility Functions**
 
     Log a message. This goes to the default logging mechanism depending
     on the platform (stdout on mac, android log on android, etc).
@@ -2921,65 +2317,42 @@ def log(message: str, to_stdout: bool = True, to_server: bool = True) -> None:
 
 
 def mac_music_app_get_library_source() -> None:
-    """mac_music_app_get_library_source() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def mac_music_app_get_playlists() -> list[str]:
-    """mac_music_app_get_playlists() -> list[str]
-
-    (internal)
-    """
+    """(internal)"""
     return ['blah', 'blah2']
 
 
 def mac_music_app_get_volume() -> int:
-    """mac_music_app_get_volume() -> int
-
-    (internal)
-    """
+    """(internal)"""
     return int()
 
 
 def mac_music_app_init() -> None:
-    """mac_music_app_init() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def mac_music_app_play_playlist(playlist: str) -> bool:
-    """mac_music_app_play_playlist(playlist: str) -> bool
-
-    (internal)
-    """
+    """(internal)"""
     return bool()
 
 
 def mac_music_app_set_volume(volume: int) -> None:
-    """mac_music_app_set_volume(volume: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def mac_music_app_stop() -> None:
-    """mac_music_app_stop() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def mark_config_dirty() -> None:
-    """mark_config_dirty() -> None
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -2987,17 +2360,12 @@ def mark_config_dirty() -> None:
 
 
 def mark_log_sent() -> None:
-    """mark_log_sent() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def music_player_play(files: Any) -> None:
-    """music_player_play(files: Any) -> None
-
-    (internal)
+    """(internal)
 
     Starts internal music file playback (for internal use)
     """
@@ -3005,9 +2373,7 @@ def music_player_play(files: Any) -> None:
 
 
 def music_player_set_volume(volume: float) -> None:
-    """music_player_set_volume(volume: float) -> None
-
-    (internal)
+    """(internal)
 
     Sets internal music player volume (for internal use)
     """
@@ -3015,9 +2381,7 @@ def music_player_set_volume(volume: float) -> None:
 
 
 def music_player_shutdown() -> None:
-    """music_player_shutdown() -> None
-
-    (internal)
+    """(internal)
 
     Finalizes internal music file playback (for internal use)
     """
@@ -3025,9 +2389,7 @@ def music_player_shutdown() -> None:
 
 
 def music_player_stop() -> None:
-    """music_player_stop() -> None
-
-    (internal)
+    """(internal)
 
     Stops internal music file playback (for internal use)
     """
@@ -3036,30 +2398,20 @@ def music_player_stop() -> None:
 
 def new_host_session(sessiontype: type[ba.Session],
                      benchmark_type: str = None) -> None:
-    """new_host_session(sessiontype: type[ba.Session],
-      benchmark_type: str = None) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def new_replay_session(file_name: str) -> None:
-    """new_replay_session(file_name: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def newactivity(activity_type: type[ba.Activity],
                 settings: dict = None) -> ba.Activity:
-    """newactivity(activity_type: type[ba.Activity],
-      settings: dict = None) -> ba.Activity
+    """Instantiates a ba.Activity given a type object.
 
-    Instantiates a ba.Activity given a type object.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Activities require special setup and thus cannot be directly
     instantiated; you must go through this function.
@@ -3073,13 +2425,9 @@ def newnode(type: str,
             attrs: dict = None,
             name: str = None,
             delegate: Any = None) -> Node:
-    """newnode(type: str, owner: ba.Node = None,
-    attrs: dict = None, name: str = None, delegate: Any = None)
-     -> Node
+    """Add a node of the given type to the game.
 
-    Add a node of the given type to the game.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     If a dict is provided for 'attributes', the node's initial attributes
     will be set based on them.
@@ -3099,9 +2447,7 @@ def newnode(type: str,
 
 
 def open_dir_externally(path: str) -> None:
-    """open_dir_externally(path: str) -> None
-
-    (internal)
+    """(internal)
 
     Open the provided dir in the default external app.
     """
@@ -3109,9 +2455,7 @@ def open_dir_externally(path: str) -> None:
 
 
 def open_file_externally(path: str) -> None:
-    """open_file_externally(path: str) -> None
-
-    (internal)
+    """(internal)
 
     Open the provided file in the default external app.
     """
@@ -3119,11 +2463,9 @@ def open_file_externally(path: str) -> None:
 
 
 def open_url(address: str) -> None:
-    """open_url(address: str) -> None
+    """Open a provided URL.
 
-    Open a provided URL.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Open the provided url in a web-browser, or display the URL
     string in a window if that isn't possible.
@@ -3135,31 +2477,23 @@ def playsound(sound: Sound,
               volume: float = 1.0,
               position: Sequence[float] = None,
               host_only: bool = False) -> None:
-    """playsound(sound: Sound, volume: float = 1.0,
-      position: Sequence[float] = None, host_only: bool = False) -> None
+    """Play a ba.Sound a single time.
 
-    Play a ba.Sound a single time.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
 
     If position is not provided, the sound will be at a constant volume
-    everywhere.  Position should be a float tuple of size 3.
+    everywhere. Position should be a float tuple of size 3.
     """
     return None
 
 
 def power_ranking_query(callback: Callable, season: Any = None) -> None:
-    """power_ranking_query(callback: Callable, season: Any = None) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def print_context() -> None:
-    """print_context() -> None
-
-    (internal)
+    """(internal)
 
     Prints info about the current context state; for debugging.
     """
@@ -3167,47 +2501,35 @@ def print_context() -> None:
 
 
 def print_load_info() -> None:
-    """print_load_info() -> None
+    """(internal)
 
-    (internal)
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
     """
     return None
 
 
 def print_stderr(message: str) -> None:
-    """print_stderr(message: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def print_stdout(message: str) -> None:
-    """print_stdout(message: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def printnodes() -> None:
-    """printnodes() -> None
+    """Print various info about existing nodes; useful for debugging.
 
-    Print various info about existing nodes; useful for debugging.
-
-    Category: Gameplay Functions
+    Category: **Gameplay Functions**
     """
     return None
 
 
 def printobjects() -> None:
-    """printobjects() -> None
+    """Print debugging info about game objects.
 
-    Print debugging info about game objects.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This call only functions in debug builds of the game.
     It prints various info about the current object count, etc.
@@ -3216,22 +2538,16 @@ def printobjects() -> None:
 
 
 def purchase(item: str) -> None:
-    """purchase(item: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def pushcall(call: Callable,
              from_other_thread: bool = False,
              suppress_other_thread_warning: bool = False) -> None:
-    """pushcall(call: Callable, from_other_thread: bool = False,
-         suppress_other_thread_warning: bool = False ) -> None
+    """Pushes a call onto the event loop to be run during the next cycle.
 
-    Pushes a call onto the event loop to be run during the next cycle.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This can be handy for calls that are disallowed from within other
     callbacks, etc.
@@ -3247,11 +2563,9 @@ def pushcall(call: Callable,
 
 
 def quit(soft: bool = False, back: bool = False) -> None:
-    """quit(soft: bool = False, back: bool = False) -> None
+    """Quit the game.
 
-    Quit the game.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     On systems like android, 'soft' will end the activity but keep the
     app running.
@@ -3260,25 +2574,17 @@ def quit(soft: bool = False, back: bool = False) -> None:
 
 
 def register_activity(activity: ba.Activity) -> ActivityData:
-    """register_activity(activity: ba.Activity) -> ActivityData
-
-    (internal)
-    """
+    """(internal)"""
     return ActivityData()
 
 
 def register_session(session: ba.Session) -> SessionData:
-    """register_session(session: ba.Session) -> SessionData
-
-    (internal)
-    """
+    """(internal)"""
     return SessionData()
 
 
 def release_gamepad_input() -> None:
-    """release_gamepad_input() -> None
-
-    (internal)
+    """(internal)
 
     Resumes normal gamepad event processing.
     """
@@ -3286,9 +2592,7 @@ def release_gamepad_input() -> None:
 
 
 def release_keyboard_input() -> None:
-    """release_keyboard_input() -> None
-
-    (internal)
+    """(internal)
 
     Resumes normal keyboard event processing.
     """
@@ -3296,9 +2600,7 @@ def release_keyboard_input() -> None:
 
 
 def reload_media() -> None:
-    """reload_media() -> None
-
-    (internal)
+    """(internal)
 
     Reload all currently loaded game media; useful for
     development/debugging.
@@ -3307,59 +2609,37 @@ def reload_media() -> None:
 
 
 def report_achievement(achievement: str, pass_to_account: bool = True) -> None:
-    """report_achievement(achievement: str, pass_to_account: bool = True)
-      -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def request_permission(permission: ba.Permission) -> None:
-    """request_permission(permission: ba.Permission) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def reset_achievements() -> None:
-    """reset_achievements() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def reset_game_activity_tracking() -> None:
-    """reset_game_activity_tracking() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def reset_random_player_names() -> None:
-    """reset_random_player_names() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def resolve_appconfig_value(key: str) -> Any:
-    """resolve_appconfig_value(key: str) -> Any
-
-    (internal)
-    """
+    """(internal)"""
     return _uninferrable()
 
 
 def restore_purchases() -> None:
-    """restore_purchases() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
@@ -3373,18 +2653,9 @@ def rowwidget(edit: ba.Widget = None,
               claims_left_right: bool = None,
               claims_tab: bool = None,
               selection_loops_to_parent: bool = None) -> ba.Widget:
-    """rowwidget(edit: ba.Widget = None, parent: ba.Widget = None,
-      size: Sequence[float] = None,
-      position: Sequence[float] = None,
-      background: bool = None, selected_child: ba.Widget = None,
-      visible_child: ba.Widget = None,
-      claims_left_right: bool = None,
-      claims_tab: bool = None,
-      selection_loops_to_parent: bool = None) -> ba.Widget
+    """Create or edit a row widget.
 
-    Create or edit a row widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -3395,21 +2666,15 @@ def rowwidget(edit: ba.Widget = None,
 
 
 def run_transactions() -> None:
-    """run_transactions() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def safecolor(color: Sequence[float],
               target_intensity: float = 0.6) -> tuple[float, ...]:
-    """safecolor(color: Sequence[float], target_intensity: float = 0.6)
-      -> tuple[float, ...]
+    """Given a color tuple, return a color safe to display as text.
 
-    Given a color tuple, return a color safe to display as text.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Accepts tuples of length 3 or 4. This will slightly brighten very
     dark colors, etc.
@@ -3424,14 +2689,9 @@ def screenmessage(message: Union[str, ba.Lstr],
                   log: bool = False,
                   clients: Sequence[int] = None,
                   transient: bool = False) -> None:
-    """screenmessage(message: Union[str, ba.Lstr],
-      color: Sequence[float] = None, top: bool = False,
-      image: dict[str, Any] = None, log: bool = False,
-      clients: Sequence[int] = None, transient: bool = False) -> None
+    """Print a message to the local client's screen, in a given color.
 
-    Print a message to the local client's screen, in a given color.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     If 'top' is True, the message will go to the top message area.
     For 'top' messages, 'image' can be a texture to display alongside the
@@ -3464,22 +2724,9 @@ def scrollwidget(edit: ba.Widget = None,
                  claims_up_down: bool = None,
                  claims_tab: bool = None,
                  autoselect: bool = None) -> ba.Widget:
-    """scrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
-      size: Sequence[float] = None, position: Sequence[float] = None,
-      background: bool = None, selected_child: ba.Widget = None,
-      capture_arrows: bool = False, on_select_call: Callable = None,
-      center_small_content: bool = None, color: Sequence[float] = None,
-      highlight: bool = None, border_opacity: float = None,
-      simple_culling_v: float = None,
-      selection_loops_to_parent: bool = None,
-      claims_left_right: bool = None,
-      claims_up_down: bool = None,
-      claims_tab: bool = None,
-      autoselect: bool = None) -> ba.Widget
+    """Create or edit a scroll widget.
 
-    Create or edit a scroll widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -3490,19 +2737,14 @@ def scrollwidget(edit: ba.Widget = None,
 
 
 def set_admins(admins: list[str]) -> None:
-    """set_admins(admins: list[str]) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_analytics_screen(screen: str) -> None:
-    """set_analytics_screen(screen: str) -> None
+    """Used for analytics to see where in the app players spend their time.
 
-    Used for analytics to see where in the app players spend their time.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     Generally called when opening a new window or entering some UI.
     'screen' should be a string description of an app location
@@ -3512,17 +2754,12 @@ def set_analytics_screen(screen: str) -> None:
 
 
 def set_authenticate_clients(enable: bool) -> None:
-    """set_authenticate_clients(enable: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_camera_manual(value: bool) -> None:
-    """set_camera_manual(value: bool) -> None
-
-    (internal)
+    """(internal)
 
     WARNING: these camera controls will not apply to network clients
     and may behave unpredictably in other ways. Use them only for
@@ -3532,9 +2769,7 @@ def set_camera_manual(value: bool) -> None:
 
 
 def set_camera_position(x: float, y: float, z: float) -> None:
-    """set_camera_position(x: float, y: float, z: float) -> None
-
-    (internal)
+    """(internal)
 
     WARNING: these camera controls will not apply to network clients
     and may behave unpredictably in other ways. Use them only for
@@ -3544,9 +2779,7 @@ def set_camera_position(x: float, y: float, z: float) -> None:
 
 
 def set_camera_target(x: float, y: float, z: float) -> None:
-    """set_camera_target(x: float, y: float, z: float) -> None
-
-    (internal)
+    """(internal)
 
     WARNING: these camera controls will not apply to network clients
     and may behave unpredictably in other ways. Use them only for
@@ -3556,9 +2789,7 @@ def set_camera_target(x: float, y: float, z: float) -> None:
 
 
 def set_debug_speed_exponent(speed: int) -> None:
-    """set_debug_speed_exponent(speed: int) -> None
-
-    (internal)
+    """(internal)
 
     Sets the debug speed scale for the game. Actual speed is pow(2,speed).
     """
@@ -3566,46 +2797,30 @@ def set_debug_speed_exponent(speed: int) -> None:
 
 
 def set_enable_default_kick_voting(enable: bool) -> None:
-    """set_enable_default_kick_voting(enable: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_have_mods(have_mods: bool) -> None:
-    """set_have_mods(have_mods: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_internal_language_keys(
         listobj: list[tuple[str, str]],
         random_names_list: list[tuple[str, str]]) -> None:
-    """set_internal_language_keys(listobj: list[tuple[str, str]],
-      random_names_list: list[tuple[str, str]]) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_low_level_config_value(key: str, value: int) -> None:
-    """set_low_level_config_value(key: str, value: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_map_bounds(
         bounds: tuple[float, float, float, float, float, float]) -> None:
-    """set_map_bounds(bounds: tuple[float, float, float, float, float, float])
-      -> None
-
-    (internal)
+    """(internal)
 
     Set map bounds. Generally nodes that go outside of this box are killed.
     """
@@ -3613,73 +2828,47 @@ def set_map_bounds(
 
 
 def set_master_server_source(source: int) -> None:
-    """set_master_server_source(source: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_party_icon_always_visible(value: bool) -> None:
-    """set_party_icon_always_visible(value: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_party_window_open(value: bool) -> None:
-    """set_party_window_open(value: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_platform_misc_read_vals(mode: str) -> None:
-    """set_platform_misc_read_vals(mode: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_public_party_enabled(enabled: bool) -> None:
-    """set_public_party_enabled(enabled: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_public_party_max_size(max_size: int) -> None:
-    """set_public_party_max_size(max_size: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_public_party_name(name: str) -> None:
-    """set_public_party_name(name: str) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_public_party_stats_url(url: Optional[str]) -> None:
-    """set_public_party_stats_url(url: Optional[str]) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_replay_speed_exponent(speed: int) -> None:
-    """set_replay_speed_exponent(speed: int) -> None
-
-    (internal)
+    """(internal)
 
     Set replay speed. Actual displayed speed is pow(2, speed).
     """
@@ -3687,26 +2876,17 @@ def set_replay_speed_exponent(speed: int) -> None:
 
 
 def set_stress_testing(testing: bool, player_count: int) -> None:
-    """set_stress_testing(testing: bool, player_count: int) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_telnet_access_enabled(enable: bool) -> None:
-    """set_telnet_access_enabled(enable: bool)
-     -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_thread_name(name: str) -> None:
-    """set_thread_name(name: str) -> None
-
-    (internal)
+    """(internal)
 
     Sets the name of the current thread (on platforms where this is
     available). Thread names are only for debugging and should not be
@@ -3716,17 +2896,12 @@ def set_thread_name(name: str) -> None:
 
 
 def set_touchscreen_editing(editing: bool) -> None:
-    """set_touchscreen_editing(editing: bool) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None:
-    """set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None
-
-    (internal)
+    """(internal)
 
     Sets the input-device that currently owns the user interface.
     """
@@ -3734,43 +2909,27 @@ def set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None:
 
 
 def setup_sigint() -> None:
-    """setup_sigint() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def show_ad(purpose: str,
             on_completion_call: Callable[[], None] = None) -> None:
-    """show_ad(purpose: str, on_completion_call: Callable[[], None] = None)
-     -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def show_ad_2(purpose: str,
               on_completion_call: Callable[[bool], None] = None) -> None:
-    """show_ad_2(purpose: str,
-     on_completion_call: Callable[[bool], None] = None)
-     -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def show_app_invite(title: Union[str, ba.Lstr], message: Union[str, ba.Lstr],
                     code: str) -> None:
-    """show_app_invite(title: Union[str, ba.Lstr],
-      message: Union[str, ba.Lstr],
-      code: str) -> None
+    """(internal)
 
-    (internal)
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
     """
     return None
 
@@ -3778,28 +2937,20 @@ def show_app_invite(title: Union[str, ba.Lstr], message: Union[str, ba.Lstr],
 def show_online_score_ui(show: str = 'general',
                          game: str = None,
                          game_version: str = None) -> None:
-    """show_online_score_ui(show: str = 'general', game: str = None,
-      game_version: str = None) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def show_progress_bar() -> None:
-    """show_progress_bar() -> None
+    """(internal)
 
-    (internal)
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
     """
     return None
 
 
 def sign_in(account_type: str) -> None:
-    """sign_in(account_type: str) -> None
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -3807,9 +2958,7 @@ def sign_in(account_type: str) -> None:
 
 
 def sign_out() -> None:
-    """sign_out() -> None
-
-    (internal)
+    """(internal)
 
     Category: General Utility Functions
     """
@@ -3817,10 +2966,7 @@ def sign_out() -> None:
 
 
 def submit_analytics_counts() -> None:
-    """submit_analytics_counts() -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
@@ -3835,14 +2981,7 @@ def submit_score(game: str,
                  score_type: str = 'points',
                  campaign: Optional[str] = None,
                  level: Optional[str] = None) -> None:
-    """submit_score(game: str, config: str, name: Any, score: Optional[int],
-      callback: Callable, friend_callback: Optional[Callable],
-      order: str = 'increasing', tournament_id: Optional[str] = None,
-      score_type: str = 'points',
-      campaign: Optional[str] = None,
-      level: Optional[str] = None)  -> None
-
-    (internal)
+    """(internal)
 
     Submit a score to the server; callback will be called with the results.
     As a courtesy, please don't send fake scores to the server. I'd prefer
@@ -3887,29 +3026,9 @@ def textwidget(edit: ba.Widget = None,
                big: bool = None,
                extra_touch_border_scale: float = None,
                res_scale: float = None) -> Widget:
-    """textwidget(edit: ba.Widget = None, parent: ba.Widget = None,
-      size: Sequence[float] = None, position: Sequence[float] = None,
-      text: Union[str, ba.Lstr] = None, v_align: str = None,
-      h_align: str = None, editable: bool = None, padding: float = None,
-      on_return_press_call: Callable[[], None] = None,
-      on_activate_call: Callable[[], None] = None,
-      selectable: bool = None, query: ba.Widget = None, max_chars: int = None,
-      color: Sequence[float] = None, click_activate: bool = None,
-      on_select_call: Callable[[], None] = None,
-      always_highlight: bool = None, draw_controller: ba.Widget = None,
-      scale: float = None, corner_scale: float = None,
-      description: Union[str, ba.Lstr] = None,
-      transition_delay: float = None, maxwidth: float = None,
-      max_height: float = None, flatness: float = None,
-      shadow: float = None, autoselect: bool = None, rotate: float = None,
-      enabled: bool = None, force_internal_editing: bool = None,
-      always_show_carat: bool = None, big: bool = None,
-      extra_touch_border_scale: float = None, res_scale: float = None)
-      -> Widget
+    """Create or edit a text widget.
 
-    Create or edit a text widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Pass a valid existing ba.Widget as 'edit' to modify it; otherwise
     a new one is created and returned. Arguments that are not set to None
@@ -3944,36 +3063,31 @@ def time(timetype: ba.TimeType,
 
 def time(timetype: ba.TimeType = TimeType.SIM,
          timeformat: ba.TimeFormat = TimeFormat.SECONDS) -> Any:
-    """time(timetype: ba.TimeType = TimeType.SIM,
-      timeformat: ba.TimeFormat = TimeFormat.SECONDS)
-      -> <varies>
+    """Return the current time.
 
-    Return the current time.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     The time returned depends on the current ba.Context and timetype.
 
     timetype can be either SIM, BASE, or REAL. It defaults to
     SIM. Types are explained below:
 
-    SIM time maps to local simulation time in ba.Activity or ba.Session
+    - SIM time maps to local simulation time in ba.Activity or ba.Session
     Contexts. This means that it may progress slower in slow-motion play
     modes, stop when the game is paused, etc.  This time type is not
     available in UI contexts.
-
-    BASE time is also linked to gameplay in ba.Activity or ba.Session
+    - BASE time is also linked to gameplay in ba.Activity or ba.Session
     Contexts, but it progresses at a constant rate regardless of
      slow-motion states or pausing.  It can, however, slow down or stop
     in certain cases such as network outages or game slowdowns due to
     cpu load. Like 'sim' time, this is unavailable in UI contexts.
-
-    REAL time always maps to actual clock time with a bit of filtering
-    added, regardless of Context.  (the filtering prevents it from going
+    - REAL time always maps to actual clock time with a bit of filtering
+    added, regardless of Context. (The filtering prevents it from going
     backwards or jumping forward by large amounts due to the app being
     backgrounded, system time changing, etc.)
+    Real time timers are currently only available in the UI context.
 
-    the 'timeformat' arg defaults to SECONDS which returns float seconds,
+    The 'timeformat' arg defaults to SECONDS which returns float seconds,
     but it can also be MILLISECONDS to return integer milliseconds.
 
     Note: If you need pure unfiltered clock time, just use the standard
@@ -3984,10 +3098,7 @@ def time(timetype: ba.TimeType = TimeType.SIM,
 
 def time_format_check(time_format: ba.TimeFormat, length: Union[float,
                                                                 int]) -> None:
-    """time_format_check(time_format: ba.TimeFormat, length: Union[float, int])
-      -> None
-
-    (internal)
+    """(internal)
 
     Logs suspicious time values for timers or animate calls.
 
@@ -4003,76 +3114,70 @@ def timer(time: float,
           timetype: ba.TimeType = TimeType.SIM,
           timeformat: ba.TimeFormat = TimeFormat.SECONDS,
           suppress_format_warning: bool = False) -> None:
-    """timer(time: float, call: Callable[[], Any], repeat: bool = False,
-      timetype: ba.TimeType = TimeType.SIM,
-      timeformat: ba.TimeFormat = TimeFormat.SECONDS,
-      suppress_format_warning: bool = False)
-     -> None
+    """Schedule a call to run at a later point in time.
 
-    Schedule a call to run at a later point in time.
-
-    Category: General Utility Functions
+    Category: **General Utility Functions**
 
     This function adds a timer to the current ba.Context.
     This timer cannot be canceled or modified once created. If you
      require the ability to do so, use the ba.Timer class instead.
 
-    time: length of time (in seconds by default) that the timer will wait
+    ##### Arguments
+    ###### time (float)
+    > Length of time (in seconds by default) that the timer will wait
     before firing. Note that the actual delay experienced may vary
      depending on the timetype. (see below)
 
-    call: A callable Python object. Note that the timer will retain a
+    ###### call (Callable[[], Any])
+    > A callable Python object. Note that the timer will retain a
     strong reference to the callable for as long as it exists, so you
     may want to look into concepts such as ba.WeakCall if that is not
     desired.
 
-    repeat: if True, the timer will fire repeatedly, with each successive
+    ###### repeat (bool)
+    > If True, the timer will fire repeatedly, with each successive
     firing having the same delay as the first.
 
-    timetype can be either 'sim', 'base', or 'real'. It defaults to
-    'sim'. Types are explained below:
+    ###### timetype (ba.TimeType)
+    > Can be either `SIM`, `BASE`, or `REAL`. It defaults to
+    `SIM`.
 
-    'sim' time maps to local simulation time in ba.Activity or ba.Session
+    ###### timeformat (ba.TimeFormat)
+    > Defaults to seconds but can also be milliseconds.
+
+    - SIM time maps to local simulation time in ba.Activity or ba.Session
     Contexts. This means that it may progress slower in slow-motion play
     modes, stop when the game is paused, etc.  This time type is not
     available in UI contexts.
-
-    'base' time is also linked to gameplay in ba.Activity or ba.Session
+    - BASE time is also linked to gameplay in ba.Activity or ba.Session
     Contexts, but it progresses at a constant rate regardless of
      slow-motion states or pausing.  It can, however, slow down or stop
     in certain cases such as network outages or game slowdowns due to
     cpu load. Like 'sim' time, this is unavailable in UI contexts.
-
-    'real' time always maps to actual clock time with a bit of filtering
-    added, regardless of Context.  (the filtering prevents it from going
+    - REAL time always maps to actual clock time with a bit of filtering
+    added, regardless of Context. (The filtering prevents it from going
     backwards or jumping forward by large amounts due to the app being
     backgrounded, system time changing, etc.)
     Real time timers are currently only available in the UI context.
 
-    the 'timeformat' arg defaults to seconds but can also be milliseconds.
-
-    # timer example: print some stuff through time:
-    ba.screenmessage('hello from now!')
-    ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))
-    ba.timer(2.0, ba.Call(ba.screenmessage, 'hello from the future 2!'))
+    ##### Examples
+    Print some stuff through time:
+    >>> ba.screenmessage('hello from now!')
+    >>> ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))
+    >>> ba.timer(2.0, ba.Call(ba.screenmessage,
+    ...                       'hello from the future 2!'))
     """
     return None
 
 
 def tournament_query(callback: Callable[[Optional[dict]], None],
                      args: dict) -> None:
-    """tournament_query(callback: Callable[[Optional[dict]], None],
-      args: dict) -> None
-
-    (internal)
-    """
+    """(internal)"""
     return None
 
 
 def uibounds() -> tuple[float, float, float, float]:
-    """uibounds() -> tuple[float, float, float, float]
-
-    (internal)
+    """(internal)
 
     Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) representing
     the range of values that can be plugged into a root level
@@ -4083,9 +3188,7 @@ def uibounds() -> tuple[float, float, float, float]:
 
 
 def unlock_all_input() -> None:
-    """unlock_all_input() -> None
-
-    (internal)
+    """(internal)
 
     Resumes normal keyboard, mouse, and gamepad event processing.
     """
@@ -4095,11 +3198,7 @@ def unlock_all_input() -> None:
 def value_test(arg: str,
                change: float = None,
                absolute: float = None) -> float:
-    """value_test(arg: str, change: float = None, absolute: float = None)
-      -> float
-
-    (internal)
-    """
+    """(internal)"""
     return float()
 
 
@@ -4113,15 +3212,9 @@ def widget(edit: ba.Widget = None,
            show_buffer_left: float = None,
            show_buffer_right: float = None,
            autoselect: bool = None) -> None:
-    """widget(edit: ba.Widget = None, up_widget: ba.Widget = None,
-      down_widget: ba.Widget = None, left_widget: ba.Widget = None,
-      right_widget: ba.Widget = None, show_buffer_top: float = None,
-      show_buffer_bottom: float = None, show_buffer_left: float = None,
-      show_buffer_right: float = None, autoselect: bool = None) -> None
+    """Edit common attributes of any widget.
 
-    Edit common attributes of any widget.
-
-    Category: User Interface Functions
+    Category: **User Interface Functions**
 
     Unlike other UI calls, this can only be used to edit, not to create.
     """

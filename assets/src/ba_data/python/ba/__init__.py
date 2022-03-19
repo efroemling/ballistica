@@ -18,7 +18,7 @@ from _ba import (
     newnode, playsound, printnodes, printobjects, pushcall, quit, rowwidget,
     safecolor, screenmessage, scrollwidget, set_analytics_screen, charstr,
     textwidget, time, timer, open_url, widget, clipboard_is_supported,
-    clipboard_has_text, clipboard_get_text, clipboard_set_text)
+    clipboard_has_text, clipboard_get_text, clipboard_set_text, getdata)
 from ba._activity import Activity
 from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor
@@ -81,15 +81,26 @@ from ba._collision import Collision, getcollision
 
 app: App
 
+__all__: list[str] = []
+
 
 # Have these things present themselves cleanly as 'ba.Foo'
 # instead of 'ba._submodule.Foo'
 def _simplify_module_names() -> None:
-    from efro.util import set_canonical_module
-    globs = globals()
-    set_canonical_module(
-        module_globals=globs,
-        names=[n for n in globs.keys() if not n.startswith('_')])
+    import os
+
+    for attr, _obj in globals().items():
+        if not attr.startswith('_'):
+            __all__.append(attr)
+
+    # Though pdoc gets confused when we override __module__,
+    # so let's make an exception for it.
+    if os.environ.get('BA_DOCS_GENERATION', '0') != '1':
+        from efro.util import set_canonical_module
+        globs = globals()
+        set_canonical_module(
+            module_globals=globs,
+            names=[n for n in globs.keys() if not n.startswith('_')])
 
 
 _simplify_module_names()

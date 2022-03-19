@@ -25,7 +25,7 @@ void PythonClassNode::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "Reference to a Node; the low level building block of the game.\n"
       "\n"
-      "Category: Gameplay Classes\n"
+      "Category: **Gameplay Classes**\n"
       "\n"
       "At its core, a game is nothing more than a scene of Nodes\n"
       "with attributes getting interconnected or set over time.\n"
@@ -38,7 +38,7 @@ void PythonClassNode::SetupType(PyTypeObject* obj) {
       "ba.Node.exists() can be used to determine if a Node still points to\n"
       "a live node in the game.\n"
       "\n"
-      "You can use ba.Node(None) to instantiate an invalid\n"
+      "You can use `ba.Node(None)` to instantiate an invalid\n"
       "Node reference (sometimes used as attr values/etc).";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
@@ -404,7 +404,8 @@ PyMethodDef PythonClassNode::tp_methods[] = {
     {"getdelegate", (PyCFunction)GetDelegate, METH_VARARGS | METH_KEYWORDS,
      "getdelegate(type: type, doraise: bool = False) -> <varies>\n"
      "\n"
-     "Return the node's current delegate object if it matches a certain type.\n"
+     "Return the node's current delegate object if it matches\n"
+     "a certain type.\n"
      "\n"
      "If the node has no delegate or it is not an instance of the passed\n"
      "type, then None will be returned. If 'doraise' is True, then an\n"
@@ -412,7 +413,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"
-     "Delete the node.  Ignores already-deleted nodes if ignore_missing\n"
+     "Delete the node. Ignores already-deleted nodes if `ignore_missing`\n"
      "is True; otherwise a ba.NodeNotFoundError is thrown."},
     {"handlemessage", (PyCFunction)HandleMessage, METH_VARARGS,
      "handlemessage(*args: Any) -> None\n"
@@ -422,7 +423,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "All standard message objects are forwarded along to the ba.Node's\n"
      "delegate for handling (generally the ba.Actor that made the node).\n"
      "\n"
-     "ba.Nodes are unique, however, in that they can be passed a second\n"
+     "ba.Node-s are unique, however, in that they can be passed a second\n"
      "form of message; 'node-messages'.  These consist of a string type-name\n"
      "as a first argument along with the args specific to that type name\n"
      "as additional arguments.\n"
@@ -437,17 +438,18 @@ PyMethodDef PythonClassNode::tp_methods[] = {
     {"connectattr", (PyCFunction)ConnectAttr, METH_VARARGS,
      "connectattr(srcattr: str, dstnode: Node, dstattr: str) -> None\n"
      "\n"
-     "Connect one of this node's attributes to an attribute on another node.\n"
-     "This will immediately set the target attribute's value to that of the\n"
-     "source attribute, and will continue to do so once per step as long as\n"
-     "the two nodes exist.  The connection can be severed by setting the\n"
-     "target attribute to any value or connecting another node attribute\n"
-     "to it.\n"
+     "Connect one of this node's attributes to an attribute on another\n"
+     "node. This will immediately set the target attribute's value to that\n"
+     "of the source attribute, and will continue to do so once per step\n"
+     "as long as the two nodes exist. The connection can be severed by\n"
+     "setting the target attribute to any value or connecting another\n"
+     "node attribute to it.\n"
      "\n"
-     "# Example: create a locator and attach a light to it:\n"
-     "light = ba.newnode('light')\n"
-     "loc = ba.newnode('locator', attrs={'position': (0,10,0)})\n"
-     "loc.connectattr('position', light, 'position')"},
+     "##### Example\n"
+     "Create a locator and attach a light to it:\n"
+     ">>> light = ba.newnode('light')\n"
+     "... loc = ba.newnode('locator', attrs={'position': (0, 10, 0)})\n"
+     "... loc.connectattr('position', light, 'position')\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

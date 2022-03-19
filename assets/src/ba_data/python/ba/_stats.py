@@ -21,20 +21,17 @@ if TYPE_CHECKING:
 class PlayerScoredMessage:
     """Informs something that a ba.Player scored.
 
-    Category: Message Classes
-
-    Attributes:
-
-        score
-            The score value.
+    Category: **Message Classes**
     """
+
     score: int
+    """The score value."""
 
 
 class PlayerRecord:
     """Stats for an individual player in a ba.Stats object.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     This does not necessarily correspond to a ba.Player that is
     still present (stats may be retained for players that leave
@@ -232,7 +229,7 @@ class PlayerRecord:
 class Stats:
     """Manages scores and statistics for a ba.Session.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
     """
 
     def __init__(self) -> None:

@@ -50,24 +50,19 @@ class DeathType(Enum):
 class DieMessage:
     """A message telling an object to die.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
-    Most ba.Actors respond to this.
-
-    Attributes:
-
-        immediate
-            If this is set to True, the actor should disappear immediately.
-            This is for 'removing' stuff from the game more so than 'killing'
-            it. If False, the actor should die a 'normal' death and can take
-            its time with lingering corpses, sound effects, etc.
-
-        how
-            The particular reason for death.
-
+    Most ba.Actor-s respond to this.
     """
+
     immediate: bool = False
+    """If this is set to True, the actor should disappear immediately.
+       This is for 'removing' stuff from the game more so than 'killing'
+       it. If False, the actor should die a 'normal' death and can take
+       its time with lingering corpses, sound effects, etc."""
+
     how: DeathType = DeathType.GENERIC
+    """The particular reason for death."""
 
 
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
@@ -76,19 +71,15 @@ PlayerType = TypeVar('PlayerType', bound='ba.Player')
 class PlayerDiedMessage:
     """A message saying a ba.Player has died.
 
-    category: Message Classes
-
-    Attributes:
-
-       killed
-          If True, the player was killed;
-          If False, they left the game or the round ended.
-
-       how
-          The particular type of death.
+    Category: **Message Classes**
     """
+
     killed: bool
+    """If True, the player was killed;
+       If False, they left the game or the round ended."""
+
     how: ba.DeathType
+    """The particular type of death."""
 
     def __init__(self, player: ba.Player, was_killed: bool,
                  killerplayer: Optional[ba.Player], how: ba.DeathType):
@@ -132,41 +123,34 @@ class PlayerDiedMessage:
 class StandMessage:
     """A message telling an object to move to a position in space.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
     Used when teleporting players to home base, etc.
-
-    Attributes:
-
-        position
-            Where to move to.
-
-        angle
-            The angle to face (in degrees)
     """
+
     position: Sequence[float] = (0.0, 0.0, 0.0)
+    """Where to move to."""
+
     angle: float = 0.0
+    """The angle to face (in degrees)"""
 
 
 @dataclass
 class PickUpMessage:
     """Tells an object that it has picked something up.
 
-    Category: Message Classes
-
-    Attributes:
-
-        node
-            The ba.Node that is getting picked up.
+    Category: **Message Classes**
     """
+
     node: ba.Node
+    """The ba.Node that is getting picked up."""
 
 
 @dataclass
 class DropMessage:
     """Tells an object that it has dropped what it was holding.
 
-    Category: Message Classes
+    Category: **Message Classes**
     """
 
 
@@ -174,35 +158,29 @@ class DropMessage:
 class PickedUpMessage:
     """Tells an object that it has been picked up by something.
 
-    Category: Message Classes
-
-    Attributes:
-
-        node
-            The ba.Node doing the picking up.
+    Category: **Message Classes**
     """
+
     node: ba.Node
+    """The ba.Node doing the picking up."""
 
 
 @dataclass
 class DroppedMessage:
     """Tells an object that it has been dropped.
 
-    Category: Message Classes
-
-    Attributes:
-
-        node
-            The ba.Node doing the dropping.
+    Category: **Message Classes**
     """
+
     node: ba.Node
+    """The ba.Node doing the dropping."""
 
 
 @dataclass
 class ShouldShatterMessage:
     """Tells an object that it should shatter.
 
-    Category: Message Classes
+    Category: **Message Classes**
     """
 
 
@@ -210,21 +188,18 @@ class ShouldShatterMessage:
 class ImpactDamageMessage:
     """Tells an object that it has been jarred violently.
 
-    Category: Message Classes
-
-    Attributes:
-
-        intensity
-            The intensity of the impact.
+    Category: **Message Classes**
     """
+
     intensity: float
+    """The intensity of the impact."""
 
 
 @dataclass
 class FreezeMessage:
     """Tells an object to become frozen.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
     As seen in the effects of an ice ba.Bomb.
     """
@@ -234,7 +209,7 @@ class FreezeMessage:
 class ThawMessage:
     """Tells an object to stop being frozen.
 
-    Category: Message Classes
+    Category: **Message Classes**
     """
 
 
@@ -242,20 +217,17 @@ class ThawMessage:
 class CelebrateMessage:
     """Tells an object to celebrate.
 
-    Category: Message Classes
-
-    Attributes:
-
-        duration
-            Amount of time to celebrate in seconds.
+    Category: **Message Classes**
     """
+
     duration: float = 10.0
+    """Amount of time to celebrate in seconds."""
 
 
 class HitMessage:
     """Tells an object it has been hit in some way.
 
-    Category: Message Classes
+    Category: **Message Classes**
 
     This is used by punches, explosions, etc to convey
     their effect to a target.

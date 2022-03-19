@@ -22,7 +22,7 @@ DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 class MultiTeamSession(Session):
     """Common base class for ba.DualTeamSession and ba.FreeForAllSession.
 
-    Category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     Free-for-all-mode is essentially just teams-mode with each ba.Player having
     their own ba.Team, so there is much overlap in functionality.
@@ -141,7 +141,7 @@ class MultiTeamSession(Session):
         team.customdata['previous_score'] = team.customdata['score'] = 0
 
     def get_max_players(self) -> int:
-        """Return max number of ba.Players allowed to join the game at once."""
+        """Return max number of ba.Player-s allowed to join the game at once"""
         if self.use_teams:
             return _ba.app.config.get('Team Game Max Players', 8)
         return _ba.app.config.get('Free-for-All Max Players', 8)

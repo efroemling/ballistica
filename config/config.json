@@ -34,6 +34,7 @@
     "ansiwrap",
     "filelock",
     "Cocoa",
+    "pdoc",
     "certifi"
   ],
   "python_paths": [

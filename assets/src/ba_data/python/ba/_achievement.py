@@ -65,7 +65,7 @@ ACH_LEVEL_NAMES = {
 class AchievementSubsystem:
     """Subsystem for achievement handling.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Access the single shared instance of this class at 'ba.app.ach'.
     """
@@ -436,7 +436,7 @@ def _display_next_achievement() -> None:
 class Achievement:
     """Represents attributes and state for an individual achievement.
 
-    Category: App Classes
+    Category: **App Classes**
     """
 
     def __init__(self,

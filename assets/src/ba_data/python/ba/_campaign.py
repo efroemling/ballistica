@@ -23,9 +23,9 @@ def getcampaign(name: str) -> ba.Campaign:
 
 
 class Campaign:
-    """Represents a unique set or series of ba.Levels.
+    """Represents a unique set or series of ba.Level-s.
 
-    Category: App Classes
+    Category: **App Classes**
     """
 
     def __init__(self, name: str, sequential: bool = True):
@@ -52,7 +52,7 @@ class Campaign:
 
     @property
     def levels(self) -> list[ba.Level]:
-        """The list of ba.Levels in the Campaign."""
+        """The list of ba.Level-s in the Campaign."""
         return self._levels
 
     def getlevel(self, name: str) -> ba.Level:

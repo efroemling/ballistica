@@ -22,10 +22,10 @@ void PythonClassWidget::SetupType(PyTypeObject* obj) {
   obj->tp_doc =
       "Internal type for low level UI elements; buttons, windows, etc.\n"
       "\n"
-      "Category: User Interface Classes\n"
+      "Category: **User Interface Classes**\n"
       "\n"
       "This class represents a weak reference to a widget object\n"
-      "in the internal c++ layer. Currently, functions such as\n"
+      "in the internal C++ layer. Currently, functions such as\n"
       "ba.buttonwidget() must be used to instantiate or edit these.";
   obj->tp_new = tp_new;
   obj->tp_dealloc = (destructor)tp_dealloc;
@@ -260,9 +260,9 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
     {"get_widget_type", (PyCFunction)GetWidgetType, METH_NOARGS,
      "get_widget_type() -> str\n"
      "\n"
-     "Return the internal type of the Widget as a string.  Note that this is\n"
-     "different from the Python ba.Widget type, which is the same for all\n"
-     "widgets."},
+     "Return the internal type of the Widget as a string. Note that this\n"
+     "is different from the Python ba.Widget type, which is the same for\n"
+     "all widgets."},
     {"activate", (PyCFunction)Activate, METH_NOARGS,
      "activate() -> None\n"
      "\n"
@@ -274,9 +274,9 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
     {"get_screen_space_center", (PyCFunction)GetScreenSpaceCenter, METH_NOARGS,
      "get_screen_space_center() -> tuple[float, float]\n"
      "\n"
-     "Returns the coords of the Widget center relative to the center of the\n"
-     "screen. This can be useful for placing pop-up windows and other special\n"
-     "cases."},
+     "Returns the coords of the ba.Widget center relative to the center\n"
+     "of the screen. This can be useful for placing pop-up windows and other\n"
+     "special cases."},
     {"get_selected_child", (PyCFunction)GetSelectedChild, METH_NOARGS,
      "get_selected_child() -> Optional[ba.Widget]\n"
      "\n"
@@ -285,8 +285,8 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"
-     "Delete the Widget.  Ignores already-deleted Widgets if ignore_missing\n"
-     "  is True; otherwise an Exception is thrown."},
+     "Delete the Widget. Ignores already-deleted Widgets if ignore_missing\n"
+     "is True; otherwise an Exception is thrown."},
     {"add_delete_callback", (PyCFunction)AddDeleteCallback,
      METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
      "add_delete_callback(call: Callable) -> None\n"

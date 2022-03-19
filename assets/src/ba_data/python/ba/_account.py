@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class AccountSubsystem:
     """Subsystem for account handling in the app.
 
-    Category: App Classes
+    Category: **App Classes**
 
     Access the single shared instance of this class at 'ba.app.plugins'.
     """

@@ -17,15 +17,13 @@ TeamType = TypeVar('TeamType', bound=ba.Team)
 
 
 class PlayerSpazHurtMessage:
-    """A message saying a ba.PlayerSpaz was hurt.
+    """A message saying a PlayerSpaz was hurt.
 
-    category: Message Classes
-
-    Attributes:
-
-       spaz
-          The ba.PlayerSpaz that was hurt
+    Category: **Message Classes**
     """
+
+    spaz: PlayerSpaz
+    """The PlayerSpaz that was hurt"""
 
     def __init__(self, spaz: PlayerSpaz):
         """Instantiate with the given ba.Spaz value."""
@@ -33,15 +31,15 @@ class PlayerSpazHurtMessage:
 
 
 class PlayerSpaz(Spaz):
-    """A ba.Spaz subclass meant to be controlled by a ba.Player.
+    """A Spaz subclass meant to be controlled by a ba.Player.
 
-    category: Gameplay Classes
+    Category: **Gameplay Classes**
 
     When a PlayerSpaz dies, it delivers a ba.PlayerDiedMessage
     to the current ba.Activity. (unless the death was the result of the
     player leaving the game, in which case no message is sent)
 
-    When a PlayerSpaz is hurt, it delivers a ba.PlayerSpazHurtMessage
+    When a PlayerSpaz is hurt, it delivers a PlayerSpazHurtMessage
     to the current ba.Activity.
     """
 

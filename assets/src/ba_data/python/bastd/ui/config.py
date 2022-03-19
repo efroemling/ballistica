@@ -17,12 +17,10 @@ class ConfigCheckBox:
 
     It will automatically save and apply the config when its
     value changes.
-
-    Attributes:
-
-        widget
-            The underlying ba.Widget instance.
     """
+
+    widget: ba.Widget
+    """The underlying ba.Widget instance."""
 
     def __init__(self,
                  parent: ba.Widget,
@@ -65,21 +63,19 @@ class ConfigNumberEdit:
 
     It will automatically save and apply the config when its
     value changes.
-
-    Attributes:
-
-        nametext
-            The text widget displaying the name.
-
-        valuetext
-            The text widget displaying the current value.
-
-        minusbutton
-            The button widget used to reduce the value.
-
-        plusbutton
-            The button widget used to increase the value.
     """
+
+    nametext: ba.Widget
+    """The text widget displaying the name."""
+
+    valuetext: ba.Widget
+    """The text widget displaying the current value."""
+
+    minusbutton: ba.Widget
+    """The button widget used to reduce the value."""
+
+    plusbutton: ba.Widget
+    """The button widget used to increase the value."""
 
     def __init__(self,
                  parent: ba.Widget,
