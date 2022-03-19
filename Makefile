@@ -705,6 +705,11 @@ test-message:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_message.py
 
+# Individual test with extra output enabled.
+test-rpc:
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
+      tests/test_efro/test_rpc.py
+
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full test-assetmanager
 

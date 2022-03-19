@@ -290,7 +290,7 @@ GLContext::GLContext(int target_res_x, int target_res_y, bool fullscreen)
 
 #if BA_SDL2_BUILD
   // Gonna wait and see if if still need this.
-#else
+#elif BA_SDL_BUILD
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
   SDL_GL_SwapBuffers();

@@ -31,6 +31,8 @@
       <w>afty</w>
       <w>aftz</w>
       <w>aint</w>
+      <w>aioloop</w>
+      <w>aiomain</w>
       <w>airborn</w>
       <w>alext</w>
       <w>alibaba</w>
@@ -112,6 +114,7 @@
       <w>bitpos</w>
       <w>bitval</w>
       <w>blarg</w>
+      <w>blargh</w>
       <w>blitters</w>
       <w>blitting</w>
       <w>blockadr</w>
@@ -155,6 +158,7 @@
       <w>buttonwidget</w>
       <w>bwst</w>
       <w>cacert</w>
+      <w>cadata</w>
       <w>cafile</w>
       <w>calced</w>
       <w>calcing</w>
@@ -314,6 +318,7 @@
       <w>dstpath</w>
       <w>dstr</w>
       <w>dtest</w>
+      <w>dummyret</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
       <w>dval</w>
@@ -404,6 +409,7 @@
       <w>fjco</w>
       <w>fjcoiwef</w>
       <w>flipbit</w>
+      <w>floop</w>
       <w>flopsy</w>
       <w>fname</w>
       <w>fnode</w>
@@ -522,6 +528,7 @@
       <w>hotkeys</w>
       <w>hotplug</w>
       <w>hscrollwidget</w>
+      <w>hsdata</w>
       <w>htonf</w>
       <w>htonl</w>
       <w>htons</w>
@@ -551,6 +558,7 @@
       <w>insta</w>
       <w>intercollide</w>
       <w>internalformat</w>
+      <w>internalmodule</w>
       <w>interuptions</w>
       <w>intstr</w>
       <w>invote</w>
@@ -600,8 +608,10 @@
       <w>kickee</w>
       <w>killable</w>
       <w>killcount</w>
+      <w>kinterval</w>
       <w>kmod</w>
       <w>kronk</w>
+      <w>ktimeout</w>
       <w>kwds</w>
       <w>kxyz</w>
       <w>langutils</w>
@@ -682,6 +692,7 @@
       <w>memcpy</w>
       <w>meshdata</w>
       <w>messagebox</w>
+      <w>messagetype</w>
       <w>metamakefile</w>
       <w>meth</w>
       <w>mhbegin</w>
@@ -693,6 +704,7 @@
       <w>mipmapcount</w>
       <w>mipmaps</w>
       <w>mkflags</w>
+      <w>mlen</w>
       <w>mmask</w>
       <w>mmdevapi</w>
       <w>modder</w>
@@ -705,6 +717,12 @@
       <w>msaa</w>
       <w>msgdict</w>
       <w>msgfull</w>
+      <w>msgid</w>
+      <w>msglen</w>
+      <w>msgnum</w>
+      <w>msgpriv</w>
+      <w>msgpub</w>
+      <w>msgtest</w>
       <w>msgtype</w>
       <w>msgtypes</w>
       <w>msgtypevar</w>
@@ -838,6 +856,7 @@
       <w>pcommands</w>
       <w>pdataclass</w>
       <w>pdst</w>
+      <w>peername</w>
       <w>persp</w>
       <w>pflag</w>
       <w>pflags</w>
@@ -915,6 +934,7 @@
       <w>pylib</w>
       <w>pyobj</w>
       <w>pyobjs</w>
+      <w>pythondevmode</w>
       <w>pythonenumsmodule</w>
       <w>pytype</w>
       <w>qerr</w>
@@ -937,6 +957,7 @@
       <w>rcva</w>
       <w>rcvs</w>
       <w>reaaaly</w>
+      <w>readexactly</w>
       <w>readset</w>
       <w>realloc</w>
       <w>reallocations</w>
@@ -979,6 +1000,9 @@
       <w>rresult</w>
       <w>rscode</w>
       <w>rsgc</w>
+      <w>rspdata</w>
+      <w>rsplen</w>
+      <w>rspobj</w>
       <w>rtest</w>
       <w>rtypes</w>
       <w>rtypevar</w>
@@ -1069,6 +1093,7 @@
       <w>sresult</w>
       <w>sscanf</w>
       <w>ssize</w>
+      <w>sslcontext</w>
       <w>sssi</w>
       <w>sssisisis</w>
       <w>sssissss</w>
@@ -1124,6 +1149,7 @@
       <w>tabtypes</w>
       <w>talloc</w>
       <w>targs</w>
+      <w>tasklabel</w>
       <w>tcls</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>
@@ -1141,6 +1167,7 @@
       <w>thang</w>
       <w>thecommand</w>
       <w>theres</w>
+      <w>thismodule</w>
       <w>threadname</w>
       <w>threadtype</w>
       <w>ticon</w>

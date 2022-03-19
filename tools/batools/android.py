@@ -8,8 +8,6 @@ import sys
 import subprocess
 from typing import TYPE_CHECKING
 
-import efrotools
-
 if TYPE_CHECKING:
     pass
 
@@ -64,16 +62,22 @@ def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
         print(f"ERROR: can't find addr2line binary ({len(lines)} options).")
         sys.exit(255)
     addr2line = lines[0]
-    efrotools.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +
-                  '"')
+    subprocess.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +
+                   '"',
+                   shell=True,
+                   check=True)
     try:
-        efrotools.run('cd "' + os.path.join(rootdir, 'android_addr_tmp') +
-                      '" && tar -xf "' +
-                      os.path.join(archive_dir, 'unstripped_libs',
-                                   archs[arch]['libmain'] + '.tgz') + '"')
-        efrotools.run(
+        subprocess.run('cd "' + os.path.join(rootdir, 'android_addr_tmp') +
+                       '" && tar -xf "' +
+                       os.path.join(archive_dir, 'unstripped_libs',
+                                    archs[arch]['libmain'] + '.tgz') + '"',
+                       shell=True,
+                       check=True)
+        subprocess.run(
             addr2line + ' -e "' +
             os.path.join(rootdir, 'android_addr_tmp', archs[arch]['libmain']) +
-            '" ' + addr)
+            '" ' + addr,
+            shell=True,
+            check=True)
     finally:
         os.system('rm -rf "' + os.path.join(rootdir, 'android_addr_tmp') + '"')

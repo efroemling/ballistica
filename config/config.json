@@ -38,6 +38,7 @@
   ],
   "python_paths": [
     "assets/src/ba_data/python",
+    "src/meta",
     "tools"
   ],
   "python_source_dirs": [

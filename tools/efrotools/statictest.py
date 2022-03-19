@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 # in a file we haven't seen yet, we copy it into the temp dir,
 # filter it a bit to add reveal_type() statements, and run mypy on it.
 # The temp dir should tear itself down when Python exits.
-_tempdir: Optional[tempfile.TemporaryDirectory] = None
+_tempdir: Optional[str] = None
 _statictestfiles: dict[str, StaticTestFile] = {}
 _nextfilenum: int = 1
 
@@ -29,7 +29,6 @@ class StaticTestFile:
 
     def __init__(self, filename: str):
         # pylint: disable=global-statement, invalid-name
-        # pylint: disable=consider-using-with
         global _tempdir, _nextfilenum
         # pylint: enable=global-statement, invalid-name
 
@@ -56,20 +55,23 @@ class StaticTestFile:
         # Create a single shared temp dir
         # (so that we can recycle our mypy cache).
         if _tempdir is None:
-            _tempdir = tempfile.TemporaryDirectory()
+            # Eww; not cleaning up this temp dir (though the
+            # OS should eventually). Using TemporaryDirectory() gives us
+            # a warning though because we don't explicitly clean it up.
+            _tempdir = tempfile.mkdtemp()
             # print(f"Created temp dir at {_tempdir.name}")
 
         # Copy our file into the temp dir with a unique name, find all
         # instances of static_type_equals(), and run mypy type checks
         # in those places to get static types.
-        tempfilepath = os.path.join(_tempdir.name, self.modulename + '.py')
+        tempfilepath = os.path.join(_tempdir, self.modulename + '.py')
         with open(tempfilepath, 'w', encoding='utf-8') as outfile:
             outfile.write(self.filter_file_contents(fdata))
         results = subprocess.run(
             [
                 PYTHON_BIN, '-m', 'mypy', '--no-error-summary',
                 '--config-file', '.mypy.ini', '--cache-dir',
-                os.path.join(_tempdir.name, '.mypy_cache'), tempfilepath
+                os.path.join(_tempdir, '.mypy_cache'), tempfilepath
             ],
             capture_output=True,
             check=False,

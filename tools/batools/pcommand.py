@@ -61,7 +61,7 @@ def clean_orphaned_assets() -> None:
     """Remove asset files that are no longer part of the build."""
     import os
     import json
-    import efrotools
+    import subprocess
 
     # Operate from dist root..
     os.chdir(PROJROOT)
@@ -82,7 +82,9 @@ def clean_orphaned_assets() -> None:
                 os.unlink(fpath)
 
     # Lastly, clear empty dirs.
-    efrotools.run('find assets/build -depth -empty -type d -delete')
+    subprocess.run('find assets/build -depth -empty -type d -delete',
+                   shell=True,
+                   check=True)
 
 
 def resize_image() -> None:
@@ -91,7 +93,7 @@ def resize_image() -> None:
     args: xres, yres, src, dst
     """
     import os
-    import efrotools
+    import subprocess
     if len(sys.argv) != 6:
         raise Exception('expected 5 args')
     width = int(sys.argv[2])
@@ -103,7 +105,9 @@ def resize_image() -> None:
     if not src.endswith('.png'):
         raise RuntimeError(f'src must be a png; got "{src}"')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
-    efrotools.run(f'convert "{src}" -resize {width}x{height} "{dst}"')
+    subprocess.run(f'convert "{src}" -resize {width}x{height} "{dst}"',
+                   shell=True,
+                   check=True)
 
 
 def check_clean_safety() -> None:

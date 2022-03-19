@@ -16,6 +16,9 @@
 #if BA_USE_ES3_INCLUDES
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
+#elif BA_OSTYPE_IOS_TVOS
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
 #else
 #if BA_SDL_BUILD
 #include <SDL/SDL.h>  // needed for ios?...
@@ -47,6 +50,7 @@
 
 #else  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
 
+// SDK Desktop builds.
 #if BA_SDL2_BUILD
 #include <SDL_opengl.h>
 #elif BA_SDL_BUILD  // BA_SDL2_BUILD
@@ -55,6 +59,10 @@
 #endif  // BA_SDL2_BUILD
 
 #if BA_OSTYPE_MACOS
+#if BA_XCODE_BUILD
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#endif  // BA_XCODE_BUILD
 #include <OpenGL/glext.h>
 #endif  // BA_OSTYPE_MACOS
 

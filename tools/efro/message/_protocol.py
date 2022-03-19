@@ -6,88 +6,20 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Annotated
-from dataclasses import dataclass
-from enum import Enum
-import inspect
+from typing import TYPE_CHECKING
+import traceback
 import logging
 import json
-import traceback
 
 from efro.error import CleanError, RemoteError
-from efro.dataclassio import (ioprepped, is_ioprepped_dataclass, IOAttrs,
-                              dataclass_to_dict, dataclass_from_dict)
+from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
+                              dataclass_from_dict)
+from efro.message._message import (Message, Response, ErrorResponse,
+                                   EmptyResponse, ErrorType,
+                                   UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Sequence, Union, Awaitable
-
-TM = TypeVar('TM', bound='MessageSender')
-
-
-class Message:
-    """Base class for messages."""
-
-    @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
-        """Return all message types this Message can result in when sent.
-
-        The default implementation specifies EmptyResponse, so messages with
-        no particular response needs can leave this untouched.
-        Note that ErrorMessage is handled as a special case and does not
-        need to be specified here.
-        """
-        return [EmptyResponse]
-
-
-class Response:
-    """Base class for responses to messages."""
-
-
-# Some standard response types:
-
-
-class ErrorType(Enum):
-    """Type of error that occurred in remote message handling."""
-    OTHER = 0
-    CLEAN = 1
-
-
-@ioprepped
-@dataclass
-class ErrorResponse(Response):
-    """Message saying some error has occurred on the other end.
-
-    This type is unique in that it is not returned to the user; it
-    instead results in a local exception being raised.
-    """
-    error_message: Annotated[str, IOAttrs('m')]
-    error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.OTHER
-
-
-@ioprepped
-@dataclass
-class EmptyResponse(Response):
-    """The response equivalent of None."""
-
-
-# TODO: could allow handlers to deal in raw values for these
-# types similar to how we allow None in place of EmptyResponse.
-# Though not sure if they are widely used enough to warrant the
-# extra code complexity.
-@ioprepped
-@dataclass
-class BoolResponse(Response):
-    """A simple bool value response."""
-
-    value: Annotated[bool, IOAttrs('v')]
-
-
-@ioprepped
-@dataclass
-class StringResponse(Response):
-    """A simple string value response."""
-
-    value: Annotated[str, IOAttrs('v')]
 
 
 class MessageProtocol:
@@ -150,8 +82,8 @@ class MessageProtocol:
             self.response_ids_by_type[r_type] = r_id
 
         # Go ahead and auto-register a few common response types
-        # if the user has not done so explicitly. Use unique IDs which
-        # will never change or overlap with user ids.
+        # if the user has not done so explicitly. Use unique negative
+        # IDs which will never change or overlap with user ids.
         def _reg_if_not(reg_tp: type[Response], reg_id: int) -> None:
             if reg_tp in self.response_ids_by_type:
                 return
@@ -204,6 +136,22 @@ class MessageProtocol:
     def encode_response(self, response: Response) -> str:
         """Encode a response to a json string for transport."""
         return self._encode(response, self.response_ids_by_type, 'response')
+
+    def encode_error_response(self, exc: Exception) -> str:
+        """Return a raw response for an error that occurred during handling."""
+        if self.log_remote_exceptions:
+            logging.exception('Error handling message.')
+
+        # If anything goes wrong, return a ErrorResponse instead.
+        if isinstance(exc, CleanError) and self.preserve_clean_errors:
+            err_response = ErrorResponse(error_message=str(exc),
+                                         error_type=ErrorType.CLEAN)
+        else:
+            err_response = ErrorResponse(
+                error_message=(traceback.format_exc() if self.trusted_sender
+                               else 'An unknown error has occurred.'),
+                error_type=ErrorType.OTHER)
+        return self.encode_response(err_response)
 
     def _encode(self, message: Any, ids_by_type: dict[type, int],
                 opname: str) -> str:
@@ -260,7 +208,8 @@ class MessageProtocol:
         # Decode this particular type.
         msgtype = types_by_id.get(m_id)
         if msgtype is None:
-            raise TypeError(f'Got unregistered {opname} type id of {m_id}.')
+            raise UnregisteredMessageIDError(
+                f'Got unregistered {opname} id of {m_id}.')
         out = dataclass_from_dict(msgtype, msgdict)
 
         # Special case: if we get EmptyResponse, we simply return None.
@@ -278,7 +227,9 @@ class MessageProtocol:
 
         return out
 
-    def _get_module_header(self, part: str) -> str:
+    def _get_module_header(self,
+                           part: str,
+                           extra_import_code: Optional[str] = None) -> str:
         """Return common parts of generated modules."""
         # pylint: disable=too-many-locals, too-many-branches
         import textwrap
@@ -336,6 +287,9 @@ class MessageProtocol:
                                  ' BoundMessageReceiver')
             tpimport_typing_extras = ', Awaitable'
 
+        if extra_import_code is not None:
+            import_lines += f'\n{extra_import_code}\n'
+
         ovld = ', overload' if not single_message_type else ''
         tpimport_lines = textwrap.indent(tpimport_lines, '    ')
         out = ('# Released under the MIT License. See LICENSE for details.\n'
@@ -356,12 +310,14 @@ class MessageProtocol:
                f'\n')
         return out
 
-    def do_create_sender_module(self,
-                                basename: str,
-                                protocol_create_code: str,
-                                enable_sync_sends: bool,
-                                enable_async_sends: bool,
-                                private: bool = False) -> str:
+    def do_create_sender_module(
+            self,
+            basename: str,
+            protocol_create_code: str,
+            enable_sync_sends: bool,
+            enable_async_sends: bool,
+            private: bool = False,
+            protocol_module_level_import_code: Optional[str] = None) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -369,7 +325,8 @@ class MessageProtocol:
         msgtypes = list(self.message_ids_by_type.keys())
 
         ppre = '_' if private else ''
-        out = self._get_module_header('sender')
+        out = self._get_module_header(
+            'sender', extra_import_code=protocol_module_level_import_code)
         ccind = textwrap.indent(protocol_create_code, '        ')
         out += (f'class {ppre}{basename}(MessageSender):\n'
                 f'    """Protocol-specific sender."""\n'
@@ -451,11 +408,13 @@ class MessageProtocol:
 
         return out
 
-    def do_create_receiver_module(self,
-                                  basename: str,
-                                  protocol_create_code: str,
-                                  is_async: bool,
-                                  private: bool = False) -> str:
+    def do_create_receiver_module(
+            self,
+            basename: str,
+            protocol_create_code: str,
+            is_async: bool,
+            private: bool = False,
+            protocol_module_level_import_code: Optional[str] = None) -> str:
         """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -463,7 +422,8 @@ class MessageProtocol:
         desc = 'asynchronous' if is_async else 'synchronous'
         ppre = '_' if private else ''
         msgtypes = list(self.message_ids_by_type.keys())
-        out = self._get_module_header('receiver')
+        out = self._get_module_header(
+            'receiver', extra_import_code=protocol_module_level_import_code)
         ccind = textwrap.indent(protocol_create_code, '        ')
         out += (f'class {ppre}{basename}(MessageReceiver):\n'
                 f'    """Protocol-specific {desc} receiver."""\n'
@@ -550,442 +510,26 @@ class MessageProtocol:
         if is_async:
             out += (
                 '\n'
-                '    async def handle_raw_message(self, message: str)'
-                ' -> str:\n'
+                '    async def handle_raw_message(self,\n'
+                '                                 message: str,\n'
+                '                                 raise_unregistered: bool ='
+                ' False) -> str:\n'
                 '        """Asynchronously handle a raw incoming message."""\n'
-                '        return await'
-                ' self._receiver.handle_raw_message_async(\n'
-                '            self._obj, message)\n')
+                '        return await self._receiver.handle_raw_message_async('
+                '\n'
+                '            self._obj, message, raise_unregistered)\n')
+
         else:
             out += (
                 '\n'
-                '    def handle_raw_message(self, message: str) -> str:\n'
+                '    def handle_raw_message(self,\n'
+                '                           message: str,\n'
+                '                           raise_unregistered: bool = False)'
+                ' -> str:\n'
                 '        """Synchronously handle a raw incoming message."""\n'
-                '        return self._receiver.handle_raw_message'
-                '(self._obj, message)\n')
+                '        return self._receiver.handle_raw_message('
+                'self._obj, message,\n'
+                '                                                 '
+                'raise_unregistered)\n')
 
         return out
-
-
-class MessageSender:
-    """Facilitates sending messages to a target and receiving responses.
-    This is instantiated at the class level and used to register unbound
-    class methods to handle raw message sending.
-
-    Example:
-
-    class MyClass:
-        msg = MyMessageSender(some_protocol)
-
-        @msg.send_method
-        def send_raw_message(self, message: str) -> str:
-            # Actually send the message here.
-
-    # MyMessageSender class should provide overloads for send(), send_bg(),
-    # etc. to ensure all sending happens with valid types.
-    obj = MyClass()
-    obj.msg.send(SomeMessageType())
-    """
-
-    def __init__(self, protocol: MessageProtocol) -> None:
-        self.protocol = protocol
-        self._send_raw_message_call: Optional[Callable[[Any, str], str]] = None
-        self._send_async_raw_message_call: Optional[Callable[
-            [Any, str], Awaitable[str]]] = None
-
-    def send_method(
-            self, call: Callable[[Any, str],
-                                 str]) -> Callable[[Any, str], str]:
-        """Function decorator for setting raw send method."""
-        assert self._send_raw_message_call is None
-        self._send_raw_message_call = call
-        return call
-
-    def send_async_method(
-        self, call: Callable[[Any, str], Awaitable[str]]
-    ) -> Callable[[Any, str], Awaitable[str]]:
-        """Function decorator for setting raw send-async method."""
-        assert self._send_async_raw_message_call is None
-        self._send_async_raw_message_call = call
-        return call
-
-    def send(self, bound_obj: Any, message: Message) -> Optional[Response]:
-        """Send a message and receive a response.
-
-        Will encode the message for transport and call dispatch_raw_message()
-        """
-        if self._send_raw_message_call is None:
-            raise RuntimeError('send() is unimplemented for this type.')
-
-        msg_encoded = self.protocol.encode_message(message)
-        response_encoded = self._send_raw_message_call(bound_obj, msg_encoded)
-        response = self.protocol.decode_response(response_encoded)
-        assert isinstance(response, (Response, type(None)))
-        assert (response is None
-                or type(response) in type(message).get_response_types())
-        return response
-
-    async def send_async(self, bound_obj: Any,
-                         message: Message) -> Optional[Response]:
-        """Send a message asynchronously using asyncio.
-
-        The message will be encoded for transport and passed to
-        dispatch_raw_message_async.
-        """
-        if self._send_async_raw_message_call is None:
-            raise RuntimeError('send_async() is unimplemented for this type.')
-
-        msg_encoded = self.protocol.encode_message(message)
-        response_encoded = await self._send_async_raw_message_call(
-            bound_obj, msg_encoded)
-        response = self.protocol.decode_response(response_encoded)
-        assert isinstance(response, (Response, type(None)))
-        assert (response is None
-                or type(response) in type(message).get_response_types())
-        return response
-
-
-class BoundMessageSender:
-    """Base class for bound senders."""
-
-    def __init__(self, obj: Any, sender: MessageSender) -> None:
-        assert obj is not None
-        self._obj = obj
-        self._sender = sender
-
-    @property
-    def protocol(self) -> MessageProtocol:
-        """Protocol associated with this sender."""
-        return self._sender.protocol
-
-    def send_untyped(self, message: Message) -> Optional[Response]:
-        """Send a message synchronously.
-
-        Whenever possible, use the send() call provided by generated
-        subclasses instead of this; it will provide better type safety.
-        """
-        return self._sender.send(self._obj, message)
-
-    async def send_async_untyped(self, message: Message) -> Optional[Response]:
-        """Send a message asynchronously.
-
-        Whenever possible, use the send_async() call provided by generated
-        subclasses instead of this; it will provide better type safety.
-        """
-        return await self._sender.send_async(self._obj, message)
-
-
-class MessageReceiver:
-    """Facilitates receiving & responding to messages from a remote source.
-
-    This is instantiated at the class level with unbound methods registered
-    as handlers for different message types in the protocol.
-
-    Example:
-
-    class MyClass:
-        receiver = MyMessageReceiver()
-
-        # MyMessageReceiver fills out handler() overloads to ensure all
-        # registered handlers have valid types/return-types.
-        @receiver.handler
-        def handle_some_message_type(self, message: SomeMsg) -> SomeResponse:
-            # Deal with this message type here.
-
-    # This will trigger the registered handler being called.
-    obj = MyClass()
-    obj.receiver.handle_raw_message(some_raw_data)
-
-    Any unhandled Exception occurring during message handling will result in
-    an Exception being raised on the sending end.
-    """
-
-    is_async = False
-
-    def __init__(self, protocol: MessageProtocol) -> None:
-        self.protocol = protocol
-        self._handlers: dict[type[Message], Callable] = {}
-
-    # noinspection PyProtectedMember
-    def register_handler(
-            self, call: Callable[[Any, Message], Optional[Response]]) -> None:
-        """Register a handler call.
-
-        The message type handled by the call is determined by its
-        type annotation.
-        """
-        # TODO: can use types.GenericAlias in 3.9.
-        from typing import _GenericAlias  # type: ignore
-        from typing import get_type_hints, get_args
-
-        sig = inspect.getfullargspec(call)
-
-        # The provided callable should be a method taking one 'msg' arg.
-        expectedsig = ['self', 'msg']
-        if sig.args != expectedsig:
-            raise ValueError(f'Expected callable signature of {expectedsig};'
-                             f' got {sig.args}')
-
-        # Make sure we are only given async methods if we are an async handler
-        # and sync ones otherwise.
-        is_async = inspect.iscoroutinefunction(call)
-        if self.is_async != is_async:
-            msg = ('Expected a sync method; found an async one.' if is_async
-                   else 'Expected an async method; found a sync one.')
-            raise ValueError(msg)
-
-        # Check annotation types to determine what message types we handle.
-        # Return-type annotation can be a Union, but we probably don't
-        # have it available at runtime. Explicitly pull it in.
-        # UPDATE: we've updated our pylint filter to where we should
-        # have all annotations available.
-        # anns = get_type_hints(call, localns={'Union': Union})
-        anns = get_type_hints(call)
-
-        msgtype = anns.get('msg')
-        if not isinstance(msgtype, type):
-            raise TypeError(
-                f'expected a type for "msg" annotation; got {type(msgtype)}.')
-        assert issubclass(msgtype, Message)
-
-        ret = anns.get('return')
-        responsetypes: tuple[Union[type[Any], type[None]], ...]
-
-        # Return types can be a single type or a union of types.
-        if isinstance(ret, _GenericAlias):
-            targs = get_args(ret)
-            if not all(isinstance(a, type) for a in targs):
-                raise TypeError(f'expected only types for "return" annotation;'
-                                f' got {targs}.')
-            responsetypes = targs
-        else:
-            if not isinstance(ret, type):
-                raise TypeError(f'expected one or more types for'
-                                f' "return" annotation; got a {type(ret)}.')
-            responsetypes = (ret, )
-
-        # Return type of None translates to EmptyResponse.
-        responsetypes = tuple(EmptyResponse if r is type(None) else r
-                              for r in responsetypes)  # noqa
-
-        # Make sure our protocol has this message type registered and our
-        # return types exactly match. (Technically we could return a subset
-        # of the supported types; can allow this in the future if it makes
-        # sense).
-        registered_types = self.protocol.message_ids_by_type.keys()
-
-        if msgtype not in registered_types:
-            raise TypeError(f'Message type {msgtype} is not registered'
-                            f' in this Protocol.')
-
-        if msgtype in self._handlers:
-            raise TypeError(f'Message type {msgtype} already has a registered'
-                            f' handler.')
-
-        # Make sure the responses exactly matches what the message expects.
-        if set(responsetypes) != set(msgtype.get_response_types()):
-            raise TypeError(
-                f'Provided response types {responsetypes} do not'
-                f' match the set expected by message type {msgtype}: '
-                f'({msgtype.get_response_types()})')
-
-        # Ok; we're good!
-        self._handlers[msgtype] = call
-
-    def validate(self, warn_only: bool = False) -> None:
-        """Check for handler completeness, valid types, etc."""
-        for msgtype in self.protocol.message_ids_by_type.keys():
-            if issubclass(msgtype, Response):
-                continue
-            if msgtype not in self._handlers:
-                msg = (f'Protocol message type {msgtype} is not handled'
-                       f' by receiver type {type(self)}.')
-                if warn_only:
-                    logging.warning(msg)
-                else:
-                    raise TypeError(msg)
-
-    def _decode_incoming_message(self,
-                                 msg: str) -> tuple[Message, type[Message]]:
-        # Decode the incoming message.
-        msg_decoded = self.protocol.decode_message(msg)
-        msgtype = type(msg_decoded)
-        assert issubclass(msgtype, Message)
-        return msg_decoded, msgtype
-
-    def _encode_response(self, response: Optional[Response],
-                         msgtype: type[Message]) -> str:
-
-        # A return value of None equals EmptyResponse.
-        if response is None:
-            response = EmptyResponse()
-
-        # Re-encode the response.
-        assert isinstance(response, Response)
-        # (user should never explicitly return these)
-        assert not isinstance(response, ErrorResponse)
-        assert type(response) in msgtype.get_response_types()
-        return self.protocol.encode_response(response)
-
-    def raw_response_for_error(self, exc: Exception) -> str:
-        """Return a raw response for an error that occurred during handling."""
-        if self.protocol.log_remote_exceptions:
-            logging.exception('Error handling message.')
-
-        # If anything goes wrong, return a ErrorResponse instead.
-        if (isinstance(exc, CleanError)
-                and self.protocol.preserve_clean_errors):
-            err_response = ErrorResponse(error_message=str(exc),
-                                         error_type=ErrorType.CLEAN)
-        else:
-            err_response = ErrorResponse(
-                error_message=(traceback.format_exc()
-                               if self.protocol.trusted_sender else
-                               'An unknown error has occurred.'),
-                error_type=ErrorType.OTHER)
-        return self.protocol.encode_response(err_response)
-
-    def handle_raw_message(self, bound_obj: Any, msg: str) -> str:
-        """Decode, handle, and return an response for a message."""
-        assert not self.is_async, "can't call sync handler on async receiver"
-        try:
-            msg_decoded, msgtype = self._decode_incoming_message(msg)
-            handler = self._handlers.get(msgtype)
-            if handler is None:
-                raise RuntimeError(f'Got unhandled message type: {msgtype}.')
-            result = handler(bound_obj, msg_decoded)
-            return self._encode_response(result, msgtype)
-
-        except Exception as exc:
-            return self.raw_response_for_error(exc)
-
-    async def handle_raw_message_async(self, bound_obj: Any, msg: str) -> str:
-        """Should be called when the receiver gets a message.
-
-        The return value is the raw response to the message.
-        """
-        assert self.is_async, "can't call async handler on sync receiver"
-        try:
-            msg_decoded, msgtype = self._decode_incoming_message(msg)
-            handler = self._handlers.get(msgtype)
-            if handler is None:
-                raise RuntimeError(f'Got unhandled message type: {msgtype}.')
-            result = await handler(bound_obj, msg_decoded)
-            return self._encode_response(result, msgtype)
-
-        except Exception as exc:
-            return self.raw_response_for_error(exc)
-
-
-class BoundMessageReceiver:
-    """Base bound receiver class."""
-
-    def __init__(
-        self,
-        obj: Any,
-        receiver: MessageReceiver,
-    ) -> None:
-        assert obj is not None
-        self._obj = obj
-        self._receiver = receiver
-
-    @property
-    def protocol(self) -> MessageProtocol:
-        """Protocol associated with this receiver."""
-        return self._receiver.protocol
-
-    def raw_response_for_error(self, exc: Exception) -> str:
-        """Return a raw response for an error that occurred during handling.
-
-        This is automatically called from standard handle_raw_message_x()
-        calls but can be manually invoked if errors occur outside of there.
-        This gives clients a better idea of what went wrong vs simply
-        returning invalid data which they might dismiss as a connection
-        related error.
-        """
-        return self._receiver.raw_response_for_error(exc)
-
-
-def create_sender_module(basename: str,
-                         protocol_create_code: str,
-                         enable_sync_sends: bool,
-                         enable_async_sends: bool,
-                         private: bool = False) -> str:
-    """Create a Python module defining a MessageSender subclass.
-
-    This class is primarily for type checking and will contain overrides
-    for the varieties of send calls for message/response types defined
-    in the protocol.
-
-    Code passed for 'protocol_create_code' should import necessary
-    modules and assign an instance of the Protocol to a 'protocol'
-    variable.
-
-    Class names are based on basename; a basename 'FooSender' will
-    result in classes FooSender and BoundFooSender.
-
-    If 'private' is True, class-names will be prefixed with an '_'.
-
-    Note that line lengths are not clipped, so output may need to be
-    run through a formatter to prevent lint warnings about excessive
-    line lengths.
-    """
-
-    # Exec the passed code to get a protocol which we then use to
-    # generate module code. The user could simply call
-    # MessageProtocol.do_create_sender_module() directly, but this allows
-    # us to verify that the create code works and yields the protocol used
-    # to generate the code.
-    protocol = _protocol_from_code(protocol_create_code)
-    return protocol.do_create_sender_module(
-        basename=basename,
-        protocol_create_code=protocol_create_code,
-        enable_sync_sends=enable_sync_sends,
-        enable_async_sends=enable_async_sends,
-        private=private)
-
-
-def create_receiver_module(basename: str,
-                           protocol_create_code: str,
-                           is_async: bool,
-                           private: bool = False) -> str:
-    """"Create a Python module defining a MessageReceiver subclass.
-
-    This class is primarily for type checking and will contain overrides
-    for the register method for message/response types defined in
-    the protocol.
-
-    Class names are based on basename; a basename 'FooReceiver' will
-    result in FooReceiver and BoundFooReceiver.
-
-    If 'is_async' is True, handle_raw_message() will be an async method
-    and the @handler decorator will expect async methods.
-
-    If 'private' is True, class-names will be prefixed with an '_'.
-
-    Note that line lengths are not clipped, so output may need to be
-    run through a formatter to prevent lint warnings about excessive
-    line lengths.
-    """
-    # Exec the passed code to get a protocol which we then use to
-    # generate module code. The user could simply call
-    # MessageProtocol.do_create_sender_module() directly, but this allows
-    # us to verify that the create code works and yields the protocol used
-    # to generate the code.
-    protocol = _protocol_from_code(protocol_create_code)
-    return protocol.do_create_receiver_module(
-        basename=basename,
-        protocol_create_code=protocol_create_code,
-        is_async=is_async,
-        private=private)
-
-
-def _protocol_from_code(protocol_create_code: str) -> MessageProtocol:
-    env: dict = {}
-    exec(protocol_create_code, env)  # pylint: disable=exec-used
-    protocol = env.get('protocol')
-    if not isinstance(protocol, MessageProtocol):
-        raise RuntimeError(
-            f'protocol_create_code yielded'
-            f' a {type(protocol)}; expected a MessageProtocol instance.')
-    return protocol

@@ -811,7 +811,7 @@ def filter_server_config(projroot: str, infilepath: str) -> str:
 def update_docs_md(check: bool) -> None:
     """Updates docs markdown files if necessary."""
     # pylint: disable=too-many-locals
-    from efrotools import get_files_hash, run
+    from efrotools import get_files_hash
 
     docs_path = 'docs/ba_module.md'
 
@@ -852,7 +852,7 @@ def update_docs_md(check: bool) -> None:
             raise RuntimeError('Docs markdown is out of date.')
 
         print(f'Updating {docs_path}...', flush=True)
-        run('make docs')
+        subprocess.run('make docs', shell=True, check=True)
 
         # Our docs markdown is just the docs html with a few added
         # bits at the top.

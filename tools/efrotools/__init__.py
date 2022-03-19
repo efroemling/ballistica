@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import os
 import json
-import subprocess
 import platform
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -104,11 +103,6 @@ def replace_one(opstr: str, old: str, new: str) -> str:
         raise Exception(
             f'expected 1 string occurrence; found {count}. String = {old}')
     return opstr.replace(old, new)
-
-
-def run(cmd: str) -> None:
-    """Run a shell command, checking errors."""
-    subprocess.run(cmd, shell=True, check=True)
 
 
 def get_files_hash(filenames: Sequence[Union[str, Path]],

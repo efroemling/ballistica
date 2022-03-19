@@ -5,9 +5,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from typing import TYPE_CHECKING
 
-from efrotools import PYVER, run, readfile, writefile, replace_one
+from efrotools import PYVER, readfile, writefile, replace_one
 
 if TYPE_CHECKING:
     from typing import Any
@@ -33,13 +34,14 @@ PRUNE_DLL_NAMES = ['*.ico']
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
     import platform
-    import subprocess
     from efro.error import CleanError
 
     # IMPORTANT; seems we currently wind up building against /usr/local gettext
     # stuff. Hopefully the maintainer fixes this, but for now I need to
     # remind myself to blow it away while building.
     # (via brew remove gettext --ignore-dependencies)
+    # NOTE: Should check to see if this is still necessary on Apple silicon
+    # since homebrew stuff is no longer in /usr/local there.
     if ('MacBook-Fro' in platform.node()
             and os.environ.get('SKIP_GETTEXT_WARNING') != '1'):
         if (subprocess.run('which gettext', shell=True,
@@ -48,11 +50,15 @@ def build_apple(arch: str, debug: bool = False) -> None:
                 'NEED TO TEMP-KILL GETTEXT (or set SKIP_GETTEXT_WARNING=1)')
 
     builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
-    run('rm -rf "' + builddir + '"')
-    run('mkdir -p build')
-    run('git clone '
-        'https://github.com/beeware/Python-Apple-support.git "' + builddir +
-        '"')
+    subprocess.run(['rm', '-rf', builddir], check=True)
+    subprocess.run(['mkdir', '-p', 'build'], check=True)
+    subprocess.run(
+        [
+            'git', 'clone',
+            'https://github.com/beeware/Python-Apple-support.git', builddir
+        ],
+        check=True,
+    )
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
@@ -60,7 +66,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # broke in the underlying build even on old commits so keeping it
     # locked for now...
     # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-    run(f'git checkout {PYVER}')
+    subprocess.run(['git', 'checkout', PYVER], check=True)
 
     txt = readfile('Makefile')
 
@@ -111,19 +117,32 @@ def build_apple(arch: str, debug: bool = False) -> None:
         f'../../../../../tools/pcommand python_apple_patch {arch}\n'
         '	# Configure target Python\n',
     )
+
+    # Use python3 instead of python for libffi setup script
+    txt = replace_one(
+        txt,
+        'cd $$(LIBFFI_DIR-$1) && python generate-darwin-source-and-headers.py'
+        " --only-$(shell echo $1 | tr '[:upper:]' '[:lower:]')",
+        'cd $$(LIBFFI_DIR-$1) && python3 generate-darwin-source-and-headers.py'
+        " --only-$(shell echo $1 | tr '[:upper:]' '[:lower:]')",
+    )
+
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.
     # (we run these in parallel so limit to 1 job a piece;
     # otherwise they inherit the -j12 or whatever from the top level)
     # (also this build seems to fail with multiple threads)
-    run(
-        'make -j1 ' + {
-            'mac': 'Python-macOS',
-            # 'mac': 'build/macOS/Python-3.9.6-macOS/Makefile',
-            'ios': 'Python-iOS',
-            'tvos': 'Python-tvOS'
-        }[arch])
+    subprocess.run(
+        [
+            'make', '-j1', {
+                'mac': 'Python-macOS',
+                'ios': 'Python-iOS',
+                'tvos': 'Python-tvOS'
+            }[arch]
+        ],
+        check=True,
+    )
     print('python build complete! (apple/' + arch + ')')
 
 
@@ -146,13 +165,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     (can be arm, arm64, x86, or x86_64)
     """
-    import subprocess
 
     builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
-    run('rm -rf "' + builddir + '"')
-    run('mkdir -p build')
-    run('git clone '
-        'https://github.com/yan12125/python3-android.git "' + builddir + '"')
+    subprocess.run(['rm', '-rf', builddir], check=True)
+    subprocess.run(['mkdir', '-p', 'build'], check=True)
+    subprocess.run(
+        [
+            'git', 'clone', 'https://github.com/yan12125/python3-android.git',
+            builddir
+        ],
+        check=True,
+    )
     os.chdir(builddir)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
@@ -202,7 +225,9 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Ok, let 'er rip
     exargs = ' --with-pydebug' if debug else ''
-    run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}')
+    subprocess.run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}',
+                   shell=True,
+                   check=True)
     print('python build complete! (android/' + arch + ')')
 
 
@@ -386,11 +411,17 @@ def winprune() -> None:
     for libdir in ('assets/src/windows/Win32/Lib',
                    'assets/src/windows/x64/Lib'):
         assert os.path.isdir(libdir)
-        run('cd "' + libdir + '" && rm -rf ' + ' '.join(PRUNE_LIB_NAMES))
+        subprocess.run('cd "' + libdir + '" && rm -rf ' +
+                       ' '.join(PRUNE_LIB_NAMES),
+                       shell=True,
+                       check=True)
     for dlldir in ('assets/src/windows/Win32/DLLs',
                    'assets/src/windows/x64/DLLs'):
         assert os.path.isdir(dlldir)
-        run('cd "' + dlldir + '" && rm -rf ' + ' '.join(PRUNE_DLL_NAMES))
+        subprocess.run('cd "' + dlldir + '" && rm -rf ' +
+                       ' '.join(PRUNE_DLL_NAMES),
+                       shell=True,
+                       check=True)
     print('Win-prune successful.')
 
 
@@ -417,7 +448,7 @@ def gather() -> None:
         existing_dirs = [d for d in existing_dirs if 'android' not in d]
 
     for existing_dir in existing_dirs:
-        run('rm -rf "' + existing_dir + '"')
+        subprocess.run(['rm', '-rf', existing_dir], check=True)
 
     apost2 = f'src/Python-{PY_VER_EXACT_ANDROID}/Android/sysroot'
     for buildtype in ['debug', 'release']:
@@ -554,22 +585,30 @@ def gather() -> None:
 
             # Do some setup only once per group.
             if not os.path.exists(builddir):
-                run('mkdir -p "' + builddir + '"')
-                run('mkdir -p "' + lib_dst + '"')
+                subprocess.run(['mkdir', '-p', builddir], check=True)
+                subprocess.run(['mkdir', '-p', lib_dst], check=True)
 
                 # Only pull modules into game assets on release pass.
                 if not debug:
                     # Copy system modules into the src assets
                     # dir for this group.
-                    run('mkdir -p "' + assets_src_dst + '"')
-                    run('rsync --recursive --include "*.py"'
-                        ' --exclude __pycache__ --include "*/" --exclude "*" "'
-                        + build['pylib'] + '/" "' + assets_src_dst + '"')
+                    subprocess.run(['mkdir', '-p', assets_src_dst], check=True)
+                    subprocess.run(
+                        [
+                            'rsync', '--recursive', '--include', '*.py',
+                            '--exclude', '__pycache__', '--include', '*/',
+                            '--exclude', '*', build['pylib'] + '/',
+                            assets_src_dst
+                        ],
+                        check=True,
+                    )
 
                     # Prune a bunch of modules we don't need to cut
                     # down on size.
-                    run('cd "' + assets_src_dst + '" && rm -rf ' +
-                        ' '.join(PRUNE_LIB_NAMES))
+                    subprocess.run('cd "' + assets_src_dst + '" && rm -rf ' +
+                                   ' '.join(PRUNE_LIB_NAMES),
+                                   shell=True,
+                                   check=True)
 
                     # Some minor filtering to system scripts:
                     # on iOS/tvOS, addusersitepackages() leads to a crash
@@ -587,11 +626,15 @@ def gather() -> None:
 
                 # Copy in a base set of headers (everything in a group should
                 # be using the same headers)
-                run(f'cp -r "{build["headers"]}" "{header_dst}"')
+                subprocess.run(f'cp -r "{build["headers"]}" "{header_dst}"',
+                               shell=True,
+                               check=True)
 
                 # Clear whatever pyconfigs came across; we'll build our own
                 # universal one below.
-                run('rm ' + header_dst + '/pyconfig*')
+                subprocess.run('rm ' + header_dst + '/pyconfig*',
+                               shell=True,
+                               check=True)
 
                 # Write a master pyconfig header that reroutes to each
                 # platform's actual header.
@@ -637,15 +680,17 @@ def gather() -> None:
                     writefile(header_dst + '/' + out, contents)
                 else:
                     # other configs we just rename
-                    run('cp "' + build['headers'] + '/' + cfg + '" "' +
-                        header_dst + '/' + out + '"')
+                    subprocess.run('cp "' + build['headers'] + '/' + cfg +
+                                   '" "' + header_dst + '/' + out + '"',
+                                   shell=True,
+                                   check=True)
 
             # Copy in libs. If the lib gave a specific install name,
             # use that; otherwise use name.
             targetdir = lib_dst + '/' + build.get('libinst', build['name'])
-            run('rm -rf "' + targetdir + '"')
-            run('mkdir -p "' + targetdir + '"')
+            subprocess.run(['rm', '-rf', targetdir], check=True)
+            subprocess.run(['mkdir', '-p', targetdir], check=True)
             for lib in build['libs']:
-                run('cp "' + lib + '" "' + targetdir + '"')
+                subprocess.run(['cp', lib, targetdir], check=True)
 
     print('Great success!')

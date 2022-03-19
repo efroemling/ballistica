@@ -82,12 +82,14 @@ from ba._collision import Collision, getcollision
 app: App
 
 
-# Change everything's listed module to simply 'ba' (instead of 'ba.foo.bar').
+# Have these things present themselves cleanly as 'ba.Foo'
+# instead of 'ba._submodule.Foo'
 def _simplify_module_names() -> None:
-    for attr, obj in globals().items():
-        if not attr.startswith('_'):
-            if getattr(obj, '__module__', None) not in [None, 'ba']:
-                obj.__module__ = 'ba'
+    from efro.util import set_canonical_module
+    globs = globals()
+    set_canonical_module(
+        module_globals=globs,
+        names=[n for n in globs.keys() if not n.startswith('_')])
 
 
 _simplify_module_names()

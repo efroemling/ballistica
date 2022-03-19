@@ -1,7 +1,8 @@
-### 1.6.10 (20503, 2022-03-07)
+### 1.6.10 (20510, 2022-03-18)
 - Added `_ba.get_client_public_device_uuid` function which returns a semi-permanent device id for a connected client running 1.6.10 or newer. Can be useful to combat spam attacks or other mischief.
 - Fixed an issue with `make update` not properly rewriting Visual Studio project files to account for new/deleted source files.
 - Removed various bits of code associated with the (no-longer-functional) Google Play Games multiplayer connections.
+- Added lots of foundation code for v2 master-server connections (not yet enabled).
 
 ### 1.6.9 (20486, 2022-02-22)
 - Upgraded Android Python to 3.9.10
