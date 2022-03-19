@@ -91,6 +91,7 @@ def generate(projroot: str) -> None:
     version, build_number = get_current_version()
 
     try:
+        os.environ['BA_DOCS_GENERATION'] = '1'
         pdoc.render.env.globals['ba_version'] = version
         pdoc.render.env.globals['ba_build'] = build_number
         pdoc.render.configure(search=True,

@@ -644,6 +644,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/call.py \
   build/ba_data/python/efro/dataclassio/__init__.py \
+  build/ba_data/python/efro/dataclassio/_api.py \
   build/ba_data/python/efro/dataclassio/_base.py \
   build/ba_data/python/efro/dataclassio/_inputter.py \
   build/ba_data/python/efro/dataclassio/_outputter.py \
@@ -651,7 +652,13 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/dataclassio/extras.py \
   build/ba_data/python/efro/error.py \
-  build/ba_data/python/efro/message.py \
+  build/ba_data/python/efro/message/__init__.py \
+  build/ba_data/python/efro/message/_message.py \
+  build/ba_data/python/efro/message/_module.py \
+  build/ba_data/python/efro/message/_protocol.py \
+  build/ba_data/python/efro/message/_receiver.py \
+  build/ba_data/python/efro/message/_sender.py \
+  build/ba_data/python/efro/rpc.py \
   build/ba_data/python/efro/terminal.py \
   build/ba_data/python/efro/util.py
 
@@ -664,6 +671,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/call.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/dataclassio/__pycache__/_api.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_base.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_inputter.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_outputter.cpython-39.opt-1.pyc \
@@ -671,7 +679,13 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-39.opt-1.pyc \
-  build/ba_data/python/efro/__pycache__/message.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/__init__.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/_message.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/_module.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/_protocol.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/_receiver.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/message/__pycache__/_sender.cpython-39.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/rpc.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/terminal.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/util.cpython-39.opt-1.pyc
 

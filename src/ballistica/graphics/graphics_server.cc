@@ -20,7 +20,7 @@
 
 namespace ballistica {
 
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_XCODE_NEW_PROJECT
 void GraphicsServer::FullscreenCheck() {
   if (!fullscreen_enabled()) {
 #if BA_ENABLE_OPENGL
@@ -577,7 +577,7 @@ void GraphicsServer::HandleFullscreenToggling(bool do_set_existing_fs,
   } else if (do_toggle_fs) {
     // If we're doing a fullscreen-toggle, we need to do it after coming out of
     // sync mode (because the toggle triggers sync-mode itself).
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_XCODE_NEW_PROJECT
 #if BA_ENABLE_OPENGL
     SDL_WM_ToggleFullScreen(gl_context_->sdl_screen_surface());
 #endif

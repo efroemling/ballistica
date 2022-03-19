@@ -11,8 +11,8 @@ Cached files are gathered and uploaded as part of the pubsync process.
 from __future__ import annotations
 
 import os
-import subprocess
 import json
+import subprocess
 from typing import TYPE_CHECKING
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -62,7 +62,6 @@ def _project_centric_path(path: str) -> str:
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
     from efro.error import CleanError
-    from efrotools import run
 
     path = _project_centric_path(path)
 
@@ -111,7 +110,9 @@ def get_target(path: str) -> None:
         if result.returncode != 0:
             raise CleanError('Download failed; is your internet working?')
 
-        run(f'mv {local_cache_path_dl} {local_cache_path}')
+        subprocess.run(f'mv {local_cache_path_dl} {local_cache_path}',
+                       shell=True,
+                       check=True)
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
     # Just expand it and it get placed wherever it belongs.
@@ -138,7 +139,7 @@ def get_target(path: str) -> None:
     # The file will wind up with the timestamp it was compressed with,
     # so let's update its timestamp or else it will still be considered
     # dirty.
-    run(f'touch {path}')
+    subprocess.run(f'touch {path}', shell=True, check=True)
     if not os.path.exists(path):
         raise RuntimeError(f'File {path} did not wind up as expected.')
 
@@ -240,7 +241,6 @@ def update_cache(makefile_dirs: list[str]) -> None:
 
 def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
                   hashes_existing_str: str) -> None:
-    from efrotools import run
 
     # First, if we've run before, print the files causing us to re-run:
     if hashes_existing_str != '':
@@ -263,8 +263,8 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
     # Now do the thing.
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
-    run(f'rm -rf {staging_dir}')
-    run(f'mkdir -p {staging_dir}')
+    subprocess.run(f'rm -rf {staging_dir}', shell=True, check=True)
+    subprocess.run(f'mkdir -p {staging_dir}', shell=True, check=True)
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
@@ -273,12 +273,18 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
 
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
-    run('rsync --progress --recursive --human-readable build/efrocache/'
-        ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
+    subprocess.run(
+        'rsync --progress --recursive --human-readable build/efrocache/'
+        ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/',
+        shell=True,
+        check=True)
 
     # Now generate the starter cache on the server..
-    run('ssh -oBatchMode=yes -oStrictHostKeyChecking=yes ubuntu@ballistica.net'
-        ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
+    subprocess.run(
+        'ssh -oBatchMode=yes -oStrictHostKeyChecking=yes ubuntu@ballistica.net'
+        ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"',
+        shell=True,
+        check=True)
 
 
 def _gen_hashes(fnames: list[str]) -> str:
@@ -362,7 +368,6 @@ def _write_cache_files(fnames1: list[str], fnames2: list[str],
 
 def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     import hashlib
-    from efrotools import run
     print(f'Caching {fname}')
     if ' ' in fname:
         raise RuntimeError('Spaces in paths not supported.')
@@ -382,7 +387,9 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     # with no embedded timestamps.
     # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
     # file attributes/resource-forks to the archive as as ._filename.
-    run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}')
+    subprocess.run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}',
+                   shell=True,
+                   check=True)
     return fname, hashpath
 
 
@@ -409,7 +416,6 @@ def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
 
 def warm_start_cache() -> None:
     """Run a pre-pass on the efrocache to improve efficiency."""
-    from efrotools import run
 
     # We maintain a starter-cache on the staging server, which
     # is simply the latest set of cache entries compressed into a single
@@ -420,12 +426,17 @@ def warm_start_cache() -> None:
     # downloading thousands)
     if not os.path.exists(CACHE_DIR_NAME):
         print('Downloading asset starter-cache...', flush=True)
-        run(f'curl --fail {BASE_URL}startercache.tar.xz'
-            f' --output startercache.tar.xz')
+        subprocess.run(
+            f'curl --fail {BASE_URL}startercache.tar.xz'
+            f' --output startercache.tar.xz',
+            shell=True,
+            check=True)
         print('Decompressing starter-cache...', flush=True)
-        run('tar -xf startercache.tar.xz')
-        run(f'mv efrocache {CACHE_DIR_NAME}')
-        run('rm startercache.tar.xz')
+        subprocess.run('tar -xf startercache.tar.xz', shell=True, check=True)
+        subprocess.run(f'mv efrocache {CACHE_DIR_NAME}',
+                       shell=True,
+                       check=True)
+        subprocess.run('rm startercache.tar.xz', shell=True, check=True)
         print('Starter-cache fetched successfully!'
               ' (should speed up asset builds)')
 

@@ -110,10 +110,6 @@ namespace ballistica {
 #define BA_ENABLE_SDL_JOYSTICKS 0
 #endif
 
-#ifndef BA_USE_ICLOUD
-#define BA_USE_ICLOUD 0
-#endif
-
 #ifndef BA_USE_STORE_KIT
 #define BA_USE_STORE_KIT 0
 #endif
@@ -242,7 +238,6 @@ class BuildConfig {
   bool arcade_build() const { return EXPBOOL_(BA_ARCADE_BUILD); }
   bool iircade_build() const { return EXPBOOL_(BA_IIRCADE_BUILD); }
 
-  bool use_icloud() const { return EXPBOOL_(BA_USE_ICLOUD); }
   bool use_store_kit() const { return EXPBOOL_(BA_USE_STORE_KIT); }
   bool use_game_center() const { return EXPBOOL_(BA_USE_GAME_CENTER); }
   bool use_stdin_thread() const { return EXPBOOL_(BA_USE_STDIN_THREAD); }

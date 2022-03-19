@@ -573,6 +573,10 @@ def pytest() -> None:
     # which can screw up our builds.
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
+    # Let's flip on dev mode to hopefully be informed on more bad stuff
+    # happening.  https://docs.python.org/3/library/devmode.html
+    os.environ['PYTHONDEVMODE'] = '1'
+
     # Do the thing.
     results = subprocess.run([PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:],
                              check=False)

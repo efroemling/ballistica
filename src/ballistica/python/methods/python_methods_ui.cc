@@ -21,7 +21,7 @@
 #include "ballistica/ui/widget/row_widget.h"
 #include "ballistica/ui/widget/scroll_widget.h"
 
-#if !BA_HEADLESS_BUILD
+#if !BA_HEADLESS_BUILD && !BA_XCODE_NEW_PROJECT
 extern "C" void SDL_ericf_focus(void);
 #endif
 
@@ -1859,7 +1859,8 @@ auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(InGameThread());
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD \
+    && !BA_XCODE_NEW_PROJECT
   SDL_ericf_focus();
 #else
 #endif

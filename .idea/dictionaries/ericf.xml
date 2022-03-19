@@ -54,6 +54,8 @@
       <w>adisp</w>
       <w>advertizing</w>
       <w>aidl</w>
+      <w>aioloop</w>
+      <w>aiomain</w>
       <w>alarmsound</w>
       <w>alibaba</w>
       <w>allpaths</w>
@@ -228,6 +230,7 @@
       <w>bisectmodule</w>
       <w>bitcode</w>
       <w>blarg</w>
+      <w>blargh</w>
       <w>blas</w>
       <w>blastos</w>
       <w>bldtp</w>
@@ -301,6 +304,7 @@
       <w>cachefile</w>
       <w>cachemap</w>
       <w>cachepath</w>
+      <w>cadata</w>
       <w>cafile</w>
       <w>calced</w>
       <w>calcing</w>
@@ -647,6 +651,7 @@
       <w>duckdns</w>
       <w>dummymodule</w>
       <w>dummyname</w>
+      <w>dummyret</w>
       <w>dummytoken</w>
       <w>dummyval</w>
       <w>dups</w>
@@ -835,6 +840,7 @@
       <w>flines</w>
       <w>floof</w>
       <w>floofcls</w>
+      <w>floop</w>
       <w>flycheck</w>
       <w>fmod</w>
       <w>fname</w>
@@ -1076,6 +1082,7 @@
       <w>howtoplay</w>
       <w>hpos</w>
       <w>hscrollwidget</w>
+      <w>hsdata</w>
       <w>hspacing</w>
       <w>httprequest</w>
       <w>hurtiness</w>
@@ -1147,6 +1154,7 @@
       <w>installdir</w>
       <w>instancer</w>
       <w>interfacetype</w>
+      <w>internalmodule</w>
       <w>internalsrc</w>
       <w>interstitials</w>
       <w>intex</w>
@@ -1223,7 +1231,9 @@
       <w>killpath</w>
       <w>killpaths</w>
       <w>kingofthehill</w>
+      <w>kinterval</w>
       <w>kronk</w>
+      <w>ktimeout</w>
       <w>kwargannotation</w>
       <w>kwds</w>
       <w>kwonlyargs</w>
@@ -1415,6 +1425,7 @@
       <w>megalint</w>
       <w>memfunctions</w>
       <w>menubar</w>
+      <w>messagetype</w>
       <w>metamakefile</w>
       <w>metaprogramming</w>
       <w>metascan</w>
@@ -1442,6 +1453,7 @@
       <w>mipmap</w>
       <w>mipmaps</w>
       <w>mkflags</w>
+      <w>mlen</w>
       <w>mline</w>
       <w>mmapmodule</w>
       <w>mmult</w>
@@ -1468,6 +1480,12 @@
       <w>msbuild</w>
       <w>msgdict</w>
       <w>msgfull</w>
+      <w>msgid</w>
+      <w>msglen</w>
+      <w>msgnum</w>
+      <w>msgpriv</w>
+      <w>msgpub</w>
+      <w>msgtest</w>
       <w>msgtype</w>
       <w>msgtypes</w>
       <w>msgtypevar</w>
@@ -1700,6 +1718,7 @@
       <w>pdataclass</w>
       <w>pedit</w>
       <w>peditui</w>
+      <w>peername</w>
       <w>pentry</w>
       <w>perma</w>
       <w>perrdetail</w>
@@ -1914,6 +1933,7 @@
       <w>pypaths</w>
       <w>pysources</w>
       <w>pytest</w>
+      <w>pythondevmode</w>
       <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
       <w>pythonenumsmodule</w>
@@ -1946,6 +1966,7 @@
       <w>rcvs</w>
       <w>rdict</w>
       <w>rdir</w>
+      <w>readexactly</w>
       <w>readline</w>
       <w>readlines</w>
       <w>realpath</w>
@@ -2008,6 +2029,9 @@
       <w>rscale</w>
       <w>rsdr</w>
       <w>rsms</w>
+      <w>rspdata</w>
+      <w>rsplen</w>
+      <w>rspobj</w>
       <w>rstr</w>
       <w>rtest</w>
       <w>rtnetlink</w>
@@ -2217,6 +2241,7 @@
       <w>srctxt</w>
       <w>sred</w>
       <w>sshd</w>
+      <w>sslcontext</w>
       <w>sslproto</w>
       <w>ssval</w>
       <w>stackstr</w>
@@ -2327,6 +2352,7 @@
       <w>targetpath</w>
       <w>targetpractice</w>
       <w>targs</w>
+      <w>tasklabel</w>
       <w>tbtcolor</w>
       <w>tbtn</w>
       <w>tbttxt</w>
@@ -2399,6 +2425,7 @@
       <w>themself</w>
       <w>thingie</w>
       <w>this'll</w>
+      <w>thismodule</w>
       <w>threadtype</w>
       <w>throwiness</w>
       <w>ticon</w>

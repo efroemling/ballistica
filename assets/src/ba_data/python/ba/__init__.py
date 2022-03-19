@@ -84,11 +84,23 @@ app: App
 __all__: list[str] = []
 
 
-# Change everything's listed module to simply 'ba' (instead of 'ba.foo.bar').
+# Have these things present themselves cleanly as 'ba.Foo'
+# instead of 'ba._submodule.Foo'
 def _simplify_module_names() -> None:
+    import os
+
     for attr, _obj in globals().items():
         if not attr.startswith('_'):
             __all__.append(attr)
+
+    # Though pdoc gets confused when we override __module__,
+    # so let's make an exception for it.
+    if os.environ.get('BA_DOCS_GENERATION', '0') != '1':
+        from efro.util import set_canonical_module
+        globs = globals()
+        set_canonical_module(
+            module_globals=globs,
+            names=[n for n in globs.keys() if not n.startswith('_')])
 
 
 _simplify_module_names()

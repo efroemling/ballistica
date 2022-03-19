@@ -16,7 +16,8 @@ from efro.error import CleanError, RemoteError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           BoundMessageSender, MessageReceiver,
-                          BoundMessageReceiver)
+                          BoundMessageReceiver, UnregisteredMessageIDError,
+                          EmptyResponse)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Awaitable
@@ -49,6 +50,13 @@ class _TMsg2(Message):
 class _TMsg3(Message):
     """Just testing."""
     sval: str
+
+
+@ioprepped
+@dataclass
+class _TMsg4(Message):
+    """Just testing."""
+    sval2: str
 
 
 @ioprepped
@@ -183,20 +191,20 @@ class _BoundTestMessageSenderAsync(BoundMessageSender):
 # SEND_BOTH_CODE_TEST_BEGIN
 
 
-class _TestMessageSenderBoth(MessageSender):
+class _TestMessageSenderBBoth(MessageSender):
     """Protocol-specific sender."""
 
     def __init__(self) -> None:
-        protocol = TEST_PROTOCOL
+        protocol = TEST_PROTOCOL_B
         super().__init__(protocol)
 
     def __get__(self,
                 obj: Any,
-                type_in: Any = None) -> _BoundTestMessageSenderBoth:
-        return _BoundTestMessageSenderBoth(obj, self)
+                type_in: Any = None) -> _BoundTestMessageSenderBBoth:
+        return _BoundTestMessageSenderBBoth(obj, self)
 
 
-class _BoundTestMessageSenderBoth(BoundMessageSender):
+class _BoundTestMessageSenderBBoth(BoundMessageSender):
     """Protocol-specific bound sender."""
 
     @overload
@@ -209,6 +217,10 @@ class _BoundTestMessageSenderBoth(BoundMessageSender):
 
     @overload
     def send(self, message: _TMsg3) -> None:
+        ...
+
+    @overload
+    def send(self, message: _TMsg4) -> None:
         ...
 
     def send(self, message: Message) -> Optional[Response]:
@@ -225,6 +237,10 @@ class _BoundTestMessageSenderBoth(BoundMessageSender):
 
     @overload
     async def send_async(self, message: _TMsg3) -> None:
+        ...
+
+    @overload
+    async def send_async(self, message: _TMsg4) -> None:
         ...
 
     async def send_async(self, message: Message) -> Optional[Response]:
@@ -267,9 +283,12 @@ class _TestSingleMessageReceiver(MessageReceiver):
 class _BoundTestSingleMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    def handle_raw_message(self, message: str) -> str:
+    def handle_raw_message(self,
+                           message: str,
+                           raise_unregistered: bool = False) -> str:
         """Synchronously handle a raw incoming message."""
-        return self._receiver.handle_raw_message(self._obj, message)
+        return self._receiver.handle_raw_message(self._obj, message,
+                                                 raise_unregistered)
 
 
 # RCV_SINGLE_CODE_TEST_END
@@ -324,9 +343,12 @@ class _TestSyncMessageReceiver(MessageReceiver):
 class _BoundTestSyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    def handle_raw_message(self, message: str) -> str:
+    def handle_raw_message(self,
+                           message: str,
+                           raise_unregistered: bool = False) -> str:
         """Synchronously handle a raw incoming message."""
-        return self._receiver.handle_raw_message(self._obj, message)
+        return self._receiver.handle_raw_message(self._obj, message,
+                                                 raise_unregistered)
 
 
 # RCV_SYNC_CODE_TEST_END
@@ -381,10 +403,12 @@ class _TestAsyncMessageReceiver(MessageReceiver):
 class _BoundTestAsyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    async def handle_raw_message(self, message: str) -> str:
+    async def handle_raw_message(self,
+                                 message: str,
+                                 raise_unregistered: bool = False) -> str:
         """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
-            self._obj, message)
+            self._obj, message, raise_unregistered)
 
 
 # RCV_ASYNC_CODE_TEST_END
@@ -394,6 +418,23 @@ TEST_PROTOCOL = MessageProtocol(
         0: _TMsg1,
         1: _TMsg2,
         2: _TMsg3,
+    },
+    response_types={
+        0: _TResp1,
+        1: _TResp2,
+    },
+    trusted_sender=True,
+    log_remote_exceptions=False,
+)
+
+# Represents an 'evolved' TEST_PROTOCOL (one extra message type added).
+# (so we can test communication failures talking to older protocols)
+TEST_PROTOCOL_B = MessageProtocol(
+    message_types={
+        0: _TMsg1,
+        1: _TMsg2,
+        2: _TMsg3,
+        3: _TMsg4,
     },
     response_types={
         0: _TResp1,
@@ -534,9 +575,9 @@ def test_sender_module_both_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL.do_create_sender_module(
-        'TestMessageSenderBoth',
-        protocol_create_code='protocol = TEST_PROTOCOL',
+    smod = TEST_PROTOCOL_B.do_create_sender_module(
+        'TestMessageSenderBBoth',
+        protocol_create_code='protocol = TEST_PROTOCOL_B',
         enable_sync_sends=True,
         enable_async_sends=True,
         private=True,
@@ -544,7 +585,7 @@ def test_sender_module_both_emb() -> None:
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
-    classline = lines.index('class _TestMessageSenderBoth(MessageSender):')
+    classline = lines.index('class _TestMessageSenderBBoth(MessageSender):')
     clipped = '\n'.join(lines[classline:])
 
     # This snippet should match what we've got embedded above;
@@ -697,11 +738,16 @@ def test_receiver_creation() -> None:
 def test_full_pipeline() -> None:
     """Test the full pipeline."""
 
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
+
     # Define a class that can send messages and one that can receive them.
     class TestClassS:
         """Test class incorporating send functionality."""
 
-        msg = _TestMessageSenderBoth()
+        msg = _TestMessageSenderBBoth()
+
+        test_handling_unregistered = False
 
         def __init__(self, target: Union[TestClassRSync,
                                          TestClassRAsync]) -> None:
@@ -713,7 +759,15 @@ def test_full_pipeline() -> None:
             # Just talk directly to the receiver for this example.
             # (currently only support synchronous receivers)
             assert isinstance(self._target, TestClassRSync)
-            return self._target.receiver.handle_raw_message(data)
+            try:
+                return self._target.receiver.handle_raw_message(
+                    data, raise_unregistered=self.test_handling_unregistered)
+            except UnregisteredMessageIDError:
+                if self.test_handling_unregistered:
+                    # Emulate forwarding unregistered messages on to some
+                    # other handler...
+                    return self.msg.protocol.encode_response(EmptyResponse())
+                raise
 
         @msg.send_async_method
         async def _send_raw_message_async(self, data: str) -> str:
@@ -815,6 +869,18 @@ def test_full_pipeline() -> None:
     # Now test sends to async handlers.
     response6 = asyncio.run(obj2.msg.send_async(_TMsg1(ival=0)))
     assert isinstance(response6, _TResp1)
+
+    # Our sender here is using a 'newer' protocol which contains a message
+    # type not in the older protocol used by our receivers. Make sure we
+    # get the expected error when trying to send that message to them.
+    with pytest.raises(RemoteError):
+        _response7 = obj.msg.send(_TMsg4(sval2='blargh'))
+
+    # Also make sure the receiver can explicitly handle unregistered
+    # messages (by forwarding them along to something that can, etc).
+    obj.test_handling_unregistered = True
+    response7 = obj.msg.send(_TMsg4(sval2='blargh'))
+    assert response7 is None
 
     # Make sure static typing lines up with what we expect.
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':

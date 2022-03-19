@@ -663,3 +663,21 @@ def unchanging_hostname() -> str:
             check=True,
             capture_output=True).stdout.decode().strip().replace(' ', '-')
     return os.uname().nodename
+
+
+def set_canonical_module(module_globals: dict[str, Any],
+                         names: list[str]) -> None:
+    """Override any __module__ attrs on passed classes/etc.
+
+    This allows classes to present themselves using clean paths such as
+    mymodule.MyClass instead of possibly ugly internal ones such as
+    mymodule._internal._stuff.MyClass.
+    """
+    modulename = module_globals.get('__name__')
+    if not isinstance(modulename, str):
+        raise RuntimeError('Unable to get module name.')
+    for name in names:
+        obj = module_globals[name]
+        existing = getattr(obj, '__module__', None)
+        if existing is not None and existing != modulename:
+            obj.__module__ = modulename
