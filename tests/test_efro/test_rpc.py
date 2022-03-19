@@ -244,7 +244,7 @@ def test_keepalive_fail() -> None:
 
         # Sleep just past the keepalive timeout and make sure the endpoint
         # IS going down.
-        await asyncio.sleep(ktimeout * 1.1)
+        await asyncio.sleep(ktimeout * 1.25)
         assert tester.server.endpoint.is_closing()
 
     tester.run(_do_it())
@@ -260,7 +260,7 @@ def test_keepalive_success() -> None:
 
         # Sleep just past the keepalive timeout and make sure the endpoint
         # is NOT going down
-        await asyncio.sleep(ktimeout * 1.1)
+        await asyncio.sleep(ktimeout * 1.25)
         assert not tester.server.endpoint.is_closing()
 
     tester.run(_do_it())
