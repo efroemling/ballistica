@@ -19,7 +19,6 @@ TA = TypeVar('TA', bound='Actor')
 
 
 class Actor:
-    # noinspection PyUnresolvedReferences
     """High level logical entities in a ba.Activity.
 
     Category: **Gameplay Classes**

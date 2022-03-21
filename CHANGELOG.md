@@ -1,4 +1,4 @@
-### 1.6.11 (20516, 2022-03-21)
+### 1.6.11 (20522, 2022-03-21)
 - Documentation is now generated using pdoc <https://pdoc.dev>. Thanks Dliwk!!
 
 ### 1.6.10 (20511, 2022-03-20)

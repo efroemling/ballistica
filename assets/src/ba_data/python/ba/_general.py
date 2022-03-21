@@ -138,7 +138,6 @@ def get_type_name(cls: type) -> str:
 
 
 class _WeakCall:
-    # noinspection PyUnresolvedReferences
     """Wrap a callable and arguments into a single callable object.
 
     Category: **General Utility Classes**
@@ -226,7 +225,6 @@ class _Call:
     """
 
     def __init__(self, *args: Any, **keywds: Any):
-        # noinspection PyUnresolvedReferences
         """Instantiate a Call.
 
         Pass a callable as the first arg, followed by any number of
@@ -362,7 +360,6 @@ def _verify_object_death(wref: weakref.ref) -> None:
 
 
 def storagename(suffix: str = None) -> str:
-    # noinspection PyUnresolvedReferences
     """Generate a unique name for storing class data in shared places.
 
     Category: **General Utility Functions**

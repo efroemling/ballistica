@@ -488,12 +488,6 @@ def gendocs() -> None:
     batools.docs.generate(projroot=str(PROJROOT))
 
 
-def update_docs_md() -> None:
-    """Updates docs markdown files if necessary."""
-    import batools.build
-    batools.build.update_docs_md(check='--check' in sys.argv)
-
-
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
     from batools.build import get_pip_reqs

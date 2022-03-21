@@ -17,9 +17,6 @@
 # own ways.
 DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
 
-# Prefix used for output of docs/changelogs/etc. targets for use in webpages.
-DOCPREFIX = "ballisticacore_"
-
 # Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a
 # cmake compile-commands database for use with irony for emacs (and possibly
 # other tools).
@@ -124,10 +121,10 @@ dummymodule:
 
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
-  assets-windows-Win32 assets-windows-x64 \
-  assets-mac assets-ios assets-android assets-clean \
-  resources resources-clean meta meta-clean \
-  clean clean-list dummymodule
+ assets-windows-Win32 assets-windows-x64 \
+ assets-mac assets-ios assets-android assets-clean \
+ resources resources-clean meta meta-clean \
+ clean clean-list dummymodule
 
 
 ################################################################################
@@ -677,8 +674,8 @@ pycharm-full: prereqs meta
 
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check2 check2-full \
-  cpplint cpplint-full pylint pylint-full mypy \
-  mypy-full pycharm pycharm-full
+ cpplint cpplint-full pylint pylint-full mypy \
+ mypy-full pycharm pycharm-full
 
 
 ################################################################################
@@ -889,7 +886,7 @@ clion-staging: assets-cmake resources meta
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
-      cmake-server-clean
+ cmake-server-clean
 
 
 ################################################################################
@@ -1029,4 +1026,4 @@ docs:
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild \
-      docs
+ docs

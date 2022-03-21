@@ -365,7 +365,6 @@ class LanguageSubsystem:
 
 
 class Lstr:
-    # noinspection PyUnresolvedReferences
     """Used to define strings in a language-independent way.
 
     Category: **General Utility Classes**

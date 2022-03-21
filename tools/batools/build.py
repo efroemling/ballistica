@@ -762,66 +762,6 @@ def filter_server_config(projroot: str, infilepath: str) -> str:
                        _get_server_config_template_yaml(projroot))
 
 
-def update_docs_md(check: bool) -> None:
-    """Updates docs markdown files if necessary."""
-    # pylint: disable=too-many-locals
-    from efrotools import get_files_hash
-
-    docs_path = 'docs/ba_module.md'
-
-    # We store the hash in a separate file that only exists on private
-    # so public isn't full of constant hash change commits.
-    # (don't care so much on private)
-    docs_hash_path = '.cache/ba_module_hash'
-
-    # Generate a hash from all c/c++ sources under the python subdir
-    # as well as all python scripts.
-    pysources = []
-    exts = ['.cc', '.c', '.h', '.py']
-    for basedir in [
-            'src/ballistica/python',
-            'tools/efro',
-            'tools/bacommon',
-            'assets/src/ba_data/python/ba',
-    ]:
-        assert os.path.isdir(basedir), f'{basedir} is not a dir.'
-        for root, _dirs, files in os.walk(basedir):
-            for fname in files:
-                if any(fname.endswith(ext) for ext in exts):
-                    pysources.append(os.path.join(root, fname))
-    pysources.sort()
-    storedhash: Optional[str]
-    curhash = get_files_hash(pysources)
-
-    # Extract the current embedded hash.
-    if os.path.exists(docs_hash_path):
-        with open(docs_hash_path, encoding='utf-8') as infile:
-            storedhash = infile.read()
-    else:
-        storedhash = None
-
-    if (storedhash is None or curhash != storedhash
-            or not os.path.exists(docs_path)):
-        if check:
-            raise RuntimeError('Docs markdown is out of date.')
-
-        print(f'Updating {docs_path}...', flush=True)
-        subprocess.run('make docs', shell=True, check=True)
-
-        # Our docs markdown is just the docs html with a few added
-        # bits at the top.
-        with open('build/docs.html', encoding='utf-8') as infile:
-            docs = infile.read()
-        docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
-                ) + docs
-        os.makedirs(os.path.dirname(docs_path), exist_ok=True)
-        with open(docs_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(docs)
-        with open(docs_hash_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(curhash)
-    print(f'{docs_path} is up to date.')
-
-
 def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """Create a dir, recreating it when cmake/python/etc. versions change.
 
