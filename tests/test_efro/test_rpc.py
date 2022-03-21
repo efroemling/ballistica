@@ -252,9 +252,13 @@ def test_keepalive_fail() -> None:
         # Tell our client to not send keepalives.
         tester.client.endpoint.test_suppress_keepalives = True
 
-        # Sleep just past the keepalive timeout and make sure the endpoint
-        # IS going down.
-        await asyncio.sleep(ktimeout * 1.25)
+        # Make sure the endpoint goes down sometime soon-ish after the
+        # keepalive timeout.
+        await asyncio.sleep(ktimeout)
+        starttime = time.monotonic()
+        while (not tester.server.endpoint.is_closing()
+               and time.monotonic() - starttime < 5.0):
+            await asyncio.sleep(0.01)
         assert tester.server.endpoint.is_closing()
 
     tester.run(_do_it())

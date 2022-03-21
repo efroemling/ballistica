@@ -111,7 +111,6 @@ def _add_python_embedded_targets(targets: list[Target]) -> None:
         name = os.path.splitext(fname)[0]
         src = [
             f'{pkg}/python_embedded/{name}.py',
-            # os.path.join(TOOLS_DIR, 'batools', 'meta.py')
         ]
         dst = os.path.join(OUT_DIR_CPP, 'python_embedded', f'{name}.inc')
         if name == 'binding':
@@ -137,10 +136,7 @@ def _add_python_embedded_targets_internal(targets: list[Target]) -> None:
         name = os.path.splitext(fname)[0]
         targets.append(
             Target(
-                src=[
-                    f'{pkg}/python_embedded/{name}.py',
-                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
-                ],
+                src=[f'{pkg}/python_embedded/{name}.py'],
                 dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
                                  f'{name}.inc'),
                 cmd='$(PCOMMAND) gen_encrypted_python_code $< $@',
@@ -159,10 +155,7 @@ def _add_extra_targets_internal(targets: list[Target]) -> None:
     ]:
         targets.append(
             Target(
-                src=[
-                    f'bametainternal/python_embedded/{srcname}.py',
-                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
-                ],
+                src=[f'bametainternal/python_embedded/{srcname}.py'],
                 dst=f'bametainternal/generated/{dstname}.py',
                 cmd=f'$(PCOMMAND) {gencmd} $@',
             ))
@@ -173,10 +166,7 @@ def _add_extra_targets_internal(targets: list[Target]) -> None:
     for name in ['basnmessagesender', 'basnmessagereceiver']:
         targets.append(
             Target(
-                src=[
-                    f'bametainternal/generated/{name}.py',
-                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
-                ],
+                src=[f'bametainternal/generated/{name}.py'],
                 dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
                                  f'{name}.inc'),
                 cmd='$(PCOMMAND) gen_encrypted_python_code $< $@',

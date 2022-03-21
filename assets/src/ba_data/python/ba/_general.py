@@ -137,8 +137,8 @@ def get_type_name(cls: type) -> str:
     return cls.__module__ + '.' + cls.__name__
 
 
-# noinspection PyUnresolvedReferences
 class _WeakCall:
+    # noinspection PyUnresolvedReferences
     """Wrap a callable and arguments into a single callable object.
 
     Category: **General Utility Classes**

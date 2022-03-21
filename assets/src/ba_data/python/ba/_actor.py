@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 TA = TypeVar('TA', bound='Actor')
 
 
-# noinspection PyUnresolvedReferences
 class Actor:
+    # noinspection PyUnresolvedReferences
     """High level logical entities in a ba.Activity.
 
     Category: **Gameplay Classes**
