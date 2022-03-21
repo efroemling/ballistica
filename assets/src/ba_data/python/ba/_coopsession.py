@@ -236,6 +236,7 @@ class CoopSession(Session):
             with _ba.Context(activity):
                 activity.end(results={'outcome': 'restart'}, force=True)
 
+    # noinspection PyUnresolvedReferences
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         """Method override for co-op sessions.
 

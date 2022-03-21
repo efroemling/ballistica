@@ -19,7 +19,7 @@ from efro.terminal import Clr
 from efrotools import getconfig
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    pass
 
 # These paths need to be relative to the dir we're writing the Makefile to.
 TOOLS_DIR = '../../tools'
@@ -111,7 +111,7 @@ def _add_python_embedded_targets(targets: list[Target]) -> None:
         name = os.path.splitext(fname)[0]
         src = [
             f'{pkg}/python_embedded/{name}.py',
-            os.path.join(TOOLS_DIR, 'batools', 'meta.py')
+            # os.path.join(TOOLS_DIR, 'batools', 'meta.py')
         ]
         dst = os.path.join(OUT_DIR_CPP, 'python_embedded', f'{name}.inc')
         if name == 'binding':
@@ -139,7 +139,7 @@ def _add_python_embedded_targets_internal(targets: list[Target]) -> None:
             Target(
                 src=[
                     f'{pkg}/python_embedded/{name}.py',
-                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
                 ],
                 dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
                                  f'{name}.inc'),
@@ -161,7 +161,7 @@ def _add_extra_targets_internal(targets: list[Target]) -> None:
             Target(
                 src=[
                     f'bametainternal/python_embedded/{srcname}.py',
-                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
                 ],
                 dst=f'bametainternal/generated/{dstname}.py',
                 cmd=f'$(PCOMMAND) {gencmd} $@',
@@ -175,7 +175,7 @@ def _add_extra_targets_internal(targets: list[Target]) -> None:
             Target(
                 src=[
                     f'bametainternal/generated/{name}.py',
-                    os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
+                    # os.path.join(TOOLS_DIR, 'batoolsinternal', 'meta.py')
                 ],
                 dst=os.path.join(OUT_DIR_CPP, 'python_embedded',
                                  f'{name}.inc'),

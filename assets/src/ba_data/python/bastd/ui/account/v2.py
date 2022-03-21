@@ -10,7 +10,7 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    pass
 
 
 class V2SignInWindow(ba.Window):

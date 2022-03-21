@@ -70,7 +70,7 @@
     <inspection_tool class="PyTypeHintsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyUnreachableCodeInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="PyIgnoreUnresolved" level="WARNING" enabled="true">
+      <scope name="PyIgnoreUnresolved" level="WARNING" enabled="false">
         <option name="ignoredIdentifiers">
           <list>
             <option value="astroid.node_classes.NodeNG.*" />
@@ -84,7 +84,7 @@
           </list>
         </option>
       </scope>
-      <scope name="UncheckedPython" level="WARNING" enabled="true">
+      <scope name="UncheckedPython" level="WARNING" enabled="false">
         <option name="ignoredIdentifiers">
           <list>
             <option value="astroid.node_classes.NodeNG.*" />
@@ -108,12 +108,14 @@
           <option value="AppKit" />
           <option value="typing.Sequence.register" />
           <option value="xml.dom.*" />
+          <option value="type.__getitem__" />
         </list>
       </option>
     </inspection_tool>
     <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
+    <inspection_tool class="Pylint" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantSuppression" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
     </inspection_tool>

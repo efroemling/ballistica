@@ -21,7 +21,6 @@ from efro.dataclassio import (dataclass_to_json, dataclass_from_json,
 
 if TYPE_CHECKING:
     from typing import Literal, Awaitable, Callable, Optional
-    from threading import Thread
 
 # Terminology:
 # Packet: A chunk of data consisting of a type and some type-dependent

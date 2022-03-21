@@ -15,7 +15,7 @@ from efro.terminal import Clr
 from efrotools import get_public_license
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def camel_case_convert(name: str) -> str:

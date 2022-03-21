@@ -78,6 +78,11 @@ def generate(projroot: str) -> None:
     from batools.version import get_current_version
     import pdoc
 
+    # Since we're operating on source dirs, suppress .pyc generation.
+    # (__pycache__ dirs in source dirs causes some subtle headaches in
+    # the private repo)
+    sys.dont_write_bytecode = True
+
     # Make sure we're running from the dir above this script.
     os.chdir(projroot)
 

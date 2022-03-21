@@ -189,7 +189,6 @@ class Map(Actor):
     def __init__(self,
                  vr_overlay_offset: Optional[Sequence[float]] = None) -> None:
         """Instantiate a map."""
-        from ba import _gameutils
         super().__init__()
 
         # This is expected to always be a ba.Node object (whether valid or not)

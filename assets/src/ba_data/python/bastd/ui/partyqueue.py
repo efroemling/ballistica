@@ -341,6 +341,7 @@ class PartyQueueWindow(ba.Window):
             self._dudes_by_id[enemy_id].claimed = True
 
         # remove unclaimed dudes from both of our lists
+        # noinspection PyUnresolvedReferences
         self._dudes_by_id = dict([
             item for item in list(self._dudes_by_id.items()) if item[1].claimed
         ])

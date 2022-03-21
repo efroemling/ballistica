@@ -1,4 +1,7 @@
-### 1.6.10 (20510, 2022-03-18)
+### 1.6.11 (20514, 2022-03-21)
+- Documentation is now generated using pdoc <https://pdoc.dev>. Thanks Dliwk!!
+
+### 1.6.10 (20511, 2022-03-20)
 - Added `_ba.get_client_public_device_uuid` function which returns a semi-permanent device id for a connected client running 1.6.10 or newer. Can be useful to combat spam attacks or other mischief.
 - Fixed an issue with `make update` not properly rewriting Visual Studio project files to account for new/deleted source files.
 - Removed various bits of code associated with the (no-longer-functional) Google Play Games multiplayer connections.

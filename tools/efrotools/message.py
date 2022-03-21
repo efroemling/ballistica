@@ -13,8 +13,6 @@ from efrotools.code import format_yapf_str
 if TYPE_CHECKING:
     from typing import Optional
 
-    from efro.message import MessageProtocol
-
 
 def standard_message_sender_gen_pcommand(
     projroot: Path,

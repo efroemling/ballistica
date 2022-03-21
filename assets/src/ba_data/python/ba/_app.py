@@ -285,11 +285,9 @@ class App:
         """Runs after the app finishes bootstrapping.
 
         (internal)"""
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _apputils
         from ba import _appconfig
-        from ba import _achievement
         from ba import _map
         from ba import _campaign
         from bastd import appdelegate
@@ -429,7 +427,6 @@ class App:
         activity: Optional[ba.Activity] = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
-            from ba import _gameutils
             from ba._language import Lstr
             from ba._nodeactor import NodeActor
 

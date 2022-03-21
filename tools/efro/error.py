@@ -75,7 +75,6 @@ def is_urllib_network_error(exc: BaseException) -> bool:
     ignored or presented to the user as general 'network-unavailable'
     states.
     """
-    import urllib.request
     import urllib.error
     import http.client
     import errno

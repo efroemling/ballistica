@@ -364,6 +364,7 @@ class LanguageSubsystem:
         return 0xE000 <= ord(char) <= 0xF8FF
 
 
+# noinspection PyUnresolvedReferences
 class Lstr:
     """Used to define strings in a language-independent way.
 

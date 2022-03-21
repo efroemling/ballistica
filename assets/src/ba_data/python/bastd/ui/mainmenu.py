@@ -76,6 +76,7 @@ class MainMenuWindow(ba.Window):
                                        repeat=True,
                                        timetype=ba.TimeType.REAL)
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use (called in bg thread)."""

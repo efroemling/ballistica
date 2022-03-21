@@ -17,7 +17,6 @@ import ba
 if TYPE_CHECKING:
     from typing import Any, Optional, Union, Callable
     from bastd.ui.gather import GatherWindow
-    from bastd.ui.confirm import ConfirmWindow
 
 
 def _safe_set_text(txt: Optional[ba.Widget],

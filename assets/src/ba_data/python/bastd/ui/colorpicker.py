@@ -249,6 +249,7 @@ class ColorPickerExact(PopupWindow):
         # color to the delegate, so start doing that.
         self._update_for_color()
 
+    # noinspection PyUnresolvedReferences
     def _update_for_color(self) -> None:
         if not self.root_widget:
             return

@@ -188,6 +188,7 @@
       <w>barebones</w>
       <w>baseaddr</w>
       <w>baseh</w>
+      <w>baseimps</w>
       <w>basemult</w>
       <w>basepos</w>
       <w>baservnode</w>
@@ -576,6 +577,7 @@
       <w>dincrease</w>
       <w>dingsound</w>
       <w>dingsoundhigh</w>
+      <w>dirfilter</w>
       <w>dirmanifest</w>
       <w>dirname</w>
       <w>dirnames</w>
@@ -679,6 +681,7 @@
       <w>efrosync</w>
       <w>efrotool</w>
       <w>efrotools</w>
+      <w>efrotoolsinternal</w>
       <w>eftools</w>
       <w>efxjtp</w>
       <w>eids</w>
@@ -692,10 +695,12 @@
       <w>enablexinput</w>
       <w>ename</w>
       <w>encerr</w>
+      <w>endblock</w>
       <w>endcall</w>
       <w>endcommand</w>
       <w>endef</w>
       <w>endindex</w>
+      <w>endmacro</w>
       <w>endmessage</w>
       <w>endparen</w>
       <w>endtime</w>
@@ -805,6 +810,7 @@
       <w>filebytes</w>
       <w>filecmp</w>
       <w>fileext</w>
+      <w>filefilter</w>
       <w>filehash</w>
       <w>fileinfo</w>
       <w>fileinput</w>
@@ -816,6 +822,7 @@
       <w>filesize</w>
       <w>filestates</w>
       <w>filt</w>
+      <w>filterdoc</w>
       <w>filterlines</w>
       <w>filterpath</w>
       <w>filterpaths</w>
@@ -1716,6 +1723,7 @@
       <w>pcommands</w>
       <w>pcstr</w>
       <w>pdataclass</w>
+      <w>pdoc</w>
       <w>pedit</w>
       <w>peditui</w>
       <w>peername</w>
@@ -1973,6 +1981,7 @@
       <w>realsies</w>
       <w>recache</w>
       <w>recursed</w>
+      <w>recursing</w>
       <w>recv</w>
       <w>redist</w>
       <w>redistributables</w>
@@ -2032,6 +2041,7 @@
       <w>rspdata</w>
       <w>rsplen</w>
       <w>rspobj</w>
+      <w>rsptypes</w>
       <w>rstr</w>
       <w>rtest</w>
       <w>rtnetlink</w>
@@ -2234,6 +2244,7 @@
       <w>srcnode</w>
       <w>srcpath</w>
       <w>srcpathfull</w>
+      <w>srcpaths</w>
       <w>srcplayer</w>
       <w>srcpy</w>
       <w>srcpydata</w>

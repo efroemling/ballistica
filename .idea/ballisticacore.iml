@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/assets/src/ba_data/python" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tools" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/generated_src/ballistica" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/meta" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.efrocache" />
       <excludeFolder url="file://$MODULE_DIR$/assets/build" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/audio" />

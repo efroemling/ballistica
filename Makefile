@@ -1025,8 +1025,6 @@ _windows-wsl-rebuild:
 
 # Generate docs.
 docs:
-	@tools/pcommand echo BLU GENERATING DOCS HTML...
-	@mkdir -p ${BUILD_DIR}
 	@tools/pcommand gendocs
 
 # Tell make which of these targets don't represent files.

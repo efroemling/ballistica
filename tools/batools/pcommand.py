@@ -481,7 +481,10 @@ def warm_start_asset_build() -> None:
 
 def gendocs() -> None:
     """Generate docs html."""
+    from efro.terminal import Clr
     import batools.docs
+
+    print(f'{Clr.BLU}Generating docs html...{Clr.RST}')
     batools.docs.generate(projroot=str(PROJROOT))
 
 
@@ -668,7 +671,7 @@ def lazybuild() -> None:
     if len(sys.argv) < 5:
         raise CleanError('Expected at least 3 args')
     try:
-        category = batools.build.SourceCategory(sys.argv[2])
+        category = batools.build.LazyBuildCategory(sys.argv[2])
     except ValueError as exc:
         raise CleanError(exc) from exc
     target = sys.argv[3]

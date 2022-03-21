@@ -12,7 +12,6 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Optional
-    import ba
 
 
 class AccountSubsystem:

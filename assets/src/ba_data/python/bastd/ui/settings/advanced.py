@@ -149,6 +149,7 @@ class AdvancedSettingsWindow(ba.Window):
         master_server_get('bsLangGetCompleted', {'b': app.build_number},
                           callback=ba.WeakCall(self._completed_langs_cb))
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use (called in bg thread)."""

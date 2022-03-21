@@ -258,6 +258,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """Return a name for this particular game instance."""
         return self.get_display_string(self.settings_raw)
 
+    # noinspection PyUnresolvedReferences
     def get_instance_scoreboard_display_string(self) -> ba.Lstr:
         """Return a name for this particular game instance.
 

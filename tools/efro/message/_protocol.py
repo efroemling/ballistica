@@ -19,7 +19,7 @@ from efro.message._message import (Message, Response, ErrorResponse,
                                    UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Union, Awaitable
+    from typing import Any, Optional, Literal
 
 
 class MessageProtocol:
@@ -228,7 +228,7 @@ class MessageProtocol:
         return out
 
     def _get_module_header(self,
-                           part: str,
+                           part: Literal['sender', 'receiver'],
                            extra_import_code: Optional[str] = None) -> str:
         """Return common parts of generated modules."""
         # pylint: disable=too-many-locals, too-many-branches
@@ -238,11 +238,16 @@ class MessageProtocol:
 
         single_message_type = len(self.message_ids_by_type) == 1
 
-        # Always import messages
-        for msgtype in list(self.message_ids_by_type) + [Message]:
+        msgtypes = list(self.message_ids_by_type)
+        if part == 'sender':
+            msgtypes.append(Message)
+        for msgtype in msgtypes:
             tpimports.setdefault(msgtype.__module__,
                                  []).append(msgtype.__name__)
-        for rsp_tp in list(self.response_ids_by_type) + [Response]:
+        rsptypes = list(self.response_ids_by_type)
+        if part == 'sender':
+            rsptypes.append(Response)
+        for rsp_tp in rsptypes:
             # Skip these as they don't actually show up in code.
             if rsp_tp is EmptyResponse or rsp_tp is ErrorResponse:
                 continue
@@ -292,6 +297,14 @@ class MessageProtocol:
 
         ovld = ', overload' if not single_message_type else ''
         tpimport_lines = textwrap.indent(tpimport_lines, '    ')
+
+        # We need Optional for sender-modules with multiple types
+        baseimps = ['Union', 'Any']
+        if part == 'sender' and len(msgtypes) > 1:
+            baseimps.append('Optional')
+        if part == 'receiver':
+            baseimps.append('Callable')
+        baseimps_s = ', '.join(baseimps)
         out = ('# Released under the MIT License. See LICENSE for details.\n'
                f'#\n'
                f'"""Auto-generated {part} module. Do not edit by hand."""\n'
@@ -303,7 +316,7 @@ class MessageProtocol:
                f'{import_lines}\n'
                f'\n'
                f'if TYPE_CHECKING:\n'
-               f'    from typing import Union, Any, Optional, Callable'
+               f'    from typing import {baseimps_s}'
                f'{tpimport_typing_extras}\n'
                f'{tpimport_lines}'
                f'\n'

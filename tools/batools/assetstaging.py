@@ -16,7 +16,6 @@ from efrotools import PYVER
 
 if TYPE_CHECKING:
     from typing import Optional
-    from pathlib import Path
 
 # Suffix for the pyc files we include in stagings.
 # We're using deterministic opt pyc files; see PEP 552.

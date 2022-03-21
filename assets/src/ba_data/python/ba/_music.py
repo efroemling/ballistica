@@ -485,7 +485,6 @@ def setmusic(musictype: Optional[ba.MusicType],
     if 'continuous' is True and musictype is the same as what is already
     playing, the playing track will not be restarted.
     """
-    from ba import _gameutils
 
     # All we do here now is set a few music attrs on the current globals
     # node. The foreground globals' current playing music then gets fed to

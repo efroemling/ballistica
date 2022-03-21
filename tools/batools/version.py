@@ -9,7 +9,7 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    pass
 
 
 def _handle_args(args: list[str]) -> str:

@@ -8,12 +8,13 @@ import sys
 import datetime
 import subprocess
 from enum import Enum
-from pathlib import Path
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from efro.util import assert_never
 from efro.error import CleanError
 from efro.terminal import Clr
+from efrotools.build import Lazybuild
 
 if TYPE_CHECKING:
     from typing import Sequence, Optional, Any
@@ -80,15 +81,6 @@ SPARSE_TEST_BUILDS: list[list[str]] = [
 DO_SPARSE_TEST_BUILDS = 'ballistica' + 'core' == 'ballisticacore'
 
 
-class SourceCategory(Enum):
-    """Types of sources."""
-    RESOURCES = 'resources_src'
-    META = 'meta_src'
-    ASSETS = 'assets_src'
-    CMAKE = 'cmake_src'
-    WIN = 'win_src'
-
-
 class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
     GUI_DEBUG = 'gui-debug'
@@ -97,130 +89,91 @@ class PrefabTarget(Enum):
     SERVER_RELEASE = 'server-release'
 
 
-def _lazybuild_check_paths(inpaths: list[str], category: SourceCategory,
-                           target: str) -> bool:
-    # pylint: disable=too-many-branches
-
-    mtime = None if not os.path.exists(target) else os.path.getmtime(target)
-
-    if target.startswith('.cache/lazybuild/'):
-        tnamepretty = target[len('.cache/lazybuild/'):]
-    else:
-        tnamepretty = target
-
-    def _testpath(path: str) -> bool:
-        # Now see this path is newer than our target..
-        if mtime is None or os.path.getmtime(path) >= mtime:
-            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by change in'
-                  f" '{path}'{Clr.RST}")
-            return True
-        return False
-
-    unchanged_count = 0
-    for inpath in inpaths:
-        # Add files verbatim; recurse through dirs.
-        if os.path.isfile(inpath):
-            if _testpath(inpath):
-                return True
-            unchanged_count += 1
-            continue
-        for root, _dnames, fnames in os.walk(inpath):
-
-            # Only the meta category uses meta src.
-            if (root.startswith('src/meta')
-                    and category is not SourceCategory.META):
-                continue
-
-            # None of our targets use tools-src.
-            if root.startswith('src/tools'):
-                continue
-
-            # Skip most of external except for key cases.
-            if root.startswith('src/external'):
-                if category is SourceCategory.WIN and root.startswith(
-                        'src/external/windows'):
-                    pass
-                else:
-                    continue
-
-            # Ignore python cache files.
-            if '__pycache__' in root:
-                continue
-
-            for fname in fnames:
-                # Ignore dot files
-                if fname.startswith('.'):
-                    continue
-                fpath = os.path.join(root, fname)
-                if ' ' in fpath:
-                    raise RuntimeError(f'Invalid path with space: {fpath}')
-
-                if _testpath(fpath):
-                    return True
-                unchanged_count += 1
-    print(f'{Clr.BLU}Lazybuild: skipping "{tnamepretty}"'
-          f' ({unchanged_count} inputs unchanged).{Clr.RST}')
-    return False
+class LazyBuildCategory(Enum):
+    """Types of sources."""
+    RESOURCES = 'resources_src'
+    META = 'meta_src'
+    CMAKE = 'cmake_src'
+    WIN = 'win_src'
 
 
-def lazybuild(target: str, category: SourceCategory, command: str) -> None:
-    """Run a build if anything in some category is newer than a target.
-
-    This can be used as an optimization for build targets that *always* run.
-    As an example, a target that spins up a VM and runs a build can be
-    expensive even if the VM build process determines that nothing has changed
-    and does no work. We can use this to examine a broad swath of source files
-    and skip firing up the VM if nothing has changed. We can be overly broad
-    in the sources we look at since the worst result of a false positive change
-    is the VM spinning up and determining that no actual inputs have changed.
-    We could recreate this mechanism purely in the Makefile, but large numbers
-    of target sources can add significant overhead each time the Makefile is
-    invoked; in our case the cost is only incurred when a build is triggered.
-
-    Note that target's mod-time will *always* be updated to match the newest
-    source regardless of whether the build itself was triggered.
-    """
-    paths: list[str]
+def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
+    """Run some lazybuild presets."""
 
     # Everything possibly affecting meta builds.
-    if category is SourceCategory.META:
-        paths = [
-            'Makefile', 'tools/batoolsinternal/meta.py',
-            'tools/batoolsinternal/pcommand.py', 'tools/batools/meta.py',
-            'tools/batools/pcommand.py', 'src/meta',
-            'tools/batools/pythonenumsmodule.py', 'src/ballistica/core/types.h'
-        ]
-
-    # Everything possibly affecting asset builds.
-    elif category is SourceCategory.ASSETS:
-        paths = ['Makefile', 'tools/pcommand', 'convert_util', 'assets/src']
+    if category is LazyBuildCategory.META:
+        Lazybuild(
+            target=target,
+            srcpaths=[
+                'Makefile',
+                'src/meta',
+                'src/ballistica/core/types.h',
+            ],
+            command=command,
+            # Our meta Makefile targets generally don't list tools scripts
+            # that can affect their creation as sources, so let's set up
+            # a catch-all here: when any of our tools stuff changes let's
+            # blow away any existing meta builds.
+            srcpaths_fullclean=[
+                'tools/efrotools',
+                'tools/efrotoolsinternal',
+                'tools/batools',
+                'tools/batoolsinternal',
+            ],
+            command_fullclean='make meta-clean',
+        ).run()
 
     # Everything possibly affecting CMake builds.
-    elif category is SourceCategory.CMAKE:
-        paths = ['Makefile', 'src', 'ballisticacore-cmake/CMakeLists.txt']
+    elif category is LazyBuildCategory.CMAKE:
+        Lazybuild(
+            target=target,
+            srcpaths=[
+                'Makefile',
+                'src',
+                'ballisticacore-cmake/CMakeLists.txt',
+            ],
+            dirfilter=(lambda root, dirname: not (
+                root == 'src' and dirname in {'meta', 'tools', 'external'})),
+            command=command,
+        ).run()
 
     # Everything possibly affecting Windows binary builds.
-    elif category is SourceCategory.WIN:
-        paths = ['Makefile', 'src', 'resources/src', 'ballisticacore-windows']
+    elif category is LazyBuildCategory.WIN:
+
+        def _win_dirfilter(root: str, dirname: str) -> bool:
+            if root == 'src' and dirname in {'meta', 'tools'}:
+                return False
+            if root == 'src/external' and dirname != 'windows':
+                return False
+            return True
+
+        Lazybuild(
+            target=target,
+            srcpaths=[
+                'Makefile',
+                'src',
+                'resources/src',
+                'ballisticacore-windows',
+            ],
+            dirfilter=_win_dirfilter,
+            command=command,
+        ).run()
 
     # Everything possibly affecting resource builds.
-    elif category is SourceCategory.RESOURCES:
-        paths = [
-            'Makefile', 'tools/pcommand', 'resources/src', 'resources/Makefile'
-        ]
+    elif category is LazyBuildCategory.RESOURCES:
+        Lazybuild(
+            target=target,
+            srcpaths=[
+                'Makefile',
+                'tools/pcommand',
+                'resources/src',
+                'resources/Makefile',
+            ],
+            command=command,
+        ).run()
+
     else:
-        raise ValueError(f'Invalid source category: {category}')
-
-    # Now do the thing if any our our input mod times changed.
-    if _lazybuild_check_paths(paths, category, target):
-        subprocess.run(command, shell=True, check=True)
-
-        # We also explicitly update the mod-time of the target;
-        # the command we (such as a VM build) may not have actually
-        # done anything but we still want to update our target to
-        # be newer than all the lazy sources.
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        Path(target).touch()
+        assert_never(category)
 
 
 def archive_old_builds(ssh_server: str, builds_dir: str,

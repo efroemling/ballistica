@@ -140,6 +140,7 @@ if (_ba.contains_python_dist()
 
 if debug_build:
 
+    # noinspection PyUnresolvedReferences
     def _thread_func() -> None:
         # pylint: disable=unused-import
         import json

@@ -19,7 +19,7 @@ from efro.error import CommunicationError
 from efro.dataclassio import ioprepped, dataclass_from_json, dataclass_to_json
 
 if TYPE_CHECKING:
-    from typing import Optional, Awaitable, Callable
+    from typing import Optional, Awaitable
 
 ADDR = '127.0.0.1'
 # Randomize this a bit to avoid failing on parallel testing.

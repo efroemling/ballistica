@@ -88,6 +88,7 @@
       <w>bametainternal</w>
       <w>barebones</w>
       <w>baseaddr</w>
+      <w>baseimps</w>
       <w>basetype</w>
       <w>basicsize</w>
       <w>basn</w>
@@ -293,6 +294,7 @@
       <w>dfmt</w>
       <w>dictval</w>
       <w>diffbit</w>
+      <w>dirfilter</w>
       <w>dirslash</w>
       <w>dlfcn</w>
       <w>dlife</w>
@@ -331,6 +333,7 @@
       <w>efrocaching</w>
       <w>efrohack</w>
       <w>efrohome</w>
+      <w>efrotoolsinternal</w>
       <w>elapsedf</w>
       <w>elems</w>
       <w>elevenbase</w>
@@ -339,9 +342,11 @@
       <w>emitfx</w>
       <w>emojis</w>
       <w>enablexinput</w>
+      <w>endblock</w>
       <w>endcall</w>
       <w>endl</w>
       <w>endline</w>
+      <w>endmacro</w>
       <w>endtime</w>
       <w>entrypoint</w>
       <w>enumvaltype</w>
@@ -400,8 +405,10 @@
       <w>fieldname</w>
       <w>fieldpath</w>
       <w>fifteenbits</w>
+      <w>filefilter</w>
       <w>filelock</w>
       <w>filt</w>
+      <w>filterdoc</w>
       <w>filterstr</w>
       <w>filterval</w>
       <w>finishedptr</w>
@@ -855,6 +862,7 @@
       <w>pausable</w>
       <w>pcommands</w>
       <w>pdataclass</w>
+      <w>pdoc</w>
       <w>pdst</w>
       <w>peername</w>
       <w>persp</w>
@@ -964,6 +972,7 @@
       <w>realtimers</w>
       <w>recalc</w>
       <w>recursed</w>
+      <w>recursing</w>
       <w>recv</w>
       <w>recvfrom</w>
       <w>redundants</w>
@@ -1003,6 +1012,7 @@
       <w>rspdata</w>
       <w>rsplen</w>
       <w>rspobj</w>
+      <w>rsptypes</w>
       <w>rtest</w>
       <w>rtypes</w>
       <w>rtypevar</w>
@@ -1089,6 +1099,7 @@
       <w>srcid</w>
       <w>srcname</w>
       <w>srcpath</w>
+      <w>srcpaths</w>
       <w>srcsz</w>
       <w>sresult</w>
       <w>sscanf</w>

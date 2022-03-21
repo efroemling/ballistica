@@ -417,6 +417,7 @@ class PlayWindow(ba.Window):
 
         self._restore_state()
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use (called in bg thread)."""

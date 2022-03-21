@@ -916,7 +916,6 @@ class Achievement:
 
     def show_completion_banner(self, sound: bool = True) -> None:
         """Create the banner/sound for an acquired achievement announcement."""
-        from ba import _account
         from ba import _gameutils
         from bastd.actor.text import Text
         from bastd.actor.image import Image

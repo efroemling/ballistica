@@ -18,7 +18,6 @@ from ba._messages import UNHANDLED
 if TYPE_CHECKING:
     from typing import Optional, Any
     import ba
-    from bastd.actor.respawnicon import RespawnIcon
 
 PlayerType = TypeVar('PlayerType', bound=Player)
 TeamType = TypeVar('TeamType', bound=Team)
@@ -675,6 +674,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         sessionplayer.setactivity(None)
         sessionplayer.activityplayer = None
 
+    # noinspection PyUnresolvedReferences
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
 

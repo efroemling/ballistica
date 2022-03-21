@@ -51,6 +51,7 @@ class Point(Enum):
 @dataclass
 class Spawn:
     """Defines a bot spawn event."""
+    # noinspection PyUnresolvedReferences
     type: type[SpazBot]
     path: int = 0
     point: Optional[Point] = None

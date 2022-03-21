@@ -131,6 +131,7 @@ class StaticTestFile:
                         f'{self._filename} line {lineno+1}: expected '
                         f' a single assert statement.')
                 assertnode = tree.body[0]
+                # noinspection PyUnresolvedReferences
                 callnode = assertnode.test
                 if (not isinstance(callnode, ast.Call)
                         or not isinstance(callnode.func, ast.Name)

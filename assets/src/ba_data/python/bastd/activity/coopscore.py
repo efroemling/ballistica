@@ -841,6 +841,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     if display_scores[i][1] is None:
                         name_str = '-'
                     else:
+                        # noinspection PyUnresolvedReferences
                         name_str = ', '.join([
                             p['name'] for p in display_scores[i][1]['players']
                         ])

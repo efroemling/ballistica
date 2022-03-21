@@ -7,8 +7,6 @@ or disappear without warning, so should be avoided (or used sparingly and
 defensively) in mods.
 """
 
-# pylint: disable=unused-import
-
 from ba._map import (get_unowned_maps, get_map_class, register_map,
                      preload_map_preview_media, get_map_display_string,
                      get_filtered_map_name)
@@ -39,3 +37,24 @@ from ba._store import (get_available_sale_time, get_available_purchase_count,
                        get_store_item, get_clean_price)
 from ba._tournament import get_tournament_prize_strings
 from ba._gameutils import get_trophy_string
+
+__all__ = [
+    'get_unowned_maps', 'get_map_class', 'register_map',
+    'preload_map_preview_media', 'get_map_display_string',
+    'get_filtered_map_name', 'commit_app_config', 'get_device_value',
+    'get_input_map_hash', 'get_input_device_config', 'getclass', 'json_prep',
+    'get_type_name', 'JoinActivity', 'ScoreScreenActivity',
+    'is_browser_likely_available', 'get_remote_app_name',
+    'should_submit_debug_info', 'run_gpu_benchmark', 'run_cpu_benchmark',
+    'run_media_reload_benchmark', 'run_stress_test', 'getcampaign',
+    'PlayerProfilesChangedMessage', 'DEFAULT_TEAM_COLORS',
+    'DEFAULT_TEAM_NAMES', 'do_play_music', 'master_server_get',
+    'master_server_post', 'get_ip_address_type',
+    'DEFAULT_REQUEST_TIMEOUT_SECONDS', 'get_default_powerup_distribution',
+    'get_player_profile_colors', 'get_player_profile_icon',
+    'get_player_colors', 'get_next_tip', 'get_default_free_for_all_playlist',
+    'get_default_teams_playlist', 'filter_playlist', 'get_available_sale_time',
+    'get_available_purchase_count', 'get_store_item_name_translated',
+    'get_store_item_display_size', 'get_store_layout', 'get_store_item',
+    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string'
+]

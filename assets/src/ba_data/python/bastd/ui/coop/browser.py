@@ -269,6 +269,7 @@ class CoopBrowserWindow(ba.Window):
                                       repeat=True)
         self._update()
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use (called in bg thread)."""

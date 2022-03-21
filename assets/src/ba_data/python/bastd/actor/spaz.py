@@ -16,7 +16,6 @@ from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional, Union, Callable
-    from bastd.actor.spazfactory import SpazFactory
 
 POWERUP_WEAR_OFF_TIME = 20000
 BASE_PUNCH_COOLDOWN = 400

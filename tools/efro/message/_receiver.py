@@ -14,7 +14,7 @@ from efro.message._message import (Message, Response, EmptyResponse,
                                    ErrorResponse, UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Awaitable, Union
+    from typing import Any, Callable, Optional, Union
 
     from efro.message._protocol import MessageProtocol
 
