@@ -484,7 +484,7 @@ def gendocs() -> None:
     from efro.terminal import Clr
     import batools.docs
 
-    print(f'{Clr.BLU}Generating docs html...{Clr.RST}')
+    print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
     batools.docs.generate(projroot=str(PROJROOT))
 
 

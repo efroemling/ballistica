@@ -452,8 +452,6 @@ class RPCEndpoint:
             # NOTE: perhaps we want to do something more exact than
             # this which only checks once per keepalive-interval?..
             now = time.monotonic()
-            assert self._peer_info is not None
-
             if (self._last_keepalive_receive_time is not None
                     and now - self._last_keepalive_receive_time >
                     self._keepalive_timeout):

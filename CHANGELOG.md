@@ -1,5 +1,7 @@
-### 1.6.11 (20522, 2022-03-21)
-- Documentation is now generated using pdoc <https://pdoc.dev>. Thanks Dliwk!!
+### 1.6.11 (20538, 2022-03-23)
+- Documentation is now generated using pdoc <https://pdoc.dev>. Thanks Dliwk!! (I'll get it wired up to auto-update to a webpage soon).
+- Players who connect to authenticated servers impersonating someone else are now simply kicked; not banned. The old behavior was being intentionally exploited to ban people from their own servers/etc. I may revert to bans once I can do it in a way that is not exploitable.
+- The game now establishes a V2 master-server connection (which will soon be used for lots of cool functionality). For this version it is mainly enabled for testing purposes; please holler if you see any odd warning messages or behavior.
 
 ### 1.6.10 (20511, 2022-03-20)
 - Added `_ba.get_client_public_device_uuid` function which returns a semi-permanent device id for a connected client running 1.6.10 or newer. Can be useful to combat spam attacks or other mischief.

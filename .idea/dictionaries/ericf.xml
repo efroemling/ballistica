@@ -198,6 +198,7 @@
       <w>baseval</w>
       <w>basew</w>
       <w>basn</w>
+      <w>basnlog</w>
       <w>basnmessagereceiver</w>
       <w>basnmessagesender</w>
       <w>basntoclient</w>
@@ -2008,6 +2009,7 @@
       <w>responsetypes</w>
       <w>responsetypevar</w>
       <w>resultstr</w>
+      <w>retcode</w>
       <w>retrysecs</w>
       <w>returncode</w>
       <w>returnfuncptrs</w>

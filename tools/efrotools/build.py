@@ -79,7 +79,7 @@ class Lazybuild:
 
         if self.have_fullclean_changes:
             assert self.command_fullclean is not None
-            print(f'{Clr.BLU}Lazybuild: \'fullclean\' input changed;'
+            print(f'{Clr.MAG}Lazybuild: full-clean input changed;'
                   f' running {Clr.BLD}{self.command_fullclean}.{Clr.RST}')
             subprocess.run(self.command_fullclean, shell=True, check=True)
 
@@ -179,7 +179,10 @@ class Lazybuild:
     def _test_path(self, path: str) -> bool:
         # Now see this path is newer than our target..
         if self.mtime is None or os.path.getmtime(path) >= self.mtime:
-            print(f'{Clr.SMAG}Build of {self.target_name_pretty} triggered'
-                  f' by change in \'{path}\'{Clr.RST}')
+            print(f'{Clr.MAG}Lazybuild: '
+                  f'{Clr.BLD}{self.target_name_pretty}{Clr.RST}{Clr.MAG}'
+                  f' build'
+                  f' triggered by change in {Clr.BLD}{path}{Clr.RST}{Clr.MAG}'
+                  f'.{Clr.RST}')
             return True
         return False

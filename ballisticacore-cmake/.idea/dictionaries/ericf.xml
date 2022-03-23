@@ -92,6 +92,7 @@
       <w>basetype</w>
       <w>basicsize</w>
       <w>basn</w>
+      <w>basnlog</w>
       <w>basnmessagereceiver</w>
       <w>basnmessagesender</w>
       <w>basntoclient</w>
@@ -994,6 +995,7 @@
       <w>responsetypes</w>
       <w>responsetypevar</w>
       <w>resync</w>
+      <w>retcode</w>
       <w>retrysecs</w>
       <w>retval</w>
       <w>rezing</w>

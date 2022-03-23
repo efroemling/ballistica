@@ -6,24 +6,6 @@
 # Targets in this top level Makefile do not expect -jX to be passed to them
 # and generally handle spawning an appropriate number of child jobs themselves.
 
-# Can be used in place of the recommended $(MAKE) to suppress various
-# warnings about the jobserver being disabled due to -jX options being
-# passed to sub-makes. Generally passing -jX as part of a recursive make
-# instantiation is frowned upon, but we treat this Makefile as a high level
-# orchestration layer and we want to handle details like that for the user,
-# so we try to pick smart -j values ourselves. We can't really rely on the
-# jobserver anyway to balance our loads since we often call out to other
-# systems (XCode, Gradle, Visual Studio, etc.) which wrangle jobs in their
-# own ways.
-DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
-
-# Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a
-# cmake compile-commands database for use with irony for emacs (and possibly
-# other tools).
-ifeq ($(BA_ENABLE_IRONY_BUILD_DB),1)
- PREREQ_IRONY = .cache/irony/compile_commands.json
-endif
-
 
 ################################################################################
 #                                                                              #
@@ -34,6 +16,13 @@ endif
 # List targets in this Makefile and basic descriptions for them.
 help:
 	@tools/pcommand makefile_target_list Makefile
+
+# Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a
+# cmake compile-commands database for use with irony for emacs (and possibly
+# other tools).
+ifeq ($(BA_ENABLE_IRONY_BUILD_DB),1)
+ PREREQ_IRONY = .cache/irony/compile_commands.json
+endif
 
 PREREQS = .cache/checkenv $(PREREQ_IRONY) .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
@@ -119,12 +108,16 @@ clean-list:
 dummymodule:
 	./tools/pcommand update_dummy_module --force
 
+# Generate docs.
+docs:
+	@tools/pcommand gendocs
+
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
  assets-windows-Win32 assets-windows-x64 \
  assets-mac assets-ios assets-android assets-clean \
  resources resources-clean meta meta-clean \
- clean clean-list dummymodule
+ clean clean-list dummymodule docs
 
 
 ################################################################################
@@ -613,22 +606,22 @@ format-makefile: prereqs
 
 # Run all project checks. (static analysis)
 check:
-	@${DMAKE} -j$(CPUS) update-check cpplint pylint mypy
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full:
-	@${DMAKE} -j$(CPUS) update-check cpplint-full pylint-full mypy-full
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2:
-	@${DMAKE} -j$(CPUS) update-check cpplint pylint mypy pycharm
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy pycharm
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full:
-	@${DMAKE} -j$(CPUS) update-check cpplint-full pylint-full mypy-full \
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full \
    pycharm-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
@@ -895,6 +888,17 @@ clion-staging: assets-cmake resources meta
 #                                                                              #
 ################################################################################
 
+# Can be used in place of the recommended $(MAKE) to suppress various
+# warnings about the jobserver being disabled due to -jX options being
+# passed to sub-makes. Generally passing -jX as part of a recursive make
+# instantiation is frowned upon, but we treat this Makefile as a high level
+# orchestration layer and we want to handle details like that for the user,
+# so we try to pick smart -j values ourselves. We can't really rely on the
+# jobserver anyway to balance our loads since we often call out to other
+# systems (XCode, Gradle, Visual Studio, etc.) which wrangle jobs in their
+# own ways.
+DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
+
 # This should give the cpu count on linux and mac; may need to expand this
 # if using this on other platforms.
 CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
@@ -1020,10 +1024,5 @@ _windows-wsl-rebuild:
    $(VISUAL_STUDIO_VERSION)
 	@tools/pcommand echo BLU BLD Built build/windows/BallisticaCore$(WINPRJ).exe.
 
-# Generate docs.
-docs:
-	@tools/pcommand gendocs
-
 # Tell make which of these targets don't represent files.
-.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild \
- docs
+.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
