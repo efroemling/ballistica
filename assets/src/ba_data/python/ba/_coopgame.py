@@ -14,8 +14,10 @@ if TYPE_CHECKING:
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
 TeamType = TypeVar('TeamType', bound='ba.Team')
+# pylint: enable=invalid-name
 
 
 class CoopGameActivity(GameActivity[PlayerType, TeamType]):

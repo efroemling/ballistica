@@ -126,14 +126,14 @@ def read_config() -> tuple[AppConfig, bool]:
         try:
             import shutil
             shutil.copyfile(config_file_path, config_file_path + '.broken')
-        except Exception as exc:
-            print('EXC copying broken config:', exc)
+        except Exception as exc2:
+            print('EXC copying broken config:', exc2)
         try:
             _ba.log('broken config contents:\n' +
                     config_contents.replace('\000', '<NULL_BYTE>'),
                     to_stdout=False)
-        except Exception as exc:
-            print('EXC logging broken config contents:', exc)
+        except Exception as exc2:
+            print('EXC logging broken config contents:', exc2)
         config = AppConfig()
 
         # Now attempt to read one of our 'prev' backup copies.
@@ -147,8 +147,8 @@ def read_config() -> tuple[AppConfig, bool]:
                 config = AppConfig()
             config_file_healthy = True
             print('successfully read backup config.')
-        except Exception as exc:
-            print('EXC reading prev backup config:', exc)
+        except Exception as exc2:
+            print('EXC reading prev backup config:', exc2)
     return config, config_file_healthy
 
 

@@ -24,8 +24,10 @@ if TYPE_CHECKING:
     from bastd.actor.bomb import TNTSpawner
     import ba
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
 TeamType = TypeVar('TeamType', bound='ba.Team')
+# pylint: enable=invalid-name
 
 
 class GameActivity(Activity[PlayerType, TeamType]):

@@ -66,7 +66,9 @@ class SessionTeam:
         self.customdata = {}
 
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
+# pylint: enable=invalid-name
 
 
 class Team(Generic[PlayerType]):

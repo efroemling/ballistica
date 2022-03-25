@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import ssl
 import time
+import errno
 import asyncio
 import logging
 import weakref
@@ -510,14 +511,29 @@ class RPCEndpoint:
 
     @classmethod
     def _is_expected_connection_error(cls, exc: Exception) -> bool:
+        """Stuff we expect to end our connection in normal circumstances."""
 
-        # We expect this stuff to be what ends us.
+        # HMMM; should we move this to efro.error?.. something
+        # like is_asyncio_streams_network_error()?
+
         if isinstance(exc, (
                 ConnectionError,
+                TimeoutError,
                 EOFError,
                 _KeepaliveTimeoutError,
         )):
             return True
+
+        # Also some specific errno ones.
+        if isinstance(exc, OSError):
+            if exc.errno == 10051:  # Windows unreachable network error.
+                return True
+            if exc.errno in {
+                    errno.ETIMEDOUT,
+                    errno.EHOSTUNREACH,
+                    errno.ENETUNREACH,
+            }:
+                return True
 
         # Am occasionally getting a specific SSL error on shutdown which I
         # believe is harmless (APPLICATION_DATA_AFTER_CLOSE_NOTIFY).

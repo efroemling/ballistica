@@ -410,7 +410,6 @@ class Lstr:
                  fallback_value: str = '',
                  subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr from a string resource."""
-        ...
 
     # noinspection PyShadowingNames,PyDefaultArgument
     @overload
@@ -419,7 +418,6 @@ class Lstr:
                  translate: tuple[str, str],
                  subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr by translating a string in a category."""
-        ...
 
     # noinspection PyDefaultArgument
     @overload
@@ -428,7 +426,6 @@ class Lstr:
                  value: str,
                  subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
         """Create an Lstr from a raw string value."""
-        ...
 
     # pylint: enable=redefined-outer-name, dangerous-default-value
 

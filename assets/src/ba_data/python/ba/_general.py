@@ -29,10 +29,11 @@ class Existable(Protocol):
 
     def exists(self) -> bool:
         """Whether this object exists."""
-        ...
 
 
+# pylint: disable=invalid-name
 ExistableType = TypeVar('ExistableType', bound=Existable)
+# pylint: enable=invalid-name
 T = TypeVar('T')
 
 

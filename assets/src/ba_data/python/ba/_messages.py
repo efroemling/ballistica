@@ -65,7 +65,9 @@ class DieMessage:
     """The particular reason for death."""
 
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
+# pylint: enable=invalid-name
 
 
 class PlayerDiedMessage:

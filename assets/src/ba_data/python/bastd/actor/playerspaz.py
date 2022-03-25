@@ -12,8 +12,10 @@ from bastd.actor.spaz import Spaz
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional, Literal
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound=ba.Player)
 TeamType = TypeVar('TeamType', bound=ba.Team)
+# pylint: enable=invalid-name
 
 
 class PlayerSpazHurtMessage:

@@ -16,7 +16,9 @@ from bastd.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional, Callable
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
+# pylint: enable=invalid-name
 
 
 class BombFactory:

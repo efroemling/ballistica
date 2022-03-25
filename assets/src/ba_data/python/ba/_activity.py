@@ -19,8 +19,10 @@ if TYPE_CHECKING:
     from typing import Optional, Any
     import ba
 
+# pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound=Player)
 TeamType = TypeVar('TeamType', bound=Team)
+# pylint: enable=invalid-name
 
 
 class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
