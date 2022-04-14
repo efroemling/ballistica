@@ -166,7 +166,7 @@ class PrivateGatherTab(GatherTab):
         elif hcfg.session_type == 'teams':
             sessiontype = ba.DualTeamSession
         else:
-            raise RuntimeError('fInvalid sessiontype: {hcfg.session_type}')
+            raise RuntimeError(f'Invalid sessiontype: {hcfg.session_type}')
         pvars = PlaylistTypeVars(sessiontype)
 
         playlist_name = ba.app.config.get(
