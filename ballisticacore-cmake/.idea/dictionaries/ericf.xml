@@ -361,6 +361,7 @@
       <w>ericsson's</w>
       <w>errname</w>
       <w>erroring</w>
+      <w>escval</w>
       <w>etcdec</w>
       <w>etcpack</w>
       <w>evals</w>
@@ -449,6 +450,7 @@
       <w>funcname</w>
       <w>fval</w>
       <w>fvals</w>
+      <w>fvar</w>
       <w>fwefocjwerj</w>
       <w>gamecenter</w>
       <w>gamedata</w>
@@ -693,6 +695,7 @@
       <w>mastervers</w>
       <w>maximus</w>
       <w>maxtries</w>
+      <w>maxwait</w>
       <w>maxwidth</w>
       <w>mediump</w>
       <w>memalign</w>
@@ -708,6 +711,7 @@
       <w>mikirog</w>
       <w>millisecs</w>
       <w>minelem</w>
+      <w>minping</w>
       <w>minsdl</w>
       <w>mipmapcount</w>
       <w>mipmaps</w>
@@ -983,15 +987,18 @@
       <w>regtp</w>
       <w>rehel</w>
       <w>reimported</w>
+      <w>relfut</w>
       <w>reloadmedia</w>
       <w>rendererdata</w>
       <w>renormalize</w>
+      <w>rentry</w>
       <w>rené</w>
       <w>reprfunc</w>
       <w>rerase</w>
       <w>resends</w>
       <w>resetbtn</w>
       <w>resetinput</w>
+      <w>responsecount</w>
       <w>responsetypes</w>
       <w>responsetypevar</w>
       <w>resync</w>
@@ -1182,6 +1189,7 @@
       <w>theres</w>
       <w>thismodule</w>
       <w>threadname</w>
+      <w>threadpool</w>
       <w>threadtype</w>
       <w>ticon</w>
       <w>tiltage</w>
@@ -1341,8 +1349,10 @@
       <w>zmin</w>
       <w>zoffset</w>
       <w>zomg</w>
+      <w>zoneid</w>
       <w>zoneinfo</w>
       <w>zoomable</w>
+      <w>zpings</w>
       <w>zrot</w>
     </words>
   </dictionary>

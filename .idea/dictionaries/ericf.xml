@@ -735,6 +735,7 @@
       <w>erroring</w>
       <w>errorsound</w>
       <w>errstr</w>
+      <w>escval</w>
       <w>etcpack</w>
       <w>etsel</w>
       <w>etxt</w>
@@ -922,6 +923,7 @@
       <w>funtionality</w>
       <w>futimens</w>
       <w>fval</w>
+      <w>fvar</w>
       <w>fverts</w>
       <w>fwefocjwerj</w>
       <w>gameactivity</w>
@@ -1424,6 +1426,7 @@
       <w>maxtries</w>
       <w>maxval</w>
       <w>maxw</w>
+      <w>maxwait</w>
       <w>maxwidth</w>
       <w>mbytecount</w>
       <w>mdiv</w>
@@ -1453,6 +1456,7 @@
       <w>minidom</w>
       <w>minigame</w>
       <w>minigames</w>
+      <w>minping</w>
       <w>minusbutton</w>
       <w>minval</w>
       <w>minver</w>
@@ -1989,9 +1993,11 @@
       <w>regionid</w>
       <w>regtp</w>
       <w>reimported</w>
+      <w>relfut</w>
       <w>relpath</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
+      <w>rentry</w>
       <w>representer</w>
       <w>reprlib</w>
       <w>reqs</w>
@@ -2005,6 +2011,7 @@
       <w>respawnable</w>
       <w>respawned</w>
       <w>respawnicon</w>
+      <w>responsecount</w>
       <w>responsetype</w>
       <w>responsetypes</w>
       <w>responsetypevar</w>
@@ -2439,6 +2446,7 @@
       <w>thingie</w>
       <w>this'll</w>
       <w>thismodule</w>
+      <w>threadpool</w>
       <w>threadtype</w>
       <w>throwiness</w>
       <w>ticon</w>
@@ -2743,8 +2751,10 @@
       <w>zipapp</w>
       <w>zlib</w>
       <w>zlibmodule</w>
+      <w>zoneid</w>
       <w>zoneinfo</w>
       <w>zoomtext</w>
+      <w>zpings</w>
       <w>zpos</w>
       <w>zval</w>
     </words>

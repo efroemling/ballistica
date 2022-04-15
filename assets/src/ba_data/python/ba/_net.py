@@ -25,9 +25,14 @@ class NetworkSubsystem:
 
     def __init__(self) -> None:
 
-        # Anyone accessing/modifying region_pings should hold this lock.
-        self.region_pings_lock = threading.Lock()
-        self.region_pings: dict[str, float] = {}
+        # Anyone accessing/modifying zone_pings should hold this lock,
+        # as it is updated by a background thread.
+        self.zone_pings_lock = threading.Lock()
+
+        # Region IDs mapped to average pings. This will remain empty
+        # until enough pings have been run to be reasonably certain
+        # that a nearby server has been pinged.
+        self.zone_pings: dict[str, float] = {}
 
         # For debugging.
         self.v1_test_log: str = ''

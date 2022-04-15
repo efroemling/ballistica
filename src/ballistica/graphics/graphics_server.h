@@ -223,15 +223,13 @@ class GraphicsServer : public Module {
   auto texture_compression_types_are_set() const {
     return texture_compression_types_set_;
   }
-  auto set_renderer_context_lost(bool lost) -> auto {
-    renderer_context_lost_ = lost;
-  }
+  auto set_renderer_context_lost(bool lost) { renderer_context_lost_ = lost; }
   auto renderer_context_lost() const { return renderer_context_lost_; }
   auto fullscreen_enabled() const { return fullscreen_enabled_; }
 
   // This doesn't actually toggle fullscreen. It is used to inform the game
   // when fullscreen changes under it.
-  auto set_fullscreen_enabled(bool fs) -> void { fullscreen_enabled_ = fs; }
+  auto set_fullscreen_enabled(bool fs) { fullscreen_enabled_ = fs; }
   auto VideoResize(float h, float v) -> void;
 
 #if BA_ENABLE_OPENGL

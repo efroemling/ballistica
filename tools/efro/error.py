@@ -134,3 +134,45 @@ def is_udp_network_error(exc: BaseException) -> bool:
         }:
             return True
     return False
+
+
+def is_asyncio_streams_network_error(exc: BaseException) -> bool:
+    """Is the provided exception a network-related error?
+
+    This should be passed an exception which resulted from creating and
+    using asyncio streams. It should return True for any errors that could
+    conceivably arise due to unavailable/poor network connections,
+    firewall/connectivity issues, etc. These issues can often be safely
+    ignored or presented to the user as general 'connection-lost' events.
+    """
+    import errno
+    import ssl
+
+    if isinstance(exc, (
+            ConnectionError,
+            TimeoutError,
+            EOFError,
+    )):
+        return True
+
+    # Also some specific errno ones.
+    if isinstance(exc, OSError):
+        if exc.errno == 10051:  # Windows unreachable network error.
+            return True
+        if exc.errno in {
+                errno.ETIMEDOUT,
+                errno.EHOSTUNREACH,
+                errno.ENETUNREACH,
+        }:
+            return True
+
+    # Am occasionally getting a specific SSL error on shutdown which I
+    # believe is harmless (APPLICATION_DATA_AFTER_CLOSE_NOTIFY).
+    # It sounds like it may soon be ignored by Python (as of March 2022).
+    # Let's still complain, however, if we get any SSL errors besides
+    # this one. https://bugs.python.org/issue39951
+    if isinstance(exc, ssl.SSLError):
+        if 'APPLICATION_DATA_AFTER_CLOSE_NOTIFY' in str(exc):
+            return True
+
+    return False

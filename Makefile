@@ -678,7 +678,7 @@ pycharm-full: prereqs meta
 ################################################################################
 
 # Run all tests. (live execution verification)
-test: prereqs
+test: prereqs meta
 	@tools/pcommand echo BLU Running all tests...
 	@tools/pcommand pytest -v tests
 

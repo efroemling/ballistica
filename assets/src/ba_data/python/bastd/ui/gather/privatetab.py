@@ -809,7 +809,7 @@ class PrivateGatherTab(GatherTab):
                 {
                     'type': 'PRIVATE_PARTY_START',
                     'config': dataclass_to_dict(self._hostingconfig),
-                    'region_pings': ba.app.net.region_pings,
+                    'region_pings': ba.app.net.zone_pings,
                     'expire_time': time.time() + 20,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))

@@ -192,18 +192,18 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         _print(f'\nContacting V2 master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
-        # Get V2 nearby region
-        with ba.app.net.region_pings_lock:
-            region_pings = copy.deepcopy(ba.app.net.region_pings)
-        nearest_region = (None if not region_pings else sorted(
-            region_pings.items(), key=lambda i: i[1])[0])
+        # Get V2 nearby zone
+        with ba.app.net.zone_pings_lock:
+            zone_pings = copy.deepcopy(ba.app.net.zone_pings)
+        nearest_zone = (None if not zone_pings else sorted(
+            zone_pings.items(), key=lambda i: i[1])[0])
 
-        if nearest_region is not None:
-            nearstr = f'{nearest_region[0]}: {nearest_region[1]:.0f}ms'
+        if nearest_zone is not None:
+            nearstr = f'{nearest_zone[0]}: {nearest_zone[1]:.0f}ms'
         else:
             nearstr = '-'
-        _print(f'\nChecking nearest V2 region ping ({nearstr})...')
-        _print_test_results(lambda: _test_nearby_region_ping(nearest_region))
+        _print(f'\nChecking nearest V2 zone ping ({nearstr})...')
+        _print_test_results(lambda: _test_nearby_zone_ping(nearest_zone))
 
         if have_error[0]:
             _print('\nDiagnostics complete. Some diagnostics failed.',
@@ -284,12 +284,11 @@ def _test_fetch(baseaddr: str) -> None:
         raise RuntimeError('Got unexpected response data.')
 
 
-def _test_nearby_region_ping(
-        nearest_region: Optional[tuple[str, float]]) -> None:
-    """Try to ping nearest v2 region."""
-    if nearest_region is None:
-        raise RuntimeError('No nearest region.')
-    if nearest_region[1] > 500:
+def _test_nearby_zone_ping(nearest_zone: Optional[tuple[str, float]]) -> None:
+    """Try to ping nearest v2 zone."""
+    if nearest_zone is None:
+        raise RuntimeError('No nearest zone.')
+    if nearest_zone[1] > 500:
         raise RuntimeError('Ping too high.')
 
 

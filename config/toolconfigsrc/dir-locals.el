@@ -11,6 +11,9 @@
  ;; Projectile indexing and search will ignore the following
  ;; (in addition to git-ignored stuff which it ignores by default)
  (nil . ((projectile-globally-ignored-directories . ("docs"
-                                                     "src/external"))))
+                                                     "src/external"
+                                                     "assets/src/pylib-android"
+                                                     "assets/src/pylib-apple"
+                                                     "assets/src/windows"))))
  
  )

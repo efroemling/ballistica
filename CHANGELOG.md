@@ -1,4 +1,5 @@
-### 1.6.12 (20542, 2022-03-25)
+### 1.6.12 (20551, 2022-04-14)
+- More internal work on V2 master-server communication
 
 ### 1.6.11 (20539, 2022-03-23)
 - Documentation is now generated using pdoc <https://pdoc.dev>. Thanks Dliwk!! (I'll get it wired up to auto-update to a webpage soon).
