@@ -86,6 +86,19 @@ class Lazybuild:
         if self.have_changes:
             subprocess.run(self.command, shell=True, check=True)
 
+            # Complain if the target path does not exist at this point.
+            # (otherwise we'd create an empty file there below which can
+            # cause problems).
+            # We make a special exception for files under .cache/lazybuild
+            # since those are not actually meaningful files; only used for
+            # dep tracking.
+            if (not self.target.startswith('.cache/lazybuild')
+                    and not os.path.isfile(self.target)):
+                raise RuntimeError(
+                    f'Expected output file \'{self.target}\' not found'
+                    f' after running lazybuild command:'
+                    f' \'{self.command}\'.')
+
             # We also explicitly update the mod-time of the target;
             # the command we (such as a VM build) may not have actually
             # done anything but we still want to update our target to

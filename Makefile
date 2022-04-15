@@ -370,12 +370,12 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 prefab-linux-x86-64-server-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug \
-      build/prefab/full/linux_x86_64_server/debug
+ build/prefab/full/linux_x86_64_server/debug
 
 prefab-linux-arm64-server-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug \
-      build/prefab/full/linux_arm64_server/debug
+ build/prefab/full/linux_arm64_server/debug
 
 build/prefab/full/linux_%_server/debug/dist/ballisticacore_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -476,7 +476,7 @@ prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-${WINPLAT_X86} \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Debug \
-   build/prefab/full/windows_x86_server/debug
+ build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
