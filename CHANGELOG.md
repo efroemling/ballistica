@@ -1,4 +1,4 @@
-### 1.6.12 (20554, 2022-04-15)
+### 1.6.12 (20556, 2022-04-19)
 - More internal work on V2 master-server communication
 
 ### 1.6.11 (20539, 2022-03-23)
