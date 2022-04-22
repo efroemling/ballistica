@@ -163,6 +163,9 @@ class IOAttrs:
             self.soft_default = soft_default
         if soft_default_factory is not cls.soft_default_factory:
             self.soft_default_factory = soft_default_factory
+            if self.soft_default is not cls.soft_default:
+                raise ValueError('Cannot set both soft_default'
+                                 ' and soft_default_factory')
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""

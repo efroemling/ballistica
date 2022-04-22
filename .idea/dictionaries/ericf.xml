@@ -2214,6 +2214,7 @@
       <w>sockaddr</w>
       <w>socketmodule</w>
       <w>socketserver</w>
+      <w>softdefault</w>
       <w>somevar</w>
       <w>sortname</w>
       <w>soundtrackname</w>

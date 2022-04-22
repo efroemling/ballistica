@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Testing dataclasses functionality."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -877,6 +878,7 @@ def test_extended_data() -> None:
 
 def test_soft_default() -> None:
     """Test soft_default IOAttr value."""
+    # pylint: disable=too-many-locals
 
     # Try both of these with and without storage_name to make sure
     # soft_default interacts correctly with both cases.
@@ -946,7 +948,16 @@ def test_soft_default() -> None:
 
     assert dataclass_to_dict(_TestClassC3(0)) == {}
 
-    # we should disallow passing a few mutable types as soft_defaults
+    @ioprepped
+    @dataclass
+    class _TestClassC3b:
+        ival: Annotated[
+            int,
+            IOAttrs(store_default=False, soft_default_factory=lambda: 0)]
+
+    assert dataclass_to_dict(_TestClassC3b(0)) == {}
+
+    # We disallow passing a few mutable types as soft_defaults
     # just as dataclass does with regular defaults.
     with pytest.raises(TypeError):
 
@@ -954,3 +965,73 @@ def test_soft_default() -> None:
         @dataclass
         class _TestClassD:
             lval: Annotated[list, IOAttrs(soft_default=[])]
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassD2:
+            lval: Annotated[set, IOAttrs(soft_default=set())]
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassD3:
+            lval: Annotated[dict, IOAttrs(soft_default={})]
+
+    # soft_defaults are not static-type-checked, but we do try to
+    # catch basic type mismatches at prep time. Make sure that's working.
+    # (we also do full value validation during input, but the more we catch
+    # early the better)
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassE:
+            lval: Annotated[int, IOAttrs(soft_default='')]
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassE2:
+            lval: Annotated[str, IOAttrs(soft_default=45)]
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassE3:
+            lval: Annotated[list, IOAttrs(soft_default_factory=set)]
+
+    # Make sure Unions/Optionals go through ok.
+    # (note that mismatches currently aren't caught at prep time; just
+    # checking the negative case here).
+    @ioprepped
+    @dataclass
+    class _TestClassE4:
+        lval: Annotated[Optional[str], IOAttrs(soft_default=None)]
+
+    @ioprepped
+    @dataclass
+    class _TestClassE5:
+        lval: Annotated[Optional[str], IOAttrs(soft_default='foo')]
+
+    # Now try more in-depth examples: nested type mismatches like this
+    # are currently not caught at prep-time but ARE caught during inputting.
+    @ioprepped
+    @dataclass
+    class _TestClassE6:
+        lval: Annotated[tuple[int, int], IOAttrs(soft_default=('foo', 'bar'))]
+
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClassE6, {})
+
+    @ioprepped
+    @dataclass
+    class _TestClassE7:
+        lval: Annotated[Optional[bool], IOAttrs(soft_default=12)]
+
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClassE7, {})

@@ -39,11 +39,22 @@ class _Outputter:
     def run(self) -> Any:
         """Do the thing."""
 
+        assert dataclasses.is_dataclass(self._obj)
+
         # For special extended data types, call their 'will_output' callback.
         if isinstance(self._obj, IOExtendedData):
             self._obj.will_output()
 
         return self._process_dataclass(type(self._obj), self._obj, '')
+
+    def soft_default_check(self, value: Any, anntype: Any,
+                           fieldpath: str) -> None:
+        """(internal)"""
+        self._process_value(type(value),
+                            fieldpath=fieldpath,
+                            anntype=anntype,
+                            value=value,
+                            ioattrs=None)
 
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
         # pylint: disable=too-many-locals
