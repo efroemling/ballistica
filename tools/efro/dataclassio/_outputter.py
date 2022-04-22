@@ -78,19 +78,23 @@ class _Outputter:
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
             if ioattrs is not None and not ioattrs.store_default:
+                # If both soft_defaults and regular field defaults
+                # are present we want to go with soft_defaults since
+                # those same values would be re-injected when reading
+                # the same data back in if we've omitted the field.
                 default_factory: Any = field.default_factory
-                if field.default is not dataclasses.MISSING:
-                    if field.default == value:
-                        continue
-                elif default_factory is not dataclasses.MISSING:
-                    if default_factory() == value:
-                        continue
-                elif ioattrs.soft_default is not ioattrs.MISSING:
+                if ioattrs.soft_default is not ioattrs.MISSING:
                     if ioattrs.soft_default == value:
                         continue
                 elif ioattrs.soft_default_factory is not ioattrs.MISSING:
                     assert callable(ioattrs.soft_default_factory)
                     if ioattrs.soft_default_factory() == value:
+                        continue
+                elif field.default is not dataclasses.MISSING:
+                    if field.default == value:
+                        continue
+                elif default_factory is not dataclasses.MISSING:
+                    if default_factory() == value:
                         continue
                 else:
                     raise RuntimeError(

@@ -107,14 +107,18 @@ class IOAttrs:
         boundaries (see efro.util.utc_today()).
     'whole_hours', if True, requires datetime values to lie exactly on hour
         boundaries (see efro.util.utc_this_hour()).
-    'soft_default', if passed, is used as a default for loading and storing
-        purposes, but leaves the dataclass itself expecting a value to
-        be passed in all constructor calls/etc. This is useful when fields
-        are added that should not be considered optional in new code but for
-        which there may exist old data that does not contain those values.
-    'soft_default_factory' should be given instead of 'soft_default' for
-        mutable types such as lists (to prevent the default from changing
-        over time).
+    'soft_default', if passed, injects a default value into dataclass
+        instantiation when the field is not present in the input data.
+        This allows dataclasses to add new non-optional fields while
+        gracefully 'upgrading' old data. Note that when a soft_default is
+        present it will take precedence over field defaults when determining
+        whether to store a value for a field with store_default=False
+        (since the soft_default value is what we'll get when reading that
+        same data back in when the field is omitted).
+    'soft_default_factory' is similar to 'default_factory' in dataclass
+        fields; it should be used instead of 'soft_default' for mutable types
+        such as lists to prevent a single default object from unintentionally
+        changing over time.
     """
 
     # A sentinel object to detect if a parameter is supplied or not.  Use

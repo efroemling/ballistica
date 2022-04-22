@@ -879,6 +879,7 @@ def test_extended_data() -> None:
 def test_soft_default() -> None:
     """Test soft_default IOAttr value."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     # Try both of these with and without storage_name to make sure
     # soft_default interacts correctly with both cases.
@@ -971,6 +972,7 @@ def test_soft_default() -> None:
         @ioprepped
         @dataclass
         class _TestClassD2:
+            # noinspection PyTypeHints
             lval: Annotated[set, IOAttrs(soft_default=set())]
 
     with pytest.raises(TypeError):
@@ -1035,3 +1037,29 @@ def test_soft_default() -> None:
 
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClassE7, {})
+
+    # If both a soft_default and regular field default are present,
+    # make sure soft_default takes precedence (it applies before
+    # data even hits the dataclass constructor).
+
+    @ioprepped
+    @dataclass
+    class _TestClassE8:
+        ival: Annotated[int, IOAttrs(soft_default=1, store_default=False)] = 2
+
+    assert dataclass_from_dict(_TestClassE8, {}).ival == 1
+
+    # Make sure soft_default gets used both when determining when
+    # to omit values from output and what to recreate missing values as.
+    orig = _TestClassE8(ival=1)
+    todict = dataclass_to_dict(orig)
+    assert todict == {}
+    assert dataclass_from_dict(_TestClassE8, todict) == orig
+
+    # Instantiate with the dataclass default and it should still get
+    # explicitly despite the store_default=False because soft_default
+    # takes precedence.
+    orig = _TestClassE8()
+    todict = dataclass_to_dict(orig)
+    assert todict == {'ival': 2}
+    assert dataclass_from_dict(_TestClassE8, todict) == orig
