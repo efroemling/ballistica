@@ -68,18 +68,25 @@ class _Outputter:
             # we can skip all output processing if we've got a default value.
             if ioattrs is not None and not ioattrs.store_default:
                 default_factory: Any = field.default_factory
-                if default_factory is not dataclasses.MISSING:
+                if field.default is not dataclasses.MISSING:
+                    if field.default == value:
+                        continue
+                elif default_factory is not dataclasses.MISSING:
                     if default_factory() == value:
                         continue
-                elif field.default is not dataclasses.MISSING:
-                    if field.default == value:
+                elif ioattrs.soft_default is not ioattrs.MISSING:
+                    if ioattrs.soft_default == value:
+                        continue
+                elif ioattrs.soft_default_factory is not ioattrs.MISSING:
+                    assert callable(ioattrs.soft_default_factory)
+                    if ioattrs.soft_default_factory() == value:
                         continue
                 else:
                     raise RuntimeError(
                         f'Field {fieldname} of {cls.__name__} has'
-                        f' neither a default nor a default_factory;'
-                        f' store_default=False cannot be set for it.'
-                        f' (AND THIS SHOULD HAVE BEEN CAUGHT IN PREP!)')
+                        f' no source of default values; store_default=False'
+                        f' cannot be set for it. (AND THIS SHOULD HAVE BEEN'
+                        f' CAUGHT IN PREP!)')
 
             outvalue = self._process_value(cls, subfieldpath, anntype, value,
                                            ioattrs)

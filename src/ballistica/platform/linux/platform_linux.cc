@@ -29,7 +29,7 @@ std::string PlatformLinux::GenerateUUID() {
   return val;
 }
 
-auto PlatformLinux::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
+auto PlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 
   // For now let's just go with machine-id.

@@ -186,13 +186,12 @@ class Platform {
   /// server bans or spam prevention.
   auto GetPublicDeviceUUID() -> std::string;
 
-  /// Return values which will be hashed to create a public device uuid.
-  /// These values may include things that may change periodically such
-  /// as minor os version numbers, but they should not include things
-  /// that change constantly or that can be changed easily by the user.
-  /// Only hashed versions of these values should ever be shared beyond
-  /// the local device.
-  virtual auto GetPublicDeviceUUIDInputs() -> std::list<std::string>;
+  /// Return values which can be hashed to create a public device uuid.
+  /// Ideally these values should come from an OS-provided guid. They
+  /// should not include anything that is easily user-changeable.
+  /// IMPORTANT: Only hashed/transformed versions of these values should
+  /// ever be shared beyond the local device.
+  virtual auto GetDeviceUUIDInputs() -> std::list<std::string>;
 
   /// Return whether there is an actual legacy-device-uuid value for
   /// this platform, and also return it if so.

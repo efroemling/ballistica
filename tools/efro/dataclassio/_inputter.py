@@ -158,6 +158,7 @@ class _Inputter(Generic[T]):
         associated values, and nested dataclasses should be passed as dicts.
         """
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
         if not isinstance(values, dict):
             raise TypeError(
                 f'Expected a dict for {fieldpath} on {cls.__name__};'
@@ -172,6 +173,16 @@ class _Inputter(Generic[T]):
         # noinspection PyDataclass
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
+
+        # Preprocess all fields to convert Annotated[] to contained types
+        # and IOAttrs.
+        parsed_field_annotations = {
+            f.name: _parse_annotated(prep.annotations[f.name])
+            for f in fields
+        }
+
+        # Go through all data in the input, converting it to either dataclass
+        # args or extra data.
         args: dict[str, Any] = {}
         for rawkey, value in values.items():
             key = prep.storage_names_to_attr_names.get(rawkey, rawkey)
@@ -197,18 +208,32 @@ class _Inputter(Generic[T]):
                         f"'{cls.__name__}' has no '{key}' field.")
             else:
                 fieldname = field.name
-                anntype = prep.annotations[fieldname]
-                anntype, ioattrs = _parse_annotated(anntype)
-
+                anntype, ioattrs = parsed_field_annotations[fieldname]
                 subfieldpath = (f'{fieldpath}.{fieldname}'
                                 if fieldpath else fieldname)
                 args[key] = self._value_from_input(cls, subfieldpath, anntype,
                                                    value, ioattrs)
+
+        # Go through all fields looking for any not yet present in our data.
+        # If we find any such fields with a soft-default value or factory
+        # defined, inject that value into our args.
+        for key, aparsed in parsed_field_annotations.items():
+            if key not in args:
+                ioattrs = aparsed[1]
+                if (ioattrs is not None and
+                    (ioattrs.soft_default is not ioattrs.MISSING
+                     or ioattrs.soft_default_factory is not ioattrs.MISSING)):
+                    if ioattrs.soft_default is not ioattrs.MISSING:
+                        args[key] = ioattrs.soft_default
+                    else:
+                        assert callable(ioattrs.soft_default_factory)
+                        args[key] = ioattrs.soft_default_factory()
+
         try:
             out = cls(**args)
         except Exception as exc:
-            raise RuntimeError(f'Error instantiating class {cls.__name__}'
-                               f' at {fieldpath}: {exc}') from exc
+            raise ValueError(f'Error instantiating class {cls.__name__}'
+                             f' at {fieldpath}: {exc}') from exc
         if extra_attrs:
             setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
         return out

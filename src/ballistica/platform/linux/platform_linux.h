@@ -21,7 +21,7 @@ class PlatformLinux : public Platform {
   auto OpenDirExternally(const std::string& path) -> void override;
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
-  auto GetPublicDeviceUUIDInputs() -> std::list<std::string> override;
+  auto GetDeviceUUIDInputs() -> std::list<std::string> override;
 };
 
 }  // namespace ballistica

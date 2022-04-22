@@ -873,3 +873,84 @@ def test_extended_data() -> None:
 
     # Uses our output filter.
     assert dataclass_to_dict(_TestClass2(vals=(1, 2))) == {'vals': [0, 0]}
+
+
+def test_soft_default() -> None:
+    """Test soft_default IOAttr value."""
+
+    # Try both of these with and without storage_name to make sure
+    # soft_default interacts correctly with both cases.
+
+    @ioprepped
+    @dataclass
+    class _TestClassA:
+        ival: int
+
+    @ioprepped
+    @dataclass
+    class _TestClassA2:
+        ival: Annotated[int, IOAttrs('i')]
+
+    @ioprepped
+    @dataclass
+    class _TestClassB:
+        ival: Annotated[int, IOAttrs(soft_default=0)]
+
+    @ioprepped
+    @dataclass
+    class _TestClassB2:
+        ival: Annotated[int, IOAttrs('i', soft_default=0)]
+
+    @ioprepped
+    @dataclass
+    class _TestClassB3:
+        ival: Annotated[int, IOAttrs('i', soft_default_factory=lambda: 0)]
+
+    # These should fail because there's no value for ival.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClassA, {})
+
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClassA2, {})
+
+    # These should succeed because it has a soft-default value to
+    # fall back on.
+    dataclass_from_dict(_TestClassB, {})
+    dataclass_from_dict(_TestClassB2, {})
+    dataclass_from_dict(_TestClassB3, {})
+
+    # soft_default should also allow using store_default=False without
+    # requiring the dataclass to contain a default or default_factory
+
+    @ioprepped
+    @dataclass
+    class _TestClassC:
+        ival: Annotated[int, IOAttrs(store_default=False)] = 0
+
+    assert dataclass_to_dict(_TestClassC()) == {}
+
+    # This should fail since store_default would be meaningless without
+    # any source for the default value.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassC2:
+            ival: Annotated[int, IOAttrs(store_default=False)]
+
+    # However with our shiny soft_default it should work.
+    @ioprepped
+    @dataclass
+    class _TestClassC3:
+        ival: Annotated[int, IOAttrs(store_default=False, soft_default=0)]
+
+    assert dataclass_to_dict(_TestClassC3(0)) == {}
+
+    # we should disallow passing a few mutable types as soft_defaults
+    # just as dataclass does with regular defaults.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassD:
+            lval: Annotated[list, IOAttrs(soft_default=[])]

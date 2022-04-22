@@ -77,7 +77,7 @@ class PlatformApple : public Platform {
   auto DoClipboardHasText() -> bool override;
   auto DoClipboardSetText(const std::string& text) -> void override;
   auto DoClipboardGetText() -> std::string override;
-  auto GetPublicDeviceUUIDInputs() -> std::list<std::string> override;
+  auto GetDeviceUUIDInputs() -> std::list<std::string> override;
 
  private:
 };

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, get_args
 from typing import _AnnotatedAlias  # type: ignore
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any, Optional, Callable, Union
 
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
@@ -96,18 +96,50 @@ def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
 
 
 class IOAttrs:
-    """For specifying io behavior in annotations."""
+    """For specifying io behavior in annotations.
+
+    'storagename', if passed, is the name used when storing to json/etc.
+    'store_default' can be set to False to avoid writing values when equal
+        to the default value. Note that this requires the dataclass field
+        to define a default or default_factory or for its IOAttrs to
+        define a soft_default value.
+    'whole_days', if True, requires datetime values to be exactly on day
+        boundaries (see efro.util.utc_today()).
+    'whole_hours', if True, requires datetime values to lie exactly on hour
+        boundaries (see efro.util.utc_this_hour()).
+    'soft_default', if passed, is used as a default for loading and storing
+        purposes, but leaves the dataclass itself expecting a value to
+        be passed in all constructor calls/etc. This is useful when fields
+        are added that should not be considered optional in new code but for
+        which there may exist old data that does not contain those values.
+    'soft_default_factory' should be given instead of 'soft_default' for
+        mutable types such as lists (to prevent the default from changing
+        over time).
+    """
+
+    # A sentinel object to detect if a parameter is supplied or not.  Use
+    # a class to give it a better repr.
+    class _MissingType:
+        pass
+
+    MISSING = _MissingType()
 
     storagename: Optional[str] = None
     store_default: bool = True
     whole_days: bool = False
     whole_hours: bool = False
+    soft_default: Any = MISSING
+    soft_default_factory: Union[Callable[[], Any], _MissingType] = MISSING
 
-    def __init__(self,
-                 storagename: Optional[str] = storagename,
-                 store_default: bool = store_default,
-                 whole_days: bool = whole_days,
-                 whole_hours: bool = whole_hours):
+    def __init__(
+        self,
+        storagename: Optional[str] = storagename,
+        store_default: bool = store_default,
+        whole_days: bool = whole_days,
+        whole_hours: bool = whole_hours,
+        soft_default: Any = MISSING,
+        soft_default_factory: Union[Callable[[], Any], _MissingType] = MISSING,
+    ):
 
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
@@ -120,18 +152,34 @@ class IOAttrs:
             self.whole_days = whole_days
         if whole_hours != cls.whole_hours:
             self.whole_hours = whole_hours
+        if soft_default is not cls.soft_default:
+
+            # Do what dataclasses does with its default types and
+            # tell the user to use factory for mutable ones.
+            if isinstance(soft_default, (list, dict, set)):
+                raise ValueError(
+                    f'mutable {type(soft_default)} is not allowed'
+                    f' for soft_default; use soft_default_factory.')
+            self.soft_default = soft_default
+        if soft_default_factory is not cls.soft_default_factory:
+            self.soft_default_factory = soft_default_factory
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
 
         # Turning off store_default requires the field to have either
-        # a default_factory or a default
+        # a default or a a default_factory or for us to have soft equivalents.
+
         if not self.store_default:
-            default_factory: Any = field.default_factory
-            if (default_factory is dataclasses.MISSING
-                    and field.default is dataclasses.MISSING):
+            field_default_factory: Any = field.default_factory
+            if (field_default_factory is dataclasses.MISSING
+                    and field.default is dataclasses.MISSING
+                    and self.soft_default is self.MISSING
+                    and self.soft_default_factory is self.MISSING):
                 raise TypeError(f'Field {field.name} of {cls} has'
-                                f' neither a default nor a default_factory;'
+                                f' neither a default nor a default_factory'
+                                f' and IOAttrs contains neither a soft_default'
+                                f' nor a soft_default_factory;'
                                 f' store_default=False cannot be set for it.')
 
     def validate_datetime(self, value: datetime.datetime,

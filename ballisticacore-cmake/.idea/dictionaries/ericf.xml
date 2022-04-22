@@ -53,6 +53,7 @@
       <w>anyofallof</w>
       <w>anyval</w>
       <w>aosp</w>
+      <w>aparsed</w>
       <w>apientry</w>
       <w>apost</w>
       <w>appconfig</w>
@@ -104,6 +105,7 @@
       <w>bbbbbbb</w>
       <w>bcfn</w>
       <w>bdea</w>
+      <w>benning</w>
       <w>bezanson</w>
       <w>bgra</w>
       <w>bigendian</w>
@@ -418,6 +420,7 @@
       <w>fjco</w>
       <w>fjcoiwef</w>
       <w>flipbit</w>
+      <w>floinkdingle</w>
       <w>floop</w>
       <w>flopsy</w>
       <w>fname</w>
@@ -462,6 +465,7 @@
       <w>gasmsg</w>
       <w>gbus</w>
       <w>gcc's</w>
+      <w>gcwe</w>
       <w>gearvr</w>
       <w>genchangelog</w>
       <w>gencmd</w>
@@ -668,6 +672,7 @@
       <w>ltypes</w>
       <w>lubyte</w>
       <w>luuid</w>
+      <w>lval</w>
       <w>lvec</w>
       <w>lvoid</w>
       <w>macbuild</w>
@@ -821,6 +826,7 @@
       <w>offsy</w>
       <w>oiffsss</w>
       <w>okbtn</w>
+      <w>oldbook</w>
       <w>oldname</w>
       <w>oooo</w>
       <w>ooooooo</w>
@@ -896,6 +902,7 @@
       <w>ppre</w>
       <w>pptabcom</w>
       <w>precalc</w>
+      <w>precompiling</w>
       <w>preconfig</w>
       <w>predeclare</w>
       <w>prefs</w>
@@ -926,6 +933,7 @@
       <w>ptrs</w>
       <w>ptype</w>
       <w>ptypename</w>
+      <w>pubdeviceid</w>
       <w>publictab</w>
       <w>pubtargets</w>
       <w>pulseaudio</w>

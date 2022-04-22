@@ -316,10 +316,6 @@ class RPCEndpoint:
             self._debug_print_call(
                 f'{self._label}: tasks finished; waiting for writer close...')
 
-        # At this point we shouldn't touch our tasks anymore.
-        # Clearing them out allows us to go down
-        # del self._tasks
-
         # Now wait for our writer to finish going down.
         # When we close our writer it generally triggers errors
         # in our current blocked read/writes. However that same
@@ -328,7 +324,18 @@ class RPCEndpoint:
         # So let's silently ignore it when that happens.
         assert self._writer.is_closing()
         try:
-            await self._writer.wait_closed()
+            # It seems that as of Python 3.9.x it is possible for this to hang
+            # indefinitely. See https://github.com/python/cpython/issues/83939
+            # It sounds like this should be fixed in 3.11 but for now just
+            # forcing the issue with a timeout here.
+            await asyncio.wait_for(self._writer.wait_closed(), timeout=10.0)
+        except asyncio.TimeoutError:
+            logging.info('Timeout on _writer.wait_closed() for %s.',
+                         self._label)
+            if self._debug_print:
+                self._debug_print_call(
+                    f'{self._label}: got timeout in _writer.wait_closed();'
+                    ' This should be fixed in future Python versions.')
         except Exception as exc:
             if not self._is_expected_connection_error(exc):
                 logging.exception('Error closing _writer for %s.', self._label)

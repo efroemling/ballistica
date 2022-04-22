@@ -127,7 +127,7 @@ void PlatformWindows::SetupInterruptHandling() {
   }
 }
 
-auto PlatformWindows::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
+auto PlatformWindows::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 
   std::string ret;

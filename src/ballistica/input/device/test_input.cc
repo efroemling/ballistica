@@ -89,7 +89,9 @@ void TestInput::Process(millisecs_t time) {
           HandleAlreadyPressedTwice();
         } else {
           jump_pressed_ = !jump_pressed_;
-          if (jump_pressed_) join_press_count_++;
+          if (jump_pressed_) {
+            join_press_count_++;
+          }
           e.type = jump_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
           e.jbutton.button = 0;
           g_input->PushJoystickEvent(e, joystick_);
@@ -121,7 +123,9 @@ void TestInput::Process(millisecs_t time) {
           HandleAlreadyPressedTwice();
         } else {
           pickup_pressed_ = !pickup_pressed_;
-          if (pickup_pressed_) join_press_count_++;
+          if (pickup_pressed_) {
+            join_press_count_++;
+          }
           e.type = pickup_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
           e.jbutton.button = 3;
           g_input->PushJoystickEvent(e, joystick_);
@@ -133,7 +137,9 @@ void TestInput::Process(millisecs_t time) {
           HandleAlreadyPressedTwice();
         } else {
           punch_pressed_ = !punch_pressed_;
-          if (punch_pressed_) join_press_count_++;
+          if (punch_pressed_) {
+            join_press_count_++;
+          }
           e.type = punch_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
           e.jbutton.button = 1;
           g_input->PushJoystickEvent(e, joystick_);

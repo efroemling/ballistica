@@ -184,17 +184,13 @@ auto Platform::GenerateUUID() -> std::string {
 auto Platform::GetPublicDeviceUUID() -> std::string {
   assert(g_python);
   if (public_device_uuid_.empty()) {
-    std::list<std::string> inputs{GetPublicDeviceUUIDInputs()};
+    std::list<std::string> inputs{GetDeviceUUIDInputs()};
 
     // This UUID is supposed to change periodically, so let's plug in
     // some stuff to enforce that.
     inputs.emplace_back(GetOSVersionString());
     inputs.emplace_back(kAppVersion);
     inputs.emplace_back("kerploople");
-    // int i{};
-    // for (auto&& input : inputs) {
-    //   printf("INPUT %d IS %s\n", i + 1, input.c_str());
-    // }
     auto gil{Python::ScopedInterpreterLock()};
     auto pylist{g_python->StringList(inputs)};
     auto args{g_python->SingleMemberTuple(pylist)};
@@ -205,8 +201,8 @@ auto Platform::GetPublicDeviceUUID() -> std::string {
   return public_device_uuid_;
 }
 
-auto Platform::GetPublicDeviceUUIDInputs() -> std::list<std::string> {
-  throw Exception("GetPublicDeviceUUIDInputs unimplemented");
+auto Platform::GetDeviceUUIDInputs() -> std::list<std::string> {
+  throw Exception("GetDeviceUUIDInputs unimplemented");
 }
 
 auto Platform::GetDefaultConfigDir() -> std::string {
@@ -860,7 +856,7 @@ auto Platform::GetUserAgentString() -> std::string {
                   + "; " + GetLocale() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
-  // characers, so let's limit to simple ascii.
+  // characters, so let's limit to simple ascii.
   out = Utils::StripNonAsciiFromUTF8(out);
 
   return out;
