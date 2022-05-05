@@ -551,69 +551,85 @@ def checkenv() -> None:
     # FIXME: since all of these come from pip now, we should just use
     # pip --list to check versions on everything instead of doing it ad-hoc.
     for req in PIP_REQUIREMENTS:
-        modname = req.modulename
-        minver = req.minversion
-        pipname = req.pipname
-        if modname is None:
-            assert pipname is not None
-            if pipname not in pipvers:
-                raise CleanError(
-                    f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                    f'To install it, try: "{PYTHON_BIN}'
-                    f' -m pip install {pipname}"\n'
-                    f'Alternately, "tools/pcommand install_pip_reqs"'
-                    f' will update all pip requirements.')
-            if minver is not None:
-                vnums = pipvers[pipname]
-                assert len(vnums) == len(minver)
-                if vnums < minver:
+        try:
+            modname = req.modulename
+            minver = req.minversion
+            pipname = req.pipname
+            if modname is None:
+                assert pipname is not None
+                if pipname not in pipvers:
                     raise CleanError(
-                        f'{pipname} ver. {_vstr(minver)} or newer'
-                        f' is required; found {_vstr(vnums)}.\n'
-                        f'To upgrade it, try: "{PYTHON_BIN}'
-                        f' -m pip install --upgrade {pipname}".\n'
-                        'Alternately, "tools/pcommand install_pip_reqs"'
-                        ' will update all pip requirements.')
-        else:
-            if pipname is None:
-                pipname = modname
-            if minver is not None:
-                results = subprocess.run(
-                    f'{PYTHON_BIN} -m {modname} --version',
-                    shell=True,
-                    check=False,
-                    capture_output=True)
+                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
+                        f'To install it, try: "{PYTHON_BIN}'
+                        f' -m pip install {pipname}"\n'
+                        f'Alternately, "tools/pcommand install_pip_reqs"'
+                        f' will update all pip requirements.')
+                if minver is not None:
+                    vnums = pipvers[pipname]
+                    assert len(vnums) == len(minver)
+                    if vnums < minver:
+                        raise CleanError(
+                            f'{pipname} ver. {_vstr(minver)} or newer'
+                            f' is required; found {_vstr(vnums)}.\n'
+                            f'To upgrade it, try: "{PYTHON_BIN}'
+                            f' -m pip install --upgrade {pipname}".\n'
+                            'Alternately, "tools/pcommand install_pip_reqs"'
+                            ' will update all pip requirements.')
             else:
-                results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
-                                         shell=True,
-                                         check=False,
-                                         capture_output=True)
-            if results.returncode != 0:
-                raise CleanError(
-                    f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                    f'To install it, try: "{PYTHON_BIN}'
-                    f' -m pip install {pipname}"\n'
-                    f'Alternately, "tools/pcommand install_pip_reqs"'
-                    f' will update all pip requirements.')
-            if minver is not None:
-                # Note: some modules such as pytest print
-                # their version to stderr, so grab both.
-                verlines = (results.stdout +
-                            results.stderr).decode().splitlines()
-                if verlines[0].startswith('Cpplint fork'):
-                    verlines = verlines[1:]
-                ver_line = verlines[0]
-                assert modname in ver_line
-                vnums = [int(x) for x in ver_line.split()[-1].split('.')]
-                assert len(vnums) == len(minver)
-                if vnums < minver:
+                if pipname is None:
+                    pipname = modname
+                if minver is not None:
+                    results = subprocess.run(
+                        f'{PYTHON_BIN} -m {modname} --version',
+                        shell=True,
+                        check=False,
+                        capture_output=True)
+                else:
+                    results = subprocess.run(
+                        f'{PYTHON_BIN} -c "import {modname}"',
+                        shell=True,
+                        check=False,
+                        capture_output=True)
+                if results.returncode != 0:
                     raise CleanError(
-                        f'{pipname} ver. {_vstr(minver)} or newer'
-                        f' is required; found {_vstr(vnums)}.\n'
-                        f'To upgrade it, try: "{PYTHON_BIN}'
-                        f' -m pip install --upgrade {pipname}".\n'
-                        'Alternately, "tools/pcommand install_pip_reqs"'
-                        ' will update all pip requirements.')
+                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
+                        f'To install it, try: "{PYTHON_BIN}'
+                        f' -m pip install {pipname}"\n'
+                        f'Alternately, "tools/pcommand install_pip_reqs"'
+                        f' will update all pip requirements.')
+                if minver is not None:
+                    # Note: some modules such as pytest print
+                    # their version to stderr, so grab both.
+                    verlines = (results.stdout +
+                                results.stderr).decode().splitlines()
+                    if verlines[0].startswith('Cpplint fork'):
+                        verlines = verlines[1:]
+                    ver_line = verlines[0]
+                    assert modname in ver_line
+
+                    # Choking on 'mypy 0.xx (compiled: yes)'
+                    if '(compiled: ' in ver_line:
+                        ver_line = ' '.join(ver_line.split()[:2])
+                    try:
+                        vnums = [
+                            int(x) for x in ver_line.split()[-1].split('.')
+                        ]
+                    except Exception:
+                        print(f'ERROR PARSING VER LINE for {req}:'
+                              f' \'{ver_line}\'')
+                        raise
+                    assert len(vnums) == len(minver)
+                    if vnums < minver:
+                        raise CleanError(
+                            f'{pipname} ver. {_vstr(minver)} or newer'
+                            f' is required; found {_vstr(vnums)}.\n'
+                            f'To upgrade it, try: "{PYTHON_BIN}'
+                            f' -m pip install --upgrade {pipname}".\n'
+                            'Alternately, "tools/pcommand install_pip_reqs"'
+                            ' will update all pip requirements.')
+        except Exception:
+            print(f'ERROR CHECKING PIP REQ \'{req}\'')
+            raise
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
 

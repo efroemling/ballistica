@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 @dataclass
 class ServerNodeEntry:
     """Information about a specific server."""
-    zone: Annotated[str, IOAttrs('r')]  # FIXME change to 'z'
+    zone: Annotated[str, IOAttrs('r')]
     address: Annotated[str, IOAttrs('a')]
     port: Annotated[int, IOAttrs('p')]
 

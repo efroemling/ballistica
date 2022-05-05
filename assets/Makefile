@@ -638,6 +638,7 @@ $(eval $(call make-opt-pyc-target,$(element))))
 SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__init__.py \
   build/ba_data/python/bacommon/assets.py \
+  build/ba_data/python/bacommon/bacloud.py \
   build/ba_data/python/bacommon/build.py \
   build/ba_data/python/bacommon/net.py \
   build/ba_data/python/bacommon/servermanager.py \
@@ -665,6 +666,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/__init__.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/assets.cpython-39.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/bacloud.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/build.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/net.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-39.opt-1.pyc \

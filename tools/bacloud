@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import sys
 import os
+import time
+import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
@@ -20,13 +22,15 @@ import requests
 
 from efro.error import CleanError
 from efro.terminal import Clr
+from efro.dataclassio import dataclass_from_json
+from bacommon.bacloud import Response
 
 if TYPE_CHECKING:
-    from typing import Optional, BinaryIO
+    from typing import Optional, BinaryIO, IO
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
-VERSION = 1
+VERSION = 2
 
 TOOL_NAME = 'bacloud'
 
@@ -41,64 +45,8 @@ class StateData:
     login_token: Optional[str] = None
 
 
-@dataclass
-class Response:
-    """Response sent from the bacloud server to the client.
-
-    Attributes:
-      message: If present, client should print this message before any other
-        response processing (including error handling) occurs.
-      message_end: end arg for message print() call.
-      error: If present, client should abort with this error message.
-      login: If present, a token that should be stored client-side and passed
-        with subsequent commands.
-      logout: If True, any existing client-side token should be discarded.
-      dir_manifest: If present, client should generate a manifest of this dir.
-        It should be added to end_command args as 'manifest'.
-      uploads: If present, client should upload the requested files (arg1)
-        individually to a server command (arg2) with provided args (arg3).
-      uploads_inline: If present, a list of pathnames that should be base64
-        gzipped and uploaded to an 'uploads_inline' dict in end_command args.
-        This should be limited to relatively small files.
-      downloads_inline: If present, pathnames mapped to base64 gzipped data to
-        be written to the client. This should only be used for relatively
-        small files as they are all included inline as part of the response.
-      deletes: If present, file paths that should be deleted on the client.
-      dir_prune_empty: If present, all empty dirs under this one should be
-        removed.
-      open_url: If present, url to display to the user.
-      input_prompt: If present, a line of input is read and placed into
-        end_command args as 'input'. The first value is the prompt printed
-        before reading and the second is whether it should be read as a
-        password (without echoing to the terminal).
-      end_message: If present, a message that should be printed after all other
-        response processing is done.
-      end_message_end: end arg for end_message print() call.
-      end_command: If present, this command is run with these args at the end
-        of response processing.
-    """
-    message: Optional[str] = None
-    message_end: str = '\n'
-    error: Optional[str] = None
-    login: Optional[str] = None
-    logout: bool = False
-    dir_manifest: Optional[str] = None
-    uploads: Optional[tuple[list[str], str, dict]] = None
-    uploads_inline: Optional[list[str]] = None
-    downloads_inline: Optional[dict[str, str]] = None
-    deletes: Optional[list[str]] = None
-    dir_prune_empty: Optional[str] = None
-    open_url: Optional[str] = None
-    input_prompt: Optional[tuple[str, bool]] = None
-    end_message: Optional[str] = None
-    end_message_end: str = '\n'
-    end_command: Optional[tuple[str, dict]] = None
-
-
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
-    import time
-    import datetime
     tval = time.time()
     utc_offset = (datetime.datetime.fromtimestamp(tval) -
                   datetime.datetime.utcfromtimestamp(tval)).total_seconds()
@@ -229,7 +177,7 @@ class App:
     def _servercmd(self,
                    cmd: str,
                    data: dict,
-                   files: dict[str, BinaryIO] = None) -> Response:
+                   files: dict[str, IO] = None) -> Response:
         """Issue a command to the server and get a response."""
 
         response_raw_2 = requests.post(
@@ -245,14 +193,9 @@ class App:
             files=files)
         response_raw_2.raise_for_status()  # Except if anything went wrong.
         assert isinstance(response_raw_2.content, bytes)
-        output = json.loads(response_raw_2.content.decode())
 
-        # Create a default Response and fill in only attrs we're aware of.
-        # (newer server may send us attrs we're unaware of)
-        response = Response()
-        for key, val in output.items():
-            if hasattr(response, key):
-                setattr(response, key, val)
+        response = dataclass_from_json(Response,
+                                       response_raw_2.content.decode())
 
         # Handle a few things inline.
         # (so this functionality is available even to recursive commands, etc.)
@@ -261,6 +204,9 @@ class App:
 
         if response.error is not None:
             raise CleanError(response.error)
+
+        if response.delay_seconds > 0.0:
+            time.sleep(response.delay_seconds)
 
         return response
 
