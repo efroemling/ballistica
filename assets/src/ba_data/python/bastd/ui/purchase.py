@@ -72,7 +72,7 @@ class PurchaseWindow(ba.Window):
                 pyoffs = -15
             else:
                 pyoffs = 0
-                price = self._price = _ba.get_account_misc_read_val(
+                price = self._price = _ba.get_v1_account_misc_read_val(
                     'price.' + str(items[0]), -1)
                 price_str = ba.charstr(ba.SpecialChar.TICKET) + str(price)
             self._price_text = ba.textwidget(parent=self._root_widget,
@@ -118,7 +118,7 @@ class PurchaseWindow(ba.Window):
 
         # We go away if we see that our target item is owned.
         if self._items == ['pro']:
-            if ba.app.accounts.have_pro():
+            if ba.app.accounts_v1.have_pro():
                 can_die = True
         else:
             if _ba.get_purchased(self._items[0]):
@@ -134,7 +134,7 @@ class PurchaseWindow(ba.Window):
         else:
             ticket_count: Optional[int]
             try:
-                ticket_count = _ba.get_account_ticket_count()
+                ticket_count = _ba.get_v1_account_ticket_count()
             except Exception:
                 ticket_count = None
             if ticket_count is not None and ticket_count < self._price:

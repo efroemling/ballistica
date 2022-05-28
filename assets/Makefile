@@ -133,7 +133,8 @@ endef
 
 SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/__init__.py \
-  build/ba_data/python/ba/_account.py \
+  build/ba_data/python/ba/_accountv1.py \
+  build/ba_data/python/ba/_accountv2.py \
   build/ba_data/python/ba/_achievement.py \
   build/ba_data/python/ba/_activity.py \
   build/ba_data/python/ba/_activitytypes.py \
@@ -192,6 +193,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_tips.py \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_ui.py \
+  build/ba_data/python/ba/cloud.py \
   build/ba_data/python/ba/deprecated.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/macmusicapp.py \
@@ -378,7 +380,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
 
 SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/__init__.cpython-39.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_account.cpython-39.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_accountv1.cpython-39.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_accountv2.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_achievement.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activity.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activitytypes.cpython-39.opt-1.pyc \
@@ -437,6 +440,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_tips.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_ui.cpython-39.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/cloud.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/deprecated.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-39.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/macmusicapp.cpython-39.opt-1.pyc \
@@ -640,6 +644,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/assets.py \
   build/ba_data/python/bacommon/bacloud.py \
   build/ba_data/python/bacommon/build.py \
+  build/ba_data/python/bacommon/cloud.py \
   build/ba_data/python/bacommon/net.py \
   build/ba_data/python/bacommon/servermanager.py \
   build/ba_data/python/efro/__init__.py \
@@ -668,6 +673,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/assets.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/bacloud.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/build.cpython-39.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/cloud.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/net.cpython-39.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-39.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-39.opt-1.pyc \

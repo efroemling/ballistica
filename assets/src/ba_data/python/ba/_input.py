@@ -639,5 +639,5 @@ def get_last_player_name_from_input_device(device: ba.InputDevice) -> str:
     if profilename == '_random':
         profilename = device.get_default_player_name()
     if profilename == '__account__':
-        profilename = _ba.get_account_display_string()
+        profilename = _ba.get_v1_account_display_string()
     return profilename

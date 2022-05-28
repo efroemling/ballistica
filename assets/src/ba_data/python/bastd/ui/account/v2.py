@@ -4,25 +4,30 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import ba
 import _ba
 
+from efro.error import CommunicationError
+import bacommon.cloud
+
 if TYPE_CHECKING:
-    pass
+    from typing import Union, Optional
+
+STATUS_CHECK_INTERVAL_SECONDS = 2.0
 
 
 class V2SignInWindow(ba.Window):
     """A window allowing signing in to a v2 account."""
 
     def __init__(self, origin_widget: ba.Widget):
-        from ba.internal import is_browser_likely_available
-        logincode = '1412345'
-        address = (
-            f'{_ba.get_master_server_address(version=2)}?login={logincode}')
         self._width = 600
         self._height = 500
+        self._proxyid: Optional[str] = None
+        self._proxykey: Optional[str] = None
+
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
@@ -31,6 +36,53 @@ class V2SignInWindow(ba.Window):
             scale=(1.25 if uiscale is ba.UIScale.SMALL else
                    1.0 if uiscale is ba.UIScale.MEDIUM else 0.85)))
 
+        self._loading_text = ba.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            h_align='center',
+            v_align='center',
+            size=(0, 0),
+            maxwidth=0.9 * self._width,
+            text=ba.Lstr(value='${A}...',
+                         subs=[('${A}', ba.Lstr(resource='loadingText'))]),
+        )
+
+        self._cancel_button = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(30, self._height - 55),
+            size=(130, 50),
+            scale=0.8,
+            label=ba.Lstr(resource='cancelText'),
+            on_activate_call=self._done,
+            autoselect=True,
+            textcolor=(0.75, 0.7, 0.8),
+        )
+        ba.containerwidget(edit=self._root_widget,
+                           cancel_button=self._cancel_button)
+
+        self._update_timer: Optional[ba.Timer] = None
+
+        # Ask the cloud for a proxy login id.
+        ba.app.cloud.send_message(bacommon.cloud.LoginProxyRequestMessage(),
+                                  on_response=ba.WeakCall(
+                                      self._on_proxy_request_response))
+
+    def _on_proxy_request_response(
+        self, response: Union[bacommon.cloud.LoginProxyRequestResponse,
+                              Exception]
+    ) -> None:
+        from ba.internal import is_browser_likely_available
+
+        # Something went wrong. Show an error message and that's it.
+        if isinstance(response, Exception):
+            ba.textwidget(
+                edit=self._loading_text,
+                text=ba.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0))
+            return
+
+        # Show link(s) the user can use to log in.
+        address = _ba.get_master_server_address(version=2) + response.url
         ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 85),
@@ -65,28 +117,75 @@ class V2SignInWindow(ba.Window):
                           v_align='center')
             qroffs = 20.0
 
-        self._cancel_button = ba.buttonwidget(
-            parent=self._root_widget,
-            position=(30, self._height - 55),
-            size=(130, 50),
-            scale=0.8,
-            label=ba.Lstr(resource='cancelText'),
-            # color=(0.6, 0.5, 0.6),
-            on_activate_call=self._done,
-            autoselect=True,
-            textcolor=(0.75, 0.7, 0.8),
-            # icon=ba.gettexture('crossOut'),
-            # iconscale=1.2
-        )
-        ba.containerwidget(edit=self._root_widget,
-                           cancel_button=self._cancel_button)
-
         qr_size = 270
         ba.imagewidget(parent=self._root_widget,
                        position=(self._width * 0.5 - qr_size * 0.5,
                                  self._height * 0.34 + qroffs - qr_size * 0.5),
                        size=(qr_size, qr_size),
                        texture=_ba.get_qrcode_texture(address))
+
+        # Start querying for results.
+        self._proxyid = response.proxyid
+        self._proxykey = response.proxykey
+        ba.timer(STATUS_CHECK_INTERVAL_SECONDS,
+                 ba.WeakCall(self._ask_for_status))
+
+    def _ask_for_status(self) -> None:
+        assert self._proxyid is not None
+        assert self._proxykey is not None
+        ba.app.cloud.send_message(bacommon.cloud.LoginProxyStateQueryMessage(
+            proxyid=self._proxyid, proxykey=self._proxykey),
+                                  on_response=ba.WeakCall(self._got_status))
+
+    def _got_status(
+        self, response: Union[bacommon.cloud.LoginProxyStateQueryResponse,
+                              Exception]
+    ) -> None:
+
+        # For now, if anything goes wrong on the server-side, just abort
+        # with a vague error message. Can be more verbose later if need be.
+        if (isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
+                and response.state is response.State.FAIL):
+            ba.playsound(ba.getsound('error'))
+            ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
+            self._done()
+            return
+
+        # If we got a token, set ourself as signed in. Hooray!
+        if (isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
+                and response.state is response.State.SUCCESS):
+            assert response.credentials is not None
+            ba.app.accounts_v2.set_primary_credentials(response.credentials)
+
+            # As a courtesy, tell the server we're done with this proxy
+            # so it can clean up (not a huge deal if this fails)
+            assert self._proxyid is not None
+            try:
+                ba.app.cloud.send_message(
+                    bacommon.cloud.LoginProxyCompleteMessage(
+                        proxyid=self._proxyid),
+                    on_response=ba.WeakCall(self._proxy_complete_response))
+            except CommunicationError:
+                pass
+            except Exception:
+                logging.warning(
+                    'Unexpected error sending login-proxy-complete message',
+                    exc_info=True)
+
+            self._done()
+            return
+
+        # If we're still waiting, ask again soon.
+        if (isinstance(response, Exception)
+                or response.state is response.State.WAITING):
+            ba.timer(STATUS_CHECK_INTERVAL_SECONDS,
+                     ba.WeakCall(self._ask_for_status))
+
+    def _proxy_complete_response(self, response: Union[None,
+                                                       Exception]) -> None:
+        del response  # Not used.
+        # We could do something smart like retry on exceptions here, but
+        # this isn't critical so we'll just let anything slide.
 
     def _done(self) -> None:
         ba.containerwidget(edit=self._root_widget, transition='out_scale')

@@ -227,7 +227,7 @@ class ServerController:
 
     def _prepare_to_serve(self) -> None:
         """Run in a timer to do prep before beginning to serve."""
-        signed_in = _ba.get_account_state() == 'signed_in'
+        signed_in = _ba.get_v1_account_state() == 'signed_in'
         if not signed_in:
 
             # Signing in to the local server account should not take long;
@@ -302,7 +302,7 @@ class ServerController:
         appcfg = app.config
         sessiontype = self._get_session_type()
 
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             print('WARNING: launch_server_session() expects to run '
                   'with a signed in server account')
 

@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     from typing import Any, Optional
 
 
-class AccountSubsystem:
-    """Subsystem for account handling in the app.
+class AccountV1Subsystem:
+    """Subsystem for legacy account handling in the app.
 
     Category: **App Classes**
 
-    Access the single shared instance of this class at 'ba.app.plugins'.
+    Access the single shared instance of this class at 'ba.app.accounts_v1'.
     """
 
     def __init__(self) -> None:
@@ -41,7 +41,7 @@ class AccountSubsystem:
         def do_auto_sign_in() -> None:
             if _ba.app.headless_mode or _ba.app.config.get(
                     'Auto Account State') == 'Local':
-                _ba.sign_in('Local')
+                _ba.sign_in_v1('Local')
 
         _ba.pushcall(do_auto_sign_in)
 
@@ -108,8 +108,8 @@ class AccountSubsystem:
 
         if data['p']:
             pro_mult = 1.0 + float(
-                _ba.get_account_misc_read_val('proPowerRankingBoost',
-                                              0.0)) * 0.01
+                _ba.get_v1_account_misc_read_val('proPowerRankingBoost',
+                                                 0.0)) * 0.01
         else:
             pro_mult = 1.0
 
@@ -135,7 +135,7 @@ class AccountSubsystem:
         """(internal)"""
         # pylint: disable=cyclic-import
         from ba import _store
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             return []
         icons = []
         store_items = _store.get_store_items()
@@ -152,12 +152,12 @@ class AccountSubsystem:
         (internal)
         """
         # This only applies when we're signed in.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             return
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not _ba.have_chars(_ba.get_account_display_string(full=False)):
+        if not _ba.have_chars(_ba.get_v1_account_display_string(full=False)):
             return
 
         config = _ba.app.config
@@ -199,7 +199,7 @@ class AccountSubsystem:
         # or also if we've been grandfathered in or are using ballistica-core
         # builds.
         return self.have_pro() or bool(
-            _ba.get_account_misc_read_val_2('proOptionsUnlocked', False)
+            _ba.get_v1_account_misc_read_val_2('proOptionsUnlocked', False)
             or _ba.app.config.get('lc14292', 0) > 1)
 
     def show_post_purchase_message(self) -> None:
@@ -221,7 +221,8 @@ class AccountSubsystem:
         from ba._language import Lstr
 
         # Run any pending promo codes we had queued up while not signed in.
-        if _ba.get_account_state() == 'signed_in' and self.pending_promo_codes:
+        if _ba.get_v1_account_state(
+        ) == 'signed_in' and self.pending_promo_codes:
             for code in self.pending_promo_codes:
                 _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
                                   color=(0, 1, 0))
@@ -241,7 +242,7 @@ class AccountSubsystem:
         # If we're not signed in, queue up the code to run the next time we
         # are and issue a warning if we haven't signed in within the next
         # few seconds.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
 
             def check_pending_codes() -> None:
                 """(internal)"""

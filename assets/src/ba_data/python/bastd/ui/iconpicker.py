@@ -40,7 +40,7 @@ class IconPicker(popup.PopupWindow):
         self._transitioning_out = False
 
         self._icons = [ba.charstr(ba.SpecialChar.LOGO)
-                       ] + ba.app.accounts.get_purchased_icons()
+                       ] + ba.app.accounts_v1.get_purchased_icons()
         count = len(self._icons)
         columns = 4
         rows = int(math.ceil(float(count) / columns))
@@ -137,7 +137,7 @@ class IconPicker(popup.PopupWindow):
     def _on_store_press(self) -> None:
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._transition_out()

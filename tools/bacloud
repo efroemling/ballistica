@@ -182,6 +182,7 @@ class App:
 
         response_raw_2 = requests.post(
             (MASTER_SERVER_URL + '/bacloudcmd'),
+            headers={'User-Agent': f'bacloud/{VERSION}'},
             data={
                 'c': cmd,
                 'v': VERSION,

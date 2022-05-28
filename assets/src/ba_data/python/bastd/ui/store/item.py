@@ -202,7 +202,7 @@ def instantiate_store_item_display(item_name: str,
                            color=(1, 1, 1),
                            texture=ba.gettexture('ticketsMore')))
         bonus_tickets = str(
-            _ba.get_account_misc_read_val('proBonusTickets', 100))
+            _ba.get_v1_account_misc_read_val('proBonusTickets', 100))
         extra_texts.append(
             ba.textwidget(parent=parent_widget,
                           draw_controller=btn,
@@ -270,8 +270,8 @@ def instantiate_store_item_display(item_name: str,
 
         # If we have a 'total-worth' item-id for this id, show that price so
         # the user knows how much this is worth.
-        total_worth_item = _ba.get_account_misc_read_val('twrths',
-                                                         {}).get(item_name)
+        total_worth_item = _ba.get_v1_account_misc_read_val('twrths',
+                                                            {}).get(item_name)
         total_worth_price: Optional[str]
         if total_worth_item is not None:
             price = _ba.get_price(total_worth_item)

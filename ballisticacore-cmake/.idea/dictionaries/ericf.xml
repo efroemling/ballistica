@@ -8,7 +8,10 @@
       <w>abouttab</w>
       <w>absval</w>
       <w>accel</w>
+      <w>accountclientv</w>
       <w>accountid</w>
+      <w>accountv</w>
+      <w>accountvalues</w>
       <w>achs</w>
       <w>acinstance</w>
       <w>ack'ed</w>
@@ -17,6 +20,7 @@
       <w>aclass</w>
       <w>aclass's</w>
       <w>activityplayer</w>
+      <w>actool</w>
       <w>addcall</w>
       <w>addchars</w>
       <w>addr</w>
@@ -62,6 +66,7 @@
       <w>appspot</w>
       <w>appstate</w>
       <w>argsjoined</w>
+      <w>argstr</w>
       <w>asci</w>
       <w>assetsmakefile</w>
       <w>assigninput</w>
@@ -99,6 +104,7 @@
       <w>basntoclient</w>
       <w>bastd</w>
       <w>batoolsinternal</w>
+      <w>baworker</w>
       <w>bbbb</w>
       <w>bbbbb</w>
       <w>bbbbbb</w>
@@ -150,6 +156,7 @@
       <w>bsmhi</w>
       <w>bsstd</w>
       <w>bstat</w>
+      <w>bstr</w>
       <w>bsuuid</w>
       <w>btnlabel</w>
       <w>bucketnum</w>
@@ -197,6 +204,7 @@
       <w>checkarglist</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
+      <w>checksummed</w>
       <w>childanntype</w>
       <w>childanntypes</w>
       <w>childtype</w>
@@ -225,11 +233,20 @@
       <w>collider</w>
       <w>columnwidget</w>
       <w>comms</w>
+      <w>compileassetcatalog</w>
+      <w>compilec</w>
+      <w>compilemetalfile</w>
+      <w>compilestoryboard</w>
+      <w>compileswift</w>
+      <w>compileswiftsources</w>
       <w>connectattr</w>
       <w>containerwidget</w>
       <w>controlfp</w>
       <w>cooldown</w>
       <w>coopscore</w>
+      <w>copypng</w>
+      <w>copystringsfile</w>
+      <w>copyswiftlibs</w>
       <w>coreaudio</w>
       <w>coulda</w>
       <w>cout</w>
@@ -239,6 +256,7 @@
       <w>cpuid</w>
       <w>crashenv</w>
       <w>crashlytics</w>
+      <w>createbuilddirectory</w>
       <w>createtime</w>
       <w>cresult</w>
       <w>crom</w>
@@ -252,6 +270,7 @@
       <w>cstdint</w>
       <w>cstdlib</w>
       <w>cstring</w>
+      <w>csval</w>
       <w>ctargetref</w>
       <w>ctracker</w>
       <w>cubemap</w>
@@ -260,6 +279,7 @@
       <w>cutef</w>
       <w>cvar</w>
       <w>data</w>
+      <w>databytes</w>
       <w>dataclassio</w>
       <w>datadata</w>
       <w>dataout</w>
@@ -546,9 +566,13 @@
       <w>htonf</w>
       <w>htonl</w>
       <w>htons</w>
+      <w>ibtool</w>
+      <w>ibtoold</w>
       <w>ibuf</w>
       <w>icloud</w>
       <w>iconscale</w>
+      <w>iconset</w>
+      <w>iconutil</w>
       <w>ieeefp</w>
       <w>ifaddr</w>
       <w>ifaddrs</w>
@@ -615,6 +639,7 @@
       <w>keycode</w>
       <w>keyfilt</w>
       <w>keyint</w>
+      <w>keylen</w>
       <w>keysyms</w>
       <w>keywds</w>
       <w>khronos</w>
@@ -648,6 +673,8 @@
       <w>lightshad</w>
       <w>linearsize</w>
       <w>linearstep</w>
+      <w>linemax</w>
+      <w>linkstoryboards</w>
       <w>listobj</w>
       <w>llock</w>
       <w>localns</w>
@@ -667,6 +694,7 @@
       <w>lrintf</w>
       <w>lscope</w>
       <w>lshort</w>
+      <w>lsregister</w>
       <w>lstr</w>
       <w>lsync</w>
       <w>ltypes</w>
@@ -709,6 +737,7 @@
       <w>meshdata</w>
       <w>messagebox</w>
       <w>messagetype</w>
+      <w>metallink</w>
       <w>metamakefile</w>
       <w>meth</w>
       <w>mhbegin</w>
@@ -722,6 +751,7 @@
       <w>mipmaps</w>
       <w>mkflags</w>
       <w>mlen</w>
+      <w>mmacosx</w>
       <w>mmask</w>
       <w>mmdevapi</w>
       <w>modder</w>
@@ -782,6 +812,7 @@
       <w>newitem</w>
       <w>newname</w>
       <w>newnode</w>
+      <w>newtoken</w>
       <w>nextchar</w>
       <w>nitpicky</w>
       <w>nlpos</w>
@@ -828,6 +859,7 @@
       <w>okbtn</w>
       <w>oldbook</w>
       <w>oldname</w>
+      <w>oldtoken</w>
       <w>oooo</w>
       <w>ooooooo</w>
       <w>ooooooooo</w>
@@ -859,6 +891,8 @@
       <w>ourname</w>
       <w>ourself</w>
       <w>ourstanding</w>
+      <w>outdict</w>
+      <w>outmsg</w>
       <w>outpath</w>
       <w>outputter</w>
       <w>outval</w>
@@ -880,6 +914,7 @@
       <w>pflag</w>
       <w>pflags</w>
       <w>pgmout</w>
+      <w>phasescriptexecution</w>
       <w>piplist</w>
       <w>pipvers</w>
       <w>pixelformat</w>
@@ -918,6 +953,9 @@
       <w>printobjects</w>
       <w>priv</w>
       <w>privatetab</w>
+      <w>processinfoplistfile</w>
+      <w>processpch</w>
+      <w>processpchplusplus</w>
       <w>profilers</w>
       <w>prog</w>
       <w>proj</w>
@@ -925,6 +963,7 @@
       <w>projpath</w>
       <w>projprefix</w>
       <w>prolly</w>
+      <w>proxykey</w>
       <w>psmx</w>
       <w>pspec</w>
       <w>psps</w>
@@ -992,6 +1031,8 @@
       <w>refcounted</w>
       <w>refl</w>
       <w>regionid</w>
+      <w>registerexecutionpolicyexception</w>
+      <w>registerwithlaunchservices</w>
       <w>regtp</w>
       <w>rehel</w>
       <w>reimported</w>
@@ -1042,6 +1083,7 @@
       <w>sapspace</w>
       <w>savebtn</w>
       <w>savebutton</w>
+      <w>sbytes</w>
       <w>scancode</w>
       <w>scenetime</w>
       <w>screenmessage</w>
@@ -1050,6 +1092,7 @@
       <w>sdkcheck</w>
       <w>sdl's</w>
       <w>sdlk</w>
+      <w>sectionchanged</w>
       <w>selchild</w>
       <w>selindex</w>
       <w>selwidget</w>
@@ -1137,6 +1180,7 @@
       <w>standin</w>
       <w>startedptr</w>
       <w>startpos</w>
+      <w>startsplits</w>
       <w>starttime</w>
       <w>startx</w>
       <w>starty</w>
@@ -1171,6 +1215,7 @@
       <w>subscr</w>
       <w>subtypestr</w>
       <w>sval</w>
+      <w>swiftc</w>
       <w>symbolification</w>
       <w>syscalls</w>
       <w>tabdefs</w>
@@ -1194,8 +1239,10 @@
       <w>textcolor</w>
       <w>textwidget</w>
       <w>thang</w>
+      <w>thats</w>
       <w>thecommand</w>
       <w>theres</w>
+      <w>thislinelen</w>
       <w>thismodule</w>
       <w>threadname</w>
       <w>threadpool</w>
@@ -1330,10 +1377,14 @@
       <w>worldspace</w>
       <w>woutdir</w>
       <w>wprjp</w>
+      <w>writeauxiliaryfile</w>
       <w>wsroot</w>
       <w>wunused</w>
       <w>wvmpth</w>
+      <w>xcframework</w>
       <w>xclamped</w>
+      <w>xcodebuildverbose</w>
+      <w>xcoderun</w>
       <w>xcrun</w>
       <w>xdiff</w>
       <w>xdist</w>
@@ -1342,6 +1393,7 @@
       <w>xmin</w>
       <w>xmmintrin</w>
       <w>xoffset</w>
+      <w>xors</w>
       <w>xtweak</w>
       <w>xxlimited</w>
       <w>xxsubinterpreters</w>
@@ -1354,6 +1406,7 @@
       <w>yoffs</w>
       <w>yooooooo</w>
       <w>ytweak</w>
+      <w>zipdata</w>
       <w>zmax</w>
       <w>zmin</w>
       <w>zoffset</w>

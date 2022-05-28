@@ -177,6 +177,31 @@ def spelling() -> None:
     _spelling(sys.argv[2:])
 
 
+def xcodebuild() -> None:
+    """Run xcodebuild with added smarts."""
+    from efrotools.xcode import XCodeBuild
+    XCodeBuild(projroot=str(PROJROOT), args=sys.argv[2:]).run()
+
+
+def xcoderun() -> None:
+    """Run an xcode build in the terminal."""
+    import os
+    import subprocess
+    from efro.error import CleanError
+    from efrotools.xcode import project_build_path
+    if len(sys.argv) != 5:
+        raise CleanError(
+            'Expected 3 args: <xcode project path> <configuration name>')
+    project_path = os.path.abspath(sys.argv[2])
+    scheme = sys.argv[3]
+    configuration = sys.argv[4]
+    path = project_build_path(projroot=str(PROJROOT),
+                              project_path=project_path,
+                              scheme=scheme,
+                              configuration=configuration)
+    subprocess.run(path, check=True)
+
+
 def pyver() -> None:
     """Prints the Python version used by this project."""
     from efrotools import PYVER
@@ -241,8 +266,9 @@ def gen_empty_py_init() -> None:
     Used as part of meta builds.
     """
     from efro.terminal import Clr
+    from efro.error import CleanError
     if len(sys.argv) != 3:
-        raise Exception('Expected a single path arg.')
+        raise CleanError('Expected a single path arg.')
     outpath = Path(sys.argv[2])
     outpath.parent.mkdir(parents=True, exist_ok=True)
     print(f'Meta-building {Clr.BLD}{outpath}{Clr.RST}')
@@ -374,8 +400,9 @@ def androidstudiocode() -> None:
 def tool_config_install() -> None:
     """Install a tool config file (with some filtering)."""
     from efro.terminal import Clr
+    from efro.error import CleanError
     if len(sys.argv) != 4:
-        raise Exception('expected 2 args')
+        raise CleanError('expected 2 args')
     src = Path(sys.argv[2])
     dst = Path(sys.argv[3])
 
@@ -590,6 +617,7 @@ def makefile_target_list() -> None:
     Takes a single argument: a path to a Makefile.
     """
     from dataclasses import dataclass
+    from efro.error import CleanError
     from efro.terminal import Clr
 
     @dataclass
@@ -599,7 +627,7 @@ def makefile_target_list() -> None:
         title: str
 
     if len(sys.argv) != 3:
-        raise RuntimeError('Expected exactly one filename arg.')
+        raise CleanError('Expected exactly one filename arg.')
 
     with open(sys.argv[2], encoding='utf-8') as infile:
         lines = infile.readlines()
@@ -663,3 +691,34 @@ def echo() -> None:
             out.append(arg)
     out.append(Clr.RST)
     print(''.join(out))
+
+
+def urandom_pretty() -> None:
+    """Spits out urandom bytes formatted for source files."""
+    # Note; this is not especially efficient. It should probably be rewritten
+    # if ever needed in a performance-sensitive context.
+    import os
+    from efro.error import CleanError
+
+    if len(sys.argv) not in (3, 4):
+        raise CleanError(
+            'Expected one arg (count) and possibly two (line len).')
+    size = int(sys.argv[2])
+    linemax = 72 if len(sys.argv) < 4 else int(sys.argv[3])
+
+    val = os.urandom(size)
+    lines: list[str] = []
+    line = b''
+
+    for i in range(len(val)):
+        char = val[i:i + 1]
+        thislinelen = len(repr(line + char))
+        if thislinelen > linemax:
+            lines.append(repr(line))
+            line = b''
+        line += char
+    if line:
+        lines.append(repr(line))
+
+    bstr = '\n'.join(str(l) for l in lines)
+    print(f'({bstr})')

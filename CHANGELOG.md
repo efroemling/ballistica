@@ -1,3 +1,22 @@
+### 1.7.0 (20577, 2022-05-28)
+- V2 accounts are now available (woohoo!). These are called 'BombSquad Accounts' in the account section. V2 accounts communicate with a completely new server and will be the foundation for lots of new functionality in the future. However they also function as a V1 account so existing functionality should still work. Note that the new 'workspaces' V2-account is not yet available in this build, but it will be coming very soon. Also note that account types such as GameCenter and Google-Play will be 'upgraded' to V2 accounts in the future so there is no need to try this out if you use one of those. But if you use device-accounts you might want to create yourself a V2 account. You can also reserve a nice account-tag by jumping on this now.
+- Legacy account subsystem has been renamed from `ba.app.accounts` to `ba.app.accounts_v1`
+- Added `ba.app.accounts_v2` subsystem for working with V2 accounts.
+- `ba.SessionPlayer.get_account_id()` is now `ba.SessionPlayer.get_v1_account_id()`
+- `ba.InputDevice.get_account_id()` is now `ba.InputDevice.get_v1_account_id()`
+- `_ba.sign_in()` is now `_ba.sign_in_v1()`
+- `_ba.sign_out()` is now `_ba.sign_out_v1()`
+- `_ba.get_account_name()` is now `_ba.get_v1_account_name()`
+- `_ba.get_account_type()` is now `_ba.get_v1_account_type()`
+- `_ba.get_account_state()` is now `_ba.get_v1_account_state()`
+- `_ba.get_account_state_num()` is now `_ba.get_v1_account_state_num()`
+- `_ba.get_account_display_string()` is now `_ba.get_v1_account_display_string()`
+- `_ba.get_account_misc_val()` is now `_ba.get_v1_account_misc_val()`
+- `_ba.get_account_misc_read_val()` is now `_ba.get_v1_account_misc_read_val()`
+- `_ba.get_account_misc_read_val_2()` is now `_ba.get_v1_account_misc_read_val_2()`
+- `_ba.get_account_ticket_count()` is now `_ba.get_v1_account_ticket_count()`
+
+
 ### 1.6.12 (20567, 2022-05-04)
 - More internal work on V2 master-server communication
 
@@ -106,7 +125,7 @@
 - `ba.get_valid_languages()` is now an attr: `ba.app.lang.available_languages`
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
-- Ditto with AccountSubsystem and ba.app.accounts
+- Ditto with AccountV1Subsystem and ba.app.accounts
 - Ditto with MetadataSubsystem and ba.app.meta
 - Ditto with AdsSubsystem and ba.app.ads
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)

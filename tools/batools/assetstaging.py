@@ -416,7 +416,7 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
                       outfilename: str) -> None:
     """Stage files for the server environment with some filtering."""
     import batools.build
-    from efrotools import replace_one
+    from efrotools import replace_exact
     if mode not in ('debug', 'release'):
         raise RuntimeError(f"Invalid server-file-staging mode '{mode}';"
                            f" expected 'debug' or 'release'.")
@@ -437,9 +437,9 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
         with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
             if mode == 'release':
-                lines[0] = replace_one(lines[0],
-                                       f'#!/usr/bin/env python{PYVER}',
-                                       f'#!/usr/bin/env -S python{PYVER} -O')
+                lines[0] = replace_exact(
+                    lines[0], f'#!/usr/bin/env python{PYVER}',
+                    f'#!/usr/bin/env -S python{PYVER} -O')
         _write_if_changed(outfilename,
                           '\n'.join(lines) + '\n',
                           make_executable=True)
@@ -452,15 +452,15 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
         with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
         if mode == 'release':
-            lines[1] = replace_one(
+            lines[1] = replace_exact(
                 lines[1], ':: Python interpreter.', ':: Python interpreter.'
                 ' (in opt mode so we use bundled .opt-1.pyc files)')
-            lines[2] = replace_one(
+            lines[2] = replace_exact(
                 lines[2], 'dist\\\\python.exe ballisticacore_server.py',
                 'dist\\\\python.exe -O ballisticacore_server.py')
         else:
             # In debug mode we use the bundled debug interpreter.
-            lines[2] = replace_one(
+            lines[2] = replace_exact(
                 lines[2], 'dist\\\\python.exe ballisticacore_server.py',
                 'dist\\\\python_d.exe ballisticacore_server.py')
 

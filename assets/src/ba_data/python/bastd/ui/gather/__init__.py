@@ -151,7 +151,7 @@ class GatherWindow(ba.Window):
         tabdefs: list[tuple[GatherWindow.TabID, ba.Lstr]] = [
             (self.TabID.ABOUT, ba.Lstr(resource=self._r + '.aboutText'))
         ]
-        if _ba.get_account_misc_read_val('enablePublicParties', True):
+        if _ba.get_v1_account_misc_read_val('enablePublicParties', True):
             tabdefs.append((self.TabID.INTERNET,
                             ba.Lstr(resource=self._r + '.publicText')))
         tabdefs.append(

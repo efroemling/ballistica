@@ -33,7 +33,7 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         self._tournament_id = tournament_id
         self._tournament_info = (
-            ba.app.accounts.tournament_info[self._tournament_id])
+            ba.app.accounts_v1.tournament_info[self._tournament_id])
 
         # Set a few vars depending on the tourney fee.
         self._fee = self._tournament_info['fee']
@@ -274,13 +274,14 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         # If there seems to be a relatively-recent valid cached info for this
         # tournament, use it. Otherwise we'll kick off a query ourselves.
-        if (self._tournament_id in ba.app.accounts.tournament_info and
-                ba.app.accounts.tournament_info[self._tournament_id]['valid']
+        if (self._tournament_id in ba.app.accounts_v1.tournament_info
+                and ba.app.accounts_v1.tournament_info[
+                    self._tournament_id]['valid']
                 and (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
-                     ba.app.accounts.tournament_info[self._tournament_id]
+                     ba.app.accounts_v1.tournament_info[self._tournament_id]
                      ['timeReceived'] < 1000 * 60 * 5)):
             try:
-                info = ba.app.accounts.tournament_info[self._tournament_id]
+                info = ba.app.accounts_v1.tournament_info[self._tournament_id]
                 self._seconds_remaining = max(
                     0, info['timeRemaining'] - int(
                         (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
@@ -304,7 +305,7 @@ class TournamentEntryWindow(popup.PopupWindow):
 
     def _on_tournament_query_response(self, data: Optional[dict[str,
                                                                 Any]]) -> None:
-        accounts = ba.app.accounts
+        accounts = ba.app.accounts_v1
         self._running_query = False
         if data is not None:
             data = data['t']  # This used to be the whole payload.
@@ -358,7 +359,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._running_query = True
 
         # Grab the latest info on our tourney.
-        self._tournament_info = ba.app.accounts.tournament_info[
+        self._tournament_info = ba.app.accounts_v1.tournament_info[
             self._tournament_id]
 
         # If we don't have valid data always show a '-' for time.
@@ -374,7 +375,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                                   timeformat=ba.TimeFormat.MILLISECONDS))
 
         # Keep price up-to-date and update the button with it.
-        self._purchase_price = _ba.get_account_misc_read_val(
+        self._purchase_price = _ba.get_v1_account_misc_read_val(
             self._purchase_price_name, None)
 
         ba.textwidget(
@@ -422,7 +423,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                           color=(0, 0.8, 0) if enabled else (0.4, 0.4, 0.4))
 
         try:
-            t_str = str(_ba.get_account_ticket_count())
+            t_str = str(_ba.get_v1_account_ticket_count())
         except Exception:
             t_str = '?'
         if self._get_tickets_button:
@@ -512,7 +513,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         # Deny if we don't have enough tickets.
         ticket_count: Optional[int]
         try:
-            ticket_count = _ba.get_account_ticket_count()
+            ticket_count = _ba.get_v1_account_ticket_count()
         except Exception:
             # FIXME: should add a ba.NotSignedInError we can use here.
             ticket_count = None

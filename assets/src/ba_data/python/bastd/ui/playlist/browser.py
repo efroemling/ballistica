@@ -140,7 +140,7 @@ class PlaylistBrowserWindow(ba.Window):
     def _ensure_standard_playlists_exist(self) -> None:
         # On new installations, go ahead and create a few playlists
         # besides the hard-coded default one:
-        if not _ba.get_account_misc_val('madeStandardPlaylists', False):
+        if not _ba.get_v1_account_misc_val('madeStandardPlaylists', False):
             _ba.add_transaction({
                 'type':
                     'ADD_PLAYLIST',

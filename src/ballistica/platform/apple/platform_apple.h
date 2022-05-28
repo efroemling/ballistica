@@ -16,7 +16,7 @@ namespace ballistica {
 class PlatformApple : public Platform {
  public:
   PlatformApple();
-  auto GetDeviceAccountUUIDPrefix() -> std::string override;
+  auto GetDeviceV1AccountUUIDPrefix() -> std::string override;
   auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
   auto GenerateUUID() -> std::string override;
   auto GetDefaultConfigDir() -> std::string override;

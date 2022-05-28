@@ -24,12 +24,11 @@ if TYPE_CHECKING:
 
 def finish_bootstrapping() -> None:
     """Do final bootstrapping related bits."""
-    from ba._asyncio import setup_asyncio
     assert _ba.in_game_thread()
 
     # Kick off our asyncio event handling, allowing us to use coroutines
     # in our game thread alongside our internal event handling.
-    setup_asyncio()
+    # setup_asyncio()
 
     # Ok, bootstrapping is done; time to get the show started.
     _ba.app.on_app_launch()
@@ -362,3 +361,8 @@ def hash_strings(inputs: list[str]) -> str:
         sha.update(inp.encode())
 
     return sha.hexdigest()
+
+
+def have_account_v2_credentials() -> bool:
+    """Do we have primary account-v2 credentials set?"""
+    return _ba.app.accounts_v2.have_primary_credentials()

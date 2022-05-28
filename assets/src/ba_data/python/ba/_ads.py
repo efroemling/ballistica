@@ -77,7 +77,7 @@ class AdsSubsystem:
         # No ads without net-connections, etc.
         if not _ba.can_show_ad():
             show = False
-        if app.accounts.have_pro():
+        if app.accounts_v1.have_pro():
             show = False  # Pro disables interstitials.
         try:
             session = _ba.get_foreground_host_session()
@@ -93,15 +93,15 @@ class AdsSubsystem:
             launch_count = app.config.get('launchCount', 0)
 
             # If we're seeing short ads we may want to space them differently.
-            interval_mult = (_ba.get_account_misc_read_val(
+            interval_mult = (_ba.get_v1_account_misc_read_val(
                 'ads.shortIntervalMult', 1.0)
                              if self.last_ad_was_short else 1.0)
             if self.ad_amt is None:
                 if launch_count <= 1:
-                    self.ad_amt = _ba.get_account_misc_read_val(
+                    self.ad_amt = _ba.get_v1_account_misc_read_val(
                         'ads.startVal1', 0.99)
                 else:
-                    self.ad_amt = _ba.get_account_misc_read_val(
+                    self.ad_amt = _ba.get_v1_account_misc_read_val(
                         'ads.startVal2', 1.0)
                 interval = None
             else:
@@ -110,15 +110,15 @@ class AdsSubsystem:
                 # (we reach our threshold faster the longer we've been
                 # playing).
                 base = 'ads' if _ba.has_video_ads() else 'ads2'
-                min_lc = _ba.get_account_misc_read_val(base + '.minLC', 0.0)
-                max_lc = _ba.get_account_misc_read_val(base + '.maxLC', 5.0)
-                min_lc_scale = (_ba.get_account_misc_read_val(
+                min_lc = _ba.get_v1_account_misc_read_val(base + '.minLC', 0.0)
+                max_lc = _ba.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
+                min_lc_scale = (_ba.get_v1_account_misc_read_val(
                     base + '.minLCScale', 0.25))
-                max_lc_scale = (_ba.get_account_misc_read_val(
+                max_lc_scale = (_ba.get_v1_account_misc_read_val(
                     base + '.maxLCScale', 0.34))
-                min_lc_interval = (_ba.get_account_misc_read_val(
+                min_lc_interval = (_ba.get_v1_account_misc_read_val(
                     base + '.minLCInterval', 360))
-                max_lc_interval = (_ba.get_account_misc_read_val(
+                max_lc_interval = (_ba.get_v1_account_misc_read_val(
                     base + '.maxLCInterval', 300))
                 if launch_count < min_lc:
                     lc_amt = 0.0

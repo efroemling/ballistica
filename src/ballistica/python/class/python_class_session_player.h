@@ -40,7 +40,7 @@ class PythonClassSessionPlayer : public PythonClass {
                               PyObject* keywds) -> PyObject*;
   static auto RemoveFromGame(PythonClassSessionPlayer* self) -> PyObject*;
   static auto GetTeam(PythonClassSessionPlayer* self) -> PyObject*;
-  static auto GetAccountID(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetV1AccountID(PythonClassSessionPlayer* self) -> PyObject*;
   static auto SetData(PythonClassSessionPlayer* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto GetIconInfo(PythonClassSessionPlayer* self) -> PyObject*;

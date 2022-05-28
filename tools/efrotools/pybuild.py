@@ -8,16 +8,17 @@ import os
 import subprocess
 from typing import TYPE_CHECKING
 
-from efrotools import PYVER, readfile, writefile, replace_one
+from efrotools import readfile, writefile, replace_exact
 
 if TYPE_CHECKING:
     from typing import Any
 
-ENABLE_OPENSSL = True
-NEWER_PY_TEST = True
+PY_VER = '3.10'
+PY_VER_EXACT_ANDROID = '3.10.4'
+PY_VER_EXACT_APPLE = '3.10.4'
 
-PY_VER_EXACT_ANDROID = '3.9.10'
-PY_VER_EXACT_APPLE = '3.9.6'
+# ANDROID_PYTHON_REPO = 'https://github.com/yan12125/python3-android.git'
+ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
 PRUNE_LIB_NAMES = [
@@ -66,66 +67,80 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # broke in the underlying build even on old commits so keeping it
     # locked for now...
     # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-    subprocess.run(['git', 'checkout', PYVER], check=True)
+    subprocess.run(['git', 'checkout', PY_VER], check=True)
 
     txt = readfile('Makefile')
 
     # Fix a bug where spaces in PATH cause errors (darn you vmware fusion!)
-    txt = replace_one(
-        txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) .',
-        '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" .')
+    txt = replace_exact(
+        txt,
+        '\t\tPATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/_install/bin:$(PATH)',
+        '\t\tPATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/_install/bin:$(PATH)"')
 
     # Turn doc strings on; looks like it only adds a few hundred k.
-    txt = txt.replace('--without-doc-strings', '--with-doc-strings')
+    txt = replace_exact(txt,
+                        '--without-doc-strings',
+                        '--with-doc-strings',
+                        count=2)
 
-    # Set mac/ios version reqs
-    # (see issue with utimensat and futimens).
-    txt = replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
-                      'MACOSX_DEPLOYMENT_TARGET=10.15')
-    # And equivalent iOS (11+).
-    txt = replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
-                      'CFLAGS-iOS=-mios-version-min=13.0')
-    # Ditto for tvOS.
-    txt = replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
-                      'CFLAGS-tvOS=-mtvos-version-min=13.0')
+    # Customize our minimum version requirements
+    txt = replace_exact(
+        txt,
+        'CFLAGS-macOS=-mmacosx-version-min=10.15\n',
+        'CFLAGS-macOS=-mmacosx-version-min=10.15\n',
+    )
+    txt = replace_exact(
+        txt,
+        'CFLAGS-iOS=-mios-version-min=12.0 ',
+        'CFLAGS-iOS=-mios-version-min=12.0 ',
+    )
+    txt = replace_exact(
+        txt,
+        'CFLAGS-tvOS=-mtvos-version-min=9.0 ',
+        'CFLAGS-tvOS=-mtvos-version-min=9.0 ',
+    )
 
+    assert '--with-pydebug' not in txt
     if debug:
 
         # Add debug build flag
-        # (Currently expect to find 2 instances of this).
-        dline = '--with-doc-strings --enable-ipv6 --without-ensurepip'
-        splitlen = len(txt.split(dline))
-        if splitlen != 3:
-            raise Exception('unexpected configure lines')
-        txt = txt.replace(dline, '--with-pydebug ' + dline)
+        txt = replace_exact(
+            txt,
+            '--enable-ipv6 --without-ensurepip ',
+            '--enable-ipv6 --with-pydebug --without-ensurepip ',
+            count=2,
+        )
 
-        # Debug has a different name.
-        # (Currently expect to replace 12 instances of this).
-        dline = ('python$(PYTHON_VER)'
-                 if NEWER_PY_TEST else 'python$(PYTHON_VER)m')
-        splitlen = len(txt.split(dline))
-        if splitlen != 13:
-            raise RuntimeError(f'Unexpected configure line count {splitlen}.')
-        txt = txt.replace(
-            dline, 'python$(PYTHON_VER)d'
-            if NEWER_PY_TEST else 'python$(PYTHON_VER)dm')
+        # Debug lib has a different name.
+        txt = replace_exact(txt,
+                            'python$(PYTHON_VER).a',
+                            'python$(PYTHON_VER)d.a',
+                            count=2)
 
-    # Inject our custom modifications to fire before building.
-    txt = txt.replace(
-        '	# Configure target Python\n',
-        '	cd $$(PYTHON_DIR-$1) && '
-        f'../../../../../tools/pcommand python_apple_patch {arch}\n'
-        '	# Configure target Python\n',
-    )
+        txt = replace_exact(txt,
+                            '/include/python$(PYTHON_VER)',
+                            '/include/python$(PYTHON_VER)d',
+                            count=4)
 
-    # Use python3 instead of python for libffi setup script
-    txt = replace_one(
-        txt,
-        'cd $$(LIBFFI_DIR-$1) && python generate-darwin-source-and-headers.py'
-        " --only-$(shell echo $1 | tr '[:upper:]' '[:lower:]')",
-        'cd $$(LIBFFI_DIR-$1) && python3 generate-darwin-source-and-headers.py'
-        " --only-$(shell echo $1 | tr '[:upper:]' '[:lower:]')",
-    )
+    # Inject our custom modifications to fire right after their normal
+    # Setup.local filtering and right before building (and pass the same
+    # 'slice' value they use so we can use it too).
+    txt = replace_exact(
+        txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
+        '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n',
+        '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
+        '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n'
+        '\tcd $$(PYTHON_DIR-$(target)) && '
+        f'../../../../../tools/pcommand python_apple_patch {arch} '
+        '"$$(SLICE-$$(SDK-$(target)))"\n')
+    txt = replace_exact(
+        txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
+        '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n',
+        '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
+        '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n'
+        '\tcd $$(PYTHON_DIR-$(os)) && '
+        f'../../../../../tools/pcommand python_apple_patch {arch} '
+        '"$$(SLICE-macosx)"\n')
 
     writefile('Makefile', txt)
 
@@ -146,20 +161,6 @@ def build_apple(arch: str, debug: bool = False) -> None:
     print('python build complete! (apple/' + arch + ')')
 
 
-def apple_patch(arch: str) -> None:
-    """Run necessary patches on an apple archive before building."""
-
-    # Here's the deal: we want our custom static python libraries to
-    # be as similar as possible on apple platforms and android, so let's
-    # blow away all the tweaks that this setup does to Setup.local and
-    # instead apply our very similar ones directly to Setup, just as we
-    # do for android.
-    with open('Modules/Setup.local', 'w', encoding='utf-8') as outfile:
-        outfile.write('# cleared by efrotools build\n')
-
-    _patch_setup_file('apple', arch)
-
-
 def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     """Run a build for android with the given architecture.
 
@@ -170,13 +171,13 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', 'build'], check=True)
     subprocess.run(
-        [
-            'git', 'clone', 'https://github.com/yan12125/python3-android.git',
-            builddir
-        ],
+        ['git', 'clone', ANDROID_PYTHON_REPO, builddir],
         check=True,
     )
     os.chdir(builddir)
+
+    # TEMP - use 3.9.6 branch
+    # subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
     os.environ['ANDROID_NDK'] = subprocess.check_output(
@@ -185,9 +186,9 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')
-    # ftxt = replace_one(ftxt, '        NCurses,\n',
+    # ftxt = replace_exact(ftxt, '        NCurses,\n',
     #                    '#        NCurses,\n',)
-    ftxt = replace_one(
+    ftxt = replace_exact(
         ftxt,
         '        '
         'BZip2, GDBM, LibFFI, LibUUID, OpenSSL, Readline, SQLite, XZ, ZLib,\n',
@@ -196,13 +197,14 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     )
 
     # Older ssl seems to choke on newer ndk layouts.
-    ftxt = replace_one(
-        ftxt,
-        "source = 'https://www.openssl.org/source/openssl-1.1.1h.tar.gz'",
-        "source = 'https://www.openssl.org/source/openssl-1.1.1l.tar.gz'")
+    if bool(False):
+        ftxt = replace_exact(
+            ftxt,
+            "source = 'https://www.openssl.org/source/openssl-1.1.1h.tar.gz'",
+            "source = 'https://www.openssl.org/source/openssl-1.1.1l.tar.gz'")
 
     # Give ourselves a handle to patch the OpenSSL build.
-    ftxt = replace_one(
+    ftxt = replace_exact(
         ftxt,
         '        # OpenSSL handles NDK internal paths by itself',
         '        # Ericf addition: do some patching:\n'
@@ -217,8 +219,9 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # of Python and also inject some code to modify bits of python
     # after it is extracted.
     ftxt = readfile('build.sh')
-    ftxt = replace_one(ftxt, 'PYVER=3.9.0', f'PYVER={PY_VER_EXACT_ANDROID}')
-    ftxt = replace_one(
+
+    ftxt = replace_exact(ftxt, 'PYVER=3.10.4', f'PYVER={PY_VER_EXACT_ANDROID}')
+    ftxt = replace_exact(
         ftxt, '    popd\n', f'    ../../../tools/pcommand'
         f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n')
     writefile('build.sh', ftxt)
@@ -231,14 +234,29 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     print('python build complete! (android/' + arch + ')')
 
 
+def apple_patch(arch: str, slc: str) -> None:
+    """Run necessary patches on an apple archive before building."""
+
+    # Here's the deal: we want our custom static python libraries to
+    # be as similar as possible on apple platforms and android, so let's
+    # blow away all the tweaks that this setup does to Setup.local and
+    # instead apply our very similar ones directly to Setup, just as we
+    # do for android.
+    with open('Modules/Setup.local', 'w', encoding='utf-8') as outfile:
+        outfile.write('# cleared by efrotools build\n')
+
+    _patch_setup_file('apple', arch, slc)
+
+
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
-    _patch_setup_file('android', '?')
+    _patch_setup_file('android', '?', '?')
 
 
-def _patch_setup_file(platform: str, arch: str) -> None:
+def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+
     fname = 'Modules/Setup'
     ftxt = readfile(fname)
 
@@ -252,18 +270,33 @@ def _patch_setup_file(platform: str, arch: str) -> None:
         hash_ex = ' -DUSE_SSL -lssl -lcrypto'
         lzma_ex = ' -llzma'
     elif platform == 'apple':
-        prefix = '$(srcdir)/Android/sysroot/usr'
+        # These should basically match what the Python-Apple-support dist
+        # does in its patch/Python/Setup.embedded.
+        # (We do our own thing and ignore the Setup.local it generates
+        # for the sake of cross-platform consistency, but still need to
+        # do what we do the same way they do what they do)
+
+        def _slrp(val: str) -> str:
+            # In the distro, the Makefile does this filtering to Setup.local
+            return val.replace('{{slice}}', slc)
+
         uuid_ex = ''
         zlib_ex = ' -I$(prefix)/include -lz'
-        bz2_ex = (' -I$(srcdir)/../Support/BZip2/Headers'
-                  ' -L$(srcdir)/../Support/BZip2 -lbzip2')
-        ssl_ex = (' -I$(srcdir)/../Support/OpenSSL/Headers'
-                  ' -L$(srcdir)/../Support/OpenSSL -lOpenSSL -DUSE_SSL')
+        bz2_ex = _slrp(
+            ' -I$(srcdir)/../Support/BZip2.xcframework/{{slice}}/Headers'
+            ' -L$(srcdir)/../Support/BZip2.xcframework/{{slice}} -lbzip2')
+        ssl_ex = _slrp(
+            ' -I$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}/Headers'
+            ' -L$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}'
+            ' -lOpenSSL -DUSE_SSL')
         sqlite_ex = ' -I$(srcdir)/Modules/_sqlite'
-        hash_ex = (' -I$(srcdir)/../Support/OpenSSL/Headers'
-                   ' -L$(srcdir)/../Support/OpenSSL -lOpenSSL -DUSE_SSL')
-        lzma_ex = (' -I$(srcdir)/../Support/XZ/Headers'
-                   ' -L$(srcdir)/../Support/XZ/ -lxz')
+        hash_ex = _slrp(
+            ' -I$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}/Headers'
+            ' -L$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}'
+            ' -lOpenSSL -DUSE_SSL')
+        lzma_ex = _slrp(
+            ' -I$(srcdir)/../Support/XZ.xcframework/{{slice}}/Headers'
+            ' -L$(srcdir)/../Support/XZ.xcframework/{{slice}} -lxz')
     else:
         raise RuntimeError(f'Unknown platform {platform}')
 
@@ -301,13 +334,13 @@ def _patch_setup_file(platform: str, arch: str) -> None:
         enables += ['_md5']
 
     for enable in enables:
-        ftxt = replace_one(ftxt, f'#{enable} ', f'{enable} ')
+        ftxt = replace_exact(ftxt, f'#{enable} ', f'{enable} ')
         cmodules.remove(enable)
 
     # Disable ones that were enabled:
     disables = ['xxsubtype']
     for disable in disables:
-        ftxt = replace_one(ftxt, f'\n{disable} ', f'\n#{disable} ')
+        ftxt = replace_exact(ftxt, f'\n{disable} ', f'\n#{disable} ')
 
     # Additions:
     ftxt += '\n# Additions by efrotools:\n'
@@ -374,10 +407,10 @@ def _patch_setup_file(platform: str, arch: str) -> None:
     fname = 'Modules/makesetup'
     txt = readfile(fname)
     if platform == 'android':
-        txt = replace_one(txt, '		*=*)'
-                          '	DEFS="$line$NL$DEFS"; continue;;',
-                          '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
-                          ' continue;;')
+        txt = replace_exact(txt, '		*=*)'
+                            '	DEFS="$line$NL$DEFS"; continue;;',
+                            '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
+                            ' continue;;')
     assert txt.count('[A-Z]*=*') == 1
     writefile(fname, txt)
 
@@ -394,7 +427,7 @@ def android_patch_ssl() -> None:
     # but it seems cleaner to just have things work by default.
     fname = 'crypto/getenv.c'
     txt = readfile(fname)
-    txt = replace_one(
+    txt = replace_exact(
         txt,
         ('char *ossl_safe_getenv(const char *name)\n'
          '{\n'),
@@ -455,7 +488,7 @@ def gather() -> None:
         debug = buildtype == 'debug'
         bsuffix = '_debug' if buildtype == 'debug' else ''
         bsuffix2 = '-debug' if buildtype == 'debug' else ''
-        libname = 'python' + PYVER + ('d' if debug else '')
+        libname = 'python' + PY_VER + ('d' if debug else '')
 
         bases = {
             'mac': f'build/python_apple_mac{bsuffix}/build/macOS',
@@ -529,7 +562,7 @@ def gather() -> None:
                 bases2['android_arm'] + '/usr/lib/libuuid.a',
             ],
             'libinst': 'android_armeabi-v7a',
-            'pylib': (bases['android_arm'] + '/usr/lib/python' + PYVER),
+            'pylib': (bases['android_arm'] + '/usr/lib/python' + PY_VER),
         }, {
             'name': 'android_arm64',
             'group': 'android',
@@ -616,7 +649,7 @@ def gather() -> None:
                     # so let's skip that.
                     fname = f'{assets_src_dst}/site.py'
                     txt = readfile(fname)
-                    txt = replace_one(
+                    txt = replace_exact(
                         txt,
                         '    known_paths = addusersitepackages(known_paths)',
                         '    # efro tweak: this craps out on ios/tvos.\n'

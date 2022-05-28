@@ -91,7 +91,7 @@ class AccountViewerWindow(popup.PopupWindow):
 
         # In cases where the user most likely has a browser/email, lets
         # offer a 'report this user' button.
-        if (is_browser_likely_available() and _ba.get_account_misc_read_val(
+        if (is_browser_likely_available() and _ba.get_v1_account_misc_read_val(
                 'showAccountExtrasMenu', False)):
 
             self._extras_menu_button = ba.buttonwidget(

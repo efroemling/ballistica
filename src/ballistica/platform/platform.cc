@@ -118,7 +118,7 @@ Platform::~Platform() = default;
 
 auto Platform::GetLegacyDeviceUUID() -> const std::string& {
   if (!have_device_uuid_) {
-    legacy_device_uuid_ = GetDeviceAccountUUIDPrefix();
+    legacy_device_uuid_ = GetDeviceV1AccountUUIDPrefix();
 
     std::string real_unique_uuid;
     bool have_real_unique_uuid = GetRealLegacyDeviceUUID(&real_unique_uuid);
@@ -168,8 +168,8 @@ auto Platform::GetLegacyDeviceUUID() -> const std::string& {
   return legacy_device_uuid_;
 }
 
-auto Platform::GetDeviceAccountUUIDPrefix() -> std::string {
-  Log("GetDeviceAccountUUIDPrefix() unimplemented");
+auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
+  Log("GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
 }
 
@@ -804,7 +804,7 @@ auto Platform::IsStdinATerminal() -> bool {
 #endif
 }
 
-auto Platform::GetOSVersionString() -> std::string { return "?"; }
+auto Platform::GetOSVersionString() -> std::string { return ""; }
 
 auto Platform::GetUserAgentString() -> std::string {
   std::string device = GetDeviceName();
@@ -949,7 +949,7 @@ void Platform::AndroidQuitActivity() {
   Log("AndroidQuitActivity() unimplemented");
 }
 
-auto Platform::GetDeviceAccountID() -> std::string {
+auto Platform::GetDeviceV1AccountID() -> std::string {
   if (HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();
   }
@@ -1073,15 +1073,15 @@ auto Platform::GetHasVideoAds() -> bool {
   return GetHasAds();
 }
 
-void Platform::SignIn(const std::string& account_type) {
-  Log("SignIn() unimplemented");
+void Platform::SignInV1(const std::string& account_type) {
+  Log("SignInV1() unimplemented");
 }
 
 void Platform::LoginDidChange() {
   // Default is no-op.
 }
 
-void Platform::SignOut() { Log("SignOut() unimplemented"); }
+void Platform::SignOutV1() { Log("SignOutV1() unimplemented"); }
 
 void Platform::AndroidShowWifiSettings() {
   Log("AndroidShowWifiSettings() unimplemented");

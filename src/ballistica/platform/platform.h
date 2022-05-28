@@ -304,17 +304,17 @@ class Platform {
 
 #pragma mark ACCOUNTS ----------------------------------------------------------
 
-  virtual auto SignIn(const std::string& account_type) -> void;
-  virtual auto SignOut() -> void;
+  virtual auto SignInV1(const std::string& account_type) -> void;
+  virtual auto SignOutV1() -> void;
 
   virtual auto GameCenterLogin() -> void;
   virtual auto LoginDidChange() -> void;
 
   /// Returns the ID to use for the device account.
-  auto GetDeviceAccountID() -> std::string;
+  auto GetDeviceV1AccountID() -> std::string;
 
   /// Return the prefix to use for device-account ids on this platform.
-  virtual auto GetDeviceAccountUUIDPrefix() -> std::string;
+  virtual auto GetDeviceV1AccountUUIDPrefix() -> std::string;
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 

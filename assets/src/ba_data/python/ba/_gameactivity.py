@@ -239,11 +239,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
         self._zoom_message_times: dict[int, float] = {}
         self._is_waiting_for_continue = False
 
-        self._continue_cost = _ba.get_account_misc_read_val(
+        self._continue_cost = _ba.get_v1_account_misc_read_val(
             'continueStartCost', 25)
-        self._continue_cost_mult = _ba.get_account_misc_read_val(
+        self._continue_cost_mult = _ba.get_v1_account_misc_read_val(
             'continuesMult', 2)
-        self._continue_cost_offset = _ba.get_account_misc_read_val(
+        self._continue_cost_offset = _ba.get_v1_account_misc_read_val(
             'continuesOffset', 0)
 
     @property
@@ -390,7 +390,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         from ba._generated.enums import TimeType
 
         try:
-            if _ba.get_account_misc_read_val('enableContinues', False):
+            if _ba.get_v1_account_misc_read_val('enableContinues', False):
                 session = self.session
 
                 # We only support continuing in non-tournament games.
@@ -467,7 +467,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
             data_t = data['t']  # This used to be the whole payload.
 
             # Keep our cached tourney info up to date
-            _ba.app.accounts.cache_tournament_info(data_t)
+            _ba.app.accounts_v1.cache_tournament_info(data_t)
             self._setup_tournament_time_limit(
                 max(5, data_t[0]['timeRemaining']))
 

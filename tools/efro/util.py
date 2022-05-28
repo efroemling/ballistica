@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-import datetime
+import os
 import time
+import datetime
 import weakref
 import functools
 from enum import Enum
@@ -652,7 +653,6 @@ def unchanging_hostname() -> str:
     network conditions. (A Mac will tend to go from Foo to Foo.local,
     Foo.lan etc. throughout its various adventures)
     """
-    import os
     import platform
     import subprocess
 

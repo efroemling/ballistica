@@ -210,7 +210,7 @@ class PlaylistMapSelectWindow(ba.Window):
     def _on_store_press(self) -> None:
         from bastd.ui import account
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         StoreBrowserWindow(modal=True,

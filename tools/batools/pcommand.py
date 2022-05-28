@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """A nice collection of ready-to-use pcommands for this package."""
 from __future__ import annotations
 
@@ -387,7 +386,10 @@ def python_apple_patch() -> None:
     """Patches Python to prep for building for Apple platforms."""
     from efrotools import pybuild
     arch = sys.argv[2]
-    pybuild.apple_patch(arch)
+    slc = sys.argv[3]
+    assert slc
+    assert ' ' not in slc
+    pybuild.apple_patch(arch, slc)
 
 
 def python_gather() -> None:
@@ -952,21 +954,6 @@ def update_meta_makefile() -> None:
     """Update the meta Makefile if needed."""
     from batools.metamakefile import update
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
-
-
-def xcode_build_path() -> None:
-    """Get the build path for an xcode project."""
-    import os
-    from batools.xcode import project_build_path
-    if len(sys.argv) != 4:
-        raise Exception(
-            'Expected 2 args: <xcode project path> <configuration name>')
-    project_path = os.path.abspath(sys.argv[2])
-    configuration = sys.argv[3]
-    path = project_build_path(projroot=str(PROJROOT),
-                              project_path=project_path,
-                              configuration=configuration)
-    print(path)
 
 
 def gen_python_enums_module() -> None:

@@ -15,7 +15,7 @@ class PlatformWindows : public Platform {
  public:
   PlatformWindows();
   void SetupInterruptHandling() override;
-  auto GetDeviceAccountUUIDPrefix() -> std::string override { return "w"; }
+  auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto GenerateUUID() -> std::string override;
   auto GetDefaultConfigDir() -> std::string override;

@@ -11,7 +11,7 @@ import traceback
 import logging
 import json
 
-from efro.error import CleanError, RemoteError
+from efro.error import CleanError
 from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
                               dataclass_from_dict)
 from efro.message._message import (Message, Response, ErrorResponse,
@@ -33,7 +33,6 @@ class MessageProtocol:
     def __init__(self,
                  message_types: dict[int, type[Message]],
                  response_types: dict[int, type[Response]],
-                 type_key: Optional[str] = None,
                  preserve_clean_errors: bool = True,
                  log_remote_exceptions: bool = True,
                  trusted_sender: bool = False) -> None:
@@ -43,11 +42,6 @@ class MessageProtocol:
         with (unchanging negative ids) so they don't need to be passed
         explicitly (but can be if a different id is desired).
 
-        If 'type_key' is provided, the message type ID is stored as the
-        provided key in the message dict; otherwise it will be stored as
-        part of a top level dict with the message payload appearing as a
-        child dict. This is mainly for backwards compatibility.
-
         If 'preserve_clean_errors' is True, efro.error.CleanError errors
         on the remote end will result in the same error raised locally.
         All other Exception types come across as efro.error.RemoteError.
@@ -55,7 +49,6 @@ class MessageProtocol:
         If 'trusted_sender' is True, stringified remote stack traces will
         be included in the responses if errors occur.
         """
-        # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}
         self.message_ids_by_type: dict[type[Message], int] = {}
         self.response_types_by_id: dict[int, type[Response]] = {}
@@ -93,7 +86,6 @@ class MessageProtocol:
 
         _reg_if_not(ErrorResponse, -1)
         _reg_if_not(EmptyResponse, -2)
-        # _reg_if_not(BoolResponse, -3)
 
         # Some extra-thorough validation in debug mode.
         if __debug__:
@@ -124,84 +116,78 @@ class MessageProtocol:
                     'message_types contains duplicate __name__s;'
                     ' all types are required to have unique names.')
 
-        self._type_key = type_key
         self.preserve_clean_errors = preserve_clean_errors
         self.log_remote_exceptions = log_remote_exceptions
         self.trusted_sender = trusted_sender
 
-    def encode_message(self, message: Message) -> str:
-        """Encode a message to a json string for transport."""
-        return self._encode(message, self.message_ids_by_type, 'message')
+    @staticmethod
+    def encode_dict(obj: dict) -> str:
+        """Json-encode a provided dict."""
+        return json.dumps(obj, separators=(',', ':'))
 
-    def encode_response(self, response: Response) -> str:
-        """Encode a response to a json string for transport."""
-        return self._encode(response, self.response_ids_by_type, 'response')
+    def message_to_dict(self, message: Message) -> dict:
+        """Encode a message to a json ready dict."""
+        return self._to_dict(message, self.message_ids_by_type, 'message')
 
-    def encode_error_response(self, exc: Exception) -> str:
-        """Return a raw response for an error that occurred during handling."""
+    def response_to_dict(self, response: Response) -> dict:
+        """Encode a response to a json ready dict."""
+        return self._to_dict(response, self.response_ids_by_type, 'response')
+
+    def error_to_response(self, exc: Exception) -> Response:
+        """Translate an error to a response."""
         if self.log_remote_exceptions:
             logging.exception('Error handling message.')
 
         # If anything goes wrong, return a ErrorResponse instead.
         if isinstance(exc, CleanError) and self.preserve_clean_errors:
-            err_response = ErrorResponse(error_message=str(exc),
-                                         error_type=ErrorType.CLEAN)
-        else:
-            err_response = ErrorResponse(
-                error_message=(traceback.format_exc() if self.trusted_sender
-                               else 'An unknown error has occurred.'),
-                error_type=ErrorType.OTHER)
-        return self.encode_response(err_response)
+            return ErrorResponse(error_message=str(exc),
+                                 error_type=ErrorType.CLEAN)
+        return ErrorResponse(
+            error_message=(traceback.format_exc() if self.trusted_sender else
+                           'An unknown error has occurred.'),
+            error_type=ErrorType.OTHER)
 
-    def _encode(self, message: Any, ids_by_type: dict[type, int],
-                opname: str) -> str:
+    def _to_dict(self, message: Any, ids_by_type: dict[type, int],
+                 opname: str) -> dict:
         """Encode a message to a json string for transport."""
 
         m_id: Optional[int] = ids_by_type.get(type(message))
         if m_id is None:
             raise TypeError(f'{opname} type is not registered in protocol:'
                             f' {type(message)}')
-        msgdict = dataclass_to_dict(message)
+        out = {'t': m_id, 'm': dataclass_to_dict(message)}
+        return out
 
-        # Encode type as part of the message/response dict if desired
-        # (for legacy compatibility).
-        if self._type_key is not None:
-            if self._type_key in msgdict:
-                raise RuntimeError(f'Type-key {self._type_key}'
-                                   f' found in msg of type {type(message)}')
-            msgdict[self._type_key] = m_id
-            out = msgdict
-        else:
-            out = {'m': msgdict, 't': m_id}
-        return json.dumps(out, separators=(',', ':'))
+    @staticmethod
+    def decode_dict(data: str) -> dict:
+        """Decode data to a dict."""
+        out = json.loads(data)
+        assert isinstance(out, dict)
+        return out
 
-    def decode_message(self, data: str) -> Message:
+    def message_from_dict(self, data: dict) -> Message:
         """Decode a message from a json string."""
-        out = self._decode(data, self.message_types_by_id, 'message')
+        out = self._from_dict(data, self.message_types_by_id, 'message')
         assert isinstance(out, Message)
         return out
 
-    def decode_response(self, data: str) -> Optional[Response]:
+    def response_from_dict(self, data: dict) -> Response:
         """Decode a response from a json string."""
-        out = self._decode(data, self.response_types_by_id, 'response')
-        assert isinstance(out, (Response, type(None)))
+        out = self._from_dict(data, self.response_types_by_id, 'response')
+        assert isinstance(out, Response)
         return out
 
     # Weeeird; we get mypy errors returning dict[int, type] but
     # dict[int, typing.Type] or dict[int, type[Any]] works..
-    def _decode(self, data: str, types_by_id: dict[int, type[Any]],
-                opname: str) -> Any:
+    def _from_dict(self, data: dict, types_by_id: dict[int, type[Any]],
+                   opname: str) -> Any:
         """Decode a message from a json string."""
-        msgfull = json.loads(data)
-        assert isinstance(msgfull, dict)
         msgdict: Optional[dict]
-        if self._type_key is not None:
-            m_id = msgfull.pop(self._type_key)
-            msgdict = msgfull
-            assert isinstance(m_id, int)
-        else:
-            m_id = msgfull.get('t')
-            msgdict = msgfull.get('m')
+
+        m_id = data.get('t')
+        # Allow omitting 'm' dict if its empty.
+        msgdict = data.get('m', {})
+
         assert isinstance(m_id, int)
         assert isinstance(msgdict, dict)
 
@@ -210,22 +196,7 @@ class MessageProtocol:
         if msgtype is None:
             raise UnregisteredMessageIDError(
                 f'Got unregistered {opname} id of {m_id}.')
-        out = dataclass_from_dict(msgtype, msgdict)
-
-        # Special case: if we get EmptyResponse, we simply return None.
-        if isinstance(out, EmptyResponse):
-            return None
-
-        # Special case: a remote error occurred. Raise a local Exception
-        # instead of returning the message.
-        if isinstance(out, ErrorResponse):
-            assert opname == 'response'
-            if (self.preserve_clean_errors
-                    and out.error_type is ErrorType.CLEAN):
-                raise CleanError(out.error_message)
-            raise RemoteError(out.error_message)
-
-        return out
+        return dataclass_from_dict(msgtype, msgdict)
 
     def _get_module_header(self,
                            part: Literal['sender', 'receiver'],

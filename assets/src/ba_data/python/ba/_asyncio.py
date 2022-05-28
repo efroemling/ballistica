@@ -21,11 +21,12 @@ _asyncio_timer: Optional[ba.Timer] = None
 _asyncio_event_loop: Optional[asyncio.AbstractEventLoop] = None
 
 
-def setup_asyncio() -> None:
-    """Setup asyncio functionality for our game thread."""
+def setup_asyncio() -> asyncio.AbstractEventLoop:
+    """Setup asyncio functionality for the logic thread."""
     # pylint: disable=global-statement
 
     import _ba
+    import ba
     from ba._generated.enums import TimeType
 
     assert _ba.in_game_thread()
@@ -40,6 +41,7 @@ def setup_asyncio() -> None:
 
     global _asyncio_event_loop  # pylint: disable=invalid-name
     _asyncio_event_loop = asyncio.new_event_loop()
+    _asyncio_event_loop.set_default_executor(ba.app.threadpool)
 
     # Ideally we should integrate asyncio into our C++ Thread class's
     # low level event loop so that asyncio timers/sockets/etc. could
@@ -70,3 +72,5 @@ def setup_asyncio() -> None:
             print('TEST AIO TASK ENDING')
 
         _asyncio_event_loop.create_task(aio_test())
+
+    return _asyncio_event_loop

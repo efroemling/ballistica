@@ -118,13 +118,13 @@ class LeagueRankWindow(ba.Window):
         self._season: Optional[str] = None
 
         # take note of our account state; we'll refresh later if this changes
-        self._account_state = _ba.get_account_state()
+        self._account_state = _ba.get_v1_account_state()
 
         self._refresh()
         self._restore_state()
 
         # if we've got cached power-ranking data already, display it
-        info = ba.app.accounts.get_cached_league_rank_data()
+        info = ba.app.accounts_v1.get_cached_league_rank_data()
         if info is not None:
             self._update_for_league_rank_data(info)
 
@@ -155,7 +155,8 @@ class LeagueRankWindow(ba.Window):
             resource='coopSelectWindow.activenessAllTimeInfoText'
             if self._season == 'a' else 'coopSelectWindow.activenessInfoText',
             subs=[('${MAX}',
-                   str(_ba.get_account_misc_read_val('activenessMax', 1.0)))])
+                   str(_ba.get_v1_account_misc_read_val('activenessMax',
+                                                        1.0)))])
         confirm.ConfirmWindow(txt,
                               cancel_button=False,
                               width=460,
@@ -164,17 +165,15 @@ class LeagueRankWindow(ba.Window):
 
     def _on_pro_mult_press(self) -> None:
         from bastd.ui import confirm
-        txt = ba.Lstr(
-            resource='coopSelectWindow.proMultInfoText',
-            subs=[
-                ('${PERCENT}',
-                 str(_ba.get_account_misc_read_val('proPowerRankingBoost',
-                                                   10))),
-                ('${PRO}',
-                 ba.Lstr(resource='store.bombSquadProNameText',
-                         subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
-                               ]))
-            ])
+        txt = ba.Lstr(resource='coopSelectWindow.proMultInfoText',
+                      subs=[('${PERCENT}',
+                             str(
+                                 _ba.get_v1_account_misc_read_val(
+                                     'proPowerRankingBoost', 10))),
+                            ('${PRO}',
+                             ba.Lstr(resource='store.bombSquadProNameText',
+                                     subs=[('${APP_NAME}',
+                                            ba.Lstr(resource='titleText'))]))])
         confirm.ConfirmWindow(txt,
                               cancel_button=False,
                               width=460,
@@ -196,7 +195,7 @@ class LeagueRankWindow(ba.Window):
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
         if data is not None and data.get('s', None) is None:
-            ba.app.accounts.cache_league_rank_data(data)
+            ba.app.accounts_v1.cache_league_rank_data(data)
         # always store a copy locally though (even for other seasons)
         self._league_rank_data = copy.deepcopy(data)
         self._update_for_league_rank_data(data)
@@ -209,7 +208,7 @@ class LeagueRankWindow(ba.Window):
         cur_time = ba.time(ba.TimeType.REAL)
 
         # if our account state has changed, refresh our UI
-        account_state = _ba.get_account_state()
+        account_state = _ba.get_v1_account_state()
         if account_state != self._account_state:
             self._account_state = account_state
             self._save_state()
@@ -353,7 +352,7 @@ class LeagueRankWindow(ba.Window):
             maxwidth=200)
 
         self._activity_mult_button: Optional[ba.Widget]
-        if _ba.get_account_misc_read_val('act', False):
+        if _ba.get_v1_account_misc_read_val('act', False):
             self._activity_mult_button = ba.buttonwidget(
                 parent=w_parent,
                 position=(h2 - 60, v2 + 10),
@@ -594,7 +593,7 @@ class LeagueRankWindow(ba.Window):
         # pylint: disable=too-many-locals
         if not self._root_widget:
             return
-        accounts = ba.app.accounts
+        accounts = ba.app.accounts_v1
         in_top = (data is not None and data['rank'] is not None)
         eq_text = self._rdict.powerRankingPointsEqualsText
         pts_txt = self._rdict.powerRankingPointsText
@@ -603,7 +602,7 @@ class LeagueRankWindow(ba.Window):
         finished_season_unranked = False
         self._can_do_more_button = True
         extra_text = ''
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             status_text = '(' + ba.Lstr(
                 resource='notSignedInText').evaluate() + ')'
         elif in_top:
@@ -790,7 +789,8 @@ class LeagueRankWindow(ba.Window):
 
         have_pro = False if data is None else data['p']
         pro_mult = 1.0 + float(
-            _ba.get_account_misc_read_val('proPowerRankingBoost', 0.0)) * 0.01
+            _ba.get_v1_account_misc_read_val('proPowerRankingBoost',
+                                             0.0)) * 0.01
         # pylint: disable=consider-using-f-string
         ba.textwidget(edit=self._pro_mult_text,
                       text='     -' if

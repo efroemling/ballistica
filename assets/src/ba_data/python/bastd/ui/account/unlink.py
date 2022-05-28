@@ -81,7 +81,7 @@ class AccountUnlinkWindow(ba.Window):
         if our_login_id is None:
             entries = []
         else:
-            account_infos = _ba.get_account_misc_read_val_2(
+            account_infos = _ba.get_v1_account_misc_read_val_2(
                 'linkedAccounts2', [])
             entries = [{
                 'name': ai['d'],

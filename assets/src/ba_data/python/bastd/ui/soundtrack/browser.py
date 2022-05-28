@@ -211,7 +211,7 @@ class SoundtrackBrowserWindow(ba.Window):
                                on_cancel_call=self._back)
 
     def _update(self) -> None:
-        have = ba.app.accounts.have_pro_options()
+        have = ba.app.accounts_v1.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -232,7 +232,7 @@ class SoundtrackBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.confirm import ConfirmWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
@@ -251,7 +251,7 @@ class SoundtrackBrowserWindow(ba.Window):
     def _duplicate_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         cfg = ba.app.config
@@ -322,7 +322,7 @@ class SoundtrackBrowserWindow(ba.Window):
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         ba.playsound(ba.getsound('swish'))
@@ -332,7 +332,7 @@ class SoundtrackBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.soundtrack.edit import SoundtrackEditWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
@@ -434,7 +434,7 @@ class SoundtrackBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.soundtrack.edit import SoundtrackEditWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         self._save_state()

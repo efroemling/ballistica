@@ -67,7 +67,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         # host is navigating menus while they're just staring at an
         # empty-ish screen.
         tval = ba.Lstr(resource='hostIsNavigatingMenusText',
-                       subs=[('${HOST}', _ba.get_account_display_string())])
+                       subs=[('${HOST}', _ba.get_v1_account_display_string())])
         self._host_is_navigating_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
@@ -274,7 +274,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
             # We now want to wait until we're signed in before fetching news.
             def _try_fetching_news(self) -> None:
-                if _ba.get_account_state() == 'signed_in':
+                if _ba.get_v1_account_state() == 'signed_in':
                     self._fetch_news()
                     self._fetch_timer = None
 
@@ -282,7 +282,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 ba.app.main_menu_last_news_fetch_time = time.time()
 
                 # UPDATE - We now just pull news from MRVs.
-                news = _ba.get_account_misc_read_val('n', None)
+                news = _ba.get_v1_account_misc_read_val('n', None)
                 if news is not None:
                     self._got_news(news)
 
@@ -757,7 +757,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             })
 
     def _get_custom_logo_tex_name(self) -> Optional[str]:
-        if _ba.get_account_misc_read_val('easter', False):
+        if _ba.get_v1_account_misc_read_val('easter', False):
             return 'logoEaster'
         return None
 

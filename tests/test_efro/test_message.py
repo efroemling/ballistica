@@ -751,6 +751,7 @@ def test_full_pipeline() -> None:
 
         def __init__(self, target: Union[TestClassRSync,
                                          TestClassRAsync]) -> None:
+            self.test_sidecar = False
             self._target = target
 
         @msg.send_method
@@ -766,7 +767,9 @@ def test_full_pipeline() -> None:
                 if self.test_handling_unregistered:
                     # Emulate forwarding unregistered messages on to some
                     # other handler...
-                    return self.msg.protocol.encode_response(EmptyResponse())
+                    response_dict = self.msg.protocol.response_to_dict(
+                        EmptyResponse())
+                    return self.msg.protocol.encode_dict(response_dict)
                 raise
 
         @msg.send_async_method
@@ -778,10 +781,25 @@ def test_full_pipeline() -> None:
                 return self._target.receiver.handle_raw_message(data)
             return await self._target.receiver.handle_raw_message(data)
 
+        @msg.encode_filter_method
+        def _encode_filter(self, msg: Message, outdict: dict) -> None:
+            """Filter our outgoing messages."""
+            if self.test_sidecar:
+                outdict['_sidecar_data'] = getattr(msg, '_sidecar_data')
+
+        @msg.decode_filter_method
+        def _decode_filter(self, indata: dict, response: Response) -> None:
+            """Filter our incoming responses."""
+            if self.test_sidecar:
+                setattr(response, '_sidecar_data', indata['_sidecar_data'])
+
     class TestClassRSync:
         """Test class incorporating synchronous receive functionality."""
 
         receiver = _TestSyncMessageReceiver()
+
+        def __init__(self) -> None:
+            self.test_sidecar = False
 
         @receiver.handler
         def handle_test_message_1(self, msg: _TMsg1) -> _TResp1:
@@ -790,7 +808,10 @@ def test_full_pipeline() -> None:
                 raise CleanError('Testing Clean Error')
             if msg.ival == 2:
                 raise RuntimeError('Testing Runtime Error')
-            return _TResp1(bval=True)
+            out = _TResp1(bval=True)
+            if self.test_sidecar:
+                setattr(out, '_sidecar_data', getattr(msg, '_sidecar_data'))
+            return out
 
         @receiver.handler
         def handle_test_message_2(self,
@@ -803,6 +824,18 @@ def test_full_pipeline() -> None:
         def handle_test_message_3(self, msg: _TMsg3) -> None:
             """Test."""
             del msg  # Unused
+
+        @receiver.decode_filter_method
+        def _decode_filter(self, indata: dict, message: Message) -> None:
+            """Filter our incoming messages."""
+            if self.test_sidecar:
+                setattr(message, '_sidecar_data', indata['_sidecar_data'])
+
+        @receiver.encode_filter_method
+        def _encode_filter(self, response: Response, outdict: dict) -> None:
+            """Filter our outgoing responses."""
+            if self.test_sidecar:
+                outdict['_sidecar_data'] = getattr(response, '_sidecar_data')
 
         receiver.validate()
 
@@ -885,3 +918,15 @@ def test_full_pipeline() -> None:
     # Make sure static typing lines up with what we expect.
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
         assert static_type_equals(response6, _TResp1)
+
+    # Now test adding extra data to messages. This should be transferred
+    # into the encoded message, copied to the response, and again back
+    # through the encoded response using the filter functions we defined.
+    obj.test_sidecar = True
+    obj_r_sync.test_sidecar = True
+    outmsg = _TMsg1(ival=0)
+    setattr(outmsg, '_sidecar_data', 198)  # Our test payload.
+    response1 = obj.msg.send(outmsg)
+    assert getattr(response1, '_sidecar_data') == 198
+    obj.test_sidecar = False
+    obj_r_sync.test_sidecar = False

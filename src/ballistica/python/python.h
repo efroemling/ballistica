@@ -350,6 +350,7 @@ class Python {
     kLstrFromJsonCall,
     kUUIDStrCall,
     kHashStringsCall,
+    kHaveAccountV2CredentialsCall,
     kLast  // Sentinel; must be at end.
   };
 

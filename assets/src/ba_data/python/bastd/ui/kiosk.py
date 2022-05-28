@@ -360,7 +360,7 @@ class KioskWindow(ba.Window):
     def _update(self) -> None:
         # Kiosk-mode is designed to be used signed-out... try for force
         # the issue.
-        if _ba.get_account_state() == 'signed_in':
+        if _ba.get_v1_account_state() == 'signed_in':
             # _bs.sign_out()
             # FIXME: Try to delete player profiles here too.
             pass

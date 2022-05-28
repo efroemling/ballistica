@@ -60,15 +60,14 @@ class AppInviteWindow(ba.Window):
                 resource='gatherWindow.earnTicketsForRecommendingAmountText',
                 fallback_resource=(
                     'gatherWindow.earnTicketsForRecommendingText'),
-                subs=[
-                    ('${COUNT}',
-                     str(_ba.get_account_misc_read_val('friendTryTickets',
-                                                       300))),
-                    ('${YOU_COUNT}',
-                     str(
-                         _ba.get_account_misc_read_val('friendTryAwardTickets',
-                                                       100)))
-                ]))
+                subs=[('${COUNT}',
+                       str(
+                           _ba.get_v1_account_misc_read_val(
+                               'friendTryTickets', 300))),
+                      ('${YOU_COUNT}',
+                       str(
+                           _ba.get_v1_account_misc_read_val(
+                               'friendTryAwardTickets', 100)))]))
 
         or_text = ba.Lstr(resource='orText',
                           subs=[('${A}', ''),
@@ -129,17 +128,18 @@ class AppInviteWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
             return
 
-        if _ba.get_account_state() == 'signed_in':
+        if _ba.get_v1_account_state() == 'signed_in':
             ba.set_analytics_screen('App Invite UI')
             _ba.show_app_invite(
                 ba.Lstr(resource='gatherWindow.appInviteTitleText',
                         subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
                               ]).evaluate(),
                 ba.Lstr(resource='gatherWindow.appInviteMessageText',
-                        subs=[('${COUNT}', str(self._data['tickets'])),
-                              ('${NAME}', _ba.get_account_name().split()[0]),
-                              ('${APP_NAME}', ba.Lstr(resource='titleText'))
-                              ]).evaluate(), self._data['code'])
+                        subs=[
+                            ('${COUNT}', str(self._data['tickets'])),
+                            ('${NAME}', _ba.get_v1_account_name().split()[0]),
+                            ('${APP_NAME}', ba.Lstr(resource='titleText'))
+                        ]).evaluate(), self._data['code'])
         else:
             ba.playsound(ba.getsound('error'))
 
@@ -256,7 +256,7 @@ class ShowFriendCodeWindow(ba.Window):
                           ]).evaluate(),
             ba.Lstr(resource='gatherWindow.appInviteMessageText',
                     subs=[('${COUNT}', str(self._data['tickets'])),
-                          ('${NAME}', _ba.get_account_name().split()[0]),
+                          ('${NAME}', _ba.get_v1_account_name().split()[0]),
                           ('${APP_NAME}', ba.Lstr(resource='titleText'))
                           ]).evaluate(), self._data['code'])
 
@@ -264,7 +264,7 @@ class ShowFriendCodeWindow(ba.Window):
         import urllib.parse
 
         # If somehow we got signed out.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             ba.screenmessage(ba.Lstr(resource='notSignedInText'),
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -273,7 +273,7 @@ class ShowFriendCodeWindow(ba.Window):
         ba.set_analytics_screen('Email Friend Code')
         subject = (ba.Lstr(resource='gatherWindow.friendHasSentPromoCodeText').
                    evaluate().replace(
-                       '${NAME}', _ba.get_account_name()).replace(
+                       '${NAME}', _ba.get_v1_account_name()).replace(
                            '${APP_NAME}',
                            ba.Lstr(resource='titleText').evaluate()).replace(
                                '${COUNT}', str(self._data['tickets'])))
@@ -304,7 +304,7 @@ def handle_app_invites_press(force_code: bool = False) -> None:
     """(internal)"""
     app = ba.app
     do_app_invites = (app.platform == 'android' and app.subplatform == 'google'
-                      and _ba.get_account_misc_read_val(
+                      and _ba.get_v1_account_misc_read_val(
                           'enableAppInvites', False) and not app.on_tv)
     if force_code:
         do_app_invites = False

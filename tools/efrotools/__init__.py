@@ -96,12 +96,16 @@ def writefile(path: Union[str, Path], txt: str) -> None:
         outfile.write(txt)
 
 
-def replace_one(opstr: str, old: str, new: str) -> str:
-    """Replace text ensuring that exactly one occurrence is replaced."""
-    count = opstr.count(old)
-    if count != 1:
-        raise Exception(
-            f'expected 1 string occurrence; found {count}. String = {old}')
+def replace_exact(opstr: str, old: str, new: str, count: int = 1) -> str:
+    """Replace text ensuring that exactly x occurrences are replaced.
+
+    Useful when filtering data in some predefined way to ensure the original
+    has not changed.
+    """
+    found = opstr.count(old)
+    if found != count:
+        raise Exception(f'expected {count} string occurrence(s);'
+                        f' found {found}. String = {old}')
     return opstr.replace(old, new)
 
 

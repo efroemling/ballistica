@@ -232,7 +232,7 @@ def _dummy_fail() -> None:
 
 def _test_v1_transaction() -> None:
     """Dummy fail test case."""
-    if _ba.get_account_state() != 'signed_in':
+    if _ba.get_v1_account_state() != 'signed_in':
         raise RuntimeError('Not signed in.')
 
     starttime = time.monotonic()

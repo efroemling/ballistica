@@ -253,7 +253,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._update()
 
     def _update(self) -> None:
-        have = ba.app.accounts.have_pro_options()
+        have = ba.app.accounts_v1.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -383,7 +383,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.playlist.editcontroller import PlaylistEditController
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
@@ -407,7 +407,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.playlist.editcontroller import PlaylistEditController
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
@@ -445,7 +445,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         from bastd.ui.playlist import share
 
         # Gotta be signed in for this to work.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'),
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -472,12 +472,12 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
     def _share_playlist(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
         # Gotta be signed in for this to work.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'),
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -508,7 +508,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.confirm import ConfirmWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
@@ -534,7 +534,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro_options():
+        if not ba.app.accounts_v1.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:

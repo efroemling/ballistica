@@ -7,6 +7,7 @@ import random
 import logging
 from enum import Enum
 from typing import TYPE_CHECKING
+from concurrent.futures import ThreadPoolExecutor
 
 import _ba
 from ba._music import MusicSubsystem
@@ -14,15 +15,19 @@ from ba._language import LanguageSubsystem
 from ba._ui import UISubsystem
 from ba._achievement import AchievementSubsystem
 from ba._plugin import PluginSubsystem
-from ba._account import AccountSubsystem
+from ba._accountv1 import AccountV1Subsystem
 from ba._meta import MetadataSubsystem
 from ba._ads import AdsSubsystem
 from ba._net import NetworkSubsystem
 
 if TYPE_CHECKING:
-    import ba
-    from bastd.actor import spazappearance
+    import asyncio
     from typing import Optional, Any, Callable
+
+    import ba
+    from ba.cloud import CloudSubsystem
+    from bastd.actor import spazappearance
+    from ba._accountv2 import AccountV2Subsystem
 
 
 class App:
@@ -38,12 +43,30 @@ class App:
 
     # pylint: disable=too-many-public-methods
 
+    # Implementations for these will be filled in by internal libs.
+    accounts_v2: AccountV2Subsystem
+    cloud: CloudSubsystem
+
     class State(Enum):
         """High level state the app can be in."""
         LAUNCHING = 0
         RUNNING = 1
         PAUSED = 2
         SHUTTING_DOWN = 3
+
+    @property
+    def aioloop(self) -> asyncio.AbstractEventLoop:
+        """The Logic Thread's Asyncio Event Loop.
+
+        This allow async tasks to be run in the logic thread.
+        Note that, at this time, the asyncio loop is encapsulated
+        and explicitly stepped by the engine's logic thread loop and
+        thus things like asyncio.get_running_loop() will not return this
+        loop from most places in the logic thread; only from within a
+        task explicitly created in this loop.
+        """
+        assert self._aioloop is not None
+        return self._aioloop
 
     @property
     def build_number(self) -> int:
@@ -196,6 +219,8 @@ class App:
         # refreshed/etc.
         self.fg_state = 0
 
+        self._aioloop: Optional[asyncio.AbstractEventLoop] = None
+
         self._env = _ba.env()
         self.protocol_version: int = self._env['protocol_version']
         assert isinstance(self.protocol_version, int)
@@ -210,6 +235,11 @@ class App:
         self.iircade_mode: bool = self._env['iircade_mode']
         assert isinstance(self.iircade_mode, bool)
         self.allow_ticket_purchases: bool = not self.iircade_mode
+
+        # Default executor which can be used for misc background processing.
+        # It should also be passed to any asyncio loops we create so that
+        # everything shares the same single set of threads.
+        self.threadpool = ThreadPoolExecutor(thread_name_prefix='baworker')
 
         # Misc.
         self.tips: list[str] = []
@@ -235,7 +265,7 @@ class App:
         self.server: Optional[ba.ServerController] = None
 
         self.meta = MetadataSubsystem()
-        self.accounts = AccountSubsystem()
+        self.accounts_v1 = AccountV1Subsystem()
         self.plugins = PluginSubsystem()
         self.music = MusicSubsystem()
         self.lang = LanguageSubsystem()
@@ -286,6 +316,8 @@ class App:
 
         (internal)"""
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-locals
+        from ba import _asyncio
         from ba import _apputils
         from ba import _appconfig
         from ba import _map
@@ -294,6 +326,8 @@ class App:
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
+
+        self._aioloop = _asyncio.setup_asyncio()
 
         cfg = self.config
 
@@ -365,7 +399,8 @@ class App:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
         self.meta.on_app_launch()
-        self.accounts.on_app_launch()
+        self.accounts_v2.on_app_launch()
+        self.accounts_v1.on_app_launch()
         self.plugins.on_app_launch()
 
         # See note below in on_app_pause.
@@ -403,7 +438,7 @@ class App:
         self._app_paused = False
         self._update_state()
         self.fg_state += 1
-        self.accounts.on_app_resume()
+        self.accounts_v1.on_app_resume()
         self.music.on_app_resume()
         self.plugins.on_app_resume()
 
@@ -569,7 +604,7 @@ class App:
         appname = _ba.appname()
         if url.startswith(f'{appname}://code/'):
             code = url.replace(f'{appname}://code/', '')
-            self.accounts.add_pending_promo_code(code)
+            self.accounts_v1.add_pending_promo_code(code)
         else:
             _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))

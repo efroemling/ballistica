@@ -95,7 +95,7 @@ class SpecialOfferWindow(ba.Window):
                 if ('bonusTickets' in offer
                         and offer['bonusTickets'] is not None):
                     self._is_bundle_sale = True
-                original_price = _ba.get_account_misc_read_val(
+                original_price = _ba.get_v1_account_misc_read_val(
                     'price.' + self._offer_item, 9999)
 
                 # For pure ticket prices we can show a percent-off.
@@ -341,7 +341,7 @@ class SpecialOfferWindow(ba.Window):
 
         # We go away if we see that our target item is owned.
         if self._offer_item == 'pro':
-            if _ba.app.accounts.have_pro():
+            if _ba.app.accounts_v1.have_pro():
                 can_die = True
         else:
             if _ba.get_purchased(self._offer_item):
@@ -364,9 +364,9 @@ class SpecialOfferWindow(ba.Window):
         if not self._root_widget:
             return
         sval: Union[str, ba.Lstr]
-        if _ba.get_account_state() == 'signed_in':
+        if _ba.get_v1_account_state() == 'signed_in':
             sval = (ba.charstr(SpecialChar.TICKET) +
-                    str(_ba.get_account_ticket_count()))
+                    str(_ba.get_v1_account_ticket_count()))
         else:
             sval = ba.Lstr(resource='getTicketsWindow.titleText')
         ba.buttonwidget(edit=self._get_tickets_button, label=sval)
@@ -374,7 +374,7 @@ class SpecialOfferWindow(ba.Window):
     def _on_get_more_tickets_press(self) -> None:
         from bastd.ui import account
         from bastd.ui import getcurrency
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         getcurrency.GetCurrencyWindow(modal=True).get_root_widget()
@@ -393,7 +393,7 @@ class SpecialOfferWindow(ba.Window):
         else:
             ticket_count: Optional[int]
             try:
-                ticket_count = _ba.get_account_ticket_count()
+                ticket_count = _ba.get_v1_account_ticket_count()
             except Exception:
                 ticket_count = None
             if (ticket_count is not None

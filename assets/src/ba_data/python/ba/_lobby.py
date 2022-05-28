@@ -452,7 +452,8 @@ class Chooser:
             clamp = not full
         elif name == '__account__':
             try:
-                name = self._sessionplayer.inputdevice.get_account_name(full)
+                name = self._sessionplayer.inputdevice.get_v1_account_name(
+                    full)
             except Exception:
                 print_exception('Error getting account name for chooser.')
                 name = 'Invalid'
@@ -894,7 +895,7 @@ class Lobby:
         self.character_names_local_unlocked.sort(key=lambda x: x.lower())
 
         # Do any overall prep we need to such as creating account profile.
-        _ba.app.accounts.ensure_have_account_player_profile()
+        _ba.app.accounts_v1.ensure_have_account_player_profile()
         for chooser in self.choosers:
             try:
                 chooser.reload_profiles()

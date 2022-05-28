@@ -13,7 +13,7 @@ namespace ballistica {
 class PlatformLinux : public Platform {
  public:
   PlatformLinux();
-  auto GetDeviceAccountUUIDPrefix() -> std::string override { return "l"; }
+  auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
   auto GenerateUUID() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
   auto DoOpenURL(const std::string& url) -> void override;

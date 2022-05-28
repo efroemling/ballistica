@@ -83,7 +83,7 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.do_quit,  # kQuitCall
         _hooks.shutdown,  # kShutdownCall
         _hooks.gc_disable,  # kGCDisableCall
-        ba.app.accounts.show_post_purchase_message,  # kShowPostPurchaseMessageCall
+        ba.app.accounts_v1.show_post_purchase_message,  # kShowPostPurchaseMessageCall
         _hooks.device_menu_press,  # kDeviceMenuPressCall
         _hooks.show_url_window,  # kShowURLWindowCall
         _hooks.party_invite_revoke,  # kHandlePartyInviteRevokeCall
@@ -134,4 +134,5 @@ def get_binding_values() -> tuple[Any, ...]:
         _language.Lstr.from_json,  # kLstrFromJsonCall
         _hooks.uuid_str,  # kUUIDStrCall
         _hooks.hash_strings,  # kHashStringsCall
+        _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     )  # yapf: disable

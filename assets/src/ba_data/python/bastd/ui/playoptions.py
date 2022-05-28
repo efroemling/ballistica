@@ -250,7 +250,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=ba.Lstr(resource='teamNamesColorText'))
-            if not ba.app.accounts.have_pro():
+            if not ba.app.accounts_v1.have_pro():
                 ba.imagewidget(
                     parent=self.root_widget,
                     size=(30, 30),
@@ -348,8 +348,8 @@ class PlayOptionsWindow(popup.PopupWindow):
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.teamnamescolors import TeamNamesColorsWindow
         from bastd.ui.purchase import PurchaseWindow
-        if not ba.app.accounts.have_pro():
-            if _ba.get_account_state() != 'signed_in':
+        if not ba.app.accounts_v1.have_pro():
+            if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
                 PurchaseWindow(items=['pro'])

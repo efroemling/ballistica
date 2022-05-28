@@ -15,7 +15,7 @@ def show_sign_in_prompt(account_type: str = None) -> None:
     if account_type == 'Google Play':
         ConfirmWindow(
             ba.Lstr(resource='notSignedInGooglePlayErrorText'),
-            lambda: _ba.sign_in('Google Play'),
+            lambda: _ba.sign_in_v1('Google Play'),
             ok_text=ba.Lstr(resource='accountSettingsWindow.signInText'),
             width=460,
             height=130)

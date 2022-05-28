@@ -38,23 +38,23 @@ class PipRequirement:
 # installing it. And as far as manually-installed bits, pip itself must
 # have some way to allow for that, right?...
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 12, 2]),
-    PipRequirement(modulename='mypy', minversion=[0, 931]),
+    PipRequirement(modulename='pylint', minversion=[2, 13, 9]),
+    PipRequirement(modulename='mypy', minversion=[0, 960]),
     PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
-    PipRequirement(modulename='pytest', minversion=[6, 2, 5]),
+    PipRequirement(modulename='cpplint', minversion=[1, 6, 0]),
+    PipRequirement(modulename='pytest', minversion=[7, 1, 2]),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
     PipRequirement(modulename='pdoc'),
-    PipRequirement(pipname='typing_extensions', minversion=[4, 0, 1]),
-    PipRequirement(pipname='types-filelock', minversion=[3, 2, 5]),
-    PipRequirement(pipname='types-requests', minversion=[2, 27, 7]),
-    PipRequirement(pipname='types-pytz', minversion=[2021, 3, 4]),
-    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 3]),
-    PipRequirement(pipname='certifi', minversion=[2021, 10, 8]),
-    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 1]),
+    PipRequirement(pipname='typing_extensions', minversion=[4, 2, 0]),
+    PipRequirement(pipname='types-filelock', minversion=[3, 2, 6]),
+    PipRequirement(pipname='types-requests', minversion=[2, 27, 29]),
+    PipRequirement(pipname='types-pytz', minversion=[2021, 3, 8]),
+    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 7]),
+    PipRequirement(pipname='certifi', minversion=[2022, 5, 18, 1]),
+    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 2]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -566,7 +566,8 @@ def checkenv() -> None:
                         f' will update all pip requirements.')
                 if minver is not None:
                     vnums = pipvers[pipname]
-                    assert len(vnums) == len(minver)
+                    assert len(vnums) == len(minver), (
+                        f'unexpected version format for {pipname}: {vnums}')
                     if vnums < minver:
                         raise CleanError(
                             f'{pipname} ver. {_vstr(minver)} or newer'

@@ -52,8 +52,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ba.app.ach.achievements_for_coop_level(self._campaign.name + ':' +
                                                    settings['level']))
 
-        self._account_type = (_ba.get_account_type() if
-                              _ba.get_account_state() == 'signed_in' else None)
+        self._account_type = (_ba.get_v1_account_type()
+                              if _ba.get_v1_account_state() == 'signed_in' else
+                              None)
 
         self._game_service_icon_color: Optional[Sequence[float]]
         self._game_service_achievements_texture: Optional[ba.Texture]
@@ -631,7 +632,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if ba.app.server is None:
             # If we're running in normal non-headless build, show this text
             # because only host can continue the game.
-            adisp = _ba.get_account_display_string()
+            adisp = _ba.get_v1_account_display_string()
             txt = Text(ba.Lstr(resource='waitingForHostText',
                                subs=[('${HOST}', adisp)]),
                        maxwidth=300,
@@ -732,7 +733,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 'scoreVersion': sver,
                 'scores': our_high_scores_all
             })
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
             if not (ba.app.demo_mode or ba.app.arcade_mode):
                 print('got not-signed-in at score-submit; unexpected')
@@ -1260,8 +1261,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         try:
             tournament_id = self.session.tournament_id
             if tournament_id is not None:
-                if tournament_id in ba.app.accounts.tournament_info:
-                    tourney_info = ba.app.accounts.tournament_info[
+                if tournament_id in ba.app.accounts_v1.tournament_info:
+                    tourney_info = ba.app.accounts_v1.tournament_info[
                         tournament_id]
                     # pylint: disable=unbalanced-tuple-unpacking
                     pr1, pv1, pr2, pv2, pr3, pv3 = (

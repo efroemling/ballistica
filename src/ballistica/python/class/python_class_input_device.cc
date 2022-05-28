@@ -300,8 +300,8 @@ auto PythonClassInputDevice::GetPlayerProfiles(PythonClassInputDevice* self)
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassInputDevice::GetAccountName(PythonClassInputDevice* self,
-                                            PyObject* args, PyObject* keywds)
+auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
+                                              PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   int full;
@@ -440,9 +440,9 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "\n"
      "Returns the default player name for this device. (used for the 'random'\n"
      "profile)"},
-    {"get_account_name", (PyCFunction)GetAccountName,
+    {"get_v1_account_name", (PyCFunction)GetV1AccountName,
      METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise ops)
-     "get_account_name(full: bool) -> str\n"
+     "get_v1_account_name(full: bool) -> str\n"
      "\n"
      "Returns the account name associated with this device.\n"
      "\n"

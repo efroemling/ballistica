@@ -173,8 +173,8 @@ class EditProfileWindow(ba.Window):
 
         self._upgrade_button = None
         if self._is_account_profile:
-            if _ba.get_account_state() == 'signed_in':
-                sval = _ba.get_account_display_string()
+            if _ba.get_v1_account_state() == 'signed_in':
+                sval = _ba.get_v1_account_display_string()
             else:
                 sval = '??'
             ba.textwidget(parent=self._root_widget,
@@ -427,7 +427,7 @@ class EditProfileWindow(ba.Window):
         """Attempt to ugrade the profile to global."""
         from bastd.ui import account
         from bastd.ui.profile import upgrade as pupgrade
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
 
@@ -593,8 +593,8 @@ class EditProfileWindow(ba.Window):
             return
         name = self.getname()
         if name == '__account__':
-            name = (_ba.get_account_name()
-                    if _ba.get_account_state() == 'signed_in' else '???')
+            name = (_ba.get_v1_account_name()
+                    if _ba.get_v1_account_state() == 'signed_in' else '???')
         if len(name) > 10 and not (self._global or self._is_account_profile):
             ba.textwidget(edit=self._clipped_name_text,
                           text=ba.Lstr(resource='inGameClippedNameText',

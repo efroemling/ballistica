@@ -179,22 +179,27 @@ class GetCurrencyWindow(ba.Window):
         c2txt = ba.Lstr(
             resource=rsrc,
             subs=[('${COUNT}',
-                   str(_ba.get_account_misc_read_val('tickets2Amount', 500)))])
+                   str(_ba.get_v1_account_misc_read_val('tickets2Amount',
+                                                        500)))])
         c3txt = ba.Lstr(
             resource=rsrc,
-            subs=[('${COUNT}',
-                   str(_ba.get_account_misc_read_val('tickets3Amount',
-                                                     1500)))])
+            subs=[
+                ('${COUNT}',
+                 str(_ba.get_v1_account_misc_read_val('tickets3Amount', 1500)))
+            ])
         c4txt = ba.Lstr(
             resource=rsrc,
-            subs=[('${COUNT}',
-                   str(_ba.get_account_misc_read_val('tickets4Amount',
-                                                     5000)))])
+            subs=[
+                ('${COUNT}',
+                 str(_ba.get_v1_account_misc_read_val('tickets4Amount', 5000)))
+            ])
         c5txt = ba.Lstr(
             resource=rsrc,
-            subs=[('${COUNT}',
-                   str(_ba.get_account_misc_read_val('tickets5Amount',
-                                                     15000)))])
+            subs=[
+                ('${COUNT}',
+                 str(_ba.get_v1_account_misc_read_val('tickets5Amount',
+                                                      15000)))
+            ])
 
         h = 110.0
 
@@ -261,7 +266,7 @@ class GetCurrencyWindow(ba.Window):
                 label=ba.Lstr(resource=self._r + '.ticketsFromASponsorText',
                               subs=[('${COUNT}',
                                      str(
-                                         _ba.get_account_misc_read_val(
+                                         _ba.get_v1_account_misc_read_val(
                                              'sponsorTickets', 5)))]),
                 tex_name='ticketsMore',
                 enabled=self._enable_ad_button,
@@ -301,11 +306,10 @@ class GetCurrencyWindow(ba.Window):
                 size=b_size_3,
                 label=ba.Lstr(
                     resource='gatherWindow.earnTicketsForRecommendingText',
-                    subs=[
-                        ('${COUNT}',
-                         str(_ba.get_account_misc_read_val(
-                             'sponsorTickets', 5)))
-                    ]),
+                    subs=[('${COUNT}',
+                           str(
+                               _ba.get_v1_account_misc_read_val(
+                                   'sponsorTickets', 5)))]),
                 tex_name='ticketsMore',
                 enabled=True,
                 tex_opacity=0.6,
@@ -427,16 +431,16 @@ class GetCurrencyWindow(ba.Window):
         import datetime
 
         # if we somehow get signed out, just die..
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             self._back()
             return
 
-        self._ticket_count = _ba.get_account_ticket_count()
+        self._ticket_count = _ba.get_v1_account_ticket_count()
 
         # update our incentivized ad button depending on whether ads are
         # available
         if self._ad_button is not None:
-            next_reward_ad_time = _ba.get_account_misc_read_val_2(
+            next_reward_ad_time = _ba.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None)
             if next_reward_ad_time is not None:
                 next_reward_ad_time = datetime.datetime.utcfromtimestamp(
@@ -494,8 +498,9 @@ class GetCurrencyWindow(ba.Window):
         app = ba.app
         if ((app.test_build or
              (app.platform == 'android'
-              and app.subplatform in ['oculus', 'cardboard'])) and
-                _ba.get_account_misc_read_val('allowAccountLinking2', False)):
+              and app.subplatform in ['oculus', 'cardboard']))
+                and _ba.get_v1_account_misc_read_val('allowAccountLinking2',
+                                                     False)):
             ba.screenmessage(ba.Lstr(resource=self._r +
                                      '.unavailableLinkAccountText'),
                              color=(1, 0.5, 0))
@@ -509,7 +514,7 @@ class GetCurrencyWindow(ba.Window):
         from bastd.ui import appinvite
         from ba.internal import master_server_get
         if item == 'app_invite':
-            if _ba.get_account_state() != 'signed_in':
+            if _ba.get_v1_account_state() != 'signed_in':
                 account.show_sign_in_prompt()
                 return
             appinvite.handle_app_invites_press()
@@ -554,7 +559,7 @@ class GetCurrencyWindow(ba.Window):
         if item == 'ad':
             import datetime
             # if ads are disabled until some time, error..
-            next_reward_ad_time = _ba.get_account_misc_read_val_2(
+            next_reward_ad_time = _ba.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None)
             if next_reward_ad_time is not None:
                 next_reward_ad_time = datetime.datetime.utcfromtimestamp(

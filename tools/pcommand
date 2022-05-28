@@ -23,7 +23,7 @@ from efrotools.pcommand import (
     cpplint, pylint, pylint_files, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
     makefile_target_list, spelling, spelling_all, pytest, echo,
-    compile_python_files, pyver, try_repeat)
+    compile_python_files, pyver, try_repeat, xcodebuild, xcoderun)
 from batools.pcommand import (
     stage_server_file, py_examine, resize_image, check_clean_safety,
     clean_orphaned_assets, archive_old_builds, lazy_increment_build,
@@ -41,9 +41,8 @@ from batools.pcommand import (
     update_cmake_prefab_lib, cmake_prep_dir, gen_binding_code,
     gen_flat_data_code, wsl_path_to_win, wsl_build_check_win_drive,
     win_ci_binary_build, genchangelog, android_sdk_utils,
-    update_resources_makefile, update_meta_makefile, xcode_build_path,
-    gen_python_enums_module, gen_python_init_module, update_dummy_module,
-    win_ci_install_prereqs)
+    update_resources_makefile, update_meta_makefile, gen_python_enums_module,
+    gen_python_init_module, update_dummy_module, win_ci_install_prereqs)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:

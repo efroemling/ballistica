@@ -94,7 +94,7 @@ class ColorPicker(PopupWindow):
             on_activate_call=ba.WeakCall(self._select_other))
 
         # Custom colors are limited to pro currently.
-        if not ba.app.accounts.have_pro():
+        if not ba.app.accounts_v1.have_pro():
             ba.imagewidget(parent=self.root_widget,
                            position=(50, 12),
                            size=(30, 30),
@@ -118,7 +118,7 @@ class ColorPicker(PopupWindow):
         from bastd.ui import purchase
 
         # Requires pro.
-        if not ba.app.accounts.have_pro():
+        if not ba.app.accounts_v1.have_pro():
             purchase.PurchaseWindow(items=['pro'])
             self._transition_out()
             return

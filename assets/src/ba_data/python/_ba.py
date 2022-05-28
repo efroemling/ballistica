@@ -263,13 +263,6 @@ class InputDevice:
         """
         return bool()
 
-    def get_account_name(self, full: bool) -> str:
-        """Returns the account name associated with this device.
-
-        (can be used to get account names for remote players)
-        """
-        return str()
-
     def get_axis_name(self, axis_id: int) -> str:
         """Given an axis ID, return the name of the axis on this device.
 
@@ -296,6 +289,13 @@ class InputDevice:
     def get_player_profiles(self) -> dict:
         """(internal)"""
         return dict()
+
+    def get_v1_account_name(self, full: bool) -> str:
+        """Returns the account name associated with this device.
+
+        (can be used to get account names for remote players)
+        """
+        return str()
 
     def is_connected_to_remote_player(self) -> bool:
         """(internal)"""
@@ -788,16 +788,6 @@ class SessionPlayer:
         """Return whether the underlying player is still in the game."""
         return bool()
 
-    def get_account_id(self) -> str:
-        """Return the Account ID this player is signed in under, if
-        there is one and it can be determined with relative certainty.
-        Returns None otherwise. Note that this may require an active
-        internet connection (especially for network-connected players)
-        and may return None for a short while after a player initially
-        joins (while verification occurs).
-        """
-        return str()
-
     def get_icon(self) -> dict[str, Any]:
         """Returns the character's icon (images, colors, etc contained
         in a dict.
@@ -807,6 +797,16 @@ class SessionPlayer:
     def get_icon_info(self) -> dict[str, Any]:
         """(internal)"""
         return {'foo': 'bar'}
+
+    def get_v1_account_id(self) -> str:
+        """Return the V1 Account ID this player is signed in under, if
+        there is one and it can be determined with relative certainty.
+        Returns None otherwise. Note that this may require an active
+        internet connection (especially for network-connected players)
+        and may return None for a short while after a player initially
+        joins (while verification occurs).
+        """
+        return str()
 
     def getname(self, full: bool = False, icon: bool = True) -> str:
         """Returns the player's name. If icon is True, the long version of the
@@ -1570,54 +1570,6 @@ def game_service_has_leaderboard(game: str, config: str) -> bool:
     return bool()
 
 
-def get_account_display_string(full: bool = True) -> str:
-    """(internal)"""
-    return str()
-
-
-def get_account_misc_read_val(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_account_misc_read_val_2(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_account_misc_val(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_account_name() -> str:
-    """(internal)"""
-    return str()
-
-
-def get_account_state() -> str:
-    """(internal)"""
-    return str()
-
-
-def get_account_state_num() -> int:
-    """(internal)"""
-    return int()
-
-
-def get_account_ticket_count() -> int:
-    """(internal)
-
-    Returns the number of tickets for the current account.
-    """
-    return int()
-
-
-def get_account_type() -> str:
-    """(internal)"""
-    return str()
-
-
 def get_appconfig_builtin_keys() -> list[str]:
     """(internal)"""
     return ['blah', 'blah2']
@@ -1918,6 +1870,54 @@ def get_ui_input_device() -> ba.InputDevice:
     """
     import ba  # pylint: disable=cyclic-import
     return ba.InputDevice()
+
+
+def get_v1_account_display_string(full: bool = True) -> str:
+    """(internal)"""
+    return str()
+
+
+def get_v1_account_misc_read_val(name: str, default_value: Any) -> Any:
+    """(internal)"""
+    return _uninferrable()
+
+
+def get_v1_account_misc_read_val_2(name: str, default_value: Any) -> Any:
+    """(internal)"""
+    return _uninferrable()
+
+
+def get_v1_account_misc_val(name: str, default_value: Any) -> Any:
+    """(internal)"""
+    return _uninferrable()
+
+
+def get_v1_account_name() -> str:
+    """(internal)"""
+    return str()
+
+
+def get_v1_account_state() -> str:
+    """(internal)"""
+    return str()
+
+
+def get_v1_account_state_num() -> int:
+    """(internal)"""
+    return int()
+
+
+def get_v1_account_ticket_count() -> int:
+    """(internal)
+
+    Returns the number of tickets for the current account.
+    """
+    return int()
+
+
+def get_v1_account_type() -> str:
+    """(internal)"""
+    return str()
 
 
 def get_v2_fleet() -> str:
@@ -2949,7 +2949,7 @@ def show_progress_bar() -> None:
     return None
 
 
-def sign_in(account_type: str) -> None:
+def sign_in_v1(account_type: str) -> None:
     """(internal)
 
     Category: General Utility Functions
@@ -2957,7 +2957,7 @@ def sign_in(account_type: str) -> None:
     return None
 
 
-def sign_out() -> None:
+def sign_out_v1(v2_embedded: bool = False) -> None:
     """(internal)
 
     Category: General Utility Functions

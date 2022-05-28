@@ -1018,7 +1018,8 @@ enum class V1AccountType {
   kServer,
   kOculus,
   kSteam,
-  kNvidiaChina
+  kNvidiaChina,
+  kV2
 };
 
 enum class GraphicsQuality {

@@ -34,8 +34,8 @@ class PythonClassInputDevice : public PythonClass {
       -> PyObject*;
   static auto GetDefaultPlayerName(PythonClassInputDevice* self) -> PyObject*;
   static auto GetPlayerProfiles(PythonClassInputDevice* self) -> PyObject*;
-  static auto GetAccountName(PythonClassInputDevice* self, PyObject* args,
-                             PyObject* keywds) -> PyObject*;
+  static auto GetV1AccountName(PythonClassInputDevice* self, PyObject* args,
+                               PyObject* keywds) -> PyObject*;
   static auto IsConnectedToRemotePlayer(PythonClassInputDevice* self)
       -> PyObject*;
   static auto Exists(PythonClassInputDevice* self) -> PyObject*;

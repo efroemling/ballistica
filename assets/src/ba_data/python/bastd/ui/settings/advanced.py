@@ -339,7 +339,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._update_lang_status()
         v -= 40
 
-        lang_inform = _ba.get_account_misc_val('langInform', False)
+        lang_inform = _ba.get_v1_account_misc_val('langInform', False)
 
         self._language_inform_checkbox = cbw = ba.checkboxwidget(
             parent=self._subcontainer,
@@ -550,7 +550,7 @@ class AdvancedSettingsWindow(ba.Window):
     def _on_friend_promo_code_press(self) -> None:
         from bastd.ui import appinvite
         from bastd.ui import account
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         appinvite.handle_app_invites_press()
@@ -568,7 +568,7 @@ class AdvancedSettingsWindow(ba.Window):
         from bastd.ui.account import show_sign_in_prompt
 
         # We have to be logged in for promo-codes to work.
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()

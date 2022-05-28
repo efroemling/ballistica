@@ -126,7 +126,8 @@ class ProfileUpgradeWindow(ba.Window):
             'b': ba.app.build_number
         },
                           callback=ba.WeakCall(self._profile_check_result))
-        self._cost = _ba.get_account_misc_read_val('price.global_profile', 500)
+        self._cost = _ba.get_v1_account_misc_read_val('price.global_profile',
+                                                      500)
         self._status: Optional[str] = 'waiting'
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
@@ -169,7 +170,7 @@ class ProfileUpgradeWindow(ba.Window):
         from bastd.ui import getcurrency
         if self._status is None:
             # If it appears we don't have enough tickets, offer to buy more.
-            tickets = _ba.get_account_ticket_count()
+            tickets = _ba.get_v1_account_ticket_count()
             if tickets < self._cost:
                 ba.playsound(ba.getsound('error'))
                 getcurrency.show_get_tickets_prompt()
@@ -204,7 +205,7 @@ class ProfileUpgradeWindow(ba.Window):
 
     def _update(self) -> None:
         try:
-            t_str = str(_ba.get_account_ticket_count())
+            t_str = str(_ba.get_v1_account_ticket_count())
         except Exception:
             t_str = '?'
         if self._tickets_text is not None:

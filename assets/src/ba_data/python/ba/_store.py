@@ -366,11 +366,11 @@ def get_store_layout() -> dict[str, list[dict[str, Any]]]:
             'games.ninja_fight', 'games.meteor_shower', 'games.target_practice'
         ]
     }]
-    if _ba.get_account_misc_read_val('xmas', False):
+    if _ba.get_v1_account_misc_read_val('xmas', False):
         store_layout['characters'][0]['items'].append('characters.santa')
     store_layout['characters'][0]['items'].append('characters.wizard')
     store_layout['characters'][0]['items'].append('characters.cyborg')
-    if _ba.get_account_misc_read_val('easter', False):
+    if _ba.get_v1_account_misc_read_val('easter', False):
         store_layout['characters'].append({
             'title': 'store.holidaySpecialText',
             'items': ['characters.bunny']
@@ -401,10 +401,10 @@ def get_clean_price(price_string: str) -> str:
 def get_available_purchase_count(tab: str = None) -> int:
     """(internal)"""
     try:
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             return 0
         count = 0
-        our_tickets = _ba.get_account_ticket_count()
+        our_tickets = _ba.get_v1_account_ticket_count()
         store_data = get_store_layout()
         if tab is not None:
             tabs = [(tab, store_data[tab])]
@@ -425,7 +425,8 @@ def _calc_count_for_tab(tabval: list[dict[str, Any]], our_tickets: int,
                         count: int) -> int:
     for section in tabval:
         for item in section['items']:
-            ticket_cost = _ba.get_account_misc_read_val('price.' + item, None)
+            ticket_cost = _ba.get_v1_account_misc_read_val(
+                'price.' + item, None)
             if ticket_cost is not None:
                 if (our_tickets >= ticket_cost
                         and not _ba.get_purchased(item)):
@@ -447,7 +448,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
         # Calc time for our pro sale (old special case).
         if tab == 'extras':
             config = app.config
-            if app.accounts.have_pro():
+            if app.accounts_v1.have_pro():
                 return None
 
             # If we haven't calced/loaded start times yet.
@@ -462,7 +463,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
 
                     # We start the timer once we get the duration from
                     # the server.
-                    start_duration = _ba.get_account_misc_read_val(
+                    start_duration = _ba.get_v1_account_misc_read_val(
                         'proSaleDurationMinutes', None)
                     if start_duration is not None:
                         app.pro_sale_start_time = int(
@@ -488,7 +489,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
             sale_times.append(val)
 
         # Now look for sales in this tab.
-        sales_raw = _ba.get_account_misc_read_val('sales', {})
+        sales_raw = _ba.get_v1_account_misc_read_val('sales', {})
         store_layout = get_store_layout()
         for section in store_layout[tab]:
             for item in section['items']:

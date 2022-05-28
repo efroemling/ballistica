@@ -92,7 +92,7 @@ class CoopBrowserWindow(ba.Window):
 
         self._tourney_data_up_to_date = False
 
-        self._campaign_difficulty = _ba.get_account_misc_val(
+        self._campaign_difficulty = _ba.get_v1_account_misc_val(
             'campaignDifficulty', 'easy')
 
         super().__init__(root_widget=ba.containerwidget(
@@ -235,7 +235,7 @@ class CoopBrowserWindow(ba.Window):
         self._subcontainer: Optional[ba.Widget] = None
 
         # Take note of our account state; we'll refresh later if this changes.
-        self._account_state_num = _ba.get_account_state_num()
+        self._account_state_num = _ba.get_v1_account_state_num()
 
         # Same for fg/bg state.
         self._fg_state = app.fg_state
@@ -251,14 +251,14 @@ class CoopBrowserWindow(ba.Window):
         # If we've got a cached tournament list for our account and info for
         # each one of those tournaments, go ahead and display it as a
         # starting point.
-        if (app.accounts.account_tournament_list is not None
-                and app.accounts.account_tournament_list[0]
-                == _ba.get_account_state_num()
-                and all(t_id in app.accounts.tournament_info
-                        for t_id in app.accounts.account_tournament_list[1])):
+        if (app.accounts_v1.account_tournament_list is not None
+                and app.accounts_v1.account_tournament_list[0]
+                == _ba.get_v1_account_state_num() and all(
+                    t_id in app.accounts_v1.tournament_info
+                    for t_id in app.accounts_v1.account_tournament_list[1])):
             tourney_data = [
-                app.accounts.tournament_info[t_id]
-                for t_id in app.accounts.account_tournament_list[1]
+                app.accounts_v1.tournament_info[t_id]
+                for t_id in app.accounts_v1.account_tournament_list[1]
             ]
             self._update_for_data(tourney_data)
 
@@ -300,7 +300,7 @@ class CoopBrowserWindow(ba.Window):
             self._tourney_data_up_to_date = False
 
         # If our account state has changed, do a full request.
-        account_state_num = _ba.get_account_state_num()
+        account_state_num = _ba.get_v1_account_state_num()
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
             self._save_state()
@@ -358,7 +358,7 @@ class CoopBrowserWindow(ba.Window):
         try:
             ba.imagewidget(
                 edit=self._hard_button_lock_image,
-                opacity=0.0 if ba.app.accounts.have_pro_options() else 1.0)
+                opacity=0.0 if ba.app.accounts_v1.have_pro_options() else 1.0)
         except Exception:
             ba.print_exception('Error updating campaign lock.')
 
@@ -480,7 +480,7 @@ class CoopBrowserWindow(ba.Window):
             tbtn['required_league'] = (None if 'requiredLeague' not in entry
                                        else entry['requiredLeague'])
 
-            game = ba.app.accounts.tournament_info[
+            game = ba.app.accounts_v1.tournament_info[
                 tbtn['tournament_id']]['game']
 
             if game is None:
@@ -491,7 +491,7 @@ class CoopBrowserWindow(ba.Window):
             else:
                 campaignname, levelname = game.split(':')
                 campaign = getcampaign(campaignname)
-                max_players = ba.app.accounts.tournament_info[
+                max_players = ba.app.accounts_v1.tournament_info[
                     tbtn['tournament_id']]['maxPlayers']
                 txt = ba.Lstr(
                     value='${A} ${B}',
@@ -525,7 +525,7 @@ class CoopBrowserWindow(ba.Window):
             tbtn['allow_ads'] = allow_ads = entry['allowAds']
 
             final_fee: Optional[int] = (None if fee_var is None else
-                                        _ba.get_account_misc_read_val(
+                                        _ba.get_v1_account_misc_read_val(
                                             fee_var, '?'))
 
             final_fee_str: Union[str, ba.Lstr]
@@ -540,9 +540,9 @@ class CoopBrowserWindow(ba.Window):
                         ba.charstr(ba.SpecialChar.TICKET_BACKING) +
                         str(final_fee))
 
-            ad_tries_remaining = ba.app.accounts.tournament_info[
+            ad_tries_remaining = ba.app.accounts_v1.tournament_info[
                 tbtn['tournament_id']]['adTriesRemaining']
-            free_tries_remaining = ba.app.accounts.tournament_info[
+            free_tries_remaining = ba.app.accounts_v1.tournament_info[
                 tbtn['tournament_id']]['freeTriesRemaining']
 
             # Now, if this fee allows ads and we support video ads, show
@@ -592,7 +592,7 @@ class CoopBrowserWindow(ba.Window):
 
     def _on_tournament_query_response(self, data: Optional[dict[str,
                                                                 Any]]) -> None:
-        accounts = ba.app.accounts
+        accounts = ba.app.accounts_v1
         if data is not None:
             tournament_data = data['t']  # This used to be the whole payload.
             self._last_tournament_query_response_time = ba.time(
@@ -606,9 +606,11 @@ class CoopBrowserWindow(ba.Window):
             accounts.cache_tournament_info(tournament_data)
 
             # Also cache the current tourney list/order for this account.
-            accounts.account_tournament_list = (_ba.get_account_state_num(), [
-                e['tournamentID'] for e in tournament_data
-            ])
+            accounts.account_tournament_list = (_ba.get_v1_account_state_num(),
+                                                [
+                                                    e['tournamentID']
+                                                    for e in tournament_data
+                                                ])
 
         self._doing_tournament_query = False
         self._update_for_data(tournament_data)
@@ -617,7 +619,8 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.purchase import PurchaseWindow
         if difficulty != self._campaign_difficulty:
-            if difficulty == 'hard' and not ba.app.accounts.have_pro_options():
+            if (difficulty == 'hard'
+                    and not ba.app.accounts_v1.have_pro_options()):
                 PurchaseWindow(items=['pro'])
                 return
             ba.playsound(ba.getsound('gunCocking'))
@@ -872,7 +875,7 @@ class CoopBrowserWindow(ba.Window):
         # no tournaments).
         if self._tournament_button_count == 0:
             unavailable_text = ba.Lstr(resource='unavailableText')
-            if _ba.get_account_state() != 'signed_in':
+            if _ba.get_v1_account_state() != 'signed_in':
                 unavailable_text = ba.Lstr(
                     value='${A} (${B})',
                     subs=[('${A}', unavailable_text),
@@ -943,7 +946,7 @@ class CoopBrowserWindow(ba.Window):
         ]
 
         # Show easter-egg-hunt either if its easter or we own it.
-        if _ba.get_account_misc_read_val(
+        if _ba.get_v1_account_misc_read_val(
                 'easter', False) or _ba.get_purchased('games.easter_egg_hunt'):
             items = [
                 'Challenges:Easter Egg Hunt', 'Challenges:Pro Easter Egg Hunt'
@@ -1346,7 +1349,7 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.league.rankwindow import LeagueRankWindow
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()
@@ -1363,7 +1366,7 @@ class CoopBrowserWindow(ba.Window):
     ) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()
@@ -1427,7 +1430,7 @@ class CoopBrowserWindow(ba.Window):
         # Do a bit of pre-flight for tournament options.
         if tournament_button is not None:
 
-            if _ba.get_account_state() != 'signed_in':
+            if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
                 return
 
@@ -1465,7 +1468,7 @@ class CoopBrowserWindow(ba.Window):
                 return
 
             # Game is whatever the tournament tells us it is.
-            game = ba.app.accounts.tournament_info[
+            game = ba.app.accounts_v1.tournament_info[
                 tournament_button['tournament_id']]['game']
 
         if tournament_button is None and game == 'Easy:The Last Stand':
@@ -1481,8 +1484,8 @@ class CoopBrowserWindow(ba.Window):
         if tournament_button is None and game in (
                 'Challenges:Infinite Runaround',
                 'Challenges:Infinite Onslaught'
-        ) and not ba.app.accounts.have_pro():
-            if _ba.get_account_state() != 'signed_in':
+        ) and not ba.app.accounts_v1.have_pro():
+            if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
                 PurchaseWindow(items=['pro'])
@@ -1508,7 +1511,7 @@ class CoopBrowserWindow(ba.Window):
 
         if (tournament_button is None and required_purchase is not None
                 and not _ba.get_purchased(required_purchase)):
-            if _ba.get_account_state() != 'signed_in':
+            if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
                 PurchaseWindow(items=[required_purchase])

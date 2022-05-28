@@ -94,7 +94,7 @@ class LeagueRankButton:
         self._smooth_update_timer: Optional[ba.Timer] = None
 
         # Take note of our account state; we'll refresh later if this changes.
-        self._account_state_num = _ba.get_account_state_num()
+        self._account_state_num = _ba.get_v1_account_state_num()
         self._last_power_ranking_query_time: Optional[float] = None
         self._doing_power_ranking_query = False
         self.set_position(position)
@@ -106,7 +106,7 @@ class LeagueRankButton:
         self._update()
 
         # If we've got cached power-ranking data already, apply it.
-        data = ba.app.accounts.get_cached_league_rank_data()
+        data = ba.app.accounts_v1.get_cached_league_rank_data()
         if data is not None:
             self._update_for_league_rank_data(data)
 
@@ -224,7 +224,7 @@ class LeagueRankButton:
 
         in_top = data is not None and data['rank'] is not None
         do_percent = False
-        if data is None or _ba.get_account_state() != 'signed_in':
+        if data is None or _ba.get_v1_account_state() != 'signed_in':
             self._percent = self._rank = None
             status_text = '-'
         elif in_top:
@@ -248,7 +248,8 @@ class LeagueRankButton:
                     self._percent = self._rank = None
                     status_text = '-'
                 else:
-                    our_points = ba.app.accounts.get_league_rank_points(data)
+                    our_points = ba.app.accounts_v1.get_league_rank_points(
+                        data)
                     progress = float(our_points) / data['scores'][-1][1]
                     self._percent = int(progress * 100.0)
                     self._rank = None
@@ -327,14 +328,14 @@ class LeagueRankButton:
     def _on_power_ranking_query_response(
             self, data: Optional[dict[str, Any]]) -> None:
         self._doing_power_ranking_query = False
-        ba.app.accounts.cache_league_rank_data(data)
+        ba.app.accounts_v1.cache_league_rank_data(data)
         self._update_for_league_rank_data(data)
 
     def _update(self) -> None:
         cur_time = ba.time(ba.TimeType.REAL)
 
         # If our account state has changed, refresh our UI.
-        account_state_num = _ba.get_account_state_num()
+        account_state_num = _ba.get_v1_account_state_num()
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
 

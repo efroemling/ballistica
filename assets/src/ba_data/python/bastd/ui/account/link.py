@@ -50,7 +50,7 @@ class AccountLinkWindow(ba.Window):
                                               autoselect=True,
                                               icon=ba.gettexture('crossOut'),
                                               iconscale=1.2)
-        maxlinks = _ba.get_account_misc_read_val('maxLinkAccounts', 5)
+        maxlinks = _ba.get_v1_account_misc_read_val('maxLinkAccounts', 5)
         ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.56),
@@ -84,7 +84,7 @@ class AccountLinkWindow(ba.Window):
 
     def _generate_press(self) -> None:
         from bastd.ui import account
-        if _ba.get_account_state() != 'signed_in':
+        if _ba.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         ba.screenmessage(

@@ -481,7 +481,7 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
 
 // NOTE: this returns their PUBLIC account-id; we want to keep
 // actual account-ids as hidden as possible for now.
-auto PythonClassSessionPlayer::GetAccountID(PythonClassSessionPlayer* self)
+auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(InGameThread());
@@ -703,10 +703,11 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "remove_from_game() -> None\n"
      "\n"
      "Removes the player from the game."},
-    {"get_account_id", (PyCFunction)GetAccountID, METH_VARARGS | METH_KEYWORDS,
-     "get_account_id() -> str\n"
+    {"get_v1_account_id", (PyCFunction)GetV1AccountID,
+     METH_VARARGS | METH_KEYWORDS,
+     "get_v1_account_id() -> str\n"
      "\n"
-     "Return the Account ID this player is signed in under, if\n"
+     "Return the V1 Account ID this player is signed in under, if\n"
      "there is one and it can be determined with relative certainty.\n"
      "Returns None otherwise. Note that this may require an active\n"
      "internet connection (especially for network-connected players)\n"
