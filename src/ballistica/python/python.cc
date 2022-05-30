@@ -39,6 +39,7 @@
 #include "ballistica/python/methods/python_methods_graphics.h"
 #include "ballistica/python/methods/python_methods_input.h"
 #include "ballistica/python/methods/python_methods_media.h"
+#include "ballistica/python/methods/python_methods_networking.h"
 #include "ballistica/python/methods/python_methods_system.h"
 #include "ballistica/python/methods/python_methods_ui.h"
 #include "ballistica/python/python_command.h"
@@ -1005,6 +1006,7 @@ void Python::Reset(bool do_init) {
 auto Python::GetModuleMethods() -> std::vector<PyMethodDef> {
   std::vector<PyMethodDef> all_methods;
   for (auto&& methods : {
+           PythonMethodsNetworking::GetMethods(),
            PythonMethodsUI::GetMethods(),
            PythonMethodsInput::GetMethods(),
            PythonMethodsApp::GetMethods(),

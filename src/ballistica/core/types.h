@@ -95,6 +95,7 @@ class Input;
 class InputDevice;
 struct JointFixedEF;
 class Joystick;
+class JsonDict;
 class KeyboardInput;
 class Material;
 class MaterialAction;

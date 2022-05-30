@@ -302,11 +302,17 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.h
   ${BA_SRC_ROOT}/ballistica/game/account.h
   ${BA_SRC_ROOT}/ballistica/game/client_controller_interface.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_set.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_set.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client_udp.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client_udp.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host_udp.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host_udp.h
   ${BA_SRC_ROOT}/ballistica/game/friend_score_set.h
   ${BA_SRC_ROOT}/ballistica/game/game.cc
@@ -488,8 +494,11 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/media/media.h
   ${BA_SRC_ROOT}/ballistica/media/media_server.cc
   ${BA_SRC_ROOT}/ballistica/media/media_server.h
+  ${BA_SRC_ROOT}/ballistica/networking/network_reader.cc
   ${BA_SRC_ROOT}/ballistica/networking/network_reader.h
+  ${BA_SRC_ROOT}/ballistica/networking/network_write_module.cc
   ${BA_SRC_ROOT}/ballistica/networking/network_write_module.h
+  ${BA_SRC_ROOT}/ballistica/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/networking/networking.h
   ${BA_SRC_ROOT}/ballistica/networking/networking_sys.h
   ${BA_SRC_ROOT}/ballistica/networking/sockaddr.cc
@@ -550,6 +559,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_input.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_media.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_media.h
+  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_networking.cc
+  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_networking.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_system.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_system.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_ui.cc

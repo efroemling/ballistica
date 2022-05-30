@@ -313,21 +313,39 @@
     <ClInclude Include="..\..\src\ballistica\game\client_controller_interface.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection_set.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection_set.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_client.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_client.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_client_udp.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_client_udp.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_host.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_host.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_host_udp.cc">
+      <Filter>ballistica\game\connection</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_host_udp.h">
       <Filter>ballistica\game\connection</Filter>
     </ClInclude>
@@ -871,12 +889,21 @@
     <ClInclude Include="..\..\src\ballistica\media\media_server.h">
       <Filter>ballistica\media</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\networking\network_reader.cc">
+      <Filter>ballistica\networking</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\networking\network_reader.h">
       <Filter>ballistica\networking</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\networking\network_write_module.cc">
+      <Filter>ballistica\networking</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\networking\network_write_module.h">
       <Filter>ballistica\networking</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\networking\networking.cc">
+      <Filter>ballistica\networking</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\networking\networking.h">
       <Filter>ballistica\networking</Filter>
     </ClInclude>
@@ -1055,6 +1082,12 @@
       <Filter>ballistica\python\methods</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\python\methods\python_methods_media.h">
+      <Filter>ballistica\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\python\methods\python_methods_networking.cc">
+      <Filter>ballistica\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\python\methods\python_methods_networking.h">
       <Filter>ballistica\python\methods</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\python\methods\python_methods_system.cc">

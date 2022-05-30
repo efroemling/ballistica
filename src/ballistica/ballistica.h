@@ -183,6 +183,13 @@ auto AppInternalOnGameThreadPause() -> void;
 auto AppInternalDirectSendLogs(const std::string& prefix,
                                const std::string& suffix, bool instant,
                                int* result = nullptr) -> void;
+auto AppInternalClientInfoQuery(const std::string& val1,
+                                const std::string& val2,
+                                const std::string& val3, int build_number)
+    -> void;
+auto AppInternalCalcV1PeerHash(const std::string& peer_hash_input)
+    -> std::string;
+auto AppInternalV1SetClientInfo(JsonDict* dict) -> void;
 
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;
