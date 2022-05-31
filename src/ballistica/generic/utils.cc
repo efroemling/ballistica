@@ -3,6 +3,7 @@
 #include "ballistica/generic/utils.h"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "ballistica/app/app_globals.h"
@@ -112,19 +113,23 @@ Utils::Utils() {
   // Here we add some compile-time checks to alert us if that happens.
 
   // Remember that results can vary per compiler; make sure we match
-  // one of the expected formats.
+  // any one of the expected formats.
   static_assert(static_type_name_constexpr<decltype(g_app_globals)>()
                     == "ballistica::AppGlobals *"
                 || static_type_name_constexpr<decltype(g_app_globals)>()
                        == "ballistica::AppGlobals*"
                 || static_type_name_constexpr<decltype(g_app_globals)>()
-                       == "class ballistica::AppGlobals*");
+                       == "class ballistica::AppGlobals*"
+                || static_type_name_constexpr<decltype(g_app_globals)>()
+                       == "AppGlobals*");
   Object::Ref<Node> testnode{};
   static_assert(
       static_type_name_constexpr<decltype(testnode)>()
           == "ballistica::Object::Ref<ballistica::Node>"
       || static_type_name_constexpr<decltype(testnode)>()
-             == "class ballistica::Object::Ref<class ballistica::Node>");
+             == "class ballistica::Object::Ref<class ballistica::Node>"
+      || static_type_name_constexpr<decltype(testnode)>()
+             == "Object::Ref<class Node>");
 
   // int testint{};
   // static_assert(static_type_name_constexpr<decltype(testint)>() == "int");

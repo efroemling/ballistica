@@ -89,44 +89,49 @@ auto static_cast_check_type(IN_TYPE in) -> OUT_TYPE {
   return out_static;
 }
 
-// This call hijacks compile-type pretty-function-printing functionality
+// This stuff hijacks compile-type pretty-function-printing functionality
 // to give human-readable strings for arbitrary types. Note that these
 // will not be consistent across platforms and should only be used for
-// logging/debugging. Also note that this code is dependent on very specific
+// logging/debugging. Also note that this code is dependent on specific
 // compiler output which could change at any time; to watch out for this
 // it is recommended to add static_assert()s somewhere to ensure that
-// output for a few given types matches expected result(s).
+// output for a few given types matches expected results.
+// For reference, see this topic:
+// https://stackoverflow.com/questions/81870
+template <typename T>
+constexpr std::string_view wrapped_type_name() {
+#ifdef __clang__
+  return __PRETTY_FUNCTION__;
+#elif defined(__GNUC__)
+  return __PRETTY_FUNCTION__;
+#elif defined(_MSC_VER)
+  return __FUNCSIG__;
+#else
+#error "Unsupported compiler"
+#endif
+}
+
+// To see what our particular compiler has at the beginning of one of
+// these strings, let's generate one for 'void' and look for 'void'.
+constexpr std::size_t wrapped_type_name_prefix_length() {
+  return wrapped_type_name<void>().find("void");
+}
+
+// Similar deal for the end. Subtract the prefix length and length of 'void'
+// and what's left is our suffix.
+constexpr std::size_t wrapped_type_name_suffix_length() {
+  return wrapped_type_name<void>().length() - wrapped_type_name_prefix_length()
+         - std::string_view("void").length();
+}
+
 template <typename T>
 constexpr auto static_type_name_constexpr(bool debug_full = false)
     -> std::string_view {
-  std::string_view name, prefix, suffix;
-#ifdef __clang__
-  name = __PRETTY_FUNCTION__;
-  prefix =
-      "std::string_view ballistica::"
-      "static_type_name_constexpr(bool) [T = ";
-  suffix = "]";
-#elif defined(__GNUC__)
-  name = __PRETTY_FUNCTION__;
-  prefix =
-      "constexpr std::string_view "
-      "ballistica::static_type_name_constexpr(bool) "
-      "[with T = ";
-  suffix = "; std::string_view = std::basic_string_view<char>]";
-#elif defined(_MSC_VER)
-  name = __FUNCSIG__;
-  prefix =
-      "class std::basic_string_view<char,struct std::char_traits<char> > "
-      "__cdecl ballistica::static_type_name_constexpr<";
-  suffix = ">(bool)";
-#else
-#error unimplemented
-#endif
-  if (debug_full) {
-    return name;
+  auto name{wrapped_type_name<T>()};
+  if (!debug_full) {
+    name.remove_prefix(wrapped_type_name_prefix_length());
+    name.remove_suffix(wrapped_type_name_suffix_length());
   }
-  name.remove_prefix(prefix.size());
-  name.remove_suffix(suffix.size());
   return name;
 }
 
