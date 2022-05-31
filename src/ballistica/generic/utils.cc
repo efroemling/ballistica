@@ -128,7 +128,7 @@ Utils::Utils() {
       || static_type_name_constexpr<decltype(testnode)>()
              == "class ballistica::Object::Ref<class ballistica::Node>"
       || static_type_name_constexpr<decltype(testnode)>()
-             == "Object::Ref<class Node>");
+             == "Object::Ref<Node>");
 
   // int testint{};
   // static_assert(static_type_name_constexpr<decltype(testint)>() == "int");
