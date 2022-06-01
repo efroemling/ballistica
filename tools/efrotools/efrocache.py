@@ -275,13 +275,14 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
     subprocess.run(
         'rsync --progress --recursive --human-readable build/efrocache/'
-        ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/',
+        ' ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
         shell=True,
         check=True)
 
     # Now generate the starter cache on the server..
     subprocess.run(
-        'ssh -oBatchMode=yes -oStrictHostKeyChecking=yes ubuntu@ballistica.net'
+        'ssh -oBatchMode=yes -oStrictHostKeyChecking=yes '
+        'ubuntu@staging.ballistica.net'
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"',
         shell=True,
         check=True)

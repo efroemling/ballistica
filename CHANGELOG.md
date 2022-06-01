@@ -1,4 +1,4 @@
-### 1.7.0 (20584, 2022-05-31)
+### 1.7.0 (20586, 2022-05-31)
 - V2 accounts are now available (woohoo!). These are called 'BombSquad Accounts' in the account section. V2 accounts communicate with a completely new server and will be the foundation for lots of new functionality in the future. However they also function as a V1 account so existing functionality should still work. Note that the new 'workspaces' feature for V2-accounts is not yet enabled in this build, but it will be in the next few builds. Also note that account types such as GameCenter and Google-Play will be 'upgraded' to V2 accounts in the future so there is no need to try this out if you use one of those. But if you use device-accounts you might want to create yourself a V2 account, since device-accounts will remain V1-only (though you can link an old device-account to a v2-enabled account if you want to keep your progress). Getting a V2 account now also gives you a chance to reserve a nice account-tag before all the good ones are taken.
 - Legacy account subsystem has been renamed from `ba.app.accounts` to `ba.app.accounts_v1`
 - Added `ba.app.accounts_v2` subsystem for working with V2 accounts.
@@ -16,6 +16,7 @@
 - `_ba.get_account_misc_read_val_2()` is now `_ba.get_v1_account_misc_read_val_2()`
 - `_ba.get_account_ticket_count()` is now `_ba.get_v1_account_ticket_count()`
 - Exposing more sources in the public repo; namely networking stuff. I realize this probably opens up some attack vectors for hackers but also opens up options for server-owners to add their own defenses without having to wait on me. Hopefully this won't prove to be a bad idea.
+- V2 master server addr is now simply https://ballistica.net. If you had saved links to the previous address, https://tools.ballistica.net, please update them, as the old address may stop working at some point.
 
 
 ### 1.6.12 (20567, 2022-05-04)
