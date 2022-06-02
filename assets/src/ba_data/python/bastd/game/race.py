@@ -221,13 +221,17 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-nested-blocks
-        collision = ba.getcollision()
         try:
-            region = collision.sourcenode.getdelegate(RaceRegion, True)
-            player = collision.opposingnode.getdelegate(PlayerSpaz,
-                                                        True).getplayer(
-                                                            Player, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(
+                PlayerSpaz, True)
         except ba.NotFoundError:
+            return
+
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
+        if player is None:
             return
 
         last_region = player.last_region
