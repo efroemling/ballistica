@@ -239,9 +239,16 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
 
     def _handle_player_flag_region_collide(self, colliding: bool) -> None:
         try:
-            player = ba.getcollision().opposingnode.getdelegate(
-                PlayerSpaz, True).getplayer(Player, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(
+                PlayerSpaz, True)
         except ba.NotFoundError:
+            return
+
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
+        if player is None:
             return
 
         # Different parts of us can collide so a single value isn't enough
