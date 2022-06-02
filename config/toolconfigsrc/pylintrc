@@ -24,29 +24,26 @@ init-import=yes
 # PEP-8 specifies 79 chars (that's right, not 80)
 max-line-length=79
 
-# We're using yapf to handle formatting and pylint doesn't always agree with it.
-# 
-# disable=bad-continuation
-
 [MESSAGES CONTROL]
 # broad-except:
-#   I tend to catch Exception (*not* BaseException) as a broad safety net.
-#   This is not disallowed in PEP-8 and I feel its
+#   I tend to catch Exception (*not* BaseException) as a broad safety net
+#   (always with a log call or something to ensure that the problem
+#   gets noticed). This is not disallowed in PEP-8 and I feel it is
 #   not a bad practice as long as they are not silently ignored.
 # too-few-public-methods:
-#   Yes I often use little classes just to carry around one or two named attrs
+#   I often use little classes just to carry around one or two named attrs
 #   or as simple messages to send to each other.
-#   Can look into Data Classes perhaps once 3.7 is well distributed,
-#   but for now I'm gonna say this is ok.
+#   Perhaps this is worth reconsidering now that dataclasses are widely used
+#   for that purpose.
 # too-many-instance-attributes
-#   Honestly just don't feel this is bad. If anything, the limit encourages
-#   me to stuff things in dicts or whatnot which loses the bit of
-#   type safety that pylint provides with attrs
+#   This one may also be worth reconsidering now; perhaps with a raised
+#   default?
 # too-many-arguments
 #   This one is more understandable, but I still don't see the problem
-#   with having a bunch of optional args in some cases.
+#   with having a bunch of optional args in some cases. Perhaps also
+#   a raised default would be appropriate?
 # similarities
-#   Not gonna touch this for now; maybe later. Bigger fish to fry.
+#   Not gonna touch this for now. Maybe later. Bigger fish to fry.
 # not-callable
 #   Seeming to get a number of false positives for this, and mypy covers
 #   this case well.
@@ -62,7 +59,7 @@ enable=useless-suppression
 
 [BASIC]
 # Allowing a handful of short names commonly understood to be iterators,
-# math concepts, or temporary variables.
+# math concepts, or short-but-complete words.
 
 good-names=i,
            j,
@@ -76,12 +73,10 @@ good-names=i,
            ui,
            h2,
            v2,
-           ex,
-           Run,
-           id,
            S,
            T,
            U,
+           id,
            _
 
 [TYPECHECK]
@@ -92,14 +87,8 @@ disable=no-member
 
 [MISCELLANEOUS]
 # We've got various TODO and FIXME notes in scripts, but don't want
-# lint to trigger over that fact.
+# lint to trigger errors over that fact.
 notes=
-
-[DESIGN]
-# We're going a bit over the recommended max of 7 ancestors when
-# in some bafoundation mixin classes; I don't feel like that's
-# unreasonable.
-max-parents=10
 
 [SIMILARITIES]
 
