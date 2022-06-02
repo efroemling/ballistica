@@ -27,12 +27,12 @@ if (APPLE)
   # to load a 3.X library from within it which doesn't exist. So we need
   # to be a bit more explicit telling it where to look. Note: this was last
   # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.9-config" "--prefix"
+  execute_process(COMMAND "python3.10-config" "--prefix"
     OUTPUT_VARIABLE Python_ROOT_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 endif ()
-find_package (Python 3.9 REQUIRED EXACT COMPONENTS Development)
+find_package (Python 3.10 REQUIRED EXACT COMPONENTS Development)
   
 
 if (HEADLESS)

@@ -146,7 +146,7 @@ class DependencyEntry:
             # This allows us to inject its data properly before __init__().
             print('creating', self.cls)
             instance = self.cls.__new__(self.cls)
-            # pylint: disable=protected-access
+            # pylint: disable=protected-access, unnecessary-dunder-call
             instance._dep_entry = weakref.ref(self)
             instance.__init__()  # type: ignore
 

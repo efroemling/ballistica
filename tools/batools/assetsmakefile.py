@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.10
 # Released under the MIT License. See LICENSE for details.
 #
 """Updates assets/Makefile based on source assets present."""
@@ -15,7 +15,8 @@ from efro.terminal import Clr
 if TYPE_CHECKING:
     pass
 
-PYC_SUFFIX = '.cpython-39.opt-1.pyc'
+# Note: code below needs updating when Python version changes (currently 3.10)
+PYC_SUFFIX = '.cpython-310.opt-1.pyc'
 
 
 def _get_targets(varname: str,

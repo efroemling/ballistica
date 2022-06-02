@@ -73,7 +73,7 @@ def get_player_profile_colors(
                 color = PLAYER_COLORS[random.randrange(6)]
             else:
                 # First 6 are bright-ish.
-                color = PLAYER_COLORS[sum([ord(c) for c in profilename]) % 6]
+                color = PLAYER_COLORS[sum(ord(c) for c in profilename) % 6]
 
         try:
             assert profilename is not None
@@ -86,8 +86,8 @@ def get_player_profile_colors(
                 highlight = PLAYER_COLORS[random.randrange(
                     len(PLAYER_COLORS) - 2)]
             else:
-                highlight = PLAYER_COLORS[sum(
-                    [ord(c) + 1
-                     for c in profilename]) % (len(PLAYER_COLORS) - 2)]
+                highlight = PLAYER_COLORS[sum(ord(c) + 1
+                                              for c in profilename) %
+                                          (len(PLAYER_COLORS) - 2)]
 
     return color, highlight

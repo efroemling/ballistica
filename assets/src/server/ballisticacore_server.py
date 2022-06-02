@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.10
 # Released under the MIT License. See LICENSE for details.
 #
 """BallisticaCore server manager."""

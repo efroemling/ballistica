@@ -866,7 +866,7 @@ void Python::Reset(bool do_init) {
 
   if (!was_inited && do_init) {
     // Flip on some extra runtime debugging options in debug builds.
-    // https://docs.python.org/3.9/library/devmode.html#devmode
+    // https://docs.python.org/3.10/library/devmode.html#devmode
     int dev_mode{g_buildconfig.debug_build()};
 
     // Pre-config as isolated if we include our own Python and as standard
@@ -946,8 +946,8 @@ void Python::Reset(bool do_init) {
     BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
 
     const char* ver = Py_GetVersion();
-    if (strncmp(ver, "3.9", 3) != 0) {
-      throw Exception("We require Python 3.9.x; instead found "
+    if (strncmp(ver, "3.10", 4) != 0) {
+      throw Exception("We require Python 3.10.x; instead found "
                       + std::string(ver));
     }
 

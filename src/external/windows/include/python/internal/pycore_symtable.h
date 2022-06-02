@@ -1,18 +1,24 @@
-#ifndef Py_LIMITED_API
-#ifndef Py_SYMTABLE_H
-#define Py_SYMTABLE_H
+#ifndef Py_INTERNAL_SYMTABLE_H
+#define Py_INTERNAL_SYMTABLE_H
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "Python-ast.h"   /* mod_ty */
+#ifndef Py_BUILD_CORE
+#  error "this header requires Py_BUILD_CORE define"
+#endif
 
-/* XXX(ncoghlan): This is a weird mix of public names and interpreter internal
- *                names.
- */
+struct _mod;   // Type defined in pycore_ast.h
 
-typedef enum _block_type { FunctionBlock, ClassBlock, ModuleBlock }
+typedef enum _block_type { FunctionBlock, ClassBlock, ModuleBlock, AnnotationBlock }
     _Py_block_ty;
+
+typedef enum _comprehension_type {
+    NoComprehension = 0,
+    ListComprehension = 1,
+    DictComprehension = 2,
+    SetComprehension = 3,
+    GeneratorExpression = 4 } _Py_comprehension_ty;
 
 struct _symtable_entry;
 
@@ -43,14 +49,14 @@ typedef struct _symtable_entry {
     PyObject *ste_varnames;  /* list of function parameters */
     PyObject *ste_children;  /* list of child blocks */
     PyObject *ste_directives;/* locations of global and nonlocal statements */
-    _Py_block_ty ste_type;   /* module, class, or function */
+    _Py_block_ty ste_type;   /* module, class or function */
     int ste_nested;      /* true if block is nested */
     unsigned ste_free : 1;        /* true if block has free variables */
     unsigned ste_child_free : 1;  /* true if a child block has free vars,
                                      including free refs to globals */
     unsigned ste_generator : 1;   /* true if namespace is a generator */
     unsigned ste_coroutine : 1;   /* true if namespace is a coroutine */
-    unsigned ste_comprehension : 1; /* true if namespace is a list comprehension */
+    _Py_comprehension_ty ste_comprehension;  /* Kind of comprehension (if any) */
     unsigned ste_varargs : 1;     /* true if block has varargs */
     unsigned ste_varkeywords : 1; /* true if block has varkeywords */
     unsigned ste_returns_value : 1;  /* true if namespace uses return with
@@ -62,28 +68,26 @@ typedef struct _symtable_entry {
     int ste_comp_iter_expr; /* non-zero if visiting a comprehension range expression */
     int ste_lineno;          /* first line of block */
     int ste_col_offset;      /* offset of first line of block */
+    int ste_end_lineno;      /* end line of block */
+    int ste_end_col_offset;  /* end offset of first line of block */
     int ste_opt_lineno;      /* lineno of last exec or import * */
     int ste_opt_col_offset;  /* offset of last exec or import * */
     struct symtable *ste_table;
 } PySTEntryObject;
 
-PyAPI_DATA(PyTypeObject) PySTEntry_Type;
+extern PyTypeObject PySTEntry_Type;
 
 #define PySTEntry_Check(op) Py_IS_TYPE(op, &PySTEntry_Type)
 
-PyAPI_FUNC(int) PyST_GetScope(PySTEntryObject *, PyObject *);
+extern int _PyST_GetScope(PySTEntryObject *, PyObject *);
 
-PyAPI_FUNC(struct symtable *) PySymtable_Build(
-    mod_ty mod,
-    const char *filename,       /* decoded from the filesystem encoding */
-    PyFutureFeatures *future);
-PyAPI_FUNC(struct symtable *) PySymtable_BuildObject(
-    mod_ty mod,
+extern struct symtable* _PySymtable_Build(
+    struct _mod *mod,
     PyObject *filename,
     PyFutureFeatures *future);
 PyAPI_FUNC(PySTEntryObject *) PySymtable_Lookup(struct symtable *, void *);
 
-PyAPI_FUNC(void) PySymtable_Free(struct symtable *);
+extern void _PySymtable_Free(struct symtable *);
 
 /* Flags for def-use information */
 
@@ -116,8 +120,14 @@ PyAPI_FUNC(void) PySymtable_Free(struct symtable *);
 #define GENERATOR 1
 #define GENERATOR_EXPRESSION 2
 
+// Used by symtablemodule.c
+extern struct symtable* _Py_SymtableStringObjectFlags(
+    const char *str,
+    PyObject *filename,
+    int start,
+    PyCompilerFlags *flags);
+
 #ifdef __cplusplus
 }
 #endif
-#endif /* !Py_SYMTABLE_H */
-#endif /* !Py_LIMITED_API */
+#endif /* !Py_INTERNAL_SYMTABLE_H */

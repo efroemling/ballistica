@@ -263,9 +263,9 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     # Otherwise its the max.
                     if isinstance(self.session, ba.DualTeamSession
                                   ) and self._entire_team_must_finish:
-                        team.lap = min([p.lap for p in team.players])
+                        team.lap = min(p.lap for p in team.players)
                     else:
-                        team.lap = max([p.lap for p in team.players])
+                        team.lap = max(p.lap for p in team.players)
 
                     # A player is finishing.
                     if player.lap == self._laps:

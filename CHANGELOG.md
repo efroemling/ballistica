@@ -17,6 +17,7 @@
 - `_ba.get_account_ticket_count()` is now `_ba.get_v1_account_ticket_count()`
 - Exposing more sources in the public repo; namely networking stuff. I realize this probably opens up some attack vectors for hackers but also opens up options for server-owners to add their own defenses without having to wait on me. Hopefully this won't prove to be a bad idea.
 - V2 master server addr is now simply https://ballistica.net. If you had saved links to the previous address, https://tools.ballistica.net, please update them, as the old address may stop working at some point.
+- Upgraded everything to Python 3.10. The upgrade process is pretty smooth at this point so we should be able to upgrade yearly now once each new Python version has had some time to mature.
 
 
 ### 1.6.12 (20567, 2022-05-04)

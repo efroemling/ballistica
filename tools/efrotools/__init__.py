@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Union, Sequence, Optional, Any, Literal
 
 # Python major version we're using for all this stuff.
-PYVER = '3.9'
+PYVER = '3.10'
 
 # Python binary assumed by these tools.
 PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'

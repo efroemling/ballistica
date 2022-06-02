@@ -13,11 +13,11 @@ from efrotools import readfile, writefile, replace_exact
 if TYPE_CHECKING:
     from typing import Any
 
+# Python version we build here (not necessarily same as we use in repo).
 PY_VER = '3.10'
 PY_VER_EXACT_ANDROID = '3.10.4'
 PY_VER_EXACT_APPLE = '3.10.4'
 
-# ANDROID_PYTHON_REPO = 'https://github.com/yan12125/python3-android.git'
 ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
@@ -29,7 +29,7 @@ PRUNE_LIB_NAMES = [
 ]
 
 # Same but for DLLs dir (windows only)
-PRUNE_DLL_NAMES = ['*.ico']
+PRUNE_DLL_NAMES = ['*.ico', '*.pdb']
 
 
 def build_apple(arch: str, debug: bool = False) -> None:
@@ -444,17 +444,23 @@ def winprune() -> None:
     for libdir in ('assets/src/windows/Win32/Lib',
                    'assets/src/windows/x64/Lib'):
         assert os.path.isdir(libdir)
-        subprocess.run('cd "' + libdir + '" && rm -rf ' +
-                       ' '.join(PRUNE_LIB_NAMES),
+        assert (' ' not in name for name in PRUNE_LIB_NAMES)
+        subprocess.run(f'cd "{libdir}" && rm -rf ' + ' '.join(PRUNE_LIB_NAMES),
                        shell=True,
                        check=True)
+        # Kill python cache dirs.
+        subprocess.run(
+            f'find "{libdir}" -name __pycache__ -print0 | xargs -0 rm -rf',
+            shell=True,
+            check=True)
     for dlldir in ('assets/src/windows/Win32/DLLs',
                    'assets/src/windows/x64/DLLs'):
         assert os.path.isdir(dlldir)
-        subprocess.run('cd "' + dlldir + '" && rm -rf ' +
-                       ' '.join(PRUNE_DLL_NAMES),
+        assert (' ' not in name for name in PRUNE_DLL_NAMES)
+        subprocess.run(f'cd "{dlldir}" && rm -rf ' + ' '.join(PRUNE_DLL_NAMES),
                        shell=True,
                        check=True)
+
     print('Win-prune successful.')
 
 
@@ -465,6 +471,7 @@ def gather() -> None:
     and that PROJROOT is the cwd.
     """
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     do_android = True
 
@@ -507,18 +514,26 @@ def gather() -> None:
         }
 
         # Note: only need pylib for the first in each group.
+        mac_arch_dir = 'macos-arm64_x86_64'
+        ios_arch_dir = 'ios-arm64'
+        tvos_arch_dir = 'tvos-arm64'
         builds: list[dict[str, Any]] = [{
             'name':
                 'macos',
             'group':
                 'apple',
             'headers':
-                bases['mac'] + '/Support/Python/Headers',
+                bases['mac'] +
+                f'/Support/Python.xcframework/{mac_arch_dir}/Headers',
             'libs': [
-                bases['mac'] + '/Support/Python/libPython.a',
-                bases['mac'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['mac'] + '/Support/XZ/libxz.a',
-                bases['mac'] + '/Support/BZip2/libbzip2.a',
+                bases['mac'] +
+                f'/Support/Python.xcframework/{mac_arch_dir}/libPython.a',
+                bases['mac'] +
+                f'/Support/OpenSSL.xcframework/{mac_arch_dir}/libOpenSSL.a',
+                bases['mac'] +
+                f'/Support/XZ.xcframework/{mac_arch_dir}/libxz.a',
+                bases['mac'] +
+                f'/Support/BZip2.xcframework/{mac_arch_dir}/libbzip2.a',
             ],
             'pylib':
                 (bases['mac'] + f'/Python-{PY_VER_EXACT_APPLE}-macOS/lib'),
@@ -528,12 +543,17 @@ def gather() -> None:
             'group':
                 'apple',
             'headers':
-                bases['ios'] + '/Support/Python/Headers',
+                bases['ios'] +
+                f'/Support/Python.xcframework/{ios_arch_dir}/Headers',
             'libs': [
-                bases['ios'] + '/Support/Python/libPython.a',
-                bases['ios'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['ios'] + '/Support/XZ/libxz.a',
-                bases['ios'] + '/Support/BZip2/libbzip2.a',
+                bases['ios'] +
+                f'/Support/Python.xcframework/{ios_arch_dir}/libPython.a',
+                bases['ios'] +
+                f'/Support/OpenSSL.xcframework/{ios_arch_dir}/libOpenSSL.a',
+                bases['ios'] +
+                f'/Support/XZ.xcframework/{ios_arch_dir}/libxz.a',
+                bases['ios'] +
+                f'/Support/BZip2.xcframework/{ios_arch_dir}/libbzip2.a',
             ],
         }, {
             'name':
@@ -541,12 +561,17 @@ def gather() -> None:
             'group':
                 'apple',
             'headers':
-                bases['tvos'] + '/Support/Python/Headers',
+                bases['tvos'] +
+                f'/Support/Python.xcframework/{tvos_arch_dir}/Headers',
             'libs': [
-                bases['tvos'] + '/Support/Python/libPython.a',
-                bases['tvos'] + '/Support/OpenSSL/libOpenSSL.a',
-                bases['tvos'] + '/Support/XZ/libxz.a',
-                bases['tvos'] + '/Support/BZip2/libbzip2.a',
+                bases['tvos'] +
+                f'/Support/Python.xcframework/{tvos_arch_dir}/libPython.a',
+                bases['tvos'] +
+                f'/Support/OpenSSL.xcframework/{tvos_arch_dir}/libOpenSSL.a',
+                bases['tvos'] +
+                f'/Support/XZ.xcframework/{tvos_arch_dir}/libxz.a',
+                bases['tvos'] +
+                f'/Support/BZip2.xcframework/{tvos_arch_dir}/libbzip2.a',
             ],
         }, {
             'name': 'android_arm',

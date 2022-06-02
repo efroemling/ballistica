@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.10
 # Released under the MIT License. See LICENSE for details.
 #
 """Stage assets for a build."""
@@ -274,7 +274,8 @@ def _sync_windows_extras(cfg: Config) -> None:
     # We could technically copy everything over but this keeps staging
     # dirs a bit tidier.
     dbgsfx = '_d' if cfg.debug else ''
-    toplevelfiles: list[str] = [f'python39{dbgsfx}.dll']
+    # Note: Below needs updating when Python version changes (currently 3.10)
+    toplevelfiles: list[str] = [f'python310{dbgsfx}.dll']
 
     if cfg.win_type == 'win':
         toplevelfiles += [

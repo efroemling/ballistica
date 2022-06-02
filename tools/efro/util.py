@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import os
 import time
-import datetime
 import weakref
+import datetime
 import functools
 from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic
@@ -680,4 +680,11 @@ def set_canonical_module(module_globals: dict[str, Any],
         obj = module_globals[name]
         existing = getattr(obj, '__module__', None)
         if existing is not None and existing != modulename:
-            obj.__module__ = modulename
+            try:
+                obj.__module__ = modulename
+            except Exception:
+                import logging
+                logging.warning(
+                    'set_canonical_module: unable to change __module__'
+                    ' from %s to %s on %s object.', existing, modulename,
+                    type(obj))

@@ -667,7 +667,6 @@ def generate(sources_hash: str, outfilename: str) -> None:
            '# pylint: disable=too-many-lines\n'
            '# pylint: disable=redefined-outer-name\n'
            '# pylint: disable=invalid-name\n'
-           '# pylint: disable=no-self-use\n'
            '# pylint: disable=no-value-for-parameter\n'
            '\n'
            'from __future__ import annotations\n'

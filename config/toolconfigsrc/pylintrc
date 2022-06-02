@@ -25,7 +25,8 @@ init-import=yes
 max-line-length=79
 
 # We're using yapf to handle formatting and pylint doesn't always agree with it.
-disable=bad-continuation
+# 
+# disable=bad-continuation
 
 [MESSAGES CONTROL]
 # broad-except:
@@ -37,9 +38,6 @@ disable=bad-continuation
 #   or as simple messages to send to each other.
 #   Can look into Data Classes perhaps once 3.7 is well distributed,
 #   but for now I'm gonna say this is ok.
-# no-self-use
-#   I find a lot of things still make sense organizationally as methods
-#   even if they do not technically use self at the current time
 # too-many-instance-attributes
 #   Honestly just don't feel this is bad. If anything, the limit encourages
 #   me to stuff things in dicts or whatnot which loses the bit of
@@ -54,7 +52,6 @@ disable=bad-continuation
 #   this case well.
 disable=broad-except,
         too-few-public-methods,
-        no-self-use,
         too-many-instance-attributes,
         too-many-arguments,
         similarities,
