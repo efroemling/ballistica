@@ -175,12 +175,16 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
 
     def _handle_base_collide(self, team: Team) -> None:
         try:
-            player = ba.getcollision().opposingnode.getdelegate(
-                PlayerSpaz, True).getplayer(Player, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(
+                PlayerSpaz, True)
         except ba.NotFoundError:
             return
 
-        if not player.is_alive():
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
+        if player is None:
             return
 
         # If its another team's player, they scored.
