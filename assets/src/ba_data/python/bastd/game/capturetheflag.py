@@ -435,11 +435,15 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         """
         player: Optional[Player]
         try:
-            player = ba.getcollision().sourcenode.getdelegate(
-                PlayerSpaz, True).getplayer(Player, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(
+                PlayerSpaz, True)
         except ba.NotFoundError:
-            # This can happen if the player leaves but his corpse touches/etc.
-            player = None
+            return
+
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
 
         if player:
             player.touching_own_flag += (1 if connecting else -1)
