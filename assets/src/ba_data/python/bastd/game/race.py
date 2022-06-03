@@ -224,11 +224,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         collision = ba.getcollision()
         try:
             region = collision.sourcenode.getdelegate(RaceRegion, True)
-            player = collision.opposingnode.getdelegate(PlayerSpaz,
-                                                        True).getplayer(
-                                                            Player, True)
+            spaz = collision.sourcenode.getdelegate(
+                PlayerSpaz, True)
         except ba.NotFoundError:
             return
+
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
 
         last_region = player.last_region
         this_region = region.index
