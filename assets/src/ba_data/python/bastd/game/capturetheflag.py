@@ -273,11 +273,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             team.home_flag_at_base = True
 
             # If the enemy flag is already here, score!
-            if team.enemy_flag_at_base:
-                self.show_zoom_message(
-                        ba.Lstr(resource='nameScoresText',
-                             subs=[('${NAME}', team.name.evaluate())]),
-                        color=team.color)  
+            if team.enemy_flag_at_base:  
                 self._score(team)
         else:
             team.enemy_flag_at_base = True
