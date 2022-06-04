@@ -224,8 +224,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         collision = ba.getcollision()
         try:
             region = collision.sourcenode.getdelegate(RaceRegion, True)
-            spaz = collision.sourcenode.getdelegate(
-                PlayerSpaz, True)
+            spaz = collision.sourcenode.getdelegate(PlayerSpaz, True)
         except ba.NotFoundError:
             return
 

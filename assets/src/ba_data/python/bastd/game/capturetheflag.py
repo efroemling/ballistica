@@ -435,8 +435,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         """
         player: Optional[Player]
         try:
-            spaz = ba.getcollision().sourcenode.getdelegate(
-                PlayerSpaz, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(PlayerSpaz, True)
         except ba.NotFoundError:
             return
 
