@@ -76,7 +76,7 @@ class ConnectionSet {
                                      PyObject* info) -> void;
 
   auto SendChatMessage(const std::string& message,
-                       const std::vector<int>* clients = nullptr,
+                       const std::vector<int>& clients,
                        const std::string* sender_override = nullptr) -> void;
 
   // Send a screen message to all connected clients AND print it on the host.

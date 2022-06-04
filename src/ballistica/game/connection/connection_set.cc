@@ -72,10 +72,10 @@ auto ConnectionSet::GetConnectedClientCount() const -> int {
 }
 
 void ConnectionSet::SendChatMessage(const std::string& message,
-                                    const std::vector<int>* clients,
+                                    const std::vector<int>& clients,
                                     const std::string* sender_override) {
   // Sending to particular clients is only applicable while hosting.
-  if (clients != nullptr && connection_to_host() != nullptr) {
+  if (!clients.empty() && connection_to_host() != nullptr) {
     throw Exception("Can't send chat message to specific clients as a client.");
   }
 
@@ -172,9 +172,9 @@ void ConnectionSet::SendChatMessage(const std::string& message,
     // Send to all (or at least some) connected clients.
     for (auto&& i : connections_to_clients_) {
       // Skip if its going to specific ones and this one doesn't match.
-      if (clients != nullptr) {
+      if (!clients.empty()) {
         auto found = false;
-        for (auto&& c : *clients) {
+        for (auto c : clients) {
           if (c == i.second->id()) {
             found = true;
           }
@@ -190,7 +190,7 @@ void ConnectionSet::SendChatMessage(const std::string& message,
     }
 
     // And display locally if the message is addressed to all.
-    if (clients == nullptr) {
+    if (clients.empty()) {
       g_game->LocalDisplayChatMessage(msg_out);
     }
   }
