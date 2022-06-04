@@ -12,6 +12,7 @@ import logging
 from enum import Enum
 import dataclasses
 import typing
+import types
 import datetime
 from typing import TYPE_CHECKING, TypeVar, get_type_hints
 
@@ -242,7 +243,7 @@ class PrepSession:
 
         origin = _get_origin(anntype)
 
-        if origin is typing.Union:
+        if origin is typing.Union or origin is types.UnionType:
             self.prep_union(cls,
                             attrname,
                             anntype,

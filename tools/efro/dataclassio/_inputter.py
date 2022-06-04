@@ -11,6 +11,7 @@ from __future__ import annotations
 from enum import Enum
 import dataclasses
 import typing
+import types
 import datetime
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -78,7 +79,7 @@ class _Inputter(Generic[T]):
                                 f' \'{type(value).__name__}\' which is not.')
             return value
 
-        if origin is typing.Union:
+        if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.
             # So let's treat this as a simple optional case.

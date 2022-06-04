@@ -24,7 +24,7 @@ class V2SignInWindow(ba.Window):
 
     def __init__(self, origin_widget: ba.Widget):
         self._width = 600
-        self._height = 500
+        self._height = 550
         self._proxyid: Optional[str] = None
         self._proxykey: Optional[str] = None
 
@@ -34,7 +34,7 @@ class V2SignInWindow(ba.Window):
             transition='in_scale',
             scale_origin_stack_offset=origin_widget.get_screen_space_center(),
             scale=(1.25 if uiscale is ba.UIScale.SMALL else
-                   1.0 if uiscale is ba.UIScale.MEDIUM else 0.85)))
+                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9)))
 
         self._loading_text = ba.textwidget(
             parent=self._root_widget,
@@ -49,7 +49,7 @@ class V2SignInWindow(ba.Window):
 
         self._cancel_button = ba.buttonwidget(
             parent=self._root_widget,
-            position=(30, self._height - 55),
+            position=(30, self._height - 65),
             size=(130, 50),
             scale=0.8,
             label=ba.Lstr(resource='cancelText'),
@@ -83,9 +83,11 @@ class V2SignInWindow(ba.Window):
 
         # Show link(s) the user can use to log in.
         address = _ba.get_master_server_address(version=2) + response.url
+        address_pretty = address.removeprefix('https://')
+
         ba.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 85),
+            position=(self._width * 0.5, self._height - 95),
             size=(0, 0),
             text=ba.Lstr(
                 resource='accountSettingsWindow.v2LinkInstructionsText'),
@@ -97,19 +99,19 @@ class V2SignInWindow(ba.Window):
         if is_browser_likely_available():
             ba.buttonwidget(parent=self._root_widget,
                             position=((self._width * 0.5 - button_width * 0.5),
-                                      self._height - 175),
+                                      self._height - 185),
                             autoselect=True,
                             size=(button_width, 60),
-                            label=ba.Lstr(value=address),
+                            label=ba.Lstr(value=address_pretty),
                             color=(0.55, 0.5, 0.6),
                             textcolor=(0.75, 0.7, 0.8),
                             on_activate_call=lambda: ba.open_url(address))
             qroffs = 0.0
         else:
             ba.textwidget(parent=self._root_widget,
-                          position=(self._width * 0.5, self._height - 135),
+                          position=(self._width * 0.5, self._height - 145),
                           size=(0, 0),
-                          text=ba.Lstr(value=address),
+                          text=ba.Lstr(value=address_pretty),
                           flatness=1.0,
                           maxwidth=self._width,
                           scale=0.75,
@@ -120,7 +122,7 @@ class V2SignInWindow(ba.Window):
         qr_size = 270
         ba.imagewidget(parent=self._root_widget,
                        position=(self._width * 0.5 - qr_size * 0.5,
-                                 self._height * 0.34 + qroffs - qr_size * 0.5),
+                                 self._height * 0.36 + qroffs - qr_size * 0.5),
                        size=(qr_size, qr_size),
                        texture=_ba.get_qrcode_texture(address))
 
