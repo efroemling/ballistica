@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 if TYPE_CHECKING:
     import asyncio
     from efro.call import Call as Call  # 'as Call' so we re-export.
-    from typing import Any, Callable, Optional, NoReturn
+    from typing import Any, Callable, NoReturn
 
 T = TypeVar('T')
 TVAL = TypeVar('TVAL')
@@ -177,15 +177,15 @@ class DirtyBit:
                  retry_interval: float = 5.0,
                  use_lock: bool = False,
                  auto_dirty_seconds: float = None,
-                 min_update_interval: Optional[float] = None):
+                 min_update_interval: float | None = None):
         curtime = time.time()
         self._retry_interval = retry_interval
         self._auto_dirty_seconds = auto_dirty_seconds
         self._min_update_interval = min_update_interval
         self._dirty = dirty
-        self._next_update_time: Optional[float] = (curtime if dirty else None)
-        self._last_update_time: Optional[float] = None
-        self._next_auto_dirty_time: Optional[float] = (
+        self._next_update_time: float | None = (curtime if dirty else None)
+        self._last_update_time: float | None = None
+        self._next_auto_dirty_time: float | None = (
             (curtime + self._auto_dirty_seconds) if
             (not dirty and self._auto_dirty_seconds is not None) else None)
         self._use_lock = use_lock
@@ -476,7 +476,7 @@ def asserttype(obj: Any, typ: type[T]) -> T:
     return obj
 
 
-def asserttype_o(obj: Any, typ: type[T]) -> Optional[T]:
+def asserttype_o(obj: Any, typ: type[T]) -> T | None:
     """Return an object typed as a given optional type.
 
     Assert is used to check its actual type, so only use this when
@@ -499,7 +499,7 @@ def checktype(obj: Any, typ: type[T]) -> T:
     return obj
 
 
-def checktype_o(obj: Any, typ: type[T]) -> Optional[T]:
+def checktype_o(obj: Any, typ: type[T]) -> T | None:
     """Return an object typed as a given optional type.
 
     Always checks the type at runtime with isinstance and throws a TypeError
@@ -524,7 +524,7 @@ def warntype(obj: Any, typ: type[T]) -> T:
     return obj  # type: ignore
 
 
-def warntype_o(obj: Any, typ: type[T]) -> Optional[T]:
+def warntype_o(obj: Any, typ: type[T]) -> T | None:
     """Return an object typed as a given type.
 
     Always checks the type at runtime and simply logs a warning if it is
@@ -538,7 +538,7 @@ def warntype_o(obj: Any, typ: type[T]) -> Optional[T]:
     return obj  # type: ignore
 
 
-def assert_non_optional(obj: Optional[T]) -> T:
+def assert_non_optional(obj: T | None) -> T:
     """Return an object with Optional typing removed.
 
     Assert is used to check its actual type, so only use this when
@@ -548,7 +548,7 @@ def assert_non_optional(obj: Optional[T]) -> T:
     return obj
 
 
-def check_non_optional(obj: Optional[T]) -> T:
+def check_non_optional(obj: T | None) -> T:
     """Return an object with Optional typing removed.
 
     Always checks the actual type and throws a TypeError on failure.
@@ -679,12 +679,12 @@ def set_canonical_module(module_globals: dict[str, Any],
     for name in names:
         obj = module_globals[name]
         existing = getattr(obj, '__module__', None)
-        if existing is not None and existing != modulename:
-            try:
+        try:
+            if existing is not None and existing != modulename:
                 obj.__module__ = modulename
-            except Exception:
-                import logging
-                logging.warning(
-                    'set_canonical_module: unable to change __module__'
-                    ' from %s to %s on %s object.', existing, modulename,
-                    type(obj))
+        except Exception:
+            import logging
+            logging.warning(
+                'set_canonical_module: unable to change __module__'
+                " from '%s' to '%s' on %s object at '%s'.", existing,
+                modulename, type(obj), name)

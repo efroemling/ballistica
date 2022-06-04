@@ -67,6 +67,7 @@ def test_assign() -> None:
         nval: _NestedClass = field(default_factory=_NestedClass)
         enval: _EnumTest = _EnumTest.TEST1
         oival: Optional[int] = None
+        oival2: int | None = None
         osval: Optional[str] = None
         obval: Optional[bool] = None
         ofval: Optional[float] = None
@@ -120,6 +121,8 @@ def test_assign() -> None:
             'test1',
         'oival':
             1,
+        'oival2':
+            1,
         'osval':
             'foo',
         'obval':
@@ -160,6 +163,7 @@ def test_assign() -> None:
         dataclass_from_dict(
             _TestClass, {
                 'oival': None,
+                'oival2': None,
                 'osval': None,
                 'obval': None,
                 'ofval': None,
@@ -173,6 +177,7 @@ def test_assign() -> None:
         dataclass_from_dict(
             _TestClass, {
                 'oival': 1,
+                'oival2': 1,
                 'osval': 'foo',
                 'obval': True,
                 'ofval': 2.0,
@@ -191,6 +196,10 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, {'bval': 2})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'oival': 'foo'})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'oival2': 'foo'})
+    dataclass_from_dict(_TestClass, {'oival2': None})
+    dataclass_from_dict(_TestClass, {'oival2': 123})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'osval': 1})
     with pytest.raises(TypeError):
