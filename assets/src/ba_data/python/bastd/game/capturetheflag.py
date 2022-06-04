@@ -274,6 +274,11 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
             # If the enemy flag is already here, score!
             if team.enemy_flag_at_base:
+                # And show team name which scored (but actually we could
+                # show here player who returned enemy flag).
+                self.show_zoom_message(ba.Lstr(resource='nameScoresText',
+                                               subs=[('${NAME}', team.name)]),
+                                       color=team.color)
                 self._score(team)
         else:
             team.enemy_flag_at_base = True
