@@ -2039,6 +2039,7 @@ auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* sender_override_obj = Py_None;
   std::string sender_override;
   const std::string* sender_override_p{};
+  std::vector<int> clients;
   std::vector<int>* clients_p{};
 
   static const char* kwlist[] = {"message", "clients", "sender_override",
@@ -2055,7 +2056,7 @@ auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (clients_obj != Py_None) {
-    std::vector<int> clients = Python::GetPyInts(clients_obj);
+    clients = Python::GetPyInts(clients_obj);
     clients_p = &clients;
   }
   g_game->connections()->SendChatMessage(message, clients_p, sender_override_p);
