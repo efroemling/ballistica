@@ -274,6 +274,11 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
             # If the enemy flag is already here, score!
             if team.enemy_flag_at_base:
+                # And show team name which scored (but actually we could
+                # show here player who returned enemy flag).
+                self.show_zoom_message(ba.Lstr(resource='nameScoresText',
+                                               subs=[('${NAME}', team.name)]),
+                                       color=team.color)
                 self._score(team)
         else:
             team.enemy_flag_at_base = True
@@ -435,11 +440,14 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         """
         player: Optional[Player]
         try:
-            player = ba.getcollision().sourcenode.getdelegate(
-                PlayerSpaz, True).getplayer(Player, True)
+            spaz = ba.getcollision().sourcenode.getdelegate(PlayerSpaz, True)
         except ba.NotFoundError:
-            # This can happen if the player leaves but his corpse touches/etc.
-            player = None
+            return
+
+        if not spaz.is_alive():
+            return
+
+        player = spaz.getplayer(Player, True)
 
         if player:
             player.touching_own_flag += (1 if connecting else -1)

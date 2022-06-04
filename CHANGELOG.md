@@ -1,6 +1,7 @@
 ### 1.7.1 (20597, 2022-06-04)
 - V2 account logic fixes
 - Polishing V2 web-based login flow
+- Minor fixes in some minigames (Thanks Droopy!)
 
 ### 1.7.0 (20591, 2022-06-02)
 - V2 accounts are now available (woohoo!). These are called 'BombSquad Accounts' in the account section. V2 accounts communicate with a completely new server and will be the foundation for lots of new functionality in the future. However they also function as a V1 account so existing functionality should still work. Note that the new 'workspaces' feature for V2-accounts is not yet enabled in this build, but it will be in the next few builds. Also note that account types such as GameCenter and Google-Play will be 'upgraded' to V2 accounts in the future so there is no need to try this out if you use one of those. But if you use device-accounts you might want to create yourself a V2 account, since device-accounts will remain V1-only (though you can link an old device-account to a v2-enabled account if you want to keep your progress). Getting a V2 account now also gives you a chance to reserve a nice account-tag before all the good ones are taken.
