@@ -29,3 +29,6 @@
 
 ### Ivan Ms
 - Few camera features
+
+# Droopy
+- Fixes in some minigames
