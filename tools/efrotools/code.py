@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from efrotools.filecache import FileCache
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Optional
+    from typing import Any
 
 
 def format_clang_format(projroot: Path, full: bool) -> None:
@@ -365,9 +365,9 @@ def _dirty_dep_check(fname: str, filestates: dict[str, bool], cache: FileCache,
     return dirty
 
 
-def _run_pylint(projroot: Path, pylintrc: Union[Path, str],
-                cache: Optional[FileCache], dirtyfiles: list[str],
-                allfiles: Optional[list[str]]) -> dict[str, Any]:
+def _run_pylint(projroot: Path, pylintrc: Path | str, cache: FileCache | None,
+                dirtyfiles: list[str],
+                allfiles: list[str] | None) -> dict[str, Any]:
     import time
     from pylint import lint
     from efro.error import CleanError
@@ -623,9 +623,9 @@ def _parse_idea_results(path: Path) -> int:
     error_count = 0
     root = Et.parse(str(path)).getroot()
     for child in root:
-        line: Optional[str] = None
-        description: Optional[str] = None
-        fname: Optional[str] = None
+        line: str | None = None
+        description: str | None = None
+        fname: str | None = None
         if child.tag == 'problem':
             is_error = True
             for pchild in child:
@@ -753,7 +753,7 @@ def _run_idea_inspections_cached(cachepath: Path,
                 md5.update(infile.read())
 
     current_hash = md5.hexdigest()
-    existing_hash: Optional[str]
+    existing_hash: str | None
     try:
         with open(cachepath, encoding='utf-8') as infile2:
             existing_hash = json.loads(infile2.read())['hash']

@@ -11,7 +11,7 @@ import subprocess
 import logging
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 # Global state:
 # We maintain a single temp dir where our mypy cache and our temp
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 # in a file we haven't seen yet, we copy it into the temp dir,
 # filter it a bit to add reveal_type() statements, and run mypy on it.
 # The temp dir should tear itself down when Python exits.
-_tempdir: Optional[str] = None
+_tempdir: str | None = None
 _statictestfiles: dict[str, StaticTestFile] = {}
 _nextfilenum: int = 1
 
@@ -158,7 +158,7 @@ class StaticTestFile:
         return '\n'.join(lines_out) + '\n'
 
 
-def static_type_equals(value: Any, statictype: Union[type, None, str]) -> bool:
+def static_type_equals(value: Any, statictype: type | str | None) -> bool:
     """Check a type statically using mypy.
 
     If a string is passed as statictype, it is checked against the mypy

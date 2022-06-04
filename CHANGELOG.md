@@ -1,4 +1,4 @@
-### 1.7.1 (20594, 2022-06-03)
+### 1.7.1 (20597, 2022-06-04)
 - V2 account logic fixes
 - Polishing V2 web-based login flow
 

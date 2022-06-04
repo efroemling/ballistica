@@ -19,7 +19,7 @@ from efro.message._message import (Message, Response, ErrorResponse,
                                    UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Literal
+    from typing import Any, Literal
 
 
 class MessageProtocol:
@@ -151,7 +151,7 @@ class MessageProtocol:
                  opname: str) -> dict:
         """Encode a message to a json string for transport."""
 
-        m_id: Optional[int] = ids_by_type.get(type(message))
+        m_id: int | None = ids_by_type.get(type(message))
         if m_id is None:
             raise TypeError(f'{opname} type is not registered in protocol:'
                             f' {type(message)}')
@@ -182,7 +182,7 @@ class MessageProtocol:
     def _from_dict(self, data: dict, types_by_id: dict[int, type[Any]],
                    opname: str) -> Any:
         """Decode a message from a json string."""
-        msgdict: Optional[dict]
+        msgdict: dict | None
 
         m_id = data.get('t')
         # Allow omitting 'm' dict if its empty.
@@ -200,7 +200,7 @@ class MessageProtocol:
 
     def _get_module_header(self,
                            part: Literal['sender', 'receiver'],
-                           extra_import_code: Optional[str] = None) -> str:
+                           extra_import_code: str | None = None) -> str:
         """Return common parts of generated modules."""
         # pylint: disable=too-many-locals, too-many-branches
         import textwrap
@@ -270,9 +270,10 @@ class MessageProtocol:
         tpimport_lines = textwrap.indent(tpimport_lines, '    ')
 
         # We need Optional for sender-modules with multiple types
-        baseimps = ['Union', 'Any']
-        if part == 'sender' and len(msgtypes) > 1:
-            baseimps.append('Optional')
+        # UPDATE: Not anymore with 3.10
+        baseimps = ['Any']
+        # if part == 'sender' and len(msgtypes) > 1:
+        #     baseimps.append('Optional')
         if part == 'receiver':
             baseimps.append('Callable')
         baseimps_s = ', '.join(baseimps)
@@ -301,7 +302,7 @@ class MessageProtocol:
             enable_sync_sends: bool,
             enable_async_sends: bool,
             private: bool = False,
-            protocol_module_level_import_code: Optional[str] = None) -> str:
+            protocol_module_level_import_code: str | None = None) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -354,8 +355,9 @@ class MessageProtocol:
                     msgtypevar = msgtype.__name__
                     rtypes = msgtype.get_response_types()
                     if len(rtypes) > 1:
-                        tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                        rtypevar = f'Union[{tps}]'
+                        rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
+                        # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                        # rtypevar = f'Union[{tps}]'
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     out += (f'\n'
@@ -373,8 +375,10 @@ class MessageProtocol:
                         msgtypevar = msgtype.__name__
                         rtypes = msgtype.get_response_types()
                         if len(rtypes) > 1:
-                            tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                            rtypevar = f'Union[{tps}]'
+                            rtypevar = ' | '.join(
+                                _filt_tp_name(t) for t in rtypes)
+                            # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                            # rtypevar = f'Union[{tps}]'
                         else:
                             rtypevar = _filt_tp_name(rtypes[0])
                         out += (f'\n'
@@ -385,7 +389,7 @@ class MessageProtocol:
                                 f'        ...\n')
                     out += (f'\n'
                             f'    {pfx}def send{sfx}(self, message: Message)'
-                            f' -> Optional[Response]:\n'
+                            f' -> Response | None:\n'
                             f'        """Send a message {how}."""\n'
                             f'        return {awt}self._sender.'
                             f'send{sfx}(self._obj, message)\n')
@@ -398,7 +402,7 @@ class MessageProtocol:
             protocol_create_code: str,
             is_async: bool,
             private: bool = False,
-            protocol_module_level_import_code: Optional[str] = None) -> str:
+            protocol_module_level_import_code: str | None = None) -> str:
         """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -443,8 +447,9 @@ class MessageProtocol:
                 msgtypevar = msgtype.__name__
                 rtypes = msgtype.get_response_types()
                 if len(rtypes) > 1:
-                    tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                    rtypevar = f'Union[{tps}]'
+                    rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
+                    # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                    # rtypevar = f'Union[{tps}]'
                 else:
                     rtypevar = _filt_tp_name(rtypes[0])
                 rtypevar = f'{cbgn}{rtypevar}{cend}'
@@ -466,8 +471,9 @@ class MessageProtocol:
                     msgtypevar = msgtype.__name__
                     rtypes = msgtype.get_response_types()
                     if len(rtypes) > 1:
-                        tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                        rtypevar = f'Union[{tps}]'
+                        rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
+                        # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
+                        # rtypevar = f'Union[{tps}]'
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     rtypevar = f'{cbgn}{rtypevar}{cend}'

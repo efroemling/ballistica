@@ -220,6 +220,11 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
                         PyExcType::kDelegateNotFound);
       }
     }
+  } else {
+    if (doraise) {
+      throw Exception("No delegate set on '" + node->type()->name() + "' node.",
+                      PyExcType::kDelegateNotFound);
+    }
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

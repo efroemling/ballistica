@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import asyncio
-from typing import TYPE_CHECKING, overload, Union
+from typing import TYPE_CHECKING, overload
 from dataclasses import dataclass
 
 import pytest
@@ -20,7 +20,7 @@ from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           EmptyResponse)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Awaitable
+    from typing import Any, Callable, Awaitable
 
 
 @ioprepped
@@ -134,14 +134,14 @@ class _BoundTestMessageSenderSync(BoundMessageSender):
         ...
 
     @overload
-    def send(self, message: _TMsg2) -> Union[_TResp1, _TResp2]:
+    def send(self, message: _TMsg2) -> _TResp1 | _TResp2:
         ...
 
     @overload
     def send(self, message: _TMsg3) -> None:
         ...
 
-    def send(self, message: Message) -> Optional[Response]:
+    def send(self, message: Message) -> Response | None:
         """Send a message synchronously."""
         return self._sender.send(self._obj, message)
 
@@ -173,14 +173,14 @@ class _BoundTestMessageSenderAsync(BoundMessageSender):
         ...
 
     @overload
-    async def send_async(self, message: _TMsg2) -> Union[_TResp1, _TResp2]:
+    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2:
         ...
 
     @overload
     async def send_async(self, message: _TMsg3) -> None:
         ...
 
-    async def send_async(self, message: Message) -> Optional[Response]:
+    async def send_async(self, message: Message) -> Response | None:
         """Send a message asynchronously."""
         return await self._sender.send_async(self._obj, message)
 
@@ -212,7 +212,7 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
         ...
 
     @overload
-    def send(self, message: _TMsg2) -> Union[_TResp1, _TResp2]:
+    def send(self, message: _TMsg2) -> _TResp1 | _TResp2:
         ...
 
     @overload
@@ -223,7 +223,7 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
     def send(self, message: _TMsg4) -> None:
         ...
 
-    def send(self, message: Message) -> Optional[Response]:
+    def send(self, message: Message) -> Response | None:
         """Send a message synchronously."""
         return self._sender.send(self._obj, message)
 
@@ -232,7 +232,7 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
         ...
 
     @overload
-    async def send_async(self, message: _TMsg2) -> Union[_TResp1, _TResp2]:
+    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2:
         ...
 
     @overload
@@ -243,7 +243,7 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
     async def send_async(self, message: _TMsg4) -> None:
         ...
 
-    async def send_async(self, message: Message) -> Optional[Response]:
+    async def send_async(self, message: Message) -> Response | None:
         """Send a message asynchronously."""
         return await self._sender.send_async(self._obj, message)
 
@@ -323,8 +323,8 @@ class _TestSyncMessageReceiver(MessageReceiver):
     @overload
     def handler(
         self,
-        call: Callable[[Any, _TMsg2], Union[_TResp1, _TResp2]],
-    ) -> Callable[[Any, _TMsg2], Union[_TResp1, _TResp2]]:
+        call: Callable[[Any, _TMsg2], _TResp1 | _TResp2],
+    ) -> Callable[[Any, _TMsg2], _TResp1 | _TResp2]:
         ...
 
     @overload
@@ -383,8 +383,8 @@ class _TestAsyncMessageReceiver(MessageReceiver):
     @overload
     def handler(
         self,
-        call: Callable[[Any, _TMsg2], Awaitable[Union[_TResp1, _TResp2]]],
-    ) -> Callable[[Any, _TMsg2], Awaitable[Union[_TResp1, _TResp2]]]:
+        call: Callable[[Any, _TMsg2], Awaitable[_TResp1 | _TResp2]],
+    ) -> Callable[[Any, _TMsg2], Awaitable[_TResp1 | _TResp2]]:
         ...
 
     @overload
@@ -749,8 +749,7 @@ def test_full_pipeline() -> None:
 
         test_handling_unregistered = False
 
-        def __init__(self, target: Union[TestClassRSync,
-                                         TestClassRAsync]) -> None:
+        def __init__(self, target: TestClassRSync | TestClassRAsync) -> None:
             self.test_sidecar = False
             self._target = target
 
@@ -814,8 +813,7 @@ def test_full_pipeline() -> None:
             return out
 
         @receiver.handler
-        def handle_test_message_2(self,
-                                  msg: _TMsg2) -> Union[_TResp1, _TResp2]:
+        def handle_test_message_2(self, msg: _TMsg2) -> _TResp1 | _TResp2:
             """Test."""
             del msg  # Unused
             return _TResp2(fval=1.2)
@@ -854,8 +852,8 @@ def test_full_pipeline() -> None:
             return _TResp1(bval=True)
 
         @receiver.handler
-        async def handle_test_message_2(
-                self, msg: _TMsg2) -> Union[_TResp1, _TResp2]:
+        async def handle_test_message_2(self,
+                                        msg: _TMsg2) -> _TResp1 | _TResp2:
             """Test."""
             del msg  # Unused
             return _TResp2(fval=1.2)

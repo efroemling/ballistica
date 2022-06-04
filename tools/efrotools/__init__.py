@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Union, Sequence, Optional, Any, Literal
+    from typing import Sequence, Any, Literal
 
 # Python major version we're using for all this stuff.
 PYVER = '3.10'
@@ -84,13 +84,13 @@ def get_public_license(style: str) -> str:
     raise RuntimeError(f'Invalid style: {style}')
 
 
-def readfile(path: Union[str, Path]) -> str:
+def readfile(path: str | Path) -> str:
     """Read a text file and return a str."""
     with open(path, encoding='utf-8') as infile:
         return infile.read()
 
 
-def writefile(path: Union[str, Path], txt: str) -> None:
+def writefile(path: str | Path, txt: str) -> None:
     """Write a string to a file."""
     with open(path, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
@@ -109,7 +109,7 @@ def replace_exact(opstr: str, old: str, new: str, count: int = 1) -> str:
     return opstr.replace(old, new)
 
 
-def get_files_hash(filenames: Sequence[Union[str, Path]],
+def get_files_hash(filenames: Sequence[str | Path],
                    extrahash: str = '',
                    int_only: bool = False,
                    hashtype: Literal['md5', 'sha256'] = 'md5') -> str:
@@ -148,7 +148,7 @@ def _py_symbol_at_column(line: str, col: int) -> str:
 
 
 def py_examine(projroot: Path, filename: Path, line: int, column: int,
-               selection: Optional[str], operation: str) -> None:
+               selection: str | None, operation: str) -> None:
     """Given file position info, performs some code inspection."""
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import

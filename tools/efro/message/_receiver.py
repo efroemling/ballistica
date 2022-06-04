@@ -6,6 +6,7 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
+import types
 import inspect
 import logging
 from typing import TYPE_CHECKING
@@ -103,7 +104,7 @@ class MessageReceiver:
         responsetypes: tuple[Union[type[Any], type[None]], ...]
 
         # Return types can be a single type or a union of types.
-        if isinstance(ret, _GenericAlias):
+        if isinstance(ret, (_GenericAlias, types.UnionType)):
             targs = get_args(ret)
             if not all(isinstance(a, type) for a in targs):
                 raise TypeError(f'expected only types for "return" annotation;'
@@ -113,7 +114,9 @@ class MessageReceiver:
             if not isinstance(ret, type):
                 raise TypeError(f'expected one or more types for'
                                 f' "return" annotation; got a {type(ret)}.')
-            responsetypes = (ret, )
+            # This seems like maybe a mypy bug. Appeared after adding
+            # types.UnionType above.
+            responsetypes = (ret, )  # type: ignore
 
         # Return type of None translates to EmptyResponse.
         responsetypes = tuple(EmptyResponse if r is type(None) else r
