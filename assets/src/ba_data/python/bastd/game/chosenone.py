@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+import _ba
 from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
@@ -138,8 +139,10 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self._flag_spawn_pos = self.map.get_flag_position(None)
         Flag.project_stand(self._flag_spawn_pos)
         self._set_chosen_one_player(None)
-
+        
         pos = self._flag_spawn_pos
+        self.flag_pos = (round(pos[0],1),0.0,round(pos[2],1))
+        
         ba.timer(1.0, call=self._tick, repeat=True)
 
         mat = self._reset_region_material = ba.Material()
@@ -278,6 +281,27 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
 
             # Also an extra momentary flash.
             self._flash_flag_spawn()
+            
+            # The player should be the chosen one when the flag spawns
+            # and the player is in the flag position
+            for player in _ba.get_foreground_host_activity().players:
+                try:
+                    player_pos = player.actor.node.position
+                    player_pos = (round(player_pos[0],1),0.0,round(player_pos[2],1))
+                    print(player_pos)
+                    print(self.flag_pos)
+                    p1 = player_pos
+                    p2 =self.flag_pos
+                    diff = (ba.Vec3(p1[0]-p2[0],
+                                0.0,
+                                p1[2]-p2[2]))
+                    dist = (diff.length())
+                    if dist < 0.4:
+                        self._set_chosen_one_player(player)
+                        break
+                except:
+                    continue
+            
         else:
             if player.actor:
                 self._flag = None
