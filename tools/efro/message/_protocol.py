@@ -269,11 +269,7 @@ class MessageProtocol:
         ovld = ', overload' if not single_message_type else ''
         tpimport_lines = textwrap.indent(tpimport_lines, '    ')
 
-        # We need Optional for sender-modules with multiple types
-        # UPDATE: Not anymore with 3.10
         baseimps = ['Any']
-        # if part == 'sender' and len(msgtypes) > 1:
-        #     baseimps.append('Optional')
         if part == 'receiver':
             baseimps.append('Callable')
         baseimps_s = ', '.join(baseimps)
@@ -356,8 +352,6 @@ class MessageProtocol:
                     rtypes = msgtype.get_response_types()
                     if len(rtypes) > 1:
                         rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
-                        # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                        # rtypevar = f'Union[{tps}]'
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     out += (f'\n'
@@ -377,8 +371,6 @@ class MessageProtocol:
                         if len(rtypes) > 1:
                             rtypevar = ' | '.join(
                                 _filt_tp_name(t) for t in rtypes)
-                            # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                            # rtypevar = f'Union[{tps}]'
                         else:
                             rtypevar = _filt_tp_name(rtypes[0])
                         out += (f'\n'
@@ -448,8 +440,6 @@ class MessageProtocol:
                 rtypes = msgtype.get_response_types()
                 if len(rtypes) > 1:
                     rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
-                    # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                    # rtypevar = f'Union[{tps}]'
                 else:
                     rtypevar = _filt_tp_name(rtypes[0])
                 rtypevar = f'{cbgn}{rtypevar}{cend}'
@@ -472,8 +462,6 @@ class MessageProtocol:
                     rtypes = msgtype.get_response_types()
                     if len(rtypes) > 1:
                         rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
-                        # tps = ', '.join(_filt_tp_name(t) for t in rtypes)
-                        # rtypevar = f'Union[{tps}]'
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     rtypevar = f'{cbgn}{rtypevar}{cend}'
