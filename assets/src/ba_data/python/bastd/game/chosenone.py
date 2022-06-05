@@ -288,8 +288,6 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                 try:
                     player_pos = player.actor.node.position
                     player_pos = (round(player_pos[0],1),0.0,round(player_pos[2],1))
-                    print(player_pos)
-                    print(self.flag_pos)
                     p1 = player_pos
                     p2 =self.flag_pos
                     diff = (ba.Vec3(p1[0]-p2[0],
