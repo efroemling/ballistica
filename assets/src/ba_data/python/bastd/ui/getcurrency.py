@@ -340,7 +340,7 @@ class GetCurrencyWindow(ba.Window):
             '.youHaveText').evaluate().partition('${COUNT}')[0].strip())
         txt2 = (ba.Lstr(
             resource=self._r +
-            '.youHaveText').evaluate().rpartition('${COUNT}')[0].strip())
+            '.youHaveText').evaluate().rpartition('${COUNT}')[-1].strip())
 
         ba.textwidget(parent=self._root_widget,
                       text=txt1,
