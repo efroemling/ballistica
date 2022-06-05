@@ -519,6 +519,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             ticket_count = None
         ticket_cost = self._purchase_price
         if ticket_count is not None and ticket_count < ticket_cost:
+            self._transition_out()
             getcurrency.show_get_tickets_prompt()
             ba.playsound(ba.getsound('error'))
             return
