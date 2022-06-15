@@ -38,8 +38,8 @@ class PipRequirement:
 # installing it. And as far as manually-installed bits, pip itself must
 # have some way to allow for that, right?...
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 13, 9]),
-    PipRequirement(modulename='mypy', minversion=[0, 960]),
+    PipRequirement(modulename='pylint', minversion=[2, 14, 2]),
+    PipRequirement(modulename='mypy', minversion=[0, 961]),
     PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 6, 0]),
     PipRequirement(modulename='pytest', minversion=[7, 1, 2]),
@@ -53,8 +53,8 @@ PIP_REQUIREMENTS = [
     PipRequirement(pipname='types-requests', minversion=[2, 27, 29]),
     PipRequirement(pipname='types-pytz', minversion=[2021, 3, 8]),
     PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 7]),
-    PipRequirement(pipname='certifi', minversion=[2022, 5, 18, 1]),
-    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 2]),
+    PipRequirement(pipname='certifi', minversion=[2022, 6, 15]),
+    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
 ]
 
 # Parts of full-tests suite we only run on particular days.

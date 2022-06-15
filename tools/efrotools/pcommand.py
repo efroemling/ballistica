@@ -481,10 +481,9 @@ def _filter_tool_config(cfg: str) -> str:
         pypaths = getconfig(PROJROOT).get('python_paths')
         if pypaths is None:
             raise RuntimeError('python_paths not set in project config')
-        cstr = "init-hook='import sys;"
+        cstr = 'init-hook=import sys;'
         for path in pypaths:
             cstr += f" sys.path.append('{PROJROOT}/{path}');"
-        cstr += "'"
         cfg = cfg.replace(pylint_init_tag, cstr)
     return cfg
 

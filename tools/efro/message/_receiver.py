@@ -15,7 +15,7 @@ from efro.message._message import (Message, Response, EmptyResponse,
                                    ErrorResponse, UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union
+    from typing import Any, Callable, Optional, Union, Awaitable
 
     from efro.message._protocol import MessageProtocol
 
@@ -54,6 +54,11 @@ class MessageReceiver:
                                                     None]] = None
         self._encode_filter_call: Optional[Callable[[Any, Response, dict],
                                                     None]] = None
+
+        # TODO: don't currently have async encode equivalent
+        # or either for sender; can add as needed.
+        self._decode_filter_async_call: Optional[Callable[
+            [Any, dict, Message], Awaitable[None]]] = None
 
     # noinspection PyProtectedMember
     def register_handler(
@@ -152,10 +157,24 @@ class MessageReceiver:
         """Function decorator for defining a decode filter.
 
         Decode filters can be used to extract extra data from incoming
-        message dicts.
+        message dicts. This version will work for both handle_raw_message()
+        and handle_raw_message_async()
         """
         assert self._decode_filter_call is None
         self._decode_filter_call = call
+        return call
+
+    def decode_filter_async_method(
+        self, call: Callable[[Any, dict, Message], Awaitable[None]]
+    ) -> Callable[[Any, dict, Message], Awaitable[None]]:
+        """Function decorator for defining a decode filter.
+
+        Decode filters can be used to extract extra data from incoming
+        message dicts. Note that this version will only work with
+        handle_raw_message_async().
+        """
+        assert self._decode_filter_async_call is None
+        self._decode_filter_async_call = call
         return call
 
     def encode_filter_method(
@@ -183,8 +202,9 @@ class MessageReceiver:
                 else:
                     raise TypeError(msg)
 
-    def _decode_incoming_message(self, bound_obj: Any,
-                                 msg: str) -> tuple[Message, type[Message]]:
+    def _decode_incoming_message_base(
+            self, bound_obj: Any,
+            msg: str) -> tuple[Any, dict, Message, type[Message]]:
         # Decode the incoming message.
         msg_dict = self.protocol.decode_dict(msg)
         msg_decoded = self.protocol.message_from_dict(msg_dict)
@@ -192,7 +212,27 @@ class MessageReceiver:
         assert issubclass(msgtype, Message)
         if self._decode_filter_call is not None:
             self._decode_filter_call(bound_obj, msg_dict, msg_decoded)
+        return bound_obj, msg_dict, msg_decoded, msgtype
 
+    def _decode_incoming_message(self, bound_obj: Any,
+                                 msg: str) -> tuple[Message, type[Message]]:
+        bound_obj, _msg_dict, msg_decoded, msgtype = (
+            self._decode_incoming_message_base(bound_obj=bound_obj, msg=msg))
+
+        # If they've set an async filter but are calling sync
+        # handle_raw_message() its likely a bug.
+        assert self._decode_filter_async_call is None
+
+        return msg_decoded, msgtype
+
+    async def _decode_incoming_message_async(
+            self, bound_obj: Any, msg: str) -> tuple[Message, type[Message]]:
+        bound_obj, msg_dict, msg_decoded, msgtype = (
+            self._decode_incoming_message_base(bound_obj=bound_obj, msg=msg))
+
+        if self._decode_filter_async_call is not None:
+            await self._decode_filter_async_call(bound_obj, msg_dict,
+                                                 msg_decoded)
         return msg_decoded, msgtype
 
     def encode_user_response(self, bound_obj: Any,
@@ -260,7 +300,7 @@ class MessageReceiver:
         """
         assert self.is_async, "can't call async handler on sync receiver"
         try:
-            msg_decoded, msgtype = self._decode_incoming_message(
+            msg_decoded, msgtype = await self._decode_incoming_message_async(
                 bound_obj, msg)
             handler = self._handlers.get(msgtype)
             if handler is None:

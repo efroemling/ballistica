@@ -151,6 +151,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_asyncio.py \
   build/ba_data/python/ba/_benchmark.py \
   build/ba_data/python/ba/_campaign.py \
+  build/ba_data/python/ba/_cloud.py \
   build/ba_data/python/ba/_collision.py \
   build/ba_data/python/ba/_coopgame.py \
   build/ba_data/python/ba/_coopsession.py \
@@ -194,7 +195,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_tips.py \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_ui.py \
-  build/ba_data/python/ba/cloud.py \
   build/ba_data/python/ba/deprecated.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/macmusicapp.py \
@@ -398,6 +398,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_asyncio.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_cloud.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_collision.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_coopgame.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_coopsession.cpython-310.opt-1.pyc \
@@ -441,7 +442,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_tips.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_ui.cpython-310.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/cloud.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/deprecated.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/macmusicapp.cpython-310.opt-1.pyc \
@@ -648,6 +648,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/cloud.py \
   build/ba_data/python/bacommon/net.py \
   build/ba_data/python/bacommon/servermanager.py \
+  build/ba_data/python/bacommon/transfer.py \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/call.py \
   build/ba_data/python/efro/dataclassio/__init__.py \
@@ -677,6 +678,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/cloud.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/net.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-310.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/transfer.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/call.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-310.opt-1.pyc \

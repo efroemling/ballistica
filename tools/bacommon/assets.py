@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Annotated
+from typing import TYPE_CHECKING, Annotated
 from enum import Enum
 
 from efro.dataclassio import ioprepped, IOAttrs
@@ -57,4 +57,4 @@ class AssetPackageBuildState:
     # Build error string. If this is present, it should be presented
     # to the user and they should required to explicitly restart the build
     # in some way if desired.
-    error: Annotated[Optional[str], IOAttrs('e')] = None
+    error: Annotated[str | None, IOAttrs('e')] = None

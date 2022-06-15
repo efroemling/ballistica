@@ -7,42 +7,42 @@ This facilitates workflows such as creating asset-packages, etc.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
+import zlib
 import time
+import base64
 import datetime
+import tempfile
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
-import json
-import subprocess
-import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from efro.error import CleanError
 from efro.terminal import Clr
-from efro.dataclassio import dataclass_from_json
-from bacommon.bacloud import Response
+from efro.error import CleanError
+from efro.dataclassio import (dataclass_from_json, dataclass_to_dict,
+                              dataclass_to_json, ioprepped)
+from bacommon.bacloud import RequestData, ResponseData, BACLOUD_VERSION
+from bacommon.transfer import DirectoryManifest
 
 if TYPE_CHECKING:
-    from typing import Optional, BinaryIO, IO
-
-# Version is sent to the master-server with all commands. Can be incremented
-# if we need to change behavior server-side to go along with client changes.
-VERSION = 2
+    from typing import BinaryIO, IO
 
 TOOL_NAME = 'bacloud'
 
 # Server we talk to (can override via env var).
-MASTER_SERVER_URL = os.getenv('BACLOUD_SERVER_URL',
-                              'https://bamaster.appspot.com')
+BACLOUD_SERVER_URL = os.getenv('BACLOUD_SERVER_URL', 'https://ballistica.net')
 
 
+@ioprepped
 @dataclass
 class StateData:
     """Persistent state data stored to disk."""
-    login_token: Optional[str] = None
+    login_token: str | None = None
 
 
 def get_tz_offset_seconds() -> float:
@@ -53,70 +53,12 @@ def get_tz_offset_seconds() -> float:
     return utc_offset
 
 
-@dataclass
-class DirManifestFile:
-    """Represents a single file within a DirManifest."""
-    filehash: str
-    filesize: int
-
-
-class DirManifest:
-    """Represents a directory of files with some common purpose."""
-
-    def __init__(self) -> None:
-        self.path = Path('')
-        self.files: dict[str, DirManifestFile] = {}
-
-    @classmethod
-    def load_from_disk(cls, path: Path) -> DirManifest:
-        """Create a package populated from a directory on disk."""
-        package = DirManifest()
-
-        package.path = path
-        packagepathstr = str(path)
-        paths: list[str] = []
-
-        # Simply return empty manifests if the given path isn't a dir.
-        # (the server may intend to create it and is just asking what's
-        # there already)
-        if path.is_dir():
-            # Build the full list of package-relative paths.
-            for basename, _dirnames, filenames in os.walk(path):
-                for filename in filenames:
-                    fullname = os.path.join(basename, filename)
-                    assert fullname.startswith(packagepathstr)
-                    paths.append(fullname[len(packagepathstr) + 1:])
-
-        import hashlib
-        from concurrent.futures import ThreadPoolExecutor
-        from multiprocessing import cpu_count
-
-        def _get_file_info(filepath: str) -> tuple[str, DirManifestFile]:
-            sha = hashlib.sha256()
-            fullfilepath = os.path.join(packagepathstr, filepath)
-            if not os.path.isfile(fullfilepath):
-                raise Exception(f'File not found: "{fullfilepath}"')
-            with open(fullfilepath, 'rb') as infile:
-                filebytes = infile.read()
-                filesize = len(filebytes)
-                sha.update(filebytes)
-            return (filepath,
-                    DirManifestFile(filehash=sha.hexdigest(),
-                                    filesize=filesize))
-
-        # Now use all procs to hash the files efficiently.
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            package.files = dict(executor.map(_get_file_info, paths))
-
-        return package
-
-
 class App:
     """Context for a run of the tool."""
 
     def __init__(self) -> None:
         self._state = StateData()
-        self._project_root: Optional[Path] = None
+        self._project_root: Path | None = None
         self._end_command_args: dict = {}
 
     def run(self) -> None:
@@ -163,7 +105,7 @@ class App:
             return
         try:
             with open(self._state_data_path, 'r', encoding='utf-8') as infile:
-                self._state = StateData(**json.loads(infile.read()))
+                self._state = dataclass_from_json(StateData, infile.read())
         except Exception:
             print(f'{Clr.RED}Error loading {TOOL_NAME} data;'
                   f' resetting to defaults.{Clr.RST}')
@@ -172,31 +114,35 @@ class App:
         if not self._state_dir.exists():
             self._state_dir.mkdir(parents=True, exist_ok=True)
         with open(self._state_data_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(json.dumps(self._state.__dict__))
+            outfile.write(dataclass_to_json(self._state))
 
     def _servercmd(self,
                    cmd: str,
-                   data: dict,
-                   files: dict[str, IO] = None) -> Response:
+                   payload: dict,
+                   files: dict[str, IO] = None) -> ResponseData:
         """Issue a command to the server and get a response."""
 
-        response_raw_2 = requests.post(
-            (MASTER_SERVER_URL + '/bacloudcmd'),
-            headers={'User-Agent': f'bacloud/{VERSION}'},
+        response_raw = requests.post(
+            f'{BACLOUD_SERVER_URL}/bacloudcmd',
+            headers={'User-Agent': f'bacloud/{BACLOUD_VERSION}'},
             data={
-                'c': cmd,
-                'v': VERSION,
-                't': json.dumps(self._state.login_token),
-                'd': json.dumps(data),
-                'z': get_tz_offset_seconds(),
-                'y': int(sys.stdout.isatty()),
+                'v':
+                    BACLOUD_VERSION,
+                'r':
+                    dataclass_to_json(
+                        RequestData(command=cmd,
+                                    token=self._state.login_token,
+                                    payload=payload,
+                                    tzoffset=get_tz_offset_seconds(),
+                                    isatty=sys.stdout.isatty())),
             },
-            files=files)
-        response_raw_2.raise_for_status()  # Except if anything went wrong.
-        assert isinstance(response_raw_2.content, bytes)
+            files=files,
+        )
+        response_raw.raise_for_status()  # Error if anything went wrong.
+        assert isinstance(response_raw.content, bytes)
 
-        response = dataclass_from_json(Response,
-                                       response_raw_2.content.decode())
+        response = dataclass_from_json(ResponseData,
+                                       response_raw.content.decode())
 
         # Handle a few things inline.
         # (so this functionality is available even to recursive commands, etc.)
@@ -212,7 +158,7 @@ class App:
         return response
 
     def _upload_file(self, filename: str, call: str, args: dict) -> None:
-        print(f'{Clr.BLU}Uploading {filename}{Clr.RST}', flush=True)
+        print(f'Uploading {Clr.BLU}{filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
             gzpath = Path(tempdir, 'file.gz')
@@ -228,17 +174,10 @@ class App:
                 )
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
-        from dataclasses import asdict
-        manifest = DirManifest.load_from_disk(Path(dirmanifest))
-
-        # Store the manifest to be included with our next called command.
-        self._end_command_args['manifest'] = {
-            'files': {key: asdict(val)
-                      for key, val in manifest.files.items()}
-        }
+        self._end_command_args['manifest'] = dataclass_to_dict(
+            DirectoryManifest.create_from_disk(Path(dirmanifest)))
 
     def _handle_uploads(self, uploads: tuple[list[str], str, dict]) -> None:
-        from concurrent.futures import ThreadPoolExecutor
         assert len(uploads) == 3
         filenames, uploadcmd, uploadargs = uploads
         assert isinstance(filenames, list)
@@ -256,12 +195,29 @@ class App:
             # exceptions that occurred.
             list(executor.map(_do_filename, filenames))
 
-    def _handle_downloads_inline(self, downloads_inline: dict[str,
-                                                              str]) -> None:
+    def _handle_deletes(self, deletes: list[str]) -> None:
+        """Handle file deletes."""
+        for fname in deletes:
+            # Server shouldn't be sending us dir paths here.
+            assert not os.path.isdir(fname)
+            os.unlink(fname)
+
+    def _handle_downloads_inline(
+        self,
+        downloads_inline: dict[str, str],
+    ) -> None:
         """Handle inline file data to be saved to the client."""
-        import base64
-        import zlib
         for fname, fdata in downloads_inline.items():
+
+            # If there's a directory where we want our file to go, clear it
+            # out first. File deletes should have run before this so
+            # everything under it should be empty and thus killable via rmdir.
+            if os.path.isdir(fname):
+                for basename, dirnames, _fn in os.walk(fname, topdown=False):
+                    for dirname in dirnames:
+                        os.rmdir(os.path.join(basename, dirname))
+                os.rmdir(fname)
+
             dirname = os.path.dirname(fname)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
@@ -269,26 +225,6 @@ class App:
             data = zlib.decompress(data_zipped)
             with open(fname, 'wb') as outfile:
                 outfile.write(data)
-
-    def _handle_deletes(self, deletes: list[str]) -> None:
-        """Handle file deletes."""
-        for fname in deletes:
-            os.unlink(fname)
-
-    def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
-        """Handle uploading files inline."""
-        import base64
-        import zlib
-        files: dict[str, str] = {}
-        for filepath in uploads_inline:
-            if not os.path.exists(filepath):
-                raise CleanError(f'File not found: {filepath}')
-            with open(filepath, 'rb') as infile:
-                data = infile.read()
-            data_zipped = zlib.compress(data)
-            data_base64 = base64.b64encode(data_zipped).decode()
-            files[filepath] = data_base64
-        self._end_command_args['uploads_inline'] = files
 
     def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
@@ -303,6 +239,19 @@ class App:
             ]
             if not dirnames and not filenames and basename != prunedir:
                 os.rmdir(basename)
+
+    def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
+        """Handle uploading files inline."""
+        files: dict[str, str] = {}
+        for filepath in uploads_inline:
+            if not os.path.exists(filepath):
+                raise CleanError(f'File not found: {filepath}')
+            with open(filepath, 'rb') as infile:
+                data = infile.read()
+            data_zipped = zlib.compress(data)
+            data_base64 = base64.b64encode(data_zipped).decode()
+            files[filepath] = data_base64
+        self._end_command_args['uploads_inline'] = files
 
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
@@ -321,13 +270,14 @@ class App:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
 
-        nextcall: Optional[tuple[str, dict]] = ('user', {'a': args})
+        nextcall: tuple[str, dict] | None = ('user', {'a': args})
 
         # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:
             self._end_command_args = {}
             response = self._servercmd(*nextcall)
             nextcall = None
+
             if response.login is not None:
                 self._state.login_token = response.login
             if response.logout:
@@ -338,12 +288,18 @@ class App:
                 self._handle_uploads_inline(response.uploads_inline)
             if response.uploads is not None:
                 self._handle_uploads(response.uploads)
-            if response.downloads_inline:
-                self._handle_downloads_inline(response.downloads_inline)
+
+            # Note: we handle file deletes *before* downloads. This
+            # way our file-download code only has to worry about creating or
+            # removing directories; not files, and corner cases such as
+            # a file getting replaced with a directory should just work.
             if response.deletes:
                 self._handle_deletes(response.deletes)
+            if response.downloads_inline:
+                self._handle_downloads_inline(response.downloads_inline)
             if response.dir_prune_empty:
                 self._handle_dir_prune_empty(response.dir_prune_empty)
+
             if response.open_url is not None:
                 self._handle_open_url(response.open_url)
             if response.input_prompt is not None:
@@ -364,7 +320,7 @@ if __name__ == '__main__':
         App().run()
     except KeyboardInterrupt:
         # Let's do a clean fail on keyboard interrupt.
-        # Can make this optional if a backtrace is ever useful..
+        # Can make this optional if a backtrace is ever useful.
         sys.exit(1)
     except CleanError as clean_exc:
         clean_exc.pretty_print()

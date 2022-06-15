@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from typing import Optional, Any, Callable
 
     import ba
-    from ba.cloud import CloudSubsystem
+    from ba._cloud import CloudSubsystem
     from bastd.actor import spazappearance
     from ba._accountv2 import AccountV2Subsystem
 

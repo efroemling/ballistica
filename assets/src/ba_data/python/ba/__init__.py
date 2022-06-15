@@ -24,6 +24,7 @@ from ba._actor import Actor
 from ba._player import PlayerInfo, Player, EmptyPlayer, StandLocation
 from ba._nodeactor import NodeActor
 from ba._app import App
+from ba._cloud import CloudSubsystem
 from ba._coopgame import CoopGameActivity
 from ba._coopsession import CoopSession
 from ba._dependency import (Dependency, DependencyComponent, DependencySet,
@@ -89,7 +90,7 @@ __all__ = [
     'clipboard_get_text', 'clipboard_has_text', 'clipboard_is_supported',
     'clipboard_set_text', 'CollideModel', 'Collision', 'columnwidget',
     'containerwidget', 'Context', 'ContextCall', 'ContextError',
-    'CoopGameActivity', 'CoopSession', 'Data', 'DeathType',
+    'CloudSubsystem', 'CoopGameActivity', 'CoopSession', 'Data', 'DeathType',
     'DelegateNotFoundError', 'Dependency', 'DependencyComponent',
     'DependencyError', 'DependencySet', 'DieMessage', 'do_once', 'DropMessage',
     'DroppedMessage', 'DualTeamSession', 'emitfx', 'EmptyPlayer', 'EmptyTeam',

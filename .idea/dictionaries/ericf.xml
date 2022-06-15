@@ -600,6 +600,7 @@
       <w>dincrease</w>
       <w>dingsound</w>
       <w>dingsoundhigh</w>
+      <w>dinl</w>
       <w>dirfilter</w>
       <w>dirmanifest</w>
       <w>dirname</w>
@@ -872,6 +873,7 @@
       <w>floinkdingle</w>
       <w>floof</w>
       <w>floofcls</w>
+      <w>floooff</w>
       <w>floop</w>
       <w>flycheck</w>
       <w>fmod</w>
@@ -1391,6 +1393,7 @@
       <w>locs</w>
       <w>logcat</w>
       <w>logincode</w>
+      <w>loginid</w>
       <w>logintoken</w>
       <w>logitech</w>
       <w>logput</w>
@@ -2325,6 +2328,7 @@
       <w>startscan</w>
       <w>startsplits</w>
       <w>starttime</w>
+      <w>statestr</w>
       <w>statictest</w>
       <w>statictestfiles</w>
       <w>statictype</w>
@@ -2481,6 +2485,7 @@
       <w>testpatch</w>
       <w>testpath</w>
       <w>testpt</w>
+      <w>testresponse</w>
       <w>testsealable</w>
       <w>testsentinel</w>
       <w>testsoundtrack</w>
@@ -2520,6 +2525,7 @@
       <w>timetype</w>
       <w>tipstext</w>
       <w>titletext</w>
+      <w>tkinval</w>
       <w>tlog</w>
       <w>tmpdir</w>
       <w>tmpf</w>
@@ -2592,6 +2598,7 @@
       <w>typestr</w>
       <w>tzdiff</w>
       <w>tzinfos</w>
+      <w>tzoffset</w>
       <w>tzpath</w>
       <w>uadfc</w>
       <w>uber</w>
@@ -2605,6 +2612,7 @@
       <w>uicleanupchecks</w>
       <w>uicontroller</w>
       <w>uilocation</w>
+      <w>uinl</w>
       <w>uiscale</w>
       <w>uiupkeeptimer</w>
       <w>unallowed</w>

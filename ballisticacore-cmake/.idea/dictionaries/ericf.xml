@@ -317,6 +317,7 @@
       <w>dfmt</w>
       <w>dictval</w>
       <w>diffbit</w>
+      <w>dinl</w>
       <w>dirfilter</w>
       <w>dirslash</w>
       <w>dlfcn</w>
@@ -441,6 +442,7 @@
       <w>fjcoiwef</w>
       <w>flipbit</w>
       <w>floinkdingle</w>
+      <w>floooff</w>
       <w>floop</w>
       <w>flopsy</w>
       <w>fname</w>
@@ -683,6 +685,7 @@
       <w>lockstr</w>
       <w>locktype</w>
       <w>logincode</w>
+      <w>loginid</w>
       <w>logmsg</w>
       <w>logpath</w>
       <w>logprefix</w>
@@ -1186,6 +1189,7 @@
       <w>starttime</w>
       <w>startx</w>
       <w>starty</w>
+      <w>statestr</w>
       <w>staticdata</w>
       <w>statictest</w>
       <w>stdint</w>
@@ -1236,6 +1240,7 @@
       <w>testint</w>
       <w>testinternalcapi</w>
       <w>testnode</w>
+      <w>testresponse</w>
       <w>texel</w>
       <w>texqualstr</w>
       <w>textcolor</w>
@@ -1258,6 +1263,7 @@
       <w>timesteps</w>
       <w>timetype</w>
       <w>timetypes</w>
+      <w>tkinval</w>
       <w>tlog</w>
       <w>tmpmat</w>
       <w>tomer</w>
@@ -1293,12 +1299,14 @@
       <w>twst</w>
       <w>typeobj</w>
       <w>typestr</w>
+      <w>tzoffset</w>
       <w>tzpath</w>
       <w>uber</w>
       <w>udbz</w>
       <w>udif</w>
       <w>uibounds</w>
       <w>uiid</w>
+      <w>uinl</w>
       <w>unbased</w>
       <w>unblessed</w>
       <w>uncas</w>

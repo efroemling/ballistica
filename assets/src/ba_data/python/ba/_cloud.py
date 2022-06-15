@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, overload
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Union, Callable, Any
+    from typing import Callable, Any
 
     from efro.message import Message
     import bacommon.cloud
@@ -35,8 +35,7 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.LoginProxyRequestMessage,
         on_response: Callable[
-            [Union[bacommon.cloud.LoginProxyRequestResponse,
-                   Exception]], None],
+            [bacommon.cloud.LoginProxyRequestResponse | Exception], None],
     ) -> None:
         ...
 
@@ -45,8 +44,7 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.LoginProxyStateQueryMessage,
         on_response: Callable[
-            [Union[bacommon.cloud.LoginProxyStateQueryResponse,
-                   Exception]], None],
+            [bacommon.cloud.LoginProxyStateQueryResponse | Exception], None],
     ) -> None:
         ...
 
@@ -54,7 +52,7 @@ class CloudSubsystem:
     def send_message(
         self,
         msg: bacommon.cloud.LoginProxyCompleteMessage,
-        on_response: Callable[[Union[None, Exception]], None],
+        on_response: Callable[[None | Exception], None],
     ) -> None:
         ...
 
@@ -63,7 +61,7 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.CredentialsCheckMessage,
         on_response: Callable[
-            [Union[bacommon.cloud.CredentialsCheckResponse, Exception]], None],
+            [bacommon.cloud.CredentialsCheckResponse | Exception], None],
     ) -> None:
         ...
 
@@ -71,7 +69,7 @@ class CloudSubsystem:
     def send_message(
         self,
         msg: bacommon.cloud.AccountSessionReleaseMessage,
-        on_response: Callable[[Union[None, Exception]], None],
+        on_response: Callable[[None | Exception], None],
     ) -> None:
         ...
 
