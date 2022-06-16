@@ -32,3 +32,6 @@
 
 ### Droopy
 - Fixes in some minigames
+
+### Easy10781
+- Added feature
