@@ -63,7 +63,7 @@ class Player(Generic[TeamType]):
     color: Sequence[float]
     highlight: Sequence[float]
 
-    playerspaztype: Optional[type['PlayerSpaz']]
+    playerspaztype: Optional[type[PlayerSpaz]]
 
     _team: TeamType
     _sessionplayer: ba.SessionPlayer
