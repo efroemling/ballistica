@@ -852,7 +852,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         name = player.getname()
         color = player.color
         highlight = player.highlight
-        
+
         playerspaztype = player.playerspaztype
         if playerspaztype is None:
             playerspaztype = PlayerSpaz
