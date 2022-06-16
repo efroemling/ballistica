@@ -96,7 +96,7 @@ class Player(Generic[TeamType]):
                 f' in the class decorator.')
 
         self.actor = None
-        self.playerspaztype = None
+        self.playerspaztype = getattr(self, 'playerspaztype'):
         self.character = ''
         self._nodeactor: Optional[ba.NodeActor] = None
         self._sessionplayer = sessionplayer
