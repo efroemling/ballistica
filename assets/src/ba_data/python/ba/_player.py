@@ -96,7 +96,10 @@ class Player(Generic[TeamType]):
                 f' in the class decorator.')
 
         self.actor = None
-        self.playerspaztype = getattr(self, 'playerspaztype'):
+        try:
+            self.playerspaztype = getattr(self, 'playerspaztype')
+        except AttributeError:
+            self.playerspaztype = None
         self.character = ''
         self._nodeactor: Optional[ba.NodeActor] = None
         self._sessionplayer = sessionplayer
