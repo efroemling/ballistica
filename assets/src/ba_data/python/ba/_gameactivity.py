@@ -855,10 +855,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         light_color = _math.normalized_color(color)
         display_color = _ba.safecolor(color, target_intensity=0.75)
-        spaz = PlayerSpaz(color=color,
-                          highlight=highlight,
-                          character=player.character,
-                          player=player)
+        spaz = player.playerspaztype(color=color,
+                                     highlight=highlight,
+                                     character=player.character,
+                                     player=player)
 
         player.actor = spaz
         assert spaz.node
