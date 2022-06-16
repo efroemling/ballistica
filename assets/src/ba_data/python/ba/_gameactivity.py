@@ -852,6 +852,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
         name = player.getname()
         color = player.color
         highlight = player.highlight
+        
+        playerspaztype = player.playerspaztype
+        if playerspaztype is None:
+            playerspaztype = PlayerSpaz
 
         light_color = _math.normalized_color(color)
         display_color = _ba.safecolor(color, target_intensity=0.75)
