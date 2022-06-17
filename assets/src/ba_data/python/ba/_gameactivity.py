@@ -853,7 +853,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         color = player.color
         highlight = player.highlight
 
-        playerspaztype = getattr(player, 'playerspaztype', None)
+        playerspaztype = getattr(player, 'playerspaztype', PlayerSpaz)
         if not issubclass(playerspaztype, PlayerSpaz):
             playerspaztype = PlayerSpaz
 
