@@ -15,7 +15,6 @@ from ba._messages import DeathType, DieMessage
 if TYPE_CHECKING:
     from typing import Optional, Sequence, Any, Union, Callable
     import ba
-    from bastd.actor.playerspaz import PlayerSpaz
 
 # pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
@@ -62,8 +61,6 @@ class Player(Generic[TeamType]):
 
     color: Sequence[float]
     highlight: Sequence[float]
-
-    playerspaztype: Optional[type[PlayerSpaz]]
 
     _team: TeamType
     _sessionplayer: ba.SessionPlayer
