@@ -25,16 +25,16 @@ class PluginSubsystem:
         self.potential_plugins: list[ba.PotentialPlugin] = []
         self.active_plugins: dict[str, ba.Plugin] = {}
 
-    def on_app_launch(self) -> None:
-        """Should be called at app launch time."""
-        # Load up our plugins and go ahead and call their on_app_launch calls.
+    def on_app_running(self) -> None:
+        """Should be called when the app reaches the running state."""
+        # Load up our plugins and go ahead and call their on_app_running calls.
         self.load_plugins()
         for plugin in self.active_plugins.values():
             try:
-                plugin.on_app_launch()
+                plugin.on_app_running()
             except Exception:
                 from ba import _error
-                _error.print_exception('Error in plugin on_app_launch()')
+                _error.print_exception('Error in plugin on_app_running()')
 
     def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
@@ -80,16 +80,23 @@ class PluginSubsystem:
             try:
                 cls = getclass(plugkey, Plugin)
             except Exception as exc:
-                _ba.log(f"Error loading plugin class '{plugkey}': {exc}",
-                        to_server=False)
+                _ba.playsound(_ba.getsound('error'))
+                # TODO: Lstr.
+                errstr = f"Error loading plugin class '{plugkey}': {exc}"
+                _ba.screenmessage(errstr, color=(1, 0, 0))
+                _ba.log(errstr, to_server=False)
                 continue
             try:
                 plugin = cls()
                 assert plugkey not in self.active_plugins
                 self.active_plugins[plugkey] = plugin
-            except Exception:
+            except Exception as exc:
                 from ba import _error
-                _error.print_exception(f'Error loading plugin: {plugkey}')
+                _ba.playsound(_ba.getsound('error'))
+                # TODO: Lstr.
+                _ba.screenmessage(f"Error loading plugin: '{plugkey}': {exc}",
+                                  color=(1, 0, 0))
+                _error.print_exception(f"Error loading plugin: '{plugkey}'.")
 
 
 @dataclass
@@ -119,8 +126,8 @@ class Plugin:
     app is running in order to modify its behavior in some way.
     """
 
-    def on_app_launch(self) -> None:
-        """Called when the app is being launched."""
+    def on_app_running(self) -> None:
+        """Called when the app reaches the running state."""
 
     def on_app_pause(self) -> None:
         """Called after pausing game activity."""

@@ -1,8 +1,14 @@
-### 1.7.2 (20604, 2022-06-15)
+### 1.7.2 (20610, 2022-06-21)
 - Minor fixes in some minigames (Thanks Droopy!)
 - Fixed a bug preventing 'clients' arg from working in _ba.chatmessage (Thanks imayushsaini!)
 - Fixed a bug where ba.Player.getdelegate(doraise=True) could return None instead of raising a ba.DelegateNotFoundError (thanks Dliwk!)
 - Lots of Romanian language improvements (Thanks Meryu!)
+- Workspaces are now functional. They require signing in with a V2 account, which currently is limited to explicitly created email/password logins. See ballistica.net to create such an account or create/edit a workspace. This is bleeding edge stuff so please holler with any bugs you come across or if anything seems unintuitive.
+- Newly detected Plugins are now enabled by default in all cases; not just headless builds. (Though a restart is still required before they run). Some builds (headless, iiRcade) can't easily access gui settings so this makes Plugins more usable there and keeps things consistent. The user still has the opportunity to deactivate newly detected plugins before restarting if they don't want to use them.
+- Reworked app states for the new workspace system, with a new `loading` stage that comes after `launching` and before `running`. The `loading` stage consists of an initial account log-in (or lack thereof) and any workspace/asset downloading related to that. This allows the app to ensure that the latest workspace state is synced for the active account before running plugin loads and meta scans, allowing those bits to work as seamlessly in workspaces as they do for traditional local manual installs.
+- Plugins now have an `on_app_running` call instead of `on_app_launch`, allowing them to work seamlessly with workspaces (see previous entry).
+- Errors running/loading plugins now show up as screen-messages. This can be ugly but hopefully provides a bit of debugging capability for anyone testing code on a phone or somewhere with no access to full log output. Once we can add logging features to the workspaces web ui we can perhaps scale back on this.
+- Api version increased from 6 to 7 due to the aforementioned plugin changes (`on_app_launch` becoming `on_app_running`, etc.)
 
 ### 1.7.1 (20597, 2022-06-04)
 - V2 account logic fixes

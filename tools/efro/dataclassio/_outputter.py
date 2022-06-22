@@ -118,8 +118,9 @@ class _Outputter:
         if isinstance(extra_attrs, dict):
             if not _is_valid_for_codec(extra_attrs, self._codec):
                 raise TypeError(
-                    f'Extra attrs on {fieldpath} contains data type(s)'
-                    f' not supported by json.')
+                    f'Extra attrs on \'{fieldpath}\' contains data type(s)'
+                    f' not supported by \'{self._codec.value}\' codec:'
+                    f' {extra_attrs}.')
             if self._create:
                 assert out is not None
                 out.update(extra_attrs)

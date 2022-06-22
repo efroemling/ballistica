@@ -205,7 +205,7 @@ auto Platform::GetDeviceUUIDInputs() -> std::list<std::string> {
   throw Exception("GetDeviceUUIDInputs unimplemented");
 }
 
-auto Platform::GetDefaultConfigDir() -> std::string {
+auto Platform::GetDefaultConfigDirectory() -> std::string {
   std::string config_dir;
   // As a default, look for a HOME env var and use that if present
   // this will cover linux and command-line macOS.
@@ -213,7 +213,7 @@ auto Platform::GetDefaultConfigDir() -> std::string {
   if (home) {
     config_dir = std::string(home) + "/.ballisticacore";
   } else {
-    printf("GetDefaultConfigDir: can't get env var \"HOME\"\n");
+    printf("GetDefaultConfigDirectory: can't get env var \"HOME\"\n");
     fflush(stdout);
     throw Exception();
   }
@@ -257,16 +257,23 @@ void Platform::SetLowLevelConfigValue(const char* key, int value) {
 
 auto Platform::GetUserPythonDirectory() -> std::string {
   // Make sure it exists the first time we run.
-  static bool attempted_to_make_user_scripts_dir = false;
-
-  if (!attempted_to_make_user_scripts_dir) {
+  if (!attempted_to_make_user_scripts_dir_) {
     user_scripts_dir_ = DoGetUserPythonDirectory();
 
     // Attempt to make it. (it's ok if this fails)
     MakeDir(user_scripts_dir_, true);
-    attempted_to_make_user_scripts_dir = true;
+    attempted_to_make_user_scripts_dir_ = true;
   }
   return user_scripts_dir_;
+}
+
+auto Platform::GetVolatileDataDirectory() -> std::string {
+  if (!made_volatile_data_dir_) {
+    volatile_data_dir_ = GetConfigDirectory() + BA_DIRSLASH + "vdata";
+    MakeDir(volatile_data_dir_);
+    made_volatile_data_dir_ = true;
+  }
+  return volatile_data_dir_;
 }
 
 auto Platform::GetAppPythonDirectory() -> std::string {
@@ -408,7 +415,7 @@ auto Platform::GetConfigDirectory() -> std::string {
     if (!g_app_globals->user_config_dir.empty()) {
       config_dir_ = g_app_globals->user_config_dir;
     } else {
-      config_dir_ = GetDefaultConfigDir();
+      config_dir_ = GetDefaultConfigDirectory();
     }
 
     // Try to make sure the config dir exists.
@@ -424,7 +431,7 @@ void Platform::MakeDir(const std::string& dir, bool quiet) {
   if (!exists) {
     DoMakeDir(dir, quiet);
 
-    // Non-quiet call should result in directory existing.
+    // Non-quiet call should always result in the directory existing.
     // (or an exception should have been raised)
     assert(quiet || FilePathExists(dir));
   }
@@ -1077,7 +1084,7 @@ void Platform::SignInV1(const std::string& account_type) {
   Log("SignInV1() unimplemented");
 }
 
-void Platform::LoginDidChange() {
+void Platform::V1LoginDidChange() {
   // Default is no-op.
 }
 

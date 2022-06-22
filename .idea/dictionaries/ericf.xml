@@ -58,6 +58,7 @@
       <w>adisp</w>
       <w>advertizing</w>
       <w>aidl</w>
+      <w>aint</w>
       <w>aioloop</w>
       <w>aiomain</w>
       <w>alarmsound</w>
@@ -513,6 +514,7 @@
       <w>createtime</w>
       <w>creationflags</w>
       <w>creditslist</w>
+      <w>credstr</w>
       <w>cresult</w>
       <w>cryptmodule</w>
       <w>cryptosimple</w>
@@ -2364,6 +2366,7 @@
       <w>strs</w>
       <w>strt</w>
       <w>strval</w>
+      <w>stuttery</w>
       <w>subargs</w>
       <w>subc</w>
       <w>subclassof</w>
@@ -2753,6 +2756,8 @@
       <w>woooo</w>
       <w>workdir</w>
       <w>workflows</w>
+      <w>workspaceid</w>
+      <w>workspacename</w>
       <w>woutdir</w>
       <w>wpath</w>
       <w>wprjp</w>

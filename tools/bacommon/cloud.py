@@ -3,12 +3,13 @@
 """Functionality related to cloud functionality."""
 
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, Optional
 from enum import Enum
 
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
+from bacommon.transfer import DirectoryManifest
 
 if TYPE_CHECKING:
     pass
@@ -77,27 +78,57 @@ class LoginProxyCompleteMessage(Message):
 
 @ioprepped
 @dataclass
-class AccountSessionReleaseMessage(Message):
-    """We're done using this particular session."""
-    token: Annotated[str, IOAttrs('tk')]
-
-
-@ioprepped
-@dataclass
-class CredentialsCheckMessage(Message):
-    """Are our current credentials valid?"""
+class TestMessage(Message):
+    """Can I get some of that workspace action?"""
+    testfoo: Annotated[int, IOAttrs('f')]
 
     @classmethod
     def get_response_types(cls) -> list[type[Response]]:
-        return [CredentialsCheckResponse]
+        return [TestResponse]
 
 
 @ioprepped
 @dataclass
-class CredentialsCheckResponse(Response):
-    """Info returned when checking credentials."""
+class TestResponse(Response):
+    """Here's that workspace you asked for, boss."""
 
-    verified: Annotated[bool, IOAttrs('v')]
+    testfoo: Annotated[int, IOAttrs('f')]
 
-    # Current account tag (good time to check if it has changed).
-    tag: Annotated[str, IOAttrs('t')]
+
+@ioprepped
+@dataclass
+class WorkspaceFetchState:
+    """Common state data for a workspace fetch."""
+    manifest: Annotated[DirectoryManifest, IOAttrs('m')]
+    iteration: Annotated[int, IOAttrs('i')] = 0
+    total_deletes: Annotated[int, IOAttrs('tdels')] = 0
+    total_downloads: Annotated[int, IOAttrs('tdlds')] = 0
+    total_up_to_date: Annotated[int | None, IOAttrs('tunmd')] = None
+
+
+@ioprepped
+@dataclass
+class WorkspaceFetchMessage(Message):
+    """Can I get some of that workspace action?"""
+    workspaceid: Annotated[str, IOAttrs('w')]
+    state: Annotated[WorkspaceFetchState, IOAttrs('s')]
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response]]:
+        return [WorkspaceFetchResponse]
+
+
+@ioprepped
+@dataclass
+class WorkspaceFetchResponse(Response):
+    """Here's that workspace you asked for, boss."""
+
+    state: Annotated[WorkspaceFetchState, IOAttrs('s')]
+    deletes: Annotated[list[str],
+                       IOAttrs('dlt', store_default=False)] = field(
+                           default_factory=list)
+    downloads_inline: Annotated[dict[str, bytes],
+                                IOAttrs('dinl', store_default=False)] = field(
+                                    default_factory=dict)
+
+    done: Annotated[bool, IOAttrs('d')] = False

@@ -6,13 +6,14 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, TypeVar
 
 from efro.error import CleanError, RemoteError
-from efro.message._message import (EmptyResponse, ErrorResponse, ErrorType)
+from efro.message._message import EmptyResponse, ErrorResponse
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Awaitable
+    from typing import Any, Callable, Awaitable
 
     from efro.message._message import Message, Response
     from efro.message._protocol import MessageProtocol
@@ -42,13 +43,13 @@ class MessageSender:
 
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
-        self._send_raw_message_call: Optional[Callable[[Any, str], str]] = None
-        self._send_async_raw_message_call: Optional[Callable[
-            [Any, str], Awaitable[str]]] = None
-        self._encode_filter_call: Optional[Callable[[Any, Message, dict],
-                                                    None]] = None
-        self._decode_filter_call: Optional[Callable[[Any, dict, Response],
-                                                    None]] = None
+        self._send_raw_message_call: Callable[[Any, str], str] | None = None
+        self._send_async_raw_message_call: Callable[
+            [Any, str], Awaitable[str]] | None = None
+        self._encode_filter_call: Callable[[Any, Message, dict],
+                                           None] | None = None
+        self._decode_filter_call: Callable[[Any, Message, dict, Response],
+                                           None] | None = None
 
     def send_method(
             self, call: Callable[[Any, str],
@@ -79,8 +80,8 @@ class MessageSender:
         return call
 
     def decode_filter_method(
-        self, call: Callable[[Any, dict, Response], None]
-    ) -> Callable[[Any, dict, Response], None]:
+        self, call: Callable[[Any, Message, dict, Response], None]
+    ) -> Callable[[Any, Message, dict, Response], None]:
         """Function decorator for defining a decode filter.
 
         Decode filters can be used to extract extra data from incoming
@@ -90,71 +91,137 @@ class MessageSender:
         self._decode_filter_call = call
         return call
 
-    def send(self, bound_obj: Any, message: Message) -> Optional[Response]:
-        """Send a message and receive a response.
+    def send(self, bound_obj: Any, message: Message) -> Response | None:
+        """Send a message synchronously."""
+        return self.send_split_part_2(
+            message=message,
+            raw_response=self.send_split_part_1(
+                bound_obj=bound_obj,
+                message=message,
+            ),
+        )
 
-        Will encode the message for transport and call dispatch_raw_message()
+    async def send_async(self, bound_obj: Any,
+                         message: Message) -> Response | None:
+        """Send a message asynchronously."""
+        return self.send_split_part_2(
+            message=message,
+            raw_response=await self.send_split_part_1_async(
+                bound_obj=bound_obj,
+                message=message,
+            ),
+        )
+
+    def send_split_part_1(self, bound_obj: Any, message: Message) -> Response:
+        """Send a message synchronously.
+
+        Generally you can just call send(); these split versions are
+        for when message sending and response handling need to happen
+        in different contexts/threads.
         """
         if self._send_raw_message_call is None:
             raise RuntimeError('send() is unimplemented for this type.')
 
-        msg_encoded = self.encode_message(bound_obj, message)
-
+        msg_encoded = self._encode_message(bound_obj, message)
         response_encoded = self._send_raw_message_call(bound_obj, msg_encoded)
+        return self._decode_raw_response(bound_obj, message, response_encoded)
 
-        response = self.decode_response(bound_obj, response_encoded)
+    async def send_split_part_1_async(self, bound_obj: Any,
+                                      message: Message) -> Response:
+        """Send a message asynchronously.
+
+        Generally you can just call send(); these split versions are
+        for when message sending and response handling need to happen
+        in different contexts/threads.
+        """
+
+        if self._send_async_raw_message_call is None:
+            raise RuntimeError('send_async() is unimplemented for this type.')
+
+        msg_encoded = self._encode_message(bound_obj, message)
+        response_encoded = await self._send_async_raw_message_call(
+            bound_obj, msg_encoded)
+
+        return self._decode_raw_response(bound_obj, message, response_encoded)
+
+    def send_split_part_2(self, message: Message,
+                          raw_response: Response) -> Response | None:
+        """Complete message sending (both sync and async).
+
+        Generally you can just call send(); these split versions are
+        for when message sending and response handling need to happen
+        in different contexts/threads.
+        """
+        response = self._unpack_raw_response(raw_response)
         assert (response is None
                 or type(response) in type(message).get_response_types())
         return response
 
-    def encode_message(self, bound_obj: Any, message: Message) -> str:
+    def _encode_message(self, bound_obj: Any, message: Message) -> str:
         """Encode a message for sending."""
         msg_dict = self.protocol.message_to_dict(message)
         if self._encode_filter_call is not None:
             self._encode_filter_call(bound_obj, message, msg_dict)
         return self.protocol.encode_dict(msg_dict)
 
-    def decode_response(self, bound_obj: Any,
-                        response_encoded: str) -> Optional[Response]:
-        """Decode, filter, and possibly act on raw response data."""
-        response_dict = self.protocol.decode_dict(response_encoded)
-        response = self.protocol.response_from_dict(response_dict)
-        if self._decode_filter_call is not None:
-            self._decode_filter_call(bound_obj, response_dict, response)
+    def _decode_raw_response(self, bound_obj: Any, message: Message,
+                             response_encoded: str) -> Response:
+        """Create a Response from returned data.
 
-        # Special case: if we get EmptyResponse, we simply return None.
-        if isinstance(response, EmptyResponse):
+        These Responses may encapsulate things like remote errors and
+        should not be handed directly to users. _unpack_raw_response()
+        should be used to translate to special values like None or raise
+        Exceptions. This function itself should never raise Exceptions.
+        """
+        try:
+            response_dict = self.protocol.decode_dict(response_encoded)
+            response = self.protocol.response_from_dict(response_dict)
+            if self._decode_filter_call is not None:
+                self._decode_filter_call(bound_obj, message, response_dict,
+                                         response)
+        except Exception:
+            # If we got to this point, we successfully communicated
+            # with the other end so errors represent protocol mismatches
+            # or other invalid data. For now let's just log it but perhaps
+            # we'd want to somehow embed it in the ErrorResponse to be raised
+            # directly to the user later.
+            logging.exception('Error decoding raw response')
+            response = ErrorResponse(
+                error_message=
+                'Error decoding raw response; see log for details.',
+                error_type=ErrorResponse.ErrorType.LOCAL)
+        return response
+
+    def _unpack_raw_response(self, raw_response: Response) -> Response | None:
+        """Given a raw Response, unpacks to special values or Exceptions.
+
+        The result of this call is what should be passed to users.
+        For complex messaging situations such as response callbacks
+        operating across different threads, this last stage should be
+        run such that any raised Exception is active when the callback
+        fires; not on the thread where the message was sent.
+        """
+        # EmptyResponse translates to None
+        if isinstance(raw_response, EmptyResponse):
             return None
 
-        # Special case: a remote error occurred. Raise a local Exception
-        # instead of returning the message.
-        if isinstance(response, ErrorResponse):
-            if (self.protocol.preserve_clean_errors
-                    and response.error_type is ErrorType.CLEAN):
-                raise CleanError(response.error_message)
-            raise RemoteError(response.error_message)
+        # Some error occurred. Raise a local Exception for it.
+        if isinstance(raw_response, ErrorResponse):
 
-        return response
+            # If something went wrong on our end of the connection,
+            # don't say it was a remote error.
+            if raw_response.error_type is ErrorResponse.ErrorType.LOCAL:
+                raise RuntimeError(raw_response.error_message)
 
-    async def send_async(self, bound_obj: Any,
-                         message: Message) -> Optional[Response]:
-        """Send a message asynchronously using asyncio.
+            # If they want to support clean errors, do those.
+            if (self.protocol.preserve_clean_errors and
+                    raw_response.error_type is ErrorResponse.ErrorType.CLEAN):
+                raise CleanError(raw_response.error_message)
 
-        The message will be encoded for transport and passed to
-        dispatch_raw_message_async.
-        """
-        if self._send_async_raw_message_call is None:
-            raise RuntimeError('send_async() is unimplemented for this type.')
+            # In all other cases, just say something went wrong 'out there'.
+            raise RemoteError(raw_response.error_message)
 
-        msg_encoded = self.encode_message(bound_obj, message)
-
-        response_encoded = await self._send_async_raw_message_call(
-            bound_obj, msg_encoded)
-
-        response = self.decode_response(bound_obj, response_encoded)
-        assert (response is None
-                or type(response) in type(message).get_response_types())
-        return response
+        return raw_response
 
 
 class BoundMessageSender:
@@ -171,20 +238,34 @@ class BoundMessageSender:
         """Protocol associated with this sender."""
         return self._sender.protocol
 
-    def send_untyped(self, message: Message) -> Optional[Response]:
+    def send_untyped(self, message: Message) -> Response | None:
         """Send a message synchronously.
 
         Whenever possible, use the send() call provided by generated
         subclasses instead of this; it will provide better type safety.
         """
         assert self._obj is not None
-        return self._sender.send(self._obj, message)
+        return self._sender.send(bound_obj=self._obj, message=message)
 
-    async def send_async_untyped(self, message: Message) -> Optional[Response]:
+    async def send_async_untyped(self, message: Message) -> Response | None:
         """Send a message asynchronously.
 
         Whenever possible, use the send_async() call provided by generated
         subclasses instead of this; it will provide better type safety.
         """
         assert self._obj is not None
-        return await self._sender.send_async(self._obj, message)
+        return await self._sender.send_async(bound_obj=self._obj,
+                                             message=message)
+
+    async def send_split_part_1_async_untyped(self,
+                                              message: Message) -> Response:
+        """Split send (part 1 of 2)."""
+        assert self._obj is not None
+        return await self._sender.send_split_part_1_async(bound_obj=self._obj,
+                                                          message=message)
+
+    def send_split_part_2_untyped(self, message: Message,
+                                  raw_response: Response) -> Response | None:
+        """Split send (part 2 of 2)."""
+        return self._sender.send_split_part_2(message=message,
+                                              raw_response=raw_response)

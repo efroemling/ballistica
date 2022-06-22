@@ -2,7 +2,7 @@
 #
 """Provides the chosen-one mini-game."""
 
-# ba_meta require api 6
+# ba_meta require api 7
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations

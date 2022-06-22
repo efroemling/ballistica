@@ -18,7 +18,7 @@ class PlatformWindows : public Platform {
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto GenerateUUID() -> std::string override;
-  auto GetDefaultConfigDir() -> std::string override;
+  auto GetDefaultConfigDirectory() -> std::string override;
   auto Remove(const char* path) -> int;
   auto Stat(const char* path, struct BA_STAT* buffer) -> int;
   auto Rename(const char* oldname, const char* newname) -> int;

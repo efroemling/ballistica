@@ -787,8 +787,10 @@ def test_full_pipeline() -> None:
                 outdict['_sidecar_data'] = getattr(msg, '_sidecar_data')
 
         @msg.decode_filter_method
-        def _decode_filter(self, indata: dict, response: Response) -> None:
+        def _decode_filter(self, message: Message, indata: dict,
+                           response: Response) -> None:
             """Filter our incoming responses."""
+            del message  # Unused.
             if self.test_sidecar:
                 setattr(response, '_sidecar_data', indata['_sidecar_data'])
 
@@ -830,8 +832,10 @@ def test_full_pipeline() -> None:
                 setattr(message, '_sidecar_data', indata['_sidecar_data'])
 
         @receiver.encode_filter_method
-        def _encode_filter(self, response: Response, outdict: dict) -> None:
+        def _encode_filter(self, message: Message | None, response: Response,
+                           outdict: dict) -> None:
             """Filter our outgoing responses."""
+            del message  # Unused.
             if self.test_sidecar:
                 outdict['_sidecar_data'] = getattr(response, '_sidecar_data')
 

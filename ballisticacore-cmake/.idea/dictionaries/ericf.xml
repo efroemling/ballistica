@@ -258,6 +258,7 @@
       <w>crashlytics</w>
       <w>createbuilddirectory</w>
       <w>createtime</w>
+      <w>credstr</w>
       <w>cresult</w>
       <w>crom</w>
       <w>crosswire</w>
@@ -1209,6 +1210,7 @@
       <w>strlen</w>
       <w>strs</w>
       <w>strtof</w>
+      <w>stuttery</w>
       <w>subargs</w>
       <w>subc</w>
       <w>subclsssing</w>
@@ -1385,6 +1387,8 @@
       <w>wofocj</w>
       <w>wonkiness</w>
       <w>woohoo</w>
+      <w>workspaceid</w>
+      <w>workspacename</w>
       <w>worldspace</w>
       <w>woutdir</w>
       <w>wprjp</w>

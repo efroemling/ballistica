@@ -19,7 +19,7 @@ class PlatformApple : public Platform {
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override;
   auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
   auto GenerateUUID() -> std::string override;
-  auto GetDefaultConfigDir() -> std::string override;
+  auto GetDefaultConfigDirectory() -> std::string override;
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;

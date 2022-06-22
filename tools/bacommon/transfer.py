@@ -34,7 +34,6 @@ class DirectoryManifest:
     def create_from_disk(cls, path: Path) -> DirectoryManifest:
         """Create a manifest from a directory on disk."""
         import hashlib
-        from multiprocessing import cpu_count
         from concurrent.futures import ThreadPoolExecutor
 
         pathstr = str(path)
@@ -65,7 +64,10 @@ class DirectoryManifest:
                                           filesize=filesize))
 
         # Now use all procs to hash the files efficiently.
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        cpus = os.cpu_count()
+        if cpus is None:
+            cpus = 4
+        with ThreadPoolExecutor(max_workers=cpus) as executor:
             return cls(files=dict(executor.map(_get_file_info, paths)))
 
     @classmethod

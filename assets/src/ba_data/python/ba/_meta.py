@@ -6,22 +6,21 @@ from __future__ import annotations
 
 import os
 import time
-import pathlib
 import threading
+from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Union, Optional
     import ba
 
 # The meta api version of this build of the game.
 # Only packages and modules requiring this exact api version
 # will be considered when scanning directories.
 # See: https://ballistica.net/wiki/Meta-Tags
-CURRENT_API_VERSION = 6
+CURRENT_API_VERSION = 7
 
 
 @dataclass
@@ -43,10 +42,11 @@ class MetadataSubsystem:
     """
 
     def __init__(self) -> None:
-        self.metascan: Optional[ScanResults] = None
+        self.metascan: ScanResults | None = None
+        self.extra_scan_dirs: list[str] = []
 
-    def on_app_launch(self) -> None:
-        """Should be called when the app is done bootstrapping."""
+    def on_app_running(self) -> None:
+        """Should be called when the app enters the running state."""
 
         # Start scanning for things exposed via ba_meta.
         self.start_scan()
@@ -58,7 +58,8 @@ class MetadataSubsystem:
         app = _ba.app
         if self.metascan is not None:
             print('WARNING: meta scan run more than once.')
-        pythondirs = [app.python_directory_app, app.python_directory_user]
+        pythondirs = ([app.python_directory_app, app.python_directory_user] +
+                      self.extra_scan_dirs)
         thread = ScanThread(pythondirs)
         thread.start()
 
@@ -99,16 +100,10 @@ class MetadataSubsystem:
                                 class_path=class_path,
                                 available=True))
             if class_path not in plugstates:
-                if _ba.app.headless_mode:
-                    # If we running in headless mode, enable plugin by default
-                    # to allow server admins to get their modified build
-                    # working 'out-of-the-box', without manually updating the
-                    # config.
-                    plugstates[class_path] = {'enabled': True}
-                else:
-                    # If we running in normal mode, disable plugin by default
-                    # (user can enable it later).
-                    plugstates[class_path] = {'enabled': False}
+                # Go ahead and enable new plugins by default, but we'll
+                # inform the user that they need to restart to pick them up.
+                # they can also disable them in settings so they never load.
+                plugstates[class_path] = {'enabled': True}
                 config_changed = True
                 found_new = True
 
@@ -223,18 +218,17 @@ class DirectoryScan:
         """
 
         # Skip non-existent paths completely.
-        self.paths = [pathlib.Path(p) for p in paths if os.path.isdir(p)]
+        self.paths = [Path(p) for p in paths if os.path.isdir(p)]
         self.results = ScanResults()
 
-    def _get_path_module_entries(
-            self, path: pathlib.Path, subpath: Union[str, pathlib.Path],
-            modules: list[tuple[pathlib.Path, pathlib.Path]]) -> None:
+    def _get_path_module_entries(self, path: Path, subpath: str | Path,
+                                 modules: list[tuple[Path, Path]]) -> None:
         """Scan provided path and add module entries to provided list."""
         try:
             # Special case: let's save some time and skip the whole 'ba'
             # package since we know it doesn't contain any meta tags.
-            fullpath = pathlib.Path(path, subpath)
-            entries = [(path, pathlib.Path(subpath, name))
+            fullpath = Path(path, subpath)
+            entries = [(path, Path(subpath, name))
                        for name in os.listdir(fullpath) if name != 'ba']
         except PermissionError:
             # Expected sometimes.
@@ -248,13 +242,13 @@ class DirectoryScan:
         for entry in entries:
             if entry[1].name.endswith('.py'):
                 modules.append(entry)
-            elif (pathlib.Path(entry[0], entry[1]).is_dir() and pathlib.Path(
-                    entry[0], entry[1], '__init__.py').is_file()):
+            elif (Path(entry[0], entry[1]).is_dir()
+                  and Path(entry[0], entry[1], '__init__.py').is_file()):
                 modules.append(entry)
 
     def scan(self) -> None:
         """Scan provided paths."""
-        modules: list[tuple[pathlib.Path, pathlib.Path]] = []
+        modules: list[tuple[Path, Path]] = []
         for path in self.paths:
             self._get_path_module_entries(path, '', modules)
         for moduledir, subpath in modules:
@@ -269,14 +263,13 @@ class DirectoryScan:
         self.results.games.sort()
         self.results.plugins.sort()
 
-    def scan_module(self, moduledir: pathlib.Path,
-                    subpath: pathlib.Path) -> None:
+    def scan_module(self, moduledir: Path, subpath: Path) -> None:
         """Scan an individual module and add the findings to results."""
         if subpath.name.endswith('.py'):
-            fpath = pathlib.Path(moduledir, subpath)
+            fpath = Path(moduledir, subpath)
             ispackage = False
         else:
-            fpath = pathlib.Path(moduledir, subpath, '__init__.py')
+            fpath = Path(moduledir, subpath, '__init__.py')
             ispackage = True
         with fpath.open(encoding='utf-8') as infile:
             flines = infile.readlines()
@@ -305,7 +298,7 @@ class DirectoryScan:
         # If its a package, recurse into its subpackages.
         if ispackage:
             try:
-                submodules: list[tuple[pathlib.Path, pathlib.Path]] = []
+                submodules: list[tuple[Path, Path]] = []
                 self._get_path_module_entries(moduledir, subpath, submodules)
                 for submodule in submodules:
                     if submodule[1].name != '__init__.py':
@@ -315,8 +308,7 @@ class DirectoryScan:
                 self.results.warnings += (
                     f"Error scanning '{subpath}': {traceback.format_exc()}\n")
 
-    def _process_module_meta_tags(self, subpath: pathlib.Path,
-                                  flines: list[str],
+    def _process_module_meta_tags(self, subpath: Path, flines: list[str],
                                   meta_lines: dict[int, list[str]]) -> None:
         """Pull data from a module based on its ba_meta tags."""
         for lindex, mline in meta_lines.items():
@@ -360,8 +352,8 @@ class DirectoryScan:
                             ': unrecognized export type "' + exporttype +
                             '" on line ' + str(lindex + 1) + '.\n')
 
-    def _get_export_class_name(self, subpath: pathlib.Path, lines: list[str],
-                               lindex: int) -> Optional[str]:
+    def _get_export_class_name(self, subpath: Path, lines: list[str],
+                               lindex: int) -> str | None:
         """Given line num of an export tag, returns its operand class name."""
         lindexorig = lindex
         classname = None
@@ -386,9 +378,12 @@ class DirectoryScan:
                 str(lindexorig + 1) + '.\n')
         return classname
 
-    def get_api_requirement(self, subpath: pathlib.Path,
-                            meta_lines: dict[int, list[str]],
-                            toplevel: bool) -> Optional[int]:
+    def get_api_requirement(
+        self,
+        subpath: Path,
+        meta_lines: dict[int, list[str]],
+        toplevel: bool,
+    ) -> int | None:
         """Return an API requirement integer or None if none present.
 
         Malformed api requirement strings will be logged as warnings.

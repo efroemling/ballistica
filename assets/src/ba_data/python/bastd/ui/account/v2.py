@@ -63,9 +63,9 @@ class V2SignInWindow(ba.Window):
         self._update_timer: Optional[ba.Timer] = None
 
         # Ask the cloud for a proxy login id.
-        ba.app.cloud.send_message(bacommon.cloud.LoginProxyRequestMessage(),
-                                  on_response=ba.WeakCall(
-                                      self._on_proxy_request_response))
+        ba.app.cloud.send_message_cb(bacommon.cloud.LoginProxyRequestMessage(),
+                                     on_response=ba.WeakCall(
+                                         self._on_proxy_request_response))
 
     def _on_proxy_request_response(
         self, response: Union[bacommon.cloud.LoginProxyRequestResponse,
@@ -135,9 +135,10 @@ class V2SignInWindow(ba.Window):
     def _ask_for_status(self) -> None:
         assert self._proxyid is not None
         assert self._proxykey is not None
-        ba.app.cloud.send_message(bacommon.cloud.LoginProxyStateQueryMessage(
-            proxyid=self._proxyid, proxykey=self._proxykey),
-                                  on_response=ba.WeakCall(self._got_status))
+        ba.app.cloud.send_message_cb(
+            bacommon.cloud.LoginProxyStateQueryMessage(
+                proxyid=self._proxyid, proxykey=self._proxykey),
+            on_response=ba.WeakCall(self._got_status))
 
     def _got_status(
         self, response: Union[bacommon.cloud.LoginProxyStateQueryResponse,
@@ -163,7 +164,7 @@ class V2SignInWindow(ba.Window):
             # so it can clean up (not a huge deal if this fails)
             assert self._proxyid is not None
             try:
-                ba.app.cloud.send_message(
+                ba.app.cloud.send_message_cb(
                     bacommon.cloud.LoginProxyCompleteMessage(
                         proxyid=self._proxyid),
                     on_response=ba.WeakCall(self._proxy_complete_response))

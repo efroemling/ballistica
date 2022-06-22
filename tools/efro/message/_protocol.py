@@ -15,8 +15,7 @@ from efro.error import CleanError
 from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
                               dataclass_from_dict)
 from efro.message._message import (Message, Response, ErrorResponse,
-                                   EmptyResponse, ErrorType,
-                                   UnregisteredMessageIDError)
+                                   EmptyResponse, UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
     from typing import Any, Literal
@@ -141,11 +140,11 @@ class MessageProtocol:
         # If anything goes wrong, return a ErrorResponse instead.
         if isinstance(exc, CleanError) and self.preserve_clean_errors:
             return ErrorResponse(error_message=str(exc),
-                                 error_type=ErrorType.CLEAN)
+                                 error_type=ErrorResponse.ErrorType.CLEAN)
         return ErrorResponse(
             error_message=(traceback.format_exc() if self.trusted_sender else
                            'An unknown error has occurred.'),
-            error_type=ErrorType.OTHER)
+            error_type=ErrorResponse.ErrorType.OTHER)
 
     def _to_dict(self, message: Any, ids_by_type: dict[type, int],
                  opname: str) -> dict:

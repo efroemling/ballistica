@@ -166,7 +166,7 @@ std::string PlatformWindows::GenerateUUID() {
   return val;
 }
 
-std::string PlatformWindows::GetDefaultConfigDir() {
+std::string PlatformWindows::GetDefaultConfigDirectory() {
   std::string config_dir;
   wchar_t* path;
   auto result = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &path);

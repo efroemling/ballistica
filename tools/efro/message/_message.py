@@ -42,12 +42,6 @@ class Response:
 # Some standard response types:
 
 
-class ErrorType(Enum):
-    """Type of error that occurred in remote message handling."""
-    OTHER = 0
-    CLEAN = 1
-
-
 @ioprepped
 @dataclass
 class ErrorResponse(Response):
@@ -56,6 +50,13 @@ class ErrorResponse(Response):
     This type is unique in that it is not returned to the user; it
     instead results in a local exception being raised.
     """
+
+    class ErrorType(Enum):
+        """Type of error that occurred in remote message handling."""
+        OTHER = 0
+        CLEAN = 1
+        LOCAL = 2
+
     error_message: Annotated[str, IOAttrs('m')]
     error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.OTHER
 

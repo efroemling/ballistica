@@ -76,7 +76,7 @@ class Platform {
 
 #pragma mark FILES -------------------------------------------------------------
 
-  /// remove() support UTF8 strings.
+  /// remove() supporting UTF8 strings.
   virtual auto Remove(const char* path) -> int;
 
   /// stat() supporting UTF8 strings.
@@ -93,8 +93,8 @@ class Platform {
   /// Simple cross-platform check for existence of a file.
   auto FilePathExists(const std::string& name) -> bool;
 
-  /// Attempt to make a directory; raise an Exception if unable,
-  /// unless quiet is true.
+  /// Attempt to make a directory. Raise an Exception if unable,
+  /// unless quiet is true. Succeeds if the directory already exists.
   auto MakeDir(const std::string& dir, bool quiet = false) -> void;
 
   /// Return the current working directory.
@@ -145,21 +145,48 @@ class Platform {
   // With it off, we loop in Main() ourself.
   virtual auto IsEventPushMode() -> bool;
 
-  // Return the interface type based on the environment (phone, tablet, etc).
+  /// Return the interface type based on the environment (phone, tablet, etc).
   virtual auto GetUIScale() -> UIScale;
 
+  /// Get the root config directory. This dir contains the app config file
+  /// and other data considered essential to the app install. This directory
+  /// should be included in OS backups.
   auto GetConfigDirectory() -> std::string;
+
+  /// Get the path of the app config file.
   auto GetConfigFilePath() -> std::string;
+
+  /// Get a directory where the app can store internal generated data.
+  /// This directory should not be included in backups and the app
+  /// should remain functional if this directory is completely cleared
+  /// between runs (though it is expected that things stay intact here
+  /// *while* the app is running).
+  auto GetVolatileDataDirectory() -> std::string;
+
+  /// Return a directory where the local user can manually place Python files
+  /// where they will be accessible by the app. When possible, this directory
+  /// should be in a place easily accessible to the user.
   auto GetUserPythonDirectory() -> std::string;
+
+  /// Return the directory where the app expects to find its bundled Python
+  /// files.
   auto GetAppPythonDirectory() -> std::string;
+
+  /// Return the directory where bundled 3rd party Python files live.
   auto GetSitePythonDirectory() -> std::string;
+
+  /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
 
-  // Return en_US or whatnot.
+  /// Return en_US or whatnot.
   virtual auto GetLocale() -> std::string;
-  virtual void SetupDataDirectory();
+
   virtual auto GetUserAgentString() -> std::string;
   virtual auto GetOSVersionString() -> std::string;
+
+  // Chdir to wherever our bundled data lives.
+  // (note to self: should rejigger this to avoid the chdir).
+  virtual auto SetupDataDirectory() -> void;
 
   /// Set an environment variable as utf8, overwriting if it already exists.
   /// Raises an exception on errors.
@@ -308,7 +335,7 @@ class Platform {
   virtual auto SignOutV1() -> void;
 
   virtual auto GameCenterLogin() -> void;
-  virtual auto LoginDidChange() -> void;
+  virtual auto V1LoginDidChange() -> void;
 
   /// Returns the ID to use for the device account.
   auto GetDeviceV1AccountID() -> std::string;
@@ -513,8 +540,7 @@ class Platform {
   virtual auto DoGetDeviceName() -> std::string;
 
   /// Attempt to actually create a directory.
-  /// Should not raise Exceptions if it already exists or
-  /// if quiet is true.
+  /// Should *not* raise Exceptions if it already exists or if quiet is true.
   virtual auto DoMakeDir(const std::string& dir, bool quiet) -> void;
 
   /// Attempt to actually get an abs path. This will only be called if
@@ -526,7 +552,7 @@ class Platform {
   virtual auto DoGetUserPythonDirectory() -> std::string;
 
   /// Return the default config directory for this platform.
-  virtual auto GetDefaultConfigDir() -> std::string;
+  virtual auto GetDefaultConfigDirectory() -> std::string;
 
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
@@ -545,11 +571,14 @@ class Platform {
   bool is_tegra_k1_{};
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
+  bool attempted_to_make_user_scripts_dir_{};
+  bool made_volatile_data_dir_{};
+  bool have_device_uuid_{};
   millisecs_t starttime_{};
   std::string legacy_device_uuid_;
-  bool have_device_uuid_{};
   std::string config_dir_;
   std::string user_scripts_dir_;
+  std::string volatile_data_dir_;
   std::string app_python_dir_;
   std::string site_python_dir_;
   std::string replays_dir_;

@@ -19,10 +19,11 @@ from ba._accountv1 import AccountV1Subsystem
 from ba._meta import MetadataSubsystem
 from ba._ads import AdsSubsystem
 from ba._net import NetworkSubsystem
+from ba._workspace import WorkspaceSubsystem
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Optional, Any, Callable
+    from typing import Any, Callable
 
     import ba
     from ba._cloud import CloudSubsystem
@@ -49,10 +50,21 @@ class App:
 
     class State(Enum):
         """High level state the app can be in."""
+
+        # Python-level systems being inited but should not interact.
         LAUNCHING = 0
-        RUNNING = 1
-        PAUSED = 2
-        SHUTTING_DOWN = 3
+
+        # Initial account logins, workspace & asset downloads, etc.
+        LOADING = 1
+
+        # Normal running state.
+        RUNNING = 2
+
+        # App is backgrounded or otherwise suspended.
+        PAUSED = 3
+
+        # App is shutting down.
+        SHUTTING_DOWN = 4
 
     @property
     def aioloop(self) -> asyncio.AbstractEventLoop:
@@ -208,7 +220,9 @@ class App:
 
         self.state = self.State.LAUNCHING
 
-        self._app_launched = False
+        self._launch_completed = False
+        self._initial_login_completed = False
+        self._called_on_app_running = False
         self._app_paused = False
 
         # Config.
@@ -219,7 +233,7 @@ class App:
         # refreshed/etc.
         self.fg_state = 0
 
-        self._aioloop: Optional[asyncio.AbstractEventLoop] = None
+        self._aioloop: asyncio.AbstractEventLoop | None = None
 
         self._env = _ba.env()
         self.protocol_version: int = self._env['protocol_version']
@@ -243,12 +257,12 @@ class App:
 
         # Misc.
         self.tips: list[str] = []
-        self.stress_test_reset_timer: Optional[ba.Timer] = None
+        self.stress_test_reset_timer: ba.Timer | None = None
         self.did_weak_call_warning = False
 
         self.log_have_new = False
         self.log_upload_timer_started = False
-        self._config: Optional[ba.AppConfig] = None
+        self._config: ba.AppConfig | None = None
         self.printed_live_object_warning = False
 
         # We include this extra hash with shared input-mapping names so
@@ -256,13 +270,13 @@ class App:
         # systems. For instance, different android devices may give different
         # key values for the same controller type so we keep their mappings
         # distinct.
-        self.input_map_hash: Optional[str] = None
+        self.input_map_hash: str | None = None
 
         # Co-op Campaigns.
         self.campaigns: dict[str, ba.Campaign] = {}
 
         # Server Mode.
-        self.server: Optional[ba.ServerController] = None
+        self.server: ba.ServerController | None = None
 
         self.meta = MetadataSubsystem()
         self.accounts_v1 = AccountV1Subsystem()
@@ -273,15 +287,16 @@ class App:
         self.ui = UISubsystem()
         self.ads = AdsSubsystem()
         self.net = NetworkSubsystem()
+        self.workspaces = WorkspaceSubsystem()
 
         # Lobby.
         self.lobby_random_profile_index: int = 1
         self.lobby_random_char_index_offset = random.randrange(1000)
-        self.lobby_account_profile_device_id: Optional[int] = None
+        self.lobby_account_profile_device_id: int | None = None
 
         # Main Menu.
         self.main_menu_did_initial_transition = False
-        self.main_menu_last_news_fetch_time: Optional[float] = None
+        self.main_menu_last_news_fetch_time: float | None = None
 
         # Spaz.
         self.spaz_appearances: dict[str, spazappearance.Appearance] = {}
@@ -300,19 +315,19 @@ class App:
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.main_menu_resume_callbacks: list = []  # Can probably go away.
-        self.special_offer: Optional[dict] = None
+        self.special_offer: dict | None = None
         self.ping_thread_count = 0
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
-        self.store_layout: Optional[dict[str, list[dict[str, Any]]]] = None
-        self.store_items: Optional[dict[str, dict]] = None
-        self.pro_sale_start_time: Optional[int] = None
-        self.pro_sale_start_val: Optional[int] = None
+        self.store_layout: dict[str, list[dict[str, Any]]] | None = None
+        self.store_items: dict[str, dict] | None = None
+        self.pro_sale_start_time: int | None = None
+        self.pro_sale_start_val: int | None = None
 
-        self.delegate: Optional[ba.AppDelegate] = None
-        self._asyncio_timer: Optional[ba.Timer] = None
+        self.delegate: ba.AppDelegate | None = None
+        self._asyncio_timer: ba.Timer | None = None
 
     def on_app_launch(self) -> None:
-        """Runs after the app finishes bootstrapping.
+        """Runs after the app finishes low level bootstrapping.
 
         (internal)"""
         # pylint: disable=cyclic-import
@@ -398,18 +413,22 @@ class App:
         if not self.headless_mode:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
-        self.meta.on_app_launch()
         self.accounts_v2.on_app_launch()
         self.accounts_v1.on_app_launch()
-        self.plugins.on_app_launch()
 
         # See note below in on_app_pause.
         if self.state != self.State.LAUNCHING:
             logging.error('on_app_launch found state %s; expected LAUNCHING.',
                           self.state)
 
-        self._app_launched = True
+        self._launch_completed = True
         self._update_state()
+
+    def on_app_running(self) -> None:
+        """Called when initially entering the running state."""
+
+        self.meta.on_app_running()
+        self.plugins.on_app_running()
 
         # from ba._dependency import test_depset
         # test_depset()
@@ -420,8 +439,13 @@ class App:
         if self._app_paused:
             self.state = self.State.PAUSED
         else:
-            if self._app_launched:
+            if self._initial_login_completed:
                 self.state = self.State.RUNNING
+                if not self._called_on_app_running:
+                    self._called_on_app_running = True
+                    self.on_app_running()
+            elif self._launch_completed:
+                self.state = self.State.LOADING
             else:
                 self.state = self.State.LAUNCHING
 
@@ -459,7 +483,7 @@ class App:
         If there's a foreground host-activity that says it's pausable, tell it
         to pause ..we now no longer pause if there are connected clients.
         """
-        activity: Optional[ba.Activity] = _ba.get_foreground_host_activity()
+        activity: ba.Activity | None = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
             from ba._language import Lstr
@@ -523,7 +547,7 @@ class App:
 
         # If we're in a host-session, tell them to end.
         # This lets them tear themselves down gracefully.
-        host_session: Optional[ba.Session] = _ba.get_foreground_host_session()
+        host_session: ba.Session | None = _ba.get_foreground_host_session()
         if host_session is not None:
 
             # Kick off a little transaction so we'll hopefully have all the
@@ -608,6 +632,17 @@ class App:
         else:
             _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))
+
+    def on_initial_login_completed(self) -> None:
+        """Callback to be run after initial login process (or lack thereof).
+
+        This period includes things such as syncing account workspaces
+        or other data so it may take a substantial amount of time.
+        This should also run after a short amount of time if no login
+        has occurred.
+        """
+        self._initial_login_completed = True
+        self._update_state()
 
     def _test_https(self) -> None:
         """Testing https support.

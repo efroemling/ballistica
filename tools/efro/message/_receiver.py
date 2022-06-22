@@ -15,7 +15,7 @@ from efro.message._message import (Message, Response, EmptyResponse,
                                    ErrorResponse, UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union, Awaitable
+    from typing import Any, Callable, Awaitable
 
     from efro.message._protocol import MessageProtocol
 
@@ -50,19 +50,19 @@ class MessageReceiver:
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
         self._handlers: dict[type[Message], Callable] = {}
-        self._decode_filter_call: Optional[Callable[[Any, dict, Message],
-                                                    None]] = None
-        self._encode_filter_call: Optional[Callable[[Any, Response, dict],
-                                                    None]] = None
+        self._decode_filter_call: Callable[[Any, dict, Message],
+                                           None] | None = None
+        self._encode_filter_call: Callable[
+            [Any, Message | None, Response, dict], None] | None = None
 
         # TODO: don't currently have async encode equivalent
         # or either for sender; can add as needed.
-        self._decode_filter_async_call: Optional[Callable[
-            [Any, dict, Message], Awaitable[None]]] = None
+        self._decode_filter_async_call: Callable[[Any, dict, Message],
+                                                 Awaitable[None]] | None = None
 
     # noinspection PyProtectedMember
     def register_handler(
-            self, call: Callable[[Any, Message], Optional[Response]]) -> None:
+            self, call: Callable[[Any, Message], Response | None]) -> None:
         """Register a handler call.
 
         The message type handled by the call is determined by its
@@ -106,7 +106,7 @@ class MessageReceiver:
         assert issubclass(msgtype, Message)
 
         ret = anns.get('return')
-        responsetypes: tuple[Union[type[Any], type[None]], ...]
+        responsetypes: tuple[type[Any] | type[None], ...]
 
         # Return types can be a single type or a union of types.
         if isinstance(ret, (_GenericAlias, types.UnionType)):
@@ -178,8 +178,8 @@ class MessageReceiver:
         return call
 
     def encode_filter_method(
-        self, call: Callable[[Any, Response, dict], None]
-    ) -> Callable[[Any, Response, dict], None]:
+        self, call: Callable[[Any, Message | None, Response, dict], None]
+    ) -> Callable[[Any, Message | None, Response, dict], None]:
         """Function decorator for defining an encode filter.
 
         Encode filters can be used to add extra data to the message
@@ -202,42 +202,38 @@ class MessageReceiver:
                 else:
                     raise TypeError(msg)
 
-    def _decode_incoming_message_base(
-            self, bound_obj: Any,
-            msg: str) -> tuple[Any, dict, Message, type[Message]]:
+    def _decode_incoming_message_base(self, bound_obj: Any,
+                                      msg: str) -> tuple[Any, dict, Message]:
         # Decode the incoming message.
         msg_dict = self.protocol.decode_dict(msg)
         msg_decoded = self.protocol.message_from_dict(msg_dict)
-        msgtype = type(msg_decoded)
-        assert issubclass(msgtype, Message)
+        assert isinstance(msg_decoded, Message)
         if self._decode_filter_call is not None:
             self._decode_filter_call(bound_obj, msg_dict, msg_decoded)
-        return bound_obj, msg_dict, msg_decoded, msgtype
+        return bound_obj, msg_dict, msg_decoded
 
-    def _decode_incoming_message(self, bound_obj: Any,
-                                 msg: str) -> tuple[Message, type[Message]]:
-        bound_obj, _msg_dict, msg_decoded, msgtype = (
+    def _decode_incoming_message(self, bound_obj: Any, msg: str) -> Message:
+        bound_obj, _msg_dict, msg_decoded = (
             self._decode_incoming_message_base(bound_obj=bound_obj, msg=msg))
 
         # If they've set an async filter but are calling sync
         # handle_raw_message() its likely a bug.
         assert self._decode_filter_async_call is None
 
-        return msg_decoded, msgtype
+        return msg_decoded
 
-    async def _decode_incoming_message_async(
-            self, bound_obj: Any, msg: str) -> tuple[Message, type[Message]]:
-        bound_obj, msg_dict, msg_decoded, msgtype = (
-            self._decode_incoming_message_base(bound_obj=bound_obj, msg=msg))
+    async def _decode_incoming_message_async(self, bound_obj: Any,
+                                             msg: str) -> Message:
+        bound_obj, msg_dict, msg_decoded = (self._decode_incoming_message_base(
+            bound_obj=bound_obj, msg=msg))
 
         if self._decode_filter_async_call is not None:
             await self._decode_filter_async_call(bound_obj, msg_dict,
                                                  msg_decoded)
-        return msg_decoded, msgtype
+        return msg_decoded
 
-    def encode_user_response(self, bound_obj: Any,
-                             response: Optional[Response],
-                             msgtype: type[Message]) -> str:
+    def encode_user_response(self, bound_obj: Any, message: Message,
+                             response: Response | None) -> str:
         """Encode a response provided by the user for sending."""
 
         # A return value of None equals EmptyResponse.
@@ -247,18 +243,21 @@ class MessageReceiver:
         assert isinstance(response, Response)
         # (user should never explicitly return error-responses)
         assert not isinstance(response, ErrorResponse)
-        assert type(response) in msgtype.get_response_types()
+        assert type(response) in message.get_response_types()
         response_dict = self.protocol.response_to_dict(response)
         if self._encode_filter_call is not None:
-            self._encode_filter_call(bound_obj, response, response_dict)
+            self._encode_filter_call(bound_obj, message, response,
+                                     response_dict)
         return self.protocol.encode_dict(response_dict)
 
-    def encode_error_response(self, bound_obj: Any, exc: Exception) -> str:
+    def encode_error_response(self, bound_obj: Any, message: Message | None,
+                              exc: Exception) -> str:
         """Given an error, return a response ready for sending."""
         response = self.protocol.error_to_response(exc)
         response_dict = self.protocol.response_to_dict(response)
         if self._encode_filter_call is not None:
-            self._encode_filter_call(bound_obj, response, response_dict)
+            self._encode_filter_call(bound_obj, message, response,
+                                     response_dict)
         return self.protocol.encode_dict(response_dict)
 
     def handle_raw_message(self,
@@ -273,21 +272,22 @@ class MessageReceiver:
         error responses returned to the sender.
         """
         assert not self.is_async, "can't call sync handler on async receiver"
+        msg_decoded: Message | None = None
         try:
-            msg_decoded, msgtype = self._decode_incoming_message(
-                bound_obj, msg)
+            msg_decoded = self._decode_incoming_message(bound_obj, msg)
+            msgtype = type(msg_decoded)
             handler = self._handlers.get(msgtype)
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
             response = handler(bound_obj, msg_decoded)
             assert isinstance(response, (Response, type(None)))
-            return self.encode_user_response(bound_obj, response, msgtype)
+            return self.encode_user_response(bound_obj, msg_decoded, response)
 
         except Exception as exc:
             if (raise_unregistered
                     and isinstance(exc, UnregisteredMessageIDError)):
                 raise
-            return self.encode_error_response(bound_obj, exc)
+            return self.encode_error_response(bound_obj, msg_decoded, exc)
 
     async def handle_raw_message_async(
             self,
@@ -299,21 +299,23 @@ class MessageReceiver:
         The return value is the raw response to the message.
         """
         assert self.is_async, "can't call async handler on sync receiver"
+        msg_decoded: Message | None = None
         try:
-            msg_decoded, msgtype = await self._decode_incoming_message_async(
+            msg_decoded = await self._decode_incoming_message_async(
                 bound_obj, msg)
+            msgtype = type(msg_decoded)
             handler = self._handlers.get(msgtype)
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
             response = await handler(bound_obj, msg_decoded)
             assert isinstance(response, (Response, type(None)))
-            return self.encode_user_response(bound_obj, response, msgtype)
+            return self.encode_user_response(bound_obj, msg_decoded, response)
 
         except Exception as exc:
             if (raise_unregistered
                     and isinstance(exc, UnregisteredMessageIDError)):
                 raise
-            return self.encode_error_response(bound_obj, exc)
+            return self.encode_error_response(bound_obj, msg_decoded, exc)
 
 
 class BoundMessageReceiver:
@@ -334,5 +336,12 @@ class BoundMessageReceiver:
         return self._receiver.protocol
 
     def encode_error_response(self, exc: Exception) -> str:
-        """Given an error, return a response ready to send."""
-        return self._receiver.encode_error_response(self._obj, exc)
+        """Given an error, return a response ready to send.
+
+        This should be used for any errors that happen outside of
+        of standard handle_raw_message calls. Any errors within those
+        calls should be automatically returned as encoded strings.
+        """
+        # Passing None for Message here; we would only have that available
+        # for things going wrong in the handler (which this is not for).
+        return self._receiver.encode_error_response(self._obj, None, exc)
