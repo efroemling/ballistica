@@ -307,7 +307,7 @@
 - Renamed 'exceptionOnNone' arg to 'doraise' in various calls.
 - bs.emitBGDynamics() is now ba.emitfx()
 - bs.shakeCamera() is now ba.camerashake()
-- Various other minor name changes (bs.getUIBounds() -> ba.app.uibounds, etc.).  I'm keeping old and new Python API docs around for now, so you can compare as needed.
+- Various other minor name changes (bs.getUIBounds() -> ba.app.ui_bounds, etc.).  I'm keeping old and new Python API docs around for now, so you can compare as needed.
 - Renamed bot classes based on their actions instead of their appearances (ie: PirateBot -> ExplodeyBot)
 - bs.getSharedObject() is now ba.stdobj()
 - Removed bs.uni(), bs.utf8(), `bs.uni_to_ints()`, and `bs.uni_from_ints()` which are no longer needed due to Python 3's better string handling.
