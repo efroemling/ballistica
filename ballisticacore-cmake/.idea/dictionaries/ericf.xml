@@ -403,6 +403,7 @@
       <w>expbool</w>
       <w>expectedsig</w>
       <w>expl</w>
+      <w>extradata</w>
       <w>extrahash</w>
       <w>extrascale</w>
       <w>exts</w>
@@ -925,6 +926,7 @@
       <w>pipvers</w>
       <w>pixelformat</w>
       <w>platstr</w>
+      <w>playerspaztype</w>
       <w>playpause</w>
       <w>playsound</w>
       <w>plen</w>
@@ -1222,6 +1224,7 @@
       <w>subscale</w>
       <w>subscr</w>
       <w>subtypestr</w>
+      <w>successmsg</w>
       <w>sval</w>
       <w>swiftc</w>
       <w>symbolification</w>
@@ -1233,6 +1236,8 @@
       <w>targs</w>
       <w>tasklabel</w>
       <w>tcls</w>
+      <w>tdels</w>
+      <w>tdlds</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>
       <w>teleported</w>
@@ -1292,6 +1297,7 @@
       <w>trimeshes</w>
       <w>trynum</w>
       <w>tself</w>
+      <w>tunmd</w>
       <w>tupleval</w>
       <w>tval</w>
       <w>tvos</w>
@@ -1393,6 +1399,7 @@
       <w>woutdir</w>
       <w>wprjp</w>
       <w>writeauxiliaryfile</w>
+      <w>wspath</w>
       <w>wsroot</w>
       <w>wunused</w>
       <w>wvmpth</w>

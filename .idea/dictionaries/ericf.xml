@@ -793,6 +793,7 @@
       <w>exportoptions</w>
       <w>exportoptionspath</w>
       <w>exporttype</w>
+      <w>extradata</w>
       <w>extraflagmat</w>
       <w>extrahash</w>
       <w>extrascale</w>
@@ -1805,6 +1806,7 @@
       <w>playerpts</w>
       <w>playerrec</w>
       <w>playerspaz</w>
+      <w>playerspaztype</w>
       <w>playerteamdata</w>
       <w>playertype</w>
       <w>playerval</w>
@@ -2393,6 +2395,7 @@
       <w>subvalue</w>
       <w>subvaluetype</w>
       <w>successfull</w>
+      <w>successmsg</w>
       <w>suiciding</w>
       <w>sunau</w>
       <w>suter</w>
@@ -2446,6 +2449,8 @@
       <w>tcls</w>
       <w>tcombine</w>
       <w>tdelay</w>
+      <w>tdels</w>
+      <w>tdlds</w>
       <w>tdval</w>
       <w>teambasesession</w>
       <w>teamdata</w>
@@ -2578,6 +2583,7 @@
       <w>tself</w>
       <w>tspc</w>
       <w>tstr</w>
+      <w>tunmd</w>
       <w>tupleval</w>
       <w>turtledemo</w>
       <w>tval</w>
@@ -2766,6 +2772,7 @@
       <w>writeclasses</w>
       <w>writefuncs</w>
       <w>wslpath</w>
+      <w>wspath</w>
       <w>wsroot</w>
       <w>wtcolor</w>
       <w>wtflib</w>

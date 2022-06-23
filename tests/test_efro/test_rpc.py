@@ -38,12 +38,15 @@ class _MessageType(Enum):
     RESPONSE2 = 'r2'
     TEST_SLOW = 'ts'
     RESPONSE_SLOW = 'rs'
+    TEST_BIG = 'tb'
+    RESPONSE_BIG = 'rb'
 
 
 @ioprepped
 @dataclass
 class _Message:
     messagetype: _MessageType
+    extradata: bytes = b''
 
 
 class _ServerClientCommon:
@@ -87,6 +90,11 @@ class _ServerClientCommon:
         if msg.messagetype is _MessageType.TEST_SLOW:
             await asyncio.sleep(SLOW_WAIT)
             return _Message(_MessageType.RESPONSE_SLOW)
+
+        if msg.messagetype is _MessageType.TEST_BIG:
+            # 5 Mb Response
+            return _Message(_MessageType.RESPONSE_BIG,
+                            extradata=bytes(bytearray(1024 * 1024 * 5)))
 
         raise RuntimeError(f'Got unexpected message type: {msg.messagetype}')
 
@@ -300,6 +308,16 @@ def test_simple_messages() -> None:
 
         resp = await tester.client.send_message(_Message(_MessageType.TEST2))
         assert resp.messagetype is _MessageType.RESPONSE2
+
+        resp = await tester.server.send_message(
+            _Message(_MessageType.TEST_BIG,
+                     extradata=bytes(bytearray(1024 * 1024 * 5))))
+        assert resp.messagetype is _MessageType.RESPONSE_BIG
+
+        resp = await tester.client.send_message(
+            _Message(_MessageType.TEST_BIG,
+                     extradata=bytes(bytearray(1024 * 1024 * 5))))
+        assert resp.messagetype is _MessageType.RESPONSE_BIG
 
     tester.run(_do_it())
 

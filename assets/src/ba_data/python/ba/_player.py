@@ -13,7 +13,7 @@ from ba._error import (SessionPlayerNotFoundError, print_exception,
 from ba._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence, Any, Union, Callable
+    from typing import Sequence, Any, Callable
     import ba
 
 # pylint: disable=invalid-name
@@ -39,7 +39,7 @@ class StandLocation:
     Category: Gameplay Classes
     """
     position: ba.Vec3
-    angle: Optional[float] = None
+    angle: float | None = None
 
 
 class Player(Generic[TeamType]):
@@ -56,7 +56,7 @@ class Player(Generic[TeamType]):
     # their type annotations are introspectable (for docs generation).
     character: str
 
-    actor: Optional[ba.Actor]
+    actor: ba.Actor | None
     """The ba.Actor associated with the player."""
 
     color: Sequence[float]
@@ -64,7 +64,7 @@ class Player(Generic[TeamType]):
 
     _team: TeamType
     _sessionplayer: ba.SessionPlayer
-    _nodeactor: Optional[ba.NodeActor]
+    _nodeactor: ba.NodeActor | None
     _expired: bool
     _postinited: bool
     _customdata: dict
@@ -94,7 +94,7 @@ class Player(Generic[TeamType]):
 
         self.actor = None
         self.character = ''
-        self._nodeactor: Optional[ba.NodeActor] = None
+        self._nodeactor: ba.NodeActor | None = None
         self._sessionplayer = sessionplayer
         self.character = sessionplayer.character
         self.color = sessionplayer.color
@@ -249,8 +249,7 @@ class Player(Generic[TeamType]):
         assert not self._expired
         return self._sessionplayer.get_icon()
 
-    def assigninput(self, inputtype: Union[ba.InputType, tuple[ba.InputType,
-                                                               ...]],
+    def assigninput(self, inputtype: ba.InputType | tuple[ba.InputType, ...],
                     call: Callable) -> None:
         """
         Set the python callable to be run for one or more types of input.
@@ -313,7 +312,7 @@ def playercast(totype: type[PlayerType], player: ba.Player) -> PlayerType:
 # for the optional variety, but that currently seems to not be working.
 # See: https://github.com/python/mypy/issues/8800
 def playercast_o(totype: type[PlayerType],
-                 player: Optional[ba.Player]) -> Optional[PlayerType]:
+                 player: ba.Player | None) -> PlayerType | None:
     """A variant of ba.playercast() for use with optional ba.Player values.
 
     Category: Gameplay Functions
