@@ -188,9 +188,9 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
             # Drop them somewhere within our bounds with velocity pointing
             # toward the opposite side.
             pos = (-7.3 + 15.3 * random.random(), 11,
-                   -5.5 + 2.1 * random.random())
+                   -5.57 + 2.1 * random.random())
             dropdir = (-1.0 if pos[0] > 0 else 1.0)
-            vel = ((-5.0 + random.random() * 30.0) * dropdir, -4.0, 0)
+            vel = ((-5.0 + random.random() * 30.0) * dropdir, random.uniform(-3.066, -4.12), 0)
             ba.timer(delay, ba.Call(self._drop_bomb, pos, vel))
             delay += 0.1
         self._set_meteor_timer()
