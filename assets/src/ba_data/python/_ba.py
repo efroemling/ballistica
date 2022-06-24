@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, overload, Sequence, TypeVar
 from ba._generated.enums import TimeFormat, TimeType
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union, Literal
+    from typing import Any, Callable, Literal
     from ba._app import App
     import ba
 
@@ -226,7 +226,7 @@ class InputDevice:
        on the actual device. (Can be used to determine whether to show
        them in controls-overlays, etc.)."""
 
-    player: Optional[ba.SessionPlayer]
+    player: ba.SessionPlayer | None
     """The player associated with this input device."""
 
     client_id: int
@@ -333,7 +333,7 @@ class Material:
 
     def add_actions(self,
                     actions: tuple,
-                    conditions: Optional[tuple] = None) -> None:
+                    conditions: tuple | None = None) -> None:
         """Add one or more actions to the material, optionally with conditions.
 
         ##### Conditions
@@ -531,9 +531,9 @@ class Node:
     name_color: Sequence[float] = (0.0, 0.0, 0.0)
     tint_color: Sequence[float] = (0.0, 0.0, 0.0)
     tint2_color: Sequence[float] = (0.0, 0.0, 0.0)
-    text: Union[ba.Lstr, str] = ''
-    texture: Optional[ba.Texture] = None
-    tint_texture: Optional[ba.Texture] = None
+    text: ba.Lstr | str = ''
+    texture: ba.Texture | None = None
+    tint_texture: ba.Texture | None = None
     times: Sequence[int] = (1, 2, 3, 4, 5)
     values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)
     offset: float = 0.0
@@ -542,7 +542,7 @@ class Node:
     input2: float = 0.0
     input3: float = 0.0
     flashing: bool = False
-    scale: Union[float, Sequence[float]] = 0.0
+    scale: float | Sequence[float] = 0.0
     opacity: float = 0.0
     loop: bool = False
     time1: int = 0
@@ -556,13 +556,13 @@ class Node:
     pickup_materials: Sequence[ba.Material] = ()
     extras_material: Sequence[ba.Material] = ()
     rotate: float = 0.0
-    hold_node: Optional[ba.Node] = None
+    hold_node: ba.Node | None = None
     hold_body: int = 0
     host_only: bool = False
     premultiplied: bool = False
-    source_player: Optional[ba.Player] = None
-    model_opaque: Optional[ba.Model] = None
-    model_transparent: Optional[ba.Model] = None
+    source_player: ba.Player | None = None
+    model_opaque: ba.Model | None = None
+    model_transparent: ba.Model | None = None
     damage_smoothed: float = 0.0
     gravity_scale: float = 1.0
     punch_power: float = 0.0
@@ -592,13 +592,13 @@ class Node:
     music_count: int = 0
     hurt: float = 0.0
     always_show_health_bar: bool = False
-    mini_billboard_1_texture: Optional[ba.Texture] = None
+    mini_billboard_1_texture: ba.Texture | None = None
     mini_billboard_1_start_time: int = 0
     mini_billboard_1_end_time: int = 0
-    mini_billboard_2_texture: Optional[ba.Texture] = None
+    mini_billboard_2_texture: ba.Texture | None = None
     mini_billboard_2_start_time: int = 0
     mini_billboard_2_end_time: int = 0
-    mini_billboard_3_texture: Optional[ba.Texture] = None
+    mini_billboard_3_texture: ba.Texture | None = None
     mini_billboard_3_start_time: int = 0
     mini_billboard_3_end_time: int = 0
     boxing_gloves_flashing: bool = False
@@ -618,9 +618,9 @@ class Node:
     area_of_interest_bounds: Sequence[float] = (-1, -1, -1, 1, 1, 1)
     shadow_range: Sequence[float] = (0, 0, 0, 0)
     counter_text: str = ''
-    counter_texture: Optional[ba.Texture] = None
+    counter_texture: ba.Texture | None = None
     shattered: int = 0
-    billboard_texture: Optional[ba.Texture] = None
+    billboard_texture: ba.Texture | None = None
     billboard_cross_out: bool = False
     billboard_opacity: float = 0.0
     slow_motion: bool = False
@@ -775,10 +775,10 @@ class SessionPlayer:
     character: str
     """The character this player has selected in their profile."""
 
-    activityplayer: Optional[ba.Player]
+    activityplayer: ba.Player | None
     """The current game-specific instance for this player."""
 
-    def assigninput(self, type: Union[ba.InputType, tuple[ba.InputType, ...]],
+    def assigninput(self, type: ba.InputType | tuple[ba.InputType, ...],
                     call: Callable) -> None:
         """Set the python callable to be run for one or more types of input."""
         return None
@@ -827,7 +827,7 @@ class SessionPlayer:
         """(internal)"""
         return None
 
-    def setactivity(self, activity: Optional[ba.Activity]) -> None:
+    def setactivity(self, activity: ba.Activity | None) -> None:
         """(internal)"""
         return None
 
@@ -846,7 +846,7 @@ class SessionPlayer:
         """
         return None
 
-    def setnode(self, node: Optional[Node]) -> None:
+    def setnode(self, node: Node | None) -> None:
         """(internal)"""
         return None
 
@@ -1080,7 +1080,7 @@ class Widget:
         """
         return (0.0, 0.0)
 
-    def get_selected_child(self) -> Optional[ba.Widget]:
+    def get_selected_child(self) -> ba.Widget | None:
         """Returns the selected child Widget or None if nothing is selected."""
         return Widget()
 
@@ -1170,7 +1170,7 @@ def buttonwidget(edit: ba.Widget = None,
                  size: Sequence[float] = None,
                  position: Sequence[float] = None,
                  on_activate_call: Callable = None,
-                 label: Union[str, ba.Lstr] = None,
+                 label: str | ba.Lstr | None = None,
                  color: Sequence[float] = None,
                  down_widget: ba.Widget = None,
                  up_widget: ba.Widget = None,
@@ -1268,7 +1268,7 @@ def charstr(char_id: ba.SpecialChar) -> str:
     return str()
 
 
-def chatmessage(message: Union[str, ba.Lstr],
+def chatmessage(message: str | ba.Lstr,
                 clients: Sequence[int] = None,
                 sender_override: str = None) -> None:
     """(internal)"""
@@ -1279,7 +1279,7 @@ def checkboxwidget(edit: ba.Widget = None,
                    parent: ba.Widget = None,
                    size: Sequence[float] = None,
                    position: Sequence[float] = None,
-                   text: Union[ba.Lstr, str] = None,
+                   text: str | ba.Lstr | None = None,
                    value: bool = None,
                    on_value_change_call: Callable[[bool], None] = None,
                    on_select_call: Callable[[], None] = None,
@@ -1496,7 +1496,7 @@ def ehv() -> None:
 
 
 def emitfx(position: Sequence[float],
-           velocity: Optional[Sequence[float]] = None,
+           velocity: Sequence[float] | None = None,
            count: int = 10,
            scale: float = 1.0,
            spread: float = 1.0,
@@ -1541,7 +1541,7 @@ def evaluate_lstr(value: str) -> str:
 
 def fade_screen(to: int = 0,
                 time: float = 0.25,
-                endcall: Optional[Callable[[], None]] = None) -> None:
+                endcall: Callable[[], None] | None = None) -> None:
     """(internal)
 
     Fade the local game screen in our out from black over a duration of
@@ -1644,7 +1644,7 @@ def get_connection_to_host_info() -> dict:
     return dict()
 
 
-def get_display_resolution() -> Optional[tuple[int, int]]:
+def get_display_resolution() -> tuple[int, int] | None:
     """(internal)
 
     Return the currently selected display resolution for fullscreen
@@ -1653,7 +1653,7 @@ def get_display_resolution() -> Optional[tuple[int, int]]:
     return (0, 0)
 
 
-def get_foreground_host_activity() -> Optional[ba.Activity]:
+def get_foreground_host_activity() -> ba.Activity | None:
     """(internal)
 
     Returns the ba.Activity currently in the foreground, or None if there
@@ -1663,7 +1663,7 @@ def get_foreground_host_activity() -> Optional[ba.Activity]:
     return ba.Activity(settings={})
 
 
-def get_foreground_host_session() -> Optional[ba.Session]:
+def get_foreground_host_session() -> ba.Session | None:
     """(internal)
 
     Return the ba.Session currently being displayed, or None if there is
@@ -1766,12 +1766,12 @@ def get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture:
     return ba.Texture()
 
 
-def get_price(item: str) -> Optional[str]:
+def get_price(item: str) -> str | None:
     """(internal)"""
     return ''
 
 
-def get_public_login_id() -> Optional[str]:
+def get_public_login_id() -> str | None:
     """(internal)"""
     return ''
 
@@ -2691,7 +2691,7 @@ def safecolor(color: Sequence[float],
     return (0.0, 0.0, 0.0)
 
 
-def screenmessage(message: Union[str, ba.Lstr],
+def screenmessage(message: str | ba.Lstr,
                   color: Sequence[float] = None,
                   top: bool = False,
                   image: dict[str, Any] = None,
@@ -2909,7 +2909,7 @@ def set_touchscreen_editing(editing: bool) -> None:
     return None
 
 
-def set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None:
+def set_ui_input_device(input_device: ba.InputDevice | None) -> None:
     """(internal)
 
     Sets the input-device that currently owns the user interface.
@@ -2934,7 +2934,7 @@ def show_ad_2(purpose: str,
     return None
 
 
-def show_app_invite(title: Union[str, ba.Lstr], message: Union[str, ba.Lstr],
+def show_app_invite(title: str | ba.Lstr, message: str | ba.Lstr,
                     code: str) -> None:
     """(internal)
 
@@ -2982,14 +2982,14 @@ def submit_analytics_counts() -> None:
 def submit_score(game: str,
                  config: str,
                  name: Any,
-                 score: Optional[int],
+                 score: int | None,
                  callback: Callable,
-                 friend_callback: Optional[Callable],
+                 friend_callback: Callable | None,
                  order: str = 'increasing',
-                 tournament_id: Optional[str] = None,
+                 tournament_id: str | None = None,
                  score_type: str = 'points',
-                 campaign: Optional[str] = None,
-                 level: Optional[str] = None) -> None:
+                 campaign: str | None = None,
+                 level: str | None = None) -> None:
     """(internal)
 
     Submit a score to the server; callback will be called with the results.
@@ -3004,7 +3004,7 @@ def textwidget(edit: ba.Widget = None,
                parent: ba.Widget = None,
                size: Sequence[float] = None,
                position: Sequence[float] = None,
-               text: Union[str, ba.Lstr] = None,
+               text: str | ba.Lstr | None = None,
                v_align: str = None,
                h_align: str = None,
                editable: bool = None,
@@ -3021,7 +3021,7 @@ def textwidget(edit: ba.Widget = None,
                draw_controller: ba.Widget = None,
                scale: float = None,
                corner_scale: float = None,
-               description: Union[str, ba.Lstr] = None,
+               description: str | ba.Lstr | None = None,
                transition_delay: float = None,
                maxwidth: float = None,
                max_height: float = None,
@@ -3105,8 +3105,7 @@ def time(timetype: ba.TimeType = TimeType.SIM,
     return None
 
 
-def time_format_check(time_format: ba.TimeFormat, length: Union[float,
-                                                                int]) -> None:
+def time_format_check(time_format: ba.TimeFormat, length: float | int) -> None:
     """(internal)
 
     Logs suspicious time values for timers or animate calls.
@@ -3179,7 +3178,7 @@ def timer(time: float,
     return None
 
 
-def tournament_query(callback: Callable[[Optional[dict]], None],
+def tournament_query(callback: Callable[[dict | None], None],
                      args: dict) -> None:
     """(internal)"""
     return None
