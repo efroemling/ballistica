@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Sequence
+    from typing import Any, Sequence
 
 
 class ZoomText(ba.Actor):
@@ -22,7 +22,7 @@ class ZoomText(ba.Actor):
     """
 
     def __init__(self,
-                 text: Union[str, ba.Lstr],
+                 text: str | ba.Lstr,
                  position: tuple[float, float] = (0.0, 0.0),
                  shiftposition: tuple[float, float] = None,
                  shiftdelay: float = None,

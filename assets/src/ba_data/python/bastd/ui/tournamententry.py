@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class TournamentEntryWindow(popup.PopupWindow):
@@ -56,7 +56,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._purchase_name = 'tournament_entry_0'
             self._purchase_price_name = 'price.tournament_entry_0'
 
-        self._purchase_price: Optional[int] = None
+        self._purchase_price: int | None = None
 
         self._on_close_call = on_close_call
         if scale is None:
@@ -153,7 +153,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             text='',
             maxwidth=95,
             color=(0, 0.8, 0))
-        self._pay_with_ad_btn: Optional[ba.Widget]
+        self._pay_with_ad_btn: ba.Widget | None
         if self._do_ad_btn:
             btn = self._pay_with_ad_btn = ba.buttonwidget(
                 parent=self.root_widget,
@@ -214,8 +214,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         else:
             self._pay_with_ad_btn = None
 
-        self._get_tickets_button: Optional[ba.Widget] = None
-        self._ticket_count_text: Optional[ba.Widget] = None
+        self._get_tickets_button: ba.Widget | None = None
+        self._ticket_count_text: ba.Widget | None = None
         if not ba.app.ui.use_toolbars:
             if ba.app.allow_ticket_purchases:
                 self._get_tickets_button = ba.buttonwidget(
@@ -270,7 +270,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             maxwidth=100,
             color=(0.7, 0.7, 0.7))
 
-        self._last_query_time: Optional[float] = None
+        self._last_query_time: float | None = None
 
         # If there seems to be a relatively-recent valid cached info for this
         # tournament, use it. Otherwise we'll kick off a query ourselves.
@@ -303,8 +303,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._update()
         self._restore_state()
 
-    def _on_tournament_query_response(self, data: Optional[dict[str,
-                                                                Any]]) -> None:
+    def _on_tournament_query_response(self,
+                                      data: dict[str, Any] | None) -> None:
         accounts = ba.app.accounts_v1
         self._running_query = False
         if data is not None:
@@ -511,7 +511,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             return
 
         # Deny if we don't have enough tickets.
-        ticket_count: Optional[int]
+        ticket_count: int | None
         try:
             ticket_count = _ba.get_v1_account_ticket_count()
         except Exception:

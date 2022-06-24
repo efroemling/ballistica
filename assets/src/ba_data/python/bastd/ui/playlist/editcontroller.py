@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class PlaylistEditController:
@@ -34,7 +34,7 @@ class PlaylistEditController:
         self._sessiontype = sessiontype
 
         self._editing_game = False
-        self._editing_game_type: Optional[type[ba.GameActivity]] = None
+        self._editing_game_type: type[ba.GameActivity] | None = None
         self._pvars = PlaylistTypeVars(sessiontype)
         self._existing_playlist_name = existing_playlist_name
         self._config_name_full = self._pvars.config_name + ' Playlists'
@@ -86,11 +86,11 @@ class PlaylistEditController:
         """(internal)"""
         return self._pvars.config_name
 
-    def get_existing_playlist_name(self) -> Optional[str]:
+    def get_existing_playlist_name(self) -> str | None:
         """(internal)"""
         return self._existing_playlist_name
 
-    def get_edit_ui_selection(self) -> Optional[str]:
+    def get_edit_ui_selection(self) -> str | None:
         """(internal)"""
         return self._edit_ui_selection
 
@@ -156,7 +156,7 @@ class PlaylistEditController:
                                transition='in_left').get_root_widget())
 
     def _show_edit_ui(self, gametype: type[ba.GameActivity],
-                      settings: Optional[dict[str, Any]]) -> None:
+                      settings: dict[str, Any] | None) -> None:
         self._editing_game = (settings is not None)
         self._editing_game_type = gametype
         assert self._sessiontype is not None
@@ -167,7 +167,7 @@ class PlaylistEditController:
         """(internal)"""
         self._show_edit_ui(gametype=gametype, settings=None)
 
-    def _edit_game_done(self, config: Optional[dict[str, Any]]) -> None:
+    def _edit_game_done(self, config: dict[str, Any] | None) -> None:
         from bastd.ui.playlist.edit import PlaylistEditWindow
         from bastd.ui.playlist.addgame import PlaylistAddGameWindow
         from ba.internal import get_type_name

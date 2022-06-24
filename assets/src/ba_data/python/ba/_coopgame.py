@@ -10,7 +10,7 @@ from ba._gameactivity import GameActivity
 from ba._general import WeakCall
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional
+    from typing import Any, Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
@@ -40,8 +40,8 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         # Cache these for efficiency.
         self._achievements_awarded: set[str] = set()
 
-        self._life_warning_beep: Optional[ba.Actor] = None
-        self._life_warning_beep_timer: Optional[ba.Timer] = None
+        self._life_warning_beep: ba.Actor | None = None
+        self._life_warning_beep_timer: ba.Timer | None = None
         self._warn_beeps_sound = _ba.getsound('warnBeeps')
 
     def on_begin(self) -> None:

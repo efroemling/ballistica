@@ -17,7 +17,7 @@ import ba
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Optional, Union
+    from typing import Callable, Any
     from bastd.ui.gather import GatherWindow
 
 # Print a bit of info about pings, queries, etc.
@@ -36,19 +36,19 @@ class PartyEntry:
     """Info about a public party."""
     address: str
     index: int
-    queue: Optional[str] = None
+    queue: str | None = None
     port: int = -1
     name: str = ''
     size: int = -1
     size_max: int = -1
     claimed: bool = False
-    ping: Optional[float] = None
+    ping: float | None = None
     ping_interval: float = -1.0
     next_ping_time: float = -1.0
     ping_attempts: int = 0
     ping_responses: int = 0
-    stats_addr: Optional[str] = None
-    clean_display_index: Optional[int] = None
+    stats_addr: str | None = None
+    clean_display_index: int | None = None
 
     def get_key(self) -> str:
         """Return the key used to store this party."""
@@ -59,10 +59,10 @@ class UIRow:
     """Wrangles UI for a row in the party list."""
 
     def __init__(self) -> None:
-        self._name_widget: Optional[ba.Widget] = None
-        self._size_widget: Optional[ba.Widget] = None
-        self._ping_widget: Optional[ba.Widget] = None
-        self._stats_button: Optional[ba.Widget] = None
+        self._name_widget: ba.Widget | None = None
+        self._size_widget: ba.Widget | None = None
+        self._ping_widget: ba.Widget | None = None
+        self._stats_button: ba.Widget | None = None
 
     def __del__(self) -> None:
         self._clear()
@@ -78,7 +78,7 @@ class UIRow:
     def update(self, index: int, party: PartyEntry, sub_scroll_width: float,
                sub_scroll_height: float, lineheight: float,
                columnwidget: ba.Widget, join_text: ba.Widget,
-               filter_text: ba.Widget, existing_selection: Optional[Selection],
+               filter_text: ba.Widget, existing_selection: Selection | None,
                tab: PublicGatherTab) -> None:
         """Update for the given data."""
         # pylint: disable=too-many-locals
@@ -182,7 +182,7 @@ class UIRow:
 class State:
     """State saved/restored only while the app is running."""
     sub_tab: SubTabType = SubTabType.JOIN
-    parties: Optional[list[tuple[str, PartyEntry]]] = None
+    parties: list[tuple[str, PartyEntry]] | None = None
     next_entry_index: int = 0
     filter_value: str = ''
     have_server_list_response: bool = False
@@ -231,7 +231,7 @@ class PingThread(threading.Thread):
     """Thread for sending out game pings."""
 
     def __init__(self, address: str, port: int,
-                 call: Callable[[str, int, Optional[float]], Optional[int]]):
+                 call: Callable[[str, int, float | None], int | None]):
         super().__init__()
         self._address = address
         self._port = port
@@ -239,7 +239,7 @@ class PingThread(threading.Thread):
 
     def run(self) -> None:
         ba.app.ping_thread_count += 1
-        sock: Optional[socket.socket] = None
+        sock: socket.socket | None = None
         try:
             import socket
             from ba.internal import get_ip_address_type
@@ -255,7 +255,7 @@ class PingThread(threading.Thread):
             sock.settimeout(1)
             for _i in range(3):
                 sock.send(b'\x0b')
-                result: Optional[bytes]
+                result: bytes | None
                 try:
                     # 11: BA_PACKET_SIMPLE_PING
                     result = sock.recv(10)
@@ -291,31 +291,31 @@ class PublicGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
-        self._container: Optional[ba.Widget] = None
-        self._join_text: Optional[ba.Widget] = None
-        self._host_text: Optional[ba.Widget] = None
-        self._filter_text: Optional[ba.Widget] = None
-        self._local_address: Optional[str] = None
-        self._last_connect_attempt_time: Optional[float] = None
+        self._container: ba.Widget | None = None
+        self._join_text: ba.Widget | None = None
+        self._host_text: ba.Widget | None = None
+        self._filter_text: ba.Widget | None = None
+        self._local_address: str | None = None
+        self._last_connect_attempt_time: float | None = None
         self._sub_tab: SubTabType = SubTabType.JOIN
-        self._selection: Optional[Selection] = None
+        self._selection: Selection | None = None
         self._refreshing_list = False
-        self._update_timer: Optional[ba.Timer] = None
-        self._host_scrollwidget: Optional[ba.Widget] = None
-        self._host_name_text: Optional[ba.Widget] = None
-        self._host_toggle_button: Optional[ba.Widget] = None
-        self._last_server_list_query_time: Optional[float] = None
-        self._join_list_column: Optional[ba.Widget] = None
-        self._join_status_text: Optional[ba.Widget] = None
-        self._host_max_party_size_value: Optional[ba.Widget] = None
-        self._host_max_party_size_minus_button: (Optional[ba.Widget]) = None
-        self._host_max_party_size_plus_button: (Optional[ba.Widget]) = None
-        self._host_status_text: Optional[ba.Widget] = None
+        self._update_timer: ba.Timer | None = None
+        self._host_scrollwidget: ba.Widget | None = None
+        self._host_name_text: ba.Widget | None = None
+        self._host_toggle_button: ba.Widget | None = None
+        self._last_server_list_query_time: float | None = None
+        self._join_list_column: ba.Widget | None = None
+        self._join_status_text: ba.Widget | None = None
+        self._host_max_party_size_value: ba.Widget | None = None
+        self._host_max_party_size_minus_button: (ba.Widget | None) = None
+        self._host_max_party_size_plus_button: (ba.Widget | None) = None
+        self._host_status_text: ba.Widget | None = None
         self._signed_in = False
         self._ui_rows: list[UIRow] = []
         self._refresh_ui_row = 0
         self._have_user_selected_row = False
-        self._first_valid_server_list_time: Optional[float] = None
+        self._first_valid_server_list_time: float | None = None
 
         # Parties indexed by id:
         self._parties: dict[str, PartyEntry] = {}
@@ -714,8 +714,8 @@ class PublicGatherTab(GatherTab):
         if _ba.get_public_party_enabled():
             self._do_status_check()
 
-    def _on_public_party_query_result(
-            self, result: Optional[dict[str, Any]]) -> None:
+    def _on_public_party_query_result(self,
+                                      result: dict[str, Any] | None) -> None:
         starttime = time.time()
         self._have_server_list_response = True
 
@@ -1071,8 +1071,8 @@ class PublicGatherTab(GatherTab):
                 PingThread(party.address, party.port,
                            ba.WeakCall(self._ping_callback)).start()
 
-    def _ping_callback(self, address: str, port: Optional[int],
-                       result: Optional[float]) -> None:
+    def _ping_callback(self, address: str, port: int | None,
+                       result: float | None) -> None:
         # Look for a widget corresponding to this target.
         # If we find one, update our list.
         party_key = f'{address}_{port}'
@@ -1100,7 +1100,7 @@ class PublicGatherTab(GatherTab):
         self._local_address = str(val)
 
     def _on_public_party_accessible_response(
-            self, data: Optional[dict[str, Any]]) -> None:
+            self, data: dict[str, Any] | None) -> None:
 
         # If we've got status text widgets, update them.
         text = self._host_status_text
@@ -1114,7 +1114,7 @@ class PublicGatherTab(GatherTab):
                 )
             else:
                 if not data.get('accessible', False):
-                    ex_line: Union[str, ba.Lstr]
+                    ex_line: str | ba.Lstr
                     if self._local_address is not None:
                         ex_line = ba.Lstr(
                             value='\n${A} ${B}',

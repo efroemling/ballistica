@@ -232,7 +232,7 @@ auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
 
       {"set_ui_input_device", (PyCFunction)PySetUIInputDevice,
        METH_VARARGS | METH_KEYWORDS,
-       "set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None\n"
+       "set_ui_input_device(input_device: ba.InputDevice | None) -> None\n"
        "\n"
        "(internal)\n"
        "\n"

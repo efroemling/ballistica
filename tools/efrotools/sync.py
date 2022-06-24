@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence
+    from typing import Sequence
 
 
 class Mode(Enum):
@@ -49,7 +49,7 @@ class SyncItem:
     """Defines a file or directory to be synced from another project."""
     src_project_id: str
     src_path: str
-    dst_path: Optional[str] = None
+    dst_path: str | None = None
 
 
 def run_standard_syncs(projectroot: Path, mode: Mode,
@@ -293,8 +293,8 @@ def get_dst_file_info(dstfile: Path) -> tuple[str, str, str]:
     if not dstlines:
         raise ValueError(f'no lines found in {dstfile}')
     found = False
-    offs: Optional[int] = None
-    marker_hash: Optional[str] = None
+    offs: int | None = None
+    marker_hash: str | None = None
     for offs in range(2):
         checkline = 1 + offs
         if 'EFRO_SYNC_HASH' in dstlines[checkline]:

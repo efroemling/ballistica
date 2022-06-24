@@ -13,7 +13,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Sequence, Optional
+    from typing import Any, Callable, Sequence
 
 
 class FileSelectorWindow(ba.Window):
@@ -21,7 +21,7 @@ class FileSelectorWindow(ba.Window):
 
     def __init__(self,
                  path: str,
-                 callback: Callable[[Optional[str]], Any] = None,
+                 callback: Callable[[str | None], Any] = None,
                  show_base_path: bool = True,
                  valid_file_extensions: Sequence[str] = None,
                  allow_folders: bool = False):
@@ -33,15 +33,15 @@ class FileSelectorWindow(ba.Window):
         self._height = 365 if uiscale is ba.UIScale.SMALL else 418
         self._callback = callback
         self._base_path = path
-        self._path: Optional[str] = None
+        self._path: str | None = None
         self._recent_paths: list[str] = []
         self._show_base_path = show_base_path
         self._valid_file_extensions = [
             '.' + ext for ext in valid_file_extensions
         ]
         self._allow_folders = allow_folders
-        self._subcontainer: Optional[ba.Widget] = None
-        self._subcontainerheight: Optional[float] = None
+        self._subcontainer: ba.Widget | None = None
+        self._subcontainerheight: float | None = None
         self._scroll_width = self._width - (80 + 2 * x_inset)
         self._scroll_height = self._height - 170
         self._r = 'fileSelectorWindow'
@@ -92,7 +92,7 @@ class FileSelectorWindow(ba.Window):
         self._folder_color = (1.1, 0.8, 0.2)
         self._file_tex = ba.gettexture('file')
         self._file_color = (1, 1, 1)
-        self._use_folder_button: Optional[ba.Widget] = None
+        self._use_folder_button: ba.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
         self._folder_icon = ba.imagewidget(parent=self._root_widget,
                                            size=(40, 40),
@@ -108,7 +108,7 @@ class FileSelectorWindow(ba.Window):
                                         v_align='center',
                                         text=self._path,
                                         maxwidth=self._width * 0.9)
-        self._scrollwidget: Optional[ba.Widget] = None
+        self._scrollwidget: ba.Widget | None = None
         ba.containerwidget(edit=self._root_widget,
                            cancel_button=self._cancel_button)
         self._set_path(path)
@@ -173,7 +173,7 @@ class FileSelectorWindow(ba.Window):
     class _RefreshThread(threading.Thread):
 
         def __init__(self, path: str,
-                     callback: Callable[[list[str], Optional[str]], Any]):
+                     callback: Callable[[list[str], str | None], Any]):
             super().__init__()
             self._callback = callback
             self._path = path
@@ -205,7 +205,7 @@ class FileSelectorWindow(ba.Window):
             self._recent_paths.append(path)
         self._RefreshThread(path, self._refresh).start()
 
-    def _refresh(self, file_names: list[str], error: Optional[str]) -> None:
+    def _refresh(self, file_names: list[str], error: str | None) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals

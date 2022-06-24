@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union, Callable
+    from typing import Any, Callable
 
 
 class GamepadSettingsWindow(ba.Window):
@@ -134,7 +134,7 @@ class GamepadSettingsWindow(ba.Window):
                 if val != -1:
                     self._settings[skey] = val
 
-        back_button: Optional[ba.Widget]
+        back_button: ba.Widget | None
 
         if self._is_secondary:
             back_button = ba.buttonwidget(parent=self._root_widget,
@@ -161,7 +161,7 @@ class GamepadSettingsWindow(ba.Window):
             ba.containerwidget(edit=self._root_widget,
                                cancel_button=cancel_button)
 
-        save_button: Optional[ba.Widget]
+        save_button: ba.Widget | None
         if not self._is_secondary:
             save_button = ba.buttonwidget(
                 parent=self._root_widget,
@@ -471,7 +471,7 @@ class GamepadSettingsWindow(ba.Window):
                               transition='in_scale',
                               transition_out='out_scale')
 
-    def get_control_value_name(self, control: str) -> Union[str, ba.Lstr]:
+    def get_control_value_name(self, control: str) -> str | ba.Lstr:
         """(internal)"""
         # pylint: disable=too-many-return-statements
         assert self._settings is not None
@@ -796,7 +796,7 @@ class AwaitGamepadInputWindow(ba.Window):
                                               size=(width, 25),
                                               color=(1, 1, 1, 0.3),
                                               text=str(self._counter))
-        self._decrement_timer: Optional[ba.Timer] = ba.Timer(
+        self._decrement_timer: ba.Timer | None = ba.Timer(
             1.0,
             ba.Call(self._decrement),
             repeat=True,

@@ -14,7 +14,7 @@ from efro.error import CommunicationError
 import bacommon.cloud
 
 if TYPE_CHECKING:
-    from typing import Union, Optional
+    pass
 
 STATUS_CHECK_INTERVAL_SECONDS = 2.0
 
@@ -25,8 +25,8 @@ class V2SignInWindow(ba.Window):
     def __init__(self, origin_widget: ba.Widget):
         self._width = 600
         self._height = 550
-        self._proxyid: Optional[str] = None
-        self._proxykey: Optional[str] = None
+        self._proxyid: str | None = None
+        self._proxykey: str | None = None
 
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
@@ -60,7 +60,7 @@ class V2SignInWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget,
                            cancel_button=self._cancel_button)
 
-        self._update_timer: Optional[ba.Timer] = None
+        self._update_timer: ba.Timer | None = None
 
         # Ask the cloud for a proxy login id.
         ba.app.cloud.send_message_cb(bacommon.cloud.LoginProxyRequestMessage(),
@@ -68,8 +68,7 @@ class V2SignInWindow(ba.Window):
                                          self._on_proxy_request_response))
 
     def _on_proxy_request_response(
-        self, response: Union[bacommon.cloud.LoginProxyRequestResponse,
-                              Exception]
+        self, response: bacommon.cloud.LoginProxyRequestResponse | Exception
     ) -> None:
         from ba.internal import is_browser_likely_available
 
@@ -141,8 +140,7 @@ class V2SignInWindow(ba.Window):
             on_response=ba.WeakCall(self._got_status))
 
     def _got_status(
-        self, response: Union[bacommon.cloud.LoginProxyStateQueryResponse,
-                              Exception]
+        self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
     ) -> None:
 
         # For now, if anything goes wrong on the server-side, just abort
@@ -184,8 +182,7 @@ class V2SignInWindow(ba.Window):
             ba.timer(STATUS_CHECK_INTERVAL_SECONDS,
                      ba.WeakCall(self._ask_for_status))
 
-    def _proxy_complete_response(self, response: Union[None,
-                                                       Exception]) -> None:
+    def _proxy_complete_response(self, response: None | Exception) -> None:
         del response  # Not used.
         # We could do something smart like retry on exceptions here, but
         # this isn't critical so we'll just let anything slide.

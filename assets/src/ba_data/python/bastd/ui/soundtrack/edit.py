@@ -11,14 +11,14 @@ from typing import TYPE_CHECKING, cast
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Optional
+    from typing import Any
 
 
 class SoundtrackEditWindow(ba.Window):
     """Window for editing a soundtrack."""
 
     def __init__(self,
-                 existing_soundtrack: Optional[Union[str, dict[str, Any]]],
+                 existing_soundtrack: str | dict[str, Any] | None,
                  transition: str = 'in_right'):
         # pylint: disable=too-many-statements
         appconfig = ba.app.config
@@ -68,8 +68,8 @@ class SoundtrackEditWindow(ba.Window):
         if 'Soundtracks' not in appconfig:
             appconfig['Soundtracks'] = {}
 
-        self._soundtrack_name: Optional[str]
-        self._existing_soundtrack_name: Optional[str]
+        self._soundtrack_name: str | None
+        self._existing_soundtrack_name: str | None
         if existing_soundtrack is not None:
             # if they passed just a name, pull info from that soundtrack
             if isinstance(existing_soundtrack, str):
@@ -185,8 +185,8 @@ class SoundtrackEditWindow(ba.Window):
 
         # FIXME: We should probably convert this to use translations.
         type_names_translated = ba.app.lang.get_resource('soundtrackTypeNames')
-        prev_type_button: Optional[ba.Widget] = None
-        prev_test_button: Optional[ba.Widget] = None
+        prev_type_button: ba.Widget | None = None
+        prev_test_button: ba.Widget | None = None
 
         for index, song_type in enumerate(types):
             row = ba.rowwidget(parent=self._col,
@@ -322,11 +322,10 @@ class SoundtrackEditWindow(ba.Window):
                             mode=ba.MusicPlayMode.TEST,
                             testsoundtrack=self._soundtrack)
 
-    def _get_entry_button_display_name(self,
-                                       entry: Any) -> Union[str, ba.Lstr]:
+    def _get_entry_button_display_name(self, entry: Any) -> str | ba.Lstr:
         music = ba.app.music
         etype = music.get_soundtrack_entry_type(entry)
-        ename: Union[str, ba.Lstr]
+        ename: str | ba.Lstr
         if etype == 'default':
             ename = ba.Lstr(resource=self._r + '.defaultGameMusicText')
         elif etype in ('musicFile', 'musicFolder'):
@@ -335,7 +334,7 @@ class SoundtrackEditWindow(ba.Window):
             ename = music.get_soundtrack_entry_name(entry)
         return ename
 
-    def _get_entry_button_display_icon_type(self, entry: Any) -> Optional[str]:
+    def _get_entry_button_display_icon_type(self, entry: Any) -> str | None:
         music = ba.app.music
         etype = music.get_soundtrack_entry_type(entry)
         if etype == 'musicFile':

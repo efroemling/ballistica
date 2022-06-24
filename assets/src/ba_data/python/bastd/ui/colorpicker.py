@@ -10,7 +10,7 @@ import ba
 from bastd.ui.popup import PopupWindow
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional
+    from typing import Any, Sequence
 
 
 class ColorPicker(PopupWindow):
@@ -182,8 +182,8 @@ class ColorPickerExact(PopupWindow):
         self._color = list(initial_color)
         self._last_press_time = ba.time(ba.TimeType.REAL,
                                         ba.TimeFormat.MILLISECONDS)
-        self._last_press_color_name: Optional[str] = None
-        self._last_press_increasing: Optional[bool] = None
+        self._last_press_color_name: str | None = None
+        self._last_press_increasing: bool | None = None
         self._change_speed = 1.0
         width = 180.0
         height = 240.0

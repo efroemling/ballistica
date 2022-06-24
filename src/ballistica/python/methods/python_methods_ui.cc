@@ -2365,7 +2365,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)"},
 
       {"chatmessage", (PyCFunction)PyChatMessage, METH_VARARGS | METH_KEYWORDS,
-       "chatmessage(message: Union[str, ba.Lstr],\n"
+       "chatmessage(message: str | ba.Lstr,\n"
        "  clients: Sequence[int] = None,\n"
        "  sender_override: str = None) -> None\n"
        "\n"
@@ -2387,8 +2387,8 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
 
       {"show_app_invite", (PyCFunction)PyShowAppInvite,
        METH_VARARGS | METH_KEYWORDS,
-       "show_app_invite(title: Union[str, ba.Lstr],\n"
-       "  message: Union[str, ba.Lstr],\n"
+       "show_app_invite(title: str | ba.Lstr,\n"
+       "  message: str | ba.Lstr,\n"
        "  code: str) -> None\n"
        "\n"
        "(internal)\n"
@@ -2410,7 +2410,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
 
       {"fade_screen", (PyCFunction)PyFadeScreen, METH_VARARGS | METH_KEYWORDS,
        "fade_screen(to: int = 0, time: float = 0.25,\n"
-       "  endcall: Optional[Callable[[], None]] = None) -> None\n"
+       "  endcall: Callable[[], None] | None = None) -> None\n"
        "\n"
        "(internal)\n"
        "\n"
@@ -2453,7 +2453,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "  size: Sequence[float] = None,\n"
        "  position: Sequence[float] = None,\n"
        "  on_activate_call: Callable = None,\n"
-       "  label: Union[str, ba.Lstr] = None,\n"
+       "  label: str | ba.Lstr | None = None,\n"
        "  color: Sequence[float] = None,\n"
        "  down_widget: ba.Widget = None,\n"
        "  up_widget: ba.Widget = None,\n"
@@ -2500,7 +2500,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "  parent: ba.Widget = None,\n"
        "  size: Sequence[float] = None,\n"
        "  position: Sequence[float] = None,\n"
-       "  text: Union[ba.Lstr, str] = None,\n"
+       "  text: str | ba.Lstr | None = None,\n"
        "  value: bool = None,\n"
        "  on_value_change_call: Callable[[bool], None] = None,\n"
        "  on_select_call: Callable[[], None] = None,\n"
@@ -2677,7 +2677,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
       {"textwidget", (PyCFunction)PyTextWidget, METH_VARARGS | METH_KEYWORDS,
        "textwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
        "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
-       "  text: Union[str, ba.Lstr] = None, v_align: str = None,\n"
+       "  text: str | ba.Lstr | None = None, v_align: str = None,\n"
        "  h_align: str = None, editable: bool = None, padding: float = None,\n"
        "  on_return_press_call: Callable[[], None] = None,\n"
        "  on_activate_call: Callable[[], None] = None,\n"
@@ -2687,7 +2687,7 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "  on_select_call: Callable[[], None] = None,\n"
        "  always_highlight: bool = None, draw_controller: ba.Widget = None,\n"
        "  scale: float = None, corner_scale: float = None,\n"
-       "  description: Union[str, ba.Lstr] = None,\n"
+       "  description: str | ba.Lstr | None = None,\n"
        "  transition_delay: float = None, maxwidth: float = None,\n"
        "  max_height: float = None, flatness: float = None,\n"
        "  shadow: float = None, autoselect: bool = None, rotate: float = "

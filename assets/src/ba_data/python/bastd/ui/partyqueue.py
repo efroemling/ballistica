@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence
+    from typing import Any, Sequence
 
 
 class PartyQueueWindow(ba.Window):
@@ -77,8 +77,8 @@ class PartyQueueWindow(ba.Window):
             self._update_image()
 
             # DEBUG: vis target pos..
-            self._body_image_target: Optional[ba.Widget]
-            self._eyes_image_target: Optional[ba.Widget]
+            self._body_image_target: ba.Widget | None
+            self._eyes_image_target: ba.Widget | None
             if self._debug:
                 self._body_image_target = ba.imagewidget(
                     parent=parent.get_root_widget(),
@@ -105,7 +105,7 @@ class PartyQueueWindow(ba.Window):
             # need to push a deferred call to kill these as necessary instead.
             # (should bulletproof internal widget code to give a clean error
             # in this case)
-            def kill_widgets(widgets: Sequence[Optional[ba.Widget]]) -> None:
+            def kill_widgets(widgets: Sequence[ba.Widget | None]) -> None:
                 for widget in widgets:
                     if widget:
                         widget.delete()
@@ -175,11 +175,11 @@ class PartyQueueWindow(ba.Window):
         self._queue_id = queue_id
         self._width = 800
         self._height = 400
-        self._last_connect_attempt_time: Optional[float] = None
-        self._last_transaction_time: Optional[float] = None
-        self._boost_button: Optional[ba.Widget] = None
-        self._boost_price: Optional[ba.Widget] = None
-        self._boost_label: Optional[ba.Widget] = None
+        self._last_connect_attempt_time: float | None = None
+        self._last_transaction_time: float | None = None
+        self._boost_button: ba.Widget | None = None
+        self._boost_price: ba.Widget | None = None
+        self._boost_label: ba.Widget | None = None
         self._field_shown = False
         self._dudes: list[PartyQueueWindow.Dude] = []
         self._dudes_by_id: dict[int, PartyQueueWindow.Dude] = {}
@@ -193,7 +193,7 @@ class PartyQueueWindow(ba.Window):
         self._boost_strength = 0.0
         self._angry_computer_transparent_model = ba.getmodel(
             'angryComputerTransparent')
-        self._angry_computer_image: Optional[ba.Widget] = None
+        self._angry_computer_image: ba.Widget | None = None
         self.lineup_1_transparent_model = ba.getmodel(
             'playerLineup1Transparent')
         self._lineup_2_transparent_model = ba.getmodel(
@@ -202,7 +202,7 @@ class PartyQueueWindow(ba.Window):
             'playerLineup3Transparent')
         self._lineup_4_transparent_model = ba.getmodel(
             'playerLineup4Transparent')
-        self._line_image: Optional[ba.Widget] = None
+        self._line_image: ba.Widget | None = None
         self.eyes_model = ba.getmodel('plasticEyesTransparent')
         self._white_tex = ba.gettexture('white')
         uiscale = ba.app.ui.uiscale
@@ -277,7 +277,7 @@ class PartyQueueWindow(ba.Window):
         """(internal)"""
         return self._line_bottom
 
-    def on_account_press(self, account_id: Optional[str],
+    def on_account_press(self, account_id: str | None,
                          origin_widget: ba.Widget) -> None:
         """A dude was clicked so we should show his account info."""
         from bastd.ui.account import viewer
@@ -357,7 +357,7 @@ class PartyQueueWindow(ba.Window):
         self._dudes = []
         self._dudes_by_id = {}
 
-    def on_update_response(self, response: Optional[dict[str, Any]]) -> None:
+    def on_update_response(self, response: dict[str, Any] | None) -> None:
         """We've received a response from an update to the server."""
         # pylint: disable=too-many-branches
         if not self._root_widget:

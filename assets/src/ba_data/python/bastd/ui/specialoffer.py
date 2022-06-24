@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 
 class SpecialOfferWindow(ba.Window):
@@ -31,7 +31,7 @@ class SpecialOfferWindow(ba.Window):
         # If not, abort and go into zombie mode (the user should never see
         # us that way).
 
-        real_price: Optional[str]
+        real_price: str | None
 
         # Misnomer: 'pro' actually means offer 'pro_sale'.
         if offer['item'] in ['pro', 'pro_fullprice']:
@@ -149,7 +149,7 @@ class SpecialOfferWindow(ba.Window):
             color=(0.3, 1, 0.3))
 
         self._flash_on = False
-        self._flashing_timer: Optional[ba.Timer] = ba.Timer(
+        self._flashing_timer: ba.Timer | None = ba.Timer(
             0.05,
             ba.WeakCall(self._flash_cycle),
             repeat=True,
@@ -363,7 +363,7 @@ class SpecialOfferWindow(ba.Window):
         from ba import SpecialChar
         if not self._root_widget:
             return
-        sval: Union[str, ba.Lstr]
+        sval: str | ba.Lstr
         if _ba.get_v1_account_state() == 'signed_in':
             sval = (ba.charstr(SpecialChar.TICKET) +
                     str(_ba.get_v1_account_ticket_count()))
@@ -391,7 +391,7 @@ class SpecialOfferWindow(ba.Window):
             # With bundle sales, the price is the name of the IAP.
             _ba.purchase(self._offer['price'])
         else:
-            ticket_count: Optional[int]
+            ticket_count: int | None
             try:
                 ticket_count = _ba.get_v1_account_ticket_count()
             except Exception:

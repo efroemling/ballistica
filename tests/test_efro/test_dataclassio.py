@@ -8,7 +8,7 @@ from __future__ import annotations
 from enum import Enum
 import datetime
 from dataclasses import field, dataclass
-from typing import TYPE_CHECKING, Optional, Any, Sequence, Union, Annotated
+from typing import TYPE_CHECKING, Any, Sequence, Annotated
 
 import pytest
 
@@ -66,12 +66,12 @@ def test_assign() -> None:
         fval: float = 1.0
         nval: _NestedClass = field(default_factory=_NestedClass)
         enval: _EnumTest = _EnumTest.TEST1
-        oival: Optional[int] = None
+        oival: int | None = None
         oival2: int | None = None
-        osval: Optional[str] = None
-        obval: Optional[bool] = None
-        ofval: Optional[float] = None
-        oenval: Optional[_EnumTest] = _EnumTest.TEST1
+        osval: str | None = None
+        obval: bool | None = None
+        ofval: float | None = None
+        oenval: _EnumTest | None = _EnumTest.TEST1
         lsval: list[str] = field(default_factory=list)
         lival: list[int] = field(default_factory=list)
         lbval: list[bool] = field(default_factory=list)
@@ -81,7 +81,7 @@ def test_assign() -> None:
         anyval: Any = 1
         dictval: dict[int, str] = field(default_factory=dict)
         tupleval: tuple[int, str, bool] = (1, 'foo', False)
-        datetimeval: Optional[datetime.datetime] = None
+        datetimeval: datetime.datetime | None = None
 
     class _TestClass2:
         pass
@@ -342,31 +342,31 @@ def test_prep() -> None:
         @ioprepped
         @dataclass
         class _TestClass2:
-            ival: Union[int, str]
+            ival: int | str
 
     @ioprepped
     @dataclass
     class _TestClass3:
-        uval: Union[int, None]
+        uval: int | None
 
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass4:
-            ival: Union[int, str]
+            ival: int | str
 
     # This will get simplified down to simply int by get_type_hints so is ok.
     @ioprepped
     @dataclass
     class _TestClass5:
-        ival: Union[int]
+        ival: int | int
 
     # This will get simplified down to a valid 2 member union so is ok
     @ioprepped
     @dataclass
     class _TestClass6:
-        ival: Union[int, None, int, None]
+        ival: int | None | int | None
 
     # Disallow dict entries with types other than str, int, or enums
     # having those value types.
@@ -417,10 +417,10 @@ def test_validate() -> None:
         sval: str = ''
         bval: bool = True
         fval: float = 1.0
-        oival: Optional[int] = None
-        osval: Optional[str] = None
-        obval: Optional[bool] = None
-        ofval: Optional[float] = None
+        oival: int | None = None
+        osval: str | None = None
+        obval: bool | None = None
+        ofval: float | None = None
 
     # Should pass by default.
     tclass = _TestClass()
@@ -665,7 +665,7 @@ def test_name_clashes() -> None:
 @dataclass
 class _RecursiveTest:
     val: int
-    child: Optional[_RecursiveTest] = None
+    child: _RecursiveTest | None = None
 
 
 def test_recursive() -> None:
@@ -1022,12 +1022,12 @@ def test_soft_default() -> None:
     @ioprepped
     @dataclass
     class _TestClassE4:
-        lval: Annotated[Optional[str], IOAttrs(soft_default=None)]
+        lval: Annotated[str | None, IOAttrs(soft_default=None)]
 
     @ioprepped
     @dataclass
     class _TestClassE5:
-        lval: Annotated[Optional[str], IOAttrs(soft_default='foo')]
+        lval: Annotated[str | None, IOAttrs(soft_default='foo')]
 
     # Now try more in-depth examples: nested type mismatches like this
     # are currently not caught at prep-time but ARE caught during inputting.
@@ -1042,7 +1042,7 @@ def test_soft_default() -> None:
     @ioprepped
     @dataclass
     class _TestClassE7:
-        lval: Annotated[Optional[bool], IOAttrs(soft_default=12)]
+        lval: Annotated[bool | None, IOAttrs(soft_default=12)]
 
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClassE7, {})

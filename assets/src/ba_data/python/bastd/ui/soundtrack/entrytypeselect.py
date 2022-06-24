@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class SoundtrackEntryTypeSelectWindow(ba.Window):
@@ -144,7 +144,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
             MacMusicAppPlaylistSelectWindow)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
-        current_playlist_entry: Optional[str]
+        current_playlist_entry: str | None
         if (music.get_soundtrack_entry_type(
                 self._current_entry) == 'iTunesPlaylist'):
             current_playlist_entry = music.get_soundtrack_entry_name(
@@ -181,13 +181,13 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                                valid_file_extensions=[],
                                allow_folders=True).get_root_widget())
 
-    def _music_file_selector_cb(self, result: Optional[str]) -> None:
+    def _music_file_selector_cb(self, result: str | None) -> None:
         if result is None:
             self._callback(self._current_entry)
         else:
             self._callback({'type': 'musicFile', 'name': result})
 
-    def _music_folder_selector_cb(self, result: Optional[str]) -> None:
+    def _music_folder_selector_cb(self, result: str | None) -> None:
         if result is None:
             self._callback(self._current_entry)
         else:

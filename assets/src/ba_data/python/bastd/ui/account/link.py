@@ -12,14 +12,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class AccountLinkWindow(ba.Window):
     """Window for linking accounts."""
 
     def __init__(self, origin_widget: ba.Widget = None):
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

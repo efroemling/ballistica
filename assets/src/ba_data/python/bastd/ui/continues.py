@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class ContinuesWindow(ba.Window):
@@ -74,8 +74,8 @@ class ContinuesWindow(ba.Window):
                                 t_left_width + t_price_width + 5,
                                 self._height - 30))
 
-        self._tickets_text_base: Optional[str]
-        self._tickets_text: Optional[ba.Widget]
+        self._tickets_text_base: str | None
+        self._tickets_text: ba.Widget | None
         if not ba.app.ui.use_toolbars:
             self._tickets_text_base = ba.Lstr(
                 resource='getTicketsWindow.youHaveShortText',

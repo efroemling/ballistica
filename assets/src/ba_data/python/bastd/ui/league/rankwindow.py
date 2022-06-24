@@ -12,7 +12,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 
 class LeagueRankWindow(ba.Window):
@@ -24,11 +24,11 @@ class LeagueRankWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         ba.set_analytics_screen('League Rank Window')
 
-        self._league_rank_data: Optional[dict[str, Any]] = None
+        self._league_rank_data: dict[str, Any] | None = None
         self._modal = modal
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -105,17 +105,17 @@ class LeagueRankWindow(ba.Window):
                            cancel_button=self._back_button,
                            selected_child=self._back_button)
 
-        self._last_power_ranking_query_time: Optional[float] = None
+        self._last_power_ranking_query_time: float | None = None
         self._doing_power_ranking_query = False
 
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
         self._subcontainerwidth = 800
         self._subcontainerheight = 483
         self._power_ranking_score_widgets: list[ba.Widget] = []
 
-        self._season_popup_menu: Optional[popup_ui.PopupMenu] = None
-        self._requested_season: Optional[str] = None
-        self._season: Optional[str] = None
+        self._season_popup_menu: popup_ui.PopupMenu | None = None
+        self._requested_season: str | None = None
+        self._season: str | None = None
 
         # take note of our account state; we'll refresh later if this changes
         self._account_state = _ba.get_v1_account_state()
@@ -190,8 +190,8 @@ class LeagueRankWindow(ba.Window):
         else:
             ba.playsound(ba.getsound('error'))
 
-    def _on_power_ranking_query_response(
-            self, data: Optional[dict[str, Any]]) -> None:
+    def _on_power_ranking_query_response(self,
+                                         data: dict[str, Any] | None) -> None:
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
         if data is not None and data.get('s', None) is None:
@@ -351,7 +351,7 @@ class LeagueRankWindow(ba.Window):
             color=(1, 1, 1, 0.3),
             maxwidth=200)
 
-        self._activity_mult_button: Optional[ba.Widget]
+        self._activity_mult_button: ba.Widget | None
         if _ba.get_v1_account_misc_read_val('act', False):
             self._activity_mult_button = ba.buttonwidget(
                 parent=w_parent,
@@ -586,8 +586,8 @@ class LeagueRankWindow(ba.Window):
                     '/highscores?list=powerRankings&v=2' + league_str +
                     season_str + '&player=' + our_login_id)
 
-    def _update_for_league_rank_data(self, data: Optional[dict[str,
-                                                               Any]]) -> None:
+    def _update_for_league_rank_data(self,
+                                     data: dict[str, Any] | None) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -714,7 +714,7 @@ class LeagueRankWindow(ba.Window):
             self._league_url_arg = (data['l']['n'] + '_' +
                                     str(data['l']['i'])).lower()
 
-        to_end_string: Union[ba.Lstr, str]
+        to_end_string: ba.Lstr | str
         if data is None or self._season == 'a' or data['se'] is None:
             to_end_string = ''
             show_season_end = False

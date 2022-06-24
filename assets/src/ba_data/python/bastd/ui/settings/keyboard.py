@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class ConfigKeyboardWindow(ba.Window):
@@ -279,7 +279,7 @@ class AwaitKeyboardInputWindow(ba.Window):
                                               size=(width, 25),
                                               color=(1, 1, 1, 0.3),
                                               text=str(self._counter))
-        self._decrement_timer: Optional[ba.Timer] = ba.Timer(
+        self._decrement_timer: ba.Timer | None = ba.Timer(
             1.0, self._decrement, repeat=True, timetype=ba.TimeType.REAL)
         _ba.capture_keyboard_input(ba.WeakCall(self._button_callback))
 

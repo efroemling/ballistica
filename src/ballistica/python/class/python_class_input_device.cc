@@ -31,7 +31,7 @@ void PythonClassInputDevice::SetupType(PyTypeObject* obj) {
       "      on the actual device. (Can be used to determine whether to show\n"
       "      them in controls-overlays, etc.).\n"
       "\n"
-      "   player (Optional[ba.SessionPlayer]):\n"
+      "   player (ba.SessionPlayer | None):\n"
       "      The player associated with this input device.\n"
       "\n"
       "   client_id (int):\n"

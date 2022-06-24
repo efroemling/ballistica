@@ -11,7 +11,6 @@ import _ba
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Optional
     from bastd.ui.gather import GatherWindow
 
 
@@ -20,7 +19,7 @@ class AboutGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
-        self._container: Optional[ba.Widget] = None
+        self._container: ba.Widget | None = None
 
     def on_activate(
         self,

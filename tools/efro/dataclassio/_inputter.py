@@ -23,7 +23,7 @@ from efro.dataclassio._base import (Codec, _parse_annotated, EXTRA_ATTRS_ATTR,
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
     from efro.dataclassio._base import IOAttrs
     from efro.dataclassio._outputter import _Outputter
@@ -44,7 +44,7 @@ class _Inputter(Generic[T]):
         self._coerce_to_float = coerce_to_float
         self._allow_unknown_attrs = allow_unknown_attrs
         self._discard_unknown_attrs = discard_unknown_attrs
-        self._soft_default_validator: Optional[_Outputter] = None
+        self._soft_default_validator: _Outputter | None = None
 
         if not allow_unknown_attrs and discard_unknown_attrs:
             raise ValueError('discard_unknown_attrs cannot be True'
@@ -63,7 +63,7 @@ class _Inputter(Generic[T]):
         return out
 
     def _value_from_input(self, cls: type, fieldpath: str, anntype: Any,
-                          value: Any, ioattrs: Optional[IOAttrs]) -> Any:
+                          value: Any, ioattrs: IOAttrs | None) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
@@ -270,7 +270,7 @@ class _Inputter(Generic[T]):
                                                         fieldpath=fieldpath)
 
     def _dict_from_input(self, cls: type, fieldpath: str, anntype: Any,
-                         value: Any, ioattrs: Optional[IOAttrs]) -> Any:
+                         value: Any, ioattrs: IOAttrs | None) -> Any:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
@@ -370,7 +370,7 @@ class _Inputter(Generic[T]):
 
     def _sequence_from_input(self, cls: type, fieldpath: str, anntype: Any,
                              value: Any, seqtype: type,
-                             ioattrs: Optional[IOAttrs]) -> Any:
+                             ioattrs: IOAttrs | None) -> Any:
 
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:
@@ -396,7 +396,7 @@ class _Inputter(Generic[T]):
             for i in value)
 
     def _datetime_from_input(self, cls: type, fieldpath: str, value: Any,
-                             ioattrs: Optional[IOAttrs]) -> Any:
+                             ioattrs: IOAttrs | None) -> Any:
 
         # For firestore we expect a datetime object.
         if self._codec is Codec.FIRESTORE:
@@ -428,7 +428,7 @@ class _Inputter(Generic[T]):
         return out
 
     def _tuple_from_input(self, cls: type, fieldpath: str, anntype: Any,
-                          value: Any, ioattrs: Optional[IOAttrs]) -> Any:
+                          value: Any, ioattrs: IOAttrs | None) -> Any:
 
         out: list = []
 

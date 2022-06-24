@@ -13,7 +13,7 @@ import ba
 from bastd.ui.tabs import TabRow
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class GatherTab:
@@ -67,7 +67,7 @@ class GatherWindow(ba.Window):
         MANUAL = 'manual'
 
     def __init__(self,
-                 transition: Optional[str] = 'in_right',
+                 transition: str | None = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -79,7 +79,7 @@ class GatherWindow(ba.Window):
         from bastd.ui.gather.nearbytab import NearbyGatherTab
 
         ba.set_analytics_screen('Gather Window')
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -94,7 +94,7 @@ class GatherWindow(ba.Window):
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (582 if uiscale is ba.UIScale.SMALL else
                         680 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[GatherWindow.TabID] = None
+        self._current_tab: GatherWindow.TabID | None = None
         extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
         self._r = 'gatherWindow'
 
@@ -209,7 +209,7 @@ class GatherWindow(ba.Window):
                              self._scroll_height + 2 * buffer_v),
                        texture=ba.gettexture('scrollWidget'),
                        model_transparent=ba.getmodel('softEdgeOutside'))
-        self._tab_container: Optional[ba.Widget] = None
+        self._tab_container: ba.Widget | None = None
 
         self._restore_state()
 
@@ -291,7 +291,7 @@ class GatherWindow(ba.Window):
             for tab in self._tabs.values():
                 tab.restore_state()
 
-            sel: Optional[ba.Widget]
+            sel: ba.Widget | None
             winstate = ba.app.ui.window_states.get(type(self), {})
             sel_name = winstate.get('sel_name', None)
             assert isinstance(sel_name, (str, type(None)))

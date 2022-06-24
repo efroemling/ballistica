@@ -732,11 +732,9 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             before_equal_sign, vval_raw = line.split('=', 1)
             before_equal_sign = before_equal_sign.strip()
             vval_raw = vval_raw.strip()
-            # vname, _vtype, veq, vval_raw = line.split()
-            vname, _vtype = before_equal_sign.split()
+            vname = before_equal_sign.split()[0]
             assert vname.endswith(':')
             vname = vname[:-1]
-            # assert veq == '='
             vval: Any
             if vval_raw == 'field(default_factory=list)':
                 vval = []

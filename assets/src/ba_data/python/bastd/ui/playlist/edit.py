@@ -10,7 +10,6 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional
     from bastd.ui.playlist.editcontroller import PlaylistEditController
 
 
@@ -22,7 +21,7 @@ class PlaylistEditWindow(ba.Window):
                  transition: str = 'in_right'):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        prev_selection: Optional[str]
+        prev_selection: str | None
         self._editcontroller = editcontroller
         self._r = 'editGameListWindow'
         prev_selection = self._editcontroller.get_edit_ui_selection()

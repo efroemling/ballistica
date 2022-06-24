@@ -16,7 +16,7 @@ from bastd.ui.league.rankbutton import LeagueRankButton
 from bastd.ui.store.browser import StoreBrowserWindow
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 
 class CoopBrowserWindow(ba.Window):
@@ -36,7 +36,7 @@ class CoopBrowserWindow(ba.Window):
                  (4 if uiscale is ba.UIScale.SMALL else 0)))
 
     def __init__(self,
-                 transition: Optional[str] = 'in_right',
+                 transition: str | None = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
@@ -62,7 +62,7 @@ class CoopBrowserWindow(ba.Window):
                      timetype=ba.TimeType.REAL)
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -76,10 +76,10 @@ class CoopBrowserWindow(ba.Window):
         self._tournament_button_count = app.config.get('Tournament Rows', 0)
         assert isinstance(self._tournament_button_count, int)
 
-        self._easy_button: Optional[ba.Widget] = None
-        self._hard_button: Optional[ba.Widget] = None
-        self._hard_button_lock_image: Optional[ba.Widget] = None
-        self._campaign_percent_text: Optional[ba.Widget] = None
+        self._easy_button: ba.Widget | None = None
+        self._hard_button: ba.Widget | None = None
+        self._hard_button_lock_image: ba.Widget | None = None
+        self._campaign_percent_text: ba.Widget | None = None
 
         uiscale = ba.app.ui.uiscale
         self._width = 1320 if uiscale is ba.UIScale.SMALL else 1120
@@ -118,10 +118,10 @@ class CoopBrowserWindow(ba.Window):
                 label=ba.Lstr(resource='backText'),
                 button_type='back')
 
-        self._league_rank_button: Optional[LeagueRankButton]
-        self._store_button: Optional[StoreButton]
-        self._store_button_widget: Optional[ba.Widget]
-        self._league_rank_button_widget: Optional[ba.Widget]
+        self._league_rank_button: LeagueRankButton | None
+        self._store_button: StoreButton | None
+        self._store_button_widget: ba.Widget | None
+        self._league_rank_button_widget: ba.Widget | None
 
         if not app.ui.use_toolbars:
             prb = self._league_rank_button = LeagueRankButton(
@@ -167,8 +167,8 @@ class CoopBrowserWindow(ba.Window):
             repeat=True,
             timetype=ba.TimeType.REAL)
 
-        self._last_tournament_query_time: Optional[float] = None
-        self._last_tournament_query_response_time: Optional[float] = None
+        self._last_tournament_query_time: float | None = None
+        self._last_tournament_query_response_time: float | None = None
         self._doing_tournament_query = False
 
         self._selected_campaign_level = (cfg.get(
@@ -232,7 +232,7 @@ class CoopBrowserWindow(ba.Window):
             claims_left_right=True,
             claims_tab=True,
             selection_loops_to_parent=True)
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
 
         # Take note of our account state; we'll refresh later if this changes.
         self._account_state_num = _ba.get_v1_account_state_num()
@@ -362,7 +362,7 @@ class CoopBrowserWindow(ba.Window):
         except Exception:
             ba.print_exception('Error updating campaign lock.')
 
-    def _update_for_data(self, data: Optional[list[dict[str, Any]]]) -> None:
+    def _update_for_data(self, data: list[dict[str, Any]] | None) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -444,7 +444,7 @@ class CoopBrowserWindow(ba.Window):
                                     93 - 90 + prize_y_offs))
 
             leader_name = '-'
-            leader_score: Union[str, ba.Lstr] = '-'
+            leader_score: str | ba.Lstr = '-'
             if entry['scores']:
                 score = tbtn['leader'] = copy.deepcopy(entry['scores'][0])
                 leader_name = score[1]
@@ -464,7 +464,7 @@ class CoopBrowserWindow(ba.Window):
                           text=leader_score)
             ba.buttonwidget(edit=tbtn['more_scores_button'],
                             label=ba.Lstr(resource=self._r + '.seeMoreText'))
-            out_of_time_text: Union[str, ba.Lstr] = (
+            out_of_time_text: str | ba.Lstr = (
                 '-' if 'totalTime' not in entry else ba.Lstr(
                     resource=self._r + '.ofTotalTimeText',
                     subs=[('${TOTAL}',
@@ -524,11 +524,11 @@ class CoopBrowserWindow(ba.Window):
 
             tbtn['allow_ads'] = allow_ads = entry['allowAds']
 
-            final_fee: Optional[int] = (None if fee_var is None else
-                                        _ba.get_v1_account_misc_read_val(
-                                            fee_var, '?'))
+            final_fee: int | None = (None if fee_var is None else
+                                     _ba.get_v1_account_misc_read_val(
+                                         fee_var, '?'))
 
-            final_fee_str: Union[str, ba.Lstr]
+            final_fee_str: str | ba.Lstr
             if fee_var is None:
                 final_fee_str = ''
             else:
@@ -590,8 +590,8 @@ class CoopBrowserWindow(ba.Window):
                           ('' + str(free_tries_remaining))),
                     color=(0.6, 0.6, 0.6, 1))
 
-    def _on_tournament_query_response(self, data: Optional[dict[str,
-                                                                Any]]) -> None:
+    def _on_tournament_query_response(self,
+                                      data: dict[str, Any] | None) -> None:
         accounts = ba.app.accounts_v1
         if data is not None:
             tournament_data = data['t']  # This used to be the whole payload.
@@ -1361,8 +1361,8 @@ class CoopBrowserWindow(ba.Window):
 
     def _switch_to_score(
         self,
-        show_tab: Optional[
-            StoreBrowserWindow.TabID] = StoreBrowserWindow.TabID.EXTRAS
+        show_tab: StoreBrowserWindow.TabID
+        | None = StoreBrowserWindow.TabID.EXTRAS
     ) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
@@ -1414,7 +1414,7 @@ class CoopBrowserWindow(ba.Window):
         return self._tourney_data_up_to_date
 
     def run(self,
-            game: Optional[str],
+            game: str | None,
             tournament_button: dict[str, Any] = None) -> None:
         """Run the provided game."""
         # pylint: disable=too-many-branches
@@ -1491,7 +1491,7 @@ class CoopBrowserWindow(ba.Window):
                 PurchaseWindow(items=['pro'])
             return
 
-        required_purchase: Optional[str]
+        required_purchase: str | None
         if game in ['Challenges:Meteor Shower']:
             required_purchase = 'games.meteor_shower'
         elif game in [

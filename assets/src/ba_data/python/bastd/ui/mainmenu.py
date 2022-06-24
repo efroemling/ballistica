@@ -11,13 +11,13 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union
+    from typing import Any, Callable
 
 
 class MainMenuWindow(ba.Window):
     """The main menu window, both in-game and in the main menu session."""
 
-    def __init__(self, transition: Optional[str] = 'in_right'):
+    def __init__(self, transition: str | None = 'in_right'):
         # pylint: disable=cyclic-import
         import threading
         from bastd.mainmenu import MainMenuSession
@@ -52,14 +52,14 @@ class MainMenuWindow(ba.Window):
         self._button_height = 45.0
         self._width = 100.0
         self._height = 100.0
-        self._demo_menu_button: Optional[ba.Widget] = None
-        self._gather_button: Optional[ba.Widget] = None
-        self._start_button: Optional[ba.Widget] = None
-        self._watch_button: Optional[ba.Widget] = None
-        self._gc_button: Optional[ba.Widget] = None
-        self._how_to_play_button: Optional[ba.Widget] = None
-        self._credits_button: Optional[ba.Widget] = None
-        self._settings_button: Optional[ba.Widget] = None
+        self._demo_menu_button: ba.Widget | None = None
+        self._gather_button: ba.Widget | None = None
+        self._start_button: ba.Widget | None = None
+        self._watch_button: ba.Widget | None = None
+        self._gc_button: ba.Widget | None = None
+        self._how_to_play_button: ba.Widget | None = None
+        self._credits_button: ba.Widget | None = None
+        self._settings_button: ba.Widget | None = None
 
         self._store_char_tex = self._get_store_char_tex()
 
@@ -150,7 +150,7 @@ class MainMenuWindow(ba.Window):
             self._refresh()
             self._restore_state()
 
-    def get_play_button(self) -> Optional[ba.Widget]:
+    def get_play_button(self) -> ba.Widget | None:
         """Return the play button."""
         return self._start_button
 
@@ -261,7 +261,7 @@ class MainMenuWindow(ba.Window):
                     label=ba.Lstr(resource=self._r + '.leavePartyText'),
                     on_activate_call=self._confirm_leave_party)
 
-        self._store_button: Optional[ba.Widget]
+        self._store_button: ba.Widget | None
         if self._have_store_button:
             this_b_width = self._button_width
             h, v, scale = positions[self._p_index]
@@ -293,7 +293,7 @@ class MainMenuWindow(ba.Window):
         else:
             self._store_button = None
 
-        self._quit_button: Optional[ba.Widget]
+        self._quit_button: ba.Widget | None
         if not self._in_game and self._have_quit_button:
             h, v, scale = positions[self._p_index]
             self._p_index += 1
@@ -426,7 +426,7 @@ class MainMenuWindow(ba.Window):
         self._width = 400.0
         self._height = 200.0
         enable_account_button = True
-        account_type_name: Union[str, ba.Lstr]
+        account_type_name: str | ba.Lstr
         if _ba.get_v1_account_state() == 'signed_in':
             account_type_name = _ba.get_v1_account_display_string()
             account_type_icon = None
@@ -981,7 +981,7 @@ class MainMenuWindow(ba.Window):
         if self._in_game:
             return
         sel_name = ba.app.ui.main_menu_selection
-        sel: Optional[ba.Widget]
+        sel: ba.Widget | None
         if sel_name is None:
             sel_name = 'Start'
         if sel_name == 'HowToPlay':

@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union
+    from typing import Any, Callable
 
 
 class PlaylistEditGameWindow(ba.Window):
@@ -21,8 +21,8 @@ class PlaylistEditGameWindow(ba.Window):
     def __init__(self,
                  gametype: type[ba.GameActivity],
                  sessiontype: type[ba.Session],
-                 config: Optional[dict[str, Any]],
-                 completion_call: Callable[[Optional[dict[str, Any]]], Any],
+                 config: dict[str, Any] | None,
+                 completion_call: Callable[[dict[str, Any] | None], Any],
                  default_selection: str = None,
                  transition: str = 'in_right',
                  edit_info: dict[str, Any] = None):
@@ -392,7 +392,7 @@ class PlaylistEditGameWindow(ba.Window):
         # Ok now wire up the column.
         try:
             # pylint: disable=unsubscriptable-object
-            prev_widgets: Optional[list[ba.Widget]] = None
+            prev_widgets: list[ba.Widget] | None = None
             for cwdg in widget_column:
                 if prev_widgets is not None:
                     # Wire our rightmost to their rightmost.
@@ -466,9 +466,9 @@ class PlaylistEditGameWindow(ba.Window):
     def _add(self) -> None:
         self._completion_call(copy.deepcopy(self._getconfig()))
 
-    def _inc(self, ctrl: ba.Widget, min_val: Union[int, float],
-             max_val: Union[int, float], increment: Union[int, float],
-             setting_type: type, setting_name: str) -> None:
+    def _inc(self, ctrl: ba.Widget, min_val: int | float, max_val: int | float,
+             increment: int | float, setting_type: type,
+             setting_name: str) -> None:
         if setting_type == float:
             val = float(cast(str, ba.textwidget(query=ctrl)))
         else:

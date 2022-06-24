@@ -19,7 +19,7 @@ from ba._dualteamsession import DualTeamSession
 from ba._coopsession import CoopSession
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
 
     import ba
     from bacommon.servermanager import ServerConfig
@@ -85,10 +85,10 @@ class ServerController:
         self._config = config
         self._playlist_name = '__default__'
         self._ran_access_check = False
-        self._prep_timer: Optional[ba.Timer] = None
+        self._prep_timer: ba.Timer | None = None
         self._next_stuck_login_warn_time = time.time() + 10.0
         self._first_run = True
-        self._shutdown_reason: Optional[ShutdownReason] = None
+        self._shutdown_reason: ShutdownReason | None = None
         self._executing_shutdown = False
 
         # Make note if they want us to import a playlist;
@@ -129,7 +129,7 @@ class ServerController:
             out += f'\n{clientid:<{col1}} {name:<{col2}} {players}'
         print(out)
 
-    def kick(self, client_id: int, ban_time: Optional[int]) -> None:
+    def kick(self, client_id: int, ban_time: int | None) -> None:
         """Kick the provided client id.
 
         ban_time is provided in seconds.
@@ -198,7 +198,7 @@ class ServerController:
             callback=self._access_check_response,
         )
 
-    def _access_check_response(self, data: Optional[dict[str, Any]]) -> None:
+    def _access_check_response(self, data: dict[str, Any] | None) -> None:
         import os
         if data is None:
             print('error on UDP port access check (internet down?)')
@@ -267,7 +267,7 @@ class ServerController:
 
     def _on_playlist_fetch_response(
         self,
-        result: Optional[dict[str, Any]],
+        result: dict[str, Any] | None,
     ) -> None:
         if result is None:
             print('Error fetching playlist; aborting.')

@@ -17,7 +17,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Union
+    from typing import Any, Sequence
 
 
 class Player(ba.Player['Team']):
@@ -94,12 +94,12 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC if self._epic_mode else
                               ba.MusicType.FORWARD_MARCH)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Touch the enemy flag.'
         return 'Touch the enemy flag ${ARG1} times.', self._score_to_win
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'touch 1 flag'
         return 'touch ${ARG1} flags', self._score_to_win

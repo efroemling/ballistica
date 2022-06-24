@@ -19,7 +19,7 @@ from efro.error import CommunicationError
 from efro.dataclassio import ioprepped, dataclass_from_json, dataclass_to_json
 
 if TYPE_CHECKING:
-    from typing import Optional, Awaitable
+    from typing import Awaitable
 
 ADDR = '127.0.0.1'
 # Randomize this a bit to avoid failing on parallel testing.
@@ -53,7 +53,7 @@ class _ServerClientCommon:
 
     def __init__(self, keepalive_interval: float, keepalive_timeout: float,
                  debug_print: bool) -> None:
-        self._endpoint: Optional[RPCEndpoint] = None
+        self._endpoint: RPCEndpoint | None = None
         self._keepalive_interval = keepalive_interval
         self._keepalive_timeout = keepalive_timeout
         self._debug_print = debug_print
@@ -71,7 +71,7 @@ class _ServerClientCommon:
 
     async def send_message(self,
                            message: _Message,
-                           timeout: Optional[float] = None) -> _Message:
+                           timeout: float | None = None) -> _Message:
         """Send high level messages."""
         assert self._endpoint is not None
         response = await self._endpoint.send_message(
@@ -111,7 +111,7 @@ class _Server(_ServerClientCommon):
         super().__init__(keepalive_interval=keepalive_interval,
                          keepalive_timeout=keepalive_timeout,
                          debug_print=debug_print)
-        self.listener: Optional[asyncio.base_events.Server] = None
+        self.listener: asyncio.base_events.Server | None = None
 
     async def start(self) -> None:
         """Start serving. Call this before run()."""

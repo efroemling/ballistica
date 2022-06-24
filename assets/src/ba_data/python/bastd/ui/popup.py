@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Callable, Optional, Union
+    from typing import Any, Sequence, Callable
 
 
 class PopupWindow:
@@ -322,7 +322,7 @@ class PopupMenu:
         self._closing_call = closing_call
         self.set_choice(self._current_choice)
         self._on_value_change_call = on_value_change_call
-        self._window_widget: Optional[ba.Widget] = None
+        self._window_widget: ba.Widget | None = None
 
         # Complain if we outlive our button.
         ba.uicleanupcheck(self, self._button)
@@ -347,7 +347,7 @@ class PopupMenu:
         """Return the menu's button widget."""
         return self._button
 
-    def get_window_widget(self) -> Optional[ba.Widget]:
+    def get_window_widget(self) -> ba.Widget | None:
         """Return the menu's window widget (or None if nonexistent)."""
         return self._window_widget
 
@@ -371,7 +371,7 @@ class PopupMenu:
     def set_choice(self, choice: str) -> None:
         """Set the selected choice."""
         self._current_choice = choice
-        displayname: Union[str, ba.Lstr]
+        displayname: str | ba.Lstr
         if len(self._choices_display) == len(self._choices):
             displayname = self._choices_display[self._choices.index(choice)]
         else:

@@ -17,7 +17,7 @@ from efrotools import get_files_hash
 # pylint: enable=useless-suppression
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence, Any
+    from typing import Sequence, Any
     from pathlib import Path
 
 
@@ -26,7 +26,7 @@ class FileCache:
 
     def __init__(self, path: Path):
         self._path = path
-        self.curhashes: dict[str, Optional[str]] = {}
+        self.curhashes: dict[str, str | None] = {}
         self.mtimes: dict[str, float] = {}
         self.entries: dict[str, Any]
         if not os.path.exists(path):

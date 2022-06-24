@@ -14,7 +14,6 @@ from ba._player import EmptyPlayer  # pylint: disable=W0611
 from ba._team import EmptyTeam  # pylint: disable=W0611
 
 if TYPE_CHECKING:
-    from typing import Optional
     import ba
     from ba._lobby import JoinInfo
 
@@ -65,9 +64,9 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
         # In vr mode we don't want stuff moving around.
         self.use_fixed_vr_overlay = True
 
-        self._background: Optional[ba.Actor] = None
-        self._tips_text: Optional[ba.Actor] = None
-        self._join_info: Optional[JoinInfo] = None
+        self._background: ba.Actor | None = None
+        self._tips_text: ba.Actor | None = None
+        self._join_info: JoinInfo | None = None
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
@@ -99,7 +98,7 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self._background: Optional[ba.Actor] = None
+        self._background: ba.Actor | None = None
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
@@ -127,20 +126,20 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     inherits_vr_camera_offset = True
     use_fixed_vr_overlay = True
 
-    default_music: Optional[MusicType] = MusicType.SCORES
+    default_music: MusicType | None = MusicType.SCORES
 
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._birth_time = _ba.time()
         self._min_view_time = 5.0
         self._allow_server_transition = False
-        self._background: Optional[ba.Actor] = None
-        self._tips_text: Optional[ba.Actor] = None
+        self._background: ba.Actor | None = None
+        self._tips_text: ba.Actor | None = None
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
         self._default_show_tips = True
-        self._custom_continue_message: Optional[ba.Lstr] = None
-        self._server_transitioning: Optional[bool] = None
+        self._custom_continue_message: ba.Lstr | None = None
+        self._server_transitioning: bool | None = None
 
     def on_player_join(self, player: EmptyPlayer) -> None:
         from ba._general import WeakCall

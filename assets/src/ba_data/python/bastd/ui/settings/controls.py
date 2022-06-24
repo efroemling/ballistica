@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class ControlsSettingsWindow(ba.Window):
@@ -27,7 +27,7 @@ class ControlsSettingsWindow(ba.Window):
         from bastd.ui import popup as popup_ui
         self._have_selected_child = False
 
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
 
         # If they provided an origin-widget, scale up from that.
         if origin_widget is not None:
@@ -132,11 +132,11 @@ class ControlsSettingsWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         # We need these vars to exist even if the buttons don't.
-        self._gamepads_button: Optional[ba.Widget] = None
-        self._touch_button: Optional[ba.Widget] = None
-        self._keyboard_button: Optional[ba.Widget] = None
-        self._keyboard_2_button: Optional[ba.Widget] = None
-        self._idevices_button: Optional[ba.Widget] = None
+        self._gamepads_button: ba.Widget | None = None
+        self._touch_button: ba.Widget | None = None
+        self._keyboard_button: ba.Widget | None = None
+        self._keyboard_2_button: ba.Widget | None = None
+        self._idevices_button: ba.Widget | None = None
 
         ba.textwidget(parent=self._root_widget,
                       position=(0, height - 49),

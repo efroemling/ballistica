@@ -14,7 +14,7 @@ from ba._generated.enums import TimeType
 from ba._general import print_active_refs
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
 
     import ba
 
@@ -46,7 +46,7 @@ class UICleanupCheck:
     """Holds info about a uicleanupcheck target."""
     obj: weakref.ref
     widget: ba.Widget
-    widget_death_time: Optional[float]
+    widget_death_time: float | None
 
 
 class UILocation:
@@ -76,7 +76,7 @@ class UILocationWindow(UILocation):
 
     def __init__(self) -> None:
         super().__init__()
-        self._root_widget: Optional[ba.Widget] = None
+        self._root_widget: ba.Widget | None = None
 
     def get_root_widget(self) -> ba.Widget:
         """Return the root widget for this window."""
@@ -91,7 +91,7 @@ class UIEntry:
         self._name = name
         self._state = None
         self._args = None
-        self._instance: Optional[UILocation] = None
+        self._instance: UILocation | None = None
         self._controller = weakref.ref(controller)
 
     def create(self) -> None:
@@ -129,7 +129,7 @@ class UIController:
         self._main_stack_menu: list[UIEntry] = []
 
         # This points at either the game or menu stack.
-        self._main_stack: Optional[list[UIEntry]] = None
+        self._main_stack: list[UIEntry] | None = None
 
         # There's only one of these since we don't need to preserve its state
         # between sessions.

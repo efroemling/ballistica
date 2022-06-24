@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class PlaylistMapSelectWindow(ba.Window):
@@ -22,7 +22,7 @@ class PlaylistMapSelectWindow(ba.Window):
                  sessiontype: type[ba.Session],
                  config: dict[str, Any],
                  edit_info: dict[str, Any],
-                 completion_call: Callable[[Optional[dict[str, Any]]], Any],
+                 completion_call: Callable[[dict[str, Any] | None], Any],
                  transition: str = 'in_right'):
         from ba.internal import get_filtered_map_name
         self._gametype = gametype
@@ -86,7 +86,7 @@ class PlaylistMapSelectWindow(ba.Window):
                            selected_child=self._scrollwidget)
         ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
         self._refresh()
 
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:

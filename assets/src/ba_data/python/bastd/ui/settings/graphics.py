@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class GraphicsSettingsWindow(ba.Window):
@@ -25,7 +25,7 @@ class GraphicsSettingsWindow(ba.Window):
         from bastd.ui import popup
         from bastd.ui.config import ConfigCheckBox, ConfigNumberEdit
         # if they provided an origin-widget, scale up from that
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -103,7 +103,7 @@ class GraphicsSettingsWindow(ba.Window):
                         size=(60, 60),
                         label=ba.charstr(ba.SpecialChar.BACK))
 
-        self._fullscreen_checkbox: Optional[ba.Widget]
+        self._fullscreen_checkbox: ba.Widget | None
         if self._show_fullscreen:
             v -= fullscreen_spacing_top
             self._fullscreen_checkbox = ConfigCheckBox(
@@ -123,7 +123,7 @@ class GraphicsSettingsWindow(ba.Window):
         else:
             self._fullscreen_checkbox = None
 
-        self._gamma_controls: Optional[ConfigNumberEdit]
+        self._gamma_controls: ConfigNumberEdit | None
         if show_gamma:
             self._gamma_controls = gmc = ConfigNumberEdit(
                 parent=self._root_widget,

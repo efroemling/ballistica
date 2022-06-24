@@ -10,14 +10,14 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Callable
+    from typing import Any, Callable
 
 
 class ConfirmWindow:
     """Window for answering simple yes/no questions."""
 
     def __init__(self,
-                 text: Union[str, ba.Lstr] = 'Are you sure?',
+                 text: str | ba.Lstr = 'Are you sure?',
                  action: Callable[[], Any] = None,
                  width: float = 360.0,
                  height: float = 100.0,
@@ -25,8 +25,8 @@ class ConfirmWindow:
                  cancel_is_selected: bool = False,
                  color: tuple[float, float, float] = (1, 1, 1),
                  text_scale: float = 1.0,
-                 ok_text: Union[str, ba.Lstr] = None,
-                 cancel_text: Union[str, ba.Lstr] = None,
+                 ok_text: str | ba.Lstr | None = None,
+                 cancel_text: str | ba.Lstr | None = None,
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-locals
         if ok_text is None:

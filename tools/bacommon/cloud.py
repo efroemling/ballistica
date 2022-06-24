@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Annotated
 from enum import Enum
 
 from efro.message import Message, Response
@@ -66,7 +66,7 @@ class LoginProxyStateQueryResponse(Response):
     state: Annotated[State, IOAttrs('s')]
 
     # On success, these will be filled out.
-    credentials: Annotated[Optional[str], IOAttrs('tk')]
+    credentials: Annotated[str | None, IOAttrs('tk')]
 
 
 @ioprepped

@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class AdvancedSettingsWindow(ba.Window):
@@ -31,7 +31,7 @@ class AdvancedSettingsWindow(ba.Window):
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -58,9 +58,9 @@ class AdvancedSettingsWindow(ba.Window):
             stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._prev_lang = ''
         self._prev_lang_list: list[str] = []
-        self._complete_langs_list: Optional[list] = None
+        self._complete_langs_list: list | None = None
         self._complete_langs_error = False
-        self._language_popup: Optional[popup_ui.PopupMenu] = None
+        self._language_popup: popup_ui.PopupMenu | None = None
 
         # In vr-mode, the internal keyboard is currently the *only* option,
         # so no need to show this.
@@ -378,7 +378,7 @@ class AdvancedSettingsWindow(ba.Window):
             scale=1.0,
             maxwidth=430)
 
-        self._disable_gyro_check_box: Optional[ConfigCheckBox] = None
+        self._disable_gyro_check_box: ConfigCheckBox | None = None
         if self._show_disable_gyro:
             v -= 42
             self._disable_gyro_check_box = ConfigCheckBox(
@@ -391,7 +391,7 @@ class AdvancedSettingsWindow(ba.Window):
                 scale=1.0,
                 maxwidth=430)
 
-        self._always_use_internal_keyboard_check_box: Optional[ConfigCheckBox]
+        self._always_use_internal_keyboard_check_box: ConfigCheckBox | None
         if self._show_always_use_internal_keyboard:
             v -= 42
             self._always_use_internal_keyboard_check_box = ConfigCheckBox(
@@ -470,7 +470,7 @@ class AdvancedSettingsWindow(ba.Window):
 
         v -= self._spacing * 0.6
 
-        self._vr_test_button: Optional[ba.Widget]
+        self._vr_test_button: ba.Widget | None
         if self._do_vr_test_button:
             v -= self._extra_button_spacing
             self._vr_test_button = ba.buttonwidget(
@@ -484,7 +484,7 @@ class AdvancedSettingsWindow(ba.Window):
         else:
             self._vr_test_button = None
 
-        self._net_test_button: Optional[ba.Widget]
+        self._net_test_button: ba.Widget | None
         if self._do_net_test_button:
             v -= self._extra_button_spacing
             self._net_test_button = ba.buttonwidget(
@@ -694,7 +694,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._save_state()
         ba.timer(0.1, ba.WeakCall(self._rebuild), timetype=ba.TimeType.REAL)
 
-    def _completed_langs_cb(self, results: Optional[dict[str, Any]]) -> None:
+    def _completed_langs_cb(self, results: dict[str, Any] | None) -> None:
         if results is not None and results['langs'] is not None:
             self._complete_langs_list = results['langs']
             self._complete_langs_error = False

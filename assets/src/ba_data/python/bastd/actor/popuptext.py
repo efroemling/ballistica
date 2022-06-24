@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Sequence
+    from typing import Any, Sequence
 
 
 class PopupText(ba.Actor):
@@ -20,7 +20,7 @@ class PopupText(ba.Actor):
     """
 
     def __init__(self,
-                 text: Union[str, ba.Lstr],
+                 text: str | ba.Lstr,
                  position: Sequence[float] = (0.0, 0.0, 0.0),
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
                  random_offset: float = 0.5,

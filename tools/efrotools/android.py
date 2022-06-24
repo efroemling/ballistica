@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 @dataclass
@@ -27,7 +27,7 @@ def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
         original = infile.read()
     lines = original.splitlines()
 
-    current_section: Optional[GradleFilterSection] = None
+    current_section: GradleFilterSection | None = None
     for i, line in enumerate(lines):
         if line.strip().startswith('// EFRO_IF'):
             if current_section is not None:

@@ -90,7 +90,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* obj) {
       "    " ATTR_CHARACTER " (str):\n"
       "        The character this player has selected in their profile.\n"
       "\n"
-      "    " ATTR_ACTIVITYPLAYER " (Optional[ba.Player]):\n"
+      "    " ATTR_ACTIVITYPLAYER " (ba.Player | None):\n"
       "        The current game-specific instance for this player.\n";
 
   // clang-format on
@@ -695,7 +695,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "\n"
      "Return whether the underlying player is still in the game."},
     {"assigninput", (PyCFunction)AssignInputCall, METH_VARARGS | METH_KEYWORDS,
-     "assigninput(type: Union[ba.InputType, tuple[ba.InputType, ...]],\n"
+     "assigninput(type: ba.InputType | tuple[ba.InputType, ...],\n"
      "  call: Callable) -> None\n"
      "\n"
      "Set the python callable to be run for one or more types of input."},
@@ -724,11 +724,11 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "\n"
      "(internal)"},
     {"setactivity", (PyCFunction)SetActivity, METH_VARARGS | METH_KEYWORDS,
-     "setactivity(activity: Optional[ba.Activity]) -> None\n"
+     "setactivity(activity: ba.Activity | None) -> None\n"
      "\n"
      "(internal)"},
     {"setnode", (PyCFunction)SetNode, METH_VARARGS | METH_KEYWORDS,
-     "setnode(node: Optional[Node]) -> None\n"
+     "setnode(node: Node | None) -> None\n"
      "\n"
      "(internal)"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class AccountV1Subsystem:
@@ -23,12 +23,12 @@ class AccountV1Subsystem:
     """
 
     def __init__(self) -> None:
-        self.account_tournament_list: Optional[tuple[int, list[str]]] = None
+        self.account_tournament_list: tuple[int, list[str]] | None = None
 
         # FIXME: should abstract/structure these.
         self.tournament_info: dict = {}
         self.league_rank_cache: dict = {}
-        self.last_post_purchase_message_time: Optional[float] = None
+        self.last_post_purchase_message_time: float | None = None
 
         # If we try to run promo-codes due to launch-args/etc we might
         # not be signed in yet; go ahead and queue them up in that case.
@@ -73,7 +73,7 @@ class AccountV1Subsystem:
         return self.league_rank_cache.get('info', None)
 
     def get_league_rank_points(self,
-                               data: Optional[dict[str, Any]],
+                               data: dict[str, Any] | None,
                                subset: str = None) -> int:
         """(internal)"""
         if data is None:

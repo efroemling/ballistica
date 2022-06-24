@@ -911,8 +911,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          "(internal)\n"},
         {"time_format_check", (PyCFunction)PyTimeFormatCheck,
          METH_VARARGS | METH_KEYWORDS,
-         "time_format_check(time_format: ba.TimeFormat, length: Union[float, "
-         "int])\n"
+         "time_format_check(time_format: ba.TimeFormat, length: float | int)\n"
          "  -> None\n"
          "\n"
          "(internal)\n"
@@ -996,7 +995,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
 
         {"screenmessage", (PyCFunction)PyScreenMessage,
          METH_VARARGS | METH_KEYWORDS,
-         "screenmessage(message: Union[str, ba.Lstr],\n"
+         "screenmessage(message: str | ba.Lstr,\n"
          "  color: Sequence[float] = None, top: bool = False,\n"
          "  image: dict[str, Any] = None, log: bool = False,\n"
          "  clients: Sequence[int] = None, transient: bool = False) -> None\n"
@@ -1169,7 +1168,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
 
         {"get_foreground_host_session", (PyCFunction)PyGetForegroundHostSession,
          METH_VARARGS | METH_KEYWORDS,
-         "get_foreground_host_session() -> Optional[ba.Session]\n"
+         "get_foreground_host_session() -> ba.Session | None\n"
          "\n"
          "(internal)\n"
          "\n"

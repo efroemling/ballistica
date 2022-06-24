@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class ProfileBrowserWindow(ba.Window):
@@ -39,7 +39,7 @@ class ProfileBrowserWindow(ba.Window):
             ba.app.pause()
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -162,7 +162,7 @@ class ProfileBrowserWindow(ba.Window):
                                              border=2,
                                              margin=0)
         v -= 255
-        self._profiles: Optional[dict[str, dict[str, Any]]] = None
+        self._profiles: dict[str, dict[str, Any]] | None = None
         self._selected_profile = selected_profile
         self._profile_widgets: list[ba.Widget] = []
         self._refresh()
@@ -282,7 +282,7 @@ class ProfileBrowserWindow(ba.Window):
         items = list(self._profiles.items())
         items.sort(key=lambda x: asserttype(x[0], str).lower())
         index = 0
-        account_name: Optional[str]
+        account_name: str | None
         if _ba.get_v1_account_state() == 'signed_in':
             account_name = _ba.get_v1_account_display_string()
         else:

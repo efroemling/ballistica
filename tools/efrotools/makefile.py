@@ -9,13 +9,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 @dataclass
 class Section:
     """Represents a section of a Makefile."""
-    name: Optional[str]
+    name: str | None
     paragraphs: list[Paragraph]
 
 

@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 
 class PlayOptionsWindow(popup.PopupWindow):
@@ -90,7 +90,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             game_count = len(plst)
             for entry in plst:
                 mapname = entry['settings']['map']
-                maptype: Optional[type[ba.Map]]
+                maptype: type[ba.Map] | None
                 try:
                     maptype = get_map_class(mapname)
                 except ba.NotFoundError:
@@ -132,9 +132,9 @@ class PlayOptionsWindow(popup.PopupWindow):
                          size=(self._width, self._height),
                          scale=scale)
 
-        playlist_name: Union[str, ba.Lstr] = (self._pvars.default_list_name
-                                              if playlist == '__default__' else
-                                              playlist)
+        playlist_name: str | ba.Lstr = (self._pvars.default_list_name
+                                        if playlist == '__default__' else
+                                        playlist)
         self._title_text = ba.textwidget(parent=self.root_widget,
                                          position=(self._width * 0.5,
                                                    self._height - 89 + 51),
@@ -239,7 +239,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                                        texture=ba.gettexture('lock'))
 
         # Team names/colors.
-        self._custom_colors_names_button: Optional[ba.Widget]
+        self._custom_colors_names_button: ba.Widget | None
         if self._sessiontype is ba.DualTeamSession:
             y_offs = 50 if show_shuffle_check_box else 0
             self._custom_colors_names_button = ba.buttonwidget(

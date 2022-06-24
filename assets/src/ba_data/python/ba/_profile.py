@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 # NOTE: player color options are enforced server-side for non-pro accounts
 # so don't change these or they won't stick...
@@ -49,7 +49,7 @@ def get_player_profile_icon(profilename: str) -> str:
 
 
 def get_player_profile_colors(
-    profilename: Optional[str],
+    profilename: str | None,
     profiles: dict[str, dict[str, Any]] = None
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """Given a profile, return colors for them."""

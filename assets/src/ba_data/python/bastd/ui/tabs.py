@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeVar, Generic
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 @dataclass
@@ -71,7 +71,8 @@ class TabRow(Generic[T]):
                                 color=(0.52, 0.48, 0.63),
                                 textcolor=(0.65, 0.6, 0.7))  # unlit
 
-    def _tick_and_call(self, call: Optional[Callable], arg: Any) -> None:
+    def _tick_and_call(self, call: Callable[[Any], None] | None,
+                       arg: Any) -> None:
         ba.playsound(ba.getsound('click01'))
         if call is not None:
             call(arg)

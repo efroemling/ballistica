@@ -14,7 +14,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union, Sequence
+    from typing import Any, Callable, Sequence
 
 
 class StoreBrowserWindow(ba.Window):
@@ -45,7 +45,7 @@ class StoreBrowserWindow(ba.Window):
 
         ba.set_analytics_screen('Store Window')
 
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
 
         # If they provided an origin-widget, scale up from that.
         if origin_widget is not None:
@@ -56,8 +56,8 @@ class StoreBrowserWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self.button_infos: Optional[dict[str, dict[str, Any]]] = None
-        self.update_buttons_timer: Optional[ba.Timer] = None
+        self.button_infos: dict[str, dict[str, Any]] | None = None
+        self.update_buttons_timer: ba.Timer | None = None
         self._status_textwidget_update_timer = None
 
         self._back_location = back_location
@@ -68,12 +68,12 @@ class StoreBrowserWindow(ba.Window):
         self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (578 if uiscale is ba.UIScale.SMALL else
                         645 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[StoreBrowserWindow.TabID] = None
+        self._current_tab: StoreBrowserWindow.TabID | None = None
         extra_top = 30 if uiscale is ba.UIScale.SMALL else 0
 
         self._request: Any = None
         self._r = 'store'
-        self._last_buy_time: Optional[float] = None
+        self._last_buy_time: float | None = None
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + extra_top),
@@ -96,8 +96,8 @@ class StoreBrowserWindow(ba.Window):
             on_activate_call=self._back)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        self._ticket_count_text: Optional[ba.Widget] = None
-        self._get_tickets_button: Optional[ba.Widget] = None
+        self._ticket_count_text: ba.Widget | None = None
+        self._get_tickets_button: ba.Widget | None = None
 
         if ba.app.allow_ticket_purchases:
             self._get_tickets_button = ba.buttonwidget(
@@ -265,8 +265,8 @@ class StoreBrowserWindow(ba.Window):
         self._scroll_width = self._width - scroll_buffer_h
         self._scroll_height = self._height - 180
 
-        self._scrollwidget: Optional[ba.Widget] = None
-        self._status_textwidget: Optional[ba.Widget] = None
+        self._scrollwidget: ba.Widget | None = None
+        self._status_textwidget: ba.Widget | None = None
         self._restore_state()
 
     def _update_get_tickets_button_pos(self) -> None:
@@ -322,7 +322,7 @@ class StoreBrowserWindow(ba.Window):
         from ba import SpecialChar
         if not self._root_widget:
             return
-        sval: Union[str, ba.Lstr]
+        sval: str | ba.Lstr
         if _ba.get_v1_account_state() == 'signed_in':
             sval = ba.charstr(SpecialChar.TICKET) + str(
                 _ba.get_v1_account_ticket_count())
@@ -387,7 +387,7 @@ class StoreBrowserWindow(ba.Window):
                          ba.WeakCall(self._on_response, data),
                          timetype=ba.TimeType.REAL)
 
-            def _on_response(self, data: Optional[dict[str, Any]]) -> None:
+            def _on_response(self, data: dict[str, Any] | None) -> None:
                 # FIXME: clean this up.
                 # pylint: disable=protected-access
                 window = self._window()
@@ -401,7 +401,7 @@ class StoreBrowserWindow(ba.Window):
 
     # Actually start the purchase locally.
     def _purchase_check_result(self, item: str, is_ticket_purchase: bool,
-                               result: Optional[dict[str, Any]]) -> None:
+                               result: dict[str, Any] | None) -> None:
         if result is None:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(
@@ -564,8 +564,8 @@ class StoreBrowserWindow(ba.Window):
                 purchased = _ba.get_purchased(b_type)
 
             sale_opacity = 0.0
-            sale_title_text: Union[str, ba.Lstr] = ''
-            sale_time_text: Union[str, ba.Lstr] = ''
+            sale_title_text: str | ba.Lstr = ''
+            sale_time_text: str | ba.Lstr = ''
 
             if purchased:
                 title_color = (0.8, 0.7, 0.9, 1.0)
@@ -686,7 +686,7 @@ class StoreBrowserWindow(ba.Window):
                 ba.textwidget(edit=b_info['descriptionText'],
                               color=description_color)
 
-    def _on_response(self, data: Optional[dict[str, Any]]) -> None:
+    def _on_response(self, data: dict[str, Any] | None) -> None:
         # pylint: disable=too-many-statements
 
         # clear status text..
@@ -719,7 +719,7 @@ class StoreBrowserWindow(ba.Window):
                     store_data = get_store_layout()
                     self._tab = sdata['tab']
                     self._sections = copy.deepcopy(store_data[sdata['tab']])
-                    self._height: Optional[float] = None
+                    self._height: float | None = None
 
                     uiscale = ba.app.ui.uiscale
 
@@ -856,7 +856,7 @@ class StoreBrowserWindow(ba.Window):
                                       maxwidth=700,
                                       transition_delay=0.4)
 
-                    prev_row_buttons: Optional[list] = None
+                    prev_row_buttons: list | None = None
                     this_row_buttons = []
 
                     delay = 0.3
@@ -1021,7 +1021,7 @@ class StoreBrowserWindow(ba.Window):
     def _restore_state(self) -> None:
         from efro.util import enum_by_value
         try:
-            sel: Optional[ba.Widget]
+            sel: ba.Widget | None
             sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))

@@ -18,7 +18,7 @@ from efro.error import CleanError
 from efro.util import assert_never
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class _Section(Enum):
@@ -56,9 +56,9 @@ class XCodeBuild:
         self._args = args
         self._output: list[str] = []
         self._verbose = os.environ.get('XCODEBUILDVERBOSE', '0') == '1'
-        self._section: Optional[_Section] = None
+        self._section: _Section | None = None
         self._section_line_count = 0
-        self._returncode: Optional[int] = None
+        self._returncode: int | None = None
         self._project: str = self._argstr(args, '-project')
         self._scheme: str = self._argstr(args, '-scheme')
         self._configuration: str = self._argstr(args, '-configuration')
@@ -441,7 +441,7 @@ class XCodeBuild:
             self,
             line: str,
             prefix: str = None,
-            prefix_index: Optional[int] = 1,
+            prefix_index: int | None = 1,
             ignore_line_starts: list[str] = None,
             ignore_line_start_tails: list[str] = None) -> None:
 
@@ -494,8 +494,8 @@ def project_build_path(projroot: str, project_path: str, scheme: str,
     config_path = os.path.join(projroot, '.cache', 'xcode_build_path')
     config: dict[str, dict[str, Any]] = {}
 
-    build_dir: Optional[str] = None
-    executable_path: Optional[str] = None
+    build_dir: str | None = None
+    executable_path: str | None = None
 
     if os.path.exists(config_path):
         with open(config_path, encoding='utf-8') as infile:

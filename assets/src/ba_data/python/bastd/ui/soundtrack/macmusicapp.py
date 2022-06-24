@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Callable
+    from typing import Any, Callable
 
 
 class MacMusicAppPlaylistSelectWindow(ba.Window):
     """Window for selecting an iTunes playlist."""
 
     def __init__(self, callback: Callable[[Any], Any],
-                 existing_playlist: Optional[str], existing_entry: Any):
+                 existing_playlist: str | None, existing_entry: Any):
         from ba.macmusicapp import MacMusicAppMusicPlayer
         self._r = 'editSoundtrackWindow'
         self._callback = callback

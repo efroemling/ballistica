@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class ServerDialogWindow(ba.Window):
@@ -47,7 +47,7 @@ class ServerDialogWindow(ba.Window):
                       maxwidth=self._width * 0.85,
                       max_height=(self._height - 110))
         show_cancel = data.get('showCancel', True)
-        self._cancel_button: Optional[ba.Widget]
+        self._cancel_button: ba.Widget | None
         if show_cancel:
             self._cancel_button = ba.buttonwidget(
                 parent=self._root_widget,

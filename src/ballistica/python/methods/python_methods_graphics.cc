@@ -304,7 +304,7 @@ auto PyGetDisplayResolution(PyObject* self, PyObject* args) -> PyObject* {
 auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
   return {
       {"get_display_resolution", PyGetDisplayResolution, METH_VARARGS,
-       "get_display_resolution() -> Optional[tuple[int, int]]\n"
+       "get_display_resolution() -> tuple[int, int] | None\n"
        "\n"
        "(internal)\n"
        "\n"

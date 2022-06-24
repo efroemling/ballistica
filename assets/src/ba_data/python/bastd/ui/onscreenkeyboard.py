@@ -12,7 +12,7 @@ from ba import charstr
 from ba import SpecialChar as SpCh
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class OnScreenKeyboardWindow(ba.Window):
@@ -72,12 +72,12 @@ class OnScreenKeyboardWindow(ba.Window):
         self._key_color = (0.69, 0.6, 0.74)
         self._key_color_dark = (0.55, 0.55, 0.71)
 
-        self._shift_button: Optional[ba.Widget] = None
-        self._backspace_button: Optional[ba.Widget] = None
-        self._space_button: Optional[ba.Widget] = None
+        self._shift_button: ba.Widget | None = None
+        self._backspace_button: ba.Widget | None = None
+        self._space_button: ba.Widget | None = None
         self._double_press_shift = False
-        self._num_mode_button: Optional[ba.Widget] = None
-        self._emoji_button: Optional[ba.Widget] = None
+        self._num_mode_button: ba.Widget | None = None
+        self._emoji_button: ba.Widget | None = None
         self._char_keys: list[ba.Widget] = []
         self._keyboard_index = 0
         self._last_space_press = 0.0
@@ -244,7 +244,7 @@ class OnScreenKeyboardWindow(ba.Window):
         return kbclass()
 
     def _refresh(self) -> None:
-        chars: Optional[list[str]] = None
+        chars: list[str] | None = None
         if self._mode in ['normal', 'caps']:
             chars = list(self._chars)
             if self._mode == 'caps':

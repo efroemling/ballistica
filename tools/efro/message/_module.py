@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efro.message._protocol import MessageProtocol
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def create_sender_module(
@@ -20,8 +20,8 @@ def create_sender_module(
     enable_sync_sends: bool,
     enable_async_sends: bool,
     private: bool = False,
-    protocol_module_level_import_code: Optional[str] = None,
-    build_time_protocol_create_code: Optional[str] = None,
+    protocol_module_level_import_code: str | None = None,
+    build_time_protocol_create_code: str | None = None,
 ) -> str:
     """Create a Python module defining a MessageSender subclass.
 
@@ -59,8 +59,8 @@ def create_receiver_module(
     protocol_create_code: str,
     is_async: bool,
     private: bool = False,
-    protocol_module_level_import_code: Optional[str] = None,
-    build_time_protocol_create_code: Optional[str] = None,
+    protocol_module_level_import_code: str | None = None,
+    build_time_protocol_create_code: str | None = None,
 ) -> str:
     """"Create a Python module defining a MessageReceiver subclass.
 

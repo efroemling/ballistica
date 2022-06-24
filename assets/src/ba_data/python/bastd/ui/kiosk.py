@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class KioskWindow(ba.Window):
@@ -182,9 +182,9 @@ class KioskWindow(ba.Window):
         if not ba.app.did_menu_intro:
             ba.app.did_menu_intro = True
 
-        self._b4: Optional[ba.Widget]
-        self._b5: Optional[ba.Widget]
-        self._b6: Optional[ba.Widget]
+        self._b4: ba.Widget | None
+        self._b5: ba.Widget | None
+        self._b6: ba.Widget | None
 
         if bool(False):
             ba.textwidget(
@@ -293,7 +293,7 @@ class KioskWindow(ba.Window):
         else:
             self._b4 = self._b5 = self._b6 = None
 
-        self._b7: Optional[ba.Widget]
+        self._b7: ba.Widget | None
         if ba.app.arcade_mode:
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,
@@ -317,7 +317,7 @@ class KioskWindow(ba.Window):
 
     def _restore_state(self) -> None:
         sel_name = ba.app.ui.window_states.get(type(self))
-        sel: Optional[ba.Widget]
+        sel: ba.Widget | None
         if sel_name == 'b1':
             sel = self._b1
         elif sel_name == 'b2':

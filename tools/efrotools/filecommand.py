@@ -10,7 +10,7 @@ from threading import Condition, Thread
 import os
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional, Callable
+    from typing import Iterable, Callable
 
 
 class _FileBatchesRun:
@@ -18,7 +18,7 @@ class _FileBatchesRun:
     def __init__(self,
                  paths: list[str],
                  batch_size: int,
-                 file_filter: Optional[Callable[[str], bool]],
+                 file_filter: Callable[[str], bool] | None,
                  include_mac_packages: bool = False) -> None:
         self.condition = Condition()
         self.paths = paths
@@ -106,7 +106,7 @@ class _FileBatchesRun:
 def file_batches(
     paths: list[str],
     batch_size: int = 1,
-    file_filter: Optional[Callable[[str], bool]] = None,
+    file_filter: Callable[[str], bool] | None = None,
     include_mac_packages: bool = False,
 ) -> Iterable[list[str]]:
     """Efficiently yield batches of files to operate on.

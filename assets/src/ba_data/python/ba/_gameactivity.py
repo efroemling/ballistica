@@ -19,7 +19,7 @@ from ba._player import PlayerInfo
 from ba import _map
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Callable, Sequence, Union
+    from typing import Any, Callable, Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     from bastd.actor.bomb import TNTSpawner
     import ba
@@ -38,19 +38,19 @@ class GameActivity(Activity[PlayerType, TeamType]):
     # pylint: disable=too-many-public-methods
 
     # Tips to be presented to the user at the start of the game.
-    tips: list[Union[str, ba.GameTip]] = []
+    tips: list[str | ba.GameTip] = []
 
     # Default getname() will return this if not None.
-    name: Optional[str] = None
+    name: str | None = None
 
     # Default get_description() will return this if not None.
-    description: Optional[str] = None
+    description: str | None = None
 
     # Default get_available_settings() will return this if not None.
-    available_settings: Optional[list[ba.Setting]] = None
+    available_settings: list[ba.Setting] | None = None
 
     # Default getscoreconfig() will return this if not None.
-    scoreconfig: Optional[ba.ScoreConfig] = None
+    scoreconfig: ba.ScoreConfig | None = None
 
     # Override some defaults.
     allow_pausing = True
@@ -61,14 +61,14 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     # If not None, the music type that should play in on_transition_in()
     # (unless overridden by the map).
-    default_music: Optional[ba.MusicType] = None
+    default_music: ba.MusicType | None = None
 
     @classmethod
     def create_settings_ui(
         cls,
         sessiontype: type[ba.Session],
-        settings: Optional[dict],
-        completion_call: Callable[[Optional[dict]], None],
+        settings: dict | None,
+        completion_call: Callable[[dict | None], None],
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
 
@@ -105,7 +105,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return cls.name if cls.name is not None else 'Untitled Game'
 
     @classmethod
-    def get_display_string(cls, settings: Optional[dict] = None) -> ba.Lstr:
+    def get_display_string(cls, settings: dict | None = None) -> ba.Lstr:
         """Return a descriptive name for this game/settings combo.
 
         Subclasses should override getname(); not this.
@@ -214,28 +214,28 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
-        self.initialplayerinfos: Optional[list[ba.PlayerInfo]] = None
+        self.initialplayerinfos: list[ba.PlayerInfo] | None = None
 
         # Go ahead and get our map loading.
         self._map_type = _map.get_map_class(self._calc_map_name(settings))
 
         self._spawn_sound = _ba.getsound('spawn')
         self._map_type.preload()
-        self._map: Optional[ba.Map] = None
-        self._powerup_drop_timer: Optional[ba.Timer] = None
-        self._tnt_spawners: Optional[dict[int, TNTSpawner]] = None
-        self._tnt_drop_timer: Optional[ba.Timer] = None
-        self._game_scoreboard_name_text: Optional[ba.Actor] = None
-        self._game_scoreboard_description_text: Optional[ba.Actor] = None
-        self._standard_time_limit_time: Optional[int] = None
-        self._standard_time_limit_timer: Optional[ba.Timer] = None
-        self._standard_time_limit_text: Optional[ba.NodeActor] = None
-        self._standard_time_limit_text_input: Optional[ba.NodeActor] = None
-        self._tournament_time_limit: Optional[int] = None
-        self._tournament_time_limit_timer: Optional[ba.Timer] = None
-        self._tournament_time_limit_title_text: Optional[ba.NodeActor] = None
-        self._tournament_time_limit_text: Optional[ba.NodeActor] = None
-        self._tournament_time_limit_text_input: Optional[ba.NodeActor] = None
+        self._map: ba.Map | None = None
+        self._powerup_drop_timer: ba.Timer | None = None
+        self._tnt_spawners: dict[int, TNTSpawner] | None = None
+        self._tnt_drop_timer: ba.Timer | None = None
+        self._game_scoreboard_name_text: ba.Actor | None = None
+        self._game_scoreboard_description_text: ba.Actor | None = None
+        self._standard_time_limit_time: int | None = None
+        self._standard_time_limit_timer: ba.Timer | None = None
+        self._standard_time_limit_text: ba.NodeActor | None = None
+        self._standard_time_limit_text_input: ba.NodeActor | None = None
+        self._tournament_time_limit: int | None = None
+        self._tournament_time_limit_timer: ba.Timer | None = None
+        self._tournament_time_limit_title_text: ba.NodeActor | None = None
+        self._tournament_time_limit_text: ba.NodeActor | None = None
+        self._tournament_time_limit_text_input: ba.NodeActor | None = None
         self._zoom_message_times: dict[int, float] = {}
         self._is_waiting_for_continue = False
 
@@ -280,7 +280,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
             print_error('error getting campaign level name')
         return self.get_instance_display_string()
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         """Return a description for this game instance, in English.
 
         This is shown in the center of the screen below the game name at the
@@ -306,7 +306,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """
         return self.get_description(type(self.session))
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         """Return a short description for this game instance in English.
 
         This description is used above the game scoreboard in the
@@ -461,8 +461,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 callback=WeakCall(self._on_tournament_query_response),
             )
 
-    def _on_tournament_query_response(self, data: Optional[dict[str,
-                                                                Any]]) -> None:
+    def _on_tournament_query_response(self,
+                                      data: dict[str, Any] | None) -> None:
         if data is not None:
             data_t = data['t']  # This used to be the whole payload.
 
@@ -662,8 +662,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
             tip = self.tips.pop(random.randrange(len(self.tips)))
             tip_title = Lstr(value='${A}:',
                              subs=[('${A}', Lstr(resource='tipText'))])
-            icon: Optional[ba.Texture] = None
-            sound: Optional[ba.Sound] = None
+            icon: ba.Texture | None = None
+            sound: ba.Sound | None = None
             if isinstance(tip, GameTip):
                 icon = tip.icon
                 sound = tip.sound
@@ -781,7 +781,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def respawn_player(self,
                        player: PlayerType,
-                       respawn_time: Optional[float] = None) -> None:
+                       respawn_time: float | None = None) -> None:
         """
         Given a ba.Player, sets up a standard respawn timer,
         along with the standard counter display, etc.

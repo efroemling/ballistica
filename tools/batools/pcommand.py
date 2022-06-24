@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efrotools.pcommand import PROJROOT
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def stage_server_file() -> None:
@@ -36,7 +36,7 @@ def py_examine() -> None:
     filename = Path(sys.argv[2])
     line = int(sys.argv[3])
     column = int(sys.argv[4])
-    selection: Optional[str] = (None if sys.argv[5] == '' else sys.argv[5])
+    selection: str | None = (None if sys.argv[5] == '' else sys.argv[5])
     operation = sys.argv[6]
 
     # This stuff assumes it is being run from project root.
@@ -569,7 +569,7 @@ def wsl_path_to_win() -> None:
         escape = False
         if len(sys.argv) < 3:
             raise CleanError('Expected at least 1 path arg.')
-        wsl_path: Optional[str] = None
+        wsl_path: str | None = None
         for arg in sys.argv[2:]:
             if arg == '--create':
                 create = True

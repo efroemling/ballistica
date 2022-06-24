@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from efrotools.code import format_yapf_str
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def standard_message_sender_gen_pcommand(
@@ -40,8 +40,8 @@ def standard_message_sender_gen_pcommand(
     # In embedded situations we have to pass different code to import
     # the protocol at build time than we do in our runtime code (where
     # there is only a dummy import for type-checking purposes)
-    protocol_module_level_import_code: Optional[str]
-    build_time_protocol_create_code: Optional[str]
+    protocol_module_level_import_code: str | None
+    build_time_protocol_create_code: str | None
     if embedded:
         protocol_module_level_import_code = (
             f'\n# Dummy import for type-checking purposes.\n'
@@ -101,8 +101,8 @@ def standard_message_receiver_gen_pcommand(
     # In embedded situations we have to pass different code to import
     # the protocol at build time than we do in our runtime code (where
     # there is only a dummy import for type-checking purposes)
-    protocol_module_level_import_code: Optional[str]
-    build_time_protocol_create_code: Optional[str]
+    protocol_module_level_import_code: str | None
+    build_time_protocol_create_code: str | None
     if embedded:
         protocol_module_level_import_code = (
             f'\n# Dummy import for type-checking purposes.\n'

@@ -11,7 +11,6 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
     from bastd.ui.coop.browser import CoopBrowserWindow
 
 
@@ -35,7 +34,7 @@ class GameButton:
         if game == 'Easy:The Last Stand':
             campaignname = 'Default'
 
-        rating: Optional[float]
+        rating: float | None
         campaign = getcampaign(campaignname)
         rating = campaign.getlevel(levelname).rating
 

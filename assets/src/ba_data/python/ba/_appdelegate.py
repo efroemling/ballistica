@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Callable
+    from typing import Callable
     import ba
 
 
@@ -18,8 +18,8 @@ class AppDelegate:
 
     def create_default_game_settings_ui(
             self, gameclass: type[ba.GameActivity],
-            sessiontype: type[ba.Session], settings: Optional[dict],
-            completion_call: Callable[[Optional[dict]], None]) -> None:
+            sessiontype: type[ba.Session], settings: dict | None,
+            completion_call: Callable[[dict | None], None]) -> None:
         """Launch a UI to configure the given game config.
 
         It should manipulate the contents of config and call completion_call

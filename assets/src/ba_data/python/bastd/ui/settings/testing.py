@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class TestingWindow(ba.Window):
@@ -21,7 +21,7 @@ class TestingWindow(ba.Window):
                  title: ba.Lstr,
                  entries: list[dict[str, Any]],
                  transition: str = 'in_right',
-                 back_call: Optional[Callable[[], ba.Window]] = None):
+                 back_call: Callable[[], ba.Window] | None = None):
         uiscale = ba.app.ui.uiscale
         self._width = 600
         self._height = 324 if uiscale is ba.UIScale.SMALL else 400

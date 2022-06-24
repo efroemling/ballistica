@@ -14,15 +14,15 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 @dataclass
 class AttributeInfo:
     """Info about an attribute of a class."""
     name: str
-    attr_type: Optional[str] = None
-    docs: Optional[str] = None
+    attr_type: str | None = None
+    docs: str | None = None
 
 
 def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
@@ -39,15 +39,15 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
         docs = '\n'.join(docs_lines[:attr_line])
 
         # Go through remaining lines creating attrs and docs for each.
-        cur_attr: Optional[AttributeInfo] = None
+        cur_attr: AttributeInfo | None = None
         for i in range(attr_line + 1, len(docs_lines)):
             line = docs_lines[i].strip()
 
             # A line with a single alphanumeric word preceding a colon
             # is a new attr.
-            splits = line.split(' ')
-            if (len(splits) in (1, 2)
-                    and splits[0].replace('_', '').isalnum()):
+            splits = line.split(' ', maxsplit=1)
+            if (splits[0].replace('_', '').isalnum()
+                    and splits[-1].endswith(':')):
                 if cur_attr is not None:
                     attrs.append(cur_attr)
                 cur_attr = AttributeInfo(name=splits[0])

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     from bastd.ui.settings import gamepad as gpsui
 
 
@@ -334,7 +334,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             pos: tuple[float, float],
             name: ba.Lstr,
             control: str,
-            message: Optional[ba.Lstr] = None) -> tuple[ba.Widget, ba.Widget]:
+            message: ba.Lstr | None = None) -> tuple[ba.Widget, ba.Widget]:
         if message is None:
             message = ba.Lstr(resource=self._parent_window.get_r() +
                               '.pressAnyButtonText')

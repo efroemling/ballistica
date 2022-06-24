@@ -275,7 +275,7 @@ auto PythonClassMaterial::AddActions(PythonClassMaterial* self, PyObject* args,
 
 PyMethodDef PythonClassMaterial::tp_methods[] = {
     {"add_actions", (PyCFunction)AddActions, METH_VARARGS | METH_KEYWORDS,
-     "add_actions(actions: tuple, conditions: Optional[tuple] = None)\n"
+     "add_actions(actions: tuple, conditions: tuple | None = None)\n"
      "  -> None\n"
      "\n"
      "Add one or more actions to the material, optionally with conditions.\n"

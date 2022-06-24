@@ -658,7 +658,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_foreground_host_activity", (PyCFunction)PyGetForegroundHostActivity,
        METH_VARARGS | METH_KEYWORDS,
-       "get_foreground_host_activity() -> Optional[ba.Activity]\n"
+       "get_foreground_host_activity() -> ba.Activity | None\n"
        "\n"
        "(internal)\n"
        "\n"
@@ -678,7 +678,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
 
       {"emitfx", (PyCFunction)PyEmitFx, METH_VARARGS | METH_KEYWORDS,
        "emitfx(position: Sequence[float],\n"
-       "  velocity: Optional[Sequence[float]] = None,\n"
+       "  velocity: Sequence[float] | None = None,\n"
        "  count: int = 10, scale: float = 1.0, spread: float = 1.0,\n"
        "  chunk_type: str = 'rock', emit_type: str ='chunks',\n"
        "  tendril_type: str = 'smoke') -> None\n"

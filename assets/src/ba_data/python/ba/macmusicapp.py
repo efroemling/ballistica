@@ -10,7 +10,7 @@ import _ba
 from ba._music import MusicPlayer
 
 if TYPE_CHECKING:
-    from typing import Optional, Callable, Any
+    from typing import Callable, Any
 
 
 class MacMusicAppMusicPlayer(MusicPlayer):
@@ -62,8 +62,8 @@ class _MacMusicAppThread(threading.Thread):
         self._commands_available = threading.Event()
         self._commands: list[list] = []
         self._volume = 1.0
-        self._current_playlist: Optional[str] = None
-        self._orig_volume: Optional[int] = None
+        self._current_playlist: str | None = None
+        self._orig_volume: int | None = None
 
     def run(self) -> None:
         """Run the Music.app thread."""
@@ -136,7 +136,7 @@ class _MacMusicAppThread(threading.Thread):
             if old_volume == 0.0:
                 self._play_current_playlist()
 
-    def play_playlist(self, musictype: Optional[str]) -> None:
+    def play_playlist(self, musictype: str | None) -> None:
         """Play the given playlist."""
         self._commands.append(['PLAY', musictype])
         self._commands_available.set()
@@ -170,7 +170,7 @@ class _MacMusicAppThread(threading.Thread):
             playlists = []
         _ba.pushcall(Call(target, playlists), from_other_thread=True)
 
-    def _handle_play_command(self, target: Optional[str]) -> None:
+    def _handle_play_command(self, target: str | None) -> None:
         if target is None:
             if self._current_playlist is not None and self._volume > 0:
                 try:

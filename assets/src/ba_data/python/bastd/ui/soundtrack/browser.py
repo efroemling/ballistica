@@ -11,7 +11,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class SoundtrackBrowserWindow(ba.Window):
@@ -24,7 +24,7 @@ class SoundtrackBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -195,9 +195,9 @@ class SoundtrackBrowserWindow(ba.Window):
                   if ba.app.ui.use_toolbars else self._scrollwidget)
         self._col = ba.columnwidget(parent=scrollwidget, border=2, margin=0)
 
-        self._soundtracks: Optional[dict[str, Any]] = None
-        self._selected_soundtrack: Optional[str] = None
-        self._selected_soundtrack_index: Optional[int] = None
+        self._soundtracks: dict[str, Any] | None = None
+        self._selected_soundtrack: str | None = None
+        self._selected_soundtrack_index: int | None = None
         self._soundtrack_widgets: list[ba.Widget] = []
         self._allow_changing_soundtracks = False
         self._refresh()

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class PluginSettingsWindow(ba.Window):
@@ -22,7 +22,7 @@ class PluginSettingsWindow(ba.Window):
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()

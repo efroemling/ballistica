@@ -9,7 +9,7 @@ import _ba
 from ba._session import Session
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Callable, Sequence
+    from typing import Any, Callable, Sequence
     import ba
 
 TEAM_COLORS = [(0.2, 0.4, 1.6)]
@@ -33,7 +33,7 @@ class CoopSession(Session):
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
 
-    campaign: Optional[ba.Campaign]
+    campaign: ba.Campaign | None
     """The ba.Campaign instance this Session represents, or None if
        there is no associated Campaign."""
 
@@ -67,21 +67,21 @@ class CoopSession(Session):
                          max_players=max_players)
 
         # Tournament-ID if we correspond to a co-op tournament (otherwise None)
-        self.tournament_id: Optional[str] = (
+        self.tournament_id: str | None = (
             app.coop_session_args.get('tournament_id'))
 
         self.campaign = getcampaign(app.coop_session_args['campaign'])
         self.campaign_level_name: str = app.coop_session_args['level']
 
         self._ran_tutorial_activity = False
-        self._tutorial_activity: Optional[ba.Activity] = None
+        self._tutorial_activity: ba.Activity | None = None
         self._custom_menu_ui: list[dict[str, Any]] = []
 
         # Start our joining screen.
         self.setactivity(_ba.newactivity(CoopJoinActivity))
 
-        self._next_game_instance: Optional[ba.GameActivity] = None
-        self._next_game_level_name: Optional[str] = None
+        self._next_game_instance: ba.GameActivity | None = None
+        self._next_game_level_name: str | None = None
         self._update_on_deck_game_instances()
 
     def get_current_game_instance(self) -> ba.GameActivity:
@@ -124,7 +124,7 @@ class CoopSession(Session):
         levels = self.campaign.levels
         level = self.campaign.getlevel(self.campaign_level_name)
 
-        nextlevel: Optional[ba.Level]
+        nextlevel: ba.Level | None
         if level.index < len(levels) - 1:
             nextlevel = levels[level.index + 1]
         else:

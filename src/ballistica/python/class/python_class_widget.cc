@@ -278,7 +278,7 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "of the screen. This can be useful for placing pop-up windows and other\n"
      "special cases."},
     {"get_selected_child", (PyCFunction)GetSelectedChild, METH_NOARGS,
-     "get_selected_child() -> Optional[ba.Widget]\n"
+     "get_selected_child() -> ba.Widget | None\n"
      "\n"
      "Returns the selected child Widget or None if nothing is selected."},
     // NOLINTNEXTLINE (signed bitwise stuff)

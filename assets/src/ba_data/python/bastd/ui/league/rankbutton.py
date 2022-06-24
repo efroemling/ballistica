@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Callable, Union
+    from typing import Any, Callable
 
 
 class LeagueRankButton:
@@ -82,20 +82,20 @@ class LeagueRankButton:
                                          transition_delay=transition_delay,
                                          color=textcolor)
 
-        self._smooth_percent: Optional[float] = None
-        self._percent: Optional[int] = None
-        self._smooth_rank: Optional[float] = None
-        self._rank: Optional[int] = None
-        self._ticking_node: Optional[ba.Node] = None
+        self._smooth_percent: float | None = None
+        self._percent: int | None = None
+        self._smooth_rank: float | None = None
+        self._rank: int | None = None
+        self._ticking_node: ba.Node | None = None
         self._smooth_increase_speed = 1.0
-        self._league: Optional[str] = None
-        self._improvement_text: Optional[str] = None
+        self._league: str | None = None
+        self._improvement_text: str | None = None
 
-        self._smooth_update_timer: Optional[ba.Timer] = None
+        self._smooth_update_timer: ba.Timer | None = None
 
         # Take note of our account state; we'll refresh later if this changes.
         self._account_state_num = _ba.get_v1_account_state_num()
-        self._last_power_ranking_query_time: Optional[float] = None
+        self._last_power_ranking_query_time: float | None = None
         self._doing_power_ranking_query = False
         self.set_position(position)
         self._bg_flash = False
@@ -191,7 +191,7 @@ class LeagueRankButton:
                 ba.timer(2.0,
                          ba.Call(safe_delete, diff_text),
                          timetype=ba.TimeType.REAL)
-            status_text: Union[str, ba.Lstr]
+            status_text: str | ba.Lstr
             if self._rank is not None:
                 assert self._smooth_rank is not None
                 status_text = ba.Lstr(resource='numberText',
@@ -211,8 +211,8 @@ class LeagueRankButton:
             ba.print_exception('Error doing smooth update.')
             self._smooth_update_timer = None
 
-    def _update_for_league_rank_data(self, data: Optional[dict[str,
-                                                               Any]]) -> None:
+    def _update_for_league_rank_data(self,
+                                     data: dict[str, Any] | None) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
@@ -220,7 +220,7 @@ class LeagueRankButton:
         if not self._button:
             return
 
-        status_text: Union[str, ba.Lstr]
+        status_text: str | ba.Lstr
 
         in_top = data is not None and data['rank'] is not None
         do_percent = False
@@ -325,8 +325,8 @@ class LeagueRankButton:
             ba.textwidget(edit=self._title_text, text=txt, color=t_color)
         ba.textwidget(edit=self._value_text, text=status_text)
 
-    def _on_power_ranking_query_response(
-            self, data: Optional[dict[str, Any]]) -> None:
+    def _on_power_ranking_query_response(self,
+                                         data: dict[str, Any] | None) -> None:
         self._doing_power_ranking_query = False
         ba.app.accounts_v1.cache_league_rank_data(data)
         self._update_for_league_rank_data(data)

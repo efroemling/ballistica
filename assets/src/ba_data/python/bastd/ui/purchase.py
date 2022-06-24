@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class PurchaseWindow(ba.Window):
@@ -132,7 +132,7 @@ class PurchaseWindow(ba.Window):
         if self._items == ['pro']:
             _ba.purchase('pro')
         else:
-            ticket_count: Optional[int]
+            ticket_count: int | None
             try:
                 ticket_count = _ba.get_v1_account_ticket_count()
             except Exception:

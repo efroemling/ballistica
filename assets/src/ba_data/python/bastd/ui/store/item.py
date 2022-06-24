@@ -9,7 +9,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 def instantiate_store_item_display(item_name: str,
@@ -39,7 +39,7 @@ def instantiate_store_item_display(item_name: str,
 
     item['name'] = title = get_store_item_name_translated(item_name)
 
-    btn: Optional[ba.Widget]
+    btn: ba.Widget | None
     if button:
         item['button'] = btn = ba.buttonwidget(parent=parent_widget,
                                                position=b_pos,
@@ -61,9 +61,9 @@ def instantiate_store_item_display(item_name: str,
     tint_tex = None
     tint_color = None
     tint2_color = None
-    tex_name: Optional[str] = None
-    desc: Optional[str] = None
-    modes: Optional[ba.Lstr] = None
+    tex_name: str | None = None
+    desc: str | None = None
+    modes: ba.Lstr | None = None
 
     if item_name.startswith('characters.'):
         character = ba.app.spaz_appearances[item_info['character']]
@@ -272,7 +272,7 @@ def instantiate_store_item_display(item_name: str,
         # the user knows how much this is worth.
         total_worth_item = _ba.get_v1_account_misc_read_val('twrths',
                                                             {}).get(item_name)
-        total_worth_price: Optional[str]
+        total_worth_price: str | None
         if total_worth_item is not None:
             price = _ba.get_price(total_worth_item)
             total_worth_price = (get_clean_price(price)

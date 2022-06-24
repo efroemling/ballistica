@@ -10,7 +10,6 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
     from bastd.ui.playlist.editcontroller import PlaylistEditController
 
 
@@ -106,13 +105,13 @@ class PlaylistAddGameWindow(ba.Window):
                   up_widget=self._back_button,
                   left_widget=self._back_button,
                   right_widget=select_button)
-        self._column: Optional[ba.Widget] = None
+        self._column: ba.Widget | None = None
 
         v -= 35
         ba.containerwidget(edit=self._root_widget,
                            cancel_button=self._back_button,
                            start_button=select_button)
-        self._selected_game_type: Optional[type[ba.GameActivity]] = None
+        self._selected_game_type: type[ba.GameActivity] | None = None
 
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)

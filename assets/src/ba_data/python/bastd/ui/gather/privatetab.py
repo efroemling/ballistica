@@ -20,7 +20,7 @@ from bastd.ui.gather import GatherTab
 from bastd.ui import getcurrency
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     from bastd.ui.gather import GatherWindow
 
 # Print a bit of info about queries, etc.
@@ -44,28 +44,28 @@ class PrivateGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
-        self._container: Optional[ba.Widget] = None
+        self._container: ba.Widget | None = None
         self._state: State = State()
         self._hostingstate = PrivateHostingState()
-        self._join_sub_tab_text: Optional[ba.Widget] = None
-        self._host_sub_tab_text: Optional[ba.Widget] = None
-        self._update_timer: Optional[ba.Timer] = None
-        self._join_party_code_text: Optional[ba.Widget] = None
+        self._join_sub_tab_text: ba.Widget | None = None
+        self._host_sub_tab_text: ba.Widget | None = None
+        self._update_timer: ba.Timer | None = None
+        self._join_party_code_text: ba.Widget | None = None
         self._c_width: float = 0.0
         self._c_height: float = 0.0
-        self._last_hosting_state_query_time: Optional[float] = None
+        self._last_hosting_state_query_time: float | None = None
         self._waiting_for_initial_state = True
         self._waiting_for_start_stop_response = True
-        self._host_playlist_button: Optional[ba.Widget] = None
-        self._host_copy_button: Optional[ba.Widget] = None
-        self._host_connect_button: Optional[ba.Widget] = None
-        self._host_start_stop_button: Optional[ba.Widget] = None
-        self._get_tickets_button: Optional[ba.Widget] = None
-        self._ticket_count_text: Optional[ba.Widget] = None
+        self._host_playlist_button: ba.Widget | None = None
+        self._host_copy_button: ba.Widget | None = None
+        self._host_connect_button: ba.Widget | None = None
+        self._host_start_stop_button: ba.Widget | None = None
+        self._get_tickets_button: ba.Widget | None = None
+        self._ticket_count_text: ba.Widget | None = None
         self._showing_not_signed_in_screen = False
         self._create_time = time.time()
-        self._last_action_send_time: Optional[float] = None
-        self._connect_press_time: Optional[float] = None
+        self._last_action_send_time: float | None = None
+        self._connect_press_time: float | None = None
         try:
             self._hostingconfig = self._build_hosting_config()
         except Exception:
@@ -177,7 +177,7 @@ class PrivateGatherTab(GatherTab):
                               if playlist_name == '__default__' else
                               playlist_name)
 
-        playlist: Optional[list[dict[str, Any]]] = None
+        playlist: list[dict[str, Any]] | None = None
         if playlist_name != '__default__':
             playlist = (cfg.get(f'{pvars.config_name} Playlists',
                                 {}).get(playlist_name))
@@ -197,7 +197,7 @@ class PrivateGatherTab(GatherTab):
         hcfg.tutorial = tutorial
 
         if hcfg.session_type == 'teams':
-            ctn: Optional[list[str]] = cfg.get('Custom Team Names')
+            ctn: list[str] | None = cfg.get('Custom Team Names')
             if ctn is not None:
                 if (isinstance(ctn, (list, tuple)) and len(ctn) == 2
                         and all(isinstance(x, str) for x in ctn)):
@@ -205,7 +205,7 @@ class PrivateGatherTab(GatherTab):
                 else:
                     print(f'Found invalid custom-team-names data: {ctn}')
 
-            ctc: Optional[list[list[float]]] = cfg.get('Custom Team Colors')
+            ctc: list[list[float]] | None = cfg.get('Custom Team Colors')
             if ctc is not None:
                 if (isinstance(ctc, (list, tuple)) and len(ctc) == 2
                         and all(isinstance(x, (list, tuple)) for x in ctc)
@@ -269,7 +269,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_hosting_state_query_time = now
 
     def _hosting_state_idle_response(self,
-                                     result: Optional[dict[str, Any]]) -> None:
+                                     result: dict[str, Any] | None) -> None:
 
         # This simply passes through to our standard response handler.
         # The one exception is if we've recently sent an action to the
@@ -284,15 +284,14 @@ class PrivateGatherTab(GatherTab):
             return
         self._hosting_state_response(result)
 
-    def _hosting_state_response(self, result: Optional[dict[str,
-                                                            Any]]) -> None:
+    def _hosting_state_response(self, result: dict[str, Any] | None) -> None:
 
         # Its possible for this to come back to us after our UI is dead;
         # ignore in that case.
         if not self._container:
             return
 
-        state: Optional[PrivateHostingState] = None
+        state: PrivateHostingState | None = None
         if result is not None:
             self._debug_server_comm('got private party state response')
             try:
@@ -344,7 +343,7 @@ class PrivateGatherTab(GatherTab):
         # Kick off an update to get any needed messages sent/etc.
         ba.pushcall(self._update)
 
-    def _selwidgets(self) -> list[Optional[ba.Widget]]:
+    def _selwidgets(self) -> list[ba.Widget | None]:
         """An indexed list of widgets we can use for saving/restoring sel."""
         return [
             self._host_playlist_button, self._host_copy_button,
@@ -357,7 +356,7 @@ class PrivateGatherTab(GatherTab):
 
         # Store an index for our current selection so we can
         # reselect the equivalent recreated widget if possible.
-        selindex: Optional[int] = None
+        selindex: int | None = None
         selchild = self._container.get_selected_child()
         if selchild is not None:
             try:
@@ -793,7 +792,7 @@ class PrivateGatherTab(GatherTab):
 
             # If there's a ticket cost, make sure we have enough tickets.
             if self._hostingstate.tickets_to_host_now > 0:
-                ticket_count: Optional[int]
+                ticket_count: int | None
                 try:
                     ticket_count = _ba.get_v1_account_ticket_count()
                 except Exception:
@@ -832,7 +831,7 @@ class PrivateGatherTab(GatherTab):
     def _join_connect_press(self) -> None:
 
         # Error immediately if its an empty code.
-        code: Optional[str] = None
+        code: str | None = None
         if self._join_party_code_text:
             code = cast(str, ba.textwidget(query=self._join_party_code_text))
         if not code:
@@ -844,7 +843,7 @@ class PrivateGatherTab(GatherTab):
 
         self._connect_to_party_code(code)
 
-    def _connect_response(self, result: Optional[dict[str, Any]]) -> None:
+    def _connect_response(self, result: dict[str, Any] | None) -> None:
         try:
             self._connect_press_time = None
             if result is None:

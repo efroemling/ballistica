@@ -15,7 +15,7 @@ import ba
 from bastd.ui.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Optional
+    from typing import Callable, Any
 
 
 class NetTestingWindow(ba.Window):
@@ -284,7 +284,7 @@ def _test_fetch(baseaddr: str) -> None:
         raise RuntimeError('Got unexpected response data.')
 
 
-def _test_nearby_zone_ping(nearest_zone: Optional[tuple[str, float]]) -> None:
+def _test_nearby_zone_ping(nearest_zone: tuple[str, float] | None) -> None:
     """Try to ping nearest v2 zone."""
     if nearest_zone is None:
         raise RuntimeError('No nearest zone.')

@@ -11,7 +11,6 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
     from bastd.ui.colorpicker import ColorPicker
 
 
@@ -27,7 +26,7 @@ class EditProfileWindow(ba.Window):
                               self._in_main_menu).get_root_widget())
 
     def __init__(self,
-                 existing_profile: Optional[str],
+                 existing_profile: str | None,
                  in_main_menu: bool,
                  transition: str = 'in_right'):
         # FIXME: Tidy this up a bit.

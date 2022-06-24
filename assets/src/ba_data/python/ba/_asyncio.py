@@ -13,12 +13,11 @@ from typing import TYPE_CHECKING
 import asyncio
 
 if TYPE_CHECKING:
-    from typing import Optional
     import ba
 
 # Our timer and event loop for the ballistica game thread.
-_asyncio_timer: Optional[ba.Timer] = None
-_asyncio_event_loop: Optional[asyncio.AbstractEventLoop] = None
+_asyncio_timer: ba.Timer | None = None
+_asyncio_event_loop: asyncio.AbstractEventLoop | None = None
 
 
 def setup_asyncio() -> asyncio.AbstractEventLoop:

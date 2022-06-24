@@ -11,7 +11,7 @@ from ba import _math
 from ba._actor import Actor
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence, Any
+    from typing import Sequence, Any
     import ba
 
 
@@ -161,7 +161,7 @@ class Map(Actor):
         return []
 
     @classmethod
-    def get_preview_texture_name(cls) -> Optional[str]:
+    def get_preview_texture_name(cls) -> str | None:
         """Return the name of the preview texture for this map."""
         return None
 
@@ -179,7 +179,7 @@ class Map(Actor):
         return cls.name
 
     @classmethod
-    def get_music_type(cls) -> Optional[ba.MusicType]:
+    def get_music_type(cls) -> ba.MusicType | None:
         """Return a music-type string that should be played on this map.
 
         If None is returned, default music will be used.
@@ -187,13 +187,13 @@ class Map(Actor):
         return None
 
     def __init__(self,
-                 vr_overlay_offset: Optional[Sequence[float]] = None) -> None:
+                 vr_overlay_offset: Sequence[float] | None = None) -> None:
         """Instantiate a map."""
         super().__init__()
 
         # This is expected to always be a ba.Node object (whether valid or not)
         # should be set to something meaningful by child classes.
-        self.node: Optional[_ba.Node] = None
+        self.node: _ba.Node | None = None
 
         # Make our class' preload-data available to us
         # (and instruct the user if we weren't preloaded properly).
@@ -294,8 +294,8 @@ class Map(Actor):
         return False
 
     def get_def_bound_box(
-        self, name: str
-    ) -> Optional[tuple[float, float, float, float, float, float]]:
+            self, name: str
+    ) -> tuple[float, float, float, float, float, float] | None:
         """Return a 6 member bounds tuple or None if it is not defined."""
         try:
             box = self.defs.boxes[name]
@@ -305,7 +305,7 @@ class Map(Actor):
         except Exception:
             return None
 
-    def get_def_point(self, name: str) -> Optional[Sequence[float]]:
+    def get_def_point(self, name: str) -> Sequence[float] | None:
         """Return a single defined point or a default value in its absence."""
         val = self.defs.points.get(name)
         return (None if val is None else

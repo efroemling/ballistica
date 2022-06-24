@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    pass
 
 
 class AccountSettingsWindow(ba.Window):
@@ -25,15 +25,15 @@ class AccountSettingsWindow(ba.Window):
                  close_once_signed_in: bool = False):
         # pylint: disable=too-many-statements
 
-        self._sign_in_game_circle_button: Optional[ba.Widget] = None
-        self._sign_in_v2_button: Optional[ba.Widget] = None
-        self._sign_in_device_button: Optional[ba.Widget] = None
+        self._sign_in_game_circle_button: ba.Widget | None = None
+        self._sign_in_v2_button: ba.Widget | None = None
+        self._sign_in_device_button: ba.Widget | None = None
 
         self._close_once_signed_in = close_once_signed_in
         ba.set_analytics_screen('Account Window')
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -56,7 +56,7 @@ class AccountSettingsWindow(ba.Window):
                                              repeat=True)
 
         # Currently we can only reset achievements on game-center.
-        account_type: Optional[str]
+        account_type: str | None
         if self._signed_in:
             account_type = _ba.get_v1_account_type()
         else:
@@ -145,7 +145,7 @@ class AccountSettingsWindow(ba.Window):
             claims_left_right=True,
             claims_tab=True,
             selection_loops_to_parent=True)
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
         self._refresh()
         self._restore_state()
 
@@ -344,7 +344,7 @@ class AccountSettingsWindow(ba.Window):
                 v_align='center')
             v -= local_signed_in_as_space * 0.4
 
-        self._account_name_text: Optional[ba.Widget]
+        self._account_name_text: ba.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
             txt = ba.Lstr(
@@ -383,7 +383,7 @@ class AccountSettingsWindow(ba.Window):
         if show_sign_in_benefits:
             v -= sign_in_benefits_space
             app = ba.app
-            extra: Optional[Union[str, ba.Lstr]]
+            extra: str | ba.Lstr | None
             if (app.platform in ['mac', 'ios']
                     and app.subplatform == 'appstore'):
                 extra = ba.Lstr(
@@ -616,7 +616,7 @@ class AccountSettingsWindow(ba.Window):
         else:
             self.game_service_button = None
 
-        self._achievements_text: Optional[ba.Widget]
+        self._achievements_text: ba.Widget | None
         if show_achievements_text:
             v -= achievements_text_space * 0.5
             self._achievements_text = ba.textwidget(
@@ -632,7 +632,7 @@ class AccountSettingsWindow(ba.Window):
         else:
             self._achievements_text = None
 
-        self._achievements_button: Optional[ba.Widget]
+        self._achievements_button: ba.Widget | None
         if show_achievements_button:
             button_width = 300
             v -= achievements_button_space * 0.85
@@ -661,7 +661,7 @@ class AccountSettingsWindow(ba.Window):
         if show_achievements_text or show_achievements_button:
             self._refresh_achievements()
 
-        self._leaderboards_button: Optional[ba.Widget]
+        self._leaderboards_button: ba.Widget | None
         if show_leaderboards_button:
             button_width = 300
             v -= leaderboards_button_space * 0.85
@@ -686,7 +686,7 @@ class AccountSettingsWindow(ba.Window):
         else:
             self._leaderboards_button = None
 
-        self._campaign_progress_text: Optional[ba.Widget]
+        self._campaign_progress_text: ba.Widget | None
         if show_campaign_progress:
             v -= campaign_progress_space * 0.5
             self._campaign_progress_text = ba.textwidget(
@@ -703,7 +703,7 @@ class AccountSettingsWindow(ba.Window):
         else:
             self._campaign_progress_text = None
 
-        self._tickets_text: Optional[ba.Widget]
+        self._tickets_text: ba.Widget | None
         if show_tickets:
             v -= tickets_space * 0.5
             self._tickets_text = ba.textwidget(parent=self._subcontainer,
@@ -753,7 +753,7 @@ class AccountSettingsWindow(ba.Window):
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
 
-        self._linked_accounts_text: Optional[ba.Widget]
+        self._linked_accounts_text: ba.Widget | None
         if show_linked_accounts_text:
             v -= linked_accounts_text_space * 0.8
             self._linked_accounts_text = ba.textwidget(
@@ -808,7 +808,7 @@ class AccountSettingsWindow(ba.Window):
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
 
-        self._unlink_accounts_button: Optional[ba.Widget]
+        self._unlink_accounts_button: ba.Widget | None
         if show_unlink_accounts_button:
             v -= unlink_accounts_button_space
             self._unlink_accounts_button = btn = ba.buttonwidget(
@@ -957,7 +957,7 @@ class AccountSettingsWindow(ba.Window):
         from ba.internal import getcampaign
         if self._campaign_progress_text is None:
             return
-        p_str: Union[str, ba.Lstr]
+        p_str: str | ba.Lstr
         try:
             campaign = getcampaign('Default')
             levels = campaign.levels

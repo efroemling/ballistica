@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any
 
 
 class GetCurrencyWindow(ba.Window):
@@ -31,14 +31,14 @@ class GetCurrencyWindow(ba.Window):
         self._store_back_location = store_back_location  # ew.
 
         self._ad_button_greyed = False
-        self._smooth_update_timer: Optional[ba.Timer] = None
+        self._smooth_update_timer: ba.Timer | None = None
         self._ad_button = None
         self._ad_label = None
         self._ad_image = None
         self._ad_time_text = None
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -372,8 +372,8 @@ class GetCurrencyWindow(ba.Window):
                       scale=0.8)
 
         # update count now and once per second going forward..
-        self._ticking_node: Optional[ba.Node] = None
-        self._smooth_ticket_count: Optional[float] = None
+        self._ticking_node: ba.Node | None = None
+        self._smooth_ticket_count: float | None = None
         self._ticket_count = 0
         self._update()
         self._update_timer = ba.Timer(1.0,
@@ -460,7 +460,7 @@ class GetCurrencyWindow(ba.Window):
                 ba.textwidget(edit=self._ad_label, color=(0.7, 0.9, 0.7, 0.2))
                 ba.textwidget(edit=self._ad_free_text, color=(1, 1, 0, 0.2))
                 ba.imagewidget(edit=self._ad_image, opacity=0.6 * 0.25)
-                sval: Union[str, ba.Lstr]
+                sval: str | ba.Lstr
                 if (next_reward_ad_time is not None
                         and next_reward_ad_time > now):
                     sval = ba.timestring(
@@ -533,7 +533,7 @@ class GetCurrencyWindow(ba.Window):
                                                item))
 
     def _purchase_check_result(self, item: str,
-                               result: Optional[dict[str, Any]]) -> None:
+                               result: dict[str, Any] | None) -> None:
         if result is None:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(

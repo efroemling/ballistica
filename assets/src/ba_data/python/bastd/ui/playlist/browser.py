@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    pass
 
 
 class PlaylistBrowserWindow(ba.Window):
@@ -20,14 +20,14 @@ class PlaylistBrowserWindow(ba.Window):
 
     def __init__(self,
                  sessiontype: type[ba.Session],
-                 transition: Optional[str] = 'in_right',
+                 transition: str | None = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui.playlist import PlaylistTypeVars
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -49,9 +49,9 @@ class PlaylistBrowserWindow(ba.Window):
 
         self._sessiontype = sessiontype
 
-        self._customize_button: Optional[ba.Widget] = None
-        self._sub_width: Optional[float] = None
-        self._sub_height: Optional[float] = None
+        self._customize_button: ba.Widget | None = None
+        self._sub_width: float | None = None
+        self._sub_height: float | None = None
 
         self._ensure_standard_playlists_exist()
 
@@ -76,7 +76,7 @@ class PlaylistBrowserWindow(ba.Window):
                    1.05 if uiscale is ba.UIScale.MEDIUM else 0.9),
             stack_offset=(0, -26) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        self._back_button: Optional[ba.Widget] = ba.buttonwidget(
+        self._back_button: ba.Widget | None = ba.buttonwidget(
             parent=self._root_widget,
             position=(59 + x_inset, self._height - 70),
             size=(120, 60),
@@ -125,7 +125,7 @@ class PlaylistBrowserWindow(ba.Window):
             position=((self._width - self._scroll_width) * 0.5,
                       65 + scroll_offs))
         ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
 
@@ -393,7 +393,7 @@ class PlaylistBrowserWindow(ba.Window):
                     if x == 0:
                         ba.widget(edit=btn, left_widget=self._back_button)
 
-                print_name: Optional[Union[str, ba.Lstr]]
+                print_name: str | ba.Lstr | None
                 if name == '__default__':
                     print_name = self._pvars.default_list_name
                 else:
@@ -432,7 +432,7 @@ class PlaylistBrowserWindow(ba.Window):
                                                mark_unowned=True)
                     for entry in playlist:
                         mapname = entry['settings']['map']
-                        maptype: Optional[type[ba.Map]]
+                        maptype: type[ba.Map] | None
                         try:
                             maptype = get_map_class(mapname)
                         except ba.NotFoundError:

@@ -21,7 +21,7 @@ from efro.dataclassio._base import (_parse_annotated, _get_origin,
                                     SIMPLE_TYPES)
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
     from efro.dataclassio._base import IOAttrs
 
 T = TypeVar('T')
@@ -115,12 +115,12 @@ class PrepData:
 class PrepSession:
     """Context for a prep."""
 
-    def __init__(self, explicit: bool, globalns: Optional[dict] = None):
+    def __init__(self, explicit: bool, globalns: dict | None = None):
         self.explicit = explicit
         self.globalns = globalns
 
     def prep_dataclass(self, cls: type,
-                       recursion_level: int) -> Optional[PrepData]:
+                       recursion_level: int) -> PrepData | None:
         """Run prep on a dataclass if necessary and return its prep data.
 
         The only case where this will return None is for recursive types
@@ -232,7 +232,7 @@ class PrepSession:
         return prepdata
 
     def prep_type(self, cls: type, attrname: str, anntype: Any,
-                  ioattrs: Optional[IOAttrs], recursion_level: int) -> None:
+                  ioattrs: IOAttrs | None, recursion_level: int) -> None:
         """Run prep on a dataclass."""
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches

@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class AudioSettingsWindow(ba.Window):
@@ -28,7 +28,7 @@ class AudioSettingsWindow(ba.Window):
         music = ba.app.music
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -122,7 +122,7 @@ class AudioSettingsWindow(ba.Window):
 
         v -= 0.5 * spacing
 
-        self._vr_head_relative_audio_button: Optional[ba.Widget]
+        self._vr_head_relative_audio_button: ba.Widget | None
         if show_vr_head_relative_audio:
             v -= 40
             ba.textwidget(parent=self._root_widget,
@@ -165,7 +165,7 @@ class AudioSettingsWindow(ba.Window):
         else:
             self._vr_head_relative_audio_button = None
 
-        self._soundtrack_button: Optional[ba.Widget]
+        self._soundtrack_button: ba.Widget | None
         if show_soundtracks:
             v -= 1.2 * spacing
             self._soundtrack_button = ba.buttonwidget(
@@ -259,7 +259,7 @@ class AudioSettingsWindow(ba.Window):
     def _restore_state(self) -> None:
         try:
             sel_name = ba.app.ui.window_states.get(type(self))
-            sel: Optional[ba.Widget]
+            sel: ba.Widget | None
             if sel_name == 'SoundMinus':
                 sel = self._sound_volume_numedit.minusbutton
             elif sel_name == 'SoundPlus':

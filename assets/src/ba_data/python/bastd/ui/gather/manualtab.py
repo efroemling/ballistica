@@ -15,12 +15,12 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union, Callable
+    from typing import Any, Callable
     from bastd.ui.gather import GatherWindow
 
 
-def _safe_set_text(txt: Optional[ba.Widget],
-                   val: Union[str, ba.Lstr],
+def _safe_set_text(txt: ba.Widget | None,
+                   val: str | ba.Lstr,
                    success: bool = True) -> None:
     if txt:
         ba.textwidget(edit=txt,
@@ -31,15 +31,15 @@ def _safe_set_text(txt: Optional[ba.Widget],
 class _HostLookupThread(threading.Thread):
     """Thread to fetch an addr."""
 
-    def __init__(self, name: str, port: int,
-                 call: Callable[[Optional[str], int], Any]):
+    def __init__(self, name: str, port: int, call: Callable[[str | None, int],
+                                                            Any]):
         super().__init__()
         self._name = name
         self._port = port
         self._call = call
 
     def run(self) -> None:
-        result: Optional[str]
+        result: str | None
         try:
             import socket
             result = socket.gethostbyname(self._name)
@@ -66,31 +66,31 @@ class ManualGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
-        self._check_button: Optional[ba.Widget] = None
-        self._doing_access_check: Optional[bool] = None
-        self._access_check_count: Optional[int] = None
+        self._check_button: ba.Widget | None = None
+        self._doing_access_check: bool | None = None
+        self._access_check_count: int | None = None
         self._sub_tab: SubTabType = SubTabType.JOIN_BY_ADDRESS
-        self._t_addr: Optional[ba.Widget] = None
-        self._t_accessible: Optional[ba.Widget] = None
-        self._t_accessible_extra: Optional[ba.Widget] = None
-        self._access_check_timer: Optional[ba.Timer] = None
-        self._checking_state_text: Optional[ba.Widget] = None
-        self._container: Optional[ba.Widget] = None
-        self._join_by_address_text: Optional[ba.Widget] = None
-        self._favorites_text: Optional[ba.Widget] = None
-        self._width: Optional[int] = None
-        self._height: Optional[int] = None
-        self._scroll_width: Optional[int] = None
-        self._scroll_height: Optional[int] = None
-        self._favorites_scroll_width: Optional[int] = None
-        self._favorites_connect_button: Optional[ba.Widget] = None
-        self._scrollwidget: Optional[ba.Widget] = None
-        self._columnwidget: Optional[ba.Widget] = None
-        self._favorite_selected: Optional[str] = None
-        self._favorite_edit_window: Optional[ba.Widget] = None
-        self._party_edit_name_text: Optional[ba.Widget] = None
-        self._party_edit_addr_text: Optional[ba.Widget] = None
-        self._party_edit_port_text: Optional[ba.Widget] = None
+        self._t_addr: ba.Widget | None = None
+        self._t_accessible: ba.Widget | None = None
+        self._t_accessible_extra: ba.Widget | None = None
+        self._access_check_timer: ba.Timer | None = None
+        self._checking_state_text: ba.Widget | None = None
+        self._container: ba.Widget | None = None
+        self._join_by_address_text: ba.Widget | None = None
+        self._favorites_text: ba.Widget | None = None
+        self._width: int | None = None
+        self._height: int | None = None
+        self._scroll_width: int | None = None
+        self._scroll_height: int | None = None
+        self._favorites_scroll_width: int | None = None
+        self._favorites_connect_button: ba.Widget | None = None
+        self._scrollwidget: ba.Widget | None = None
+        self._columnwidget: ba.Widget | None = None
+        self._favorite_selected: str | None = None
+        self._favorite_edit_window: ba.Widget | None = None
+        self._party_edit_name_text: ba.Widget | None = None
+        self._party_edit_addr_text: ba.Widget | None = None
+        self._party_edit_port_text: ba.Widget | None = None
 
     def on_activate(
         self,
@@ -674,7 +674,7 @@ class ManualGatherTab(GatherTab):
             ba.screenmessage('Invalid Address', color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
 
-    def _host_lookup_result(self, resolved_address: Optional[str],
+    def _host_lookup_result(self, resolved_address: str | None,
                             port: int) -> None:
         if resolved_address is None:
             ba.screenmessage(
@@ -723,7 +723,7 @@ class ManualGatherTab(GatherTab):
                             from_other_thread=True)
 
     def _on_show_my_address_button_press(self, v2: float,
-                                         container: Optional[ba.Widget],
+                                         container: ba.Widget | None,
                                          c_width: float) -> None:
         if not container:
             return
@@ -849,7 +849,7 @@ class ManualGatherTab(GatherTab):
                               callback=ba.WeakCall(
                                   self._on_accessible_response))
 
-    def _on_accessible_response(self, data: Optional[dict[str, Any]]) -> None:
+    def _on_accessible_response(self, data: dict[str, Any] | None) -> None:
         t_addr = self._t_addr
         t_accessible = self._t_accessible
         t_accessible_extra = self._t_accessible_extra

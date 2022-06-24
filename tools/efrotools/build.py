@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, Callable
+    from typing import Callable
 
 
 class Lazybuild:
@@ -37,10 +37,10 @@ class Lazybuild:
                  target: str,
                  srcpaths: list[str],
                  command: str,
-                 dirfilter: Optional[Callable[[str, str], bool]] = None,
-                 filefilter: Optional[Callable[[str, str], bool]] = None,
-                 srcpaths_fullclean: Optional[list[str]] = None,
-                 command_fullclean: Optional[str] = None) -> None:
+                 dirfilter: Callable[[str, str], bool] | None = None,
+                 filefilter: Callable[[str, str], bool] | None = None,
+                 srcpaths_fullclean: list[str] | None = None,
+                 command_fullclean: str | None = None) -> None:
         self.target = target
         self.srcpaths = srcpaths
         self.command = command

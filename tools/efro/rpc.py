@@ -19,7 +19,7 @@ from efro.dataclassio import (dataclass_to_json, dataclass_from_json,
                               ioprepped, IOAttrs)
 
 if TYPE_CHECKING:
-    from typing import Literal, Awaitable, Callable, Optional
+    from typing import Literal, Awaitable, Callable
 
 # Terminology:
 # Packet: A chunk of data consisting of a type and some type-dependent
@@ -64,7 +64,7 @@ class _InFlightMessage:
     """Represents a message that is out on the wire."""
 
     def __init__(self) -> None:
-        self._response: Optional[bytes] = None
+        self._response: bytes | None = None
         self._got_response = asyncio.Event()
         self.wait_task = asyncio.create_task(self._wait())
 
@@ -134,7 +134,7 @@ class RPCEndpoint:
         self._out_packets: list[bytes] = []
         self._have_out_packets = asyncio.Event()
         self._run_called = False
-        self._peer_info: Optional[_PeerInfo] = None
+        self._peer_info: _PeerInfo | None = None
         self._keepalive_interval = keepalive_interval
         self._keepalive_timeout = keepalive_timeout
 
@@ -143,7 +143,7 @@ class RPCEndpoint:
         self._tasks: list[weakref.ref[asyncio.Task]] = []
 
         # When we last got a keepalive or equivalent (time.monotonic value)
-        self._last_keepalive_receive_time: Optional[float] = None
+        self._last_keepalive_receive_time: float | None = None
 
         # (Start near the end to make sure our looping logic is sound).
         self._next_message_id = 65530
@@ -201,7 +201,7 @@ class RPCEndpoint:
 
     async def send_message(self,
                            message: bytes,
-                           timeout: Optional[float] = None) -> bytes:
+                           timeout: float | None = None) -> bytes:
         """Send a message to the peer and return a response.
 
         If timeout is not provided, the default will be used.

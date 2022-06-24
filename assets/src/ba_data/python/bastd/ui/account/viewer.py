@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class AccountViewerWindow(popup.PopupWindow):
@@ -37,7 +37,7 @@ class AccountViewerWindow(popup.PopupWindow):
         self._width = 400
         self._height = (300 if uiscale is ba.UIScale.SMALL else
                         400 if uiscale is ba.UIScale.MEDIUM else 450)
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
 
         bg_color = (0.5, 0.4, 0.6)
 
@@ -169,7 +169,7 @@ class AccountViewerWindow(popup.PopupWindow):
         ba.open_url(_ba.get_master_server_address() + '/highscores?profile=' +
                     self._account_id)
 
-    def _on_query_response(self, data: Optional[dict[str, Any]]) -> None:
+    def _on_query_response(self, data: dict[str, Any] | None) -> None:
         # FIXME: Tidy this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches

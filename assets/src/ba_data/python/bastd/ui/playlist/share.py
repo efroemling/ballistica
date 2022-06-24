@@ -12,7 +12,7 @@ import ba
 from bastd.ui import promocode
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class SharePlaylistImportWindow(promocode.PromoCodeWindow):
@@ -26,7 +26,7 @@ class SharePlaylistImportWindow(promocode.PromoCodeWindow):
                                            origin_widget=origin_widget)
         self._on_success_callback = on_success_callback
 
-    def _on_import_response(self, response: Optional[dict[str, Any]]) -> None:
+    def _on_import_response(self, response: dict[str, Any] | None) -> None:
         if response is None:
             ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))

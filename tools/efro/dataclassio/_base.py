@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, get_args
 from typing import _AnnotatedAlias  # type: ignore
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Callable, Union
+    from typing import Any, Callable
 
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
@@ -31,8 +31,7 @@ def _raise_type_error(fieldpath: str, valuetype: type,
     if len(expected) == 1:
         expected_str = expected[0].__name__
     else:
-        names = ', '.join(t.__name__ for t in expected)
-        expected_str = f'Union[{names}]'
+        expected_str = ' | '.join(t.__name__ for t in expected)
     raise TypeError(f'Invalid value type for "{fieldpath}";'
                     f' expected "{expected_str}", got'
                     f' "{valuetype.__name__}".')
@@ -128,21 +127,21 @@ class IOAttrs:
 
     MISSING = _MissingType()
 
-    storagename: Optional[str] = None
+    storagename: str | None = None
     store_default: bool = True
     whole_days: bool = False
     whole_hours: bool = False
     soft_default: Any = MISSING
-    soft_default_factory: Union[Callable[[], Any], _MissingType] = MISSING
+    soft_default_factory: Callable[[], Any] | _MissingType = MISSING
 
     def __init__(
         self,
-        storagename: Optional[str] = storagename,
+        storagename: str | None = storagename,
         store_default: bool = store_default,
         whole_days: bool = whole_days,
         whole_hours: bool = whole_hours,
         soft_default: Any = MISSING,
-        soft_default_factory: Union[Callable[[], Any], _MissingType] = MISSING,
+        soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
     ):
 
         # Only store values that differ from class defaults to keep
@@ -216,12 +215,12 @@ def _get_origin(anntype: Any) -> Any:
     return anntype if origin is None else origin
 
 
-def _parse_annotated(anntype: Any) -> tuple[Any, Optional[IOAttrs]]:
+def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
     """Parse Annotated() constructs, returning annotated type & IOAttrs."""
     # If we get an Annotated[foo, bar, eep] we take
     # foo as the actual type, and we look for IOAttrs instances in
     # bar/eep to affect our behavior.
-    ioattrs: Optional[IOAttrs] = None
+    ioattrs: IOAttrs | None = None
     if isinstance(anntype, _AnnotatedAlias):
         annargs = get_args(anntype)
         for annarg in annargs[1:]:

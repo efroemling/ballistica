@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class PlayWindow(ba.Window):
@@ -37,7 +37,7 @@ class PlayWindow(ba.Window):
         height = 550
         button_width = 400
 
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -112,7 +112,7 @@ class PlayWindow(ba.Window):
             'playerLineup4Transparent')
         self._eyes_model = ba.getmodel('plasticEyesTransparent')
 
-        self._coop_button: Optional[ba.Widget] = None
+        self._coop_button: ba.Widget | None = None
 
         # Only show coop button in main-menu variant.
         if self._is_main_menu:

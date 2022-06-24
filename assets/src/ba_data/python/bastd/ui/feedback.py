@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
-def ask_for_rating() -> Optional[ba.Widget]:
+def ask_for_rating() -> ba.Widget | None:
     """(internal)"""
     app = ba.app
     platform = app.platform

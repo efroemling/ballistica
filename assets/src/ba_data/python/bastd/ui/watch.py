@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class WatchWindow(ba.Window):
@@ -24,13 +24,13 @@ class WatchWindow(ba.Window):
         TEST_TAB = 'test_tab'
 
     def __init__(self,
-                 transition: Optional[str] = 'in_right',
+                 transition: str | None = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         from bastd.ui.tabs import TabRow
         ba.set_analytics_screen('Watch Window')
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -40,20 +40,20 @@ class WatchWindow(ba.Window):
             scale_origin = None
         ba.app.ui.set_main_menu_location('Watch')
         self._tab_data: dict[str, Any] = {}
-        self._my_replays_scroll_width: Optional[float] = None
-        self._my_replays_watch_replay_button: Optional[ba.Widget] = None
-        self._scrollwidget: Optional[ba.Widget] = None
-        self._columnwidget: Optional[ba.Widget] = None
-        self._my_replay_selected: Optional[str] = None
-        self._my_replays_rename_window: Optional[ba.Widget] = None
-        self._my_replay_rename_text: Optional[ba.Widget] = None
+        self._my_replays_scroll_width: float | None = None
+        self._my_replays_watch_replay_button: ba.Widget | None = None
+        self._scrollwidget: ba.Widget | None = None
+        self._columnwidget: ba.Widget | None = None
+        self._my_replay_selected: str | None = None
+        self._my_replays_rename_window: ba.Widget | None = None
+        self._my_replay_rename_text: ba.Widget | None = None
         self._r = 'watchWindow'
         uiscale = ba.app.ui.uiscale
         self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (578 if uiscale is ba.UIScale.SMALL else
                         670 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[WatchWindow.TabID] = None
+        self._current_tab: WatchWindow.TabID | None = None
         extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
@@ -137,7 +137,7 @@ class WatchWindow(ba.Window):
                              self._scroll_height + 2 * buffer_v),
                        texture=ba.gettexture('scrollWidget'),
                        model_transparent=ba.getmodel('softEdgeOutside'))
-        self._tab_container: Optional[ba.Widget] = None
+        self._tab_container: ba.Widget | None = None
 
         self._restore_state()
 
@@ -503,7 +503,7 @@ class WatchWindow(ba.Window):
     def _restore_state(self) -> None:
         from efro.util import enum_by_value
         try:
-            sel: Optional[ba.Widget]
+            sel: ba.Widget | None
             sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))

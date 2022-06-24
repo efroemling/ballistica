@@ -18,7 +18,7 @@ from efro.dataclassio._inputter import _Inputter
 from efro.dataclassio._base import Codec
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 T = TypeVar('T')
 
@@ -69,7 +69,7 @@ def dataclass_to_dict(obj: Any,
 def dataclass_to_json(obj: Any,
                       coerce_to_float: bool = True,
                       pretty: bool = False,
-                      sort_keys: Optional[bool] = None) -> str:
+                      sort_keys: bool | None = None) -> str:
     """Utility function; return a json string from a dataclass instance.
 
     Basically json.dumps(dataclass_to_dict(...)).

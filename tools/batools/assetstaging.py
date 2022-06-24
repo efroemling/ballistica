@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from efrotools import PYVER
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 # Suffix for the pyc files we include in stagings.
 # We're using deterministic opt pyc files; see PEP 552.
@@ -32,11 +32,11 @@ class Config:
         self.projroot = projroot
         # We always calc src relative to this script.
         self.src = self.projroot + '/assets/build'
-        self.dst: Optional[str] = None
-        self.serverdst: Optional[str] = None
-        self.win_extras_src: Optional[str] = None
-        self.win_platform: Optional[str] = None
-        self.win_type: Optional[str] = None
+        self.dst: str | None = None
+        self.serverdst: str | None = None
+        self.win_extras_src: str | None = None
+        self.win_platform: str | None = None
+        self.win_type: str | None = None
         self.include_audio = True
         self.include_models = True
         self.include_collide_models = True
@@ -46,11 +46,11 @@ class Config:
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
-        self.pylib_src_name: Optional[str] = None
+        self.pylib_src_name: str | None = None
         self.include_payload_file = False
-        self.tex_suffix: Optional[str] = None
+        self.tex_suffix: str | None = None
         self.is_payload_full = False
-        self.debug: Optional[bool] = None
+        self.debug: bool | None = None
 
     def _parse_android_args(self, args: list[str]) -> None:
         # On Android we get nitpicky with what
@@ -470,7 +470,7 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
         raise RuntimeError(f"Unknown server file for staging: '{basename}'.")
 
 
-def main(projroot: str, args: Optional[list[str]] = None) -> None:
+def main(projroot: str, args: list[str] | None = None) -> None:
     """Stage assets for a build."""
 
     if args is None:

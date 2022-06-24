@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    pass
 
 
 class AllSettingsWindow(ba.Window):
@@ -28,7 +28,7 @@ class AllSettingsWindow(ba.Window):
         threading.Thread(target=self._preload_modules).start()
 
         ba.set_analytics_screen('Settings Window')
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -98,7 +98,7 @@ class AllSettingsWindow(ba.Window):
         x_offs5 = x_offs3
 
         def _b_title(x: float, y: float, button: ba.Widget,
-                     text: Union[str, ba.Lstr]) -> None:
+                     text: str | ba.Lstr) -> None:
             ba.textwidget(parent=self._root_widget,
                           text=text,
                           position=(x + basew * 0.47, y + baseh * 0.22),
@@ -265,7 +265,7 @@ class AllSettingsWindow(ba.Window):
         try:
             sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
-            sel: Optional[ba.Widget]
+            sel: ba.Widget | None
             if sel_name == 'Controllers':
                 sel = self._controllers_button
             elif sel_name == 'Graphics':

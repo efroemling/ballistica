@@ -21,7 +21,7 @@ from efrotools import get_files_hash
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import Sequence, Any, Optional
+    from typing import Sequence, Any
     from batools.docs import AttributeInfo
 
 
@@ -179,24 +179,21 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
             elif returns == 'ba.Lstr':
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              "return ba.Lstr(value='')")
-            elif returns in ('ba.Activity', 'Optional[ba.Activity]',
-                             'ba.Activity | None'):
+            elif returns in {'ba.Activity', 'ba.Activity | None'}:
                 returnstr = (
                     'import ba  # pylint: disable=cyclic-import\nreturn ' +
                     'ba.Activity(settings={})')
-            elif returns in ('ba.Session', 'Optional[ba.Session]',
-                             'ba.Session | None'):
+            elif returns in {'ba.Session', 'ba.Session | None'}:
                 returnstr = (
                     'import ba  # pylint: disable=cyclic-import\nreturn ' +
                     'ba.Session([])')
-            elif returns in ('Optional[ba.SessionPlayer]',
-                             'ba.SessionPlayer | None'):
+            elif returns == 'ba.SessionPlayer | None':
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              'return ba.SessionPlayer()')
-            elif returns in ('Optional[ba.Player]', 'ba.Player | None'):
+            elif returns == 'ba.Player | None':
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              'return ba.Player()')
-            elif returns.startswith('ba.'):
+            elif returns.startswith('ba.') and ' | None' not in returns:
 
                 # We cant import ba at module level so let's
                 # do it within funcs as needed.
@@ -208,21 +205,20 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 # (could use the equivalent _ba class perhaps)
                 # sig = sig.split('->')[0]
 
-            elif returns in ['object', 'Any']:
+            elif returns in {'object', 'Any'}:
 
                 # We use 'object' when we mean "can vary"
                 # don't want pylint making assumptions in this case.
                 returnstr = 'return _uninferrable()'
             elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
-            elif returns in ('Optional[str]', 'str | None'):
+            elif returns == 'str | None':
                 returnstr = "return ''"
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
-            elif returns in ('Optional[ba.Widget]', 'ba.Widget | None'):
+            elif returns == 'ba.Widget | None':
                 returnstr = 'return Widget()'
-            elif returns in ('Optional[ba.InputDevice]',
-                             'ba.InputDevice | None'):
+            elif returns == 'ba.InputDevice | None':
                 returnstr = 'return InputDevice()'
             elif returns == 'list[ba.Widget]':
                 returnstr = 'return [Widget()]'
@@ -230,19 +226,18 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'list[str]':
                 returnstr = "return ['blah', 'blah2']"
-            elif returns == 'Union[float, int]':
+            elif returns == 'float | int':
                 returnstr = 'return 0.0'
             elif returns == 'dict[str, Any]':
                 returnstr = "return {'foo': 'bar'}"
-            elif returns in ('Optional[tuple[int, int]]',
-                             'tuple[int, int] | None', 'tuple[int, int]'):
+            elif returns in {'tuple[int, int] | None', 'tuple[int, int]'}:
                 returnstr = 'return (0, 0)'
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
-            elif returns in [
+            elif returns in {
                     'session.Session', 'team.Team', '_app.App',
                     'appconfig.AppConfig'
-            ]:
+            }:
                 returnstr = ('from ba import ' + returns.split('.')[0] +
                              '; return ' + returns + '()')
             elif returns in [
@@ -358,9 +353,9 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
-            "    text: Union[ba.Lstr, str] = ''\n"
-            '    texture: Optional[ba.Texture] = None\n'
-            '    tint_texture: Optional[ba.Texture] = None\n'
+            "    text: ba.Lstr | str = ''\n"
+            '    texture: ba.Texture | None = None\n'
+            '    tint_texture: ba.Texture | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'
             '    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)\n'
             '    offset: float = 0.0\n'
@@ -369,7 +364,7 @@ def _special_class_cases(classname: str) -> str:
             '    input2: float = 0.0\n'
             '    input3: float = 0.0\n'
             '    flashing: bool = False\n'
-            '    scale: Union[float, Sequence[float]] = 0.0\n'  # FIXME
+            '    scale: float | Sequence[float] = 0.0\n'  # FIXME
             '    opacity: float = 0.0\n'
             '    loop: bool = False\n'
             '    time1: int = 0\n'
@@ -383,13 +378,13 @@ def _special_class_cases(classname: str) -> str:
             '    pickup_materials: Sequence[ba.Material] = ()\n'
             '    extras_material: Sequence[ba.Material] = ()\n'
             '    rotate: float = 0.0\n'
-            '    hold_node: Optional[ba.Node] = None\n'
+            '    hold_node: ba.Node | None = None\n'
             '    hold_body: int = 0\n'
             '    host_only: bool = False\n'
             '    premultiplied: bool = False\n'
-            '    source_player: Optional[ba.Player] = None\n'
-            '    model_opaque: Optional[ba.Model] = None\n'
-            '    model_transparent: Optional[ba.Model] = None\n'
+            '    source_player: ba.Player | None = None\n'
+            '    model_opaque: ba.Model | None = None\n'
+            '    model_transparent: ba.Model | None = None\n'
             '    damage_smoothed: float = 0.0\n'
             '    gravity_scale: float = 1.0\n'
             '    punch_power: float = 0.0\n'
@@ -420,13 +415,13 @@ def _special_class_cases(classname: str) -> str:
             '    music_count: int = 0\n'
             '    hurt: float = 0.0\n'
             '    always_show_health_bar: bool = False\n'
-            '    mini_billboard_1_texture: Optional[ba.Texture] = None\n'
+            '    mini_billboard_1_texture: ba.Texture | None = None\n'
             '    mini_billboard_1_start_time: int = 0\n'
             '    mini_billboard_1_end_time: int = 0\n'
-            '    mini_billboard_2_texture: Optional[ba.Texture] = None\n'
+            '    mini_billboard_2_texture: ba.Texture | None = None\n'
             '    mini_billboard_2_start_time: int = 0\n'
             '    mini_billboard_2_end_time: int = 0\n'
-            '    mini_billboard_3_texture: Optional[ba.Texture] = None\n'
+            '    mini_billboard_3_texture: ba.Texture | None = None\n'
             '    mini_billboard_3_start_time: int = 0\n'
             '    mini_billboard_3_end_time: int = 0\n'
             '    boxing_gloves_flashing: bool = False\n'
@@ -447,9 +442,9 @@ def _special_class_cases(classname: str) -> str:
             ' = (-1, -1, -1, 1, 1, 1)\n'
             '    shadow_range: Sequence[float] = (0, 0, 0, 0)\n'
             "    counter_text: str = ''\n"
-            '    counter_texture: Optional[ba.Texture] = None\n'
+            '    counter_texture: ba.Texture | None = None\n'
             '    shattered: int = 0\n'
-            '    billboard_texture: Optional[ba.Texture] = None\n'
+            '    billboard_texture: ba.Texture | None = None\n'
             '    billboard_cross_out: bool = False\n'
             '    billboard_opacity: float = 0.0\n'
             '    slow_motion: bool = False\n'
@@ -476,7 +471,7 @@ def _special_class_cases(classname: str) -> str:
     return out
 
 
-def _filterdoc(docstr: str, funcname: Optional[str] = None) -> str:
+def _filterdoc(docstr: str, funcname: str | None = None) -> str:
     docslines = docstr.splitlines()
 
     if (funcname and docslines and docslines[0]
@@ -489,8 +484,8 @@ def _filterdoc(docstr: str, funcname: Optional[str] = None) -> str:
     # Assuming that each line between 'Attributes:' and '\n\n' belongs to
     # attrs descriptions.
     empty_lines_count = 0
-    attributes_line: Optional[int] = None
-    attrs_definitions_last_line: Optional[int] = None
+    attributes_line: int | None = None
+    attrs_definitions_last_line: int | None = None
     for i, line in enumerate(docslines):
         if line.strip() in ['Attrs:', 'Attributes:']:
             if attributes_line is not None:
@@ -681,7 +676,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
            'from ba._generated.enums import TimeFormat, TimeType\n'
            '\n'
            'if TYPE_CHECKING:\n'
-           '    from typing import Any, Callable, Optional, Union, Literal\n'
+           '    from typing import Any, Callable, Literal\n'
            '    from ba._app import App\n'
            '    import ba\n'
            '\n'

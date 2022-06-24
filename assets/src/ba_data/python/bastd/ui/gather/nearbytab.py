@@ -12,7 +12,7 @@ import _ba
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     from bastd.ui.gather import GatherWindow
 
 
@@ -30,7 +30,7 @@ class NetScanner:
                                              left_border=10)
         ba.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
-        self._last_selected_host: Optional[dict[str, Any]] = None
+        self._last_selected_host: dict[str, Any] | None = None
 
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self.update),
@@ -93,8 +93,8 @@ class NearbyGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
-        self._net_scanner: Optional[NetScanner] = None
-        self._container: Optional[ba.Widget] = None
+        self._net_scanner: NetScanner | None = None
+        self._container: ba.Widget | None = None
 
     def on_activate(
         self,

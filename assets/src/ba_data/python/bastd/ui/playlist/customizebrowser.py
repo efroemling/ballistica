@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class PlaylistCustomizeBrowserWindow(ba.Window):
@@ -28,7 +28,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui import playlist
-        scale_origin: Optional[tuple[float, float]]
+        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
             scale_origin = origin_widget.get_screen_space_center()
@@ -234,8 +234,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         if self._config_name_full not in ba.app.config:
             ba.app.config[self._config_name_full] = {}
 
-        self._selected_playlist_name: Optional[str] = None
-        self._selected_playlist_index: Optional[int] = None
+        self._selected_playlist_name: str | None = None
+        self._selected_playlist_index: int | None = None
         self._playlist_widgets: list[ba.Widget] = []
 
         self._refresh(select_playlist=select_playlist)
@@ -539,7 +539,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             return
         if self._selected_playlist_name is None:
             return
-        plst: Optional[list[dict[str, Any]]]
+        plst: list[dict[str, Any]] | None
         if self._selected_playlist_name == '__default__':
             plst = self._pvars.get_default_list_call()
         else:

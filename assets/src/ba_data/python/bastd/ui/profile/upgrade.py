@@ -12,7 +12,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
     from bastd.ui.profile.edit import EditProfileWindow
 
 
@@ -30,7 +30,7 @@ class ProfileUpgradeWindow(ba.Window):
         uiscale = ba.app.ui.uiscale
         self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
                             1.5 if uiscale is ba.UIScale.MEDIUM else 1.2)
-        self._upgrade_start_time: Optional[float] = None
+        self._upgrade_start_time: float | None = None
         self._name = edit_profile_window.getname()
         self._edit_profile_window = weakref.ref(edit_profile_window)
 
@@ -106,7 +106,7 @@ class ProfileUpgradeWindow(ba.Window):
                                          h_align='center',
                                          v_align='center')
 
-        self._tickets_text: Optional[ba.Widget]
+        self._tickets_text: ba.Widget | None
         if not ba.app.ui.use_toolbars:
             self._tickets_text = ba.textwidget(
                 parent=self._root_widget,
@@ -128,14 +128,14 @@ class ProfileUpgradeWindow(ba.Window):
                           callback=ba.WeakCall(self._profile_check_result))
         self._cost = _ba.get_v1_account_misc_read_val('price.global_profile',
                                                       500)
-        self._status: Optional[str] = 'waiting'
+        self._status: str | None = 'waiting'
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       timetype=ba.TimeType.REAL,
                                       repeat=True)
         self._update()
 
-    def _profile_check_result(self, result: Optional[dict[str, Any]]) -> None:
+    def _profile_check_result(self, result: dict[str, Any] | None) -> None:
         if result is None:
             ba.textwidget(
                 edit=self._status_text,
