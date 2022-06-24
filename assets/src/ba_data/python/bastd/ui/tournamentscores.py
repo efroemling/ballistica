@@ -11,7 +11,7 @@ import ba
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Callable, Optional
+    from typing import Any, Sequence, Callable
 
 
 class TournamentScoresWindow(popup_ui.PopupWindow):
@@ -33,7 +33,7 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
         del tint2_color  # unused arg
         del selected_character  # unused arg
         self._tournament_id = tournament_id
-        self._subcontainer: Optional[ba.Widget] = None
+        self._subcontainer: ba.Widget | None = None
         self._on_close_call = on_close_call
         uiscale = ba.app.ui.uiscale
         if scale is None:
@@ -107,8 +107,8 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
                              callback=ba.WeakCall(
                                  self._on_tournament_query_response))
 
-    def _on_tournament_query_response(self, data: Optional[dict[str,
-                                                                Any]]) -> None:
+    def _on_tournament_query_response(self,
+                                      data: dict[str, Any] | None) -> None:
         if data is not None:
             # this used to be the whole payload
             data_t: list[dict[str, Any]] = data['t']

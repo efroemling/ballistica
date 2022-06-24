@@ -16,14 +16,14 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
     def __init__(self) -> None:
-        self.chosen_light: Optional[ba.NodeActor] = None
+        self.chosen_light: ba.NodeActor | None = None
 
 
 class Team(ba.Team[Player]):
@@ -87,7 +87,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._chosen_one_player: Optional[Player] = None
+        self._chosen_one_player: Player | None = None
         self._swipsound = ba.getsound('swip')
         self._countdownsounds: dict[int, ba.Sound] = {
             10: ba.getsound('announceTen'),
@@ -101,10 +101,10 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             2: ba.getsound('announceTwo'),
             1: ba.getsound('announceOne')
         }
-        self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self._reset_region_material: Optional[ba.Material] = None
-        self._flag: Optional[Flag] = None
-        self._reset_region: Optional[ba.Node] = None
+        self._flag_spawn_pos: Sequence[float] | None = None
+        self._reset_region_material: ba.Material | None = None
+        self._flag: Flag | None = None
+        self._reset_region: ba.Node | None = None
         self._epic_mode = bool(settings['Epic Mode'])
         self._chosen_one_time = int(settings['Chosen One Time'])
         self._time_limit = float(settings['Time Limit'])
@@ -116,7 +116,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC
                               if self._epic_mode else ba.MusicType.CHOSEN_ONE)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'There can be only one.'
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:
@@ -165,7 +165,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                                             'materials': [mat]
                                         })
 
-    def _get_chosen_one_player(self) -> Optional[Player]:
+    def _get_chosen_one_player(self) -> Player | None:
         # Should never return invalid references; return None in that case.
         if self._chosen_one_player:
             return self._chosen_one_player
@@ -251,7 +251,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                                    self._chosen_one_time - team.time_remaining)
         self.end(results=results, announce_delay=0)
 
-    def _set_chosen_one_player(self, player: Optional[Player]) -> None:
+    def _set_chosen_one_player(self, player: Player | None) -> None:
         existing = self._get_chosen_one_player()
         if existing:
             existing.chosen_light = None

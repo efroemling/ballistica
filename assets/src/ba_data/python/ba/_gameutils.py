@@ -12,7 +12,7 @@ from ba._generated.enums import TimeType, TimeFormat, SpecialChar, UIScale
 from ba._error import ActivityNotFoundError
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional
+    from typing import Sequence
     import ba
 
 TROPHY_CHARS = {
@@ -32,8 +32,8 @@ class GameTip:
     Category: **Gameplay Classes**
     """
     text: str
-    icon: Optional[ba.Texture] = None
-    sound: Optional[ba.Sound] = None
+    icon: ba.Texture | None = None
+    sound: ba.Sound | None = None
 
 
 def get_trophy_string(trophy_id: str) -> str:

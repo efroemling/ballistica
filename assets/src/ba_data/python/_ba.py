@@ -675,7 +675,7 @@ class Node:
     @overload
     def getdelegate(self,
                     type: type[_T],
-                    doraise: Literal[False] = False) -> Optional[_T]:
+                    doraise: Literal[False] = False) -> _T | None:
         ...
 
     @overload
@@ -1604,7 +1604,7 @@ def get_chat_messages() -> list[str]:
     return ['blah', 'blah2']
 
 
-def get_client_public_device_uuid(client_id: int) -> Optional[str]:
+def get_client_public_device_uuid(client_id: int) -> str | None:
     """(internal)
 
     Category: General Utility Functions
@@ -1941,11 +1941,11 @@ def getactivity(doraise: Literal[True] = True) -> ba.Activity:
 
 
 @overload
-def getactivity(doraise: Literal[False]) -> Optional[ba.Activity]:
+def getactivity(doraise: Literal[False]) -> ba.Activity | None:
     ...
 
 
-def getactivity(doraise: bool = True) -> Optional[ba.Activity]:
+def getactivity(doraise: bool = True) -> ba.Activity | None:
     """Return the current ba.Activity instance.
 
     Category: **Gameplay Functions**
@@ -2000,7 +2000,7 @@ def getinputdevice(name: str,
 
 @overload
 def getinputdevice(name: str, unique_id: str,
-                   doraise: Literal[False]) -> Optional[ba.InputDevice]:
+                   doraise: Literal[False]) -> ba.InputDevice | None:
     ...
 
 
@@ -2048,11 +2048,11 @@ def getsession(doraise: Literal[True] = True) -> ba.Session:
 
 
 @overload
-def getsession(doraise: Literal[False]) -> Optional[ba.Session]:
+def getsession(doraise: Literal[False]) -> ba.Session | None:
     ...
 
 
-def getsession(doraise: bool = True) -> Optional[ba.Session]:
+def getsession(doraise: bool = True) -> ba.Session | None:
     """Category: **Gameplay Functions**
 
     Returns the current ba.Session instance.
@@ -2871,7 +2871,7 @@ def set_public_party_name(name: str) -> None:
     return None
 
 
-def set_public_party_stats_url(url: Optional[str]) -> None:
+def set_public_party_stats_url(url: str | None) -> None:
     """(internal)"""
     return None
 

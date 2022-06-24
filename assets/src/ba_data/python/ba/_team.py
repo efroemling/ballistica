@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeVar, Generic
 from ba._error import print_exception
 
 if TYPE_CHECKING:
-    from typing import Sequence, Union, Optional
+    from typing import Sequence
     import ba
 
 
@@ -26,7 +26,7 @@ class SessionTeam:
 
     # Annotate our attr types at the class level so they're introspectable.
 
-    name: Union[ba.Lstr, str]
+    name: ba.Lstr | str
     """The team's name."""
 
     color: tuple[float, ...]  # FIXME: can't we make this fixed len?
@@ -46,7 +46,7 @@ class SessionTeam:
 
     def __init__(self,
                  team_id: int = 0,
-                 name: Union[ba.Lstr, str] = '',
+                 name: ba.Lstr | str = '',
                  color: Sequence[float] = (1.0, 1.0, 1.0)):
         """Instantiate a ba.SessionTeam.
 
@@ -59,7 +59,7 @@ class SessionTeam:
         self.color = tuple(color)
         self.players = []
         self.customdata = {}
-        self.activityteam: Optional[Team] = None
+        self.activityteam: Team | None = None
 
     def leave(self) -> None:
         """(internal)"""
@@ -84,7 +84,7 @@ class Team(Generic[PlayerType]):
     # that types are introspectable (these are still instance attrs).
     players: list[PlayerType]
     id: int
-    name: Union[ba.Lstr, str]
+    name: ba.Lstr | str
     color: tuple[float, ...]  # FIXME: can't we make this fixed length?
     _sessionteam: weakref.ref[SessionTeam]
     _expired: bool
@@ -120,7 +120,7 @@ class Team(Generic[PlayerType]):
         self._expired = False
         self._postinited = True
 
-    def manual_init(self, team_id: int, name: Union[ba.Lstr, str],
+    def manual_init(self, team_id: int, name: ba.Lstr | str,
                     color: tuple[float, ...]) -> None:
         """Manually init a team for uses such as bots."""
         self.id = team_id

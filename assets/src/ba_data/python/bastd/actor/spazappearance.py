@@ -9,7 +9,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def get_appearances(include_locked: bool = False) -> list[str]:
@@ -111,8 +111,8 @@ class Appearance:
         self.pickup_sounds: list[str] = []
         self.fall_sounds: list[str] = []
         self.style = 'spaz'
-        self.default_color: Optional[tuple[float, float, float]] = None
-        self.default_highlight: Optional[tuple[float, float, float]] = None
+        self.default_color: tuple[float, float, float] | None = None
+        self.default_highlight: tuple[float, float, float] | None = None
 
 
 def register_appearances() -> None:

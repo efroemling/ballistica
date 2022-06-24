@@ -9,7 +9,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Callable, Optional
+    from typing import Any, Sequence, Callable
 
 
 class StoreButton:
@@ -46,8 +46,8 @@ class StoreButton:
             color=color,
             button_type=button_type)
 
-        self._title_text: Optional[ba.Widget]
-        self._ticket_text: Optional[ba.Widget]
+        self._title_text: ba.Widget | None
+        self._ticket_text: ba.Widget | None
 
         if show_tickets:
             self._title_text = ba.textwidget(

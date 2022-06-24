@@ -12,7 +12,7 @@ import ba
 from bastd.ui import popup
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional, Any
+    from typing import Sequence, Any
 
 
 class PartyWindow(ba.Window):
@@ -24,9 +24,9 @@ class PartyWindow(ba.Window):
     def __init__(self, origin: Sequence[float] = (0, 0)):
         _ba.set_party_window_open(True)
         self._r = 'partyWindow'
-        self._popup_type: Optional[str] = None
-        self._popup_party_member_client_id: Optional[int] = None
-        self._popup_party_member_is_host: Optional[bool] = None
+        self._popup_type: str | None = None
+        self._popup_party_member_client_id: int | None = None
+        self._popup_party_member_is_host: bool | None = None
         self._width = 500
         uiscale = ba.app.ui.uiscale
         self._height = (365 if uiscale is ba.UIScale.SMALL else
@@ -153,7 +153,7 @@ class PartyWindow(ba.Window):
                               on_activate_call=self._send_chat_message)
         ba.textwidget(edit=txt, on_return_press_call=btn.activate)
         self._name_widgets: list[ba.Widget] = []
-        self._roster: Optional[list[dict[str, Any]]] = None
+        self._roster: list[dict[str, Any]] | None = None
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       repeat=True,

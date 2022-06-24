@@ -10,7 +10,7 @@ import ba
 from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -236,7 +236,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                             transtime2: ts_h_offs + (xval - slide_amt) * scale
                         }))
 
-                def _safesetattr(node: Optional[ba.Node], attr: str,
+                def _safesetattr(node: ba.Node | None, attr: str,
                                  value: Any) -> None:
                     if node:
                         setattr(node, attr, value)
@@ -259,7 +259,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                                     self._score_display_sound_small))
             v_offs -= spacing
 
-    def _safe_animate(self, node: Optional[ba.Node], attr: str,
+    def _safe_animate(self, node: ba.Node | None, attr: str,
                       keys: dict[float, float]) -> None:
         """Run an animation on a node if the node still exists."""
         if node:

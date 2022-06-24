@@ -11,7 +11,7 @@ from bastd.actor.text import Text
 from bastd.actor.image import Image
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    pass
 
 
 class MultiTeamScoreScreenActivity(ScoreScreenActivity):
@@ -52,7 +52,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
     def show_player_scores(self,
                            delay: float = 2.5,
-                           results: Optional[ba.GameResults] = None,
+                           results: ba.GameResults | None = None,
                            scale: float = 1.0,
                            x_offset: float = 0.0,
                            y_offset: float = 0.0) -> None:
@@ -67,7 +67,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
         is_free_for_all = isinstance(self.session, ba.FreeForAllSession)
 
-        def _get_prec_score(p_rec: ba.PlayerRecord) -> Optional[int]:
+        def _get_prec_score(p_rec: ba.PlayerRecord) -> int | None:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.GameResults)
                 assert p_rec.team.activityteam is not None
@@ -75,7 +75,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                 return val
             return p_rec.accumscore
 
-        def _get_prec_score_str(p_rec: ba.PlayerRecord) -> Union[str, ba.Lstr]:
+        def _get_prec_score_str(p_rec: ba.PlayerRecord) -> str | ba.Lstr:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.GameResults)
                 assert p_rec.team.activityteam is not None
@@ -96,7 +96,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
             # noinspection PyUnresolvedReferences
             def _get_player_score_set_entry(
-                    player: ba.SessionPlayer) -> Optional[ba.PlayerRecord]:
+                    player: ba.SessionPlayer) -> ba.PlayerRecord | None:
                 for p_rec in valid_players:
                     if p_rec[1].player is player:
                         return p_rec[1]
@@ -129,7 +129,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                  text: ba.Lstr,
                  h_align: Text.HAlign = Text.HAlign.RIGHT,
                  extrascale: float = 1.0,
-                 maxwidth: Optional[float] = 120.0) -> None:
+                 maxwidth: float | None = 120.0) -> None:
             Text(text,
                  color=(0.5, 0.5, 0.6, 0.5),
                  position=(ts_h_offs + xoffs * scale,
@@ -169,7 +169,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             topkillcount = max(topkillcount, prec.accum_kill_count)
             topkilledcount = min(topkilledcount, prec.accum_killed_count)
 
-        def _scoretxt(text: Union[str, ba.Lstr],
+        def _scoretxt(text: str | ba.Lstr,
                       x_offs: float,
                       highlight: bool,
                       delay2: float,

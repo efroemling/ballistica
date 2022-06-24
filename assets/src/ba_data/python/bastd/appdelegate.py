@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class AppDelegate(ba.AppDelegate):
@@ -16,8 +16,8 @@ class AppDelegate(ba.AppDelegate):
 
     def create_default_game_settings_ui(
             self, gameclass: type[ba.GameActivity],
-            sessiontype: type[ba.Session], settings: Optional[dict],
-            completion_call: Callable[[Optional[dict]], Any]) -> None:
+            sessiontype: type[ba.Session], settings: dict | None,
+            completion_call: Callable[[dict | None], Any]) -> None:
         """(internal)"""
 
         # Replace the main window once we come up successfully.

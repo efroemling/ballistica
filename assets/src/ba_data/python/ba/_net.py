@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Callable, Optional
+    from typing import Any, Callable
     import socket
-    MasterServerCallback = Callable[[Union[None, dict[str, Any]]], None]
+    MasterServerCallback = Callable[[None | dict[str, Any]], None]
 
 # Timeout for standard functions talking to the master-server/etc.
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
@@ -72,8 +72,8 @@ class MasterServerCallThread(threading.Thread):
     """Thread to communicate with the master-server."""
 
     def __init__(self, request: str, request_type: str,
-                 data: Optional[dict[str, Any]],
-                 callback: Optional[MasterServerCallback],
+                 data: dict[str, Any] | None,
+                 callback: MasterServerCallback | None,
                  response_type: MasterServerResponseType):
         super().__init__()
         self._request = request
@@ -82,7 +82,7 @@ class MasterServerCallThread(threading.Thread):
             raise TypeError(f'Invalid response type: {response_type}')
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
-        self._callback: Optional[MasterServerCallback] = callback
+        self._callback: MasterServerCallback | None = callback
         self._context = _ba.Context('current')
 
         # Save and restore the context we were created from.
@@ -90,7 +90,7 @@ class MasterServerCallThread(threading.Thread):
         self._activity = weakref.ref(
             activity) if activity is not None else None
 
-    def _run_callback(self, arg: Union[None, dict[str, Any]]) -> None:
+    def _run_callback(self, arg: None | dict[str, Any]) -> None:
         # If we were created in an activity context and that activity has
         # since died, do nothing.
         # FIXME: Should we just be using a ContextCall instead of doing
@@ -182,7 +182,7 @@ class MasterServerCallThread(threading.Thread):
 def master_server_get(
     request: str,
     data: dict[str, Any],
-    callback: Optional[MasterServerCallback] = None,
+    callback: MasterServerCallback | None = None,
     response_type: MasterServerResponseType = MasterServerResponseType.JSON
 ) -> None:
     """Make a call to the master server via a http GET."""
@@ -193,7 +193,7 @@ def master_server_get(
 def master_server_post(
     request: str,
     data: dict[str, Any],
-    callback: Optional[MasterServerCallback] = None,
+    callback: MasterServerCallback | None = None,
     response_type: MasterServerResponseType = MasterServerResponseType.JSON
 ) -> None:
     """Make a call to the master server via a http POST."""

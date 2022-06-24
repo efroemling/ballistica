@@ -12,7 +12,7 @@ from ba._language import Lstr
 from ba._player import Player
 
 if TYPE_CHECKING:
-    from typing import Sequence, Any, Optional
+    from typing import Sequence, Any
     import ba
 
 
@@ -134,7 +134,7 @@ class Session:
         self._sessiondata = _ba.register_session(self)
 
         # Should remove this if possible.
-        self.tournament_id: Optional[str] = None
+        self.tournament_id: str | None = None
 
         self.sessionteams = []
         self.sessionplayers = []
@@ -144,16 +144,16 @@ class Session:
         self.customdata = {}
         self._in_set_activity = False
         self._next_team_id = 0
-        self._activity_retained: Optional[ba.Activity] = None
-        self._launch_end_session_activity_time: Optional[float] = None
-        self._activity_end_timer: Optional[ba.Timer] = None
+        self._activity_retained: ba.Activity | None = None
+        self._launch_end_session_activity_time: float | None = None
+        self._activity_end_timer: ba.Timer | None = None
         self._activity_weak = empty_weakref(Activity)
-        self._next_activity: Optional[ba.Activity] = None
+        self._next_activity: ba.Activity | None = None
         self._wants_to_end = False
         self._ending = False
         self._activity_should_end_immediately = False
-        self._activity_should_end_immediately_results: (
-            Optional[ba.GameResults]) = None
+        self._activity_should_end_immediately_results: (ba.GameResults
+                                                        | None) = None
         self._activity_should_end_immediately_delay = 0.0
 
         # Create static teams if we're using them.
@@ -285,7 +285,7 @@ class Session:
         self.sessionplayers.remove(sessionplayer)
 
     def _remove_player_team(self, sessionteam: ba.SessionTeam,
-                            activity: Optional[ba.Activity]) -> None:
+                            activity: ba.Activity | None) -> None:
         """Remove the player-specific team in non-teams mode."""
 
         # They should have been the only one on their team.
@@ -481,7 +481,7 @@ class Session:
                           timetype=TimeType.REAL)
         self._in_set_activity = False
 
-    def getactivity(self) -> Optional[ba.Activity]:
+    def getactivity(self) -> ba.Activity | None:
         """Return the current foreground activity for this session."""
         return self._activity_weak()
 

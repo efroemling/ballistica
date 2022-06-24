@@ -20,15 +20,15 @@ from bastd.actor.respawnicon import RespawnIcon
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
     def __init__(self) -> None:
-        self.respawn_timer: Optional[ba.Timer] = None
-        self.respawn_icon: Optional[RespawnIcon] = None
+        self.respawn_timer: ba.Timer | None = None
+        self.respawn_icon: RespawnIcon | None = None
 
 
 class Team(ba.Team[Player]):
@@ -76,9 +76,9 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
             conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect', self._on_egg_player_collide), ))
         self._eggs: list[Egg] = []
-        self._update_timer: Optional[ba.Timer] = None
-        self._countdown: Optional[OnScreenCountdown] = None
-        self._bots: Optional[SpazBotSet] = None
+        self._update_timer: ba.Timer | None = None
+        self._countdown: OnScreenCountdown | None = None
+        self._bots: SpazBotSet | None = None
 
         # Base class overrides
         self.default_music = ba.MusicType.FORWARD_MARCH

@@ -12,14 +12,14 @@ from efro.util import asserttype
 from ba._team import Team, SessionTeam
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional
+    from typing import Sequence
     import ba
 
 
 @dataclass
 class WinnerGroup:
     """Entry for a winning team or teams calculated by game-results."""
-    score: Optional[int]
+    score: int | None
     teams: Sequence[ba.SessionTeam]
 
 
@@ -36,13 +36,13 @@ class GameResults:
     def __init__(self) -> None:
         self._game_set = False
         self._scores: dict[int, tuple[weakref.ref[ba.SessionTeam],
-                                      Optional[int]]] = {}
-        self._sessionteams: Optional[list[weakref.ref[ba.SessionTeam]]] = None
-        self._playerinfos: Optional[list[ba.PlayerInfo]] = None
-        self._lower_is_better: Optional[bool] = None
-        self._score_label: Optional[str] = None
-        self._none_is_winner: Optional[bool] = None
-        self._scoretype: Optional[ba.ScoreType] = None
+                                      int | None]] = {}
+        self._sessionteams: list[weakref.ref[ba.SessionTeam]] | None = None
+        self._playerinfos: list[ba.PlayerInfo] | None = None
+        self._lower_is_better: bool | None = None
+        self._score_label: str | None = None
+        self._none_is_winner: bool | None = None
+        self._scoretype: ba.ScoreType | None = None
 
     def set_game(self, game: ba.GameActivity) -> None:
         """Set the game instance these results are applying to."""
@@ -59,7 +59,7 @@ class GameResults:
         self._none_is_winner = scoreconfig.none_is_winner
         self._scoretype = scoreconfig.scoretype
 
-    def set_team_score(self, team: ba.Team, score: Optional[int]) -> None:
+    def set_team_score(self, team: ba.Team, score: int | None) -> None:
         """Set the score for a given team.
 
         This can be a number or None.
@@ -69,8 +69,7 @@ class GameResults:
         sessionteam = team.sessionteam
         self._scores[sessionteam.id] = (weakref.ref(sessionteam), score)
 
-    def get_sessionteam_score(self,
-                              sessionteam: ba.SessionTeam) -> Optional[int]:
+    def get_sessionteam_score(self, sessionteam: ba.SessionTeam) -> int | None:
         """Return the score for a given ba.SessionTeam."""
         assert isinstance(sessionteam, SessionTeam)
         for score in list(self._scores.values()):
@@ -157,7 +156,7 @@ class GameResults:
         return self._lower_is_better
 
     @property
-    def winning_sessionteam(self) -> Optional[ba.SessionTeam]:
+    def winning_sessionteam(self) -> ba.SessionTeam | None:
         """The winning ba.SessionTeam if there is exactly one, or else None."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
@@ -184,7 +183,7 @@ class GameResults:
             team = score[0]()
             assert team is not None
             sval.append(team)
-        results: list[tuple[Optional[int],
+        results: list[tuple[int | None,
                             list[ba.SessionTeam]]] = list(winners.items())
         results.sort(reverse=not self._lower_is_better,
                      key=lambda x: asserttype(x[0], int))
@@ -199,7 +198,7 @@ class GameResults:
         # Add the Nones to the list (either as winners or losers
         # depending on the rules).
         if none_sessionteams:
-            nones: list[tuple[Optional[int], list[ba.SessionTeam]]] = [
+            nones: list[tuple[int | None, list[ba.SessionTeam]]] = [
                 (None, none_sessionteams)
             ]
             if self._none_is_winner:

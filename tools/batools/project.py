@@ -15,7 +15,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def project_centric_path(projroot: str, path: str) -> str:
@@ -67,8 +67,8 @@ class Updater:
         self._license_line_checks = bool(
             getlocalconfig(Path('.')).get('license_line_checks', True))
 
-        self._internal_source_dirs: Optional[set[str]] = None
-        self._internal_source_files: Optional[set[str]] = None
+        self._internal_source_dirs: set[str] | None = None
+        self._internal_source_files: set[str] | None = None
 
     def run(self) -> None:
         """Do the thing."""
@@ -153,7 +153,7 @@ class Updater:
         # (or error if we're in check mode).
         unchanged_project_count = 0
         for fname, fcode in self._file_changes.items():
-            f_orig: Optional[str]
+            f_orig: str | None
             if os.path.exists(fname):
                 with open(fname, 'r', encoding='utf-8') as infile:
                     f_orig = infile.read()

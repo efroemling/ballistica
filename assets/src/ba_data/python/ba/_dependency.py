@@ -10,7 +10,7 @@ from typing import (Generic, TypeVar, TYPE_CHECKING)
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     import ba
 
 T = TypeVar('T', bound='DependencyComponent')
@@ -39,7 +39,7 @@ class Dependency(Generic[T]):
         """
         self.cls: type[T] = cls
         self.config = config
-        self._hash: Optional[int] = None
+        self._hash: int | None = None
 
     def get_hash(self) -> int:
         """Return the dependency's hash, calculating it if necessary."""
@@ -133,7 +133,7 @@ class DependencyEntry:
 
         # Arbitrary data for use by dependencies in the resolved set
         # (the static instance for static-deps, etc).
-        self.component: Optional[DependencyComponent] = None
+        self.component: DependencyComponent | None = None
 
         # Weakref to the depset that includes us (to avoid ref loop).
         self.depset = weakref.ref(depset)

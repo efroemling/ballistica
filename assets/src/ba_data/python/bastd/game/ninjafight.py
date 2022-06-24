@@ -15,7 +15,7 @@ from bastd.actor.spazbot import SpazBotSet, ChargerBot, SpazBotDiedMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 class Player(ba.Player['Team']):
@@ -58,7 +58,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._winsound = ba.getsound('score')
         self._won = False
-        self._timer: Optional[OnScreenTimer] = None
+        self._timer: OnScreenTimer | None = None
         self._bots = SpazBotSet()
         self._preset = str(settings['preset'])
 

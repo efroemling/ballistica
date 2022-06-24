@@ -13,7 +13,7 @@ import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Callable
+    from typing import Any, Sequence, Callable
     from bastd.actor.flag import Flag
 
 LITE_BOT_COLOR = (1.2, 0.9, 0.2)
@@ -51,13 +51,13 @@ class SpazBotDiedMessage:
     spazbot: SpazBot
     """The SpazBot that was killed."""
 
-    killerplayer: Optional[ba.Player]
+    killerplayer: ba.Player | None
     """The ba.Player that killed it (or None)."""
 
     how: ba.DeathType
     """The particular type of death."""
 
-    def __init__(self, spazbot: SpazBot, killerplayer: Optional[ba.Player],
+    def __init__(self, spazbot: SpazBot, killerplayer: ba.Player | None,
                  how: ba.DeathType):
         """Instantiate with given values."""
         self.spazbot = spazbot
@@ -115,17 +115,17 @@ class SpazBot(Spaz):
         # If you need to add custom behavior to a bot, set this to a callable
         # which takes one arg (the bot) and returns False if the bot's normal
         # update should be run and True if not.
-        self.update_callback: Optional[Callable[[SpazBot], Any]] = None
+        self.update_callback: Callable[[SpazBot], Any] | None = None
         activity = self.activity
         assert isinstance(activity, ba.GameActivity)
         self._map = weakref.ref(activity.map)
-        self.last_player_attacked_by: Optional[ba.Player] = None
+        self.last_player_attacked_by: ba.Player | None = None
         self.last_attacked_time = 0.0
-        self.last_attacked_type: Optional[tuple[str, str]] = None
-        self.target_point_default: Optional[ba.Vec3] = None
+        self.last_attacked_type: tuple[str, str] | None = None
+        self.target_point_default: ba.Vec3 | None = None
         self.held_count = 0
-        self.last_player_held_by: Optional[ba.Player] = None
-        self.target_flag: Optional[Flag] = None
+        self.last_player_held_by: ba.Player | None = None
+        self.target_flag: Flag | None = None
         self._charge_speed = 0.5 * (self.charge_speed_min +
                                     self.charge_speed_max)
         self._lead_amount = 0.5
@@ -135,9 +135,9 @@ class SpazBot(Spaz):
         self._running = False
         self._last_jump_time = 0.0
 
-        self._throw_release_time: Optional[float] = None
-        self._have_dropped_throw_bomb: Optional[bool] = None
-        self._player_pts: Optional[list[tuple[ba.Vec3, ba.Vec3]]] = None
+        self._throw_release_time: float | None = None
+        self._have_dropped_throw_bomb: bool | None = None
+        self._player_pts: list[tuple[ba.Vec3, ba.Vec3]] | None = None
 
         # These cooldowns didn't exist when these bots were calibrated,
         # so take them out of the equation.
@@ -156,17 +156,16 @@ class SpazBot(Spaz):
         assert mval is not None
         return mval
 
-    def _get_target_player_pt(
-            self) -> tuple[Optional[ba.Vec3], Optional[ba.Vec3]]:
+    def _get_target_player_pt(self) -> tuple[ba.Vec3 | None, ba.Vec3 | None]:
         """Returns the position and velocity of our target.
 
         Both values will be None in the case of no target.
         """
         assert self.node
         botpt = ba.Vec3(self.node.position)
-        closest_dist: Optional[float] = None
-        closest_vel: Optional[ba.Vec3] = None
-        closest: Optional[ba.Vec3] = None
+        closest_dist: float | None = None
+        closest_vel: ba.Vec3 | None = None
+        closest: ba.Vec3 | None = None
         assert self._player_pts is not None
         for plpt, plvel in self._player_pts:
             dist = (plpt - botpt).length()
@@ -206,8 +205,8 @@ class SpazBot(Spaz):
         our_pos = ba.Vec3(pos[0], 0, pos[2])
         can_attack = True
 
-        target_pt_raw: Optional[ba.Vec3]
-        target_vel: Optional[ba.Vec3]
+        target_pt_raw: ba.Vec3 | None
+        target_vel: ba.Vec3 | None
 
         # If we're a flag-bearer, we're pretty simple-minded - just walk
         # towards the flag and try to pick it up.
@@ -517,7 +516,7 @@ class SpazBot(Spaz):
             # Report normal deaths for scoring purposes.
             if not self._dead and not msg.immediate:
 
-                killerplayer: Optional[ba.Player]
+                killerplayer: ba.Player | None
 
                 # If this guy was being held at the time of death, the
                 # holder is the killer.
@@ -883,7 +882,7 @@ class SpazBotSet:
         ]
         self._spawn_sound = ba.getsound('spawn')
         self._spawning_count = 0
-        self._bot_update_timer: Optional[ba.Timer] = None
+        self._bot_update_timer: ba.Timer | None = None
         self.start_moving()
 
     def __del__(self) -> None:
@@ -904,7 +903,7 @@ class SpazBotSet:
         self._spawning_count += 1
 
     def _spawn_bot(self, bot_type: type[SpazBot], pos: Sequence[float],
-                   on_spawn_call: Optional[Callable[[SpazBot], Any]]) -> None:
+                   on_spawn_call: Callable[[SpazBot], Any] | None) -> None:
         spaz = bot_type()
         ba.playsound(self._spawn_sound, position=pos)
         assert spaz.node

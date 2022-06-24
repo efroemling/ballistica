@@ -14,7 +14,7 @@ from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Sequence, Optional
+    from typing import Any, Sequence
 
 
 class Player(ba.Player['Team']):
@@ -97,7 +97,7 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._score_to_win: Optional[int] = None
+        self._score_to_win: int | None = None
         self._dingsound = ba.getsound('dingSmall')
         self._epic_mode = bool(settings['Epic Mode'])
         self._kills_to_win_per_player = int(
@@ -111,10 +111,10 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC if self._epic_mode else
                               ba.MusicType.TO_THE_DEATH)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         return 'kill ${ARG1} enemies', self._score_to_win
 
     def on_team_join(self, team: Team) -> None:

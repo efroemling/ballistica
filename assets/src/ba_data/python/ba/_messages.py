@@ -11,7 +11,7 @@ from enum import Enum
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional, Any
+    from typing import Sequence, Any
     import ba
 
 
@@ -84,7 +84,7 @@ class PlayerDiedMessage:
     """The particular type of death."""
 
     def __init__(self, player: ba.Player, was_killed: bool,
-                 killerplayer: Optional[ba.Player], how: ba.DeathType):
+                 killerplayer: ba.Player | None, how: ba.DeathType):
         """Instantiate a message with the given values."""
 
         # Invalid refs should never be passed as args.
@@ -98,7 +98,7 @@ class PlayerDiedMessage:
         self.how = how
 
     def getkillerplayer(self,
-                        playertype: type[PlayerType]) -> Optional[PlayerType]:
+                        playertype: type[PlayerType]) -> PlayerType | None:
         """Return the ba.Player responsible for the killing, if any.
 
         Pass the Player type being used by the current game.
@@ -267,8 +267,8 @@ class HitMessage:
         self.force_direction = (force_direction
                                 if force_direction is not None else velocity)
 
-    def get_source_player(
-            self, playertype: type[PlayerType]) -> Optional[PlayerType]:
+    def get_source_player(self,
+                          playertype: type[PlayerType]) -> PlayerType | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
 

@@ -12,7 +12,7 @@ import _ba
 from ba._music import MusicPlayer
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Union, Optional
+    from typing import Callable, Any
 
 
 class OSMusicPlayer(MusicPlayer):
@@ -60,8 +60,8 @@ class OSMusicPlayer(MusicPlayer):
                                   self._on_play_folder_cb).start()
 
     def _on_play_folder_cb(self,
-                           result: Union[str, list[str]],
-                           error: Optional[str] = None) -> None:
+                           result: str | list[str],
+                           error: str | None = None) -> None:
         from ba import _language
         if error is not None:
             rstr = (_language.Lstr(
@@ -95,8 +95,7 @@ class OSMusicPlayer(MusicPlayer):
 class _PickFolderSongThread(threading.Thread):
 
     def __init__(self, path: str, valid_extensions: list[str],
-                 callback: Callable[[Union[str, list[str]], Optional[str]],
-                                    None]):
+                 callback: Callable[[str | list[str], str | None], None]):
         super().__init__()
         self._valid_extensions = valid_extensions
         self._callback = callback

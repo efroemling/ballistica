@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional, Any
+    from typing import Sequence, Any
     import ba
 
 
@@ -325,7 +325,7 @@ def party_invite_revoke(invite_id: str) -> None:
                                 transition='out_right')
 
 
-def filter_chat_message(msg: str, client_id: int) -> Optional[str]:
+def filter_chat_message(msg: str, client_id: int) -> str | None:
     """Intercept/filter chat messages.
 
     Called for all chat messages while hosting.

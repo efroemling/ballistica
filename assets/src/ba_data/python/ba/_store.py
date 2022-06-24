@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     import ba
 
 
@@ -434,7 +434,7 @@ def _calc_count_for_tab(tabval: list[dict[str, Any]], our_tickets: int,
     return count
 
 
-def get_available_sale_time(tab: str) -> Optional[int]:
+def get_available_sale_time(tab: str) -> int | None:
     """(internal)"""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-nested-blocks
@@ -443,7 +443,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
         import datetime
         from ba._generated.enums import TimeType, TimeFormat
         app = _ba.app
-        sale_times: list[Optional[int]] = []
+        sale_times: list[int | None] = []
 
         # Calc time for our pro sale (old special case).
         if tab == 'extras':
@@ -475,7 +475,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
                         return None
 
             assert app.pro_sale_start_val is not None
-            val: Optional[int] = max(
+            val: int | None = max(
                 0, app.pro_sale_start_val -
                 (_ba.time(TimeType.REAL, TimeFormat.MILLISECONDS) -
                  app.pro_sale_start_time))

@@ -17,7 +17,7 @@ from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDiedMessage,
                               FlagPickedUpMessage)
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class FlagState(Enum):
@@ -106,20 +106,20 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
             2: ba.getsound('announceTwo'),
             1: ba.getsound('announceOne')
         }
-        self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self._update_timer: Optional[ba.Timer] = None
+        self._flag_spawn_pos: Sequence[float] | None = None
+        self._update_timer: ba.Timer | None = None
         self._holding_players: list[Player] = []
-        self._flag_state: Optional[FlagState] = None
-        self._flag_light: Optional[ba.Node] = None
-        self._scoring_team: Optional[Team] = None
-        self._flag: Optional[Flag] = None
+        self._flag_state: FlagState | None = None
+        self._flag_light: ba.Node | None = None
+        self._scoring_team: Team | None = None
+        self._flag: Flag | None = None
         self._hold_time = int(settings['Hold Time'])
         self._time_limit = float(settings['Time Limit'])
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'Carry the flag for ${ARG1} seconds.', self._hold_time
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         return 'carry the flag for ${ARG1} seconds', self._hold_time
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:

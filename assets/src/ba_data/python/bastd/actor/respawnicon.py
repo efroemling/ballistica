@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class RespawnIcon:
@@ -49,7 +49,7 @@ class RespawnIcon:
         texture = icon['texture']
         h_offs = -10
         ipos = (-40 - h_offs if on_right else 40 + h_offs, -180 + offs)
-        self._image: Optional[ba.NodeActor] = ba.NodeActor(
+        self._image: ba.NodeActor | None = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'texture': texture,
@@ -68,7 +68,7 @@ class RespawnIcon:
         ba.animate(self._image.node, 'opacity', {0.0: 0, 0.2: 0.7})
 
         npos = (-40 - h_offs if on_right else 40 + h_offs, -205 + 49 + offs)
-        self._name: Optional[ba.NodeActor] = ba.NodeActor(
+        self._name: ba.NodeActor | None = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',
@@ -88,7 +88,7 @@ class RespawnIcon:
         ba.animate(self._name.node, 'scale', {0: 0, 0.1: 0.5})
 
         tpos = (-60 - h_offs if on_right else 60 + h_offs, -192 + offs)
-        self._text: Optional[ba.NodeActor] = ba.NodeActor(
+        self._text: ba.NodeActor | None = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'position': tpos,
@@ -107,9 +107,9 @@ class RespawnIcon:
 
         self._respawn_time = ba.time() + respawn_time
         self._update()
-        self._timer: Optional[ba.Timer] = ba.Timer(1.0,
-                                                   ba.WeakCall(self._update),
-                                                   repeat=True)
+        self._timer: ba.Timer | None = ba.Timer(1.0,
+                                                ba.WeakCall(self._update),
+                                                repeat=True)
 
     @property
     def visible(self) -> bool:

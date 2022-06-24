@@ -21,7 +21,7 @@ from bastd.actor.spazbot import (SpazBotSet, SpazBotDiedMessage, BomberBot,
                                  ChargerBot, StickyBot, ExplodeyBot)
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence
+    from typing import Any, Sequence
     from bastd.actor.spazbot import SpazBot
 
 
@@ -71,14 +71,14 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._powerup_spread = (7, 2)
         self._preset = str(settings.get('preset', 'default'))
         self._excludepowerups: list[str] = []
-        self._scoreboard: Optional[Scoreboard] = None
+        self._scoreboard: Scoreboard | None = None
         self._score = 0
         self._bots = SpazBotSet()
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
-        self._tntspawner: Optional[TNTSpawner] = None
-        self._bot_update_interval: Optional[float] = None
-        self._bot_update_timer: Optional[ba.Timer] = None
+        self._tntspawner: TNTSpawner | None = None
+        self._bot_update_interval: float | None = None
+        self._bot_update_timer: ba.Timer | None = None
         self._powerup_drop_timer = None
 
         # For each bot type: [spawnrate, increase, d_increase]
@@ -220,7 +220,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # Now go back through and see where this value falls.
         total = 0
-        bottype: Optional[type[SpazBot]] = None
+        bottype: type[SpazBot] | None = None
         for spawntype, spawninfo in self._bot_spawn_types.items():
             total += spawninfo.spawnrate
             if randval <= total:
@@ -262,7 +262,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         elif isinstance(msg, SpazBotDiedMessage):
             pts, importance = msg.spazbot.get_death_points(msg.how)
-            target: Optional[Sequence[float]]
+            target: Sequence[float] | None
             if msg.killerplayer:
                 assert msg.spazbot.node
                 target = msg.spazbot.node.position

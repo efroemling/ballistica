@@ -11,7 +11,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional
+    from typing import Any, Sequence
 
 
 class FlagFactory:
@@ -185,7 +185,7 @@ class Flag(ba.Actor):
 
         super().__init__()
 
-        self._initial_position: Optional[Sequence[float]] = None
+        self._initial_position: Sequence[float] | None = None
         self._has_moved = False
         shared = SharedObjects.get()
         factory = FlagFactory.get()
@@ -214,7 +214,7 @@ class Flag(ba.Actor):
         if dropped_timeout is not None:
             dropped_timeout = int(dropped_timeout)
         self._dropped_timeout = dropped_timeout
-        self._counter: Optional[ba.Node]
+        self._counter: ba.Node | None
         if self._dropped_timeout is not None:
             self._count = self._dropped_timeout
             self._tick_timer = ba.Timer(1.0,
@@ -234,8 +234,8 @@ class Flag(ba.Actor):
             self._counter = None
 
         self._held_count = 0
-        self._score_text: Optional[ba.Node] = None
-        self._score_text_hide_timer: Optional[ba.Timer] = None
+        self._score_text: ba.Node | None = None
+        self._score_text_hide_timer: ba.Timer | None = None
 
     def _tick(self) -> None:
         if self.node:

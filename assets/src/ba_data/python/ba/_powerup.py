@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional
+    from typing import Sequence
     import ba
 
 
@@ -25,7 +25,7 @@ class PowerupMessage:
     """The type of powerup to be granted (a string).
        See ba.Powerup.poweruptype for available type values."""
 
-    sourcenode: Optional[ba.Node] = None
+    sourcenode: ba.Node | None = None
     """The node the powerup game from, or None otherwise.
        If a powerup is accepted, a ba.PowerupAcceptMessage should be sent
        back to the sourcenode to inform it of the fact. This will generally

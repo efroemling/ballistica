@@ -10,7 +10,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class ControlsGuide(ba.Actor):
@@ -52,13 +52,13 @@ class ControlsGuide(ba.Actor):
         self._lifespan = lifespan
         self._dead = False
         self._bright = bright
-        self._cancel_timer: Optional[ba.Timer] = None
-        self._fade_in_timer: Optional[ba.Timer] = None
-        self._update_timer: Optional[ba.Timer] = None
-        self._title_text: Optional[ba.Node]
+        self._cancel_timer: ba.Timer | None = None
+        self._fade_in_timer: ba.Timer | None = None
+        self._update_timer: ba.Timer | None = None
+        self._title_text: ba.Node | None
         clr: Sequence[float]
-        extra_pos_1: Optional[tuple[float, float]]
-        extra_pos_2: Optional[tuple[float, float]]
+        extra_pos_1: tuple[float, float] | None
+        extra_pos_2: tuple[float, float] | None
         if ba.app.iircade_mode:
             xtweak = 0.2
             ytweak = 0.2
@@ -238,7 +238,7 @@ class ControlsGuide(ba.Actor):
                                       })
 
         if extra_pos_1 is not None:
-            self._extra_image_1: Optional[ba.Node] = ba.newnode(
+            self._extra_image_1: ba.Node | None = ba.newnode(
                 'image',
                 attrs={
                     'texture': ba.gettexture('nub'),
@@ -252,7 +252,7 @@ class ControlsGuide(ba.Actor):
         else:
             self._extra_image_1 = None
         if extra_pos_2 is not None:
-            self._extra_image_2: Optional[ba.Node] = ba.newnode(
+            self._extra_image_2: ba.Node | None = ba.newnode(
                 'image',
                 attrs={
                     'texture': ba.gettexture('nub'),
@@ -317,8 +317,9 @@ class ControlsGuide(ba.Actor):
         # an input device that is *not* the touchscreen.
         # (otherwise it is confusing to see the touchscreen buttons right
         # next to our display buttons)
-        touchscreen: Optional[ba.InputDevice] = _ba.getinputdevice(
-            'TouchScreen', '#1', doraise=False)
+        touchscreen: ba.InputDevice | None = _ba.getinputdevice('TouchScreen',
+                                                                '#1',
+                                                                doraise=False)
 
         if touchscreen is not None:
             # We look at the session's players; not the activity's.
@@ -477,7 +478,7 @@ class ControlsGuide(ba.Actor):
             pickup_button_names.clear()
 
         self._run_text.text = run_text
-        w_text: Union[ba.Lstr, str]
+        w_text: ba.Lstr | str
         if only_remote and self._lifespan is None:
             w_text = ba.Lstr(resource='fireTVRemoteWarningText',
                              subs=[('${REMOTE_APP_NAME}',

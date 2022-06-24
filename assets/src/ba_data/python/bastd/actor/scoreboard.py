@@ -10,13 +10,13 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class _Entry:
 
     def __init__(self, scoreboard: Scoreboard, team: ba.Team, do_cover: bool,
-                 scale: float, label: Optional[ba.Lstr], flash_length: float):
+                 scale: float, label: ba.Lstr | None, flash_length: float):
         # pylint: disable=too-many-statements
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
@@ -29,11 +29,11 @@ class _Entry:
         self._bar_tex = self._backing_tex = ba.gettexture('bar')
         self._cover_tex = ba.gettexture('uiAtlas')
         self._model = ba.getmodel('meterTransparent')
-        self._pos: Optional[Sequence[float]] = None
-        self._flash_timer: Optional[ba.Timer] = None
-        self._flash_counter: Optional[int] = None
-        self._flash_colors: Optional[bool] = None
-        self._score: Optional[float] = None
+        self._pos: Sequence[float] | None = None
+        self._flash_timer: ba.Timer | None = None
+        self._flash_counter: int | None = None
+        self._flash_colors: bool | None = None
+        self._score: float | None = None
 
         safe_team_color = ba.safecolor(team.color, target_intensity=1.0)
 
@@ -126,7 +126,7 @@ class _Entry:
 
         clr = safe_team_color
 
-        team_name_label: Union[str, ba.Lstr]
+        team_name_label: str | ba.Lstr
         if label is not None:
             team_name_label = label
         else:
@@ -207,7 +207,7 @@ class _Entry:
     def _set_flash_colors(self, flash: bool) -> None:
         self._flash_colors = flash
 
-        def _safesetcolor(node: Optional[ba.Node], val: Any) -> None:
+        def _safesetcolor(node: ba.Node | None, val: Any) -> None:
             if node:
                 node.color = val
 

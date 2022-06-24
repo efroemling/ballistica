@@ -16,7 +16,7 @@ from ba._general import Call, verify_object_death
 from ba._messages import UNHANDLED
 
 if TYPE_CHECKING:
-    from typing import Optional, Any
+    from typing import Any
     import ba
 
 # pylint: disable=invalid-name
@@ -139,7 +139,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         assert isinstance(settings, dict)
         assert _ba.getactivity() is self
 
-        self._globalsnode: Optional[ba.Node] = None
+        self._globalsnode: ba.Node | None = None
 
         # Player/Team types should have been specified as type args;
         # grab those.
@@ -148,7 +148,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._setup_player_and_team_types()
 
         # FIXME: Relocate or remove the need for this stuff.
-        self.paused_text: Optional[ba.Actor] = None
+        self.paused_text: ba.Actor | None = None
 
         self._session = weakref.ref(_ba.getsession())
 
@@ -163,7 +163,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._has_transitioned_in = False
         self._has_begun = False
         self._has_ended = False
-        self._activity_death_check_timer: Optional[ba.Timer] = None
+        self._activity_death_check_timer: ba.Timer | None = None
         self._expired = False
         self._delay_delete_players: list[PlayerType] = []
         self._delay_delete_teams: list[TeamType] = []
@@ -177,14 +177,14 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._actor_refs: list[ba.Actor] = []
         self._actor_weak_refs: list[weakref.ref[ba.Actor]] = []
         self._last_prune_dead_actors_time = _ba.time()
-        self._prune_dead_actors_timer: Optional[ba.Timer] = None
+        self._prune_dead_actors_timer: ba.Timer | None = None
 
         self.teams = []
         self.players = []
 
         self.lobby = None
-        self._stats: Optional[ba.Stats] = None
-        self._customdata: Optional[dict] = {}
+        self._stats: ba.Stats | None = None
+        self._customdata: dict | None = {}
 
     def __del__(self) -> None:
 
@@ -396,7 +396,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """Return whether ba.Activity.on_transition_out() has been called."""
         return self._transitioning_out
 
-    def transition_in(self, prev_globals: Optional[ba.Node]) -> None:
+    def transition_in(self, prev_globals: ba.Node | None) -> None:
         """Called by Session to kick off transition-in.
 
         (internal)

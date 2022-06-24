@@ -9,7 +9,7 @@ import os
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence
+    from typing import Sequence
 
 
 def get_human_readable_user_scripts_path() -> str:
@@ -19,7 +19,7 @@ def get_human_readable_user_scripts_path() -> str:
     """
     from ba import _language
     app = _ba.app
-    path: Optional[str] = app.python_directory_user
+    path: str | None = app.python_directory_user
     if path is None:
         return '<Not Available>'
 
@@ -27,7 +27,7 @@ def get_human_readable_user_scripts_path() -> str:
     # only visible to the user's processes and thus not really useful printed
     # in its entirety; lets print it as <External Storage>/myfilepath.
     if app.platform == 'android':
-        ext_storage_path: Optional[str] = (
+        ext_storage_path: str | None = (
             _ba.android_get_external_storage_path())
         if (ext_storage_path is not None
                 and app.python_directory_user.startswith(ext_storage_path)):
@@ -70,7 +70,7 @@ def show_user_scripts() -> None:
     # they can see it.
     if app.platform == 'android':
         try:
-            usd: Optional[str] = app.python_directory_user
+            usd: str | None = app.python_directory_user
             if usd is not None and os.path.isdir(usd):
                 file_name = usd + '/about_this_folder.txt'
                 with open(file_name, 'w', encoding='utf-8') as outfile:

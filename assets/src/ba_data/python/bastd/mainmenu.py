@@ -13,7 +13,7 @@ import ba
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 # FIXME: Clean this up if I ever revisit it.
 # pylint: disable=attribute-defined-outside-init
@@ -32,8 +32,8 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
     def on_transition_in(self) -> None:
         super().on_transition_in()
         random.seed(123)
-        self._logo_node: Optional[ba.Node] = None
-        self._custom_logo_tex_name: Optional[str] = None
+        self._logo_node: ba.Node | None = None
+        self._custom_logo_tex_name: str | None = None
         self._word_actors: list[ba.Actor] = []
         app = ba.app
 
@@ -246,7 +246,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
         self._ts = 0.86
 
-        self._language: Optional[str] = None
+        self._language: str | None = None
         self._update_timer = ba.Timer(1.0, self._update, repeat=True)
         self._update()
 
@@ -263,12 +263,12 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 self._valid = True
                 self._message_duration = 10.0
                 self._message_spacing = 2.0
-                self._text: Optional[ba.NodeActor] = None
+                self._text: ba.NodeActor | None = None
                 self._activity = weakref.ref(activity)
 
                 # If we're signed in, fetch news immediately.
                 # Otherwise wait until we are signed in.
-                self._fetch_timer: Optional[ba.Timer] = ba.Timer(
+                self._fetch_timer: ba.Timer | None = ba.Timer(
                     1.0, ba.WeakCall(self._try_fetching_news), repeat=True)
                 self._try_fetching_news()
 
@@ -694,8 +694,8 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         # (unless we're in VR mode in which case its best to
         # leave things still).
         if not ba.app.vr_mode:
-            cmb: Optional[ba.Node]
-            cmb2: Optional[ba.Node]
+            cmb: ba.Node | None
+            cmb2: ba.Node | None
             if not shadow:
                 cmb = ba.newnode('combine',
                                  owner=word_obj.node,
@@ -756,7 +756,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 delay + 0.2: scale
             })
 
-    def _get_custom_logo_tex_name(self) -> Optional[str]:
+    def _get_custom_logo_tex_name(self) -> str | None:
         if _ba.get_v1_account_misc_read_val('easter', False):
             return 'logoEaster'
         return None

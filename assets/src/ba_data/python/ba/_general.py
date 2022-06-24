@@ -17,7 +17,7 @@ from ba._generated.enums import TimeType
 
 if TYPE_CHECKING:
     from types import FrameType
-    from typing import Any, Optional
+    from typing import Any
     from efro.call import Call as Call  # 'as Call' so we re-export.
 
 
@@ -37,15 +37,15 @@ ExistableType = TypeVar('ExistableType', bound=Existable)
 T = TypeVar('T')
 
 
-def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
+def existing(obj: ExistableType | None) -> ExistableType | None:
     """Convert invalid references to None for any ba.Existable object.
 
     Category: **Gameplay Functions**
 
     To best support type checking, it is important that invalid references
     not be passed around and instead get converted to values of None.
-    That way the type checker can properly flag attempts to pass dead
-    objects (Optional[FooType]) into functions expecting only live ones
+    That way the type checker can properly flag attempts to pass possibly-dead
+    objects (FooType | None) into functions expecting only live ones
     (FooType), etc. This call can be used on any 'existable' object
     (one with an exists() method) and will convert it to a None value
     if it does not exist.

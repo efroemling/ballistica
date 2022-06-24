@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class SharedObjects:
@@ -29,14 +29,14 @@ class SharedObjects:
         if self._STORENAME in activity.customdata:
             raise RuntimeError('Use SharedObjects.get() to fetch the'
                                ' shared instance for this activity.')
-        self._object_material: Optional[ba.Material] = None
-        self._player_material: Optional[ba.Material] = None
-        self._pickup_material: Optional[ba.Material] = None
-        self._footing_material: Optional[ba.Material] = None
-        self._attack_material: Optional[ba.Material] = None
-        self._death_material: Optional[ba.Material] = None
-        self._region_material: Optional[ba.Material] = None
-        self._railing_material: Optional[ba.Material] = None
+        self._object_material: ba.Material | None = None
+        self._player_material: ba.Material | None = None
+        self._pickup_material: ba.Material | None = None
+        self._footing_material: ba.Material | None = None
+        self._attack_material: ba.Material | None = None
+        self._death_material: ba.Material | None = None
+        self._region_material: ba.Material | None = None
+        self._railing_material: ba.Material | None = None
 
     @classmethod
     def get(cls) -> SharedObjects:

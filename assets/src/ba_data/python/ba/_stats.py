@@ -14,7 +14,7 @@ from ba._error import (print_exception, print_error, SessionTeamNotFoundError,
 
 if TYPE_CHECKING:
     import ba
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 @dataclass
@@ -49,12 +49,12 @@ class PlayerRecord:
         self.accum_kill_count = 0
         self.killed_count = 0
         self.accum_killed_count = 0
-        self._multi_kill_timer: Optional[ba.Timer] = None
+        self._multi_kill_timer: ba.Timer | None = None
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
-        self._last_sessionplayer: Optional[ba.SessionPlayer] = None
-        self._sessionplayer: Optional[ba.SessionPlayer] = None
-        self._sessionteam: Optional[weakref.ref[ba.SessionTeam]] = None
+        self._last_sessionplayer: ba.SessionPlayer | None = None
+        self._sessionplayer: ba.SessionPlayer | None = None
+        self._sessionteam: weakref.ref[ba.SessionTeam] | None = None
         self.streak = 0
         self.associate_with_sessionplayer(sessionplayer)
 
@@ -96,7 +96,7 @@ class PlayerRecord:
         """Cancel any multi-kill timer for this player entry."""
         self._multi_kill_timer = None
 
-    def getactivity(self) -> Optional[ba.Activity]:
+    def getactivity(self) -> ba.Activity | None:
         """Return the ba.Activity this instance is currently associated with.
 
         Returns None if the activity no longer exists."""
@@ -178,12 +178,12 @@ class PlayerRecord:
 
         def _apply(name2: Lstr, score2: int, showpoints2: bool,
                    color2: tuple[float, float, float, float], scale2: float,
-                   sound2: Optional[ba.Sound]) -> None:
+                   sound2: ba.Sound | None) -> None:
             from bastd.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
             # a current position for them.
-            our_pos: Optional[ba.Vec3] = None
+            our_pos: ba.Vec3 | None = None
             if self._sessionplayer:
                 if self._sessionplayer.activityplayer is not None:
                     try:
@@ -233,14 +233,14 @@ class Stats:
     """
 
     def __init__(self) -> None:
-        self._activity: Optional[weakref.ref[ba.Activity]] = None
+        self._activity: weakref.ref[ba.Activity] | None = None
         self._player_records: dict[str, PlayerRecord] = {}
-        self.orchestrahitsound1: Optional[ba.Sound] = None
-        self.orchestrahitsound2: Optional[ba.Sound] = None
-        self.orchestrahitsound3: Optional[ba.Sound] = None
-        self.orchestrahitsound4: Optional[ba.Sound] = None
+        self.orchestrahitsound1: ba.Sound | None = None
+        self.orchestrahitsound2: ba.Sound | None = None
+        self.orchestrahitsound3: ba.Sound | None = None
+        self.orchestrahitsound4: ba.Sound | None = None
 
-    def setactivity(self, activity: Optional[ba.Activity]) -> None:
+    def setactivity(self, activity: ba.Activity | None) -> None:
         """Set the current activity for this instance."""
 
         self._activity = None if activity is None else weakref.ref(activity)
@@ -253,7 +253,7 @@ class Stats:
                 with _ba.Context(activity):
                     self._load_activity_media()
 
-    def getactivity(self) -> Optional[ba.Activity]:
+    def getactivity(self) -> ba.Activity | None:
         """Get the activity associated with this instance.
 
         May return None.
@@ -319,7 +319,7 @@ class Stats:
                       victim_player: ba.Player = None,
                       scale: float = 1.0,
                       color: Sequence[float] = None,
-                      title: Union[str, ba.Lstr] = None,
+                      title: str | ba.Lstr | None = None,
                       screenmessage: bool = True,
                       display: bool = True,
                       importance: int = 1,

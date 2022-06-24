@@ -14,7 +14,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Callable
+    from typing import Any, Sequence, Callable
 
 # pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
@@ -678,7 +678,7 @@ class Bomb(ba.Actor):
         self._exploded = False
         self.scale = bomb_scale
 
-        self.texture_sequence: Optional[ba.Node] = None
+        self.texture_sequence: ba.Node | None = None
 
         if self.bomb_type == 'sticky':
             self._last_sticky_sound_time = 0.0
@@ -846,8 +846,8 @@ class Bomb(ba.Actor):
             0.26: self.scale
         })
 
-    def get_source_player(
-            self, playertype: type[PlayerType]) -> Optional[PlayerType]:
+    def get_source_player(self,
+                          playertype: type[PlayerType]) -> PlayerType | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
         return (player if isinstance(player, playertype) and player.exists()
@@ -1071,7 +1071,7 @@ class TNTSpawner:
     def __init__(self, position: Sequence[float], respawn_time: float = 20.0):
         """Instantiate with given position and respawn_time (in seconds)."""
         self._position = position
-        self._tnt: Optional[Bomb] = None
+        self._tnt: Bomb | None = None
         self._respawn_time = random.uniform(0.8, 1.2) * respawn_time
         self._wait_time = 0.0
         self._update()

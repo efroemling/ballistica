@@ -17,16 +17,16 @@ from efro.terminal import Clr
 from efrotools.build import Lazybuild
 
 if TYPE_CHECKING:
-    from typing import Sequence, Optional, Any
+    from typing import Sequence, Any
 
 
 # Python pip packages we require for this project.
 @dataclass
 class PipRequirement:
     """A pip package required by our project."""
-    modulename: Optional[str] = None
-    minversion: Optional[list[int]] = None  # None implies no min version.
-    pipname: Optional[str] = None  # None implies same as modulename.
+    modulename: str | None = None
+    minversion: list[int] | None = None  # None implies no min version.
+    pipname: str | None = None  # None implies same as modulename.
 
 
 # Note: we look directly for modules when possible instead of just pip

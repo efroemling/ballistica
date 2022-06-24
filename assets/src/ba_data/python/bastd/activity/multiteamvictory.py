@@ -10,7 +10,7 @@ import ba
 from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -146,8 +146,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         else:
             v_extra = 0
 
-        mvp: Optional[ba.PlayerRecord] = None
-        mvp_name: Optional[str] = None
+        mvp: ba.PlayerRecord | None = None
+        mvp_name: str | None = None
 
         # Show game MVP.
         if not self._is_ffa:

@@ -10,7 +10,7 @@ import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Literal
+    from typing import Any, Sequence, Literal
 
 # pylint: disable=invalid-name
 PlayerType = TypeVar('PlayerType', bound=ba.Player)
@@ -63,11 +63,11 @@ class PlayerSpaz(Spaz):
                          source_player=player,
                          start_invincible=True,
                          powerups_expire=powerups_expire)
-        self.last_player_attacked_by: Optional[ba.Player] = None
+        self.last_player_attacked_by: ba.Player | None = None
         self.last_attacked_time = 0.0
-        self.last_attacked_type: Optional[tuple[str, str]] = None
+        self.last_attacked_type: tuple[str, str] | None = None
         self.held_count = 0
-        self.last_player_held_by: Optional[ba.Player] = None
+        self.last_player_held_by: ba.Player | None = None
         self._player = player
         self._drive_player_position()
 
@@ -76,7 +76,7 @@ class PlayerSpaz(Spaz):
     @overload
     def getplayer(self,
                   playertype: type[PlayerType],
-                  doraise: Literal[False] = False) -> Optional[PlayerType]:
+                  doraise: Literal[False] = False) -> PlayerType | None:
         ...
 
     @overload
@@ -86,7 +86,7 @@ class PlayerSpaz(Spaz):
 
     def getplayer(self,
                   playertype: type[PlayerType],
-                  doraise: bool = False) -> Optional[PlayerType]:
+                  doraise: bool = False) -> PlayerType | None:
         """Get the ba.Player associated with this Spaz.
 
         By default this will return None if the Player no longer exists.

@@ -11,7 +11,7 @@ from enum import Enum
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Optional, Union
+    from typing import Callable, Any
     import ba
 
 
@@ -127,11 +127,11 @@ class MusicSubsystem:
 
     def __init__(self) -> None:
         # pylint: disable=cyclic-import
-        self._music_node: Optional[_ba.Node] = None
+        self._music_node: _ba.Node | None = None
         self._music_mode: MusicPlayMode = MusicPlayMode.REGULAR
-        self._music_player: Optional[MusicPlayer] = None
-        self._music_player_type: Optional[type[MusicPlayer]] = None
-        self.music_types: dict[MusicPlayMode, Optional[MusicType]] = {
+        self._music_player: MusicPlayer | None = None
+        self._music_player_type: type[MusicPlayer] | None = None
+        self.music_types: dict[MusicPlayMode, MusicType | None] = {
             MusicPlayMode.REGULAR: None,
             MusicPlayMode.TEST: None
         }
@@ -270,7 +270,7 @@ class MusicSubsystem:
             self.do_play_music(None)
 
     def do_play_music(self,
-                      musictype: Union[MusicType, str, None],
+                      musictype: MusicType | str | None,
                       continuous: bool = False,
                       mode: MusicPlayMode = MusicPlayMode.REGULAR,
                       testsoundtrack: dict[str, Any] = None) -> None:
@@ -352,7 +352,7 @@ class MusicSubsystem:
         # Do the thing.
         self.get_music_player().play(entry)
 
-    def _play_internal_music(self, musictype: Optional[MusicType]) -> None:
+    def _play_internal_music(self, musictype: MusicType | None) -> None:
 
         # Stop any existing music-player playback.
         if self._music_player is not None:
@@ -393,7 +393,7 @@ class MusicPlayer:
 
     def __init__(self) -> None:
         self._have_set_initial_volume = False
-        self._entry_to_play: Optional[Any] = None
+        self._entry_to_play: Any = None
         self._volume = 1.0
         self._actually_playing = False
 
@@ -470,8 +470,7 @@ class MusicPlayer:
                 self._actually_playing = False
 
 
-def setmusic(musictype: Optional[ba.MusicType],
-             continuous: bool = False) -> None:
+def setmusic(musictype: ba.MusicType | None, continuous: bool = False) -> None:
     """Set the app to play (or stop playing) a certain type of music.
 
     category: **Gameplay Functions**

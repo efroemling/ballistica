@@ -14,7 +14,7 @@ from bastd.actor.spazfactory import SpazFactory
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Union
+    from typing import Any, Sequence
 
 
 class Icon(ba.Actor):
@@ -162,7 +162,7 @@ class Team(ba.Team[Player]):
     """Our team type for this game."""
 
     def __init__(self) -> None:
-        self.survival_seconds: Optional[int] = None
+        self.survival_seconds: int | None = None
         self.spawn_order: list[Player] = []
 
 
@@ -234,9 +234,9 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._start_time: Optional[float] = None
-        self._vs_text: Optional[ba.Actor] = None
-        self._round_end_timer: Optional[ba.Timer] = None
+        self._start_time: float | None = None
+        self._vs_text: ba.Actor | None = None
+        self._round_end_timer: ba.Timer | None = None
         self._epic_mode = bool(settings['Epic Mode'])
         self._lives_per_player = int(settings['Lives Per Player'])
         self._time_limit = float(settings['Time Limit'])
@@ -249,11 +249,11 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC
                               if self._epic_mode else ba.MusicType.SURVIVAL)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'Last team standing wins.' if isinstance(
             self.session, ba.DualTeamSession) else 'Last one standing wins.'
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         return 'last team standing wins' if isinstance(
             self.session, ba.DualTeamSession) else 'last one standing wins'
 
@@ -401,7 +401,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
                             icon.update_for_lives()
                         xval += x_offs
 
-    def _get_spawn_point(self, player: Player) -> Optional[ba.Vec3]:
+    def _get_spawn_point(self, player: Player) -> ba.Vec3 | None:
         del player  # Unused.
 
         # In solo-mode, if there's an existing live player on the map, spawn at

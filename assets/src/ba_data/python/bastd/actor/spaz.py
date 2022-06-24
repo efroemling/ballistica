@@ -15,7 +15,7 @@ from bastd.actor.spazfactory import SpazFactory
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Union, Callable
+    from typing import Any, Sequence, Callable
 
 POWERUP_WEAR_OFF_TIME = 20000
 BASE_PUNCH_COOLDOWN = 400
@@ -57,7 +57,7 @@ class Spaz(ba.Actor):
     """The 'spaz' ba.Node."""
 
     points_mult = 1
-    curse_time: Optional[float] = 5.0
+    curse_time: float | None = 5.0
     default_bomb_count = 1
     default_bomb_type = 'normal'
     default_boxing_gloves = False
@@ -102,7 +102,7 @@ class Spaz(ba.Actor):
             self._hockey = False
         self._punched_nodes: set[ba.Node] = set()
         self._cursed = False
-        self._connected_to_player: Optional[ba.Player] = None
+        self._connected_to_player: ba.Player | None = None
         materials = [
             factory.spaz_material, shared.object_material,
             shared.player_material
@@ -155,11 +155,11 @@ class Spaz(ba.Actor):
                 'invincible': start_invincible,
                 'source_player': source_player
             })
-        self.shield: Optional[ba.Node] = None
+        self.shield: ba.Node | None = None
 
         if start_invincible:
 
-            def _safesetattr(node: Optional[ba.Node], attr: str,
+            def _safesetattr(node: ba.Node | None, attr: str,
                              val: Any) -> None:
                 if node:
                     setattr(node, attr, val)
@@ -168,15 +168,15 @@ class Spaz(ba.Actor):
                                   False))
         self.hitpoints = 1000
         self.hitpoints_max = 1000
-        self.shield_hitpoints: Optional[int] = None
+        self.shield_hitpoints: int | None = None
         self.shield_hitpoints_max = 650
         self.shield_decay_rate = 0
-        self.shield_decay_timer: Optional[ba.Timer] = None
-        self._boxing_gloves_wear_off_timer: Optional[ba.Timer] = None
-        self._boxing_gloves_wear_off_flash_timer: Optional[ba.Timer] = None
-        self._bomb_wear_off_timer: Optional[ba.Timer] = None
-        self._bomb_wear_off_flash_timer: Optional[ba.Timer] = None
-        self._multi_bomb_wear_off_timer: Optional[ba.Timer] = None
+        self.shield_decay_timer: ba.Timer | None = None
+        self._boxing_gloves_wear_off_timer: ba.Timer | None = None
+        self._boxing_gloves_wear_off_flash_timer: ba.Timer | None = None
+        self._bomb_wear_off_timer: ba.Timer | None = None
+        self._bomb_wear_off_flash_timer: ba.Timer | None = None
+        self._multi_bomb_wear_off_timer: ba.Timer | None = None
         self.bomb_count = self.default_bomb_count
         self._max_bomb_count = self.default_bomb_count
         self.bomb_type_default = self.default_bomb_type
@@ -205,7 +205,7 @@ class Spaz(ba.Actor):
         self._turbo_filter_counts: dict[str, int] = {}
         self.frozen = False
         self.shattered = False
-        self._last_hit_time: Optional[int] = None
+        self._last_hit_time: int | None = None
         self._num_times_hit = 0
         self._bomb_held = False
         if self.default_shields:
@@ -213,13 +213,13 @@ class Spaz(ba.Actor):
         self._dropped_bomb_callbacks: list[Callable[[Spaz, ba.Actor],
                                                     Any]] = []
 
-        self._score_text: Optional[ba.Node] = None
-        self._score_text_hide_timer: Optional[ba.Timer] = None
-        self._last_stand_pos: Optional[Sequence[float]] = None
+        self._score_text: ba.Node | None = None
+        self._score_text_hide_timer: ba.Timer | None = None
+        self._last_stand_pos: Sequence[float] | None = None
 
         # Deprecated stuff.. should make these into lists.
-        self.punch_callback: Optional[Callable[[Spaz], Any]] = None
-        self.pick_up_powerup_callback: Optional[Callable[[Spaz], Any]] = None
+        self.punch_callback: Callable[[Spaz], Any] | None = None
+        self.pick_up_powerup_callback: Callable[[Spaz], Any] | None = None
 
     def exists(self) -> bool:
         return bool(self.node)
@@ -297,7 +297,7 @@ class Spaz(ba.Actor):
             self._turbo_filter_counts = {source: 1}
 
     def set_score_text(self,
-                       text: Union[str, ba.Lstr],
+                       text: str | ba.Lstr,
                        color: Sequence[float] = (1.0, 1.0, 0.4),
                        flash: bool = False) -> None:
         """
@@ -1208,7 +1208,7 @@ class Spaz(ba.Actor):
             return super().handlemessage(msg)
         return None
 
-    def drop_bomb(self) -> Optional[stdbomb.Bomb]:
+    def drop_bomb(self) -> stdbomb.Bomb | None:
         """
         Tell the spaz to drop one of his bombs, and returns
         the resulting bomb object.

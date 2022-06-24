@@ -12,7 +12,7 @@ from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
 from ba._error import print_exception, ActivityNotFoundError
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Literal
+    from typing import Any, Literal
     import ba
 
 TA = TypeVar('TA', bound='Actor')
@@ -187,10 +187,10 @@ class Actor:
         ...
 
     @overload
-    def getactivity(self, doraise: Literal[False]) -> Optional[ba.Activity]:
+    def getactivity(self, doraise: Literal[False]) -> ba.Activity | None:
         ...
 
-    def getactivity(self, doraise: bool = True) -> Optional[ba.Activity]:
+    def getactivity(self, doraise: bool = True) -> ba.Activity | None:
         """Return the ba.Activity this Actor is associated with.
 
         If the Activity no longer exists, raises a ba.ActivityNotFoundError

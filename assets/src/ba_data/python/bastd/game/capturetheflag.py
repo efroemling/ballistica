@@ -16,7 +16,7 @@ from bastd.actor.flag import (FlagFactory, Flag, FlagPickedUpMessage,
                               FlagDroppedMessage, FlagDiedMessage)
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Union, Optional
+    from typing import Any, Sequence
 
 
 class CTFFlag(Flag):
@@ -39,9 +39,9 @@ class CTFFlag(Flag):
                                       'h_align': 'center'
                                   })
         self.reset_return_times()
-        self.last_player_to_hold: Optional[Player] = None
-        self.time_out_respawn_time: Optional[int] = None
-        self.touch_return_time: Optional[float] = None
+        self.last_player_to_hold: Player | None = None
+        self.time_out_respawn_time: int | None = None
+        self.touch_return_time: float | None = None
 
     def reset_return_times(self) -> None:
         """Clear flag related times in the activity."""
@@ -78,11 +78,11 @@ class Team(ba.Team[Player]):
         self.score = 0
         self.flag_return_touches = 0
         self.home_flag_at_base = True
-        self.touch_return_timer: Optional[ba.Timer] = None
+        self.touch_return_timer: ba.Timer | None = None
         self.enemy_flag_at_base = False
-        self.flag: Optional[CTFFlag] = None
-        self.last_flag_leave_time: Optional[float] = None
-        self.touch_return_timer_ticking: Optional[ba.NodeActor] = None
+        self.flag: CTFFlag | None = None
+        self.last_flag_leave_time: float | None = None
+        self.touch_return_timer_ticking: ba.NodeActor | None = None
 
 
 # ba_meta export game
@@ -161,12 +161,12 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC if self._epic_mode else
                               ba.MusicType.FLAG_CATCHER)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Steal the enemy flag.'
         return 'Steal the enemy flag ${ARG1} times.', self._score_to_win
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'return 1 flag'
         return 'return ${ARG1} flags', self._score_to_win
@@ -438,7 +438,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         We keep track of when each player is touching their own flag so we
         can award points when returned.
         """
-        player: Optional[Player]
+        player: Player | None
         try:
             spaz = ba.getcollision().sourcenode.getdelegate(PlayerSpaz, True)
         except ba.NotFoundError:

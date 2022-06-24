@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 def gen_flat_data_code(projroot: str, in_path: str, out_path: str,
@@ -33,7 +33,7 @@ def gen_flat_data_code(projroot: str, in_path: str, out_path: str,
     # slightly slow down hackers.
     sval = svalin
 
-    sval1: Optional[bytes]
+    sval1: bytes | None
     sval1 = sval
     while sval1:
         sval_out += ' ' + json.dumps(sval1[:1000].decode())

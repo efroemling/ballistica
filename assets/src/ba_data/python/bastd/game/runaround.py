@@ -26,7 +26,7 @@ from bastd.actor.spazbot import (
     BomberBotPro, BrawlerBotPro)
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Union
+    from typing import Any, Sequence
 
 
 class Preset(Enum):
@@ -54,7 +54,7 @@ class Spawn:
     # noinspection PyUnresolvedReferences
     type: type[SpazBot]
     path: int = 0
-    point: Optional[Point] = None
+    point: Point | None = None
 
 
 @dataclass
@@ -66,15 +66,15 @@ class Spacing:
 @dataclass
 class Wave:
     """Defines a wave of enemies."""
-    entries: list[Union[Spawn, Spacing, None]]
+    entries: list[Spawn | Spacing | None]
 
 
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
     def __init__(self) -> None:
-        self.respawn_timer: Optional[ba.Timer] = None
-        self.respawn_icon: Optional[RespawnIcon] = None
+        self.respawn_timer: ba.Timer | None = None
+        self.respawn_icon: RespawnIcon | None = None
 
 
 class Team(ba.Team[Player]):
@@ -144,31 +144,31 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
         self._last_wave_end_time = ba.time()
         self._player_has_picked_up_powerup = False
-        self._scoreboard: Optional[Scoreboard] = None
+        self._scoreboard: Scoreboard | None = None
         self._game_over = False
         self._wavenum = 0
         self._can_end_wave = True
         self._score = 0
         self._time_bonus = 0
-        self._score_region: Optional[ba.Actor] = None
+        self._score_region: ba.Actor | None = None
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
-        self._exclude_powerups: Optional[list[str]] = None
-        self._have_tnt: Optional[bool] = None
-        self._waves: Optional[list[Wave]] = None
+        self._exclude_powerups: list[str] | None = None
+        self._have_tnt: bool | None = None
+        self._waves: list[Wave] | None = None
         self._bots = SpazBotSet()
-        self._tntspawner: Optional[TNTSpawner] = None
-        self._lives_bg: Optional[ba.NodeActor] = None
+        self._tntspawner: TNTSpawner | None = None
+        self._lives_bg: ba.NodeActor | None = None
         self._start_lives = 10
         self._lives = self._start_lives
-        self._lives_text: Optional[ba.NodeActor] = None
+        self._lives_text: ba.NodeActor | None = None
         self._flawless = True
-        self._time_bonus_timer: Optional[ba.Timer] = None
-        self._time_bonus_text: Optional[ba.NodeActor] = None
-        self._time_bonus_mult: Optional[float] = None
-        self._wave_text: Optional[ba.NodeActor] = None
-        self._flawless_bonus: Optional[int] = None
-        self._wave_update_timer: Optional[ba.Timer] = None
+        self._time_bonus_timer: ba.Timer | None = None
+        self._time_bonus_text: ba.NodeActor | None = None
+        self._time_bonus_mult: float | None = None
+        self._wave_text: ba.NodeActor | None = None
+        self._flawless_bonus: int | None = None
+        self._wave_update_timer: ba.Timer | None = None
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
@@ -556,7 +556,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         else:
             delay = 0
 
-        score: Optional[int]
+        score: int | None
         if self._wavenum >= 2:
             score = self._score
             fail_message = None
@@ -723,13 +723,13 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         t_sec = 0.0
         base_delay = 0.5
         delay = 0.0
-        bot_types: list[Union[Spawn, Spacing, None]] = []
+        bot_types: list[Spawn | Spacing | None] = []
 
         if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             level = self._wavenum
             target_points = (level + 1) * 8.0
             group_count = random.randint(1, 3)
-            entries: list[Union[Spawn, Spacing, None]] = []
+            entries: list[Spawn | Spacing | None] = []
             spaz_types: list[tuple[type[SpazBot], float]] = []
             if level < 6:
                 spaz_types += [(BomberBot, 5.0)]
@@ -1121,7 +1121,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 return None
             pts, importance = msg.spazbot.get_death_points(msg.how)
             if msg.killerplayer is not None:
-                target: Optional[Sequence[float]]
+                target: Sequence[float] | None
                 try:
                     assert msg.spazbot is not None
                     assert msg.spazbot.node

@@ -28,7 +28,6 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
@@ -81,23 +80,23 @@ class ServerManagerApp:
         self._interactive = sys.stdin.isatty()
         self._wrapper_shutdown_desired = False
         self._done = False
-        self._subprocess_commands: list[Union[str, ServerCommand]] = []
+        self._subprocess_commands: list[str | ServerCommand] = []
         self._subprocess_commands_lock = Lock()
-        self._subprocess_force_kill_time: Optional[float] = None
+        self._subprocess_force_kill_time: float | None = None
         self._auto_restart = True
         self._config_auto_restart = True
-        self._config_mtime: Optional[float] = None
-        self._last_config_mtime_check_time: Optional[float] = None
+        self._config_mtime: float | None = None
+        self._last_config_mtime_check_time: float | None = None
         self._should_report_subprocess_error = False
         self._running = False
-        self._interpreter_start_time: Optional[float] = None
-        self._subprocess: Optional[subprocess.Popen[bytes]] = None
-        self._subprocess_launch_time: Optional[float] = None
+        self._interpreter_start_time: float | None = None
+        self._subprocess: subprocess.Popen[bytes] | None = None
+        self._subprocess_launch_time: float | None = None
         self._subprocess_sent_config_auto_restart = False
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
-        self._subprocess_thread: Optional[Thread] = None
-        self._subprocess_exited_cleanly: Optional[bool] = None
+        self._subprocess_thread: Thread | None = None
+        self._subprocess_exited_cleanly: bool | None = None
 
         # This may override the above defaults.
         self._parse_command_line_args()
@@ -251,8 +250,8 @@ class ServerManagerApp:
 
     def screenmessage(self,
                       message: str,
-                      color: Optional[tuple[float, float, float]] = None,
-                      clients: Optional[list[int]] = None) -> None:
+                      color: tuple[float, float, float] | None = None,
+                      clients: list[int] | None = None) -> None:
         """Display a screen-message.
 
         This will have no name attached and not show up in chat history.
@@ -265,7 +264,7 @@ class ServerManagerApp:
 
     def chatmessage(self,
                     message: str,
-                    clients: Optional[list[int]] = None) -> None:
+                    clients: list[int] | None = None) -> None:
         """Send a chat message from the server.
 
         This will have the server's name attached and will be logged
@@ -281,7 +280,7 @@ class ServerManagerApp:
         self._enqueue_server_command(ClientListCommand())
         self._block_for_command_completion()
 
-    def kick(self, client_id: int, ban_time: Optional[int] = None) -> None:
+    def kick(self, client_id: int, ban_time: int | None = None) -> None:
         """Kick the client with the provided id.
 
         If ban_time is provided, the client will be banned for that
@@ -489,7 +488,7 @@ class ServerManagerApp:
 
     def _load_config_from_file(self, print_confirmation: bool) -> ServerConfig:
 
-        out: Optional[ServerConfig] = None
+        out: ServerConfig | None = None
 
         if not os.path.exists(self._config_path):
 
@@ -549,8 +548,7 @@ class ServerManagerApp:
         while not self._done:
             self._run_server_cycle()
 
-    def _handle_term_signal(self, sig: int,
-                            frame: Optional[FrameType]) -> None:
+    def _handle_term_signal(self, sig: int, frame: FrameType | None) -> None:
         """Handle signals (will always run in the main thread)."""
         del sig, frame  # Unused.
         sys.exit(1 if self._should_report_subprocess_error else 0)
@@ -742,7 +740,7 @@ class ServerManagerApp:
                 break
 
             # Watch for the server process exiting..
-            code: Optional[int] = self._subprocess.poll()
+            code: int | None = self._subprocess.poll()
             if code is not None:
 
                 clr = Clr.CYN if code == 0 else Clr.RED
@@ -768,7 +766,7 @@ class ServerManagerApp:
             if (self._last_config_mtime_check_time is None
                     or (now - self._last_config_mtime_check_time) > 3.123):
                 self._last_config_mtime_check_time = now
-                mtime: Optional[float]
+                mtime: float | None
                 if os.path.isfile(self._config_path):
                     mtime = Path(self._config_path).stat().st_mtime
                 else:

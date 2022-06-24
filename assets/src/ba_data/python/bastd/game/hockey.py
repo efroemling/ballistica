@@ -16,7 +16,7 @@ from bastd.actor.powerupbox import PowerupBoxFactory
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Union
+    from typing import Any, Sequence
 
 
 class PuckDiedMessage:
@@ -198,18 +198,18 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
             actions=(('modify_part_collision', 'collide',
                       True), ('modify_part_collision', 'physical', False),
                      ('call', 'at_connect', self._handle_score)))
-        self._puck_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: Optional[list[ba.NodeActor]] = None
-        self._puck: Optional[Puck] = None
+        self._puck_spawn_pos: Sequence[float] | None = None
+        self._score_regions: list[ba.NodeActor] | None = None
+        self._puck: Puck | None = None
         self._score_to_win = int(settings['Score to Win'])
         self._time_limit = float(settings['Time Limit'])
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Score a goal.'
         return 'Score ${ARG1} goals.', self._score_to_win
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'score a goal'
         return 'score ${ARG1} goals', self._score_to_win

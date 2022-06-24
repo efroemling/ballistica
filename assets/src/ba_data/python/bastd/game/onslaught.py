@@ -28,22 +28,22 @@ from bastd.actor.spazbot import (
     TriggerBotProShielded, BrawlerBotPro, BomberBotProShielded)
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union, Sequence
+    from typing import Any, Sequence
     from bastd.actor.spazbot import SpazBot
 
 
 @dataclass
 class Wave:
     """A wave of enemies."""
-    entries: list[Union[Spawn, Spacing, Delay, None]]
+    entries: list[Spawn | Spacing | Delay | None]
     base_angle: float = 0.0
 
 
 @dataclass
 class Spawn:
     """A bot spawn event in a wave."""
-    bottype: Union[type[SpazBot], str]
-    point: Optional[Point] = None
+    bottype: type[SpazBot] | str
+    point: Point | None = None
     spacing: float = 5.0
 
 
@@ -123,7 +123,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     name = 'Onslaught'
     description = 'Defeat all enemies.'
 
-    tips: list[Union[str, ba.GameTip]] = [
+    tips: list[str | ba.GameTip] = [
         'Hold any button to run.'
         '  (Trigger buttons work well if you have them)',
         'Try tricking enemies into killing eachother or running off cliffs.',
@@ -169,26 +169,26 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._powerup_spread = (4.6, 2.7)
         else:
             raise Exception('Unsupported map: ' + str(settings['map']))
-        self._scoreboard: Optional[Scoreboard] = None
+        self._scoreboard: Scoreboard | None = None
         self._game_over = False
         self._wavenum = 0
         self._can_end_wave = True
         self._score = 0
         self._time_bonus = 0
-        self._spawn_info_text: Optional[ba.NodeActor] = None
+        self._spawn_info_text: ba.NodeActor | None = None
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._have_tnt = False
-        self._excluded_powerups: Optional[list[str]] = None
+        self._excluded_powerups: list[str] | None = None
         self._waves: list[Wave] = []
-        self._tntspawner: Optional[TNTSpawner] = None
-        self._bots: Optional[SpazBotSet] = None
-        self._powerup_drop_timer: Optional[ba.Timer] = None
-        self._time_bonus_timer: Optional[ba.Timer] = None
-        self._time_bonus_text: Optional[ba.NodeActor] = None
-        self._flawless_bonus: Optional[int] = None
-        self._wave_text: Optional[ba.NodeActor] = None
-        self._wave_update_timer: Optional[ba.Timer] = None
+        self._tntspawner: TNTSpawner | None = None
+        self._bots: SpazBotSet | None = None
+        self._powerup_drop_timer: ba.Timer | None = None
+        self._time_bonus_timer: ba.Timer | None = None
+        self._time_bonus_text: ba.NodeActor | None = None
+        self._flawless_bonus: int | None = None
+        self._wave_text: ba.NodeActor | None = None
+        self._wave_update_timer: ba.Timer | None = None
         self._throw_off_kills = 0
         self._land_mine_kills = 0
         self._tnt_kills = 0
@@ -729,7 +729,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         """End the game with the specified outcome."""
         if outcome == 'defeat':
             self.fade_to_red()
-        score: Optional[int]
+        score: int | None
         if self._wavenum >= 2:
             score = self._score
             fail_message = None
@@ -878,7 +878,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if not any(player.is_alive() for player in self.teams[0].players):
             self._spawn_info_text.node.text = ''
         else:
-            text: Union[str, ba.Lstr] = ''
+            text: str | ba.Lstr = ''
             for player in self.players:
                 if (not player.is_alive()
                         and (self._preset
@@ -1070,8 +1070,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _add_entries_for_distribution_group(
             self, group: list[tuple[int, int]],
             bot_levels: list[list[type[SpazBot]]],
-            all_entries: list[Union[Spawn, Spacing, Delay, None]]) -> None:
-        entries: list[Union[Spawn, Spacing, Delay, None]] = []
+            all_entries: list[Spawn | Spacing | Delay | None]) -> None:
+        entries: list[Spawn | Spacing | Delay | None] = []
         for entry in group:
             bot_level = bot_levels[entry[0] - 1]
             bot_type = bot_level[random.randrange(len(bot_level))]
@@ -1106,7 +1106,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         distribution = self._get_distribution(target_points, min_dudes,
                                               max_dudes, group_count,
                                               max_level)
-        all_entries: list[Union[Spawn, Spacing, Delay, None]] = []
+        all_entries: list[Spawn | Spacing | Delay | None] = []
         for group in distribution:
             self._add_entries_for_distribution_group(group, bot_levels,
                                                      all_entries)
@@ -1206,7 +1206,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             pts, importance = msg.spazbot.get_death_points(msg.how)
             if msg.killerplayer is not None:
                 self._handle_kill_achievements(msg)
-                target: Optional[Sequence[float]]
+                target: Sequence[float] | None
                 if msg.spazbot.node:
                     target = msg.spazbot.node.position
                 else:

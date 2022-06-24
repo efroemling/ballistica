@@ -11,7 +11,7 @@ from ba.internal import JoinActivity
 from bastd.actor.text import Text
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 class MultiTeamJoinActivity(JoinActivity):
@@ -19,7 +19,7 @@ class MultiTeamJoinActivity(JoinActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self._next_up_text: Optional[Text] = None
+        self._next_up_text: Text | None = None
 
     def on_transition_in(self) -> None:
         from bastd.actor.controlsguide import ControlsGuide

@@ -14,7 +14,7 @@ from bastd.actor.text import Text
 from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Sequence
+    from typing import Any, Sequence
     from bastd.ui.store.button import StoreButton
     from bastd.ui.league.rankbutton import LeagueRankButton
 
@@ -56,9 +56,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                               if _ba.get_v1_account_state() == 'signed_in' else
                               None)
 
-        self._game_service_icon_color: Optional[Sequence[float]]
-        self._game_service_achievements_texture: Optional[ba.Texture]
-        self._game_service_leaderboards_texture: Optional[ba.Texture]
+        self._game_service_icon_color: Sequence[float] | None
+        self._game_service_achievements_texture: ba.Texture | None
+        self._game_service_leaderboards_texture: ba.Texture | None
 
         with ba.Context('ui'):
             if self._account_type == 'Game Center':
@@ -89,53 +89,53 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._cashregistersound = ba.getsound('cashRegister')
         self._gun_cocking_sound = ba.getsound('gunCocking')
         self._dingsound = ba.getsound('ding')
-        self._score_link: Optional[str] = None
-        self._root_ui: Optional[ba.Widget] = None
-        self._background: Optional[ba.Actor] = None
+        self._score_link: str | None = None
+        self._root_ui: ba.Widget | None = None
+        self._background: ba.Actor | None = None
         self._old_best_rank = 0.0
-        self._game_name_str: Optional[str] = None
-        self._game_config_str: Optional[str] = None
+        self._game_name_str: str | None = None
+        self._game_config_str: str | None = None
 
         # Ui bits.
-        self._corner_button_offs: Optional[tuple[float, float]] = None
-        self._league_rank_button: Optional[LeagueRankButton] = None
-        self._store_button_instance: Optional[StoreButton] = None
-        self._restart_button: Optional[ba.Widget] = None
-        self._update_corner_button_positions_timer: Optional[ba.Timer] = None
-        self._next_level_error: Optional[ba.Actor] = None
+        self._corner_button_offs: tuple[float, float] | None = None
+        self._league_rank_button: LeagueRankButton | None = None
+        self._store_button_instance: StoreButton | None = None
+        self._restart_button: ba.Widget | None = None
+        self._update_corner_button_positions_timer: ba.Timer | None = None
+        self._next_level_error: ba.Actor | None = None
 
         # Score/gameplay bits.
-        self._was_complete: Optional[bool] = None
-        self._is_complete: Optional[bool] = None
-        self._newly_complete: Optional[bool] = None
-        self._is_more_levels: Optional[bool] = None
-        self._next_level_name: Optional[str] = None
-        self._show_friend_scores: Optional[bool] = None
-        self._show_info: Optional[dict[str, Any]] = None
-        self._name_str: Optional[str] = None
-        self._friends_loading_status: Optional[ba.Actor] = None
-        self._score_loading_status: Optional[ba.Actor] = None
-        self._tournament_time_remaining: Optional[float] = None
-        self._tournament_time_remaining_text: Optional[Text] = None
-        self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
+        self._was_complete: bool | None = None
+        self._is_complete: bool | None = None
+        self._newly_complete: bool | None = None
+        self._is_more_levels: bool | None = None
+        self._next_level_name: str | None = None
+        self._show_friend_scores: bool | None = None
+        self._show_info: dict[str, Any] | None = None
+        self._name_str: str | None = None
+        self._friends_loading_status: ba.Actor | None = None
+        self._score_loading_status: ba.Actor | None = None
+        self._tournament_time_remaining: float | None = None
+        self._tournament_time_remaining_text: Text | None = None
+        self._tournament_time_remaining_text_timer: ba.Timer | None = None
 
         # Stuff for activity skip by pressing button
         self._birth_time = ba.time()
         self._min_view_time = 5.0
         self._allow_server_transition = False
-        self._server_transitioning: Optional[bool] = None
+        self._server_transitioning: bool | None = None
 
         self._playerinfos: list[ba.PlayerInfo] = settings['playerinfos']
         assert isinstance(self._playerinfos, list)
         assert (isinstance(i, ba.PlayerInfo) for i in self._playerinfos)
 
-        self._score: Optional[int] = settings['score']
+        self._score: int | None = settings['score']
         assert isinstance(self._score, (int, type(None)))
 
-        self._fail_message: Optional[ba.Lstr] = settings['fail_message']
+        self._fail_message: ba.Lstr | None = settings['fail_message']
         assert isinstance(self._fail_message, (ba.Lstr, type(None)))
 
-        self._begin_time: Optional[float] = None
+        self._begin_time: float | None = None
 
         self._score_order: str
         if 'score_order' in settings:
@@ -410,7 +410,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                        texture=self._replay_icon_texture,
                        opacity=0.8)
 
-        next_button: Optional[ba.Widget] = None
+        next_button: ba.Widget | None = None
 
         # Our 'next' button is disabled if we haven't unlocked the next
         # level yet and invisible if there is none.
@@ -702,7 +702,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             str(len(self._playerinfos)) + ' Player', [])
 
         if self._score is not None:
-            our_score: Optional[list] = [
+            our_score: list | None = [
                 self._score, {
                     'players': [{
                         'name': p.name,
@@ -931,7 +931,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                            'loop': False
                        })).autoretain()
 
-    def _got_friend_score_results(self, results: Optional[list[Any]]) -> None:
+    def _got_friend_score_results(self, results: list[Any] | None) -> None:
 
         # FIXME: tidy this up
         # pylint: disable=too-many-locals
@@ -1046,7 +1046,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                  transition=Text.Transition.IN_RIGHT,
                  transition_delay=tdelay2).autoretain()
 
-    def _got_score_results(self, results: Optional[dict[str, Any]]) -> None:
+    def _got_score_results(self, results: dict[str, Any] | None) -> None:
 
         # FIXME: tidy this up
         # pylint: disable=too-many-locals

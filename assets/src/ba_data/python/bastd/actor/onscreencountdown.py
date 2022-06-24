@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class OnScreenCountdown(ba.Actor):
@@ -57,7 +57,7 @@ class OnScreenCountdown(ba.Actor):
             2: ba.getsound('announceTwo'),
             1: ba.getsound('announceOne')
         }
-        self._timer: Optional[ba.Timer] = None
+        self._timer: ba.Timer | None = None
 
     def start(self) -> None:
         """Start the timer."""

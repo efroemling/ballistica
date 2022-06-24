@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Union, Optional
+    from typing import Any, Sequence
 
 
 class Image(ba.Actor):
@@ -33,9 +33,9 @@ class Image(ba.Actor):
         BOTTOM_CENTER = 'bottomCenter'
 
     def __init__(self,
-                 texture: Union[ba.Texture, dict[str, Any]],
+                 texture: ba.Texture | dict[str, Any],
                  position: tuple[float, float] = (0, 0),
-                 transition: Optional[Transition] = None,
+                 transition: Transition | None = None,
                  transition_delay: float = 0.0,
                  attach: Attach = Attach.CENTER,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
@@ -53,7 +53,7 @@ class Image(ba.Actor):
 
         # If they provided a dict as texture, assume its an icon.
         # otherwise its just a texture value itself.
-        mask_texture: Optional[ba.Texture]
+        mask_texture: ba.Texture | None
         if isinstance(texture, dict):
             tint_color = texture['tint_color']
             tint2_color = texture['tint2_color']

@@ -17,7 +17,7 @@ from bastd.actor.bomb import Bomb
 from bastd.actor.popuptext import PopupText
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence
+    from typing import Any, Sequence
     from bastd.actor.bomb import Blast
 
 
@@ -62,8 +62,8 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._targets: list[Target] = []
-        self._update_timer: Optional[ba.Timer] = None
-        self._countdown: Optional[OnScreenCountdown] = None
+        self._update_timer: ba.Timer | None = None
+        self._countdown: OnScreenCountdown | None = None
         self._target_count = int(settings['Target Count'])
         self._enable_impact_bombs = bool(settings['Enable Impact Bombs'])
         self._enable_triple_bombs = bool(settings['Enable Triple Bombs'])

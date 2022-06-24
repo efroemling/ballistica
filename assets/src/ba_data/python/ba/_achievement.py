@@ -9,7 +9,7 @@ import _ba
 from ba._error import print_exception
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Union, Optional
+    from typing import Any, Sequence
     import ba
 
 # This could use some cleanup.
@@ -73,7 +73,7 @@ class AchievementSubsystem:
     def __init__(self) -> None:
         self.achievements: list[Achievement] = []
         self.achievements_to_display: (list[tuple[ba.Achievement, bool]]) = []
-        self.achievement_display_timer: Optional[_ba.Timer] = None
+        self.achievement_display_timer: _ba.Timer | None = None
         self.last_achievement_display_time: float = 0.0
         self.achievement_completion_banner_slots: set[int] = set()
         self._init_achievements()
@@ -450,7 +450,7 @@ class Achievement:
         self._icon_name = icon_name
         self._icon_color: Sequence[float] = list(icon_color) + [1]
         self._level_name = level_name
-        self._completion_banner_slot: Optional[int] = None
+        self._completion_banner_slot: int | None = None
         self._award = award
         self._hard_mode_only = hard_mode_only
 
@@ -534,7 +534,7 @@ class Achievement:
     def display_name(self) -> ba.Lstr:
         """Return a ba.Lstr for this Achievement's name."""
         from ba._language import Lstr
-        name: Union[ba.Lstr, str]
+        name: ba.Lstr | str
         try:
             if self._level_name != '':
                 from ba._campaign import getcampaign

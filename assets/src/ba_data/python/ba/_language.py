@@ -11,7 +11,7 @@ import _ba
 
 if TYPE_CHECKING:
     import ba
-    from typing import Any, Optional, Union, Sequence
+    from typing import Any, Sequence
 
 
 class LanguageSubsystem:
@@ -23,8 +23,8 @@ class LanguageSubsystem:
     """
 
     def __init__(self) -> None:
-        self.language_target: Optional[AttrDict] = None
-        self.language_merged: Optional[AttrDict] = None
+        self.language_target: AttrDict | None = None
+        self.language_merged: AttrDict | None = None
         self.default_language = self._get_default_language()
 
     def _can_display_language(self, language: str) -> bool:
@@ -139,7 +139,7 @@ class LanguageSubsystem:
                       if self._can_display_language(name))
 
     def setlanguage(self,
-                    language: Optional[str],
+                    language: str | None,
                     print_change: bool = True,
                     store_to_config: bool = True) -> None:
         """Set the active language used for the game.
@@ -408,7 +408,7 @@ class Lstr:
                  resource: str,
                  fallback_resource: str = '',
                  fallback_value: str = '',
-                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
+                 subs: Sequence[tuple[str, str | Lstr]] = []) -> None:
         """Create an Lstr from a string resource."""
 
     # noinspection PyShadowingNames,PyDefaultArgument
@@ -416,7 +416,7 @@ class Lstr:
     def __init__(self,
                  *,
                  translate: tuple[str, str],
-                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
+                 subs: Sequence[tuple[str, str | Lstr]] = []) -> None:
         """Create an Lstr by translating a string in a category."""
 
     # noinspection PyDefaultArgument
@@ -424,7 +424,7 @@ class Lstr:
     def __init__(self,
                  *,
                  value: str,
-                 subs: Sequence[tuple[str, Union[str, Lstr]]] = []) -> None:
+                 subs: Sequence[tuple[str, str | Lstr]] = []) -> None:
         """Create an Lstr from a raw string value."""
 
     # pylint: enable=redefined-outer-name, dangerous-default-value

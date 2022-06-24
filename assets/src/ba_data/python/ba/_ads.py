@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Callable, Any
+    from typing import Callable, Any
 
 
 class AdsSubsystem:
@@ -23,11 +23,11 @@ class AdsSubsystem:
     def __init__(self) -> None:
         self.last_ad_network = 'unknown'
         self.last_ad_network_set_time = time.time()
-        self.ad_amt: Optional[float] = None
+        self.ad_amt: float | None = None
         self.last_ad_purpose = 'invalid'
         self.attempted_first_ad = False
-        self.last_in_game_ad_remove_message_show_time: Optional[float] = None
-        self.last_ad_completion_time: Optional[float] = None
+        self.last_in_game_ad_remove_message_show_time: float | None = None
+        self.last_ad_completion_time: float | None = None
         self.last_ad_was_short = False
 
     def do_remove_in_game_ads_message(self) -> None:
@@ -89,7 +89,7 @@ class AdsSubsystem:
             show = False  # Never show ads during tournaments.
 
         if show:
-            interval: Optional[float]
+            interval: float | None
             launch_count = app.config.get('launchCount', 0)
 
             # If we're seeing short ads we may want to space them differently.

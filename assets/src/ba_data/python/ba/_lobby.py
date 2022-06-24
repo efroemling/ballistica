@@ -16,7 +16,7 @@ from ba._generated.enums import SpecialChar, InputType
 from ba._profile import get_player_profile_colors
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Sequence, Union
+    from typing import Any, Sequence
     import ba
 
 MAX_QUICK_CHANGE_COUNT = 30
@@ -32,14 +32,12 @@ class JoinInfo:
         from ba._nodeactor import NodeActor
         from ba._general import WeakCall
         self._state = 0
-        self._press_to_punch: Union[str,
-                                    ba.Lstr] = ('C' if _ba.app.iircade_mode
-                                                else _ba.charstr(
-                                                    SpecialChar.LEFT_BUTTON))
-        self._press_to_bomb: Union[str,
-                                   ba.Lstr] = ('B' if _ba.app.iircade_mode else
+        self._press_to_punch: str | ba.Lstr = ('C' if _ba.app.iircade_mode else
                                                _ba.charstr(
-                                                   SpecialChar.RIGHT_BUTTON))
+                                                   SpecialChar.LEFT_BUTTON))
+        self._press_to_bomb: str | ba.Lstr = ('B' if _ba.app.iircade_mode else
+                                              _ba.charstr(
+                                                  SpecialChar.RIGHT_BUTTON))
         self._joinmsg = Lstr(resource='pressAnyButtonToJoinText')
         can_switch_teams = (len(lobby.sessionteams) > 1)
 
@@ -150,12 +148,12 @@ class Chooser:
         self._sessionplayer = sessionplayer
         self._inited = False
         self._dead = False
-        self._text_node: Optional[ba.Node] = None
+        self._text_node: ba.Node | None = None
         self._profilename = ''
         self._profilenames: list[str] = []
         self._ready: bool = False
         self._character_names: list[str] = []
-        self._last_change: Sequence[Union[float, int]] = (0, 0)
+        self._last_change: Sequence[float | int] = (0, 0)
         self._profiles: dict[str, dict[str, Any]] = {}
 
         app = _ba.app
@@ -318,7 +316,7 @@ class Chooser:
             raise NotFoundError('Lobby does not exist.')
         return lobby
 
-    def get_lobby(self) -> Optional[ba.Lobby]:
+    def get_lobby(self) -> ba.Lobby | None:
         """Return this chooser's lobby if it still exists; otherwise None."""
         return self._lobby()
 

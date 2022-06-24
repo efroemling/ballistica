@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Sequence, Optional
+    from typing import Any, Sequence
 
 
 class Text(ba.Actor):
@@ -49,12 +49,12 @@ class Text(ba.Actor):
         TOP = 'top'
 
     def __init__(self,
-                 text: Union[str, ba.Lstr],
+                 text: str | ba.Lstr,
                  position: tuple[float, float] = (0.0, 0.0),
                  h_align: HAlign = HAlign.LEFT,
                  v_align: VAlign = VAlign.NONE,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
-                 transition: Optional[Transition] = None,
+                 transition: Transition | None = None,
                  transition_delay: float = 0.0,
                  flash: bool = False,
                  v_attach: VAttach = VAttach.CENTER,

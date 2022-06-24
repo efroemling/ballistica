@@ -23,10 +23,10 @@ import ba
 from bastd.actor import spaz as basespaz
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Callable, Sequence, Union
+    from typing import Any, Callable, Sequence
 
 
-def _safesetattr(node: Optional[ba.Node], attr: str, value: Any) -> None:
+def _safesetattr(node: ba.Node | None, attr: str, value: Any) -> None:
     if node:
         setattr(node, attr, value)
 
@@ -46,9 +46,9 @@ class ButtonPress:
     def run(self, a: TutorialActivity) -> None:
         s = a.current_spaz
         assert s is not None
-        img: Optional[ba.Node]
-        release_call: Optional[Callable]
-        color: Optional[Sequence[float]]
+        img: ba.Node | None
+        release_call: Callable[[], None] | None
+        color: Sequence[float] | None
         if self._button == 'punch':
             call = s.on_punch_press
             release_call = s.on_punch_release
@@ -124,9 +124,9 @@ class ButtonRelease:
     def run(self, a: TutorialActivity) -> None:
         s = a.current_spaz
         assert s is not None
-        call: Optional[Callable]
-        img: Optional[ba.Node]
-        color: Optional[Sequence[float]]
+        call: Callable[[], None] | None
+        img: ba.Node | None
+        color: Sequence[float] | None
         if self._button == 'punch':
             call = s.on_punch_release
             img = a.punch_image
@@ -183,9 +183,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
         if settings is None:
             settings = {}
         super().__init__(settings)
-        self.current_spaz: Optional[basespaz.Spaz] = None
+        self.current_spaz: basespaz.Spaz | None = None
         self._benchmark_type = getattr(ba.getsession(), 'benchmark_type', None)
-        self.last_start_time: Optional[int] = None
+        self.last_start_time: int | None = None
         self.cycle_times: list[int] = []
         self.allow_pausing = True
         self.allow_kick_idle_players = False
@@ -200,31 +200,31 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
         self.spawn_sound = ba.getsound('spawn')
-        self.map: Optional[ba.Map] = None
-        self.text: Optional[ba.Node] = None
-        self._skip_text: Optional[ba.Node] = None
-        self._skip_count_text: Optional[ba.Node] = None
-        self._scale: Optional[float] = None
+        self.map: ba.Map | None = None
+        self.text: ba.Node | None = None
+        self._skip_text: ba.Node | None = None
+        self._skip_count_text: ba.Node | None = None
+        self._scale: float | None = None
         self._stick_base_position: tuple[float, float] = (0.0, 0.0)
         self._stick_nub_position: tuple[float, float] = (0.0, 0.0)
         self._stick_base_image_color: Sequence[float] = (1.0, 1.0, 1.0, 1.0)
         self._stick_nub_image_color: Sequence[float] = (1.0, 1.0, 1.0, 1.0)
         self._time: int = -1
         self.punch_image_color = (1.0, 1.0, 1.0)
-        self.punch_image: Optional[ba.Node] = None
-        self.bomb_image: Optional[ba.Node] = None
-        self.jump_image: Optional[ba.Node] = None
-        self.pickup_image: Optional[ba.Node] = None
-        self._stick_base_image: Optional[ba.Node] = None
-        self._stick_nub_image: Optional[ba.Node] = None
+        self.punch_image: ba.Node | None = None
+        self.bomb_image: ba.Node | None = None
+        self.jump_image: ba.Node | None = None
+        self.pickup_image: ba.Node | None = None
+        self._stick_base_image: ba.Node | None = None
+        self._stick_nub_image: ba.Node | None = None
         self.bomb_image_color = (1.0, 1.0, 1.0)
         self.pickup_image_color = (1.0, 1.0, 1.0)
         self.control_ui_nodes: list[ba.Node] = []
         self.spazzes: dict[int, basespaz.Spaz] = {}
         self.jump_image_color = (1.0, 1.0, 1.0)
         self._entries: list[Any] = []
-        self._read_entries_timer: Optional[ba.Timer] = None
-        self._entry_timer: Optional[ba.Timer] = None
+        self._read_entries_timer: ba.Timer | None = None
+        self._entry_timer: ba.Timer | None = None
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
@@ -493,7 +493,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                              color: Sequence[float] = (1.0, 1.0, 1.0),
                              make_current: bool = False,
                              relative_to: int = None,
-                             name: Union[str, ba.Lstr] = '',
+                             name: str | ba.Lstr = '',
                              flash: bool = True,
                              angle: float = 0.0):
                     self._num = num
@@ -752,7 +752,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
             class Text:
 
-                def __init__(self, text: Union[str, ba.Lstr]):
+                def __init__(self, text: str | ba.Lstr):
                     self.text = text
 
                 def run(self, a: TutorialActivity) -> None:

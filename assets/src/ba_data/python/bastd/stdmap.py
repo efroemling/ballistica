@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 
 def _get_map_data(name: str) -> dict[str, Any]:
@@ -26,7 +26,7 @@ class StdMap(ba.Map):
     """A map completely defined by asset data.
 
     """
-    _data: Optional[dict[str, Any]] = None
+    _data: dict[str, Any] | None = None
 
     @classmethod
     def _getdata(cls) -> dict[str, Any]:

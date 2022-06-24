@@ -18,7 +18,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Union
+    from typing import Any, Sequence
     from bastd.actor.onscreentimer import OnScreenTimer
 
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class RaceMine:
     """Holds info about a mine on the track."""
     point: Sequence[float]
-    mine: Optional[Bomb]
+    mine: Bomb | None
 
 
 class RaceRegion(ba.Actor):
@@ -53,19 +53,19 @@ class Player(ba.Player['Team']):
     """Our player type for this game."""
 
     def __init__(self) -> None:
-        self.distance_txt: Optional[ba.Node] = None
+        self.distance_txt: ba.Node | None = None
         self.last_region = 0
         self.lap = 0
         self.distance = 0.0
         self.finished = False
-        self.rank: Optional[int] = None
+        self.rank: int | None = None
 
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
 
     def __init__(self) -> None:
-        self.time: Optional[float] = None
+        self.time: float | None = None
         self.lap = 0
         self.finished = False
 
@@ -141,22 +141,22 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._scoreboard = Scoreboard()
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
-        self._last_team_time: Optional[float] = None
-        self._front_race_region: Optional[int] = None
+        self._last_team_time: float | None = None
+        self._front_race_region: int | None = None
         self._nub_tex = ba.gettexture('nub')
         self._beep_1_sound = ba.getsound('raceBeep1')
         self._beep_2_sound = ba.getsound('raceBeep2')
-        self.race_region_material: Optional[ba.Material] = None
+        self.race_region_material: ba.Material | None = None
         self._regions: list[RaceRegion] = []
-        self._team_finish_pts: Optional[int] = None
-        self._time_text: Optional[ba.Actor] = None
-        self._timer: Optional[OnScreenTimer] = None
-        self._race_mines: Optional[list[RaceMine]] = None
-        self._race_mine_timer: Optional[ba.Timer] = None
-        self._scoreboard_timer: Optional[ba.Timer] = None
-        self._player_order_update_timer: Optional[ba.Timer] = None
-        self._start_lights: Optional[list[ba.Node]] = None
-        self._bomb_spawn_timer: Optional[ba.Timer] = None
+        self._team_finish_pts: int | None = None
+        self._time_text: ba.Actor | None = None
+        self._timer: OnScreenTimer | None = None
+        self._race_mines: list[RaceMine] | None = None
+        self._race_mine_timer: ba.Timer | None = None
+        self._scoreboard_timer: ba.Timer | None = None
+        self._player_order_update_timer: ba.Timer | None = None
+        self._start_lights: list[ba.Node] | None = None
+        self._bomb_spawn_timer: ba.Timer | None = None
         self._laps = int(settings['Laps'])
         self._entire_team_must_finish = bool(
             settings.get('Entire Team Must Finish', False))
@@ -170,7 +170,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self.default_music = (ba.MusicType.EPIC_RACE
                               if self._epic_mode else ba.MusicType.RACE)
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         if (isinstance(self.session, ba.DualTeamSession)
                 and self._entire_team_must_finish):
             t_str = ' Your entire team has to finish.'
@@ -181,7 +181,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             return 'Run ${ARG1} laps.' + t_str, self._laps
         return 'Run 1 lap.' + t_str
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         if self._laps > 1:
             return 'run ${ARG1} laps', self._laps
         return 'run 1 lap'
@@ -522,7 +522,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Calc all player distances.
         for player in self.players:
-            pos: Optional[ba.Vec3]
+            pos: ba.Vec3 | None
             try:
                 pos = player.position
             except ba.NotFoundError:

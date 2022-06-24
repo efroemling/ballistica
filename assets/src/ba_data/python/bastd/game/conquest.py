@@ -17,7 +17,7 @@ from bastd.actor.playerspaz import PlayerSpaz
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
     from bastd.actor.respawnicon import RespawnIcon
 
 
@@ -26,11 +26,11 @@ class ConquestFlag(Flag):
 
     def __init__(self, *args: Any, **keywds: Any):
         super().__init__(*args, **keywds)
-        self._team: Optional[Team] = None
-        self.light: Optional[ba.Node] = None
+        self._team: Team | None = None
+        self.light: ba.Node | None = None
 
     @property
-    def team(self) -> Optional[Team]:
+    def team(self) -> Team | None:
         """The team that owns this flag."""
         return self._team
 
@@ -46,21 +46,21 @@ class Player(ba.Player['Team']):
     # FIXME: We shouldn't be using customdata here
     # (but need to update respawn funcs accordingly first).
     @property
-    def respawn_timer(self) -> Optional[ba.Timer]:
+    def respawn_timer(self) -> ba.Timer | None:
         """Type safe access to standard respawn timer."""
         return self.customdata.get('respawn_timer', None)
 
     @respawn_timer.setter
-    def respawn_timer(self, value: Optional[ba.Timer]) -> None:
+    def respawn_timer(self, value: ba.Timer | None) -> None:
         self.customdata['respawn_timer'] = value
 
     @property
-    def respawn_icon(self) -> Optional[RespawnIcon]:
+    def respawn_icon(self) -> RespawnIcon | None:
         """Type safe access to standard respawn icon."""
         return self.customdata.get('respawn_icon', None)
 
     @respawn_icon.setter
-    def respawn_icon(self, value: Optional[RespawnIcon]) -> None:
+    def respawn_icon(self, value: RespawnIcon | None) -> None:
         self.customdata['respawn_icon'] = value
 
 
@@ -136,10 +136,10 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
                 ('call', 'at_connect', self._handle_flag_player_collide),
             ))
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'Secure all ${ARG1} flags.', len(self.map.flag_points)
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
     def on_team_join(self, team: Team) -> None:

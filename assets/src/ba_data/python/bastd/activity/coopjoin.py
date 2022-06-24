@@ -11,7 +11,7 @@ import ba
 from ba.internal import JoinActivity
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class CoopJoinActivity(JoinActivity):
@@ -54,7 +54,7 @@ class CoopJoinActivity(JoinActivity):
         ControlsGuide(delay=1.0).autoretain()
 
     def _on_got_scores_to_beat(self,
-                               scores: Optional[list[dict[str, Any]]]) -> None:
+                               scores: list[dict[str, Any]] | None) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         from efro.util import asserttype
@@ -87,7 +87,7 @@ class CoopJoinActivity(JoinActivity):
             delay_inc = 0.1
 
             def _add_t(
-                text: Union[str, ba.Lstr],
+                text: str | ba.Lstr,
                 h_offs: float = 0.0,
                 scale: float = 1.0,
                 color: Sequence[float] = (1.0, 1.0, 1.0, 0.46)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
     import ba
 
 
@@ -31,9 +31,9 @@ class Level:
         self._settings = settings
         self._preview_texture_name = preview_texture_name
         self._displayname = displayname
-        self._campaign: Optional[weakref.ref[ba.Campaign]] = None
-        self._index: Optional[int] = None
-        self._score_version_string: Optional[str] = None
+        self._campaign: weakref.ref[ba.Campaign] | None = None
+        self._index: int | None = None
+        self._score_version_string: str | None = None
 
     def __repr__(self) -> str:
         cls = type(self)
@@ -78,7 +78,7 @@ class Level:
         return self._gametype
 
     @property
-    def campaign(self) -> Optional[ba.Campaign]:
+    def campaign(self) -> ba.Campaign | None:
         """The ba.Campaign this Level is associated with, or None."""
         return None if self._campaign is None else self._campaign()
 

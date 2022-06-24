@@ -18,7 +18,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 
 class FlagState(Enum):
@@ -108,11 +108,11 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             2: ba.getsound('announceTwo'),
             1: ba.getsound('announceOne')
         }
-        self._flag_pos: Optional[Sequence[float]] = None
-        self._flag_state: Optional[FlagState] = None
-        self._flag: Optional[Flag] = None
-        self._flag_light: Optional[ba.Node] = None
-        self._scoring_team: Optional[weakref.ref[Team]] = None
+        self._flag_pos: Sequence[float] | None = None
+        self._flag_state: FlagState | None = None
+        self._flag: Flag | None = None
+        self._flag_light: ba.Node | None = None
+        self._scoring_team: weakref.ref[Team] | None = None
         self._hold_time = int(settings['Hold Time'])
         self._time_limit = float(settings['Time Limit'])
         self._flag_region_material = ba.Material()
@@ -130,10 +130,10 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         # Base class overrides.
         self.default_music = ba.MusicType.SCARY
 
-    def get_instance_description(self) -> Union[str, Sequence]:
+    def get_instance_description(self) -> str | Sequence:
         return 'Secure the flag for ${ARG1} seconds.', self._hold_time
 
-    def get_instance_description_short(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> str | Sequence:
         return 'secure the flag for ${ARG1} seconds', self._hold_time
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:

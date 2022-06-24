@@ -15,7 +15,7 @@ from bastd.actor.bomb import Bomb
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional
+    from typing import Any, Sequence
 
 
 class Player(ba.Player['Team']):
@@ -23,7 +23,7 @@ class Player(ba.Player['Team']):
 
     def __init__(self) -> None:
         super().__init__()
-        self.death_time: Optional[float] = None
+        self.death_time: float | None = None
 
 
 class Team(ba.Team[Player]):
@@ -64,9 +64,9 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         super().__init__(settings)
 
         self._epic_mode = settings.get('Epic Mode', False)
-        self._last_player_death_time: Optional[float] = None
+        self._last_player_death_time: float | None = None
         self._meteor_time = 2.0
-        self._timer: Optional[OnScreenTimer] = None
+        self._timer: OnScreenTimer | None = None
 
         # Some base class overrides:
         self.default_music = (ba.MusicType.EPIC

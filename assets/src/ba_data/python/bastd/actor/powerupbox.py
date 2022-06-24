@@ -11,7 +11,7 @@ import ba
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence
+    from typing import Any, Sequence
 
 DEFAULT_POWERUP_INTERVAL = 8.0
 
@@ -88,7 +88,7 @@ class PowerupBoxFactory:
         """
         from ba.internal import get_default_powerup_distribution
         shared = SharedObjects.get()
-        self._lastpoweruptype: Optional[str] = None
+        self._lastpoweruptype: str | None = None
         self.model = ba.getmodel('powerup')
         self.model_simple = ba.getmodel('powerupSimple')
         self.tex_bomb = ba.gettexture('powerupBomb')

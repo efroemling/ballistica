@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, overload
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Union, Any, Literal
+    from typing import Any, Literal
 
 
 class OnScreenTimer(ba.Actor):
@@ -21,7 +21,7 @@ class OnScreenTimer(ba.Actor):
 
     def __init__(self) -> None:
         super().__init__()
-        self._starttime_ms: Optional[int] = None
+        self._starttime_ms: int | None = None
         self.node = ba.newnode('text',
                                attrs={
                                    'v_attach': 'top',
@@ -55,7 +55,7 @@ class OnScreenTimer(ba.Actor):
         return self._starttime_ms is not None
 
     def stop(self,
-             endtime: Union[int, float] = None,
+             endtime: int | float | None = None,
              timeformat: ba.TimeFormat = ba.TimeFormat.SECONDS) -> None:
         """End the timer.
 
@@ -96,9 +96,8 @@ class OnScreenTimer(ba.Actor):
         ...
 
     def getstarttime(
-        self,
-        timeformat: ba.TimeFormat = ba.TimeFormat.SECONDS
-    ) -> Union[int, float]:
+            self,
+            timeformat: ba.TimeFormat = ba.TimeFormat.SECONDS) -> int | float:
         """Return the sim-time when start() was called.
 
         Time will be returned in seconds if timeformat is SECONDS or

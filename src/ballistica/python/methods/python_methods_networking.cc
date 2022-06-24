@@ -467,7 +467,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
 
       {"get_client_public_device_uuid",
        (PyCFunction)PyGetClientPublicDeviceUUID, METH_VARARGS | METH_KEYWORDS,
-       "get_client_public_device_uuid(client_id: int) -> Optional[str]\n"
+       "get_client_public_device_uuid(client_id: int) -> str | None\n"
        "\n"
        "(internal)\n"
        "\n"
@@ -529,7 +529,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
 
       {"set_public_party_stats_url", (PyCFunction)PySetPublicPartyStatsURL,
        METH_VARARGS | METH_KEYWORDS,
-       "set_public_party_stats_url(url: Optional[str]) -> None\n"
+       "set_public_party_stats_url(url: str | None) -> None\n"
        "\n"
        "(internal)"},
 

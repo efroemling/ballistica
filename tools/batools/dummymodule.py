@@ -33,7 +33,7 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
         sig = ('# Show that ur return type varies based on "doraise" value:\n'
                '@overload\n'
                'def getdelegate(self, type: type[_T],'
-               ' doraise: Literal[False] = False) -> Optional[_T]:\n'
+               ' doraise: Literal[False] = False) -> _T | None:\n'
                '    ...\n'
                '\n'
                '@overload\n'
@@ -53,7 +53,7 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
                '\n'
                '@overload\n'
                'def getinputdevice(name: str, unique_id: str,'
-               ' doraise: Literal[False]) -> Optional[ba.InputDevice]:\n'
+               ' doraise: Literal[False]) -> ba.InputDevice | None:\n'
                '    ...\n'
                '\n'
                'def getinputdevice(name: str, unique_id: str,'
@@ -97,11 +97,11 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             '\n'
             '@overload\n'
             'def getactivity(doraise: Literal[False])'
-            ' -> Optional[ba.Activity]:\n'
+            ' -> ba.Activity | None:\n'
             '    ...\n'
             '\n'
             '\n'
-            'def getactivity(doraise: bool = True) -> Optional[ba.Activity]:')
+            'def getactivity(doraise: bool = True) -> ba.Activity | None:')
     elif sig_in == 'getsession(doraise: bool = True) -> <varies>':
         sig = ('# Show that our return type varies based on "doraise" value:\n'
                '@overload\n'
@@ -111,11 +111,11 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
                '\n'
                '@overload\n'
                'def getsession(doraise: Literal[False])'
-               ' -> Optional[ba.Session]:\n'
+               ' -> ba.Session | None:\n'
                '    ...\n'
                '\n'
                '\n'
-               'def getsession(doraise: bool = True) -> Optional[ba.Session]:')
+               'def getsession(doraise: bool = True) -> ba.Session | None:')
 
     else:
         raise RuntimeError(
@@ -179,18 +179,21 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
             elif returns == 'ba.Lstr':
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              "return ba.Lstr(value='')")
-            elif returns in ('ba.Activity', 'Optional[ba.Activity]'):
+            elif returns in ('ba.Activity', 'Optional[ba.Activity]',
+                             'ba.Activity | None'):
                 returnstr = (
                     'import ba  # pylint: disable=cyclic-import\nreturn ' +
                     'ba.Activity(settings={})')
-            elif returns in ('ba.Session', 'Optional[ba.Session]'):
+            elif returns in ('ba.Session', 'Optional[ba.Session]',
+                             'ba.Session | None'):
                 returnstr = (
                     'import ba  # pylint: disable=cyclic-import\nreturn ' +
                     'ba.Session([])')
-            elif returns == 'Optional[ba.SessionPlayer]':
+            elif returns in ('Optional[ba.SessionPlayer]',
+                             'ba.SessionPlayer | None'):
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              'return ba.SessionPlayer()')
-            elif returns == 'Optional[ba.Player]':
+            elif returns in ('Optional[ba.Player]', 'ba.Player | None'):
                 returnstr = ('import ba  # pylint: disable=cyclic-import\n'
                              'return ba.Player()')
             elif returns.startswith('ba.'):
@@ -212,13 +215,14 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 returnstr = 'return _uninferrable()'
             elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
-            elif returns == 'Optional[str]':
+            elif returns in ('Optional[str]', 'str | None'):
                 returnstr = "return ''"
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
-            elif returns == 'Optional[ba.Widget]':
+            elif returns in ('Optional[ba.Widget]', 'ba.Widget | None'):
                 returnstr = 'return Widget()'
-            elif returns == 'Optional[ba.InputDevice]':
+            elif returns in ('Optional[ba.InputDevice]',
+                             'ba.InputDevice | None'):
                 returnstr = 'return InputDevice()'
             elif returns == 'list[ba.Widget]':
                 returnstr = 'return [Widget()]'
@@ -230,7 +234,8 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 returnstr = 'return 0.0'
             elif returns == 'dict[str, Any]':
                 returnstr = "return {'foo': 'bar'}"
-            elif returns in ('Optional[tuple[int, int]]', 'tuple[int, int]'):
+            elif returns in ('Optional[tuple[int, int]]',
+                             'tuple[int, int] | None', 'tuple[int, int]'):
                 returnstr = 'return (0, 0)'
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
