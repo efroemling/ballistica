@@ -50,7 +50,7 @@ def get_player_profile_icon(profilename: str) -> str:
 
 def get_player_profile_colors(
     profilename: str | None,
-    profiles: dict[str, dict[str, Any]] = None
+    profiles: dict[str, dict[str, Any]] | None = None
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """Given a profile, return colors for them."""
     appconfig = _ba.app.config

@@ -314,11 +314,11 @@ class Stats:
     def player_scored(self,
                       player: ba.Player,
                       base_points: int = 1,
-                      target: Sequence[float] = None,
+                      target: Sequence[float] | None = None,
                       kill: bool = False,
-                      victim_player: ba.Player = None,
+                      victim_player: ba.Player | None = None,
                       scale: float = 1.0,
-                      color: Sequence[float] = None,
+                      color: Sequence[float] | None = None,
                       title: str | ba.Lstr | None = None,
                       screenmessage: bool = True,
                       display: bool = True,
@@ -422,7 +422,7 @@ class Stats:
     def player_was_killed(self,
                           player: ba.Player,
                           killed: bool = False,
-                          killer: ba.Player = None) -> None:
+                          killer: ba.Player | None = None) -> None:
         """Should be called when a player is killed."""
         from ba._language import Lstr
         name = player.getname()

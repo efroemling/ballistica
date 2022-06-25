@@ -21,7 +21,7 @@ class GamepadSettingsWindow(ba.Window):
                  is_main_menu: bool = True,
                  transition: str = 'in_right',
                  transition_out: str = 'out_right',
-                 settings: dict = None):
+                 settings: dict | None = None):
         self._input = gamepad
 
         # If our input-device went away, just return an empty zombie.
@@ -652,8 +652,8 @@ class GamepadSettingsWindow(ba.Window):
                         texture: ba.Texture,
                         button: str,
                         scale: float = 1.0,
-                        message: ba.Lstr = None,
-                        message2: ba.Lstr = None,
+                        message: ba.Lstr | None = None,
+                        message2: ba.Lstr | None = None,
                         maxwidth: float = 80.0) -> ba.Widget:
         if message is None:
             message = ba.Lstr(resource=self._r + '.pressAnyButtonText')
@@ -754,8 +754,8 @@ class AwaitGamepadInputWindow(ba.Window):
             button: str,
             callback: Callable[[str, dict[str, Any], AwaitGamepadInputWindow],
                                Any],
-            message: ba.Lstr = None,
-            message2: ba.Lstr = None):
+            message: ba.Lstr | None = None,
+            message2: ba.Lstr | None = None):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             # Shouldn't get here.

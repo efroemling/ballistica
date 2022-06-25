@@ -72,8 +72,8 @@ class Session:
 
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],
-                 team_names: Sequence[str] = None,
-                 team_colors: Sequence[Sequence[float]] = None,
+                 team_names: Sequence[str] | None = None,
+                 team_colors: Sequence[Sequence[float]] | None = None,
                  min_players: int = 1,
                  max_players: int = 8):
         """Instantiate a session.

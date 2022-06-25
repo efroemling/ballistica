@@ -841,7 +841,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     def spawn_player_spaz(self,
                           player: PlayerType,
                           position: Sequence[float] = (0, 0, 0),
-                          angle: float = None) -> PlayerSpaz:
+                          angle: float | None = None) -> PlayerSpaz:
         """Create and wire up a ba.PlayerSpaz for the provided ba.Player."""
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import

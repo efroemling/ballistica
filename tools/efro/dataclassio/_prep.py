@@ -38,7 +38,7 @@ PREP_ATTR = '_DCIOPREP'
 PREP_SESSION_ATTR = '_DCIOPREPSESSION'
 
 
-def ioprep(cls: type, globalns: dict = None) -> None:
+def ioprep(cls: type, globalns: dict | None = None) -> None:
     """Prep a dataclass type for use with this module's functionality.
 
     Prepping ensures that all types contained in a data class as well as

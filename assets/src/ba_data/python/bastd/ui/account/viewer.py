@@ -19,9 +19,9 @@ class AccountViewerWindow(popup.PopupWindow):
 
     def __init__(self,
                  account_id: str,
-                 profile_id: str = None,
+                 profile_id: str | None = None,
                  position: tuple[float, float] = (0.0, 0.0),
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0)):
         from ba.internal import is_browser_likely_available, master_server_get
 

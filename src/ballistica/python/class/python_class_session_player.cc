@@ -680,7 +680,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "Returns the player's name. If icon is True, the long version of the\n"
      "name may include an icon."},
     {"setname", (PyCFunction)SetName, METH_VARARGS | METH_KEYWORDS,
-     "setname(name: str, full_name: str = None, real: bool = True)\n"
+     "setname(name: str, full_name: str | None = None, real: bool = True)\n"
      "  -> None\n"
      "\n"
      "Set the player's name to the provided string.\n"

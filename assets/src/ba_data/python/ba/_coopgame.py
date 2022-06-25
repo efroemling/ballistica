@@ -177,7 +177,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     def spawn_player_spaz(self,
                           player: PlayerType,
                           position: Sequence[float] = (0.0, 0.0, 0.0),
-                          angle: float = None) -> PlayerSpaz:
+                          angle: float | None = None) -> PlayerSpaz:
         """Spawn and wire up a standard player spaz."""
         spaz = super().spawn_player_spaz(player, position, angle)
 

@@ -177,9 +177,10 @@ def garbage_collect() -> None:
     gc.collect()
 
 
-def print_live_object_warnings(when: Any,
-                               ignore_session: ba.Session = None,
-                               ignore_activity: ba.Activity = None) -> None:
+def print_live_object_warnings(
+        when: Any,
+        ignore_session: ba.Session | None = None,
+        ignore_activity: ba.Activity | None = None) -> None:
     """Print warnings for remaining objects in the current context."""
     # pylint: disable=cyclic-import
     from ba._session import Session

@@ -19,7 +19,7 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def __init__(self,
                  transition: str = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
@@ -355,7 +355,7 @@ class SoundtrackBrowserWindow(ba.Window):
             return ba.Lstr(resource=self._r + '.defaultSoundtrackNameText')
         return ba.Lstr(value=soundtrack)
 
-    def _refresh(self, select_soundtrack: str = None) -> None:
+    def _refresh(self, select_soundtrack: str | None = None) -> None:
         from efro.util import asserttype
         self._allow_changing_soundtracks = False
         old_selection = self._selected_soundtrack

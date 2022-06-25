@@ -137,8 +137,8 @@ class PowerupBoxFactory:
                 self._powerupdist.append(powerup)
 
     def get_random_powerup_type(self,
-                                forcetype: str = None,
-                                excludetypes: list[str] = None) -> str:
+                                forcetype: str | None = None,
+                                excludetypes: list[str] | None = None) -> str:
         """Returns a random powerup type (string).
 
         See ba.Powerup.poweruptype for available type values.

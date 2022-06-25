@@ -25,7 +25,7 @@ class WatchWindow(ba.Window):
 
     def __init__(self,
                  transition: str | None = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         from bastd.ui.tabs import TabRow

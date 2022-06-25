@@ -21,7 +21,7 @@ class PlaylistBrowserWindow(ba.Window):
     def __init__(self,
                  sessiontype: type[ba.Session],
                  transition: str | None = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui.playlist import PlaylistTypeVars

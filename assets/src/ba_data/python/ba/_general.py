@@ -360,7 +360,7 @@ def _verify_object_death(wref: weakref.ref) -> None:
     print_active_refs(obj)
 
 
-def storagename(suffix: str = None) -> str:
+def storagename(suffix: str | None = None) -> str:
     """Generate a unique name for storing class data in shared places.
 
     Category: **General Utility Functions**

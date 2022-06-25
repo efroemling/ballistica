@@ -19,14 +19,14 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
 
     def __init__(self,
                  tournament_id: str,
-                 tournament_activity: ba.GameActivity = None,
+                 tournament_activity: ba.GameActivity | None = None,
                  position: tuple[float, float] = (0.0, 0.0),
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
                  tint_color: Sequence[float] = (1.0, 1.0, 1.0),
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
-                 selected_character: str = None,
-                 on_close_call: Callable[[], Any] = None):
+                 selected_character: str | None = None,
+                 on_close_call: Callable[[], Any] | None = None):
 
         del tournament_activity  # unused arg
         del tint_color  # unused arg

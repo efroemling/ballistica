@@ -25,7 +25,7 @@ class Level:
                  gametype: type[ba.GameActivity],
                  settings: dict,
                  preview_texture_name: str,
-                 displayname: str = None):
+                 displayname: str | None = None):
         self._name = name
         self._gametype = gametype
         self._settings = settings

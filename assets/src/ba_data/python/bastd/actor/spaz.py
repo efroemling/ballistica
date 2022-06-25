@@ -67,7 +67,7 @@ class Spaz(ba.Actor):
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
                  character: str = 'Spaz',
-                 source_player: ba.Player = None,
+                 source_player: ba.Player | None = None,
                  start_invincible: bool = True,
                  can_accept_powerups: bool = True,
                  powerups_expire: bool = False,
@@ -1266,7 +1266,7 @@ class Spaz(ba.Actor):
             else:
                 self.node.counter_text = ''
 
-    def curse_explode(self, source_player: ba.Player = None) -> None:
+    def curse_explode(self, source_player: ba.Player | None = None) -> None:
         """Explode the poor spaz spectacularly."""
         if self._cursed and self.node:
             self.shatter(extreme=True)

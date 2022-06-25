@@ -178,7 +178,7 @@ class Team(ba.Team[Player]):
 
 class TutorialActivity(ba.Activity[Player, Team]):
 
-    def __init__(self, settings: dict = None):
+    def __init__(self, settings: dict | None = None):
         from bastd.maps import Rampage
         if settings is None:
             settings = {}
@@ -492,7 +492,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                              position: Sequence[float],
                              color: Sequence[float] = (1.0, 1.0, 1.0),
                              make_current: bool = False,
-                             relative_to: int = None,
+                             relative_to: int | None = None,
                              name: str | ba.Lstr = '',
                              flash: bool = True,
                              angle: float = 0.0):
@@ -550,7 +550,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                              position: Sequence[float],
                              color: Sequence[float] = (1.0, 1.0, 1.0),
                              make_current: bool = False,
-                             relative_to: int = None):
+                             relative_to: int | None = None):
                     self._position = position
                     self._relative_to = relative_to
 
@@ -761,7 +761,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
             class PrintPos:
 
-                def __init__(self, spaz_num: int = None):
+                def __init__(self, spaz_num: int | None = None):
                     self._spaz_num = spaz_num
 
                 def run(self, a: TutorialActivity) -> None:
@@ -787,7 +787,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
                 def __init__(self,
                              celebrate_type: str = 'both',
-                             spaz_num: int = None,
+                             spaz_num: int | None = None,
                              duration: int = 1000):
                     self._spaz_num = spaz_num
                     self._celebrate_type = celebrate_type

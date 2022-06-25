@@ -996,9 +996,13 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"screenmessage", (PyCFunction)PyScreenMessage,
          METH_VARARGS | METH_KEYWORDS,
          "screenmessage(message: str | ba.Lstr,\n"
-         "  color: Sequence[float] = None, top: bool = False,\n"
-         "  image: dict[str, Any] = None, log: bool = False,\n"
-         "  clients: Sequence[int] = None, transient: bool = False) -> None\n"
+         "  color: Sequence[float] | None = None,\n"
+         "  top: bool = False,\n"
+         "  image: dict[str, Any] | None = None,\n"
+         "  log: bool = False,\n"
+         "  clients: Sequence[int] | None = None,\n"
+         "  transient: bool = False)"
+         " -> None\n"
          "\n"
          "Print a message to the local client's screen, in a given color.\n"
          "\n"
@@ -1157,7 +1161,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"newactivity", (PyCFunction)PyNewActivity,
          METH_VARARGS | METH_KEYWORDS,
          "newactivity(activity_type: type[ba.Activity],\n"
-         "  settings: dict = None) -> ba.Activity\n"
+         "  settings: dict | None = None) -> ba.Activity\n"
          "\n"
          "Instantiates a ba.Activity given a type object.\n"
          "\n"
@@ -1203,7 +1207,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"new_host_session", (PyCFunction)PyNewHostSession,
          METH_VARARGS | METH_KEYWORDS,
          "new_host_session(sessiontype: type[ba.Session],\n"
-         "  benchmark_type: str = None) -> None\n"
+         "  benchmark_type: str | None = None) -> None\n"
          "\n"
          "(internal)"},
 

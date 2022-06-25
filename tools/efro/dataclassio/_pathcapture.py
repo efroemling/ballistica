@@ -19,7 +19,7 @@ T = TypeVar('T')
 class _PathCapture:
     """Utility for obtaining dataclass storage paths in a type safe way."""
 
-    def __init__(self, obj: Any, pathparts: list[str] = None):
+    def __init__(self, obj: Any, pathparts: list[str] | None = None):
         self._is_dataclass = dataclasses.is_dataclass(obj)
         if pathparts is None:
             pathparts = []

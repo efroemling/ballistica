@@ -40,9 +40,9 @@ class Image(ba.Actor):
                  attach: Attach = Attach.CENTER,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
                  scale: tuple[float, float] = (100.0, 100.0),
-                 transition_out_delay: float = None,
-                 model_opaque: ba.Model = None,
-                 model_transparent: ba.Model = None,
+                 transition_out_delay: float | None = None,
+                 model_opaque: ba.Model | None = None,
+                 model_transparent: ba.Model | None = None,
                  vr_depth: float = 0.0,
                  host_only: bool = False,
                  front: bool = False):

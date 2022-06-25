@@ -493,7 +493,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
 
       {"connect_to_party", (PyCFunction)PyConnectToParty,
        METH_VARARGS | METH_KEYWORDS,
-       "connect_to_party(address: str, port: int = None,\n"
+       "connect_to_party(address: str, port: int | None = None,\n"
        "  print_progress: bool = True) -> None\n"
        "\n"
        "(internal)"},

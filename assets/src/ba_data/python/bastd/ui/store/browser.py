@@ -31,10 +31,10 @@ class StoreBrowserWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  modal: bool = False,
-                 show_tab: StoreBrowserWindow.TabID = None,
-                 on_close_call: Callable[[], Any] = None,
-                 back_location: str = None,
-                 origin_widget: ba.Widget = None):
+                 show_tab: StoreBrowserWindow.TabID | None = None,
+                 on_close_call: Callable[[], Any] | None = None,
+                 back_location: str | None = None,
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bastd.ui.tabs import TabRow

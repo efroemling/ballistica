@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 class AchievementsWindow(popup.PopupWindow):
     """Popup window to view achievements."""
 
-    def __init__(self, position: tuple[float, float], scale: float = None):
+    def __init__(self,
+                 position: tuple[float, float],
+                 scale: float | None = None):
         # pylint: disable=too-many-locals
         uiscale = ba.app.ui.uiscale
         if scale is None:

@@ -20,7 +20,9 @@ class OnScreenCountdown(ba.Actor):
     Useful for time-based games that count down to zero.
     """
 
-    def __init__(self, duration: int, endcall: Callable[[], Any] = None):
+    def __init__(self,
+                 duration: int,
+                 endcall: Callable[[], Any] | None = None):
         """Duration is provided in seconds."""
         super().__init__()
         self._timeremaining = duration
@@ -73,7 +75,7 @@ class OnScreenCountdown(ba.Actor):
         # Release callbacks/refs.
         self._endcall = None
 
-    def _update(self, forcevalue: int = None) -> None:
+    def _update(self, forcevalue: int | None = None) -> None:
         if forcevalue is not None:
             tval = forcevalue
         else:

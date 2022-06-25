@@ -8,7 +8,7 @@ import _ba
 import ba
 
 
-def show_sign_in_prompt(account_type: str = None) -> None:
+def show_sign_in_prompt(account_type: str | None = None) -> None:
     """Bring up a prompt telling the user they must sign in."""
     from bastd.ui.confirm import ConfirmWindow
     from bastd.ui.account import settings

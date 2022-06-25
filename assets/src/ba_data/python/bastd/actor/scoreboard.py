@@ -241,7 +241,7 @@ class _Entry:
 
     def set_value(self,
                   score: float,
-                  max_score: float = None,
+                  max_score: float | None = None,
                   countdown: bool = False,
                   flash: bool = True,
                   show_value: bool = True) -> None:
@@ -327,7 +327,7 @@ class Scoreboard:
 
     _ENTRYSTORENAME = ba.storagename('entry')
 
-    def __init__(self, label: ba.Lstr = None, score_split: float = 0.7):
+    def __init__(self, label: ba.Lstr | None = None, score_split: float = 0.7):
         """Instantiate a scoreboard.
 
         Label can be something like 'points' and will
@@ -356,7 +356,7 @@ class Scoreboard:
     def set_team_value(self,
                        team: ba.Team,
                        score: float,
-                       max_score: float = None,
+                       max_score: float | None = None,
                        countdown: bool = False,
                        flash: bool = True,
                        show_value: bool = True) -> None:

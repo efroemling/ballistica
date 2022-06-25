@@ -21,8 +21,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
     def __init__(self,
                  sessiontype: type[ba.Session],
                  transition: str = 'in_right',
-                 select_playlist: str = None,
-                 origin_widget: ba.Widget = None):
+                 select_playlist: str | None = None,
+                 origin_widget: ba.Widget | None = None):
         # Yes this needs tidying.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -297,7 +297,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         _ba.fade_screen(False, endcall=self._run_selected_playlist)
         _ba.lock_all_input()
 
-    def _refresh(self, select_playlist: str = None) -> None:
+    def _refresh(self, select_playlist: str | None = None) -> None:
         from efro.util import asserttype
         old_selection = self._selected_playlist_name
 

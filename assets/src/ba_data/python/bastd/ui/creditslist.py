@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class CreditsListWindow(ba.Window):
     """Window for displaying game credits."""
 
-    def __init__(self, origin_widget: ba.Widget = None):
+    def __init__(self, origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         import json

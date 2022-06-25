@@ -440,10 +440,10 @@ class XCodeBuild:
     def _print_simple_section_line(
             self,
             line: str,
-            prefix: str = None,
+            prefix: str | None = None,
             prefix_index: int | None = 1,
-            ignore_line_starts: list[str] = None,
-            ignore_line_start_tails: list[str] = None) -> None:
+            ignore_line_starts: list[str] | None = None,
+            ignore_line_start_tails: list[str] | None = None) -> None:
 
         if ignore_line_starts is None:
             ignore_line_starts = []

@@ -18,10 +18,10 @@ class PlaylistEditController:
 
     def __init__(self,
                  sessiontype: type[ba.Session],
-                 existing_playlist_name: str = None,
+                 existing_playlist_name: str | None = None,
                  transition: str = 'in_right',
-                 playlist: list[dict[str, Any]] = None,
-                 playlist_name: str = None):
+                 playlist: list[dict[str, Any]] | None = None,
+                 playlist_name: str | None = None):
         from ba.internal import preload_map_preview_media, filter_playlist
         from bastd.ui.playlist import PlaylistTypeVars
         from bastd.ui.playlist.edit import PlaylistEditWindow

@@ -1,4 +1,4 @@
-### 1.7.2 (20617, 2022-06-24)
+### 1.7.2 (20620, 2022-06-25)
 - Minor fixes in some minigames (Thanks Droopy!)
 - Fixed a bug preventing 'clients' arg from working in _ba.chatmessage (Thanks imayushsaini!)
 - Fixed a bug where ba.Player.getdelegate(doraise=True) could return None instead of raising a ba.DelegateNotFoundError (thanks Dliwk!)

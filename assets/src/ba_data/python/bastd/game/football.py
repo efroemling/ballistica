@@ -596,7 +596,9 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             if closest_bot is not None:
                 closest_bot.target_flag = self._flag
 
-    def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
+    def _drop_powerup(self,
+                      index: int,
+                      poweruptype: str | None = None) -> None:
         if poweruptype is None:
             poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
                 excludetypes=self._exclude_powerups))
@@ -610,7 +612,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
 
     def _drop_powerups(self,
                        standard_points: bool = False,
-                       poweruptype: str = None) -> None:
+                       poweruptype: str | None = None) -> None:
         """Generic powerup drop."""
         if standard_points:
             spawnpoints = self.map.powerup_spawn_points

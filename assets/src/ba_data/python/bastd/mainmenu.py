@@ -767,7 +767,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                    y: float,
                    scale: float,
                    delay: float,
-                   custom_texture: str = None,
+                   custom_texture: str | None = None,
                    jitter_scale: float = 1.0,
                    rotate: float = 0.0,
                    vr_depth_offset: float = 0.0) -> None:

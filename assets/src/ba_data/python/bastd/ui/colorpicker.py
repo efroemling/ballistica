@@ -24,7 +24,7 @@ class ColorPicker(PopupWindow):
                  position: tuple[float, float],
                  initial_color: Sequence[float] = (1.0, 1.0, 1.0),
                  delegate: Any = None,
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
@@ -162,7 +162,7 @@ class ColorPickerExact(PopupWindow):
                  position: tuple[float, float],
                  initial_color: Sequence[float] = (1.0, 1.0, 1.0),
                  delegate: Any = None,
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals

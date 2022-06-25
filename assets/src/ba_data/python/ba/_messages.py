@@ -236,17 +236,17 @@ class HitMessage:
     """
 
     def __init__(self,
-                 srcnode: ba.Node = None,
-                 pos: Sequence[float] = None,
-                 velocity: Sequence[float] = None,
+                 srcnode: ba.Node | None = None,
+                 pos: Sequence[float] | None = None,
+                 velocity: Sequence[float] | None = None,
                  magnitude: float = 1.0,
                  velocity_magnitude: float = 0.0,
                  radius: float = 1.0,
-                 source_player: ba.Player = None,
+                 source_player: ba.Player | None = None,
                  kick_back: float = 1.0,
-                 flat_damage: float = None,
+                 flat_damage: float | None = None,
                  hit_type: str = 'generic',
-                 force_direction: Sequence[float] = None,
+                 force_direction: Sequence[float] | None = None,
                  hit_subtype: str = 'default'):
         """Instantiate a message with given values."""
 

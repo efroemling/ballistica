@@ -54,7 +54,7 @@ class Spawner:
             pt: Sequence[float] = (0, 0, 0),  # pylint: disable=invalid-name
             spawn_time: float = 1.0,
             send_spawn_message: bool = True,
-            spawn_callback: Callable[[], Any] = None):
+            spawn_callback: Callable[[], Any] | None = None):
         """Instantiate a Spawner.
 
         Requires some custom data, a position,

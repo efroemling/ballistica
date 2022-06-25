@@ -19,12 +19,12 @@ class TournamentEntryWindow(popup.PopupWindow):
 
     def __init__(self,
                  tournament_id: str,
-                 tournament_activity: ba.Activity = None,
+                 tournament_activity: ba.Activity | None = None,
                  position: tuple[float, float] = (0.0, 0.0),
                  delegate: Any = None,
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
-                 on_close_call: Callable[[], Any] = None):
+                 on_close_call: Callable[[], Any] | None = None):
         # Needs some tidying.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements

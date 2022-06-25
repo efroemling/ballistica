@@ -404,7 +404,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             increment: float = 1.0,
             change_sound: bool = True,
             x_offset: float = 0.0,
-            displayname: ba.Lstr = None) -> tuple[ba.Widget, ba.Widget]:
+            displayname: ba.Lstr | None = None) -> tuple[ba.Widget, ba.Widget]:
 
         if displayname is None:
             displayname = name

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class AccountLinkWindow(ba.Window):
     """Window for linking accounts."""
 
-    def __init__(self, origin_widget: ba.Widget = None):
+    def __init__(self, origin_widget: ba.Widget | None = None):
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'

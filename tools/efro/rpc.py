@@ -115,7 +115,7 @@ class RPCEndpoint:
                  label: str,
                  debug_print: bool = False,
                  debug_print_io: bool = False,
-                 debug_print_call: Callable[[str], None] = None,
+                 debug_print_call: Callable[[str], None] | None = None,
                  keepalive_interval: float = DEFAULT_KEEPALIVE_INTERVAL,
                  keepalive_timeout: float = DEFAULT_KEEPALIVE_TIMEOUT) -> None:
         self._handle_raw_message_call = handle_raw_message_call

@@ -18,7 +18,7 @@ class ControlsSettingsWindow(ba.Window):
 
     def __init__(self,
                  transition: str = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # FIXME: should tidy up here.
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches

@@ -47,7 +47,7 @@ void PythonClassMaterial::SetupType(PyTypeObject* obj) {
 
   // clang-format off
   obj->tp_doc =
-      "Material(label: str = None)\n"
+      "Material(label: str | None = None)\n"
       "\n"
       "An entity applied to game objects to modify collision behavior.\n"
       "\n"

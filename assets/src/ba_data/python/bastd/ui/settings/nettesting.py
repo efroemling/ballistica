@@ -131,7 +131,8 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
 
     # We're running in a background thread but UI stuff needs to run
     # in the logic thread; give ourself a way to pass stuff to it.
-    def _print(text: str, color: tuple[float, float, float] = None) -> None:
+    def _print(text: str,
+               color: tuple[float, float, float] | None = None) -> None:
 
         def _print_in_logic_thread() -> None:
             win = weakwin()

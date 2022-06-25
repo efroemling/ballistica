@@ -27,7 +27,7 @@ class ControlsGuide(ba.Actor):
                  position: tuple[float, float] = (390.0, 120.0),
                  scale: float = 1.0,
                  delay: float = 0.0,
-                 lifespan: float = None,
+                 lifespan: float | None = None,
                  bright: bool = False):
         """Instantiate an overlay.
 

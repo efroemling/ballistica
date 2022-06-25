@@ -22,11 +22,11 @@ class IconPicker(popup.PopupWindow):
                  parent: ba.Widget,
                  position: tuple[float, float] = (0.0, 0.0),
                  delegate: Any = None,
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
                  tint_color: Sequence[float] = (1.0, 1.0, 1.0),
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
-                 selected_icon: str = None):
+                 selected_icon: str | None = None):
         # pylint: disable=too-many-locals
         del parent  # unused here
         del tint_color  # unused_here

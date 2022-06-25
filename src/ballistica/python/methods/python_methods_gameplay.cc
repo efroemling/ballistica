@@ -693,8 +693,10 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "settings, exiting element counts, or other factors."},
 
       {"playsound", (PyCFunction)PyPlaySound, METH_VARARGS | METH_KEYWORDS,
-       "playsound(sound: Sound, volume: float = 1.0,\n"
-       "  position: Sequence[float] = None, host_only: bool = False) -> None\n"
+       "playsound(sound: Sound,\n"
+       "  volume: float = 1.0,\n"
+       "  position: Sequence[float] | None = None,\n"
+       "  host_only: bool = False) -> None\n"
        "\n"
        "Play a ba.Sound a single time.\n"
        "\n"
@@ -740,9 +742,10 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "Category: **Gameplay Functions**"},
 
       {"newnode", (PyCFunction)PyNewNode, METH_VARARGS | METH_KEYWORDS,
-       "newnode(type: str, owner: ba.Node = None,\n"
-       "attrs: dict = None, name: str = None, delegate: Any = None)\n"
-       " -> Node\n"
+       "newnode(type: str, owner: ba.Node | None = None,\n"
+       "  attrs: dict | None = None,\n"
+       "  name: str | None = None,\n"
+       "  delegate: Any = None) -> Node\n"
        "\n"
        "Add a node of the given type to the game.\n"
        "\n"

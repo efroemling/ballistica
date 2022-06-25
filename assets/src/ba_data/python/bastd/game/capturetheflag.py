@@ -492,8 +492,8 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
     def spawn_player_spaz(self,
                           player: Player,
-                          position: Sequence[float] = None,
-                          angle: float = None) -> PlayerSpaz:
+                          position: Sequence[float] | None = None,
+                          angle: float | None = None) -> PlayerSpaz:
         """Intercept new spazzes and add our team material for them."""
         spaz = super().spawn_player_spaz(player, position, angle)
         player = spaz.getplayer(Player, True)

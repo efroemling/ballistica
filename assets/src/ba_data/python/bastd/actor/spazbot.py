@@ -888,11 +888,12 @@ class SpazBotSet:
     def __del__(self) -> None:
         self.clear()
 
-    def spawn_bot(self,
-                  bot_type: type[SpazBot],
-                  pos: Sequence[float],
-                  spawn_time: float = 3.0,
-                  on_spawn_call: Callable[[SpazBot], Any] = None) -> None:
+    def spawn_bot(
+            self,
+            bot_type: type[SpazBot],
+            pos: Sequence[float],
+            spawn_time: float = 3.0,
+            on_spawn_call: Callable[[SpazBot], Any] | None = None) -> None:
         """Spawn a bot from this set."""
         from bastd.actor import spawner
         spawner.Spawner(pt=pos,

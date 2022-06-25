@@ -20,8 +20,8 @@ class GetCurrencyWindow(ba.Window):
                  transition: str = 'in_right',
                  from_modal_store: bool = False,
                  modal: bool = False,
-                 origin_widget: ba.Widget = None,
-                 store_back_location: str = None):
+                 origin_widget: ba.Widget | None = None,
+                 store_back_location: str | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
@@ -105,8 +105,8 @@ class GetCurrencyWindow(ba.Window):
                         position: tuple[float, float],
                         size: tuple[float, float],
                         label: ba.Lstr,
-                        price: str = None,
-                        tex_name: str = None,
+                        price: str | None = None,
+                        tex_name: str | None = None,
                         tex_opacity: float = 1.0,
                         tex_scale: float = 1.0,
                         enabled: bool = True,

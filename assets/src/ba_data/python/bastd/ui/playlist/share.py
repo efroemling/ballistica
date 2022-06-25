@@ -19,8 +19,8 @@ class SharePlaylistImportWindow(promocode.PromoCodeWindow):
     """Window for importing a shared playlist."""
 
     def __init__(self,
-                 origin_widget: ba.Widget = None,
-                 on_success_callback: Callable[[], Any] = None):
+                 origin_widget: ba.Widget | None = None,
+                 on_success_callback: Callable[[], Any] | None = None):
         promocode.PromoCodeWindow.__init__(self,
                                            modal=True,
                                            origin_widget=origin_widget)

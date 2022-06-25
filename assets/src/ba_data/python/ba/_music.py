@@ -273,7 +273,7 @@ class MusicSubsystem:
                       musictype: MusicType | str | None,
                       continuous: bool = False,
                       mode: MusicPlayMode = MusicPlayMode.REGULAR,
-                      testsoundtrack: dict[str, Any] = None) -> None:
+                      testsoundtrack: dict[str, Any] | None = None) -> None:
         """Plays the requested music type/mode.
 
         For most cases, setmusic() is the proper call to use, which itself

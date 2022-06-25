@@ -132,7 +132,9 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._bot_update_timer = ba.Timer(self._bot_update_interval,
                                           ba.WeakCall(self._update_bots))
 
-    def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
+    def _drop_powerup(self,
+                      index: int,
+                      poweruptype: str | None = None) -> None:
         if poweruptype is None:
             poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
                 excludetypes=self._excludepowerups))
@@ -146,7 +148,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
     def _drop_powerups(self,
                        standard_points: bool = False,
-                       force_first: str = None) -> None:
+                       force_first: str | None = None) -> None:
         """Generic powerup drop."""
         from bastd.actor import powerupbox
         if standard_points:

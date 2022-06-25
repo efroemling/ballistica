@@ -22,11 +22,11 @@ class CharacterPicker(popup.PopupWindow):
                  parent: ba.Widget,
                  position: tuple[float, float] = (0.0, 0.0),
                  delegate: Any = None,
-                 scale: float = None,
+                 scale: float | None = None,
                  offset: tuple[float, float] = (0.0, 0.0),
                  tint_color: Sequence[float] = (1.0, 1.0, 1.0),
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
-                 selected_character: str = None):
+                 selected_character: str | None = None):
         # pylint: disable=too-many-locals
         from bastd.actor import spazappearance
         del parent  # unused here

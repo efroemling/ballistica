@@ -26,7 +26,7 @@ class PopupWindow:
                  offset: tuple[float, float] = (0, 0),
                  bg_color: tuple[float, float, float] = (0.35, 0.55, 0.15),
                  focus_position: tuple[float, float] = (0, 0),
-                 focus_size: tuple[float, float] = None,
+                 focus_size: tuple[float, float] | None = None,
                  toolbar_visibility: str = 'menu_minimal_no_back'):
         # pylint: disable=too-many-locals
         if focus_size is None:
@@ -108,10 +108,10 @@ class PopupMenuWindow(PopupWindow):
                  current_choice: str,
                  delegate: Any = None,
                  width: float = 230.0,
-                 maxwidth: float = None,
+                 maxwidth: float | None = None,
                  scale: float = 1.0,
-                 choices_disabled: Sequence[str] = None,
-                 choices_display: Sequence[ba.Lstr] = None):
+                 choices_disabled: Sequence[str] | None = None,
+                 choices_display: Sequence[ba.Lstr] | None = None):
         # FIXME: Clean up a bit.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -268,15 +268,15 @@ class PopupMenu:
                  parent: ba.Widget,
                  position: tuple[float, float],
                  choices: Sequence[str],
-                 current_choice: str = None,
-                 on_value_change_call: Callable[[str], Any] = None,
-                 opening_call: Callable[[], Any] = None,
-                 closing_call: Callable[[], Any] = None,
+                 current_choice: str | None = None,
+                 on_value_change_call: Callable[[str], Any] | None = None,
+                 opening_call: Callable[[], Any] | None = None,
+                 closing_call: Callable[[], Any] | None = None,
                  width: float = 230.0,
-                 maxwidth: float = None,
-                 scale: float = None,
-                 choices_disabled: Sequence[str] = None,
-                 choices_display: Sequence[ba.Lstr] = None,
+                 maxwidth: float | None = None,
+                 scale: float | None = None,
+                 choices_disabled: Sequence[str] | None = None,
+                 choices_display: Sequence[ba.Lstr] | None = None,
                  button_size: tuple[float, float] = (160.0, 50.0),
                  autoselect: bool = True):
         # pylint: disable=too-many-locals

@@ -119,7 +119,7 @@ class App:
     def _servercmd(self,
                    cmd: str,
                    payload: dict,
-                   files: dict[str, IO] = None) -> ResponseData:
+                   files: dict[str, IO] | None = None) -> ResponseData:
         """Issue a command to the server and get a response."""
 
         response_raw = requests.post(

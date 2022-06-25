@@ -144,7 +144,7 @@ class UISubsystem:
         _ba.timer(1.0, _delay_kill, timetype=TimeType.REAL)
         self._main_menu_window = window
 
-    def clear_main_menu_window(self, transition: str = None) -> None:
+    def clear_main_menu_window(self, transition: str | None = None) -> None:
         """Clear any existing 'main' window with the provided transition."""
         if self._main_menu_window:
             if transition is not None:

@@ -325,7 +325,7 @@ class Material:
     ba.Material.add_actions() method to define what the material does.
     """
 
-    def __init__(self, label: str = None):
+    def __init__(self, label: str | None = None):
         pass
 
     label: str
@@ -838,7 +838,7 @@ class SessionPlayer:
 
     def setname(self,
                 name: str,
-                full_name: str = None,
+                full_name: str | None = None,
                 real: bool = True) -> None:
         """Set the player's name to the provided string.
         A number will automatically be appended if the name is not unique from
@@ -1108,7 +1108,8 @@ def add_clean_frame_callback(call: Callable) -> None:
     return None
 
 
-def add_transaction(transaction: dict, callback: Callable = None) -> None:
+def add_transaction(transaction: dict,
+                    callback: Callable | None = None) -> None:
     """(internal)"""
     return None
 
@@ -1165,43 +1166,43 @@ def bless() -> None:
     return None
 
 
-def buttonwidget(edit: ba.Widget = None,
-                 parent: ba.Widget = None,
-                 size: Sequence[float] = None,
-                 position: Sequence[float] = None,
-                 on_activate_call: Callable = None,
+def buttonwidget(edit: ba.Widget | None = None,
+                 parent: ba.Widget | None = None,
+                 size: Sequence[float] | None = None,
+                 position: Sequence[float] | None = None,
+                 on_activate_call: Callable | None = None,
                  label: str | ba.Lstr | None = None,
-                 color: Sequence[float] = None,
-                 down_widget: ba.Widget = None,
-                 up_widget: ba.Widget = None,
-                 left_widget: ba.Widget = None,
-                 right_widget: ba.Widget = None,
-                 texture: ba.Texture = None,
-                 text_scale: float = None,
-                 textcolor: Sequence[float] = None,
-                 enable_sound: bool = None,
-                 model_transparent: ba.Model = None,
-                 model_opaque: ba.Model = None,
-                 repeat: bool = None,
-                 scale: float = None,
-                 transition_delay: float = None,
-                 on_select_call: Callable = None,
-                 button_type: str = None,
-                 extra_touch_border_scale: float = None,
-                 selectable: bool = None,
-                 show_buffer_top: float = None,
-                 icon: ba.Texture = None,
-                 iconscale: float = None,
-                 icon_tint: float = None,
-                 icon_color: Sequence[float] = None,
-                 autoselect: bool = None,
-                 mask_texture: ba.Texture = None,
-                 tint_texture: ba.Texture = None,
-                 tint_color: Sequence[float] = None,
-                 tint2_color: Sequence[float] = None,
-                 text_flatness: float = None,
-                 text_res_scale: float = None,
-                 enabled: bool = None) -> ba.Widget:
+                 color: Sequence[float] | None = None,
+                 down_widget: ba.Widget | None = None,
+                 up_widget: ba.Widget | None = None,
+                 left_widget: ba.Widget | None = None,
+                 right_widget: ba.Widget | None = None,
+                 texture: ba.Texture | None = None,
+                 text_scale: float | None = None,
+                 textcolor: Sequence[float] | None = None,
+                 enable_sound: bool | None = None,
+                 model_transparent: ba.Model | None = None,
+                 model_opaque: ba.Model | None = None,
+                 repeat: bool | None = None,
+                 scale: float | None = None,
+                 transition_delay: float | None = None,
+                 on_select_call: Callable | None = None,
+                 button_type: str | None = None,
+                 extra_touch_border_scale: float | None = None,
+                 selectable: bool | None = None,
+                 show_buffer_top: float | None = None,
+                 icon: ba.Texture | None = None,
+                 iconscale: float | None = None,
+                 icon_tint: float | None = None,
+                 icon_color: Sequence[float] | None = None,
+                 autoselect: bool | None = None,
+                 mask_texture: ba.Texture | None = None,
+                 tint_texture: ba.Texture | None = None,
+                 tint_color: Sequence[float] | None = None,
+                 tint2_color: Sequence[float] | None = None,
+                 text_flatness: float | None = None,
+                 text_res_scale: float | None = None,
+                 enabled: bool | None = None) -> ba.Widget:
     """Create or edit a button widget.
 
     Category: **User Interface Functions**
@@ -1269,27 +1270,27 @@ def charstr(char_id: ba.SpecialChar) -> str:
 
 
 def chatmessage(message: str | ba.Lstr,
-                clients: Sequence[int] = None,
-                sender_override: str = None) -> None:
+                clients: Sequence[int] | None = None,
+                sender_override: str | None = None) -> None:
     """(internal)"""
     return None
 
 
-def checkboxwidget(edit: ba.Widget = None,
-                   parent: ba.Widget = None,
-                   size: Sequence[float] = None,
-                   position: Sequence[float] = None,
+def checkboxwidget(edit: ba.Widget | None = None,
+                   parent: ba.Widget | None = None,
+                   size: Sequence[float] | None = None,
+                   position: Sequence[float] | None = None,
                    text: str | ba.Lstr | None = None,
-                   value: bool = None,
-                   on_value_change_call: Callable[[bool], None] = None,
-                   on_select_call: Callable[[], None] = None,
-                   text_scale: float = None,
-                   textcolor: Sequence[float] = None,
-                   scale: float = None,
-                   is_radio_button: bool = None,
-                   maxwidth: float = None,
-                   autoselect: bool = None,
-                   color: Sequence[float] = None) -> ba.Widget:
+                   value: bool | None = None,
+                   on_value_change_call: Callable[[bool], None] | None = None,
+                   on_select_call: Callable[[], None] | None = None,
+                   text_scale: float | None = None,
+                   textcolor: Sequence[float] | None = None,
+                   scale: float | None = None,
+                   is_radio_button: bool | None = None,
+                   maxwidth: float | None = None,
+                   autoselect: bool | None = None,
+                   color: Sequence[float] | None = None) -> ba.Widget:
     """Create or edit a check-box widget.
 
     Category: **User Interface Functions**
@@ -1351,23 +1352,23 @@ def clipboard_set_text(value: str) -> None:
     return None
 
 
-def columnwidget(edit: ba.Widget = None,
-                 parent: ba.Widget = None,
-                 size: Sequence[float] = None,
-                 position: Sequence[float] = None,
-                 background: bool = None,
-                 selected_child: ba.Widget = None,
-                 visible_child: ba.Widget = None,
-                 single_depth: bool = None,
-                 print_list_exit_instructions: bool = None,
-                 left_border: float = None,
-                 top_border: float = None,
-                 bottom_border: float = None,
-                 selection_loops_to_parent: bool = None,
-                 border: float = None,
-                 margin: float = None,
-                 claims_left_right: bool = None,
-                 claims_tab: bool = None) -> ba.Widget:
+def columnwidget(edit: ba.Widget | None = None,
+                 parent: ba.Widget | None = None,
+                 size: Sequence[float] | None = None,
+                 position: Sequence[float] | None = None,
+                 background: bool | None = None,
+                 selected_child: ba.Widget | None = None,
+                 visible_child: ba.Widget | None = None,
+                 single_depth: bool | None = None,
+                 print_list_exit_instructions: bool | None = None,
+                 left_border: float | None = None,
+                 top_border: float | None = None,
+                 bottom_border: float | None = None,
+                 selection_loops_to_parent: bool | None = None,
+                 border: float | None = None,
+                 margin: float | None = None,
+                 claims_left_right: bool | None = None,
+                 claims_tab: bool | None = None) -> ba.Widget:
     """Create or edit a column widget.
 
     Category: **User Interface Functions**
@@ -1386,7 +1387,7 @@ def commit_config(config: str) -> None:
 
 
 def connect_to_party(address: str,
-                     port: int = None,
+                     port: int | None = None,
                      print_progress: bool = True) -> None:
     """(internal)"""
     return None
@@ -1402,37 +1403,37 @@ def console_print(*args: Any) -> None:
     return None
 
 
-def containerwidget(edit: ba.Widget = None,
-                    parent: ba.Widget = None,
-                    size: Sequence[float] = None,
-                    position: Sequence[float] = None,
-                    background: bool = None,
-                    selected_child: ba.Widget = None,
-                    transition: str = None,
-                    cancel_button: ba.Widget = None,
-                    start_button: ba.Widget = None,
-                    root_selectable: bool = None,
-                    on_activate_call: Callable[[], None] = None,
-                    claims_left_right: bool = None,
-                    claims_tab: bool = None,
-                    selection_loops: bool = None,
-                    selection_loops_to_parent: bool = None,
-                    scale: float = None,
-                    on_outside_click_call: Callable[[], None] = None,
-                    single_depth: bool = None,
-                    visible_child: ba.Widget = None,
-                    stack_offset: Sequence[float] = None,
-                    color: Sequence[float] = None,
-                    on_cancel_call: Callable[[], None] = None,
-                    print_list_exit_instructions: bool = None,
-                    click_activate: bool = None,
-                    always_highlight: bool = None,
-                    selectable: bool = None,
-                    scale_origin_stack_offset: Sequence[float] = None,
-                    toolbar_visibility: str = None,
-                    on_select_call: Callable[[], None] = None,
-                    claim_outside_clicks: bool = None,
-                    claims_up_down: bool = None) -> ba.Widget:
+def containerwidget(edit: ba.Widget | None = None,
+                    parent: ba.Widget | None = None,
+                    size: Sequence[float] | None = None,
+                    position: Sequence[float] | None = None,
+                    background: bool | None = None,
+                    selected_child: ba.Widget | None = None,
+                    transition: str | None = None,
+                    cancel_button: ba.Widget | None = None,
+                    start_button: ba.Widget | None = None,
+                    root_selectable: bool | None = None,
+                    on_activate_call: Callable[[], None] | None = None,
+                    claims_left_right: bool | None = None,
+                    claims_tab: bool | None = None,
+                    selection_loops: bool | None = None,
+                    selection_loops_to_parent: bool | None = None,
+                    scale: float | None = None,
+                    on_outside_click_call: Callable[[], None] | None = None,
+                    single_depth: bool | None = None,
+                    visible_child: ba.Widget | None = None,
+                    stack_offset: Sequence[float] | None = None,
+                    color: Sequence[float] | None = None,
+                    on_cancel_call: Callable[[], None] | None = None,
+                    print_list_exit_instructions: bool | None = None,
+                    click_activate: bool | None = None,
+                    always_highlight: bool | None = None,
+                    selectable: bool | None = None,
+                    scale_origin_stack_offset: Sequence[float] | None = None,
+                    toolbar_visibility: str | None = None,
+                    on_select_call: Callable[[], None] | None = None,
+                    claim_outside_clicks: bool | None = None,
+                    claims_up_down: bool | None = None) -> ba.Widget:
     """Create or edit a container widget.
 
     Category: **User Interface Functions**
@@ -2160,22 +2161,22 @@ def host_scan_cycle() -> list:
     return list()
 
 
-def hscrollwidget(edit: ba.Widget = None,
-                  parent: ba.Widget = None,
-                  size: Sequence[float] = None,
-                  position: Sequence[float] = None,
-                  background: bool = None,
-                  selected_child: ba.Widget = None,
-                  capture_arrows: bool = None,
-                  on_select_call: Callable[[], None] = None,
-                  center_small_content: bool = None,
-                  color: Sequence[float] = None,
-                  highlight: bool = None,
-                  border_opacity: float = None,
-                  simple_culling_h: float = None,
-                  claims_left_right: bool = None,
-                  claims_up_down: bool = None,
-                  claims_tab: bool = None) -> ba.Widget:
+def hscrollwidget(edit: ba.Widget | None = None,
+                  parent: ba.Widget | None = None,
+                  size: Sequence[float] | None = None,
+                  position: Sequence[float] | None = None,
+                  background: bool | None = None,
+                  selected_child: ba.Widget | None = None,
+                  capture_arrows: bool | None = None,
+                  on_select_call: Callable[[], None] | None = None,
+                  center_small_content: bool | None = None,
+                  color: Sequence[float] | None = None,
+                  highlight: bool | None = None,
+                  border_opacity: float | None = None,
+                  simple_culling_h: float | None = None,
+                  claims_left_right: bool | None = None,
+                  claims_up_down: bool | None = None,
+                  claims_tab: bool | None = None) -> ba.Widget:
     """Create or edit a horizontal scroll widget.
 
     Category: **User Interface Functions**
@@ -2188,24 +2189,24 @@ def hscrollwidget(edit: ba.Widget = None,
     return ba.Widget()
 
 
-def imagewidget(edit: ba.Widget = None,
-                parent: ba.Widget = None,
-                size: Sequence[float] = None,
-                position: Sequence[float] = None,
-                color: Sequence[float] = None,
-                texture: ba.Texture = None,
-                opacity: float = None,
-                model_transparent: ba.Model = None,
-                model_opaque: ba.Model = None,
+def imagewidget(edit: ba.Widget | None = None,
+                parent: ba.Widget | None = None,
+                size: Sequence[float] | None = None,
+                position: Sequence[float] | None = None,
+                color: Sequence[float] | None = None,
+                texture: ba.Texture | None = None,
+                opacity: float | None = None,
+                model_transparent: ba.Model | None = None,
+                model_opaque: ba.Model | None = None,
                 has_alpha_channel: bool = True,
-                tint_texture: ba.Texture = None,
-                tint_color: Sequence[float] = None,
-                transition_delay: float = None,
-                draw_controller: ba.Widget = None,
-                tint2_color: Sequence[float] = None,
-                tilt_scale: float = None,
-                mask_texture: ba.Texture = None,
-                radial_amount: float = None) -> ba.Widget:
+                tint_texture: ba.Texture | None = None,
+                tint_color: Sequence[float] | None = None,
+                transition_delay: float | None = None,
+                draw_controller: ba.Widget | None = None,
+                tint2_color: Sequence[float] | None = None,
+                tilt_scale: float | None = None,
+                mask_texture: ba.Texture | None = None,
+                radial_amount: float | None = None) -> ba.Widget:
     """Create or edit an image widget.
 
     Category: **User Interface Functions**
@@ -2406,7 +2407,7 @@ def music_player_stop() -> None:
 
 
 def new_host_session(sessiontype: type[ba.Session],
-                     benchmark_type: str = None) -> None:
+                     benchmark_type: str | None = None) -> None:
     """(internal)"""
     return None
 
@@ -2417,7 +2418,7 @@ def new_replay_session(file_name: str) -> None:
 
 
 def newactivity(activity_type: type[ba.Activity],
-                settings: dict = None) -> ba.Activity:
+                settings: dict | None = None) -> ba.Activity:
     """Instantiates a ba.Activity given a type object.
 
     Category: **General Utility Functions**
@@ -2430,9 +2431,9 @@ def newactivity(activity_type: type[ba.Activity],
 
 
 def newnode(type: str,
-            owner: ba.Node = None,
-            attrs: dict = None,
-            name: str = None,
+            owner: ba.Node | None = None,
+            attrs: dict | None = None,
+            name: str | None = None,
             delegate: Any = None) -> Node:
     """Add a node of the given type to the game.
 
@@ -2484,7 +2485,7 @@ def open_url(address: str) -> None:
 
 def playsound(sound: Sound,
               volume: float = 1.0,
-              position: Sequence[float] = None,
+              position: Sequence[float] | None = None,
               host_only: bool = False) -> None:
     """Play a ba.Sound a single time.
 
@@ -2652,16 +2653,16 @@ def restore_purchases() -> None:
     return None
 
 
-def rowwidget(edit: ba.Widget = None,
-              parent: ba.Widget = None,
-              size: Sequence[float] = None,
-              position: Sequence[float] = None,
-              background: bool = None,
-              selected_child: ba.Widget = None,
-              visible_child: ba.Widget = None,
-              claims_left_right: bool = None,
-              claims_tab: bool = None,
-              selection_loops_to_parent: bool = None) -> ba.Widget:
+def rowwidget(edit: ba.Widget | None = None,
+              parent: ba.Widget | None = None,
+              size: Sequence[float] | None = None,
+              position: Sequence[float] | None = None,
+              background: bool | None = None,
+              selected_child: ba.Widget | None = None,
+              visible_child: ba.Widget | None = None,
+              claims_left_right: bool | None = None,
+              claims_tab: bool | None = None,
+              selection_loops_to_parent: bool | None = None) -> ba.Widget:
     """Create or edit a row widget.
 
     Category: **User Interface Functions**
@@ -2692,11 +2693,11 @@ def safecolor(color: Sequence[float],
 
 
 def screenmessage(message: str | ba.Lstr,
-                  color: Sequence[float] = None,
+                  color: Sequence[float] | None = None,
                   top: bool = False,
-                  image: dict[str, Any] = None,
+                  image: dict[str, Any] | None = None,
                   log: bool = False,
-                  clients: Sequence[int] = None,
+                  clients: Sequence[int] | None = None,
                   transient: bool = False) -> None:
     """Print a message to the local client's screen, in a given color.
 
@@ -2715,24 +2716,24 @@ def screenmessage(message: str | ba.Lstr,
     return None
 
 
-def scrollwidget(edit: ba.Widget = None,
-                 parent: ba.Widget = None,
-                 size: Sequence[float] = None,
-                 position: Sequence[float] = None,
-                 background: bool = None,
-                 selected_child: ba.Widget = None,
+def scrollwidget(edit: ba.Widget | None = None,
+                 parent: ba.Widget | None = None,
+                 size: Sequence[float] | None = None,
+                 position: Sequence[float] | None = None,
+                 background: bool | None = None,
+                 selected_child: ba.Widget | None = None,
                  capture_arrows: bool = False,
-                 on_select_call: Callable = None,
-                 center_small_content: bool = None,
-                 color: Sequence[float] = None,
-                 highlight: bool = None,
-                 border_opacity: float = None,
-                 simple_culling_v: float = None,
-                 selection_loops_to_parent: bool = None,
-                 claims_left_right: bool = None,
-                 claims_up_down: bool = None,
-                 claims_tab: bool = None,
-                 autoselect: bool = None) -> ba.Widget:
+                 on_select_call: Callable | None = None,
+                 center_small_content: bool | None = None,
+                 color: Sequence[float] | None = None,
+                 highlight: bool | None = None,
+                 border_opacity: float | None = None,
+                 simple_culling_v: float | None = None,
+                 selection_loops_to_parent: bool | None = None,
+                 claims_left_right: bool | None = None,
+                 claims_up_down: bool | None = None,
+                 claims_tab: bool | None = None,
+                 autoselect: bool | None = None) -> ba.Widget:
     """Create or edit a scroll widget.
 
     Category: **User Interface Functions**
@@ -2923,13 +2924,14 @@ def setup_sigint() -> None:
 
 
 def show_ad(purpose: str,
-            on_completion_call: Callable[[], None] = None) -> None:
+            on_completion_call: Callable[[], None] | None = None) -> None:
     """(internal)"""
     return None
 
 
-def show_ad_2(purpose: str,
-              on_completion_call: Callable[[bool], None] = None) -> None:
+def show_ad_2(
+        purpose: str,
+        on_completion_call: Callable[[bool], None] | None = None) -> None:
     """(internal)"""
     return None
 
@@ -2944,8 +2946,8 @@ def show_app_invite(title: str | ba.Lstr, message: str | ba.Lstr,
 
 
 def show_online_score_ui(show: str = 'general',
-                         game: str = None,
-                         game_version: str = None) -> None:
+                         game: str | None = None,
+                         game_version: str | None = None) -> None:
     """(internal)"""
     return None
 
@@ -3000,41 +3002,41 @@ def submit_score(game: str,
     return None
 
 
-def textwidget(edit: ba.Widget = None,
-               parent: ba.Widget = None,
-               size: Sequence[float] = None,
-               position: Sequence[float] = None,
+def textwidget(edit: ba.Widget | None = None,
+               parent: ba.Widget | None = None,
+               size: Sequence[float] | None = None,
+               position: Sequence[float] | None = None,
                text: str | ba.Lstr | None = None,
-               v_align: str = None,
-               h_align: str = None,
-               editable: bool = None,
-               padding: float = None,
-               on_return_press_call: Callable[[], None] = None,
-               on_activate_call: Callable[[], None] = None,
-               selectable: bool = None,
-               query: ba.Widget = None,
-               max_chars: int = None,
-               color: Sequence[float] = None,
-               click_activate: bool = None,
-               on_select_call: Callable[[], None] = None,
-               always_highlight: bool = None,
-               draw_controller: ba.Widget = None,
-               scale: float = None,
-               corner_scale: float = None,
+               v_align: str | None = None,
+               h_align: str | None = None,
+               editable: bool | None = None,
+               padding: float | None = None,
+               on_return_press_call: Callable[[], None] | None = None,
+               on_activate_call: Callable[[], None] | None = None,
+               selectable: bool | None = None,
+               query: ba.Widget | None = None,
+               max_chars: int | None = None,
+               color: Sequence[float] | None = None,
+               click_activate: bool | None = None,
+               on_select_call: Callable[[], None] | None = None,
+               always_highlight: bool | None = None,
+               draw_controller: ba.Widget | None = None,
+               scale: float | None = None,
+               corner_scale: float | None = None,
                description: str | ba.Lstr | None = None,
-               transition_delay: float = None,
-               maxwidth: float = None,
-               max_height: float = None,
-               flatness: float = None,
-               shadow: float = None,
-               autoselect: bool = None,
-               rotate: float = None,
-               enabled: bool = None,
-               force_internal_editing: bool = None,
-               always_show_carat: bool = None,
-               big: bool = None,
-               extra_touch_border_scale: float = None,
-               res_scale: float = None) -> Widget:
+               transition_delay: float | None = None,
+               maxwidth: float | None = None,
+               max_height: float | None = None,
+               flatness: float | None = None,
+               shadow: float | None = None,
+               autoselect: bool | None = None,
+               rotate: float | None = None,
+               enabled: bool | None = None,
+               force_internal_editing: bool | None = None,
+               always_show_carat: bool | None = None,
+               big: bool | None = None,
+               extra_touch_border_scale: float | None = None,
+               res_scale: float | None = None) -> Widget:
     """Create or edit a text widget.
 
     Category: **User Interface Functions**
@@ -3204,22 +3206,22 @@ def unlock_all_input() -> None:
 
 
 def value_test(arg: str,
-               change: float = None,
-               absolute: float = None) -> float:
+               change: float | None = None,
+               absolute: float | None = None) -> float:
     """(internal)"""
     return float()
 
 
-def widget(edit: ba.Widget = None,
-           up_widget: ba.Widget = None,
-           down_widget: ba.Widget = None,
-           left_widget: ba.Widget = None,
-           right_widget: ba.Widget = None,
-           show_buffer_top: float = None,
-           show_buffer_bottom: float = None,
-           show_buffer_left: float = None,
-           show_buffer_right: float = None,
-           autoselect: bool = None) -> None:
+def widget(edit: ba.Widget | None = None,
+           up_widget: ba.Widget | None = None,
+           down_widget: ba.Widget | None = None,
+           left_widget: ba.Widget | None = None,
+           right_widget: ba.Widget | None = None,
+           show_buffer_top: float | None = None,
+           show_buffer_bottom: float | None = None,
+           show_buffer_left: float | None = None,
+           show_buffer_right: float | None = None,
+           autoselect: bool | None = None) -> None:
     """Edit common attributes of any widget.
 
     Category: **User Interface Functions**

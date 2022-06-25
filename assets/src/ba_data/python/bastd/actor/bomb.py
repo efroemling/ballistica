@@ -327,7 +327,7 @@ class Blast(ba.Actor):
                  velocity: Sequence[float] = (0.0, 0.0, 0.0),
                  blast_radius: float = 2.0,
                  blast_type: str = 'normal',
-                 source_player: ba.Player = None,
+                 source_player: ba.Player | None = None,
                  hit_type: str = 'explosion',
                  hit_subtype: str = 'normal'):
         """Instantiate with given values."""
@@ -657,8 +657,8 @@ class Bomb(ba.Actor):
                  bomb_type: str = 'normal',
                  blast_radius: float = 2.0,
                  bomb_scale: float = 1.0,
-                 source_player: ba.Player = None,
-                 owner: ba.Node = None):
+                 source_player: ba.Player | None = None,
+                 owner: ba.Node | None = None):
         """Create a new Bomb.
 
         bomb_type can be 'ice','impact','land_mine','normal','sticky', or

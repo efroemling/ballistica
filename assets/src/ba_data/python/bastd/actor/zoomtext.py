@@ -24,9 +24,9 @@ class ZoomText(ba.Actor):
     def __init__(self,
                  text: str | ba.Lstr,
                  position: tuple[float, float] = (0.0, 0.0),
-                 shiftposition: tuple[float, float] = None,
-                 shiftdelay: float = None,
-                 lifespan: float = None,
+                 shiftposition: tuple[float, float] | None = None,
+                 shiftdelay: float | None = None,
+                 lifespan: float | None = None,
                  flash: bool = True,
                  trail: bool = True,
                  h_align: str = 'center',
@@ -36,7 +36,7 @@ class ZoomText(ba.Actor):
                  scale: float = 1.0,
                  project_scale: float = 1.0,
                  tilt_translate: float = 0.0,
-                 maxwidth: float = None):
+                 maxwidth: float | None = None):
         # pylint: disable=too-many-locals
         super().__init__()
         self._dying = False

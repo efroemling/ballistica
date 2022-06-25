@@ -18,7 +18,7 @@ class HelpWindow(ba.Window):
 
     def __init__(self,
                  main_menu: bool = False,
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from ba.internal import get_remote_app_name

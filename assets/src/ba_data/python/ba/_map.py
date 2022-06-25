@@ -384,7 +384,8 @@ class Map(Actor):
         assert farthestpt is not None
         return tuple(farthestpt)
 
-    def get_flag_position(self, team_index: int = None) -> Sequence[float]:
+    def get_flag_position(self,
+                          team_index: int | None = None) -> Sequence[float]:
         """Return a flag position on the map for the given team index.
 
         Pass None to get the default flag point.

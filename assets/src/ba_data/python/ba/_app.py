@@ -577,7 +577,7 @@ class App:
     def launch_coop_game(self,
                          game: str,
                          force: bool = False,
-                         args: dict = None) -> bool:
+                         args: dict | None = None) -> bool:
         """High level way to launch a local co-op session."""
         # pylint: disable=cyclic-import
         from ba._campaign import getcampaign

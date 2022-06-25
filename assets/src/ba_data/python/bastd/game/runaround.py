@@ -497,7 +497,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         del player  # Unused.
         self._player_has_picked_up_powerup = True
 
-    def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
+    def _drop_powerup(self,
+                      index: int,
+                      poweruptype: str | None = None) -> None:
         if poweruptype is None:
             poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
                 excludetypes=self._exclude_powerups))
@@ -509,7 +511,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
     def _drop_powerups(self,
                        standard_points: bool = False,
-                       force_first: str = None) -> None:
+                       force_first: str | None = None) -> None:
         """Generic powerup drop."""
 
         # If its been a minute since our last wave finished emerging, stop

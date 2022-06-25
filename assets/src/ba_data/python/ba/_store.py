@@ -398,7 +398,7 @@ def get_clean_price(price_string: str) -> str:
     return psubs.get(price_string, price_string)
 
 
-def get_available_purchase_count(tab: str = None) -> int:
+def get_available_purchase_count(tab: str | None = None) -> int:
     """(internal)"""
     try:
         if _ba.get_v1_account_state() != 'signed_in':

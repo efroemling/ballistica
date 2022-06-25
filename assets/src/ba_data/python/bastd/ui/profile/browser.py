@@ -19,8 +19,8 @@ class ProfileBrowserWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  in_main_menu: bool = True,
-                 selected_profile: str = None,
-                 origin_widget: ba.Widget = None):
+                 selected_profile: str | None = None,
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         self._in_main_menu = in_main_menu

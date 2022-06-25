@@ -74,7 +74,7 @@ class AccountV1Subsystem:
 
     def get_league_rank_points(self,
                                data: dict[str, Any] | None,
-                               subset: str = None) -> int:
+                               subset: str | None = None) -> int:
         """(internal)"""
         if data is None:
             return 0

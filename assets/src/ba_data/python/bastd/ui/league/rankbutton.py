@@ -21,11 +21,11 @@ class LeagueRankButton:
                  position: tuple[float, float],
                  size: tuple[float, float],
                  scale: float,
-                 on_activate_call: Callable[[], Any] = None,
-                 transition_delay: float = None,
-                 color: tuple[float, float, float] = None,
-                 textcolor: tuple[float, float, float] = None,
-                 smooth_update_delay: float = None):
+                 on_activate_call: Callable[[], Any] | None = None,
+                 transition_delay: float | None = None,
+                 color: tuple[float, float, float] | None = None,
+                 textcolor: tuple[float, float, float] | None = None,
+                 smooth_update_delay: float | None = None):
         if on_activate_call is None:
             on_activate_call = ba.WeakCall(self._default_on_activate_call)
         self._on_activate_call = on_activate_call

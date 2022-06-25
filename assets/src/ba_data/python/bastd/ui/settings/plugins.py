@@ -17,7 +17,7 @@ class PluginSettingsWindow(ba.Window):
 
     def __init__(self,
                  transition: str = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-locals
         app = ba.app
 

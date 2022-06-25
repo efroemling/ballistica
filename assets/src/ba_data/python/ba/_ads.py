@@ -53,14 +53,15 @@ class AdsSubsystem:
 
     def show_ad(self,
                 purpose: str,
-                on_completion_call: Callable[[], Any] = None) -> None:
+                on_completion_call: Callable[[], Any] | None = None) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
         _ba.show_ad(purpose, on_completion_call)
 
-    def show_ad_2(self,
-                  purpose: str,
-                  on_completion_call: Callable[[bool], Any] = None) -> None:
+    def show_ad_2(
+            self,
+            purpose: str,
+            on_completion_call: Callable[[bool], Any] | None = None) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
         _ba.show_ad_2(purpose, on_completion_call)

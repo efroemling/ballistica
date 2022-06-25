@@ -1048,8 +1048,8 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "Debugging func for tracking leaked Python errors in the C++ layer.."},
 
       {"value_test", (PyCFunction)PyValueTest, METH_VARARGS | METH_KEYWORDS,
-       "value_test(arg: str, change: float = None, absolute: float = None)\n"
-       "  -> float\n"
+       "value_test(arg: str, change: float | None = None,\n"
+       "  absolute: float | None = None) -> float\n"
        "\n"
        "(internal)"},
 

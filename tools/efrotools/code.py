@@ -653,7 +653,7 @@ def _run_idea_inspections(projroot: Path,
                           displayname: str,
                           inspect: Path,
                           verbose: bool,
-                          inspectdir: Path = None) -> None:
+                          inspectdir: Path | None = None) -> None:
     """Actually run idea inspections.
 
     Throw an Exception if anything is found or goes wrong.
@@ -726,7 +726,7 @@ def _run_idea_inspections_cached(cachepath: Path,
                                  displayname: str,
                                  inspect: Path,
                                  verbose: bool,
-                                 inspectdir: Path = None) -> None:
+                                 inspectdir: Path | None = None) -> None:
     # pylint: disable=too-many-locals
     import hashlib
     import json

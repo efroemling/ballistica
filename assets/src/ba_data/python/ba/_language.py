@@ -240,7 +240,7 @@ class LanguageSubsystem:
 
     def get_resource(self,
                      resource: str,
-                     fallback_resource: str = None,
+                     fallback_resource: str | None = None,
                      fallback_value: Any = None) -> Any:
         """Return a translation resource by name.
 

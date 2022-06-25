@@ -18,7 +18,7 @@ class ConfirmWindow:
 
     def __init__(self,
                  text: str | ba.Lstr = 'Are you sure?',
-                 action: Callable[[], Any] = None,
+                 action: Callable[[], Any] | None = None,
                  width: float = 360.0,
                  height: float = 100.0,
                  cancel_button: bool = True,
@@ -27,7 +27,7 @@ class ConfirmWindow:
                  text_scale: float = 1.0,
                  ok_text: str | ba.Lstr | None = None,
                  cancel_text: str | ba.Lstr | None = None,
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-locals
         if ok_text is None:
             ok_text = ba.Lstr(resource='okText')
@@ -127,7 +127,7 @@ class QuitWindow:
     def __init__(self,
                  swish: bool = False,
                  back: bool = False,
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         ui = ba.app.ui
         app = ba.app
         self._back = back

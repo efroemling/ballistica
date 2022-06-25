@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 class PromoCodeWindow(ba.Window):
     """Window for entering promo codes."""
 
-    def __init__(self, modal: bool = False, origin_widget: ba.Widget = None):
+    def __init__(self,
+                 modal: bool = False,
+                 origin_widget: ba.Widget | None = None):
 
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:

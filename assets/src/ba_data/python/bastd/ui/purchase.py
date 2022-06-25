@@ -19,7 +19,7 @@ class PurchaseWindow(ba.Window):
     def __init__(self,
                  items: list[str],
                  transition: str = 'in_right',
-                 header_text: ba.Lstr = None):
+                 header_text: ba.Lstr | None = None):
         from ba.internal import get_store_item_display_size
         from bastd.ui.store import item as storeitemui
         if header_text is None:

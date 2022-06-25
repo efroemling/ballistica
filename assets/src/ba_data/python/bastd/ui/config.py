@@ -28,10 +28,10 @@ class ConfigCheckBox:
                  position: tuple[float, float],
                  size: tuple[float, float],
                  displayname: str | ba.Lstr | None = None,
-                 scale: float = None,
-                 maxwidth: float = None,
+                 scale: float | None = None,
+                 maxwidth: float | None = None,
                  autoselect: bool = True,
-                 value_change_call: Callable[[Any], Any] = None):
+                 value_change_call: Callable[[Any], Any] | None = None):
         if displayname is None:
             displayname = configkey
         self._value_change_call = value_change_call
@@ -84,7 +84,7 @@ class ConfigNumberEdit:
                  minval: float = 0.0,
                  maxval: float = 100.0,
                  increment: float = 1.0,
-                 callback: Callable[[float], Any] = None,
+                 callback: Callable[[float], Any] | None = None,
                  xoffset: float = 0.0,
                  displayname: str | ba.Lstr | None = None,
                  changesound: bool = True,

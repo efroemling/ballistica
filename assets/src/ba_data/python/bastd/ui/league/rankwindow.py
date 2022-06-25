@@ -21,7 +21,7 @@ class LeagueRankWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  modal: bool = False,
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         ba.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: dict[str, Any] | None = None

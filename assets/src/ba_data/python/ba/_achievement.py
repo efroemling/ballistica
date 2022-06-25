@@ -610,8 +610,8 @@ class Achievement:
                        x: float,
                        y: float,
                        delay: float,
-                       outdelay: float = None,
-                       color: Sequence[float] = None,
+                       outdelay: float | None = None,
+                       color: Sequence[float] | None = None,
                        style: str = 'post_game') -> list[ba.Actor]:
         """Create a display for the Achievement.
 

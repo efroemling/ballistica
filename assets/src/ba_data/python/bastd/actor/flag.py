@@ -167,9 +167,9 @@ class Flag(ba.Actor):
     def __init__(self,
                  position: Sequence[float] = (0.0, 1.0, 0.0),
                  color: Sequence[float] = (1.0, 1.0, 1.0),
-                 materials: Sequence[ba.Material] = None,
+                 materials: Sequence[ba.Material] | None = None,
                  touchable: bool = True,
-                 dropped_timeout: int = None):
+                 dropped_timeout: int | None = None):
         """Instantiate a flag.
 
         If 'touchable' is False, the flag will only touch terrain;

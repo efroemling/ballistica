@@ -20,12 +20,12 @@ class StoreButton:
                  position: Sequence[float],
                  size: Sequence[float],
                  scale: float,
-                 on_activate_call: Callable[[], Any] = None,
-                 transition_delay: float = None,
-                 color: Sequence[float] = None,
-                 textcolor: Sequence[float] = None,
+                 on_activate_call: Callable[[], Any] | None = None,
+                 transition_delay: float | None = None,
+                 color: Sequence[float] | None = None,
+                 textcolor: Sequence[float] | None = None,
                  show_tickets: bool = False,
-                 button_type: str = None,
+                 button_type: str | None = None,
                  sale_scale: float = 1.0):
         self._position = position
         self._size = size

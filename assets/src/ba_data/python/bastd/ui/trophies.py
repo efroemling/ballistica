@@ -19,7 +19,7 @@ class TrophiesWindow(popup.PopupWindow):
     def __init__(self,
                  position: tuple[float, float],
                  data: dict[str, Any],
-                 scale: float = None):
+                 scale: float | None = None):
         self._data = data
         uiscale = ba.app.ui.uiscale
         if scale is None:

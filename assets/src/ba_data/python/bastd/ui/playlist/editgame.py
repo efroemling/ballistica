@@ -23,9 +23,9 @@ class PlaylistEditGameWindow(ba.Window):
                  sessiontype: type[ba.Session],
                  config: dict[str, Any] | None,
                  completion_call: Callable[[dict[str, Any] | None], Any],
-                 default_selection: str = None,
+                 default_selection: str | None = None,
                  transition: str = 'in_right',
-                 edit_info: dict[str, Any] = None):
+                 edit_info: dict[str, Any] | None = None):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals

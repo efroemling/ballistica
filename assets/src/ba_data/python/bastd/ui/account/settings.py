@@ -21,7 +21,7 @@ class AccountSettingsWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  modal: bool = False,
-                 origin_widget: ba.Widget = None,
+                 origin_widget: ba.Widget | None = None,
                  close_once_signed_in: bool = False):
         # pylint: disable=too-many-statements
 

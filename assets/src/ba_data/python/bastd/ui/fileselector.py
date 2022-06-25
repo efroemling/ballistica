@@ -21,9 +21,9 @@ class FileSelectorWindow(ba.Window):
 
     def __init__(self,
                  path: str,
-                 callback: Callable[[str | None], Any] = None,
+                 callback: Callable[[str | None], Any] | None = None,
                  show_base_path: bool = True,
-                 valid_file_extensions: Sequence[str] = None,
+                 valid_file_extensions: Sequence[str] | None = None,
                  allow_folders: bool = False):
         if valid_file_extensions is None:
             valid_file_extensions = []

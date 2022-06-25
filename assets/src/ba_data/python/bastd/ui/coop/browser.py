@@ -37,7 +37,7 @@ class CoopBrowserWindow(ba.Window):
 
     def __init__(self,
                  transition: str | None = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         import threading
@@ -1415,7 +1415,7 @@ class CoopBrowserWindow(ba.Window):
 
     def run(self,
             game: str | None,
-            tournament_button: dict[str, Any] = None) -> None:
+            tournament_button: dict[str, Any] | None = None) -> None:
         """Run the provided game."""
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements

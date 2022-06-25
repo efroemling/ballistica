@@ -19,7 +19,7 @@ class AdvancedSettingsWindow(ba.Window):
 
     def __init__(self,
                  transition: str = 'in_right',
-                 origin_widget: ba.Widget = None):
+                 origin_widget: ba.Widget | None = None):
         # pylint: disable=too-many-statements
         from ba.internal import master_server_get
         import threading

@@ -23,7 +23,7 @@ def _get_targets(varname: str,
                  inext: str,
                  outext: str,
                  all_targets: set,
-                 limit_to_prefix: str = None) -> str:
+                 limit_to_prefix: str | None = None) -> str:
     """Generic function to map source extension to dst files."""
 
     src = 'assets/src'
