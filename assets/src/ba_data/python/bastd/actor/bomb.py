@@ -3,6 +3,7 @@
 """Various classes for bombs, mines, tnt, etc."""
 
 # FIXME
+# pylint: disable=unused-argument
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -849,7 +850,7 @@ class Bomb(ba.Actor):
             0.26: self.scale
         })
 
-        if self.node and self.is_armed:
+        if self.is_armed:
             self.arm()
 
     def get_source_player(self,
