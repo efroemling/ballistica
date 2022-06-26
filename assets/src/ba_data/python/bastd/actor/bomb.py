@@ -347,7 +347,6 @@ class Blast(ba.Actor):
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
         self.radius = blast_radius
-        self.is_armed = is_armed
 
         # Set our position a bit lower so we throw more things upward.
         rmats = (factory.blast_material, shared.attack_material)
@@ -679,6 +678,7 @@ class Bomb(ba.Actor):
 
         self._exploded = False
         self.scale = bomb_scale
+        self.is_armed = is_armed
 
         self.texture_sequence: ba.Node | None = None
 
