@@ -659,7 +659,8 @@ class Bomb(ba.Actor):
                  blast_radius: float = 2.0,
                  bomb_scale: float = 1.0,
                  source_player: ba.Player = None,
-                 owner: ba.Node = None):
+                 owner: ba.Node = None,
+                 is_armed: bool = False):
         """Create a new Bomb.
 
         bomb_type can be 'ice','impact','land_mine','normal','sticky', or
