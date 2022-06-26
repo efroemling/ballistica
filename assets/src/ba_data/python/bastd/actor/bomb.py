@@ -329,7 +329,8 @@ class Blast(ba.Actor):
                  blast_type: str = 'normal',
                  source_player: ba.Player = None,
                  hit_type: str = 'explosion',
-                 hit_subtype: str = 'normal'):
+                 hit_subtype: str = 'normal',
+                 is_armed: bool = False):
         """Instantiate with given values."""
 
         # bah; get off my lawn!
@@ -346,6 +347,7 @@ class Blast(ba.Actor):
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
         self.radius = blast_radius
+        self.is_armed = is_armed
 
         # Set our position a bit lower so we throw more things upward.
         rmats = (factory.blast_material, shared.attack_material)
@@ -845,6 +847,9 @@ class Bomb(ba.Actor):
             0.2: 1.3 * self.scale,
             0.26: self.scale
         })
+
+        if self.node and self.is_armed:
+            self.arm()
 
     def get_source_player(self,
                           playertype: type[PlayerType]) -> PlayerType | None:
