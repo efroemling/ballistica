@@ -139,7 +139,6 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         Flag.project_stand(self._flag_spawn_pos)
         self._set_chosen_one_player(None)
 
-        pos = self._flag_spawn_pos
         ba.timer(1.0, call=self._tick, repeat=True)
 
         mat = self._reset_region_material = ba.Material()
@@ -156,14 +155,20 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             ),
         )
 
-        self._reset_region = ba.newnode('region',
-                                        attrs={
-                                            'position': (pos[0], pos[1] + 0.75,
-                                                         pos[2]),
-                                            'scale': (0.5, 0.5, 0.5),
-                                            'type': 'sphere',
-                                            'materials': [mat]
-                                        })
+        self._create_reset_region()
+
+    def _create_reset_region(self) -> None:
+        assert self._reset_region_material is not None
+        assert self._flag_spawn_pos is not None
+        pos = self._flag_spawn_pos
+        self._reset_region = ba.newnode(
+            'region',
+            attrs={
+                'position': (pos[0], pos[1] + 0.75, pos[2]),
+                'scale': (0.5, 0.5, 0.5),
+                'type': 'sphere',
+                'materials': [self._reset_region_material]
+            })
 
     def _get_chosen_one_player(self) -> Player | None:
         # Should never return invalid references; return None in that case.
@@ -176,14 +181,14 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         if self._get_chosen_one_player() is not None:
             return
 
-        # Attempt to get a Player controlling a Spaz that we hit.
+        # Attempt to get a Actor that we hit.
         try:
-            player = ba.getcollision().opposingnode.getdelegate(
-                PlayerSpaz, True).getplayer(Player, True)
+            spaz = ba.getcollision().opposingnode.getdelegate(PlayerSpaz, True)
+            player = spaz.getplayer(Player, True)
         except ba.NotFoundError:
             return
 
-        if player.is_alive():
+        if spaz.is_alive():
             self._set_chosen_one_player(player)
 
     def _flash_flag_spawn(self) -> None:
@@ -278,6 +283,10 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
 
             # Also an extra momentary flash.
             self._flash_flag_spawn()
+
+            # Re-create our flag region if someone is waiting for flag
+            # right there:
+            self._create_reset_region()
         else:
             if player.actor:
                 self._flag = None
