@@ -137,8 +137,6 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
         Flag.project_stand(self._flag_spawn_pos)
-        self._set_chosen_one_player(None)
-
         ba.timer(1.0, call=self._tick, repeat=True)
 
         mat = self._reset_region_material = ba.Material()
@@ -155,7 +153,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             ),
         )
 
-        self._create_reset_region()
+        self._set_chosen_one_player(None)
 
     def _create_reset_region(self) -> None:
         assert self._reset_region_material is not None
@@ -284,8 +282,8 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             # Also an extra momentary flash.
             self._flash_flag_spawn()
 
-            # Re-create our flag region if someone is waiting for flag
-            # right there:
+            # Re-create our flag region in case if someone is waiting for
+            # flag right there:
             self._create_reset_region()
         else:
             if player.actor:
