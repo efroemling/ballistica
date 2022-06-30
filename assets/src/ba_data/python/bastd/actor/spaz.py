@@ -177,6 +177,7 @@ class Spaz(ba.Actor):
         self._bomb_wear_off_timer: ba.Timer | None = None
         self._bomb_wear_off_flash_timer: ba.Timer | None = None
         self._multi_bomb_wear_off_timer: ba.Timer | None = None
+        self._multi_bomb_wear_off_flash_timer: ba.Timer | None = None
         self.bomb_count = self.default_bomb_count
         self._max_bomb_count = self.default_bomb_count
         self.bomb_type_default = self.default_bomb_type
@@ -704,7 +705,7 @@ class Spaz(ba.Actor):
                     self.node.mini_billboard_1_start_time = t_ms
                     self.node.mini_billboard_1_end_time = (
                         t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._multi_bomb_wear_off_timer = (ba.Timer(
+                    self._multi_bomb_wear_off_flash_timer = (ba.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000),
                         ba.WeakCall(self._multi_bomb_wear_off_flash),
                         timeformat=ba.TimeFormat.MILLISECONDS))
