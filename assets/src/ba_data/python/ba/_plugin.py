@@ -66,6 +66,7 @@ class PluginSubsystem:
     def load_plugins(self) -> None:
         """(internal)"""
         from ba._general import getclass
+        from ba._language import Lstr
 
         # Note: the plugins we load is purely based on what's enabled
         # in the app config. Our meta-scan gives us a list of available
@@ -76,15 +77,21 @@ class PluginSubsystem:
         assert isinstance(plugstates, dict)
         plugkeys: list[str] = sorted(key for key, val in plugstates.items()
                                      if val.get('enabled', False))
+        disappeared_plugs: set[str] = set()
         for plugkey in plugkeys:
             try:
                 cls = getclass(plugkey, Plugin)
+            except ModuleNotFoundError:
+                disappeared_plugs.add(plugkey)
+                continue
             except Exception as exc:
                 _ba.playsound(_ba.getsound('error'))
-                # TODO: Lstr.
-                errstr = f"Error loading plugin class '{plugkey}': {exc}"
-                _ba.screenmessage(errstr, color=(1, 0, 0))
-                _ba.log(errstr, to_server=False)
+                _ba.screenmessage(Lstr(resource='pluginClassLoadErrorText',
+                                       subs=[('${PLUGIN}', plugkey),
+                                             ('${ERROR}', str(exc))]),
+                                  color=(1, 0, 0))
+                _ba.log(f"Error loading plugin class '{plugkey}': {exc}",
+                        to_server=False)
                 continue
             try:
                 plugin = cls()
@@ -93,10 +100,29 @@ class PluginSubsystem:
             except Exception as exc:
                 from ba import _error
                 _ba.playsound(_ba.getsound('error'))
-                # TODO: Lstr.
-                _ba.screenmessage(f"Error loading plugin: '{plugkey}': {exc}",
+                _ba.screenmessage(Lstr(resource='pluginInitErrorText',
+                                       subs=[('${PLUGIN}', plugkey),
+                                             ('${ERROR}', str(exc))]),
                                   color=(1, 0, 0))
-                _error.print_exception(f"Error loading plugin: '{plugkey}'.")
+                _error.print_exception(f"Error initing plugin: '{plugkey}'.")
+
+        # If plugins disappeared, let the user know gently and remove them
+        # from the config so we'll again let the user know if they later
+        # reappear. This makes it much smoother to switch between users
+        # or workspaces.
+        if disappeared_plugs:
+            _ba.playsound(_ba.getsound('shieldDown'))
+            _ba.screenmessage(Lstr(resource='pluginsRemovedText',
+                                   subs=[('${NUM}',
+                                          str(len(disappeared_plugs)))]),
+                              color=(1, 1, 0))
+            _ba.log(
+                f'{len(disappeared_plugs)} plugin(s) no longer found:'
+                f' {disappeared_plugs}',
+                to_server=False)
+            for goneplug in disappeared_plugs:
+                del _ba.app.config['Plugins'][goneplug]
+            _ba.app.config.commit()
 
 
 @dataclass

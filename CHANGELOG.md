@@ -1,3 +1,12 @@
+### 1.7.3 (20623, 2022-06-30)
+- Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)
+- Fixed an issue in Chosen One where the flag resetting on top of a player would not cause them to become the chosen one (Thanks Dliwk!)
+- Fixed an issue where triple-bomb powerup would not flash before wearing off (Thanks Juleskie!).
+- Fixed an issue where syncing workspaces containing large files could error.
+- Net-testing window now requires you to be signed in instead of giving an error result in that case.
+- The app now issues a gentle notice if plugins are removed instead of erroring and continuing to look for them on subsequent launches. This makes things much smoother when switching between workspaces or users.
+- Added new translation entries for Workspace/Plugin stuff.
+
 ### 1.7.2 (20620, 2022-06-25)
 - Minor fixes in some minigames (Thanks Droopy!)
 - Fixed a bug preventing 'clients' arg from working in _ba.chatmessage (Thanks imayushsaini!)

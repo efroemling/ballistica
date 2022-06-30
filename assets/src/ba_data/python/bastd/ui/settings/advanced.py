@@ -542,6 +542,14 @@ class AdvancedSettingsWindow(ba.Window):
 
     def _on_net_test_press(self) -> None:
         from bastd.ui.settings.nettesting import NetTestingWindow
+
+        # Net-testing requires a signed in v1 account.
+        if _ba.get_v1_account_state() != 'signed_in':
+            ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'),
+                             color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(

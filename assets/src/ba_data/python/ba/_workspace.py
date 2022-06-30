@@ -52,17 +52,17 @@ class WorkspaceSubsystem:
             daemon=True,
         ).start()
 
-    def _errmsg(self, msg: str | ba.Lstr) -> None:
+    def _errmsg(self, msg: ba.Lstr) -> None:
         _ba.screenmessage(msg, color=(1, 0, 0))
         _ba.playsound(_ba.getsound('error'))
 
-    def _successmsg(self, msg: str | ba.Lstr) -> None:
+    def _successmsg(self, msg: ba.Lstr) -> None:
         _ba.screenmessage(msg, color=(0, 1, 0))
         _ba.playsound(_ba.getsound('gunCocking'))
 
     def _set_active_workspace_bg(self, workspaceid: str, workspacename: str,
                                  on_completed: Callable[[], None]) -> None:
-        # pylint: disable=too-many-branches
+        from ba._language import Lstr
 
         class _SkipSyncError(RuntimeError):
             pass
@@ -101,45 +101,42 @@ class WorkspaceSubsystem:
                     break
                 state.iteration += 1
 
-            extras: list[str] = []
-            # Hmm; let's not show deletes for now since currently lots of
-            # .pyc files get deleted.
-            if bool(False):
-                if state.total_deletes:
-                    extras.append(f'{state.total_deletes} files deleted')
-            if state.total_downloads:
-                extras.append(f'{state.total_downloads} files downloaded')
-            if state.total_up_to_date:
-                extras.append(f'{state.total_up_to_date} files up-to-date')
-            # Actually let's try with none of this; seems a bit excessive.
-            if bool(False) and extras:
-                extras_s = '\n' + ', '.join(extras) + '.'
-            else:
-                extras_s = ''
-            _ba.pushcall(tpartial(self._successmsg,
-                                  f'{workspacename} activated.{extras_s}'),
-                         from_other_thread=True)
+            _ba.pushcall(
+                tpartial(
+                    self._successmsg,
+                    Lstr(resource='activatedText',
+                         subs=[('${THING}', workspacename)]),
+                ),
+                from_other_thread=True,
+            )
 
         except _SkipSyncError:
-            _ba.pushcall(tpartial(
-                self._errmsg, f'Can\'t sync {workspacename}'
-                f'. Reusing previous synced version.'),
-                         from_other_thread=True)
+            _ba.pushcall(
+                tpartial(
+                    self._errmsg,
+                    Lstr(resource='workspaceSyncReuseText',
+                         subs=[('$WORKSPACE', workspacename)])),
+                from_other_thread=True,
+            )
 
         except CleanError as exc:
             # Avoid reusing existing if we fail in the middle; could
             # be in wonky state.
             set_path = False
-            _ba.pushcall(tpartial(self._errmsg, str(exc)),
+            _ba.pushcall(tpartial(self._errmsg, Lstr(value=str(exc))),
                          from_other_thread=True)
         except Exception:
             # Ditto.
             set_path = False
-            logging.exception('Error syncing workspace.')
-            # TODO: Lstr.
-            _ba.pushcall(tpartial(
-                self._errmsg, 'Error syncing workspace. See log for details.'),
-                         from_other_thread=True)
+            logging.exception("Error syncing workspace '%s'.", workspacename)
+            _ba.pushcall(
+                tpartial(
+                    self._errmsg,
+                    Lstr(resource='workspaceSyncErrorText',
+                         subs=[('${WORKSPACE}', workspacename)]),
+                ),
+                from_other_thread=True,
+            )
 
         if set_path and wspath.is_dir():
             # Add to Python paths and also to list of stuff to be scanned
