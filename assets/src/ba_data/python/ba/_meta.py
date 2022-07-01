@@ -405,7 +405,7 @@ class DirectoryScan:
                 ' ignoring module.\n')
         elif not lines and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but
-            # no valid require api , complain.
+            # no valid "require api" line found, complain.
             self.results.warnings += (
                 'Warning: ' + str(subpath) +
                 ': no valid "# ba_meta require api <NUM>" line found;'
