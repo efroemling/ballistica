@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated
 
-from efro.error import CommunicationError, is_asyncio_streams_network_error
 from efro.util import assert_never
+from efro.error import CommunicationError, is_asyncio_streams_network_error
 from efro.dataclassio import (dataclass_to_json, dataclass_from_json,
                               ioprepped, IOAttrs)
 

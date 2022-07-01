@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
-BACLOUD_VERSION = 6
+BACLOUD_VERSION = 7
 
 
 @ioprepped

@@ -822,6 +822,7 @@
       <w>fdout</w>
       <w>fecfc</w>
       <w>feedparser</w>
+      <w>fentry</w>
       <w>ffaeff</w>
       <w>ffap</w>
       <w>ffbbdf</w>
@@ -1047,6 +1048,7 @@
       <w>gname</w>
       <w>gnode</w>
       <w>goles</w>
+      <w>goneplug</w>
       <w>goodlist</w>
       <w>googleplaytab</w>
       <w>googlevr</w>
@@ -1225,6 +1227,7 @@
       <w>isysroot</w>
       <w>itms</w>
       <w>itmsp</w>
+      <w>itsre</w>
       <w>itunes</w>
       <w>itunesconnectutils</w>
       <w>ival</w>
@@ -1250,6 +1253,7 @@
       <w>jsonstrbase</w>
       <w>jsontools</w>
       <w>jsonutils</w>
+      <w>juleskie</w>
       <w>kbclass</w>
       <w>kbytecount</w>
       <w>keepalive</w>

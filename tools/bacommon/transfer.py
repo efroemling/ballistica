@@ -5,13 +5,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 
 @ioprepped
@@ -40,15 +41,17 @@ class DirectoryManifest:
         paths: list[str] = []
 
         if path.is_dir():
-            # Build the full list of package-relative paths.
+            # Build the full list of relative paths.
             for basename, _dirnames, filenames in os.walk(path):
                 for filename in filenames:
                     fullname = os.path.join(basename, filename)
                     assert fullname.startswith(pathstr)
-                    paths.append(fullname[len(pathstr) + 1:])
+                    # Make sure we end up with forward slashes no matter
+                    # what the os.* stuff above here was using.
+                    paths.append(Path(fullname[len(pathstr) + 1:]).as_posix())
         elif path.exists():
             # Just return a single file entry if path is not a dir.
-            paths.append(pathstr)
+            paths.append(path.as_posix())
 
         def _get_file_info(filepath: str) -> tuple[str, DirectoryManifestFile]:
             sha = hashlib.sha256()
@@ -69,6 +72,18 @@ class DirectoryManifest:
             cpus = 4
         with ThreadPoolExecutor(max_workers=cpus) as executor:
             return cls(files=dict(executor.map(_get_file_info, paths)))
+
+    def validate(self) -> None:
+        """Log any odd data in the manifest; for debugging."""
+        import logging
+        for fpath, _fentry in self.files.items():
+            # We want to be dealing in only forward slashes; make sure
+            # that's the case (wondering if we'll ever see backslashes
+            # for escape purposes).
+            if '\\' in fpath:
+                logging.exception("Found unusual path in manifest: '%s'.",
+                                  fpath)
+                break  # 1 error is enough for now.
 
     @classmethod
     def get_empty_hash(cls) -> str:

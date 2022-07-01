@@ -637,9 +637,11 @@ def compact_id(num: int) -> str:
         'abcdefghijklmnopqrstuvwxyz')
 
 
+# NOTE: Even though this is available as part of typing_extensions, keeping
+# it in here for now so we don't require typing_extensions as a dependency.
+# Once 3.11 rolls around we can kill this and use typing.assert_never.
 def assert_never(value: NoReturn) -> NoReturn:
     """Trick for checking exhaustive handling of Enums, etc.
-
     See https://github.com/python/typing/issues/735
     """
     assert False, f'Unhandled value: {value} ({type(value).__name__})'

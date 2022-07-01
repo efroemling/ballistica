@@ -420,6 +420,7 @@
       <w>fdirx</w>
       <w>fdiry</w>
       <w>fdirz</w>
+      <w>fentry</w>
       <w>fenv</w>
       <w>fesetround</w>
       <w>ffbbdf</w>
@@ -530,6 +531,7 @@
       <w>gles</w>
       <w>glext</w>
       <w>globalns</w>
+      <w>goneplug</w>
       <w>googleplaytab</w>
       <w>gpgs</w>
       <w>gqualstr</w>
@@ -621,6 +623,7 @@
       <w>itemsize</w>
       <w>itri</w>
       <w>itsclass</w>
+      <w>itsre</w>
       <w>itunes</w>
       <w>itunesconnectutils</w>
       <w>ival</w>
@@ -638,6 +641,7 @@
       <w>jmessage</w>
       <w>jnames</w>
       <w>json's</w>
+      <w>juleskie</w>
       <w>keepalives</w>
       <w>kerploople</w>
       <w>keyanntype</w>

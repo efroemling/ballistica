@@ -38,7 +38,7 @@ class PipRequirement:
 # installing it. And as far as manually-installed bits, pip itself must
 # have some way to allow for that, right?...
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 14, 2]),
+    PipRequirement(modulename='pylint', minversion=[2, 14, 4]),
     PipRequirement(modulename='mypy', minversion=[0, 961]),
     PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 6, 0]),
@@ -48,7 +48,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
     PipRequirement(modulename='pdoc'),
-    PipRequirement(pipname='typing_extensions', minversion=[4, 2, 0]),
+    PipRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
     PipRequirement(pipname='types-filelock', minversion=[3, 2, 6]),
     PipRequirement(pipname='types-requests', minversion=[2, 27, 29]),
     PipRequirement(pipname='types-pytz', minversion=[2021, 3, 8]),

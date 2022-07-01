@@ -13,9 +13,9 @@ import shlex
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from efro.util import assert_never
 from efro.terminal import Clr
 from efro.error import CleanError
-from efro.util import assert_never
 
 if TYPE_CHECKING:
     from typing import Any
