@@ -401,13 +401,13 @@ class DirectoryScan:
         if len(lines) > 1:
             self.results.warnings += (
                 'Warning: ' + str(subpath) +
-                ': multiple "# ba_meta api require <NUM>" lines found;'
+                ': multiple "# ba_meta require api <NUM>" lines found;'
                 ' ignoring module.\n')
         elif not lines and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but
-            # no valid api require, complain.
+            # no valid "require api" line found, complain.
             self.results.warnings += (
                 'Warning: ' + str(subpath) +
-                ': no valid "# ba_meta api require <NUM>" line found;'
+                ': no valid "# ba_meta require api <NUM>" line found;'
                 ' ignoring module.\n')
         return None
