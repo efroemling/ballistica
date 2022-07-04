@@ -115,7 +115,7 @@ class WorkspaceSubsystem:
                 tpartial(
                     self._errmsg,
                     Lstr(resource='workspaceSyncReuseText',
-                         subs=[('$WORKSPACE', workspacename)])),
+                         subs=[('${WORKSPACE}', workspacename)])),
                 from_other_thread=True,
             )
 
