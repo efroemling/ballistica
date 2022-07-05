@@ -606,6 +606,7 @@ class Spaz(ba.Actor):
         """
         assert self.node
         self.node.boxing_gloves = True
+        self._has_boxing_gloves = True
         if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.7
             self._punch_cooldown = 300
@@ -754,7 +755,6 @@ class Spaz(ba.Actor):
                         ba.WeakCall(self._bomb_wear_off),
                         timeformat=ba.TimeFormat.MILLISECONDS))
             elif msg.poweruptype == 'punch':
-                self._has_boxing_gloves = True
                 tex = PowerupBoxFactory.get().tex_punch
                 self._flash_billboard(tex)
                 self.equip_boxing_gloves()
