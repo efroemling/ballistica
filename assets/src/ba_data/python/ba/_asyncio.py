@@ -59,9 +59,8 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
         _asyncio_event_loop.run_forever()
         endtime = time.monotonic()
 
-        # We'd like to keep the app running at a smooth 120hz, so
-        # complain if we're taking more than half that time per update.
-        warn_time = 1.0 / 240
+        # Let's aim to have nothing take longer than 1/120 of a second.
+        warn_time = 1.0 / 120
         duration = endtime - starttime
         if duration > warn_time:
             logging.warning('Asyncio loop step took %.4fs; ideal max is %.4f',
