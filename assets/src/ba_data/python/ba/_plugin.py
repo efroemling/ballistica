@@ -118,7 +118,7 @@ class PluginSubsystem:
                               color=(1, 1, 0))
             _ba.log(
                 f'{len(disappeared_plugs)} plugin(s) no longer found:'
-                f' {disappeared_plugs}',
+                f' {str(disappeared_plugs)[1:-1]}.',
                 to_server=False)
             for goneplug in disappeared_plugs:
                 del _ba.app.config['Plugins'][goneplug]
