@@ -29,7 +29,7 @@ class NetworkSubsystem:
         # as it is updated by a background thread.
         self.zone_pings_lock = threading.Lock()
 
-        # Region IDs mapped to average pings. This will remain empty
+        # Zone IDs mapped to average pings. This will remain empty
         # until enough pings have been run to be reasonably certain
         # that a nearby server has been pinged.
         self.zone_pings: dict[str, float] = {}
@@ -37,6 +37,7 @@ class NetworkSubsystem:
         # For debugging.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
+        self.server_time_offset_hours: float | None = None
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import asyncio
+import logging
+import time
 
 if TYPE_CHECKING:
     import ba
@@ -53,7 +55,17 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     def run_cycle() -> None:
         assert _asyncio_event_loop is not None
         _asyncio_event_loop.call_soon(_asyncio_event_loop.stop)
+        starttime = time.monotonic()
         _asyncio_event_loop.run_forever()
+        endtime = time.monotonic()
+
+        # We'd like to keep the app running at a smooth 120hz, so
+        # complain if we're taking more than half that time per update.
+        warn_time = 1.0 / 240
+        duration = endtime - starttime
+        if duration > warn_time:
+            logging.warning('Asyncio loop step took %.4fs; ideal max is %.4f',
+                            duration, warn_time)
 
     global _asyncio_timer  # pylint: disable=invalid-name
     _asyncio_timer = _ba.Timer(1.0 / 30.0,

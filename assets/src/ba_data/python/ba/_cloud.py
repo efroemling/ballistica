@@ -56,6 +56,14 @@ class CloudSubsystem:
     ) -> None:
         ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.PingMessage,
+        on_response: Callable[[bacommon.cloud.PingResponse | Exception], None],
+    ) -> None:
+        ...
+
     def send_message_cb(
         self,
         msg: Message,

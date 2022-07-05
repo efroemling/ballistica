@@ -211,7 +211,7 @@ class MusicSubsystem:
             return 'Mac' in uas
         if entry_type in ('musicFile', 'musicFolder'):
             return ('android' in uas
-                    and _ba.android_get_external_storage_path() is not None)
+                    and _ba.android_get_external_files_dir() is not None)
         if entry_type == 'default':
             return True
         return False

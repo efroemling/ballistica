@@ -27,8 +27,7 @@ def get_human_readable_user_scripts_path() -> str:
     # only visible to the user's processes and thus not really useful printed
     # in its entirety; lets print it as <External Storage>/myfilepath.
     if app.platform == 'android':
-        ext_storage_path: str | None = (
-            _ba.android_get_external_storage_path())
+        ext_storage_path: str | None = (_ba.android_get_external_files_dir())
         if (ext_storage_path is not None
                 and app.python_directory_user.startswith(ext_storage_path)):
             path = ('<' +

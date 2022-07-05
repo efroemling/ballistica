@@ -71,12 +71,6 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
     txt = readfile('Makefile')
 
-    # Fix a bug where spaces in PATH cause errors (darn you vmware fusion!)
-    txt = replace_exact(
-        txt,
-        '\t\tPATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/_install/bin:$(PATH)',
-        '\t\tPATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/_install/bin:$(PATH)"')
-
     # Turn doc strings on; looks like it only adds a few hundred k.
     txt = replace_exact(txt,
                         '--without-doc-strings',
