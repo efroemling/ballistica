@@ -588,6 +588,7 @@
       <w>dereferencing</w>
       <w>descpos</w>
       <w>dest</w>
+      <w>destdir</w>
       <w>devel</w>
       <w>devicename</w>
       <w>devtool</w>
@@ -1031,6 +1032,7 @@
       <w>getstarttime</w>
       <w>gettext</w>
       <w>gettexture</w>
+      <w>gettime</w>
       <w>gfile</w>
       <w>gfxb</w>
       <w>ghnc</w>
@@ -1387,6 +1389,7 @@
       <w>loadpackage</w>
       <w>localconfig</w>
       <w>localdir</w>
+      <w>localmodlibs</w>
       <w>localns</w>
       <w>localuser</w>
       <w>locationgroup</w>
@@ -1665,6 +1668,7 @@
       <w>nowtickets</w>
       <w>npos</w>
       <w>nprocessors</w>
+      <w>nsec</w>
       <w>nsworkspace</w>
       <w>ntpath</w>
       <w>ntriple</w>
@@ -2443,6 +2447,7 @@
       <w>targetpractice</w>
       <w>targs</w>
       <w>tasklabel</w>
+      <w>tbegin</w>
       <w>tbtcolor</w>
       <w>tbtn</w>
       <w>tbttxt</w>
@@ -2454,6 +2459,7 @@
       <w>tcombine</w>
       <w>tdelay</w>
       <w>tdels</w>
+      <w>tdiff</w>
       <w>tdlds</w>
       <w>tdval</w>
       <w>teambasesession</w>

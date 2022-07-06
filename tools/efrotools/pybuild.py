@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER = '3.10'
-PY_VER_EXACT_ANDROID = '3.10.4'
+PY_VER_EXACT_ANDROID = '3.10.5'
 PY_VER_EXACT_APPLE = '3.10.4'
 
 ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
@@ -170,8 +170,9 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     )
     os.chdir(builddir)
 
-    # TEMP - use 3.9.6 branch
-    # subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
+    # If we need to use a particular branch.
+    if bool(False):
+        subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
     os.environ['ANDROID_NDK'] = subprocess.check_output(
@@ -180,8 +181,6 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')
-    # ftxt = replace_exact(ftxt, '        NCurses,\n',
-    #                    '#        NCurses,\n',)
     ftxt = replace_exact(
         ftxt,
         '        '
@@ -189,13 +188,6 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         '        '
         'BZip2, LibUUID, OpenSSL, SQLite, XZ, ZLib,\n',
     )
-
-    # Older ssl seems to choke on newer ndk layouts.
-    if bool(False):
-        ftxt = replace_exact(
-            ftxt,
-            "source = 'https://www.openssl.org/source/openssl-1.1.1h.tar.gz'",
-            "source = 'https://www.openssl.org/source/openssl-1.1.1l.tar.gz'")
 
     # Give ourselves a handle to patch the OpenSSL build.
     ftxt = replace_exact(
@@ -220,7 +212,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n')
     writefile('build.sh', ftxt)
 
-    # Ok, let 'er rip
+    # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
     subprocess.run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}',
                    shell=True,
@@ -240,11 +232,64 @@ def apple_patch(arch: str, slc: str) -> None:
         outfile.write('# cleared by efrotools build\n')
 
     _patch_setup_file('apple', arch, slc)
+    _patch_py_ssl()
 
 
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
     _patch_setup_file('android', '?', '?')
+    _patch_py_ssl()
+
+
+def android_patch_ssl() -> None:
+    """Run necessary patches on an android ssl before building."""
+
+    # We bundle our own SSL root certificates on various platforms and use
+    # the OpenSSL 'SSL_CERT_FILE' env var override to get them to be used
+    # by default. However, OpenSSL is picky about allowing env-vars to be
+    # used and something about the Android environment makes it disallow
+    # them. So we need to force the issue. Alternately we could explicitly
+    # pass 'cafile' args to SSLContexts whenever we do network-y stuff
+    # but it seems cleaner to just have things work everywhere by default.
+    fname = 'crypto/getenv.c'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        ('char *ossl_safe_getenv(const char *name)\n'
+         '{\n'),
+        ('char *ossl_safe_getenv(const char *name)\n'
+         '{\n'
+         '    // ERICF TWEAK: ALWAYS ALLOW GETENV.\n'
+         '    return getenv(name);\n'),
+    )
+    writefile(fname, txt)
+
+
+def _patch_py_ssl() -> None:
+
+    # I've tracked down an issue where Python's SSL module
+    # can spend lots of time in SSL_CTX_set_default_verify_paths()
+    # while holding the GIL, which hitches the game like crazy.
+    # On debug builds on older Android devices it can spend up to
+    # 1-2 seconds there. So its necessary to release the GIL during that
+    # call to keep things smooth. Will submit a report/patch to the
+    # Python folks, but for now am just patching it for our Python builds.
+    # NOTE TO SELF: It would also be good to look into why that call can be
+    # so slow and if there's anything we can do about that.
+    fname = 'Modules/_ssl.c'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        '    if (!SSL_CTX_set_default_verify_paths(self->ctx)) {',
+        '    int ret = 0;\n'
+        '\n'
+        '    PySSL_BEGIN_ALLOW_THREADS\n'
+        '    ret = SSL_CTX_set_default_verify_paths(self->ctx);\n'
+        '    PySSL_END_ALLOW_THREADS\n'
+        '\n'
+        '    if (!ret) {',
+    )
+    writefile(fname, txt)
 
 
 def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
@@ -406,30 +451,6 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
                             '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
                             ' continue;;')
     assert txt.count('[A-Z]*=*') == 1
-    writefile(fname, txt)
-
-
-def android_patch_ssl() -> None:
-    """Run necessary patches on an android ssl before building."""
-
-    # We bundle our own SSL root certificates on various platforms and use
-    # the OpenSSL 'SSL_CERT_FILE' env var override to get them to be used
-    # by default. However, OpenSSL is picky about allowing env-vars to be
-    # used and something about the Android environment makes it disallow
-    # them. So we need to force the issue. Alternately we could explicitly
-    # pass 'cafile' args to SSLContexts whenever we do network-y stuff
-    # but it seems cleaner to just have things work by default.
-    fname = 'crypto/getenv.c'
-    txt = readfile(fname)
-    txt = replace_exact(
-        txt,
-        ('char *ossl_safe_getenv(const char *name)\n'
-         '{\n'),
-        ('char *ossl_safe_getenv(const char *name)\n'
-         '{\n'
-         '    // ERICF TWEAK: ALWAYS ALLOW GETENV.\n'
-         '    return getenv(name);\n'),
-    )
     writefile(fname, txt)
 
 

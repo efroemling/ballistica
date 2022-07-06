@@ -311,6 +311,7 @@
       <w>demangling</w>
       <w>denom</w>
       <w>dernit</w>
+      <w>destdir</w>
       <w>dets</w>
       <w>dfba</w>
       <w>dffc</w>
@@ -527,6 +528,7 @@
       <w>getsession</w>
       <w>getsound</w>
       <w>gettexture</w>
+      <w>gettime</w>
       <w>gettotalrefcount</w>
       <w>gles</w>
       <w>glext</w>
@@ -686,6 +688,7 @@
       <w>linkstoryboards</w>
       <w>listobj</w>
       <w>llock</w>
+      <w>localmodlibs</w>
       <w>localns</w>
       <w>lockpath</w>
       <w>lockstr</w>
@@ -846,6 +849,7 @@
       <w>notorized</w>
       <w>nowtickets</w>
       <w>nptr</w>
+      <w>nsec</w>
       <w>nsize</w>
       <w>nsworkspace</w>
       <w>ntoa</w>
@@ -1239,8 +1243,10 @@
       <w>talloc</w>
       <w>targs</w>
       <w>tasklabel</w>
+      <w>tbegin</w>
       <w>tcls</w>
       <w>tdels</w>
+      <w>tdiff</w>
       <w>tdlds</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>

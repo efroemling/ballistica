@@ -341,7 +341,7 @@ def test_simultaneous_messages() -> None:
         )
 
         # This should all go through in the same time that 1 goes through in.
-        assert (time.monotonic() - starttime) < 1.1 * SLOW_WAIT
+        assert (time.monotonic() - starttime) < 1.25 * SLOW_WAIT
 
         # Make sure we got all correct responses.
         assert all(r.messagetype is _MessageType.RESPONSE_SLOW

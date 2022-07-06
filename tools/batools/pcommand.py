@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """A nice collection of ready-to-use pcommands for this package."""
 from __future__ import annotations
 
@@ -303,6 +304,12 @@ def gen_fulltest_buildfile_linux() -> None:
     """
     import batools.build
     batools.build.gen_fulltest_buildfile_linux()
+
+
+def python_version_build_base() -> None:
+    """Print built Python base version."""
+    from efrotools.pybuild import PY_VER
+    print(PY_VER, end='')
 
 
 def python_version_android() -> None:
@@ -734,12 +741,15 @@ def efro_gradle() -> None:
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
         enabled_tags = {'google', 'crashlytics'}
+    prev_suffix = 'efro_gradle_prev'
 
     buildfilename = 'BallisticaCore/build.gradle'
 
     # Move the original file out of the way and operate on a copy of it.
-    subprocess.run(['mv', buildfilename, f'{buildfilename}.prev'], check=True)
-    subprocess.run(['cp', f'{buildfilename}.prev', buildfilename], check=True)
+    subprocess.run(['mv', buildfilename, f'{buildfilename}.{prev_suffix}'],
+                   check=True)
+    subprocess.run(['cp', f'{buildfilename}.{prev_suffix}', buildfilename],
+                   check=True)
 
     filter_gradle_file(buildfilename, enabled_tags)
 
@@ -750,7 +760,8 @@ def efro_gradle() -> None:
         errored = True
 
     # Restore the original.
-    subprocess.run(['mv', f'{buildfilename}.prev', buildfilename], check=True)
+    subprocess.run(['mv', f'{buildfilename}.{prev_suffix}', buildfilename],
+                   check=True)
 
     if errored:
         sys.exit(1)

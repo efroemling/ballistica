@@ -1,4 +1,4 @@
-### 1.7.3 (20629, 2022-07-05)
+### 1.7.3 (20634, 2022-07-06)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)
 - Fixed an issue in Chosen One where the flag resetting on top of a player would not cause them to become the chosen one (Thanks Dliwk!)
 - Fixed an issue where triple-bomb powerup would not flash before wearing off (Thanks Juleskie!).
@@ -13,8 +13,7 @@
 - The app now issues a warning if unable to establish secure connections to cloud servers (which can be due to aforementioned issue, but could also stem from other network problems).
 - The Network Testing utility (Settings->Advanced->Network Testing) now tests for more potential issues including ones mentioned above.
 - The Android version now stores files such as extracted assets and audio caches in the non-backed-up files dir (Android's Context.getNoBackupFilesDir()). These files can always be recreated by the app so they don't need backups, and this makes it more likely that Android will back up what's left in the regular files dir (the app config, etc).
-
-
+- Fixed an issue causing hitches during background SSL network operations (manifesting on the Android version but theoretically possibly anywhere).
 
 ### 1.7.2 (20620, 2022-06-25)
 - Minor fixes in some minigames (Thanks Droopy!)

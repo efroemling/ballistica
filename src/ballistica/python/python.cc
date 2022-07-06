@@ -2246,9 +2246,15 @@ void Python::LogContextAuto() {
 }
 
 void Python::AcquireGIL() {
+  auto startms{Platform::GetCurrentMilliseconds()};
   if (thread_state_) {
     PyEval_RestoreThread(thread_state_);
     thread_state_ = nullptr;
+  }
+  auto duration{Platform::GetCurrentMilliseconds() - startms};
+  if (duration > (1000 / 120)) {
+    Log("GIL acquire took too long (" + std::to_string(duration) + " ms).",
+        true, false);
   }
 }
 void Python::ReleaseGIL() {
@@ -2583,12 +2589,10 @@ auto Python::ValidatedPackageAssetName(PyObject* package, const char* name)
 
 class Python::ScopedInterpreterLock::Impl {
  public:
-  Impl() : need_lock_(true), gstate_(PyGILState_UNLOCKED) {
+  Impl() {
     if (need_lock_) {
-      if (need_lock_) {
-        // Grab the python GIL.
-        gstate_ = PyGILState_Ensure();
-      }
+      // Grab the python GIL.
+      gstate_ = PyGILState_Ensure();
     }
   }
   ~Impl() {
@@ -2599,8 +2603,8 @@ class Python::ScopedInterpreterLock::Impl {
   }
 
  private:
-  bool need_lock_ = false;
-  PyGILState_STATE gstate_;
+  bool need_lock_{true};
+  PyGILState_STATE gstate_{PyGILState_UNLOCKED};
 };
 
 Python::ScopedInterpreterLock::ScopedInterpreterLock()

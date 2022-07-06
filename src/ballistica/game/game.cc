@@ -498,10 +498,6 @@ void Game::HandleQuitOnIdle() {
       PushCall([this, idle_seconds] {
         assert(InGameThread());
 
-        // Special exit value the wrapper script looks for to know we idled out.
-        // UPDATE: no longer need this.
-        // g_app_globals->return_value = 154;
-
         // Just go through _ba.quit()
         // FIXME: Shouldn't need to go out to the python layer here...
         g_python->obj(Python::ObjID::kQuitCall).Call();
@@ -512,10 +508,10 @@ void Game::HandleQuitOnIdle() {
 
 // Bring our scenes, real-time timers, etc up to date.
 void Game::Update() {
+  auto startms{Platform::GetCurrentMilliseconds()};
   assert(InGameThread());
   millisecs_t real_time = GetRealTime();
-  g_platform->SetDebugKey("LastUpdateTime",
-                          std::to_string(Platform::GetCurrentMilliseconds()));
+  g_platform->SetDebugKey("LastUpdateTime", std::to_string(startms));
   if (first_update_) {
     master_time_offset_ = master_time_ - real_time;
     first_update_ = false;
@@ -652,6 +648,20 @@ void Game::Update() {
     step++;
   }
   in_update_ = false;
+
+  // Report excessively long updates.
+  if (real_time >= next_long_update_report_time_) {
+    auto duration{Platform::GetCurrentMilliseconds() - startms};
+
+    // Complain when our full update takes longer than 1/60th second.
+    if (duration > (1000 / 60)) {
+      Log("Game update took too long (" + std::to_string(duration) + " ms).",
+          true, false);
+
+      // Limit these if we want (not doing so for now).
+      next_long_update_report_time_ = real_time;
+    }
+  }
 }
 
 // Reset the game to a blank slate.

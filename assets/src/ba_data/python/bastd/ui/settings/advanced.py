@@ -56,6 +56,7 @@ class AdvancedSettingsWindow(ba.Window):
             scale=(2.06 if uiscale is ba.UIScale.SMALL else
                    1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
             stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
+
         self._prev_lang = ''
         self._prev_lang_list: list[str] = []
         self._complete_langs_list: list | None = None

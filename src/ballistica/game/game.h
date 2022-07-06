@@ -296,6 +296,7 @@ class Game : public Module {
   millisecs_t largest_draw_time_increment_since_last_reset_{};
   millisecs_t last_draw_real_time_{};
   millisecs_t first_draw_real_time_{};
+  millisecs_t next_long_update_report_time_{};
 
   // *All* existing sessions (including old ones waiting to shut down).
   std::vector<Object::Ref<Session> > sessions_;
