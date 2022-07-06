@@ -10,6 +10,7 @@ import weakref
 from threading import Thread
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 import _ba
 import ba
 from bastd.ui.settings.testing import TestingWindow
@@ -148,10 +149,12 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             call()
             duration = time.monotonic() - starttime
             _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
-        except Exception:
+        except Exception as exc:
             import traceback
             duration = time.monotonic() - starttime
-            _print(traceback.format_exc(), color=(1.0, 1.0, 0.3))
+            msg = (str(exc)
+                   if isinstance(exc, CleanError) else traceback.format_exc())
+            _print(msg, color=(1.0, 1.0, 0.3))
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
 
@@ -193,6 +196,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         _print(f'\nContacting V2 master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
+        _print('\nComparing local time to V2 server...')
+        _print_test_results(_test_v2_time)
+
         # Get V2 nearby zone
         with ba.app.net.zone_pings_lock:
             zone_pings = copy.deepcopy(ba.app.net.zone_pings)
@@ -205,6 +211,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             nearstr = '-'
         _print(f'\nChecking nearest V2 zone ping ({nearstr})...')
         _print_test_results(lambda: _test_nearby_zone_ping(nearest_zone))
+
+        _print('\nSending V2 cloud message...')
+        _print_test_results(_test_v2_cloud_message)
 
         if have_error[0]:
             _print('\nDiagnostics complete. Some diagnostics failed.',
@@ -269,6 +278,58 @@ def _test_v1_transaction() -> None:
     # If we got left a string, its an error.
     if isinstance(results[0], str):
         raise RuntimeError(results[0])
+
+
+def _test_v2_cloud_message() -> None:
+    from dataclasses import dataclass
+    import bacommon.cloud
+
+    @dataclass
+    class _Results:
+        errstr: str | None = None
+        send_time: float | None = None
+        response_time: float | None = None
+
+    results = _Results()
+
+    def _cb(response: bacommon.cloud.PingResponse | Exception) -> None:
+        # Note: this runs in another thread so need to avoid exceptions.
+        results.response_time = time.monotonic()
+        if isinstance(response, Exception):
+            results.errstr = str(response)
+        if not isinstance(response, bacommon.cloud.PingResponse):
+            results.errstr = f'invalid response type: {type(response)}.'
+
+    def _send() -> None:
+        # Note: this runs in another thread so need to avoid exceptions.
+        results.send_time = time.monotonic()
+        ba.app.cloud.send_message_cb(bacommon.cloud.PingMessage(), _cb)
+
+    # This stuff expects to be run from the logic thread.
+    ba.pushcall(_send, from_other_thread=True)
+
+    wait_start_time = time.monotonic()
+    while True:
+        if results.response_time is not None:
+            break
+        time.sleep(0.01)
+        if time.monotonic() - wait_start_time > 10.0:
+            raise RuntimeError('Timeout waiting for cloud message response')
+    if results.errstr is not None:
+        raise RuntimeError(results.errstr)
+
+
+def _test_v2_time() -> None:
+    offset = ba.app.net.server_time_offset_hours
+    if offset is None:
+        raise RuntimeError('no time offset found;'
+                           ' perhaps unable to communicate with v2 server?')
+    if abs(offset) >= 2.0:
+        raise CleanError(
+            f'Your device time is off from world time by {offset:.1f} hours.\n'
+            'This may cause network operations to fail due to your device\n'
+            ' incorrectly treating SSL certificates as not-yet-valid, etc.\n'
+            'Check your device time and time-zone settings to fix this.\n')
 
 
 def _test_fetch(baseaddr: str) -> None:

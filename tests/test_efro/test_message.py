@@ -423,8 +423,8 @@ TEST_PROTOCOL = MessageProtocol(
         0: _TResp1,
         1: _TResp2,
     },
-    trusted_sender=True,
-    log_remote_exceptions=False,
+    receiver_returns_stack_traces=True,
+    receiver_logs_exceptions=False,
 )
 
 # Represents an 'evolved' TEST_PROTOCOL (one extra message type added).
@@ -440,8 +440,8 @@ TEST_PROTOCOL_B = MessageProtocol(
         0: _TResp1,
         1: _TResp2,
     },
-    trusted_sender=True,
-    log_remote_exceptions=False,
+    receiver_returns_stack_traces=True,
+    receiver_logs_exceptions=False,
 )
 
 TEST_PROTOCOL_SINGLE = MessageProtocol(
@@ -451,8 +451,8 @@ TEST_PROTOCOL_SINGLE = MessageProtocol(
     response_types={
         0: _TResp1,
     },
-    trusted_sender=True,
-    log_remote_exceptions=False,
+    receiver_returns_stack_traces=True,
+    receiver_logs_exceptions=False,
 )
 
 

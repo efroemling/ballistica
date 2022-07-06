@@ -239,9 +239,6 @@ class Platform {
   /// Are we running on fireTV hardware?
   virtual auto IsRunningOnFireTV() -> bool;
 
-  /// Return the external storage path (currently only relevant on Android).
-  virtual auto GetExternalStoragePath() -> std::string;
-
   // For enabling some special hardware optimizations for nvidia.
   auto is_tegra_k1() const -> bool { return is_tegra_k1_; }
   auto set_is_tegra_k1(bool val) -> void { is_tegra_k1_ = val; }
@@ -276,6 +273,7 @@ class Platform {
                                     const std::string& code) -> void;
   virtual auto AndroidRefreshFile(const std::string& file) -> void;
   virtual auto AndroidShowWifiSettings() -> void;
+  virtual auto AndroidGetExternalFilesDir() -> std::string;
 
 #pragma mark PERMISSIONS -------------------------------------------------------
 
@@ -462,7 +460,7 @@ class Platform {
   // Return a monotonic time measurement in milliseconds since launch.
   // To get a time value that is guaranteed to not jump around or go backwards,
   // use ballistica::GetRealTime() (which is an abstraction around this).
-  auto GetTicks() -> millisecs_t;
+  auto GetTicks() const -> millisecs_t;
 
   // A raw milliseconds value (not relative to launch time).
   static auto GetCurrentMilliseconds() -> millisecs_t;
@@ -552,7 +550,14 @@ class Platform {
   virtual auto DoGetUserPythonDirectory() -> std::string;
 
   /// Return the default config directory for this platform.
+  /// This will be used as the config dir if not overridden via command
+  /// line options, etc.
   virtual auto GetDefaultConfigDirectory() -> std::string;
+
+  /// Return the default Volatile data dir for this platform.
+  /// This will be used as the volatile-data-dir if not overridden via command
+  /// line options/etc.
+  virtual auto GetDefaultVolatileDataDirectory() -> std::string;
 
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;

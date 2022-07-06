@@ -1,4 +1,4 @@
-### 1.7.3 (20627, 2022-07-01)
+### 1.7.3 (20629, 2022-07-05)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)
 - Fixed an issue in Chosen One where the flag resetting on top of a player would not cause them to become the chosen one (Thanks Dliwk!)
 - Fixed an issue where triple-bomb powerup would not flash before wearing off (Thanks Juleskie!).
@@ -7,6 +7,14 @@
 - The app now issues a gentle notice if plugins are removed instead of erroring and continuing to look for them on subsequent launches. This makes things much smoother when switching between workspaces or users.
 - Added new translation entries for Workspace/Plugin stuff.
 - tools/bacloud workspace get/put commands are now functional (wiki page with instructions coming soon).
+- `_ba.android_get_external_storage_path` is now `_ba.android_get_external_files_dir` which maps to the actual call it makes under the hood these days.
+- Android logging now breaks up long entries such as stack-traces into multiple log entries so they should not get truncated.
+- The app now issues a warning if device time varies significantly from actual world time. This can lead to things like the app incorrectly treating SSL certificates as not yet valid and network functionality failing.
+- The app now issues a warning if unable to establish secure connections to cloud servers (which can be due to aforementioned issue, but could also stem from other network problems).
+- The Network Testing utility (Settings->Advanced->Network Testing) now tests for more potential issues including ones mentioned above.
+- The Android version now stores files such as extracted assets and audio caches in the non-backed-up files dir (Android's Context.getNoBackupFilesDir()). These files can always be recreated by the app so they don't need backups, and this makes it more likely that Android will back up what's left in the regular files dir (the app config, etc).
+
+
 
 ### 1.7.2 (20620, 2022-06-25)
 - Minor fixes in some minigames (Thanks Droopy!)

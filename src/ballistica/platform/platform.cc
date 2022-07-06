@@ -269,11 +269,16 @@ auto Platform::GetUserPythonDirectory() -> std::string {
 
 auto Platform::GetVolatileDataDirectory() -> std::string {
   if (!made_volatile_data_dir_) {
-    volatile_data_dir_ = GetConfigDirectory() + BA_DIRSLASH + "vdata";
+    volatile_data_dir_ = GetDefaultVolatileDataDirectory();
     MakeDir(volatile_data_dir_);
     made_volatile_data_dir_ = true;
   }
   return volatile_data_dir_;
+}
+
+auto Platform::GetDefaultVolatileDataDirectory() -> std::string {
+  // By default, stuff this in a subdir under our config dir.
+  return GetConfigDirectory() + BA_DIRSLASH + "vdata";
 }
 
 auto Platform::GetAppPythonDirectory() -> std::string {
@@ -437,8 +442,8 @@ void Platform::MakeDir(const std::string& dir, bool quiet) {
   }
 }
 
-auto Platform::GetExternalStoragePath() -> std::string {
-  throw Exception("GetExternalStoragePath() unimplemented");
+auto Platform::AndroidGetExternalFilesDir() -> std::string {
+  throw Exception("AndroidGetExternalFilesDir() unimplemented");
 }
 
 auto Platform::DoGetUserPythonDirectory() -> std::string {
@@ -708,7 +713,7 @@ auto Platform::GetKeyName(int keycode) -> std::string {
 
 void Platform::CreateAuxiliaryModules() {
 #if !BA_HEADLESS_BUILD
-  auto bg_dynamics_thread = new Thread(ThreadIdentifier::kBGDynamics);
+  auto* bg_dynamics_thread = new Thread(ThreadIdentifier::kBGDynamics);
   g_app_globals->pausable_threads.push_back(bg_dynamics_thread);
 #endif
 #if !BA_HEADLESS_BUILD
@@ -719,7 +724,7 @@ void Platform::CreateAuxiliaryModules() {
     // Start listening for stdin commands (on platforms where that makes sense).
     // Note: this thread blocks indefinitely for input so we don't add it to the
     // pausable list.
-    auto std_input_thread = new Thread(ThreadIdentifier::kStdin);
+    auto* std_input_thread = new Thread(ThreadIdentifier::kStdin);
     std_input_thread->AddModule<StdInputModule>();
     g_std_input_module->PushBeginReadCall();
   }
@@ -1209,7 +1214,7 @@ auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
   throw Exception();
 #else
   std::vector<uint32_t> addrs;
-  struct ifaddrs* ifaddr;
+  struct ifaddrs* ifaddr{};
   if (getifaddrs(&ifaddr) != -1) {
     int i = 0;
     for (ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
@@ -1252,7 +1257,7 @@ auto Platform::SetSocketNonBlocking(int sd) -> bool {
 #endif
 }
 
-auto Platform::GetTicks() -> millisecs_t {
+auto Platform::GetTicks() const -> millisecs_t {
   return GetCurrentMilliseconds() - starttime_;
 }
 

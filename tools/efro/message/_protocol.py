@@ -25,28 +25,40 @@ class MessageProtocol:
     """Wrangles a set of message types, formats, and response types.
     Both endpoints must be using a compatible Protocol for communication
     to succeed. To maintain Protocol compatibility between revisions,
-    all message types must retain the same id, message attr storage names must
-    not change, newly added attrs must have default values, etc.
+    all message types must retain the same id, message attr storage
+    names must not change, newly added attrs must have default values,
+    etc.
     """
 
     def __init__(self,
                  message_types: dict[int, type[Message]],
                  response_types: dict[int, type[Response]],
                  preserve_clean_errors: bool = True,
-                 log_remote_exceptions: bool = True,
-                 trusted_sender: bool = False) -> None:
+                 receiver_logs_exceptions: bool = True,
+                 receiver_returns_stack_traces: bool = False) -> None:
         """Create a protocol with a given configuration.
 
         Note that common response types are automatically registered
         with (unchanging negative ids) so they don't need to be passed
         explicitly (but can be if a different id is desired).
 
-        If 'preserve_clean_errors' is True, efro.error.CleanError errors
-        on the remote end will result in the same error raised locally.
-        All other Exception types come across as efro.error.RemoteError.
+        If 'preserve_clean_errors' is True, efro.error.CleanError
+        exceptions raised on the receiver end will result in a matching
+        CleanError raised back on the sender. All other Exception types
+        come across as efro.error.RemoteError.
 
-        If 'trusted_sender' is True, stringified remote stack traces will
-        be included in the responses if errors occur.
+        When 'receiver_logs_exceptions' is True, any uncaught Exceptions
+        on the receiver end will be logged there via logging.exception()
+        (in addition to the usual behavior of returning an ErrorResponse
+        to the sender). This is good to leave enabled if your
+        intention is to never return ErrorResponses. Looser setups
+        making routine use of CleanErrors or whatnot may want to
+        disable this, however.
+
+        If 'receiver_returns_stack_traces' is True, stringified stack
+        traces will be returned to the sender for exceptions occurring
+        on the receiver end. This can make debugging easier but should
+        only be used when the client is trusted to see such info.
         """
         self.message_types_by_id: dict[int, type[Message]] = {}
         self.message_ids_by_type: dict[type[Message], int] = {}
@@ -102,9 +114,9 @@ class MessageProtocol:
                 assert is_ioprepped_dataclass(cls)
                 assert issubclass(cls, Response)
                 if cls not in self.response_ids_by_type:
-                    raise ValueError(f'Possible response type {cls}'
-                                     f' needs to be included in response_types'
-                                     f' for this protocol.')
+                    raise ValueError(
+                        f'Possible response type {cls} needs to be included'
+                        f' in response_types for this protocol.')
 
             # Make sure all registered types have unique base names.
             # We can take advantage of this to generate cleaner looking
@@ -116,8 +128,8 @@ class MessageProtocol:
                     ' all types are required to have unique names.')
 
         self.preserve_clean_errors = preserve_clean_errors
-        self.log_remote_exceptions = log_remote_exceptions
-        self.trusted_sender = trusted_sender
+        self.receiver_logs_exceptions = receiver_logs_exceptions
+        self.receiver_returns_stack_traces = receiver_returns_stack_traces
 
     @staticmethod
     def encode_dict(obj: dict) -> str:
@@ -134,7 +146,9 @@ class MessageProtocol:
 
     def error_to_response(self, exc: Exception) -> Response:
         """Translate an error to a response."""
-        if self.log_remote_exceptions:
+
+        # Log any errors we got during handling if so desired.
+        if self.receiver_logs_exceptions:
             logging.exception('Error handling message.')
 
         # If anything goes wrong, return a ErrorResponse instead.
@@ -142,8 +156,9 @@ class MessageProtocol:
             return ErrorResponse(error_message=str(exc),
                                  error_type=ErrorResponse.ErrorType.CLEAN)
         return ErrorResponse(
-            error_message=(traceback.format_exc() if self.trusted_sender else
-                           'An unknown error has occurred.'),
+            error_message=(traceback.format_exc()
+                           if self.receiver_returns_stack_traces else
+                           'An internal error has occurred.'),
             error_type=ErrorResponse.ErrorType.OTHER)
 
     def _to_dict(self, message: Any, ids_by_type: dict[type, int],

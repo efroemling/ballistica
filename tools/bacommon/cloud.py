@@ -78,6 +78,22 @@ class LoginProxyCompleteMessage(Message):
 
 @ioprepped
 @dataclass
+class PingMessage(Message):
+    """Standard ping."""
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response]]:
+        return [PingResponse]
+
+
+@ioprepped
+@dataclass
+class PingResponse(Response):
+    """pong."""
+
+
+@ioprepped
+@dataclass
 class TestMessage(Message):
     """Can I get some of that workspace action?"""
     testfoo: Annotated[int, IOAttrs('f')]

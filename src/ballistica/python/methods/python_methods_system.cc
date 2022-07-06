@@ -729,17 +729,17 @@ auto PyAndroidMediaScanFile(PyObject* self, PyObject* args, PyObject* keywds)
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantFunctionResult"
 
-auto PyAndroidGetExternalStoragePath(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
+auto PyAndroidGetExternalFilesDir(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("android_get_external_storage_path");
+  Platform::SetLastPyCall("android_get_external_files_dir");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
 #if BA_OSTYPE_ANDROID
-  std::string path = g_platform->GetExternalStoragePath();
+  std::string path = g_platform->AndroidGetExternalFilesDir();
   if (path.empty()) {
     Py_RETURN_NONE;
   } else {
@@ -883,10 +883,9 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "Refreshes Android MTP Index for a file; use this to get file\n"
        "modifications to be reflected in Android File Transfer."},
 
-      {"android_get_external_storage_path",
-       (PyCFunction)PyAndroidGetExternalStoragePath,
-       METH_VARARGS | METH_KEYWORDS,
-       "android_get_external_storage_path() -> str\n"
+      {"android_get_external_files_dir",
+       (PyCFunction)PyAndroidGetExternalFilesDir, METH_VARARGS | METH_KEYWORDS,
+       "android_get_external_files_dir() -> str\n"
        "\n"
        "(internal)\n"
        "\n"

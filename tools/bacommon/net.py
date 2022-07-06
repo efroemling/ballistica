@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Any, Annotated
 from dataclasses import dataclass, field
 
@@ -26,6 +27,9 @@ class ServerNodeEntry:
 @dataclass
 class ServerNodeQueryResponse:
     """A response to a query about server-nodes."""
+
+    # The current utc time on the master server.
+    time: Annotated[datetime.datetime, IOAttrs('t')]
 
     # If present, something went wrong, and this describes it.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None

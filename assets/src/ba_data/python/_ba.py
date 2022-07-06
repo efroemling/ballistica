@@ -1114,7 +1114,7 @@ def add_transaction(transaction: dict,
     return None
 
 
-def android_get_external_storage_path() -> str:
+def android_get_external_files_dir() -> str:
     """(internal)
 
     Returns the android external storage path, or None if there is none on
