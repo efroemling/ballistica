@@ -1,3 +1,5 @@
+### 1.7.4 (20636, 2022-07-06)
+
 ### 1.7.3 (20634, 2022-07-06)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)
 - Fixed an issue in Chosen One where the flag resetting on top of a player would not cause them to become the chosen one (Thanks Dliwk!)
