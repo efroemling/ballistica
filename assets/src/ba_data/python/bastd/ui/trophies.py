@@ -88,9 +88,12 @@ class TrophiesWindow(popup.PopupWindow):
         multi_txt = ba.Lstr(
             resource='coopSelectWindow.powerRankingPointsMultText').evaluate()
 
-        self.total_pts += self._create_trophy_type_widgets(eq_text, incr, multi_txt,
-                                                      sub_height, sub_width,
-                                                      trophy_types)
+        self.total_pts += self._create_trophy_type_widgets(eq_text,
+                                                           incr,
+                                                           multi_txt,
+                                                           sub_height,
+                                                           sub_width,
+                                                           trophy_types)
 
         ba.textwidget(
             parent=self._subcontainer,
@@ -102,7 +105,7 @@ class TrophiesWindow(popup.PopupWindow):
             flatness=1.0,
             shadow=0.0,
             text=ba.Lstr(resource='coopSelectWindow.totalText').evaluate() +
-            ' ' + eq_text.replace('${NUMBER}', str(total_pts)),
+            ' ' + eq_text.replace('${NUMBER}', str(self.total_pts)),
             size=(0, 0),
             h_align='right',
             v_align='center')
