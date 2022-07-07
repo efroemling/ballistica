@@ -112,7 +112,7 @@ class TrophiesWindow(popup.PopupWindow):
                                     sub_width: int,
                                     trophy_types: list[list[str]]) -> int:
         from ba.internal import get_trophy_string
-        pts = 0
+        total_pts = 0
         for i, trophy_type in enumerate(trophy_types):
             t_count = self._data['t' + trophy_type[0]]
             t_mult = self._data['t' + trophy_type[0] + 'm']
@@ -157,7 +157,7 @@ class TrophiesWindow(popup.PopupWindow):
                           h_align='center',
                           v_align='center')
 
-            pts = t_count * t_mult
+            this_pts = t_count * t_mult
             ba.textwidget(parent=self._subcontainer,
                           position=(sub_width * 0.88,
                                     sub_height - 20 - incr * i),
@@ -167,12 +167,12 @@ class TrophiesWindow(popup.PopupWindow):
                           flatness=1.0,
                           shadow=0.0,
                           scale=0.5,
-                          text=eq_text.replace('${NUMBER}', str(pts)),
+                          text=eq_text.replace('${NUMBER}', str(this_pts)),
                           size=(0, 0),
                           h_align='center',
                           v_align='center')
-            pts += pts
-        return pts
+            total_pts += this_pts
+        return total_pts
 
     def _on_cancel_press(self) -> None:
         self._transition_out()
