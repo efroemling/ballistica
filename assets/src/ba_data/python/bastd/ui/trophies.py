@@ -83,12 +83,12 @@ class TrophiesWindow(popup.PopupWindow):
                                                 size=(sub_width, sub_height),
                                                 background=False)
 
-        total_pts = 0
+        self.total_pts = 0
 
         multi_txt = ba.Lstr(
             resource='coopSelectWindow.powerRankingPointsMultText').evaluate()
 
-        total_pts += self._create_trophy_type_widgets(eq_text, incr, multi_txt,
+        self.total_pts += self._create_trophy_type_widgets(eq_text, incr, multi_txt,
                                                       sub_height, sub_width,
                                                       trophy_types)
 
@@ -171,8 +171,8 @@ class TrophiesWindow(popup.PopupWindow):
                           size=(0, 0),
                           h_align='center',
                           v_align='center')
-            pts += pts
-        return pts
+            self.total_pts += pts
+        return self.total_pts
 
     def _on_cancel_press(self) -> None:
         self._transition_out()
