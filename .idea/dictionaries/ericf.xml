@@ -2153,6 +2153,7 @@
       <w>sbwht</w>
       <w>sbylw</w>
       <w>sbytes</w>
+      <w>scanresults</w>
       <w>scenefile</w>
       <w>scenefiles</w>
       <w>scenename</w>
@@ -2567,6 +2568,7 @@
       <w>totalwaves</w>
       <w>totype</w>
       <w>touchpad</w>
+      <w>tournamentbutton</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
       <w>tpartial</w>

@@ -93,7 +93,7 @@ class PluginSettingsWindow(ba.Window):
         self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
                                              selection_loops_to_parent=True)
 
-        if ba.app.meta.metascan is None:
+        if ba.app.meta.scanresults is None:
             ba.screenmessage('Still scanning plugins; please try again.',
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))

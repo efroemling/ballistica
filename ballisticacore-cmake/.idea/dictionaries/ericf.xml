@@ -1101,6 +1101,7 @@
       <w>savebutton</w>
       <w>sbytes</w>
       <w>scancode</w>
+      <w>scanresults</w>
       <w>scenetime</w>
       <w>screenmessage</w>
       <w>scrollwidget</w>
@@ -1287,6 +1288,7 @@
       <w>topos</w>
       <w>touchpad</w>
       <w>toucs</w>
+      <w>tournamentbutton</w>
       <w>toutf</w>
       <w>tpartial</w>
       <w>tpimport</w>

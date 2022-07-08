@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.10
 # Released under the MIT License. See LICENSE for details.
 #
 """Stage assets for a build."""

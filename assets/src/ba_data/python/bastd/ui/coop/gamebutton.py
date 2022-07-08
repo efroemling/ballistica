@@ -55,7 +55,7 @@ class GameButton:
             position=(x + 23, y + 4),
             size=(sclx, scly),
             label='',
-            on_activate_call=ba.Call(window.run, game),
+            on_activate_call=ba.Call(window.run_game, game),
             button_type='square',
             autoselect=True,
             on_select_call=ba.Call(window.sel_change, row, game))

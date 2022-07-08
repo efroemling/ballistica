@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import copy
 from typing import TYPE_CHECKING
 
 import _ba
@@ -17,6 +16,8 @@ from bastd.ui.store.browser import StoreBrowserWindow
 
 if TYPE_CHECKING:
     from typing import Any
+
+    from bastd.ui.coop.tournamentbutton import TournamentButton
 
 
 class CoopBrowserWindow(ba.Window):
@@ -175,8 +176,6 @@ class CoopBrowserWindow(ba.Window):
             'Selected Coop Campaign Level', None))
         self._selected_custom_level = (cfg.get('Selected Coop Custom Level',
                                                None))
-        self._selected_challenge_level = (cfg.get(
-            'Selected Coop Challenge Level', None))
 
         # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
@@ -283,6 +282,7 @@ class CoopBrowserWindow(ba.Window):
         import bastd.ui.tournamentscores as _unused8
         import bastd.ui.tournamententry as _unused9
         import bastd.ui.play as _unused10
+        import bastd.ui.coop.tournamentbutton as _unused11
 
     def _update(self) -> None:
         # Do nothing if we've somehow outlived our actual UI.
@@ -335,21 +335,21 @@ class CoopBrowserWindow(ba.Window):
         # Decrement time on our tournament buttons.
         ads_enabled = _ba.have_incentivized_ad()
         for tbtn in self._tournament_buttons:
-            tbtn['time_remaining'] = max(0, tbtn['time_remaining'] - 1)
-            if tbtn['time_remaining_value_text'] is not None:
+            tbtn.time_remaining = max(0, tbtn.time_remaining - 1)
+            if tbtn.time_remaining_value_text is not None:
                 ba.textwidget(
-                    edit=tbtn['time_remaining_value_text'],
-                    text=ba.timestring(tbtn['time_remaining'],
+                    edit=tbtn.time_remaining_value_text,
+                    text=ba.timestring(tbtn.time_remaining,
                                        centi=False,
                                        suppress_format_warning=True) if
-                    (tbtn['has_time_remaining']
+                    (tbtn.has_time_remaining
                      and self._tourney_data_up_to_date) else '-')
 
             # Also adjust the ad icon visibility.
-            if tbtn.get('allow_ads', False) and _ba.has_video_ads():
-                ba.imagewidget(edit=tbtn['entry_fee_ad_image'],
+            if tbtn.allow_ads and _ba.has_video_ads():
+                ba.imagewidget(edit=tbtn.entry_fee_ad_image,
                                opacity=1.0 if ads_enabled else 0.25)
-                ba.textwidget(edit=tbtn['entry_fee_text_remaining'],
+                ba.textwidget(edit=tbtn.entry_fee_text_remaining,
                               color=(0.6, 0.6, 0.6, 1 if ads_enabled else 0.2))
 
         self._update_hard_mode_lock_image()
@@ -363,232 +363,21 @@ class CoopBrowserWindow(ba.Window):
             ba.print_exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: list[dict[str, Any]] | None) -> None:
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
-        from ba.internal import getcampaign, get_tournament_prize_strings
 
         # If the number of tournaments or challenges in the data differs from
         # our current arrangement, refresh with the new number.
         if ((data is None and self._tournament_button_count != 0)
                 or (data is not None and
                     (len(data) != self._tournament_button_count))):
-            self._tournament_button_count = len(
-                data) if data is not None else 0
+            self._tournament_button_count = (len(data)
+                                             if data is not None else 0)
             ba.app.config['Tournament Rows'] = self._tournament_button_count
             self._refresh()
 
         # Update all of our tourney buttons based on whats in data.
         for i, tbtn in enumerate(self._tournament_buttons):
             assert data is not None
-            entry: dict[str, Any] = data[i]
-            prize_y_offs = (34 if 'prizeRange3' in entry else
-                            20 if 'prizeRange2' in entry else 12)
-            x_offs = 90
-
-            # This seems to be a false alarm.
-            # pylint: disable=unbalanced-tuple-unpacking
-            pr1, pv1, pr2, pv2, pr3, pv3 = (
-                get_tournament_prize_strings(entry))
-            # pylint: enable=unbalanced-tuple-unpacking
-            enabled = 'requiredLeague' not in entry
-            ba.buttonwidget(edit=tbtn['button'],
-                            color=(0.5, 0.7, 0.2) if enabled else
-                            (0.5, 0.5, 0.5))
-            ba.imagewidget(edit=tbtn['lock_image'],
-                           opacity=0.0 if enabled else 1.0)
-            ba.textwidget(edit=tbtn['prize_range_1_text'],
-                          text='-' if pr1 == '' else pr1,
-                          position=(tbtn['button_x'] + 365 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 + prize_y_offs))
-
-            # We want to draw values containing tickets a bit smaller
-            # (scratch that; we now draw medals a bit bigger).
-            ticket_char = ba.charstr(ba.SpecialChar.TICKET_BACKING)
-            prize_value_scale_large = 1.0
-            prize_value_scale_small = 1.0
-
-            ba.textwidget(edit=tbtn['prize_value_1_text'],
-                          text='-' if pv1 == '' else pv1,
-                          scale=prize_value_scale_large if ticket_char
-                          not in pv1 else prize_value_scale_small,
-                          position=(tbtn['button_x'] + 380 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 + prize_y_offs))
-
-            ba.textwidget(edit=tbtn['prize_range_2_text'],
-                          text=pr2,
-                          position=(tbtn['button_x'] + 365 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 - 45 + prize_y_offs))
-            ba.textwidget(edit=tbtn['prize_value_2_text'],
-                          text=pv2,
-                          scale=prize_value_scale_large if ticket_char
-                          not in pv2 else prize_value_scale_small,
-                          position=(tbtn['button_x'] + 380 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 - 45 + prize_y_offs))
-
-            ba.textwidget(edit=tbtn['prize_range_3_text'],
-                          text=pr3,
-                          position=(tbtn['button_x'] + 365 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 - 90 + prize_y_offs))
-            ba.textwidget(edit=tbtn['prize_value_3_text'],
-                          text=pv3,
-                          scale=prize_value_scale_large if ticket_char
-                          not in pv3 else prize_value_scale_small,
-                          position=(tbtn['button_x'] + 380 + x_offs,
-                                    tbtn['button_y'] + tbtn['button_scale_y'] -
-                                    93 - 90 + prize_y_offs))
-
-            leader_name = '-'
-            leader_score: str | ba.Lstr = '-'
-            if entry['scores']:
-                score = tbtn['leader'] = copy.deepcopy(entry['scores'][0])
-                leader_name = score[1]
-                leader_score = (ba.timestring(
-                    score[0] * 10,
-                    centi=True,
-                    timeformat=ba.TimeFormat.MILLISECONDS,
-                    suppress_format_warning=True) if entry['scoreType']
-                                == 'time' else str(score[0]))
-            else:
-                tbtn['leader'] = None
-
-            ba.textwidget(edit=tbtn['current_leader_name_text'],
-                          text=ba.Lstr(value=leader_name))
-            self._tournament_leader_score_type = (entry['scoreType'])
-            ba.textwidget(edit=tbtn['current_leader_score_text'],
-                          text=leader_score)
-            ba.buttonwidget(edit=tbtn['more_scores_button'],
-                            label=ba.Lstr(resource=self._r + '.seeMoreText'))
-            out_of_time_text: str | ba.Lstr = (
-                '-' if 'totalTime' not in entry else ba.Lstr(
-                    resource=self._r + '.ofTotalTimeText',
-                    subs=[('${TOTAL}',
-                           ba.timestring(entry['totalTime'],
-                                         centi=False,
-                                         suppress_format_warning=True))]))
-            ba.textwidget(edit=tbtn['time_remaining_out_of_text'],
-                          text=out_of_time_text)
-
-            tbtn['time_remaining'] = entry['timeRemaining']
-            tbtn['has_time_remaining'] = entry is not None
-            tbtn['tournament_id'] = entry['tournamentID']
-            tbtn['required_league'] = (None if 'requiredLeague' not in entry
-                                       else entry['requiredLeague'])
-
-            game = ba.app.accounts_v1.tournament_info[
-                tbtn['tournament_id']]['game']
-
-            if game is None:
-                ba.textwidget(edit=tbtn['button_text'], text='-')
-                ba.imagewidget(edit=tbtn['image'],
-                               texture=ba.gettexture('black'),
-                               opacity=0.2)
-            else:
-                campaignname, levelname = game.split(':')
-                campaign = getcampaign(campaignname)
-                max_players = ba.app.accounts_v1.tournament_info[
-                    tbtn['tournament_id']]['maxPlayers']
-                txt = ba.Lstr(
-                    value='${A} ${B}',
-                    subs=[('${A}', campaign.getlevel(levelname).displayname),
-                          ('${B}',
-                           ba.Lstr(resource='playerCountAbbreviatedText',
-                                   subs=[('${COUNT}', str(max_players))]))])
-                ba.textwidget(edit=tbtn['button_text'], text=txt)
-                ba.imagewidget(
-                    edit=tbtn['image'],
-                    texture=campaign.getlevel(levelname).get_preview_texture(),
-                    opacity=1.0 if enabled else 0.5)
-
-            fee = entry['fee']
-
-            if fee is None:
-                fee_var = None
-            elif fee == 4:
-                fee_var = 'price.tournament_entry_4'
-            elif fee == 3:
-                fee_var = 'price.tournament_entry_3'
-            elif fee == 2:
-                fee_var = 'price.tournament_entry_2'
-            elif fee == 1:
-                fee_var = 'price.tournament_entry_1'
-            else:
-                if fee != 0:
-                    print('Unknown fee value:', fee)
-                fee_var = 'price.tournament_entry_0'
-
-            tbtn['allow_ads'] = allow_ads = entry['allowAds']
-
-            final_fee: int | None = (None if fee_var is None else
-                                     _ba.get_v1_account_misc_read_val(
-                                         fee_var, '?'))
-
-            final_fee_str: str | ba.Lstr
-            if fee_var is None:
-                final_fee_str = ''
-            else:
-                if final_fee == 0:
-                    final_fee_str = ba.Lstr(
-                        resource='getTicketsWindow.freeText')
-                else:
-                    final_fee_str = (
-                        ba.charstr(ba.SpecialChar.TICKET_BACKING) +
-                        str(final_fee))
-
-            ad_tries_remaining = ba.app.accounts_v1.tournament_info[
-                tbtn['tournament_id']]['adTriesRemaining']
-            free_tries_remaining = ba.app.accounts_v1.tournament_info[
-                tbtn['tournament_id']]['freeTriesRemaining']
-
-            # Now, if this fee allows ads and we support video ads, show
-            # the 'or ad' version.
-            if allow_ads and _ba.has_video_ads():
-                ads_enabled = _ba.have_incentivized_ad()
-                ba.imagewidget(edit=tbtn['entry_fee_ad_image'],
-                               opacity=1.0 if ads_enabled else 0.25)
-                or_text = ba.Lstr(resource='orText',
-                                  subs=[('${A}', ''),
-                                        ('${B}', '')]).evaluate().strip()
-                ba.textwidget(edit=tbtn['entry_fee_text_or'], text=or_text)
-                ba.textwidget(
-                    edit=tbtn['entry_fee_text_top'],
-                    position=(tbtn['button_x'] + 360,
-                              tbtn['button_y'] + tbtn['button_scale_y'] - 60),
-                    scale=1.3,
-                    text=final_fee_str)
-
-                # Possibly show number of ad-plays remaining.
-                ba.textwidget(
-                    edit=tbtn['entry_fee_text_remaining'],
-                    position=(tbtn['button_x'] + 360,
-                              tbtn['button_y'] + tbtn['button_scale_y'] - 146),
-                    text='' if ad_tries_remaining in [None, 0] else
-                    ('' + str(ad_tries_remaining)),
-                    color=(0.6, 0.6, 0.6, 1 if ads_enabled else 0.2))
-            else:
-                ba.imagewidget(edit=tbtn['entry_fee_ad_image'], opacity=0.0)
-                ba.textwidget(edit=tbtn['entry_fee_text_or'], text='')
-                ba.textwidget(
-                    edit=tbtn['entry_fee_text_top'],
-                    position=(tbtn['button_x'] + 360,
-                              tbtn['button_y'] + tbtn['button_scale_y'] - 80),
-                    scale=1.3,
-                    text=final_fee_str)
-
-                # Possibly show number of free-plays remaining.
-                ba.textwidget(
-                    edit=tbtn['entry_fee_text_remaining'],
-                    position=(tbtn['button_x'] + 360,
-                              tbtn['button_y'] + tbtn['button_scale_y'] - 100),
-                    text=('' if (free_tries_remaining in [None, 0]
-                                 or final_fee != 0) else
-                          ('' + str(free_tries_remaining))),
-                    color=(0.6, 0.6, 0.6, 1))
+            tbtn.update_for_data(data[i])
 
     def _on_tournament_query_response(self,
                                       data: dict[str, Any] | None) -> None:
@@ -715,10 +504,13 @@ class CoopBrowserWindow(ba.Window):
         items = [
             campaignname + ':Onslaught Training',
             campaignname + ':Rookie Onslaught',
-            campaignname + ':Rookie Football', campaignname + ':Pro Onslaught',
-            campaignname + ':Pro Football', campaignname + ':Pro Runaround',
-            campaignname + ':Uber Onslaught', campaignname + ':Uber Football',
-            campaignname + ':Uber Runaround'
+            campaignname + ':Rookie Football',
+            campaignname + ':Pro Onslaught',
+            campaignname + ':Pro Football',
+            campaignname + ':Pro Runaround',
+            campaignname + ':Uber Onslaught',
+            campaignname + ':Uber Football',
+            campaignname + ':Uber Runaround',
         ]
         items += [campaignname + ':The Last Stand']
         if self._selected_campaign_level is None:
@@ -772,6 +564,7 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bastd.ui.coop.gamebutton import GameButton
+        from bastd.ui.coop.tournamentbutton import TournamentButton
 
         # (Re)create the sub-container if need be.
         if self._subcontainer is not None:
@@ -839,7 +632,7 @@ class CoopBrowserWindow(ba.Window):
 
         # Tournaments
 
-        self._tournament_buttons: list[dict[str, Any]] = []
+        self._tournament_buttons: list[TournamentButton] = []
 
         v -= 53
         # FIXME shouldn't use hard-coded strings here.
@@ -919,7 +712,12 @@ class CoopBrowserWindow(ba.Window):
                 v2 = -2
                 is_last_sel = True
                 self._tournament_buttons.append(
-                    self._tournament_button(sc2, h, v2, is_last_sel))
+                    TournamentButton(sc2,
+                                     h,
+                                     v2,
+                                     is_last_sel,
+                                     on_pressed=ba.WeakCall(
+                                         self.run_tournament)))
                 v -= 200
 
         # Custom Games.
@@ -949,7 +747,8 @@ class CoopBrowserWindow(ba.Window):
         if _ba.get_v1_account_misc_read_val(
                 'easter', False) or _ba.get_purchased('games.easter_egg_hunt'):
             items = [
-                'Challenges:Easter Egg Hunt', 'Challenges:Pro Easter Egg Hunt'
+                'Challenges:Easter Egg Hunt',
+                'Challenges:Pro Easter Egg Hunt',
             ] + items
 
         # add all custom user levels here..
@@ -995,19 +794,19 @@ class CoopBrowserWindow(ba.Window):
 
         for i, tbutton in enumerate(self._tournament_buttons):
             ba.widget(
-                edit=tbutton['button'],
+                edit=tbutton.button,
                 up_widget=self._tournament_info_button
-                if i == 0 else self._tournament_buttons[i - 1]['button'],
-                down_widget=self._tournament_buttons[(i + 1)]['button']
+                if i == 0 else self._tournament_buttons[i - 1].button,
+                down_widget=self._tournament_buttons[(i + 1)].button
                 if i + 1 < len(self._tournament_buttons) else custom_h_scroll)
             ba.widget(
-                edit=tbutton['more_scores_button'],
+                edit=tbutton.more_scores_button,
                 down_widget=self._tournament_buttons[(
-                    i + 1)]['current_leader_name_text']
+                    i + 1)].current_leader_name_text
                 if i + 1 < len(self._tournament_buttons) else custom_h_scroll)
-            ba.widget(edit=tbutton['current_leader_name_text'],
+            ba.widget(edit=tbutton.current_leader_name_text,
                       up_widget=self._tournament_info_button if i == 0 else
-                      self._tournament_buttons[i - 1]['more_scores_button'])
+                      self._tournament_buttons[i - 1].more_scores_button)
 
         for btn in self._custom_buttons:
             try:
@@ -1036,314 +835,6 @@ class CoopBrowserWindow(ba.Window):
 
     def _enable_selectable_callback(self) -> None:
         self._do_selection_callbacks = True
-
-    def _tournament_button(self, parent: ba.Widget, x: float, y: float,
-                           select: bool) -> dict[str, Any]:
-        sclx = 300
-        scly = 195.0
-        data: dict[str, Any] = {
-            'tournament_id': None,
-            'time_remaining': 0,
-            'has_time_remaining': False,
-            'leader': None
-        }
-        data['button'] = btn = ba.buttonwidget(
-            parent=parent,
-            position=(x + 23, y + 4),
-            size=(sclx, scly),
-            label='',
-            button_type='square',
-            autoselect=True,
-            on_activate_call=lambda: self.run(None, tournament_button=data))
-        ba.widget(edit=btn,
-                  show_buffer_bottom=50,
-                  show_buffer_top=50,
-                  show_buffer_left=400,
-                  show_buffer_right=200)
-        if select:
-            ba.containerwidget(edit=parent,
-                               selected_child=btn,
-                               visible_child=btn)
-        image_width = sclx * 0.85 * 0.75
-
-        data['image'] = ba.imagewidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 21 + sclx * 0.5 - image_width * 0.5, y + scly - 150),
-            size=(image_width, image_width * 0.5),
-            model_transparent=self.lsbt,
-            model_opaque=self.lsbo,
-            texture=ba.gettexture('black'),
-            opacity=0.2,
-            mask_texture=ba.gettexture('mapPreviewMask'))
-
-        data['lock_image'] = ba.imagewidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 21 + sclx * 0.5 - image_width * 0.25,
-                      y + scly - 150),
-            size=(image_width * 0.5, image_width * 0.5),
-            texture=ba.gettexture('lock'),
-            opacity=0.0)
-
-        data['button_text'] = ba.textwidget(parent=parent,
-                                            draw_controller=btn,
-                                            position=(x + 20 + sclx * 0.5,
-                                                      y + scly - 35),
-                                            size=(0, 0),
-                                            h_align='center',
-                                            text='-',
-                                            v_align='center',
-                                            maxwidth=sclx * 0.76,
-                                            scale=0.85,
-                                            color=(0.8, 1.0, 0.8, 1.0))
-
-        header_color = (0.43, 0.4, 0.5, 1)
-        value_color = (0.6, 0.6, 0.6, 1)
-
-        x_offs = 0
-        ba.textwidget(parent=parent,
-                      draw_controller=btn,
-                      position=(x + 360, y + scly - 20),
-                      size=(0, 0),
-                      h_align='center',
-                      text=ba.Lstr(resource=self._r + '.entryFeeText'),
-                      v_align='center',
-                      maxwidth=100,
-                      scale=0.9,
-                      color=header_color,
-                      flatness=1.0)
-
-        data['entry_fee_text_top'] = ba.textwidget(parent=parent,
-                                                   draw_controller=btn,
-                                                   position=(x + 360,
-                                                             y + scly - 60),
-                                                   size=(0, 0),
-                                                   h_align='center',
-                                                   text='-',
-                                                   v_align='center',
-                                                   maxwidth=60,
-                                                   scale=1.3,
-                                                   color=value_color,
-                                                   flatness=1.0)
-        data['entry_fee_text_or'] = ba.textwidget(parent=parent,
-                                                  draw_controller=btn,
-                                                  position=(x + 360,
-                                                            y + scly - 90),
-                                                  size=(0, 0),
-                                                  h_align='center',
-                                                  text='',
-                                                  v_align='center',
-                                                  maxwidth=60,
-                                                  scale=0.5,
-                                                  color=value_color,
-                                                  flatness=1.0)
-        data['entry_fee_text_remaining'] = ba.textwidget(parent=parent,
-                                                         draw_controller=btn,
-                                                         position=(x + 360, y +
-                                                                   scly - 90),
-                                                         size=(0, 0),
-                                                         h_align='center',
-                                                         text='',
-                                                         v_align='center',
-                                                         maxwidth=60,
-                                                         scale=0.5,
-                                                         color=value_color,
-                                                         flatness=1.0)
-
-        data['entry_fee_ad_image'] = ba.imagewidget(
-            parent=parent,
-            size=(40, 40),
-            draw_controller=btn,
-            position=(x + 360 - 20, y + scly - 140),
-            opacity=0.0,
-            texture=ba.gettexture('tv'))
-
-        x_offs += 50
-
-        ba.textwidget(parent=parent,
-                      draw_controller=btn,
-                      position=(x + 447 + x_offs, y + scly - 20),
-                      size=(0, 0),
-                      h_align='center',
-                      text=ba.Lstr(resource=self._r + '.prizesText'),
-                      v_align='center',
-                      maxwidth=130,
-                      scale=0.9,
-                      color=header_color,
-                      flatness=1.0)
-
-        data['button_x'] = x
-        data['button_y'] = y
-        data['button_scale_y'] = scly
-
-        xo2 = 0
-        prize_value_scale = 1.5
-
-        data['prize_range_1_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 355 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='right',
-            v_align='center',
-            maxwidth=50,
-            text='-',
-            scale=0.8,
-            color=header_color,
-            flatness=1.0)
-        data['prize_value_1_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 380 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='left',
-            text='-',
-            v_align='center',
-            maxwidth=100,
-            scale=prize_value_scale,
-            color=value_color,
-            flatness=1.0)
-
-        data['prize_range_2_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 355 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='right',
-            v_align='center',
-            maxwidth=50,
-            scale=0.8,
-            color=header_color,
-            flatness=1.0)
-        data['prize_value_2_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 380 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='left',
-            text='',
-            v_align='center',
-            maxwidth=100,
-            scale=prize_value_scale,
-            color=value_color,
-            flatness=1.0)
-
-        data['prize_range_3_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 355 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='right',
-            v_align='center',
-            maxwidth=50,
-            scale=0.8,
-            color=header_color,
-            flatness=1.0)
-        data['prize_value_3_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 380 + xo2 + x_offs, y + scly - 93),
-            size=(0, 0),
-            h_align='left',
-            text='',
-            v_align='center',
-            maxwidth=100,
-            scale=prize_value_scale,
-            color=value_color,
-            flatness=1.0)
-
-        ba.textwidget(parent=parent,
-                      draw_controller=btn,
-                      position=(x + 620 + x_offs, y + scly - 20),
-                      size=(0, 0),
-                      h_align='center',
-                      text=ba.Lstr(resource=self._r + '.currentBestText'),
-                      v_align='center',
-                      maxwidth=180,
-                      scale=0.9,
-                      color=header_color,
-                      flatness=1.0)
-        data['current_leader_name_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 620 + x_offs - (170 / 1.4) * 0.5,
-                      y + scly - 60 - 40 * 0.5),
-            selectable=True,
-            click_activate=True,
-            autoselect=True,
-            on_activate_call=lambda: self._show_leader(tournament_button=data),
-            size=(170 / 1.4, 40),
-            h_align='center',
-            text='-',
-            v_align='center',
-            maxwidth=170,
-            scale=1.4,
-            color=value_color,
-            flatness=1.0)
-        data['current_leader_score_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 620 + x_offs, y + scly - 113 + 10),
-            size=(0, 0),
-            h_align='center',
-            text='-',
-            v_align='center',
-            maxwidth=170,
-            scale=1.8,
-            color=value_color,
-            flatness=1.0)
-
-        data['more_scores_button'] = ba.buttonwidget(
-            parent=parent,
-            position=(x + 620 + x_offs - 60, y + scly - 50 - 125),
-            color=(0.5, 0.5, 0.6),
-            textcolor=(0.7, 0.7, 0.8),
-            label='-',
-            size=(120, 40),
-            autoselect=True,
-            up_widget=data['current_leader_name_text'],
-            text_scale=0.6,
-            on_activate_call=lambda: self._show_scores(tournament_button=data))
-        ba.widget(edit=data['current_leader_name_text'],
-                  down_widget=data['more_scores_button'])
-
-        ba.textwidget(parent=parent,
-                      draw_controller=btn,
-                      position=(x + 820 + x_offs, y + scly - 20),
-                      size=(0, 0),
-                      h_align='center',
-                      text=ba.Lstr(resource=self._r + '.timeRemainingText'),
-                      v_align='center',
-                      maxwidth=180,
-                      scale=0.9,
-                      color=header_color,
-                      flatness=1.0)
-        data['time_remaining_value_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 820 + x_offs, y + scly - 68),
-            size=(0, 0),
-            h_align='center',
-            text='-',
-            v_align='center',
-            maxwidth=180,
-            scale=2.0,
-            color=value_color,
-            flatness=1.0)
-        data['time_remaining_out_of_text'] = ba.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 820 + x_offs, y + scly - 110),
-            size=(0, 0),
-            h_align='center',
-            text='-',
-            v_align='center',
-            maxwidth=120,
-            scale=0.72,
-            color=(0.4, 0.4, 0.5),
-            flatness=1.0)
-        return data
 
     def _switch_to_league_rankings(self) -> None:
         # pylint: disable=cyclic-import
@@ -1378,100 +869,20 @@ class CoopBrowserWindow(ba.Window):
                 show_tab=show_tab,
                 back_location='CoopBrowserWindow').get_root_widget())
 
-    def _show_leader(self, tournament_button: dict[str, Any]) -> None:
-        # pylint: disable=cyclic-import
-        from bastd.ui.account.viewer import AccountViewerWindow
-        tournament_id = tournament_button['tournament_id']
-
-        # FIXME: This assumes a single player entry in leader; should expand
-        #  this to work with multiple.
-        if tournament_id is None or tournament_button['leader'] is None or len(
-                tournament_button['leader'][2]) != 1:
-            ba.playsound(ba.getsound('error'))
-            return
-        ba.playsound(ba.getsound('swish'))
-        AccountViewerWindow(
-            account_id=tournament_button['leader'][2][0].get('a', None),
-            profile_id=tournament_button['leader'][2][0].get('p', None),
-            position=tournament_button['current_leader_name_text'].
-            get_screen_space_center())
-
-    def _show_scores(self, tournament_button: dict[str, Any]) -> None:
-        # pylint: disable=cyclic-import
-        from bastd.ui.tournamentscores import TournamentScoresWindow
-        tournament_id = tournament_button['tournament_id']
-        if tournament_id is None:
-            ba.playsound(ba.getsound('error'))
-            return
-
-        TournamentScoresWindow(
-            tournament_id=tournament_id,
-            position=tournament_button['more_scores_button'].
-            get_screen_space_center())
-
     def is_tourney_data_up_to_date(self) -> bool:
         """Return whether our tourney data is up to date."""
         return self._tourney_data_up_to_date
 
-    def run(self,
-            game: str | None,
-            tournament_button: dict[str, Any] | None = None) -> None:
+    def run_game(self, game: str) -> None:
         """Run the provided game."""
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-return-statements
         # pylint: disable=cyclic-import
         from bastd.ui.confirm import ConfirmWindow
-        from bastd.ui.tournamententry import TournamentEntryWindow
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.account import show_sign_in_prompt
         args: dict[str, Any] = {}
 
-        # Do a bit of pre-flight for tournament options.
-        if tournament_button is not None:
-
-            if _ba.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-                return
-
-            if not self._tourney_data_up_to_date:
-                ba.screenmessage(
-                    ba.Lstr(resource='tournamentCheckingStateText'),
-                    color=(1, 1, 0))
-                ba.playsound(ba.getsound('error'))
-                return
-
-            if tournament_button['tournament_id'] is None:
-                ba.screenmessage(
-                    ba.Lstr(resource='internal.unavailableNoConnectionText'),
-                    color=(1, 0, 0))
-                ba.playsound(ba.getsound('error'))
-                return
-
-            if tournament_button['required_league'] is not None:
-                ba.screenmessage(ba.Lstr(
-                    resource='league.tournamentLeagueText',
-                    subs=[
-                        ('${NAME}',
-                         ba.Lstr(
-                             translate=('leagueNames',
-                                        tournament_button['required_league'])))
-                    ]),
-                                 color=(1, 0, 0))
-                ba.playsound(ba.getsound('error'))
-                return
-
-            if tournament_button['time_remaining'] <= 0:
-                ba.screenmessage(ba.Lstr(resource='tournamentEndedText'),
-                                 color=(1, 0, 0))
-                ba.playsound(ba.getsound('error'))
-                return
-
-            # Game is whatever the tournament tells us it is.
-            game = ba.app.accounts_v1.tournament_info[
-                tournament_button['tournament_id']]['game']
-
-        if tournament_button is None and game == 'Easy:The Last Stand':
+        if game == 'Easy:The Last Stand':
             ConfirmWindow(ba.Lstr(resource='difficultyHardUnlockOnlyText',
                                   fallback_resource='difficultyHardOnlyText'),
                           cancel_button=False,
@@ -1479,12 +890,11 @@ class CoopBrowserWindow(ba.Window):
                           height=130)
             return
 
-        # Infinite onslaught/runaround require pro; bring up a store link if
-        # need be.
-        if tournament_button is None and game in (
-                'Challenges:Infinite Runaround',
-                'Challenges:Infinite Onslaught'
-        ) and not ba.app.accounts_v1.have_pro():
+        # Infinite onslaught/runaround require pro; bring up a store link
+        # if need be.
+        if game in ('Challenges:Infinite Runaround',
+                    'Challenges:Infinite Onslaught'
+                    ) and not ba.app.accounts_v1.have_pro():
             if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
@@ -1495,7 +905,8 @@ class CoopBrowserWindow(ba.Window):
         if game in ['Challenges:Meteor Shower']:
             required_purchase = 'games.meteor_shower'
         elif game in [
-                'Challenges:Target Practice', 'Challenges:Target Practice B'
+                'Challenges:Target Practice',
+                'Challenges:Target Practice B',
         ]:
             required_purchase = 'games.target_practice'
         elif game in ['Challenges:Ninja Fight']:
@@ -1503,13 +914,14 @@ class CoopBrowserWindow(ba.Window):
         elif game in ['Challenges:Pro Ninja Fight']:
             required_purchase = 'games.ninja_fight'
         elif game in [
-                'Challenges:Easter Egg Hunt', 'Challenges:Pro Easter Egg Hunt'
+                'Challenges:Easter Egg Hunt',
+                'Challenges:Pro Easter Egg Hunt',
         ]:
             required_purchase = 'games.easter_egg_hunt'
         else:
             required_purchase = None
 
-        if (tournament_button is None and required_purchase is not None
+        if (required_purchase is not None
                 and not _ba.get_purchased(required_purchase)):
             if _ba.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
@@ -1519,17 +931,57 @@ class CoopBrowserWindow(ba.Window):
 
         self._save_state()
 
-        # For tournaments, we pop up the entry window.
-        if tournament_button is not None:
-            TournamentEntryWindow(
-                tournament_id=tournament_button['tournament_id'],
-                position=tournament_button['button'].get_screen_space_center())
-        else:
-            # Otherwise just dive right in.
-            assert game is not None
-            if ba.app.launch_coop_game(game, args=args):
-                ba.containerwidget(edit=self._root_widget,
-                                   transition='out_left')
+        if ba.app.launch_coop_game(game, args=args):
+            ba.containerwidget(edit=self._root_widget, transition='out_left')
+
+    def run_tournament(self, tournament_button: TournamentButton) -> None:
+        """Run the provided tournament game."""
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.tournamententry import TournamentEntryWindow
+
+        if _ba.get_v1_account_state() != 'signed_in':
+            show_sign_in_prompt()
+            return
+
+        if not self._tourney_data_up_to_date:
+            ba.screenmessage(ba.Lstr(resource='tournamentCheckingStateText'),
+                             color=(1, 1, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
+        if tournament_button.tournament_id is None:
+            ba.screenmessage(
+                ba.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
+        if tournament_button.required_league is not None:
+            ba.screenmessage(
+                ba.Lstr(
+                    resource='league.tournamentLeagueText',
+                    subs=[('${NAME}',
+                           ba.Lstr(
+                               translate=('leagueNames',
+                                          tournament_button.required_league)))
+                          ]),
+                color=(1, 0, 0),
+            )
+            ba.playsound(ba.getsound('error'))
+            return
+
+        if tournament_button.time_remaining <= 0:
+            ba.screenmessage(ba.Lstr(resource='tournamentEndedText'),
+                             color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
+        self._save_state()
+
+        assert tournament_button.tournament_id is not None
+        TournamentEntryWindow(
+            tournament_id=tournament_button.tournament_id,
+            position=tournament_button.button.get_screen_space_center())
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
@@ -1541,24 +993,6 @@ class CoopBrowserWindow(ba.Window):
                            transition=self._transition_out)
         ba.app.ui.set_main_menu_window(
             PlayWindow(transition='in_left').get_root_widget())
-
-    def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.ui.window_states.get(type(self),
-                                                   {}).get('sel_name')
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'Scroll':
-                sel = self._scrollwidget
-            elif sel_name == 'PowerRanking':
-                sel = self._league_rank_button_widget
-            elif sel_name == 'Store':
-                sel = self._store_button_widget
-            else:
-                sel = self._scrollwidget
-            ba.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            ba.print_exception(f'Error restoring state for {self}.')
 
     def _save_state(self) -> None:
         cfg = ba.app.config
@@ -1580,16 +1014,31 @@ class CoopBrowserWindow(ba.Window):
 
         cfg['Selected Coop Row'] = self._selected_row
         cfg['Selected Coop Custom Level'] = self._selected_custom_level
-        cfg['Selected Coop Challenge Level'] = self._selected_challenge_level
         cfg['Selected Coop Campaign Level'] = self._selected_campaign_level
         cfg.commit()
+
+    def _restore_state(self) -> None:
+        try:
+            sel_name = ba.app.ui.window_states.get(type(self),
+                                                   {}).get('sel_name')
+            if sel_name == 'Back':
+                sel = self._back_button
+            elif sel_name == 'Scroll':
+                sel = self._scrollwidget
+            elif sel_name == 'PowerRanking':
+                sel = self._league_rank_button_widget
+            elif sel_name == 'Store':
+                sel = self._store_button_widget
+            else:
+                sel = self._scrollwidget
+            ba.containerwidget(edit=self._root_widget, selected_child=sel)
+        except Exception:
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def sel_change(self, row: str, game: str) -> None:
         """(internal)"""
         if self._do_selection_callbacks:
             if row == 'custom':
                 self._selected_custom_level = game
-            if row == 'challenges':
-                self._selected_challenge_level = game
             elif row == 'campaign':
                 self._selected_campaign_level = game

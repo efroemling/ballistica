@@ -298,6 +298,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/coop/browser.py \
   build/ba_data/python/bastd/ui/coop/gamebutton.py \
   build/ba_data/python/bastd/ui/coop/level.py \
+  build/ba_data/python/bastd/ui/coop/tournamentbutton.py \
   build/ba_data/python/bastd/ui/creditslist.py \
   build/ba_data/python/bastd/ui/debug.py \
   build/ba_data/python/bastd/ui/feedback.py \
@@ -546,6 +547,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/coop/__pycache__/browser.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/coop/__pycache__/level.cpython-310.opt-1.pyc \
+  build/ba_data/python/bastd/ui/coop/__pycache__/tournamentbutton.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/creditslist.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/debug.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/feedback.cpython-310.opt-1.pyc \
