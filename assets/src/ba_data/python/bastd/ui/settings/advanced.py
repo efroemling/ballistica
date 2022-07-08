@@ -424,29 +424,6 @@ class AdvancedSettingsWindow(ba.Window):
         v -= self._spacing * 2.1
 
         this_button_width = 410
-        self._show_user_mods_button = ba.buttonwidget(
-            parent=self._subcontainer,
-            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
-            size=(this_button_width, 60),
-            autoselect=True,
-            label=ba.Lstr(resource=self._r + '.showUserModsText'),
-            text_scale=1.0,
-            on_activate_call=show_user_scripts)
-        if self._show_always_use_internal_keyboard:
-            assert self._always_use_internal_keyboard_check_box is not None
-            ba.widget(edit=self._always_use_internal_keyboard_check_box.widget,
-                      down_widget=self._show_user_mods_button)
-            ba.widget(
-                edit=self._show_user_mods_button,
-                up_widget=self._always_use_internal_keyboard_check_box.widget)
-        else:
-            ba.widget(edit=self._show_user_mods_button,
-                      up_widget=self._kick_idle_players_check_box.widget)
-            ba.widget(edit=self._kick_idle_players_check_box.widget,
-                      down_widget=self._show_user_mods_button)
-
-        v -= self._spacing * 2.0
-
         self._modding_guide_button = ba.buttonwidget(
             parent=self._subcontainer,
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
@@ -455,8 +432,30 @@ class AdvancedSettingsWindow(ba.Window):
             label=ba.Lstr(resource=self._r + '.moddingGuideText'),
             text_scale=1.0,
             on_activate_call=ba.Call(
-                ba.open_url,
-                'http://www.froemling.net/docs/bombsquad-modding-guide'))
+                ba.open_url, 'http://ballistica.net/wiki/modding-guide'))
+        if self._show_always_use_internal_keyboard:
+            assert self._always_use_internal_keyboard_check_box is not None
+            ba.widget(edit=self._always_use_internal_keyboard_check_box.widget,
+                      down_widget=self._modding_guide_button)
+            ba.widget(
+                edit=self._modding_guide_button,
+                up_widget=self._always_use_internal_keyboard_check_box.widget)
+        else:
+            ba.widget(edit=self._modding_guide_button,
+                      up_widget=self._kick_idle_players_check_box.widget)
+            ba.widget(edit=self._kick_idle_players_check_box.widget,
+                      down_widget=self._modding_guide_button)
+
+        v -= self._spacing * 2.0
+
+        self._show_user_mods_button = ba.buttonwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
+            size=(this_button_width, 60),
+            autoselect=True,
+            label=ba.Lstr(resource=self._r + '.showUserModsText'),
+            text_scale=1.0,
+            on_activate_call=show_user_scripts)
 
         v -= self._spacing * 2.0
 

@@ -1,9 +1,12 @@
-### 1.7.4 (20641, 2022-07-08)
+### 1.7.4 (20644, 2022-07-08)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)
 - ba.app.meta.metascan is now ba.app.meta.scanresults
 - Cleaned up co-op ui code a bit
 - Added a utility function to add custom co-op games in the practice section: `ba.app.add_coop_practice_level`. Also added new workspace template script which uses it to define a new co-op game type.
 - Removed some spammy debug timing logging I added for tracking down a recent bug (can be reenabled by setting env var `BA_DEBUG_TIMING=1`)
+- Android user scripts dir is now called 'mods' instead of 'BombSquad'. The name 'BombSquad' made sense when it was located in a truly shared area of storage but now that it is in the app-specific area (something like Android/data/net.froemling.bombsquad/files) it makes sense to just use 'mods' like other platforms.
+- Updated the 'Show Mods Folder' to properly show the path to the mods folder. Before it would unhelpfully show something like `<External Storage>/mods` but now it should be something more useful like `Android/data/net.froemling.bombsquad/files/mods`.
+- Updated the Modding Guide button in advanced settings to point to the new ballistica wiki stuff instead of the old out-of-date 1.4 modding docs.
 
 ### 1.7.3 (20634, 2022-07-06)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)

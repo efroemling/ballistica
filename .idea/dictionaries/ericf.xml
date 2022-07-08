@@ -1835,6 +1835,7 @@
       <w>plugkey</w>
       <w>plugkeys</w>
       <w>pluglist</w>
+      <w>plugnames</w>
       <w>plugstate</w>
       <w>plugstates</w>
       <w>plusbutton</w>
@@ -2057,6 +2058,7 @@
       <w>recv</w>
       <w>redist</w>
       <w>redistributables</w>
+      <w>reenabled</w>
       <w>regionid</w>
       <w>registerexecutionpolicyexception</w>
       <w>registerwithlaunchservices</w>

@@ -17,22 +17,29 @@ def get_human_readable_user_scripts_path() -> str:
 
     This is NOT a valid filesystem path; may be something like "(SD Card)".
     """
-    from ba import _language
     app = _ba.app
     path: str | None = app.python_directory_user
     if path is None:
         return '<Not Available>'
 
-    # On newer versions of android, the user's external storage dir is probably
-    # only visible to the user's processes and thus not really useful printed
-    # in its entirety; lets print it as <External Storage>/myfilepath.
+    # These days, on Android, we use getExternalFilesDir() as the base of our
+    # app's user-scripts dir, which gives us paths like:
+    # /storage/emulated/0/Android/data/net.froemling.bombsquad/files
+    # Userspace apps tend to show that as:
+    # Android/data/net.froemling.bombsquad/files
+    # We'd like to display it that way, but I'm not sure if there's a clean
+    # way to get the root of the external storage area (/storage/emulated/0)
+    # so that we could strip it off. There is
+    # Environment.getExternalStorageDirectory() but that is deprecated.
+    # So for now let's just be conservative and trim off recognized prefixes
+    # and show the whole ugly path as a fallback.
+    # Note that we used to use externalStorageText resource but gonna try
+    # without it for now. (simply 'foo' instead of <External Storage>/foo).
     if app.platform == 'android':
-        ext_storage_path: str | None = (_ba.android_get_external_files_dir())
-        if (ext_storage_path is not None
-                and app.python_directory_user.startswith(ext_storage_path)):
-            path = ('<' +
-                    _language.Lstr(resource='externalStorageText').evaluate() +
-                    '>' + app.python_directory_user[len(ext_storage_path):])
+        for pre in ['/storage/emulated/0/']:
+            if path.startswith(pre):
+                path = path.removeprefix(pre)
+                break
     return path
 
 

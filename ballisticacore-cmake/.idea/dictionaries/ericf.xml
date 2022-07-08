@@ -940,6 +940,7 @@
       <w>playpause</w>
       <w>playsound</w>
       <w>plen</w>
+      <w>plugnames</w>
       <w>pname</w>
       <w>podcast</w>
       <w>podcasts</w>
@@ -1047,6 +1048,7 @@
       <w>recv</w>
       <w>recvfrom</w>
       <w>redundants</w>
+      <w>reenabled</w>
       <w>refcounted</w>
       <w>refl</w>
       <w>regionid</w>
