@@ -650,7 +650,8 @@ void Game::Update() {
   in_update_ = false;
 
   // Report excessively long updates.
-  if (real_time >= next_long_update_report_time_) {
+  if (g_app_globals->debug_timing
+      && real_time >= next_long_update_report_time_) {
     auto duration{Platform::GetCurrentMilliseconds() - startms};
 
     // Complain when our full update takes longer than 1/60th second.

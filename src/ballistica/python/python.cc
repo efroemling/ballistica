@@ -2246,15 +2246,20 @@ void Python::LogContextAuto() {
 }
 
 void Python::AcquireGIL() {
-  auto startms{Platform::GetCurrentMilliseconds()};
+  auto debug_timing{g_app_globals->debug_timing};
+  millisecs_t startms{debug_timing ? Platform::GetCurrentMilliseconds() : 0};
+
   if (thread_state_) {
     PyEval_RestoreThread(thread_state_);
     thread_state_ = nullptr;
   }
-  auto duration{Platform::GetCurrentMilliseconds() - startms};
-  if (duration > (1000 / 120)) {
-    Log("GIL acquire took too long (" + std::to_string(duration) + " ms).",
-        true, false);
+
+  if (debug_timing) {
+    auto duration{Platform::GetCurrentMilliseconds() - startms};
+    if (duration > (1000 / 120)) {
+      Log("GIL acquire took too long (" + std::to_string(duration) + " ms).",
+          true, false);
+    }
   }
 }
 void Python::ReleaseGIL() {

@@ -60,6 +60,7 @@ class AppGlobals {
   std::string user_agent_string{"BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
   int return_value{};
   bool is_stdin_a_terminal{true};
+  bool debug_timing{};
   std::thread::id main_thread_id{};
   bool is_bootstrapped{};
   bool args_handled{};

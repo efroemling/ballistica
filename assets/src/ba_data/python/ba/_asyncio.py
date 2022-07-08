@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import asyncio
 import logging
 import time
+import os
 
 if TYPE_CHECKING:
     import ba
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 # Our timer and event loop for the ballistica game thread.
 _asyncio_timer: ba.Timer | None = None
 _asyncio_event_loop: asyncio.AbstractEventLoop | None = None
+
+DEBUG_TIMING = os.environ.get('BA_DEBUG_TIMING') == '1'
 
 
 def setup_asyncio() -> asyncio.AbstractEventLoop:
@@ -55,16 +58,18 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     def run_cycle() -> None:
         assert _asyncio_event_loop is not None
         _asyncio_event_loop.call_soon(_asyncio_event_loop.stop)
-        starttime = time.monotonic()
+        starttime = time.monotonic() if DEBUG_TIMING else 0
         _asyncio_event_loop.run_forever()
-        endtime = time.monotonic()
+        endtime = time.monotonic() if DEBUG_TIMING else 0
 
         # Let's aim to have nothing take longer than 1/120 of a second.
-        warn_time = 1.0 / 120
-        duration = endtime - starttime
-        if duration > warn_time:
-            logging.warning('Asyncio loop step took %.4fs; ideal max is %.4f',
-                            duration, warn_time)
+        if DEBUG_TIMING:
+            warn_time = 1.0 / 120
+            duration = endtime - starttime
+            if duration > warn_time:
+                logging.warning(
+                    'Asyncio loop step took %.4fs; ideal max is %.4f',
+                    duration, warn_time)
 
     global _asyncio_timer  # pylint: disable=invalid-name
     _asyncio_timer = _ba.Timer(1.0 / 30.0,
