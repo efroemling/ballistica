@@ -1,6 +1,8 @@
 ### 1.7.4 (20638, 2022-07-07)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)
 - ba.app.meta.metascan is now ba.app.meta.scanresults
+- Cleaned up co-op ui code a bit
+- Added a utility function to add custom co-op games in the practice section: `ba.app.add_coop_practice_level`. Also added new workspace template script which uses it to define a new co-op game type.
 
 ### 1.7.3 (20634, 2022-07-06)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)

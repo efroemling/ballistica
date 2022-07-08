@@ -49,12 +49,12 @@ class Campaign:
         """Whether this Campaign's levels must be played in sequence."""
         return self._sequential
 
-    def addlevel(self, level: ba.Level) -> None:
+    def addlevel(self, level: ba.Level, index: int = -1) -> None:
         """Adds a ba.Level to the Campaign."""
         if level.campaign is not None:
             raise RuntimeError('Level already belongs to a campaign.')
         level.set_campaign(self, len(self._levels))
-        self._levels.append(level)
+        self._levels.insert(index, level)
 
     @property
     def levels(self) -> list[ba.Level]:

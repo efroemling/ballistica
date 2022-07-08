@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from ba._cloud import CloudSubsystem
     from bastd.actor import spazappearance
     from ba._accountv2 import AccountV2Subsystem
+    from ba._level import Level
 
 
 class App:
@@ -274,6 +275,7 @@ class App:
 
         # Co-op Campaigns.
         self.campaigns: dict[str, ba.Campaign] = {}
+        self.custom_coop_practice_games: list[str] = []
 
         # Server Mode.
         self.server: ba.ServerController | None = None
@@ -526,6 +528,15 @@ class App:
 
                     # FIXME: This should not be an actor attr.
                     activity.paused_text = None
+
+    def add_coop_practice_level(self, level: Level) -> None:
+        """Adds an individual level to the 'practice' section in Co-op."""
+
+        # Assign this level to our catch-all campaign.
+        self.campaigns['Challenges'].addlevel(level)
+
+        # Make note to add it to our challenges UI.
+        self.custom_coop_practice_games.append(f'Challenges:{level.name}')
 
     def return_to_main_menu_session_gracefully(self,
                                                reset_ui: bool = True) -> None:

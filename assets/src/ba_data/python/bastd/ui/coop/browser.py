@@ -720,7 +720,7 @@ class CoopBrowserWindow(ba.Window):
                                          self.run_tournament)))
                 v -= 200
 
-        # Custom Games.
+        # Custom Games. (called 'Practice' in UI these days).
         v -= 50
         ba.textwidget(parent=w_parent,
                       position=(h_base + 27, v + 30 + 198),
@@ -751,11 +751,9 @@ class CoopBrowserWindow(ba.Window):
                 'Challenges:Pro Easter Egg Hunt',
             ] + items
 
-        # add all custom user levels here..
-        # items += [
-        #     'User:' + l.getname()
-        #     for l in getcampaign('User').getlevels()
-        # ]
+        # If we've defined custom games, put them at the beginning.
+        if ba.app.custom_coop_practice_games:
+            items = ba.app.custom_coop_practice_games + items
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = ba.hscrollwidget(
             parent=w_parent,
