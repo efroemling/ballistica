@@ -509,7 +509,7 @@ def sync_all() -> None:
 
     def _format_project(fproject: str) -> None:
         fcmd = f'cd "{fproject}" && make format'
-        print(fcmd)
+        # print(fcmd)
         subprocess.run(fcmd, shell=True, check=True)
 
     # No matter what we're doing (even if just listing), run formatting
@@ -532,15 +532,14 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(Clr.BLD + 'Running sync pass 1:'
-                      ' (ensures all changes at dsts are pushed to src)' +
-                      Clr.RST)
+                print(f'{Clr.BLD}Running sync pass 1'
+                      f' (ensures all changes at dsts are pushed to src):'
+                      f'{Clr.RST}')
             else:
-                print(Clr.BLD + 'Running sync pass 2:'
-                      ' (ensures latest src is pulled to all dsts)' + Clr.RST)
+                print(f'{Clr.BLD}Running sync pass 2'
+                      f' (ensures latest src is pulled to all dsts):{Clr.RST}')
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
-                print(cmd)
                 subprocess.run(cmd, shell=True, check=True)
         print(Clr.BLD + 'Sync-all successful!' + Clr.RST)
 

@@ -2548,7 +2548,10 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/yaml/resolver.py \
   build/ba_data/python-site-packages/yaml/scanner.py \
   build/ba_data/python-site-packages/yaml/serializer.py \
-  build/ba_data/python-site-packages/yaml/tokens.py
+  build/ba_data/python-site-packages/yaml/tokens.py \
+  build/workspace/ninjafightplug.py \
+  build/workspace/onslaughtplug.py \
+  build/workspace/runaroundplug.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-310.opt-1.pyc \
@@ -2572,7 +2575,10 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-310.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-310.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-310.opt-1.pyc \
-  build/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-310.opt-1.pyc
+  build/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-310.opt-1.pyc \
+  build/workspace/__pycache__/ninjafightplug.cpython-310.opt-1.pyc \
+  build/workspace/__pycache__/onslaughtplug.cpython-310.opt-1.pyc \
+  build/workspace/__pycache__/runaroundplug.cpython-310.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)

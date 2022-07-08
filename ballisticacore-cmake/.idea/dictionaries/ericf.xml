@@ -828,6 +828,7 @@
       <w>newnode</w>
       <w>newtoken</w>
       <w>nextchar</w>
+      <w>ninjafightplug</w>
       <w>nitpicky</w>
       <w>nlpos</w>
       <w>nmemb</w>
@@ -875,6 +876,7 @@
       <w>oldbook</w>
       <w>oldname</w>
       <w>oldtoken</w>
+      <w>onslaughtplug</w>
       <w>oooo</w>
       <w>ooooooo</w>
       <w>ooooooooo</w>
@@ -975,6 +977,7 @@
       <w>profilers</w>
       <w>prog</w>
       <w>proj</w>
+      <w>projbasename</w>
       <w>projdir</w>
       <w>projpath</w>
       <w>projprefix</w>
@@ -1090,6 +1093,7 @@
       <w>rtest</w>
       <w>rtypes</w>
       <w>rtypevar</w>
+      <w>runaroundplug</w>
       <w>runnables</w>
       <w>runseconds</w>
       <w>rvec</w>

@@ -59,8 +59,11 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
     Syncitems should be a list of tuples consisting of a src project name,
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
+    # pylint: disable=too-many-locals
     from efrotools import getlocalconfig
     localconfig = getlocalconfig(projectroot)
+    total_count = 0
+    verbose = False
     for syncitem in syncitems:
         assert isinstance(syncitem, SyncItem)
         src_project = syncitem.src_project_id
@@ -69,9 +72,12 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
                        if syncitem.dst_path is not None else syncitem.src_path)
         dstname = os.path.basename(dst_subpath)
         if mode == Mode.CHECK:
-            print(f'Checking sync target {dstname}...')
+            if verbose:
+                print(f'Checking sync target {dstname}...')
             count = check_path(Path(dst_subpath))
-            print(f'Sync check passed for {count} items.')
+            total_count += count
+            if verbose:
+                print(f'Sync check passed for {count} items.')
         else:
             link_entry = f'linked_{src_project}'
 
@@ -80,12 +86,21 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
                 print(f'No link entry for {src_project}; skipping sync entry.')
                 continue
             src = Path(localconfig[link_entry], src_subpath)
-            print(f'Processing {dstname} in {mode.name} mode...')
+            if verbose:
+                print(f'Processing {dstname} in {mode.name} mode...')
             count = sync_paths(src_project, src, Path(dst_subpath), mode)
-            if mode in [Mode.LIST, Mode.CHECK]:
-                print(f'Scanned {count} items.')
-            else:
-                print(f'Sync successful for {count} items.')
+            total_count += count
+            if verbose:
+                if mode in [Mode.LIST, Mode.CHECK]:
+                    print(f'Scanned {count} items.')
+                else:
+                    print(f'Sync successful for {count} items.')
+
+    projbasename = os.path.basename(projectroot)
+    if mode in [Mode.LIST, Mode.CHECK]:
+        print(f'Checked {total_count} synced items in {projbasename}.')
+    else:
+        print(f'Synced {total_count} items in {projbasename}.')
 
 
 def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:

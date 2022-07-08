@@ -5,6 +5,9 @@
 # We wear the cone of shame.
 # pylint: disable=too-many-lines
 
+# ba_meta require api 7
+# (see https://ballistica.net/wiki/meta-tag-system)
+
 from __future__ import annotations
 
 import random

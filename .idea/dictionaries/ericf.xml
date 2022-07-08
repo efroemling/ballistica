@@ -1633,6 +1633,7 @@
       <w>nfoo</w>
       <w>nilly</w>
       <w>ninjafight</w>
+      <w>ninjafightplug</w>
       <w>nitpicky</w>
       <w>nline</w>
       <w>nlines</w>
@@ -1707,6 +1708,7 @@
       <w>onscreencountdown</w>
       <w>onscreenkeyboard</w>
       <w>onscreentimer</w>
+      <w>onslaughtplug</w>
       <w>opcode</w>
       <w>opdir</w>
       <w>opendiff</w>
@@ -1917,6 +1919,7 @@
       <w>profilename</w>
       <w>profilenames</w>
       <w>proj</w>
+      <w>projbasename</w>
       <w>projconfig</w>
       <w>projdir</w>
       <w>projectpath</w>
@@ -2123,6 +2126,7 @@
       <w>rtxt</w>
       <w>rtypes</w>
       <w>rtypevar</w>
+      <w>runaroundplug</w>
       <w>runmypy</w>
       <w>runonly</w>
       <w>runpy</w>

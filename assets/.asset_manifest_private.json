@@ -6322,5 +6322,11 @@
  "windows/x64/ucrtbased.dll",
  "windows/x64/vc_redist.x64.exe",
  "windows/x64/vcruntime140_1d.dll",
- "windows/x64/vcruntime140d.dll"
+ "windows/x64/vcruntime140d.dll",
+ "workspace/__pycache__/ninjafightplug.cpython-310.opt-1.pyc",
+ "workspace/__pycache__/onslaughtplug.cpython-310.opt-1.pyc",
+ "workspace/__pycache__/runaroundplug.cpython-310.opt-1.pyc",
+ "workspace/ninjafightplug.py",
+ "workspace/onslaughtplug.py",
+ "workspace/runaroundplug.py"
 ]
