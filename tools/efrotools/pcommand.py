@@ -115,6 +115,7 @@ def _trim_docstring(docstring: str) -> str:
 
 
 def _spelling(words: list[str]) -> None:
+    from efrotools.code import sort_jetbrains_dict
     import os
     num_modded_dictionaries = 0
     for fname in [
@@ -135,16 +136,8 @@ def _spelling(words: list[str]) -> None:
                 added_count += 1
 
         with open(fname, 'w', encoding='utf-8') as outfile:
-            # Sort lines in the words section.
-            assert all(l.startswith('      <w>') for l in lines[3:-3])
+            outfile.write(sort_jetbrains_dict('\n'.join(lines)))
 
-            # Note: need to pull the </w> off the end of the line when sorting
-            # or it messes with the order and we get different results than
-            # Jetbrains stuff.
-            outfile.write('\n'.join(
-                lines[:3] +
-                sorted(lines[3:-3], key=lambda x: x.replace('</w>', '')) +
-                lines[-3:]))
         print(f'Added {added_count} words to {fname}.')
         num_modded_dictionaries += 1
     print(f'Modified {num_modded_dictionaries} dictionaries.')

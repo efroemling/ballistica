@@ -176,6 +176,7 @@
       <w>bacfg</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backporting</w>
       <w>backwin</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
@@ -2468,6 +2469,7 @@
       <w>tdels</w>
       <w>tdiff</w>
       <w>tdlds</w>
+      <w>tdstpath</w>
       <w>tdval</w>
       <w>teambasesession</w>
       <w>teamdata</w>
@@ -2600,6 +2602,7 @@
       <w>tscl</w>
       <w>tself</w>
       <w>tspc</w>
+      <w>tsrcpath</w>
       <w>tstr</w>
       <w>tunmd</w>
       <w>tupleval</w>

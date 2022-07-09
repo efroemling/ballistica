@@ -434,8 +434,6 @@ class App:
 
         # from ba._dependency import test_depset
         # test_depset()
-        if bool(False):
-            self._test_https()
 
     def _update_state(self) -> None:
         if self._app_paused:
@@ -654,19 +652,3 @@ class App:
         """
         self._initial_login_completed = True
         self._update_state()
-
-    def _test_https(self) -> None:
-        """Testing https support.
-
-        (would be nice to get this working on our custom Python builds; need
-        to wrangle certificates somehow).
-        """
-        import urllib.request
-        try:
-            with urllib.request.urlopen('https://example.com') as url:
-                val = url.read()
-            _ba.screenmessage('HTTPS SUCCESS!')
-            print('HTTPS TEST SUCCESS', len(val))
-        except Exception as exc:
-            _ba.screenmessage('HTTPS FAIL.')
-            print('HTTPS TEST FAIL:', exc)

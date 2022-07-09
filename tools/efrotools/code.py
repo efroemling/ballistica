@@ -960,3 +960,26 @@ def check_android_studio(projroot: Path, full: bool, verbose: bool) -> None:
         displayname='Android Studio',
         inspect=inspect,
         verbose=verbose)
+
+
+def sort_jetbrains_dict(original: str) -> str:
+    """Given jetbrains dict contents, sort it the way jetbrains would."""
+    lines = original.splitlines()
+    if lines[2] != '    <words>':
+        raise RuntimeError('Unexpected dictionary format.')
+    if lines[-3] != '    </words>':
+        raise RuntimeError('Unexpected dictionary format b.')
+    if not all(
+            l.startswith('      <w>') and l.endswith('</w>')
+            for l in lines[3:-3]):
+        raise RuntimeError('Unexpected dictionary format.')
+
+    # Sort lines in the words section.
+    assert all(l.startswith('      <w>') for l in lines[3:-3])
+
+    # Note: need to pull the </w> off the end of the line when sorting
+    # or it messes with the order and we get different results than
+    # Jetbrains stuff.
+    return '\n'.join(lines[:3] +
+                     sorted(lines[3:-3], key=lambda x: x.replace('</w>', '')) +
+                     lines[-3:])

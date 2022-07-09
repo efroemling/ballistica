@@ -3,6 +3,7 @@
 """Networking related functionality."""
 from __future__ import annotations
 
+import ssl
 import copy
 import threading
 import weakref
@@ -34,10 +35,27 @@ class NetworkSubsystem:
         # that a nearby server has been pinged.
         self.zone_pings: dict[str, float] = {}
 
+        self._sslcontext: ssl.SSLContext | None = None
+
         # For debugging.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
         self.server_time_offset_hours: float | None = None
+
+    @property
+    def sslcontext(self) -> ssl.SSLContext:
+        """Create/return our shared SSLContext.
+
+        This can be reused for all standard urllib requests/etc.
+        """
+        # Note: I've run into older Android devices taking upwards of 1 second
+        # to put together a default SSLContext, so recycling one can definitely
+        # be a worthwhile optimization. This was suggested to me in this
+        # thread by one of Python's SSL maintainers:
+        # https://github.com/python/cpython/issues/94637
+        if self._sslcontext is None:
+            self._sslcontext = ssl.create_default_context()
+        return self._sslcontext
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
@@ -126,6 +144,7 @@ class MasterServerCallThread(threading.Thread):
                          self._request + '?' +
                          urllib.parse.urlencode(self._data)), None,
                         {'User-Agent': _ba.app.user_agent_string}),
+                    context=_ba.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             elif self._request_type == 'post':
                 response = urllib.request.urlopen(
@@ -133,6 +152,7 @@ class MasterServerCallThread(threading.Thread):
                         _ba.get_master_server_address() + '/' + self._request,
                         urllib.parse.urlencode(self._data).encode(),
                         {'User-Agent': _ba.app.user_agent_string}),
+                    context=_ba.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             else:
                 raise TypeError('Invalid request_type: ' + self._request_type)

@@ -58,7 +58,7 @@ def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
                 line = line[3:]
             lines[lineno] = leading + line
 
-    # Only write if its not changed (potentially avoid triggering builds).
+    # Only write if its changed (potentially avoid triggering builds).
     out = '\n'.join(lines) + '\n'
     if out != original:
         with open(buildfilename, 'w', encoding='utf-8') as outfile:

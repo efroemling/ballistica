@@ -84,6 +84,7 @@
       <w>axismotion</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backporting</w>
       <w>backtraces</w>
       <w>backwin</w>
       <w>ballistica</w>
@@ -1255,6 +1256,7 @@
       <w>tdels</w>
       <w>tdiff</w>
       <w>tdlds</w>
+      <w>tdstpath</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>
       <w>teleported</w>
@@ -1315,6 +1317,7 @@
       <w>trimeshes</w>
       <w>trynum</w>
       <w>tself</w>
+      <w>tsrcpath</w>
       <w>tunmd</w>
       <w>tupleval</w>
       <w>tval</w>

@@ -17,6 +17,7 @@ import sys
 
 from efro.dataclassio import (ioprepped, IOAttrs, dataclass_from_json,
                               dataclass_to_json)
+import _ba
 
 if TYPE_CHECKING:
     from bacommon.assets import AssetPackageFlavor
@@ -165,7 +166,6 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
 
     """
     # pylint: disable=consider-using-with
-
     import socket
 
     # We don't want to keep the provided AssetGather alive, but we want
@@ -175,7 +175,9 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
 
     # Pass a very short timeout to urllib so we have opportunities
     # to cancel even with network blockage.
-    req = urllib.request.urlopen(url, timeout=1)
+    req = urllib.request.urlopen(url,
+                                 context=_ba.app.net.sslcontext,
+                                 timeout=1)
     file_size = int(req.headers['Content-Length'])
     print(f'\nDownloading: {filename} Bytes: {file_size:,}')
 

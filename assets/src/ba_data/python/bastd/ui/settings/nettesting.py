@@ -335,9 +335,12 @@ def _test_v2_time() -> None:
 def _test_fetch(baseaddr: str) -> None:
     # pylint: disable=consider-using-with
     import urllib.request
-    response = urllib.request.urlopen(urllib.request.Request(
-        f'{baseaddr}/ping', None, {'User-Agent': _ba.app.user_agent_string}),
-                                      timeout=10.0)
+    response = urllib.request.urlopen(
+        urllib.request.Request(f'{baseaddr}/ping', None,
+                               {'User-Agent': _ba.app.user_agent_string}),
+        context=ba.app.net.sslcontext,
+        timeout=10.0,
+    )
     if response.getcode() != 200:
         raise RuntimeError(
             f'Got unexpected response code {response.getcode()}.')
