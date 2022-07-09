@@ -138,7 +138,7 @@ def _reset_stress_test(args: dict[str, Any]) -> None:
 
 def run_gpu_benchmark() -> None:
     """Kick off a benchmark to test gpu speeds."""
-    _ba.screenmessage('FIXME: Not wired up yet.', color=(1, 0, 0))
+    _ba.screenmessage('Not wired up yet.', color=(1, 0, 0))
 
 
 def run_media_reload_benchmark() -> None:
