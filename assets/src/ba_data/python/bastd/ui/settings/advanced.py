@@ -504,7 +504,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 14),
             size=(this_button_width, 60),
             autoselect=True,
-            label=ba.Lstr(resource=self._r + '.benchmarksText'),
+            label="Benchmarks & Stress Tests",
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press)
 
