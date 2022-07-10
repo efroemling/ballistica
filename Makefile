@@ -567,12 +567,12 @@ update-check: prereqs
 # Run formatting on all files in the project considered 'dirty'.
 format:
 	@$(MAKE) -j$(CPUS) format-code format-scripts format-makefile
-	@tools/pcommand echo BLD Formatting complete!
+	@tools/pcommand echo BLD Formatting complete for $(notdir $(CURDIR))!
 
 # Same but always formats; ignores dirty state.
 format-full:
 	@$(MAKE) -j$(CPUS) format-code-full format-scripts-full format-makefile
-	@tools/pcommand echo BLD Formatting complete!
+	@tools/pcommand echo BLD Formatting complete for $(notdir $(CURDIR))!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
 format-code: prereqs
