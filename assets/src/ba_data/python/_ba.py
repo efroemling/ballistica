@@ -586,6 +586,7 @@ class Node:
     move_left_right: float = 0.0
     curse_death_time: int = 0
     boxing_gloves: bool = False
+    hockey: bool = False
     use_fixed_vr_overlay: bool = False
     allow_kick_idle_players: bool = False
     music_continuous: bool = False

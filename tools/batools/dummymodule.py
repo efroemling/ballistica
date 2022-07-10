@@ -409,6 +409,7 @@ def _special_class_cases(classname: str) -> str:
             '    move_left_right: float = 0.0\n'
             '    curse_death_time: int = 0\n'
             '    boxing_gloves: bool = False\n'
+            '    hockey: bool = False\n'
             '    use_fixed_vr_overlay: bool = False\n'
             '    allow_kick_idle_players: bool = False\n'
             '    music_continuous: bool = False\n'
