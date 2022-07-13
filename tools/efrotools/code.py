@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Functionality for formatting, linting, etc. code."""
 
 from __future__ import annotations
@@ -16,14 +17,35 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-def format_clang_format(projroot: Path, full: bool) -> None:
+def format_cpp_str(projroot: Path,
+                   text: str,
+                   filename: str = 'untitled.cc') -> str:
+    """Run clang-format inline on c++ code.
+
+    Note that some cpp formatting keys off the filename, so a fake one can
+    be optionally provided.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        filename = os.path.join(tempdir, filename)
+        with open(filename, 'w', encoding='utf-8') as outfile:
+            outfile.write(text)
+        cfg = os.path.join(projroot, 'config/toolconfigsrc/clang-format')
+        subprocess.run(['clang-format', f'--style=file:{cfg}', '-i', filename],
+                       check=True)
+        with open(filename, encoding='utf-8') as infile:
+            return infile.read()
+
+
+def format_project_cpp_files(projroot: Path, full: bool) -> None:
     """Run clang-format on all of our source code (multithreaded)."""
     import time
     import concurrent.futures
     from multiprocessing import cpu_count
     from efrotools import get_files_hash
     os.chdir(projroot)
-    cachepath = Path(projroot, '.cache/format_clang_format')
+    cachepath = Path(projroot, '.cache/format_project_cpp_files')
     if full and cachepath.exists():
         cachepath.unlink()
     cache = FileCache(cachepath)
@@ -145,14 +167,14 @@ def get_code_filenames(projroot: Path) -> list[str]:
     return codefilenames
 
 
-def format_yapf(projroot: Path, full: bool) -> None:
+def format_project_python_files(projroot: Path, full: bool) -> None:
     """Runs yapf on all of our Python code."""
     import time
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
     from efrotools import get_files_hash, PYVER
     os.chdir(projroot)
-    cachepath = Path(projroot, '.cache/format_yapf')
+    cachepath = Path(projroot, '.cache/format_project_python_files')
     if full and cachepath.exists():
         cachepath.unlink()
 
@@ -189,9 +211,12 @@ def format_yapf(projroot: Path, full: bool) -> None:
           flush=True)
 
 
-def format_yapf_str(projroot: Path, code: str) -> str:
+def format_python_str(projroot: Path, code: str) -> str:
     """Run yapf formatting on the provided inline code."""
     from efrotools import PYVER
+
+    # We'll get incorrect results if run on an uninited repo dir/etc.
+    assert os.path.exists(os.path.join(projroot, '.style.yapf'))
     out = subprocess.run([f'python{PYVER}', '-m', 'yapf'],
                          capture_output=True,
                          check=True,

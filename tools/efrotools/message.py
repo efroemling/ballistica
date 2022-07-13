@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from efrotools.code import format_yapf_str
+from efrotools.code import format_python_str
 
 if TYPE_CHECKING:
     pass
@@ -66,7 +66,7 @@ def standard_message_sender_gen_pcommand(
         enable_sync_sends=enable_sync_sends,
         enable_async_sends=enable_async_sends,
     )
-    out = format_yapf_str(projroot, module_code)
+    out = format_python_str(projroot, module_code)
 
     print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)
@@ -127,7 +127,7 @@ def standard_message_receiver_gen_pcommand(
         is_async=is_async,
     )
 
-    out = format_yapf_str(projroot, module_code)
+    out = format_python_str(projroot, module_code)
 
     print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)

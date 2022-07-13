@@ -273,14 +273,14 @@ def formatcode() -> None:
     """Format all of our C/C++/etc. code."""
     import efrotools.code
     full = '-full' in sys.argv
-    efrotools.code.format_clang_format(PROJROOT, full)
+    efrotools.code.format_project_cpp_files(PROJROOT, full)
 
 
 def formatscripts() -> None:
     """Format all of our Python/etc. code."""
     import efrotools.code
     full = '-full' in sys.argv
-    efrotools.code.format_yapf(PROJROOT, full)
+    efrotools.code.format_project_python_files(PROJROOT, full)
 
 
 def formatmakefile() -> None:
@@ -404,7 +404,7 @@ def tool_config_install() -> None:
     with src.open(encoding='utf-8') as infile:
         cfg = infile.read()
 
-    # Rome substitutions, etc.
+    # Some substitutions, etc.
     cfg = _filter_tool_config(cfg)
 
     # Add an auto-generated notice.

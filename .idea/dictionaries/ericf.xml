@@ -434,6 +434,7 @@
       <w>cmodel</w>
       <w>cmodules</w>
       <w>cmpf</w>
+      <w>cmplen</w>
       <w>cnode</w>
       <w>codecsmodule</w>
       <w>codedata</w>
@@ -624,6 +625,7 @@
       <w>dlldir</w>
       <w>dlls</w>
       <w>dmake</w>
+      <w>dmgname</w>
       <w>dmitry</w>
       <w>dmodule</w>
       <w>dmypy</w>
@@ -654,6 +656,7 @@
       <w>drawscore</w>
       <w>drawscreen</w>
       <w>dripity</w>
+      <w>drooopyyy</w>
       <w>dropbox</w>
       <w>dropdir</w>
       <w>drumroll</w>
@@ -1771,9 +1774,11 @@
       <w>passwd</w>
       <w>patcomp</w>
       <w>pathcapture</w>
+      <w>pathdst</w>
       <w>pathlib</w>
       <w>pathnames</w>
       <w>pathparts</w>
+      <w>pathsrc</w>
       <w>pathstonames</w>
       <w>pathtmp</w>
       <w>patsubst</w>
@@ -2719,6 +2724,7 @@
       <w>vert</w>
       <w>verts</w>
       <w>virotic</w>
+      <w>vishal</w>
       <w>vmaddr</w>
       <w>vmcfg</w>
       <w>vmhgfs</w>

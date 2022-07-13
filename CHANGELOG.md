@@ -1,4 +1,4 @@
-### 1.7.4 (20645, 2022-07-09)
+### 1.7.4 (20646, 2022-07-12)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)
 - ba.app.meta.metascan is now ba.app.meta.scanresults
 - Cleaned up co-op ui code a bit
@@ -8,6 +8,8 @@
 - Updated the 'Show Mods Folder' to properly show the path to the mods folder. Before it would unhelpfully show something like `<External Storage>/mods` but now it should be something more useful like `Android/data/net.froemling.bombsquad/files/mods`.
 - Updated the Modding Guide button in advanced settings to point to the new ballistica wiki stuff instead of the old out-of-date 1.4 modding docs.
 - Added ba.app.net.sslcontext which is a shared SSLContext we can recycle for our https requests. It turns out it can take upwards of 1 second on older Android devices to create a default SSLContext, so this can provide a nice speedup compared to the default behavior of creating a new default one for each request.
+- Rewrote Google Play version purchasing code using Google's newest libraries (Google Play Billing 5.0). This should make everything more reliable, but please holler if you try to purchase anything in the game and run into problems.
+- It is now possible on the Google Play version to purchase things like Pro more than once for different accounts.
 
 ### 1.7.3 (20634, 2022-07-06)
 - Fixed an issue with King of the Hill flag regions not working when players entered them (Thanks itsre3!)

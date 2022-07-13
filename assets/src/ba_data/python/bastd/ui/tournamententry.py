@@ -182,8 +182,9 @@ class TournamentEntryWindow(popup.PopupWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=ba.Lstr(resource='watchAVideoText',
-                             fallback_resource='watchAnAdText'),
+                # Note: AdMob now requires rewarded ad usage
+                # specifically says 'Ad' in it.
+                text=ba.Lstr(resource='watchAnAdText'),
                 maxwidth=95,
                 color=(0, 1, 0))
             ad_plays_remaining_text = (
