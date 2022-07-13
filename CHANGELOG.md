@@ -1,3 +1,5 @@
+### 1.7.5 (20648, 2022-07-12)
+
 ### 1.7.4 (20646, 2022-07-12)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)
 - ba.app.meta.metascan is now ba.app.meta.scanresults
