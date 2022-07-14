@@ -1,4 +1,8 @@
-### 1.7.5 (20648, 2022-07-12)
+### 1.7.5 (20650, 2022-07-14)
+- Android build now uses the ReLinker library to load the native main.so, which will (hopefully) avoid some random load failures on older Android versions.
+- Android Google Play build now prints a message at launch if the billing library isn't available or needs to be updated (explaining why purchases won't work in that case).
+- Various minor bug fixes (mostly cleaning up unnecessary error logging)
+- Updated Android builds to use the new NDK 25 release
 
 ### 1.7.4 (20646, 2022-07-12)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)

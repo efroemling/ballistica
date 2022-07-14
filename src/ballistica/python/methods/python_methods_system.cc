@@ -195,18 +195,11 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  const char* h = (g_app_globals->user_ran_commands ? "cjief3l" : "wofocj8");
+  const char* h =
+      ((g_app_globals->user_ran_commands || g_app_globals->have_mods)
+           ? "cjief3l"
+           : "wofocj8");
   return PyUnicode_FromString(h);
-  BA_PYTHON_CATCH;
-}
-
-auto PySetHaveMods(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_have_mods");
-  int have_mods;
-  if (!PyArg_ParseTuple(args, "p", &have_mods)) return nullptr;
-  g_app_globals->have_mods = static_cast<bool>(have_mods);
-  Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
@@ -1076,11 +1069,6 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "(internal)\n"
        "\n"
        "Returns the amount of time since any game input has been received."},
-
-      {"set_have_mods", PySetHaveMods, METH_VARARGS,
-       "set_have_mods(have_mods: bool) -> None\n"
-       "\n"
-       "(internal)"},
 
       {"ehv", (PyCFunction)PyExtraHashValue, METH_VARARGS | METH_KEYWORDS,
        "ehv() -> None\n"

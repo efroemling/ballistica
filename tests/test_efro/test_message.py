@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import pytest
 
 from efrotools.statictest import static_type_equals
-from efro.error import CleanError, RemoteError
+from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           BoundMessageSender, MessageReceiver,
@@ -748,6 +748,8 @@ def test_full_pipeline() -> None:
         msg = _TestMessageSenderBBoth()
 
         test_handling_unregistered = False
+        test_send_method_exceptions = False
+        test_send_method_exceptions_comm = False
 
         def __init__(self, target: TestClassRSync | TestClassRAsync) -> None:
             self.test_sidecar = False
@@ -756,6 +758,13 @@ def test_full_pipeline() -> None:
         @msg.send_method
         def _send_raw_message(self, data: str) -> str:
             """Handle synchronous sending of raw json message data."""
+
+            # Test throwing exceptions in send methods.
+            if self.test_send_method_exceptions:
+                raise (CommunicationError()
+                       if self.test_send_method_exceptions_comm else
+                       RuntimeError())
+
             # Just talk directly to the receiver for this example.
             # (currently only support synchronous receivers)
             assert isinstance(self._target, TestClassRSync)
@@ -774,6 +783,13 @@ def test_full_pipeline() -> None:
         @msg.send_async_method
         async def _send_raw_message_async(self, data: str) -> str:
             """Handle asynchronous sending of raw json message data."""
+
+            # Test throwing exceptions in async send methods.
+            if self.test_send_method_exceptions:
+                raise (CommunicationError()
+                       if self.test_send_method_exceptions_comm else
+                       RuntimeError())
+
             # Just talk directly to the receiver for this example.
             # (we can do sync or async receivers)
             if isinstance(self._target, TestClassRSync):
@@ -932,3 +948,21 @@ def test_full_pipeline() -> None:
     assert getattr(response1, '_sidecar_data') == 198
     obj.test_sidecar = False
     obj_r_sync.test_sidecar = False
+
+    # Now test errors in the raw-send function. Errors there should
+    # come across as either CommunicationErrors or RuntimeErrors
+    obj.test_send_method_exceptions = True
+
+    obj.test_send_method_exceptions_comm = False
+    with pytest.raises(RuntimeError):
+        response1 = obj.msg.send(_TMsg1(ival=0))
+    with pytest.raises(RuntimeError):
+        response4 = asyncio.run(obj.msg.send_async(_TMsg1(ival=0)))
+
+    obj.test_send_method_exceptions_comm = True
+    with pytest.raises(CommunicationError):
+        response1 = obj.msg.send(_TMsg1(ival=0))
+    with pytest.raises(CommunicationError):
+        response4 = asyncio.run(obj.msg.send_async(_TMsg1(ival=0)))
+
+    obj.test_send_method_exceptions = False

@@ -204,6 +204,12 @@ def no_game_circle_message() -> None:
     _ba.screenmessage(Lstr(resource='noGameCircleText'), color=(1, 0, 0))
 
 
+def google_play_purchases_not_available_message() -> None:
+    from ba._language import Lstr
+    _ba.screenmessage(Lstr(resource='googlePlayPurchasesNotAvailableText'),
+                      color=(1, 0, 0))
+
+
 def empty_call() -> None:
     pass
 

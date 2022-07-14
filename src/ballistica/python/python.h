@@ -309,6 +309,7 @@ class Python {
     kSubmitAnalyticsCountsCall,
     kSetLastAdNetworkCall,
     kNoGameCircleMessageCall,
+    kGooglePlayPurchasesNotAvailableMessageCall,
     kEmptyCall,
     kLevelIconPressCall,
     kTrophyIconPressCall,

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import errno
 
 if TYPE_CHECKING:
     pass
@@ -39,12 +40,13 @@ class CommunicationError(Exception):
     """A communication related error has occurred.
 
     This covers anything network-related going wrong in the sending
-    of data or receiving of a response. This error does not imply
+    of data or receiving of a response. Basically anything that is out
+    of our control should get lumped in here. This error does not imply
     that data was not received on the other end; only that a full
     acknowledgement round trip was not completed.
 
     These errors should be gracefully handled whenever possible, as
-    occasional network outages are generally unavoidable.
+    occasional network issues are unavoidable.
     """
 
 
@@ -55,9 +57,9 @@ class RemoteError(Exception):
     occurs remotely. The error string can consist of a remote stack
     trace or a simple message depending on the context.
 
-    Communication systems should raise more specific error types when
-    more introspection/control is needed; this is intended somewhat as
-    a catch-all.
+    Communication systems should raise more specific error types locally
+    when more introspection/control is needed; this is intended somewhat
+    as a catch-all.
     """
 
     def __str__(self) -> str:
@@ -69,31 +71,43 @@ class IntegrityError(ValueError):
     """Data has been tampered with or corrupted in some form."""
 
 
-def is_urllib_network_error(exc: BaseException) -> bool:
-    """Is the provided exception from urllib a network-related error?
+def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
+    """Is the provided exception from urllib a communication-related error?
+
+    Url, if provided can provide extra context for when to treat an error
+    as such an error.
 
     This should be passed an exception which resulted from opening or
     reading a urllib Request. It returns True for any errors that could
     conceivably arise due to unavailable/poor network connections,
-    firewall/connectivity issues, etc. These issues can often be safely
-    ignored or presented to the user as general 'network-unavailable'
-    states.
+    firewall/connectivity issues, or other issues out of our control.
+    These errors can often be safely ignored or presented to the user
+    as general 'network-unavailable' states.
     """
     import urllib.error
     import http.client
-    import errno
     import socket
-    if isinstance(
-            exc,
-        (urllib.error.URLError, ConnectionError, http.client.IncompleteRead,
-         http.client.BadStatusLine, socket.timeout)):
+    if isinstance(exc, (urllib.error.URLError, ConnectionError,
+                        http.client.IncompleteRead, http.client.BadStatusLine,
+                        http.client.RemoteDisconnected, socket.timeout)):
+
         # Special case: although an HTTPError is a subclass of URLError,
-        # we don't return True for it. It means we have successfully
-        # communicated with the server but what we are asking for is
-        # not there/etc.
+        # we don't consider it a communication error. It generally means we
+        # have successfully communicated with the server but what we are asking
+        # for is not there/etc.
         if isinstance(exc, urllib.error.HTTPError):
+
+            # Special sub-case: appspot.com hosting seems to give 403 errors
+            # (forbidden) to some countries. I'm assuming for legal reasons?..
+            # Let's consider that a communication error since its out of our
+            # control so we don't fill up logs with it.
+            if exc.code == 403 and url is not None and '.appspot.com' in url:
+                return True
+
             return False
+
         return True
+
     if isinstance(exc, OSError):
         if exc.errno == 10051:  # Windows unreachable network error.
             return True
@@ -106,18 +120,17 @@ def is_urllib_network_error(exc: BaseException) -> bool:
     return False
 
 
-def is_udp_network_error(exc: BaseException) -> bool:
-    """Is the provided exception a network-related error?
+def is_udp_communication_error(exc: BaseException) -> bool:
+    """Should this udp-related exception be considered a communication error?
 
     This should be passed an exception which resulted from creating and
     using a socket.SOCK_DGRAM type socket. It should return True for any
     errors that could conceivably arise due to unavailable/poor network
-    connections, firewall/connectivity issues, etc. These issues can often
+    conditions, firewall/connectivity issues, etc. These issues can often
     be safely ignored or presented to the user as general
     'network-unavailable' states.
     """
-    import errno
-    if isinstance(exc, ConnectionRefusedError):
+    if isinstance(exc, ConnectionRefusedError | TimeoutError):
         return True
     if isinstance(exc, OSError):
         if exc.errno == 10051:  # Windows unreachable network error.
@@ -140,8 +153,8 @@ def is_udp_network_error(exc: BaseException) -> bool:
     return False
 
 
-def is_asyncio_streams_network_error(exc: BaseException) -> bool:
-    """Is the provided exception a network-related error?
+def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
+    """Should this streams error be considered a communication error?
 
     This should be passed an exception which resulted from creating and
     using asyncio streams. It should return True for any errors that could
@@ -149,7 +162,6 @@ def is_asyncio_streams_network_error(exc: BaseException) -> bool:
     firewall/connectivity issues, etc. These issues can often be safely
     ignored or presented to the user as general 'connection-lost' events.
     """
-    import errno
     import ssl
 
     if isinstance(exc, (

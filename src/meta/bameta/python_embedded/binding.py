@@ -64,6 +64,7 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.submit_analytics_counts,  # kSubmitAnalyticsCountsCall
         _hooks.set_last_ad_network,  # kSetLastAdNetworkCall
         _hooks.no_game_circle_message,  # kNoGameCircleMessageCall
+        _hooks.google_play_purchases_not_available_message,  # kGooglePlayPurchasesNotAvailableMessageCall
         _hooks.empty_call,  # kEmptyCall
         _hooks.level_icon_press,  # kLevelIconPressCall
         _hooks.trophy_icon_press,  # kTrophyIconPressCall

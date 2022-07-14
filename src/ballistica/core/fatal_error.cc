@@ -25,10 +25,6 @@ auto FatalError::ReportFatalError(const std::string& message,
   // error to the user and exiting the app cleanly (so we don't pollute our
   // crash records with results of user tinkering).
 
-  // Try to avoid crash reports if we're not a clean blessed build.
-  // bool exit_cleanly = !IsUnmodifiedBlessedBuild();
-  // printf("BLESSED %d\n", static_cast<int>(IsUnmodifiedBlessedBuild()));
-
   // Give the platform the opportunity to completely override our handling.
   if (g_platform) {
     auto handled =

@@ -56,6 +56,7 @@ class ErrorResponse(Response):
         OTHER = 0
         CLEAN = 1
         LOCAL = 2
+        COMMUNICATION = 3
 
     error_message: Annotated[str, IOAttrs('m')]
     error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.OTHER

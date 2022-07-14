@@ -219,9 +219,9 @@ class AddrFetchThread(threading.Thread):
             sock.close()
             ba.pushcall(ba.Call(self._call, val), from_other_thread=True)
         except Exception as exc:
-            from efro.error import is_udp_network_error
+            from efro.error import is_udp_communication_error
             # Ignore expected network errors; log others.
-            if is_udp_network_error(exc):
+            if is_udp_communication_error(exc):
                 pass
             else:
                 ba.print_exception()
@@ -271,8 +271,8 @@ class PingThread(threading.Thread):
                                 ping if accessible else None),
                         from_other_thread=True)
         except Exception as exc:
-            from efro.error import is_udp_network_error
-            if is_udp_network_error(exc):
+            from efro.error import is_udp_communication_error
+            if is_udp_communication_error(exc):
                 pass
             else:
                 ba.print_exception('Error on gather ping', once=True)

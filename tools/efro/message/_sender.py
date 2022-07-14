@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, TypeVar
 
-from efro.error import CleanError, RemoteError
+from efro.error import CleanError, RemoteError, CommunicationError
 from efro.message._message import EmptyResponse, ErrorResponse
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class MessageSender:
         def send_raw_message(self, message: str) -> str:
             # Actually send the message here.
 
-    # MyMessageSender class should provide overloads for send(), send_bg(),
+    # MyMessageSender class should provide overloads for send(), send_async(),
     # etc. to ensure all sending happens with valid types.
     obj = MyClass()
     obj.msg.send(SomeMessageType())
@@ -54,7 +54,12 @@ class MessageSender:
     def send_method(
             self, call: Callable[[Any, str],
                                  str]) -> Callable[[Any, str], str]:
-        """Function decorator for setting raw send method."""
+        """Function decorator for setting raw send method.
+
+        Send methods take strings and should return strings.
+        Any Exception raised during the send_method manifests as
+        a CommunicationError for the message sender.
+        """
         assert self._send_raw_message_call is None
         self._send_raw_message_call = call
         return call
@@ -62,7 +67,12 @@ class MessageSender:
     def send_async_method(
         self, call: Callable[[Any, str], Awaitable[str]]
     ) -> Callable[[Any, str], Awaitable[str]]:
-        """Function decorator for setting raw send-async method."""
+        """Function decorator for setting raw send-async method.
+
+        Send methods take strings and should return strings.
+        Any Exception raised during the send_method manifests as
+        a CommunicationError for the message sender.
+        """
         assert self._send_async_raw_message_call is None
         self._send_async_raw_message_call = call
         return call
@@ -123,7 +133,17 @@ class MessageSender:
             raise RuntimeError('send() is unimplemented for this type.')
 
         msg_encoded = self._encode_message(bound_obj, message)
-        response_encoded = self._send_raw_message_call(bound_obj, msg_encoded)
+        try:
+            response_encoded = self._send_raw_message_call(
+                bound_obj, msg_encoded)
+        except Exception as exc:
+            # Any error in the raw send call gets recorded as either
+            # a local or communication error.
+            return ErrorResponse(
+                error_message=f'Error in send async method: {exc}',
+                error_type=(ErrorResponse.ErrorType.COMMUNICATION
+                            if isinstance(exc, CommunicationError) else
+                            ErrorResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     async def send_split_part_1_async(self, bound_obj: Any,
@@ -139,9 +159,17 @@ class MessageSender:
             raise RuntimeError('send_async() is unimplemented for this type.')
 
         msg_encoded = self._encode_message(bound_obj, message)
-        response_encoded = await self._send_async_raw_message_call(
-            bound_obj, msg_encoded)
-
+        try:
+            response_encoded = await self._send_async_raw_message_call(
+                bound_obj, msg_encoded)
+        except Exception as exc:
+            # Any error in the raw send call gets recorded as either
+            # a local or communication error.
+            return ErrorResponse(
+                error_message=f'Error in send async method: {exc}',
+                error_type=(ErrorResponse.ErrorType.COMMUNICATION
+                            if isinstance(exc, CommunicationError) else
+                            ErrorResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     def send_split_part_2(self, message: Message,
@@ -183,8 +211,8 @@ class MessageSender:
             # If we got to this point, we successfully communicated
             # with the other end so errors represent protocol mismatches
             # or other invalid data. For now let's just log it but perhaps
-            # we'd want to somehow embed it in the ErrorResponse to be raised
-            # directly to the user later.
+            # we'd want to somehow embed it in the ErrorResponse to be
+            # available directly to the user later.
             logging.exception('Error decoding raw response')
             response = ErrorResponse(
                 error_message=
@@ -207,6 +235,10 @@ class MessageSender:
 
         # Some error occurred. Raise a local Exception for it.
         if isinstance(raw_response, ErrorResponse):
+
+            if (raw_response.error_type is
+                    ErrorResponse.ErrorType.COMMUNICATION):
+                raise CommunicationError(raw_response.error_message)
 
             # If something went wrong on our end of the connection,
             # don't say it was a remote error.

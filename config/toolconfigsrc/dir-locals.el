@@ -10,6 +10,8 @@
 
  ;; Projectile indexing and search will ignore the following
  ;; (in addition to git-ignored stuff which it ignores by default)
+ ;; NOTE TO SELF: this means searches in spinoff projects will mostly fail
+ ;;  because everything is gitignored; should search in parent repo instead.
  (nil . ((projectile-globally-ignored-directories . ("docs"
                                                      "submodules"
                                                      "src/external"
