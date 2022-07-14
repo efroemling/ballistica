@@ -2812,11 +2812,6 @@ def set_enable_default_kick_voting(enable: bool) -> None:
     return None
 
 
-def set_have_mods(have_mods: bool) -> None:
-    """(internal)"""
-    return None
-
-
 def set_internal_language_keys(
         listobj: list[tuple[str, str]],
         random_names_list: list[tuple[str, str]]) -> None:
