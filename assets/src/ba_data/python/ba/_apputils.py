@@ -82,7 +82,7 @@ def handle_log() -> None:
                 'fatal': 0,
                 'userRanCommands': _ba.has_user_run_commands(),
                 'time': _ba.time(TimeType.REAL),
-                'userModded': _ba.has_user_mods(),
+                'userModded': _ba.workspaces_in_use(),
                 'newsShow': _ba.get_news_show(),
             }
 

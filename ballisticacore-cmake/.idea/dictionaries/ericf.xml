@@ -67,6 +67,8 @@
       <w>appstate</w>
       <w>argsjoined</w>
       <w>argstr</w>
+      <w>armcap</w>
+      <w>armv</w>
       <w>asci</w>
       <w>assetsmakefile</w>
       <w>assigninput</w>
@@ -320,6 +322,7 @@
       <w>dfff</w>
       <w>dfmt</w>
       <w>dictval</w>
+      <w>didn</w>
       <w>diffbit</w>
       <w>dinl</w>
       <w>dirfilter</w>
@@ -502,6 +505,7 @@
       <w>getactivity</w>
       <w>getattro</w>
       <w>getattrofunc</w>
+      <w>getauxval</w>
       <w>getbasetime</w>
       <w>getbit</w>
       <w>getbits</w>
@@ -1162,6 +1166,7 @@
       <w>shouldnt</w>
       <w>shufflable</w>
       <w>signsubscale</w>
+      <w>sigsetjmp</w>
       <w>simd</w>
       <w>simpletype</w>
       <w>sisssssssss</w>

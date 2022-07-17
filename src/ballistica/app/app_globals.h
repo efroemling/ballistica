@@ -35,7 +35,7 @@ class AppGlobals {
   std::unordered_map<int, NodeType*> node_types_by_id;
   std::unordered_map<std::string, NodeMessageType> node_message_types;
   std::vector<std::string> node_message_formats;
-  bool have_mods{};
+  bool workspaces_in_use{};
   bool replay_open{};
   std::vector<Thread*> pausable_threads;
   TouchInput* touch_input{};

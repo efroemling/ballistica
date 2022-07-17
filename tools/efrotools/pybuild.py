@@ -264,6 +264,31 @@ def android_patch_ssl() -> None:
     )
     writefile(fname, txt)
 
+    # Getting a lot of crashes in _armv7_tick, which seems to be a
+    # somewhat known issue with certain arm7 devices. Sounds like
+    # there are no major downsides to disabling this feature, so doing that.
+    # (Sounds like its possible to somehow disable it through an env var
+    # but let's just be sure and #ifdef it out in the source.
+    # see https://github.com/openssl/openssl/issues/17465
+    fname = 'crypto/armcap.c'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        '    /* Things that getauxval didn\'t tell us */\n'
+        '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
+        '        _armv7_tick();\n'
+        '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
+        '    }\n',
+        '# if 0  // ericf disabled; causing crashes on some android devices.\n'
+        '    /* Things that getauxval didn\'t tell us */\n'
+        '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
+        '        _armv7_tick();\n'
+        '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
+        '    }\n'
+        '# endif // 0\n',
+    )
+    writefile(fname, txt)
+
 
 def _patch_py_ssl() -> None:
 
@@ -276,6 +301,10 @@ def _patch_py_ssl() -> None:
     # Python folks, but for now am just patching it for our Python builds.
     # NOTE TO SELF: It would also be good to look into why that call can be
     # so slow and if there's anything we can do about that.
+    # UPDATE: This should be fixed in Python itself as of 3.10.6
+    # (see https://github.com/python/cpython/issues/94637)
+    # UPDATE 2: Have confirmed that call is expected to be slow in some
+    # situations.
     fname = 'Modules/_ssl.c'
     txt = readfile(fname)
     txt = replace_exact(

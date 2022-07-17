@@ -941,6 +941,13 @@ class CoopBrowserWindow(ba.Window):
             show_sign_in_prompt()
             return
 
+        if _ba.workspaces_in_use():
+            ba.screenmessage(
+                ba.Lstr(resource='tournamentsDisabledWorkspaceText'),
+                color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
         if not self._tourney_data_up_to_date:
             ba.screenmessage(ba.Lstr(resource='tournamentCheckingStateText'),
                              color=(1, 1, 0))

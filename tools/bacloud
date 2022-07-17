@@ -255,6 +255,7 @@ class App:
 
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
+        print(f'{Clr.CYN}(url: {url}){Clr.RST}')
         webbrowser.open(url)
 
     def _handle_input_prompt(self, prompt: str, as_password: bool) -> None:

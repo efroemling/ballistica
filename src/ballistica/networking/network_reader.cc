@@ -235,9 +235,30 @@ auto NetworkReader::RunThread() -> int {
       fd_set readset;
       FD_ZERO(&readset);
       if (sd4_ != -1) {
+        if (!g_buildconfig.ostype_windows()) {
+          // Try to get a clean error instead of a crash if we exceed our
+          // open file descriptor limit (except on windows where FD_SETSIZE
+          // is apparently a dummy value).
+          if (sd4_ < 0 || sd4_ >= FD_SETSIZE) {
+            FatalError("Socket/File Descriptor Overflow (sd4="
+                       + std::to_string(sd4_) + ", FD_SETSIZE="
+                       + std::to_string(FD_SETSIZE) + "). Please report this.");
+          }
+        }
+
         FD_SET(sd4_, &readset);  // NOLINT
       }
       if (sd6_ != -1) {
+        if (!g_buildconfig.ostype_windows()) {
+          // Try to get a clean error instead of a crash if we exceed our
+          // open file descriptor limit (except on windows where FD_SETSIZE
+          // is apparently a dummy value).
+          if (sd6_ < 0 || sd6_ >= FD_SETSIZE) {
+            FatalError("Socket/File Descriptor Overflow (sd6="
+                       + std::to_string(sd6_) + ", FD_SETSIZE="
+                       + std::to_string(FD_SETSIZE) + "). Please report this.");
+          }
+        }
         FD_SET(sd6_, &readset);  // NOLINT
       }
       int maxfd = std::max(sd4_, sd6_);
@@ -408,9 +429,9 @@ auto NetworkReader::RunThread() -> int {
                           PlayerSpec::GetAccountPlayerSpec().GetSpecString();
 
                       // This should always be the case (len needs to be 1 byte)
-                      assert(player_spec_string.size() < 256);
+                      BA_PRECONDITION_FATAL(player_spec_string.size() < 256);
 
-                      assert(!usid.empty());
+                      BA_PRECONDITION_FATAL(!usid.empty());
                       if (usid.size() > 100) {
                         Log("had to truncate session-id; shouldn't happen");
                         usid.resize(100);
@@ -431,9 +452,10 @@ auto NetworkReader::RunThread() -> int {
                              player_spec_string.size());
                       size_t msg_len =
                           11 + player_spec_string.size() + usid.size();
+                      BA_PRECONDITION_FATAL(msg_len <= sizeof(msg));
 
                       std::vector<uint8_t> msg_buffer(msg_len);
-                      memcpy(&msg_buffer[0], msg, msg_len);
+                      memcpy(msg_buffer.data(), msg, msg_len);
 
                       g_network_write_module->PushSendToCall(msg_buffer,
                                                              SockAddr(from));

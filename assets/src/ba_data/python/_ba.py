@@ -2102,15 +2102,6 @@ def has_gamma_control() -> bool:
     return bool()
 
 
-def has_user_mods() -> bool:
-    """(internal)
-
-    Returns whether the system varies from default configuration
-    (by user mods, etc)
-    """
-    return bool()
-
-
 def has_user_run_commands() -> bool:
     """(internal)"""
     return bool()
@@ -3225,3 +3216,12 @@ def widget(edit: ba.Widget | None = None,
     Unlike other UI calls, this can only be used to edit, not to create.
     """
     return None
+
+
+def workspaces_in_use() -> bool:
+    """(internal)
+
+    Returns whether workspaces functionality has been enabled at
+    any point this run.
+    """
+    return bool()

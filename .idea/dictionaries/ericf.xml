@@ -119,7 +119,9 @@
       <w>argstr</w>
       <w>argtypes</w>
       <w>argval</w>
+      <w>armcap</w>
       <w>armeabi</w>
+      <w>armv</w>
       <w>arraymodule</w>
       <w>asdict</w>
       <w>aspx</w>
@@ -599,6 +601,7 @@
       <w>dhave</w>
       <w>dheadless</w>
       <w>dictval</w>
+      <w>didn</w>
       <w>diemessages</w>
       <w>difflib</w>
       <w>dilateerode</w>
@@ -996,6 +999,7 @@
       <w>genutils</w>
       <w>getaccountid</w>
       <w>getactivity</w>
+      <w>getauxval</w>
       <w>getcampaign</w>
       <w>getclass</w>
       <w>getcollide</w>
@@ -2262,6 +2266,7 @@
       <w>showsubseconds</w>
       <w>shroom</w>
       <w>shutil</w>
+      <w>sigsetjmp</w>
       <w>simplesubclasses</w>
       <w>simpletype</w>
       <w>sincelaunch</w>

@@ -196,7 +196,7 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   const char* h =
-      ((g_app_globals->user_ran_commands || g_app_globals->have_mods)
+      ((g_app_globals->user_ran_commands || g_app_globals->workspaces_in_use)
            ? "cjief3l"
            : "wofocj8");
   return PyUnicode_FromString(h);
@@ -221,10 +221,10 @@ auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PyHasUserMods(PyObject* self, PyObject* args) -> PyObject* {
+auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("has_user_mods");
-  if (g_app_globals->have_mods) {
+  Platform::SetLastPyCall("workspaces_in_use");
+  if (g_app_globals->workspaces_in_use) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -1045,13 +1045,13 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)"},
 
-      {"has_user_mods", PyHasUserMods, METH_VARARGS,
-       "has_user_mods() -> bool\n"
+      {"workspaces_in_use", PyWorkspacesInUse, METH_VARARGS,
+       "workspaces_in_use() -> bool\n"
        "\n"
        "(internal)\n"
        "\n"
-       "Returns whether the system varies from default configuration\n"
-       "(by user mods, etc)"},
+       "Returns whether workspaces functionality has been enabled at\n"
+       "any point this run."},
 
       {"has_user_run_commands", PyHasUserRunCommands, METH_VARARGS,
        "has_user_run_commands() -> bool\n"
