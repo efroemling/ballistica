@@ -89,6 +89,7 @@
       <w>aparsed</w>
       <w>apichanges</w>
       <w>apis</w>
+      <w>apiversion</w>
       <w>apks</w>
       <w>apost</w>
       <w>appath</w>
@@ -1369,6 +1370,7 @@
       <w>linenum</w>
       <w>linenumber</w>
       <w>linenums</w>
+      <w>linestart</w>
       <w>linetype</w>
       <w>linetypes</w>
       <w>linflav</w>

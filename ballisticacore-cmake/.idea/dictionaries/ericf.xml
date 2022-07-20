@@ -59,6 +59,7 @@
       <w>aosp</w>
       <w>aparsed</w>
       <w>apientry</w>
+      <w>apiversion</w>
       <w>apost</w>
       <w>appconfig</w>
       <w>appname</w>
@@ -693,6 +694,7 @@
       <w>linearsize</w>
       <w>linearstep</w>
       <w>linemax</w>
+      <w>linestart</w>
       <w>linkstoryboards</w>
       <w>listobj</w>
       <w>llock</w>

@@ -5,28 +5,39 @@
 from __future__ import annotations
 
 import os
-import sys
+from enum import Enum
 from typing import TYPE_CHECKING
+
+from typing_extensions import assert_never
+
+from efro.error import CleanError
 
 if TYPE_CHECKING:
     pass
 
 
-def _handle_args(args: list[str]) -> str:
+class Mode(Enum):
+    """Mode we can run this command in."""
+    INFO = 'info'
+    BUILD = 'build'
+    VERSION = 'version'
+    API = 'api'
+
+
+def _handle_args(args: list[str]) -> Mode:
     """parse os args and return a mode"""
-    mode = None
+    mode: Mode | None = None
     if len(args) == 0:
-        print('OPTIONS: info, build, version')
-        sys.exit(0)
-    elif len(args) == 1:
-        if args[0] == 'info':
-            mode = 'info'
-        if args[0] == 'build':
-            mode = 'build'
-        if args[0] == 'version':
-            mode = 'version'
-    if mode is None:
-        raise Exception('invalid args')
+        print('OPTIONS: info, build, version', 'apiversion')
+        raise CleanError()
+
+    try:
+        mode = Mode(args[0])
+    except ValueError as exc:
+        raise CleanError(f"Invalid mode '{args[0]}'") from exc
+
+    if len(args) != 1:
+        raise CleanError('Incorrect args.')
     return mode
 
 
@@ -52,6 +63,18 @@ def get_current_version() -> tuple[str, int]:
     return version, build_number
 
 
+def get_current_api_version() -> int:
+    """Pull current api version from the project."""
+    with open('assets/src/ba_data/python/ba/_meta.py',
+              encoding='utf-8') as infile:
+        lines = infile.readlines()
+    linestart = 'CURRENT_API_VERSION = '
+    for line in lines:
+        if line.startswith(linestart):
+            return int(line.strip().removeprefix(linestart).strip())
+    raise RuntimeError('Api version line not found.')
+
+
 def run(projroot: str, args: list[str]) -> None:
     """Main entry point for this script."""
 
@@ -62,12 +85,15 @@ def run(projroot: str, args: list[str]) -> None:
 
     version, build_number = get_current_version()
 
-    if mode == 'info':
+    if mode is Mode.INFO:
         print('version = ' + version)
         print('build = ' + str(build_number))
-    elif mode == 'version':
+        print('api = ' + str(get_current_api_version()))
+    elif mode is Mode.VERSION:
         print(version)
-    elif mode == 'build':
+    elif mode is Mode.BUILD:
         print(build_number)
+    elif mode is Mode.API:
+        print(get_current_api_version())
     else:
-        raise Exception('invalid mode: ' + str(mode))
+        assert_never(mode)
