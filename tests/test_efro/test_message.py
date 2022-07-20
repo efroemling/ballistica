@@ -9,9 +9,10 @@ import asyncio
 from typing import TYPE_CHECKING, overload
 from dataclasses import dataclass
 
+from typing_extensions import assert_type
 import pytest
 
-from efrotools.statictest import static_type_equals
+# from efrotools.statictest import static_type_equals
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
@@ -898,8 +899,10 @@ def test_full_pipeline() -> None:
 
     # Make sure static typing lines up with what we expect.
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
-        assert static_type_equals(response1, _TResp1)
-        assert static_type_equals(response3, None)
+        # assert static_type_equals(response1, _TResp1)
+        assert_type(response1, _TResp1)
+        # assert static_type_equals(response3, None)
+        assert_type(response3, None)
 
     assert isinstance(response1, _TResp1)
     assert isinstance(response2, (_TResp1, _TResp2))
@@ -935,7 +938,8 @@ def test_full_pipeline() -> None:
 
     # Make sure static typing lines up with what we expect.
     if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
-        assert static_type_equals(response6, _TResp1)
+        # assert static_type_equals(response6, _TResp1)
+        assert_type(response6, _TResp1)
 
     # Now test adding extra data to messages. This should be transferred
     # into the encoded message, copied to the response, and again back

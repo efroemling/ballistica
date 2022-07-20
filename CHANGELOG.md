@@ -1,4 +1,4 @@
-### 1.7.5 (20653, 2022-07-15)
+### 1.7.5 (20654, 2022-07-18)
 - Android build now uses the ReLinker library to load the native main.so, which will (hopefully) avoid some random load failures on older Android versions.
 - Android Google Play build now prints a message at launch if the billing library isn't available or needs to be updated (explaining why purchases won't work in that case).
 - Various minor bug fixes (mostly cleaning up unnecessary error logging)

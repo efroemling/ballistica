@@ -38,8 +38,8 @@ class PipRequirement:
 # installing it. And as far as manually-installed bits, pip itself must
 # have some way to allow for that, right?...
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 14, 4]),
-    PipRequirement(modulename='mypy', minversion=[0, 961]),
+    PipRequirement(modulename='pylint', minversion=[2, 14, 5]),
+    PipRequirement(modulename='mypy', minversion=[0, 971]),
     PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 6, 0]),
     PipRequirement(modulename='pytest', minversion=[7, 1, 2]),
@@ -49,10 +49,10 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='requests'),
     PipRequirement(modulename='pdoc'),
     PipRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
-    PipRequirement(pipname='types-filelock', minversion=[3, 2, 6]),
-    PipRequirement(pipname='types-requests', minversion=[2, 27, 29]),
-    PipRequirement(pipname='types-pytz', minversion=[2021, 3, 8]),
-    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 7]),
+    PipRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
+    PipRequirement(pipname='types-requests', minversion=[2, 28, 2]),
+    PipRequirement(pipname='types-pytz', minversion=[2022, 1, 2]),
+    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 10]),
     PipRequirement(pipname='certifi', minversion=[2022, 6, 15]),
     PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
 ]
