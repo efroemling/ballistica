@@ -28,7 +28,7 @@ def _handle_args(args: list[str]) -> Mode:
     """parse os args and return a mode"""
     mode: Mode | None = None
     if len(args) == 0:
-        print('OPTIONS: info, build, version', 'apiversion')
+        print('OPTIONS: info, build, version', 'api')
         raise CleanError()
 
     try:
