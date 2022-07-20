@@ -109,7 +109,7 @@ dummymodule:
 	./tools/pcommand update_dummy_module --force
 
 # Generate docs.
-docs:
+docs: assets-cmake
 	@tools/pcommand gendocs
 
 # Tell make which of these targets don't represent files.
