@@ -498,6 +498,7 @@ def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
 
     from efrotools import PYTHON_BIN
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
@@ -543,9 +544,13 @@ def checkenv() -> None:
     piplist = piplist[2:]
     pipvers: dict[str, list[int]] = {}
     for line in piplist:
-        pname, pverraw = line.split()[:2]
-        pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
-        pipvers[pname] = pver
+        try:
+            pname, pverraw = line.split()[:2]
+            pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
+            pipvers[pname] = pver
+        except Exception as exc:
+            raise RuntimeError(
+                f"Error parsing version info from line '{line}'") from exc
 
     # Check for some required python modules.
     # FIXME: since all of these come from pip now, we should just use
