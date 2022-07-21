@@ -509,6 +509,11 @@ def install_pip_reqs() -> None:
     from efrotools import PYTHON_BIN
     from efro.terminal import Clr
     from batools.build import get_pip_reqs
+
+    # Make sure pip itself is up to date first.
+    subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'],
+                   check=True)
+
     subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
                    get_pip_reqs(),
                    check=True)
