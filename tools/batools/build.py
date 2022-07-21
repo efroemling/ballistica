@@ -543,14 +543,14 @@ def checkenv() -> None:
     assert '--------' in piplist[1]
     piplist = piplist[2:]
     pipvers: dict[str, list[int]] = {}
-    for line in piplist:
+    for i, line in enumerate(piplist):
         try:
             pname, pverraw = line.split()[:2]
             pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
             pipvers[pname] = pver
         except Exception as exc:
-            raise RuntimeError(
-                f"Error parsing version info from line '{line}'") from exc
+            raise RuntimeError(f'Error parsing version info from line {i} of:'
+                               f'\nBEGIN\n{piplist}\nEND') from exc
 
     # Check for some required python modules.
     # FIXME: since all of these come from pip now, we should just use
