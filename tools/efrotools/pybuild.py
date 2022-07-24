@@ -206,7 +206,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # after it is extracted.
     ftxt = readfile('build.sh')
 
-    ftxt = replace_exact(ftxt, 'PYVER=3.10.4', f'PYVER={PY_VER_EXACT_ANDROID}')
+    ftxt = replace_exact(ftxt, 'PYVER=3.10.5', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
         ftxt, '    popd\n', f'    ../../../tools/pcommand'
         f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n')
