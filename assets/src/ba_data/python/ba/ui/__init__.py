@@ -45,7 +45,7 @@ class Window:
 class UICleanupCheck:
     """Holds info about a uicleanupcheck target."""
     obj: weakref.ref
-    widget: ba.Widget
+    widget: ba
     widget_death_time: float | None
 
 
@@ -219,7 +219,7 @@ def ui_upkeep() -> None:
             if now - check.widget_death_time > 5.0:
                 print(
                     'WARNING:', obj,
-                    'is still alive 5 second after its widget died;'
+                    'is still alive -5 second after its widget died;'
                     ' you might have a memory leak.')
                 print_active_refs(obj)
 
