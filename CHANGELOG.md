@@ -1,9 +1,10 @@
-### 1.7.5 (build 20670, api 7, 2022-07-24)
+### 1.7.5 (build 20672, api 7, 2022-07-25)
 - Android build now uses the ReLinker library to load the native main.so, which will (hopefully) avoid some random load failures on older Android versions.
 - Android Google Play build now prints a message at launch if the billing library isn't available or needs to be updated (explaining why purchases won't work in that case).
 - Various minor bug fixes (mostly cleaning up unnecessary error logging)
 - Updated Android builds to use the new NDK 25 release
 - Added a warning when trying to play a tournament with a workspace active
+- Added api-version to changelog headers and `pcommand version` command.
 
 ### 1.7.4 (20646, 2022-07-12)
 - Fixed the trophies list showing an incorrect total (Thanks itsre3!)
