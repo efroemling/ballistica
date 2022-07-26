@@ -399,3 +399,24 @@ def cameraflash(duration: float = 999.0) -> None:
                   light.node.delete,
                   timeformat=TimeFormat.MILLISECONDS)
         activity.camera_flash_data.append(light)  # type: ignore
+
+
+def get_game_types() -> list[type[ba.GameActivity]]:
+    """Return all available game types."""
+    # pylint: disable=cyclic-import
+    from ba._general import getclass
+    from ba._gameactivity import GameActivity
+    from ba._store import get_unowned_game_types
+
+    gameclassnames = _ba.app.meta.wait_for_scan_results().exports_of_class(
+        GameActivity)
+    gameclasses = []
+    for gameclassname in gameclassnames:
+        try:
+            cls = getclass(gameclassname, GameActivity)
+            gameclasses.append(cls)
+        except Exception:
+            from ba import _error
+            _error.print_exception('error importing ' + str(gameclassname))
+    unowned = get_unowned_game_types()
+    return [cls for cls in gameclasses if cls not in unowned]

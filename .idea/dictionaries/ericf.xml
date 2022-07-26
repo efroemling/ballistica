@@ -799,9 +799,11 @@
       <w>expectedsig</w>
       <w>explodable</w>
       <w>explodey</w>
+      <w>exportlist</w>
       <w>exportoptions</w>
       <w>exportoptionspath</w>
       <w>exporttype</w>
+      <w>exporttypestr</w>
       <w>extradata</w>
       <w>extraflagmat</w>
       <w>extrahash</w>
@@ -1266,6 +1268,7 @@
       <w>jsonutils</w>
       <w>juleskie</w>
       <w>kbclass</w>
+      <w>kbexports</w>
       <w>kbytecount</w>
       <w>keepalive</w>
       <w>keepalives</w>
@@ -1782,6 +1785,7 @@
       <w>pathcapture</w>
       <w>pathdst</w>
       <w>pathlib</w>
+      <w>pathlist</w>
       <w>pathnames</w>
       <w>pathparts</w>
       <w>pathsrc</w>

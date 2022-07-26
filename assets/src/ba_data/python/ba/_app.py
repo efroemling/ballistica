@@ -223,6 +223,7 @@ class App:
 
         self._launch_completed = False
         self._initial_login_completed = False
+        self._meta_scan_completed = False
         self._called_on_app_running = False
         self._app_paused = False
 
@@ -344,6 +345,8 @@ class App:
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
 
+        assert _ba.in_game_thread()
+
         self._aioloop = _asyncio.setup_asyncio()
 
         cfg = self.config
@@ -415,6 +418,9 @@ class App:
         if not self.headless_mode:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
+        # Get meta-system scanning built-in stuff in the bg.
+        self.meta.start_scan(scan_complete_cb=self.on_meta_scan_complete)
+
         self.accounts_v2.on_app_launch()
         self.accounts_v1.on_app_launch()
 
@@ -429,17 +435,27 @@ class App:
     def on_app_running(self) -> None:
         """Called when initially entering the running state."""
 
-        self.meta.on_app_running()
         self.plugins.on_app_running()
 
         # from ba._dependency import test_depset
         # test_depset()
 
+    def on_meta_scan_complete(self) -> None:
+        """Called by meta-scan when it is done doing its thing."""
+        assert _ba.in_game_thread()
+        self.plugins.on_meta_scan_complete()
+
+        assert not self._meta_scan_completed
+        self._meta_scan_completed = True
+        self._update_state()
+
     def _update_state(self) -> None:
+        assert _ba.in_game_thread()
+
         if self._app_paused:
             self.state = self.State.PAUSED
         else:
-            if self._initial_login_completed:
+            if self._initial_login_completed and self._meta_scan_completed:
                 self.state = self.State.RUNNING
                 if not self._called_on_app_running:
                     self._called_on_app_running = True
@@ -650,5 +666,9 @@ class App:
         This should also run after a short amount of time if no login
         has occurred.
         """
+        # Tell meta it can start scanning extra stuff that just showed up
+        # (account workspaces).
+        self.meta.start_extra_scan()
+
         self._initial_login_completed = True
         self._update_state()

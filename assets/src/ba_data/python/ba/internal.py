@@ -7,9 +7,8 @@ or disappear without warning, so should be avoided (or used sparingly and
 defensively) in mods.
 """
 
-from ba._map import (get_unowned_maps, get_map_class, register_map,
-                     preload_map_preview_media, get_map_display_string,
-                     get_filtered_map_name)
+from ba._map import (get_map_class, register_map, preload_map_preview_media,
+                     get_map_display_string, get_filtered_map_name)
 from ba._appconfig import commit_app_config
 from ba._input import (get_device_value, get_input_map_hash,
                        get_input_device_config)
@@ -34,13 +33,14 @@ from ba._playlist import (get_default_free_for_all_playlist,
 from ba._store import (get_available_sale_time, get_available_purchase_count,
                        get_store_item_name_translated,
                        get_store_item_display_size, get_store_layout,
-                       get_store_item, get_clean_price)
+                       get_store_item, get_clean_price, get_unowned_maps,
+                       get_unowned_game_types)
 from ba._tournament import get_tournament_prize_strings
-from ba._gameutils import get_trophy_string
+from ba._gameutils import get_trophy_string, get_game_types
 
 __all__ = [
-    'get_unowned_maps', 'get_map_class', 'register_map',
-    'preload_map_preview_media', 'get_map_display_string',
+    'get_unowned_maps', 'get_unowned_game_types', 'get_map_class',
+    'register_map', 'preload_map_preview_media', 'get_map_display_string',
     'get_filtered_map_name', 'commit_app_config', 'get_device_value',
     'get_input_map_hash', 'get_input_device_config', 'getclass', 'json_prep',
     'get_type_name', 'JoinActivity', 'ScoreScreenActivity',
@@ -56,5 +56,6 @@ __all__ = [
     'get_default_teams_playlist', 'filter_playlist', 'get_available_sale_time',
     'get_available_purchase_count', 'get_store_item_name_translated',
     'get_store_item_display_size', 'get_store_layout', 'get_store_item',
-    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string'
+    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string',
+    'get_game_types'
 ]

@@ -17,6 +17,7 @@ from ba._error import NotFoundError, print_error, print_exception
 from ba._general import Call, WeakCall
 from ba._player import PlayerInfo
 from ba import _map
+from ba import _store
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -1159,7 +1160,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         else:
             # If settings doesn't specify a map, pick a random one from the
             # list of supported ones.
-            unowned_maps = _map.get_unowned_maps()
+            unowned_maps = _store.get_unowned_maps()
             valid_maps: list[str] = [
                 m for m in self.get_supported_maps(type(self.session))
                 if m not in unowned_maps

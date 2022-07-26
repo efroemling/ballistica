@@ -1,4 +1,7 @@
-### 1.7.6 (build 20674, api 7, 2022-07-25)
+### 1.7.6 (build 20676, api 7, 2022-07-26)
+- Cleaned up MetaSubsystem code
+- It is now possible to tell the meta system about arbitrary classes (ba_meta export foo.bar.Class) instead of just the preset types 'plugin', 'game', etc. 
+- Newly discovered plugins are now activated immediately instead of requiring a restart.
 
 ### 1.7.5 (build 20672, api 7, 2022-07-25)
 - Android build now uses the ReLinker library to load the native main.so, which will (hopefully) avoid some random load failures on older Android versions.

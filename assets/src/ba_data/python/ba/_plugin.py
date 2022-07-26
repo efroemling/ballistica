@@ -25,6 +25,46 @@ class PluginSubsystem:
         self.potential_plugins: list[ba.PotentialPlugin] = []
         self.active_plugins: dict[str, ba.Plugin] = {}
 
+    def on_meta_scan_complete(self) -> None:
+        """Should be called when meta-scanning is complete."""
+        from ba._language import Lstr
+
+        plugs = _ba.app.plugins
+        config_changed = False
+        found_new = False
+        plugstates: dict[str, dict] = _ba.app.config.setdefault('Plugins', {})
+        assert isinstance(plugstates, dict)
+
+        results = _ba.app.meta.scanresults
+        assert results is not None
+
+        # Create a potential-plugin for each class we found in the scan.
+        for class_path in results.exports_of_class(Plugin):
+            plugs.potential_plugins.append(
+                PotentialPlugin(display_name=Lstr(value=class_path),
+                                class_path=class_path,
+                                available=True))
+            if class_path not in plugstates:
+                # Go ahead and enable new plugins by default, but we'll
+                # inform the user that they need to restart to pick them up.
+                # they can also disable them in settings so they never load.
+                plugstates[class_path] = {'enabled': True}
+                config_changed = True
+                found_new = True
+
+        plugs.potential_plugins.sort(key=lambda p: p.class_path)
+
+        # Note: these days we complete meta-scan and immediately activate
+        # plugins, so we don't need the message about 'restart to activate'
+        # anymore.
+        if found_new and bool(False):
+            _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
+                              color=(0, 1, 0))
+            _ba.playsound(_ba.getsound('ding'))
+
+        if config_changed:
+            _ba.app.config.commit()
+
     def on_app_running(self) -> None:
         """Should be called when the app reaches the running state."""
         # Load up our plugins and go ahead and call their on_app_running calls.
@@ -69,10 +109,7 @@ class PluginSubsystem:
         from ba._language import Lstr
 
         # Note: the plugins we load is purely based on what's enabled
-        # in the app config. Our meta-scan gives us a list of available
-        # plugins, but that is only used to give the user a list of plugins
-        # that they can enable. (we wouldn't want to look at meta-scan here
-        # anyway because it may not be done yet at this point in the launch)
+        # in the app config. Its not our job to look at meta stuff here.
         plugstates: dict[str, dict] = _ba.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
         plugkeys: list[str] = sorted(key for key, val in plugstates.items()

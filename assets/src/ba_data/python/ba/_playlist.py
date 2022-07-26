@@ -29,14 +29,15 @@ def filter_playlist(playlist: PlaylistType,
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     import _ba
-    from ba import _map
-    from ba import _general
-    from ba import _gameactivity
+    from ba._map import get_filtered_map_name
+    from ba._store import get_unowned_maps, get_unowned_game_types
+    from ba._general import getclass
+    from ba._gameactivity import GameActivity
     goodlist: list[dict] = []
     unowned_maps: Sequence[str]
     if remove_unowned or mark_unowned:
-        unowned_maps = _map.get_unowned_maps()
-        unowned_game_types = _ba.app.meta.get_unowned_game_types()
+        unowned_maps = get_unowned_maps()
+        unowned_game_types = get_unowned_game_types()
     else:
         unowned_maps = []
         unowned_game_types = set()
@@ -53,7 +54,7 @@ def filter_playlist(playlist: PlaylistType,
             del entry['map']
 
         # Update old map names to new ones.
-        entry['settings']['map'] = _map.get_filtered_map_name(
+        entry['settings']['map'] = get_filtered_map_name(
             entry['settings']['map'])
         if remove_unowned and entry['settings']['map'] in unowned_maps:
             continue
@@ -120,8 +121,7 @@ def filter_playlist(playlist: PlaylistType,
                 entry['type'] = (
                     'bastd.game.targetpractice.TargetPracticeGame')
 
-            gameclass = _general.getclass(entry['type'],
-                                          _gameactivity.GameActivity)
+            gameclass = getclass(entry['type'], GameActivity)
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue

@@ -412,6 +412,8 @@
       <w>expbool</w>
       <w>expectedsig</w>
       <w>expl</w>
+      <w>exportlist</w>
+      <w>exporttypestr</w>
       <w>extradata</w>
       <w>extrahash</w>
       <w>extrascale</w>
@@ -653,6 +655,7 @@
       <w>jnames</w>
       <w>json's</w>
       <w>juleskie</w>
+      <w>kbexports</w>
       <w>keepalives</w>
       <w>kerploople</w>
       <w>keyanntype</w>
@@ -931,6 +934,7 @@
       <w>passcode</w>
       <w>pathcapture</w>
       <w>pathdst</w>
+      <w>pathlist</w>
       <w>pathparts</w>
       <w>pathsrc</w>
       <w>pausable</w>

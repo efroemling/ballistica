@@ -101,22 +101,6 @@ def getmaps(playtype: str) -> list[str]:
                   if playtype in val.get_play_types())
 
 
-def get_unowned_maps() -> list[str]:
-    """Return the list of local maps not owned by the current account.
-
-    Category: **Asset Functions**
-    """
-    from ba import _store
-    unowned_maps: set[str] = set()
-    if not _ba.app.headless_mode:
-        for map_section in _store.get_store_layout()['maps']:
-            for mapitem in map_section['items']:
-                if not _ba.get_purchased(mapitem):
-                    m_info = _store.get_store_item(mapitem)
-                    unowned_maps.add(m_info['map_type'].name)
-    return sorted(unowned_maps)
-
-
 def get_map_class(name: str) -> type[ba.Map]:
     """Return a map type given a name.
 

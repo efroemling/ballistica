@@ -509,3 +509,35 @@ def get_available_sale_time(tab: str) -> int | None:
         from ba import _error
         _error.print_exception('error calcing sale time')
         return None
+
+
+def get_unowned_maps() -> list[str]:
+    """Return the list of local maps not owned by the current account.
+
+    Category: **Asset Functions**
+    """
+    unowned_maps: set[str] = set()
+    if not _ba.app.headless_mode:
+        for map_section in get_store_layout()['maps']:
+            for mapitem in map_section['items']:
+                if not _ba.get_purchased(mapitem):
+                    m_info = get_store_item(mapitem)
+                    unowned_maps.add(m_info['map_type'].name)
+    return sorted(unowned_maps)
+
+
+def get_unowned_game_types() -> set[type[ba.GameActivity]]:
+    """Return present game types not owned by the current account."""
+    try:
+        unowned_games: set[type[ba.GameActivity]] = set()
+        if not _ba.app.headless_mode:
+            for section in get_store_layout()['minigames']:
+                for mname in section['items']:
+                    if not _ba.get_purchased(mname):
+                        m_info = get_store_item(mname)
+                        unowned_games.add(m_info['gametype'])
+        return unowned_games
+    except Exception:
+        from ba import _error
+        _error.print_exception('error calcing un-owned games')
+        return set()
