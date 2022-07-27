@@ -92,10 +92,6 @@ class MetadataSubsystem:
         assert self._scan is not None
         self._scan.set_extras(self.extra_scan_dirs)
 
-        # Let the game know we're done.
-        assert self._scan_complete_cb is not None
-        self._scan_complete_cb()
-
     def wait_for_scan_results(self) -> ScanResults:
         """Return scan results, blocking if the scan is not yet complete."""
         if self.scanresults is None:
@@ -138,6 +134,10 @@ class MetadataSubsystem:
                 _ba.log(
                     textwrap.indent('\n'.join(results.errors),
                                     'Error (meta-scan): '))
+
+        # Let the game know we're done.
+        assert self._scan_complete_cb is not None
+        self._scan_complete_cb()
 
     def _do_scan_dirs(self) -> None:
         """Runs a scan (for use in background thread)."""
