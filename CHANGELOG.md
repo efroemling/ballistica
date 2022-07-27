@@ -1,5 +1,5 @@
 ### 1.7.6 (build 20679, api 7, 2022-07-26)
-- Cleaned up the MetaSubsystem code.
+- Cleaned up da MetaSubsystem code.
 - It is now possible to tell the meta system about arbitrary classes (ba_meta export foo.bar.Class) instead of just the preset types 'plugin', 'game', etc. 
 - Newly discovered plugins are now activated immediately instead of requiring a restart.
 
