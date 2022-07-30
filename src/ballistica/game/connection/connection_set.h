@@ -99,6 +99,8 @@ class ConnectionSet {
   auto PushClientDisconnectedCall(int id) -> void;
 
  private:
+  auto VerifyClientAddr(uint8_t client_id, const SockAddr& addr) -> bool;
+
   // Try to minimize the chance a garbage packet will have this id.
   int next_connection_to_client_id_{113};
   std::unordered_map<int, Object::Ref<ConnectionToClient> >
