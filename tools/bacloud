@@ -85,7 +85,7 @@ class App:
         self._load_state()
 
         # Simply pass all args to the server and let it do the thing.
-        self.run_user_command(sys.argv[1:])
+        self.run_interactive_command(sys.argv[1:])
 
         self._save_state()
 
@@ -267,11 +267,11 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def run_user_command(self, args: list[str]) -> None:
+    def run_interactive_command(self, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
 
-        nextcall: tuple[str, dict] | None = ('user', {'a': args})
+        nextcall: tuple[str, dict] | None = ('_interactive', {'a': args})
 
         # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:
@@ -292,7 +292,7 @@ class App:
 
             # Note: we handle file deletes *before* downloads. This
             # way our file-download code only has to worry about creating or
-            # removing directories; not files, and corner cases such as
+            # removing directories and not files, and corner cases such as
             # a file getting replaced with a directory should just work.
             if response.deletes:
                 self._handle_deletes(response.deletes)
