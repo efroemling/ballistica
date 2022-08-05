@@ -979,9 +979,11 @@ class Spaz(ba.Actor):
                                  position=self.node.position)
                 if damage > 500:
                     sounds = SpazFactory.get().punch_sound_strong
-                    sound = sounds[random.randrange(len(sounds))]
+                    sound = sounds[random.randrange(len(sounds))]                                       
+                elif damage > 300:    
+                    sound = SpazFactory.get().punch_sound                   
                 else:
-                    sound = SpazFactory.get().punch_sound
+                    sound = SpazFactory.get().punch_sound_weak
                 ba.playsound(sound, 1.0, position=self.node.position)
 
                 # Throw up some chunks.
