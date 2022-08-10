@@ -60,7 +60,7 @@ def ask_for_rating() -> ba.Widget | None:
             if subplatform == 'google':
                 url = f'market://details?id=net.froemling.{appname}'
             else:
-                url = 'market://details?id=net.froemling.{appname}cb'
+                url = f'market://details?id=net.froemling.{appname}cb'
         else:
             url = 'macappstore://itunes.apple.com/app/id416482767?ls=1&mt=12'
 
