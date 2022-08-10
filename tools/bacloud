@@ -11,14 +11,11 @@ import os
 import sys
 import zlib
 import time
-import base64
 import datetime
-import tempfile
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
@@ -27,7 +24,6 @@ from efro.error import CleanError
 from efro.dataclassio import (dataclass_from_json, dataclass_to_dict,
                               dataclass_to_json, ioprepped)
 from bacommon.bacloud import RequestData, ResponseData, BACLOUD_VERSION
-from bacommon.transfer import DirectoryManifest
 
 if TYPE_CHECKING:
     from typing import BinaryIO, IO
@@ -72,7 +68,7 @@ class App:
             raise CleanError('Unable to locate project directory.')
 
         # Also run project prereqs checks so we can hopefully inform the user
-        # of missing python modules/etc. instead of just failing cryptically.
+        # of missing Python modules/etc. instead of just failing cryptically.
         try:
             subprocess.run(['make', '--quiet', 'prereqs'],
                            check=True,
@@ -122,27 +118,48 @@ class App:
                    files: dict[str, IO] | None = None) -> ResponseData:
         """Issue a command to the server and get a response."""
 
-        response_raw = requests.post(
-            f'{BACLOUD_SERVER_URL}/bacloudcmd',
-            headers={'User-Agent': f'bacloud/{BACLOUD_VERSION}'},
-            data={
-                'v':
-                    BACLOUD_VERSION,
-                'r':
-                    dataclass_to_json(
-                        RequestData(command=cmd,
-                                    token=self._state.login_token,
-                                    payload=payload,
-                                    tzoffset=get_tz_offset_seconds(),
-                                    isatty=sys.stdout.isatty())),
-            },
-            files=files,
-        )
-        response_raw.raise_for_status()  # Error if anything went wrong.
-        assert isinstance(response_raw.content, bytes)
+        response_content: str | None = None
 
-        response = dataclass_from_json(ResponseData,
-                                       response_raw.content.decode())
+        url = f'{BACLOUD_SERVER_URL}/bacloudcmd'
+        headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
+
+        rdata = {
+            'v':
+                BACLOUD_VERSION,
+            'r':
+                dataclass_to_json(
+                    RequestData(command=cmd,
+                                token=self._state.login_token,
+                                payload=payload,
+                                tzoffset=get_tz_offset_seconds(),
+                                isatty=sys.stdout.isatty())),
+        }
+
+        # Trying urllib for comparison (note that this doesn't support
+        # files arg so not actually production ready)
+        if bool(False):
+            import urllib.request
+            import urllib.parse
+
+            with urllib.request.urlopen(
+                    urllib.request.Request(
+                        url,
+                        urllib.parse.urlencode(rdata).encode(),
+                        headers)) as raw_response:
+                if raw_response.getcode() != 200:
+                    raise RuntimeError('Error talking to server')
+                response_content = raw_response.read().decode()
+
+        # Using requests module.
+        else:
+            with requests.post(url, headers=headers, data=rdata,
+                               files=files) as response_raw:
+                response_raw.raise_for_status()
+                assert isinstance(response_raw.content, bytes)
+                response_content = response_raw.content.decode()
+
+        assert response_content is not None
+        response = dataclass_from_json(ResponseData, response_content)
 
         # Handle a few things inline.
         # (so this functionality is available even to recursive commands, etc.)
@@ -158,6 +175,7 @@ class App:
         return response
 
     def _upload_file(self, filename: str, call: str, args: dict) -> None:
+        import tempfile
         print(f'Uploading {Clr.BLU}{filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
@@ -174,10 +192,12 @@ class App:
                 )
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
+        from bacommon.transfer import DirectoryManifest
         self._end_command_args['manifest'] = dataclass_to_dict(
             DirectoryManifest.create_from_disk(Path(dirmanifest)))
 
     def _handle_uploads(self, uploads: tuple[list[str], str, dict]) -> None:
+        from concurrent.futures import ThreadPoolExecutor
         assert len(uploads) == 3
         filenames, uploadcmd, uploadargs = uploads
         assert isinstance(filenames, list)
@@ -207,6 +227,7 @@ class App:
         downloads_inline: dict[str, str],
     ) -> None:
         """Handle inline file data to be saved to the client."""
+        import base64
         for fname, fdata in downloads_inline.items():
 
             # If there's a directory where we want our file to go, clear it
@@ -242,6 +263,7 @@ class App:
 
     def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
         """Handle uploading files inline."""
+        import base64
         files: dict[str, str] = {}
         for filepath in uploads_inline:
             if not os.path.exists(filepath):

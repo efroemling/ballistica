@@ -140,7 +140,8 @@ class MessageSender:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
             return ErrorResponse(
-                error_message=f'Error in send async method: {exc}',
+                error_message=(
+                    f'Error in send async method ({type(exc)}): {exc}'),
                 error_type=(ErrorResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
                             ErrorResponse.ErrorType.LOCAL))
