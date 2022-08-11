@@ -36,7 +36,7 @@ from ba._store import (get_available_sale_time, get_available_purchase_count,
                        get_store_item, get_clean_price, get_unowned_maps,
                        get_unowned_game_types)
 from ba._tournament import get_tournament_prize_strings
-from ba._gameutils import get_trophy_string, get_game_types
+from ba._gameutils import get_trophy_string
 
 __all__ = [
     'get_unowned_maps', 'get_unowned_game_types', 'get_map_class',
@@ -56,6 +56,5 @@ __all__ = [
     'get_default_teams_playlist', 'filter_playlist', 'get_available_sale_time',
     'get_available_purchase_count', 'get_store_item_name_translated',
     'get_store_item_display_size', 'get_store_layout', 'get_store_item',
-    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string',
-    'get_game_types'
+    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string'
 ]

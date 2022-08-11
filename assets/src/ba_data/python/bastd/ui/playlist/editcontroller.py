@@ -52,7 +52,8 @@ class PlaylistEditController:
                 appconfig[self._pvars.config_name +
                           ' Playlists'][existing_playlist_name],
                 sessiontype=sessiontype,
-                remove_unowned=False)
+                remove_unowned=False,
+                name=existing_playlist_name)
             self._edit_ui_selection = None
         else:
             if playlist is not None:

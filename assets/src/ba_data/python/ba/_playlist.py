@@ -18,7 +18,8 @@ def filter_playlist(playlist: PlaylistType,
                     sessiontype: type[_session.Session],
                     add_resolved_type: bool = False,
                     remove_unowned: bool = True,
-                    mark_unowned: bool = False) -> PlaylistType:
+                    mark_unowned: bool = False,
+                    name: str = '?') -> PlaylistType:
     """Return a filtered version of a playlist.
 
     Strips out or replaces invalid or unowned game types, makes sure all
@@ -139,7 +140,7 @@ def filter_playlist(playlist: PlaylistType,
                     entry['settings'][setting.name] = setting.default
             goodlist.append(entry)
         except ImportError as exc:
-            _ba.log(f'Import failed while scanning playlist: {exc}',
+            _ba.log(f'Import failed while scanning playlist \'{name}\': {exc}',
                     to_server=False)
         except Exception:
             from ba import _error

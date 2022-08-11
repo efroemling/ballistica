@@ -1569,7 +1569,10 @@ void Game::SetLanguageKeys(
 }
 
 auto DoCompileResourceString(cJSON* obj) -> std::string {
-  assert(InGameThread());
+  // NOTE: We currently talk to Python here so need to be sure
+  // we're holding the GIL. Perhaps in the future we could handle this
+  // stuff completely in C++ and be free of this limitation.
+  assert(Python::HaveGIL());
   assert(obj != nullptr);
 
   std::string result;
@@ -1707,8 +1710,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
     if (subs->type != cJSON_Array) {
       throw Exception("expected an array for 'subs'");
     }
-    int subsCount = cJSON_GetArraySize(subs);
-    for (int i = 0; i < subsCount; i++) {
+    int subs_count = cJSON_GetArraySize(subs);
+    for (int i = 0; i < subs_count; i++) {
       cJSON* sub = cJSON_GetArrayItem(subs, i);
       if (sub->type != cJSON_Array || cJSON_GetArraySize(sub) != 2) {
         throw Exception(
@@ -1753,7 +1756,6 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
 
 auto Game::CompileResourceString(const std::string& s, const std::string& loc,
                                  bool* valid) -> std::string {
-  assert(InGameThread());
   assert(g_python != nullptr);
 
   bool dummyvalid;

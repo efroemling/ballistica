@@ -1078,7 +1078,7 @@ Python::~Python() { Reset(false); }
 
 auto Python::GetResource(const char* key, const char* fallback_resource,
                          const char* fallback_value) -> std::string {
-  assert(InGameThread());
+  assert(HaveGIL());
   PythonRef results;
   BA_PRECONDITION(key != nullptr);
   const PythonRef& get_resource_call(obj(ObjID::kGetResourceCall));
@@ -1130,7 +1130,7 @@ auto Python::GetResource(const char* key, const char* fallback_resource,
 
 auto Python::GetTranslation(const char* category, const char* s)
     -> std::string {
-  assert(InGameThread());
+  assert(HaveGIL());
   PythonRef results;
   PythonRef args(Py_BuildValue("(ss)", category, s), PythonRef::kSteal);
   // Don't print errors.

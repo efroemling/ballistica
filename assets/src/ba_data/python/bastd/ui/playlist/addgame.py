@@ -116,10 +116,39 @@ class PlaylistAddGameWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
 
+        self._game_types: list[type[ba.GameActivity]] = []
+
+        # Get actual games loading in the bg.
+        ba.app.meta.load_exported_classes(ba.GameActivity,
+                                          self._on_game_types_loaded,
+                                          completion_cb_in_bg_thread=True)
+
+        # Refresh with our initial empty list. We'll refresh again once
+        # game loading is complete.
         self._refresh()
 
+    def _on_game_types_loaded(self,
+                              gametypes: list[type[ba.GameActivity]]) -> None:
+        from ba.internal import get_unowned_game_types
+
+        # We asked for a bg thread completion cb so we can do some
+        # filtering here in the bg thread where its not gonna cause hitches.
+        assert not _ba.in_game_thread()
+        sessiontype = self._editcontroller.get_session_type()
+        unowned = get_unowned_game_types()
+        self._game_types = [
+            gt for gt in gametypes
+            if gt not in unowned and gt.supports_session_type(sessiontype)
+        ]
+
+        # Sort in the current language.
+        self._game_types.sort(key=lambda g: g.get_display_string().evaluate())
+
+        # Tell ourself to refresh back in the logic thread.
+        ba.pushcall(self._refresh, from_other_thread=True)
+
     def _refresh(self, select_get_more_games_button: bool = False) -> None:
-        from ba.internal import get_game_types
+        # from ba.internal import get_game_types
 
         if self._column is not None:
             self._column.delete()
@@ -128,15 +157,7 @@ class PlaylistAddGameWindow(ba.Window):
                                        border=2,
                                        margin=0)
 
-        gametypes = [
-            gt for gt in get_game_types() if gt.supports_session_type(
-                self._editcontroller.get_session_type())
-        ]
-
-        # Sort in the current language.
-        gametypes.sort(key=lambda g: g.get_display_string().evaluate())
-
-        for i, gametype in enumerate(gametypes):
+        for i, gametype in enumerate(self._game_types):
 
             def _doit() -> None:
                 if self._select_button:

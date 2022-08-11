@@ -429,7 +429,8 @@ class PlaylistBrowserWindow(ba.Window):
                     playlist = filter_playlist(playlist,
                                                self._sessiontype,
                                                remove_unowned=False,
-                                               mark_unowned=True)
+                                               mark_unowned=True,
+                                               name=name)
                     for entry in playlist:
                         mapname = entry['settings']['map']
                         maptype: type[ba.Map] | None

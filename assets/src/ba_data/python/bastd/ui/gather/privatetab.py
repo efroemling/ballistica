@@ -184,7 +184,9 @@ class PrivateGatherTab(GatherTab):
         if playlist is None:
             playlist = pvars.get_default_list_call()
 
-        hcfg.playlist = filter_playlist(playlist, sessiontype)
+        hcfg.playlist = filter_playlist(playlist,
+                                        sessiontype,
+                                        name=playlist_name)
 
         randomize = cfg.get(f'{pvars.config_name} Playlist Randomize')
         if not isinstance(randomize, bool):

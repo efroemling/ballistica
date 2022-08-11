@@ -94,9 +94,11 @@ class MultiTeamSession(Session):
                 playlist = _playlist.get_default_free_for_all_playlist()
 
         # Resolve types and whatnot to get our final playlist.
-        playlist_resolved = _playlist.filter_playlist(playlist,
-                                                      sessiontype=type(self),
-                                                      add_resolved_type=True)
+        playlist_resolved = _playlist.filter_playlist(
+            playlist,
+            sessiontype=type(self),
+            add_resolved_type=True,
+            name='default teams' if self.use_teams else 'default ffa')
 
         if not playlist_resolved:
             raise RuntimeError('Playlist contains no valid games.')

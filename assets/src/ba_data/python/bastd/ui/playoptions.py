@@ -86,7 +86,8 @@ class PlayOptionsWindow(popup.PopupWindow):
             plst = filter_playlist(plst,
                                    self._sessiontype,
                                    remove_unowned=False,
-                                   mark_unowned=True)
+                                   mark_unowned=True,
+                                   name=name)
             game_count = len(plst)
             for entry in plst:
                 mapname = entry['settings']['map']
