@@ -3,7 +3,6 @@
 #include "ballistica/game/account.h"
 
 #include "ballistica/app/app_globals.h"
-#include "ballistica/app/app_internal.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/platform/platform.h"
@@ -177,7 +176,7 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
   }
   if (call_login_did_change) {
     // Inform a few subsystems of the change.
-    g_app_internal->V1LoginDidChange();
+    AppInternalV1LoginDidChange();
     g_platform->V1LoginDidChange();
   }
 }

@@ -162,6 +162,7 @@ auto AppInternalHasBlessingHash() -> bool;
 auto AppInternalPutLog(bool fatal) -> bool;
 auto AppInternalAAT() -> void;
 auto AppInternalAATE() -> void;
+auto AppInternalV1LoginDidChange() -> void;
 auto AppInternalSetAdCompletionCall(PyObject* obj, bool pass_actually_showed)
     -> void;
 auto AppInternalPushAdViewComplete(const std::string& purpose,
