@@ -291,6 +291,7 @@
     <ClInclude Include="..\..\src\ballistica\dynamics\part.h" />
     <ClCompile Include="..\..\src\ballistica\dynamics\rigid_body.cc" />
     <ClInclude Include="..\..\src\ballistica\dynamics\rigid_body.h" />
+    <ClCompile Include="..\..\src\ballistica\game\account.cc" />
     <ClInclude Include="..\..\src\ballistica\game\account.h" />
     <ClInclude Include="..\..\src\ballistica\game\client_controller_interface.h" />
     <ClCompile Include="..\..\src\ballistica\game\connection\connection.cc" />
@@ -308,6 +309,7 @@
     <ClInclude Include="..\..\src\ballistica\game\friend_score_set.h" />
     <ClCompile Include="..\..\src\ballistica\game\game.cc" />
     <ClInclude Include="..\..\src\ballistica\game\game.h" />
+    <ClCompile Include="..\..\src\ballistica\game\game_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\game\game_stream.h" />
     <ClCompile Include="..\..\src\ballistica\game\host_activity.cc" />
     <ClInclude Include="..\..\src\ballistica\game\host_activity.h" />
@@ -316,10 +318,15 @@
     <ClCompile Include="..\..\src\ballistica\game\player_spec.cc" />
     <ClInclude Include="..\..\src\ballistica\game\player_spec.h" />
     <ClInclude Include="..\..\src\ballistica\game\score_to_beat.h" />
+    <ClCompile Include="..\..\src\ballistica\game\session\client_session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\client_session.h" />
+    <ClCompile Include="..\..\src\ballistica\game\session\host_session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\host_session.h" />
+    <ClCompile Include="..\..\src\ballistica\game\session\net_client_session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\net_client_session.h" />
+    <ClCompile Include="..\..\src\ballistica\game\session\replay_client_session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\replay_client_session.h" />
+    <ClCompile Include="..\..\src\ballistica\game\session\session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\session.h" />
     <ClCompile Include="..\..\src\ballistica\generic\base64.cc" />
     <ClInclude Include="..\..\src\ballistica\generic\base64.h" />

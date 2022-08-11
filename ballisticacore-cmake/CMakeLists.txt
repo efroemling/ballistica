@@ -300,6 +300,7 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/dynamics/part.h
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.cc
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.h
+  ${BA_SRC_ROOT}/ballistica/game/account.cc
   ${BA_SRC_ROOT}/ballistica/game/account.h
   ${BA_SRC_ROOT}/ballistica/game/client_controller_interface.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection.cc
@@ -317,6 +318,7 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/friend_score_set.h
   ${BA_SRC_ROOT}/ballistica/game/game.cc
   ${BA_SRC_ROOT}/ballistica/game/game.h
+  ${BA_SRC_ROOT}/ballistica/game/game_stream.cc
   ${BA_SRC_ROOT}/ballistica/game/game_stream.h
   ${BA_SRC_ROOT}/ballistica/game/host_activity.cc
   ${BA_SRC_ROOT}/ballistica/game/host_activity.h
@@ -325,10 +327,15 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/player_spec.cc
   ${BA_SRC_ROOT}/ballistica/game/player_spec.h
   ${BA_SRC_ROOT}/ballistica/game/score_to_beat.h
+  ${BA_SRC_ROOT}/ballistica/game/session/client_session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/client_session.h
+  ${BA_SRC_ROOT}/ballistica/game/session/host_session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/host_session.h
+  ${BA_SRC_ROOT}/ballistica/game/session/net_client_session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/net_client_session.h
+  ${BA_SRC_ROOT}/ballistica/game/session/replay_client_session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/replay_client_session.h
+  ${BA_SRC_ROOT}/ballistica/game/session/session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/session.h
   ${BA_SRC_ROOT}/ballistica/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/generic/base64.h

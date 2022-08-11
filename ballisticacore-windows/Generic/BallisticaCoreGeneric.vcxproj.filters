@@ -307,6 +307,9 @@
     <ClInclude Include="..\..\src\ballistica\dynamics\rigid_body.h">
       <Filter>ballistica\dynamics</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\account.cc">
+      <Filter>ballistica\game</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\account.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
@@ -358,6 +361,9 @@
     <ClInclude Include="..\..\src\ballistica\game\game.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\game_stream.cc">
+      <Filter>ballistica\game</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\game_stream.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
@@ -382,18 +388,33 @@
     <ClInclude Include="..\..\src\ballistica\game\score_to_beat.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\session\client_session.cc">
+      <Filter>ballistica\game\session</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\client_session.h">
       <Filter>ballistica\game\session</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\session\host_session.cc">
+      <Filter>ballistica\game\session</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\host_session.h">
       <Filter>ballistica\game\session</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\session\net_client_session.cc">
+      <Filter>ballistica\game\session</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\net_client_session.h">
       <Filter>ballistica\game\session</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\session\replay_client_session.cc">
+      <Filter>ballistica\game\session</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\replay_client_session.h">
       <Filter>ballistica\game\session</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\session\session.cc">
+      <Filter>ballistica\game\session</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\session.h">
       <Filter>ballistica\game\session</Filter>
     </ClInclude>
