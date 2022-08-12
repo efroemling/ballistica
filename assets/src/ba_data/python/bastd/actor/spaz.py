@@ -966,7 +966,7 @@ class Spaz(ba.Actor):
                 self.on_punched(damage)
 
                 # If damage was significant, lets show it.
-                if damage > 350:
+                if damage >= 350:
                     assert msg.force_direction is not None
                     ba.show_damage_count('-' + str(int(damage / 10)) + '%',
                                          msg.pos, msg.force_direction)
@@ -977,10 +977,10 @@ class Spaz(ba.Actor):
                     ba.playsound(SpazFactory.get().punch_sound_stronger,
                                  1.0,
                                  position=self.node.position)
-                if damage > 500:
+                if damage >= 500:
                     sounds = SpazFactory.get().punch_sound_strong
                     sound = sounds[random.randrange(len(sounds))]                                       
-                elif damage > 300:    
+                elif damage >= 300:    
                     sound = SpazFactory.get().punch_sound                   
                 else:
                     sound = SpazFactory.get().punch_sound_weak
