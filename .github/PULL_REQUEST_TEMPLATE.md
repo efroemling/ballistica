@@ -2,18 +2,18 @@
 
 Thank you for submitting a PR to Ballistica!
 
-To ease the process of reviewing your PR, do make sure to complete the following boxes.
+To ease the process of reviewing your PR, make sure to complete the following steps.
 
-You can also read more about contributing to pylint in this document:
-https://github.com/efroemling/ballistica/wiki/Contributing
+You can also read more about contributing to Ballistica in this document:
+https://ballistica.net/wiki/Contributing
 -->
 
 ## Steps
 
+- [ ] Write a good description of what your PR does (and WHY it does it).
 - [ ] Add yourself to CONTRIBUTORS if you are a new contributor.
-- [ ] Add a CHANGELOG entry describing what your PR does.
+- [ ] Add a CHANGELOG entry if your change is non-trivial.
 - [ ] Ensure `make preflight` completes successfully.
-- [ ] Write a good description on what the PR does.
 
 ## Description
 
