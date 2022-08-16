@@ -190,7 +190,7 @@ class Spaz(ba.Actor):
         else:
             self._punch_cooldown = factory.punch_cooldown
         self._jump_cooldown = 250
-        self._pickup_cooldown = 0
+        self._pickup_cooldown = 100
         self._bomb_cooldown = 0
         self._has_boxing_gloves = False
         if self.default_boxing_gloves:
