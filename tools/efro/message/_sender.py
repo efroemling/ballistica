@@ -57,8 +57,9 @@ class MessageSender:
         """Function decorator for setting raw send method.
 
         Send methods take strings and should return strings.
-        Any Exception raised during the send_method manifests as
-        a CommunicationError for the message sender.
+        CommunicationErrors raised here will be returned to the sender
+        as such; all other exceptions will result in a RuntimeError for
+        the sender.
         """
         assert self._send_raw_message_call is None
         self._send_raw_message_call = call
@@ -70,8 +71,9 @@ class MessageSender:
         """Function decorator for setting raw send-async method.
 
         Send methods take strings and should return strings.
-        Any Exception raised during the send_method manifests as
-        a CommunicationError for the message sender.
+        CommunicationErrors raised here will be returned to the sender
+        as such; all other exceptions will result in a RuntimeError for
+        the sender.
         """
         assert self._send_async_raw_message_call is None
         self._send_async_raw_message_call = call
@@ -140,8 +142,7 @@ class MessageSender:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
             return ErrorResponse(
-                error_message=(
-                    f'Error in send async method ({type(exc)}): {exc}'),
+                error_message=f'Error in send method ({type(exc)}): {exc}',
                 error_type=(ErrorResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
                             ErrorResponse.ErrorType.LOCAL))
@@ -167,7 +168,8 @@ class MessageSender:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
             return ErrorResponse(
-                error_message=f'Error in send async method: {exc}',
+                error_message=f'Error in send async method ({type(exc)}):'
+                f' {exc}',
                 error_type=(ErrorResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
                             ErrorResponse.ErrorType.LOCAL))
@@ -241,17 +243,17 @@ class MessageSender:
                     ErrorResponse.ErrorType.COMMUNICATION):
                 raise CommunicationError(raw_response.error_message)
 
-            # If something went wrong on our end of the connection,
+            # If something went wrong on *our* end of the connection,
             # don't say it was a remote error.
             if raw_response.error_type is ErrorResponse.ErrorType.LOCAL:
                 raise RuntimeError(raw_response.error_message)
 
             # If they want to support clean errors, do those.
-            if (self.protocol.preserve_clean_errors and
-                    raw_response.error_type is ErrorResponse.ErrorType.CLEAN):
+            if (self.protocol.preserve_clean_errors and raw_response.error_type
+                    is ErrorResponse.ErrorType.REMOTE_CLEAN):
                 raise CleanError(raw_response.error_message)
 
-            # In all other cases, just say something went wrong 'out there'.
+            # Everything else gets lumped in as a remote error.
             raise RemoteError(raw_response.error_message)
 
         return raw_response

@@ -45,21 +45,21 @@ class Response:
 @ioprepped
 @dataclass
 class ErrorResponse(Response):
-    """Message saying some error has occurred on the other end.
+    """Response saying some error has occurred for the send.
 
     This type is unique in that it is not returned to the user; it
     instead results in a local exception being raised.
     """
 
     class ErrorType(Enum):
-        """Type of error that occurred in remote message handling."""
-        OTHER = 0
-        CLEAN = 1
+        """Type of error that occurred while sending a message."""
+        REMOTE = 0
+        REMOTE_CLEAN = 1
         LOCAL = 2
         COMMUNICATION = 3
 
     error_message: Annotated[str, IOAttrs('m')]
-    error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.OTHER
+    error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.REMOTE
 
 
 @ioprepped

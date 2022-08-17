@@ -6,28 +6,33 @@
 
 ![](https://github.com/efroemling/ballistica/workflows/CI/badge.svg)
 
-The Ballistica project is the foundation for the next generation of [BombSquad](https://www.froemling.net/apps/bombsquad). It debuted with version 1.5 of the game and lays the foundation for some of the big changes coming in 2.0.
+The Ballistica project is the foundation for [BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other future projects.
 
 [Head to the project wiki to get started](https://github.com/efroemling/ballistica/wiki), or learn more about the project below.
 
 ### Project Goals
-* Cleanup
-  * BombSquad's codebase, and especially its scripting layer, have grown a lot over its lifetime, but not always in a 'designed' way. It was overdue for a major refactoring, which should keep it more maintainable for years to come. Examples of this include breaking up the monstrous twenty-six-thousand-line bsUI.py file into a much cleaner individual subpackages, updating all code from Python 2.7 to the latest 3.X versions, and adding type annotations to the entire codebase.
-* Provide modders and tinkerers with the best possible development environment
-  * I've spent a lot of time incorporating auto-formatters, type-checkers, linters, and smart IDEs into my development workflow and have found them to be an enormous help. By sharing my setup here I hope to make them easily accessible to everyone.
-* Improve transparency
-  * I get a lot of "what's in the next update?" or "how is 2.0 coming?" questions. By working here in the open I hope to make many of these questions unnecessary.
-* Increase community involvement
-  * Provide a single place for tracking issues related to the engine/game
-  * Allow people to submit their own bug fixes or improvements, making myself less of a bottleneck
-  * Migrate modding documentation to this repo's wiki, allowing other modders to add their own bits of wisdom
 
+* **Do one thing and do it well**
+
+  Ballistica is not aiming to be a general purpose game engine. Rather it aims to support creating one particular type of experience; namely 'physics based multiplayer action on small table-top-ish environments built from real-world objects'. If you've got something you'd like to create that fits that description (like BombSquad itself does), give Ballistica a look. Of course, there is nothing preventing you from going and building an FPS out of this stuff, but I wouldn't recommend it.
+
+* **Python tomfoolery**
+
+   Ballistica is built on a C++ core for performance-sensitive code with a Python layer for high level game/app logic. This Python layer is designed to be mucked with. Users can override core game functionality, write their own mini games, or anything else they can dream up, either by directly accessing files on disk or by working through an integrated web-based editor. It can be a fun way to learn Python without any danger of getting real work done.
+
+* **Physics-y goodness**
+
+   I love playing with physics simulations, and Ballistica was built partly to scratch this itch. Though the game physics in BombSquad have stayed largely unchanged for a while, my future plans for the engine lean heavily on making this more flexible and open-ended, opening up lots of fun multiplayer physics-y potential. Stay tuned...
+
+* **Community**
+   BombSquad started as a 'just for fun' project to play with my friends, and I want to keep that spirit alive as the Ballistica project moves forward. Whether this means making it easier to share mods, organize tournaments, join up with friends, teach each other some Python, or whatever else. Life is short; let's play some games. Or make them. Maybe both.
+  
 ### Frequently Asked Questions
-* **Q: What's with this new name? Is BombSquad getting renamed?**
-* A: No, BombSquad is still BombSquad. 'Ballistica' is simply the new name for the engine/app-framework. This way it can also be used for other game/app projects without causing confusion (though that is mostly theoretical at this point). As a modder, the biggest changes you will notice is 'ba' prefixes in the API instead of 'bs' and naming that follows Python PEP8 standards (underscores and lowercase instead of camel-case). So `bs.playSound(mySound)` in the old system might look like `ba.playsound(my_sound)` in the new. You may also see the word 'BallisticaCore' show up various places, which in actual releases gets replaced by 'BombSquad'.
+* **Q: What's with this name? Is it BombSquad or Ballistica?**
+  * A: BombSquad is the game. Ballistica is the engine.
+
+* **Q: When are you adding more maps/characters/minigames/etc. to BombSquad!?!?**
+  * A: Check out the [Ballistica Roadmap](https://github.com/efroemling/ballistica/wiki/Roadmap) to get a sense of what's planned for when. And for the record, the answer to that particular question is basically '1.8'.
 
 * **Q: Does this mean BombSquad is open source?**
-* A: Yes and no. All code contained in this repo is MIT licensed and free for use anywhere. This includes game scripts, pipeline tools, and most of the binary engine sources. Anything not directly contained in this repository, however, even if automatically downloaded by build scripts, is still proprietary and cannot be redistributed without explicit consent. This includes assets and game libraries/binaries. So in a nutshell: create and share mods or use any of this code in your own projects, but please don't distribute your own complete copies of BombSquad without permission. Please email support@froemling.net if you have any questions about this.
-
-* **Q: Will my existing BombSquad 1.4.x mods still work?**
-* A: Not 'out of the box'. All mods will need to be explicitly updated to work with the new ballistica apis in 1.5+. This may or may not be a significant amount of work depending on the mod. I would highly suggest tinkering around with some of the new features in 1.5 such as type-safe Python and dynamic assets before attempting to port any old mods, as some things are done significantly differently now. You may also want to consider simply sticking with 1.4 builds for a while longer, especially for server duties, since they will remain fully compatible with clients running 1.5. The new ballistica APIs may be changing significantly for at least a while as the dust settles, but they will be worth switching to in the end, I promise!
+  * A: Yes and no. All code contained in this repo is MIT licensed and free for use anywhere. This includes game scripts, pipeline tools, and most of the binary engine sources. Anything not directly contained in this repository, however, even if automatically downloaded by build scripts, is still proprietary and cannot be redistributed without explicit consent. This includes assets and game libraries/binaries. So in a nutshell: create and share mods or use any of this code in your own projects, but please don't distribute your own complete copies of BombSquad without permission. Please email support@froemling.net if you have any questions about this.
