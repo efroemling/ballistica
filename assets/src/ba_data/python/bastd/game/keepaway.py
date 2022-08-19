@@ -76,6 +76,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
             ],
             default=1.0,
         ),
+        ba.BoolSetting('Epic Mode', default=False),
     ]
     scoreconfig = ba.ScoreConfig(label='Time Held')
     default_music = ba.MusicType.KEEP_AWAY
@@ -115,6 +116,8 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._flag: Flag | None = None
         self._hold_time = int(settings['Hold Time'])
         self._time_limit = float(settings['Time Limit'])
+        self._epic_mode = bool(settings['Epic Mode'])
+        self.slow_motion = self._epic_mode
 
     def get_instance_description(self) -> str | Sequence:
         return 'Carry the flag for ${ARG1} seconds.', self._hold_time
