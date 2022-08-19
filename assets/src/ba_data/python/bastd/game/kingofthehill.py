@@ -79,6 +79,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             ],
             default=1.0,
         ),
+        ba.BoolSetting('Epic Mode', default=False),
     ]
     scoreconfig = ba.ScoreConfig(label='Time Held')
 
@@ -115,6 +116,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         self._scoring_team: weakref.ref[Team] | None = None
         self._hold_time = int(settings['Hold Time'])
         self._time_limit = float(settings['Time Limit'])
+        self._epic_mode = bool(settings['Epic Mode'])
         self._flag_region_material = ba.Material()
         self._flag_region_material.add_actions(
             conditions=('they_have_material', shared.player_material),
@@ -128,6 +130,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             ))
 
         # Base class overrides.
+        self.slow_motion = self._epic_mode
         self.default_music = ba.MusicType.SCARY
 
     def get_instance_description(self) -> str | Sequence:
