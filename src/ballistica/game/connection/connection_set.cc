@@ -452,7 +452,10 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
       if (data_size == 2) {
         // Client is telling us (host) that it wants to disconnect.
         uint8_t client_id = data[1];
-        if (!VerifyClientAddr(client_id, addr)) break;
+        if (!VerifyClientAddr(client_id, addr)) {
+          Log("VerifyClientAddr() failed");
+          break;
+        }
 
         // Wipe that client out (if it still exists).
         PushClientDisconnectedCall(client_id);
@@ -496,7 +499,10 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
     case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED: {
       if (data_size > 2) {
         uint8_t client_id = data[1];
-        if (!VerifyClientAddr(client_id, addr)) break;
+        if (!VerifyClientAddr(client_id, addr)) {
+          Log("VerifyClientAddr() failed");
+          break;
+        }
 
         auto i = connections_to_clients_.find(client_id);
         if (i != connections_to_clients_.end()) {
