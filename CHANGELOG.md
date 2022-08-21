@@ -1,4 +1,4 @@
-### 1.7.7 (build 20694, api 7, 2022-08-21)
+### 1.7.7 (build 20696, api 7, 2022-08-21)
 - added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread
 - improved logging of missing playlist game types
 - some ba.Lstr functionality can now be used in background threads

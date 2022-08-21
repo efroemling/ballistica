@@ -41,7 +41,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 14, 5]),
     PipRequirement(modulename='mypy', minversion=[0, 971]),
     PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 6, 0]),
+    PipRequirement(modulename='cpplint', minversion=[1, 6, 1]),
     PipRequirement(modulename='pytest', minversion=[7, 1, 2]),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),
@@ -50,9 +50,9 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='pdoc'),
     PipRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
     PipRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PipRequirement(pipname='types-requests', minversion=[2, 28, 2]),
-    PipRequirement(pipname='types-pytz', minversion=[2022, 1, 2]),
-    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 10]),
+    PipRequirement(pipname='types-requests', minversion=[2, 28, 9]),
+    PipRequirement(pipname='types-pytz', minversion=[2022, 2, 1, 0]),
+    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 11]),
     PipRequirement(pipname='certifi', minversion=[2022, 6, 15]),
     PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
 ]
@@ -571,6 +571,13 @@ def checkenv() -> None:
                         f' will update all pip requirements.')
                 if minver is not None:
                     vnums = pipvers[pipname]
+                    # Seeing a decent number of version lengths fluctuating
+                    # (one day [a,b,c,d] and the next [a,b,c])
+                    # So let's pad with zeros to match lengths.
+                    while len(vnums) < len(minver):
+                        vnums.append(0)
+                    while len(minver) < len(vnums):
+                        minver.append(0)
                     assert len(vnums) == len(minver), (
                         f'unexpected version format for {pipname}: {vnums}')
                     if vnums < minver:
