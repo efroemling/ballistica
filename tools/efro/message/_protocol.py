@@ -152,14 +152,16 @@ class MessageProtocol:
             logging.exception('Error handling message.')
 
         # If anything goes wrong, return a ErrorResponse instead.
+        # (either CLEAN or generic REMOTE)
         if isinstance(exc, CleanError) and self.preserve_clean_errors:
-            return ErrorResponse(error_message=str(exc),
-                                 error_type=ErrorResponse.ErrorType.CLEAN)
+            return ErrorResponse(
+                error_message=str(exc),
+                error_type=ErrorResponse.ErrorType.REMOTE_CLEAN)
         return ErrorResponse(
             error_message=(traceback.format_exc()
                            if self.receiver_returns_stack_traces else
                            'An internal error has occurred.'),
-            error_type=ErrorResponse.ErrorType.OTHER)
+            error_type=ErrorResponse.ErrorType.REMOTE)
 
     def _to_dict(self, message: Any, ids_by_type: dict[type, int],
                  opname: str) -> dict:
