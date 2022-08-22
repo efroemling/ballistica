@@ -92,6 +92,12 @@ class App:
         return self._env['build_number']
 
     @property
+    def device_name(self) -> str:
+        """Name of the device running the game."""
+        assert isinstance(self._env['device_name'], str)
+        return self._env['device_name']
+
+    @property
     def config_file_path(self) -> str:
         """Where the game's config file is stored on disk."""
         assert isinstance(self._env['config_file_path'], str)

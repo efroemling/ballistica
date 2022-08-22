@@ -110,6 +110,7 @@
           <option value="xml.dom.*" />
           <option value="type.__getitem__" />
           <option value="typing_extensions.assert_type" />
+          <option value="float.__getitem__" />
         </list>
       </option>
     </inspection_tool>

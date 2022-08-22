@@ -1,8 +1,9 @@
-### 1.7.7 (build 20698, api 7, 2022-08-21)
+### 1.7.7 (build 20700, api 7, 2022-08-22)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
 - Added simple check for incoming packets (should increase security level a bit).
+- Simplified logic for C++ `Platform::GetDeviceName()` and made it accessible to Python via `ba.app.device_name`.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

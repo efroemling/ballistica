@@ -453,7 +453,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
         // Client is telling us (host) that it wants to disconnect.
         uint8_t client_id = data[1];
         if (!VerifyClientAddr(client_id, addr)) {
-          Log("VerifyClientAddr() failed");
+          BA_LOG_ONCE("VerifyClientAddr() failed.");
           break;
         }
 
@@ -500,7 +500,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
       if (data_size > 2) {
         uint8_t client_id = data[1];
         if (!VerifyClientAddr(client_id, addr)) {
-          Log("VerifyClientAddr() failed");
+          BA_LOG_ONCE("VerifyClientAddr() failed.");
           break;
         }
 

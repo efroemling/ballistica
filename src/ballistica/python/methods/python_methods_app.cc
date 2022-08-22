@@ -780,6 +780,7 @@ auto PyEnv(PyObject* self) -> PyObject* {
         "si"  // protocol_version
         "sO"  // headless_mode
         "ss"  // python_directory_app_site
+        "ss"  // device_name
         "}",
         "build_number", kAppBuildNumber,
         "config_file_path", config_path.c_str(),
@@ -802,7 +803,9 @@ auto PyEnv(PyObject* self) -> PyObject* {
         "protocol_version", kProtocolVersion,
         "headless_mode", HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
-        g_platform->GetSitePythonDirectory().c_str());
+        g_platform->GetSitePythonDirectory().c_str(),
+        "device_name",
+        g_platform->GetDeviceName().c_str());
     // clang-format on
   }
   Py_INCREF(env_obj);

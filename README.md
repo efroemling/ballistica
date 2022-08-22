@@ -18,7 +18,7 @@ The Ballistica project is the foundation for [BombSquad](https://www.froemling.n
 
 * **Python tomfoolery**
 
-   Ballistica is built on a C++ core for performance-sensitive code with a Python layer for high level game/app logic. This Python layer is designed to be mucked with. Users can override core game functionality, write their own mini games, or anything else they can dream up, either by directly accessing files on disk or by working through an integrated web-based editor. It can be a fun way to learn Python without the danger of getting useful work done.
+   Ballistica is built on a C++ core for performance-sensitive code with a Python layer for high level game/app logic. This Python layer is designed to be mucked with. Users can override core game functionality, write their own mini games, or anything else they can dream up, either by directly accessing files on disk or by working through an integrated web-based editor. It can be a fun way to learn Python without the danger of getting actual work done.
 
 * **Physics-y goodness**
 

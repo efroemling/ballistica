@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/account.h"
+#include "ballistica/game/game.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/platform/platform.h"
@@ -80,8 +81,16 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
     spec.name_ =
         Utils::GetValidUTF8(g_account->GetLoginName().c_str(), "bsgaps");
   } else {
-    spec.name_ =
-        Utils::GetValidUTF8(g_platform->GetDeviceName().c_str(), "bsgaps2");
+    // Headless builds fall back to V1 public-party name if that's available.
+    if (g_buildconfig.headless_build()
+        && !g_game->public_party_name().empty()) {
+      spec.name_ =
+          Utils::GetValidUTF8(g_game->public_party_name().c_str(), "bsgp3r");
+    } else {
+      // Or lastly fall back to device name.
+      spec.name_ =
+          Utils::GetValidUTF8(g_platform->GetDeviceName().c_str(), "bsgaps2");
+    }
   }
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
