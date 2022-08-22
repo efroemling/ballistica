@@ -45,6 +45,26 @@ class SockAddr {
         throw Exception();
     }
   }
+  auto operator==(const SockAddr& other) const -> bool {
+    if (addr_.ss_family != other.addr_.ss_family) return false;
+    if (addr_.ss_family == AF_INET) {
+      return (reinterpret_cast<const sockaddr_in&>(addr_).sin_addr.s_addr
+              == reinterpret_cast<const sockaddr_in&>(other.addr_)
+                     .sin_addr.s_addr)
+             && (reinterpret_cast<const sockaddr_in&>(addr_).sin_port
+                 == reinterpret_cast<const sockaddr_in&>(other.addr_).sin_port);
+    }
+    if (addr_.ss_family == AF_INET6) {
+      return !memcmp(&(reinterpret_cast<const sockaddr_in6&>(addr_).sin6_addr),
+                     &(reinterpret_cast<const sockaddr_in6&>(other.addr_)
+                           .sin6_addr),
+                     sizeof(in6_addr))
+             && (reinterpret_cast<const sockaddr_in6&>(addr_).sin6_port
+                 == reinterpret_cast<const sockaddr_in6&>(other.addr_)
+                        .sin6_port);
+    }
+    throw Exception();
+  }
 
  private:
   sockaddr_storage addr_{};

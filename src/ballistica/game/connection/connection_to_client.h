@@ -49,7 +49,6 @@ class ConnectionToClient : public Connection {
     next_kick_vote_allow_time_ = val;
   }
   auto next_kick_vote_allow_time() const { return next_kick_vote_allow_time_; }
-
   auto public_device_id() const { return public_device_id_; }
   // Returns a spec for this client that incorporates their player names
   // or their peer name if they have no players.
