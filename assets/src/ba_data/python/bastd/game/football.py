@@ -732,6 +732,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                     self._scoring_team = team
                     if team is self._bot_team:
                         self.continue_or_end_game()
+                        ba.app.pause()
                     else:
                         ba.setmusic(ba.MusicType.VICTORY)
 

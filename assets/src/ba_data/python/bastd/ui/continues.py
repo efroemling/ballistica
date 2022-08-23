@@ -162,6 +162,8 @@ class ContinuesWindow(ba.Window):
                 ba.textwidget(edit=self._counter_text, text=str(self._count))
 
     def _on_cancel_press(self) -> None:
+        ba.app.resume()
+
         # disallow for first second
         if self._start_count - self._count < 2:
             ba.playsound(ba.getsound('error'))
@@ -170,6 +172,7 @@ class ContinuesWindow(ba.Window):
 
     def _on_continue_press(self) -> None:
         from bastd.ui import getcurrency
+        ba.app.resume()
 
         # Disallow for first second.
         if self._start_count - self._count < 2:
