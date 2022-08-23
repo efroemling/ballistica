@@ -85,6 +85,7 @@ class Updater:
         self._check_makefiles()
         self._check_python_files()
         self._check_sync_states()
+        self._check_misc()
 
         self._find_sources_and_headers('src/ballistica')
 
@@ -613,17 +614,30 @@ class Updater:
         self._source_files = sorted(src_files)
         self._header_files = sorted(header_files)
 
+    def _check_misc(self) -> None:
+        # Misc sanity checks.
+        if not self._public:
+            # Make sure we're set to prod master server.
+            with open('src/ballistica/networking/master_server_config.h',
+                      encoding='utf-8') as infile:
+                msconfig = infile.read()
+                if ('// V2 Master Server:\n'
+                        '\n'
+                        '// PROD\n'
+                        '#if 1\n') not in msconfig:
+                    raise CleanError('Not using prod v2 master server.')
+
     def _check_sync_states(self) -> None:
         # Make sure none of our sync targets have been mucked with since
         # their last sync.
-        if os.system('tools/pcommand sync check') != 0:
-            print(Clr.RED + 'Sync check failed; you may need to run "sync".' +
-                  Clr.RST)
-            sys.exit(255)
+        if (subprocess.run(['tools/pcommand', 'sync', 'check'],
+                           check=False).returncode != 0):
+            raise CleanError('Sync check failed; you may need to run "sync".')
 
     def _update_assets_makefile(self) -> None:
-        if os.system(f'tools/pcommand update_assets_makefile {self._checkarg}'
-                     ) != 0:
+        if (subprocess.run(
+            ['tools/pcommand', 'update_assets_makefile', self._checkarg],
+                check=False).returncode != 0):
             print(
                 f'{Clr.RED}Error checking/updating assets Makefile.{Clr.RST}')
             sys.exit(255)

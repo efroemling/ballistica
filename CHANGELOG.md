@@ -1,12 +1,13 @@
-### 1.7.7 (build 20692, api 7, 2022-08-17)
-- added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread
-- improved logging of missing playlist game types
-- some ba.Lstr functionality can now be used in background threads
-
+### 1.7.7 (build 20700, api 7, 2022-08-22)
+- Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
+- Improved logging of missing playlist game types.
+- Some ba.Lstr functionality can now be used in background threads.
+- Added simple check for incoming packets (should increase security level a bit).
+- Simplified logic for C++ `Platform::GetDeviceName()` and made it accessible to Python via `ba.app.device_name`.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.
-- It is now possible to tell the meta system about arbitrary classes (ba_meta export foo.bar.Class) instead of just the preset types 'plugin', 'game', etc. 
+- It is now possible to tell the meta system about arbitrary classes (ba_meta export foo.bar.Class) instead of just the preset types 'plugin', 'game', etc.
 - Newly discovered plugins are now activated immediately instead of requiring a restart.
 
 ### 1.7.5 (build 20672, api 7, 2022-07-25)
@@ -49,7 +50,7 @@
 
 ### 1.7.2 (20620, 2022-06-25)
 - Minor fixes in some minigames (Thanks Droopy!)
-- Fixed a bug preventing 'clients' arg from working in _ba.chatmessage (Thanks imayushsaini!)
+- Fixed a bug preventing 'clients' arg from working in `_ba.chatmessage` (Thanks imayushsaini!)
 - Fixed a bug where ba.Player.getdelegate(doraise=True) could return None instead of raising a ba.DelegateNotFoundError (thanks Dliwk!)
 - Lots of Romanian language improvements (Thanks Meryu!)
 - Workspaces are now functional. They require signing in with a V2 account, which currently is limited to explicitly created email/password logins. See ballistica.net to create such an account or create/edit a workspace. This is bleeding edge stuff so please holler with any bugs you come across or if anything seems unintuitive.

@@ -579,7 +579,9 @@ class Platform {
   bool attempted_to_make_user_scripts_dir_{};
   bool made_volatile_data_dir_{};
   bool have_device_uuid_{};
+  bool ran_base_post_init_{};
   millisecs_t starttime_{};
+  std::string device_name_;
   std::string legacy_device_uuid_;
   std::string config_dir_;
   std::string user_scripts_dir_;

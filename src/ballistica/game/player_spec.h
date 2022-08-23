@@ -9,9 +9,11 @@
 
 namespace ballistica {
 
-// a PlayerSpec is a portable description of an entity such as a player or
-// client. It can contain long and short names, optional info linking it to a
-// real account, and can be passed around easily in string form.
+/// a PlayerSpec is a portable description of an entity such as a player or
+/// client. It can contain long and short names, optional info linking it to a
+/// V1 account, and can be passed around easily in string form.
+/// Note: usage of this should be phased out during the V2 era; the C++ layer
+/// should not know or care about V2 accounts.
 class PlayerSpec {
  public:
   /// Init an invalid player-spec
@@ -35,9 +37,10 @@ class PlayerSpec {
   /// Return the full string form to be passed around.
   auto GetSpecString() const -> std::string;
 
-  /// Return a PlayerSpec for the currently logged in account.
-  /// If there is no current logged in account, a dummy-spec is created
-  /// using the device name (so this always returns something reasonable).
+  /// Return a PlayerSpec for the currently logged in v1 account.
+  /// If there is no current logged in v1 account, a dummy-spec is created
+  /// using the current party name or device name (so this always returns
+  /// something reasonable).
   static auto GetAccountPlayerSpec() -> PlayerSpec;
 
   /// Return a 'dummy' PlayerSpec using the given name; can be

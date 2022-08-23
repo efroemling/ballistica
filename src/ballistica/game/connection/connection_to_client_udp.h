@@ -9,6 +9,7 @@
 
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/networking/networking.h"
+#include "ballistica/networking/sockaddr.h"
 
 namespace ballistica {
 
@@ -27,6 +28,7 @@ class ConnectionToClientUDP : public ConnectionToClient {
   void SendDisconnectRequest();
   auto SendGamePacketCompressed(const std::vector<uint8_t>& data)
       -> void override;
+  auto addr() { return *addr_; }
 
  private:
   uint8_t request_id_;

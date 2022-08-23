@@ -107,12 +107,19 @@ namespace ballistica {
 auto Platform::Create() -> Platform* {
   auto platform = new BA_PLATFORM_CLASS();
   platform->PostInit();
+  assert(platform->ran_base_post_init_);
   return platform;
 }
 
 Platform::Platform() : starttime_(GetCurrentMilliseconds()) {}
 
-auto Platform::PostInit() -> void {}
+auto Platform::PostInit() -> void {
+  // Hmm; we seem to get some funky invalid utf8 out of
+  // this sometimes (mainly on windows). Should look into that
+  // more closely or at least log it somewhere.
+  device_name_ = Utils::GetValidUTF8(DoGetDeviceName().c_str(), "dn");
+  ran_base_post_init_ = true;
+}
 
 Platform::~Platform() = default;
 
@@ -478,41 +485,11 @@ auto Platform::GetLocale() -> std::string {
 }
 
 auto Platform::GetDeviceName() -> std::string {
-  static std::string device_name;
-  static bool have_device_name = false;
-
-  // In headless-mode we always return our party name if that's available
-  // (otherwise everything will just be BallisticaCore Game).
-  // UPDATE: hmm don't think I like this. Device-name is supposed to go into
-  // user-agent-strings and whatnot.
-  // Should probably inject public party name at a higher level.
-  if (g_buildconfig.headless_build()) {
-    // Hmm this might be called from non-main threads; should
-    // think about ensuring this is thread-safe perhaps.
-    if (g_python != nullptr) {
-      std::string pname = g_game->public_party_name();
-      if (!pname.empty()) {
-        device_name = pname;
-        have_device_name = true;
-      }
-    }
-  }
-
-  if (!have_device_name) {
-    device_name = DoGetDeviceName();
-
-    // Hmm seem to get some funky invalid utf8 out of
-    // this sometimes (mainly on windows). Should look into that
-    // more closely or at least log it somewhere.
-    device_name = Utils::GetValidUTF8(device_name.c_str(), "dn");
-    have_device_name = true;
-  }
-  return device_name;
+  assert(ran_base_post_init_);
+  return device_name_;
 }
 
-auto Platform::DoGetDeviceName() -> std::string {
-  return "BallisticaCore Game";
-}
+auto Platform::DoGetDeviceName() -> std::string { return "Untitled Device"; }
 
 auto Platform::IsRunningOnTV() -> bool { return false; }
 
