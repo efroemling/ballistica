@@ -32,7 +32,7 @@ class NetworkReader {
   auto sd6() const { return sd6_; }
 
  private:
-  auto HandleJSONPing(const std::string& data) -> std::string;
+  auto OpenSockets() -> void;
   auto PokeSelf() -> void;
   auto RunThread() -> int;
   static auto RunThreadStatic(void* self) -> int {

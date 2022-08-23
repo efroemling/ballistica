@@ -453,9 +453,9 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
         // Client is telling us (host) that it wants to disconnect.
 
         uint8_t client_id = data[1];
-        if (!VerifyClientAddr(client_id, addr)) {
-          break;
-        }
+        // if (!VerifyClientAddr(client_id, addr)) {
+        //   break;
+        // }
 
         // Wipe that client out (if it still exists).
         PushClientDisconnectedCall(client_id);
