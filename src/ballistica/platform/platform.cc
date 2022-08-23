@@ -489,7 +489,16 @@ auto Platform::GetDeviceName() -> std::string {
   return device_name_;
 }
 
-auto Platform::DoGetDeviceName() -> std::string { return "Untitled Device"; }
+auto Platform::DoGetDeviceName() -> std::string {
+  // Just go with hostname as a decent default.
+  char nbuffer[64];
+  int ret = gethostname(nbuffer, sizeof(nbuffer));
+  if (ret == 0) {
+    nbuffer[sizeof(nbuffer) - 1] = 0;  // Make sure its terminated.
+    return nbuffer;
+  }
+  return "Untitled Device";
+}
 
 auto Platform::IsRunningOnTV() -> bool { return false; }
 
