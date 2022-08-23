@@ -202,6 +202,7 @@ class ContinuesWindow(ba.Window):
                 self._continue_call()
 
     def _on_cancel(self) -> None:
+        ba.app.resume()
         if not self._transitioning_out:
             ba.playsound(ba.getsound('swish'))
             self._transitioning_out = True
