@@ -451,9 +451,9 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
     case BA_PACKET_DISCONNECT_FROM_CLIENT_REQUEST: {
       if (data_size == 2) {
         // Client is telling us (host) that it wants to disconnect.
+
         uint8_t client_id = data[1];
         if (!VerifyClientAddr(client_id, addr)) {
-          BA_LOG_ONCE("VerifyClientAddr() failed.");
           break;
         }
 
@@ -499,8 +499,8 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
     case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED: {
       if (data_size > 2) {
         uint8_t client_id = data[1];
+
         if (!VerifyClientAddr(client_id, addr)) {
-          BA_LOG_ONCE("VerifyClientAddr() failed.");
           break;
         }
 
@@ -707,6 +707,8 @@ auto ConnectionSet::VerifyClientAddr(uint8_t client_id, const SockAddr& addr)
     if (addr == connection_to_client_udp->addr()) {
       return true;
     }
+    BA_LOG_ONCE("VerifyClientAddr() found mismatch for client "
+                + std::to_string(client_id) + ".");
     return false;
   }
 
