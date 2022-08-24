@@ -1,10 +1,11 @@
-### 1.7.7 (build 20709, api 7, 2022-08-23)
+### 1.7.7 (build 20711, api 7, 2022-08-23)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
 - Added simple check for incoming packets (should increase security level a bit).
 - Simplified logic for C++ `Platform::GetDeviceName()` and made it accessible to Python via `ba.app.device_name`.
 - Default device name now uses gethostname() instead of being hard coded to 'Untitled Device' (though many platforms override this).
+- Added support for the console tool in the new devices section on ballistica.net.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

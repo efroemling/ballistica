@@ -517,6 +517,7 @@
       <w>getdata</w>
       <w>getenv</w>
       <w>gethostbyname</w>
+      <w>gethostname</w>
       <w>getifaddr</w>
       <w>getifaddrs</w>
       <w>getinputdevice</w>
