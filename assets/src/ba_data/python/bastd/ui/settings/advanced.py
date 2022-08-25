@@ -432,7 +432,7 @@ class AdvancedSettingsWindow(ba.Window):
             label=ba.Lstr(resource=self._r + '.moddingGuideText'),
             text_scale=1.0,
             on_activate_call=ba.Call(
-                ba.open_url, 'http://ballistica.net/wiki/modding-guide'))
+                ba.open_url, 'https://ballistica.net/wiki/modding-guide'))
         if self._show_always_use_internal_keyboard:
             assert self._always_use_internal_keyboard_check_box is not None
             ba.widget(edit=self._always_use_internal_keyboard_check_box.widget,

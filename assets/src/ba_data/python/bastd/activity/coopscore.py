@@ -1074,7 +1074,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             else:
                 self._score_link = results['link']
                 assert self._score_link is not None
-                if not self._score_link.startswith('http://'):
+                # Prepend our master-server addr if its a relative addr.
+                if (not self._score_link.startswith('http://')
+                        and not self._score_link.startswith('https://')):
                     self._score_link = (_ba.get_master_server_address() + '/' +
                                         self._score_link)
                 self._score_loading_status = None

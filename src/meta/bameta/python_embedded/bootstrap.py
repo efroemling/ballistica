@@ -82,7 +82,7 @@ sys.path.append(_ba.env()['python_directory_app_site'])
 
 # Tell Python to not handle SIGINT itself (it normally generates
 # KeyboardInterrupts which make a mess; we want to intercept them
-# for simple clean exitt). We capture interrupts per-platform in
+# for simple clean exit). We capture interrupts per-platform in
 # the C++ layer.
 # Note: I tried creating a handler in Python but it seemed to often have
 # a delay of up to a second before getting called. (not a huge deal
