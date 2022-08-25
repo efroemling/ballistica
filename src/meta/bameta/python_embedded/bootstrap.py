@@ -25,7 +25,7 @@ class _BAConsoleRedirect:
         self._pending_ship = False
 
     def write(self, sval: Any) -> None:
-        """Override standard stdout write."""
+        """Override standard write call."""
 
         self._call(sval)
 
@@ -66,9 +66,13 @@ class _BAConsoleRedirect:
         return self._original.isatty()
 
 
+# The very first thing we set up is redirecting Python stdout/stderr so
+# we can at least debug problems on systems where native stdout/stderr
+# is not easily accessible (looking at you, Android).
 sys.stdout = _BAConsoleRedirect(sys.stdout, _ba.print_stdout)  # type: ignore
 sys.stderr = _BAConsoleRedirect(sys.stderr, _ba.print_stderr)  # type: ignore
 
+# Now get access to our various script files.
 # Let's lookup mods first (so users can do whatever they want).
 # and then our bundled scripts last (don't want bundled site-package
 # stuff overwriting system versions)
@@ -77,9 +81,10 @@ sys.path.append(_ba.env()['python_directory_app'])
 sys.path.append(_ba.env()['python_directory_app_site'])
 
 # Tell Python to not handle SIGINT itself (it normally generates
-# KeyboardInterrupts which make a mess; we want to do a simple
-# clean exit). We capture interrupts per-platform in the C++ layer.
-# I tried creating a handler in Python but it seemed to often have
+# KeyboardInterrupts which make a mess; we want to intercept them
+# for simple clean exitt). We capture interrupts per-platform in
+# the C++ layer.
+# Note: I tried creating a handler in Python but it seemed to often have
 # a delay of up to a second before getting called. (not a huge deal
 # but I'm picky).
 signal.signal(signal.SIGINT, signal.SIG_DFL)  # Do default handling.

@@ -20,7 +20,6 @@ namespace ballistica {
 
 auto PyGetConfigurableGamePads(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_configurable_game_pads");
   std::vector<InputDevice*> gamepads = g_input->GetConfigurableGamePads();
   PyObject* list = PyList_New(0);
   for (auto&& i : gamepads) {
@@ -34,7 +33,6 @@ auto PyGetConfigurableGamePads(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyHaveTouchScreenInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("have_touch_screen_input");
   if (g_app_globals->touch_input) {
     Py_RETURN_TRUE;
   } else {
@@ -45,7 +43,6 @@ auto PyHaveTouchScreenInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_touchscreen_editing");
   int editing;
   if (!PyArg_ParseTuple(args, "p", &editing)) {
     return nullptr;
@@ -59,7 +56,6 @@ auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("capture_gamepad_input");
   assert(InGameThread());
   assert(g_python);
   PyObject* obj;
@@ -73,7 +69,6 @@ auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("release_gamepad_input");
   assert(InGameThread());
   assert(g_python);
   g_python->ReleaseGamePadInput();
@@ -83,7 +78,6 @@ auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyCaptureKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("capture_keyboard_input");
   assert(InGameThread());
   if (!g_python) {
     return nullptr;
@@ -99,7 +93,6 @@ auto PyCaptureKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyReleaseKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("release_keyboard_input");
   assert(InGameThread());
   if (!g_python) {
     return nullptr;
@@ -111,7 +104,6 @@ auto PyReleaseKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyLockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("lock_all_input");
   assert(InGameThread());
   assert(g_input);
   g_input->LockAllInput(false, Python::GetPythonFileLocation());
@@ -121,7 +113,6 @@ auto PyLockAllInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyUnlockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("unlock_all_input");
   assert(InGameThread());
   assert(g_input);
   g_input->UnlockAllInput(false, Python::GetPythonFileLocation());
@@ -132,7 +123,6 @@ auto PyUnlockAllInput(PyObject* self, PyObject* args) -> PyObject* {
 auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_ui_input_device");
   assert(InGameThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -151,7 +141,6 @@ auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_ui_input_device");
   assert(InGameThread());
   static const char* kwlist[] = {"input", nullptr};
   PyObject* input_device_obj = Py_None;
@@ -170,7 +159,6 @@ auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_input_device");
   assert(InGameThread());
   const char* name;
   const char* unique_id;
@@ -199,7 +187,6 @@ auto PyGetInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetLocalActiveInputDevicesCount(PyObject* self, PyObject* args,
                                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_local_active_input_devices_count");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {

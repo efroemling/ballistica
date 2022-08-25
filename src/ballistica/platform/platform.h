@@ -444,17 +444,6 @@ class Platform {
     }
   }
 
-  /// Shortcut to set last native Python call we made.
-  static auto SetLastPyCall(const std::string& name) {
-    if (g_platform) {
-      g_platform->py_call_num_++;
-      g_platform->SetDebugKey(
-          "LastPyCall" + std::to_string(g_platform->py_call_num_ % 10),
-          std::to_string(g_platform->py_call_num_) + ":" + name + "@"
-              + std::to_string(GetCurrentMilliseconds()));
-    }
-  }
-
 #pragma mark MISC --------------------------------------------------------------
 
   // Return a monotonic time measurement in milliseconds since launch.
@@ -568,7 +557,6 @@ class Platform {
   virtual auto DoClipboardGetText() -> std::string;
 
  private:
-  int py_call_num_{};
   bool using_custom_app_python_dir_{};
   bool have_config_dir_{};
   bool have_has_touchscreen_value_{};

@@ -34,7 +34,6 @@ namespace ballistica {
 auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("buttonwidget");
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* label_obj = Py_None;
@@ -339,7 +338,6 @@ auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("checkboxwidget");
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* text_obj = Py_None;
@@ -478,7 +476,6 @@ auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("imagewidget");
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* texture_obj = Py_None;
@@ -638,8 +635,6 @@ auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("columnwidget");
-
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
   PyObject* background_obj{Py_None};
@@ -780,7 +775,6 @@ auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("containerwidget");
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* background_obj = Py_None;
@@ -1059,8 +1053,6 @@ auto PyRowWidget(PyObject* /* self */, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("rowwidget");
-
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
   PyObject* background_obj{Py_None};
@@ -1159,7 +1151,6 @@ auto PyRowWidget(PyObject* /* self */, PyObject* args, PyObject* keywds)
 auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("scrollwidget");
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
   PyObject* background_obj{Py_None};
@@ -1309,8 +1300,6 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("hscrollwidget");
-
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* background_obj = Py_None;
@@ -1451,7 +1440,6 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("textwidget");
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
   PyObject* text_obj = Py_None;
@@ -1735,8 +1723,6 @@ auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("widget");
-
   PyObject* edit_obj = Py_None;
   PyObject* down_widget_obj = Py_None;
   PyObject* up_widget_obj = Py_None;
@@ -1831,7 +1817,6 @@ auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyUIBounds(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("uibounds");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -1851,8 +1836,6 @@ auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("focuswindow");
-
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -1871,7 +1854,6 @@ auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyShowOnlineScoreUI(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("show_online_score_ui");
   const char* show = "general";
   PyObject* game_obj = Py_None;
   PyObject* game_version_obj = Py_None;
@@ -1898,8 +1880,6 @@ auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("fade_screen");
-
   // This can only be called in the UI context.
   int fade = 0;
   float time = 0.25;
@@ -1918,7 +1898,6 @@ auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("show_ad");
   BA_PRECONDITION(InGameThread());
   const char* purpose;
   PyObject* on_completion_call_obj = Py_None;
@@ -1949,7 +1928,6 @@ auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("show_ad_2");
   BA_PRECONDITION(InGameThread());
   const char* purpose;
   PyObject* on_completion_call_obj = Py_None;
@@ -1979,7 +1957,6 @@ auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyShowAppInvite(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("show_app_invite");
   std::string title;
   std::string message;
   std::string code;
@@ -2004,8 +1981,6 @@ auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("show_progress_bar");
-
   g_graphics->EnableProgressBar(false);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -2014,8 +1989,6 @@ auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-
-  Platform::SetLastPyCall("set_party_icon_always_visible");
 
   int value;
   static const char* kwlist[] = {"value", nullptr};
@@ -2032,7 +2005,6 @@ auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
 auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("chat_message");
   std::string message;
   PyObject* message_obj;
   PyObject* clients_obj = Py_None;
@@ -2068,8 +2040,6 @@ auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("get_chat_messages");
-
   BA_PRECONDITION(InGameThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -2087,7 +2057,6 @@ auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPartyWindowOpen(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_party_window_open");
   int value;
   static const char* kwlist[] = {"value", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
@@ -2103,8 +2072,6 @@ auto PySetPartyWindowOpen(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetSpecialWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-
-  Platform::SetLastPyCall("get_special_widget");
 
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -2129,7 +2096,6 @@ auto PyGetSpecialWidget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHaveIncentivizedAd(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("have_incentivized_ad");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -2147,8 +2113,6 @@ auto PyHaveIncentivizedAd(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-
-  Platform::SetLastPyCall("can_show_ad");
 
   BA_PRECONDITION(InGameThread());
   // if we've got any network connections, no ads..
@@ -2168,7 +2132,6 @@ auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHasVideoAds(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("has_video_ads");
   if (g_platform->GetHasVideoAds()) {
     Py_RETURN_TRUE;
   } else {
@@ -2180,8 +2143,6 @@ auto PyHasVideoAds(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-
-  Platform::SetLastPyCall("back_press");
 
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -2195,7 +2156,6 @@ auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("open_url");
   const char* address = nullptr;
   static const char* kwlist[] = {"address", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -2212,8 +2172,6 @@ auto PyOpenFileExternally(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  Platform::SetLastPyCall("open_file_externally");
-
   char* path = nullptr;
   static const char* kwlist[] = {"path", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -2228,7 +2186,6 @@ auto PyOpenFileExternally(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyOpenDirExternally(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("open_dir_externally");
   char* path = nullptr;
   static const char* kwlist[] = {"path", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -2242,8 +2199,6 @@ auto PyOpenDirExternally(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-
-  Platform::SetLastPyCall("console_print");
 
 #if !BA_HEADLESS_BUILD
   Py_ssize_t tuple_size = PyTuple_GET_SIZE(args);
@@ -2266,7 +2221,6 @@ auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyIsPartyIconVisible(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
-  Platform::SetLastPyCall("is_party_icon_visible");
   BA_PYTHON_TRY;
   bool party_button_active =
       (g_game->connections()->GetConnectedClientCount() > 0

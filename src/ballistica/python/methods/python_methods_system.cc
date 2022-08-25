@@ -50,7 +50,6 @@ auto PyClipboardHasText(PyObject* self) -> PyObject* {
 auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("clipboard_set_text");
   const char* value;
   static const char* kwlist[] = {"value", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -71,14 +70,12 @@ auto PyClipboardGetText(PyObject* self) -> PyObject* {
 
 auto PyIsRunningOnOuya(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_running_on_ouya");
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
 auto PySetUpSigInt(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_up_sig_int");
   if (g_app) {
     g_platform->SetupInterruptHandling();
   } else {
@@ -90,7 +87,6 @@ auto PySetUpSigInt(PyObject* self) -> PyObject* {
 
 auto PyIsRunningOnFireTV(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_running_on_fire_tv");
   if (g_platform->IsRunningOnFireTV()) {
     Py_RETURN_TRUE;
   }
@@ -101,7 +97,6 @@ auto PyIsRunningOnFireTV(PyObject* self, PyObject* args) -> PyObject* {
 auto PyHavePermission(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("have_permission");
   BA_PRECONDITION(InGameThread());
   Permission permission;
   PyObject* permission_obj;
@@ -123,7 +118,6 @@ auto PyHavePermission(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRequestPermission(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("request_permission");
   BA_PRECONDITION(InGameThread());
   Permission permission;
   PyObject* permission_obj;
@@ -143,7 +137,6 @@ auto PyRequestPermission(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyInGameThread(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("in_game_thread");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -159,7 +152,6 @@ auto PyInGameThread(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_thread_name");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -174,7 +166,6 @@ auto PySetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_thread_name");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -189,7 +180,6 @@ auto PyGetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("extra_hash_value");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -205,7 +195,6 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetIdleTime(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_idle_time");
   return PyLong_FromLong(static_cast_check_fit<long>(  // NOLINT
       g_input ? g_input->input_idle_time() : 0));
   BA_PYTHON_CATCH;
@@ -213,7 +202,6 @@ auto PyGetIdleTime(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("has_user_run_commands");
   if (g_app_globals->user_ran_commands) {
     Py_RETURN_TRUE;
   }
@@ -223,7 +211,6 @@ auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("workspaces_in_use");
   if (g_app_globals->workspaces_in_use) {
     Py_RETURN_TRUE;
   }
@@ -233,7 +220,6 @@ auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyContainsPythonDist(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("contains_python_dist");
   if (g_platform->ContainsPythonDist()) {
     Py_RETURN_TRUE;
   }
@@ -244,7 +230,6 @@ auto PyContainsPythonDist(PyObject* self, PyObject* args) -> PyObject* {
 auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("value_test");
   const char* arg;
   double change = 0.0f;
   double absolute = 0.0f;
@@ -354,7 +339,6 @@ auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
 }
 
 auto PyDebugPrintPyErr(PyObject* self, PyObject* args) -> PyObject* {
-  Platform::SetLastPyCall("debug_print_py_err");
   if (PyErr_Occurred()) {
     // we pass zero here to avoid grabbing references to this exception
     // which can cause objects to stick around and trip up our deletion checks
@@ -368,7 +352,6 @@ auto PyDebugPrintPyErr(PyObject* self, PyObject* args) -> PyObject* {
 auto PyPrintContext(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_context");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -382,7 +365,6 @@ auto PyPrintContext(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyPrintLoadInfo(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_load_info");
   g_media->PrintLoadInfo();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -391,7 +373,6 @@ auto PyPrintLoadInfo(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetReplaysDir(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_replays_dir");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -404,7 +385,6 @@ auto PyGetReplaysDir(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetAppConfigDefaultValue(PyObject* self, PyObject* args,
                                 PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_app_config_default_value");
   const char* key = "";
   static const char* kwlist[] = {"key", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -438,7 +418,6 @@ auto PyGetAppConfigDefaultValue(PyObject* self, PyObject* args,
 auto PyAppConfigGetBuiltinKeys(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("app_config_get_builtin_keys");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -455,7 +434,6 @@ auto PyAppConfigGetBuiltinKeys(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyResolveAppConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("resolve_app_config_value");
 
   const char* key;
   static const char* kwlist[] = {"key", nullptr};
@@ -490,7 +468,6 @@ auto PyResolveAppConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetLowLevelConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_low_level_config_value");
   const char* key;
   int default_value;
   static const char* kwlist[] = {"key", "default_value", nullptr};
@@ -505,7 +482,6 @@ auto PyGetLowLevelConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetLowLevelConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_low_level_config_value");
   const char* key;
   int value;
   static const char* kwlist[] = {"key", "value", nullptr};
@@ -520,7 +496,6 @@ auto PySetLowLevelConfigValue(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_platform_misc_read_vals");
   PyObject* vals_obj;
   static const char* kwlist[] = {"mode", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -535,7 +510,6 @@ auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_log_file_path");
   std::string config_dir = g_platform->GetConfigDirectory();
   std::string logpath = config_dir + BA_DIRSLASH + "log.json";
   return PyUnicode_FromString(logpath.c_str());
@@ -544,14 +518,12 @@ auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetVolatileDataDirectory(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_volatile_data_directory");
   return PyUnicode_FromString(g_platform->GetVolatileDataDirectory().c_str());
   BA_PYTHON_CATCH;
 }
 
 auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_log_full");
   if (g_app_globals->log_full) {
     Py_RETURN_TRUE;
   }
@@ -561,7 +533,6 @@ auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_log");
   std::string log_fin;
   {
     std::lock_guard<std::mutex> lock(g_app_globals->log_mutex);
@@ -577,7 +548,6 @@ auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("mark_log_sent");
   // this way we won't try to send it at shutdown time and whatnot
   g_app_globals->put_log = true;
   Py_RETURN_NONE;
@@ -587,7 +557,6 @@ auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("increment_analytics_count");
   const char* name;
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
@@ -603,7 +572,6 @@ auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyIncrementAnalyticsCountRaw(PyObject* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("increment_analytics_count_raw");
   const char* name;
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
@@ -619,7 +587,6 @@ auto PyIncrementAnalyticsCountRaw(PyObject* self, PyObject* args,
 auto PyIncrementAnalyticsCountRaw2(PyObject* self, PyObject* args,
                                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("increment_analytics_count_raw2");
   const char* name;
   int uses_increment = 1;
   int increment = 1;
@@ -638,7 +605,6 @@ auto PyIncrementAnalyticsCountRaw2(PyObject* self, PyObject* args,
 auto PySubmitAnalyticsCounts(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("submit_analytics_counts");
   g_platform->SubmitAnalyticsCounts();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -647,7 +613,6 @@ auto PySubmitAnalyticsCounts(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetAnalyticsScreen(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_analytics_screen");
   const char* screen;
   static const char* kwlist[] = {"screen", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -661,7 +626,6 @@ auto PySetAnalyticsScreen(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_internal_language_keys");
   PyObject* list_obj;
   PyObject* random_names_list_obj;
   if (!PyArg_ParseTuple(args, "OO", &list_obj, &random_names_list_obj)) {
@@ -699,7 +663,6 @@ auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyIsOuyaBuild(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_ouya_builds");
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
@@ -707,7 +670,6 @@ auto PyIsOuyaBuild(PyObject* self, PyObject* args) -> PyObject* {
 auto PyAndroidMediaScanFile(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("android_media_scan_file");
   const char* file_name;
   static const char* kwlist[] = {"file_name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -725,7 +687,6 @@ auto PyAndroidMediaScanFile(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyAndroidGetExternalFilesDir(PyObject* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("android_get_external_files_dir");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -750,7 +711,6 @@ auto PyAndroidGetExternalFilesDir(PyObject* self, PyObject* args,
 auto PyAndroidShowWifiSettings(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("android_show_wifi_settings");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -764,7 +724,6 @@ auto PyAndroidShowWifiSettings(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyPrintObjects(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_objects");
   Object::PrintObjects();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -772,7 +731,6 @@ auto PyPrintObjects(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyDoOnce(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("do_once");
   if (g_python->DoOnce()) {
     Py_RETURN_TRUE;
   }
@@ -782,7 +740,6 @@ auto PyDoOnce(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PyApp(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("app");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {

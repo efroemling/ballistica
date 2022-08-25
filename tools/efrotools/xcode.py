@@ -486,8 +486,11 @@ class XCodeBuild:
             sys.stdout.write(line)
 
 
-def project_build_path(projroot: str, project_path: str, scheme: str,
-                       configuration: str) -> str:
+def project_build_path(projroot: str,
+                       project_path: str,
+                       scheme: str,
+                       configuration: str,
+                       executable: bool = True) -> str:
     """Get build paths for an xcode project (cached for efficiency)."""
     # pylint: disable=too-many-locals
 
@@ -566,5 +569,7 @@ def project_build_path(projroot: str, project_path: str, scheme: str,
             outfile.write(json.dumps(config))
 
     assert build_dir is not None
-    assert executable_path is not None
-    return os.path.join(build_dir, executable_path)
+    if executable:
+        assert executable_path is not None
+        return os.path.join(build_dir, executable_path)
+    return build_dir

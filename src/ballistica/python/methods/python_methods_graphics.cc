@@ -20,7 +20,6 @@ namespace ballistica {
 auto PyGetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_camera_position");
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
@@ -33,7 +32,6 @@ auto PyGetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_camera_target");
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
@@ -46,7 +44,6 @@ auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_camera_position");
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
@@ -64,7 +61,6 @@ auto PySetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_camera_target");
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
@@ -82,7 +78,6 @@ auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetCameraManual(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_camera_manual");
   bool value = false;
   static const char* kwlist[] = {"value", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "b",
@@ -97,7 +92,6 @@ auto PySetCameraManual(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("charstr");
   PyObject* name_obj;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -114,7 +108,6 @@ auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("safecolor");
   PyObject* color_obj;
   float red, green, blue;
   float target_intensity = 0.6f;
@@ -152,7 +145,6 @@ auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetMaxGraphicsQuality(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_max_graphics_quality");
   if (g_graphics && g_graphics->has_supports_high_quality_graphics_value()
       && g_graphics->supports_high_quality_graphics()) {
     return Py_BuildValue("s", "High");
@@ -165,7 +157,6 @@ auto PyGetMaxGraphicsQuality(PyObject* self, PyObject* args) -> PyObject* {
 auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("evaluate_lstr");
   const char* value;
   static const char* kwlist[] = {"value", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -180,7 +171,6 @@ auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_string_height");
   std::string s;
   int suppress_warning = 0;
   PyObject* s_obj;
@@ -211,7 +201,6 @@ auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_string_width");
   std::string s;
   PyObject* s_obj;
   int suppress_warning = 0;
@@ -242,7 +231,6 @@ auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHaveChars(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("have_chars");
   std::string text;
   PyObject* text_obj;
   static const char* kwlist[] = {"text", nullptr};
@@ -262,7 +250,6 @@ auto PyHaveChars(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyAddCleanFrameCallback(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("add_clean_frame_callback");
   PyObject* call_obj;
   static const char* kwlist[] = {"call", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -276,7 +263,6 @@ auto PyAddCleanFrameCallback(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyHasGammaControl(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("has_gamma_control");
   // phasing this out; our old non-sdl2 mac has gamma controls but nothing newer
   // does...
 #if BA_OSTYPE_MACOS && !BA_SDL2_BUILD
@@ -289,7 +275,6 @@ auto PyHasGammaControl(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetDisplayResolution(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_display_resolution");
   int x = 0;
   int y = 0;
   bool have_res = g_platform->GetDisplayResolution(&x, &y);

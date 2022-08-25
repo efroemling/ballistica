@@ -25,7 +25,6 @@ namespace ballistica {
 auto PyGetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpublicpartyenabled");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist)))
@@ -42,7 +41,6 @@ auto PyGetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("setpublicpartyenabled");
   int enable;
   static const char* kwlist[] = {"enabled", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
@@ -58,7 +56,6 @@ auto PySetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPublicPartyName(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("setpublicpartyname");
   PyObject* name_obj;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -75,7 +72,6 @@ auto PySetPublicPartyName(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("setpublicpartystatsurl");
   PyObject* url_obj;
   static const char* kwlist[] = {"url", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -93,7 +89,6 @@ auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpublicpartymaxsize");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -107,7 +102,6 @@ auto PyGetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("setpublicpartymaxsize");
   int max_size;
   static const char* kwlist[] = {"max_size", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
@@ -123,7 +117,6 @@ auto PySetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetAuthenticateClients(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_authenticate_clients");
   int enable;
   static const char* kwlist[] = {"enable", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
@@ -139,7 +132,6 @@ auto PySetAuthenticateClients(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_admins");
   PyObject* admins_obj;
   static const char* kwlist[] = {"admins", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -162,7 +154,6 @@ auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_enable_default_kick_voting");
   int enable;
   static const char* kwlist[] = {"enable", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
@@ -178,7 +169,6 @@ auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
 auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("connect_to_party");
   std::string address;
   PyObject* address_obj;
   int port = kDefaultPort;
@@ -225,7 +215,6 @@ auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyClientInfoQueryResponse(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("client_info_query_response");
   const char* token;
   PyObject* response_obj;
   static const char* kwlist[] = {"token", "response", nullptr};
@@ -242,7 +231,6 @@ auto PyClientInfoQueryResponse(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_connection_to_host_info");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -262,7 +250,6 @@ auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyDisconnectFromHost(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("disconnect_from_host");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -276,7 +263,6 @@ auto PyDisconnectFromHost(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyDisconnectClient(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("disconnect_client");
   int client_id;
   int ban_time = 300;  // Old default before we exposed this.
   static const char* kwlist[] = {"client_id", "ban_time", nullptr};
@@ -297,7 +283,6 @@ auto PyDisconnectClient(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetClientPublicDeviceUUID(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_client_public_device_uuid");
   int client_id;
   static const char* kwlist[] = {"client_id", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
@@ -325,7 +310,6 @@ auto PyGetClientPublicDeviceUUID(PyObject* self, PyObject* args,
 
 auto PyGetGamePort(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_game_port");
   int port = 0;
   if (g_network_reader != nullptr) {
     // Hmmm; we're just fetching the ipv4 port here; 6 could be different.
@@ -337,7 +321,6 @@ auto PyGetGamePort(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PySetMasterServerSource(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_master_server_source");
   int source;
   if (!PyArg_ParseTuple(args, "i", &source)) return nullptr;
   if (source != 0 && source != 1) {
@@ -353,7 +336,6 @@ auto PySetMasterServerSource(PyObject* self, PyObject* args) -> PyObject* {
 auto PySetTelnetAccessEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_telnet_access_enabled");
   assert(InGameThread());
   int enable;
   static const char* kwlist[] = {"enable", nullptr};
@@ -373,7 +355,6 @@ auto PySetTelnetAccessEnabled(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("host_scan_cycle");
   g_networking->HostScanCycle();
   std::vector<Networking::ScanResultsEntry> results =
       g_networking->GetScanResults();
@@ -390,7 +371,6 @@ auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("end_host_scanning");
   g_networking->EndHostScanning();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -399,7 +379,6 @@ auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHaveConnectedClients(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("have_connected_clients");
   if (g_game->connections()->GetConnectedClientCount() > 0) {
     Py_RETURN_TRUE;
   } else {

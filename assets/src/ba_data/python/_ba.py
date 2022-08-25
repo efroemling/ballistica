@@ -2511,12 +2511,19 @@ def print_load_info() -> None:
 
 
 def print_stderr(message: str) -> None:
-    """(internal)"""
+    """(internal)
+
+    Print to system stderr.
+    Also forwards to the internal console, etc.
+    """
     return None
 
 
 def print_stdout(message: str) -> None:
-    """(internal)"""
+    """(internal)
+    Print to system stdout.
+    Also forwards to the internal console, etc.
+    """
     return None
 
 

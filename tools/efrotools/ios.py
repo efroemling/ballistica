@@ -58,7 +58,7 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
     The use case for this is quick build iteration on a device
     that is not physically near the build machine.
     """
-
+    from efrotools.xcode import project_build_path
     # Load both the local and project config data.
     cfg = Config(**getconfig(root)['push_ipa_config'])
     lcfg = LocalConfig(**getlocalconfig(root)['push_ipa_local_config'])
@@ -67,12 +67,12 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
         raise Exception('invalid mode: "' + str(modename) + '"')
     mode = MODES[modename]
 
-    pcommand_path = pathlib.Path(root, 'tools/pcommand')
     xcprojpath = pathlib.Path(root, cfg.projectpath)
-    app_dir = subprocess.run(
-        [pcommand_path, 'xcode_build_path', xcprojpath, mode['configuration']],
-        check=True,
-        capture_output=True).stdout.decode().strip()
+    app_dir = project_build_path(projroot=str(root),
+                                 project_path=str(xcprojpath),
+                                 scheme='BallisticaCore iOS Legacy',
+                                 configuration=mode['configuration'],
+                                 executable=False)
     built_app_path = pathlib.Path(app_dir, cfg.app_bundle_name)
 
     workdir = pathlib.Path(root, 'build', 'push_ipa')

@@ -27,7 +27,6 @@ namespace ballistica {
 auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("gettexture");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -41,7 +40,6 @@ auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetPackageTexture(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpackagetexture");
   const char* name;
   PyObject* package_obj;
   static const char* kwlist[] = {"package", "name", nullptr};
@@ -57,7 +55,6 @@ auto PyGetPackageTexture(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getsound");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -71,7 +68,6 @@ auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyGetPackageSound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpackagesound");
   const char* name;
   PyObject* package_obj;
   static const char* kwlist[] = {"package", "name", nullptr};
@@ -87,7 +83,6 @@ auto PyGetPackageSound(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetData(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getdata");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -101,7 +96,6 @@ auto PyGetData(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyGetPackageData(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpackagedata");
   const char* name;
   PyObject* package_obj;
   static const char* kwlist[] = {"package", "name", nullptr};
@@ -117,7 +111,6 @@ auto PyGetPackageData(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetModel(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getmodel");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -131,7 +124,6 @@ auto PyGetModel(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyGetPackageModel(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpackagemodel");
   const char* name;
   PyObject* package_obj;
   static const char* kwlist[] = {"package", "name", nullptr};
@@ -148,7 +140,6 @@ auto PyGetPackageModel(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetCollideModel(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getcollidemodel");
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -162,7 +153,6 @@ auto PyGetCollideModel(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetPackageCollideModel(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getpackagecollidemodel");
   const char* name;
   PyObject* package_obj;
   static const char* kwlist[] = {"package", "name", nullptr};
@@ -179,7 +169,6 @@ auto PyGetPackageCollideModel(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMusicPlayerStop(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("musicplayerstop");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -193,7 +182,6 @@ auto PyMusicPlayerStop(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMusicPlayerPlay(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("musicplayerplay");
   PyObject* files_obj;
   static const char* kwlist[] = {"files", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -208,7 +196,6 @@ auto PyMusicPlayerPlay(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMusicPlayerSetVolume(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("musicplayersetvolume");
   float volume;
   static const char* kwlist[] = {"volume", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "f",
@@ -223,7 +210,6 @@ auto PyMusicPlayerSetVolume(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMusicPlayerShutdown(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("musicplayershutdown");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -236,7 +222,6 @@ auto PyMusicPlayerShutdown(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyReloadMedia(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("reloadmedia");
   assert(g_graphics_server);
   g_graphics_server->PushReloadMediaCall();
   Py_RETURN_NONE;
@@ -246,7 +231,6 @@ auto PyReloadMedia(PyObject* self, PyObject* args) -> PyObject* {
 auto PyGetQRCodeTexture(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("getqrcodetexture");
   const char* url;
   static const char* kwlist[] = {"url", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -268,7 +252,6 @@ auto PyGetQRCodeTexture(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppInit(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappinit");
   g_platform->MacMusicAppInit();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -277,7 +260,6 @@ auto PyMacMusicAppInit(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppGetVolume(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappgetvolume");
   return PyLong_FromLong(g_platform->MacMusicAppGetVolume());
   BA_PYTHON_CATCH;
 }
@@ -285,7 +267,6 @@ auto PyMacMusicAppGetVolume(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppSetVolume(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappsetvolume");
   int volume;
   static const char* kwlist[] = {"volume", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
@@ -300,7 +281,6 @@ auto PyMacMusicAppSetVolume(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppGetLibrarySource(PyObject* self, PyObject* args,
                                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappgetlibrarysource");
   g_platform->MacMusicAppGetLibrarySource();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -309,7 +289,6 @@ auto PyMacMusicAppGetLibrarySource(PyObject* self, PyObject* args,
 auto PyMacMusicAppStop(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappstop");
   g_platform->MacMusicAppStop();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -318,7 +297,6 @@ auto PyMacMusicAppStop(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppPlayPlaylist(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappplayplaylist");
   std::string playlist;
   PyObject* playlist_obj;
   static const char* kwlist[] = {"playlist", nullptr};
@@ -338,7 +316,6 @@ auto PyMacMusicAppPlayPlaylist(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyMacMusicAppGetPlaylists(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("macmusicappgetplaylists");
   PyObject* py_list = PyList_New(0);
   std::list<std::string> playlists = g_platform->MacMusicAppGetPlaylists();
   for (auto&& i : playlists) {
@@ -353,7 +330,6 @@ auto PyMacMusicAppGetPlaylists(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyIsOSPlayingMusic(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("isosplayingmusic");
   if (g_platform->IsOSPlayingMusic()) {
     Py_RETURN_TRUE;
   } else {

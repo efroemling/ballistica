@@ -18,6 +18,10 @@ from bastd.ui.settings.testing import TestingWindow
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+# We generally want all net tests to timeout on their own, but we add
+# sort of sane max in case they don't.
+MAX_TEST_SECONDS = 60 * 2
+
 
 class NetTestingWindow(ba.Window):
     """Window that runs a networking test suite to help diagnose issues."""
@@ -272,8 +276,9 @@ def _test_v1_transaction() -> None:
 
     while results[0] is False:
         time.sleep(0.01)
-        if time.monotonic() - starttime > 10.0:
-            raise RuntimeError('timed out')
+        if time.monotonic() - starttime > MAX_TEST_SECONDS:
+            raise RuntimeError(
+                f'test timed out after {MAX_TEST_SECONDS} seconds')
 
     # If we got left a string, its an error.
     if isinstance(results[0], str):
@@ -313,8 +318,9 @@ def _test_v2_cloud_message() -> None:
         if results.response_time is not None:
             break
         time.sleep(0.01)
-        if time.monotonic() - wait_start_time > 10.0:
-            raise RuntimeError('Timeout waiting for cloud message response')
+        if time.monotonic() - wait_start_time > MAX_TEST_SECONDS:
+            raise RuntimeError(f'Timeout ({MAX_TEST_SECONDS} seconds)'
+                               f' waiting for cloud message response')
     if results.errstr is not None:
         raise RuntimeError(results.errstr)
 
@@ -339,7 +345,7 @@ def _test_fetch(baseaddr: str) -> None:
         urllib.request.Request(f'{baseaddr}/ping', None,
                                {'User-Agent': _ba.app.user_agent_string}),
         context=ba.app.net.sslcontext,
-        timeout=10.0,
+        timeout=MAX_TEST_SECONDS,
     )
     if response.getcode() != 200:
         raise RuntimeError(

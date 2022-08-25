@@ -27,7 +27,6 @@ namespace ballistica {
 
 auto PyAppName(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("app_name");
 
   // This will get subbed out by standard filtering.
   return PyUnicode_FromString("ballisticacore");
@@ -36,7 +35,6 @@ auto PyAppName(PyObject* self) -> PyObject* {
 
 auto PyAppNameUpper(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("app_name_upper");
 
   // This will get subbed out by standard filtering.
   return PyUnicode_FromString("BallisticaCore");
@@ -45,7 +43,6 @@ auto PyAppNameUpper(PyObject* self) -> PyObject* {
 
 auto PyIsXCodeBuild(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_xcode_build");
   if (g_buildconfig.xcode_build()) {
     Py_RETURN_TRUE;
   }
@@ -55,7 +52,6 @@ auto PyIsXCodeBuild(PyObject* self) -> PyObject* {
 
 auto PyCanDisplayFullUnicode(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("can_display_full_unicode");
   if (g_buildconfig.enable_os_font_rendering()) {
     Py_RETURN_TRUE;
   }
@@ -66,7 +62,6 @@ auto PyCanDisplayFullUnicode(PyObject* self) -> PyObject* {
 auto PyGetSession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_session");
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i",
@@ -91,7 +86,6 @@ auto PyGetSession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyNewHostSession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("new_host_session");
   const char* benchmark_type_str = nullptr;
   static const char* kwlist[] = {"sessiontype", "benchmark_type", nullptr};
   PyObject* sessiontype_obj;
@@ -120,7 +114,6 @@ auto PyNewHostSession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("new_replay_session");
   std::string file_name;
   PyObject* file_name_obj;
   static const char* kwlist[] = {"file_name", nullptr};
@@ -137,7 +130,6 @@ auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("is_in_replay");
   BA_PRECONDITION(InGameThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -155,7 +147,6 @@ auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("register_session");
   assert(InGameThread());
   PyObject* session_obj;
   static const char* kwlist[] = {"session", nullptr};
@@ -178,7 +169,6 @@ auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRegisterActivity(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("register_activity");
   assert(InGameThread());
   PyObject* activity_obj;
   static const char* kwlist[] = {"activity", nullptr};
@@ -200,7 +190,6 @@ auto PyRegisterActivity(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetForegroundHostSession(PyObject* self, PyObject* args,
                                 PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_foreground_host_session");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -223,7 +212,6 @@ auto PyGetForegroundHostSession(PyObject* self, PyObject* args,
 auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("new_activity");
 
   static const char* kwlist[] = {"activity_type", "settings", nullptr};
   PyObject* activity_type_obj;
@@ -263,7 +251,6 @@ auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_activity");
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i",
@@ -291,7 +278,6 @@ auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("push_call");
   PyObject* call_obj;
   int from_other_thread{};
   int suppress_warning{};
@@ -329,7 +315,6 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PyTime(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("time");
 
   PyObject* time_type_obj = nullptr;
   PyObject* time_format_obj = nullptr;
@@ -377,7 +362,6 @@ auto PyTime(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(InGameThread());
-  Platform::SetLastPyCall("timer");
 
   PyObject* length_obj;
   int64_t length;
@@ -450,7 +434,6 @@ auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("screen_message");
   const char* message = nullptr;
   PyObject* color_obj = Py_None;
   int top = 0;
@@ -585,7 +568,6 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("quit");
   static const char* kwlist[] = {"soft", "back", nullptr};
   int soft = 0;
   int back = 0;
@@ -636,7 +618,6 @@ auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 #if BA_DEBUG_BUILD
 auto PyBless(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("bless");
   ScreenMessage("WOULD BLESS BUILD " + std::to_string(kAppBuildNumber));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -645,7 +626,6 @@ auto PyBless(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("apply_config");
 
   // Hmm; python runs in the game thread; technically we could just run
   // ApplyConfig() immediately (though pushing is probably safer).
@@ -657,7 +637,6 @@ auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
 auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("commit_config");
   PyObject* config_obj;
   static const char* kwlist[] = {"config", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -721,7 +700,6 @@ auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyEnv(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("env");
 
   static PyObject* env_obj = nullptr;
 
@@ -816,7 +794,6 @@ auto PyEnv(PyObject* self) -> PyObject* {
 
 auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_stress_testing");
   int testing;
   int player_count;
   if (!PyArg_ParseTuple(args, "pi", &testing, &player_count)) {
@@ -829,7 +806,6 @@ auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyPrintStdout(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_stdout");
   const char* s;
   if (!PyArg_ParseTuple(args, "s", &s)) {
     return nullptr;
@@ -841,7 +817,6 @@ auto PyPrintStdout(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyPrintStderr(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_stderr");
   const char* s;
   if (!PyArg_ParseTuple(args, "s", &s)) {
     return nullptr;
@@ -853,7 +828,6 @@ auto PyPrintStderr(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("log");
   static const char* kwlist[] = {"message", "to_stdout", "to_server", nullptr};
   int to_server = 1;
   int to_stdout = 1;
@@ -873,7 +847,6 @@ auto PyLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyTimeFormatCheck(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("time_format_check");
   static const char* kwlist[] = {"time_format", "length", nullptr};
   PyObject* time_format_obj;
   PyObject* length_obj;
@@ -945,12 +918,18 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"print_stdout", PyPrintStdout, METH_VARARGS,
          "print_stdout(message: str) -> None\n"
          "\n"
-         "(internal)"},
+         "(internal)"
+         "\n"
+         "Print to system stdout.\n"
+         "Also forwards to the internal console, etc."},
 
         {"print_stderr", PyPrintStderr, METH_VARARGS,
          "print_stderr(message: str) -> None\n"
          "\n"
-         "(internal)"},
+         "(internal)\n"
+         "\n"
+         "Print to system stderr.\n"
+         "Also forwards to the internal console, etc."},
 
         {"set_stress_testing", PySetStressTesting, METH_VARARGS,
          "set_stress_testing(testing: bool, player_count: int) -> None\n"

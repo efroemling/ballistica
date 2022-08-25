@@ -33,7 +33,6 @@ namespace ballistica {
 
 auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("new_node");
   Node* n = g_python->DoNewNode(args, keywds);
   if (!n) {
     return nullptr;
@@ -44,7 +43,6 @@ auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("print_nodes");
   HostActivity* host_activity =
       g_game->GetForegroundContext().GetHostActivity();
   if (!host_activity) {
@@ -67,7 +65,6 @@ auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetNodes(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_nodes");
   HostActivity* host_activity = Context::current().GetHostActivity();
   if (!host_activity) {
     throw Exception(PyExcType::kContext);
@@ -132,7 +129,6 @@ static auto DoGetCollideValue(Dynamics* dynamics, const Collision* c,
 
 auto PyGetCollisionInfo(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_collision_info");
   HostActivity* host_activity = Context::current().GetHostActivity();
   if (!host_activity) {
     throw Exception(PyExcType::kContext);
@@ -186,7 +182,6 @@ auto PyGetCollisionInfo(PyObject* self, PyObject* args) -> PyObject* {
 auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("camera_shake");
   assert(InGameThread());
   float intensity = 1.0f;
   static const char* kwlist[] = {"intensity", nullptr};
@@ -202,7 +197,6 @@ auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyPlaySound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("play_sound");
 
   assert(InGameThread());
   PyObject* sound_obj;
@@ -248,7 +242,6 @@ auto PyPlaySound(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("emit_fx");
   static const char* kwlist[] = {"position",  "velocity",     "count",
                                  "scale",     "spread",       "chunk_type",
                                  "emit_type", "tendril_type", nullptr};
@@ -363,7 +356,6 @@ auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PySetMapBounds(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_map_bounds");
   HostActivity* host_activity = Context::current().GetHostActivity();
   if (!host_activity) {
     throw Exception(PyExcType::kContext);
@@ -382,7 +374,6 @@ auto PySetMapBounds(PyObject* self, PyObject* args) -> PyObject* {
 auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_foreground_host_activity");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -405,7 +396,6 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
 auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_game_roster");
   BA_PRECONDITION(InGameThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -501,7 +491,6 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetScoresToBeat(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_scores_to_beat");
   const char* level;
   const char* config;
   PyObject* callback_obj = Py_None;
@@ -522,7 +511,6 @@ auto PyGetScoresToBeat(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_debug_speed_exponent");
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) {
     return nullptr;
@@ -542,7 +530,6 @@ auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_replay_speed_exponent");
   assert(g_game);
   return PyLong_FromLong(g_game->replay_speed_exponent());
   BA_PYTHON_CATCH;
@@ -550,7 +537,6 @@ auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PySetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_replay_speed_exponent");
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) return nullptr;
   assert(g_game);
@@ -562,7 +548,6 @@ auto PySetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
 auto PyResetGameActivityTracking(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("reset_game_activity_tracking");
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -578,7 +563,6 @@ auto PyResetGameActivityTracking(PyObject* self, PyObject* args,
 auto PyResetRandomPlayerNames(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("reset_random_player_names");
   InputDevice::ResetRandomNames();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -586,7 +570,6 @@ auto PyResetRandomPlayerNames(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyGetRandomNames(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_random_names");
   PyObject* list = PyList_New(0);
   const std::list<std::string>& random_name_list = Utils::GetRandomNameList();
   for (const auto& i : random_name_list) {
