@@ -206,6 +206,7 @@ class Spaz(ba.Actor):
         self._turbo_filter_counts: dict[str, int] = {}
         self.frozen = False
         self.shattered = False
+        self._thaw_timer: ba.Timer | None = None
         self._last_hit_time: int | None = None
         self._num_times_hit = 0
         self._bomb_held = False
@@ -835,15 +836,14 @@ class Spaz(ba.Actor):
                 return None
             if self.shield:
                 return None
-            if not self.frozen:
-                self.frozen = True
-                self.node.frozen = True
-                ba.timer(5.0, ba.WeakCall(self.handlemessage,
-                                          ba.ThawMessage()))
-                # Instantly shatter if we're already dead.
-                # (otherwise its hard to tell we're dead)
-                if self.hitpoints <= 0:
-                    self.shatter()
+            self.frozen = True
+            self.node.frozen = True
+            self._thaw_timer = ba.Timer(
+                5.0, ba.WeakCall(self.handlemessage, ba.ThawMessage()))
+            # Instantly shatter if we're already dead.
+            # (otherwise its hard to tell we're dead)
+            if self.hitpoints <= 0:
+                self.shatter()
 
         elif isinstance(msg, ba.ThawMessage):
             if self.frozen and not self.shattered and self.node:
