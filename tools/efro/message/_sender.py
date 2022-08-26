@@ -140,7 +140,8 @@ class MessageSender:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
             return ErrorResponse(
-                error_message=f'Error in send method ({type(exc)}): {exc}',
+                error_message=
+                f'Error in MessageSender @send_method ({type(exc)}): {exc}',
                 error_type=(ErrorResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
                             ErrorResponse.ErrorType.LOCAL))
@@ -166,7 +167,8 @@ class MessageSender:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
             return ErrorResponse(
-                error_message=f'Error in send async method ({type(exc)}):'
+                error_message=
+                f'Error in MessageSender @send_async_method ({type(exc)}):'
                 f' {exc}',
                 error_type=(ErrorResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
