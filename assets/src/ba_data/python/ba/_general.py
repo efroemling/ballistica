@@ -31,13 +31,11 @@ class Existable(Protocol):
         """Whether this object exists."""
 
 
-# pylint: disable=invalid-name
-ExistableType = TypeVar('ExistableType', bound=Existable)
-# pylint: enable=invalid-name
+ExistableT = TypeVar('ExistableT', bound=Existable)
 T = TypeVar('T')
 
 
-def existing(obj: ExistableType | None) -> ExistableType | None:
+def existing(obj: ExistableT | None) -> ExistableT | None:
     """Convert invalid references to None for any ba.Existable object.
 
     Category: **Gameplay Functions**
@@ -251,6 +249,10 @@ class _Call:
 
 
 if TYPE_CHECKING:
+    # Some interaction between our ballistica pylint plugin
+    # and this code is crashing starting on pylint 2.15.0.
+    # This seems to fix things for now.
+    # pylint: disable=all
     WeakCall = Call
     Call = Call
 else:

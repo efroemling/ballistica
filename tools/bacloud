@@ -30,6 +30,8 @@ if TYPE_CHECKING:
 
 TOOL_NAME = 'bacloud'
 
+TIMEOUT_SECONDS = 60 * 5
+
 # Server we talk to (can override via env var).
 BACLOUD_SERVER_URL = os.getenv('BACLOUD_SERVER_URL', 'https://ballistica.net')
 
@@ -152,8 +154,11 @@ class App:
 
         # Using requests module.
         else:
-            with requests.post(url, headers=headers, data=rdata,
-                               files=files) as response_raw:
+            with requests.post(url,
+                               headers=headers,
+                               data=rdata,
+                               files=files,
+                               timeout=TIMEOUT_SECONDS) as response_raw:
                 response_raw.raise_for_status()
                 assert isinstance(response_raw.content, bytes)
                 response_content = response_raw.content.decode()

@@ -27,11 +27,11 @@ if TYPE_CHECKING:
     from typing import Any, Callable, NoReturn
 
 T = TypeVar('T')
-TVAL = TypeVar('TVAL')
-TARG = TypeVar('TARG')
-TSELF = TypeVar('TSELF')
-TRET = TypeVar('TRET')
-TENUM = TypeVar('TENUM', bound=Enum)
+ValT = TypeVar('ValT')
+ArgT = TypeVar('ArgT')
+SelfT = TypeVar('SelfT')
+RetT = TypeVar('RetT')
+EnumT = TypeVar('EnumT', bound=Enum)
 
 
 class _EmptyObj:
@@ -44,7 +44,7 @@ else:
     Call = functools.partial
 
 
-def enum_by_value(cls: type[TENUM], value: Any) -> TENUM:
+def enum_by_value(cls: type[EnumT], value: Any) -> EnumT:
     """Create an enum from a value.
 
     This is basically the same as doing 'obj = EnumType(value)' except
@@ -251,15 +251,15 @@ class DirtyBit:
         return False
 
 
-class DispatchMethodWrapper(Generic[TARG, TRET]):
+class DispatchMethodWrapper(Generic[ArgT, RetT]):
     """Type-aware standin for the dispatch func returned by dispatchmethod."""
 
-    def __call__(self, arg: TARG) -> TRET:
+    def __call__(self, arg: ArgT) -> RetT:
         pass
 
     @staticmethod
     def register(
-            func: Callable[[Any, Any], TRET]) -> Callable[[Any, Any], TRET]:
+            func: Callable[[Any, Any], RetT]) -> Callable[[Any, Any], RetT]:
         """Register a new dispatch handler for this dispatch-method."""
 
     registry: dict[Any, Callable]
@@ -267,8 +267,8 @@ class DispatchMethodWrapper(Generic[TARG, TRET]):
 
 # noinspection PyProtectedMember,PyTypeHints
 def dispatchmethod(
-        func: Callable[[Any, TARG],
-                       TRET]) -> DispatchMethodWrapper[TARG, TRET]:
+        func: Callable[[Any, ArgT],
+                       RetT]) -> DispatchMethodWrapper[ArgT, RetT]:
     """A variation of functools.singledispatch for methods.
 
     Note: as of Python 3.9 there is now functools.singledispatchmethod,
@@ -307,7 +307,7 @@ def dispatchmethod(
     return cast(DispatchMethodWrapper, wrapper)
 
 
-def valuedispatch(call: Callable[[TVAL], TRET]) -> ValueDispatcher[TVAL, TRET]:
+def valuedispatch(call: Callable[[ValT], RetT]) -> ValueDispatcher[ValT, RetT]:
     """Decorator for functions to allow dispatching based on a value.
 
     This differs from functools.singledispatch in that it dispatches based
@@ -318,21 +318,21 @@ def valuedispatch(call: Callable[[TVAL], TRET]) -> ValueDispatcher[TVAL, TRET]:
     return ValueDispatcher(call)
 
 
-class ValueDispatcher(Generic[TVAL, TRET]):
+class ValueDispatcher(Generic[ValT, RetT]):
     """Used by the valuedispatch decorator"""
 
-    def __init__(self, call: Callable[[TVAL], TRET]) -> None:
+    def __init__(self, call: Callable[[ValT], RetT]) -> None:
         self._base_call = call
-        self._handlers: dict[TVAL, Callable[[], TRET]] = {}
+        self._handlers: dict[ValT, Callable[[], RetT]] = {}
 
-    def __call__(self, value: TVAL) -> TRET:
+    def __call__(self, value: ValT) -> RetT:
         handler = self._handlers.get(value)
         if handler is not None:
             return handler()
         return self._base_call(value)
 
-    def _add_handler(self, value: TVAL,
-                     call: Callable[[], TRET]) -> Callable[[], TRET]:
+    def _add_handler(self, value: ValT,
+                     call: Callable[[], RetT]) -> Callable[[], RetT]:
         if value in self._handlers:
             raise RuntimeError(f'Duplicate handlers added for {value}')
         self._handlers[value] = call
@@ -340,42 +340,42 @@ class ValueDispatcher(Generic[TVAL, TRET]):
 
     def register(
             self,
-            value: TVAL) -> Callable[[Callable[[], TRET]], Callable[[], TRET]]:
+            value: ValT) -> Callable[[Callable[[], RetT]], Callable[[], RetT]]:
         """Add a handler to the dispatcher."""
         from functools import partial
         return partial(self._add_handler, value)
 
 
 def valuedispatch1arg(
-    call: Callable[[TVAL, TARG],
-                   TRET]) -> ValueDispatcher1Arg[TVAL, TARG, TRET]:
+    call: Callable[[ValT, ArgT],
+                   RetT]) -> ValueDispatcher1Arg[ValT, ArgT, RetT]:
     """Like valuedispatch but for functions taking an extra argument."""
     return ValueDispatcher1Arg(call)
 
 
-class ValueDispatcher1Arg(Generic[TVAL, TARG, TRET]):
+class ValueDispatcher1Arg(Generic[ValT, ArgT, RetT]):
     """Used by the valuedispatch1arg decorator"""
 
-    def __init__(self, call: Callable[[TVAL, TARG], TRET]) -> None:
+    def __init__(self, call: Callable[[ValT, ArgT], RetT]) -> None:
         self._base_call = call
-        self._handlers: dict[TVAL, Callable[[TARG], TRET]] = {}
+        self._handlers: dict[ValT, Callable[[ArgT], RetT]] = {}
 
-    def __call__(self, value: TVAL, arg: TARG) -> TRET:
+    def __call__(self, value: ValT, arg: ArgT) -> RetT:
         handler = self._handlers.get(value)
         if handler is not None:
             return handler(arg)
         return self._base_call(value, arg)
 
-    def _add_handler(self, value: TVAL,
-                     call: Callable[[TARG], TRET]) -> Callable[[TARG], TRET]:
+    def _add_handler(self, value: ValT,
+                     call: Callable[[ArgT], RetT]) -> Callable[[ArgT], RetT]:
         if value in self._handlers:
             raise RuntimeError(f'Duplicate handlers added for {value}')
         self._handlers[value] = call
         return call
 
     def register(
-        self, value: TVAL
-    ) -> Callable[[Callable[[TARG], TRET]], Callable[[TARG], TRET]]:
+        self, value: ValT
+    ) -> Callable[[Callable[[ArgT], RetT]], Callable[[ArgT], RetT]]:
         """Add a handler to the dispatcher."""
         from functools import partial
         return partial(self._add_handler, value)
@@ -383,22 +383,22 @@ class ValueDispatcher1Arg(Generic[TVAL, TARG, TRET]):
 
 if TYPE_CHECKING:
 
-    class ValueDispatcherMethod(Generic[TVAL, TRET]):
+    class ValueDispatcherMethod(Generic[ValT, RetT]):
         """Used by the valuedispatchmethod decorator."""
 
-        def __call__(self, value: TVAL) -> TRET:
+        def __call__(self, value: ValT) -> RetT:
             ...
 
         def register(
-            self, value: TVAL
-        ) -> Callable[[Callable[[TSELF], TRET]], Callable[[TSELF], TRET]]:
+            self, value: ValT
+        ) -> Callable[[Callable[[SelfT], RetT]], Callable[[SelfT], RetT]]:
             """Add a handler to the dispatcher."""
             ...
 
 
 def valuedispatchmethod(
-        call: Callable[[TSELF, TVAL],
-                       TRET]) -> ValueDispatcherMethod[TVAL, TRET]:
+        call: Callable[[SelfT, ValT],
+                       RetT]) -> ValueDispatcherMethod[ValT, RetT]:
     """Like valuedispatch but works with methods instead of functions."""
 
     # NOTE: It seems that to wrap a method with a decorator and have self
@@ -407,18 +407,18 @@ def valuedispatchmethod(
     # in the function call dict and simply return a call.
 
     _base_call = call
-    _handlers: dict[TVAL, Callable[[TSELF], TRET]] = {}
+    _handlers: dict[ValT, Callable[[SelfT], RetT]] = {}
 
-    def _add_handler(value: TVAL, addcall: Callable[[TSELF], TRET]) -> None:
+    def _add_handler(value: ValT, addcall: Callable[[SelfT], RetT]) -> None:
         if value in _handlers:
             raise RuntimeError(f'Duplicate handlers added for {value}')
         _handlers[value] = addcall
 
-    def _register(value: TVAL) -> Callable[[Callable[[TSELF], TRET]], None]:
+    def _register(value: ValT) -> Callable[[Callable[[SelfT], RetT]], None]:
         from functools import partial
         return partial(_add_handler, value)
 
-    def _call_wrapper(self: TSELF, value: TVAL) -> TRET:
+    def _call_wrapper(self: SelfT, value: ValT) -> RetT:
         handler = _handlers.get(value)
         if handler is not None:
             return handler(self)
@@ -433,7 +433,7 @@ def valuedispatchmethod(
     # In reality we just return a raw function call (for reasons listed above).
     # pylint: disable=undefined-variable, no-else-return
     if TYPE_CHECKING:
-        return ValueDispatcherMethod[TVAL, TRET]()
+        return ValueDispatcherMethod[ValT, RetT]()
     else:
         return _call_wrapper
 

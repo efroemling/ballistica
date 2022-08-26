@@ -7,7 +7,7 @@ Supports static typing for message types and possible return types.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.message._message import EmptyResponse, ErrorResponse
@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 
     from efro.message._message import Message, Response
     from efro.message._protocol import MessageProtocol
-
-TM = TypeVar('TM', bound='MessageSender')
 
 
 class MessageSender:

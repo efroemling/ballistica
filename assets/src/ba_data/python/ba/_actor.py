@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from typing import Any, Literal
     import ba
 
-TA = TypeVar('TA', bound='Actor')
+ActorT = TypeVar('ActorT', bound='Actor')
 
 
 class Actor:
@@ -95,7 +95,7 @@ class Actor:
 
         return UNHANDLED
 
-    def autoretain(self: TA) -> TA:
+    def autoretain(self: ActorT) -> ActorT:
         """Keep this Actor alive without needing to hold a reference to it.
 
         This keeps the ba.Actor in existence by storing a reference to it

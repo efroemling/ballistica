@@ -243,7 +243,7 @@ def push_ipa() -> None:
     root = Path(sys.argv[0], '../..').resolve()
     if len(sys.argv) != 3:
         raise Exception('expected 1 arg (debug or release)')
-    modename = sys.argv[2]
+    modename = sys.argv[2].lower()
     efrotools.ios.push_ipa(root, modename)
 
 
