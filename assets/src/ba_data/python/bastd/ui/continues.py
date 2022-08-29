@@ -133,7 +133,14 @@ class ContinuesWindow(ba.Window):
                                          ba.WeakCall(self._tick),
                                          repeat=True,
                                          timetype=ba.TimeType.REAL)
+
+        # If there is foreground activity, suspend it.
+        ba.app.pause()
         self._tick()
+
+    def __del__(self) -> None:
+        # If there is suspended foreground activity, resume it.
+        ba.app.resume()
 
     def _tick(self) -> None:
         # if our target activity is gone or has ended, go away

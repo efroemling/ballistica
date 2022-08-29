@@ -236,7 +236,7 @@ class CreditsListWindow(ba.Window):
                                   '${NAME}', 'the Khronos Group') + '\n'
             '\n'
             '                                       '
-            '                      www.froemling.net\n')
+            '                      www.ballistica.net\n')
 
         txt = credits_text
         lines = txt.splitlines()
