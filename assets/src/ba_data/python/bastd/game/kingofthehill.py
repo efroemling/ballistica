@@ -131,7 +131,8 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
 
         # Base class overrides.
         self.slow_motion = self._epic_mode
-        self.default_music = ba.MusicType.SCARY
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.SCARY)
 
     def get_instance_description(self) -> str | Sequence:
         return 'Secure the flag for ${ARG1} seconds.', self._hold_time
