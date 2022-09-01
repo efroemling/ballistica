@@ -106,8 +106,8 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
             ],
             default=1.0,
         ),
+        ba.BoolSetting('Epic Mode', default=False),
     ]
-    default_music = ba.MusicType.FOOTBALL
 
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
@@ -143,6 +143,10 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         self._flag_respawn_light: ba.NodeActor | None = None
         self._score_to_win = int(settings['Score to Win'])
         self._time_limit = float(settings['Time Limit'])
+        self._epic_mode = bool(settings['Epic Mode'])
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.FOOTBALL)
 
     def get_instance_description(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
@@ -330,7 +334,6 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     tips = ['Use the pick-up button to grab the flag < ${PICKUP} >']
     scoreconfig = ba.ScoreConfig(scoretype=ba.ScoreType.MILLISECONDS,
                                  version='B')
-    default_music = ba.MusicType.FOOTBALL
 
     # FIXME: Need to update co-op games to use getscoreconfig.
     def get_score_type(self) -> str:
