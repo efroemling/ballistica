@@ -664,6 +664,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/dataclassio/extras.py \
   build/ba_data/python/efro/error.py \
+  build/ba_data/python/efro/log.py \
   build/ba_data/python/efro/message/__init__.py \
   build/ba_data/python/efro/message/_message.py \
   build/ba_data/python/efro/message/_module.py \
@@ -694,6 +695,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-310.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/log.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/__init__.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/_message.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/_module.cpython-310.opt-1.pyc \
