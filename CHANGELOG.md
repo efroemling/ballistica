@@ -1,4 +1,4 @@
-### 1.7.7 (build 20731, api 7, 2022-09-02)
+### 1.7.7 (build 20732, api 7, 2022-09-02)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -9,6 +9,10 @@
 - Increased timeouts in net-testing gui and a few other places to be able to better diagnose/handle places with very poor connectivity.
 - Removed `Platform::SetLastPyCall()` which was just for debugging and which has not been useful in a while.
 - Moved some app bootstrapping from the C++ layer to the ba._bootstrap module.
+- The game will now properly return to the stress-test window after a stress test finishes (thanks vishal332008!)
+- Continue window will now pause the game to avoid running up times in the background (thanks vishal332008!)
+- Keepaway and KingOfTheHill now have epic options (thanks FAL-Guys!)
+- Spaz starting with gloves no longer loses it after picking up an expiring gloves powerup (thanks itsre3!)
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

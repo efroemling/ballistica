@@ -493,6 +493,7 @@ def project_build_path(projroot: str,
                        executable: bool = True) -> str:
     """Get build paths for an xcode project (cached for efficiency)."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     config_path = os.path.join(projroot, '.cache', 'xcode_build_path')
     config: dict[str, dict[str, Any]] = {}
@@ -571,5 +572,12 @@ def project_build_path(projroot: str,
     assert build_dir is not None
     if executable:
         assert executable_path is not None
-        return os.path.join(build_dir, executable_path)
-    return build_dir
+        outpath = os.path.join(build_dir, executable_path)
+        if not os.path.isfile(outpath):
+            raise RuntimeError(f'Path is not a file: "{outpath}".')
+    else:
+        outpath = build_dir
+        if not os.path.isdir(outpath):
+            raise RuntimeError(f'Path is not a dir: "{outpath}".')
+
+    return outpath
