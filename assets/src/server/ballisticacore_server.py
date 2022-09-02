@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3'
+VERSION_STR = '1.3.1'
 
 # Version history:
 # 1.3.1
