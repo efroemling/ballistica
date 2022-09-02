@@ -20,6 +20,7 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import popup
 
+        ba.app.ui.set_main_menu_location('Benchmarks & Stress Tests')
         uiscale = ba.app.ui.uiscale
         self._width = width = 580
         self._height = height = (350 if uiscale is ba.UIScale.SMALL else

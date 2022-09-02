@@ -453,6 +453,12 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                         ba.app.ui.set_main_menu_window(
                             CoopBrowserWindow(
                                 transition=None).get_root_widget())
+                    elif main_menu_location == 'Benchmarks & Stress Tests':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.debug import DebugWindow
+                        ba.app.ui.set_main_menu_window(
+                            DebugWindow(
+                                transition=None).get_root_widget())
                     else:
                         # pylint: disable=cyclic-import
                         from bastd.ui.mainmenu import MainMenuWindow
