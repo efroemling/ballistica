@@ -40,7 +40,7 @@ class SpazFactory:
 
     punch_sound_weak: ba.Sound
     """A weak punch ba.Sound."""
-    
+
     punch_sound: ba.Sound
     """A standard punch ba.Sound."""
 
