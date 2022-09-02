@@ -150,6 +150,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_asyncio.py \
   build/ba_data/python/ba/_benchmark.py \
+  build/ba_data/python/ba/_bootstrap.py \
   build/ba_data/python/ba/_campaign.py \
   build/ba_data/python/ba/_cloud.py \
   build/ba_data/python/ba/_collision.py \
@@ -399,6 +400,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_asyncio.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_bootstrap.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_cloud.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_collision.cpython-310.opt-1.pyc \
@@ -664,6 +666,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/dataclassio/extras.py \
   build/ba_data/python/efro/error.py \
+  build/ba_data/python/efro/log.py \
   build/ba_data/python/efro/message/__init__.py \
   build/ba_data/python/efro/message/_message.py \
   build/ba_data/python/efro/message/_module.py \
@@ -694,6 +697,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-310.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/log.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/__init__.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/_message.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/_module.cpython-310.opt-1.pyc \

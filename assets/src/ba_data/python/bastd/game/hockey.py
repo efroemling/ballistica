@@ -137,8 +137,8 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
             ],
             default=1.0,
         ),
+        ba.BoolSetting('Epic Mode', default=False),
     ]
-    default_music = ba.MusicType.HOCKEY
 
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
@@ -203,6 +203,10 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         self._puck: Puck | None = None
         self._score_to_win = int(settings['Score to Win'])
         self._time_limit = float(settings['Time Limit'])
+        self._epic_mode = bool(settings['Epic Mode'])
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC
+                              if self._epic_mode else ba.MusicType.HOCKEY)
 
     def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
