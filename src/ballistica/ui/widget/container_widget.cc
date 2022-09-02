@@ -1055,7 +1055,7 @@ void ContainerWidget::Activate() {
 }
 
 void ContainerWidget::AddWidget(Widget* w) {
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   Object::WeakRef<ContainerWidget> weakthis(this);
   {
     BA_DEBUG_UI_WRITE_LOCK;

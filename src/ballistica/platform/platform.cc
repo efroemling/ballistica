@@ -678,7 +678,7 @@ void Platform::CreateApp() {
 }
 
 auto Platform::CreateGraphics() -> Graphics* {
-  assert(InGameThread());
+  assert(InLogicThread());
 #if BA_VR_BUILD
   return new VRGraphics();
 #else

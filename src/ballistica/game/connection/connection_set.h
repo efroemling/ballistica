@@ -24,7 +24,7 @@ class ConnectionSet {
   // Quick test as to whether there are clients. Does not check if they are
   // fully connected.
   auto has_connection_to_clients() const -> bool {
-    assert(InGameThread());
+    assert(InLogicThread());
     return (!connections_to_clients_.empty());
   }
 

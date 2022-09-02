@@ -852,13 +852,13 @@ void Camera::ManualHandleMouseMove(float move_h, float move_v) {
 }
 
 auto Camera::NewAreaOfInterest(bool in_focus) -> AreaOfInterest* {
-  assert(InGameThread());
+  assert(InLogicThread());
   areas_of_interest_.emplace_back(in_focus);
   return &areas_of_interest_.back();
 }
 
 void Camera::DeleteAreaOfInterest(AreaOfInterest* a) {
-  assert(InGameThread());
+  assert(InLogicThread());
   for (auto i = areas_of_interest_.begin(); i != areas_of_interest_.end();
        ++i) {
     if (&(*i) == a) {

@@ -12,7 +12,7 @@ namespace ballistica {
 
 Sound::Sound(const std::string& name, Scene* scene)
     : MediaComponent(name, scene) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (scene) {
     if (GameStream* os = scene->GetGameStream()) {
       os->AddSound(this);

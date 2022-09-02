@@ -336,7 +336,7 @@ auto PySetMasterServerSource(PyObject* self, PyObject* args) -> PyObject* {
 auto PySetTelnetAccessEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   int enable;
   static const char* kwlist[] = {"enable", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",

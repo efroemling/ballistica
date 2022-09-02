@@ -788,7 +788,7 @@ void Graphics::AddScreenMessage(const std::string& msg, const Vector3f& color,
   // So we know we're always dealing with valid utf8.
   std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");
 
-  assert(InGameThread());
+  assert(InLogicThread());
   if (top) {
     float start_v = -40.0f;
     if (!screen_messages_top_.empty()) {
@@ -842,7 +842,7 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
 }
 
 auto Graphics::GetEmptyFrameDef() -> FrameDef* {
-  assert(InGameThread());
+  assert(InLogicThread());
   FrameDef* frame_def;
 
   // Grab a ready-to-use recycled one if available.
@@ -857,7 +857,7 @@ auto Graphics::GetEmptyFrameDef() -> FrameDef* {
 }
 
 void Graphics::ClearFrameDefDeleteList() {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::lock_guard<std::mutex> lock(frame_def_delete_list_mutex_);
 
   for (auto& i : frame_def_delete_list_) {
@@ -986,7 +986,7 @@ void Graphics::DrawWorld(Session* session, FrameDef* frame_def) {
 }
 
 void Graphics::BuildAndPushFrameDef() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(camera_.exists());
 
   // We should not be building/pushing any frames until after
@@ -1320,7 +1320,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
 }
 
 void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   bool can_show_cursor = g_platform->IsRunningOnDesktop();
   bool should_show_cursor = camera_->manual() || g_input->IsCursorVisible();
@@ -1427,7 +1427,7 @@ void Graphics::ReturnCompletedFrameDef(FrameDef* frame_def) {
 }
 
 void Graphics::AddMeshDataCreate(MeshData* d) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_graphics);
 
   // Add this to our list of new-mesh-datas. We'll include this with our
@@ -1437,7 +1437,7 @@ void Graphics::AddMeshDataCreate(MeshData* d) {
 }
 
 void Graphics::AddMeshDataDestroy(MeshData* d) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_graphics);
 
   // Add this to our list of delete-mesh-datas; we'll include this with our
@@ -1447,7 +1447,7 @@ void Graphics::AddMeshDataDestroy(MeshData* d) {
 }
 
 void Graphics::EnableProgressBar(bool fade_in) {
-  assert(InGameThread());
+  assert(InLogicThread());
   progress_bar_loads_ = g_media->GetGraphicalPendingLoadCount();
   assert(progress_bar_loads_ >= 0);
   if (progress_bar_loads_ > 0) {
@@ -1460,7 +1460,7 @@ void Graphics::EnableProgressBar(bool fade_in) {
 }
 
 void Graphics::ToggleManualCamera() {
-  assert(InGameThread());
+  assert(InLogicThread());
   camera_->SetManual(!camera_->manual());
   if (camera_->manual()) {
     ScreenMessage("Manual Camera On");
@@ -1470,14 +1470,14 @@ void Graphics::ToggleManualCamera() {
 }
 
 void Graphics::LocalCameraShake(float mag) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (camera_.exists()) {
     camera_->Shake(mag);
   }
 }
 
 void Graphics::ToggleNetworkDebugDisplay() {
-  assert(InGameThread());
+  assert(InLogicThread());
   network_debug_display_enabled_ = !network_debug_display_enabled_;
   if (network_debug_display_enabled_) {
     ScreenMessage("Network Debug Display Enabled");
@@ -1487,7 +1487,7 @@ void Graphics::ToggleNetworkDebugDisplay() {
 }
 
 void Graphics::ToggleDebugDraw() {
-  assert(InGameThread());
+  assert(InLogicThread());
   debug_draw_ = !debug_draw_;
   if (g_graphics_server->renderer()) {
     g_graphics_server->renderer()->set_debug_draw_mode(debug_draw_);
@@ -1522,7 +1522,7 @@ void Graphics::DoDrawBlotch(std::vector<uint16_t>* indices,
                             std::vector<VertexSprite>* verts,
                             const Vector3f& pos, float size, float r, float g,
                             float b, float a) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(indices && verts);
 
   // Add verts.
@@ -1789,7 +1789,7 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
 
 void Graphics::ScreenResize(float virtual_width, float virtual_height,
                             float pixel_width, float pixel_height) {
-  assert(InGameThread());
+  assert(InLogicThread());
   res_x_virtual_ = virtual_width;
   res_y_virtual_ = virtual_height;
   res_x_ = pixel_width;

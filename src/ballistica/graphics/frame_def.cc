@@ -26,10 +26,10 @@ FrameDef::FrameDef()
           new RenderPass(RenderPass::Type::kOverlayFlatPass, this)),
       blit_pass_(new RenderPass(RenderPass::Type::kBlitPass, this)) {}
 
-FrameDef::~FrameDef() { assert(InGameThread()); }
+FrameDef::~FrameDef() { assert(InLogicThread()); }
 
 void FrameDef::Reset() {
-  assert(InGameThread());
+  assert(InLogicThread());
   real_time_ = 0;
   base_time_ = 0;
   base_time_elapsed_ = 0;

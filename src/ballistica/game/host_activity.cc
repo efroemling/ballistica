@@ -125,7 +125,7 @@ void HostActivity::StepScene() {
   }
 
   for (int cycle = 0; cycle < cycle_count; ++cycle) {
-    assert(InGameThread());
+    assert(InLogicThread());
 
     // Clear our player-positions for this step.
     // FIXME: Move this to scene and/or player node.
@@ -365,19 +365,19 @@ auto HostActivity::NewBaseTimer(millisecs_t length, bool repeat,
 }
 
 void HostActivity::DeleteSimTimer(int timer_id) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (shutting_down_) return;
   sim_timers_.DeleteTimer(timer_id);
 }
 
 void HostActivity::DeleteBaseTimer(int timer_id) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (shutting_down_) return;
   base_timers_.DeleteTimer(timer_id);
 }
 
 auto HostActivity::Update(millisecs_t time_advance) -> millisecs_t {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // We can be killed at any time, so let's keep an eye out for that.
   WeakRef<HostActivity> test_ref(this);

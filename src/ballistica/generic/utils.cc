@@ -428,7 +428,7 @@ static const char* g_default_random_names[] = {
 static std::list<std::string>* g_random_names_list = nullptr;
 
 auto Utils::GetRandomNameList() -> const std::list<std::string>& {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_random_names_list == nullptr) {
     // This will init the list with our default english names.
     SetRandomNameList(std::list<std::string>(1, "DEFAULT_NAMES"));
@@ -445,7 +445,7 @@ auto Utils::GetRandomNameList() -> const std::list<std::string>& {
 }
 
 void Utils::SetRandomNameList(const std::list<std::string>& custom_names) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!g_random_names_list) {
     g_random_names_list = new std::list<std::string>;
   } else {

@@ -42,11 +42,11 @@ class Player : public Object {
 
   // Set the player node for the current activity.
   auto set_node(Node* node) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     node_ = node;
   }
   auto node() const -> Node* {
-    assert(InGameThread());
+    assert(InLogicThread());
     return node_.get();
   }
 

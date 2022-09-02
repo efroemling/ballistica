@@ -8,7 +8,7 @@ namespace ballistica {
 
 BGDynamicsFuse::BGDynamicsFuse() {
   assert(g_bg_dynamics_server);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Allocate our data. We'll pass this to the BGDynamics thread, and
   // it'll then own it.
@@ -18,7 +18,7 @@ BGDynamicsFuse::BGDynamicsFuse() {
 
 BGDynamicsFuse::~BGDynamicsFuse() {
   assert(g_bg_dynamics_server);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Let the data know the client side is dead
   // so that we're no longer included in step messages.
@@ -28,13 +28,13 @@ BGDynamicsFuse::~BGDynamicsFuse() {
 }
 
 void BGDynamicsFuse::SetTransform(const Matrix44f& t) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->transform_client_ = t;
   data_->have_transform_client_ = true;
 }
 
 void BGDynamicsFuse::SetLength(float length) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->length_client_ = length;
 }
 

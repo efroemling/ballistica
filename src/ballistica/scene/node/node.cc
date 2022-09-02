@@ -222,7 +222,7 @@ void Node::SetDelegate(PyObject* delegate_obj) {
 }
 
 auto Node::GetPyRef(bool new_ref) -> PyObject* {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassNode::Create(this);
   }
@@ -353,7 +353,7 @@ void Node::DispatchImpactDamageMessage(float intensity) {
 }
 
 void Node::DispatchUserMessage(PyObject* obj, const char* label) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (scene_->shutting_down()) {
     return;
   }

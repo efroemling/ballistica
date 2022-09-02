@@ -56,7 +56,7 @@ auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_python);
   PyObject* obj;
   if (!PyArg_ParseTuple(args, "O", &obj)) {
@@ -69,7 +69,7 @@ auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_python);
   g_python->ReleaseGamePadInput();
   Py_RETURN_NONE;
@@ -78,7 +78,7 @@ auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyCaptureKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!g_python) {
     return nullptr;
   }
@@ -93,7 +93,7 @@ auto PyCaptureKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyReleaseKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!g_python) {
     return nullptr;
   }
@@ -104,7 +104,7 @@ auto PyReleaseKeyboardInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyLockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_input);
   g_input->LockAllInput(false, Python::GetPythonFileLocation());
   Py_RETURN_NONE;
@@ -113,7 +113,7 @@ auto PyLockAllInput(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyUnlockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_input);
   g_input->UnlockAllInput(false, Python::GetPythonFileLocation());
   Py_RETURN_NONE;
@@ -123,7 +123,7 @@ auto PyUnlockAllInput(PyObject* self, PyObject* args) -> PyObject* {
 auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -141,7 +141,7 @@ auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
 auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   static const char* kwlist[] = {"input", nullptr};
   PyObject* input_device_obj = Py_None;
   if (!PyArg_ParseTupleAndKeywords(
@@ -159,7 +159,7 @@ auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyGetInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   const char* name;
   const char* unique_id;
   int doraise = true;

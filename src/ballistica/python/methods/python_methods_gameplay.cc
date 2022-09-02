@@ -182,7 +182,7 @@ auto PyGetCollisionInfo(PyObject* self, PyObject* args) -> PyObject* {
 auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   float intensity = 1.0f;
   static const char* kwlist[] = {"intensity", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|f",
@@ -198,7 +198,7 @@ auto PyPlaySound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* sound_obj;
   float volume = 1.0f;
   int host_only = 0;
@@ -253,7 +253,7 @@ auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   const char* chunk_type_str = "rock";
   const char* emit_type_str = "chunks";
   const char* tendril_type_str = "smoke";
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "O|Oiffsss", const_cast<char**>(kwlist), &pos_obj,
           &vel_obj, &count, &scale, &spread, &chunk_type_str, &emit_type_str,
@@ -361,7 +361,7 @@ auto PySetMapBounds(PyObject* self, PyObject* args) -> PyObject* {
     throw Exception(PyExcType::kContext);
   }
   float xmin, ymin, zmin, xmax, ymax, zmax;
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!PyArg_ParseTuple(args, "(ffffff)", &xmin, &ymin, &zmin, &xmax, &ymax,
                         &zmax)) {
     return nullptr;
@@ -381,7 +381,7 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
   }
 
   // Note: we return None if not in the game thread.
-  HostActivity* h = InGameThread()
+  HostActivity* h = InLogicThread()
                         ? g_game->GetForegroundContext().GetHostActivity()
                         : nullptr;
   if (h != nullptr) {
@@ -396,7 +396,7 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
 auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {

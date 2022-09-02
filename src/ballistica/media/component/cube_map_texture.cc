@@ -8,7 +8,7 @@ namespace ballistica {
 
 CubeMapTexture::CubeMapTexture(const std::string& name, Scene* scene)
     : MediaComponent(name, scene) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // cant currently add these to scenes so nothing to do here..
   {

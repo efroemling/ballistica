@@ -63,7 +63,7 @@ auto PythonClassData::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
   auto* self = reinterpret_cast<PythonClassData*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -83,7 +83,7 @@ auto PythonClassData::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 #pragma clang diagnostic pop
 
 void PythonClassData::Delete(Object::Ref<Data>* ref) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // if we're the py-object for a data, clear them out
   // (FIXME - wej should pass the old pointer in here to sanity-test that we
@@ -98,7 +98,7 @@ void PythonClassData::tp_dealloc(PythonClassData* self) {
   BA_PYTHON_TRY;
   // these have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<Data>* s = self->data_;
     g_game->PushCall([s] { Delete(s); });
   } else {

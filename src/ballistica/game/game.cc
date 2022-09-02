@@ -249,7 +249,7 @@ void Game::PushVRHandsState(const VRHandsState& state) {
 
 void Game::PushMediaPruneCall(int level) {
   PushCall([level] {
-    assert(InGameThread());
+    assert(InLogicThread());
     g_media->Prune(level);
   });
 }
@@ -268,7 +268,7 @@ void Game::PushInitialScreenCreatedCall() {
 }
 
 void Game::InitialScreenCreated() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Ok; graphics-server is telling us we've got a screen.
 
@@ -305,7 +305,7 @@ void Game::Prune() { g_media->Prune(); }
 
 // Launch into main menu or whatever else.
 void Game::RunAppLaunchCommands() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(!ran_app_launch_commands_);
 
   // First off, run our python app-launch call.
@@ -336,7 +336,7 @@ Game::~Game() = default;
 
 // Set up our sleeping based on what we're doing.
 void Game::UpdateProcessTimer() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // This might get called before we set up our timer in some cases. (such as
   // very early) should be safe to ignore since we update the interval
@@ -496,7 +496,7 @@ void Game::HandleQuitOnIdle() {
       idle_exiting_ = true;
 
       PushCall([this, idle_seconds] {
-        assert(InGameThread());
+        assert(InLogicThread());
 
         // Just go through _ba.quit()
         // FIXME: Shouldn't need to go out to the python layer here...
@@ -509,7 +509,7 @@ void Game::HandleQuitOnIdle() {
 // Bring our scenes, real-time timers, etc up to date.
 void Game::Update() {
   auto startms{Platform::GetCurrentMilliseconds()};
-  assert(InGameThread());
+  assert(InLogicThread());
   millisecs_t real_time = GetRealTime();
   g_platform->SetDebugKey("LastUpdateTime", std::to_string(startms));
   if (first_update_) {
@@ -667,7 +667,7 @@ void Game::Update() {
 
 // Reset the game to a blank slate.
 void Game::Reset() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Tear down any existing setup.
   // This should allow high-level objects to die gracefully.
@@ -707,7 +707,7 @@ auto Game::IsInUIContext() const -> bool {
 
 void Game::PushShowURLCall(const std::string& url) {
   PushCall([url] {
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(g_python);
     g_python->ShowURL(url);
   });
@@ -724,7 +724,7 @@ auto Game::GetForegroundContext() -> Context {
 
 void Game::PushBackButtonCall(InputDevice* input_device) {
   PushCall([this, input_device] {
-    assert(InGameThread());
+    assert(InLogicThread());
 
     // Ignore if UI isn't up yet.
     if (!g_ui || !g_ui->overlay_root_widget() || !g_ui->screen_root_widget()) {
@@ -773,12 +773,12 @@ void Game::PushStringEditCancelCall() {
 // Called by a newly made Session instance to set itself as the current
 // session.
 void Game::SetForegroundSession(Session* s) {
-  assert(InGameThread());
+  assert(InLogicThread());
   foreground_session_ = s;
 }
 
 void Game::SetForegroundScene(Scene* sg) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (foreground_scene_.get() != sg) {
     foreground_scene_ = sg;
 
@@ -795,7 +795,7 @@ void Game::LaunchClientSession() {
         "can't launch a session from within a session update; use "
         "ba.pushcall()");
   }
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Don't want to pick up any old stuff in here.
   ScopedSetContext cp(nullptr);
@@ -824,7 +824,7 @@ void Game::LaunchReplaySession(const std::string& file_name) {
         "can't launch a session from within a session update; use "
         "ba.pushcall()");
 
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Don't want to pick up any old stuff in here.
   ScopedSetContext cp(nullptr);
@@ -856,7 +856,7 @@ void Game::LaunchHostSession(PyObject* session_type_obj,
         "ba.pushcall()");
   }
 
-  assert(InGameThread());
+  assert(InLogicThread());
 
   connections_->PrepareForLaunchHostSession();
 
@@ -884,12 +884,12 @@ void Game::LaunchHostSession(PyObject* session_type_obj,
 }
 
 void Game::RunMainMenu() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_app_globals->shutting_down) {
     return;
   }
   assert(g_python);
-  assert(InGameThread());
+  assert(InLogicThread());
   PythonRef result =
       g_python->obj(Python::ObjID::kLaunchMainMenuSessionCall).Call();
   if (!result.exists()) {
@@ -964,7 +964,7 @@ void Game::PushStdinScriptCommand(const std::string& command) {
 
 void Game::PushInterruptSignalCall() {
   PushCall([this] {
-    assert(InGameThread());
+    assert(InLogicThread());
 
     // Special case; when running under the server-wrapper, we completely
     // ignore interrupt signals (the wrapper acts on them).
@@ -979,7 +979,7 @@ void Game::PushInterruptSignalCall() {
 
 void Game::PushAskUserForTelnetAccessCall() {
   PushCall([this] {
-    assert(InGameThread());
+    assert(InLogicThread());
     ScopedSetContext cp(GetUIContext());
     g_python->obj(Python::ObjID::kTelnetAccessRequestCall).Call();
   });
@@ -990,12 +990,12 @@ void Game::HandleThreadPause() {
 
   // Let Python and internal layers do their thing.
   g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
-  AppInternalOnGameThreadPause();
+  AppInternalOnLogicThreadPause();
 }
 
 void Game::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
   // Since we're mucking with refs, need to limit to game thread.
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
   PushCall([call] {
     assert(call.exists());
@@ -1006,7 +1006,7 @@ void Game::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
 void Game::PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
                               const PythonRef& args) {
   // Since we're mucking with refs, need to limit to game thread.
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
   PushCall([call, args] {
     assert(call.exists());
@@ -1016,7 +1016,7 @@ void Game::PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
 
 void Game::PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call) {
   // Since we're mucking with refs, need to limit to game thread.
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
 
   // Even though we only hold a weak ref, we expect a valid strong-reffed
   // object to be passed in.
@@ -1033,7 +1033,7 @@ void Game::PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call) {
 void Game::PushPythonWeakCallArgs(
     const Object::WeakRef<PythonContextCall>& call, const PythonRef& args) {
   // Since we're mucking with refs, need to limit to game thread.
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
 
   // Even though we only hold a weak ref, we expect a valid strong-reffed
   // object to be passed in.
@@ -1046,7 +1046,7 @@ void Game::PushPythonWeakCallArgs(
 
 void Game::PushPythonRawCallable(PyObject* callable) {
   PushCall([this, callable] {
-    assert(InGameThread());
+    assert(InLogicThread());
 
     // Lets run this in the UI context.
     // (can add other options if we need later)
@@ -1079,7 +1079,7 @@ void Game::SetDebugSpeedExponent(int val) {
 }
 
 void Game::ChangeGameSpeed(int offs) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // If we're in a replay session, adjust playback speed there.
   if (dynamic_cast<ReplayClientSession*>(GetForegroundSession())) {
@@ -1126,7 +1126,7 @@ void Game::PushMainMenuPressCall(InputDevice* device) {
 }
 
 void Game::MainMenuPress(InputDevice* device) {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_python->HandleDeviceMenuPress(device);
 }
 
@@ -1139,7 +1139,7 @@ void Game::PushScreenResizeCall(float virtual_width, float virtual_height,
 
 void Game::ScreenResize(float virtual_width, float virtual_height,
                         float pixel_width, float pixel_height) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_graphics != nullptr);
   if (g_graphics) {
     g_graphics->ScreenResize(virtual_width, virtual_height, pixel_width,
@@ -1161,7 +1161,7 @@ void Game::PushGameServiceAchievementListCall(
 void Game::GameServiceAchievementList(
     const std::set<std::string>& achievements) {
   assert(g_python);
-  assert(InGameThread());
+  assert(InLogicThread());
   AppInternalDispatchRemoteAchievementList(achievements);
 }
 
@@ -1177,7 +1177,7 @@ void Game::ScoresToBeatResponse(bool success,
                                 const std::list<ScoreToBeat>& scores,
                                 void* py_callback) {
   assert(g_python);
-  assert(InGameThread());
+  assert(InLogicThread());
   g_python->DispatchScoresToBeatResponse(success, scores, py_callback);
 }
 
@@ -1191,7 +1191,7 @@ void Game::PushFriendScoreSetCall(const FriendScoreSet& score_set) {
 
 void Game::PushConfirmQuitCall() {
   PushCall([this] {
-    assert(InGameThread());
+    assert(InLogicThread());
     if (HeadlessMode()) {
       Log("PushConfirmQuitCall() unhandled on headless.");
     } else {
@@ -1266,7 +1266,7 @@ void Game::PushOnAppResumeCall() {
 
 // Look through everything in our config dict and act on it.
 void Game::ApplyConfig() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Not relevant for fullscreen anymore
   // since we're fullscreen windows everywhere.
@@ -1451,7 +1451,7 @@ void Game::PushHavePendingLoadsDoneCall() {
 }
 
 void Game::ToggleConsole() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (auto console = g_app_globals->console) {
     console->ToggleState();
   }
@@ -1481,7 +1481,7 @@ void Game::PushShutdownCall(bool soft) {
 }
 
 void Game::Shutdown(bool soft) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (!g_app_globals->shutting_down) {
     g_app_globals->shutting_down = true;
@@ -1508,13 +1508,13 @@ void Game::Shutdown(bool soft) {
 }
 
 void Game::ResetInput() {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_input->ResetKeyboardHeldKeys();
   g_input->ResetJoyStickHeldButtons();
 }
 
 auto Game::RemovePlayer(Player* player) -> void {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (HostSession* host_session = player->GetHostSession()) {
     host_session->RemovePlayer(player);
   } else {
@@ -1542,13 +1542,13 @@ void Game::SetRealTimerLength(int timer_id, millisecs_t length) {
 }
 
 void Game::Process() {
-  have_pending_loads_ = g_media->RunPendingLoadsGameThread();
+  have_pending_loads_ = g_media->RunPendingLoadsLogicThread();
   UpdateProcessTimer();
 }
 
 void Game::SetLanguageKeys(
     const std::unordered_map<std::string, std::string>& language) {
-  assert(InGameThread());
+  assert(InLogicThread());
   {
     std::lock_guard<std::mutex> lock(language_mutex_);
     language_ = language;
@@ -1818,7 +1818,7 @@ auto Game::CharStr(SpecialChar id) -> std::string {
 }
 
 auto Game::ShouldAnnouncePartyJoinsAndLeaves() -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // At the moment we don't announce these for public internet parties.. (too
   // much noise).
@@ -1840,7 +1840,7 @@ void Game::CleanUpBeforeConnectingToHost() {
 }
 
 auto Game::GetPartySize() const -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(game_roster_ != nullptr);
   return cJSON_GetArraySize(game_roster_);
 }
@@ -2020,7 +2020,7 @@ void Game::BanPlayer(const PlayerSpec& spec, millisecs_t duration) {
 }
 
 void Game::UpdateGameRoster() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   assert(game_roster_ != nullptr);
   if (game_roster_ != nullptr) {
@@ -2131,7 +2131,7 @@ void Game::UpdateGameRoster() {
 }
 
 void Game::SetPublicPartyEnabled(bool val) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (val == public_party_enabled_) {
     return;
   }
@@ -2140,7 +2140,7 @@ void Game::SetPublicPartyEnabled(bool val) {
 }
 
 void Game::SetPublicPartySize(int count) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (count == public_party_size_) {
     return;
   }
@@ -2154,7 +2154,7 @@ void Game::SetPublicPartySize(int count) {
 }
 
 void Game::SetPublicPartyMaxSize(int count) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (count == public_party_max_size_) {
     return;
   }
@@ -2168,7 +2168,7 @@ void Game::SetPublicPartyMaxSize(int count) {
 }
 
 void Game::SetPublicPartyName(const std::string& name) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (name == public_party_name_) {
     return;
   }
@@ -2182,7 +2182,7 @@ void Game::SetPublicPartyName(const std::string& name) {
 }
 
 void Game::SetPublicPartyStatsURL(const std::string& url) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (url == public_party_stats_url_) {
     return;
   }
@@ -2196,7 +2196,7 @@ void Game::SetPublicPartyStatsURL(const std::string& url) {
 }
 
 void Game::SetPublicPartyPlayerCount(int count) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (count == public_party_player_count_) {
     return;
   }

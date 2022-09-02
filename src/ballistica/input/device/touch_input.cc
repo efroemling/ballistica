@@ -351,7 +351,7 @@ void TouchInput::UpdateDPad() {
 }
 
 void TouchInput::Draw(FrameDef* frame_def) {
-  assert(InGameThread());
+  assert(InLogicThread());
   bool active = (!g_ui->IsWindowPresent());
   millisecs_t real_time = frame_def->real_time();
 
@@ -831,7 +831,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
 }
 
 void TouchInput::UpdateMapping() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   std::string touch_movement_type =
       g_app_config->Resolve(AppConfig::StringID::kTouchMovementControlType);
@@ -895,7 +895,7 @@ void TouchInput::UpdateMapping() {
 }
 
 auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   float width = g_graphics->screen_virtual_width();
   float height = g_graphics->screen_virtual_height();
@@ -985,7 +985,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
 }
 
 auto TouchInput::HandleTouchUp(void* touch, float x, float y) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Release dpad drag touch.
   if (touch == d_pad_drag_touch_) {
@@ -1027,7 +1027,7 @@ auto TouchInput::HandleTouchUp(void* touch, float x, float y) -> bool {
 }
 
 auto TouchInput::HandleTouchMoved(void* touch, float x, float y) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (touch == d_pad_drag_touch_) {
     float width = g_graphics->screen_virtual_width();
     float height = g_graphics->screen_virtual_height();

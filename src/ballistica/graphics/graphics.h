@@ -136,70 +136,70 @@ class Graphics {
   auto ToggleNetworkDebugDisplay() -> void;
   auto SetGyroEnabled(bool enable) -> void;
   auto floor_reflection() const -> bool {
-    assert(InGameThread());
+    assert(InLogicThread());
     return floor_reflection_;
   }
   auto set_floor_reflection(bool val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     floor_reflection_ = val;
   }
   auto set_shadow_offset(const Vector3f& val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     shadow_offset_ = val;
   }
   auto set_shadow_scale(float x, float y) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     shadow_scale_.x = x;
     shadow_scale_.y = y;
   }
   auto set_shadow_ortho(bool o) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     shadow_ortho_ = o;
   }
   auto tint() -> const Vector3f& { return tint_; }
   auto set_tint(const Vector3f& val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     tint_ = val;
   }
 
   auto set_ambient_color(const Vector3f& val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     ambient_color_ = val;
   }
   auto set_vignette_outer(const Vector3f& val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     vignette_outer_ = val;
   }
   auto set_vignette_inner(const Vector3f& val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     vignette_inner_ = val;
   }
   auto shadow_offset() const -> const Vector3f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return shadow_offset_;
   }
   auto shadow_scale() const -> const Vector2f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return shadow_scale_;
   }
   auto tint() const -> const Vector3f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return tint_;
   }
   auto ambient_color() const -> const Vector3f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return ambient_color_;
   }
   auto vignette_outer() const -> const Vector3f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return vignette_outer_;
   }
   auto vignette_inner() const -> const Vector3f& {
-    assert(InGameThread());
+    assert(InLogicThread());
     return vignette_inner_;
   }
   auto shadow_ortho() const -> bool {
-    assert(InGameThread());
+    assert(InLogicThread());
     return shadow_ortho_;
   }
   auto SetShadowRange(float lower_bottom, float lower_top, float upper_bottom,
@@ -209,11 +209,11 @@ class Graphics {
 
   // FIXME - move to graphics_server
   auto set_tv_border(bool val) -> void {
-    assert(InGameThread());
+    assert(InLogicThread());
     tv_border_ = val;
   }
   auto tv_border() const -> bool {
-    assert(InGameThread());
+    assert(InLogicThread());
     return tv_border_;
   }
 

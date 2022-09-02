@@ -20,13 +20,13 @@ class Context {
     assert(g_context);
 
     // Context can only be accessed from the game thread.
-    BA_PRECONDITION(InGameThread());
+    BA_PRECONDITION(InLogicThread());
 
     return *g_context;
   }
   static void set_current(const Context& context) {
     // Context can only be accessed from the game thread.
-    BA_PRECONDITION(InGameThread());
+    BA_PRECONDITION(InLogicThread());
 
     *g_context = context;
   }

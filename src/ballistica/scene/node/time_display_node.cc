@@ -43,7 +43,7 @@ TimeDisplayNode::TimeDisplayNode(Scene* scene) : Node(scene, node_type) {}
 TimeDisplayNode::~TimeDisplayNode() = default;
 
 auto TimeDisplayNode::GetOutput() -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (translations_dirty_) {
     time_suffix_hours_ =
         g_game->CompileResourceString(R"({"r":"timeSuffixHoursText"})", "tda");

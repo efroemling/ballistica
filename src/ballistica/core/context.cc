@@ -25,7 +25,7 @@ auto ContextTarget::GetAsHostActivity() -> HostActivity* { return nullptr; }
 auto ContextTarget::GetAsUIContext() -> UI* { return nullptr; }
 auto ContextTarget::GetMutableScene() -> Scene* { return nullptr; }
 
-Context::Context() : target(g_context->target) { assert(InGameThread()); }
+Context::Context() : target(g_context->target) { assert(InLogicThread()); }
 
 auto Context::operator==(const Context& other) const -> bool {
   return (target.get() == other.target.get());
@@ -34,7 +34,7 @@ auto Context::operator==(const Context& other) const -> bool {
 Context::Context(ContextTarget* target_in) : target(target_in) {}
 
 auto Context::GetHostSession() const -> HostSession* {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (target.exists()) return target->GetHostSession();
   return nullptr;
 }
@@ -60,28 +60,28 @@ auto Context::GetUIContext() const -> UI* {
 }
 
 ScopedSetContext::ScopedSetContext(const Object::Ref<ContextTarget>& target) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_context);
   context_prev_ = *g_context;
   g_context->target = target;
 }
 
 ScopedSetContext::ScopedSetContext(ContextTarget* target) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_context);
   context_prev_ = *g_context;
   g_context->target = target;
 }
 
 ScopedSetContext::ScopedSetContext(const Context& context) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_context);
   context_prev_ = *g_context;
   *g_context = context;
 }
 
 ScopedSetContext::~ScopedSetContext() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_context);
   // Restore old.
   *g_context = context_prev_;

@@ -133,7 +133,7 @@ class PlaylistAddGameWindow(ba.Window):
 
         # We asked for a bg thread completion cb so we can do some
         # filtering here in the bg thread where its not gonna cause hitches.
-        assert not _ba.in_game_thread()
+        assert not _ba.in_logic_thread()
         sessiontype = self._editcontroller.get_session_type()
         unowned = get_unowned_game_types()
         self._game_types = [

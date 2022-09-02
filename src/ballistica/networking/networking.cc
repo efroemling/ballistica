@@ -18,7 +18,7 @@ struct Networking::ScanResultsEntryPriv {
 };
 
 Networking::Networking() {
-  assert(InGameThread());
+  assert(InLogicThread());
   Resume();
 }
 
@@ -29,7 +29,7 @@ Networking::~Networking() = default;
 // non-blocking mode they're still blocking for 3-4ms sometimes. But for now
 // since this is only used minimally and only while in the UI i guess it's ok.
 void Networking::HostScanCycle() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // We need to create a scanner socket - an ipv4 socket we can send out
   // broadcast messages from.

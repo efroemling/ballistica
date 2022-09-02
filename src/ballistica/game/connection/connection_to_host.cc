@@ -270,7 +270,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
 #pragma clang diagnostic pop
 
 void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (buffer.empty()) {
     Log("Error: got invalid HandleMessagePacket");

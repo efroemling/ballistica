@@ -23,7 +23,7 @@ class BGDynamicsDrawSnapshot {
   // These are created in the bg-dynamics thread, and object ownership
   // needs to be switched back to the game-thread default when it is passed
   // over or else the debug thread-access-checks will error.
-  void SetGameThreadOwnership() {
+  void SetLogicThreadOwnership() {
     if (g_buildconfig.debug_build()) {
       for (Object* o : {static_cast<Object*>(tendril_indices.get()),
                         static_cast<Object*>(tendril_vertices.get()),

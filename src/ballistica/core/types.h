@@ -995,10 +995,10 @@ enum class ThreadType {
 
 /// Used for module-thread identification.
 /// Mostly just for debugging, through a few things are affected by this
-/// (the GAME thread manages the python GIL, etc).
+/// (the Logic thread manages the python GIL, etc).
 enum class ThreadIdentifier {
   kInvalid,
-  kGame,
+  kLogic,
   kMedia,
   kFileOut,
   kMain,

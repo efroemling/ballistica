@@ -71,7 +71,7 @@ void Thread::KillModules() {
 // These are all exactly the same, but by running different ones for
 // different thread groups makes its easy to see which thread is which
 // in profilers, backtraces, etc.
-auto Thread::RunGameThread(void* data) -> int {
+auto Thread::RunLogicThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
 
@@ -295,8 +295,8 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
       // it's ready to go.
       int (*func)(void*);
       switch (identifier_) {
-        case ThreadIdentifier::kGame:
-          func = RunGameThread;
+        case ThreadIdentifier::kLogic:
+          func = RunLogicThread;
           break;
         case ThreadIdentifier::kMedia:
           func = RunMediaThread;
@@ -354,8 +354,8 @@ auto Thread::ThreadMain() -> int {
 
     const char* id_string;
     switch (identifier_) {
-      case ThreadIdentifier::kGame:
-        id_string = "ballistica game";
+      case ThreadIdentifier::kLogic:
+        id_string = "ballistica logic";
         break;
       case ThreadIdentifier::kStdin:
         id_string = "ballistica stdin";

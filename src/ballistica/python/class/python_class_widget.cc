@@ -73,7 +73,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
   auto* self = reinterpret_cast<PythonClassWidget*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -89,7 +89,7 @@ void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
   BA_PYTHON_TRY;
   // these have to be destructed in the game thread - send them along to it if
   // need be
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<Widget>* w = self->widget_;
     g_game->PushCall([w] { delete w; });
   } else {

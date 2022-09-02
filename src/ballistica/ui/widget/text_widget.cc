@@ -25,7 +25,7 @@ bool TextWidget::always_use_internal_keyboard_{false};
 // FIXME: Move this to g_ui or something; not a global.
 Object::WeakRef<TextWidget> TextWidget::android_string_edit_widget_;
 TextWidget* TextWidget::GetAndroidStringEditWidget() {
-  assert(InGameThread());
+  assert(InLogicThread());
   return android_string_edit_widget_.get();
 }
 

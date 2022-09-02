@@ -13,7 +13,7 @@ namespace ballistica {
 PythonContextCall* PythonContextCall::current_call_ = nullptr;
 
 PythonContextCall::PythonContextCall(PyObject* obj_in) {
-  assert(InGameThread());
+  assert(InLogicThread());
   // as a sanity test, store the current context ptr just to make sure it
   // hasn't changed when we run
 #if BA_DEBUG_BUILD
@@ -125,7 +125,7 @@ void PythonContextCall::Run(PyObject* args) {
 }
 
 void PythonContextCall::LogContext() {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::string s = std::string("  root call: ") + object().Str();
   s += ("\n  root call origin: " + file_loc());
   s += g_python->GetContextBaseString();

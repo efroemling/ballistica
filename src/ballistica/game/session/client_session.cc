@@ -965,7 +965,7 @@ void ClientSession::End() {
 }
 
 void ClientSession::HandleSessionMessage(const std::vector<uint8_t>& buffer) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   BA_PRECONDITION(!buffer.empty());
 

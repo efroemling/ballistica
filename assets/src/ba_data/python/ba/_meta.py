@@ -144,7 +144,7 @@ class MetadataSubsystem:
     def _wait_for_scan_results(self) -> ScanResults:
         """Return scan results, blocking if the scan is not yet complete."""
         if self.scanresults is None:
-            if _ba.in_game_thread():
+            if _ba.in_logic_thread():
                 logging.warning(
                     'ba.meta._wait_for_scan_results()'
                     ' called in logic thread before scan completed;'
@@ -177,7 +177,7 @@ class MetadataSubsystem:
     def _handle_scan_results(self) -> None:
         """Called in the logic thread with results of a completed scan."""
         from ba._language import Lstr
-        assert _ba.in_game_thread()
+        assert _ba.in_logic_thread()
 
         results = self.scanresults
         assert results is not None

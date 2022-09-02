@@ -1,4 +1,4 @@
-### 1.7.7 (build 20732, api 7, 2022-09-02)
+### 1.7.7 (build 20734, api 7, 2022-09-02)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -13,6 +13,8 @@
 - Continue window will now pause the game to avoid running up times in the background (thanks vishal332008!)
 - Keepaway and KingOfTheHill now have epic options (thanks FAL-Guys!)
 - Spaz starting with gloves no longer loses it after picking up an expiring gloves powerup (thanks itsre3!)
+- Starting to rename the 'game' thread to the 'logic' thread. This is the thread where most high level app logic happen, not only game logic.
+- `_ba.in_game_thread()` is now `_ba.in_logic_thread()`.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

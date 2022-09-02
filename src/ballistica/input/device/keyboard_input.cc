@@ -373,7 +373,7 @@ void KeyboardInput::UpdateRun(SDL_Keycode key, bool down) {
 }
 
 void KeyboardInput::UpdateMapping() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   SDL_Keycode up_key_default, down_key_default, left_key_default,
       right_key_default, jump_key_default, punch_key_default, bomb_key_default,

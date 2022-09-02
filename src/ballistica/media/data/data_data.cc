@@ -32,7 +32,7 @@ void DataData::DoPreload() {
 }
 
 void DataData::DoLoad() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(valid_);
   PythonRef args(Py_BuildValue("(s)", raw_input_.c_str()), PythonRef::kSteal);
   object_ = g_python->obj(Python::ObjID::kJsonLoadsCall).Call(args);
@@ -42,7 +42,7 @@ void DataData::DoLoad() {
 }
 
 void DataData::DoUnload() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(valid_);
   object_.Release();
 }

@@ -122,7 +122,7 @@ auto PythonClassInputDevice::tp_new(PyTypeObject* type, PyObject* args,
       reinterpret_cast<PythonClassInputDevice*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -140,7 +140,7 @@ void PythonClassInputDevice::tp_dealloc(PythonClassInputDevice* self) {
   // need be.
   // FIXME: Technically the main thread has a pointer to a dead PyObject
   //  until the delete goes through; could that ever be a problem?
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<InputDevice>* d = self->input_device_;
     g_game->PushCall([d] { delete d; });
   } else {
@@ -347,7 +347,7 @@ auto PythonClassInputDevice::GetAxisName(PythonClassInputDevice* self,
                                          PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   int id;
   static const char* kwlist[] = {"axis_id", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
@@ -366,7 +366,7 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                                            PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   int id{};
   static const char* kwlist[] = {"button_id", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",

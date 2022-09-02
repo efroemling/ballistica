@@ -2216,7 +2216,7 @@ def in_game_purchase(item: str, price: int) -> None:
     return None
 
 
-def in_game_thread() -> bool:
+def in_logic_thread() -> bool:
     """(internal)
 
     Returns whether or not the current thread is the game thread.

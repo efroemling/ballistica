@@ -9,7 +9,7 @@
 namespace ballistica {
 
 BGDynamicsShadow::BGDynamicsShadow(float height_scaling) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // allocate our shadow data... we'll pass this to the BGDynamics thread,
   // which will then own it.
@@ -19,7 +19,7 @@ BGDynamicsShadow::BGDynamicsShadow(float height_scaling) {
 }
 
 BGDynamicsShadow::~BGDynamicsShadow() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_bg_dynamics_server);
 
   // let the data know the client side is dead,
@@ -30,17 +30,17 @@ BGDynamicsShadow::~BGDynamicsShadow() {
 }
 
 void BGDynamicsShadow::SetPosition(const Vector3f& pos) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->pos_client = pos;
 }
 
 auto BGDynamicsShadow::GetPosition() const -> const Vector3f& {
-  assert(InGameThread());
+  assert(InLogicThread());
   return data_->pos_client;
 }
 
 void BGDynamicsShadow::GetValues(float* scale, float* density) const {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(scale);
   assert(density);
 

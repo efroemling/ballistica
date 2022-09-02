@@ -1841,7 +1841,7 @@ auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  assert(InGameThread());
+  assert(InLogicThread());
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD \
     && !BA_XCODE_NEW_PROJECT
   SDL_ericf_focus();
@@ -1898,7 +1898,7 @@ auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   const char* purpose;
   PyObject* on_completion_call_obj = Py_None;
   int pass_actually_showed = false;
@@ -1928,7 +1928,7 @@ auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   const char* purpose;
   PyObject* on_completion_call_obj = Py_None;
   int pass_actually_showed = true;
@@ -2040,7 +2040,7 @@ auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -2114,7 +2114,7 @@ auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   // if we've got any network connections, no ads..
   // (don't want to make someone on the other end wait or risk disconnecting
   // them or whatnot) also disallow ads if remote apps are connected; at least

@@ -42,7 +42,7 @@ RootUI::RootUI() {
 RootUI::~RootUI() = default;
 
 void RootUI::TogglePartyWindowKeyPress() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_game->GetPartySize() > 1 || g_game->connections()->connection_to_host()
       || always_draw_party_icon()) {
     ActivatePartyIcon();
@@ -50,7 +50,7 @@ void RootUI::TogglePartyWindowKeyPress() {
 }
 
 void RootUI::ActivatePartyIcon() const {
-  assert(InGameThread());
+  assert(InLogicThread());
   ScopedSetContext cp(g_game->GetUIContext());
 
   // Originate from center of party icon. If menu button is shown, it is to the

@@ -11,7 +11,7 @@ namespace ballistica {
 
 Texture::Texture(const std::string& name, Scene* scene)
     : MediaComponent(name, scene), dead_(false) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Add to the provided scene to get a numeric ID.
   if (scene) {
@@ -28,7 +28,7 @@ Texture::Texture(const std::string& name, Scene* scene)
 
 // qrcode version
 Texture::Texture(const std::string& qr_url) : MediaComponent(qr_url, nullptr) {
-  assert(InGameThread());
+  assert(InLogicThread());
   {
     Media::MediaListsLock lock;
     texture_data_ = g_media->GetTextureDataQRCode(qr_url);

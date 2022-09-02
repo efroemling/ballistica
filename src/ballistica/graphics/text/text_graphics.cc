@@ -20,7 +20,7 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
 };
 
 void TextGraphics::Init() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_text_graphics == nullptr);
   g_text_graphics = new TextGraphics();
 }
@@ -1000,7 +1000,7 @@ auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
 
 void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                                float* width) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Asking the OS to calculate text bounds sounds expensive,
   // so let's use a cache of recent results.

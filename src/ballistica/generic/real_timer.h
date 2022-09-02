@@ -17,16 +17,16 @@ class RealTimer : public Object {
  public:
   RealTimer(millisecs_t length, bool repeat, T* delegate) {
     assert(g_game);
-    assert(InGameThread());
+    assert(InLogicThread());
     timer_id_ = g_game->NewRealTimer(
         length, repeat, Object::New<Runnable, Callback>(delegate, this));
   }
   void SetLength(uint32_t length) {
-    assert(InGameThread());
+    assert(InLogicThread());
     g_game->SetRealTimerLength(timer_id_, length);
   }
   ~RealTimer() override {
-    assert(InGameThread());
+    assert(InLogicThread());
     g_game->DeleteRealTimer(timer_id_);
   }
 

@@ -21,7 +21,7 @@ const int kActivateKey1 = SDLK_BACKQUOTE;
 const int kActivateKey2 = SDLK_F2;
 
 Console::Console() {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::string title = std::string("BallisticaCore ") + kAppVersion + " ("
                       + std::to_string(kAppBuildNumber) + ")";
   if (g_buildconfig.debug_build()) {
@@ -45,7 +45,7 @@ Console::Console() {
 Console::~Console() = default;
 
 auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Handle our toggle buttons no matter whether we're active.
   switch (keysym->sym) {
@@ -158,7 +158,7 @@ void Console::ToggleState() {
 }
 
 auto Console::HandleTextEditing(const std::string& text) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (state_ == State::kInactive) {
     return false;
   }
@@ -186,7 +186,7 @@ auto Console::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
 
 void Console::Print(const std::string& s_in) {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
   last_line_ += s;
   std::vector<std::string> broken_up;

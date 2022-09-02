@@ -322,7 +322,7 @@ Input::Input() {
   // assert(g_input == nullptr);
   // g_input = this;
 
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Config should have always been read by this point; right?
   // assert(g_python);
@@ -334,7 +334,7 @@ void Input::PushCreateKeyboardInputDevices() {
 }
 
 void Input::CreateKeyboardInputDevices() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
     Log("Error: CreateKeyboardInputDevices called with existing kbs.");
     return;
@@ -350,7 +350,7 @@ void Input::PushDestroyKeyboardInputDevices() {
 }
 
 void Input::DestroyKeyboardInputDevices() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
     Log("Error: DestroyKeyboardInputDevices called with null kb(s).");
     return;
@@ -372,7 +372,7 @@ auto Input::GetInputDevice(int id) -> InputDevice* {
 
 auto Input::GetInputDevice(const std::string& name,
                            const std::string& unique_id) -> InputDevice* {
-  assert(InGameThread());
+  assert(InLogicThread());
   for (auto&& i : input_devices_) {
     if (i.exists() && (i->GetDeviceName() == name)
         && i->GetPersistentIdentifier() == unique_id) {
@@ -384,7 +384,7 @@ auto Input::GetInputDevice(const std::string& name,
 
 auto Input::GetNewNumberedIdentifier(const std::string& name,
                                      const std::string& identifier) -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Stuff like reserved_identifiers["JoyStickType"]["0x812312314"] = 2;
 
@@ -520,7 +520,7 @@ void Input::AnnounceDisconnects() {
 }
 
 void Input::ShowStandardInputDeviceConnectedMessage(InputDevice* j) {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::string suffix;
   suffix += j->GetPersistentIdentifier();
   suffix += j->GetDeviceExtraDescription();
@@ -538,7 +538,7 @@ void Input::ShowStandardInputDeviceConnectedMessage(InputDevice* j) {
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   newly_disconnected_controllers_.push_back(j->GetDeviceName() + " "
                                             + j->GetPersistentIdentifier()
@@ -560,7 +560,7 @@ void Input::PushAddInputDeviceCall(InputDevice* input_device,
 }
 
 void Input::AddInputDevice(InputDevice* input, bool standard_message) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Lets go through and find the first unused input-device id and use that
   // (might as well keep our list small if we can).
@@ -622,7 +622,7 @@ void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
 }
 
 void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (standard_message && !input->ShouldBeHiddenFromUser()) {
     ShowStandardInputDeviceDisconnectedMessage(input);
@@ -668,7 +668,7 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
 }
 
 void Input::UpdateInputDeviceCounts() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   have_button_using_inputs_ = false;
   have_start_activated_default_button_inputs_ = false;
@@ -711,7 +711,7 @@ void Input::UpdateInputDeviceCounts() {
 }
 
 auto Input::GetLocalActiveInputDeviceCount() -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // This can get called alot so lets cache the value.
   millisecs_t current_time = g_game->master_time();
@@ -737,7 +737,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 }
 
 auto Input::HaveControllerWithPlayer() -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.exists() && (*input_device).IsController()
@@ -749,7 +749,7 @@ auto Input::HaveControllerWithPlayer() -> bool {
 }
 
 auto Input::HaveRemoteAppController() -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.exists() && (*input_device).IsRemoteApp()) {
@@ -776,7 +776,7 @@ auto Input::GetInputDevicesWithName(const std::string& name)
 }
 
 auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::vector<InputDevice*> vals;
   if (!HeadlessMode()) {
     for (auto& input_device : input_devices_) {
@@ -830,7 +830,7 @@ void Input::UpdateEnabledControllerSubsystems() {
 
 // Tells all inputs to update their controls based on the app config.
 void Input::ApplyAppConfig() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   UpdateEnabledControllerSubsystems();
 
@@ -846,7 +846,7 @@ void Input::ApplyAppConfig() {
 }
 
 void Input::Update() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   millisecs_t real_time = GetRealTime();
 
@@ -890,7 +890,7 @@ void Input::Update() {
 }
 
 void Input::Reset() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Detach all inputs from players.
   for (auto& input_device : input_devices_) {
@@ -901,7 +901,7 @@ void Input::Reset() {
 }
 
 void Input::LockAllInput(bool permanent, const std::string& label) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (permanent) {
     input_lock_count_permanent_++;
     input_lock_permanent_labels_.push_back(label);
@@ -921,7 +921,7 @@ void Input::LockAllInput(bool permanent, const std::string& label) {
 }
 
 void Input::UnlockAllInput(bool permanent, const std::string& label) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   recent_input_locks_unlocks_.push_back(
       permanent
@@ -1057,7 +1057,7 @@ void Input::ProcessStressTesting(int player_count) {
 }
 
 void Input::HandleBackPress(bool from_toolbar) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // This can come through occasionally before our UI is up it seems?
   // Just ignore in that case.
@@ -1112,7 +1112,7 @@ auto Input::PushJoystickEvent(const SDL_Event& event, InputDevice* input_device)
 
 void Input::HandleJoystickEvent(const SDL_Event& event,
                                 InputDevice* input_device) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(input_device);
 
   if (ShouldCompletelyIgnoreInputDevice(input_device)) {
@@ -1145,7 +1145,7 @@ void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
 }
 
 void Input::HandleKeyPress(const SDL_Keysym* keysym) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   mark_input_active();
 
@@ -1319,7 +1319,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 }
 
 void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Note: we want to let these through even if input is locked.
 
@@ -1396,7 +1396,7 @@ auto Input::PushMouseScrollEvent(const Vector2f& amount) -> void {
 }
 
 auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (IsInputLocked()) {
     return;
   }
@@ -1432,7 +1432,7 @@ auto Input::PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum)
 
 auto Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum)
     -> void {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (IsInputLocked()) {
     return;
   }
@@ -1465,7 +1465,7 @@ auto Input::PushMouseMotionEvent(const Vector2f& position) -> void {
 
 auto Input::HandleMouseMotion(const Vector2f& position) -> void {
   assert(g_graphics);
-  assert(InGameThread());
+  assert(InLogicThread());
   mark_input_active();
 
   float old_cursor_pos_x = cursor_pos_x_;
@@ -1517,7 +1517,7 @@ auto Input::PushMouseDownEvent(int button, const Vector2f& position) -> void {
 
 auto Input::HandleMouseDown(int button, const Vector2f& position) -> void {
   assert(g_graphics);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (IsInputLocked()) {
     return;
@@ -1593,7 +1593,7 @@ auto Input::PushMouseUpEvent(int button, const Vector2f& position) -> void {
 }
 
 auto Input::HandleMouseUp(int button, const Vector2f& position) -> void {
-  assert(InGameThread());
+  assert(InLogicThread());
   mark_input_active();
 
   // Convert normalized view coords to our virtual ones.
@@ -1641,7 +1641,7 @@ void Input::PushTouchEvent(const TouchEvent& e) {
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_graphics);
 
   if (IsInputLocked()) {
@@ -1713,7 +1713,7 @@ void Input::ResetJoyStickHeldButtons() {
 
 // Send key-ups for any currently-held keys.
 void Input::ResetKeyboardHeldKeys() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!HeadlessMode()) {
     // Synthesize key-ups for all our held keys.
     while (!keys_held_.empty()) {
@@ -1733,7 +1733,7 @@ void Input::Draw(FrameDef* frame_def) {
 }
 
 auto Input::IsCursorVisible() const -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!g_ui) {
     return false;
   }

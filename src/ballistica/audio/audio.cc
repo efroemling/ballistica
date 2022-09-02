@@ -8,7 +8,7 @@
 
 namespace ballistica {
 
-Audio::Audio() { assert(InGameThread()); }
+Audio::Audio() { assert(InLogicThread()); }
 
 void Audio::Init() {
   // Init our singleton.
@@ -17,7 +17,7 @@ void Audio::Init() {
 }
 
 void Audio::Reset() {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_audio_server->PushResetCall();
 }
 
@@ -129,7 +129,7 @@ auto Audio::ShouldPlay(SoundData* sound) -> bool {
 }
 
 void Audio::PlaySound(SoundData* sound, float volume) {
-  assert(InGameThread());
+  assert(InLogicThread());
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   assert(sound);
   if (!ShouldPlay(sound)) {

@@ -61,7 +61,7 @@ auto ConnectionSet::Update() -> void {
 }
 
 auto ConnectionSet::GetConnectedClientCount() const -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
   int count = 0;
   for (auto&& i : connections_to_clients_) {
     if (i.second.exists() && i.second->can_communicate()) {
@@ -312,7 +312,7 @@ auto ConnectionSet::HandleClientDisconnected(int id) -> void {
 }
 
 auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (connection_to_host_.exists()) {
     // Kick-votes first appeared in 14248

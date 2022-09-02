@@ -130,7 +130,7 @@ auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
                                    const_cast<char**>(kwlist))) {
@@ -147,7 +147,7 @@ auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* session_obj;
   static const char* kwlist[] = {"session", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -169,7 +169,7 @@ auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRegisterActivity(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* activity_obj;
   static const char* kwlist[] = {"activity", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -197,7 +197,7 @@ auto PyGetForegroundHostSession(PyObject* self, PyObject* args,
   }
 
   // Note: we return None if not in the game thread.
-  HostSession* s = InGameThread()
+  HostSession* s = InLogicThread()
                        ? g_game->GetForegroundContext().GetHostSession()
                        : nullptr;
   if (s != nullptr) {
@@ -259,7 +259,7 @@ auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   // Fail gracefully if called from outside the game thread.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Py_RETURN_NONE;
   }
 
@@ -293,8 +293,8 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   if (from_other_thread) {
     // Warn the user not to use this from the game thread since it doesnt
     // save/restore context.
-    if (!suppress_warning && InGameThread()) {
-      g_python->IssueCallInGameThreadWarning(call_obj);
+    if (!suppress_warning && InLogicThread()) {
+      g_python->IssueCallInLogicThreadWarning(call_obj);
     }
 
     // This gets called from other python threads so we can't construct
@@ -304,7 +304,7 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     Py_INCREF(call_obj);
     g_game->PushPythonRawCallable(call_obj);
   } else {
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception("You must use from_other_thread mode.");
     }
     g_game->PushPythonCall(Object::New<PythonContextCall>(call_obj));
@@ -361,7 +361,7 @@ auto PyTime(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
 
   PyObject* length_obj;
   int64_t length;

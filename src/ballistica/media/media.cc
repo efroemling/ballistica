@@ -79,7 +79,7 @@ void Media::LoadSystemModel(SystemModelID id, const char* name) {
 }
 
 void Media::LoadSystemMedia() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_audio_server && g_media_server && g_graphics_server);
   assert(g_graphics_server
          && g_graphics_server->texture_compression_types_are_set());
@@ -378,7 +378,7 @@ void Media::PrintLoadInfo() {
 }
 
 void Media::MarkAllMediaForLoad() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Need to keep lists locked while iterating over them.
   MediaListsLock m_lock;
@@ -465,7 +465,7 @@ auto Media::GetComponentData(
     const std::string& file_name,
     std::unordered_map<std::string, Object::Ref<T> >* c_list)
     -> Object::Ref<T> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
   auto i = c_list->find(file_name);
   if (i != c_list->end()) {
@@ -484,7 +484,7 @@ auto Media::GetComponentData(
 }
 
 auto Media::GetTextureData(TextPacker* packer) -> Object::Ref<TextureData> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
   const std::string& hash(packer->hash());
   auto i = text_textures_.find(hash);
@@ -505,7 +505,7 @@ auto Media::GetTextureData(TextPacker* packer) -> Object::Ref<TextureData> {
 
 auto Media::GetTextureDataQRCode(const std::string& url)
     -> Object::Ref<TextureData> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
   auto i = qr_textures_.find(url);
   if (i != qr_textures_.end()) {
@@ -527,7 +527,7 @@ auto Media::GetTextureDataQRCode(const std::string& url)
 // ..should fix.
 auto Media::GetCubeMapTextureData(const std::string& file_name)
     -> Object::Ref<TextureData> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
@@ -550,7 +550,7 @@ auto Media::GetCubeMapTextureData(const std::string& file_name)
 // settings, etc). Should fix.
 auto Media::GetTextureData(const std::string& file_name)
     -> Object::Ref<TextureData> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
@@ -603,7 +603,7 @@ auto Media::GetTextureData(const std::string& file_name)
 }
 
 void Media::MarkComponentForLoad(MediaComponentData* c) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   assert(c->locked());
 
@@ -708,7 +708,7 @@ template <class T>
 auto Media::GetComponentPendingLoadCount(
     std::unordered_map<std::string, Object::Ref<T> >* t_list, MediaType type)
     -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(media_lists_locked_);
 
   int c = 0;
@@ -742,8 +742,8 @@ auto Media::RunPendingGraphicsLoads() -> bool {
 
 // Runs the pending loads that run in the main thread.  Also clears the list of
 // done loads.
-auto Media::RunPendingLoadsGameThread() -> bool {
-  assert(InGameThread());
+auto Media::RunPendingLoadsLogicThread() -> bool {
+  assert(InLogicThread());
   return RunPendingLoadList(&pending_loads_other_);
 }
 
@@ -826,7 +826,7 @@ auto Media::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
 }
 
 void Media::Prune(int level) {
-  assert(InGameThread());
+  assert(InLogicThread());
   millisecs_t current_time = GetRealTime();
 
   // need lists locked while accessing/modifying them
@@ -1066,7 +1066,7 @@ auto Media::FindMediaFile(FileType type, const std::string& name)
   std::string file_out;
 
   // We don't protect package-path access so make sure its always from here.
-  assert(InGameThread());
+  assert(InLogicThread());
 
   const char* ext = "";
   const char* prefix = "";
@@ -1199,7 +1199,7 @@ void Media::AddPendingLoad(Object::Ref<MediaComponentData>* c) {
 }
 
 void Media::ClearPendingLoadsDoneList() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
 
@@ -1229,7 +1229,7 @@ void Media::PreloadRunnable::Run() {
 
 void Media::AddPackage(const std::string& name, const std::string& path) {
   // we don't protect package-path access so make sure its always from here..
-  assert(InGameThread());
+  assert(InLogicThread());
 #if BA_DEBUG_BUILD
   if (packages_.find(name) != packages_.end()) {
     Log("WARNING: adding duplicate package: '" + name + "'");

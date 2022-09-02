@@ -351,7 +351,7 @@ class App:
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
 
-        assert _ba.in_game_thread()
+        assert _ba.in_logic_thread()
 
         self._aioloop = _asyncio.setup_asyncio()
 
@@ -448,7 +448,7 @@ class App:
 
     def on_meta_scan_complete(self) -> None:
         """Called by meta-scan when it is done doing its thing."""
-        assert _ba.in_game_thread()
+        assert _ba.in_logic_thread()
         self.plugins.on_meta_scan_complete()
 
         assert not self._meta_scan_completed
@@ -456,7 +456,7 @@ class App:
         self._update_state()
 
     def _update_state(self) -> None:
-        assert _ba.in_game_thread()
+        assert _ba.in_logic_thread()
 
         if self._app_paused:
             self.state = self.State.PAUSED

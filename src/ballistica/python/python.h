@@ -78,7 +78,7 @@ class Python {
   static void LogContextForCallableLabel(const char* label);
   static void LogContextEmpty();
   static void LogContextAuto();
-  static void LogContextNonGameThread();
+  static void LogContextNonLogicThread();
   Python();
   ~Python();
 
@@ -105,7 +105,7 @@ class Python {
   void CaptureKeyboardInput(PyObject* obj);
   void ReleaseKeyboardInput();
   void HandleFriendScoresCB(const FriendScoreSet& ss);
-  void IssueCallInGameThreadWarning(PyObject* call);
+  void IssueCallInLogicThreadWarning(PyObject* call);
 
   /// Borrowed from python's source code: used in overriding of objects' dir()
   /// results.

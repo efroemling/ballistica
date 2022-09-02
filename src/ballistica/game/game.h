@@ -172,7 +172,7 @@ class Game : public Module {
 
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> Scene* {
-    assert(InGameThread());
+    assert(InLogicThread());
     return foreground_scene_.get();
   }
   auto SetForegroundScene(Scene* sg) -> void;

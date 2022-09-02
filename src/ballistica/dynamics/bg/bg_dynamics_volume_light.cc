@@ -7,7 +7,7 @@
 namespace ballistica {
 
 BGDynamicsVolumeLight::BGDynamicsVolumeLight() {
-  assert(InGameThread());
+  assert(InLogicThread());
   // allocate our light data... we'll pass this to the BGDynamics thread,
   // which will then own it
   data_ = new BGDynamicsVolumeLightData();
@@ -16,7 +16,7 @@ BGDynamicsVolumeLight::BGDynamicsVolumeLight() {
 }
 
 BGDynamicsVolumeLight::~BGDynamicsVolumeLight() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // let the data know the client side is dead,
   // so we're no longer included in step messages
@@ -28,17 +28,17 @@ BGDynamicsVolumeLight::~BGDynamicsVolumeLight() {
 }
 
 void BGDynamicsVolumeLight::SetPosition(const Vector3f& pos) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->pos_client = pos;
 }
 
 void BGDynamicsVolumeLight::SetRadius(float radius) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->radius_client = radius;
 }
 
 void BGDynamicsVolumeLight::SetColor(float r, float g, float b) {
-  assert(InGameThread());
+  assert(InLogicThread());
   data_->r_client = r;
   data_->g_client = g;
   data_->b_client = b;

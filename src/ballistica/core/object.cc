@@ -137,7 +137,7 @@ auto Object::GetThreadOwnership() const -> Object::ThreadOwnership {
 }
 
 auto Object::GetDefaultOwnerThread() const -> ThreadIdentifier {
-  return ThreadIdentifier::kGame;
+  return ThreadIdentifier::kLogic;
 }
 
 #if BA_DEBUG_BUILD
@@ -145,8 +145,8 @@ auto Object::GetDefaultOwnerThread() const -> ThreadIdentifier {
 static auto GetCurrentThreadIdentifier() -> ThreadIdentifier {
   if (InMainThread()) {
     return ThreadIdentifier::kMain;
-  } else if (InGameThread()) {
-    return ThreadIdentifier::kGame;
+  } else if (InLogicThread()) {
+    return ThreadIdentifier::kLogic;
   } else if (InAudioThread()) {
     return ThreadIdentifier::kAudio;
   } else if (InNetworkWriteThread()) {
@@ -194,9 +194,9 @@ void Object::ObjectThreadCheck() {
         DO_FAIL("Main");
       }
       break;
-    case ThreadIdentifier::kGame:
-      if (!InGameThread()) {
-        DO_FAIL("Game");
+    case ThreadIdentifier::kLogic:
+      if (!InLogicThread()) {
+        DO_FAIL("Logic");
       }
       break;
     case ThreadIdentifier::kAudio:

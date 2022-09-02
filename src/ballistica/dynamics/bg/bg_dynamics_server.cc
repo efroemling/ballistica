@@ -2314,7 +2314,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // so they can draw us.
   BGDynamicsDrawSnapshot* snapshot = CreateDrawSnapshot();
   g_game->PushCall([snapshot] {
-    snapshot->SetGameThreadOwnership();
+    snapshot->SetLogicThreadOwnership();
     g_bg_dynamics->SetDrawSnapshot(snapshot);
   });
 

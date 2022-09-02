@@ -150,7 +150,7 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
     std::lock_guard<std::mutex> lock(mutex_);
 
     // We call out to Python so need to be in game thread.
-    assert(InGameThread());
+    assert(InLogicThread());
     if (login_state_ != login_state
         || g_app_globals->account_type != account_type || login_id_ != login_id
         || login_name_ != login_name) {

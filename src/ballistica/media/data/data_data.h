@@ -28,7 +28,7 @@ class DataData : public MediaComponentData {
     }
   }
   auto object() -> const PythonRef& {
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(loaded());
     return object_;
   }

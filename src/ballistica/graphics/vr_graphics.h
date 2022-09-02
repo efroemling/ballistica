@@ -39,14 +39,14 @@ class VRGraphics : public Graphics {
   void set_vr_head_up(const Vector3f& v) { vr_head_up_ = v; }
   void set_vr_head_translate(const Vector3f& v) { vr_head_translate_ = v; }
   void set_vr_overlay_center(const Vector3f& val) {
-    assert(InGameThread());
+    assert(InLogicThread());
     vr_overlay_center_ = val;
   }
   auto vr_overlay_center() const -> const Vector3f& {
     return vr_overlay_center_;
   }
   void set_vr_overlay_center_enabled(bool val) {
-    assert(InGameThread());
+    assert(InLogicThread());
     vr_overlay_center_enabled_ = val;
   }
   auto vr_overlay_center_enabled() const -> bool {

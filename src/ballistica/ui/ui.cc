@@ -89,7 +89,7 @@ auto UI::IsWindowPresent() const -> bool {
 }
 
 void UI::SetUIInputDevice(InputDevice* input_device) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   ui_input_device_ = input_device;
 
@@ -99,7 +99,7 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
 
 UI::UILock::UILock(bool write) {
   assert(g_ui);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (write && g_ui->ui_lock_count_ != 0) {
     BA_LOG_ERROR_TRACE_ONCE("Illegal operation: UI is locked");
@@ -122,7 +122,7 @@ void UI::StepScene() {
 }
 
 void UI::Update(millisecs_t time_advance) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   millisecs_t target_base_time = base_time_ + time_advance;
   while (!base_timers_.empty()
@@ -209,7 +209,7 @@ auto UI::ShouldShowButtonShortcuts() const -> bool {
 }
 
 void UI::AddWidget(Widget* w, ContainerWidget* parent) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   BA_PRECONDITION(parent != nullptr);
 
@@ -249,13 +249,13 @@ void UI::ScreenSizeChanged() {
 }
 
 auto UI::GetUIInputDevice() const -> InputDevice* {
-  assert(InGameThread());
+  assert(InLogicThread());
   return ui_input_device_.get();
 }
 
 auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
   assert(input_device);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // We only allow input-devices to control the UI when there's a window/dialog
   // on the screen (even though our top/bottom bars still exist).

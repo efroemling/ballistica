@@ -14,7 +14,7 @@ namespace ballistica {
 class MaterialComponent : public Object {
  public:
   auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kGame;
+    return ThreadIdentifier::kLogic;
   }
 
   auto GetFlattenedSize() -> size_t;

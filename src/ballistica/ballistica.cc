@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20732;
+const int kAppBuildNumber = 20734;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -102,13 +102,13 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app_globals->pausable_threads.push_back(media_thread);
     auto* audio_thread = new Thread(ThreadIdentifier::kAudio);
     g_app_globals->pausable_threads.push_back(audio_thread);
-    auto* game_thread = new Thread(ThreadIdentifier::kGame);
-    g_app_globals->pausable_threads.push_back(game_thread);
+    auto* logic_thread = new Thread(ThreadIdentifier::kLogic);
+    g_app_globals->pausable_threads.push_back(logic_thread);
     auto* network_write_thread = new Thread(ThreadIdentifier::kNetworkWrite);
     g_app_globals->pausable_threads.push_back(network_write_thread);
 
     // And add our other standard modules to them.
-    game_thread->AddModule<Game>();
+    logic_thread->AddModule<Game>();
     network_write_thread->AddModule<NetworkWriteModule>();
     media_thread->AddModule<MediaServer>();
     g_main_thread->AddModule<GraphicsServer>();
@@ -238,7 +238,7 @@ auto GetAppInstanceUUID() -> const std::string& {
   return session_id;
 }
 
-auto InGameThread() -> bool {
+auto InLogicThread() -> bool {
   return (g_game && g_game->thread()->IsCurrent());
 }
 

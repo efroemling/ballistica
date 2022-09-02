@@ -59,7 +59,7 @@ class Object {
 
   /// Return the exact thread to check for with ThreadOwnership::kClassDefault
   /// (in the default ObjectThreadCheck implementation at least).
-  /// Default returns ThreadIdentifier::kGame
+  /// Default returns ThreadIdentifier::kLogic
   virtual auto GetDefaultOwnerThread() const -> ThreadIdentifier;
 
   /// Set thread ownership values for an individual object.
@@ -70,7 +70,7 @@ class Object {
   /// with just set_thread_checks_enabled() for temp special cases...
   void SetThreadOwnership(
       ThreadOwnership ownership,
-      ThreadIdentifier thread_identifier = ThreadIdentifier::kGame) {
+      ThreadIdentifier thread_identifier = ThreadIdentifier::kLogic) {
 #if BA_DEBUG_BUILD
     thread_ownership_ = ownership;
     if (thread_ownership_ == ThreadOwnership::kNextReferencing) {

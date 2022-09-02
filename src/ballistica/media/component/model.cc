@@ -10,7 +10,7 @@ namespace ballistica {
 
 Model::Model(const std::string& name, Scene* scene)
     : MediaComponent(name, scene), dead_(false) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (scene) {
     if (GameStream* os = scene->GetGameStream()) {

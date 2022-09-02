@@ -97,7 +97,7 @@ auto PyIsRunningOnFireTV(PyObject* self, PyObject* args) -> PyObject* {
 auto PyHavePermission(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   Permission permission;
   PyObject* permission_obj;
   static const char* kwlist[] = {"permission", nullptr};
@@ -118,7 +118,7 @@ auto PyHavePermission(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyRequestPermission(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(InGameThread());
+  BA_PRECONDITION(InLogicThread());
   Permission permission;
   PyObject* permission_obj;
   static const char* kwlist[] = {"permission", nullptr};
@@ -134,7 +134,7 @@ auto PyRequestPermission(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-auto PyInGameThread(PyObject* self, PyObject* args, PyObject* keywds)
+auto PyInLogicThread(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
@@ -142,7 +142,7 @@ auto PyInGameThread(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (InGameThread()) {
+  if (InLogicThread()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -1052,9 +1052,9 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "available). Thread names are only for debugging and should not be\n"
        "used in logic, as naming behavior can vary across platforms.\n"},
 
-      {"in_game_thread", (PyCFunction)PyInGameThread,
+      {"in_logic_thread", (PyCFunction)PyInLogicThread,
        METH_VARARGS | METH_KEYWORDS,
-       "in_game_thread() -> bool\n"
+       "in_logic_thread() -> bool\n"
        "\n"
        "(internal)\n"
        "\n"

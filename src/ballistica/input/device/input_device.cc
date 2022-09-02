@@ -28,12 +28,12 @@ auto InputDevice::ShouldBeHiddenFromUser() -> bool {
 }
 
 auto InputDevice::GetDeviceName() -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   return GetRawDeviceName();
 }
 
 void InputDevice::ResetRandomNames() {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_rand_name_registry == nullptr) return;
   g_rand_name_registry->clear();
 }
@@ -41,7 +41,7 @@ void InputDevice::ResetRandomNames() {
 // Given a full name "SomeJoyStick #3" etc, reserves/returns a persistent random
 // name for it.
 static auto GetRandomName(const std::string& full_name) -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Hmm; statically allocating this is giving some crashes on shutdown :-(
   if (g_rand_name_registry == nullptr) {
@@ -75,7 +75,7 @@ static auto GetRandomName(const std::string& full_name) -> std::string {
 auto InputDevice::GetPlayerProfiles() const -> PyObject* { return nullptr; }
 
 auto InputDevice::GetPublicAccountID() const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // This default implementation assumes the device is local
   // so just returns the locally signed in account's public id.
@@ -84,7 +84,7 @@ auto InputDevice::GetPublicAccountID() const -> std::string {
 }
 
 auto InputDevice::GetAccountName(bool full) const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (full) {
     return PlayerSpec::GetAccountPlayerSpec().GetDisplayString();
   } else {
@@ -97,7 +97,7 @@ auto InputDevice::IsRemoteClient() const -> bool { return false; }
 auto InputDevice::GetClientID() const -> int { return -1; }
 
 auto InputDevice::GetDefaultPlayerName() -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   char buffer[256];
   snprintf(buffer, sizeof(buffer), "%s %s", GetDeviceName().c_str(),
            GetPersistentIdentifier().c_str());
@@ -120,14 +120,14 @@ auto InputDevice::GetAxisName(int id) -> std::string {
 auto InputDevice::HasMeaningfulButtonNames() -> bool { return false; }
 
 auto InputDevice::GetPersistentIdentifier() const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   char buffer[128];
   snprintf(buffer, sizeof(buffer), "#%d", number_);
   return buffer;
 }
 
 InputDevice::~InputDevice() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(!player_.exists());
   // release our python ref to ourself if we have one
   if (py_ref_) {
@@ -203,7 +203,7 @@ auto InputDevice::GetRemotePlayer() const -> ConnectionToHost* {
 // Called to let the current host/client-session know that we'd like to control
 // something please.
 void InputDevice::RequestPlayer() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Make note that we're being used in some way.
   last_input_time_ = g_game->master_time();
@@ -274,7 +274,7 @@ void InputDevice::UpdateLastInputTime() {
 }
 
 void InputDevice::InputCommand(InputType type, float value) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Make note that we're being used in some way.
   UpdateLastInputTime();
@@ -306,7 +306,7 @@ void InputDevice::InputCommand(InputType type, float value) {
 void InputDevice::ResetHeldStates() {}
 
 auto InputDevice::GetPyInputDevice(bool new_ref) -> PyObject* {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassInputDevice::Create(this);
   }

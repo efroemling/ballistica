@@ -153,7 +153,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
       reinterpret_cast<PythonClassSessionPlayer*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -185,7 +185,7 @@ void PythonClassSessionPlayer::tp_dealloc(PythonClassSessionPlayer* self) {
 
   // These have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<Player>* p = self->player_;
     g_game->PushCall([p] { delete p; });
   } else {
@@ -199,7 +199,7 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
                                            PyObject* attr) -> PyObject* {
   BA_PYTHON_TRY;
 
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Assuming this will always be a str?
   assert(PyUnicode_Check(attr));
@@ -336,7 +336,7 @@ auto PythonClassSessionPlayer::GetName(PythonClassSessionPlayer* self,
                                        PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   int full = false;
   int icon = true;
   static const char* kwlist[] = {"full", "icon", nullptr};
@@ -356,7 +356,7 @@ auto PythonClassSessionPlayer::GetName(PythonClassSessionPlayer* self,
 auto PythonClassSessionPlayer::Exists(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   if (self->player_->exists()) {
     Py_RETURN_TRUE;
   }
@@ -368,7 +368,7 @@ auto PythonClassSessionPlayer::SetName(PythonClassSessionPlayer* self,
                                        PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* name_obj;
   PyObject* full_name_obj = Py_None;
 
@@ -395,7 +395,7 @@ auto PythonClassSessionPlayer::SetName(PythonClassSessionPlayer* self,
 auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
@@ -409,7 +409,7 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
                                                PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* input_type_obj;
   PyObject* call_obj;
   static const char* kwlist[] = {"type", "call", nullptr};
@@ -449,7 +449,7 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
 auto PythonClassSessionPlayer::RemoveFromGame(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* player = self->player_->get();
   if (!player) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
@@ -468,7 +468,7 @@ auto PythonClassSessionPlayer::RemoveFromGame(PythonClassSessionPlayer* self)
 auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
@@ -484,7 +484,7 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
 auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
@@ -501,7 +501,7 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
                                        PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* team_obj;
   PyObject* character_obj;
   PyObject* color_obj;
@@ -529,7 +529,7 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
 auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
@@ -547,7 +547,7 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
                                            PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* texture_name_obj;
   PyObject* tint_texture_name_obj;
   PyObject* tint_color_obj;
@@ -582,7 +582,7 @@ auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
                                            PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* activity_obj;
   static const char* kwlist[] = {"activity", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -608,7 +608,7 @@ auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
                                        PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* node_obj;
   static const char* kwlist[] = {"node", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -634,7 +634,7 @@ auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
 auto PythonClassSessionPlayer::GetIcon(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);

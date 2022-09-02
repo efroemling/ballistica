@@ -88,7 +88,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
 
     // Do anything that might throw an exception *before* our placement-new
     // stuff so we don't have to worry about cleaning it up on errors.
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -130,7 +130,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
 }
 
 void PythonClassMaterial::Delete(Object::Ref<Material>* m) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // If we're the py-object for a material, clear them out.
   if (m->exists()) {
@@ -145,7 +145,7 @@ void PythonClassMaterial::tp_dealloc(PythonClassMaterial* self) {
 
   // These have to be deleted in the game thread - push a call if
   // need be.. otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<Material>* ptr = self->material_;
     g_game->PushCall([ptr] { Delete(ptr); });
   } else {
@@ -229,7 +229,7 @@ auto PythonClassMaterial::Dir(PythonClassMaterial* self) -> PyObject* {
 auto PythonClassMaterial::AddActions(PythonClassMaterial* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(InGameThread());
+  assert(InLogicThread());
   PyObject* conditions_obj{Py_None};
   PyObject* actions_obj{nullptr};
   const char* kwlist[] = {"actions", "conditions", nullptr};
@@ -430,7 +430,7 @@ PyMethodDef PythonClassMaterial::tp_methods[] = {
 
 void DoAddConditions(PyObject* cond_obj,
                      Object::Ref<MaterialConditionNode>* c) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (PyTuple_Check(cond_obj)) {
     Py_ssize_t size = PyTuple_GET_SIZE(cond_obj);
     if (size < 1) {
@@ -560,7 +560,7 @@ void DoAddConditions(PyObject* cond_obj,
 
 void DoAddAction(PyObject* actions_obj,
                  std::vector<Object::Ref<MaterialAction> >* actions) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!PyTuple_Check(actions_obj)) {
     throw Exception("Expected a tuple.", PyExcType::kType);
   }

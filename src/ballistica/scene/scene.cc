@@ -314,21 +314,21 @@ void Scene::DeleteNode(Node* node) {
 }
 
 void Scene::GraphicsQualityChanged(GraphicsQuality q) {
-  assert(InGameThread());
+  assert(InLogicThread());
   for (auto&& i : nodes_) {
     i->OnGraphicsQualityChanged(q);
   }
 }
 
 void Scene::ScreenSizeChanged() {
-  assert(InGameThread());
+  assert(InLogicThread());
   for (auto&& i : nodes_) {
     i->OnScreenSizeChange();  // New.
   }
 }
 
 void Scene::LanguageChanged() {
-  assert(InGameThread());
+  assert(InLogicThread());
   for (auto&& i : nodes_) {
     i->OnLanguageChange();  // New.
   }
@@ -344,7 +344,7 @@ auto Scene::GetNodeMessageFormat(NodeMessageType type) -> const char* {
 
 auto Scene::NewNode(const std::string& type_string, const std::string& name,
                     PyObject* delegate) -> Node* {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Clion incorrectly things in_step_ will always be false.
 #pragma clang diagnostic push
@@ -373,7 +373,7 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
 }
 
 void Scene::Dump(GameStream* stream) {
-  assert(InGameThread());
+  assert(InLogicThread());
   stream->AddScene(this);
 
   // If we're the foreground one, communicate that fact as well.

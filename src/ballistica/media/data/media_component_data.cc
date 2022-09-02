@@ -5,7 +5,7 @@
 namespace ballistica {
 
 MediaComponentData::MediaComponentData() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_media);
   last_used_time_ = GetRealTime();
 }

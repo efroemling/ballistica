@@ -22,7 +22,7 @@ namespace ballistica {
 HostSession::HostSession(PyObject* session_type_obj)
     : last_kick_idle_players_decrement_time_(GetRealTime()) {
   assert(g_game);
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(session_type_obj != nullptr);
 
   ScopedSetContext cp(this);
@@ -196,7 +196,7 @@ auto HostSession::NewTimer(TimerMedium length, bool repeat,
 }
 
 void HostSession::DeleteTimer(int timer_id) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (shutting_down_) return;
   sim_timers_.DeleteTimer(timer_id);
 }
@@ -237,7 +237,7 @@ auto HostSession::GetForegroundContext() -> Context {
 }
 
 void HostSession::RequestPlayer(InputDevice* device) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Ignore if we have no Python session obj.
   if (!GetSessionPyObj()) {
@@ -309,7 +309,7 @@ void HostSession::RemovePlayer(Player* player) {
 
 void HostSession::IssuePlayerLeft(Player* player) {
   assert(player);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   try {
     if (GetSessionPyObj()) {
@@ -334,7 +334,7 @@ void HostSession::IssuePlayerLeft(Player* player) {
 
 void HostSession::SetKickIdlePlayers(bool enable) {
   // If this has changed, reset our disconnect-time reporting.
-  assert(InGameThread());
+  assert(InLogicThread());
   if (enable != kick_idle_players_) {
     last_kick_idle_players_decrement_time_ = GetRealTime();
   }
@@ -343,7 +343,7 @@ void HostSession::SetKickIdlePlayers(bool enable) {
 
 void HostSession::SetForegroundHostActivity(HostActivity* a) {
   assert(a);
-  assert(InGameThread());
+  assert(InLogicThread());
 
   if (shutting_down_) {
     Log("WARNING: SetForegroundHostActivity called during session shutdown; "
@@ -490,7 +490,7 @@ void HostSession::StepScene() {
 }
 
 void HostSession::Update(int time_advance) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // We can be killed at any time, so let's keep an eye out for that.
   WeakRef<HostSession> test_ref(this);

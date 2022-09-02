@@ -61,7 +61,7 @@ auto PythonClassSessionData::tp_new(PyTypeObject* type, PyObject* args,
       reinterpret_cast<PythonClassSessionData*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -79,7 +79,7 @@ void PythonClassSessionData::tp_dealloc(PythonClassSessionData* self) {
   // ...send the ptr along if need be.
   // FIXME: technically the main thread has a pointer to a dead PyObject
   // until the delete goes through; could that ever be a problem?
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<Session>* s = self->session_;
     g_game->PushCall([s] { delete s; });
   } else {

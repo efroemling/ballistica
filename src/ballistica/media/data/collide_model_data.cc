@@ -97,7 +97,7 @@ void CollideModelData::DoPreload() {
 #endif  // dSINGLE
 }  // namespace ballistica
 
-void CollideModelData::DoLoad() { assert(InGameThread()); }
+void CollideModelData::DoLoad() { assert(InLogicThread()); }
 
 void CollideModelData::DoUnload() {
   // TODO(ericf): if we want to support in-game reloading we need

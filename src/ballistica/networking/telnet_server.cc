@@ -222,7 +222,7 @@ void TelnetServer::PushPrint(const std::string& s) {
 void TelnetServer::Print(const std::string& s) {
   // Currently we make the assumption that *only* the game thread writes to our
   // socket.
-  assert(InGameThread());
+  assert(InLogicThread());
   if (client_sd_ != -1) {
     send(client_sd_, s.c_str(),
          static_cast_check_fit<socket_send_length_t>(s.size()), 0);

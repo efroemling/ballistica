@@ -64,7 +64,7 @@ auto PythonClassModel::tp_new(PyTypeObject* type, PyObject* args,
   auto* self = reinterpret_cast<PythonClassModel*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -84,7 +84,7 @@ auto PythonClassModel::tp_new(PyTypeObject* type, PyObject* args,
 #pragma clang diagnostic pop
 
 void PythonClassModel::Delete(Object::Ref<Model>* ref) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // if we're the py-object for a model, clear them out
   // (FIXME - we should pass the old pointer in here to sanity-test that we
@@ -99,7 +99,7 @@ void PythonClassModel::tp_dealloc(PythonClassModel* self) {
   BA_PYTHON_TRY;
   // these have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<Model>* m = self->model_;
     g_game->PushCall([m] { Delete(m); });
   } else {

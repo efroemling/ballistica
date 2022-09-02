@@ -25,7 +25,7 @@ class Media {
   static auto GetMedia(
       std::unordered_map<std::string, Object::WeakRef<T> >* list,
       const std::string& name, Scene* scene) -> Object::Ref<T> {
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(list);
     auto i = list->find(name);
 
@@ -47,7 +47,7 @@ class Media {
 
   /// Finish loading any media that has been preloaded but still needs to be
   /// loaded by the proper thread.
-  auto RunPendingLoadsGameThread() -> bool;
+  auto RunPendingLoadsLogicThread() -> bool;
 
   /// Return true if audio loads remain to be done.
   auto RunPendingAudioLoads() -> bool;
@@ -110,25 +110,25 @@ class Media {
   // Get system assets.
   auto GetTexture(SystemTextureID id) -> TextureData* {
     BA_PRECONDITION_FATAL(system_media_loaded_);  // Revert to assert later.
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(static_cast<size_t>(id) < system_textures_.size());
     return system_textures_[static_cast<int>(id)].get();
   }
   auto GetCubeMapTexture(SystemCubeMapTextureID id) -> TextureData* {
     BA_PRECONDITION_FATAL(system_media_loaded_);  // Revert to assert later.
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(static_cast<size_t>(id) < system_cube_map_textures_.size());
     return system_cube_map_textures_[static_cast<int>(id)].get();
   }
   auto GetSound(SystemSoundID id) -> SoundData* {
     BA_PRECONDITION_FATAL(system_media_loaded_);  // Revert to assert later.
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(static_cast<size_t>(id) < system_sounds_.size());
     return system_sounds_[static_cast<int>(id)].get();
   }
   auto GetModel(SystemModelID id) -> ModelData* {
     BA_PRECONDITION_FATAL(system_media_loaded_);  // Revert to assert later.
-    assert(InGameThread());
+    assert(InLogicThread());
     assert(static_cast<size_t>(id) < system_models_.size());
     return system_models_[static_cast<int>(id)].get();
   }

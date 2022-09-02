@@ -208,7 +208,7 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
 }
 
 auto Widget::GetPyWidget(bool new_ref) -> PyObject* {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassWidget::Create(this);
   }

@@ -20,13 +20,13 @@ void BGDynamics::Init() {
 }
 
 BGDynamics::BGDynamics() {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_bg_dynamics == nullptr);
   g_bg_dynamics = this;
 }
 
 void BGDynamics::AddTerrain(CollideModelData* o) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Allocate a fresh reference to keep this collide-model alive as long as
   // we're using it. Once we're done, we'll pass the pointer back to the
@@ -36,18 +36,18 @@ void BGDynamics::AddTerrain(CollideModelData* o) {
 }
 
 void BGDynamics::RemoveTerrain(CollideModelData* o) {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_bg_dynamics_server->PushRemoveTerrainCall(o);
 }
 
 void BGDynamics::Emit(const BGDynamicsEmission& e) {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_bg_dynamics_server->PushEmitCall(e);
 }
 
 // Call friend client to step our sim.
 void BGDynamics::Step(const Vector3f& cam_pos) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // The BG dynamics thread just processes steps as fast as it can;
   // we need to throttle what we send or tell it to cut back if its behind
@@ -158,17 +158,17 @@ void BGDynamics::TooSlow() {
 }
 
 void BGDynamics::SetDebrisFriction(float val) {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_bg_dynamics_server->PushSetDebrisFrictionCall(val);
 }
 
 void BGDynamics::SetDebrisKillHeight(float val) {
-  assert(InGameThread());
+  assert(InLogicThread());
   g_bg_dynamics_server->PushSetDebrisKillHeightCall(val);
 }
 
 void BGDynamics::Draw(FrameDef* frame_def) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   BGDynamicsDrawSnapshot* ds{draw_snapshot_.get()};
   if (!ds) {

@@ -286,7 +286,7 @@ auto Joystick::GetButtonName(int index) -> std::string {
 }
 
 Joystick::~Joystick() {
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Log("Error: Joystick dying in wrong thread.");
   }
 
@@ -320,7 +320,7 @@ auto Joystick::GetDefaultPlayerName() -> std::string {
   return InputDevice::GetDefaultPlayerName();
 }
 
-void Joystick::ConnectionComplete() { assert(InGameThread()); }
+void Joystick::ConnectionComplete() { assert(InLogicThread()); }
 
 auto Joystick::ShouldBeHiddenFromUser() -> bool {
   std::string d_name = GetDeviceName();
@@ -362,7 +362,7 @@ auto Joystick::GetCalibratedValue(float raw, float neutral) const -> int32_t {
 void Joystick::Update() {
   InputDevice::Update();
 
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // We seem to get a fair amount of bogus direction-pressed events from newly
   // plugged in joysticks.. this leads to continuous scrolling in menus and such
@@ -530,7 +530,7 @@ void Joystick::ResetHeldStates() {
 }
 
 void Joystick::HandleSDLEvent(const SDL_Event* e) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // If we've got a child joystick, send them any events they're set to handle.
   if (child_joy_stick_) {
@@ -1290,7 +1290,7 @@ void Joystick::UpdateRunningState() {
 }
 
 void Joystick::UpdateMapping() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // This doesn't apply to manual ones (except children which are).
   if (!can_configure_ && !parent_joy_stick_) {

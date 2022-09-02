@@ -63,7 +63,7 @@ auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
   auto* self = reinterpret_cast<PythonClassSound*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -83,7 +83,7 @@ auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
 #pragma clang diagnostic pop
 
 void PythonClassSound::Delete(Object::Ref<Sound>* ref) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // if we're the py-object for a sound, clear them out
   // (FIXME - wej should pass the old pointer in here to sanity-test that we
@@ -98,7 +98,7 @@ void PythonClassSound::tp_dealloc(PythonClassSound* self) {
   BA_PYTHON_TRY;
   // these have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<Sound>* s = self->sound_;
     g_game->PushCall([s] { Delete(s); });
   } else {

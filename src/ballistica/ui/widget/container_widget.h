@@ -79,7 +79,7 @@ class ContainerWidget : public Widget {
   auto is_window_stack() const -> bool { return is_window_stack_; }
 
   auto GetChildCount() const -> int {
-    assert(InGameThread());
+    assert(InLogicThread());
     return static_cast<int>(widgets_.size());
   }
   void Clear();

@@ -223,7 +223,7 @@ class Thread {
   // These are all exactly the same, but by running different ones for
   // different thread groups makes its easy to see which thread is which
   // in profilers, backtraces, etc.
-  static auto RunGameThread(void* data) -> int;
+  static auto RunLogicThread(void* data) -> int;
   static auto RunAudioThread(void* data) -> int;
   static auto RunBGDynamicThread(void* data) -> int;
   static auto RunNetworkWriteThread(void* data) -> int;

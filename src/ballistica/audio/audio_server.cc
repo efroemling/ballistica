@@ -1123,7 +1123,7 @@ void AudioServer::AddSoundRefDelete(const Object::Ref<SoundData>* c) {
 }
 
 void AudioServer::ClearSoundRefDeleteList() {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::lock_guard<std::mutex> lock(sound_ref_delete_list_mutex_);
   for (const Object::Ref<SoundData>* i : sound_ref_delete_list_) {
     delete i;

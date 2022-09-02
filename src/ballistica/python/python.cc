@@ -852,7 +852,7 @@ auto Python::GetPyVector3f(PyObject* o) -> Vector3f {
 Python::Python() = default;
 
 void Python::Reset(bool do_init) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(g_python);
 
   bool was_inited = inited_;
@@ -1149,7 +1149,7 @@ auto Python::GetTranslation(const char* category, const char* s)
 }
 
 void Python::RunDeepLink(const std::string& url) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (objexists(ObjID::kDeepLinkCall)) {
     ScopedSetContext cp(g_game->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
@@ -1160,7 +1160,7 @@ void Python::RunDeepLink(const std::string& url) {
 }
 
 void Python::PlayMusic(const std::string& music_type, bool continuous) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (music_type.empty()) {
     PythonRef args(
         Py_BuildValue("(OO)", Py_None, continuous ? Py_True : Py_False),
@@ -1992,7 +1992,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
   return nullptr;
 }
 
-void Python::IssueCallInGameThreadWarning(PyObject* call_obj) {
+void Python::IssueCallInLogicThreadWarning(PyObject* call_obj) {
   Log("WARNING: ba.pushcall() called from the game thread with "
       "from_other_thread set to true (call "
       + ObjToString(call_obj) + " at " + GetPythonFileLocation()
@@ -2000,7 +2000,7 @@ void Python::IssueCallInGameThreadWarning(PyObject* call_obj) {
 }
 
 void Python::LaunchStringEdit(TextWidget* w) {
-  assert(InGameThread());
+  assert(InLogicThread());
   BA_PRECONDITION(w);
 
   ScopedSetContext cp(g_game->GetUIContext());
@@ -2016,7 +2016,7 @@ void Python::LaunchStringEdit(TextWidget* w) {
 }
 
 void Python::CaptureGamePadInput(PyObject* obj) {
-  assert(InGameThread());
+  assert(InLogicThread());
   ReleaseGamePadInput();
   if (PyCallable_Check(obj)) {
     game_pad_call_.Acquire(obj);
@@ -2028,7 +2028,7 @@ void Python::CaptureGamePadInput(PyObject* obj) {
 void Python::ReleaseGamePadInput() { game_pad_call_.Release(); }
 
 void Python::CaptureKeyboardInput(PyObject* obj) {
-  assert(InGameThread());
+  assert(InLogicThread());
   ReleaseKeyboardInput();
   if (PyCallable_Check(obj)) {
     keyboard_call_.Acquire(obj);
@@ -2073,7 +2073,7 @@ void Python::HandleFriendScoresCB(const FriendScoreSet& score_set) {
 }
 
 auto Python::HandleKeyPressEvent(const SDL_Keysym& keysym) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!keyboard_call_.exists()) {
     return false;
   }
@@ -2088,7 +2088,7 @@ auto Python::HandleKeyPressEvent(const SDL_Keysym& keysym) -> bool {
   return true;
 }
 auto Python::HandleKeyReleaseEvent(const SDL_Keysym& keysym) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (!keyboard_call_.exists()) {
     return false;
   }
@@ -2104,7 +2104,7 @@ auto Python::HandleKeyReleaseEvent(const SDL_Keysym& keysym) -> bool {
 
 auto Python::HandleJoystickEvent(const SDL_Event& event,
                                  InputDevice* input_device) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(input_device != nullptr);
   if (!game_pad_call_.exists()) {
     return false;
@@ -2208,21 +2208,21 @@ auto Python::GetContextBaseString() -> std::string {
 }
 
 void Python::LogContextForCallableLabel(const char* label) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(label);
   std::string s = std::string("  root call: ") + label;
   s += g_python->GetContextBaseString();
   Log(s);
 }
 
-void Python::LogContextNonGameThread() {
+void Python::LogContextNonLogicThread() {
   std::string s =
       std::string("  root call: <not in game thread; context unavailable>");
   Log(s);
 }
 
 void Python::LogContextEmpty() {
-  assert(InGameThread());
+  assert(InLogicThread());
   std::string s = std::string("  root call: <unavailable>");
   s += g_python->GetContextBaseString();
   Log(s);
@@ -2232,8 +2232,8 @@ void Python::LogContextAuto() {
   // Lets print whatever context info is available.
   // FIXME: If we have recursive calls this may not print
   // the context we'd expect; we'd need a unified stack.
-  if (!InGameThread()) {
-    LogContextNonGameThread();
+  if (!InLogicThread()) {
+    LogContextNonLogicThread();
   } else if (const char* label = ScopedCallLabel::current_label()) {
     LogContextForCallableLabel(label);
   } else if (PythonCommand* cmd = PythonCommand::current_command()) {
@@ -2402,7 +2402,7 @@ void Python::StoreObjCallable(ObjID id, const char* expr, PyObject* context) {
 }
 
 void Python::SetRawConfigValue(const char* name, float value) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PythonRef value_obj(PyFloat_FromDouble(value), PythonRef::kSteal);
   int result =
@@ -2416,14 +2416,14 @@ void Python::SetRawConfigValue(const char* name, float value) {
 }
 
 auto Python::GetRawConfigValue(const char* name) -> PyObject* {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   return PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
 }
 
 auto Python::GetRawConfigValue(const char* name, const char* default_value)
     -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
   if (value == nullptr || !PyUnicode_Check(value)) {
@@ -2433,7 +2433,7 @@ auto Python::GetRawConfigValue(const char* name, const char* default_value)
 }
 
 auto Python::GetRawConfigValue(const char* name, float default_value) -> float {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
   if (value == nullptr) {
@@ -2450,7 +2450,7 @@ auto Python::GetRawConfigValue(const char* name, float default_value) -> float {
 auto Python::GetRawConfigValue(const char* name,
                                std::optional<float> default_value)
     -> std::optional<float> {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
   if (value == nullptr) {
@@ -2468,7 +2468,7 @@ auto Python::GetRawConfigValue(const char* name,
 }
 
 auto Python::GetRawConfigValue(const char* name, int default_value) -> int {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
   if (value == nullptr) {
@@ -2483,7 +2483,7 @@ auto Python::GetRawConfigValue(const char* name, int default_value) -> int {
 }
 
 auto Python::GetRawConfigValue(const char* name, bool default_value) -> bool {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kConfig));
   PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
   if (value == nullptr) {
@@ -2549,7 +2549,7 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
 
 auto Python::ValidatedPackageAssetName(PyObject* package, const char* name)
     -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(objexists(ObjID::kAssetPackageClass));
 
   if (!PyObject_IsInstance(package, obj(ObjID::kAssetPackageClass).get())) {

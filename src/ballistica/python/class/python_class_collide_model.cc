@@ -66,7 +66,7 @@ auto PythonClassCollideModel::tp_new(PyTypeObject* type, PyObject* args,
       reinterpret_cast<PythonClassCollideModel*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -87,7 +87,7 @@ auto PythonClassCollideModel::tp_new(PyTypeObject* type, PyObject* args,
 #pragma clang diagnostic pop
 
 void PythonClassCollideModel::Delete(Object::Ref<CollideModel>* ref) {
-  assert(InGameThread());
+  assert(InLogicThread());
   // if we're the py-object for a collide_model, clear them out
   // (FIXME - we should pass the old pointer in here to sanity-test that we
   //   were their ref)
@@ -101,7 +101,7 @@ void PythonClassCollideModel::tp_dealloc(PythonClassCollideModel* self) {
   BA_PYTHON_TRY;
   // these have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<CollideModel>* c = self->collide_model_;
     g_game->PushCall([c] { Delete(c); });
   } else {

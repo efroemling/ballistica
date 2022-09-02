@@ -64,7 +64,7 @@ auto PythonClassActivityData::tp_new(PyTypeObject* type, PyObject* args,
       reinterpret_cast<PythonClassActivityData*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -81,7 +81,7 @@ void PythonClassActivityData::tp_dealloc(PythonClassActivityData* self) {
 
   // These have to be destructed in the game thread; send them along to
   // it if need be; otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<HostActivity>* h = self->host_activity_;
     g_game->PushCall([h] { delete h; });
   } else {

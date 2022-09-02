@@ -41,7 +41,7 @@ auto ClientInputDevice::GetPlayerProfiles() const -> PyObject* {
 }
 
 auto ClientInputDevice::GetAccountName(bool full) const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (connection_to_client_.exists()) {
     if (full) {
       return connection_to_client_->peer_spec().GetDisplayString();
@@ -53,7 +53,7 @@ auto ClientInputDevice::GetAccountName(bool full) const -> std::string {
 }
 
 auto ClientInputDevice::GetPublicAccountID() const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (connection_to_client_.exists()) {
     return connection_to_client_->peer_public_account_id();
   }

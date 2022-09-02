@@ -14,7 +14,7 @@ void RenderComponent::ScissorPush(const Rect& rIn) {
 
 #if BA_DEBUG_BUILD
 void RenderComponent::ConfigForEmptyDebugChecks(bool transparent) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_graphics->drawing_opaque_only() && transparent) {
     throw Exception("Transparent component submitted in opaque-only section");
   }
@@ -24,7 +24,7 @@ void RenderComponent::ConfigForEmptyDebugChecks(bool transparent) {
 }
 
 void RenderComponent::ConfigForShadingDebugChecks(ShadingType shading_type) {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (g_graphics->drawing_opaque_only()
       && Graphics::IsShaderTransparent(shading_type)) {
     throw Exception("Transparent component submitted in opaque-only section");

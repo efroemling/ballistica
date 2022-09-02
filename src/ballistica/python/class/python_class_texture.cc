@@ -58,7 +58,7 @@ auto PythonClassTexture::tp_new(PyTypeObject* type, PyObject* args,
   auto* self = reinterpret_cast<PythonClassTexture*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -76,7 +76,7 @@ auto PythonClassTexture::tp_new(PyTypeObject* type, PyObject* args,
 }
 
 void PythonClassTexture::Delete(Object::Ref<Texture>* ref) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // If we're the py-object for a texture, kill our reference to it.
   // (FIXME - we should pass the old py obj pointer in here to
@@ -91,7 +91,7 @@ void PythonClassTexture::tp_dealloc(PythonClassTexture* self) {
   BA_PYTHON_TRY;
   // These have to be deleted in the game thread - send the ptr along if need
   // be; otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::Ref<Texture>* t = self->texture_;
     g_game->PushCall([t] { Delete(t); });
   } else {

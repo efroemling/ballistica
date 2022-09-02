@@ -83,7 +83,7 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
   auto* self = reinterpret_cast<PythonClassNode*>(type->tp_alloc(type, 0));
   if (self) {
     BA_PYTHON_TRY;
-    if (!InGameThread()) {
+    if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
           + " objects must only be created in the game thread (current is ("
@@ -111,7 +111,7 @@ void PythonClassNode::tp_dealloc(PythonClassNode* self) {
   BA_PYTHON_TRY;
   // These have to be deleted in the game thread; send the ptr along if need
   // be; otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Object::WeakRef<Node>* n = self->node_;
     g_game->PushCall([n] { delete n; });
   } else {

@@ -17,11 +17,11 @@ namespace ballistica {
 Player::Player(int id_in, HostSession* host_session)
     : id_(id_in), creation_time_(GetRealTime()), host_session_(host_session) {
   assert(host_session);
-  assert(InGameThread());
+  assert(InLogicThread());
 }
 
 Player::~Player() {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // If we have an input-device attached to us, detach it.
   InputDevice* input_device = input_device_.get();
@@ -56,7 +56,7 @@ auto Player::GetHostActivity() const -> HostActivity* {
 }
 
 void Player::SetHostActivity(HostActivity* a) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   // Make sure we get pulled out of one activity before being added to another.
   if (a && in_activity_) {
@@ -137,7 +137,7 @@ auto Player::GetPyActivityPlayer() -> PyObject* {
 }
 
 auto Player::GetPyRef(bool new_ref) -> PyObject* {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassSessionPlayer::Create(this);
   }
@@ -148,7 +148,7 @@ auto Player::GetPyRef(bool new_ref) -> PyObject* {
 }
 
 void Player::AssignInputCall(InputType type, PyObject* call_obj) {
-  assert(InGameThread());
+  assert(InLogicThread());
   assert(static_cast<int>(type) >= 0
          && static_cast<int>(type) < static_cast<int>(InputType::kLast));
 
@@ -203,7 +203,7 @@ void Player::AssignInputCall(InputType type, PyObject* call_obj) {
 }
 
 void Player::RunInput(InputType type, float value) {
-  assert(InGameThread());
+  assert(InLogicThread());
 
   const float threshold = kJoystickDiscreteThresholdFloat;
 
@@ -357,7 +357,7 @@ auto Player::GetHostSession() const -> HostSession* {
 
 void Player::SetName(const std::string& name, const std::string& full_name,
                      bool is_real) {
-  assert(InGameThread());
+  assert(InLogicThread());
   HostSession* host_session = GetHostSession();
   BA_PRECONDITION(host_session);
   name_is_real_ = is_real;
@@ -372,7 +372,7 @@ void Player::SetName(const std::string& name, const std::string& full_name,
 }
 
 void Player::InputCommand(InputType type, float value) {
-  assert(InGameThread());
+  assert(InLogicThread());
   switch (type) {
     case InputType::kUpDown:
     case InputType::kLeftRight:
@@ -393,7 +393,7 @@ void Player::SetInputDevice(InputDevice* input_device) {
 }
 
 auto Player::GetPublicAccountID() const -> std::string {
-  assert(InGameThread());
+  assert(InLogicThread());
   if (input_device_.exists()) {
     return input_device_->GetPublicAccountID();
   }

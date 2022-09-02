@@ -132,7 +132,7 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
     return nullptr;
   }
 
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the game thread (current is ("
@@ -184,7 +184,7 @@ void PythonClassContext::tp_dealloc(PythonClassContext* self) {
   BA_PYTHON_TRY;
   // Contexts have to be deleted in the game thread;
   // ship them to it for deletion if need be; otherwise do it immediately.
-  if (!InGameThread()) {
+  if (!InLogicThread()) {
     Context* c = self->context_;
     Context* c2 = self->context_prev_;
     g_game->PushCall([c, c2] {

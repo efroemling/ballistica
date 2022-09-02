@@ -180,7 +180,7 @@ auto AppInternalPushPurchaseTransactionCall(const std::string& item,
                                             const std::string& order_id,
                                             bool user_initiated) -> void;
 auto AppInternalGetPublicAccountID() -> std::string;
-auto AppInternalOnGameThreadPause() -> void;
+auto AppInternalOnLogicThreadPause() -> void;
 auto AppInternalDirectSendLogs(const std::string& prefix,
                                const std::string& suffix, bool instant,
                                int* result = nullptr) -> void;
@@ -215,7 +215,7 @@ auto FatalError(const std::string& message = "") -> void;
 // Check current-threads.
 auto InMainThread() -> bool;      // (main and graphics are same currently)
 auto InGraphicsThread() -> bool;  // (main and graphics are same currently)
-auto InGameThread() -> bool;
+auto InLogicThread() -> bool;
 auto InAudioThread() -> bool;
 auto InBGDynamicsThread() -> bool;
 auto InMediaThread() -> bool;
