@@ -35,7 +35,7 @@
 #define BA_PYTHON_CATCH                                                   \
   }                                                                       \
   catch (const Exception& e) {                                            \
-    e.SetPyError();                                                       \
+    Python::SetPythonException(e);                                        \
     return nullptr;                                                       \
   }                                                                       \
   catch (const std::exception& e) {                                       \
@@ -48,7 +48,7 @@
 #define BA_PYTHON_NEW_CATCH                                               \
   }                                                                       \
   catch (const Exception& e) {                                            \
-    e.SetPyError();                                                       \
+    Python::SetPythonException(e);                                        \
     Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));            \
     return nullptr;                                                       \
   }                                                                       \
@@ -72,7 +72,7 @@
 #define BA_PYTHON_INT_CATCH                                               \
   }                                                                       \
   catch (const Exception& e) {                                            \
-    e.SetPyError();                                                       \
+    Python::SetPythonException(e);                                        \
     return -1;                                                            \
   }                                                                       \
   catch (const std::exception& e) {                                       \

@@ -14,25 +14,19 @@
 
 namespace ballistica {
 
-// Support functions we declare in our .cc file; not for public use.
-// auto InlineDebugExplicitBool(bool val) -> bool;
-
 /// Return the same bool value passed in, but obfuscated enough in debug mode
 /// that no 'value is always true/false', 'code will never run', type warnings
 /// should appear. In release builds it should optimize away to a no-op.
 inline auto explicit_bool(bool val) -> bool {
-#if BA_DEBUG_BUILD
-  return InlineDebugExplicitBool(val);
-#else
-  return val;
-#endif
+  if (g_buildconfig.debug_build()) {
+    return InlineDebugExplicitBool(val);
+  } else {
+    return val;
+  }
 }
 
-/// Simply a static_cast, but in debug builds casts the results back to ensure
-/// the value fits into the receiver unchanged. Handy as a sanity check when
-/// stuffing a 32 bit value into a 16 bit container, etc.
 template <typename OUT_TYPE, typename IN_TYPE>
-auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
+auto check_static_cast_fit(IN_TYPE in) -> bool {
   // Make sure we don't try to use this when casting to or from floats or
   // doubles. We don't expect to always get the same value back
   // on casting back in that case.
@@ -44,10 +38,18 @@ auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
                     && !std::is_same<OUT_TYPE, double>::value
                     && !std::is_same<OUT_TYPE, const float>::value
                     && !std::is_same<OUT_TYPE, const double>::value,
-                "static_cast_check_fit cannot be used with floats or doubles.");
-#if BA_DEBUG_BUILD
-  assert(static_cast<IN_TYPE>(static_cast<OUT_TYPE>(in)) == in);
-#endif
+                "check_static_cast_fit cannot be used with floats or doubles.");
+  return static_cast<IN_TYPE>(static_cast<OUT_TYPE>(in)) == in;
+}
+
+/// Simply a static_cast, but in debug builds casts the results back to ensure
+/// the value fits into the receiver unchanged. Handy as a sanity check when
+/// stuffing a 32 bit value into a 16 bit container, etc.
+template <typename OUT_TYPE, typename IN_TYPE>
+auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
+  if (g_buildconfig.debug_build()) {
+    assert(check_static_cast_fit<OUT_TYPE>(in));
+  }
   return static_cast<OUT_TYPE>(in);
 }
 
@@ -55,23 +57,21 @@ auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
 /// throws an Exception on failure.
 template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_fit_always(IN_TYPE in) -> OUT_TYPE {
-  // Make sure we don't try to use this when casting to or from floats or
-  // doubles. We don't expect to always get the same value back
-  // on casting back in that case.
-  static_assert(
-      !std::is_same<IN_TYPE, float>::value
-          && !std::is_same<IN_TYPE, double>::value
-          && !std::is_same<IN_TYPE, const float>::value
-          && !std::is_same<IN_TYPE, const double>::value
-          && !std::is_same<OUT_TYPE, float>::value
-          && !std::is_same<OUT_TYPE, double>::value
-          && !std::is_same<OUT_TYPE, const float>::value
-          && !std::is_same<OUT_TYPE, const double>::value,
-      "static_cast_always_checked cannot be used with floats or doubles.");
-  auto out = static_cast<OUT_TYPE>(in);
-  if (static_cast<IN_TYPE>(out) != in) {
+  if (!check_static_cast_fit<OUT_TYPE>(in)) {
     throw Exception("static_cast_check_fit_always failed for value "
                     + std::to_string(in) + ".");
+  }
+  return static_cast<OUT_TYPE>(in);
+}
+
+/// Like static_cast_check_fit, but runs checks even in release builds and
+/// aborts on failure.
+template <typename OUT_TYPE, typename IN_TYPE>
+auto static_cast_check_fit_always_2(IN_TYPE in) -> OUT_TYPE {
+  if (!check_static_cast_fit<OUT_TYPE>(in)) {
+    fprintf(stderr, "static_cast_check_fit_always failed for value %s.",
+            std::to_string(in).c_str());
+    abort();
   }
   return static_cast<OUT_TYPE>(in);
 }
@@ -82,10 +82,10 @@ auto static_cast_check_fit_always(IN_TYPE in) -> OUT_TYPE {
 template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_type(IN_TYPE in) -> OUT_TYPE {
   auto out_static = static_cast<OUT_TYPE>(in);
-#if BA_DEBUG_BUILD
-  auto out_dynamic = dynamic_cast<OUT_TYPE>(in);
-  assert(out_static == out_dynamic);
-#endif
+  if (g_buildconfig.debug_build()) {
+    auto out_dynamic = dynamic_cast<OUT_TYPE>(in);
+    assert(out_static == out_dynamic);
+  }
   return out_static;
 }
 

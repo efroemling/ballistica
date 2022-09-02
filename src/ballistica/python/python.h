@@ -236,7 +236,8 @@ class Python {
   static void SetNodeAttr(Node* node, const char* attr_name,
                           PyObject* value_obj);
 
-  static void SetPythonException(PyExcType exctype, const char* description);
+  /// Set Python exception from C++ Exception.
+  static void SetPythonException(const Exception& exc);
 
   static void DoBuildNodeMessage(PyObject* args, int arg_offset,
                                  Buffer<char>* b, PyObject** user_message_obj);

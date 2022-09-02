@@ -68,7 +68,9 @@ namespace ballistica {
 #pragma ide diagnostic ignored "RedundantCast"
 
 // Used by our built in exception type.
-void Python::SetPythonException(PyExcType exctype, const char* description) {
+void Python::SetPythonException(const Exception& exc) {
+  PyExcType exctype{exc.python_type()};
+  const char* description{GetShortExceptionDescription(exc)};
   PyObject* pytype{};
   switch (exctype) {
     case PyExcType::kRuntime:

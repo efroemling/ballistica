@@ -25,12 +25,14 @@
 
 namespace ballistica {
 
-// All this stuff must be called from the game module.
+// Note: this stuff is generally intended to be used solely from
+// the logic thread.
+
 class UI : public ContextTarget {
  public:
   UI();
   ~UI() override;
-  void Reset();
+  auto Reset() -> void;
 
   // Return the root widget containing all windows & dialogs
   // Whenever this contains children, the UI is considered to be in focus
@@ -42,8 +44,8 @@ class UI : public ContextTarget {
     return overlay_root_widget_.get();
   }
 
-  // Returns true if there is UI present in either the main or overlay
-  // stacks.  Generally this implies the focus should be on the UI.
+  /// Return whether there is UI present in either the main or overlay
+  /// stacks. Generally this implies the focus should be on the UI.
   auto IsWindowPresent() const -> bool;
 
   // Return the absolute root widget; this includes persistent UI
@@ -60,17 +62,17 @@ class UI : public ContextTarget {
   // Add a widget to a container.
   // If a parent is provided, the widget is added to it; otherwise it is added
   // to the root widget.
-  void AddWidget(Widget* w, ContainerWidget* to);
+  auto AddWidget(Widget* w, ContainerWidget* to) -> void;
 
   // Send message to the active widget.
   auto SendWidgetMessage(const WidgetMessage& msg) -> int;
 
   // Use this to destroy any named widget (even those in containers).
-  void DeleteWidget(Widget* widget);
+  auto DeleteWidget(Widget* widget) -> void;
 
-  void ScreenSizeChanged();
+  auto ScreenSizeChanged() -> void;
 
-  void SetUIInputDevice(InputDevice* input_device);
+  auto SetUIInputDevice(InputDevice* input_device) -> void;
 
   // Returns the input-device that currently owns the menu; otherwise nullptr.
   auto GetUIInputDevice() const -> InputDevice*;
@@ -106,13 +108,13 @@ class UI : public ContextTarget {
     assert(scene_.exists());
     return scene_.get();
   }
-  void Update(millisecs_t time_advance);
+  auto Update(millisecs_t time_advance) -> void;
   auto GetMutableScene() -> Scene* override;
 
   // Context-target timer support.
   auto NewTimer(TimeType timetype, TimerMedium length, bool repeat,
                 const Object::Ref<Runnable>& runnable) -> int override;
-  void DeleteTimer(TimeType timetype, int timer_id) override;
+  auto DeleteTimer(TimeType timetype, int timer_id) -> void override;
 
   RootUI* root_ui() const {
     assert(root_ui_);
@@ -120,7 +122,7 @@ class UI : public ContextTarget {
   }
 
  private:
-  void StepScene();
+  auto StepScene() -> void;
   RootUI* root_ui_{};
   millisecs_t next_prune_time_{};
   int node_warning_count_{};

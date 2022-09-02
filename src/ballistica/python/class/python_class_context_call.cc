@@ -3,6 +3,7 @@
 #include "ballistica/python/class/python_class_context_call.h"
 
 #include "ballistica/game/game.h"
+#include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 
 namespace ballistica {

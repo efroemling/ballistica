@@ -5,6 +5,7 @@
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
+#include "ballistica/python/python.h"
 #include "ballistica/ui/widget/container_widget.h"
 
 namespace ballistica {

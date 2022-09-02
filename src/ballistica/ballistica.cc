@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20734;
+const int kAppBuildNumber = 20736;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -295,11 +295,6 @@ auto GetCurrentThreadName() -> std::string {
 }
 
 auto IsBootstrapped() -> bool { return g_app_globals->is_bootstrapped; }
-
-// Used by our built-in exception type.
-void SetPythonException(PyExcType python_type, const char* description) {
-  Python::SetPythonException(python_type, description);
-}
 
 }  // namespace ballistica
 

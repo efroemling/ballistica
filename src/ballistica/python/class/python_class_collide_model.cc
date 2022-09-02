@@ -4,6 +4,7 @@
 
 #include "ballistica/game/game.h"
 #include "ballistica/media/component/collide_model.h"
+#include "ballistica/python/python.h"
 
 namespace ballistica {
 

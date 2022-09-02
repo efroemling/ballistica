@@ -3,6 +3,7 @@
 #include "ballistica/python/class/python_class.h"
 
 #include "ballistica/ballistica.h"
+#include "ballistica/python/python.h"
 
 namespace ballistica {
 

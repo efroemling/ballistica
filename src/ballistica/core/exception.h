@@ -68,6 +68,8 @@ class Exception : public std::exception {
 
   void SetPyError() const noexcept;
 
+  auto python_type() const { return python_type_; }
+
  private:
   std::string thread_name_;
   std::string message_;

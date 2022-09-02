@@ -258,8 +258,6 @@ inline auto RandomFloat() -> float {
       (static_cast<double>(rand()) / RAND_MAX));  // NOLINT
 }
 
-auto SetPythonException(PyExcType python_type, const char* description) -> void;
-
 }  // namespace ballistica
 
 #endif  // __cplusplus

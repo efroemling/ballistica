@@ -74,8 +74,4 @@ auto Exception::what() const noexcept -> const char* {
   }
 }
 
-void Exception::SetPyError() const noexcept {
-  SetPythonException(python_type_, GetShortExceptionDescription(*this));
-}
-
 }  // namespace ballistica
