@@ -9,22 +9,24 @@ import logging
 import datetime
 import threading
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated
 
 from efro.util import utc_now
-from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 from efro.terminal import TerminalColor
+from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
     from pathlib import Path
+    from typing import Any, Callable
 
 
 class LogLevel(Enum):
     """Severity level for a log entry.
 
-    Note: these are numeric values so they can be compared in severity.
+    These enums have numeric values so they can be compared in severity.
+    Note that these values are not currently interchangeable with the
+    logging.ERROR, logging.DEBUG, etc. values.
     """
     DEBUG = 0
     INFO = 1
@@ -36,7 +38,7 @@ class LogLevel(Enum):
 @ioprepped
 @dataclass
 class LogEntry:
-    """Structured log entry."""
+    """Single logged message."""
     name: Annotated[str,
                     IOAttrs('n', soft_default='root', store_default=False)]
     message: Annotated[str, IOAttrs('m')]
@@ -44,7 +46,7 @@ class LogEntry:
     time: Annotated[datetime.datetime, IOAttrs('t')]
 
 
-class StructuredLogHandler(logging.StreamHandler):
+class LogHandler(logging.Handler):
     """Fancy-pants handler for logging output.
 
     Writes logs to disk in structured json format and echoes them
@@ -64,9 +66,14 @@ class StructuredLogHandler(logging.StreamHandler):
         self._suppress_non_root_debug = suppress_non_root_debug
 
     def emit(self, record: logging.LogRecord) -> None:
+
+        # Special case - filter out this common extra-chatty category.
+        # TODO - should use a standard logging.Filter for this.
         if (self._suppress_non_root_debug and record.name != 'root'
                 and record.levelname == 'DEBUG'):
             return
+
+        # Bake down all log formatting into a simple string.
         msg = self.format(record)
 
         # Translate Python log levels to our own.
@@ -87,7 +94,8 @@ class StructuredLogHandler(logging.StreamHandler):
         for call in self._callbacks:
             call(entry)
 
-        # Also route log entries to the echo file (generally stdout)
+        # Also route log entries to the echo file (generally stdout/stderr)
+        # with pretty colors.
         if self._echofile is not None:
             cbegin: str
             cend: str
@@ -123,7 +131,6 @@ class StructuredLogHandler(logging.StreamHandler):
                          level=level,
                          time=utc_now())
 
-        # Inform anyone who wants to know about this log's level.
         for call in self._callbacks:
             call(entry)
 
@@ -140,8 +147,8 @@ class StructuredLogHandler(logging.StreamHandler):
 class LogRedirect:
     """A file-like object for redirecting stdout/stderr to our log."""
 
-    def __init__(self, name: str, orig_out: Any,
-                 log_handler: StructuredLogHandler, log_level: LogLevel):
+    def __init__(self, name: str, orig_out: Any, log_handler: LogHandler,
+                 log_level: LogLevel):
         self._name = name
         self._orig_out = orig_out
         self._log_handler = log_handler
@@ -196,10 +203,9 @@ class LogRedirect:
                 self._chunk = ''
 
 
-def setup_logging(
-        log_path: str | Path | None,
-        level: LogLevel,
-        suppress_non_root_debug: bool = False) -> StructuredLogHandler:
+def setup_logging(log_path: str | Path | None,
+                  level: LogLevel,
+                  suppress_non_root_debug: bool = False) -> LogHandler:
     """Set up our logging environment.
 
     Returns the custom handler which can be used to fetch information
@@ -216,7 +222,7 @@ def setup_logging(
 
     # Wire logger output to go to a structured log file.
     # Also echo it to stderr IF we're running in a terminal.
-    loghandler = StructuredLogHandler(
+    loghandler = LogHandler(
         log_path,
         echofile=sys.stderr if sys.stderr.isatty() else None,
         suppress_non_root_debug=suppress_non_root_debug)

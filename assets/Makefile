@@ -150,6 +150,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_asyncio.py \
   build/ba_data/python/ba/_benchmark.py \
+  build/ba_data/python/ba/_bootstrap.py \
   build/ba_data/python/ba/_campaign.py \
   build/ba_data/python/ba/_cloud.py \
   build/ba_data/python/ba/_collision.py \
@@ -399,6 +400,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_asyncio.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_bootstrap.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_cloud.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_collision.cpython-310.opt-1.pyc \

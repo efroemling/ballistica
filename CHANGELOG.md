@@ -1,4 +1,4 @@
-### 1.7.7 (build 20725, api 7, 2022-09-01)
+### 1.7.7 (build 20728, api 7, 2022-09-02)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -8,6 +8,7 @@
 - Added support for the console tool in the new devices section on ballistica.net.
 - Increased timeouts in net-testing gui and a few other places to be able to better diagnose/handle places with very poor connectivity.
 - Removed `Platform::SetLastPyCall()` which was just for debugging and which has not been useful in a while.
+- Moved some app bootstrapping from the C++ layer to the ba._bootstrap module.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.
