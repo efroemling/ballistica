@@ -117,8 +117,8 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._time_limit = float(settings['Time Limit'])
         self._epic_mode = bool(settings['Epic Mode'])
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
-                              ba.MusicType.KEEP_AWAY)
+        self.default_music = (ba.MusicType.EPIC
+                              if self._epic_mode else ba.MusicType.KEEP_AWAY)
 
     def get_instance_description(self) -> str | Sequence:
         return 'Carry the flag for ${ARG1} seconds.', self._hold_time

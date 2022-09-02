@@ -145,8 +145,8 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         self._time_limit = float(settings['Time Limit'])
         self._epic_mode = bool(settings['Epic Mode'])
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
-                              ba.MusicType.FOOTBALL)
+        self.default_music = (ba.MusicType.EPIC
+                              if self._epic_mode else ba.MusicType.FOOTBALL)
 
     def get_instance_description(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
