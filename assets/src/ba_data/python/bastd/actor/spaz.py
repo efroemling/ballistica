@@ -979,9 +979,9 @@ class Spaz(ba.Actor):
                                  position=self.node.position)
                 if damage >= 500:
                     sounds = SpazFactory.get().punch_sound_strong
-                    sound = sounds[random.randrange(len(sounds))]                                       
-                elif damage >= 300:    
-                    sound = SpazFactory.get().punch_sound                   
+                    sound = sounds[random.randrange(len(sounds))]
+                elif damage >= 300:
+                    sound = SpazFactory.get().punch_sound
                 else:
                     sound = SpazFactory.get().punch_sound_weak
                 ba.playsound(sound, 1.0, position=self.node.position)
@@ -1077,7 +1077,7 @@ class Spaz(ba.Actor):
             # us if its grown high enough.
             if self.hitpoints <= 0:
                 damage_avg = self.node.damage_smoothed * damage_scale
-                if damage_avg > 1000:
+                if damage_avg >= 1000:
                     self.shatter()
 
         elif isinstance(msg, BombDiedMessage):
@@ -1343,9 +1343,9 @@ class Spaz(ba.Actor):
                           hit_type='impact'))
         self.node.handlemessage('knockout', max(0.0, 50.0 * intensity))
         sounds: Sequence[ba.Sound]
-        if intensity > 5.0:
+        if intensity >= 5.0:
             sounds = SpazFactory.get().impact_sounds_harder
-        elif intensity > 3.0:
+        elif intensity >= 3.0:
             sounds = SpazFactory.get().impact_sounds_hard
         else:
             sounds = SpazFactory.get().impact_sounds_medium
