@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 class DebugWindow(ba.Window):
     """Window for debugging internal values."""
 
-    def __init__(self, transition: str = 'in_right'):
+    def __init__(self,
+                 transition: str | None = 'in_right'):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui import popup
