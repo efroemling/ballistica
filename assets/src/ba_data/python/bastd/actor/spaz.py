@@ -758,7 +758,7 @@ class Spaz(ba.Actor):
                 tex = PowerupBoxFactory.get().tex_punch
                 self._flash_billboard(tex)
                 self.equip_boxing_gloves()
-                if self.powerups_expire:
+                if self.powerups_expire and not self.default_boxing_gloves:
                     self.node.boxing_gloves_flashing = False
                     self.node.mini_billboard_3_texture = tex
                     t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
