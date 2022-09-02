@@ -457,8 +457,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                         # pylint: disable=cyclic-import
                         from bastd.ui.debug import DebugWindow
                         ba.app.ui.set_main_menu_window(
-                            DebugWindow(
-                                transition=None).get_root_widget())
+                            DebugWindow(transition=None).get_root_widget())
                     else:
                         # pylint: disable=cyclic-import
                         from bastd.ui.mainmenu import MainMenuWindow
