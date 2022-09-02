@@ -231,8 +231,8 @@ class AccountSettingsWindow(ba.Window):
         linked_accounts_text_space = 60.0
 
         show_achievements_button = (
-            self._signed_in
-            and account_type in ('Google Play', 'Alibaba', 'Local', 'OUYA'))
+            self._signed_in and account_type
+            in ('Google Play', 'Alibaba', 'Local', 'OUYA', 'V2'))
         achievements_button_space = 60.0
 
         show_achievements_text = (self._signed_in
