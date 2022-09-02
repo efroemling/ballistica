@@ -28,10 +28,12 @@ def bootstrap() -> None:
     sys.stdout = _Redirect(sys.stdout, _ba.print_stdout)  # type: ignore
     sys.stderr = _Redirect(sys.stderr, _ba.print_stderr)  # type: ignore
 
+    env = _ba.env()
+
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20728
-    running_build = _ba.env().get('build_number')
+    expected_build = 20730
+    running_build: int = env['build_number']
     if running_build != expected_build:
         print(
             f'WARNING: These script files are meant to be used with'
@@ -56,15 +58,19 @@ def bootstrap() -> None:
 
     # Sanity check: we should always be run in UTF-8 mode.
     if sys.flags.utf8_mode != 1:
-        print('ERROR: Python\'s UTF-8 mode is not set.'
-              ' This will likely result in errors.')
+        print(
+            'ERROR: Python\'s UTF-8 mode is not set.'
+            ' This will likely result in errors.',
+            file=sys.stderr)
 
-    debug_build = _ba.env()['debug_build']
+    debug_build = env['debug_build']
 
     # We expect dev_mode on in debug builds and off otherwise.
     if debug_build != sys.flags.dev_mode:
-        print(f'WARNING: Mismatch in debug_build {debug_build}'
-              f' and sys.flags.dev_mode {sys.flags.dev_mode}')
+        print(
+            f'WARNING: Mismatch in debug_build {debug_build}'
+            f' and sys.flags.dev_mode {sys.flags.dev_mode}',
+            file=sys.stderr)
 
     # In embedded situations (when we're providing our own Python) let's
     # also provide our own root certs so ssl works. We can consider overriding
@@ -122,12 +128,9 @@ def bootstrap() -> None:
         del __main__.__builtins__.quit
         del __main__.__builtins__.exit
 
-    # Now spin up our App instance, store it on both _ba and ba,
-    # and return it to the C++ layer.
-    # noinspection PyProtectedMember
+    # Now spin up our App instance and store it on both _ba and ba.
     from ba._app import App
     import ba
-
     _ba.app = ba.app = App()
 
 
