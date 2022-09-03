@@ -10,12 +10,8 @@
 
 namespace ballistica {
 
-/// Internal bits.
 auto CreateAppInternal() -> AppInternal*;
 
-/// Our high level app interface module.
-/// It runs in the main thread and is what platform wrappers
-/// should primarily interact with.
 class AppInternal {
  public:
   virtual ~AppInternal() {}
