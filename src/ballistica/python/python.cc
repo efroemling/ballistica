@@ -946,6 +946,7 @@ void Python::Reset(bool do_init) {
     BA_PRECONDITION(m = PyImport_AddModule("__main__"));
     BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
 
+    // Make sure we're running the Python version we require.
     const char* ver = Py_GetVersion();
     if (strncmp(ver, "3.10", 4) != 0) {
       throw Exception("We require Python 3.10.x; instead found "
@@ -960,7 +961,7 @@ void Python::Reset(bool do_init) {
     // Run a few core bootstrappy things first:
     // - get stdout/stderr redirection up so we can intercept python output
     // - add our user and system script dirs to python path
-    // - import and instantiate our app-state class
+    // - create the ba.app instance.
 
 #include "ballistica/generated/python_embedded/bootstrap.inc"
     PyObject* result =
@@ -975,7 +976,7 @@ void Python::Reset(bool do_init) {
     }
     Py_DECREF(result);
 
-    // Import and grab all the Python stuff we use.
+    // Import and grab all the Python stuff we use from C++.
 #include "ballistica/generated/python_embedded/binding.inc"
 
     AppInternalPythonPostInit();

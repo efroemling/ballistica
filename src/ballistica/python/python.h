@@ -35,7 +35,7 @@ class Python {
     static auto current_label() -> const char* { return current_label_; }
 
    private:
-    const char* prev_label_ = nullptr;
+    const char* prev_label_{};
     static const char* current_label_;
     BA_DISALLOW_CLASS_COPIES(ScopedCallLabel);
   };
@@ -63,7 +63,7 @@ class Python {
   static auto HaveGIL() -> bool;
 
   /// Attempt to print the python stack trace.
-  static void PrintStackTrace();
+  static auto PrintStackTrace() -> void;
 
   /// Pass any PyObject* (including nullptr) to get a readable string
   /// (basically equivalent of str(foo)).
@@ -75,14 +75,14 @@ class Python {
   auto ValidatedPackageAssetName(PyObject* package, const char* name)
       -> std::string;
 
-  static void LogContextForCallableLabel(const char* label);
-  static void LogContextEmpty();
-  static void LogContextAuto();
-  static void LogContextNonLogicThread();
+  static auto LogContextForCallableLabel(const char* label) -> void;
+  static auto LogContextEmpty() -> void;
+  static auto LogContextAuto() -> void;
+  static auto LogContextNonLogicThread() -> void;
   Python();
   ~Python();
 
-  void Reset(bool init = true);
+  auto Reset(bool init = true) -> void;
 
   /// Add classes to the newly created ba module.
   static auto InitModuleClasses(PyObject* module) -> void;
@@ -93,19 +93,19 @@ class Python {
                           const std::string& value_name) -> int;
   auto GetControllerFloatValue(InputDevice* input_device,
                                const std::string& value_name) -> float;
-  void HandleDeviceMenuPress(InputDevice* input_device);
+  auto HandleDeviceMenuPress(InputDevice* input_device) -> void;
   auto GetLastPlayerNameFromInputDevice(InputDevice* input_device)
       -> std::string;
-  void AcquireGIL();
-  void ReleaseGIL();
+  auto AcquireGIL() -> void;
+  auto ReleaseGIL() -> void;
 
-  void LaunchStringEdit(TextWidget* w);
-  void CaptureGamePadInput(PyObject* obj);
-  void ReleaseGamePadInput();
-  void CaptureKeyboardInput(PyObject* obj);
-  void ReleaseKeyboardInput();
-  void HandleFriendScoresCB(const FriendScoreSet& ss);
-  void IssueCallInLogicThreadWarning(PyObject* call);
+  auto LaunchStringEdit(TextWidget* w) -> void;
+  auto CaptureGamePadInput(PyObject* obj) -> void;
+  auto ReleaseGamePadInput() -> void;
+  auto CaptureKeyboardInput(PyObject* obj) -> void;
+  auto ReleaseKeyboardInput() -> void;
+  auto HandleFriendScoresCB(const FriendScoreSet& ss) -> void;
+  auto IssueCallInLogicThreadWarning(PyObject* call) -> void;
 
   /// Borrowed from python's source code: used in overriding of objects' dir()
   /// results.
@@ -125,24 +125,24 @@ class Python {
   auto FilterChatMessage(std::string* message, int client_id) -> bool;
 
   /// Pass a chat message along to the python UI layer for handling..
-  void HandleLocalChatMessage(const std::string& message);
+  auto HandleLocalChatMessage(const std::string& message) -> void;
 
-  void DispatchScoresToBeatResponse(
+  auto DispatchScoresToBeatResponse(
       bool success, const std::list<ScoreToBeat>& scores_to_beat,
-      void* PyCallback);
+      void* PyCallback) -> void;
 
   /// Pop up an in-game window to show a url (NOT in a browser).
-  void ShowURL(const std::string& url);
+  auto ShowURL(const std::string& url) -> void;
 
-  void AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c);
-  void RunCleanFrameCommands();
+  auto AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) -> void;
+  auto RunCleanFrameCommands() -> void;
 
   /// Return a minimal filename/position string such as 'foo.py:201' based
-  /// on the python stack state. This shouldn't be too expensive to fetch and
+  /// on the Python stack state. This shouldn't be too expensive to fetch and
   /// is useful as an object identifier/etc.
   static auto GetPythonFileLocation(bool pretty = true) -> std::string;
 
-  void set_env_obj(PyObject* obj) { env_ = obj; }
+  auto set_env_obj(PyObject* obj) -> void { env_ = obj; }
   auto env_obj() const -> PyObject* {
     assert(env_);
     return env_;
@@ -151,7 +151,7 @@ class Python {
     assert(main_dict_);
     return main_dict_;
   }
-  void PlayMusic(const std::string& music_type, bool continuous);
+  auto PlayMusic(const std::string& music_type, bool continuous) -> void;
 
   // Fetch raw values from the config dict. The default value is returned if
   // the requested value is not present or not of a compatible type.
@@ -166,14 +166,14 @@ class Python {
       -> std::optional<float>;
   auto GetRawConfigValue(const char* name, int default_value) -> int;
   auto GetRawConfigValue(const char* name, bool default_value) -> bool;
-  void SetRawConfigValue(const char* name, float value);
+  auto SetRawConfigValue(const char* name, float value) -> void;
 
-  void RunDeepLink(const std::string& url);
+  auto RunDeepLink(const std::string& url) -> void;
   auto GetResource(const char* key, const char* fallback_resource = nullptr,
                    const char* fallback_value = nullptr) -> std::string;
   auto GetTranslation(const char* category, const char* s) -> std::string;
 
-  // For checking and pulling values out of python objects.
+  // For checking and pulling values out of Python objects.
   // These will all throw Exceptions on errors.
   static auto GetPyString(PyObject* o) -> std::string;
   static auto GetPyInt64(PyObject* o) -> int64_t;
@@ -233,14 +233,15 @@ class Python {
   static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
 
   static auto GetNodeAttr(Node* node, const char* attribute_name) -> PyObject*;
-  static void SetNodeAttr(Node* node, const char* attr_name,
-                          PyObject* value_obj);
+  static auto SetNodeAttr(Node* node, const char* attr_name,
+                          PyObject* value_obj) -> void;
 
   /// Set Python exception from C++ Exception.
-  static void SetPythonException(const Exception& exc);
+  static auto SetPythonException(const Exception& exc) -> void;
 
-  static void DoBuildNodeMessage(PyObject* args, int arg_offset,
-                                 Buffer<char>* b, PyObject** user_message_obj);
+  static auto DoBuildNodeMessage(PyObject* args, int arg_offset,
+                                 Buffer<char>* b, PyObject** user_message_obj)
+      -> void;
   auto DoNewNode(PyObject* args, PyObject* keywds) -> Node*;
 
   /// Identifiers for specific Python objects we grab references to for easy
@@ -382,40 +383,41 @@ class Python {
 
   /// Push a call to a preset obj to the game thread
   /// (will be run in the UI context).
-  void PushObjCall(ObjID obj);
+  auto PushObjCall(ObjID obj) -> void;
 
   /// Push a call with a single string arg.
-  void PushObjCall(ObjID obj, const std::string& arg);
+  auto PushObjCall(ObjID obj, const std::string& arg) -> void;
 
-  /// Register python location and returns true if it has not
+  /// Register Python location and returns true if it has not
   /// yet been registered. (for print-once type stuff).
   auto DoOnce() -> bool;
 
   /// Check values passed to timer functions; triggers warnings
   /// for cases that look like they're passing milliseconds as seconds
   /// or vice versa... (can remove this once things are settled in).
-  void TimeFormatCheck(TimeFormat time_format, PyObject* length_obj);
+  auto TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) -> void;
 
  private:
   /// Check/set debug related initialization.
-  void SetupInterpreterDebugState();
+  auto SetupInterpreterDebugState() -> void;
 
   /// Set up system paths if needed (for embedded builds).
-  void SetupPythonHome();
+  auto SetupPythonHome() -> void;
 
   /// Set the value for a named object.
-  void StoreObj(ObjID id, PyObject* pyobj, bool incref = false);
+  auto StoreObj(ObjID id, PyObject* pyobj, bool incref = false) -> void;
 
   /// Set the value for a named object and verify that it is a callable.
-  void StoreObjCallable(ObjID id, PyObject* pyobj, bool incref = false);
+  auto StoreObjCallable(ObjID id, PyObject* pyobj, bool incref = false) -> void;
 
   /// Set the value for a named object to the result of a Python expression.
-  void StoreObj(ObjID id, const char* expression, PyObject* context = nullptr);
+  auto StoreObj(ObjID id, const char* expression, PyObject* context = nullptr)
+      -> void;
 
   /// Set the value for a named object to the result of a Python expression
   /// and verify that it is callable.
-  void StoreObjCallable(ObjID id, const char* expression,
-                        PyObject* context = nullptr);
+  auto StoreObjCallable(ObjID id, const char* expression,
+                        PyObject* context = nullptr) -> void;
 
   std::set<std::string> do_once_locations_;
   PythonRef objs_[static_cast<int>(ObjID::kLast)];

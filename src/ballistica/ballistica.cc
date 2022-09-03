@@ -22,7 +22,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20741;
+const int kAppBuildNumber = 20746;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -269,7 +269,7 @@ auto InNetworkWriteThread() -> bool {
           && g_network_write_module->thread()->IsCurrent());
 }
 
-void Log(const std::string& msg, bool to_stdout, bool to_server) {
+auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {
   Logging::Log(msg, to_stdout, to_server);
 }
 
@@ -283,7 +283,7 @@ void ScreenMessage(const std::string& s, const Vector3f& color) {
   }
 }
 
-void ScreenMessage(const std::string& msg) {
+auto ScreenMessage(const std::string& msg) -> void {
   ScreenMessage(msg, {1.0f, 1.0f, 1.0f});
 }
 

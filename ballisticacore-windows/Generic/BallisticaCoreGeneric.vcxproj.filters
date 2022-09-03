@@ -778,6 +778,9 @@
     <ClInclude Include="..\..\src\ballistica\input\std_input_module.h">
       <Filter>ballistica\input</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\internal\internal.h">
+      <Filter>ballistica\internal</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\math\matrix44f.cc">
       <Filter>ballistica\math</Filter>
     </ClCompile>
@@ -1667,6 +1670,7 @@
     <Filter Include="ballistica\graphics\texture" />
     <Filter Include="ballistica\input" />
     <Filter Include="ballistica\input\device" />
+    <Filter Include="ballistica\internal" />
     <Filter Include="ballistica\math" />
     <Filter Include="ballistica\media" />
     <Filter Include="ballistica\media\component" />

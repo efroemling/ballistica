@@ -11,7 +11,8 @@ namespace ballistica {
 
 VRApp::VRApp(Thread* thread) : App(thread) {}
 
-void VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
+auto VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state)
+    -> void {
   PushCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
@@ -34,7 +35,7 @@ void VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
   });
 }
 
-void VRApp::VRSetDrawDimensions(int w, int h) {
+auto VRApp::VRSetDrawDimensions(int w, int h) -> void {
   g_graphics_server->VideoResize(w, h);
 }
 
@@ -55,7 +56,7 @@ void VRApp::VRPreDraw() {
   }
 }
 
-void VRApp::VRPostDraw() {
+auto VRApp::VRPostDraw() -> void {
   assert(InMainThread());
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
@@ -67,15 +68,15 @@ void VRApp::VRPostDraw() {
   RunRenderUpkeepCycle();
 }
 
-void VRApp::VRSetHead(float tx, float ty, float tz, float yaw, float pitch,
-                      float roll) {
+auto VRApp::VRSetHead(float tx, float ty, float tz, float yaw, float pitch,
+                      float roll) -> void {
   assert(InMainThread());
   Renderer* renderer = g_graphics_server->renderer();
   if (renderer == nullptr) return;
   renderer->VRSetHead(tx, ty, tz, yaw, pitch, roll);
 }
 
-void VRApp::VRSetHands(const VRHandsState& state) {
+auto VRApp::VRSetHands(const VRHandsState& state) -> void {
   assert(InMainThread());
 
   // Pass this along to the renderer (in this same thread) for drawing
@@ -88,10 +89,10 @@ void VRApp::VRSetHands(const VRHandsState& state) {
   g_game->PushVRHandsState(state);
 }
 
-void VRApp::VRDrawEye(int eye, float yaw, float pitch, float roll, float tan_l,
+auto VRApp::VRDrawEye(int eye, float yaw, float pitch, float roll, float tan_l,
                       float tan_r, float tan_b, float tan_t, float eye_x,
-                      float eye_y, float eye_z, int viewport_x,
-                      int viewport_y) {
+                      float eye_y, float eye_z, int viewport_x, int viewport_y)
+    -> void {
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
   }

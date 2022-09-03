@@ -618,7 +618,7 @@ class Updater:
         # Misc sanity checks.
         if not self._public:
             # Make sure we're set to prod master server.
-            with open('src/ballistica/networking/master_server_config.h',
+            with open('src/ballistica/internal/master_server_config.h',
                       encoding='utf-8') as infile:
                 msconfig = infile.read()
                 if ('// V2 Master Server:\n'

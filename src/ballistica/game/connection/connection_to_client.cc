@@ -2,7 +2,6 @@
 
 #include "ballistica/game/connection/connection_to_client.h"
 
-// #include "ballistica/app/app_internal.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/client_controller_interface.h"
 #include "ballistica/game/connection/connection_set.h"
