@@ -138,7 +138,7 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
   // when the user specifies no backing it means they intend to cover the screen
   // with a flat-ish window texture.. however this only applies to phone-size;
   // for other sizes we always draw a backing.
-  if (GetUIScale() != UIScale::kSmall) {
+  if (g_ui->scale() != UIScale::kSmall) {
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
   }
@@ -152,7 +152,7 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
 
 void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
                           float b, bool plus, const std::string& s) {
-  float yoffs = (GetUIScale() == UIScale::kSmall) ? 0.0f : -7.0f;
+  float yoffs = (g_ui->scale() == UIScale::kSmall) ? 0.0f : -7.0f;
 
   float width = type == 1 ? 80.0f : 110.0f;
   // bar
@@ -170,7 +170,7 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
     bd.color_r = 0.32f;
     bd.color_g = 0.30f;
     bd.color_b = 0.4f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       bd.color_r *= TOOLBAR_COLOR_R;
       bd.color_g *= TOOLBAR_COLOR_G;
       bd.color_b *= TOOLBAR_COLOR_B;
@@ -290,7 +290,7 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
     bd.color_r = 0.35f;
     bd.color_g = 0.35f;
     bd.color_b = 0.55f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       bd.color_r *= TOOLBAR_COLOR_R;
       bd.color_g *= TOOLBAR_COLOR_G;
       bd.color_b *= TOOLBAR_COLOR_B;
@@ -357,9 +357,9 @@ void RootWidget::Setup() {
 
   // widen this a bit in small mode so it just covers most of the top
   // - that looks funny in medium/large mode though
-  // if (GetUIScale() == UIScale::kSmall) {
+  // if (g_ui->scale() == UIScale::kSmall) {
   //   AddCover(0.5f, VAlign::kTop, 0.0f, 320.0f,
-  //             GetUIScale() == UIScale::kSmall ? 1000.0f :
+  //             g_ui->scale() == UIScale::kSmall ? 1000.0f :
   //             1000.0f, 800.0f, 0.4f);
   // }
   // if (c) {
@@ -373,14 +373,14 @@ void RootWidget::Setup() {
     bd.h_align = 0.5f;
     bd.v_align = VAlign::kTop;
     bd.width = 370.0f;
-    // if (GetUIScale() != UIScale::kSmall) {
+    // if (g_ui->scale() != UIScale::kSmall) {
     //   bd.width = 950.0f;
     // }
     bd.height = 90.0f;
     bd.x = 256.0f;
     bd.y = -20.0f;
     bd.img = "uiAtlas2";
-    // if (GetUIScale() != UIScale::kSmall) {
+    // if (g_ui->scale() != UIScale::kSmall) {
     //   bd.model_transparent = "toolbarBackingTop";
     // } else {
     bd.model_transparent = "toolbarBackingTop2";
@@ -390,7 +390,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.41f;
     bd.color_b = 0.56f;
     bd.opacity = 1.0f;
-    // if (GetUIScale() != UIScale::kSmall) {
+    // if (g_ui->scale() != UIScale::kSmall) {
     //   bd.color_r *= TOOLBAR_COLOR_R;
     //   bd.color_g *= TOOLBAR_COLOR_G;
     //   bd.color_b *= TOOLBAR_COLOR_B;
@@ -417,7 +417,7 @@ void RootWidget::Setup() {
     bd.h_align = 0.5f;
     bd.v_align = VAlign::kTop;
     bd.width = 850.0f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       bd.width = 850.0f;
     }
     bd.height = 90.0f;
@@ -430,7 +430,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.41f;
     bd.color_b = 0.56f;
     bd.opacity = 1.0f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       bd.color_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
       bd.color_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
       bd.color_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
@@ -450,7 +450,7 @@ void RootWidget::Setup() {
     AddButton(bd);
   }
 
-  float yoffs = (GetUIScale() == UIScale::kSmall) ? 0.0f : -10.0f;
+  float yoffs = (g_ui->scale() == UIScale::kSmall) ? 0.0f : -10.0f;
 
   // account button
   {
@@ -460,12 +460,12 @@ void RootWidget::Setup() {
     bd.width = 160.0f;
     bd.height = 60.0f;
     bd.depth_min = 0.3f;
-    bd.x = (GetUIScale() == UIScale::kSmall) ? 100.0f : -50.0f;
+    bd.x = (g_ui->scale() == UIScale::kSmall) ? 100.0f : -50.0f;
     bd.y = -24.0f + yoffs;
     bd.color_r = 0.56f;
     bd.color_g = 0.5f;
     bd.color_b = 0.73f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       bd.color_r *= TOOLBAR_COLOR_R;
       bd.color_g *= TOOLBAR_COLOR_G;
       bd.color_b *= TOOLBAR_COLOR_B;
@@ -477,7 +477,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
     // on desktop, stick this in the top left corner
-    // if (GetUIScale() == UIScale::kLarge) {
+    // if (g_ui->scale() == UIScale::kLarge) {
     //   bd.h_align = 0.0f;
     //   bd.x = 120.0f;
     // }
@@ -515,7 +515,7 @@ void RootWidget::Setup() {
     }
   }
 
-  float anchorx = (GetUIScale() == UIScale::kSmall) ? 0.3f : 0.25f;
+  float anchorx = (g_ui->scale() == UIScale::kSmall) ? 0.3f : 0.25f;
 
   AddMeter(anchorx, 200.0f - 148.0f, 0, 1.0f, 1.0f, 1.0f, false, "456/1000");
   AddMeter(anchorx, 200.0f, 1, 1.0f, 1.0f, 1.0f, false, "123");
@@ -661,7 +661,7 @@ void RootWidget::Setup() {
     float backingCoverG = backingG;
     float backingCoverB = backingB;
     float backingA = 1.0f;
-    if (GetUIScale() != UIScale::kSmall) {
+    if (g_ui->scale() != UIScale::kSmall) {
       backingR *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
       backingG *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
       backingB *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
@@ -944,7 +944,7 @@ void RootWidget::StepPositions(float dt) {
     }
     if (&b == back_button_) {
       // back button is always disabled in medium/large UI
-      if (GetUIScale() != UIScale::kSmall) {
+      if (g_ui->scale() != UIScale::kSmall) {
         enable_button = false;
       }
 
@@ -1033,7 +1033,7 @@ void RootWidget::StepPositions(float dt) {
 void RootWidget::UpdateLayout() {
   // Now actually put things in place.
   base_scale_ = 1.0f;
-  switch (GetUIScale()) {
+  switch (g_ui->scale()) {
     case UIScale::kLarge:
       base_scale_ = 0.6f;
       break;

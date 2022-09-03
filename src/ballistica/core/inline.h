@@ -69,7 +69,7 @@ auto static_cast_check_fit_always(IN_TYPE in) -> OUT_TYPE {
 template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_fit_always_2(IN_TYPE in) -> OUT_TYPE {
   if (!check_static_cast_fit<OUT_TYPE>(in)) {
-    fprintf(stderr, "static_cast_check_fit_always failed for value %s.",
+    fprintf(stderr, "static_cast_check_fit_always_2 failed for value %s.",
             std::to_string(in).c_str());
     abort();
   }

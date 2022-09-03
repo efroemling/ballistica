@@ -21,6 +21,7 @@
 #if !BA_USE_ES3_INCLUDES
 #include "ballistica/platform/android/android_gl3.h"
 #endif
+#include "ballistica/ui/ui.h"
 #define glDepthRange glDepthRangef
 #define glDiscardFramebufferEXT _glDiscardFramebufferEXT
 #ifndef GL_RGB565_OES
@@ -5819,11 +5820,11 @@ std::string RendererGL::GetAutoAndroidRes() {
 
   const char* renderer = (const char*)glGetString(GL_RENDERER);
 
-  // on the adreno 4xxx or 5xxx series we should be able to do anything...
+  // On the adreno 4xxx or 5xxx series we should be able to do anything.
   if (strstr(renderer, "Adreno (TM) 4") || strstr(renderer, "Adreno (TM) 5")) {
     // for phones lets go with 1080p (phones most likely have 1920x1080-ish
     // aspect ratios)
-    if (GetUIScale() == UIScale::kSmall) {
+    if (g_ui->scale() == UIScale::kSmall) {
       return "1080p";
     } else {
       // tablets are more likely to have 1920x1200 so lets inch a bit higher
@@ -5831,11 +5832,11 @@ std::string RendererGL::GetAutoAndroidRes() {
     }
   }
 
-  // on extra-speedy devices we should be able to do 1920x1200
+  // On extra-speedy devices we should be able to do 1920x1200.
   if (is_extra_speedy_android_device_) {
     // for phones lets go with 1080p (phones most likely have 1920x1080-ish
     // aspect ratios)
-    if (GetUIScale() == UIScale::kSmall) {
+    if (g_ui->scale() == UIScale::kSmall) {
       return "1080p";
     } else {
       // tablets are more likely to have 1920x1200 so lets inch a bit higher
@@ -5843,7 +5844,7 @@ std::string RendererGL::GetAutoAndroidRes() {
     }
   }
 
-  // Amazon Fire tablet (as of jan '18) needs REAL low res to feel smooth..
+  // Amazon Fire tablet (as of jan '18) needs REAL low res to feel smooth.
   if (g_platform->GetDeviceName() == "Amazon KFAUWI") {
     return "480p";
   }

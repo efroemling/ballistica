@@ -23,7 +23,7 @@ const float kMenuButtonDrawDepth = -0.07f;
 
 RootUI::RootUI() {
   float base_scale;
-  switch (GetUIScale()) {
+  switch (g_ui->scale()) {
     case UIScale::kLarge:
       base_scale = 1.0f;
       break;

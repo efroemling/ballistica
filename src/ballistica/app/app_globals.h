@@ -53,13 +53,11 @@ class AppGlobals {
   Console* console{};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
-  UIScale ui_scale{UIScale::kLarge};
   V1AccountType account_type{V1AccountType::kInvalid};
   bool remote_server_accepting_connections{true};
   std::string exec_command;
   std::string user_agent_string{"BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
   int return_value{};
-  bool is_stdin_a_terminal{true};
   bool debug_timing{};
   std::thread::id main_thread_id{};
   bool is_bootstrapped{};

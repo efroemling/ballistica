@@ -17,6 +17,7 @@
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
@@ -721,7 +722,7 @@ auto PyEnv(PyObject* self) -> PyObject* {
     bool demo_mode{g_buildconfig.demo_build()};
 
     const char* ui_scale;
-    switch (GetUIScale()) {
+    switch (g_ui->scale()) {
       case UIScale::kLarge:
         ui_scale = "large";
         break;

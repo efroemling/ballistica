@@ -31,6 +31,7 @@ namespace ballistica {
 class UI : public ContextTarget {
  public:
   UI();
+  auto PostInit() -> void;
   ~UI() override;
   auto Reset() -> void;
 
@@ -116,10 +117,12 @@ class UI : public ContextTarget {
                 const Object::Ref<Runnable>& runnable) -> int override;
   auto DeleteTimer(TimeType timetype, int timer_id) -> void override;
 
-  RootUI* root_ui() const {
+  auto root_ui() -> RootUI* const {
     assert(root_ui_);
     return root_ui_;
   }
+
+  auto scale() const { return scale_; }
 
  private:
   auto StepScene() -> void;
@@ -138,6 +141,7 @@ class UI : public ContextTarget {
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
   int ui_lock_count_{};
+  UIScale scale_{UIScale::kLarge};
 
   // Media loaded in the UI context.
   std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;

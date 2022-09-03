@@ -782,7 +782,7 @@ void PlatformWindows::SetEnv(const std::string& name,
   }
 }
 
-bool PlatformWindows::IsStdinATerminal() { return _isatty(_fileno(stdin)); }
+bool PlatformWindows::GetIsStdinATerminal() { return _isatty(_fileno(stdin)); }
 
 std::string PlatformWindows::GetOSVersionString() {
   DWORD dw_version = 0;

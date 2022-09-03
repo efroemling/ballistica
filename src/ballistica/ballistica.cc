@@ -17,11 +17,12 @@
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20736;
+const int kAppBuildNumber = 20741;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -268,15 +269,11 @@ auto InNetworkWriteThread() -> bool {
           && g_network_write_module->thread()->IsCurrent());
 }
 
-auto GetUIScale() -> UIScale { return g_app_globals->ui_scale; }
-
 void Log(const std::string& msg, bool to_stdout, bool to_server) {
   Logging::Log(msg, to_stdout, to_server);
 }
 
 auto IsVRMode() -> bool { return g_app_globals->vr_mode; }
-
-auto IsStdinATerminal() -> bool { return g_app_globals->is_stdin_a_terminal; }
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
   if (g_game) {

@@ -21,6 +21,7 @@
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
+#include "ballistica/ui/ui.h"
 #include "ode/ode_collision_util.h"
 
 namespace ballistica {
@@ -4925,7 +4926,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
 
       int elem_count = name_text_group_.GetElementCount();
       float s_extra =
-          (IsVRMode() || GetUIScale() == UIScale::kSmall) ? 1.2f : 1.0f;
+          (IsVRMode() || g_ui->scale() == UIScale::kSmall) ? 1.2f : 1.0f;
 
       for (int e = 0; e < elem_count; e++) {
         // Gracefully skip unloaded textures.

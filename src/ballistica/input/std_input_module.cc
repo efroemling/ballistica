@@ -21,7 +21,7 @@ StdInputModule::~StdInputModule() = default;
 
 void StdInputModule::PushBeginReadCall() {
   PushCall([this] {
-    bool stdin_is_terminal = IsStdinATerminal();
+    bool stdin_is_terminal = g_platform->is_stdin_a_terminal();
 
     while (true) {
       // Print a prompt if we're a tty.

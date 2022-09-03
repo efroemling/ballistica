@@ -35,7 +35,7 @@ class PlatformWindows : public Platform {
   void HandleLog(const std::string& msg) override;
   void SetupDataDirectory() override;
   void SetEnv(const std::string& name, const std::string& value) override;
-  auto IsStdinATerminal() -> bool override;
+  auto GetIsStdinATerminal() -> bool override;
   auto GetOSVersionString() -> std::string override;
   auto GetCWD() -> std::string override;
   void DoOpenURL(const std::string& url) override;

@@ -119,6 +119,13 @@ auto Platform::PostInit() -> void {
   // more closely or at least log it somewhere.
   device_name_ = Utils::GetValidUTF8(DoGetDeviceName().c_str(), "dn");
   ran_base_post_init_ = true;
+
+  // Are we running in a terminal?
+  if (g_buildconfig.use_stdin_thread()) {
+    is_stdin_a_terminal_ = GetIsStdinATerminal();
+  } else {
+    is_stdin_a_terminal_ = false;
+  }
 }
 
 Platform::~Platform() = default;
@@ -536,15 +543,8 @@ static void Init() {
   assert(true);
 #endif  // !BA_DEBUG_BUILD
 
-  // Are we running in a terminal?
-  if (g_buildconfig.use_stdin_thread()) {
-    g_app_globals->is_stdin_a_terminal = g_platform->IsStdinATerminal();
-  } else {
-    g_app_globals->is_stdin_a_terminal = false;
-  }
-
   // If we're running in a terminal, print some info.
-  if (g_app_globals->is_stdin_a_terminal) {
+  if (g_platform->is_stdin_a_terminal()) {
     if (g_buildconfig.headless_build()) {
       printf("BallisticaCore Headless %s build %d.\n", kAppVersion,
              kAppBuildNumber);
@@ -793,7 +793,7 @@ void Platform::SetEnv(const std::string& name, const std::string& value) {
 #endif
 }
 
-auto Platform::IsStdinATerminal() -> bool {
+auto Platform::GetIsStdinATerminal() -> bool {
 // This covers non-windows cases.
 #if BA_OSTYPE_WINDOWS
   throw Exception();

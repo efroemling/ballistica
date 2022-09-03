@@ -204,14 +204,6 @@ auto IsUnmodifiedBlessedBuild() -> bool;
 auto ScreenMessage(const std::string& msg) -> void;
 auto ScreenMessage(const std::string& msg, const Vector3f& color) -> void;
 
-/// Log a fatal error and kill the app.
-/// Can be called from any thread at any time.
-/// message is a message to be shown to the user if possible.
-/// This will attempt to ship all accumulated logs to the master-server
-/// so the standard Log() call can be used before this to include extra
-/// info not relevant to the end user.
-auto FatalError(const std::string& message = "") -> void;
-
 // Check current-threads.
 auto InMainThread() -> bool;      // (main and graphics are same currently)
 auto InGraphicsThread() -> bool;  // (main and graphics are same currently)
@@ -230,11 +222,13 @@ auto GetCurrentThreadName() -> std::string;
 auto Log(const std::string& msg, bool to_stdout = true, bool to_server = true)
     -> void;
 
-auto GetUIScale() -> UIScale;
-
-/// Return true if stdin seems to be coming from a terminal
-/// (so we know to print prompts, etc).
-auto IsStdinATerminal() -> bool;
+/// Log a fatal error and kill the app.
+/// Can be called from any thread at any time.
+/// Provided message will be shown to the user if possible.
+/// This will attempt to ship all accumulated logs to the master-server
+/// so the standard Log() call can be used before this to include extra
+/// info not relevant to the end user.
+auto FatalError(const std::string& message = "") -> void;
 
 /// Are we running in a VR environment?
 auto IsVRMode() -> bool;

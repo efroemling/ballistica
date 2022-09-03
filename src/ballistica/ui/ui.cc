@@ -39,20 +39,20 @@ UI::UI() {
     }
   }
   if (force_test_small) {
-    g_app_globals->ui_scale = UIScale::kSmall;
+    scale_ = UIScale::kSmall;
   } else if (force_test_medium) {
-    g_app_globals->ui_scale = UIScale::kMedium;
+    scale_ = UIScale::kMedium;
   } else if (force_test_large) {
-    g_app_globals->ui_scale = UIScale::kLarge;
+    scale_ = UIScale::kLarge;
   } else {
     // Use automatic val.
     if (g_buildconfig.iircade_build()) {  // NOLINT(bugprone-branch-clone)
-      g_app_globals->ui_scale = UIScale::kMedium;
+      scale_ = UIScale::kMedium;
     } else if (IsVRMode() || g_platform->IsRunningOnTV()) {
       // VR and tv builds always use medium.
-      g_app_globals->ui_scale = UIScale::kMedium;
+      scale_ = UIScale::kMedium;
     } else {
-      g_app_globals->ui_scale = g_platform->GetUIScale();
+      scale_ = g_platform->GetUIScale();
     }
   }
 
@@ -72,8 +72,9 @@ UI::UI() {
       base_timers_.NewTimer(base_time_, kGameStepMilliseconds, 0, -1,
                             NewLambdaRunnable([this] { StepScene(); }));
   scene_ = Object::New<Scene>(0);
-  root_ui_ = new RootUI();
 }
+
+auto UI::PostInit() -> void { root_ui_ = new RootUI(); }
 
 // Currently the UI never dies so we don't bother doing a clean tear-down..
 // (verifying scene cleanup, etc)

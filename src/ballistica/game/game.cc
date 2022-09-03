@@ -93,6 +93,7 @@ Game::Game(Thread* thread)
     // (need to be able to create weak-refs to it).
     assert(g_ui == nullptr);
     g_ui = Object::NewUnmanaged<UI>();
+    g_ui->PostInit();
 
     assert(g_networking == nullptr);
     g_networking = new Networking();
@@ -943,7 +944,8 @@ void Game::PushStdinScriptCommand(const std::string& command) {
       if (PyObject* obj = cmd.RunReturnObj(true, nullptr)) {
         // Print the value if we're running directly from a terminal
         // (or being run under the server-manager)
-        if ((IsStdinATerminal() || g_app->server_wrapper_managed())
+        if ((g_platform->is_stdin_a_terminal()
+             || g_app->server_wrapper_managed())
             && obj != Py_None) {
           PyObject* s = PyObject_Repr(obj);
           if (s) {

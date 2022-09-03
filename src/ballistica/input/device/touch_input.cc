@@ -67,7 +67,7 @@ void TouchInput::HandleTouchEvent(TouchEvent::Type type, void* touch, float x,
 }
 
 TouchInput::TouchInput() {
-  switch (GetUIScale()) {
+  switch (g_ui->scale()) {
     case UIScale::kSmall:
       base_controls_scale_ = 2.0f;
       world_draw_scale_ = 1.2f;
@@ -862,7 +862,7 @@ void TouchInput::UpdateMapping() {
       g_app_config->Resolve(AppConfig::BoolID::kTouchControlsSwipeHidden);
 
   // Start with defaults.
-  switch (GetUIScale()) {
+  switch (g_ui->scale()) {
     case UIScale::kSmall:
       buttons_default_frac_x_ = 0.88f;
       buttons_default_frac_y_ = 0.2f;

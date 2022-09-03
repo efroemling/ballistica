@@ -192,9 +192,6 @@ class Platform {
   /// Raises an exception on errors.
   virtual void SetEnv(const std::string& name, const std::string& value);
 
-  /// Are we being run from a terminal? (should we show prompts, etc?).
-  virtual auto IsStdinATerminal() -> bool;
-
   /// Return hostname or other id suitable for displaying in network search
   /// results, etc.
   auto GetDeviceName() -> std::string;
@@ -516,7 +513,13 @@ class Platform {
     return using_custom_app_python_dir_;
   }
 
+  /// Are we being run from a terminal? (should we show prompts, etc?).
+  auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
+
  protected:
+  /// Are we being run from a terminal? (should we show prompts, etc?).
+  virtual auto GetIsStdinATerminal() -> bool;
+
   /// Open the provided URL in a browser or whatnot.
   virtual auto DoOpenURL(const std::string& url) -> void;
 
@@ -557,6 +560,7 @@ class Platform {
   virtual auto DoClipboardGetText() -> std::string;
 
  private:
+  bool is_stdin_a_terminal_{};
   bool using_custom_app_python_dir_{};
   bool have_config_dir_{};
   bool have_has_touchscreen_value_{};
