@@ -42,12 +42,12 @@ class InputDevice : public Object {
   /// (for remote players, returns their account).
   virtual auto GetAccountName(bool full) const -> std::string;
 
-  /// Return the public Account ID of the signed-in account associated
+  /// Return the public V1 Account ID of the signed-in account associated
   /// with this device, or an empty string if not (yet) available.
   /// Note that in some cases there may be a delay before this value
   /// is available. (remote player account IDs are verified with the
   /// master server before becoming available, etc)
-  virtual auto GetPublicAccountID() const -> std::string;
+  virtual auto GetPublicV1AccountID() const -> std::string;
 
   /// Returns player-profiles dict if available; otherwise nullptr.
   virtual auto GetPlayerProfiles() const -> PyObject*;

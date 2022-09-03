@@ -778,7 +778,7 @@
     <ClInclude Include="..\..\src\ballistica\input\std_input_module.h">
       <Filter>ballistica\input</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\internal\internal.h">
+    <ClInclude Include="..\..\src\ballistica\internal\app_internal.h">
       <Filter>ballistica\internal</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\math\matrix44f.cc">

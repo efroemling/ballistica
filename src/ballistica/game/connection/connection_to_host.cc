@@ -8,6 +8,7 @@
 #include "ballistica/generic/json.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/input.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/math/vector3f.h"
 #include "ballistica/media/media.h"
 #include "ballistica/networking/networking.h"
@@ -171,7 +172,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           set_peer_spec(PlayerSpec(string_buffer.data()));
         }
 
-        peer_hash_ = AppInternalCalcV1PeerHash(peer_hash_input_);
+        peer_hash_ = g_app_internal->CalcV1PeerHash(peer_hash_input_);
 
         set_can_communicate(true);
         g_game->LaunchClientSession();
@@ -196,7 +197,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           JsonDict dict;
           dict.AddNumber("b", kAppBuildNumber);
 
-          AppInternalV1SetClientInfo(&dict);
+          g_app_internal->V1SetClientInfo(&dict);
 
           // Pass the hash we generated from their handshake; they can use
           // this to make sure we're who we say we are.

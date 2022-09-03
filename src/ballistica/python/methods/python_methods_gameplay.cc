@@ -16,6 +16,7 @@
 #include "ballistica/generic/json.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/media/component/sound.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -454,7 +455,7 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     // Let's also include a public account-id if we have one.
     std::string account_id;
     if (clientid == -1) {
-      account_id = AppInternalGetPublicAccountID();
+      account_id = g_app_internal->GetPublicV1AccountID();
     } else {
       auto client2 =
           g_game->connections()->connections_to_clients().find(clientid);

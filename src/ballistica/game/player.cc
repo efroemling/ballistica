@@ -392,10 +392,10 @@ void Player::SetInputDevice(InputDevice* input_device) {
   input_device_ = input_device;
 }
 
-auto Player::GetPublicAccountID() const -> std::string {
+auto Player::GetPublicV1AccountID() const -> std::string {
   assert(InLogicThread());
   if (input_device_.exists()) {
-    return input_device_->GetPublicAccountID();
+    return input_device_->GetPublicV1AccountID();
   }
   return "";
 }

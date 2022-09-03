@@ -24,7 +24,7 @@ class ClientInputDevice : public InputDevice {
   // Return player-profiles dict if available; otherwise nullptr.
   auto GetPlayerProfiles() const -> PyObject* override;
   auto GetAccountName(bool full) const -> std::string override;
-  auto GetPublicAccountID() const -> std::string override;
+  auto GetPublicV1AccountID() const -> std::string override;
   void AttachToLocalPlayer(Player* player) override;
   void DetachFromPlayer() override;
   void PassInputCommand(InputType type, float value) {

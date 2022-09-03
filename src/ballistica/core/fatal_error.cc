@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/core/logging.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {
@@ -81,7 +82,7 @@ auto FatalError::ReportFatalError(const std::string& message,
   if (g_app_globals == nullptr) {
     suffix = logmsg;
   }
-  AppInternalDirectSendLogs(prefix, suffix, true, &result);
+  g_app_internal->DirectSendLogs(prefix, suffix, true, &result);
 
   // If we're able to show a fatal-error dialog synchronously, do so.
   if (g_platform && g_platform->CanShowBlockingFatalErrorDialog()) {

@@ -6,6 +6,7 @@
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/game.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -102,7 +103,7 @@ void Logging::Log(const std::string& msg, bool to_stdout, bool to_server) {
         if (g_app_globals == nullptr) {
           logsuffix = msg;
         }
-        AppInternalDirectSendLogs(logprefix, logsuffix, false);
+        g_app_internal->DirectSendLogs(logprefix, logsuffix, false);
       }
     }
   }

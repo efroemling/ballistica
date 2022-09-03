@@ -12,6 +12,7 @@
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/account.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/media/media_server.h"
 #include "ballistica/networking/network_write_module.h"
 #include "ballistica/platform/platform.h"
@@ -22,7 +23,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20746;
+const int kAppBuildNumber = 20754;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.

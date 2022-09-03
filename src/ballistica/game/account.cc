@@ -5,6 +5,7 @@
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {
@@ -176,7 +177,7 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
   }
   if (call_login_did_change) {
     // Inform a few subsystems of the change.
-    AppInternalV1LoginDidChange();
+    g_app_internal->V1LoginDidChange();
     g_platform->V1LoginDidChange();
   }
 }

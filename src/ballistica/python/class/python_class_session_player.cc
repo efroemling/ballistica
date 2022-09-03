@@ -489,7 +489,7 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string account_id = p->GetPublicAccountID();
+  std::string account_id = p->GetPublicV1AccountID();
   if (account_id.empty()) {
     Py_RETURN_NONE;
   }

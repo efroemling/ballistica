@@ -443,7 +443,7 @@
     <ClInclude Include="..\..\src\ballistica\input\remote_app.h" />
     <ClCompile Include="..\..\src\ballistica\input\std_input_module.cc" />
     <ClInclude Include="..\..\src\ballistica\input\std_input_module.h" />
-    <ClInclude Include="..\..\src\ballistica\internal\internal.h" />
+    <ClInclude Include="..\..\src\ballistica\internal\app_internal.h" />
     <ClCompile Include="..\..\src\ballistica\math\matrix44f.cc" />
     <ClInclude Include="..\..\src\ballistica\math\matrix44f.h" />
     <ClInclude Include="..\..\src\ballistica\math\point2d.h" />

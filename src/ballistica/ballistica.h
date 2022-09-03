@@ -154,44 +154,6 @@ auto GetAppInstanceUUID() -> const std::string&;
 /// Have our main threads/modules all been inited yet?
 auto IsBootstrapped() -> bool;
 
-/// Internal bits.
-auto CreateAppInternal() -> AppInternal*;
-auto AppInternalPyInitialize(void* pyconfig) -> void;
-auto AppInternalPythonPostInit() -> void;
-auto AppInternalHasBlessingHash() -> bool;
-auto AppInternalPutLog(bool fatal) -> bool;
-auto AppInternalAAT() -> void;
-auto AppInternalAATE() -> void;
-auto AppInternalV1LoginDidChange() -> void;
-auto AppInternalSetAdCompletionCall(PyObject* obj, bool pass_actually_showed)
-    -> void;
-auto AppInternalPushAdViewComplete(const std::string& purpose,
-                                   bool actually_showed) -> void;
-auto AppInternalPushPublicPartyState() -> void;
-auto AppInternalPushSetFriendListCall(const std::vector<std::string>& friends)
-    -> void;
-auto AppInternalDispatchRemoteAchievementList(const std::set<std::string>& achs)
-    -> void;
-auto AppInternalPushAnalyticsCall(const std::string& type, int increment)
-    -> void;
-auto AppInternalPushPurchaseTransactionCall(const std::string& item,
-                                            const std::string& receipt,
-                                            const std::string& signature,
-                                            const std::string& order_id,
-                                            bool user_initiated) -> void;
-auto AppInternalGetPublicAccountID() -> std::string;
-auto AppInternalOnLogicThreadPause() -> void;
-auto AppInternalDirectSendLogs(const std::string& prefix,
-                               const std::string& suffix, bool instant,
-                               int* result = nullptr) -> void;
-auto AppInternalClientInfoQuery(const std::string& val1,
-                                const std::string& val2,
-                                const std::string& val3, int build_number)
-    -> void;
-auto AppInternalCalcV1PeerHash(const std::string& peer_hash_input)
-    -> std::string;
-auto AppInternalV1SetClientInfo(JsonDict* dict) -> void;
-
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;
 

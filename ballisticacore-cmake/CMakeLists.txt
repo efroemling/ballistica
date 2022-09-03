@@ -457,7 +457,7 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/input/remote_app.h
   ${BA_SRC_ROOT}/ballistica/input/std_input_module.cc
   ${BA_SRC_ROOT}/ballistica/input/std_input_module.h
-  ${BA_SRC_ROOT}/ballistica/internal/internal.h
+  ${BA_SRC_ROOT}/ballistica/internal/app_internal.h
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.h
   ${BA_SRC_ROOT}/ballistica/math/point2d.h

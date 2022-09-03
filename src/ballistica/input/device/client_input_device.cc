@@ -52,7 +52,7 @@ auto ClientInputDevice::GetAccountName(bool full) const -> std::string {
   return "???";
 }
 
-auto ClientInputDevice::GetPublicAccountID() const -> std::string {
+auto ClientInputDevice::GetPublicV1AccountID() const -> std::string {
   assert(InLogicThread());
   if (connection_to_client_.exists()) {
     return connection_to_client_->peer_public_account_id();

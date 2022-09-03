@@ -27,6 +27,7 @@
 #include "ballistica/input/device/client_input_device.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/touch_input.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/networking/network_write_module.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/networking/telnet_server.h"
@@ -992,7 +993,7 @@ void Game::HandleThreadPause() {
 
   // Let Python and internal layers do their thing.
   g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
-  AppInternalOnLogicThreadPause();
+  g_app_internal->OnLogicThreadPause();
 }
 
 void Game::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
@@ -1164,7 +1165,7 @@ void Game::GameServiceAchievementList(
     const std::set<std::string>& achievements) {
   assert(g_python);
   assert(InLogicThread());
-  AppInternalDispatchRemoteAchievementList(achievements);
+  g_app_internal->DispatchRemoteAchievementList(achievements);
 }
 
 void Game::PushScoresToBeatResponseCall(bool success,
@@ -1501,7 +1502,7 @@ void Game::Shutdown(bool soft) {
     HandleThreadPause();
 
     // Attempt to report/store outstanding log stuff.
-    AppInternalPutLog(false);
+    g_app_internal->PutLog(false);
 
     // Ideally we'd want to give some of the above stuff
     // a few seconds to complete, but just calling it done for now.
@@ -2138,7 +2139,7 @@ void Game::SetPublicPartyEnabled(bool val) {
     return;
   }
   public_party_enabled_ = val;
-  AppInternalPushPublicPartyState();
+  g_app_internal->PushPublicPartyState();
 }
 
 void Game::SetPublicPartySize(int count) {
@@ -2151,7 +2152,7 @@ void Game::SetPublicPartySize(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    AppInternalPushPublicPartyState();
+    g_app_internal->PushPublicPartyState();
   }
 }
 
@@ -2165,7 +2166,7 @@ void Game::SetPublicPartyMaxSize(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    AppInternalPushPublicPartyState();
+    g_app_internal->PushPublicPartyState();
   }
 }
 
@@ -2179,7 +2180,7 @@ void Game::SetPublicPartyName(const std::string& name) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    AppInternalPushPublicPartyState();
+    g_app_internal->PushPublicPartyState();
   }
 }
 
@@ -2193,7 +2194,7 @@ void Game::SetPublicPartyStatsURL(const std::string& url) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    AppInternalPushPublicPartyState();
+    g_app_internal->PushPublicPartyState();
   }
 }
 
@@ -2207,7 +2208,7 @@ void Game::SetPublicPartyPlayerCount(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    AppInternalPushPublicPartyState();
+    g_app_internal->PushPublicPartyState();
   }
 }
 

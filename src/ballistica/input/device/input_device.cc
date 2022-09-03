@@ -10,6 +10,7 @@
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/game/session/net_client_session.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/class/python_class_input_device.h"
 #include "ballistica/python/python.h"
@@ -74,13 +75,13 @@ static auto GetRandomName(const std::string& full_name) -> std::string {
 
 auto InputDevice::GetPlayerProfiles() const -> PyObject* { return nullptr; }
 
-auto InputDevice::GetPublicAccountID() const -> std::string {
+auto InputDevice::GetPublicV1AccountID() const -> std::string {
   assert(InLogicThread());
 
   // This default implementation assumes the device is local
   // so just returns the locally signed in account's public id.
 
-  return AppInternalGetPublicAccountID();
+  return g_app_internal->GetPublicV1AccountID();
 }
 
 auto InputDevice::GetAccountName(bool full) const -> std::string {

@@ -10,6 +10,7 @@
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/input/device/client_input_device.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/media/media.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/python.h"
@@ -390,7 +391,7 @@ void ConnectionToClient::HandleMessagePacket(
           if (!token_.empty()) {
             // Kick off a query to the master-server for this client's info.
             // FIXME: we need to add retries for this in case of failure.
-            AppInternalClientInfoQuery(
+            g_app_internal->ClientInfoQuery(
                 token_, our_handshake_player_spec_str_ + our_handshake_salt_,
                 peer_hash_, build_number_);
           }

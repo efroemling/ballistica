@@ -77,7 +77,7 @@ class Player : public Object {
   // If an public account-id can be determined with relative
   // certainty for this player, returns it. Otherwise returns
   // an empty string.
-  auto GetPublicAccountID() const -> std::string;
+  auto GetPublicV1AccountID() const -> std::string;
 
   auto SetHostActivity(HostActivity* host_activity) -> void;
   auto GetHostActivity() const -> HostActivity*;

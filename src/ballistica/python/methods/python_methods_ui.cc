@@ -8,6 +8,7 @@
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
 #include "ballistica/input/input.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
 #include "ballistica/ui/root_ui.h"
@@ -1908,8 +1909,8 @@ auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
           &on_completion_call_obj, &pass_actually_showed)) {
     return nullptr;
   }
-  AppInternalSetAdCompletionCall(on_completion_call_obj,
-                                 static_cast<bool>(pass_actually_showed));
+  g_app_internal->SetAdCompletionCall(on_completion_call_obj,
+                                      static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
   // We'll then fire our callback once its done.
@@ -1918,7 +1919,7 @@ auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   if (g_platform->GetHasAds()) {
     g_platform->ShowAd(purpose);
   } else {
-    AppInternalPushAdViewComplete(purpose, false);
+    g_app_internal->PushAdViewComplete(purpose, false);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1938,8 +1939,8 @@ auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
           &on_completion_call_obj, &pass_actually_showed)) {
     return nullptr;
   }
-  AppInternalSetAdCompletionCall(on_completion_call_obj,
-                                 static_cast<bool>(pass_actually_showed));
+  g_app_internal->SetAdCompletionCall(on_completion_call_obj,
+                                      static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
   // We'll then fire our callback once its done.
@@ -1948,7 +1949,7 @@ auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   if (g_platform->GetHasAds()) {
     g_platform->ShowAd(purpose);
   } else {
-    AppInternalPushAdViewComplete(purpose, false);
+    g_app_internal->PushAdViewComplete(purpose, false);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

@@ -14,6 +14,7 @@
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
+#include "ballistica/internal/app_internal.h"
 #include "ballistica/media/component/collide_model.h"
 #include "ballistica/media/component/model.h"
 #include "ballistica/media/component/sound.h"
@@ -939,7 +940,7 @@ void Python::Reset(bool do_init) {
     }
 
     // Inits our _ba module and runs Py_Initialize().
-    AppInternalPyInitialize(&config);
+    g_app_internal->PyInitialize(&config);
 
     // Grab __main__ in case we need to use it later.
     PyObject* m;
@@ -979,7 +980,7 @@ void Python::Reset(bool do_init) {
     // Import and grab all the Python stuff we use from C++.
 #include "ballistica/generated/python_embedded/binding.inc"
 
-    AppInternalPythonPostInit();
+    g_app_internal->PythonPostInit();
 
     // Alright I guess let's pull ba in to main, since pretty
     // much all interactive commands will be using it.
