@@ -3,12 +3,12 @@
 """A dummy stub module for the real _ba.
 
 The real _ba is a compiled extension module and only available
-in the live game. This dummy module allows Pylint/Mypy/etc. to
-function reasonably well outside of the game.
+in the live engine. This dummy-module allows Pylint/Mypy/etc. to
+function reasonably well outside of that environment.
 
-Make sure this file is never included in an actual game distro!
+Make sure this file is never included in live script dirs!
 
-Ideally this should be a stub (.pyi) file, but we'd need
+In the future perhaps this can be a stub (.pyi) file, but we will need
 to make sure that it still works with all our tools
 (mypy, pylint, pycharm).
 

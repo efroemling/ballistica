@@ -1033,6 +1033,7 @@ auto AddClass(PyObject* module) -> PyObject* {
   BA_PRECONDITION(r == 0);
   return reinterpret_cast<PyObject*>(&T::type_obj);
 }
+
 auto Python::InitModuleClasses(PyObject* module) -> void {
   // Init our classes and add them to our module.
   AddClass<PythonClassNode>(module);

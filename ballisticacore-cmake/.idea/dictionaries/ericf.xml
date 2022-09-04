@@ -3,6 +3,7 @@
     <words>
       <w>NOMINMAX</w>
       <w>aabb</w>
+      <w>aate</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
       <w>abcdefghjkmnpqrtuvwxy</w>
       <w>abouttab</w>
@@ -90,6 +91,7 @@
       <w>backporting</w>
       <w>backtraces</w>
       <w>backwin</w>
+      <w>bainternal</w>
       <w>ballistica</w>
       <w>ballisticacore</w>
       <w>bamasteraddr</w>
@@ -157,8 +159,10 @@
       <w>bscfg</w>
       <w>bsgaps</w>
       <w>bsgdps</w>
+      <w>bsgp</w>
       <w>bsivu</w>
       <w>bsmhi</w>
+      <w>bsremote</w>
       <w>bsstd</w>
       <w>bstat</w>
       <w>bstr</w>
@@ -356,6 +360,7 @@
       <w>dstpath</w>
       <w>dstr</w>
       <w>dtest</w>
+      <w>dummymodules</w>
       <w>dummyret</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
@@ -759,6 +764,7 @@
       <w>masterver</w>
       <w>mastervers</w>
       <w>maximus</w>
+      <w>maxpathlen</w>
       <w>maxtries</w>
       <w>maxwait</w>
       <w>maxwidth</w>
@@ -778,6 +784,7 @@
       <w>mikirog</w>
       <w>millisecs</w>
       <w>minelem</w>
+      <w>miniplayer</w>
       <w>minping</w>
       <w>minsdl</w>
       <w>mipmapcount</w>
@@ -826,6 +833,7 @@
       <w>mywidget</w>
       <w>namecap</w>
       <w>nameval</w>
+      <w>nbuffer</w>
       <w>ndebug</w>
       <w>nearbytab</w>
       <w>nearstr</w>
@@ -1226,6 +1234,7 @@
       <w>ssval</w>
       <w>standin</w>
       <w>startedptr</w>
+      <w>startms</w>
       <w>startpos</w>
       <w>startsplits</w>
       <w>starttime</w>
@@ -1399,6 +1408,7 @@
       <w>vbos</w>
       <w>vbuf</w>
       <w>vcache</w>
+      <w>vdata</w>
       <w>vdynamic</w>
       <w>vertout</w>
       <w>verts</w>

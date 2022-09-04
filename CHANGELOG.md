@@ -1,4 +1,4 @@
-### 1.7.7 (build 20756, api 7, 2022-09-03)
+### 1.7.7 (build 20760, api 7, 2022-09-04)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -15,7 +15,9 @@
 - Spaz starting with gloves no longer loses it after picking up an expiring gloves powerup (thanks itsre3!)
 - Starting to rename the 'game' thread to the 'logic' thread. This is the thread where most high level app logic happen, not only game logic.
 - `_ba.in_game_thread()` is now `_ba.in_logic_thread()`.
-- Misc C++ layer tidying.
+- Misc C++ layer tidying/refactoring.
+- Split out the `_ba` binary module into `_ba` and `_bainternal`. This will eventually allow running without the closed-source parts (_bainternal) present at all.
+- There is now a `_bainternal.py` dummy-module alongside the existing `_ba.py` one. Be sure to exclude it from any script collections used by the game (the same as `_ba.py`).
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

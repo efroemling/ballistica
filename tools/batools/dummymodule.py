@@ -1,10 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Generates a dummy _ba.py based on the game's real internal _ba module.
+"""Generates a dummy _ba.py and _bainternal.py based on binary modules.
 
-This allows us to use code introspection tools such as pylint from outside
-the game, and also allows external scripts to import game scripts successfully
-(though with limited functionality)
+This allows us to use code introspection tools such as pylint without spinning
+up the engine, and also allows external scripts to import game scripts
+successfully (albeit with limited functionality).
 """
 
 from __future__ import annotations
@@ -200,10 +200,6 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
                 returnstr = (
                     'import ba  # pylint: disable=cyclic-import\nreturn ' +
                     returns + '()')
-
-                # we'll also have to go without a sig
-                # (could use the equivalent _ba class perhaps)
-                # sig = sig.split('->')[0]
 
             elif returns in {'object', 'Any'}:
 
@@ -614,9 +610,10 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     return out
 
 
-def generate(sources_hash: str, outfilename: str) -> None:
+def generate(mname: str, sources_hash: str, outfilename: str) -> None:
     """Run the actual generation from within the game."""
-    import _ba as module
+    # pylint: disable=too-many-locals
+    module = __import__(mname)
     from efrotools import get_public_license, PYVER
     import types
     funcnames = []
@@ -626,7 +623,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
             funcnames.append(entry)
         elif isinstance(getattr(module, entry), type):
             classnames.append(entry)
-        elif entry == 'app':
+        elif mname == '_ba' and entry == 'app':
             # Ignore _ba.app.
             continue
         else:
@@ -634,18 +631,31 @@ def generate(sources_hash: str, outfilename: str) -> None:
                 f'found unknown obj {entry}, {getattr(module, entry)}')
     funcnames.sort()
     classnames.sort()
+    typing_imports = ('TYPE_CHECKING, overload, Sequence, TypeVar'
+                      if mname == '_ba' else 'TYPE_CHECKING, TypeVar')
+    typing_imports_tc = ('Any, Callable, Literal'
+                         if mname == '_ba' else 'Any, Callable')
+    tc_import_lines_extra = ('    from ba._app import App\n'
+                             '    import ba\n' if mname == '_ba' else '')
+    app_declare_lines = ('app: App\n'
+                         '\n' if mname == '_ba' else '')
+    enum_import_lines = (
+        'from ba._generated.enums import TimeFormat, TimeType\n'
+        '\n' if mname == '_ba' else '')
     out = (get_public_license('python')
            + '\n'
            '#\n'
-           '"""A dummy stub module for the real _ba.\n'
+           f'"""A dummy stub module for the real {mname}.\n'
            '\n'
-           'The real _ba is a compiled extension module and only available\n'
-           'in the live game. This dummy module allows Pylint/Mypy/etc. to\n'
-           'function reasonably well outside of the game.\n'
+           f'The real {mname} is a compiled extension module'
+           ' and only available\n'
+           'in the live engine. This dummy-module allows Pylint/Mypy/etc. to\n'
+           'function reasonably well outside of that environment.\n'
            '\n'
-           'Make sure this file is never included in an actual game distro!\n'
+           'Make sure this file is never included in live script dirs!\n'
            '\n'
-           'Ideally this should be a stub (.pyi) file, but we\'d need\n'
+           'In the future perhaps this can be a stub (.pyi) file, but'
+           ' we will need\n'
            'to make sure that it still works with all our tools\n'
            '(mypy, pylint, pycharm).\n'
            '\n'
@@ -672,20 +682,17 @@ def generate(sources_hash: str, outfilename: str) -> None:
            '\n'
            'from __future__ import annotations\n'
            '\n'
-           'from typing import TYPE_CHECKING, overload, Sequence, TypeVar\n'
+           f'from typing import {typing_imports}\n'
            '\n'
-           'from ba._generated.enums import TimeFormat, TimeType\n'
-           '\n'
+           f'{enum_import_lines}'
            'if TYPE_CHECKING:\n'
-           '    from typing import Any, Callable, Literal\n'
-           '    from ba._app import App\n'
-           '    import ba\n'
+           f'    from typing import {typing_imports_tc}\n'
+           f'{tc_import_lines_extra}'
            '\n'
            '\n'
            "_T = TypeVar('_T')\n"
            '\n'
-           'app: App\n'
-           '\n'
+           f'{app_declare_lines}'
            'def _uninferrable() -> Any:\n'
            '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
            '    # pylint: disable=undefined-variable\n'
@@ -698,7 +705,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
     out += _writefuncs(module, funcnames, indent=0, spacing=2, as_method=False)
 
     outhashpath = os.path.join(os.path.dirname(outfilename),
-                               '._ba_sources_hash')
+                               f'.{mname}_sources_hash')
 
     with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(out)
@@ -711,8 +718,8 @@ def generate(sources_hash: str, outfilename: str) -> None:
                    check=True)
 
 
-def _dummy_module_dirty() -> tuple[bool, str]:
-    """Test hashes on the dummy module to see if it needs updates."""
+def _dummy_module_dirty(mname: str) -> tuple[bool, str]:
+    """Test hashes on the dummy-module to see if it needs updates."""
 
     # Let's generate a hash from all sources under the python source dir.
     pysources = []
@@ -725,7 +732,7 @@ def _dummy_module_dirty() -> tuple[bool, str]:
     # Also lets add this script so we re-create when it changes.
     pysources.append(__file__)
 
-    outpath = 'assets/src/ba_data/python/._ba_sources_hash'
+    outpath = f'assets/src/ba_data/python/.{mname}_sources_hash'
     if not os.path.exists(outpath):
         existing_hash = ''
     else:
@@ -743,11 +750,8 @@ def _dummy_module_dirty() -> tuple[bool, str]:
 
 
 def update(projroot: str, check: bool, force: bool) -> None:
-    """Update the dummy module as needed."""
+    """Update dummy-modules as needed."""
     toolsdir = os.path.abspath(os.path.join(projroot, 'tools'))
-
-    outfilename = os.path.abspath(
-        os.path.join(projroot, 'assets/src/ba_data/python/_ba.py'))
 
     # Make sure we're running from the project root dir.
     os.chdir(projroot)
@@ -756,53 +760,61 @@ def update(projroot: str, check: bool, force: bool) -> None:
     if force and check:
         raise Exception('cannot specify both force and check mode')
 
-    dirty, sources_hash = _dummy_module_dirty()
+    for mname in ('_ba', '_bainternal'):
+        outfilename = os.path.abspath(
+            os.path.join(projroot, f'assets/src/ba_data/python/{mname}.py'))
 
-    if dirty:
-        if check:
-            print(f'{Clr.RED}ERROR: dummy _ba module'
-                  f' is out of date.{Clr.RST}')
-            sys.exit(255)
-    elif not force:
-        # Dummy module is clean and force is off; we're done here.
-        print('Dummy module _ba.py is up to date.')
-        sys.exit(0)
+        dirty, sources_hash = _dummy_module_dirty(mname)
 
-    print(f'{Clr.MAG}Updating _ba.py Dummy Module...{Clr.RST}')
+        if dirty:
+            if check:
+                print(f'{Clr.RED}ERROR: dummy {mname} module'
+                      f' is out of date.{Clr.RST}')
+                sys.exit(255)
+        elif not force:
+            # Dummy-module is clean and force is off; we're done here.
+            print(f'Dummy-module {Clr.BLD}{mname}.py{Clr.RST} is up to date.')
+            continue
 
-    # Let's build the cmake version; no sandboxing issues to contend with
-    # there. Also going with the headless build; will need to revisit if
-    # there's ever any functionality not available in that build.
-    subprocess.run(['make', 'cmake-server-build'], check=True)
+        print(f'{Clr.MAG}Updating {Clr.BLD}{mname}.py{Clr.RST}{Clr.MAG}'
+              f' dummy-module...{Clr.RST}')
 
-    # Launch ballistica and exec ourself from within it.
-    print('Launching ballisticacore to generate dummy-module...')
-    try:
-        subprocess.run(
-            [
-                './ballisticacore',
-                '-exec',
-                f'try:\n'
-                f'    import sys\n'
-                f'    sys.path.append("{toolsdir}")\n'
-                f'    from batools import dummymodule\n'
-                f'    dummymodule.generate(sources_hash="{sources_hash}",\n'
-                f'        outfilename="{outfilename}")\n'
-                f'    ba.quit()\n'
-                f'except Exception as exc:\n'
-                f'    import sys\n'
-                f'    import traceback\n'
-                f'    print("ERROR GENERATING DUMMY MODULE")\n'
-                f'    traceback.print_exc()\n'
-                f'    sys.exit(255)\n',
-            ],
-            cwd='build/cmake/server-debug/dist',
-            check=True,
-        )
-    except Exception as exc2:
-        # Keep our error simple here; we want focus to be on what went
-        # wrong withing BallisticaCore.
-        raise CleanError(
-            'BallisticaCore dummy-module generation failed.') from exc2
+        # Let's build the cmake version; no sandboxing issues to contend with
+        # there. Also going with the headless build; will need to revisit if
+        # there's ever any functionality not available in that build.
+        subprocess.run(['make', 'cmake-server-build'], check=True)
 
-    print('Dummy-module generation complete.')
+        # Launch ballisticacore and exec ourself from within it.
+        print(f'Launching ballisticacore to generate'
+              f' {Clr.BLD}{mname}.py{Clr.RST} dummy-module...')
+        try:
+            subprocess.run(
+                [
+                    './ballisticacore',
+                    '-exec',
+                    f'try:\n'
+                    f'    import sys\n'
+                    f'    sys.path.append("{toolsdir}")\n'
+                    f'    from batools import dummymodule\n'
+                    f'    dummymodule.generate(mname="{mname}",\n'
+                    f'        sources_hash="{sources_hash}",\n'
+                    f'        outfilename="{outfilename}")\n'
+                    f'    ba.quit()\n'
+                    f'except Exception as exc:\n'
+                    f'    import sys\n'
+                    f'    import traceback\n'
+                    f'    print("ERROR GENERATING {mname} DUMMY-MODULE")\n'
+                    f'    traceback.print_exc()\n'
+                    f'    sys.exit(255)\n',
+                ],
+                cwd='build/cmake/server-debug/dist',
+                check=True,
+            )
+            print(
+                f'{Clr.BLU}{mname} dummy-module generation complete.{Clr.RST}')
+
+        except Exception as exc2:
+            # Keep our error simple here; we want focus to be on what went
+            # wrong withing BallisticaCore.
+            raise CleanError(
+                'BallisticaCore dummy-module generation failed.') from exc2

@@ -18,43 +18,43 @@
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
-#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20756;
+const int kAppBuildNumber = 20760;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
 // These are separated out for easy access.
 // Everything else should go into AppGlobals (or more ideally into a class).
 int g_early_log_writes{10};
-Thread* g_main_thread{};
-AppGlobals* g_app_globals{};
+
+Account* g_account{};
 AppConfig* g_app_config{};
+AppGlobals* g_app_globals{};
 AppInternal* g_app_internal{};
 App* g_app{};
-Account* g_account{};
-Game* g_game{};
+Audio* g_audio{};
+AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
 BGDynamicsServer* g_bg_dynamics_server{};
-Platform* g_platform{};
-Utils* g_utils{};
-UI* g_ui{};
+Game* g_game{};
 Graphics* g_graphics{};
-Python* g_python{};
-Input* g_input{};
 GraphicsServer* g_graphics_server{};
+Input* g_input{};
+Thread* g_main_thread{};
 Media* g_media{};
-Audio* g_audio{};
 MediaServer* g_media_server{};
-AudioServer* g_audio_server{};
-StdInputModule* g_std_input_module{};
 NetworkReader* g_network_reader{};
 Networking* g_networking{};
 NetworkWriteModule* g_network_write_module{};
+Platform* g_platform{};
+Python* g_python{};
+StdInputModule* g_std_input_module{};
 TextGraphics* g_text_graphics{};
+UI* g_ui{};
+Utils* g_utils{};
 
 // Basic overview of our bootstrapping process:
 // 1: All threads and globals are created and provisioned. Everything above

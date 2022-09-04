@@ -105,8 +105,8 @@ clean-list:
 	git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Force regenerate the dummy module.
-dummymodule:
-	./tools/pcommand update_dummy_module --force
+dummymodules:
+	./tools/pcommand update_dummy_modules --force
 
 # Generate docs.
 docs: assets-cmake
@@ -117,7 +117,7 @@ docs: assets-cmake
  assets-windows-Win32 assets-windows-x64 \
  assets-mac assets-ios assets-android assets-clean \
  resources resources-clean meta meta-clean \
- clean clean-list dummymodule docs
+ clean clean-list dummymodules docs
 
 
 ################################################################################

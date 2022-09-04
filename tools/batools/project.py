@@ -101,7 +101,7 @@ class Updater:
         self._apply_line_changes()
         self._apply_file_changes()
 
-        self._update_dummy_module()
+        self._update_dummy_modules()
 
         # Though not technically necessary, let's go ahead and update
         # irony compile-commands, tool configs, etc. as part of the
@@ -659,13 +659,13 @@ class Updater:
             raise CleanError(
                 'Error checking/updating resources Makefile.') from exc
 
-    def _update_dummy_module(self) -> None:
+    def _update_dummy_modules(self) -> None:
         # Update our dummy _ba module.
         # Note: This should happen near the end because it may run the cmake
         # build so its success may depend on the cmake build files having
         # already been updated.
         try:
-            subprocess.run(['tools/pcommand', 'update_dummy_module'] +
+            subprocess.run(['tools/pcommand', 'update_dummy_modules'] +
                            self._checkarglist,
                            check=True)
         except Exception as exc:

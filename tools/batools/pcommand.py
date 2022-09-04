@@ -999,8 +999,8 @@ def gen_python_init_module() -> None:
                       '#\n')
 
 
-def update_dummy_module() -> None:
-    """Update our _ba dummy module."""
+def update_dummy_modules() -> None:
+    """Update our _ba.py and _bainternal.py dummy modules."""
     from batools.dummymodule import update
     update(projroot=str(PROJROOT),
            check='--check' in sys.argv,
