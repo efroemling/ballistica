@@ -499,7 +499,7 @@ class TournamentButton:
         self.allow_ads = allow_ads = entry['allowAds']
 
         final_fee: int | None = (None if fee_var is None else
-                                 _ba.get_v1_account_misc_read_val(
+                                 ba.internal.get_v1_account_misc_read_val(
                                      fee_var, '?'))
 
         final_fee_str: str | ba.Lstr

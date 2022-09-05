@@ -134,15 +134,16 @@ class MasterServerCallThread(threading.Thread):
         import json
 
         from efro.error import is_urllib_communication_error
-        from ba import _general
+        from ba._general import Call, utf8_all
+        from ba._internal import get_master_server_address
 
         response_data: Any = None
         url: str | None = None
         try:
-            self._data = _general.utf8_all(self._data)
+            self._data = utf8_all(self._data)
             _ba.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
-                url = (_ba.get_master_server_address() + '/' + self._request +
+                url = (get_master_server_address() + '/' + self._request +
                        '?' + urllib.parse.urlencode(self._data))
                 response = urllib.request.urlopen(
                     urllib.request.Request(
@@ -150,7 +151,7 @@ class MasterServerCallThread(threading.Thread):
                     context=_ba.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             elif self._request_type == 'post':
-                url = _ba.get_master_server_address() + '/' + self._request
+                url = get_master_server_address() + '/' + self._request
                 response = urllib.request.urlopen(
                     urllib.request.Request(
                         url,
@@ -189,7 +190,7 @@ class MasterServerCallThread(threading.Thread):
             response_data = None
 
         if self._callback is not None:
-            _ba.pushcall(_general.Call(self._run_callback, response_data),
+            _ba.pushcall(Call(self._run_callback, response_data),
                          from_other_thread=True)
 
 

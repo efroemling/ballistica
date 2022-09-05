@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui import popup
 
 if TYPE_CHECKING:
@@ -91,8 +92,9 @@ class AccountViewerWindow(popup.PopupWindow):
 
         # In cases where the user most likely has a browser/email, lets
         # offer a 'report this user' button.
-        if (is_browser_likely_available() and _ba.get_v1_account_misc_read_val(
-                'showAccountExtrasMenu', False)):
+        if (is_browser_likely_available()
+                and ba.internal.get_v1_account_misc_read_val(
+                    'showAccountExtrasMenu', False)):
 
             self._extras_menu_button = ba.buttonwidget(
                 parent=self.root_widget,
@@ -154,11 +156,11 @@ class AccountViewerWindow(popup.PopupWindow):
             delegate=self)
 
     def _on_ban_press(self) -> None:
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'BAN_ACCOUNT',
             'account': self._account_id
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
     def _on_report_press(self) -> None:
         from bastd.ui import report
@@ -166,8 +168,8 @@ class AccountViewerWindow(popup.PopupWindow):
                                   origin_widget=self._extras_menu_button)
 
     def _on_more_press(self) -> None:
-        ba.open_url(_ba.get_master_server_address() + '/highscores?profile=' +
-                    self._account_id)
+        ba.open_url(ba.internal.get_master_server_address() +
+                    '/highscores?profile=' + self._account_id)
 
     def _on_query_response(self, data: dict[str, Any] | None) -> None:
         # FIXME: Tidy this up.

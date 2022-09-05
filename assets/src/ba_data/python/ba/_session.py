@@ -615,6 +615,7 @@ class Session:
     def transitioning_out_activity_was_freed(
             self, can_show_ad_on_death: bool) -> None:
         """(internal)"""
+        # pylint: disable=cyclic-import
         from ba._apputils import garbage_collect
 
         # Since things should be generally still right now, it's a good time

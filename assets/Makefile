@@ -169,6 +169,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_generated/enums.py \
   build/ba_data/python/ba/_hooks.py \
   build/ba_data/python/ba/_input.py \
+  build/ba_data/python/ba/_internal.py \
   build/ba_data/python/ba/_keyboard.py \
   build/ba_data/python/ba/_language.py \
   build/ba_data/python/ba/_level.py \
@@ -420,6 +421,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/_generated/__pycache__/enums.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_input.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_internal.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_keyboard.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_language.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_level.cpython-310.opt-1.pyc \

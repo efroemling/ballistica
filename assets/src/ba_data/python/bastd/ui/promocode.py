@@ -7,8 +7,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -112,9 +112,9 @@ class PromoCodeWindow(ba.Window):
         if not self._modal:
             ba.app.ui.set_main_menu_window(
                 AdvancedSettingsWindow(transition='in_left').get_root_widget())
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'PROMO_CODE',
             'expire_time': time.time() + 5,
             'code': ba.textwidget(query=self._text_field)
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()

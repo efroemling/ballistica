@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -257,11 +258,11 @@ class PartyQueueWindow(ba.Window):
     def __del__(self) -> None:
         try:
             ba.app.ui.have_party_queue_window = False
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type': 'PARTY_QUEUE_REMOVE',
                 'q': self._queue_id
             })
-            _ba.run_transactions()
+            ba.internal.run_transactions()
         except Exception:
             ba.print_exception('Error removing self from party queue.')
 
@@ -320,8 +321,9 @@ class PartyQueueWindow(ba.Window):
         if -1 not in self._dudes_by_id:
             dude = self.Dude(
                 self, response['d'], self._initial_offset, True,
-                _ba.get_v1_account_misc_read_val_2('resolvedAccountID', None),
-                _ba.get_v1_account_display_string())
+                ba.internal.get_v1_account_misc_read_val_2(
+                    'resolvedAccountID', None),
+                ba.internal.get_v1_account_display_string())
             self._dudes_by_id[-1] = dude
             self._dudes.append(dude)
         else:
@@ -457,17 +459,17 @@ class PartyQueueWindow(ba.Window):
         """Boost was pressed."""
         from bastd.ui import account
         from bastd.ui import getcurrency
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
 
-        if _ba.get_v1_account_ticket_count() < self._boost_tickets:
+        if ba.internal.get_v1_account_ticket_count() < self._boost_tickets:
             ba.playsound(ba.getsound('error'))
             getcurrency.show_get_tickets_prompt()
             return
 
         ba.playsound(ba.getsound('laserReverse'))
-        _ba.add_transaction(
+        ba.internal.add_transaction(
             {
                 'type': 'PARTY_QUEUE_BOOST',
                 't': self._boost_tickets,
@@ -497,18 +499,18 @@ class PartyQueueWindow(ba.Window):
 
         # Update boost button color based on if we have enough moola.
         if self._boost_button is not None:
-            can_boost = (
-                (_ba.get_v1_account_state() == 'signed_in'
-                 and _ba.get_v1_account_ticket_count() >= self._boost_tickets))
+            can_boost = ((ba.internal.get_v1_account_state() == 'signed_in'
+                          and ba.internal.get_v1_account_ticket_count() >=
+                          self._boost_tickets))
             ba.buttonwidget(edit=self._boost_button,
                             color=(0, 1, 0) if can_boost else (0.7, 0.7, 0.7))
 
         # Update ticket-count.
         if self._tickets_text is not None:
             if self._boost_button is not None:
-                if _ba.get_v1_account_state() == 'signed_in':
+                if ba.internal.get_v1_account_state() == 'signed_in':
                     val = ba.charstr(ba.SpecialChar.TICKET) + str(
-                        _ba.get_v1_account_ticket_count())
+                        ba.internal.get_v1_account_ticket_count())
                 else:
                     val = ba.charstr(ba.SpecialChar.TICKET) + '???'
                 ba.textwidget(edit=self._tickets_text, text=val)
@@ -517,16 +519,16 @@ class PartyQueueWindow(ba.Window):
 
         current_time = ba.time(ba.TimeType.REAL)
         if (self._last_transaction_time is None
-                or current_time - self._last_transaction_time >
-                0.001 * _ba.get_v1_account_misc_read_val('pqInt', 5000)):
+                or current_time - self._last_transaction_time > 0.001 *
+                ba.internal.get_v1_account_misc_read_val('pqInt', 5000)):
             self._last_transaction_time = current_time
-            _ba.add_transaction(
+            ba.internal.add_transaction(
                 {
                     'type': 'PARTY_QUEUE_QUERY',
                     'q': self._queue_id
                 },
                 callback=ba.WeakCall(self.on_update_response))
-            _ba.run_transactions()
+            ba.internal.run_transactions()
 
         # step our dudes
         for dude in self._dudes:

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
@@ -118,7 +119,7 @@ class LeagueRankWindow(ba.Window):
         self._season: str | None = None
 
         # take note of our account state; we'll refresh later if this changes
-        self._account_state = _ba.get_v1_account_state()
+        self._account_state = ba.internal.get_v1_account_state()
 
         self._refresh()
         self._restore_state()
@@ -155,8 +156,9 @@ class LeagueRankWindow(ba.Window):
             resource='coopSelectWindow.activenessAllTimeInfoText'
             if self._season == 'a' else 'coopSelectWindow.activenessInfoText',
             subs=[('${MAX}',
-                   str(_ba.get_v1_account_misc_read_val('activenessMax',
-                                                        1.0)))])
+                   str(
+                       ba.internal.get_v1_account_misc_read_val(
+                           'activenessMax', 1.0)))])
         confirm.ConfirmWindow(txt,
                               cancel_button=False,
                               width=460,
@@ -168,7 +170,7 @@ class LeagueRankWindow(ba.Window):
         txt = ba.Lstr(resource='coopSelectWindow.proMultInfoText',
                       subs=[('${PERCENT}',
                              str(
-                                 _ba.get_v1_account_misc_read_val(
+                                 ba.internal.get_v1_account_misc_read_val(
                                      'proPowerRankingBoost', 10))),
                             ('${PRO}',
                              ba.Lstr(resource='store.bombSquadProNameText',
@@ -208,7 +210,7 @@ class LeagueRankWindow(ba.Window):
         cur_time = ba.time(ba.TimeType.REAL)
 
         # if our account state has changed, refresh our UI
-        account_state = _ba.get_v1_account_state()
+        account_state = ba.internal.get_v1_account_state()
         if account_state != self._account_state:
             self._account_state = account_state
             self._save_state()
@@ -242,9 +244,9 @@ class LeagueRankWindow(ba.Window):
 
             self._last_power_ranking_query_time = cur_time
             self._doing_power_ranking_query = True
-            _ba.power_ranking_query(season=self._requested_season,
-                                    callback=ba.WeakCall(
-                                        self._on_power_ranking_query_response))
+            ba.internal.power_ranking_query(
+                season=self._requested_season,
+                callback=ba.WeakCall(self._on_power_ranking_query_response))
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
@@ -352,7 +354,7 @@ class LeagueRankWindow(ba.Window):
             maxwidth=200)
 
         self._activity_mult_button: ba.Widget | None
-        if _ba.get_v1_account_misc_read_val('act', False):
+        if ba.internal.get_v1_account_misc_read_val('act', False):
             self._activity_mult_button = ba.buttonwidget(
                 parent=w_parent,
                 position=(h2 - 60, v2 + 10),
@@ -564,7 +566,7 @@ class LeagueRankWindow(ba.Window):
                                                     self._on_more_press))
 
     def _on_more_press(self) -> None:
-        our_login_id = _ba.get_public_login_id()
+        our_login_id = ba.internal.get_public_login_id()
         # our_login_id = _bs.get_account_misc_read_val_2(
         #     'resolvedAccountID', None)
         if not self._can_do_more_button or our_login_id is None:
@@ -582,7 +584,7 @@ class LeagueRankWindow(ba.Window):
             league_str = '&league=' + self._league_url_arg
         else:
             league_str = ''
-        ba.open_url(_ba.get_master_server_address() +
+        ba.open_url(ba.internal.get_master_server_address() +
                     '/highscores?list=powerRankings&v=2' + league_str +
                     season_str + '&player=' + our_login_id)
 
@@ -602,7 +604,7 @@ class LeagueRankWindow(ba.Window):
         finished_season_unranked = False
         self._can_do_more_button = True
         extra_text = ''
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             status_text = '(' + ba.Lstr(
                 resource='notSignedInText').evaluate() + ')'
         elif in_top:
@@ -789,8 +791,8 @@ class LeagueRankWindow(ba.Window):
 
         have_pro = False if data is None else data['p']
         pro_mult = 1.0 + float(
-            _ba.get_v1_account_misc_read_val('proPowerRankingBoost',
-                                             0.0)) * 0.01
+            ba.internal.get_v1_account_misc_read_val('proPowerRankingBoost',
+                                                     0.0)) * 0.01
         # pylint: disable=consider-using-f-string
         ba.textwidget(edit=self._pro_mult_text,
                       text='     -' if

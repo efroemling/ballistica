@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
@@ -340,7 +341,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._update_lang_status()
         v -= 40
 
-        lang_inform = _ba.get_v1_account_misc_val('langInform', False)
+        lang_inform = ba.internal.get_v1_account_misc_val('langInform', False)
 
         self._language_inform_checkbox = cbw = ba.checkboxwidget(
             parent=self._subcontainer,
@@ -526,12 +527,12 @@ class AdvancedSettingsWindow(ba.Window):
                          color=(1, 1, 0))
 
     def _on_lang_inform_value_change(self, val: bool) -> None:
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'SET_MISC_VAL',
             'name': 'langInform',
             'value': val
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
     def _on_vr_test_press(self) -> None:
         from bastd.ui.settings.vrtesting import VRTestingWindow
@@ -544,7 +545,7 @@ class AdvancedSettingsWindow(ba.Window):
         from bastd.ui.settings.nettesting import NetTestingWindow
 
         # Net-testing requires a signed in v1 account.
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'),
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -558,7 +559,7 @@ class AdvancedSettingsWindow(ba.Window):
     def _on_friend_promo_code_press(self) -> None:
         from bastd.ui import appinvite
         from bastd.ui import account
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         appinvite.handle_app_invites_press()
@@ -576,7 +577,7 @@ class AdvancedSettingsWindow(ba.Window):
         from bastd.ui.account import show_sign_in_prompt
 
         # We have to be logged in for promo-codes to work.
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()

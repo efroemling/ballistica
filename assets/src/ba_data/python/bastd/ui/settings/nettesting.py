@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 import _ba
 import ba
+import ba.internal
 from bastd.ui.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
@@ -175,12 +176,12 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print_test_results(_dummy_fail)
 
         # V1 ping
-        baseaddr = _ba.get_master_server_address(source=0, version=1)
+        baseaddr = ba.internal.get_master_server_address(source=0, version=1)
         _print(f'\nContacting V1 master-server src0 ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
         # V1 alternate ping
-        baseaddr = _ba.get_master_server_address(source=1, version=1)
+        baseaddr = ba.internal.get_master_server_address(source=1, version=1)
         _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
@@ -189,14 +190,14 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         for srcid, result in sorted(ba.app.net.v1_ctest_results.items()):
             _print(f'\nV1 src{srcid} result: {result}')
 
-        curv1addr = _ba.get_master_server_address(version=1)
+        curv1addr = ba.internal.get_master_server_address(version=1)
         _print(f'\nUsing V1 address: {curv1addr}')
 
         _print('\nRunning V1 transaction...')
         _print_test_results(_test_v1_transaction)
 
         # V2 ping
-        baseaddr = _ba.get_master_server_address(version=2)
+        baseaddr = ba.internal.get_master_server_address(version=2)
         _print(f'\nContacting V2 master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 
@@ -246,7 +247,7 @@ def _dummy_fail() -> None:
 
 def _test_v1_transaction() -> None:
     """Dummy fail test case."""
-    if _ba.get_v1_account_state() != 'signed_in':
+    if ba.internal.get_v1_account_state() != 'signed_in':
         raise RuntimeError('Not signed in.')
 
     starttime = time.monotonic()
@@ -263,14 +264,14 @@ def _test_v1_transaction() -> None:
 
     def _do_it() -> None:
         # Fire off a transaction with a callback.
-        _ba.add_transaction(
+        ba.internal.add_transaction(
             {
                 'type': 'PRIVATE_PARTY_QUERY',
                 'expire_time': time.time() + 20,
             },
             callback=_cb,
         )
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
     ba.pushcall(_do_it, from_other_thread=True)
 

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -282,10 +283,10 @@ class StoreBrowserWindow(ba.Window):
 
     def _restore_purchases(self) -> None:
         from bastd.ui import account
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
         else:
-            _ba.restore_purchases()
+            ba.internal.restore_purchases()
 
     def _update_tabs(self) -> None:
         from ba.internal import (get_available_sale_time,
@@ -323,9 +324,9 @@ class StoreBrowserWindow(ba.Window):
         if not self._root_widget:
             return
         sval: str | ba.Lstr
-        if _ba.get_v1_account_state() == 'signed_in':
+        if ba.internal.get_v1_account_state() == 'signed_in':
             sval = ba.charstr(SpecialChar.TICKET) + str(
-                _ba.get_v1_account_ticket_count())
+                ba.internal.get_v1_account_ticket_count())
         else:
             sval = ba.Lstr(resource='getTicketsWindow.titleText')
         if self._get_tickets_button:
@@ -410,7 +411,7 @@ class StoreBrowserWindow(ba.Window):
         else:
             if is_ticket_purchase:
                 if result['allow']:
-                    price = _ba.get_v1_account_misc_read_val(
+                    price = ba.internal.get_v1_account_misc_read_val(
                         'price.' + item, None)
                     if (price is None or not isinstance(price, int)
                             or price <= 0):
@@ -419,7 +420,7 @@ class StoreBrowserWindow(ba.Window):
                         ba.playsound(ba.getsound('error'))
                     else:
                         ba.playsound(ba.getsound('click01'))
-                        _ba.in_game_purchase(item, price)
+                        ba.internal.in_game_purchase(item, price)
                 else:
                     if result['reason'] == 'versionTooOld':
                         ba.playsound(ba.getsound('error'))
@@ -434,7 +435,7 @@ class StoreBrowserWindow(ba.Window):
             # Real in-app purchase.
             else:
                 if result['allow']:
-                    _ba.purchase(item)
+                    ba.internal.purchase(item)
                 else:
                     if result['reason'] == 'versionTooOld':
                         ba.playsound(ba.getsound('error'))
@@ -485,7 +486,7 @@ class StoreBrowserWindow(ba.Window):
                                                 self._last_buy_time) < 2.0:
             ba.playsound(ba.getsound('error'))
         else:
-            if _ba.get_v1_account_state() != 'signed_in':
+            if ba.internal.get_v1_account_state() != 'signed_in':
                 account.show_sign_in_prompt()
             else:
                 self._last_buy_time = curtime
@@ -499,9 +500,9 @@ class StoreBrowserWindow(ba.Window):
                     self._do_purchase_check('pro' if get_available_sale_time(
                         'extras') is None else 'pro_sale')
                 else:
-                    price = _ba.get_v1_account_misc_read_val(
+                    price = ba.internal.get_v1_account_misc_read_val(
                         'price.' + item, None)
-                    our_tickets = _ba.get_v1_account_ticket_count()
+                    our_tickets = ba.internal.get_v1_account_ticket_count()
                     if price is not None and our_tickets < price:
                         ba.playsound(ba.getsound('error'))
                         getcurrency.show_get_tickets_prompt()
@@ -540,7 +541,7 @@ class StoreBrowserWindow(ba.Window):
         if not self._root_widget:
             return
         import datetime
-        sales_raw = _ba.get_v1_account_misc_read_val('sales', {})
+        sales_raw = ba.internal.get_v1_account_misc_read_val('sales', {})
         sales = {}
         try:
             # Look at the current set of sales; filter any with time remaining.
@@ -561,7 +562,7 @@ class StoreBrowserWindow(ba.Window):
             if b_type in ['upgrades.pro', 'pro']:
                 purchased = _ba.app.accounts_v1.have_pro()
             else:
-                purchased = _ba.get_purchased(b_type)
+                purchased = ba.internal.get_purchased(b_type)
 
             sale_opacity = 0.0
             sale_title_text: str | ba.Lstr = ''
@@ -587,10 +588,10 @@ class StoreBrowserWindow(ba.Window):
                 if b_type in ['upgrades.pro', 'pro']:
                     sale_time = get_available_sale_time('extras')
                     if sale_time is not None:
-                        priceraw = _ba.get_price('pro')
+                        priceraw = ba.internal.get_price('pro')
                         price_text_left = (priceraw
                                            if priceraw is not None else '?')
-                        priceraw = _ba.get_price('pro_sale')
+                        priceraw = ba.internal.get_price('pro_sale')
                         price_text_right = (priceraw
                                             if priceraw is not None else '?')
                         sale_opacity = 1.0
@@ -601,20 +602,20 @@ class StoreBrowserWindow(ba.Window):
                             centi=False,
                             timeformat=ba.TimeFormat.MILLISECONDS)
                     else:
-                        priceraw = _ba.get_price('pro')
+                        priceraw = ba.internal.get_price('pro')
                         price_text = priceraw if priceraw is not None else '?'
                         price_text_left = ''
                         price_text_right = ''
                 else:
-                    price = _ba.get_v1_account_misc_read_val(
+                    price = ba.internal.get_v1_account_misc_read_val(
                         'price.' + b_type, 0)
 
                     # Color the button differently if we cant afford this.
-                    if _ba.get_v1_account_state() == 'signed_in':
-                        if _ba.get_v1_account_ticket_count() < price:
+                    if ba.internal.get_v1_account_state() == 'signed_in':
+                        if ba.internal.get_v1_account_ticket_count() < price:
                             color = (0.6, 0.61, 0.6)
                     price_text = ba.charstr(ba.SpecialChar.TICKET) + str(
-                        _ba.get_v1_account_misc_read_val(
+                        ba.internal.get_v1_account_misc_read_val(
                             'price.' + b_type, '?'))
                     price_text_left = ''
                     price_text_right = ''
@@ -1064,7 +1065,7 @@ class StoreBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.getcurrency import GetCurrencyWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()

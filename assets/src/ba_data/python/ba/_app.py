@@ -20,6 +20,7 @@ from ba._meta import MetadataSubsystem
 from ba._ads import AdsSubsystem
 from ba._net import NetworkSubsystem
 from ba._workspace import WorkspaceSubsystem
+from ba import _internal
 
 if TYPE_CHECKING:
     import asyncio
@@ -378,7 +379,7 @@ class App:
         # Non-test, non-debug builds should generally be blessed; warn if not.
         # (so I don't accidentally release a build that can't play tourneys)
         if (not self.debug_build and not self.test_build
-                and not _ba.is_blessed()):
+                and not _internal.is_blessed()):
             _ba.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
         # If there's a leftover log file, attempt to upload it to the
@@ -416,7 +417,8 @@ class App:
         def check_special_offer() -> None:
             from bastd.ui.specialoffer import show_offer
             config = self.config
-            if ('pendingSpecialOffer' in config and _ba.get_public_login_id()
+            if ('pendingSpecialOffer' in config
+                    and _internal.get_public_login_id()
                     == config['pendingSpecialOffer']['a']):
                 self.special_offer = config['pendingSpecialOffer']['o']
                 show_offer()
@@ -583,11 +585,11 @@ class App:
 
             # Kick off a little transaction so we'll hopefully have all the
             # latest account state when we get back to the menu.
-            _ba.add_transaction({
+            _internal.add_transaction({
                 'type': 'END_SESSION',
                 'sType': str(type(host_session))
             })
-            _ba.run_transactions()
+            _internal.run_transactions()
 
             host_session.end()
 

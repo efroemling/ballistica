@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -76,7 +77,7 @@ class ServerDialogWindow(ba.Window):
                    ba.TimeFormat.MILLISECONDS) - self._starttime < 1000:
             ba.playsound(ba.getsound('error'))
             return
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'DIALOG_RESPONSE',
             'dialogID': self._dialog_id,
             'response': 1
@@ -88,7 +89,7 @@ class ServerDialogWindow(ba.Window):
                    ba.TimeFormat.MILLISECONDS) - self._starttime < 1000:
             ba.playsound(ba.getsound('error'))
             return
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'DIALOG_RESPONSE',
             'dialogID': self._dialog_id,
             'response': 0

@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
+from ba import _internal
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
@@ -189,8 +190,8 @@ def unavailable_message() -> None:
 
 
 def submit_analytics_counts(sval: str) -> None:
-    _ba.add_transaction({'type': 'ANALYTICS_COUNTS', 'values': sval})
-    _ba.run_transactions()
+    _internal.add_transaction({'type': 'ANALYTICS_COUNTS', 'values': sval})
+    _internal.run_transactions()
 
 
 def set_last_ad_network(sval: str) -> None:

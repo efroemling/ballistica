@@ -7,8 +7,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -77,11 +77,11 @@ class AccountUnlinkWindow(ba.Window):
                                              margin=0,
                                              left_border=10)
 
-        our_login_id = _ba.get_public_login_id()
+        our_login_id = ba.internal.get_public_login_id()
         if our_login_id is None:
             entries = []
         else:
-            account_infos = _ba.get_v1_account_misc_read_val_2(
+            account_infos = ba.internal.get_v1_account_misc_read_val_2(
                 'linkedAccounts2', [])
             entries = [{
                 'name': ai['d'],
@@ -108,12 +108,12 @@ class AccountUnlinkWindow(ba.Window):
         ba.screenmessage(ba.Lstr(resource='pleaseWaitText',
                                  fallback_resource='requestingText'),
                          color=(0, 1, 0))
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'ACCOUNT_UNLINK_REQUEST',
             'accountID': entry['id'],
             'expire_time': time.time() + 5
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
 

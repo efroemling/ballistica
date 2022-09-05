@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
+from ba import _internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -366,11 +367,11 @@ def get_store_layout() -> dict[str, list[dict[str, Any]]]:
             'games.ninja_fight', 'games.meteor_shower', 'games.target_practice'
         ]
     }]
-    if _ba.get_v1_account_misc_read_val('xmas', False):
+    if _internal.get_v1_account_misc_read_val('xmas', False):
         store_layout['characters'][0]['items'].append('characters.santa')
     store_layout['characters'][0]['items'].append('characters.wizard')
     store_layout['characters'][0]['items'].append('characters.cyborg')
-    if _ba.get_v1_account_misc_read_val('easter', False):
+    if _internal.get_v1_account_misc_read_val('easter', False):
         store_layout['characters'].append({
             'title': 'store.holidaySpecialText',
             'items': ['characters.bunny']
@@ -401,10 +402,10 @@ def get_clean_price(price_string: str) -> str:
 def get_available_purchase_count(tab: str | None = None) -> int:
     """(internal)"""
     try:
-        if _ba.get_v1_account_state() != 'signed_in':
+        if _internal.get_v1_account_state() != 'signed_in':
             return 0
         count = 0
-        our_tickets = _ba.get_v1_account_ticket_count()
+        our_tickets = _internal.get_v1_account_ticket_count()
         store_data = get_store_layout()
         if tab is not None:
             tabs = [(tab, store_data[tab])]
@@ -425,11 +426,11 @@ def _calc_count_for_tab(tabval: list[dict[str, Any]], our_tickets: int,
                         count: int) -> int:
     for section in tabval:
         for item in section['items']:
-            ticket_cost = _ba.get_v1_account_misc_read_val(
+            ticket_cost = _internal.get_v1_account_misc_read_val(
                 'price.' + item, None)
             if ticket_cost is not None:
                 if (our_tickets >= ticket_cost
-                        and not _ba.get_purchased(item)):
+                        and not _internal.get_purchased(item)):
                     count += 1
     return count
 
@@ -463,7 +464,7 @@ def get_available_sale_time(tab: str) -> int | None:
 
                     # We start the timer once we get the duration from
                     # the server.
-                    start_duration = _ba.get_v1_account_misc_read_val(
+                    start_duration = _internal.get_v1_account_misc_read_val(
                         'proSaleDurationMinutes', None)
                     if start_duration is not None:
                         app.pro_sale_start_time = int(
@@ -489,12 +490,12 @@ def get_available_sale_time(tab: str) -> int | None:
             sale_times.append(val)
 
         # Now look for sales in this tab.
-        sales_raw = _ba.get_v1_account_misc_read_val('sales', {})
+        sales_raw = _internal.get_v1_account_misc_read_val('sales', {})
         store_layout = get_store_layout()
         for section in store_layout[tab]:
             for item in section['items']:
                 if item in sales_raw:
-                    if not _ba.get_purchased(item):
+                    if not _internal.get_purchased(item):
                         to_end = ((datetime.datetime.utcfromtimestamp(
                             sales_raw[item]['e']) -
                                    datetime.datetime.utcnow()).total_seconds())
@@ -520,7 +521,7 @@ def get_unowned_maps() -> list[str]:
     if not _ba.app.headless_mode:
         for map_section in get_store_layout()['maps']:
             for mapitem in map_section['items']:
-                if not _ba.get_purchased(mapitem):
+                if not _internal.get_purchased(mapitem):
                     m_info = get_store_item(mapitem)
                     unowned_maps.add(m_info['map_type'].name)
     return sorted(unowned_maps)
@@ -533,7 +534,7 @@ def get_unowned_game_types() -> set[type[ba.GameActivity]]:
         if not _ba.app.headless_mode:
             for section in get_store_layout()['minigames']:
                 for mname in section['items']:
-                    if not _ba.get_purchased(mname):
+                    if not _internal.get_purchased(mname):
                         m_info = get_store_item(mname)
                         unowned_games.add(m_info['gametype'])
         return unowned_games

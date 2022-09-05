@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 from bastd.ui import popup as popup_ui
 
 if TYPE_CHECKING:
@@ -99,13 +99,13 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
         ba.containerwidget(edit=self.root_widget,
                            cancel_button=self._cancel_button)
 
-        _ba.tournament_query(args={
+        ba.internal.tournament_query(args={
             'tournamentIDs': [tournament_id],
             'numScores': 50,
             'source': 'scores window'
         },
-                             callback=ba.WeakCall(
-                                 self._on_tournament_query_response))
+                                     callback=ba.WeakCall(
+                                         self._on_tournament_query_response))
 
     def _on_tournament_query_response(self,
                                       data: dict[str, Any] | None) -> None:

@@ -7,7 +7,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 
 if TYPE_CHECKING:
@@ -200,17 +199,17 @@ class GameButton:
                       'Challenges:Infinite Onslaught')
              and not ba.app.accounts_v1.have_pro())
                 or (game in ('Challenges:Meteor Shower', )
-                    and not _ba.get_purchased('games.meteor_shower'))
+                    and not ba.internal.get_purchased('games.meteor_shower'))
                 or (game in ('Challenges:Target Practice',
                              'Challenges:Target Practice B')
-                    and not _ba.get_purchased('games.target_practice'))
+                    and not ba.internal.get_purchased('games.target_practice'))
                 or (game in ('Challenges:Ninja Fight', )
-                    and not _ba.get_purchased('games.ninja_fight'))
+                    and not ba.internal.get_purchased('games.ninja_fight'))
                 or (game in ('Challenges:Pro Ninja Fight', )
-                    and not _ba.get_purchased('games.ninja_fight'))
-                or (game in ('Challenges:Easter Egg Hunt',
-                             'Challenges:Pro Easter Egg Hunt')
-                    and not _ba.get_purchased('games.easter_egg_hunt'))):
+                    and not ba.internal.get_purchased('games.ninja_fight')) or
+            (game in ('Challenges:Easter Egg Hunt',
+                      'Challenges:Pro Easter Egg Hunt')
+             and not ba.internal.get_purchased('games.easter_egg_hunt'))):
             unlocked = False
 
         # Let's tint levels a slightly different color when easy mode

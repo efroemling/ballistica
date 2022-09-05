@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -35,15 +36,15 @@ class SpecialOfferWindow(ba.Window):
 
         # Misnomer: 'pro' actually means offer 'pro_sale'.
         if offer['item'] in ['pro', 'pro_fullprice']:
-            real_price = _ba.get_price('pro' if offer['item'] ==
-                                       'pro_fullprice' else 'pro_sale')
+            real_price = ba.internal.get_price('pro' if offer['item'] ==
+                                               'pro_fullprice' else 'pro_sale')
             if real_price is None and ba.app.debug_build:
                 print('NOTE: Faking prices for debug build.')
                 real_price = '$1.23'
             zombie = real_price is None
         elif isinstance(offer['price'], str):
             # (a string price implies IAP id)
-            real_price = _ba.get_price(offer['price'])
+            real_price = ba.internal.get_price(offer['price'])
             if real_price is None and ba.app.debug_build:
                 print('NOTE: Faking price for debug build.')
                 real_price = '$1.23'
@@ -83,10 +84,10 @@ class SpecialOfferWindow(ba.Window):
         self._is_bundle_sale = False
         try:
             if offer['item'] in ['pro', 'pro_fullprice']:
-                original_price_str = _ba.get_price('pro')
+                original_price_str = ba.internal.get_price('pro')
                 if original_price_str is None:
                     original_price_str = '?'
-                new_price_str = _ba.get_price('pro_sale')
+                new_price_str = ba.internal.get_price('pro_sale')
                 if new_price_str is None:
                     new_price_str = '?'
                 percent_off_text = ''
@@ -95,7 +96,7 @@ class SpecialOfferWindow(ba.Window):
                 if ('bonusTickets' in offer
                         and offer['bonusTickets'] is not None):
                     self._is_bundle_sale = True
-                original_price = _ba.get_v1_account_misc_read_val(
+                original_price = ba.internal.get_v1_account_misc_read_val(
                     'price.' + self._offer_item, 9999)
 
                 # For pure ticket prices we can show a percent-off.
@@ -207,7 +208,7 @@ class SpecialOfferWindow(ba.Window):
             # Total-value if they supplied it.
             total_worth_item = offer.get('valueItem', None)
             if total_worth_item is not None:
-                price = _ba.get_price(total_worth_item)
+                price = ba.internal.get_price(total_worth_item)
                 total_worth_price = (get_clean_price(price)
                                      if price is not None else None)
                 if total_worth_price is not None:
@@ -344,7 +345,7 @@ class SpecialOfferWindow(ba.Window):
             if _ba.app.accounts_v1.have_pro():
                 can_die = True
         else:
-            if _ba.get_purchased(self._offer_item):
+            if ba.internal.get_purchased(self._offer_item):
                 can_die = True
 
         if can_die:
@@ -364,9 +365,9 @@ class SpecialOfferWindow(ba.Window):
         if not self._root_widget:
             return
         sval: str | ba.Lstr
-        if _ba.get_v1_account_state() == 'signed_in':
+        if ba.internal.get_v1_account_state() == 'signed_in':
             sval = (ba.charstr(SpecialChar.TICKET) +
-                    str(_ba.get_v1_account_ticket_count()))
+                    str(ba.internal.get_v1_account_ticket_count()))
         else:
             sval = ba.Lstr(resource='getTicketsWindow.titleText')
         ba.buttonwidget(edit=self._get_tickets_button, label=sval)
@@ -374,7 +375,7 @@ class SpecialOfferWindow(ba.Window):
     def _on_get_more_tickets_press(self) -> None:
         from bastd.ui import account
         from bastd.ui import getcurrency
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         getcurrency.GetCurrencyWindow(modal=True).get_root_widget()
@@ -384,16 +385,16 @@ class SpecialOfferWindow(ba.Window):
         from bastd.ui import getcurrency
         from bastd.ui import confirm
         if self._offer['item'] == 'pro':
-            _ba.purchase('pro_sale')
+            ba.internal.purchase('pro_sale')
         elif self._offer['item'] == 'pro_fullprice':
-            _ba.purchase('pro')
+            ba.internal.purchase('pro')
         elif self._is_bundle_sale:
             # With bundle sales, the price is the name of the IAP.
-            _ba.purchase(self._offer['price'])
+            ba.internal.purchase(self._offer['price'])
         else:
             ticket_count: int | None
             try:
-                ticket_count = _ba.get_v1_account_ticket_count()
+                ticket_count = ba.internal.get_v1_account_ticket_count()
             except Exception:
                 ticket_count = None
             if (ticket_count is not None
@@ -403,8 +404,8 @@ class SpecialOfferWindow(ba.Window):
                 return
 
             def do_it() -> None:
-                _ba.in_game_purchase('offer:' + str(self._offer['id']),
-                                     self._offer['price'])
+                ba.internal.in_game_purchase('offer:' + str(self._offer['id']),
+                                             self._offer['price'])
 
             ba.playsound(ba.getsound('swish'))
             confirm.ConfirmWindow(ba.Lstr(
@@ -446,7 +447,7 @@ def show_offer() -> bool:
             if app.special_offer.get('item') == 'pro_fullprice':
                 cfg = app.config
                 cfg['pendingSpecialOffer'] = {
-                    'a': _ba.get_public_login_id(),
+                    'a': ba.internal.get_public_login_id(),
                     'o': app.special_offer
                 }
                 cfg.commit()

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -176,38 +177,34 @@ class GetCurrencyWindow(ba.Window):
 
         rsrc = self._r + '.ticketsText'
 
-        c2txt = ba.Lstr(
-            resource=rsrc,
-            subs=[('${COUNT}',
-                   str(_ba.get_v1_account_misc_read_val('tickets2Amount',
-                                                        500)))])
-        c3txt = ba.Lstr(
-            resource=rsrc,
-            subs=[
-                ('${COUNT}',
-                 str(_ba.get_v1_account_misc_read_val('tickets3Amount', 1500)))
-            ])
-        c4txt = ba.Lstr(
-            resource=rsrc,
-            subs=[
-                ('${COUNT}',
-                 str(_ba.get_v1_account_misc_read_val('tickets4Amount', 5000)))
-            ])
-        c5txt = ba.Lstr(
-            resource=rsrc,
-            subs=[
-                ('${COUNT}',
-                 str(_ba.get_v1_account_misc_read_val('tickets5Amount',
-                                                      15000)))
-            ])
+        c2txt = ba.Lstr(resource=rsrc,
+                        subs=[('${COUNT}',
+                               str(
+                                   ba.internal.get_v1_account_misc_read_val(
+                                       'tickets2Amount', 500)))])
+        c3txt = ba.Lstr(resource=rsrc,
+                        subs=[('${COUNT}',
+                               str(
+                                   ba.internal.get_v1_account_misc_read_val(
+                                       'tickets3Amount', 1500)))])
+        c4txt = ba.Lstr(resource=rsrc,
+                        subs=[('${COUNT}',
+                               str(
+                                   ba.internal.get_v1_account_misc_read_val(
+                                       'tickets4Amount', 5000)))])
+        c5txt = ba.Lstr(resource=rsrc,
+                        subs=[('${COUNT}',
+                               str(
+                                   ba.internal.get_v1_account_misc_read_val(
+                                       'tickets5Amount', 15000)))])
 
         h = 110.0
 
         # enable buttons if we have prices..
-        tickets2_price = _ba.get_price('tickets2')
-        tickets3_price = _ba.get_price('tickets3')
-        tickets4_price = _ba.get_price('tickets4')
-        tickets5_price = _ba.get_price('tickets5')
+        tickets2_price = ba.internal.get_price('tickets2')
+        tickets3_price = ba.internal.get_price('tickets3')
+        tickets4_price = ba.internal.get_price('tickets4')
+        tickets5_price = ba.internal.get_price('tickets5')
 
         # TEMP
         # tickets1_price = '$0.99'
@@ -263,11 +260,12 @@ class GetCurrencyWindow(ba.Window):
                 'ad',
                 position=(h + h_offs, v),
                 size=b_size_3,
-                label=ba.Lstr(resource=self._r + '.ticketsFromASponsorText',
-                              subs=[('${COUNT}',
-                                     str(
-                                         _ba.get_v1_account_misc_read_val(
-                                             'sponsorTickets', 5)))]),
+                label=ba.Lstr(
+                    resource=self._r + '.ticketsFromASponsorText',
+                    subs=[('${COUNT}',
+                           str(
+                               ba.internal.get_v1_account_misc_read_val(
+                                   'sponsorTickets', 5)))]),
                 tex_name='ticketsMore',
                 enabled=self._enable_ad_button,
                 tex_opacity=0.6,
@@ -308,7 +306,7 @@ class GetCurrencyWindow(ba.Window):
                     resource='gatherWindow.earnTicketsForRecommendingText',
                     subs=[('${COUNT}',
                            str(
-                               _ba.get_v1_account_misc_read_val(
+                               ba.internal.get_v1_account_misc_read_val(
                                    'sponsorTickets', 5)))]),
                 tex_name='ticketsMore',
                 enabled=True,
@@ -431,16 +429,16 @@ class GetCurrencyWindow(ba.Window):
         import datetime
 
         # if we somehow get signed out, just die..
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             self._back()
             return
 
-        self._ticket_count = _ba.get_v1_account_ticket_count()
+        self._ticket_count = ba.internal.get_v1_account_ticket_count()
 
         # update our incentivized ad button depending on whether ads are
         # available
         if self._ad_button is not None:
-            next_reward_ad_time = _ba.get_v1_account_misc_read_val_2(
+            next_reward_ad_time = ba.internal.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None)
             if next_reward_ad_time is not None:
                 next_reward_ad_time = datetime.datetime.utcfromtimestamp(
@@ -499,8 +497,8 @@ class GetCurrencyWindow(ba.Window):
         if ((app.test_build or
              (app.platform == 'android'
               and app.subplatform in ['oculus', 'cardboard']))
-                and _ba.get_v1_account_misc_read_val('allowAccountLinking2',
-                                                     False)):
+                and ba.internal.get_v1_account_misc_read_val(
+                    'allowAccountLinking2', False)):
             ba.screenmessage(ba.Lstr(resource=self._r +
                                      '.unavailableLinkAccountText'),
                              color=(1, 0.5, 0))
@@ -514,7 +512,7 @@ class GetCurrencyWindow(ba.Window):
         from bastd.ui import appinvite
         from ba.internal import master_server_get
         if item == 'app_invite':
-            if _ba.get_v1_account_state() != 'signed_in':
+            if ba.internal.get_v1_account_state() != 'signed_in':
                 account.show_sign_in_prompt()
                 return
             appinvite.handle_app_invites_press()
@@ -559,7 +557,7 @@ class GetCurrencyWindow(ba.Window):
         if item == 'ad':
             import datetime
             # if ads are disabled until some time, error..
-            next_reward_ad_time = _ba.get_v1_account_misc_read_val_2(
+            next_reward_ad_time = ba.internal.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None)
             if next_reward_ad_time is not None:
                 next_reward_ad_time = datetime.datetime.utcfromtimestamp(
@@ -574,7 +572,7 @@ class GetCurrencyWindow(ba.Window):
             elif self._enable_ad_button:
                 _ba.app.ads.show_ad('tickets')
         else:
-            _ba.purchase(item)
+            ba.internal.purchase(item)
 
     def _back(self) -> None:
         from bastd.ui.store import browser

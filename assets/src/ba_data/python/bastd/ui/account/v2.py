@@ -8,6 +8,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import ba
+import ba.internal
 import _ba
 
 from efro.error import CommunicationError
@@ -81,7 +82,8 @@ class V2SignInWindow(ba.Window):
             return
 
         # Show link(s) the user can use to log in.
-        address = _ba.get_master_server_address(version=2) + response.url
+        address = ba.internal.get_master_server_address(
+            version=2) + response.url
         address_pretty = address.removeprefix('https://')
 
         ba.textwidget(

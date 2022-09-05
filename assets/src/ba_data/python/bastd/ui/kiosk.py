@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -360,7 +361,7 @@ class KioskWindow(ba.Window):
     def _update(self) -> None:
         # Kiosk-mode is designed to be used signed-out... try for force
         # the issue.
-        if _ba.get_v1_account_state() == 'signed_in':
+        if ba.internal.get_v1_account_state() == 'signed_in':
             # _bs.sign_out()
             # FIXME: Try to delete player profiles here too.
             pass

@@ -58,6 +58,7 @@ def handle_log() -> None:
     """
     from ba._net import master_server_post
     from ba._generated.enums import TimeType
+    from ba._internal import get_news_show
     app = _ba.app
     app.log_have_new = True
     if not app.log_upload_timer_started:
@@ -83,7 +84,7 @@ def handle_log() -> None:
                 'userRanCommands': _ba.has_user_run_commands(),
                 'time': _ba.time(TimeType.REAL),
                 'userModded': _ba.workspaces_in_use(),
-                'newsShow': _ba.get_news_show(),
+                'newsShow': get_news_show(),
             }
 
             def response(data: Any) -> None:

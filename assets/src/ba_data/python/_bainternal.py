@@ -59,9 +59,7 @@ def game_service_has_leaderboard(game: str, config: str) -> bool:
     return bool()
 
 
-def get_master_server_address(source: int = -1,
-                              version: int = 1,
-                              internal: bool = False) -> str:
+def get_master_server_address(source: int = -1, version: int = 1) -> str:
     """(internal)
 
     Return the address of the master server.

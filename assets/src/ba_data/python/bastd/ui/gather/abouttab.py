@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-import _ba
+import ba.internal
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
@@ -51,8 +51,8 @@ class AboutGatherTab(GatherTab):
         include_invite = True
         msc_scale = 1.1
         c_height_2 = min(region_height, string_height * msc_scale + 100)
-        try_tickets = _ba.get_v1_account_misc_read_val('friendTryTickets',
-                                                       None)
+        try_tickets = ba.internal.get_v1_account_misc_read_val(
+            'friendTryTickets', None)
         if try_tickets is None:
             include_invite = False
         self._container = ba.containerwidget(
@@ -106,7 +106,7 @@ class AboutGatherTab(GatherTab):
     def _invite_to_try_press(self) -> None:
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.appinvite import handle_app_invites_press
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         handle_app_invites_press()

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from bastd.ui.playlist.editcontroller import PlaylistEditController
@@ -197,7 +198,7 @@ class PlaylistAddGameWindow(ba.Window):
     def _on_get_more_games_press(self) -> None:
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         StoreBrowserWindow(modal=True,

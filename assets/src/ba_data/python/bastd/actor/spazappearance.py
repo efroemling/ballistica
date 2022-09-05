@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -16,66 +16,67 @@ def get_appearances(include_locked: bool = False) -> list[str]:
     """Get the list of available spaz appearances."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
+    get_purchased = ba.internal.get_purchased
     disallowed = []
     if not include_locked:
         # hmm yeah this'll be tough to hack...
-        if not _ba.get_purchased('characters.santa'):
+        if not get_purchased('characters.santa'):
             disallowed.append('Santa Claus')
-        if not _ba.get_purchased('characters.frosty'):
+        if not get_purchased('characters.frosty'):
             disallowed.append('Frosty')
-        if not _ba.get_purchased('characters.bones'):
+        if not get_purchased('characters.bones'):
             disallowed.append('Bones')
-        if not _ba.get_purchased('characters.bernard'):
+        if not get_purchased('characters.bernard'):
             disallowed.append('Bernard')
-        if not _ba.get_purchased('characters.pixie'):
+        if not get_purchased('characters.pixie'):
             disallowed.append('Pixel')
-        if not _ba.get_purchased('characters.pascal'):
+        if not get_purchased('characters.pascal'):
             disallowed.append('Pascal')
-        if not _ba.get_purchased('characters.actionhero'):
+        if not get_purchased('characters.actionhero'):
             disallowed.append('Todd McBurton')
-        if not _ba.get_purchased('characters.taobaomascot'):
+        if not get_purchased('characters.taobaomascot'):
             disallowed.append('Taobao Mascot')
-        if not _ba.get_purchased('characters.agent'):
+        if not get_purchased('characters.agent'):
             disallowed.append('Agent Johnson')
-        if not _ba.get_purchased('characters.jumpsuit'):
+        if not get_purchased('characters.jumpsuit'):
             disallowed.append('Lee')
-        if not _ba.get_purchased('characters.assassin'):
+        if not get_purchased('characters.assassin'):
             disallowed.append('Zola')
-        if not _ba.get_purchased('characters.wizard'):
+        if not get_purchased('characters.wizard'):
             disallowed.append('Grumbledorf')
-        if not _ba.get_purchased('characters.cowboy'):
+        if not get_purchased('characters.cowboy'):
             disallowed.append('Butch')
-        if not _ba.get_purchased('characters.witch'):
+        if not get_purchased('characters.witch'):
             disallowed.append('Witch')
-        if not _ba.get_purchased('characters.warrior'):
+        if not get_purchased('characters.warrior'):
             disallowed.append('Warrior')
-        if not _ba.get_purchased('characters.superhero'):
+        if not get_purchased('characters.superhero'):
             disallowed.append('Middle-Man')
-        if not _ba.get_purchased('characters.alien'):
+        if not get_purchased('characters.alien'):
             disallowed.append('Alien')
-        if not _ba.get_purchased('characters.oldlady'):
+        if not get_purchased('characters.oldlady'):
             disallowed.append('OldLady')
-        if not _ba.get_purchased('characters.gladiator'):
+        if not get_purchased('characters.gladiator'):
             disallowed.append('Gladiator')
-        if not _ba.get_purchased('characters.wrestler'):
+        if not get_purchased('characters.wrestler'):
             disallowed.append('Wrestler')
-        if not _ba.get_purchased('characters.operasinger'):
+        if not get_purchased('characters.operasinger'):
             disallowed.append('Gretel')
-        if not _ba.get_purchased('characters.robot'):
+        if not get_purchased('characters.robot'):
             disallowed.append('Robot')
-        if not _ba.get_purchased('characters.cyborg'):
+        if not get_purchased('characters.cyborg'):
             disallowed.append('B-9000')
-        if not _ba.get_purchased('characters.bunny'):
+        if not get_purchased('characters.bunny'):
             disallowed.append('Easter Bunny')
-        if not _ba.get_purchased('characters.kronk'):
+        if not get_purchased('characters.kronk'):
             disallowed.append('Kronk')
-        if not _ba.get_purchased('characters.zoe'):
+        if not get_purchased('characters.zoe'):
             disallowed.append('Zoe')
-        if not _ba.get_purchased('characters.jackmorgan'):
+        if not get_purchased('characters.jackmorgan'):
             disallowed.append('Jack Morgan')
-        if not _ba.get_purchased('characters.mel'):
+        if not get_purchased('characters.mel'):
             disallowed.append('Mel')
-        if not _ba.get_purchased('characters.snakeshadow'):
+        if not get_purchased('characters.snakeshadow'):
             disallowed.append('Snake Shadow')
     return [
         s for s in list(ba.app.spaz_appearances.keys()) if s not in disallowed

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui import popup
 
 if TYPE_CHECKING:
@@ -349,13 +350,13 @@ class TournamentEntryWindow(popup.PopupWindow):
         if not self._running_query and (
             (self._last_query_time is None) or (not self._have_valid_data) or
             (ba.time(ba.TimeType.REAL) - self._last_query_time > 30.0)):
-            _ba.tournament_query(args={
-                'source':
-                    'entry window' if self._tournament_activity is None else
-                    'retry entry window'
-            },
-                                 callback=ba.WeakCall(
-                                     self._on_tournament_query_response))
+            ba.internal.tournament_query(
+                args={
+                    'source':
+                        'entry window' if self._tournament_activity is None
+                        else 'retry entry window'
+                },
+                callback=ba.WeakCall(self._on_tournament_query_response))
             self._last_query_time = ba.time(ba.TimeType.REAL)
             self._running_query = True
 
@@ -376,7 +377,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                                   timeformat=ba.TimeFormat.MILLISECONDS))
 
         # Keep price up-to-date and update the button with it.
-        self._purchase_price = _ba.get_v1_account_misc_read_val(
+        self._purchase_price = ba.internal.get_v1_account_misc_read_val(
             self._purchase_price_name, None)
 
         ba.textwidget(
@@ -424,7 +425,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                           color=(0, 0.8, 0) if enabled else (0.4, 0.4, 0.4))
 
         try:
-            t_str = str(_ba.get_v1_account_ticket_count())
+            t_str = str(ba.internal.get_v1_account_ticket_count())
         except Exception:
             t_str = '?'
         if self._get_tickets_button:
@@ -514,7 +515,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         # Deny if we don't have enough tickets.
         ticket_count: int | None
         try:
-            ticket_count = _ba.get_v1_account_ticket_count()
+            ticket_count = ba.internal.get_v1_account_ticket_count()
         except Exception:
             # FIXME: should add a ba.NotSignedInError we can use here.
             ticket_count = None
@@ -527,15 +528,15 @@ class TournamentEntryWindow(popup.PopupWindow):
         cur_time = ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
         self._last_ticket_press_time = cur_time
         assert isinstance(ticket_cost, int)
-        _ba.in_game_purchase(self._purchase_name, ticket_cost)
+        ba.internal.in_game_purchase(self._purchase_name, ticket_cost)
 
         self._entering = True
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'ENTER_TOURNAMENT',
             'fee': self._fee,
             'tournamentID': self._tournament_id
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
         self._launch()
 
     def _on_pay_with_ad_press(self) -> None:
@@ -568,7 +569,7 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         # Make sure any transactions the ad added got locally applied
         # (rewards added, etc.).
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
         # If we're already entering the tourney, ignore.
         if self._entering:
@@ -580,19 +581,19 @@ class TournamentEntryWindow(popup.PopupWindow):
         # This should have awarded us the tournament_entry_ad purchase;
         # make sure that's present.
         # (otherwise the server will ignore our tournament entry anyway)
-        if not _ba.get_purchased('tournament_entry_ad'):
+        if not ba.internal.get_purchased('tournament_entry_ad'):
             print('no tournament_entry_ad purchase present in _on_ad_complete')
             ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
             return
 
         self._entering = True
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'ENTER_TOURNAMENT',
             'fee': 'ad',
             'tournamentID': self._tournament_id
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
         self._launch()
 
     def _on_get_tickets_press(self) -> None:
@@ -614,9 +615,10 @@ class TournamentEntryWindow(popup.PopupWindow):
         # button if it looks like we're waiting on a purchase or entering
         # the tournament.
         if ((ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
-             self._last_ticket_press_time < 6000) and
-            (_ba.have_outstanding_transactions()
-             or _ba.get_purchased(self._purchase_name) or self._entering)):
+             self._last_ticket_press_time < 6000)
+                and (ba.internal.have_outstanding_transactions()
+                     or ba.internal.get_purchased(self._purchase_name)
+                     or self._entering)):
             ba.playsound(ba.getsound('error'))
             return
         self._transition_out()

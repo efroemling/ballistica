@@ -8,8 +8,8 @@ import copy
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -50,7 +50,8 @@ class AccountLinkWindow(ba.Window):
                                               autoselect=True,
                                               icon=ba.gettexture('crossOut'),
                                               iconscale=1.2)
-        maxlinks = _ba.get_v1_account_misc_read_val('maxLinkAccounts', 5)
+        maxlinks = ba.internal.get_v1_account_misc_read_val(
+            'maxLinkAccounts', 5)
         ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.56),
@@ -84,17 +85,17 @@ class AccountLinkWindow(ba.Window):
 
     def _generate_press(self) -> None:
         from bastd.ui import account
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         ba.screenmessage(
             ba.Lstr(resource='gatherWindow.requestingAPromoCodeText'),
             color=(0, 1, 0))
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'ACCOUNT_LINK_CODE_REQUEST',
             'expire_time': time.time() + 5
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
     def _enter_code_press(self) -> None:
         from bastd.ui import promocode

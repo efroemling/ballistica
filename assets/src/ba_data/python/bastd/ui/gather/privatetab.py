@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 import ba
+import ba.internal
 import _ba
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (PrivateHostingState, PrivateHostingConfig,
@@ -227,7 +228,7 @@ class PrivateGatherTab(GatherTab):
     def _update_currency_ui(self) -> None:
         # Keep currency count up to date if applicable.
         try:
-            t_str = str(_ba.get_v1_account_ticket_count())
+            t_str = str(ba.internal.get_v1_account_ticket_count())
         except Exception:
             t_str = '?'
         if self._get_tickets_button:
@@ -247,7 +248,7 @@ class PrivateGatherTab(GatherTab):
         if self._state.sub_tab is SubTabType.HOST:
 
             # If we're not signed in, just refresh to show that.
-            if (_ba.get_v1_account_state() != 'signed_in'
+            if (ba.internal.get_v1_account_state() != 'signed_in'
                     and self._showing_not_signed_in_screen):
                 self._refresh_sub_tab()
             else:
@@ -256,8 +257,8 @@ class PrivateGatherTab(GatherTab):
                 if (self._last_hosting_state_query_time is None
                         or now - self._last_hosting_state_query_time > 15.0):
                     self._debug_server_comm('querying private party state')
-                    if _ba.get_v1_account_state() == 'signed_in':
-                        _ba.add_transaction(
+                    if ba.internal.get_v1_account_state() == 'signed_in':
+                        ba.internal.add_transaction(
                             {
                                 'type': 'PRIVATE_PARTY_QUERY',
                                 'expire_time': time.time() + 20,
@@ -265,7 +266,7 @@ class PrivateGatherTab(GatherTab):
                             callback=ba.WeakCall(
                                 self._hosting_state_idle_response),
                         )
-                        _ba.run_transactions()
+                        ba.internal.run_transactions()
                     else:
                         self._hosting_state_idle_response(None)
                     self._last_hosting_state_query_time = now
@@ -438,7 +439,7 @@ class PrivateGatherTab(GatherTab):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             ba.textwidget(parent=self._container,
                           size=(0, 0),
                           h_align='center',
@@ -762,7 +763,7 @@ class PrivateGatherTab(GatherTab):
         self._connect_press_time = now
 
         self._debug_server_comm('sending private party connect')
-        _ba.add_transaction(
+        ba.internal.add_transaction(
             {
                 'type': 'PRIVATE_PARTY_CONNECT',
                 'expire_time': time.time() + 20,
@@ -770,14 +771,14 @@ class PrivateGatherTab(GatherTab):
             },
             callback=ba.WeakCall(self._connect_response),
         )
-        _ba.run_transactions()
+        ba.internal.run_transactions()
 
     def _start_stop_button_press(self) -> None:
         if (self._waiting_for_start_stop_response
                 or self._waiting_for_initial_state):
             return
 
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'))
             ba.playsound(ba.getsound('error'))
             self._refresh_sub_tab()
@@ -796,7 +797,7 @@ class PrivateGatherTab(GatherTab):
             if self._hostingstate.tickets_to_host_now > 0:
                 ticket_count: int | None
                 try:
-                    ticket_count = _ba.get_v1_account_ticket_count()
+                    ticket_count = ba.internal.get_v1_account_ticket_count()
                 except Exception:
                     # FIXME: should add a ba.NotSignedInError we can use here.
                     ticket_count = None
@@ -806,7 +807,7 @@ class PrivateGatherTab(GatherTab):
                     ba.playsound(ba.getsound('error'))
                     return
             self._last_action_send_time = time.time()
-            _ba.add_transaction(
+            ba.internal.add_transaction(
                 {
                     'type': 'PRIVATE_PARTY_START',
                     'config': dataclass_to_dict(self._hostingconfig),
@@ -814,17 +815,17 @@ class PrivateGatherTab(GatherTab):
                     'expire_time': time.time() + 20,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))
-            _ba.run_transactions()
+            ba.internal.run_transactions()
 
         else:
             self._last_action_send_time = time.time()
-            _ba.add_transaction(
+            ba.internal.add_transaction(
                 {
                     'type': 'PRIVATE_PARTY_STOP',
                     'expire_time': time.time() + 20,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))
-            _ba.run_transactions()
+            ba.internal.run_transactions()
         ba.playsound(ba.getsound('click01'))
 
         self._waiting_for_start_stop_response = True

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui import popup
 
 if TYPE_CHECKING:
@@ -350,7 +351,7 @@ class PlayOptionsWindow(popup.PopupWindow):
         from bastd.ui.teamnamescolors import TeamNamesColorsWindow
         from bastd.ui.purchase import PurchaseWindow
         if not ba.app.accounts_v1.have_pro():
-            if _ba.get_v1_account_state() != 'signed_in':
+            if ba.internal.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
                 PurchaseWindow(items=['pro'])

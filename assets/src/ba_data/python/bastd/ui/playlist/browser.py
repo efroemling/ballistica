@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -140,8 +141,9 @@ class PlaylistBrowserWindow(ba.Window):
     def _ensure_standard_playlists_exist(self) -> None:
         # On new installations, go ahead and create a few playlists
         # besides the hard-coded default one:
-        if not _ba.get_v1_account_misc_val('madeStandardPlaylists', False):
-            _ba.add_transaction({
+        if not ba.internal.get_v1_account_misc_val('madeStandardPlaylists',
+                                                   False):
+            ba.internal.add_transaction({
                 'type':
                     'ADD_PLAYLIST',
                 'playlistType':
@@ -175,7 +177,7 @@ class PlaylistBrowserWindow(ba.Window):
                     },
                 ]
             })
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type':
                     'ADD_PLAYLIST',
                 'playlistType':
@@ -226,7 +228,7 @@ class PlaylistBrowserWindow(ba.Window):
                     },
                 ]
             })
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type':
                     'ADD_PLAYLIST',
                 'playlistType':
@@ -255,7 +257,7 @@ class PlaylistBrowserWindow(ba.Window):
                     },
                 ]
             })
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type':
                     'ADD_PLAYLIST',
                 'playlistType':
@@ -274,12 +276,12 @@ class PlaylistBrowserWindow(ba.Window):
                     }
                 }]
             })
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type': 'SET_MISC_VAL',
                 'name': 'madeStandardPlaylists',
                 'value': True
             })
-            _ba.run_transactions()
+            ba.internal.run_transactions()
 
     def _refresh(self) -> None:
         # FIXME: Should tidy this up.

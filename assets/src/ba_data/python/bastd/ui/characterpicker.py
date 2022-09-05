@@ -7,8 +7,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 from bastd.ui import popup
 
 if TYPE_CHECKING:
@@ -156,7 +156,7 @@ class CharacterPicker(popup.PopupWindow):
     def _on_store_press(self) -> None:
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._transition_out()

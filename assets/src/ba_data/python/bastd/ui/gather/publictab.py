@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, cast
 
 import _ba
 import ba
+import ba.internal
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
@@ -88,8 +89,8 @@ class UIRow:
         if party.clean_display_index == index:
             return
 
-        ping_good = _ba.get_v1_account_misc_read_val('pingGood', 100)
-        ping_med = _ba.get_v1_account_misc_read_val('pingMed', 500)
+        ping_good = ba.internal.get_v1_account_misc_read_val('pingGood', 100)
+        ping_med = ba.internal.get_v1_account_misc_read_val('pingMed', 500)
 
         self._clear()
         hpos = 20
@@ -122,8 +123,8 @@ class UIRow:
         if party.stats_addr:
             url = party.stats_addr.replace(
                 '${ACCOUNT}',
-                _ba.get_v1_account_misc_read_val_2('resolvedAccountID',
-                                                   'UNKNOWN'))
+                ba.internal.get_v1_account_misc_read_val_2(
+                    'resolvedAccountID', 'UNKNOWN'))
             self._stats_button = ba.buttonwidget(
                 color=(0.3, 0.6, 0.94),
                 textcolor=(1.0, 1.0, 1.0),
@@ -793,7 +794,7 @@ class PublicGatherTab(GatherTab):
         self._process_pending_party_infos()
 
         # Anytime we sign in/out, make sure we refresh our list.
-        signed_in = _ba.get_v1_account_state() == 'signed_in'
+        signed_in = ba.internal.get_v1_account_state() == 'signed_in'
         if self._signed_in != signed_in:
             self._signed_in = signed_in
             self._party_lists_dirty = True
@@ -986,7 +987,7 @@ class PublicGatherTab(GatherTab):
             p[1].index))
 
         # If signed out or errored, show no parties.
-        if (_ba.get_v1_account_state() != 'signed_in'
+        if (ba.internal.get_v1_account_state() != 'signed_in'
                 or not self._have_valid_server_list):
             self._parties_displayed = {}
         else:
@@ -1022,20 +1023,21 @@ class PublicGatherTab(GatherTab):
 
         # Fire off a new public-party query periodically.
         if (self._last_server_list_query_time is None
-                or now - self._last_server_list_query_time > 0.001 *
-                _ba.get_v1_account_misc_read_val('pubPartyRefreshMS', 10000)):
+                or now - self._last_server_list_query_time >
+                0.001 * ba.internal.get_v1_account_misc_read_val(
+                    'pubPartyRefreshMS', 10000)):
             self._last_server_list_query_time = now
             if DEBUG_SERVER_COMMUNICATION:
                 print('REQUESTING SERVER LIST')
-            if _ba.get_v1_account_state() == 'signed_in':
-                _ba.add_transaction(
+            if ba.internal.get_v1_account_state() == 'signed_in':
+                ba.internal.add_transaction(
                     {
                         'type': 'PUBLIC_PARTY_QUERY',
                         'proto': ba.app.protocol_version,
                         'lang': ba.app.lang.language
                     },
                     callback=ba.WeakCall(self._on_public_party_query_result))
-                _ba.run_transactions()
+                ba.internal.run_transactions()
             else:
                 self._on_public_party_query_result(None)
 
@@ -1156,7 +1158,7 @@ class PublicGatherTab(GatherTab):
 
     def _on_start_advertizing_press(self) -> None:
         from bastd.ui.account import show_sign_in_prompt
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
 

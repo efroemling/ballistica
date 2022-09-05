@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -68,11 +68,11 @@ class PurchaseWindow(ba.Window):
             pass  # not working
         else:
             if self._items == ['pro']:
-                price_str = _ba.get_price(self._items[0])
+                price_str = ba.internal.get_price(self._items[0])
                 pyoffs = -15
             else:
                 pyoffs = 0
-                price = self._price = _ba.get_v1_account_misc_read_val(
+                price = self._price = ba.internal.get_v1_account_misc_read_val(
                     'price.' + str(items[0]), -1)
                 price_str = ba.charstr(ba.SpecialChar.TICKET) + str(price)
             self._price_text = ba.textwidget(parent=self._root_widget,
@@ -121,7 +121,7 @@ class PurchaseWindow(ba.Window):
             if ba.app.accounts_v1.have_pro():
                 can_die = True
         else:
-            if _ba.get_purchased(self._items[0]):
+            if ba.internal.get_purchased(self._items[0]):
                 can_die = True
 
         if can_die:
@@ -130,11 +130,11 @@ class PurchaseWindow(ba.Window):
     def _purchase(self) -> None:
         from bastd.ui import getcurrency
         if self._items == ['pro']:
-            _ba.purchase('pro')
+            ba.internal.purchase('pro')
         else:
             ticket_count: int | None
             try:
-                ticket_count = _ba.get_v1_account_ticket_count()
+                ticket_count = ba.internal.get_v1_account_ticket_count()
             except Exception:
                 ticket_count = None
             if ticket_count is not None and ticket_count < self._price:
@@ -143,7 +143,7 @@ class PurchaseWindow(ba.Window):
                 return
 
             def do_it() -> None:
-                _ba.in_game_purchase(self._items[0], self._price)
+                ba.internal.in_game_purchase(self._items[0], self._price)
 
             ba.playsound(ba.getsound('swish'))
             do_it()

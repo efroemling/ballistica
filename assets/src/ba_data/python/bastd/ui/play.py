@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -447,7 +448,7 @@ class PlayWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.coop.browser import CoopBrowserWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()

@@ -752,16 +752,27 @@ def _dummy_module_dirty(mname: str) -> tuple[bool, str]:
 
 def update(projroot: str, check: bool, force: bool) -> None:
     """Update dummy-modules as needed."""
+    from pathlib import Path
+
+    from efrotools import getconfig
+
     toolsdir = os.path.abspath(os.path.join(projroot, 'tools'))
 
     # Make sure we're running from the project root dir.
     os.chdir(projroot)
+
+    public = getconfig(Path('.'))['public']
 
     # Force makes no sense in check mode.
     if force and check:
         raise Exception('cannot specify both force and check mode')
 
     for mname in ('_ba', '_bainternal'):
+        # Skip internal module in public since it might
+        # not exist and is read-only anyway.
+        if mname == '_ba' and public:
+            continue
+
         outfilename = os.path.abspath(
             os.path.join(projroot, f'assets/src/ba_data/python/{mname}.py'))
 

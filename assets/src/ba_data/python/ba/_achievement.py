@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
+from ba import _internal
 from ba._error import print_exception
 
 if TYPE_CHECKING:
@@ -317,10 +318,13 @@ class AchievementSubsystem:
             if not ach.complete:
 
                 # Report new achievements to the game-service.
-                _ba.report_achievement(achname)
+                _internal.report_achievement(achname)
 
                 # And to our account.
-                _ba.add_transaction({'type': 'ACHIEVEMENT', 'name': achname})
+                _internal.add_transaction({
+                    'type': 'ACHIEVEMENT',
+                    'name': achname
+                })
 
                 # Now attempt to show a banner.
                 self.display_achievement_banner(achname)
@@ -409,7 +413,7 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
 
     (just for display; changing this here won't affect actual rewards)
     """
-    val: int = _ba.get_v1_account_misc_read_val('achAwardMult', 5)
+    val: int = _internal.get_v1_account_misc_read_val('achAwardMult', 5)
     assert isinstance(val, int)
     if include_pro_bonus and _ba.app.accounts_v1.have_pro():
         val *= 2
@@ -496,7 +500,7 @@ class Achievement:
         # signed in, lets not show them (otherwise we tend to get
         # confusing 'controller connected' achievements popping up while
         # waiting to log in which can be confusing).
-        if _ba.get_v1_account_state() != 'signed_in':
+        if _internal.get_v1_account_state() != 'signed_in':
             return
 
         # If we're being freshly complete, display/report it and whatnot.
@@ -592,8 +596,8 @@ class Achievement:
 
     def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
         """Get the ticket award value for this achievement."""
-        val: int = (_ba.get_v1_account_misc_read_val('achAward.' + self._name,
-                                                     self._award) *
+        val: int = (_internal.get_v1_account_misc_read_val(
+            'achAward.' + self._name, self._award) *
                     _get_ach_mult(include_pro_bonus))
         assert isinstance(val, int)
         return val
@@ -601,7 +605,7 @@ class Achievement:
     @property
     def power_ranking_value(self) -> int:
         """Get the power-ranking award value for this achievement."""
-        val: int = _ba.get_v1_account_misc_read_val(
+        val: int = _internal.get_v1_account_misc_read_val(
             'achLeaguePoints.' + self._name, self._award)
         assert isinstance(val, int)
         return val

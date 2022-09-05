@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import _ba
 import ba
+import ba.internal
 
 
 class ReportPlayerWindow(ba.Window):
@@ -63,7 +64,7 @@ class ReportPlayerWindow(ba.Window):
 
     def _on_language_press(self) -> None:
         from urllib import parse
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'REPORT_ACCOUNT',
             'reason': 'language',
             'account': self._account_id
@@ -76,7 +77,7 @@ class ReportPlayerWindow(ba.Window):
 
     def _on_cheating_press(self) -> None:
         from urllib import parse
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'REPORT_ACCOUNT',
             'reason': 'cheating',
             'account': self._account_id

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+import ba.internal
 import _ba
 
 if TYPE_CHECKING:
@@ -67,9 +68,9 @@ class MainMenuWindow(ba.Window):
         self._restore_state()
 
         # Keep an eye on a few things and refresh if they change.
-        self._account_state = _ba.get_v1_account_state()
-        self._account_state_num = _ba.get_v1_account_state_num()
-        self._account_type = (_ba.get_v1_account_type()
+        self._account_state = ba.internal.get_v1_account_state()
+        self._account_state_num = ba.internal.get_v1_account_state_num()
+        self._account_type = (ba.internal.get_v1_account_type()
                               if self._account_state == 'signed_in' else None)
         self._refresh_timer = ba.Timer(1.0,
                                        ba.WeakCall(self._check_refresh),
@@ -122,10 +123,11 @@ class MainMenuWindow(ba.Window):
                 ba.print_exception('Error showing get-remote-app info')
 
     def _get_store_char_tex(self) -> str:
-        return ('storeCharacterXmas' if _ba.get_v1_account_misc_read_val(
-            'xmas', False) else
-                'storeCharacterEaster' if _ba.get_v1_account_misc_read_val(
-                    'easter', False) else 'storeCharacter')
+        return (
+            'storeCharacterXmas' if ba.internal.get_v1_account_misc_read_val(
+                'xmas', False) else
+            'storeCharacterEaster' if ba.internal.get_v1_account_misc_read_val(
+                'easter', False) else 'storeCharacter')
 
     def _check_refresh(self) -> None:
         if not self._root_widget:
@@ -138,13 +140,14 @@ class MainMenuWindow(ba.Window):
             return
 
         store_char_tex = self._get_store_char_tex()
-        account_state_num = _ba.get_v1_account_state_num()
+        account_state_num = ba.internal.get_v1_account_state_num()
         if (account_state_num != self._account_state_num
                 or store_char_tex != self._store_char_tex):
             self._store_char_tex = store_char_tex
             self._account_state_num = account_state_num
-            account_state = self._account_state = (_ba.get_v1_account_state())
-            self._account_type = (_ba.get_v1_account_type()
+            account_state = self._account_state = (
+                ba.internal.get_v1_account_state())
+            self._account_type = (ba.internal.get_v1_account_type()
                                   if account_state == 'signed_in' else None)
             self._save_state()
             self._refresh()
@@ -213,8 +216,8 @@ class MainMenuWindow(ba.Window):
                 on_activate_call=self._settings)
 
         # Scattered eggs on easter.
-        if _ba.get_v1_account_misc_read_val('easter',
-                                            False) and not self._in_game:
+        if ba.internal.get_v1_account_misc_read_val(
+                'easter', False) and not self._in_game:
             icon_size = 34
             ba.imagewidget(parent=self._root_widget,
                            position=(h - icon_size * 0.5 - 15,
@@ -310,7 +313,7 @@ class MainMenuWindow(ba.Window):
                 transition_delay=self._tdelay)
 
             # Scattered eggs on easter.
-            if _ba.get_v1_account_misc_read_val('easter', False):
+            if ba.internal.get_v1_account_misc_read_val('easter', False):
                 icon_size = 30
                 ba.imagewidget(parent=self._root_widget,
                                position=(h - icon_size * 0.5 + 25,
@@ -427,8 +430,8 @@ class MainMenuWindow(ba.Window):
         self._height = 200.0
         enable_account_button = True
         account_type_name: str | ba.Lstr
-        if _ba.get_v1_account_state() == 'signed_in':
-            account_type_name = _ba.get_v1_account_display_string()
+        if ba.internal.get_v1_account_state() == 'signed_in':
+            account_type_name = ba.internal.get_v1_account_display_string()
             account_type_icon = None
             account_textcolor = (1.0, 1.0, 1.0)
         else:
@@ -618,8 +621,8 @@ class MainMenuWindow(ba.Window):
                 enable_sound=account_type_enable_button_sound)
 
             # Scattered eggs on easter.
-            if _ba.get_v1_account_misc_read_val('easter',
-                                                False) and not self._in_game:
+            if ba.internal.get_v1_account_misc_read_val(
+                    'easter', False) and not self._in_game:
                 icon_size = 32
                 ba.imagewidget(parent=self._root_widget,
                                position=(h - icon_size * 0.5 + 35,
@@ -648,8 +651,8 @@ class MainMenuWindow(ba.Window):
         self._how_to_play_button = btn
 
         # Scattered eggs on easter.
-        if _ba.get_v1_account_misc_read_val('easter',
-                                            False) and not self._in_game:
+        if ba.internal.get_v1_account_misc_read_val(
+                'easter', False) and not self._in_game:
             icon_size = 28
             ba.imagewidget(parent=self._root_widget,
                            position=(h - icon_size * 0.5 + 30,
@@ -851,7 +854,7 @@ class MainMenuWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.store.browser import StoreBrowserWindow
         from bastd.ui.account import show_sign_in_prompt
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         self._save_state()

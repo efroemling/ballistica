@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
@@ -197,7 +198,7 @@ class StoreButton:
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
         StoreBrowserWindow(modal=True, origin_widget=self._button)
@@ -216,9 +217,9 @@ class StoreButton:
             return  # Our instance may outlive our UI objects.
 
         if self._ticket_text is not None:
-            if _ba.get_v1_account_state() == 'signed_in':
+            if ba.internal.get_v1_account_state() == 'signed_in':
                 sval = ba.charstr(SpecialChar.TICKET) + str(
-                    _ba.get_v1_account_ticket_count())
+                    ba.internal.get_v1_account_ticket_count())
             else:
                 sval = '-'
             ba.textwidget(edit=self._ticket_text, text=sval)
@@ -230,13 +231,13 @@ class StoreButton:
         # ..also look for new style sales.
         if sale_time is None:
             import datetime
-            sales_raw = _ba.get_v1_account_misc_read_val('sales', {})
+            sales_raw = ba.internal.get_v1_account_misc_read_val('sales', {})
             sale_times = []
             try:
                 # Look at the current set of sales; filter any with time
                 # remaining that we don't own.
                 for sale_item, sale_info in list(sales_raw.items()):
-                    if not _ba.get_purchased(sale_item):
+                    if not ba.internal.get_purchased(sale_item):
                         to_end = (datetime.datetime.utcfromtimestamp(
                             sale_info['e']) -
                                   datetime.datetime.utcnow()).total_seconds()

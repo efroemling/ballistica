@@ -7,8 +7,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 from bastd.ui import promocode
 
 if TYPE_CHECKING:
@@ -50,14 +50,14 @@ class SharePlaylistImportWindow(promocode.PromoCodeWindow):
                            transition=self._transition_out)
 
     def _do_enter(self) -> None:
-        _ba.add_transaction(
+        ba.internal.add_transaction(
             {
                 'type': 'IMPORT_PLAYLIST',
                 'expire_time': time.time() + 5,
                 'code': ba.textwidget(query=self._text_field)
             },
             callback=ba.WeakCall(self._on_import_response))
-        _ba.run_transactions()
+        ba.internal.run_transactions()
         ba.screenmessage(ba.Lstr(resource='importingText'))
 
 

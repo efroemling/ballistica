@@ -9,6 +9,7 @@ import time
 from typing import TYPE_CHECKING
 
 import _ba
+import _bainternal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -41,7 +42,7 @@ class AccountV1Subsystem:
         def do_auto_sign_in() -> None:
             if _ba.app.headless_mode or _ba.app.config.get(
                     'Auto Account State') == 'Local':
-                _ba.sign_in_v1('Local')
+                _bainternal.sign_in_v1('Local')
 
         _ba.pushcall(do_auto_sign_in)
 
@@ -108,8 +109,8 @@ class AccountV1Subsystem:
 
         if data['p']:
             pro_mult = 1.0 + float(
-                _ba.get_v1_account_misc_read_val('proPowerRankingBoost',
-                                                 0.0)) * 0.01
+                _bainternal.get_v1_account_misc_read_val(
+                    'proPowerRankingBoost', 0.0)) * 0.01
         else:
             pro_mult = 1.0
 
@@ -135,12 +136,13 @@ class AccountV1Subsystem:
         """(internal)"""
         # pylint: disable=cyclic-import
         from ba import _store
-        if _ba.get_v1_account_state() != 'signed_in':
+        if _bainternal.get_v1_account_state() != 'signed_in':
             return []
         icons = []
         store_items = _store.get_store_items()
         for item_name, item in list(store_items.items()):
-            if item_name.startswith('icons.') and _ba.get_purchased(item_name):
+            if item_name.startswith('icons.') and _bainternal.get_purchased(
+                    item_name):
                 icons.append(item['icon'])
         return icons
 
@@ -152,12 +154,13 @@ class AccountV1Subsystem:
         (internal)
         """
         # This only applies when we're signed in.
-        if _ba.get_v1_account_state() != 'signed_in':
+        if _bainternal.get_v1_account_state() != 'signed_in':
             return
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not _ba.have_chars(_ba.get_v1_account_display_string(full=False)):
+        if not _ba.have_chars(
+                _bainternal.get_v1_account_display_string(full=False)):
             return
 
         config = _ba.app.config
@@ -165,7 +168,7 @@ class AccountV1Subsystem:
                 or '__account__' not in config['Player Profiles']):
 
             # Create a spaz with a nice default purply color.
-            _ba.add_transaction({
+            _bainternal.add_transaction({
                 'type': 'ADD_PLAYER_PROFILE',
                 'name': '__account__',
                 'profile': {
@@ -174,7 +177,7 @@ class AccountV1Subsystem:
                     'highlight': [0.5, 0.25, 1.0]
                 }
             })
-            _ba.run_transactions()
+            _bainternal.run_transactions()
 
     def have_pro(self) -> bool:
         """Return whether pro is currently unlocked."""
@@ -182,9 +185,9 @@ class AccountV1Subsystem:
         # Check our tickets-based pro upgrade and our two real-IAP based
         # upgrades. Also always unlock this stuff in ballistica-core builds.
         return bool(
-            _ba.get_purchased('upgrades.pro')
-            or _ba.get_purchased('static.pro')
-            or _ba.get_purchased('static.pro_sale')
+            _bainternal.get_purchased('upgrades.pro')
+            or _bainternal.get_purchased('static.pro')
+            or _bainternal.get_purchased('static.pro_sale')
             or 'ballistica' + 'core' == _ba.appname())
 
     def have_pro_options(self) -> bool:
@@ -199,7 +202,8 @@ class AccountV1Subsystem:
         # or also if we've been grandfathered in or are using ballistica-core
         # builds.
         return self.have_pro() or bool(
-            _ba.get_v1_account_misc_read_val_2('proOptionsUnlocked', False)
+            _bainternal.get_v1_account_misc_read_val_2('proOptionsUnlocked',
+                                                       False)
             or _ba.app.config.get('lc14292', 0) > 1)
 
     def show_post_purchase_message(self) -> None:
@@ -221,17 +225,17 @@ class AccountV1Subsystem:
         from ba._language import Lstr
 
         # Run any pending promo codes we had queued up while not signed in.
-        if _ba.get_v1_account_state(
+        if _bainternal.get_v1_account_state(
         ) == 'signed_in' and self.pending_promo_codes:
             for code in self.pending_promo_codes:
                 _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
                                   color=(0, 1, 0))
-                _ba.add_transaction({
+                _bainternal.add_transaction({
                     'type': 'PROMO_CODE',
                     'expire_time': time.time() + 5,
                     'code': code
                 })
-            _ba.run_transactions()
+            _bainternal.run_transactions()
             self.pending_promo_codes = []
 
     def add_pending_promo_code(self, code: str) -> None:
@@ -242,7 +246,7 @@ class AccountV1Subsystem:
         # If we're not signed in, queue up the code to run the next time we
         # are and issue a warning if we haven't signed in within the next
         # few seconds.
-        if _ba.get_v1_account_state() != 'signed_in':
+        if _bainternal.get_v1_account_state() != 'signed_in':
 
             def check_pending_codes() -> None:
                 """(internal)"""
@@ -259,9 +263,9 @@ class AccountV1Subsystem:
             return
         _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
                           color=(0, 1, 0))
-        _ba.add_transaction({
+        _bainternal.add_transaction({
             'type': 'PROMO_CODE',
             'expire_time': time.time() + 5,
             'code': code
         })
-        _ba.run_transactions()
+        _bainternal.run_transactions()

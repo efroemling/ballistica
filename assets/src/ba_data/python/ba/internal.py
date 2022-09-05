@@ -6,6 +6,7 @@ Classes and functions contained here, while technically 'public', may change
 or disappear without warning, so should be avoided (or used sparingly and
 defensively) in mods.
 """
+from __future__ import annotations
 
 from ba._map import (get_map_class, register_map, preload_map_preview_media,
                      get_map_display_string, get_filtered_map_name)
@@ -38,6 +39,19 @@ from ba._store import (get_available_sale_time, get_available_purchase_count,
 from ba._tournament import get_tournament_prize_strings
 from ba._gameutils import get_trophy_string
 
+from ba._internal import (
+    get_v2_fleet, get_master_server_address, is_blessed, get_news_show,
+    game_service_has_leaderboard, report_achievement, submit_score,
+    tournament_query, power_ranking_query, restore_purchases, purchase,
+    get_purchases_state, get_purchased, get_price, in_game_purchase,
+    add_transaction, reset_achievements, get_public_login_id,
+    have_outstanding_transactions, run_transactions,
+    get_v1_account_misc_read_val, get_v1_account_misc_read_val_2,
+    get_v1_account_misc_val, get_v1_account_ticket_count,
+    get_v1_account_state_num, get_v1_account_state,
+    get_v1_account_display_string, get_v1_account_type, get_v1_account_name,
+    sign_out_v1, sign_in_v1, mark_config_dirty)
+
 __all__ = [
     'get_unowned_maps', 'get_unowned_game_types', 'get_map_class',
     'register_map', 'preload_map_preview_media', 'get_map_display_string',
@@ -56,5 +70,16 @@ __all__ = [
     'get_default_teams_playlist', 'filter_playlist', 'get_available_sale_time',
     'get_available_purchase_count', 'get_store_item_name_translated',
     'get_store_item_display_size', 'get_store_layout', 'get_store_item',
-    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string'
+    'get_clean_price', 'get_tournament_prize_strings', 'get_trophy_string',
+    'get_v2_fleet', 'get_master_server_address', 'is_blessed', 'get_news_show',
+    'game_service_has_leaderboard', 'report_achievement', 'submit_score',
+    'tournament_query', 'power_ranking_query', 'restore_purchases', 'purchase',
+    'get_purchases_state', 'get_purchased', 'get_price', 'in_game_purchase',
+    'add_transaction', 'reset_achievements', 'get_public_login_id',
+    'have_outstanding_transactions', 'run_transactions',
+    'get_v1_account_misc_read_val', 'get_v1_account_misc_read_val_2',
+    'get_v1_account_misc_val', 'get_v1_account_ticket_count',
+    'get_v1_account_state_num', 'get_v1_account_state',
+    'get_v1_account_display_string', 'get_v1_account_type',
+    'get_v1_account_name', 'sign_out_v1', 'sign_in_v1', 'mark_config_dirty'
 ]

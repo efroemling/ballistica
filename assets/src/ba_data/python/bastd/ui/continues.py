@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -149,9 +150,9 @@ class ContinuesWindow(ba.Window):
             self._on_cancel()
             return
 
-        if _ba.get_v1_account_state() == 'signed_in':
+        if ba.internal.get_v1_account_state() == 'signed_in':
             sval = (ba.charstr(ba.SpecialChar.TICKET) +
-                    str(_ba.get_v1_account_ticket_count()))
+                    str(ba.internal.get_v1_account_ticket_count()))
         else:
             sval = '?'
         if self._tickets_text is not None:
@@ -183,14 +184,14 @@ class ContinuesWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
         else:
             # If somehow we got signed out...
-            if _ba.get_v1_account_state() != 'signed_in':
+            if ba.internal.get_v1_account_state() != 'signed_in':
                 ba.screenmessage(ba.Lstr(resource='notSignedInText'),
                                  color=(1, 0, 0))
                 ba.playsound(ba.getsound('error'))
                 return
 
             # If it appears we don't have enough tickets, offer to buy more.
-            tickets = _ba.get_v1_account_ticket_count()
+            tickets = ba.internal.get_v1_account_ticket_count()
             if tickets < self._cost:
                 # FIXME: Should we start the timer back up again after?
                 self._counting_down = False

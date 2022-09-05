@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar
 
 import _ba
+from ba import _internal
 from ba._gameactivity import GameActivity
 from ba._general import WeakCall
 
@@ -217,10 +218,10 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
             self._achievements_awarded.add(achievement_name)
 
             # Report new achievements to the game-service.
-            _ba.report_achievement(achievement_name)
+            _internal.report_achievement(achievement_name)
 
             # ...and to our account.
-            _ba.add_transaction({
+            _internal.add_transaction({
                 'type': 'ACHIEVEMENT',
                 'name': achievement_name
             })

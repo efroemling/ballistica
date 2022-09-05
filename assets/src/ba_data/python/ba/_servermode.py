@@ -13,6 +13,8 @@ from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
                                     ChatMessageCommand, ScreenMessageCommand,
                                     ClientListCommand, KickCommand)
 import _ba
+from ba._internal import (add_transaction, run_transactions,
+                          get_v1_account_state)
 from ba._generated.enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
@@ -227,7 +229,7 @@ class ServerController:
 
     def _prepare_to_serve(self) -> None:
         """Run in a timer to do prep before beginning to serve."""
-        signed_in = _ba.get_v1_account_state() == 'signed_in'
+        signed_in = get_v1_account_state() == 'signed_in'
         if not signed_in:
 
             # Signing in to the local server account should not take long;
@@ -247,14 +249,14 @@ class ServerController:
             if not self._playlist_fetch_sent_request:
                 print(f'{Clr.SBLU}Requesting shared-playlist'
                       f' {self._config.playlist_code}...{Clr.RST}')
-                _ba.add_transaction(
+                add_transaction(
                     {
                         'type': 'IMPORT_PLAYLIST',
                         'code': str(self._config.playlist_code),
                         'overwrite': True
                     },
                     callback=self._on_playlist_fetch_response)
-                _ba.run_transactions()
+                run_transactions()
                 self._playlist_fetch_sent_request = True
 
             if self._playlist_fetch_got_response:
@@ -302,7 +304,7 @@ class ServerController:
         appcfg = app.config
         sessiontype = self._get_session_type()
 
-        if _ba.get_v1_account_state() != 'signed_in':
+        if get_v1_account_state() != 'signed_in':
             print('WARNING: launch_server_session() expects to run '
                   'with a signed in server account')
 
@@ -322,13 +324,13 @@ class ServerController:
 
             # Need to add this in a transaction instead of just setting
             # it directly or it will get overwritten by the master-server.
-            _ba.add_transaction({
+            add_transaction({
                 'type': 'ADD_PLAYLIST',
                 'playlistType': ptypename,
                 'playlistName': self._playlist_name,
                 'playlist': self._config.playlist_inline
             })
-            _ba.run_transactions()
+            run_transactions()
 
         if self._first_run:
             curtimestr = time.strftime('%c')

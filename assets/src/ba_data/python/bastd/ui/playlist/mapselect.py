@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -210,7 +211,7 @@ class PlaylistMapSelectWindow(ba.Window):
     def _on_store_press(self) -> None:
         from bastd.ui import account
         from bastd.ui.store.browser import StoreBrowserWindow
-        if _ba.get_v1_account_state() != 'signed_in':
+        if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
         StoreBrowserWindow(modal=True,

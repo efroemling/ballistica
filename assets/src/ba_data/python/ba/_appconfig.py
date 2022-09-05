@@ -159,8 +159,9 @@ def commit_app_config(force: bool = False) -> None:
 
     (internal)
     """
+    from ba._internal import mark_config_dirty
     if not _ba.app.config_file_healthy and not force:
         print('Current config file is broken; '
               'skipping write to avoid losing settings.')
         return
-    _ba.mark_config_dirty()
+    mark_config_dirty()

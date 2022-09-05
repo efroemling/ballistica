@@ -8,8 +8,8 @@ import time
 import weakref
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -126,8 +126,8 @@ class ProfileUpgradeWindow(ba.Window):
             'b': ba.app.build_number
         },
                           callback=ba.WeakCall(self._profile_check_result))
-        self._cost = _ba.get_v1_account_misc_read_val('price.global_profile',
-                                                      500)
+        self._cost = ba.internal.get_v1_account_misc_read_val(
+            'price.global_profile', 500)
         self._status: str | None = 'waiting'
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
@@ -170,7 +170,7 @@ class ProfileUpgradeWindow(ba.Window):
         from bastd.ui import getcurrency
         if self._status is None:
             # If it appears we don't have enough tickets, offer to buy more.
-            tickets = _ba.get_v1_account_ticket_count()
+            tickets = ba.internal.get_v1_account_ticket_count()
             if tickets < self._cost:
                 ba.playsound(ba.getsound('error'))
                 getcurrency.show_get_tickets_prompt()
@@ -193,11 +193,11 @@ class ProfileUpgradeWindow(ba.Window):
                                  color=(1, 0, 0))
                 ba.playsound(ba.getsound('error'))
                 return
-            _ba.add_transaction({
+            ba.internal.add_transaction({
                 'type': 'UPGRADE_PROFILE',
                 'name': self._name
             })
-            _ba.run_transactions()
+            ba.internal.run_transactions()
             self._status = 'upgrading'
             self._upgrade_start_time = time.time()
         else:
@@ -205,7 +205,7 @@ class ProfileUpgradeWindow(ba.Window):
 
     def _update(self) -> None:
         try:
-            t_str = str(_ba.get_v1_account_ticket_count())
+            t_str = str(ba.internal.get_v1_account_ticket_count())
         except Exception:
             t_str = '?'
         if self._tickets_text is not None:
@@ -219,7 +219,7 @@ class ProfileUpgradeWindow(ba.Window):
         # Once we've kicked off an upgrade attempt and all transactions go
         # through, we're done.
         if (self._status == 'upgrading'
-                and not _ba.have_outstanding_transactions()):
+                and not ba.internal.have_outstanding_transactions()):
             self._status = 'exiting'
             ba.containerwidget(edit=self._root_widget, transition='out_right')
             edit_profile_window = self._edit_profile_window()

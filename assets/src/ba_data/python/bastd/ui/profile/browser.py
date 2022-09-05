@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -174,7 +175,8 @@ class ProfileBrowserWindow(ba.Window):
         from bastd.ui.purchase import PurchaseWindow
 
         # Limit to a handful profiles if they don't have pro-options.
-        max_non_pro_profiles = _ba.get_v1_account_misc_read_val('mnpp', 5)
+        max_non_pro_profiles = ba.internal.get_v1_account_misc_read_val(
+            'mnpp', 5)
         assert self._profiles is not None
         if (not ba.app.accounts_v1.have_pro_options()
                 and len(self._profiles) >= max_non_pro_profiles):
@@ -221,11 +223,11 @@ class ProfileBrowserWindow(ba.Window):
             self._do_delete_profile, 350)
 
     def _do_delete_profile(self) -> None:
-        _ba.add_transaction({
+        ba.internal.add_transaction({
             'type': 'REMOVE_PLAYER_PROFILE',
             'name': self._selected_profile
         })
-        _ba.run_transactions()
+        ba.internal.run_transactions()
         ba.playsound(ba.getsound('shieldDown'))
         self._refresh()
 
@@ -283,8 +285,8 @@ class ProfileBrowserWindow(ba.Window):
         items.sort(key=lambda x: asserttype(x[0], str).lower())
         index = 0
         account_name: str | None
-        if _ba.get_v1_account_state() == 'signed_in':
-            account_name = _ba.get_v1_account_display_string()
+        if ba.internal.get_v1_account_state() == 'signed_in':
+            account_name = ba.internal.get_v1_account_display_string()
         else:
             account_name = None
         widget_to_select = None
