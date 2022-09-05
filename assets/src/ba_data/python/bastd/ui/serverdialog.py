@@ -20,12 +20,12 @@ class ServerDialogWindow(ba.Window):
         self._dialog_id = data['dialogID']
         txt = ba.Lstr(translate=('serverResponses', data['text']),
                       subs=data.get('subs', [])).evaluate()
-        self.txt = txt.strip()
+        txt = txt.strip()
         txt_scale = 1.5
-        txt_height = (_ba.get_string_height(self.txt, suppress_warning=True) *
+        txt_height = (_ba.get_string_height(txt, suppress_warning=True) *
                       txt_scale)
         self._width = 500
-        self._height = 130 + min(200, txt_height)
+        self._height = 160 + min(200, txt_height)
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
@@ -43,11 +43,11 @@ class ServerDialogWindow(ba.Window):
                       scale=txt_scale,
                       h_align='center',
                       v_align='center',
-                      text=self.txt,
+                      text=txt,
                       maxwidth=self._width * 0.85,
                       max_height=(self._height - 110))
         show_cancel = data.get('showCancel', True)
-        show_copy = ba.clipboard_is_supported()
+        self.copy_text = data.get('copyText', None)
         self._cancel_button: ba.Widget | None
         self._copy_button: ba.Widget | None
         if show_cancel:
@@ -58,7 +58,7 @@ class ServerDialogWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource='cancelText'),
                 on_activate_call=self._cancel_press)
-        elif show_copy:
+        elif self.copy_text is not None:
             self._cancel_button = None
             self._copy_button = ba.buttonwidget(
                 parent=self._root_widget,
@@ -73,7 +73,7 @@ class ServerDialogWindow(ba.Window):
         self._ok_button = ba.buttonwidget(
             parent=self._root_widget,
             position=((self._width - 182) if show_cancel else
-                      (self._width - 182) if show_copy else
+                      (self._width - 182) if self.copy_text is not None else
                       (self._width * 0.5 - 80), 30),
             size=(160, 60),
             autoselect=True,
@@ -85,7 +85,7 @@ class ServerDialogWindow(ba.Window):
                            selected_child=self._ok_button)
 
     def _copy_press(self) -> None:
-        ba.clipboard_set_text(self.txt)
+        ba.clipboard_set_text(self.copy_text)
         ba.screenmessage('Copied To Clipboard', color = (0, 1, 0))
 
     def _ok_press(self) -> None:
