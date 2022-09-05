@@ -38,6 +38,9 @@ class SpazFactory:
     """The sound that plays for an 'important' spaz death such as in
        co-op games."""
 
+    punch_sound_weak: ba.Sound
+    """A weak punch ba.Sound."""
+
     punch_sound: ba.Sound
     """A standard punch ba.Sound."""
 
@@ -98,6 +101,7 @@ class SpazFactory:
         self.impact_sounds_harder = (ba.getsound('bigImpact'),
                                      ba.getsound('bigImpact2'))
         self.single_player_death_sound = ba.getsound('playerDeath')
+        self.punch_sound_weak = ba.getsound('punchWeak01')
         self.punch_sound = ba.getsound('punch01')
         self.punch_sound_strong = (ba.getsound('punchStrong01'),
                                    ba.getsound('punchStrong02'))
