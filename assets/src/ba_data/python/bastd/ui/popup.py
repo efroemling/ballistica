@@ -7,8 +7,8 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
@@ -81,7 +81,7 @@ class PopupWindow:
             scale=scale,
             toolbar_visibility=toolbar_visibility,
             size=size,
-            parent=_ba.get_special_widget('overlay_stack'),
+            parent=ba.internal.get_special_widget('overlay_stack'),
             stack_offset=(x_fin - x_offs, y_fin - y_offs),
             scale_origin_stack_offset=(position[0], position[1]),
             on_outside_click_call=self.on_popup_cancel,
@@ -159,15 +159,15 @@ class PopupMenuWindow(PopupWindow):
                     self._width,
                     min(
                         maxwidth,
-                        _ba.get_string_width(choice_display_name,
-                                             suppress_warning=True)) + 75)
+                        ba.internal.get_string_width(
+                            choice_display_name, suppress_warning=True)) + 75)
             else:
                 self._width = max(
                     self._width,
                     min(
                         maxwidth,
-                        _ba.get_string_width(choice_display_name,
-                                             suppress_warning=True)) + 60)
+                        ba.internal.get_string_width(
+                            choice_display_name, suppress_warning=True)) + 60)
 
         # init parent class - this will rescale and reposition things as
         # needed and create our root widget

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -332,7 +331,7 @@ class ProfileBrowserWindow(ba.Window):
 
         # If there's a team-chooser in existence, tell it the profile-list
         # has probably changed.
-        session = _ba.get_foreground_host_session()
+        session = ba.internal.get_foreground_host_session()
         if session is not None:
             session.handlemessage(PlayerProfilesChangedMessage())
 

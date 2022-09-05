@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -112,7 +111,7 @@ class LeagueRankButton:
             self._update_for_league_rank_data(data)
 
     def _on_activate(self) -> None:
-        _ba.increment_analytics_count('League rank button press')
+        ba.internal.increment_analytics_count('League rank button press')
         self._on_activate_call()
 
     def __del__(self) -> None:

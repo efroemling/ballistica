@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -23,8 +22,9 @@ class ServerDialogWindow(ba.Window):
                       subs=data.get('subs', [])).evaluate()
         txt = txt.strip()
         txt_scale = 1.5
-        txt_height = (_ba.get_string_height(txt, suppress_warning=True) *
-                      txt_scale)
+        txt_height = (
+            ba.internal.get_string_height(txt, suppress_warning=True) *
+            txt_scale)
         self._width = 500
         self._height = 160 + min(200, txt_height)
         uiscale = ba.app.ui.uiscale

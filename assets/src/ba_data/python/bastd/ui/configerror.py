@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -29,7 +29,7 @@ class ConfigErrorWindow(ba.Window):
             h_align='center',
             v_align='top',
             scale=0.73,
-            text=(f'Error reading {_ba.appnameupper()} config file'
+            text=(f'Error reading {ba.internal.appnameupper()} config file'
                   ':\n\n\nCheck the console'
                   ' (press ~ twice) for details.\n\nWould you like to quit and'
                   ' try to fix it by hand\nor overwrite it with defaults?\n\n'
@@ -58,10 +58,10 @@ class ConfigErrorWindow(ba.Window):
 
     def _quit(self) -> None:
         ba.timer(0.001, self._edit_and_quit, timetype=ba.TimeType.REAL)
-        _ba.lock_all_input()
+        ba.internal.lock_all_input()
 
     def _edit_and_quit(self) -> None:
-        _ba.open_file_externally(self._config_file_path)
+        ba.internal.open_file_externally(self._config_file_path)
         ba.timer(0.1, ba.quit, timetype=ba.TimeType.REAL)
 
     def _defaults(self) -> None:

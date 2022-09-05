@@ -8,7 +8,6 @@ import copy
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -226,7 +225,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             ba.widget(edit=btn, right_widget=scrollwidget)
         ba.widget(edit=scrollwidget,
                   left_widget=new_button,
-                  right_widget=_ba.get_special_widget('party_button')
+                  right_widget=ba.internal.get_special_widget('party_button')
                   if ba.app.ui.use_toolbars else None)
 
         # make sure config exists
@@ -280,23 +279,23 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _run_selected_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        _ba.unlock_all_input()
+        ba.internal.unlock_all_input()
         try:
-            _ba.new_host_session(self._sessiontype)
+            ba.internal.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
             ba.print_exception(f'Error running session {self._sessiontype}.')
 
             # Drop back into a main menu session.
-            _ba.new_host_session(mainmenu.MainMenuSession)
+            ba.internal.new_host_session(mainmenu.MainMenuSession)
 
     def _choose_playlist(self) -> None:
         if self._selected_playlist_name is None:
             return
         self._save_playlist_selection()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        _ba.fade_screen(False, endcall=self._run_selected_playlist)
-        _ba.lock_all_input()
+        ba.internal.fade_screen(False, endcall=self._run_selected_playlist)
+        ba.internal.lock_all_input()
 
     def _refresh(self, select_playlist: str | None = None) -> None:
         from efro.util import asserttype

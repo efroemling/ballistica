@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -19,7 +19,7 @@ class XBox360ControllerSettingsWindow(ba.Window):
     def __init__(self) -> None:
         self._r = 'xbox360ControllersWindow'
         width = 700
-        height = 300 if _ba.is_running_on_fire_tv() else 485
+        height = 300 if ba.internal.is_running_on_fire_tv() else 485
         spacing = 40
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
@@ -58,7 +58,7 @@ class XBox360ControllerSettingsWindow(ba.Window):
         v = height - 70
         v -= spacing
 
-        if _ba.is_running_on_fire_tv():
+        if ba.internal.is_running_on_fire_tv():
             ba.textwidget(parent=self._root_widget,
                           position=(width * 0.5, height * 0.47),
                           size=(0, 0),

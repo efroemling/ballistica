@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import _ba
 import ba
 import ba.internal
 
@@ -19,7 +18,7 @@ class ReportPlayerWindow(ba.Window):
         self._transition_out = 'out_scale'
         scale_origin = origin_widget.get_screen_space_center()
 
-        overlay_stack = _ba.get_special_widget('overlay_stack')
+        overlay_stack = ba.internal.get_special_widget('overlay_stack')
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
@@ -71,7 +70,7 @@ class ReportPlayerWindow(ba.Window):
         })
         body = ba.Lstr(resource='reportPlayerExplanationText').evaluate()
         ba.open_url('mailto:support@froemling.net'
-                    f'?subject={_ba.appnameupper()} Player Report: ' +
+                    f'?subject={ba.internal.appnameupper()} Player Report: ' +
                     self._account_id + '&body=' + parse.quote(body))
         self.close()
 
@@ -84,7 +83,7 @@ class ReportPlayerWindow(ba.Window):
         })
         body = ba.Lstr(resource='reportPlayerExplanationText').evaluate()
         ba.open_url('mailto:support@froemling.net'
-                    f'?subject={_ba.appnameupper()} Player Report: ' +
+                    f'?subject={ba.internal.appnameupper()} Player Report: ' +
                     self._account_id + '&body=' + parse.quote(body))
         self.close()
 

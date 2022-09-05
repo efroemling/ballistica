@@ -8,7 +8,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import ba
-import _ba
+import ba.internal
 from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
@@ -42,13 +42,13 @@ class NetScanner:
         ba.timer(0.25, ba.WeakCall(self.update), timetype=ba.TimeType.REAL)
 
     def __del__(self) -> None:
-        _ba.end_host_scanning()
+        ba.internal.end_host_scanning()
 
     def _on_select(self, host: dict[str, Any]) -> None:
         self._last_selected_host = host
 
     def _on_activate(self, host: dict[str, Any]) -> None:
-        _ba.connect_to_party(host['address'])
+        ba.internal.connect_to_party(host['address'])
 
     def update(self) -> None:
         """(internal)"""
@@ -65,7 +65,7 @@ class NetScanner:
 
         # Grab this now this since adding widgets will change it.
         last_selected_host = self._last_selected_host
-        hosts = _ba.host_scan_cycle()
+        hosts = ba.internal.host_scan_cycle()
         for i, host in enumerate(hosts):
             txt3 = ba.textwidget(parent=self._columnwidget,
                                  size=(self._width / t_scale, 30),

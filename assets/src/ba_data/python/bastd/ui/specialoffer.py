@@ -7,7 +7,6 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -65,8 +64,8 @@ class SpecialOfferWindow(ba.Window):
             return
 
         # This can pop up suddenly, so lets block input for 1 second.
-        _ba.lock_all_input()
-        ba.timer(1.0, _ba.unlock_all_input, timetype=ba.TimeType.REAL)
+        ba.internal.lock_all_input()
+        ba.timer(1.0, ba.internal.unlock_all_input, timetype=ba.TimeType.REAL)
         ba.playsound(ba.getsound('ding'))
         ba.timer(0.3,
                  lambda: ba.playsound(ba.getsound('ooh')),
@@ -342,7 +341,7 @@ class SpecialOfferWindow(ba.Window):
 
         # We go away if we see that our target item is owned.
         if self._offer_item == 'pro':
-            if _ba.app.accounts_v1.have_pro():
+            if ba.app.accounts_v1.have_pro():
                 can_die = True
         else:
             if ba.internal.get_purchased(self._offer_item):

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui.store.button import StoreButton
@@ -27,7 +26,7 @@ class CoopBrowserWindow(ba.Window):
     def _update_corner_button_positions(self) -> None:
         uiscale = ba.app.ui.uiscale
         offs = (-55 if uiscale is ba.UIScale.SMALL
-                and _ba.is_party_icon_visible() else 0)
+                and ba.internal.is_party_icon_visible() else 0)
         if self._league_rank_button is not None:
             self._league_rank_button.set_position(
                 (self._width - 282 + offs - self._x_inset, self._height - 85 -
@@ -55,7 +54,7 @@ class CoopBrowserWindow(ba.Window):
 
         # Quick note to players that tourneys won't work in ballistica
         # core builds. (need to split the word so it won't get subbed out)
-        if 'ballistica' + 'core' == _ba.appname():
+        if 'ballistica' + 'core' == ba.internal.appname():
             ba.timer(1.0,
                      lambda: ba.screenmessage(
                          ba.Lstr(resource='noTournamentsInTestBuildText'),
@@ -334,7 +333,7 @@ class CoopBrowserWindow(ba.Window):
             )
 
         # Decrement time on our tournament buttons.
-        ads_enabled = _ba.have_incentivized_ad()
+        ads_enabled = ba.internal.have_incentivized_ad()
         for tbtn in self._tournament_buttons:
             tbtn.time_remaining = max(0, tbtn.time_remaining - 1)
             if tbtn.time_remaining_value_text is not None:
@@ -347,7 +346,7 @@ class CoopBrowserWindow(ba.Window):
                      and self._tourney_data_up_to_date) else '-')
 
             # Also adjust the ad icon visibility.
-            if tbtn.allow_ads and _ba.has_video_ads():
+            if tbtn.allow_ads and ba.internal.has_video_ads():
                 ba.imagewidget(edit=tbtn.entry_fee_ad_image,
                                opacity=1.0 if ads_enabled else 0.25)
                 ba.textwidget(edit=tbtn.entry_fee_text_remaining,
@@ -637,7 +636,7 @@ class CoopBrowserWindow(ba.Window):
         # FIXME shouldn't use hard-coded strings here.
         txt = ba.Lstr(resource='tournamentsText',
                       fallback_resource='tournamentText').evaluate()
-        t_width = _ba.get_string_width(txt, suppress_warning=True)
+        t_width = ba.internal.get_string_width(txt, suppress_warning=True)
         ba.textwidget(parent=w_parent,
                       position=(h_base + 27, v + 30),
                       size=(0, 0),
@@ -941,7 +940,7 @@ class CoopBrowserWindow(ba.Window):
             show_sign_in_prompt()
             return
 
-        if _ba.workspaces_in_use():
+        if ba.internal.workspaces_in_use():
             ba.screenmessage(
                 ba.Lstr(resource='tournamentsDisabledWorkspaceText'),
                 color=(1, 0, 0))

@@ -11,8 +11,8 @@ from enum import Enum
 from dataclasses import dataclass
 from bastd.ui.gather import GatherTab
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -341,8 +341,9 @@ class ManualGatherTab(GatherTab):
             label=ba.Lstr(resource='gatherWindow.manualConnectText'),
             autoselect=True)
         if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
-            ba.widget(edit=btn1,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=btn1,
+                left_widget=ba.internal.get_special_widget('back_button'))
         btnv -= b_height + b_space_extra
         ba.buttonwidget(parent=self._container,
                         size=(b_width, b_height),
@@ -686,7 +687,7 @@ class ManualGatherTab(GatherTab):
             config = ba.app.config
             config['Last Manual Party Connect Address'] = resolved_address
             config.commit()
-            _ba.connect_to_party(resolved_address, port=port)
+            ba.internal.connect_to_party(resolved_address, port=port)
 
     def _run_addr_fetch(self) -> None:
         try:
@@ -894,9 +895,12 @@ class ManualGatherTab(GatherTab):
                 if t_accessible_extra:
                     ba.textwidget(
                         edit=t_accessible_extra,
-                        text=ba.Lstr(resource='gatherWindow.'
-                                     'manualRouterForwardingText',
-                                     subs=[('${PORT}',
-                                            str(_ba.get_game_port()))]),
+                        text=ba.Lstr(
+                            resource='gatherWindow.'
+                            'manualRouterForwardingText',
+                            subs=[
+                                ('${PORT}', str(ba.internal.get_game_port())),
+                            ],
+                        ),
                         color=color_bad,
                     )

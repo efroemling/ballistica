@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -41,7 +41,7 @@ class ControlsSettingsWindow(ba.Window):
         self._r = 'configControllersWindow'
         app = ba.app
 
-        # is_fire_tv = _ba.is_running_on_fire_tv()
+        # is_fire_tv = ba.internal.is_running_on_fire_tv()
 
         spacing = 50.0
         button_width = 350.0
@@ -63,7 +63,7 @@ class ControlsSettingsWindow(ba.Window):
             height += spacing
 
         show_touch = False
-        if _ba.have_touchscreen_input():
+        if ba.internal.have_touchscreen_input():
             show_touch = True
             height += spacing
 
@@ -73,7 +73,8 @@ class ControlsSettingsWindow(ba.Window):
             height += space_height
 
         show_keyboard = False
-        if _ba.getinputdevice('Keyboard', '#1', doraise=False) is not None:
+        if ba.internal.getinputdevice('Keyboard', '#1',
+                                      doraise=False) is not None:
             show_keyboard = True
             height += spacing
         show_keyboard_p2 = False if app.vr_mode else show_keyboard
@@ -101,7 +102,7 @@ class ControlsSettingsWindow(ba.Window):
         # (we can run into problems where devices register as one of each
         # type otherwise)..
         show_mac_controller_subsystem = False
-        if platform == 'mac' and _ba.is_xcode_build():
+        if platform == 'mac' and ba.internal.is_xcode_build():
             show_mac_controller_subsystem = True
 
         if show_mac_controller_subsystem:
@@ -163,7 +164,8 @@ class ControlsSettingsWindow(ba.Window):
                 on_activate_call=self._do_touchscreen)
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             if not self._have_selected_child:
                 ba.containerwidget(edit=self._root_widget,
                                    selected_child=self._touch_button)
@@ -182,7 +184,8 @@ class ControlsSettingsWindow(ba.Window):
                 on_activate_call=self._do_gamepads)
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             if not self._have_selected_child:
                 ba.containerwidget(edit=self._root_widget,
                                    selected_child=self._gamepads_button)
@@ -206,7 +209,8 @@ class ControlsSettingsWindow(ba.Window):
                 on_activate_call=self._config_keyboard)
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             if not self._have_selected_child:
                 ba.containerwidget(edit=self._root_widget,
                                    selected_child=self._keyboard_button)
@@ -235,7 +239,8 @@ class ControlsSettingsWindow(ba.Window):
                 on_activate_call=self._do_mobile_devices)
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             if not self._have_selected_child:
                 ba.containerwidget(edit=self._root_widget,
                                    selected_child=self._idevices_button)
@@ -251,13 +256,15 @@ class ControlsSettingsWindow(ba.Window):
                     ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
                     color=(1, 1, 0))
                 ba.playsound(ba.getsound('gunCocking'))
-                _ba.set_low_level_config_value('enablexinput', not value)
+                ba.internal.set_low_level_config_value('enablexinput',
+                                                       not value)
 
             ba.checkboxwidget(
                 parent=self._root_widget,
                 position=(100, v + 3),
                 size=(120, 30),
-                value=(not _ba.get_low_level_config_value('enablexinput', 1)),
+                value=(not ba.internal.get_low_level_config_value(
+                    'enablexinput', 1)),
                 maxwidth=200,
                 on_value_change_call=do_toggle,
                 text=ba.Lstr(resource='disableXInputText'),
@@ -323,8 +330,8 @@ class ControlsSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            ConfigKeyboardWindow(_ba.getinputdevice('Keyboard',
-                                                    '#1')).get_root_widget())
+            ConfigKeyboardWindow(ba.internal.getinputdevice(
+                'Keyboard', '#1')).get_root_widget())
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
@@ -332,8 +339,8 @@ class ControlsSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            ConfigKeyboardWindow(_ba.getinputdevice('Keyboard',
-                                                    '#2')).get_root_widget())
+            ConfigKeyboardWindow(ba.internal.getinputdevice(
+                'Keyboard', '#2')).get_root_widget())
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import

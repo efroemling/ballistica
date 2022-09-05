@@ -599,7 +599,9 @@ static void HandleArgs(int argc, char** argv) {
       if (explicit_bool(true)) {
         invalid_ptr = nullptr;
       }
-      *invalid_ptr = 1;
+      if (explicit_bool(true)) {
+        *invalid_ptr = 1;
+      }
     } else if (!strcmp(argv[i], "-cfgdir")) {
       if (i + 1 < argc) {
         g_app_globals->user_config_dir = argv[i + 1];

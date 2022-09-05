@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -130,13 +129,15 @@ class PlayWindow(ba.Window):
                 on_activate_call=self._coop)
 
             if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
-                ba.widget(edit=btn,
-                          left_widget=_ba.get_special_widget('back_button'))
-                ba.widget(edit=btn,
-                          up_widget=_ba.get_special_widget('account_button'))
                 ba.widget(
                     edit=btn,
-                    down_widget=_ba.get_special_widget('settings_button'))
+                    left_widget=ba.internal.get_special_widget('back_button'))
+                ba.widget(
+                    edit=btn,
+                    up_widget=ba.internal.get_special_widget('account_button'))
+                ba.widget(edit=btn,
+                          down_widget=ba.internal.get_special_widget(
+                              'settings_button'))
 
             self._draw_dude(0,
                             btn,
@@ -217,9 +218,11 @@ class PlayWindow(ba.Window):
             on_activate_call=self._team_tourney)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=btn,
-                      up_widget=_ba.get_special_widget('tickets_plus_button'),
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=btn,
+                up_widget=ba.internal.get_special_widget(
+                    'tickets_plus_button'),
+                right_widget=ba.internal.get_special_widget('party_button'))
 
         xxx = -14
         self._draw_dude(2,

@@ -17,7 +17,8 @@ from _ba import (
     newnode, playsound, printnodes, printobjects, pushcall, quit, rowwidget,
     safecolor, screenmessage, scrollwidget, set_analytics_screen, charstr,
     textwidget, time, timer, open_url, widget, clipboard_is_supported,
-    clipboard_has_text, clipboard_get_text, clipboard_set_text, getdata)
+    clipboard_has_text, clipboard_get_text, clipboard_set_text, getdata,
+    in_logic_thread)
 from ba._activity import Activity
 from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor
@@ -99,8 +100,8 @@ __all__ = [
     'GameTip', 'garbage_collect', 'getactivity', 'getclass', 'getcollidemodel',
     'getcollision', 'getdata', 'getmaps', 'getmodel', 'getnodes', 'getsession',
     'getsound', 'gettexture', 'HitMessage', 'hscrollwidget', 'imagewidget',
-    'ImpactDamageMessage', 'InputDevice', 'InputDeviceNotFoundError',
-    'InputType', 'IntChoiceSetting', 'IntSetting',
+    'ImpactDamageMessage', 'in_logic_thread', 'InputDevice',
+    'InputDeviceNotFoundError', 'InputType', 'IntChoiceSetting', 'IntSetting',
     'is_browser_likely_available', 'is_point_in_box', 'Keyboard',
     'LanguageSubsystem', 'Level', 'Lobby', 'log', 'Lstr', 'Map', 'Material',
     'MetadataSubsystem', 'Model', 'MultiTeamSession', 'MusicPlayer',

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -58,8 +57,9 @@ class PlaylistAddGameWindow(ba.Window):
             on_activate_call=self._add)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=select_button,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=select_button,
+                right_widget=ba.internal.get_special_widget('party_button'))
 
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 28),
@@ -134,7 +134,7 @@ class PlaylistAddGameWindow(ba.Window):
 
         # We asked for a bg thread completion cb so we can do some
         # filtering here in the bg thread where its not gonna cause hitches.
-        assert not _ba.in_logic_thread()
+        assert not ba.in_logic_thread()
         sessiontype = self._editcontroller.get_session_type()
         unowned = get_unowned_game_types()
         self._game_types = [
@@ -210,8 +210,8 @@ class PlaylistAddGameWindow(ba.Window):
         self._refresh(select_get_more_games_button=True)
 
     def _add(self) -> None:
-        _ba.lock_all_input()  # Make sure no more commands happen.
-        ba.timer(0.1, _ba.unlock_all_input, timetype=ba.TimeType.REAL)
+        ba.internal.lock_all_input()  # Make sure no more commands happen.
+        ba.timer(0.1, ba.internal.unlock_all_input, timetype=ba.TimeType.REAL)
         assert self._selected_game_type is not None
         self._editcontroller.add_game_type_selected(self._selected_game_type)
 

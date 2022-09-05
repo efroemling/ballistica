@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -281,10 +281,10 @@ class AwaitKeyboardInputWindow(ba.Window):
                                               text=str(self._counter))
         self._decrement_timer: ba.Timer | None = ba.Timer(
             1.0, self._decrement, repeat=True, timetype=ba.TimeType.REAL)
-        _ba.capture_keyboard_input(ba.WeakCall(self._button_callback))
+        ba.internal.capture_keyboard_input(ba.WeakCall(self._button_callback))
 
     def __del__(self) -> None:
-        _ba.release_keyboard_input()
+        ba.internal.release_keyboard_input()
 
     def _die(self) -> None:
         # This strong-refs us; killing it allows us to die now.

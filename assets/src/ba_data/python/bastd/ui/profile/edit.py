@@ -7,7 +7,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, cast
 
-import _ba
 import ba
 import ba.internal
 
@@ -145,7 +144,7 @@ class EditProfileWindow(ba.Window):
 
         # Assign a random name if they had none.
         if self._name == '':
-            names = _ba.get_random_names()
+            names = ba.internal.get_random_names()
             self._name = names[random.randrange(len(names))]
 
         self._clipped_name_text = ba.textwidget(parent=self._root_widget,
@@ -189,7 +188,8 @@ class EditProfileWindow(ba.Window):
                 resource='editProfileWindow.accountProfileText').evaluate()
             b_width = min(
                 270.0,
-                _ba.get_string_width(txtl, suppress_warning=True) * 0.6)
+                ba.internal.get_string_width(txtl, suppress_warning=True) *
+                0.6)
             ba.textwidget(parent=self._root_widget,
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
@@ -259,7 +259,8 @@ class EditProfileWindow(ba.Window):
                 resource='editProfileWindow.globalProfileText').evaluate()
             b_width = min(
                 240.0,
-                _ba.get_string_width(txtl, suppress_warning=True) * 0.6)
+                ba.internal.get_string_width(txtl, suppress_warning=True) *
+                0.6)
             ba.textwidget(parent=self._root_widget,
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
@@ -300,7 +301,8 @@ class EditProfileWindow(ba.Window):
                 resource='editProfileWindow.localProfileText').evaluate()
             b_width = min(
                 270.0,
-                _ba.get_string_width(txtl, suppress_warning=True) * 0.6)
+                ba.internal.get_string_width(txtl, suppress_warning=True) *
+                0.6)
             ba.textwidget(parent=self._root_widget,
                           position=(self._width * 0.5, v - 43),
                           size=(0, 0),

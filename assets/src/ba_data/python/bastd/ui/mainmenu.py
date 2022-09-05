@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 import ba
 import ba.internal
-import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -22,8 +21,8 @@ class MainMenuWindow(ba.Window):
         # pylint: disable=cyclic-import
         import threading
         from bastd.mainmenu import MainMenuSession
-        self._in_game = not isinstance(_ba.get_foreground_host_session(),
-                                       MainMenuSession)
+        self._in_game = not isinstance(
+            ba.internal.get_foreground_host_session(), MainMenuSession)
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
@@ -102,7 +101,7 @@ class MainMenuWindow(ba.Window):
             try:
                 app = ba.app
                 force_test = False
-                _ba.get_local_active_input_devices_count()
+                ba.internal.get_local_active_input_devices_count()
                 if (((app.on_tv or app.platform == 'mac')
                      and ba.app.config.get('launchCount', 0) <= 1)
                         or force_test):
@@ -188,7 +187,7 @@ class MainMenuWindow(ba.Window):
             (not self._in_game or not app.toolbar_test)
             and not (self._is_demo or self._is_arcade or self._is_iircade))
 
-        self._input_device = input_device = _ba.get_ui_input_device()
+        self._input_device = input_device = ba.internal.get_ui_input_device()
         self._input_player = input_device.player if input_device else None
         self._connected_to_remote_player = (
             input_device.is_connected_to_remote_player()
@@ -235,7 +234,7 @@ class MainMenuWindow(ba.Window):
             self._p_index += 1
 
             # If we're in a replay, we have a 'Leave Replay' button.
-            if _ba.is_in_replay():
+            if ba.internal.is_in_replay():
                 ba.buttonwidget(parent=self._root_widget,
                                 position=(h - self._button_width * 0.5 * scale,
                                           v),
@@ -244,7 +243,7 @@ class MainMenuWindow(ba.Window):
                                 autoselect=self._use_autoselect,
                                 label=ba.Lstr(resource='replayEndText'),
                                 on_activate_call=self._confirm_end_replay)
-            elif _ba.get_foreground_host_session() is not None:
+            elif ba.internal.get_foreground_host_session() is not None:
                 ba.buttonwidget(
                     parent=self._root_widget,
                     position=(h - self._button_width * 0.5 * scale, v),
@@ -344,7 +343,7 @@ class MainMenuWindow(ba.Window):
         # Add speed-up/slow-down buttons for replays.
         # (ideally this should be part of a fading-out playback bar like most
         # media players but this works for now).
-        if _ba.is_in_replay():
+        if ba.internal.is_in_replay():
             b_size = 50.0
             b_buffer = 10.0
             t_scale = 0.75
@@ -685,7 +684,7 @@ class MainMenuWindow(ba.Window):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         custom_menu_entries: list[dict[str, Any]] = []
-        session = _ba.get_foreground_host_session()
+        session = ba.internal.get_foreground_host_session()
         if session is not None:
             try:
                 custom_menu_entries = session.get_custom_menu_entries()
@@ -822,8 +821,9 @@ class MainMenuWindow(ba.Window):
             if ba.do_once():
                 print('_change_replay_speed called without widget')
             return
-        _ba.set_replay_speed_exponent(_ba.get_replay_speed_exponent() + offs)
-        actual_speed = pow(2.0, _ba.get_replay_speed_exponent())
+        ba.internal.set_replay_speed_exponent(
+            ba.internal.get_replay_speed_exponent() + offs)
+        actual_speed = pow(2.0, ba.internal.get_replay_speed_exponent())
         ba.textwidget(edit=self._replay_speed_text,
                       text=ba.Lstr(resource='watchWindow.playbackSpeedText',
                                    subs=[('${SPEED}', str(actual_speed))]))
@@ -895,7 +895,7 @@ class MainMenuWindow(ba.Window):
                       cancel_is_selected=True)
 
     def _leave_party(self) -> None:
-        _ba.disconnect_from_host()
+        ba.internal.disconnect_from_host()
 
     def _end_game(self) -> None:
         if not self._root_widget:
@@ -945,7 +945,7 @@ class MainMenuWindow(ba.Window):
 
     def _do_game_service_press(self) -> None:
         self._save_state()
-        _ba.show_online_score_ui()
+        ba.internal.show_online_score_ui()
 
     def _save_state(self) -> None:
 

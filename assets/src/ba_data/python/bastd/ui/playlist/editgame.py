@@ -8,8 +8,8 @@ import copy
 import random
 from typing import TYPE_CHECKING, cast
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -134,7 +134,7 @@ class PlaylistEditGameWindow(ba.Window):
                               resource='doneText'))
 
         if ba.app.ui.use_toolbars:
-            pbtn = _ba.get_special_widget('party_button')
+            pbtn = ba.internal.get_special_widget('party_button')
             ba.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
         ba.textwidget(parent=self._root_widget,

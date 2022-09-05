@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-import _ba
 import ba
+import ba.internal
 
 
 class TelnetAccessRequestWindow(ba.Window):
@@ -45,9 +45,9 @@ class TelnetAccessRequestWindow(ba.Window):
 
     def _cancel(self) -> None:
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        _ba.set_telnet_access_enabled(False)
+        ba.internal.set_telnet_access_enabled(False)
 
     def _ok(self) -> None:
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        _ba.set_telnet_access_enabled(True)
+        ba.internal.set_telnet_access_enabled(True)
         ba.screenmessage(ba.Lstr(resource='telnetAccessGrantedText'))

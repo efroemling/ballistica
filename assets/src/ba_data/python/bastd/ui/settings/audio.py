@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -105,8 +105,9 @@ class AudioSettingsWindow(ba.Window):
             maxval=1.0,
             increment=0.1)
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=svne.plusbutton,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=svne.plusbutton,
+                right_widget=ba.internal.get_special_widget('party_button'))
         v -= spacing
         self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
@@ -208,12 +209,13 @@ class AudioSettingsWindow(ba.Window):
 
         # We require disk access for soundtracks;
         # if we don't have it, request it.
-        if not _ba.have_permission(ba.Permission.STORAGE):
+        if not ba.internal.have_permission(ba.Permission.STORAGE):
             ba.playsound(ba.getsound('ding'))
             ba.screenmessage(ba.Lstr(resource='storagePermissionAccessText'),
                              color=(0.5, 1, 0.5))
             ba.timer(1.0,
-                     ba.Call(_ba.request_permission, ba.Permission.STORAGE),
+                     ba.Call(ba.internal.request_permission,
+                             ba.Permission.STORAGE),
                      timetype=ba.TimeType.REAL)
             return
 

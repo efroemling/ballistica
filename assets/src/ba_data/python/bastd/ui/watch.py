@@ -8,8 +8,8 @@ import os
 from enum import Enum
 from typing import TYPE_CHECKING, cast
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -114,10 +114,11 @@ class WatchWindow(ba.Window):
         if ba.app.ui.use_toolbars:
             first_tab = self._tab_row.tabs[tabdefs[0][0]]
             last_tab = self._tab_row.tabs[tabdefs[-1][0]]
-            ba.widget(edit=last_tab.button,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=last_tab.button,
+                right_widget=ba.internal.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
-                bbtn = _ba.get_special_widget('back_button')
+                bbtn = ba.internal.get_special_widget('back_button')
                 ba.widget(edit=first_tab.button,
                           up_widget=bbtn,
                           left_widget=bbtn)
@@ -224,8 +225,9 @@ class WatchWindow(ba.Window):
                 autoselect=True)
             ba.widget(edit=btn1, up_widget=self._tab_row.tabs[tab_id].button)
             if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
-                ba.widget(edit=btn1,
-                          left_widget=_ba.get_special_widget('back_button'))
+                ba.widget(
+                    edit=btn1,
+                    left_widget=ba.internal.get_special_widget('back_button'))
             btnv -= b_height + b_space_extra
             ba.buttonwidget(parent=cnt,
                             size=(b_width, b_height),
@@ -282,25 +284,25 @@ class WatchWindow(ba.Window):
         if self._my_replay_selected is None:
             self._no_replay_selected_error()
             return
-        _ba.increment_analytics_count('Replay watch')
+        ba.internal.increment_analytics_count('Replay watch')
 
         def do_it() -> None:
             try:
                 # Reset to normal speed.
-                _ba.set_replay_speed_exponent(0)
-                _ba.fade_screen(True)
+                ba.internal.set_replay_speed_exponent(0)
+                ba.internal.fade_screen(True)
                 assert self._my_replay_selected is not None
-                _ba.new_replay_session(_ba.get_replays_dir() + '/' +
-                                       self._my_replay_selected)
+                ba.internal.new_replay_session(ba.internal.get_replays_dir() +
+                                               '/' + self._my_replay_selected)
             except Exception:
                 ba.print_exception('Error running replay session.')
 
                 # Drop back into a fresh main menu session
                 # in case we half-launched or something.
                 from bastd import mainmenu
-                _ba.new_host_session(mainmenu.MainMenuSession)
+                ba.internal.new_host_session(mainmenu.MainMenuSession)
 
-        _ba.fade_screen(False, endcall=ba.Call(ba.pushcall, do_it))
+        ba.internal.fade_screen(False, endcall=ba.Call(ba.pushcall, do_it))
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _on_my_replay_rename_press(self) -> None:
@@ -371,9 +373,9 @@ class WatchWindow(ba.Window):
             # (or what it looks like to the user).
             if (replay != new_name
                     and self._get_replay_display_name(replay) != new_name_raw):
-                old_name_full = (_ba.get_replays_dir() + '/' +
+                old_name_full = (ba.internal.get_replays_dir() + '/' +
                                  replay).encode('utf-8')
-                new_name_full = (_ba.get_replays_dir() + '/' +
+                new_name_full = (ba.internal.get_replays_dir() + '/' +
                                  new_name).encode('utf-8')
                 # False alarm; ba.textwidget can return non-None val.
                 # pylint: disable=unsupported-membership-test
@@ -389,7 +391,7 @@ class WatchWindow(ba.Window):
                                              '.replayRenameErrorInvalidName'),
                                      color=(1, 0, 0))
                 else:
-                    _ba.increment_analytics_count('Replay rename')
+                    ba.internal.increment_analytics_count('Replay rename')
                     os.rename(old_name_full, new_name_full)
                     self._refresh_my_replays()
                     ba.playsound(ba.getsound('gunCocking'))
@@ -426,8 +428,9 @@ class WatchWindow(ba.Window):
 
     def _delete_replay(self, replay: str) -> None:
         try:
-            _ba.increment_analytics_count('Replay delete')
-            os.remove((_ba.get_replays_dir() + '/' + replay).encode('utf-8'))
+            ba.internal.increment_analytics_count('Replay delete')
+            os.remove(
+                (ba.internal.get_replays_dir() + '/' + replay).encode('utf-8'))
             self._refresh_my_replays()
             ba.playsound(ba.getsound('shieldDown'))
             if replay == self._my_replay_selected:
@@ -449,7 +452,7 @@ class WatchWindow(ba.Window):
             child.delete()
         t_scale = 1.6
         try:
-            names = os.listdir(_ba.get_replays_dir())
+            names = os.listdir(ba.internal.get_replays_dir())
 
             # Ignore random other files in there.
             names = [n for n in names if n.endswith('.brp')]

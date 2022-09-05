@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, cast
 
 import ba
 import ba.internal
-import _ba
 
 if TYPE_CHECKING:
     from bastd.ui.playlist.editcontroller import PlaylistEditController
@@ -59,8 +58,9 @@ class PlaylistEditWindow(ba.Window):
             text_scale=1.2)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=btn,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=btn,
+                right_widget=ba.internal.get_special_widget('party_button'))
 
         ba.widget(edit=cancel_button,
                   left_widget=cancel_button,

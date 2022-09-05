@@ -3,8 +3,8 @@
 """UI settings functionality related to touchscreens."""
 from __future__ import annotations
 
-import _ba
 import ba
+import ba.internal
 
 
 class TouchscreenSettingsWindow(ba.Window):
@@ -16,7 +16,7 @@ class TouchscreenSettingsWindow(ba.Window):
 
         # FIXME: Could switch to a UI destroy callback now that those are a
         #  thing that exists.
-        _ba.set_touchscreen_editing(False)
+        ba.internal.set_touchscreen_editing(False)
 
     def __init__(self) -> None:
 
@@ -25,7 +25,7 @@ class TouchscreenSettingsWindow(ba.Window):
         self._spacing = 40
         self._r = 'configTouchscreenWindow'
 
-        _ba.set_touchscreen_editing(True)
+        ba.internal.set_touchscreen_editing(True)
 
         uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
@@ -233,4 +233,4 @@ class TouchscreenSettingsWindow(ba.Window):
         ba.app.ui.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left').get_root_widget())
-        _ba.set_touchscreen_editing(False)
+        ba.internal.set_touchscreen_editing(False)

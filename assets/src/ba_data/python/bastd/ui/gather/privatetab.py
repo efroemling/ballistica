@@ -11,12 +11,11 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-import ba
-import ba.internal
-import _ba
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (PrivateHostingState, PrivateHostingConfig,
                           PrivatePartyConnectResult)
+import ba
+import ba.internal
 from bastd.ui.gather import GatherTab
 from bastd.ui import getcurrency
 
@@ -705,7 +704,7 @@ class PrivateGatherTab(GatherTab):
                 btnlabel = ba.Lstr(
                     resource='gatherWindow.hostingUnavailableText')
             elif self._hostingstate.party_code is None:
-                ticon = _ba.charstr(ba.SpecialChar.TICKET)
+                ticon = ba.internal.charstr(ba.SpecialChar.TICKET)
                 nowtickets = self._hostingstate.tickets_to_host_now
                 if nowtickets > 0:
                     btnlabel = ba.Lstr(
@@ -863,7 +862,7 @@ class PrivateGatherTab(GatherTab):
                 return
             self._debug_server_comm('got valid connect response')
             assert cresult.addr is not None and cresult.port is not None
-            _ba.connect_to_party(cresult.addr, port=cresult.port)
+            ba.internal.connect_to_party(cresult.addr, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
             ba.playsound(ba.getsound('error'))

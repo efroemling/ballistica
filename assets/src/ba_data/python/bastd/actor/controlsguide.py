@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -317,9 +317,8 @@ class ControlsGuide(ba.Actor):
         # an input device that is *not* the touchscreen.
         # (otherwise it is confusing to see the touchscreen buttons right
         # next to our display buttons)
-        touchscreen: ba.InputDevice | None = _ba.getinputdevice('TouchScreen',
-                                                                '#1',
-                                                                doraise=False)
+        touchscreen: ba.InputDevice | None = ba.internal.getinputdevice(
+            'TouchScreen', '#1', doraise=False)
 
         if touchscreen is not None:
             # We look at the session's players; not the activity's.
@@ -385,7 +384,7 @@ class ControlsGuide(ba.Actor):
         # If there's no players with input devices yet, try to default to
         # showing keyboard controls.
         if not input_devices:
-            kbd = _ba.getinputdevice('Keyboard', '#1', doraise=False)
+            kbd = ba.internal.getinputdevice('Keyboard', '#1', doraise=False)
             if kbd is not None:
                 input_devices.append(kbd)
 

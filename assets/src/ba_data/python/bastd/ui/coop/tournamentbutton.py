@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import copy
 
 import ba
-import _ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -519,8 +519,8 @@ class TournamentButton:
 
         # Now, if this fee allows ads and we support video ads, show
         # the 'or ad' version.
-        if allow_ads and _ba.has_video_ads():
-            ads_enabled = _ba.have_incentivized_ad()
+        if allow_ads and ba.internal.has_video_ads():
+            ads_enabled = ba.internal.have_incentivized_ad()
             ba.imagewidget(edit=self.entry_fee_ad_image,
                            opacity=1.0 if ads_enabled else 0.25)
             or_text = ba.Lstr(resource='orText',

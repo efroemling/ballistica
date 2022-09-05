@@ -8,7 +8,6 @@ import random
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -450,9 +449,9 @@ class PartyQueueWindow(ba.Window):
                 now = time.time()
                 if (self._last_connect_attempt_time is None
                         or now - self._last_connect_attempt_time > 10.0):
-                    _ba.connect_to_party(address=self._address,
-                                         port=self._port,
-                                         print_progress=False)
+                    ba.internal.connect_to_party(address=self._address,
+                                                 port=self._port,
+                                                 print_progress=False)
                     self._last_connect_attempt_time = now
 
     def on_boost_press(self) -> None:

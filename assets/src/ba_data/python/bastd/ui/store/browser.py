@@ -10,7 +10,6 @@ import weakref
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -272,9 +271,10 @@ class StoreBrowserWindow(ba.Window):
 
     def _update_get_tickets_button_pos(self) -> None:
         uiscale = ba.app.ui.uiscale
-        pos = (self._width - 252 - (self._x_inset +
-                                    (47 if uiscale is ba.UIScale.SMALL
-                                     and _ba.is_party_icon_visible() else 0)),
+        pos = (self._width - 252 -
+               (self._x_inset +
+                (47 if uiscale is ba.UIScale.SMALL
+                 and ba.internal.is_party_icon_visible() else 0)),
                self._height - 70)
         if self._get_tickets_button:
             ba.buttonwidget(edit=self._get_tickets_button, position=pos)
@@ -560,7 +560,7 @@ class StoreBrowserWindow(ba.Window):
         for b_type, b_info in self.button_infos.items():
 
             if b_type in ['upgrades.pro', 'pro']:
-                purchased = _ba.app.accounts_v1.have_pro()
+                purchased = ba.app.accounts_v1.have_pro()
             else:
                 purchased = ba.internal.get_purchased(b_type)
 

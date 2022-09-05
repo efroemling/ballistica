@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -21,7 +21,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
     # Ignore all but button-presses.
     if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
         return
-    _ba.release_gamepad_input()
+    ba.internal.release_gamepad_input()
     try:
         ba.app.ui.clear_main_menu_window(transition='out_left')
     except Exception:
@@ -140,11 +140,11 @@ class GamepadSelectWindow(ba.Window):
                           h_align='center',
                           v_align='top')
 
-        _ba.capture_gamepad_input(gamepad_configure_callback)
+        ba.internal.capture_gamepad_input(gamepad_configure_callback)
 
     def _back(self) -> None:
         from bastd.ui.settings import controls
-        _ba.release_gamepad_input()
+        ba.internal.release_gamepad_input()
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.app.ui.set_main_menu_window(
             controls.ControlsSettingsWindow(

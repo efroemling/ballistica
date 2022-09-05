@@ -7,7 +7,6 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -38,11 +37,14 @@ class ContinuesWindow(ba.Window):
         txt = (ba.Lstr(
             resource='continuePurchaseText').evaluate().split('${PRICE}'))
         t_left = txt[0]
-        t_left_width = _ba.get_string_width(t_left, suppress_warning=True)
+        t_left_width = ba.internal.get_string_width(t_left,
+                                                    suppress_warning=True)
         t_price = ba.charstr(ba.SpecialChar.TICKET) + str(self._cost)
-        t_price_width = _ba.get_string_width(t_price, suppress_warning=True)
+        t_price_width = ba.internal.get_string_width(t_price,
+                                                     suppress_warning=True)
         t_right = txt[-1]
-        t_right_width = _ba.get_string_width(t_right, suppress_warning=True)
+        t_right_width = ba.internal.get_string_width(t_right,
+                                                     suppress_warning=True)
         width_total_half = (t_left_width + t_price_width + t_right_width) * 0.5
 
         ba.textwidget(parent=self._root_widget,

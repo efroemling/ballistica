@@ -8,7 +8,6 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -379,7 +378,7 @@ class AccountSettingsWindow(ba.Window):
             self._account_name_text = None
 
         if self._back_button is None:
-            bbtn = _ba.get_special_widget('back_button')
+            bbtn = ba.internal.get_special_widget('back_button')
         else:
             bbtn = self._back_button
 
@@ -447,7 +446,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -472,7 +472,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -517,7 +518,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -563,7 +565,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -585,7 +588,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=0)
 
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
@@ -606,14 +610,15 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                on_activate_call=_ba.show_online_score_ui,
+                on_activate_call=ba.internal.show_online_score_ui,
                 size=(button_width, 50),
                 label=account_type_name)
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             v -= game_service_button_space * 0.15
         else:
@@ -655,7 +660,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             v -= achievements_button_space * 0.15
         else:
@@ -683,7 +689,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
             v -= leaderboards_button_space * 0.15
         else:
@@ -753,7 +760,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
 
         self._linked_accounts_text: ba.Widget | None
@@ -808,7 +816,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
 
         self._unlink_accounts_button: ba.Widget | None
@@ -836,7 +845,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
             self._update_unlink_accounts_button()
         else:
@@ -857,7 +867,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         if show_cancel_v2_sign_in_button:
@@ -875,7 +886,8 @@ class AccountSettingsWindow(ba.Window):
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         # Whatever the topmost selectable thing is, we want it to scroll all
@@ -898,7 +910,7 @@ class AccountSettingsWindow(ba.Window):
         # for google play we use the built-in UI; otherwise pop up our own
         if account_type == 'Google Play':
             ba.timer(0.15,
-                     ba.Call(_ba.show_online_score_ui, 'achievements'),
+                     ba.Call(ba.internal.show_online_score_ui, 'achievements'),
                      timetype=ba.TimeType.REAL)
         elif account_type != 'unknown':
             assert self._achievements_button is not None
@@ -910,7 +922,7 @@ class AccountSettingsWindow(ba.Window):
 
     def _on_leaderboards_press(self) -> None:
         ba.timer(0.15,
-                 ba.Call(_ba.show_online_score_ui, 'leaderboards'),
+                 ba.Call(ba.internal.show_online_score_ui, 'leaderboards'),
                  timetype=ba.TimeType.REAL)
 
     def _have_unlinkable_accounts(self) -> bool:

@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -54,9 +55,8 @@ def ask_for_rating() -> ba.Widget | None:
                   v_align='center')
 
     def do_rating() -> None:
-        import _ba
         if platform == 'android':
-            appname = _ba.appname()
+            appname = ba.internal.appname()
             if subplatform == 'google':
                 url = f'market://details?id=net.froemling.{appname}'
             else:

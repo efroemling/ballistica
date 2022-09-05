@@ -8,7 +8,6 @@ import weakref
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui.tabs import TabRow
@@ -89,7 +88,7 @@ class GatherWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
         ba.app.ui.set_main_menu_location('Gather')
-        _ba.set_party_icon_always_visible(True)
+        ba.internal.set_party_icon_always_visible(True)
         uiscale = ba.app.ui.uiscale
         self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
@@ -188,11 +187,13 @@ class GatherWindow(ba.Window):
                 self._tabs[tab_id] = tabtype(self)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=self._tab_row.tabs[tabdefs[-1][0]].button,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=self._tab_row.tabs[tabdefs[-1][0]].button,
+                right_widget=ba.internal.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
-                ba.widget(edit=self._tab_row.tabs[tabdefs[0][0]].button,
-                          left_widget=_ba.get_special_widget('back_button'))
+                ba.widget(
+                    edit=self._tab_row.tabs[tabdefs[0][0]].button,
+                    left_widget=ba.internal.get_special_widget('back_button'))
 
         self._scroll_width = self._width - scroll_buffer_h
         self._scroll_height = self._height - 180.0 + tabs_top_extra
@@ -216,7 +217,7 @@ class GatherWindow(ba.Window):
         self._restore_state()
 
     def __del__(self) -> None:
-        _ba.set_party_icon_always_visible(False)
+        ba.internal.set_party_icon_always_visible(False)
 
     def playlist_select(self, origin_widget: ba.Widget) -> None:
         """Called by the private-hosting tab to select a playlist."""

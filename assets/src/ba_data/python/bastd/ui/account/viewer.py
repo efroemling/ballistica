@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui import popup
@@ -199,8 +198,8 @@ class AccountViewerWindow(popup.PopupWindow):
                     ba.print_exception('Error displaying trophies.')
                 account_name_spacing = 15
                 tscale = 0.65
-                ts_height = _ba.get_string_height(trophystr,
-                                                  suppress_warning=True)
+                ts_height = ba.internal.get_string_height(
+                    trophystr, suppress_warning=True)
                 sub_width = self._width - 80
                 sub_height = 200 + ts_height * tscale + \
                     account_name_spacing * len(data['accountDisplayStrings'])
@@ -323,8 +322,8 @@ class AccountViewerWindow(popup.PopupWindow):
                               ('${SUFFIX}', '')]).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
-                        _ba.get_string_width(rank_str, suppress_warning=True) *
-                        0.55)
+                        ba.internal.get_string_width(
+                            rank_str, suppress_warning=True) * 0.55)
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
@@ -376,8 +375,8 @@ class AccountViewerWindow(popup.PopupWindow):
                         ]).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
-                        _ba.get_string_width(rank_str, suppress_warning=True) *
-                        0.3)
+                        ba.internal.get_string_width(
+                            rank_str, suppress_warning=True) * 0.3)
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.

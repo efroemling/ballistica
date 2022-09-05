@@ -8,7 +8,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.actor.text import Text
@@ -265,12 +264,12 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             self.end({'outcome': 'next_level'})
 
     def _ui_gc(self) -> None:
-        _ba.show_online_score_ui('leaderboard',
-                                 game=self._game_name_str,
-                                 game_version=self._game_config_str)
+        ba.internal.show_online_score_ui('leaderboard',
+                                         game=self._game_name_str,
+                                         game_version=self._game_config_str)
 
     def _ui_show_achievements(self) -> None:
-        _ba.show_online_score_ui('achievements')
+        ba.internal.show_online_score_ui('achievements')
 
     def _ui_worlds_best(self) -> None:
         if self._score_link is None:
@@ -332,7 +331,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # to the game (like on mac).
         can_select_extra_buttons = ba.app.platform == 'android'
 
-        _ba.set_ui_input_device(None)  # Menu is up for grabs.
+        ba.internal.set_ui_input_device(None)  # Menu is up for grabs.
 
         if self._show_friend_scores:
             ba.buttonwidget(parent=rootc,
@@ -484,7 +483,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             timetype=ba.TimeType.REAL)
 
     def _update_corner_button_positions(self) -> None:
-        offs = -55 if _ba.is_party_icon_visible() else 0
+        offs = -55 if ba.internal.is_party_icon_visible() else 0
         assert self._corner_button_offs is not None
         pos_x = self._corner_button_offs[0] + offs
         pos_y = self._corner_button_offs[1]
@@ -498,9 +497,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         # If this activity is a good 'end point', ask server-mode just once if
         # it wants to do anything special like switch sessions or kill the app.
-        if (self._allow_server_transition and _ba.app.server is not None
+        if (self._allow_server_transition and ba.app.server is not None
                 and self._server_transitioning is None):
-            self._server_transitioning = _ba.app.server.handle_transition()
+            self._server_transitioning = ba.app.server.handle_transition()
             assert isinstance(self._server_transitioning, bool)
 
         # If server-mode is handling this, don't do anything ourself.
@@ -529,7 +528,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if ba.app.server is not None:
             # Host can't press retry button, so anyone can do it instead.
             time_till_assign = max(
-                0, self._birth_time + self._min_view_time - _ba.time())
+                0, self._birth_time + self._min_view_time - ba.time())
 
             ba.timer(time_till_assign, ba.WeakCall(self._safe_assign, player))
 

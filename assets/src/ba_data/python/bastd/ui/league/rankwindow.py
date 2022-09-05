@@ -7,7 +7,6 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui import popup as popup_ui
@@ -748,7 +747,7 @@ class LeagueRankWindow(ba.Window):
         ba.textwidget(edit=self._league_text, text=lname, color=lcolor)
         l_text_width = min(
             self._league_text_maxwidth,
-            _ba.get_string_width(lname, suppress_warning=True) *
+            ba.internal.get_string_width(lname, suppress_warning=True) *
             self._league_text_scale)
         ba.textwidget(
             edit=self._league_number_text,

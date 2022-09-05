@@ -8,7 +8,6 @@ import copy
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -131,7 +130,7 @@ class AppInviteWindow(ba.Window):
 
         if ba.internal.get_v1_account_state() == 'signed_in':
             ba.set_analytics_screen('App Invite UI')
-            _ba.show_app_invite(
+            ba.internal.show_app_invite(
                 ba.Lstr(resource='gatherWindow.appInviteTitleText',
                         subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
                               ]).evaluate(),
@@ -251,7 +250,7 @@ class ShowFriendCodeWindow(ba.Window):
 
     def _google_invites(self) -> None:
         ba.set_analytics_screen('App Invite UI')
-        _ba.show_app_invite(
+        ba.internal.show_app_invite(
             ba.Lstr(resource='gatherWindow.appInviteTitleText',
                     subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
                           ]).evaluate(),

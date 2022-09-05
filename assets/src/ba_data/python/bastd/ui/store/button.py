@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -146,7 +145,7 @@ class StoreButton:
         self._update()
 
     def _on_activate(self) -> None:
-        _ba.increment_analytics_count('Store button press')
+        ba.internal.increment_analytics_count('Store button press')
         self._on_activate_call()
 
     def set_position(self, position: Sequence[float]) -> None:

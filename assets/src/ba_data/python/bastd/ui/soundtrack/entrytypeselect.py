@@ -6,8 +6,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -160,7 +160,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         from ba.osmusic import OSMusicPlayer
         from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        base_path = _ba.android_get_external_files_dir()
+        base_path = ba.internal.android_get_external_files_dir()
         ba.app.ui.set_main_menu_window(
             FileSelectorWindow(
                 base_path,
@@ -173,7 +173,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
     def _on_music_folder_press(self) -> None:
         from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        base_path = _ba.android_get_external_files_dir()
+        base_path = ba.internal.android_get_external_files_dir()
         ba.app.ui.set_main_menu_window(
             FileSelectorWindow(base_path,
                                callback=self._music_folder_selector_cb,

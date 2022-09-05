@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -54,7 +54,7 @@ class ConfirmWindow:
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal_no_back',
-            parent=_ba.get_special_widget('overlay_stack'),
+            parent=ba.internal.get_special_widget('overlay_stack'),
             scale=(2.1 if uiscale is ba.UIScale.SMALL else
                    1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
             scale_origin_stack_offset=scale_origin)
@@ -147,12 +147,13 @@ class QuitWindow:
             origin_widget=origin_widget).root_widget)
 
     def _fade_and_quit(self) -> None:
-        _ba.fade_screen(False,
-                        time=0.2,
-                        endcall=lambda: ba.quit(soft=True, back=self._back))
-        _ba.lock_all_input()
+        ba.internal.fade_screen(
+            False,
+            time=0.2,
+            endcall=lambda: ba.quit(soft=True, back=self._back))
+        ba.internal.lock_all_input()
 
         # Unlock and fade back in shortly.. just in case something goes wrong
         # (or on android where quit just backs out of our activity and
         # we may come back)
-        ba.timer(0.3, _ba.unlock_all_input, timetype=ba.TimeType.REAL)
+        ba.timer(0.3, ba.internal.unlock_all_input, timetype=ba.TimeType.REAL)

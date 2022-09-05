@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-import _ba
 import ba
+import ba.internal
 
 
 class ShowURLWindow(ba.Window):
@@ -41,7 +41,7 @@ class ShowURLWindow(ba.Window):
                            position=(self._width * 0.5 - qr_size * 0.5,
                                      self._height * 0.5 - qr_size * 0.5),
                            size=(qr_size, qr_size),
-                           texture=_ba.get_qrcode_texture(address))
+                           texture=ba.internal.get_qrcode_texture(address))
             ba.containerwidget(edit=self._root_widget,
                                cancel_button=self._cancel_button)
         else:

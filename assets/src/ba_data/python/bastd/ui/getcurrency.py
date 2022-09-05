@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -249,7 +248,7 @@ class GetCurrencyWindow(ba.Window):
                     tex_name='ticketRolls',
                     tex_scale=1.2)  # 19.99-ish
 
-        self._enable_ad_button = _ba.has_video_ads()
+        self._enable_ad_button = ba.internal.has_video_ads()
         h = self._width * 0.5 + 110.0
         v = self._height - b_size[1] - 115.0
 
@@ -444,7 +443,7 @@ class GetCurrencyWindow(ba.Window):
                 next_reward_ad_time = datetime.datetime.utcfromtimestamp(
                     next_reward_ad_time)
             now = datetime.datetime.utcnow()
-            if (_ba.have_incentivized_ad() and
+            if (ba.internal.have_incentivized_ad() and
                 (next_reward_ad_time is None or next_reward_ad_time <= now)):
                 self._ad_button_greyed = False
                 ba.buttonwidget(edit=self._ad_button, color=(0.65, 0.5, 0.7))
@@ -570,7 +569,7 @@ class GetCurrencyWindow(ba.Window):
                     resource='getTicketsWindow.unavailableTemporarilyText'),
                                  color=(1, 0, 0))
             elif self._enable_ad_button:
-                _ba.app.ads.show_ad('tickets')
+                ba.app.ads.show_ad('tickets')
         else:
             ba.internal.purchase(item)
 

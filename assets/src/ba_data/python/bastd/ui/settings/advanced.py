@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui import popup as popup_ui
@@ -201,10 +200,10 @@ class AdvancedSettingsWindow(ba.Window):
         # menu based on the language so still need this. ...however we could
         # make this more limited to it only rebuilds that one menu instead
         # of everything.
-        if self._menu_open or (self._prev_lang == _ba.app.config.get(
+        if self._menu_open or (self._prev_lang == ba.app.config.get(
                 'Lang', None) and self._prev_lang_list == available_languages):
             return
-        self._prev_lang = _ba.app.config.get('Lang', None)
+        self._prev_lang = ba.app.config.get('Lang', None)
         self._prev_lang_list = available_languages
 
         # Clear out our sub-container.
@@ -252,8 +251,8 @@ class AdvancedSettingsWindow(ba.Window):
                       h_align='right',
                       v_align='center')
 
-        languages = _ba.app.lang.available_languages
-        cur_lang = _ba.app.config.get('Lang', None)
+        languages = ba.app.lang.available_languages
+        cur_lang = ba.app.config.get('Lang', None)
         if cur_lang is None:
             cur_lang = 'Auto'
 
@@ -513,11 +512,12 @@ class AdvancedSettingsWindow(ba.Window):
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
 
         if ba.app.ui.use_toolbars:
-            pbtn = _ba.get_special_widget('party_button')
+            pbtn = ba.internal.get_special_widget('party_button')
             ba.widget(edit=self._scrollwidget, right_widget=pbtn)
             if self._back_button is None:
-                ba.widget(edit=self._scrollwidget,
-                          left_widget=_ba.get_special_widget('back_button'))
+                ba.widget(
+                    edit=self._scrollwidget,
+                    left_widget=ba.internal.get_special_widget('back_button'))
 
         self._restore_state()
 

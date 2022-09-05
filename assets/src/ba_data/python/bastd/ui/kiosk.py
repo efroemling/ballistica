@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -38,7 +37,7 @@ class KioskWindow(ba.Window):
         self._show_multiplayer = False
 
         # Let's reset all random player names every time we hit the main menu.
-        _ba.reset_random_player_names()
+        ba.internal.reset_random_player_names()
 
         # Reset achievements too (at least locally).
         ba.app.config['Achievements'] = {}
@@ -391,11 +390,12 @@ class KioskWindow(ba.Window):
                     'type': 'bs_elimination.EliminationGame'
                 }]
                 appconfig['Free-for-All Playlist Selection'] = 'Just Epic Elim'
-                _ba.fade_screen(False,
-                                endcall=ba.Call(
-                                    ba.pushcall,
-                                    ba.Call(_ba.new_host_session,
-                                            ba.FreeForAllSession)))
+                ba.internal.fade_screen(False,
+                                        endcall=ba.Call(
+                                            ba.pushcall,
+                                            ba.Call(
+                                                ba.internal.new_host_session,
+                                                ba.FreeForAllSession)))
             else:
                 if mode == 'ctf':
                     appconfig['Team Tournament Playlists']['Just CTF'] = [{
@@ -424,11 +424,12 @@ class KioskWindow(ba.Window):
                     }]
                     appconfig['Team Tournament Playlist Selection'] = (
                         'Just Hockey')
-                _ba.fade_screen(False,
-                                endcall=ba.Call(
-                                    ba.pushcall,
-                                    ba.Call(_ba.new_host_session,
-                                            ba.DualTeamSession)))
+                ba.internal.fade_screen(False,
+                                        endcall=ba.Call(
+                                            ba.pushcall,
+                                            ba.Call(
+                                                ba.internal.new_host_session,
+                                                ba.DualTeamSession)))
             ba.containerwidget(edit=self._root_widget, transition='out_left')
             return
 

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui import popup
@@ -89,7 +88,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._launched = False
 
         # Show the ad button only if we support ads *and* it has a level 1 fee.
-        self._do_ad_btn = (_ba.has_video_ads() and self._allow_ads)
+        self._do_ad_btn = (ba.internal.has_video_ads() and self._allow_ads)
 
         x_offs = 0 if self._do_ad_btn else 85
 
@@ -404,7 +403,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                        if self._purchase_price == 0 else self._ticket_img_pos)
 
         if self._do_ad_btn:
-            enabled = _ba.have_incentivized_ad()
+            enabled = ba.internal.have_incentivized_ad()
             have_ad_tries_remaining = (
                 self._tournament_info['adTriesRemaining'] is not None
                 and self._tournament_info['adTriesRemaining'] > 0)
@@ -561,9 +560,9 @@ class TournamentEntryWindow(popup.PopupWindow):
         cur_time = ba.time(ba.TimeType.REAL)
         if cur_time - self._last_ad_press_time > 5.0:
             self._last_ad_press_time = cur_time
-            _ba.app.ads.show_ad_2('tournament_entry',
-                                  on_completion_call=ba.WeakCall(
-                                      self._on_ad_complete))
+            ba.app.ads.show_ad_2('tournament_entry',
+                                 on_completion_call=ba.WeakCall(
+                                     self._on_ad_complete))
 
     def _on_ad_complete(self, actually_showed: bool) -> None:
 

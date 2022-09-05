@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -52,7 +52,7 @@ class GraphicsSettingsWindow(ba.Window):
 
         show_gamma = False
         gamma_spacing = spacing * 1.3
-        if _ba.has_gamma_control():
+        if ba.internal.has_gamma_control():
             show_gamma = True
             height += gamma_spacing
 
@@ -137,7 +137,8 @@ class GraphicsSettingsWindow(ba.Window):
                 textscale=0.85)
             if ba.app.ui.use_toolbars:
                 ba.widget(edit=gmc.plusbutton,
-                          right_widget=_ba.get_special_widget('party_button'))
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
             if not self._have_selected_child:
                 ba.containerwidget(edit=self._root_widget,
                                    selected_child=gmc.minusbutton)
@@ -166,7 +167,7 @@ class GraphicsSettingsWindow(ba.Window):
             scale=popup_menu_scale,
             choices=['Auto', 'Higher', 'High', 'Medium', 'Low'],
             choices_disabled=['Higher', 'High']
-            if _ba.get_max_graphics_quality() == 'Medium' else [],
+            if ba.internal.get_max_graphics_quality() == 'Medium' else [],
             choices_display=[
                 ba.Lstr(resource='autoText'),
                 ba.Lstr(resource=self._r + '.higherText'),
@@ -202,8 +203,9 @@ class GraphicsSettingsWindow(ba.Window):
             current_choice=ba.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures)
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=textures_popup.get_button(),
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=textures_popup.get_button(),
+                right_widget=ba.internal.get_special_widget('party_button'))
         v -= 80
 
         h_offs = 0
@@ -238,7 +240,7 @@ class GraphicsSettingsWindow(ba.Window):
                         current_choice=current_res_cardboard,
                         on_value_change_call=self._set_gvr_render_target_scale)
                 else:
-                    native_res = _ba.get_display_resolution()
+                    native_res = ba.internal.get_display_resolution()
                     assert native_res is not None
                     choices = ['Auto', 'Native']
                     choices_display = [
@@ -265,7 +267,7 @@ class GraphicsSettingsWindow(ba.Window):
             else:
                 # if we're on a system that doesn't allow setting resolution,
                 # set pixel-scale instead
-                current_res = _ba.get_display_resolution()
+                current_res = ba.internal.get_display_resolution()
                 if current_res is None:
                     current_res2 = (str(min(100, max(10, int(round(
                         ba.app.config.resolve('Screen Pixel Scale')

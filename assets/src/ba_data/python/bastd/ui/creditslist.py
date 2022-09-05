@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -91,17 +91,19 @@ class CreditsListWindow(ba.Window):
                                  capture_arrows=True)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=scroll,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=scroll,
+                right_widget=ba.internal.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
-                ba.widget(edit=scroll,
-                          left_widget=_ba.get_special_widget('back_button'))
+                ba.widget(
+                    edit=scroll,
+                    left_widget=ba.internal.get_special_widget('back_button'))
 
         def _format_names(names2: Sequence[str], inset: float) -> str:
             sval = ''
             # measure a series since there's overlaps and stuff..
-            space_width = _ba.get_string_width(' ' * 10,
-                                               suppress_warning=True) / 10.0
+            space_width = ba.internal.get_string_width(
+                ' ' * 10, suppress_warning=True) / 10.0
             spacing = 330.0
             col1 = inset
             col2 = col1 + spacing
@@ -124,7 +126,8 @@ class CreditsListWindow(ba.Window):
                 spacingstr = ' ' * int((target - line_width) / space_width)
                 nline += spacingstr
                 nline += name
-                line_width = _ba.get_string_width(nline, suppress_warning=True)
+                line_width = ba.internal.get_string_width(
+                    nline, suppress_warning=True)
             if nline != '':
                 sval += nline + '\n'
             return sval

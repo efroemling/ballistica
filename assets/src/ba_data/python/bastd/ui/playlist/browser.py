@@ -8,7 +8,6 @@ import copy
 import math
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 
@@ -369,14 +368,14 @@ class PlaylistBrowserWindow(ba.Window):
 
                 if (x == 0 and ba.app.ui.use_toolbars
                         and uiscale is ba.UIScale.SMALL):
-                    ba.widget(
-                        edit=btn,
-                        left_widget=_ba.get_special_widget('back_button'))
+                    ba.widget(edit=btn,
+                              left_widget=ba.internal.get_special_widget(
+                                  'back_button'))
                 if (x == columns - 1 and ba.app.ui.use_toolbars
                         and uiscale is ba.UIScale.SMALL):
-                    ba.widget(
-                        edit=btn,
-                        right_widget=_ba.get_special_widget('party_button'))
+                    ba.widget(edit=btn,
+                              right_widget=ba.internal.get_special_widget(
+                                  'party_button'))
                 ba.buttonwidget(
                     edit=btn,
                     on_activate_call=ba.Call(self._on_playlist_press, btn,

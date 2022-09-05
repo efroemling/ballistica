@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 from ba.internal import JoinActivity
 
@@ -32,8 +31,9 @@ class CoopJoinActivity(JoinActivity):
         config_str = ('1p' + session.campaign.getlevel(
             session.campaign_level_name).get_score_version_string().replace(
                 ' ', '_'))
-        _ba.get_scores_to_beat(level_name_full, config_str,
-                               ba.WeakCall(self._on_got_scores_to_beat))
+        ba.internal.get_scores_to_beat(
+            level_name_full, config_str,
+            ba.WeakCall(self._on_got_scores_to_beat))
 
     def on_transition_in(self) -> None:
         from bastd.actor.controlsguide import ControlsGuide

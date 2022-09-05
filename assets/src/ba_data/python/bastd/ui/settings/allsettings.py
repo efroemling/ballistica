@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -118,7 +118,7 @@ class AllSettingsWindow(ba.Window):
             label='',
             on_activate_call=self._do_controllers)
         if ba.app.ui.use_toolbars and self._back_button is None:
-            bbtn = _ba.get_special_widget('back_button')
+            bbtn = ba.internal.get_special_widget('back_button')
             ba.widget(edit=ctb, left_widget=bbtn)
         _b_title(x_offs2, v, ctb,
                  ba.Lstr(resource=self._r + '.controllersText'))
@@ -138,7 +138,7 @@ class AllSettingsWindow(ba.Window):
             label='',
             on_activate_call=self._do_graphics)
         if ba.app.ui.use_toolbars:
-            pbtn = _ba.get_special_widget('party_button')
+            pbtn = ba.internal.get_special_widget('party_button')
             ba.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
         _b_title(x_offs3, v, gfxb, ba.Lstr(resource=self._r + '.graphicsText'))
         imgw = imgh = 110

@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -801,7 +801,7 @@ class AwaitGamepadInputWindow(ba.Window):
             ba.Call(self._decrement),
             repeat=True,
             timetype=ba.TimeType.REAL)
-        _ba.capture_gamepad_input(ba.WeakCall(self._event_callback))
+        ba.internal.capture_gamepad_input(ba.WeakCall(self._event_callback))
 
     def __del__(self) -> None:
         pass
@@ -811,7 +811,7 @@ class AwaitGamepadInputWindow(ba.Window):
 
         # This strong-refs us; killing it allow us to die now.
         self._decrement_timer = None
-        _ba.release_gamepad_input()
+        ba.internal.release_gamepad_input()
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_scale')
 

@@ -7,8 +7,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any
@@ -105,8 +105,9 @@ class SoundtrackBrowserWindow(ba.Window):
                            texture=lock_tex))
 
         if self._back_button is None:
-            ba.widget(edit=btn,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=btn,
+                left_widget=ba.internal.get_special_widget('back_button'))
         v -= 60.0 * scl
 
         self._edit_button = btn = ba.buttonwidget(
@@ -127,8 +128,9 @@ class SoundtrackBrowserWindow(ba.Window):
                            position=(h - 10, v + 55.0 * scl - 28),
                            texture=lock_tex))
         if self._back_button is None:
-            ba.widget(edit=btn,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=btn,
+                left_widget=ba.internal.get_special_widget('back_button'))
         v -= 60.0 * scl
 
         self._duplicate_button = btn = ba.buttonwidget(
@@ -149,8 +151,9 @@ class SoundtrackBrowserWindow(ba.Window):
                            position=(h - 10, v + 55.0 * scl - 28),
                            texture=lock_tex))
         if self._back_button is None:
-            ba.widget(edit=btn,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=btn,
+                left_widget=ba.internal.get_special_widget('back_button'))
         v -= 60.0 * scl
 
         self._delete_button = btn = ba.buttonwidget(
@@ -171,8 +174,9 @@ class SoundtrackBrowserWindow(ba.Window):
                            position=(h - 10, v + 55.0 * scl - 28),
                            texture=lock_tex))
         if self._back_button is None:
-            ba.widget(edit=btn,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=btn,
+                left_widget=ba.internal.get_special_widget('back_button'))
 
         # Keep our lock images up to date/etc.
         self._update_timer = ba.Timer(1.0,
@@ -191,7 +195,7 @@ class SoundtrackBrowserWindow(ba.Window):
             size=(self._width - (205 + 2 * x_inset), scroll_height))
         ba.widget(edit=self._scrollwidget,
                   left_widget=self._new_button,
-                  right_widget=_ba.get_special_widget('party_button')
+                  right_widget=ba.internal.get_special_widget('party_button')
                   if ba.app.ui.use_toolbars else self._scrollwidget)
         self._col = ba.columnwidget(parent=scrollwidget, border=2, margin=0)
 

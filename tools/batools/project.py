@@ -349,6 +349,7 @@ class Updater:
                         f'Priv or pub legal not found in {fname}.')
 
     def _check_python_file(self, fname: str) -> None:
+        # pylint: disable=too-many-branches
         from efrotools import get_public_license, PYVER
         with open(fname, encoding='utf-8') as infile:
             contents = infile.read()
@@ -374,6 +375,22 @@ class Updater:
 
         if lines[copyrightline].startswith('# Synced from '):
             copyrightline += 3
+
+        for i, line in enumerate(lines):
+            # stuff under the ba module.
+            if '/ba/' in fname:
+                # Don't allow importing ba at the top level from within ba.
+                if line == 'import ba':
+                    raise CleanError(
+                        f'{fname}:{i+1}: no top level ba imports allowed'
+                        f' under ba module.')
+            if '/bastd/' in fname:
+                # Don't allow importing _ba or _bainternal anywhere here.
+                # (any internal needs should be in ba.internal)
+                if 'import _ba' in line:
+                    raise CleanError(
+                        f'{fname}:{i+1}: _ba or _bainternal imports not'
+                        f' allowed under bastd.')
 
         # In all cases, look for our one-line legal notice.
         # In the public case, look for the rest of our public license too.

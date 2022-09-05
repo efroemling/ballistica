@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 import ba
 import ba.internal
-import _ba
 
 from efro.error import CommunicationError
 import bacommon.cloud
@@ -125,7 +124,7 @@ class V2SignInWindow(ba.Window):
                        position=(self._width * 0.5 - qr_size * 0.5,
                                  self._height * 0.36 + qroffs - qr_size * 0.5),
                        size=(qr_size, qr_size),
-                       texture=_ba.get_qrcode_texture(address))
+                       texture=ba.internal.get_qrcode_texture(address))
 
         # Start querying for results.
         self._proxyid = response.proxyid

@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     pass
@@ -76,8 +76,9 @@ class HelpWindow(ba.Window):
             capture_arrows=True)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=self._scrollwidget,
-                      right_widget=_ba.get_special_widget('party_button'))
+            ba.widget(
+                edit=self._scrollwidget,
+                right_widget=ba.internal.get_special_widget('party_button'))
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
 
@@ -86,8 +87,9 @@ class HelpWindow(ba.Window):
         if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._close)
-            ba.widget(edit=self._scrollwidget,
-                      left_widget=_ba.get_special_widget('back_button'))
+            ba.widget(
+                edit=self._scrollwidget,
+                left_widget=ba.internal.get_special_widget('back_button'))
         else:
             btn = ba.buttonwidget(
                 parent=self._root_widget,
@@ -150,7 +152,8 @@ class HelpWindow(ba.Window):
                       maxwidth=txt_maxwidth)
         txt_width = min(
             txt_maxwidth,
-            _ba.get_string_width(txt, suppress_warning=True) * txt_scale)
+            ba.internal.get_string_width(txt, suppress_warning=True) *
+            txt_scale)
 
         icon_size = 70
         hval2 = h - (txt_width * 0.5 + icon_size * 0.5 * icon_buffer)
@@ -350,7 +353,8 @@ class HelpWindow(ba.Window):
                       maxwidth=txt_maxwidth)
         txt_width = min(
             txt_maxwidth,
-            _ba.get_string_width(txt, suppress_warning=True) * txt_scale)
+            ba.internal.get_string_width(txt, suppress_warning=True) *
+            txt_scale)
         icon_size = 70
 
         hval2 = h - (txt_width * 0.5 + icon_size * 0.5 * icon_buffer)
@@ -496,7 +500,8 @@ class HelpWindow(ba.Window):
                       maxwidth=txt_maxwidth)
         txt_width = min(
             txt_maxwidth,
-            _ba.get_string_width(txt, suppress_warning=True) * txt_scale)
+            ba.internal.get_string_width(txt, suppress_warning=True) *
+            txt_scale)
         icon_size = 70
         hval2 = h - (txt_width * 0.5 + icon_size * 0.5 * icon_buffer)
         ba.imagewidget(parent=self._subcontainer,

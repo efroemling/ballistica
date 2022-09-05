@@ -9,8 +9,8 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -242,7 +242,7 @@ class FileSelectorWindow(ba.Window):
         max_str_width = 300.0
         str_width = min(
             max_str_width,
-            _ba.get_string_width(folder_name, suppress_warning=True))
+            ba.internal.get_string_width(folder_name, suppress_warning=True))
         ba.textwidget(edit=self._path_text,
                       text=folder_name,
                       maxwidth=max_str_width)

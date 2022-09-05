@@ -7,8 +7,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -96,7 +96,7 @@ class TestingWindow(ba.Window):
             # we can reset if we want..
             if entry_name not in ba.app.value_test_defaults:
                 ba.app.value_test_defaults[entry_name] = (
-                    _ba.value_test(entry_name))
+                    ba.internal.value_test(entry_name))
 
             ba.textwidget(parent=self._subcontainer,
                           position=(h, v),
@@ -125,7 +125,7 @@ class TestingWindow(ba.Window):
                                             v_align='center',
                                             maxwidth=60,
                                             text='%.4g' %
-                                            _ba.value_test(entry_name))
+                                            ba.internal.value_test(entry_name))
             btn = ba.buttonwidget(parent=self._subcontainer,
                                   position=(h + 140, v - 19),
                                   size=(40, 40),
@@ -156,25 +156,26 @@ class TestingWindow(ba.Window):
 
     def _on_reset_press(self) -> None:
         for entry in self._entries:
-            _ba.value_test(entry['name'],
-                           absolute=ba.app.value_test_defaults[entry['name']])
+            ba.internal.value_test(
+                entry['name'],
+                absolute=ba.app.value_test_defaults[entry['name']])
             # pylint: disable=consider-using-f-string
             ba.textwidget(edit=entry['widget'],
-                          text='%.4g' % _ba.value_test(entry['name']))
+                          text='%.4g' % ba.internal.value_test(entry['name']))
 
     def _on_minus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
-        _ba.value_test(entry['name'], change=-entry['increment'])
+        ba.internal.value_test(entry['name'], change=-entry['increment'])
         # pylint: disable=consider-using-f-string
         ba.textwidget(edit=entry['widget'],
-                      text='%.4g' % _ba.value_test(entry['name']))
+                      text='%.4g' % ba.internal.value_test(entry['name']))
 
     def _on_plus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
-        _ba.value_test(entry['name'], change=entry['increment'])
+        ba.internal.value_test(entry['name'], change=entry['increment'])
         # pylint: disable=consider-using-f-string
         ba.textwidget(edit=entry['widget'],
-                      text='%.4g' % _ba.value_test(entry['name']))
+                      text='%.4g' % ba.internal.value_test(entry['name']))
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import

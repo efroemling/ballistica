@@ -18,8 +18,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import ba.internal
 from bastd.actor import spaz as basespaz
 
 if TYPE_CHECKING:
@@ -235,7 +235,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         super().on_begin()
 
         ba.set_analytics_screen('Tutorial Start')
-        _ba.increment_analytics_count('Tutorial start')
+        ba.internal.increment_analytics_count('Tutorial start')
 
         if bool(False):
             # Buttons on top.
@@ -461,7 +461,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
                 def run(self, a: TutorialActivity) -> None:
                     print('setting to', self._speed)
-                    _ba.set_debug_speed_exponent(self._speed)
+                    ba.internal.set_debug_speed_exponent(self._speed)
 
             class RemoveGloves:
 
@@ -609,7 +609,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     pass
 
                 def run(self, a: TutorialActivity) -> None:
-                    _ba.increment_analytics_count('Tutorial finish')
+                    ba.internal.increment_analytics_count('Tutorial finish')
                     a.end()
 
             class Move:
@@ -2328,7 +2328,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                   ('${TOTAL}', str(len(self.players)))]) if count > 0 else ''
         if (count >= len(self.players) and self.players
                 and not self._have_skipped):
-            _ba.increment_analytics_count('Tutorial skip')
+            ba.internal.increment_analytics_count('Tutorial skip')
             ba.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
             ba.playsound(ba.getsound('swish'))

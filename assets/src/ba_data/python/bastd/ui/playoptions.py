@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 import ba.internal
 from bastd.ui import popup
@@ -419,8 +418,8 @@ class PlayOptionsWindow(popup.PopupWindow):
             if self._delegate is not None:
                 self._delegate.on_play_options_window_run_game()
         else:
-            _ba.fade_screen(False, endcall=self._run_selected_playlist)
-            _ba.lock_all_input()
+            ba.internal.fade_screen(False, endcall=self._run_selected_playlist)
+            ba.internal.lock_all_input()
             self._transition_out(transition='out_left')
             if self._delegate is not None:
                 self._delegate.on_play_options_window_run_game()
@@ -428,12 +427,12 @@ class PlayOptionsWindow(popup.PopupWindow):
         cfg.commit()
 
     def _run_selected_playlist(self) -> None:
-        _ba.unlock_all_input()
+        ba.internal.unlock_all_input()
         try:
-            _ba.new_host_session(self._sessiontype)
+            ba.internal.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
             ba.print_exception('exception running session', self._sessiontype)
 
             # Drop back into a main menu session.
-            _ba.new_host_session(mainmenu.MainMenuSession)
+            ba.internal.new_host_session(mainmenu.MainMenuSession)

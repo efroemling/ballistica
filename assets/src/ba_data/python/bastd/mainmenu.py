@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 import ba
 import ba.internal
-import _ba
 
 if TYPE_CHECKING:
     from typing import Any
@@ -253,7 +252,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         self._update()
 
         # Hopefully this won't hitch but lets space these out anyway.
-        _ba.add_clean_frame_callback(ba.WeakCall(self._start_preloads))
+        ba.internal.add_clean_frame_callback(ba.WeakCall(self._start_preloads))
 
         random.seed()
 
@@ -937,7 +936,7 @@ class MainMenuSession(ba.Session):
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         if self._locked:
-            _ba.unlock_all_input()
+            ba.internal.unlock_all_input()
 
         # Any ending activity leads us into the main menu one.
         self.setactivity(ba.newactivity(MainMenuActivity))

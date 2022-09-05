@@ -7,8 +7,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING, cast
 
-import _ba
 import ba
+import ba.internal
 from bastd.ui import popup
 
 if TYPE_CHECKING:
@@ -19,10 +19,10 @@ class PartyWindow(ba.Window):
     """Party list/chat window."""
 
     def __del__(self) -> None:
-        _ba.set_party_window_open(False)
+        ba.internal.set_party_window_open(False)
 
     def __init__(self, origin: Sequence[float] = (0, 0)):
-        _ba.set_party_window_open(True)
+        ba.internal.set_party_window_open(True)
         self._r = 'partyWindow'
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
@@ -35,7 +35,7 @@ class PartyWindow(ba.Window):
             size=(self._width, self._height),
             transition='in_scale',
             color=(0.40, 0.55, 0.20),
-            parent=_ba.get_special_widget('overlay_stack'),
+            parent=ba.internal.get_special_widget('overlay_stack'),
             on_outside_click_call=self.close_with_sound,
             scale_origin_stack_offset=origin,
             scale=(2.0 if uiscale is ba.UIScale.SMALL else
@@ -68,7 +68,7 @@ class PartyWindow(ba.Window):
             color=(0.55, 0.73, 0.25),
             iconscale=1.2)
 
-        info = _ba.get_connection_to_host_info()
+        info = ba.internal.get_connection_to_host_info()
         if info.get('name', '') != '':
             title = ba.Lstr(value=info['name'])
         else:
@@ -116,7 +116,7 @@ class PartyWindow(ba.Window):
 
         # add all existing messages if chat is not muted
         if not ba.app.config.resolve('Chat Muted'):
-            msgs = _ba.get_chat_messages()
+            msgs = ba.internal.get_chat_messages()
             for msg in msgs:
                 self._add_msg(msg)
 
@@ -215,7 +215,7 @@ class PartyWindow(ba.Window):
             ba.textwidget(edit=self._muted_text, color=(1, 1, 1, 0.0))
 
         # update roster section
-        roster = _ba.get_game_roster()
+        roster = ba.internal.get_game_roster()
         if roster != self._roster:
             self._roster = roster
 
@@ -318,7 +318,7 @@ class PartyWindow(ba.Window):
                             if is_host:
                                 twd = min(
                                     c_width * 0.85,
-                                    _ba.get_string_width(
+                                    ba.internal.get_string_width(
                                         p_str, suppress_warning=True) *
                                     t_scale)
                                 self._name_widgets.append(
@@ -357,7 +357,7 @@ class PartyWindow(ba.Window):
                 assert self._popup_party_member_client_id is not None
 
                 # Ban for 5 minutes.
-                result = _ba.disconnect_client(
+                result = ba.internal.disconnect_client(
                     self._popup_party_member_client_id, ban_time=5 * 60)
                 if not result:
                     ba.playsound(ba.getsound('error'))
@@ -379,12 +379,12 @@ class PartyWindow(ba.Window):
     def _on_party_member_press(self, client_id: int, is_host: bool,
                                widget: ba.Widget) -> None:
         # if we're the host, pop up 'kick' options for all non-host members
-        if _ba.get_foreground_host_session() is not None:
+        if ba.internal.get_foreground_host_session() is not None:
             kick_str = ba.Lstr(resource='kickText')
         else:
             # kick-votes appeared in build 14248
-            if (_ba.get_connection_to_host_info().get('build_number', 0) <
-                    14248):
+            if (ba.internal.get_connection_to_host_info().get(
+                    'build_number', 0) < 14248):
                 return
             kick_str = ba.Lstr(resource='kickVoteText')
         uiscale = ba.app.ui.uiscale
@@ -401,7 +401,8 @@ class PartyWindow(ba.Window):
         self._popup_party_member_is_host = is_host
 
     def _send_chat_message(self) -> None:
-        _ba.chatmessage(cast(str, ba.textwidget(query=self._text_field)))
+        ba.internal.chatmessage(
+            cast(str, ba.textwidget(query=self._text_field)))
         ba.textwidget(edit=self._text_field, text='')
 
     def close(self) -> None:

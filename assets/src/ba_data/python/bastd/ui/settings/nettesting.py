@@ -11,7 +11,6 @@ from threading import Thread
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
-import _ba
 import ba
 import ba.internal
 from bastd.ui.settings.testing import TestingWindow
@@ -165,7 +164,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
 
     try:
         _print(f'Running network diagnostics...\n'
-               f'ua: {_ba.app.user_agent_string}\n'
+               f'ua: {ba.app.user_agent_string}\n'
                f'time: {utc_now()}.')
 
         if bool(False):
@@ -344,7 +343,7 @@ def _test_fetch(baseaddr: str) -> None:
     import urllib.request
     response = urllib.request.urlopen(
         urllib.request.Request(f'{baseaddr}/ping', None,
-                               {'User-Agent': _ba.app.user_agent_string}),
+                               {'User-Agent': ba.app.user_agent_string}),
         context=ba.app.net.sslcontext,
         timeout=MAX_TEST_SECONDS,
     )
