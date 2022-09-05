@@ -36,9 +36,9 @@ class PopupText(ba.Actor):
         if len(color) == 3:
             color = (color[0], color[1], color[2], 1.0)
         pos = (position[0] + offset[0] + random_offset *
-               (0.5 - random.random()), position[1] + offset[0] +
+               (0.5 - random.random()), position[1] + offset[1] +
                random_offset * (0.5 - random.random()), position[2] +
-               offset[0] + random_offset * (0.5 - random.random()))
+               offset[2] + random_offset * (0.5 - random.random()))
 
         self.node = ba.newnode('text',
                                attrs={
