@@ -980,7 +980,7 @@ class Spaz(ba.Actor):
                 if damage >= 500:
                     sounds = SpazFactory.get().punch_sound_strong
                     sound = sounds[random.randrange(len(sounds))]
-                elif damage >= 300:
+                elif damage >= 100:
                     sound = SpazFactory.get().punch_sound
                 else:
                     sound = SpazFactory.get().punch_sound_weak
