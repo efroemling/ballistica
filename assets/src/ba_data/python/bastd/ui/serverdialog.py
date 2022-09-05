@@ -87,7 +87,7 @@ class ServerDialogWindow(ba.Window):
 
     def _copy_press(self) -> None:
         ba.clipboard_set_text(self.copy_text)
-        ba.screenmessage('Copied To Clipboard', color = (0, 1, 0))
+        ba.screenmessage('Copied To Clipboard', color=(0, 1, 0))
 
     def _ok_press(self) -> None:
         if ba.time(ba.TimeType.REAL,
