@@ -93,8 +93,8 @@ class ServerDialogWindow(ba.Window):
 
         self._ok_button = ba.buttonwidget(
             parent=self._root_widget,
-            position=((self._width - 182) if data.show_cancel else
-                      (self._width - 182) if data.copy_text is not None else
+            position=((self._width - 182) if
+                      (data.show_cancel or show_copy) else
                       (self._width * 0.5 - 80), 30),
             size=(160, 60),
             autoselect=True,
