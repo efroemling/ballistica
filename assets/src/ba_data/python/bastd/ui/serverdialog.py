@@ -4,22 +4,38 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import logging
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Annotated
+
+from efro.dataclassio import ioprepped, IOAttrs
 
 import ba
 import ba.internal
 
 if TYPE_CHECKING:
-    from typing import Any
+    pass
+
+
+@ioprepped
+@dataclass
+class ServerDialogData:
+    """Data for ServerDialog."""
+    dialog_id: Annotated[str, IOAttrs('dialogID')]
+    text: Annotated[str, IOAttrs('text')]
+    subs: Annotated[list[tuple[str, str]],
+                    IOAttrs('subs')] = field(default_factory=list)
+    show_cancel: Annotated[bool, IOAttrs('showCancel')] = True
+    copy_text: Annotated[str | None, IOAttrs('copyText')] = None
 
 
 class ServerDialogWindow(ba.Window):
     """A dialog window driven by the master-server."""
 
-    def __init__(self, data: dict[str, Any]):
-        self._dialog_id = data['dialogID']
-        txt = ba.Lstr(translate=('serverResponses', data['text']),
-                      subs=data.get('subs', [])).evaluate()
+    def __init__(self, data: ServerDialogData):
+        self._data = data
+        txt = ba.Lstr(translate=('serverResponses', data.text),
+                      subs=data.subs).evaluate()
         txt = txt.strip()
         txt_scale = 1.5
         txt_height = (
@@ -33,7 +49,7 @@ class ServerDialogWindow(ba.Window):
             transition='in_scale',
             scale=(1.8 if uiscale is ba.UIScale.SMALL else
                    1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
-        self._starttime = ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
+        self._starttime = ba.time(ba.TimeType.REAL)
 
         ba.playsound(ba.getsound('swish'))
         ba.textwidget(parent=self._root_widget,
@@ -47,68 +63,72 @@ class ServerDialogWindow(ba.Window):
                       text=txt,
                       maxwidth=self._width * 0.85,
                       max_height=(self._height - 110))
-        show_cancel = data.get('showCancel', True)
-        self.copy_text = data.get('copyText', None)
-        self._cancel_button: ba.Widget | None
-        self._copy_button: ba.Widget | None
-        if show_cancel:
-            self._cancel_button = ba.buttonwidget(
-                parent=self._root_widget,
-                position=(30, 30),
-                size=(160, 60),
-                autoselect=True,
-                label=ba.Lstr(resource='cancelText'),
-                on_activate_call=self._cancel_press)
-        elif self.copy_text is not None:
-            self._cancel_button = None
-            self._copy_button = ba.buttonwidget(
-                parent=self._root_widget,
-                position=(30, 30),
-                size=(160, 60),
-                autoselect=True,
-                label=ba.Lstr(resource='copyText'),
-                on_activate_call=self._copy_press)
-        else:
-            self._cancel_button = None
-            self._copy_button = None
+
+        show_copy = data.copy_text is not None and ba.clipboard_is_supported()
+
+        # Currently can't do both copy and cancel since they go in the same
+        # spot. Cancel wins in this case since it is important functionality
+        # and copy is just for convenience (and not even always available).
+        if show_copy and data.show_cancel:
+            logging.warning('serverdialog requesting both copy and cancel;'
+                            ' copy will not be shown.')
+            show_copy = False
+
+        self._cancel_button = (None
+                               if not data.show_cancel else ba.buttonwidget(
+                                   parent=self._root_widget,
+                                   position=(30, 30),
+                                   size=(160, 60),
+                                   autoselect=True,
+                                   label=ba.Lstr(resource='cancelText'),
+                                   on_activate_call=self._cancel_press))
+
+        self._copy_button = None if not show_copy else ba.buttonwidget(
+            parent=self._root_widget,
+            position=(30, 30),
+            size=(160, 60),
+            autoselect=True,
+            label=ba.Lstr(resource='copyText'),
+            on_activate_call=self._copy_press)
+
         self._ok_button = ba.buttonwidget(
             parent=self._root_widget,
-            position=((self._width - 182) if show_cancel else
-                      (self._width - 182) if self.copy_text is not None else
+            position=((self._width - 182) if data.show_cancel else
+                      (self._width - 182) if data.copy_text is not None else
                       (self._width * 0.5 - 80), 30),
             size=(160, 60),
             autoselect=True,
             label=ba.Lstr(resource='okText'),
             on_activate_call=self._ok_press)
+
         ba.containerwidget(edit=self._root_widget,
                            cancel_button=self._cancel_button,
                            start_button=self._ok_button,
                            selected_child=self._ok_button)
 
     def _copy_press(self) -> None:
-        ba.clipboard_set_text(self.copy_text)
+        assert self._data.copy_text is not None
+        ba.clipboard_set_text(self._data.copy_text)
         ba.screenmessage(ba.Lstr(resource='copyConfirmText'), color=(0, 1, 0))
 
     def _ok_press(self) -> None:
-        if ba.time(ba.TimeType.REAL,
-                   ba.TimeFormat.MILLISECONDS) - self._starttime < 1000:
+        if ba.time(ba.TimeType.REAL) - self._starttime < 1.0:
             ba.playsound(ba.getsound('error'))
             return
         ba.internal.add_transaction({
             'type': 'DIALOG_RESPONSE',
-            'dialogID': self._dialog_id,
+            'dialogID': self._data.dialog_id,
             'response': 1
         })
         ba.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _cancel_press(self) -> None:
-        if ba.time(ba.TimeType.REAL,
-                   ba.TimeFormat.MILLISECONDS) - self._starttime < 1000:
+        if ba.time(ba.TimeType.REAL) - self._starttime < 1.0:
             ba.playsound(ba.getsound('error'))
             return
         ba.internal.add_transaction({
             'type': 'DIALOG_RESPONSE',
-            'dialogID': self._dialog_id,
+            'dialogID': self._data.dialog_id,
             'response': 0
         })
         ba.containerwidget(edit=self._root_widget, transition='out_scale')
