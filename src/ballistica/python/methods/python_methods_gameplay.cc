@@ -327,6 +327,8 @@ auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     emit_type = BGDynamicsEmitType::kDistortion;
   } else if (!strcmp(emit_type_str, "flag_stand")) {
     emit_type = BGDynamicsEmitType::kFlagStand;
+  } else if (!strcmp(emit_type_str, "fairydust")) {
+    emit_type = BGDynamicsEmitType::kFairyDust;
   } else {
     throw Exception("Invalid emit type: '" + std::string(emit_type_str) + "'.",
                     PyExcType::kValue);
