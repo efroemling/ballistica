@@ -2,6 +2,7 @@
 
 #include "ballistica/game/connection/connection_set.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/connection/connection_to_client_udp.h"
 #include "ballistica/game/connection/connection_to_host_udp.h"
 #include "ballistica/game/game.h"
@@ -215,14 +216,15 @@ void ConnectionSet::PushUDPConnectionPacketCall(
     const std::vector<uint8_t>& data, const SockAddr& addr) {
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
-  if (!g_game->CheckPushSafety()) {
+  if (!g_game->thread()->CheckPushSafety()) {
     BA_LOG_ONCE(
         "Ignoring excessive udp-connection input packets; (could this be a "
         "flood attack?).");
     return;
   }
 
-  g_game->PushCall([this, data, addr] { UDPConnectionPacket(data, addr); });
+  g_game->thread()->PushCall(
+      [this, data, addr] { UDPConnectionPacket(data, addr); });
 }
 
 auto ConnectionSet::Shutdown() -> void {
@@ -352,11 +354,11 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
 }
 
 void ConnectionSet::PushClientDisconnectedCall(int id) {
-  g_game->PushCall([this, id] { HandleClientDisconnected(id); });
+  g_game->thread()->PushCall([this, id] { HandleClientDisconnected(id); });
 }
 
 void ConnectionSet::PushDisconnectedFromHostCall() {
-  g_game->PushCall([this] {
+  g_game->thread()->PushCall([this] {
     if (connection_to_host_.exists()) {
       bool was_connected = connection_to_host_->can_communicate();
       connection_to_host_.Clear();
@@ -377,7 +379,7 @@ void ConnectionSet::PushDisconnectedFromHostCall() {
 
 void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
                                              bool print_connect_progress) {
-  g_game->PushCall([this, addr, print_connect_progress] {
+  g_game->thread()->PushCall([this, addr, print_connect_progress] {
     // Attempt to disconnect any clients we have, turn off public-party
     // advertising, etc.
     g_game->CleanUpBeforeConnectingToHost();
@@ -389,7 +391,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
 }
 
 void ConnectionSet::PushDisconnectFromHostCall() {
-  g_game->PushCall([this] {
+  g_game->thread()->PushCall([this] {
     if (connection_to_host_.exists()) {
       connection_to_host_->RequestDisconnect();
     }

@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/core/context.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/networking/networking_sys.h"
@@ -188,7 +189,7 @@ void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
   if (g_game == nullptr) {
     return;
   }
-  g_game->PushCall([this, command] {
+  g_game->thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(g_game->GetForegroundContext());
     if (!g_app_globals->user_ran_commands) {
@@ -216,7 +217,7 @@ void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
 
 void TelnetServer::PushPrint(const std::string& s) {
   assert(g_game);
-  g_game->PushCall([this, s] { Print(s); });
+  g_game->thread()->PushCall([this, s] { Print(s); });
 }
 
 void TelnetServer::Print(const std::string& s) {

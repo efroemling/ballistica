@@ -5,15 +5,19 @@
 
 #include <vector>
 
-#include "ballistica/core/module.h"
+#include "ballistica/ballistica.h"
 
 namespace ballistica {
 
 // this thread handles network output and whatnot
-class NetworkWriteModule : public Module {
+class NetworkWriteModule {
  public:
   void PushSendToCall(const std::vector<uint8_t>& msg, const SockAddr& addr);
   explicit NetworkWriteModule(Thread* thread);
+  auto thread() const -> Thread* { return thread_; }
+
+ private:
+  Thread* thread_{};
 };
 
 }  // namespace ballistica

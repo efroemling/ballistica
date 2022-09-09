@@ -535,7 +535,7 @@ auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   std::string log_fin;
   {
-    std::lock_guard<std::mutex> lock(g_app_globals->log_mutex);
+    std::scoped_lock lock(g_app_globals->log_mutex);
     log_fin = g_app_globals->log;
   }
   // we want to use something with error handling here since the last

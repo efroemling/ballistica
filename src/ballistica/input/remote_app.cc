@@ -62,7 +62,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
       size_t msg_len = 1 + strlen(msg + 1);
 
       // This needs to be locked during any sd changes/writes.
-      std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+      std::scoped_lock lock(g_network_reader->sd_mutex());
       sendto(socket, msg, static_cast_check_fit<socket_send_length_t>(msg_len),
              0, addr, static_cast<socklen_t>(addr_len));
 
@@ -91,7 +91,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
             static_cast_check_fit<uint8_t>(RemoteError::kVersionMismatch)};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), sizeof(data), 0, addr,
                static_cast<socklen_t>(addr_len));
         break;
@@ -135,7 +135,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
                            static_cast<uint8_t>(protocol_response)};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), sizeof(data), 0, addr,
                static_cast<socklen_t>(addr_len));
       } else {
@@ -145,7 +145,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
                                RemoteError::kNotAcceptingConnections)};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), sizeof(data), 0, addr,
                static_cast<socklen_t>(addr_len));
       }
@@ -179,7 +179,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
         uint8_t data[1] = {BA_PACKET_REMOTE_DISCONNECT_ACK};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), 1, 0, addr,
                static_cast<socklen_t>(addr_len));
       }
@@ -204,7 +204,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
             static_cast_check_fit<uint8_t>(RemoteError::kNotConnected)};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), sizeof(data), 0, addr,
                static_cast<socklen_t>(addr_len));
         break;
@@ -313,7 +313,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
       uint8_t data[2] = {BA_PACKET_REMOTE_STATE_ACK, client->next_state_id};
 
       // This needs to be locked during any sd changes/writes.
-      std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+      std::scoped_lock lock(g_network_reader->sd_mutex());
       sendto(socket, reinterpret_cast<char*>(data), 2, 0, addr,
              static_cast<socklen_t>(addr_len));
 
@@ -331,7 +331,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
             static_cast_check_fit<uint8_t>(RemoteError::kVersionMismatch)};
 
         // This needs to be locked during any sd changes/writes.
-        std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+        std::scoped_lock lock(g_network_reader->sd_mutex());
         sendto(socket, reinterpret_cast<char*>(data), sizeof(data), 0, addr,
                static_cast<socklen_t>(addr_len));
         break;

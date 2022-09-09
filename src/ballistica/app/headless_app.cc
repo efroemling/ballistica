@@ -13,10 +13,10 @@ HeadlessApp::HeadlessApp(Thread* thread) : App(thread) {
   // Handle a few misc things like stress-test updates.
   // (SDL builds set up a similar timer so we need to also).
   // This can probably go away at some point.
-  NewThreadTimer(10, true, NewLambdaRunnable([this] {
-                   assert(g_app);
-                   g_app->RunEvents();
-                 }));
+  this->thread()->NewTimer(10, true, NewLambdaRunnable([this] {
+                             assert(g_app);
+                             g_app->RunEvents();
+                           }));
 }
 
 }  // namespace ballistica

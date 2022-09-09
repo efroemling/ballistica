@@ -239,7 +239,7 @@ auto NetworkReader::RunThread() -> int {
                 "happen");
           } else if (rresult == -1) {
             // This needs to be locked during any sd changes/writes.
-            std::lock_guard<std::mutex> lock(sd_mutex_);
+            std::scoped_lock lock(sd_mutex_);
 
             // If either of our sockets goes down lets close *both* of
             // them.
@@ -258,7 +258,7 @@ auto NetworkReader::RunThread() -> int {
             // sockets (we ping ourself for this purpose).
             if (paused_) {
               // This needs to be locked during any sd changes/writes.
-              std::lock_guard<std::mutex> lock(sd_mutex_);
+              std::scoped_lock lock(sd_mutex_);
               if (sd4_ != -1) {
                 g_platform->CloseSocket(sd4_);
                 sd4_ = -1;
@@ -274,7 +274,7 @@ auto NetworkReader::RunThread() -> int {
                 break;
               case BA_PACKET_SIMPLE_PING: {
                 // This needs to be locked during any sd changes/writes.
-                std::lock_guard<std::mutex> lock(sd_mutex_);
+                std::scoped_lock lock(sd_mutex_);
                 char msg[1] = {BA_PACKET_SIMPLE_PONG};
                 sendto(sd, msg, 1, 0, reinterpret_cast<sockaddr*>(&from),
                        from_size);
@@ -290,7 +290,7 @@ auto NetworkReader::RunThread() -> int {
                     std::vector<char> msg(1 + response.size());
                     msg[0] = BA_PACKET_JSON_PONG;
                     memcpy(msg.data() + 1, response.c_str(), response.size());
-                    std::lock_guard<std::mutex> lock(sd_mutex_);
+                    std::scoped_lock lock(sd_mutex_);
                     sendto(
                         sd, msg.data(),
                         static_cast_check_fit<socket_send_length_t>(msg.size()),
@@ -378,7 +378,7 @@ auto NetworkReader::RunThread() -> int {
 
 auto NetworkReader::OpenSockets() -> void {
   // This needs to be locked during any socket-descriptor changes/writes.
-  std::lock_guard<std::mutex> lock(sd_mutex_);
+  std::scoped_lock lock(sd_mutex_);
 
   int result;
   int print_port_unavailable = false;

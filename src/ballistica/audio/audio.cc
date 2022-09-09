@@ -4,6 +4,7 @@
 
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/audio/audio_source.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/media/data/sound_data.h"
 
 namespace ballistica {
@@ -40,11 +41,12 @@ void Audio::SetListenerOrientation(const Vector3f& forward,
 
 // This stops a particular sound play ID only.
 void Audio::PushSourceStopSoundCall(uint32_t play_id) {
-  g_audio_server->PushCall([play_id] { g_audio_server->StopSound(play_id); });
+  g_audio_server->thread()->PushCall(
+      [play_id] { g_audio_server->StopSound(play_id); });
 }
 
 void Audio::PushSourceFadeOutCall(uint32_t play_id, uint32_t time) {
-  g_audio_server->PushCall(
+  g_audio_server->thread()->PushCall(
       [play_id, time] { g_audio_server->FadeSoundOut(play_id, time); });
 }
 
@@ -60,7 +62,7 @@ auto Audio::SourceBeginNew() -> AudioSource* {
     // Got to make sure to hold this until we've locked the source.
     // Otherwise, theoretically, the audio thread could make our source
     // available again before we can use it.
-    std::lock_guard<std::mutex> lock(available_sources_mutex_);
+    std::lock_guard lock(available_sources_mutex_);
 
     // If there's an available source, reserve and return it.
     auto i = available_sources_.begin();

@@ -30,15 +30,15 @@ void GraphicsServer::FullscreenCheck() {
 }
 #endif
 
-GraphicsServer::GraphicsServer(Thread* thread) : Module("graphics", thread) {
+GraphicsServer::GraphicsServer(Thread* thread) : thread_(thread) {
   // We're a singleton.
   assert(g_graphics_server == nullptr);
   g_graphics_server = this;
 
   // For janky old non-event-push mode, just fall back on a timer for rendering.
   if (!g_platform->IsEventPushMode()) {
-    render_timer_ = NewThreadTimer(1000 / 60, true,
-                                   NewLambdaRunnable([this] { TryRender(); }));
+    render_timer_ = this->thread()->NewTimer(
+        1000 / 60, true, NewLambdaRunnable([this] { TryRender(); }));
   }
 }
 
@@ -198,7 +198,7 @@ void GraphicsServer::ReloadMedia() {
   // Now tell the game thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->PushCall([this] {
+  g_game->thread()->PushCall([this] {
     g_media->MarkAllMediaForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
@@ -249,7 +249,7 @@ void GraphicsServer::RebuildLostContext() {
 
   // Now tell the game thread to kick off loads for everything, flip on progress
   // bar drawing, and then tell the graphics thread to stop ignoring frame-defs.
-  g_game->PushCall([this] {
+  g_game->thread()->PushCall([this] {
     g_media->MarkAllMediaForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
@@ -343,8 +343,8 @@ void GraphicsServer::SetScreen(bool fullscreen, int width, int height,
 
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && BA_SDL_BUILD
     if (create_fullscreen_check_timer) {
-      NewThreadTimer(1000, false,
-                     NewLambdaRunnable([this] { FullscreenCheck(); }));
+      thread()->NewTimer(1000, false,
+                         NewLambdaRunnable([this] { FullscreenCheck(); }));
     }
 #endif  // BA_OSTYPE_MACOS
 
@@ -463,7 +463,7 @@ void GraphicsServer::HandleFullContextScreenRebuild(
   // Now tell the game thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->PushCall([this] {
+  g_game->thread()->PushCall([this] {
     g_media->MarkAllMediaForLoad();
     g_graphics->set_internal_components_inited(false);
     g_graphics->EnableProgressBar(false);
@@ -708,18 +708,18 @@ void GraphicsServer::PushSetScreenCall(bool fullscreen, int width, int height,
                                        TextureQuality texture_quality,
                                        GraphicsQuality graphics_quality,
                                        const std::string& android_res) {
-  PushCall([=] {
+  thread()->PushCall([=] {
     SetScreen(fullscreen, width, height, texture_quality, graphics_quality,
               android_res);
   });
 }
 
 void GraphicsServer::PushReloadMediaCall() {
-  PushCall([this] { ReloadMedia(); });
+  thread()->PushCall([this] { ReloadMedia(); });
 }
 
 void GraphicsServer::PushSetScreenGammaCall(float gamma) {
-  PushCall([this, gamma] {
+  thread()->PushCall([this, gamma] {
     assert(InGraphicsThread());
     if (!renderer_) {
       return;
@@ -729,7 +729,7 @@ void GraphicsServer::PushSetScreenGammaCall(float gamma) {
 }
 
 void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
-  PushCall([this, pixel_scale] {
+  thread()->PushCall([this, pixel_scale] {
     assert(InGraphicsThread());
     if (!renderer_) {
       return;
@@ -739,7 +739,7 @@ void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
 }
 
 void GraphicsServer::PushSetVSyncCall(bool sync, bool auto_sync) {
-  PushCall([this, sync, auto_sync] {
+  thread()->PushCall([this, sync, auto_sync] {
     assert(InGraphicsThread());
 
 #if BA_SDL_BUILD
@@ -769,7 +769,7 @@ void GraphicsServer::PushSetVSyncCall(bool sync, bool auto_sync) {
 
 void GraphicsServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<MediaComponentData>*>& components) {
-  PushCall([this, components] {
+  thread()->PushCall([this, components] {
     // Unload all components we were passed.
     for (auto&& i : components) {
       (**i).Unload();
@@ -781,7 +781,7 @@ void GraphicsServer::PushComponentUnloadCall(
 }
 
 void GraphicsServer::PushRemoveRenderHoldCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     assert(render_hold_);
     render_hold_--;
     if (render_hold_ < 0) {

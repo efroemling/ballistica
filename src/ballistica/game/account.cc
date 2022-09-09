@@ -92,32 +92,32 @@ auto Account::AccountTypeToIconString(V1AccountType type) -> std::string {
 Account::Account() = default;
 
 auto Account::GetLoginName() -> std::string {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   return login_name_;
 }
 
 auto Account::GetLoginID() -> std::string {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   return login_id_;
 }
 
 auto Account::GetToken() -> std::string {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   return token_;
 }
 
 auto Account::GetExtra() -> std::string {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   return extra_;
 }
 
 auto Account::GetExtra2() -> std::string {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   return extra_2_;
 }
 
 auto Account::GetLoginState(int* state_num) -> V1LoginState {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   if (state_num) {
     *state_num = login_state_num_;
   }
@@ -125,18 +125,18 @@ auto Account::GetLoginState(int* state_num) -> V1LoginState {
 }
 
 void Account::SetExtra(const std::string& extra) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   extra_ = extra;
 }
 
 void Account::SetExtra2(const std::string& extra) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   extra_2_ = extra;
 }
 
 void Account::SetToken(const std::string& account_id,
                        const std::string& token) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   // Hmm, does this compare logic belong in here?
   if (login_id_ == account_id) {
     token_ = token;
@@ -148,7 +148,7 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
                        const std::string& login_id) {
   bool call_login_did_change = false;
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
 
     // We call out to Python so need to be in game thread.
     assert(InLogicThread());
@@ -183,7 +183,7 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
 }
 
 void Account::SetProductsPurchased(const std::vector<std::string>& products) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   std::unordered_map<std::string, bool> purchases_old = product_purchases_;
   product_purchases_.clear();
   for (auto&& i : products) {
@@ -195,7 +195,7 @@ void Account::SetProductsPurchased(const std::vector<std::string>& products) {
 }
 
 auto Account::GetProductPurchased(const std::string& product) -> bool {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::scoped_lock lock(mutex_);
   auto i = product_purchases_.find(product);
   if (i == product_purchases_.end()) {
     return false;

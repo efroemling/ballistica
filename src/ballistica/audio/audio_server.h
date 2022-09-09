@@ -4,14 +4,15 @@
 #define BALLISTICA_AUDIO_AUDIO_SERVER_H_
 
 #include <map>
+#include <mutex>
 #include <vector>
 
-#include "ballistica/core/module.h"
+#include "ballistica/core/object.h"
 
 namespace ballistica {
 
 /// A module that handles audio processing.
-class AudioServer : public Module {
+class AudioServer {
  public:
   static auto source_id_from_play_id(uint32_t play_id) -> uint32_t {
     return play_id & 0xFFFFu;
@@ -26,9 +27,6 @@ class AudioServer : public Module {
   void PushSetVolumesCall(float music_volume, float sound_volume);
   void PushSetSoundPitchCall(float val);
   void PushSetPausedCall(bool pause);
-
-  void HandleThreadPause() override;
-  void HandleThreadResume() override;
 
   static void BeginInterruption();
   static void EndInterruption();
@@ -64,11 +62,16 @@ class AudioServer : public Module {
   // Stop a sound from playing if it exists.
   void StopSound(uint32_t play_id);
 
+  auto thread() const -> Thread* { return thread_; }
+
  private:
   class ThreadSource;
   struct Impl;
 
-  ~AudioServer() override;
+  ~AudioServer();
+
+  auto OnThreadPause() -> void;
+  auto OnThreadResume() -> void;
 
   void SetPaused(bool paused);
 
@@ -104,6 +107,7 @@ class AudioServer : public Module {
   // std::unique_ptr<Impl> impl_{};
   Impl* impl_{};
 
+  Thread* thread_{};
   Timer* process_timer_{};
   bool have_pending_loads_{};
   bool paused_{};

@@ -8,6 +8,7 @@
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/audio/audio_streamer.h"
 #include "ballistica/audio/ogg_stream.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/math/vector3f.h"
@@ -195,7 +196,7 @@ void AudioServer::SetPaused(bool pause) {
 }
 
 void AudioServer::PushSourceSetIsMusicCall(uint32_t play_id, bool val) {
-  PushCall([this, play_id, val] {
+  thread()->PushCall([this, play_id, val] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetIsMusic(val);
@@ -204,7 +205,7 @@ void AudioServer::PushSourceSetIsMusicCall(uint32_t play_id, bool val) {
 }
 
 void AudioServer::PushSourceSetPositionalCall(uint32_t play_id, bool val) {
-  PushCall([this, play_id, val] {
+  thread()->PushCall([this, play_id, val] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetPositional(val);
@@ -214,7 +215,7 @@ void AudioServer::PushSourceSetPositionalCall(uint32_t play_id, bool val) {
 
 void AudioServer::PushSourceSetPositionCall(uint32_t play_id,
                                             const Vector3f& p) {
-  PushCall([this, play_id, p] {
+  thread()->PushCall([this, play_id, p] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetPosition(p.x, p.y, p.z);
@@ -223,7 +224,7 @@ void AudioServer::PushSourceSetPositionCall(uint32_t play_id,
 }
 
 void AudioServer::PushSourceSetGainCall(uint32_t play_id, float val) {
-  PushCall([this, play_id, val] {
+  thread()->PushCall([this, play_id, val] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetGain(val);
@@ -232,7 +233,7 @@ void AudioServer::PushSourceSetGainCall(uint32_t play_id, float val) {
 }
 
 void AudioServer::PushSourceSetFadeCall(uint32_t play_id, float val) {
-  PushCall([this, play_id, val] {
+  thread()->PushCall([this, play_id, val] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetFade(val);
@@ -241,7 +242,7 @@ void AudioServer::PushSourceSetFadeCall(uint32_t play_id, float val) {
 }
 
 void AudioServer::PushSourceSetLoopingCall(uint32_t play_id, bool val) {
-  PushCall([this, play_id, val] {
+  thread()->PushCall([this, play_id, val] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->SetLooping(val);
@@ -251,7 +252,7 @@ void AudioServer::PushSourceSetLoopingCall(uint32_t play_id, bool val) {
 
 void AudioServer::PushSourcePlayCall(uint32_t play_id,
                                      Object::Ref<SoundData>* sound) {
-  PushCall([this, play_id, sound] {
+  thread()->PushCall([this, play_id, sound] {
     ThreadSource* s = GetPlayingSound(play_id);
 
     // If this play command is valid, pass it along.
@@ -271,7 +272,7 @@ void AudioServer::PushSourcePlayCall(uint32_t play_id,
 }
 
 void AudioServer::PushSourceStopCall(uint32_t play_id) {
-  PushCall([this, play_id] {
+  thread()->PushCall([this, play_id] {
     ThreadSource* s = GetPlayingSound(play_id);
     if (s) {
       s->Stop();
@@ -280,7 +281,7 @@ void AudioServer::PushSourceStopCall(uint32_t play_id) {
 }
 
 void AudioServer::PushSourceEndCall(uint32_t play_id) {
-  PushCall([this, play_id] {
+  thread()->PushCall([this, play_id] {
     ThreadSource* s = GetPlayingSound(play_id);
     assert(s);
     s->client_source()->Lock(5);
@@ -292,11 +293,11 @@ void AudioServer::PushSourceEndCall(uint32_t play_id) {
 }
 
 void AudioServer::PushResetCall() {
-  PushCall([this] { Reset(); });
+  thread()->PushCall([this] { Reset(); });
 }
 
 void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
-  PushCall([this, p] {
+  thread()->PushCall([this, p] {
 #if BA_ENABLE_AUDIO
     if (!paused_) {
       ALfloat lpos[3] = {p.x, p.y, p.z};
@@ -309,7 +310,7 @@ void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
 
 void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
                                                  const Vector3f& up) {
-  PushCall([this, forward, up] {
+  thread()->PushCall([this, forward, up] {
 #if BA_ENABLE_AUDIO
     if (!paused_) {
       ALfloat lorient[6] = {forward.x, forward.y, forward.z, up.x, up.y, up.z};
@@ -321,17 +322,17 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
 }
 
 AudioServer::AudioServer(Thread* thread)
-    : Module("audio", thread),
-      impl_{new AudioServer::Impl()}
-// impl_{std::make_unique<AudioServer::Impl>()}
-{
+    : thread_(thread), impl_{new AudioServer::Impl()} {
   // we're a singleton...
   assert(g_audio_server == nullptr);
   g_audio_server = this;
 
+  thread->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
+  thread->AddResumeCallback(NewLambdaRunnableRaw([this] { OnThreadResume(); }));
+
   // Get our thread to give us periodic processing time.
-  process_timer_ = NewThreadTimer(kAudioProcessIntervalNormal, true,
-                                  NewLambdaRunnable([this] { Process(); }));
+  process_timer_ = thread->NewTimer(kAudioProcessIntervalNormal, true,
+                                    NewLambdaRunnable([this] { Process(); }));
 
 #if BA_ENABLE_AUDIO
 
@@ -782,8 +783,7 @@ void AudioServer::ThreadSource::UpdateAvailability() {
 
   if (!busy) {
     if (g_audio->available_sources_mutex().try_lock()) {
-      std::lock_guard<std::mutex> lock(g_audio->available_sources_mutex(),
-                                       std::adopt_lock);
+      std::lock_guard lock(g_audio->available_sources_mutex(), std::adopt_lock);
       Stop();
       Reset();
 #if BA_DEBUG_BUILD
@@ -1074,18 +1074,18 @@ void AudioServer::ThreadSource::UpdatePitch() {
 }
 
 void AudioServer::PushSetVolumesCall(float music_volume, float sound_volume) {
-  PushCall([this, music_volume, sound_volume] {
+  thread()->PushCall([this, music_volume, sound_volume] {
     SetSoundVolume(sound_volume);
     SetMusicVolume(music_volume);
   });
 }
 
 void AudioServer::PushSetSoundPitchCall(float val) {
-  PushCall([this, val] { SetSoundPitch(val); });
+  thread()->PushCall([this, val] { SetSoundPitch(val); });
 }
 
 void AudioServer::PushSetPausedCall(bool pause) {
-  PushCall([this, pause] {
+  thread()->PushCall([this, pause] {
     if (g_buildconfig.ostype_android()) {
       Log("Error: Shouldn't be getting SetPausedCall on android.");
     }
@@ -1095,7 +1095,7 @@ void AudioServer::PushSetPausedCall(bool pause) {
 
 void AudioServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<MediaComponentData>*>& components) {
-  PushCall([this, components] {
+  thread()->PushCall([this, components] {
     // Unload all components we were passed...
     for (auto&& i : components) {
       (**i).Unload();
@@ -1107,7 +1107,7 @@ void AudioServer::PushComponentUnloadCall(
 }
 
 void AudioServer::PushHavePendingLoadsCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     have_pending_loads_ = true;
     UpdateTimerInterval();
   });
@@ -1115,16 +1115,16 @@ void AudioServer::PushHavePendingLoadsCall() {
 
 void AudioServer::AddSoundRefDelete(const Object::Ref<SoundData>* c) {
   {
-    std::lock_guard<std::mutex> lock(sound_ref_delete_list_mutex_);
+    std::scoped_lock lock(sound_ref_delete_list_mutex_);
     sound_ref_delete_list_.push_back(c);
   }
   // Now push a call to the game thread to do the deletes.
-  g_game->PushCall([] { g_audio_server->ClearSoundRefDeleteList(); });
+  g_game->thread()->PushCall([] { g_audio_server->ClearSoundRefDeleteList(); });
 }
 
 void AudioServer::ClearSoundRefDeleteList() {
   assert(InLogicThread());
-  std::lock_guard<std::mutex> lock(sound_ref_delete_list_mutex_);
+  std::scoped_lock lock(sound_ref_delete_list_mutex_);
   for (const Object::Ref<SoundData>* i : sound_ref_delete_list_) {
     delete i;
   }
@@ -1149,9 +1149,9 @@ void AudioServer::BeginInterruption() {
   }
 }
 
-void AudioServer::HandleThreadPause() { SetPaused(true); }
+auto AudioServer::OnThreadPause() -> void { SetPaused(true); }
 
-void AudioServer::HandleThreadResume() { SetPaused(false); }
+auto AudioServer::OnThreadResume() -> void { SetPaused(false); }
 
 void AudioServer::EndInterruption() {
   assert(!InAudioThread());

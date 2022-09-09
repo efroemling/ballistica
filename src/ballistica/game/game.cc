@@ -66,7 +66,7 @@ const int kMaxChatMessages = 40;
 const int kKickBanSeconds = 5 * 60;
 
 Game::Game(Thread* thread)
-    : Module("game", thread),
+    : thread_(thread),
       game_roster_(cJSON_CreateArray()),
       realtimers_(new TimerList()),
       connections_(std::make_unique<ConnectionSet>()) {
@@ -88,6 +88,9 @@ Game::Game(Thread* thread)
     InitSpecialChars();
 
     Context::Init();
+
+    // We want to be informed when our thread is pausing.
+    thread->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
 
     // Waaah does UI need to be a bs::Object?
     // Update: yes it does in order to be a context target.
@@ -116,7 +119,7 @@ Game::Game(Thread* thread)
     // This way it is more likely we can show a fatal error dialog
     // since the main thread won't be blocking waiting for us to init.
     std::string what = e.what();
-    PushCall([what] {
+    this->thread()->PushCall([what] {
       // Just throw a standard exception since our what already
       // contains a stack trace; if we throw an Exception we wind
       // up with a useless second one.
@@ -125,8 +128,16 @@ Game::Game(Thread* thread)
   }
 }
 
+auto Game::OnThreadPause() -> void {
+  ScopedSetContext cp(GetUIContextTarget());
+
+  // Let Python and internal layers do their thing.
+  g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
+  g_app_internal->OnLogicThreadPause();
+}
+
 void Game::InitSpecialChars() {
-  std::lock_guard<std::mutex> lock(special_char_mutex_);
+  std::scoped_lock lock(special_char_mutex_);
 
   special_char_strings_[SpecialChar::kDownArrow] = "\xee\x80\x84";
   special_char_strings_[SpecialChar::kUpArrow] = "\xee\x80\x83";
@@ -244,13 +255,13 @@ void Game::ResetActivityTracking() {
 #if BA_VR_BUILD
 
 void Game::PushVRHandsState(const VRHandsState& state) {
-  PushCall([this, state] { vr_hands_state_ = state; });
+  thread()->PushCall([this, state] { vr_hands_state_ = state; });
 }
 
 #endif  // BA_VR_BUILD
 
 void Game::PushMediaPruneCall(int level) {
-  PushCall([level] {
+  thread()->PushCall([level] {
     assert(InLogicThread());
     g_media->Prune(level);
   });
@@ -260,13 +271,14 @@ void Game::PushSetV1LoginCall(V1AccountType account_type,
                               V1LoginState account_state,
                               const std::string& account_name,
                               const std::string& account_id) {
-  PushCall([this, account_type, account_state, account_name, account_id] {
+  thread()->PushCall([this, account_type, account_state, account_name,
+                      account_id] {
     g_account->SetLogin(account_type, account_state, account_name, account_id);
   });
 }
 
 void Game::PushInitialScreenCreatedCall() {
-  PushCall([this] { InitialScreenCreated(); });
+  thread()->PushCall([this] { InitialScreenCreated(); });
 }
 
 void Game::InitialScreenCreated() {
@@ -288,22 +300,22 @@ void Game::InitialScreenCreated() {
 
   // Set up our timers.
   process_timer_ =
-      NewThreadTimer(0, true, NewLambdaRunnable([this] { Process(); }));
-  media_prune_timer_ =
-      NewThreadTimer(2345, true, NewLambdaRunnable([this] { Prune(); }));
+      thread()->NewTimer(0, true, NewLambdaRunnable([this] { Process(); }));
+  media_prune_timer_ = thread()->NewTimer(
+      2345, true, NewLambdaRunnable([this] { PruneMedia(); }));
 
   // Normally we schedule updates when we're asked to draw a frame.
   // In headless mode, however, we're not drawing, so we need a dedicated
   // timer to take its place.
   if (HeadlessMode()) {
     headless_update_timer_ =
-        NewThreadTimer(8, true, NewLambdaRunnable([this] { Update(); }));
+        thread()->NewTimer(8, true, NewLambdaRunnable([this] { Update(); }));
   }
 
   RunAppLaunchCommands();
 }
 
-void Game::Prune() { g_media->Prune(); }
+void Game::PruneMedia() { g_media->Prune(); }
 
 // Launch into main menu or whatever else.
 void Game::RunAppLaunchCommands() {
@@ -333,8 +345,6 @@ void Game::RunAppLaunchCommands() {
 
   UpdateProcessTimer();
 }
-
-Game::~Game() = default;
 
 // Set up our sleeping based on what we're doing.
 void Game::UpdateProcessTimer() {
@@ -497,7 +507,7 @@ void Game::HandleQuitOnIdle() {
     if (!idle_exiting_ && idle_seconds > (idle_exit_minutes_.value() * 60.0f)) {
       idle_exiting_ = true;
 
-      PushCall([this, idle_seconds] {
+      thread()->PushCall([this, idle_seconds] {
         assert(InLogicThread());
 
         // Just go through _ba.quit()
@@ -708,7 +718,7 @@ auto Game::IsInUIContext() const -> bool {
 }
 
 void Game::PushShowURLCall(const std::string& url) {
-  PushCall([url] {
+  thread()->PushCall([url] {
     assert(InLogicThread());
     assert(g_python);
     g_python->ShowURL(url);
@@ -725,7 +735,7 @@ auto Game::GetForegroundContext() -> Context {
 }
 
 void Game::PushBackButtonCall(InputDevice* input_device) {
-  PushCall([this, input_device] {
+  thread()->PushCall([this, input_device] {
     assert(InLogicThread());
 
     // Ignore if UI isn't up yet.
@@ -747,7 +757,7 @@ void Game::PushBackButtonCall(InputDevice* input_device) {
 }
 
 void Game::PushStringEditSetCall(const std::string& value) {
-  PushCall([value] {
+  thread()->PushCall([value] {
     if (!g_ui) {
       Log("Error: No ui on StringEditSetEvent.");
       return;
@@ -764,7 +774,7 @@ void Game::PushStringEditSetCall(const std::string& value) {
 }
 
 void Game::PushStringEditCancelCall() {
-  PushCall([] {
+  thread()->PushCall([] {
     if (!g_ui) {
       Log("Error: No ui in PushStringEditCancelCall.");
       return;
@@ -903,7 +913,7 @@ void Game::RunMainMenu() {
 // in the current visible context.
 
 void Game::PushInGameConsoleScriptCommand(const std::string& command) {
-  PushCall([this, command] {
+  thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(GetForegroundContext());
     PythonCommand cmd(command, "<in-game-console>");
@@ -932,7 +942,7 @@ void Game::PushInGameConsoleScriptCommand(const std::string& command) {
 
 // Commands run via stdin.
 void Game::PushStdinScriptCommand(const std::string& command) {
-  PushCall([this, command] {
+  thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(GetForegroundContext());
     PythonCommand cmd(command, "<stdin>");
@@ -966,7 +976,7 @@ void Game::PushStdinScriptCommand(const std::string& command) {
 }
 
 void Game::PushInterruptSignalCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     assert(InLogicThread());
 
     // Special case; when running under the server-wrapper, we completely
@@ -981,26 +991,18 @@ void Game::PushInterruptSignalCall() {
 }
 
 void Game::PushAskUserForTelnetAccessCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     assert(InLogicThread());
     ScopedSetContext cp(GetUIContext());
     g_python->obj(Python::ObjID::kTelnetAccessRequestCall).Call();
   });
 }
 
-void Game::HandleThreadPause() {
-  ScopedSetContext cp(GetUIContextTarget());
-
-  // Let Python and internal layers do their thing.
-  g_python->obj(Python::ObjID::kOnAppPauseCall).Call();
-  g_app_internal->OnLogicThreadPause();
-}
-
 void Game::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
   // Since we're mucking with refs, need to limit to game thread.
   BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
-  PushCall([call] {
+  thread()->PushCall([call] {
     assert(call.exists());
     call->Run();
   });
@@ -1011,7 +1013,7 @@ void Game::PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
   // Since we're mucking with refs, need to limit to game thread.
   BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
-  PushCall([call, args] {
+  thread()->PushCall([call, args] {
     assert(call.exists());
     call->Run(args.get());
   });
@@ -1025,7 +1027,7 @@ void Game::PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call) {
   // object to be passed in.
   assert(call.exists() && call->object_strong_ref_count() > 0);
 
-  PushCall([call] {
+  thread()->PushCall([call] {
     if (call.exists()) {
       Python::ScopedCallLabel label("PythonWeakCallMessage");
       call->Run();
@@ -1042,13 +1044,13 @@ void Game::PushPythonWeakCallArgs(
   // object to be passed in.
   assert(call.exists() && call->object_strong_ref_count() > 0);
 
-  PushCall([call, args] {
+  thread()->PushCall([call, args] {
     if (call.exists()) call->Run(args.get());
   });
 }
 
 void Game::PushPythonRawCallable(PyObject* callable) {
-  PushCall([this, callable] {
+  thread()->PushCall([this, callable] {
     assert(InLogicThread());
 
     // Lets run this in the UI context.
@@ -1065,7 +1067,8 @@ void Game::PushPythonRawCallable(PyObject* callable) {
 
 void Game::PushScreenMessage(const std::string& message,
                              const Vector3f& color) {
-  PushCall([message, color] { g_graphics->AddScreenMessage(message, color); });
+  thread()->PushCall(
+      [message, color] { g_graphics->AddScreenMessage(message, color); });
 }
 
 void Game::SetReplaySpeedExponent(int val) {
@@ -1113,19 +1116,19 @@ auto Game::GetUIContext() const -> Context {
 }
 
 void Game::PushToggleManualCameraCall() {
-  PushCall([] { g_graphics->ToggleManualCamera(); });
+  thread()->PushCall([] { g_graphics->ToggleManualCamera(); });
 }
 
 void Game::PushToggleDebugInfoDisplayCall() {
-  PushCall([] { g_graphics->ToggleNetworkDebugDisplay(); });
+  thread()->PushCall([] { g_graphics->ToggleNetworkDebugDisplay(); });
 }
 
 void Game::PushToggleCollisionGeometryDisplayCall() {
-  PushCall([] { g_graphics->ToggleDebugDraw(); });
+  thread()->PushCall([] { g_graphics->ToggleDebugDraw(); });
 }
 
 void Game::PushMainMenuPressCall(InputDevice* device) {
-  PushCall([this, device] { MainMenuPress(device); });
+  thread()->PushCall([this, device] { MainMenuPress(device); });
 }
 
 void Game::MainMenuPress(InputDevice* device) {
@@ -1135,7 +1138,7 @@ void Game::MainMenuPress(InputDevice* device) {
 
 void Game::PushScreenResizeCall(float virtual_width, float virtual_height,
                                 float pixel_width, float pixel_height) {
-  PushCall([=] {
+  thread()->PushCall([=] {
     ScreenResize(virtual_width, virtual_height, pixel_width, pixel_height);
   });
 }
@@ -1158,7 +1161,8 @@ void Game::ScreenResize(float virtual_width, float virtual_height,
 
 void Game::PushGameServiceAchievementListCall(
     const std::set<std::string>& achievements) {
-  PushCall([this, achievements] { GameServiceAchievementList(achievements); });
+  thread()->PushCall(
+      [this, achievements] { GameServiceAchievementList(achievements); });
 }
 
 void Game::GameServiceAchievementList(
@@ -1171,7 +1175,7 @@ void Game::GameServiceAchievementList(
 void Game::PushScoresToBeatResponseCall(bool success,
                                         const std::list<ScoreToBeat>& scores,
                                         void* py_callback) {
-  PushCall([this, success, scores, py_callback] {
+  thread()->PushCall([this, success, scores, py_callback] {
     ScoresToBeatResponse(success, scores, py_callback);
   });
 }
@@ -1185,15 +1189,16 @@ void Game::ScoresToBeatResponse(bool success,
 }
 
 void Game::PushPlaySoundCall(SystemSoundID sound) {
-  PushCall([sound] { g_audio->PlaySound(g_media->GetSound(sound)); });
+  thread()->PushCall([sound] { g_audio->PlaySound(g_media->GetSound(sound)); });
 }
 
 void Game::PushFriendScoreSetCall(const FriendScoreSet& score_set) {
-  PushCall([score_set] { g_python->HandleFriendScoresCB(score_set); });
+  thread()->PushCall(
+      [score_set] { g_python->HandleFriendScoresCB(score_set); });
 }
 
 void Game::PushConfirmQuitCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     assert(InLogicThread());
     if (HeadlessMode()) {
       Log("PushConfirmQuitCall() unhandled on headless.");
@@ -1256,11 +1261,11 @@ void Game::Draw() {
 }
 
 void Game::PushFrameDefRequest() {
-  PushCall([this] { Draw(); });
+  thread()->PushCall([this] { Draw(); });
 }
 
 void Game::PushOnAppResumeCall() {
-  PushCall([] {
+  thread()->PushCall([] {
     // Wipe out whatever input device was in control of the UI.
     assert(g_ui);
     g_ui->SetUIInputDevice(nullptr);
@@ -1348,7 +1353,7 @@ void Game::ApplyConfig() {
   // FIXME: this should exist either on the client or the server; not both.
   //  (and should be communicated via frameldefs/etc.)
   bool tv_border = g_app_config->Resolve(AppConfig::BoolID::kTVBorder);
-  g_graphics_server->PushCall(
+  g_graphics_server->thread()->PushCall(
       [tv_border] { g_graphics_server->set_tv_border(tv_border); });
   g_graphics->set_tv_border(tv_border);
 
@@ -1427,11 +1432,11 @@ void Game::ApplyConfig() {
 }
 
 void Game::PushApplyConfigCall() {
-  PushCall([this] { ApplyConfig(); });
+  thread()->PushCall([this] { ApplyConfig(); });
 }
 
 void Game::PushRemoveGraphicsServerRenderHoldCall() {
-  PushCall([] {
+  thread()->PushCall([] {
     // This call acts as a flush of sorts; when it goes through,
     // we push a call to the graphics server saying its ok for it
     // to start rendering again.  Thus any already-queued-up
@@ -1442,7 +1447,7 @@ void Game::PushRemoveGraphicsServerRenderHoldCall() {
 
 void Game::PushFreeMediaComponentRefsCall(
     const std::vector<Object::Ref<MediaComponentData>*>& components) {
-  PushCall([components] {
+  thread()->PushCall([components] {
     for (auto&& i : components) {
       delete i;
     }
@@ -1450,7 +1455,7 @@ void Game::PushFreeMediaComponentRefsCall(
 }
 
 void Game::PushHavePendingLoadsDoneCall() {
-  PushCall([] { g_media->ClearPendingLoadsDoneList(); });
+  thread()->PushCall([] { g_media->ClearPendingLoadsDoneList(); });
 }
 
 void Game::ToggleConsole() {
@@ -1461,7 +1466,7 @@ void Game::ToggleConsole() {
 }
 
 void Game::PushConsolePrintCall(const std::string& msg) {
-  PushCall([msg] {
+  thread()->PushCall([msg] {
     // Send them to the console if its been created or store them
     // for when it is (unless we're headless in which case it never will).
     if (auto console = g_app_globals->console) {
@@ -1473,14 +1478,14 @@ void Game::PushConsolePrintCall(const std::string& msg) {
 }
 
 void Game::PushHavePendingLoadsCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     have_pending_loads_ = true;
     UpdateProcessTimer();
   });
 }
 
 void Game::PushShutdownCall(bool soft) {
-  PushCall([this, soft] { Shutdown(soft); });
+  thread()->PushCall([this, soft] { Shutdown(soft); });
 }
 
 void Game::Shutdown(bool soft) {
@@ -1499,7 +1504,7 @@ void Game::Shutdown(bool soft) {
 
     // Let's do the same stuff we do when our thread is pausing. (committing
     // account-client to disk, etc).
-    HandleThreadPause();
+    OnThreadPause();
 
     // Attempt to report/store outstanding log stuff.
     g_app_internal->PutLog(false);
@@ -1553,7 +1558,7 @@ void Game::SetLanguageKeys(
     const std::unordered_map<std::string, std::string>& language) {
   assert(InLogicThread());
   {
-    std::lock_guard<std::mutex> lock(language_mutex_);
+    std::scoped_lock lock(language_mutex_);
     language_ = language;
   }
 
@@ -1797,7 +1802,7 @@ auto Game::CompileResourceString(const std::string& s, const std::string& loc,
 auto Game::GetResourceString(const std::string& key) -> std::string {
   std::string val;
   {
-    std::lock_guard<std::mutex> lock(language_mutex_);
+    std::scoped_lock lock(language_mutex_);
     auto i = language_.find(key);
     if (i != language_.end()) {
       val = i->second;
@@ -1807,7 +1812,7 @@ auto Game::GetResourceString(const std::string& key) -> std::string {
 }
 
 auto Game::CharStr(SpecialChar id) -> std::string {
-  std::lock_guard<std::mutex> lock(special_char_mutex_);
+  std::scoped_lock lock(special_char_mutex_);
   std::string val;
   auto i = special_char_strings_.find(id);
   if (i != special_char_strings_.end()) {

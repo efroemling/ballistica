@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_material.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/dynamics/material/material_component.h"
@@ -147,7 +148,7 @@ void PythonClassMaterial::tp_dealloc(PythonClassMaterial* self) {
   // need be.. otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Material>* ptr = self->material_;
-    g_game->PushCall([ptr] { Delete(ptr); });
+    g_game->thread()->PushCall([ptr] { Delete(ptr); });
   } else {
     Delete(self->material_);
   }

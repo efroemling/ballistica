@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_context.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
@@ -187,7 +188,7 @@ void PythonClassContext::tp_dealloc(PythonClassContext* self) {
   if (!InLogicThread()) {
     Context* c = self->context_;
     Context* c2 = self->context_prev_;
-    g_game->PushCall([c, c2] {
+    g_game->thread()->PushCall([c, c2] {
       delete c;
       delete c2;
     });

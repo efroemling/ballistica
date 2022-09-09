@@ -9,28 +9,14 @@
 
 namespace ballistica {
 
-bool Thread::threads_paused_ = false;
-
-void Thread::AddCurrentThreadName(const std::string& name) {
-  std::lock_guard<std::mutex> lock(g_app_globals->thread_name_map_mutex);
+void Thread::SetInternalThreadName(const std::string& name) {
+  std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
   std::thread::id thread_id = std::this_thread::get_id();
-  auto i = g_app_globals->thread_name_map.find(thread_id);
-  std::string s;
-  if (i != g_app_globals->thread_name_map.end()) {
-    s = i->second;
-  }
-  if (!strstr(s.c_str(), name.c_str())) {
-    if (s.empty()) {
-      s = name;
-    } else {
-      s = s + "+" + name;
-    }
-  }
-  g_app_globals->thread_name_map[std::this_thread::get_id()] = s;
+  g_app_globals->thread_name_map[std::this_thread::get_id()] = name;
 }
 
 void Thread::ClearCurrentThreadName() {
-  std::lock_guard<std::mutex> lock(g_app_globals->thread_name_map_mutex);
+  std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
   auto i = g_app_globals->thread_name_map.find(std::this_thread::get_id());
   if (i != g_app_globals->thread_name_map.end()) {
     g_app_globals->thread_name_map.erase(i);
@@ -50,27 +36,10 @@ void Thread::UpdateMainThreadID() {
   }
 }
 
-void Thread::KillModule(const Module& module) {
-  for (auto i = modules_.begin(); i != modules_.end(); i++) {
-    if (*i == &module) {
-      delete *i;
-      modules_.erase(i);
-      return;
-    }
-  }
-  throw Exception("Module not found on this thread");
-}
+// These are all exactly the same; its just a way to try and clarify
+// in stack traces which thread is running in case it is not otherwise
+// evident.
 
-void Thread::KillModules() {
-  for (auto i : modules_) {
-    delete i;
-  }
-  modules_.clear();
-}
-
-// These are all exactly the same, but by running different ones for
-// different thread groups makes its easy to see which thread is which
-// in profilers, backtraces, etc.
 auto Thread::RunLogicThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
@@ -108,13 +77,11 @@ void Thread::WaitForNextEvent(bool single_cycle) {
     return;
   }
 
-  // We also never wait if any of our modules have pending runnables.
+  // We also never wait if we have pending runnables.
   // (we run all existing runnables in each loop cycle, but one of those
   // may have enqueued more).
-  for (auto&& i : modules_) {
-    if (i->has_pending_runnables()) {
-      return;
-    }
+  if (has_pending_runnables()) {
+    return;
   }
 
   // While we're waiting, allow other python threads to run.
@@ -124,7 +91,7 @@ void Thread::WaitForNextEvent(bool single_cycle) {
 
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
-  if ((!paused_) && timers_.active_timer_count() > 0) {
+  if (!paused_ && timers_.active_timer_count() > 0) {
     millisecs_t real_time = GetRealTime();
     millisecs_t wait_time = timers_.GetTimeToNextExpire(real_time);
     if (wait_time > 0) {
@@ -185,53 +152,27 @@ auto Thread::RunEventLoop(bool single_cycle) -> int {
     GetThreadMessages(&thread_messages);
     for (auto& thread_message : thread_messages) {
       switch (thread_message.type) {
-        case ThreadMessage::Type::kNewModule: {
-          // Launch a new module and unlock.
-          ModuleLauncher* tl;
-          tl = static_cast<ModuleLauncher*>(thread_message.pval);
-          tl->Launch(this);
-          auto cmd =
-              static_cast<uint32_t>(ThreadMessage::Type::kNewModuleConfirm);
-          WriteToOwner(&cmd, sizeof(cmd));
-          break;
-        }
         case ThreadMessage::Type::kRunnable: {
-          auto module_id = thread_message.ival;
-          Module* t = GetModule(module_id);
-          assert(t);
-          auto e = static_cast<Runnable*>(thread_message.pval);
-
-          // Add the event to our list.
-          t->PushLocalRunnable(e);
-          RunnablesWhilePausedSanityCheck(e);
-
+          PushLocalRunnable(thread_message.runnable,
+                            thread_message.completion_flag);
           break;
         }
         case ThreadMessage::Type::kShutdown: {
-          // Shutdown; die!
           done_ = true;
-          break;
-        }
-        case ThreadMessage::Type::kResume: {
-          assert(paused_);
-
-          // Let all modules do pause-related stuff.
-          for (auto&& i : modules_) {
-            i->HandleThreadResume();
-          }
-          paused_ = false;
           break;
         }
         case ThreadMessage::Type::kPause: {
           assert(!paused_);
-
-          // Let all modules do pause-related stuff.
-          for (auto&& i : modules_) {
-            i->HandleThreadPause();
-          }
+          RunPauseCallbacks();
           paused_ = true;
           last_pause_time_ = GetRealTime();
           messages_since_paused_ = 0;
+          break;
+        }
+        case ThreadMessage::Type::kResume: {
+          assert(paused_);
+          RunResumeCallbacks();
+          paused_ = false;
           break;
         }
         default: {
@@ -239,38 +180,21 @@ auto Thread::RunEventLoop(bool single_cycle) -> int {
         }
       }
 
-      // If the thread is going down.
       if (done_) {
         break;
       }
     }
 
-    // Run timers && queued module runnables unless we're paused.
     if (!paused_) {
-      // Run timers.
       timers_.Run(GetRealTime());
-
-      // Run module-messages.
-      for (auto& module_entry : modules_) {
-        module_entry->RunPendingRunnables();
-      }
+      RunPendingRunnables();
     }
+
     if (done_ || single_cycle) {
       break;
     }
   }
   return 0;
-}
-
-void Thread::RunnablesWhilePausedSanityCheck(Runnable* e) {
-  // We generally shouldn't be getting messages while paused..
-  // (check both our pause-state and the global one; wanna ignore things
-  // that might slip through if some just-unlocked thread msgs us but we
-  // haven't been unlocked yet)
-
-  // UPDATE - we are migrating away from distinct message classes and towards
-  // LambdaRunnables for everything, which means that we can't easily
-  // see details of what is coming through.  Disabling this check for now.
 }
 
 void Thread::GetThreadMessages(std::list<ThreadMessage>* messages) {
@@ -323,13 +247,12 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
       // Let 'er rip.
       thread_ = new std::thread(func, this);
 
-      // The thread lets us know when its up and running.
-      std::unique_lock<std::mutex> lock(data_to_client_mutex_);
+      // Block until the thread is bootstrapped.
+      // (maybe not necessary, but let's be cautious in case we'd
+      // try to use things like thread_id before they're known).
+      std::unique_lock lock(client_listener_mutex_);
+      client_listener_cv_.wait(lock, [this] { return bootstrapped_; });
 
-      uint32_t cmd;
-      ReadFromThread(&lock, &cmd, sizeof(cmd));
-      assert(static_cast<ThreadMessage::Type>(cmd)
-             == ThreadMessage::Type::kNewThreadConfirm);
       break;
     }
     case ThreadType::kMain: {
@@ -338,8 +261,11 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
       assert(std::this_thread::get_id() == g_app_globals->main_thread_id);
       thread_id_ = std::this_thread::get_id();
 
-      // Hmmm we might want to set our thread name here,
-      // as we do for other threads?
+      // Set our own thread-id-to-name mapping.
+      SetInternalThreadName("main");
+
+      // Hmmm we might want to set our OS thread name here,
+      // as we do for other threads? (SetCurrentThreadName).
       // However on linux that winds up being what we see in top/etc
       // so maybe shouldn't.
       break;
@@ -351,46 +277,60 @@ auto Thread::ThreadMain() -> int {
   try {
     assert(type_ == ThreadType::kStandard);
     thread_id_ = std::this_thread::get_id();
-
+    const char* name;
     const char* id_string;
+
     switch (identifier_) {
       case ThreadIdentifier::kLogic:
+        name = "logic";
         id_string = "ballistica logic";
         break;
       case ThreadIdentifier::kStdin:
+        name = "stdin";
         id_string = "ballistica stdin";
         break;
       case ThreadIdentifier::kMedia:
+        name = "media";
         id_string = "ballistica media";
         break;
       case ThreadIdentifier::kFileOut:
+        name = "fileout";
         id_string = "ballistica file-out";
         break;
       case ThreadIdentifier::kMain:
+        name = "main";
         id_string = "ballistica main";
         break;
       case ThreadIdentifier::kAudio:
+        name = "audio";
         id_string = "ballistica audio";
         break;
       case ThreadIdentifier::kBGDynamics:
+        name = "bgdynamics";
         id_string = "ballistica bg-dynamics";
         break;
       case ThreadIdentifier::kNetworkWrite:
+        name = "networkwrite";
         id_string = "ballistica network writing";
         break;
       default:
         throw Exception();
     }
+    assert(name && id_string);
+    SetInternalThreadName(name);
     g_platform->SetCurrentThreadName(id_string);
 
-    // Send our owner a confirmation that we're alive.
-    auto cmd = static_cast<uint32_t>(ThreadMessage::Type::kNewThreadConfirm);
-    WriteToOwner(&cmd, sizeof(cmd));
+    // Mark ourself as bootstrapped and signal listeners so
+    // anyone waiting for us to spin up can move along.
+    {
+      std::scoped_lock lock(client_listener_mutex_);
+      bootstrapped_ = true;
+    }
+    client_listener_cv_.notify_all();
 
     // Now just run our loop until we die.
     int result = RunEventLoop();
 
-    KillModules();
     ClearCurrentThreadName();
     return result;
   } catch (const std::exception& e) {
@@ -453,15 +393,6 @@ void Thread::LogThreadMessageTally() {
         case ThreadMessage::Type::kRunnable:
           s += "kRunnable";
           break;
-        case ThreadMessage::Type::kNewModule:
-          s += "kNewModule";
-          break;
-        case ThreadMessage::Type::kNewModuleConfirm:
-          s += "kNewModuleConfirm";
-          break;
-        case ThreadMessage::Type::kNewThreadConfirm:
-          s += "kNewThreadConfirm";
-          break;
         case ThreadMessage::Type::kPause:
           s += "kPause";
           break;
@@ -473,8 +404,8 @@ void Thread::LogThreadMessageTally() {
           break;
       }
       if (m.type == ThreadMessage::Type::kRunnable) {
-        std::string m_name = g_platform->DemangleCXXSymbol(
-            typeid(*(static_cast<Runnable*>(m.pval))).name());
+        std::string m_name =
+            g_platform->DemangleCXXSymbol(typeid(*(m.runnable)).name());
         s += std::string(": ") + m_name;
       }
       auto j = tally.find(s);
@@ -550,55 +481,15 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
   thread_message_cv_.notify_all();
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantParameter"
-
-void Thread::WriteToOwner(const void* data, uint32_t size) {
-  assert(std::this_thread::get_id() == thread_id());
-  {
-    std::unique_lock<std::mutex> lock(data_to_client_mutex_);
-    data_to_client_.emplace_back(size);
-    memcpy(&(data_to_client_.back()[0]), data, size);
-  }
-  data_to_client_cv_.notify_all();
-}
-
-void Thread::ReadFromThread(std::unique_lock<std::mutex>* lock, void* buffer,
-                            uint32_t size) {
-  // Threads cant read from themselves.. could load to lock-deadlock.
-  assert(std::this_thread::get_id() != thread_id());
-  data_to_client_cv_.wait(*lock, [this] {
-    // Go back to sleep on spurious wakeups
-    // (if we didn't wind up with any new messages)
-    return (!data_to_client_.empty());
-  });
-
-  // Read the oldest thing on our in-data list.
-  assert(!data_to_client_.empty());
-  assert(data_to_client_.front().size() == size);
-  memcpy(buffer, &(data_to_client_.front()[0]), size);
-  data_to_client_.pop_front();
-}
-
-#pragma clang diagnostic pop
-
 void Thread::SetThreadsPaused(bool paused) {
-  threads_paused_ = paused;
+  g_app_globals->threads_paused = paused;
   for (auto&& i : g_app_globals->pausable_threads) {
     i->SetPaused(paused);
   }
 }
 
-auto Thread::AreThreadsPaused() -> bool { return threads_paused_; }
-
-auto Thread::RegisterModule(const std::string& name, Module* module) -> int {
-  AddCurrentThreadName(name);
-  // This should assure we were properly launched.
-  // (the ModuleLauncher will set the index to what ours will be)
-  int index = static_cast<int>(modules_.size());
-  // module_entries_.emplace_back(module, name, index);
-  modules_.push_back(module);
-  return index;
+auto Thread::AreThreadsPaused() -> bool {
+  return g_app_globals->threads_paused;
 }
 
 auto Thread::NewTimer(millisecs_t length, bool repeat,
@@ -613,12 +504,14 @@ auto Thread::GetCurrentThreadName() -> std::string {
     return "unknown(not-yet-inited)";
   }
   {
-    std::lock_guard<std::mutex> lock(g_app_globals->thread_name_map_mutex);
+    std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
     auto i = g_app_globals->thread_name_map.find(std::this_thread::get_id());
     if (i != g_app_globals->thread_name_map.end()) {
       return i->second;
     }
   }
+
+  // FIXME - move this to platform.
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
   std::string name = "unknown (sys-name=";
   char buffer[256];
@@ -632,6 +525,101 @@ auto Thread::GetCurrentThreadName() -> std::string {
 #else
   return "unknown";
 #endif
+}
+
+void Thread::RunPendingRunnables() {
+  // Pull all runnables off the list first (its possible for one of these
+  // runnables to add more) and then process them.
+  assert(std::this_thread::get_id() == thread_id());
+  std::list<std::pair<Runnable*, bool*>> runnables;
+  runnables_.swap(runnables);
+  bool do_notify_listeners{};
+  for (auto&& i : runnables) {
+    i.first->Run();
+    delete i.first;
+
+    // If this runnable wanted to be flagged when done, set its flag
+    // and make a note to wake all client listeners.
+    if (i.second != nullptr) {
+      *(i.second) = true;
+      do_notify_listeners = true;
+    }
+  }
+  if (do_notify_listeners) {
+    client_listener_cv_.notify_all();
+  }
+}
+
+void Thread::RunPauseCallbacks() {
+  for (Runnable* i : pause_callbacks_) {
+    i->Run();
+  }
+}
+
+void Thread::RunResumeCallbacks() {
+  for (Runnable* i : resume_callbacks_) {
+    i->Run();
+  }
+}
+
+void Thread::PushLocalRunnable(Runnable* runnable, bool* completion_flag) {
+  assert(std::this_thread::get_id() == thread_id());
+  runnables_.push_back(std::make_pair(runnable, completion_flag));
+}
+
+void Thread::PushCrossThreadRunnable(Runnable* runnable,
+                                     bool* completion_flag) {
+  PushThreadMessage(Thread::ThreadMessage(
+      Thread::ThreadMessage::Type::kRunnable, runnable, completion_flag));
+}
+
+void Thread::AddPauseCallback(Runnable* runnable) {
+  assert(std::this_thread::get_id() == thread_id());
+  pause_callbacks_.push_back(runnable);
+}
+
+void Thread::AddResumeCallback(Runnable* runnable) {
+  assert(std::this_thread::get_id() == thread_id());
+  resume_callbacks_.push_back(runnable);
+}
+
+void Thread::PushRunnable(Runnable* runnable) {
+  // If we're being called from withing our thread, just drop it in the list.
+  // otherwise send it as a message to the other thread.
+  if (std::this_thread::get_id() == thread_id()) {
+    PushLocalRunnable(runnable, nullptr);
+  } else {
+    PushCrossThreadRunnable(runnable, nullptr);
+  }
+}
+
+void Thread::PushRunnableSynchronous(Runnable* runnable) {
+  bool complete{};
+  bool* complete_ptr{&complete};
+  if (std::this_thread::get_id() == thread_id()) {
+    FatalError(
+        "PushRunnableSynchronous called from target thread;"
+        " would deadlock.");
+  } else {
+    PushCrossThreadRunnable(runnable, &complete);
+  }
+
+  // Now listen until our completion flag gets set.
+  std::unique_lock lock(client_listener_mutex_);
+  client_listener_cv_.wait(lock, [complete_ptr] {
+    // Go back to sleep on spurious wakeups
+    // (if we're not actually complete yet).
+    return *complete_ptr;
+  });
+}
+
+auto Thread::CheckPushSafety() -> bool {
+  if (std::this_thread::get_id() == thread_id()) {
+    // behave the same as the thread-message safety check.
+    return (runnables_.size() < kThreadMessageSafetyThreshold);
+  } else {
+    return CheckPushRunnableSafety();
+  }
 }
 
 }  // namespace ballistica

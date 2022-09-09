@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/core/logging.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/platform/platform.h"
 
@@ -109,7 +110,7 @@ auto FatalError::DoBlockingFatalErrorDialog(const std::string& message)
     bool finished{};
     bool* startedptr{&started};
     bool* finishedptr{&finished};
-    g_app->PushCall([message, startedptr, finishedptr] {
+    g_app->thread()->PushCall([message, startedptr, finishedptr] {
       *startedptr = true;
       g_platform->BlockingFatalErrorDialog(message);
       *finishedptr = true;

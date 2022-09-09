@@ -13,8 +13,8 @@ class Runnable : public Object {
  public:
   virtual void Run() = 0;
 
-  // these are used on lots of threads; lets
-  // lock to wherever we're first referenced
+  // these are used on lots of threads; we lock to whichever
+  // thread first creates a reference to us.
   auto GetThreadOwnership() const -> ThreadOwnership override;
 };
 

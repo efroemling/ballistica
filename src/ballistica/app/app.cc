@@ -17,7 +17,7 @@
 namespace ballistica {
 
 App::App(Thread* thread)
-    : Module("app", thread), stress_test_(std::make_unique<StressTest>()) {
+    : thread_(thread), stress_test_(std::make_unique<StressTest>()) {
   assert(g_app == nullptr);
   g_app = this;
 
@@ -36,8 +36,6 @@ void App::PostInit() {
   // as of App::App()).
   g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
 }
-
-App::~App() = default;
 
 auto App::ManagesEventLoop() const -> bool {
   // We have 2 redundant values for essentially the same thing;
@@ -104,7 +102,7 @@ void App::SetScreenResolution(float width, float height) {
 }
 
 void App::PushShutdownCompleteCall() {
-  PushCall([this] { ShutdownComplete(); });
+  thread()->PushCall([this] { ShutdownComplete(); });
 }
 
 void App::ShutdownComplete() {
@@ -154,8 +152,9 @@ void App::OnPause() {
   g_graphics->SetGyroEnabled(false);
 
   // IMPORTANT: Any on-pause related stuff that threads need to do must
-  // be done from their HandleThreadPause(). If we push runnables to them,
-  // they may or may not be called before the thread is actually paused.
+  // be done from registered pause-callbacks. If we instead push runnables
+  // to them from here they may or may not be called before the thread
+  // is actually paused.
 
   Thread::SetThreadsPaused(true);
 
@@ -210,7 +209,7 @@ void App::OnResume() {
 }
 
 auto App::GetProductPrice(const std::string& product) -> std::string {
-  std::lock_guard<std::mutex> lock(product_prices_mutex_);
+  std::scoped_lock lock(product_prices_mutex_);
   auto i = product_prices_.find(product);
   if (i == product_prices_.end()) {
     return "";
@@ -221,7 +220,7 @@ auto App::GetProductPrice(const std::string& product) -> std::string {
 
 void App::SetProductPrice(const std::string& product,
                           const std::string& price) {
-  std::lock_guard<std::mutex> lock(product_prices_mutex_);
+  std::scoped_lock lock(product_prices_mutex_);
   product_prices_[product] = price;
 }
 
@@ -261,7 +260,7 @@ void App::PrimeEventPump() {
 void App::PushShowOnlineScoreUICall(const std::string& show,
                                     const std::string& game,
                                     const std::string& game_version) {
-  PushCall([show, game, game_version] {
+  thread()->PushCall([show, game, game_version] {
     assert(InMainThread());
     g_platform->ShowOnlineScoreUI(show, game, game_version);
   });
@@ -269,7 +268,7 @@ void App::PushShowOnlineScoreUICall(const std::string& show,
 
 void App::PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
                                const std::string& telnet_password) {
-  PushCall([port, telnet_port, enable_telnet, telnet_password] {
+  thread()->PushCall([port, telnet_port, enable_telnet, telnet_password] {
     assert(InMainThread());
     // Kick these off if they don't exist.
     // (do we want to support changing ports on existing ones?)
@@ -290,58 +289,59 @@ void App::PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
 
 void App::PushPurchaseAckCall(const std::string& purchase,
                               const std::string& order_id) {
-  PushCall(
+  thread()->PushCall(
       [purchase, order_id] { g_platform->PurchaseAck(purchase, order_id); });
 }
 
 void App::PushGetScoresToBeatCall(const std::string& level,
                                   const std::string& config,
                                   void* py_callback) {
-  PushCall([level, config, py_callback] {
+  thread()->PushCall([level, config, py_callback] {
     assert(InMainThread());
     g_platform->GetScoresToBeat(level, config, py_callback);
   });
 }
 
 void App::PushPurchaseCall(const std::string& item) {
-  PushCall([item] {
+  thread()->PushCall([item] {
     assert(InMainThread());
     g_platform->Purchase(item);
   });
 }
 
 void App::PushRestorePurchasesCall() {
-  PushCall([] {
+  thread()->PushCall([] {
     assert(InMainThread());
     g_platform->RestorePurchases();
   });
 }
 
 void App::PushOpenURLCall(const std::string& url) {
-  PushCall([url] { g_platform->OpenURL(url); });
+  thread()->PushCall([url] { g_platform->OpenURL(url); });
 }
 
 void App::PushGetFriendScoresCall(const std::string& game,
                                   const std::string& game_version, void* data) {
-  PushCall([game, game_version, data] {
+  thread()->PushCall([game, game_version, data] {
     g_platform->GetFriendScores(game, game_version, data);
   });
 }
 
 void App::PushSubmitScoreCall(const std::string& game,
                               const std::string& game_version, int64_t score) {
-  PushCall([game, game_version, score] {
+  thread()->PushCall([game, game_version, score] {
     g_platform->SubmitScore(game, game_version, score);
   });
 }
 
 void App::PushAchievementReportCall(const std::string& achievement) {
-  PushCall([achievement] { g_platform->ReportAchievement(achievement); });
+  thread()->PushCall(
+      [achievement] { g_platform->ReportAchievement(achievement); });
 }
 
 void App::PushStringEditCall(const std::string& name, const std::string& value,
                              int max_chars) {
-  PushCall([name, value, max_chars] {
+  thread()->PushCall([name, value, max_chars] {
     static millisecs_t last_edit_time = 0;
     millisecs_t t = GetRealTime();
 
@@ -357,13 +357,13 @@ void App::PushStringEditCall(const std::string& name, const std::string& value,
 }
 
 void App::PushSetStressTestingCall(bool enable, int player_count) {
-  PushCall([this, enable, player_count] {
+  thread()->PushCall([this, enable, player_count] {
     stress_test_->SetStressTesting(enable, player_count);
   });
 }
 
 void App::PushResetAchievementsCall() {
-  PushCall([] { g_platform->ResetAchievements(); });
+  thread()->PushCall([] { g_platform->ResetAchievements(); });
 }
 
 void App::OnBootstrapComplete() {
@@ -386,7 +386,7 @@ void App::OnBootstrapComplete() {
 }
 
 void App::PushCursorUpdate(bool vis) {
-  PushCall([vis] {
+  thread()->PushCall([vis] {
     assert(InMainThread());
     g_platform->SetHardwareCursorVisible(vis);
   });

@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_input_device.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/player.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/python/python.h"
@@ -142,7 +143,7 @@ void PythonClassInputDevice::tp_dealloc(PythonClassInputDevice* self) {
   //  until the delete goes through; could that ever be a problem?
   if (!InLogicThread()) {
     Object::WeakRef<InputDevice>* d = self->input_device_;
-    g_game->PushCall([d] { delete d; });
+    g_game->thread()->PushCall([d] { delete d; });
   } else {
     delete self->input_device_;
   }

@@ -69,7 +69,7 @@ void Logging::Log(const std::string& msg, bool to_stdout, bool to_server) {
 
     // Add to our complete log.
     if (g_app_globals != nullptr) {
-      std::lock_guard<std::mutex> lock(g_app_globals->log_mutex);
+      std::scoped_lock lock(g_app_globals->log_mutex);
       if (!g_app_globals->log_full) {
         (g_app_globals->log) += (msg + "\n");
         if ((g_app_globals->log).size() > 10000) {

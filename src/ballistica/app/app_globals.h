@@ -31,6 +31,7 @@ class AppGlobals {
   /// Program argument values (on applicable platforms).
   char** argv{};
 
+  bool threads_paused{};
   std::unordered_map<std::string, NodeType*> node_types;
   std::unordered_map<int, NodeType*> node_types_by_id;
   std::unordered_map<std::string, NodeMessageType> node_message_types;

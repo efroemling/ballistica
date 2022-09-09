@@ -7,20 +7,19 @@
 #endif
 
 #include "ballistica/app/app_globals.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {
 
-StdInputModule::StdInputModule(Thread* thread) : Module("stdin", thread) {
+StdInputModule::StdInputModule(Thread* thread) : thread_(thread) {
   assert(g_std_input_module == nullptr);
   g_std_input_module = this;
 }
 
-StdInputModule::~StdInputModule() = default;
-
 void StdInputModule::PushBeginReadCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     bool stdin_is_terminal = g_platform->is_stdin_a_terminal();
 
     while (true) {
@@ -28,7 +27,7 @@ void StdInputModule::PushBeginReadCall() {
       // We send this to the game thread so it happens AFTER the
       // results of the last script-command message we may have just sent.
       if (stdin_is_terminal) {
-        g_game->PushCall([] {
+        g_game->thread()->PushCall([] {
           if (!g_app_globals->shutting_down) {
             printf(">>> ");
             fflush(stdout);

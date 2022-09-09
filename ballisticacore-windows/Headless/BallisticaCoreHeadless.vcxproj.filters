@@ -130,12 +130,6 @@
     <ClInclude Include="..\..\src\ballistica\core\macros.h">
       <Filter>ballistica\core</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\core\module.cc">
-      <Filter>ballistica\core</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\core\module.h">
-      <Filter>ballistica\core</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\core\object.cc">
       <Filter>ballistica\core</Filter>
     </ClCompile>

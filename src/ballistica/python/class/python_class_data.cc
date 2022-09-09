@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_data.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/media/component/data.h"
 #include "ballistica/python/python.h"
@@ -101,7 +102,7 @@ void PythonClassData::tp_dealloc(PythonClassData* self) {
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<Data>* s = self->data_;
-    g_game->PushCall([s] { Delete(s); });
+    g_game->thread()->PushCall([s] { Delete(s); });
   } else {
     Delete(self->data_);
   }

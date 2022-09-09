@@ -15,7 +15,7 @@ void Object::PrintObjects() {
 #if BA_DEBUG_BUILD
   std::string s;
   {
-    std::lock_guard<std::mutex> lock(g_app_globals->object_list_mutex);
+    std::scoped_lock lock(g_app_globals->object_list_mutex);
     s = std::to_string(g_app_globals->object_count) + " Objects at time "
         + std::to_string(GetRealTime()) + ";";
 
@@ -66,7 +66,7 @@ Object::Object() {
   object_birth_time_ = GetRealTime();
 
   // Add ourself to the global object list.
-  std::lock_guard<std::mutex> lock(g_app_globals->object_list_mutex);
+  std::scoped_lock lock(g_app_globals->object_list_mutex);
   object_prev_ = nullptr;
   object_next_ = g_app_globals->object_list_first;
   g_app_globals->object_list_first = this;
@@ -80,7 +80,7 @@ Object::Object() {
 Object::~Object() {
 #if BA_DEBUG_BUILD
   // Pull ourself from the global obj list.
-  std::lock_guard<std::mutex> lock(g_app_globals->object_list_mutex);
+  std::scoped_lock lock(g_app_globals->object_list_mutex);
   if (object_next_) {
     object_next_->object_prev_ = object_prev_;
   }
@@ -96,20 +96,19 @@ Object::~Object() {
     // Avoiding Log for these low level errors; can lead to deadlock.
     printf(
         "Warning: Object is dying with non-zero ref-count; this is bad. "
-        "(this "
-        "might mean the object raised an exception in its constructor after "
-        "being strong-referenced first).\n");
+        "(this might mean the object raised an exception in its constructor"
+        " after being strong-referenced first).\n");
   }
 
 #endif  // BA_DEBUG_BUILD
 
   // Invalidate all our weak refs.
   // We could call Release() on each but we'd have to deactivate the
-  // thread-check since virtual functions won't work right in a destructor.
-  // Also we can take a few shortcuts here since we know we're deleting the
-  // entire list, not just one object.
+  // thread-check since virtual functions won't work as expected in a
+  // destructor. Also we can take a few shortcuts here since we know
+  // we're deleting the entire list, not just one object.
   while (object_weak_refs_) {
-    auto tmp = object_weak_refs_;
+    auto tmp{object_weak_refs_};
     object_weak_refs_ = tmp->next_;
     tmp->prev_ = nullptr;
     tmp->next_ = nullptr;
@@ -127,17 +126,17 @@ auto Object::GetObjectDescription() const -> std::string {
          + ">";
 }
 
+auto Object::GetDefaultOwnerThread() const -> ThreadIdentifier {
+  return ThreadIdentifier::kLogic;
+}
+
 auto Object::GetThreadOwnership() const -> Object::ThreadOwnership {
 #if BA_DEBUG_BUILD
   return thread_ownership_;
 #else
-  // Not used in release build so doesn't matter.
-  return ThreadOwnership::kAny;
+  FatalError("Should not be called in release builds.");
+  return ThreadOwnership::kClassDefault;
 #endif
-}
-
-auto Object::GetDefaultOwnerThread() const -> ThreadIdentifier {
-  return ThreadIdentifier::kLogic;
 }
 
 #if BA_DEBUG_BUILD
@@ -161,22 +160,23 @@ static auto GetCurrentThreadIdentifier() -> ThreadIdentifier {
   }
 }
 
-void Object::ObjectThreadCheck() {
+auto Object::ObjectUpdateForAcquire() -> void {
+  ThreadOwnership thread_ownership = GetThreadOwnership();
+
+  // If we're set to use the next-referencing thread and haven't set one
+  // yet, do so.
+  if (thread_ownership == ThreadOwnership::kNextReferencing
+      && owner_thread_ == ThreadIdentifier::kInvalid) {
+    owner_thread_ = GetCurrentThreadIdentifier();
+  }
+}
+
+auto Object::ObjectThreadCheck() -> void {
   if (!thread_checks_enabled_) {
     return;
   }
 
   ThreadOwnership thread_ownership = GetThreadOwnership();
-  if (thread_ownership == ThreadOwnership::kAny) {
-    return;
-  }
-
-  // If we're set to use the next-referencing thread
-  // and haven't set that yet, do so.
-  if (thread_ownership == ThreadOwnership::kNextReferencing
-      && owner_thread_ == ThreadIdentifier::kInvalid) {
-    owner_thread_ = GetCurrentThreadIdentifier();
-  }
 
   ThreadIdentifier t;
   if (thread_ownership == ThreadOwnership::kClassDefault) {

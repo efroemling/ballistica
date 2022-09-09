@@ -5,10 +5,10 @@
 
 #include <list>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 
-#include "ballistica/core/module.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/math/matrix44f.h"
 #include "ballistica/math/vector3f.h"
@@ -16,7 +16,7 @@
 
 namespace ballistica {
 
-class BGDynamicsServer : public Module {
+class BGDynamicsServer {
  public:
   struct Particle {
     float x;
@@ -81,7 +81,7 @@ class BGDynamicsServer : public Module {
   };
 
   explicit BGDynamicsServer(Thread* thread);
-  ~BGDynamicsServer() override;
+
   auto time() const -> uint32_t { return time_; }
   auto graphics_quality() const -> GraphicsQuality { return graphics_quality_; }
 
@@ -98,6 +98,7 @@ class BGDynamicsServer : public Module {
     return spark_particles_.get();
   }
   auto step_count() const -> int { return step_count_; }
+  auto thread() const -> Thread* { return thread_; }
 
  private:
   class Terrain;
@@ -121,6 +122,8 @@ class BGDynamicsServer : public Module {
   void UpdateFuses();
   void UpdateShadows();
   auto CreateDrawSnapshot() -> BGDynamicsDrawSnapshot*;
+
+  Thread* thread_{};
   BGDynamicsChunkType cb_type_ = BGDynamicsChunkType::kRock;
   dBodyID cb_body_{};
   float cb_cfm_{0.0f};

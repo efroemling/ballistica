@@ -3,6 +3,7 @@
 
 #include "ballistica/app/vr_app.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
@@ -13,7 +14,7 @@ VRApp::VRApp(Thread* thread) : App(thread) {}
 
 auto VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state)
     -> void {
-  PushCall([this, state] {
+  thread()->PushCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
     VRHandsState s;

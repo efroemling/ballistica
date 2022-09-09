@@ -3,13 +3,14 @@
 #ifndef BALLISTICA_MEDIA_MEDIA_H_
 #define BALLISTICA_MEDIA_MEDIA_H_
 
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/context.h"
-#include "ballistica/core/module.h"
 #include "ballistica/core/object.h"
+#include "ballistica/generic/runnable.h"
 
 namespace ballistica {
 

@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_context_call.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
@@ -118,7 +119,7 @@ void PythonClassContextCall::tp_dealloc(PythonClassContextCall* self) {
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<PythonContextCall>* c = self->context_call_;
-    g_game->PushCall([c] { delete c; });
+    g_game->thread()->PushCall([c] { delete c; });
   } else {
     delete self->context_call_;
   }

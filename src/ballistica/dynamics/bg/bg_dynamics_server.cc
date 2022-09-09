@@ -2,6 +2,7 @@
 
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/dynamics/bg/bg_dynamics_fuse_data.h"
 #include "ballistica/dynamics/bg/bg_dynamics_height_cache.h"
@@ -86,7 +87,7 @@ class BGDynamicsServer::Terrain {
     // back to the main thread to get freed.
     if (collide_model_) {
       Object::Ref<CollideModelData>* ref = collide_model_;
-      g_game->PushCall([ref] {
+      g_game->thread()->PushCall([ref] {
         (**ref).set_last_used_time(GetRealTime());
         delete ref;
       });
@@ -660,7 +661,7 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
 }
 
 BGDynamicsServer::BGDynamicsServer(Thread* thread)
-    : Module("bgDynamics", thread),
+    : thread_(thread),
       height_cache_(new BGDynamicsHeightCache()),
       collision_cache_(new CollisionCache) {
   BA_PRECONDITION(g_bg_dynamics_server == nullptr);
@@ -681,8 +682,6 @@ BGDynamicsServer::BGDynamicsServer(Thread* thread)
   ode_contact_group_ = dJointGroupCreate(0);
   assert(ode_contact_group_);
 }
-
-BGDynamicsServer::~BGDynamicsServer() = default;
 
 BGDynamicsServer::Tendril::~Tendril() {
   // If we have a controller, tell them not to call us anymore.
@@ -992,7 +991,7 @@ void BGDynamicsServer::Clear() {
 }
 
 void BGDynamicsServer::PushEmitCall(const BGDynamicsEmission& def) {
-  PushCall([this, def] { Emit(def); });
+  thread()->PushCall([this, def] { Emit(def); });
 }
 
 void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
@@ -1364,7 +1363,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
 }
 
 void BGDynamicsServer::PushRemoveTerrainCall(CollideModelData* collide_model) {
-  PushCall([this, collide_model] {
+  thread()->PushCall([this, collide_model] {
     assert(collide_model != nullptr);
     bool found = false;
     for (auto i = terrains_.begin(); i != terrains_.end(); ++i) {
@@ -1394,19 +1393,19 @@ void BGDynamicsServer::PushRemoveTerrainCall(CollideModelData* collide_model) {
 }
 
 void BGDynamicsServer::PushAddShadowCall(BGDynamicsShadowData* shadow_data) {
-  PushCall([this, shadow_data] {
+  thread()->PushCall([this, shadow_data] {
     assert(InBGDynamicsThread());
-    std::lock_guard<std::mutex> lock(shadow_list_mutex_);
+    std::scoped_lock lock(shadow_list_mutex_);
     shadows_.push_back(shadow_data);
   });
 }
 
 void BGDynamicsServer::PushRemoveShadowCall(BGDynamicsShadowData* shadow_data) {
-  PushCall([this, shadow_data] {
+  thread()->PushCall([this, shadow_data] {
     assert(InBGDynamicsThread());
     bool found = false;
     {
-      std::lock_guard<std::mutex> lock(shadow_list_mutex_);
+      std::scoped_lock lock(shadow_list_mutex_);
       for (auto i = shadows_.begin(); i != shadows_.end(); ++i) {
         if ((*i) == shadow_data) {
           found = true;
@@ -1422,20 +1421,20 @@ void BGDynamicsServer::PushRemoveShadowCall(BGDynamicsShadowData* shadow_data) {
 
 void BGDynamicsServer::PushAddVolumeLightCall(
     BGDynamicsVolumeLightData* volume_light_data) {
-  PushCall([this, volume_light_data] {
+  thread()->PushCall([this, volume_light_data] {
     // Add to our internal list.
-    std::lock_guard<std::mutex> lock(volume_light_list_mutex_);
+    std::scoped_lock lock(volume_light_list_mutex_);
     volume_lights_.push_back(volume_light_data);
   });
 }
 
 void BGDynamicsServer::PushRemoveVolumeLightCall(
     BGDynamicsVolumeLightData* volume_light_data) {
-  PushCall([this, volume_light_data] {
+  thread()->PushCall([this, volume_light_data] {
     // Remove from our list and kill.
     bool found = false;
     {
-      std::lock_guard<std::mutex> lock(volume_light_list_mutex_);
+      std::scoped_lock lock(volume_light_list_mutex_);
       for (auto i = volume_lights_.begin(); i != volume_lights_.end(); ++i) {
         if ((*i) == volume_light_data) {
           found = true;
@@ -1450,17 +1449,17 @@ void BGDynamicsServer::PushRemoveVolumeLightCall(
 }
 
 void BGDynamicsServer::PushAddFuseCall(BGDynamicsFuseData* fuse_data) {
-  PushCall([this, fuse_data] {
-    std::lock_guard<std::mutex> lock(fuse_list_mutex_);
+  thread()->PushCall([this, fuse_data] {
+    std::scoped_lock lock(fuse_list_mutex_);
     fuses_.push_back(fuse_data);
   });
 }
 
 void BGDynamicsServer::PushRemoveFuseCall(BGDynamicsFuseData* fuse_data) {
-  PushCall([this, fuse_data] {
+  thread()->PushCall([this, fuse_data] {
     bool found = false;
     {
-      std::lock_guard<std::mutex> lock(fuse_list_mutex_);
+      std::scoped_lock lock(fuse_list_mutex_);
       for (auto i = fuses_.begin(); i != fuses_.end(); i++) {
         if ((*i) == fuse_data) {
           found = true;
@@ -1475,11 +1474,11 @@ void BGDynamicsServer::PushRemoveFuseCall(BGDynamicsFuseData* fuse_data) {
 }
 
 void BGDynamicsServer::PushSetDebrisFrictionCall(float friction) {
-  PushCall([this, friction] { debris_friction_ = friction; });
+  thread()->PushCall([this, friction] { debris_friction_ = friction; });
 }
 
 void BGDynamicsServer::PushSetDebrisKillHeightCall(float height) {
-  PushCall([this, height] { debris_kill_height_ = height; });
+  thread()->PushCall([this, height] { debris_kill_height_ = height; });
 }
 
 auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
@@ -2215,7 +2214,7 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
 }  // NOLINT (yes this should be shorter)
 
 void BGDynamicsServer::PushTooSlowCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     if (chunk_count_ > 0 || tendril_count_thick_ > 0
         || tendril_count_thin_ > 0) {
       // Ok lets kill a small percentage of our oldest chunks.
@@ -2313,7 +2312,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // Now generate a snapshot of our state and send it to the game thread,
   // so they can draw us.
   BGDynamicsDrawSnapshot* snapshot = CreateDrawSnapshot();
-  g_game->PushCall([snapshot] {
+  g_game->thread()->PushCall([snapshot] {
     snapshot->SetLogicThreadOwnership();
     g_bg_dynamics->SetDrawSnapshot(snapshot);
   });
@@ -2326,19 +2325,19 @@ void BGDynamicsServer::Step(StepData* step_data) {
 
   // Job's done!
   {
-    std::lock_guard<std::mutex> lock(step_count_mutex_);
+    std::scoped_lock lock(step_count_mutex_);
     step_count_--;
   }
   assert(step_count_ >= 0);
 }
 
 void BGDynamicsServer::PushStepCall(StepData* data) {
-  PushCall([this, data] { Step(data); });
+  thread()->PushCall([this, data] { Step(data); });
 }
 
 void BGDynamicsServer::PushAddTerrainCall(
     Object::Ref<CollideModelData>* collide_model) {
-  PushCall([this, collide_model] {
+  thread()->PushCall([this, collide_model] {
     assert(InBGDynamicsThread());
     assert(collide_model != nullptr);
 
@@ -2639,7 +2638,7 @@ void BGDynamicsServer::UpdateShadows() {
   {
     BA_DEBUG_TIME_CHECK_BEGIN(bg_dynamic_shadow_list_lock);
     {
-      std::lock_guard<std::mutex> lock(shadow_list_mutex_);
+      std::scoped_lock lock(shadow_list_mutex_);
       for (auto&& s : shadows_) {
         s->UpdateClientData();
       }

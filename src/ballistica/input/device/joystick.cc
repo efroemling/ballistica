@@ -5,6 +5,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/player.h"
 #include "ballistica/graphics/renderer.h"
@@ -305,7 +306,7 @@ Joystick::~Joystick() {
 #if BA_ENABLE_SDL_JOYSTICKS
     assert(g_app);
     auto joystick = sdl_joystick_;
-    g_app->PushCall([joystick] { SDL_JoystickClose(joystick); });
+    g_app->thread()->PushCall([joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
     Log("sdl_joystick_ set in non-sdl-joystick build destructor.");

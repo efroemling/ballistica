@@ -3,6 +3,9 @@
 """Bootstrapping."""
 from __future__ import annotations
 
+import os
+import sys
+import signal
 import threading
 from typing import TYPE_CHECKING
 
@@ -11,6 +14,8 @@ import _ba
 if TYPE_CHECKING:
     from typing import Any, TextIO, Callable
 
+_g_did_bootstrap = False  # pylint: disable=invalid-name
+
 
 def bootstrap() -> None:
     """Run bootstrapping logic.
@@ -18,9 +23,10 @@ def bootstrap() -> None:
     This is the very first userland code that runs.
     It sets up low level environment bits and creates the app instance.
     """
-    import os
-    import sys
-    import signal
+    global _g_did_bootstrap  # pylint: disable=global-statement, invalid-name
+    if _g_did_bootstrap:
+        raise RuntimeError('Bootstrap has already been called.')
+    _g_did_bootstrap = True
 
     # The first thing we set up is capturing/redirecting Python
     # stdout/stderr so we can at least debug problems on systems where
@@ -32,7 +38,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20778
+    expected_build = 20794
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(

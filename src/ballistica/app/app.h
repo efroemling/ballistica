@@ -8,17 +8,17 @@
 #include <string>
 #include <unordered_map>
 
-#include "ballistica/core/module.h"
+#include "ballistica/app/stress_test.h"
+#include "ballistica/ballistica.h"
 
 namespace ballistica {
 
 /// Our high level app interface module.
 /// It runs in the main thread and is what platform wrappers
 /// should primarily interact with.
-class App : public Module {
+class App {
  public:
   explicit App(Thread* thread);
-  ~App() override;
 
   /// This gets run after the constructor completes.
   /// Any setup that may trigger a virtual method/etc. should go here.
@@ -124,12 +124,14 @@ class App : public Module {
   auto PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
                             const std::string& telnet_password) -> void;
   auto PushShutdownCompleteCall() -> void;
+  auto thread() const -> Thread* { return thread_; }
 
  private:
   auto UpdatePauseResume() -> void;
   auto OnPause() -> void;
   auto OnResume() -> void;
   auto ShutdownComplete() -> void;
+  Thread* thread_{};
   bool done_{};
   bool server_wrapper_managed_{};
   bool sys_paused_app_{};

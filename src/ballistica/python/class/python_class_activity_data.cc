@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_activity_data.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
@@ -84,7 +85,7 @@ void PythonClassActivityData::tp_dealloc(PythonClassActivityData* self) {
   // it if need be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<HostActivity>* h = self->host_activity_;
-    g_game->PushCall([h] { delete h; });
+    g_game->thread()->PushCall([h] { delete h; });
   } else {
     delete self->host_activity_;
   }

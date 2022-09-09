@@ -6,21 +6,23 @@
 #include <list>
 #include <vector>
 
-#include "ballistica/core/module.h"
+#include "ballistica/core/object.h"
 
 namespace ballistica {
 
-class MediaServer : public Module {
+class MediaServer {
  public:
   explicit MediaServer(Thread* thread);
-  ~MediaServer() override;
+  ~MediaServer();
   void PushBeginWriteReplayCall();
   void PushEndWriteReplayCall();
   void PushAddMessageToReplayCall(const std::vector<uint8_t>& data);
+  auto thread() const -> Thread* { return thread_; }
 
  private:
   void Process();
   void WriteReplayMessages();
+  Thread* thread_{};
   FILE* replay_out_file_{};
   size_t replay_bytes_written_{};
   bool writing_replay_{};

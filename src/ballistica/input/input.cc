@@ -5,6 +5,7 @@
 #include "ballistica/app/app_config.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/input/device/joystick.h"
@@ -330,7 +331,7 @@ Input::Input() {
 }
 
 void Input::PushCreateKeyboardInputDevices() {
-  g_game->PushCall([this] { CreateKeyboardInputDevices(); });
+  g_game->thread()->PushCall([this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
@@ -346,7 +347,7 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  g_game->PushCall([this] { DestroyKeyboardInputDevices(); });
+  g_game->thread()->PushCall([this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
@@ -554,7 +555,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  g_game->PushCall([this, input_device, standard_message] {
+  g_game->thread()->PushCall([this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -616,7 +617,7 @@ void Input::AddInputDevice(InputDevice* input, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  g_game->PushCall([this, input_device, standard_message] {
+  g_game->thread()->PushCall([this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -1087,7 +1088,7 @@ void Input::HandleBackPress(bool from_toolbar) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  g_game->PushCall([this, text] {
+  g_game->thread()->PushCall([this, text] {
     mark_input_active();
 
     // Ignore  if input is locked.
@@ -1105,7 +1106,7 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 auto Input::PushJoystickEvent(const SDL_Event& event, InputDevice* input_device)
     -> void {
-  g_game->PushCall([this, event, input_device] {
+  g_game->thread()->PushCall([this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -1137,11 +1138,11 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  g_game->PushCall([this, keysym] { HandleKeyPress(&keysym); });
+  g_game->thread()->PushCall([this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  g_game->PushCall([this, keysym] { HandleKeyRelease(&keysym); });
+  g_game->thread()->PushCall([this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::HandleKeyPress(const SDL_Keysym* keysym) {
@@ -1392,7 +1393,7 @@ auto Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) -> void {
 }
 
 auto Input::PushMouseScrollEvent(const Vector2f& amount) -> void {
-  g_game->PushCall([this, amount] { HandleMouseScroll(amount); });
+  g_game->thread()->PushCall([this, amount] { HandleMouseScroll(amount); });
 }
 
 auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
@@ -1425,7 +1426,7 @@ auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
 
 auto Input::PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum)
     -> void {
-  g_game->PushCall([this, velocity, momentum] {
+  g_game->thread()->PushCall([this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
@@ -1460,7 +1461,7 @@ auto Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum)
 }
 
 auto Input::PushMouseMotionEvent(const Vector2f& position) -> void {
-  g_game->PushCall([this, position] { HandleMouseMotion(position); });
+  g_game->thread()->PushCall([this, position] { HandleMouseMotion(position); });
 }
 
 auto Input::HandleMouseMotion(const Vector2f& position) -> void {
@@ -1511,7 +1512,7 @@ auto Input::HandleMouseMotion(const Vector2f& position) -> void {
 }
 
 auto Input::PushMouseDownEvent(int button, const Vector2f& position) -> void {
-  g_game->PushCall(
+  g_game->thread()->PushCall(
       [this, button, position] { HandleMouseDown(button, position); });
 }
 
@@ -1588,7 +1589,7 @@ auto Input::HandleMouseDown(int button, const Vector2f& position) -> void {
 }
 
 auto Input::PushMouseUpEvent(int button, const Vector2f& position) -> void {
-  g_game->PushCall(
+  g_game->thread()->PushCall(
       [this, button, position] { HandleMouseUp(button, position); });
 }
 
@@ -1637,7 +1638,7 @@ auto Input::HandleMouseUp(int button, const Vector2f& position) -> void {
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  g_game->PushCall([e, this] { HandleTouchEvent(e); });
+  g_game->thread()->PushCall([e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {

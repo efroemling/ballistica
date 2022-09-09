@@ -3,6 +3,7 @@
 #include "ballistica/ui/widget/container_widget.h"
 
 #include "ballistica/audio/audio.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
@@ -808,7 +809,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
             // Probably not safe to delete ourself here since we're in
             // the draw loop, but we can push a call to do it.
             Object::WeakRef<Widget> weakref(this);
-            g_game->PushCall([weakref] {
+            g_game->thread()->PushCall([weakref] {
               Widget* w = weakref.get();
               if (w) g_ui->DeleteWidget(w);
             });
@@ -863,7 +864,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
                   // Probably not safe to delete ourself here since we're in the
                   // draw loop, but we can set up an event to do it.
                   Object::WeakRef<Widget> weakref(this);
-                  g_game->PushCall([weakref] {
+                  g_game->thread()->PushCall([weakref] {
                     Widget* w = weakref.get();
                     if (w) g_ui->DeleteWidget(w);
                   });

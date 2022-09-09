@@ -22,7 +22,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20778;
+const int kAppBuildNumber = 20794;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -87,7 +87,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // -------------------------------------------------------------------------
 
     g_app_globals = new AppGlobals(argc, argv);
-    g_app_internal = CreateAppInternal();
+    g_app_internal = GetAppInternal();
     g_platform = Platform::Create();
     g_account = new Account();
     g_utils = new Utils();
@@ -109,15 +109,21 @@ auto BallisticaMain(int argc, char** argv) -> int {
     auto* network_write_thread = new Thread(ThreadIdentifier::kNetworkWrite);
     g_app_globals->pausable_threads.push_back(network_write_thread);
 
-    // And add our other standard modules to them.
-    logic_thread->AddModule<Game>();
-    network_write_thread->AddModule<NetworkWriteModule>();
-    media_thread->AddModule<MediaServer>();
-    g_main_thread->AddModule<GraphicsServer>();
-    audio_thread->AddModule<AudioServer>();
+    // Spin up our subsystems in those threads.
+    logic_thread->PushCallSynchronous(
+        [logic_thread] { new Game(logic_thread); });
+    network_write_thread->PushCallSynchronous([network_write_thread] {
+      new NetworkWriteModule(network_write_thread);
+    });
+    media_thread->PushCallSynchronous(
+        [media_thread] { new MediaServer(media_thread); });
+    new GraphicsServer(g_main_thread);
+    audio_thread->PushCallSynchronous(
+        [audio_thread] { new AudioServer(audio_thread); });
 
     // Now let the platform spin up any other threads/modules it uses.
-    // (bg-dynamics in non-headless builds, stdin/stdout where applicable, etc.)
+    // (bg-dynamics in non-headless builds, stdin/stdout where applicable,
+    // etc.)
     g_platform->CreateAuxiliaryModules();
 
     // Ok at this point we can be considered up-and-running.
@@ -148,8 +154,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
       // In this case we'll now simply return and let the OS feed us events
       // until the app quits.
       // However, we may need to 'prime the pump' first. For instance,
-      // if the main thread event loop is driven by frame draws, it may need to
-      // manually pump events until drawing begins (otherwise it will never
+      // if the main thread event loop is driven by frame draws, it may need
+      // to manually pump events until drawing begins (otherwise it will never
       // process the 'create-screen' event and wind up deadlocked).
       g_app->PrimeEventPump();
     }
@@ -184,7 +190,7 @@ auto GetRealTime() -> millisecs_t {
 
   // If we're at a different time than our last query, do our funky math.
   if (t != g_app_globals->last_real_time_ticks) {
-    std::lock_guard<std::mutex> lock(g_app_globals->real_time_mutex);
+    std::scoped_lock lock(g_app_globals->real_time_mutex);
     millisecs_t passed = t - g_app_globals->last_real_time_ticks;
 
     // GetTicks() is supposed to be monotonic, but I've seen 'passed'

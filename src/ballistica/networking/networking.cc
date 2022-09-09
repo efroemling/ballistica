@@ -159,7 +159,7 @@ void Networking::HostScanCycle() {
 
           // Add or modify an entry for this.
           {
-            std::lock_guard<std::mutex> lock(scan_results_mutex_);
+            std::scoped_lock lock(scan_results_mutex_);
 
             // Ignore if it looks like its us.
             if (id != GetAppInstanceUUID()) {
@@ -197,7 +197,7 @@ auto Networking::GetScanResults() -> std::vector<Networking::ScanResultsEntry> {
   std::vector<ScanResultsEntry> results;
   results.resize(scan_results_.size());
   {
-    std::lock_guard<std::mutex> lock(scan_results_mutex_);
+    std::scoped_lock lock(scan_results_mutex_);
     int out_num = 0;
     for (auto&& i : scan_results_) {
       ScanResultsEntryPriv& in(i.second);
@@ -252,7 +252,7 @@ void Networking::SendTo(const std::vector<uint8_t>& buffer,
   assert(!buffer.empty());
 
   // This needs to be locked during any sd changes/writes.
-  std::lock_guard<std::mutex> lock(g_network_reader->sd_mutex());
+  std::scoped_lock lock(g_network_reader->sd_mutex());
 
   // Only send if the relevant socket is currently up.. silently ignore
   // otherwise.

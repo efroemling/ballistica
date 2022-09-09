@@ -2,6 +2,7 @@
 
 #include "ballistica/media/media_server.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/generic/huffman.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/generic/utils.h"
@@ -12,7 +13,7 @@
 namespace ballistica {
 
 MediaServer::MediaServer(Thread* thread)
-    : Module("media", thread),
+    : thread_(thread),
       writing_replay_(false),
       replay_message_bytes_(0),
       replays_broken_(false),
@@ -21,14 +22,14 @@ MediaServer::MediaServer(Thread* thread)
   g_media_server = this;
 
   // get our thread to give us periodic processing time...
-  process_timer_ =
-      NewThreadTimer(1000, true, NewLambdaRunnable([this] { Process(); }));
+  process_timer_ = this->thread()->NewTimer(
+      1000, true, NewLambdaRunnable([this] { Process(); }));
 }
 
 MediaServer::~MediaServer() = default;
 
 void MediaServer::PushBeginWriteReplayCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     if (replays_broken_) {
       return;
     }
@@ -79,7 +80,7 @@ void MediaServer::PushBeginWriteReplayCall() {
 }
 
 void MediaServer::PushAddMessageToReplayCall(const std::vector<uint8_t>& data) {
-  PushCall([this, data] {
+  thread()->PushCall([this, data] {
     if (replays_broken_) {
       return;
     }
@@ -110,7 +111,7 @@ void MediaServer::PushAddMessageToReplayCall(const std::vector<uint8_t>& data) {
 }
 
 void MediaServer::PushEndWriteReplayCall() {
-  PushCall([this] {
+  thread()->PushCall([this] {
     if (replays_broken_) {
       return;
     }

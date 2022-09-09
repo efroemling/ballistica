@@ -4,6 +4,7 @@
 
 #include "ballistica/platform/sdl/sdl_app.h"
 
+#include "ballistica/app/stress_test.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/game/game.h"
@@ -340,10 +341,10 @@ SDLApp::SDLApp(Thread* thread) : App(thread) {
     // something is returned; In spirit, we're pretty much doing that same
     // thing, except that we're free to handle other matters concurrently
     // instead of being locked in a delay call.
-    NewThreadTimer(10, true, NewLambdaRunnable([this] {
-                     assert(g_app);
-                     g_app->RunEvents();
-                   }));
+    this->thread()->NewTimer(10, true, NewLambdaRunnable([this] {
+                               assert(g_app);
+                               g_app->RunEvents();
+                             }));
   }
 }
 

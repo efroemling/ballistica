@@ -826,7 +826,7 @@ auto TextGraphics::GetBigCharIndex(int c) -> int {
 }
 
 void TextGraphics::LoadGlyphPage(uint32_t index) {
-  std::lock_guard<std::mutex> lock(glyph_load_mutex_);
+  std::scoped_lock lock(glyph_load_mutex_);
 
   // Its possible someone else coulda loaded it since we last checked.
   if (g_glyph_pages[index] == nullptr) {

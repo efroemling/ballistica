@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "ballistica/ballistica.h"
-#include "ballistica/core/module.h"
 #include "ballistica/core/object.h"
 #include "ballistica/math/matrix44f.h"
 
@@ -17,7 +16,7 @@ namespace ballistica {
 
 // Runs in the main thread and renders frame_defs shipped to it by the
 // Graphics
-class GraphicsServer : public Module {
+class GraphicsServer {
  public:
   explicit GraphicsServer(Thread* thread);
   auto PushSetScreenGammaCall(float gamma) -> void;
@@ -170,7 +169,7 @@ class GraphicsServer : public Module {
   }
 
   auto RebuildLostContext() -> void;
-  ~GraphicsServer() override;
+  ~GraphicsServer();
 
   auto renderer() { return renderer_; }
   auto quality() const -> GraphicsQuality {
@@ -240,6 +239,7 @@ class GraphicsServer : public Module {
   auto texture_quality_requested() const { return texture_quality_requested_; }
   auto renderer() const { return renderer_; }
   auto initial_screen_created() const { return initial_screen_created_; }
+  auto thread() const -> Thread* { return thread_; }
 
  private:
   auto HandleFullscreenToggling(bool do_set_existing_fs, bool do_toggle_fs,
@@ -273,6 +273,7 @@ class GraphicsServer : public Module {
 #if BA_ENABLE_OPENGL
   std::unique_ptr<GLContext> gl_context_;
 #endif
+  Thread* thread_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{0.0f};

@@ -659,20 +659,20 @@ void Platform::CreateApp() {
 #endif
 
 #if BA_HEADLESS_BUILD
-  g_main_thread->AddModule<HeadlessApp>();
+  new HeadlessApp(g_main_thread);
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
   if (g_app_globals->vr_mode) {
-    g_main_thread->AddModule<VRApp>();
+    new VRApp(g_main_thread);
   } else {
-    g_main_thread->AddModule<SDLApp>();
+    new SDLApp(g_main_thread);
   }
 #elif BA_CARDBOARD_BUILD
-  g_main_thread->AddModule<VRApp>();
+  new VRApp(g_main_thread);
 #elif BA_SDL_BUILD
-  g_main_thread->AddModule<SDLApp>();
+  new SDLApp(g_main_thread);
 #else
-  g_main_thread->AddModule<App>();
+  new App(g_main_thread);
 #endif
 
   // Let app do any init it needs to after it is fully constructed.
@@ -705,7 +705,8 @@ void Platform::CreateAuxiliaryModules() {
   g_app_globals->pausable_threads.push_back(bg_dynamics_thread);
 #endif
 #if !BA_HEADLESS_BUILD
-  bg_dynamics_thread->AddModule<BGDynamicsServer>();
+  bg_dynamics_thread->PushCallSynchronous(
+      [bg_dynamics_thread] { new BGDynamicsServer(bg_dynamics_thread); });
 #endif
 
   if (g_buildconfig.use_stdin_thread()) {
@@ -713,7 +714,8 @@ void Platform::CreateAuxiliaryModules() {
     // Note: this thread blocks indefinitely for input so we don't add it to the
     // pausable list.
     auto* std_input_thread = new Thread(ThreadIdentifier::kStdin);
-    std_input_thread->AddModule<StdInputModule>();
+    std_input_thread->PushCallSynchronous(
+        [std_input_thread] { new StdInputModule(std_input_thread); });
     g_std_input_module->PushBeginReadCall();
   }
 }

@@ -70,8 +70,7 @@ void BGDynamics::Step(const Vector3f& cam_pos) {
   {  // Shadows.
     BA_DEBUG_TIME_CHECK_BEGIN(bg_dynamic_shadow_list_lock);
     {
-      std::lock_guard<std::mutex> lock(
-          g_bg_dynamics_server->shadow_list_mutex_);
+      std::scoped_lock lock(g_bg_dynamics_server->shadow_list_mutex_);
       auto size = g_bg_dynamics_server->shadows_.size();
       d->shadow_step_data_.resize(size);
       if (size > 0) {
@@ -90,8 +89,7 @@ void BGDynamics::Step(const Vector3f& cam_pos) {
   {  // Volume lights.
     BA_DEBUG_TIME_CHECK_BEGIN(bg_dynamic_volumelights_list_lock);
     {
-      std::lock_guard<std::mutex> lock(
-          g_bg_dynamics_server->volume_light_list_mutex_);
+      std::scoped_lock lock(g_bg_dynamics_server->volume_light_list_mutex_);
       auto size = g_bg_dynamics_server->volume_lights_.size();
       d->volume_light_step_data_.resize(size);
       if (size > 0) {
@@ -116,7 +114,7 @@ void BGDynamics::Step(const Vector3f& cam_pos) {
   {  // Fuses.
     BA_DEBUG_TIME_CHECK_BEGIN(bg_dynamic_fuse_list_lock);
     {
-      std::lock_guard<std::mutex> lock(g_bg_dynamics_server->fuse_list_mutex_);
+      std::scoped_lock lock(g_bg_dynamics_server->fuse_list_mutex_);
       auto size = g_bg_dynamics_server->fuses_.size();
       d->fuse_step_data_.resize(size);
       if (size > 0) {
@@ -137,7 +135,7 @@ void BGDynamics::Step(const Vector3f& cam_pos) {
 
   // Increase our step count and ship it.
   {
-    std::lock_guard<std::mutex> lock(g_bg_dynamics_server->step_count_mutex_);
+    std::scoped_lock lock(g_bg_dynamics_server->step_count_mutex_);
     g_bg_dynamics_server->step_count_++;
   }
 

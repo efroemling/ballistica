@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/game/account.h"
 #include "ballistica/game/friend_score_set.h"
@@ -853,6 +854,38 @@ auto Python::GetPyVector3f(PyObject* o) -> Vector3f {
 
 Python::Python() = default;
 
+static struct PyModuleDef ba_module_def = {PyModuleDef_HEAD_INIT};
+
+static auto ba_exec(PyObject* module) -> int {
+  Python::InitModuleClasses(module);
+  return 0;
+}
+
+static PyModuleDef_Slot ba_slots[] = {
+    {Py_mod_exec, reinterpret_cast<void*>(ba_exec)}, {0, NULL}};
+
+// Called when our _ba module is getting spun up.
+static auto PyInit__ba() -> PyObject* {
+  assert(Python::HaveGIL());
+
+  // We should be able to assign these in the initializer above,
+  // but older g++ chokes on it at the moment...
+  // (and this is still more readable than setting ALL values positionally)
+  assert(ba_module_def.m_size == 0);  // should all be zeroed though...
+
+  // Gather our methods into a static null-terminated list.
+  auto* all_methods = new std::vector<PyMethodDef>{Python::GetModuleMethods()};
+  all_methods->push_back(PyMethodDef{nullptr, nullptr, 0, nullptr});
+
+  ba_module_def.m_methods = all_methods->data();
+  ba_module_def.m_slots = ba_slots;
+
+  PyObject* module = PyModuleDef_Init(&ba_module_def);
+  BA_PRECONDITION(module);
+
+  return module;
+}
+
 void Python::Reset(bool do_init) {
   assert(InLogicThread());
   assert(g_python);
@@ -938,6 +971,9 @@ void Python::Reset(bool do_init) {
       }
       config.module_search_paths_set = 1;
     }
+
+    // Let Python know how to spin up our _ba module.
+    PyImport_AppendInittab("_ba", &PyInit__ba);
 
     // Inits our _ba module and runs Py_Initialize().
     g_app_internal->PyInitialize(&config);
@@ -1063,14 +1099,14 @@ auto Python::InitModuleClasses(PyObject* module) -> void {
 }
 
 void Python::PushObjCall(ObjID obj_id) {
-  g_game->PushCall([obj_id] {
+  g_game->thread()->PushCall([obj_id] {
     ScopedSetContext cp(g_game->GetUIContext());
     g_python->obj(obj_id).Call();
   });
 }
 
 void Python::PushObjCall(ObjID obj_id, const std::string& arg) {
-  g_game->PushCall([this, obj_id, arg] {
+  g_game->thread()->PushCall([this, obj_id, arg] {
     ScopedSetContext cp(g_game->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", arg.c_str()),
                    ballistica::PythonRef::kSteal);

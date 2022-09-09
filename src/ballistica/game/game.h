@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/core/module.h"
+#include "ballistica/core/object.h"
 
 namespace ballistica {
 
@@ -22,10 +22,10 @@ const int kMaxPartyNameCombinedSize = 25;
 /// The Game Module generally runs on a dedicated thread; it manages
 /// all game logic, builds frame_defs to send to the graphics-server for
 /// rendering, etc.
-class Game : public Module {
+class Game {
  public:
   explicit Game(Thread* thread);
-  ~Game() override;
+
   auto LaunchHostSession(PyObject* session_type_obj,
                          BenchmarkType benchmark_type = BenchmarkType::kNone)
       -> void;
@@ -102,7 +102,7 @@ class Game : public Module {
   auto ChangeGameSpeed(int offs) -> void;
   auto ResetInput() -> void;
   auto RunMainMenu() -> void;
-  auto HandleThreadPause() -> void override;
+  auto OnThreadPause() -> void;
 
 #if BA_VR_BUILD
   auto PushVRHandsState(const VRHandsState& state) -> void;
@@ -244,6 +244,7 @@ class Game : public Module {
     return connections_.get();
   }
   auto mark_game_roster_dirty() -> void { game_roster_dirty_ = true; }
+  auto thread() const -> Thread* { return thread_; }
 
  private:
   auto HandleQuitOnIdle() -> void;
@@ -258,7 +259,7 @@ class Game : public Module {
   auto ScoresToBeatResponse(bool success, const std::list<ScoreToBeat>& scores,
                             void* py_callback) -> void;
 
-  auto Prune() -> void;  // Periodic pruning of dead stuff.
+  auto PruneMedia() -> void;
   auto Update() -> void;
   auto Process() -> void;
   auto UpdateKickVote() -> void;
@@ -277,6 +278,7 @@ class Game : public Module {
   int rift_step_index_{};
 #endif
 
+  Thread* thread_{};
   std::unique_ptr<ConnectionSet> connections_;
   std::list<std::pair<millisecs_t, PlayerSpec> > banned_players_;
   std::list<std::string> chat_messages_;

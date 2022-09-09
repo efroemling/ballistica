@@ -7,6 +7,7 @@
 #endif
 
 #include "ballistica/audio/audio_server.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/graphics/graphics_server.h"
@@ -614,7 +615,8 @@ void Media::MarkComponentForLoad(MediaComponentData* c) {
   // ClearPendingLoadsDoneList)
 
   auto media_ptr = new Object::Ref<MediaComponentData>(c);
-  g_media_server->PushRunnable(Object::NewDeferred<PreloadRunnable>(media_ptr));
+  g_media_server->thread()->PushRunnable(
+      Object::NewDeferred<PreloadRunnable>(media_ptr));
 }
 
 #pragma clang diagnostic push
@@ -756,7 +758,7 @@ auto Media::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   std::vector<Object::Ref<T>*> l_unfinished;
   std::vector<Object::Ref<T>*> l_finished;
   {
-    std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+    std::scoped_lock lock(pending_load_list_mutex_);
 
     // If we're already out of time.
     if (!flush && GetRealTime() - starttime > PENDING_LOAD_PROCESS_TIME) {
@@ -807,7 +809,7 @@ auto Media::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   // Now add unfinished ones back onto the original list and finished ones into
   // the done list.
   {
-    std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+    std::scoped_lock lock(pending_load_list_mutex_);
     for (auto&& i : l) {
       c_list->push_back(i);
     }
@@ -1173,14 +1175,14 @@ void Media::AddPendingLoad(Object::Ref<MediaComponentData>* c) {
     case MediaType::kTexture:
     case MediaType::kModel: {
       // Tell the graphics thread there's pending loads...
-      std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+      std::scoped_lock lock(pending_load_list_mutex_);
       pending_loads_graphics_.push_back(c);
       break;
     }
     case MediaType::kSound: {
       // Tell the audio thread there's pending loads.
       {
-        std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+        std::scoped_lock lock(pending_load_list_mutex_);
         pending_loads_sounds_.push_back(c);
       }
       g_audio_server->PushHavePendingLoadsCall();
@@ -1189,7 +1191,7 @@ void Media::AddPendingLoad(Object::Ref<MediaComponentData>* c) {
     default: {
       // Tell the game thread there's pending loads.
       {
-        std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+        std::scoped_lock lock(pending_load_list_mutex_);
         pending_loads_other_.push_back(c);
       }
       g_game->PushHavePendingLoadsCall();
@@ -1201,7 +1203,7 @@ void Media::AddPendingLoad(Object::Ref<MediaComponentData>* c) {
 void Media::ClearPendingLoadsDoneList() {
   assert(InLogicThread());
 
-  std::lock_guard<std::mutex> lock(pending_load_list_mutex_);
+  std::scoped_lock lock(pending_load_list_mutex_);
 
   // Our explicitly-allocated reference pointer has made it back to us here in
   // the game thread.

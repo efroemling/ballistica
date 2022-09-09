@@ -34,22 +34,22 @@ class Object {
   // type-name plus address.
   virtual auto GetObjectDescription() const -> std::string;
 
-  // This is called when adding or removing a reference to an Object;
-  // it can perform sanity-tests to make sure references are not being
-  // added at incorrect times or from incorrect threads.
-  // The default implementation uses the per-object
-  // ThreadOwnership/ThreadIdentifier values accessible below. NOTE: this
-  // check runs only in the debug build so don't add any logical side-effects!
-#if BA_DEBUG_BUILD
-  virtual void ObjectThreadCheck();
-#endif
-
   enum class ThreadOwnership {
-    kClassDefault,     // Uses class' GetDefaultOwnerThread() call.
-    kNextReferencing,  // Uses whichever thread next acquires/accesses a ref.
-    kCustom,           // Always use a specific thread.
-    kAny               // Any thread is fine.
+    kClassDefault,    // Uses class' GetDefaultOwnerThread() call.
+    kNextReferencing  // Uses whichever thread next acquires/accesses a ref.
   };
+
+#if BA_DEBUG_BUILD
+
+  /// This is called when adding or removing a reference to an Object;
+  /// it can perform sanity-tests to make sure references are not being
+  /// added at incorrect times or from incorrect threads.
+  /// The default implementation uses the per-object
+  /// ThreadOwnership/ThreadIdentifier values accessible below. NOTE: this
+  /// check runs only in the debug build so don't add any logical side-effects!
+  virtual void ObjectThreadCheck();
+
+#endif
 
   /// Called by the default ObjectThreadCheck() to determine ThreadOwnership
   /// for an Object.  The default uses the object's individual value
@@ -62,21 +62,12 @@ class Object {
   /// Default returns ThreadIdentifier::kLogic
   virtual auto GetDefaultOwnerThread() const -> ThreadIdentifier;
 
-  /// Set thread ownership values for an individual object.
-  /// Note that these values may be ignored if ObjectThreadCheck() is
-  /// overridden, and thread_identifier is only relevant when ownership is
-  /// ThreadOwnership::kCustom.
-  /// UPDATE: turning off per-object controls; gonna see if we can get by
-  /// with just set_thread_checks_enabled() for temp special cases...
-  void SetThreadOwnership(
-      ThreadOwnership ownership,
-      ThreadIdentifier thread_identifier = ThreadIdentifier::kLogic) {
+  /// Set thread ownership for an individual object.
+  void SetThreadOwnership(ThreadOwnership ownership) {
 #if BA_DEBUG_BUILD
     thread_ownership_ = ownership;
     if (thread_ownership_ == ThreadOwnership::kNextReferencing) {
       owner_thread_ = ThreadIdentifier::kInvalid;
-    } else {
-      owner_thread_ = thread_identifier;
     }
 #endif
   }
@@ -128,9 +119,9 @@ class Object {
     }
 
    private:
-    Object* obj_ = nullptr;
-    WeakRefBase* prev_ = nullptr;
-    WeakRefBase* next_ = nullptr;
+    Object* obj_{};
+    WeakRefBase* prev_{};
+    WeakRefBase* next_{};
     friend class Object;
   };  // WeakRefBase
 
@@ -278,8 +269,8 @@ class Object {
       if (obj == nullptr) {
         throw Exception("Acquiring invalid ptr of " + static_type_name<T>());
       }
-#if BA_DEBUG_BUILD
 
+#if BA_DEBUG_BUILD
       // Seems like it'd be a good idea to prevent creation of weak-refs to
       // objects in their destructors, but it turns out we're currently
       // doing this (session points contexts at itself as it dies, etc.)
@@ -287,13 +278,14 @@ class Object {
       obj->ObjectThreadCheck();
       assert(obj_ == nullptr && next_ == nullptr && prev_ == nullptr);
 #endif
+
       if (obj->object_weak_refs_) {
         obj->object_weak_refs_->prev_ = this;
         next_ = obj->object_weak_refs_;
       }
       obj->object_weak_refs_ = this;
 
-      // Sanity checking: We make the assumption that static-casting our pointer
+      // Sanity check: We make the assumption that static-casting our pointer
       // to/from Object gives the same results as reinterpret-casting it; let's
       // be certain that's the case. In some cases involving multiple
       // inheritance this might not be true, but we avoid those cases in our
@@ -431,6 +423,7 @@ class Object {
       }
 
 #if BA_DEBUG_BUILD
+      obj->ObjectUpdateForAcquire();
       obj->ObjectThreadCheck();
 
       // Obvs shouldn't be referencing dead stuff.
@@ -444,10 +437,10 @@ class Object {
         // Log only to system log for these low-level errors;
         // console or server can cause deadlock due to recursive
         // ref-list locks.
-        printf(
-            "Incorrectly creating initial strong-ref to %s; use "
-            "New() or MakeRefCounted()\n",
-            obj->GetObjectDescription().c_str());
+        FatalError(
+            "Incorrectly creating initial strong-ref; use "
+            "New() or MakeRefCounted(): "
+            + obj->GetObjectDescription());
       }
       obj->object_has_strong_ref_ = true;
 #endif  // BA_DEBUG_BUILD
@@ -474,7 +467,7 @@ class Object {
         }
       }
     }
-    T* obj_ = nullptr;
+    T* obj_{};
   };
 
   /// Object::New<Type>(): The preferred way to create ref-counted Objects.
@@ -490,17 +483,16 @@ class Object {
 #if BA_DEBUG_BUILD
     if (ptr->object_creating_strong_reffed_) {
       // Avoiding Log for these low level errors; can lead to deadlock.
-      printf("Object already set up as reffed in New: %s\n",
-             ptr->GetObjectDescription().c_str());
+      FatalError("ballistica::Object already set up as reffed in New: "
+                 + ptr->GetObjectDescription());
     }
     if (ptr->object_strong_ref_count_ > 0) {
-      // TODO(ericf): make this an error once its cleared out
-      printf("Obj strong-ref in constructor: %s\n",
-             ptr->GetObjectDescription().c_str());
+      FatalError("ballistica::Object hs strong-ref in constructor: "
+                 + ptr->GetObjectDescription());
     }
     ptr->object_in_constructor_ = false;
     ptr->object_creating_strong_reffed_ = true;
-#endif  // BA_DEBUG_BUILD
+#endif
     return Object::Ref<TRETURN>(ptr);
   }
 
@@ -517,8 +509,8 @@ class Object {
     T* ptr = new T(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
     if (ptr->object_strong_ref_count_ > 0) {
-      printf("Obj strong-ref in constructor: %s\n",
-             ptr->GetObjectDescription().c_str());
+      FatalError("ballistica::Object has strong-ref in constructor: "
+                 + ptr->GetObjectDescription());
     }
     ptr->object_in_constructor_ = false;
 #endif
@@ -531,9 +523,9 @@ class Object {
     // Make sure we're operating on a fresh object.
     assert(ptr->object_strong_ref_count_ == 0);
     if (ptr->object_creating_strong_reffed_) {
-      // Avoiding Log for these low level errors; can lead to deadlock.
-      printf("Object already set up as reffed in MakeRefCounted: %s\n",
-             ptr->GetObjectDescription().c_str());
+      FatalError(
+          "ballistica::Object already set up as reffed in MakeRefCounted: "
+          + ptr->GetObjectDescription());
     }
     ptr->object_creating_strong_reffed_ = true;
 #endif
@@ -554,15 +546,13 @@ class Object {
   }
 
  private:
+#if BA_DEBUG_BUILD
   // Making operator new private here to help ensure all of our dynamic
   // allocation/deallocation goes through our special functions (New(),
   // NewDeferred(), etc.). However, sticking with original new for release
   // builds since it may handle corner cases this does not.
-#if BA_DEBUG_BUILD
   auto operator new(size_t size) -> void* { return new char[size]; }
-#endif
-
-#if BA_DEBUG_BUILD
+  auto ObjectUpdateForAcquire() -> void;
   bool object_has_strong_ref_{};
   bool object_creating_strong_reffed_{};
   bool object_is_dead_{};

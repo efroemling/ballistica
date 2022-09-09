@@ -232,8 +232,6 @@
     <ClInclude Include="..\..\src\ballistica\core\logging.h" />
     <ClCompile Include="..\..\src\ballistica\core\macros.cc" />
     <ClInclude Include="..\..\src\ballistica\core\macros.h" />
-    <ClCompile Include="..\..\src\ballistica\core\module.cc" />
-    <ClInclude Include="..\..\src\ballistica\core\module.h" />
     <ClCompile Include="..\..\src\ballistica\core\object.cc" />
     <ClInclude Include="..\..\src\ballistica\core\object.h" />
     <ClCompile Include="..\..\src\ballistica\core\thread.cc" />

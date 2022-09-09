@@ -6,6 +6,7 @@
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"
+#include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/media/component/collide_model.h"

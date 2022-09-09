@@ -7,7 +7,6 @@
 #include <mutex>
 #include <vector>
 
-#include "ballistica/core/module.h"
 #include "ballistica/core/object.h"
 
 namespace ballistica {

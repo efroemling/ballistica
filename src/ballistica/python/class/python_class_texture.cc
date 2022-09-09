@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_texture.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
@@ -94,7 +95,7 @@ void PythonClassTexture::tp_dealloc(PythonClassTexture* self) {
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Texture>* t = self->texture_;
-    g_game->PushCall([t] { Delete(t); });
+    g_game->thread()->PushCall([t] { Delete(t); });
   } else {
     Delete(self->texture_);
   }

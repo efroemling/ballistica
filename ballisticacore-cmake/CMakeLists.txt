@@ -241,8 +241,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/core/logging.h
   ${BA_SRC_ROOT}/ballistica/core/macros.cc
   ${BA_SRC_ROOT}/ballistica/core/macros.h
-  ${BA_SRC_ROOT}/ballistica/core/module.cc
-  ${BA_SRC_ROOT}/ballistica/core/module.h
   ${BA_SRC_ROOT}/ballistica/core/object.cc
   ${BA_SRC_ROOT}/ballistica/core/object.h
   ${BA_SRC_ROOT}/ballistica/core/thread.cc

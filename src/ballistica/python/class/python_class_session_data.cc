@@ -2,6 +2,7 @@
 
 #include "ballistica/python/class/python_class_session_data.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/session.h"
 #include "ballistica/generic/utils.h"
@@ -82,7 +83,7 @@ void PythonClassSessionData::tp_dealloc(PythonClassSessionData* self) {
   // until the delete goes through; could that ever be a problem?
   if (!InLogicThread()) {
     Object::WeakRef<Session>* s = self->session_;
-    g_game->PushCall([s] { delete s; });
+    g_game->thread()->PushCall([s] { delete s; });
   } else {
     delete self->session_;
   }

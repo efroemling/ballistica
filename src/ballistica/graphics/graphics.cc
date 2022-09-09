@@ -858,7 +858,7 @@ auto Graphics::GetEmptyFrameDef() -> FrameDef* {
 
 void Graphics::ClearFrameDefDeleteList() {
   assert(InLogicThread());
-  std::lock_guard<std::mutex> lock(frame_def_delete_list_mutex_);
+  std::scoped_lock lock(frame_def_delete_list_mutex_);
 
   for (auto& i : frame_def_delete_list_) {
     // We recycle our frame_defs so we don't have to reallocate all those
@@ -1422,7 +1422,7 @@ void Graphics::ClearScreenMessageTranslations() {
 }
 
 void Graphics::ReturnCompletedFrameDef(FrameDef* frame_def) {
-  std::lock_guard<std::mutex> lock(frame_def_delete_list_mutex_);
+  std::scoped_lock lock(frame_def_delete_list_mutex_);
   g_graphics->frame_def_delete_list_.push_back(frame_def);
 }
 
