@@ -11,7 +11,6 @@ namespace ballistica {
 
 void Thread::SetInternalThreadName(const std::string& name) {
   std::scoped_lock lock(g_app->thread_name_map_mutex);
-  std::thread::id thread_id = std::this_thread::get_id();
   g_app->thread_name_map[std::this_thread::get_id()] = name;
 }
 

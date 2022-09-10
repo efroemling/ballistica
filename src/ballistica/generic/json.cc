@@ -29,6 +29,7 @@
 #include "ballistica/generic/json.h"
 
 #include <cfloat>
+#include <cmath>
 
 #if BA_OSTYPE_LINUX
 #include <climits>

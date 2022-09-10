@@ -5,28 +5,14 @@
 
 // Try to ensure they're providing proper config stuff.
 #ifndef BA_HAVE_CONFIG
-#error platform config has not been defined!
+#error ballistica platform config has not been defined!
 #endif
 
-// FIXME: We need to update to C++17 to get unified std::abs().
-//  Until we do that, int types are defined in <cstdlib>
-//  and float/double in <cmath>, meaning its possible to call the wrong
-//  version if we aren't careful and only include one header.
-//  For now just including both here at the top level to hopefully
-//  minimize problems.
-// UPDATE: We should now be building with C++17 everywhere; should add a
-// check to ensure that is the case and can simplify this.
 #ifdef __cplusplus
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-#include <set>
-#include <stdexcept>
 #include <string>
-#include <thread>
-#include <vector>
 #endif
 
+// Minimum functionality we want available everywhere we are included.
 #include "ballistica/core/exception.h"
 #include "ballistica/core/inline.h"
 #include "ballistica/core/macros.h"
