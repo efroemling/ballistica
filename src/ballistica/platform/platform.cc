@@ -24,7 +24,6 @@
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/friend_score_set.h"
 #include "ballistica/game/game.h"
-#include "ballistica/game/score_to_beat.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
@@ -1093,39 +1092,36 @@ void Platform::SetHardwareCursorVisible(bool visible) {
 #endif
 }
 
-void Platform::QuitApp() { exit(g_app->return_value); }
+auto Platform::QuitApp() -> void { exit(g_app->return_value); }
 
-void Platform::GetScoresToBeat(const std::string& level,
-                               const std::string& config, void* py_callback) {
-  // By default, return nothing.
-  g_game->PushScoresToBeatResponseCall(false, std::list<ScoreToBeat>(),
-                                       py_callback);
-}
-
-void Platform::OpenFileExternally(const std::string& path) {
+auto Platform::OpenFileExternally(const std::string& path) -> void {
   Log("OpenFileExternally() unimplemented");
 }
 
-void Platform::OpenDirExternally(const std::string& path) {
+auto Platform::OpenDirExternally(const std::string& path) -> void {
   Log("OpenDirExternally() unimplemented");
 }
 
-void Platform::MacMusicAppInit() { Log("MacMusicAppInit() unimplemented"); }
+auto Platform::MacMusicAppInit() -> void {
+  Log("MacMusicAppInit() unimplemented");
+}
 
 auto Platform::MacMusicAppGetVolume() -> int {
   Log("MacMusicAppGetVolume() unimplemented");
   return 0;
 }
 
-void Platform::MacMusicAppSetVolume(int volume) {
+auto Platform::MacMusicAppSetVolume(int volume) -> void {
   Log("MacMusicAppSetVolume() unimplemented");
 }
 
-void Platform::MacMusicAppGetLibrarySource() {
+auto Platform::MacMusicAppGetLibrarySource() -> void {
   Log("MacMusicAppGetLibrarySource() unimplemented");
 }
 
-void Platform::MacMusicAppStop() { Log("MacMusicAppStop() unimplemented"); }
+auto Platform::MacMusicAppStop() -> void {
+  Log("MacMusicAppStop() unimplemented");
+}
 
 auto Platform::MacMusicAppPlayPlaylist(const std::string& playlist) -> bool {
   Log("MacMusicAppPlayPlaylist() unimplemented");
@@ -1136,7 +1132,7 @@ auto Platform::MacMusicAppGetPlaylists() -> std::list<std::string> {
   return {};
 }
 
-void Platform::SetCurrentThreadName(const std::string& name) {
+auto Platform::SetCurrentThreadName(const std::string& name) -> void {
   // Currently we leave the main thread alone, otherwise we show up as
   // "BallisticaMainThread" under "top" on linux (should check other platforms).
   if (InMainThread()) {
@@ -1149,7 +1145,7 @@ void Platform::SetCurrentThreadName(const std::string& name) {
 #endif
 }
 
-void Platform::Unlink(const char* path) {
+auto Platform::Unlink(const char* path) -> void {
 // This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
@@ -1186,7 +1182,7 @@ auto Platform::IsEventPushMode() -> bool { return false; }
 
 auto Platform::GetDisplayResolution(int* x, int* y) -> bool { return false; }
 
-void Platform::CloseSocket(int socket) {
+auto Platform::CloseSocket(int socket) -> void {
 // This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();

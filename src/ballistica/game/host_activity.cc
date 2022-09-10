@@ -8,7 +8,6 @@
 #include "ballistica/assets/component/sound.h"
 #include "ballistica/assets/component/texture.h"
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/generic/lambda_runnable.h"
@@ -19,6 +18,7 @@
 #include "ballistica/python/python_sys.h"
 #include "ballistica/scene/node/globals_node.h"
 #include "ballistica/scene/node/node_type.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -36,7 +36,7 @@ HostActivity::HostActivity(HostSession* host_session) {
     scene_ = Object::New<Scene>(0);
 
     // If there's an output stream, add to it.
-    if (GameStream* out = host_session->GetGameStream()) {
+    if (SceneStream* out = host_session->GetSceneStream()) {
       out->AddScene(scene_.get());
     }
   }
@@ -110,9 +110,9 @@ HostActivity::~HostActivity() {
   }
 }
 
-auto HostActivity::GetGameStream() const -> GameStream* {
+auto HostActivity::GetSceneStream() const -> SceneStream* {
   if (!host_session_.exists()) return nullptr;
-  return host_session_->GetGameStream();
+  return host_session_->GetSceneStream();
 }
 
 auto HostActivity::SetGlobalsNode(GlobalsNode* node) -> void {
@@ -314,7 +314,7 @@ void HostActivity::SetIsForeground(bool val) {
     g_game->SetForegroundScene(sg);
 
     // Also push it to clients.
-    if (GameStream* out = GetGameStream()) {
+    if (SceneStream* out = GetSceneStream()) {
       out->SetForegroundScene(scene_.get());
     }
   }
@@ -433,7 +433,7 @@ void HostActivity::Draw(FrameDef* frame_def) {
   scene()->Draw(frame_def);
 }
 
-void HostActivity::DumpFullState(GameStream* out) {
+void HostActivity::DumpFullState(SceneStream* out) {
   // Add our scene.
   if (scene_.exists()) {
     scene_->Dump(out);

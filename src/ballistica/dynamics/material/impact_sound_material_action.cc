@@ -4,10 +4,10 @@
 
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_context.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -17,7 +17,7 @@ auto ImpactSoundMaterialAction::GetFlattenedSize() -> size_t {
 }
 
 void ImpactSoundMaterialAction::Flatten(char** buffer,
-                                        GameStream* output_stream) {
+                                        SceneStream* output_stream) {
   assert(sounds.size() < 100);
   auto sound_count{static_cast<uint8_t>(sounds.size())};
   Utils::EmbedInt8(buffer, sound_count);

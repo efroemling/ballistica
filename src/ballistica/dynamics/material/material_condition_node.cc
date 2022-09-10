@@ -3,9 +3,9 @@
 #include "ballistica/dynamics/material/material_condition_node.h"
 
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -22,7 +22,7 @@ auto MaterialConditionNode::GetFlattenedSize() -> size_t {
   return size;
 }
 
-void MaterialConditionNode::Flatten(char** buffer, GameStream* output_stream) {
+void MaterialConditionNode::Flatten(char** buffer, SceneStream* output_stream) {
   // Pack our opmode in. Or if we're a leaf note stick zero in.
   Utils::EmbedInt8(buffer, static_cast<int8_t>(opmode));
   if (opmode == OpMode::LEAF_NODE) {

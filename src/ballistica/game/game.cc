@@ -13,7 +13,6 @@
 #include "ballistica/game/friend_score_set.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
-#include "ballistica/game/score_to_beat.h"
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/game/session/net_client_session.h"
@@ -1169,22 +1168,6 @@ void Game::GameServiceAchievementList(
   assert(g_python);
   assert(InLogicThread());
   g_app_internal->DispatchRemoteAchievementList(achievements);
-}
-
-void Game::PushScoresToBeatResponseCall(bool success,
-                                        const std::list<ScoreToBeat>& scores,
-                                        void* py_callback) {
-  thread()->PushCall([this, success, scores, py_callback] {
-    ScoresToBeatResponse(success, scores, py_callback);
-  });
-}
-
-void Game::ScoresToBeatResponse(bool success,
-                                const std::list<ScoreToBeat>& scores,
-                                void* py_callback) {
-  assert(g_python);
-  assert(InLogicThread());
-  g_python->DispatchScoresToBeatResponse(success, scores, py_callback);
 }
 
 void Game::PushPlaySoundCall(SystemSoundID sound) {

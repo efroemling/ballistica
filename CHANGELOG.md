@@ -1,4 +1,4 @@
-### 1.7.7 (build 20806, api 7, 2022-09-10)
+### 1.7.7 (build 20809, api 7, 2022-09-10)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -20,8 +20,9 @@
 - There is now a `_bainternal.py` dummy-module alongside the existing `_ba.py` one. Be sure to exclude it from any script collections used by the game (the same as `_ba.py`).
 - Added checks to make sure _ba or _bainternal arent used outside of ba. Any 'internal' functionality needed outside of ba should be exposed through ba.internal. _ba and _bainternal are internal implementation details.
 - Removed C++ Module class and simplified Thread class. The Module class was an old relic of long ago before C++ had lambdas and its existence was pretty pointless and confusing these days.
-- Renamed C++ App to AppFlavor and AppGlobals to App
-- Renamed C++ Media to Assets
+- Renamed C++ App to AppFlavor and AppGlobals to App.
+- Renamed C++ Media to Assets.
+- Removed 'scores to beat' list in coop which was only ever functional in limited cases on the Mac version. Perhaps that feature can reappear in a cross-platform way sometime.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

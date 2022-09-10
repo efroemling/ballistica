@@ -57,8 +57,6 @@ class PlatformApple : public Platform {
   auto IsOSPlayingMusic() -> bool override;
   auto SetHardwareCursorVisible(bool visible) -> void override;
   auto QuitApp() -> void override;
-  auto GetScoresToBeat(const std::string& level, const std::string& config,
-                       void* py_callback) -> void override;
   auto OpenFileExternally(const std::string& path) -> void override;
   auto OpenDirExternally(const std::string& path) -> void override;
   auto MacMusicAppInit() -> void override;

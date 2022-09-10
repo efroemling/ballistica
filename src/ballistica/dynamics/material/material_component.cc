@@ -143,7 +143,7 @@ auto MaterialComponent::GetFlattenedSize() -> size_t {
   return size;
 }
 
-void MaterialComponent::Flatten(char** buffer, GameStream* output_stream) {
+void MaterialComponent::Flatten(char** buffer, SceneStream* output_stream) {
   // Embed a byte telling whether we have conditions.
   Utils::EmbedInt8(buffer, conditions.exists());
 

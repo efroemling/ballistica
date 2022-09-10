@@ -26,7 +26,7 @@ class ImpactSoundMaterialAction : public MaterialAction {
              const Object::Ref<MaterialAction>& p) override;
   auto GetType() const -> Type override { return Type::IMPACT_SOUND; }
   auto GetFlattenedSize() -> size_t override;
-  void Flatten(char** buffer, GameStream* output_stream) override;
+  void Flatten(char** buffer, SceneStream* output_stream) override;
   void Restore(const char** buffer, ClientSession* cs) override;
 
  private:

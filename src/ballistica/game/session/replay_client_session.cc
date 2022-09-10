@@ -5,13 +5,13 @@
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/generic/huffman.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/math/vector3f.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -67,7 +67,7 @@ void ReplayClientSession::OnClientConnected(ConnectionToClient* c) {
     // we create a temporary output stream just for the purpose of building
     // a giant session-commands message that we can send to the client
     // to build its state up to where we are currently.
-    GameStream out(nullptr, false);
+    SceneStream out(nullptr, false);
 
     // go ahead and dump our full state..
     DumpFullState(&out);

@@ -339,15 +339,12 @@
     <ClInclude Include="..\..\src\ballistica\game\friend_score_set.h" />
     <ClCompile Include="..\..\src\ballistica\game\game.cc" />
     <ClInclude Include="..\..\src\ballistica\game\game.h" />
-    <ClCompile Include="..\..\src\ballistica\game\game_stream.cc" />
-    <ClInclude Include="..\..\src\ballistica\game\game_stream.h" />
     <ClCompile Include="..\..\src\ballistica\game\host_activity.cc" />
     <ClInclude Include="..\..\src\ballistica\game\host_activity.h" />
     <ClCompile Include="..\..\src\ballistica\game\player.cc" />
     <ClInclude Include="..\..\src\ballistica\game\player.h" />
     <ClCompile Include="..\..\src\ballistica\game\player_spec.cc" />
     <ClInclude Include="..\..\src\ballistica\game\player_spec.h" />
-    <ClInclude Include="..\..\src\ballistica\game\score_to_beat.h" />
     <ClCompile Include="..\..\src\ballistica\game\session\client_session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\client_session.h" />
     <ClCompile Include="..\..\src\ballistica\game\session\host_session.cc" />
@@ -629,6 +626,8 @@
     <ClInclude Include="..\..\src\ballistica\scene\node\time_display_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene\scene.cc" />
     <ClInclude Include="..\..\src\ballistica\scene\scene.h" />
+    <ClCompile Include="..\..\src\ballistica\scene\scene_stream.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene\scene_stream.h" />
     <ClCompile Include="..\..\src\ballistica\ui\console.cc" />
     <ClInclude Include="..\..\src\ballistica\ui\console.h" />
     <ClCompile Include="..\..\src\ballistica\ui\root_ui.cc" />

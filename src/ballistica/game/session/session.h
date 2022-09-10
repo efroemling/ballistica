@@ -33,7 +33,7 @@ class Session : public ContextTarget {
   virtual void DebugSpeedMultChanged();
   auto benchmark_type() const -> BenchmarkType { return benchmark_type_; }
   void set_benchmark_type(BenchmarkType val) { benchmark_type_ = val; }
-  virtual void DumpFullState(GameStream* s);
+  virtual void DumpFullState(SceneStream* s);
 
  private:
   BenchmarkType benchmark_type_ = BenchmarkType::kNone;

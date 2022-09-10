@@ -127,10 +127,6 @@ class Python {
   /// Pass a chat message along to the python UI layer for handling..
   auto HandleLocalChatMessage(const std::string& message) -> void;
 
-  auto DispatchScoresToBeatResponse(
-      bool success, const std::list<ScoreToBeat>& scores_to_beat,
-      void* PyCallback) -> void;
-
   /// Pop up an in-game window to show a url (NOT in a browser).
   auto ShowURL(const std::string& url) -> void;
 

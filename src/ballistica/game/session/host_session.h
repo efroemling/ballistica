@@ -64,11 +64,11 @@ class HostSession : public Session {
     return scene_.get();
   }
   void RegisterCall(PythonContextCall* call);
-  auto GetGameStream() const -> GameStream* { return output_stream_.get(); }
+  auto GetSceneStream() const -> SceneStream* { return output_stream_.get(); }
   auto is_main_menu() const -> bool {
     return is_main_menu_;
   }  // fixme remove this
-  void DumpFullState(GameStream* out) override;
+  void DumpFullState(SceneStream* out) override;
   void GetCorrectionMessages(bool blend,
                              std::vector<std::vector<uint8_t> >* messages);
   auto base_time() const -> millisecs_t { return base_time_; }
@@ -98,7 +98,7 @@ class HostSession : public Session {
   void IssuePlayerLeft(Player* player);
 
   bool is_main_menu_;  // FIXME: Remove this.
-  Object::Ref<GameStream> output_stream_;
+  Object::Ref<SceneStream> output_stream_;
   Timer* step_scene_timer_;
   millisecs_t base_time_ = 0;
   TimerList sim_timers_;

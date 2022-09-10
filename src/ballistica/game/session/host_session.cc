@@ -6,7 +6,6 @@
 #include "ballistica/assets/component/model.h"
 #include "ballistica/assets/component/sound.h"
 #include "ballistica/assets/component/texture.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
 #include "ballistica/generic/lambda_runnable.h"
@@ -17,6 +16,7 @@
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/python/python_sys.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -51,7 +51,7 @@ HostSession::HostSession(PyObject* session_type_obj)
     do_replay = false;
   }
 
-  output_stream_ = Object::New<GameStream>(this, do_replay);
+  output_stream_ = Object::New<SceneStream>(this, do_replay);
 
   // Make a scene for our session-level nodes, etc.
   scene_ = Object::New<Scene>(0);
@@ -499,7 +499,7 @@ void HostSession::Update(int time_advance) {
 
   ProcessPlayerTimeOuts();
 
-  GameStream* output_stream = GetGameStream();
+  SceneStream* output_stream = GetSceneStream();
 
   // Advance base time by the specified amount,
   // firing all timers along the way.
@@ -656,7 +656,7 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
   return name_test;
 }
 
-void HostSession::DumpFullState(GameStream* out) {
+void HostSession::DumpFullState(SceneStream* out) {
   // Add session-scene.
   if (scene_.exists()) {
     scene_->Dump(out);

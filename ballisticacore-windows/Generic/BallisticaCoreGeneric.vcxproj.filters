@@ -451,12 +451,6 @@
     <ClInclude Include="..\..\src\ballistica\game\game.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\game_stream.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\game_stream.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\game\host_activity.cc">
       <Filter>ballistica\game</Filter>
     </ClCompile>
@@ -473,9 +467,6 @@
       <Filter>ballistica\game</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\player_spec.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\game\score_to_beat.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\game\session\client_session.cc">
@@ -1319,6 +1310,12 @@
       <Filter>ballistica\scene</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene\scene.h">
+      <Filter>ballistica\scene</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene\scene_stream.cc">
+      <Filter>ballistica\scene</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene\scene_stream.h">
       <Filter>ballistica\scene</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui\console.cc">

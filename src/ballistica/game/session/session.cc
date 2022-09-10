@@ -30,7 +30,7 @@ void Session::GraphicsQualityChanged(GraphicsQuality q) {}
 
 void Session::DebugSpeedMultChanged() {}
 
-void Session::DumpFullState(GameStream* out) {
+void Session::DumpFullState(SceneStream* out) {
   Log("Session::DumpFullState() being called; shouldn't happen.");
 }
 

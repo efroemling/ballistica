@@ -3,9 +3,9 @@
 #include "ballistica/dynamics/material/sound_material_action.h"
 
 #include "ballistica/dynamics/material/material_context.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -18,7 +18,7 @@ void SoundMaterialAction::Apply(MaterialContext* context, const Part* src_part,
 
 auto SoundMaterialAction::GetFlattenedSize() -> size_t { return 4 + 2; }
 
-void SoundMaterialAction::Flatten(char** buffer, GameStream* output_stream) {
+void SoundMaterialAction::Flatten(char** buffer, SceneStream* output_stream) {
   Utils::EmbedInt32NBO(buffer, static_cast_check_fit<int32_t>(
                                    output_stream->GetSoundID(sound_.get())));
   Utils::EmbedFloat16NBO(buffer, volume_);

@@ -2,10 +2,10 @@
 
 #include "ballistica/assets/component/texture.h"
 
-#include "ballistica/game/game_stream.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/python/class/python_class_texture.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -15,7 +15,7 @@ Texture::Texture(const std::string& name, Scene* scene)
 
   // Add to the provided scene to get a numeric ID.
   if (scene) {
-    if (GameStream* os = scene->GetGameStream()) {
+    if (SceneStream* os = scene->GetSceneStream()) {
       os->AddTexture(this);
     }
   }
@@ -43,7 +43,7 @@ void Texture::MarkDead() {
     return;
   }
   if (Scene* s = scene()) {
-    if (GameStream* os = s->GetGameStream()) {
+    if (SceneStream* os = s->GetSceneStream()) {
       os->RemoveTexture(this);
     }
   }

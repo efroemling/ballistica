@@ -9,16 +9,16 @@ defensively) in mods.
 from __future__ import annotations
 
 from _ba import (
-    get_scores_to_beat, show_online_score_ui, set_ui_input_device,
-    is_party_icon_visible, getinputdevice, add_clean_frame_callback,
-    unlock_all_input, increment_analytics_count, set_debug_speed_exponent,
-    get_special_widget, get_qrcode_texture, get_string_height,
-    get_string_width, show_app_invite, appnameupper, lock_all_input,
-    open_file_externally, fade_screen, appname, have_incentivized_ad,
-    has_video_ads, workspaces_in_use, set_party_icon_always_visible,
-    connect_to_party, get_game_port, end_host_scanning, host_scan_cycle,
-    charstr, get_public_party_enabled, get_public_party_max_size,
-    set_public_party_name, set_public_party_max_size, set_authenticate_clients,
+    show_online_score_ui, set_ui_input_device, is_party_icon_visible,
+    getinputdevice, add_clean_frame_callback, unlock_all_input,
+    increment_analytics_count, set_debug_speed_exponent, get_special_widget,
+    get_qrcode_texture, get_string_height, get_string_width, show_app_invite,
+    appnameupper, lock_all_input, open_file_externally, fade_screen, appname,
+    have_incentivized_ad, has_video_ads, workspaces_in_use,
+    set_party_icon_always_visible, connect_to_party, get_game_port,
+    end_host_scanning, host_scan_cycle, charstr, get_public_party_enabled,
+    get_public_party_max_size, set_public_party_name,
+    set_public_party_max_size, set_authenticate_clients,
     set_public_party_enabled, reset_random_player_names, new_host_session,
     get_foreground_host_session, get_local_active_input_devices_count,
     get_ui_input_device, is_in_replay, set_replay_speed_exponent,
@@ -78,7 +78,6 @@ from ba._internal import (
     sign_out_v1, sign_in_v1, mark_config_dirty)
 
 __all__ = [
-    'get_scores_to_beat',
     'show_online_score_ui',
     'set_ui_input_device',
     'is_party_icon_visible',

@@ -3,13 +3,13 @@
 #include "ballistica/scene/node/node.h"
 
 #include "ballistica/dynamics/part.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/python/class/python_class_node.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_attribute_connection.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -30,7 +30,7 @@ void Node::AddToScene(Scene* scene) {
   // id_ = scene->next_node_id_++;
   // our_iterator_ =
   //     scene->nodes_.insert(scene->nodes_.end(), Object::Ref<Node>(this));
-  if (GameStream* os = scene->GetGameStream()) {
+  if (SceneStream* os = scene->GetSceneStream()) {
     os->AddNode(this);
   }
 }
@@ -71,7 +71,7 @@ Node::~Node() {
 
   // If we were going to an output stream, inform them of our demise.
   assert(scene());
-  if (GameStream* output_stream = scene()->GetGameStream()) {
+  if (SceneStream* output_stream = scene()->GetSceneStream()) {
     output_stream->RemoveNode(this);
   }
 }

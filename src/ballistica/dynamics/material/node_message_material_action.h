@@ -27,7 +27,7 @@ class NodeMessageMaterialAction : public MaterialAction {
     // 1 byte for bools + data
     return static_cast<int>(1 + data.GetFlattenedSize());
   }
-  void Flatten(char** buffer, GameStream* output_stream) override {
+  void Flatten(char** buffer, SceneStream* output_stream) override {
     Utils::EmbedBools(buffer, target_other, at_disconnect);
     data.embed(buffer);
   }

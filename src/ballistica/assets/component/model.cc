@@ -2,9 +2,9 @@
 
 #include "ballistica/assets/component/model.h"
 
-#include "ballistica/game/game_stream.h"
 #include "ballistica/python/class/python_class_model.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -13,7 +13,7 @@ Model::Model(const std::string& name, Scene* scene)
   assert(InLogicThread());
 
   if (scene) {
-    if (GameStream* os = scene->GetGameStream()) {
+    if (SceneStream* os = scene->GetSceneStream()) {
       os->AddModel(this);
     }
   }
@@ -31,7 +31,7 @@ void Model::MarkDead() {
     return;
   }
   if (Scene* s = scene()) {
-    if (GameStream* os = s->GetGameStream()) {
+    if (SceneStream* os = s->GetSceneStream()) {
       os->RemoveModel(this);
     }
   }

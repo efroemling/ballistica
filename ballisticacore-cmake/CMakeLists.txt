@@ -348,15 +348,12 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/friend_score_set.h
   ${BA_SRC_ROOT}/ballistica/game/game.cc
   ${BA_SRC_ROOT}/ballistica/game/game.h
-  ${BA_SRC_ROOT}/ballistica/game/game_stream.cc
-  ${BA_SRC_ROOT}/ballistica/game/game_stream.h
   ${BA_SRC_ROOT}/ballistica/game/host_activity.cc
   ${BA_SRC_ROOT}/ballistica/game/host_activity.h
   ${BA_SRC_ROOT}/ballistica/game/player.cc
   ${BA_SRC_ROOT}/ballistica/game/player.h
   ${BA_SRC_ROOT}/ballistica/game/player_spec.cc
   ${BA_SRC_ROOT}/ballistica/game/player_spec.h
-  ${BA_SRC_ROOT}/ballistica/game/score_to_beat.h
   ${BA_SRC_ROOT}/ballistica/game/session/client_session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/client_session.h
   ${BA_SRC_ROOT}/ballistica/game/session/host_session.cc
@@ -638,6 +635,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/scene/node/time_display_node.h
   ${BA_SRC_ROOT}/ballistica/scene/scene.cc
   ${BA_SRC_ROOT}/ballistica/scene/scene.h
+  ${BA_SRC_ROOT}/ballistica/scene/scene_stream.cc
+  ${BA_SRC_ROOT}/ballistica/scene/scene_stream.h
   ${BA_SRC_ROOT}/ballistica/ui/console.cc
   ${BA_SRC_ROOT}/ballistica/ui/console.h
   ${BA_SRC_ROOT}/ballistica/ui/root_ui.cc

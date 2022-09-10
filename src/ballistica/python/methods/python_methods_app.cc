@@ -7,7 +7,6 @@
 #include "ballistica/assets/component/texture.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/game/session/replay_client_session.h"
@@ -17,6 +16,7 @@
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {
@@ -499,8 +499,8 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
           PyExcType::kValue);
     }
     Scene* context_scene = Context::current().GetMutableScene();
-    GameStream* output_stream =
-        context_scene ? context_scene->GetGameStream() : nullptr;
+    SceneStream* output_stream =
+        context_scene ? context_scene->GetSceneStream() : nullptr;
 
     Texture* texture = nullptr;
     Texture* tint_texture = nullptr;

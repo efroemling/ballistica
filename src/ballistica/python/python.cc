@@ -11,10 +11,8 @@
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/game/friend_score_set.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
-#include "ballistica/game/score_to_beat.h"
 #include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/joystick.h"
@@ -47,6 +45,7 @@
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/node/node_attribute.h"
+#include "ballistica/scene/scene_stream.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/text_widget.h"
 
@@ -1275,33 +1274,6 @@ void Python::HandleLocalChatMessage(const std::string& message) {
   obj(ObjID::kHandleLocalChatMessageCall).Call(args);
 }
 
-void Python::DispatchScoresToBeatResponse(
-    bool success, const std::list<ScoreToBeat>& scores_to_beat,
-    void* callback_in) {
-  // callback_in was a newly allocated PythonContextCall.
-  // This will make it ref-counted so it'll die when we're done with it
-  auto callback(
-      Object::MakeRefCounted(static_cast<PythonContextCall*>(callback_in)));
-
-  // Empty type denotes error.
-  if (!success) {
-    PythonRef args(Py_BuildValue("(O)", Py_None), PythonRef::kSteal);
-    callback->Run(args);
-  } else {
-    PyObject* py_list = PyList_New(0);
-    for (const auto& i : scores_to_beat) {
-      PyObject* val = Py_BuildValue("{sssssssd}", "player", i.player.c_str(),
-                                    "type", i.type.c_str(), "value",
-                                    i.value.c_str(), "time", i.time);
-      PyList_Append(py_list, val);
-      Py_DECREF(val);
-    }
-    PythonRef args(Py_BuildValue("(O)", py_list), PythonRef::kSteal);
-    Py_DECREF(py_list);
-    callback->Run(args);
-  }
-}
-
 // Put together a node message with all args on the provided tuple (starting
 // with arg_offset) returns false on failure, true on success.
 void Python::DoBuildNodeMessage(PyObject* args, int arg_offset, Buffer<char>* b,
@@ -1506,7 +1478,7 @@ auto Python::GetPythonFileLocation(bool pretty) -> std::string {
 void Python::SetNodeAttr(Node* node, const char* attr_name,
                          PyObject* value_obj) {
   assert(node);
-  GameStream* out_stream = node->scene()->GetGameStream();
+  SceneStream* out_stream = node->scene()->GetSceneStream();
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
     case NodeAttributeType::kFloat: {
@@ -1820,7 +1792,7 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
   // do.
   try {
     // Tell clients to do the same.
-    if (GameStream* output_stream = scene->GetGameStream()) {
+    if (SceneStream* output_stream = scene->GetSceneStream()) {
       output_stream->NodeOnCreate(node);
     }
     node->OnCreate();

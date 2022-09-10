@@ -291,15 +291,6 @@ void AppFlavor::PushPurchaseAckCall(const std::string& purchase,
       [purchase, order_id] { g_platform->PurchaseAck(purchase, order_id); });
 }
 
-void AppFlavor::PushGetScoresToBeatCall(const std::string& level,
-                                        const std::string& config,
-                                        void* py_callback) {
-  thread()->PushCall([level, config, py_callback] {
-    assert(InMainThread());
-    g_platform->GetScoresToBeat(level, config, py_callback);
-  });
-}
-
 void AppFlavor::PushPurchaseCall(const std::string& item) {
   thread()->PushCall([item] {
     assert(InMainThread());

@@ -491,11 +491,6 @@ class Platform {
   /// Quit the app (can be immediate or via posting some high level event).
   virtual auto QuitApp() -> void;
 
-  // Note to self: do we want to deprecate this?...
-  virtual auto GetScoresToBeat(const std::string& level,
-                               const std::string& config, void* py_callback)
-      -> void;
-
   /// Open a file using the system default method (in another app, etc.)
   virtual auto OpenFileExternally(const std::string& path) -> void;
 

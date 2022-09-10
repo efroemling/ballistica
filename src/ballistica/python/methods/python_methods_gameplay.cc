@@ -12,7 +12,6 @@
 #include "ballistica/dynamics/material/material_action.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/graphics/graphics.h"
@@ -25,6 +24,7 @@
 #include "ballistica/scene/node/node.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -341,7 +341,7 @@ auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     e.spread = spread;
     e.chunk_type = chunk_type;
     e.tendril_type = tendril_type;
-    if (GameStream* output_stream = scene->GetGameStream()) {
+    if (SceneStream* output_stream = scene->GetSceneStream()) {
       output_stream->EmitBGDynamics(e);
     }
 #if !BA_HEADLESS_BUILD
@@ -489,27 +489,6 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-auto PyGetScoresToBeat(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* level;
-  const char* config;
-  PyObject* callback_obj = Py_None;
-  static const char* kwlist[] = {"level", "config", "callback", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
-                                   const_cast<char**>(kwlist), &level, &config,
-                                   &callback_obj)) {
-    return nullptr;
-  }
-
-  // Allocate a Call object for this and pass its pointer to the main thread;
-  // we'll ref/de-ref it when it comes back.
-  auto* call = Object::NewDeferred<PythonContextCall>(callback_obj);
-  g_app_flavor->PushGetScoresToBeatCall(level, config, call);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
 auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
@@ -626,13 +605,6 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Sets the debug speed scale for the game. Actual speed is "
        "pow(2,speed)."},
-
-      {"get_scores_to_beat", (PyCFunction)PyGetScoresToBeat,
-       METH_VARARGS | METH_KEYWORDS,
-       "get_scores_to_beat(level: str, config: str, callback: Callable) -> "
-       "None\n"
-       "\n"
-       "(internal)"},
 
       {"get_game_roster", (PyCFunction)PyGetGameRoster,
        METH_VARARGS | METH_KEYWORDS,

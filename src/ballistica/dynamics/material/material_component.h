@@ -18,7 +18,7 @@ class MaterialComponent : public Object {
   }
 
   auto GetFlattenedSize() -> size_t;
-  void Flatten(char** buffer, GameStream* output_stream);
+  void Flatten(char** buffer, SceneStream* output_stream);
   void Restore(const char** buffer, ClientSession* cs);
 
   // Actions are stored as shared pointers so references

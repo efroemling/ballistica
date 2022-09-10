@@ -54,9 +54,6 @@ class Game {
 
   auto PushGameServiceAchievementListCall(
       const std::set<std::string>& achievements) -> void;
-  auto PushScoresToBeatResponseCall(bool success,
-                                    const std::list<ScoreToBeat>& scores,
-                                    void* py_callback) -> void;
   auto PushToggleCollisionGeometryDisplayCall() -> void;
   auto PushToggleDebugInfoDisplayCall() -> void;
   auto PushToggleManualCameraCall() -> void;
@@ -256,8 +253,6 @@ class Game {
                     float pixel_width, float pixel_height) -> void;
   auto GameServiceAchievementList(const std::set<std::string>& achievements)
       -> void;
-  auto ScoresToBeatResponse(bool success, const std::list<ScoreToBeat>& scores,
-                            void* py_callback) -> void;
 
   auto PruneMedia() -> void;
   auto Update() -> void;

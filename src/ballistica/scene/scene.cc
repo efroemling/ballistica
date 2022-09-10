@@ -8,7 +8,6 @@
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/part.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
@@ -39,6 +38,7 @@
 #include "ballistica/scene/node/text_node.h"
 #include "ballistica/scene/node/texture_sequence_node.h"
 #include "ballistica/scene/node/time_display_node.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -106,7 +106,7 @@ void Scene::SetupNodeMessageType(const std::string& name, NodeMessageType val,
   g_app->node_message_formats[static_cast<size_t>(val)] = format;
 }
 
-auto Scene::GetGameStream() const -> GameStream* {
+auto Scene::GetSceneStream() const -> SceneStream* {
   return output_stream_.get();
 }
 
@@ -372,7 +372,7 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
   return node.get();  // NOLINT
 }
 
-void Scene::Dump(GameStream* stream) {
+void Scene::Dump(SceneStream* stream) {
   assert(InLogicThread());
   stream->AddScene(this);
 
@@ -382,7 +382,7 @@ void Scene::Dump(GameStream* stream) {
   }
 }
 
-void Scene::DumpNodes(GameStream* out) {
+void Scene::DumpNodes(SceneStream* out) {
   // Dumps commands to the output stream to recreate scene's nodes
   // in their current state.
 
@@ -623,7 +623,7 @@ auto Scene::GetCorrectionMessage(bool blended) -> std::vector<uint8_t> {
   return message;
 }
 
-void Scene::SetOutputStream(GameStream* val) { output_stream_ = val; }
+void Scene::SetOutputStream(SceneStream* val) { output_stream_ = val; }
 
 auto Scene::AddNode(Node* node, int64_t* node_id, NodeList::iterator* i)
     -> void {

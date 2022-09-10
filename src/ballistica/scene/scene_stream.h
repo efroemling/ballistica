@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_GAME_GAME_STREAM_H_
-#define BALLISTICA_GAME_GAME_STREAM_H_
+#ifndef BALLISTICA_SCENE_SCENE_STREAM_H_
+#define BALLISTICA_SCENE_SCENE_STREAM_H_
 
 #include <string>
 #include <vector>
@@ -13,10 +13,10 @@ namespace ballistica {
 
 // A mechanism for dumping a live session or session-creation-commands to a
 // stream of messages that can be saved to file or sent over the network.
-class GameStream : public Object, public ClientControllerInterface {
+class SceneStream : public Object, public ClientControllerInterface {
  public:
-  GameStream(HostSession* host_session, bool save_replay);
-  ~GameStream() override;
+  SceneStream(HostSession* host_session, bool save_replay);
+  ~SceneStream() override;
   auto SetTime(millisecs_t t) -> void;
   auto AddScene(Scene* s) -> void;
   auto RemoveScene(Scene* s) -> void;
@@ -169,4 +169,4 @@ class GameStream : public Object, public ClientControllerInterface {
 
 }  // namespace ballistica
 
-#endif  // BALLISTICA_GAME_GAME_STREAM_H_
+#endif  // BALLISTICA_SCENE_SCENE_STREAM_H_

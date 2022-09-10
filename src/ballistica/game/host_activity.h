@@ -69,8 +69,8 @@ class HostActivity : public ContextTarget {
   auto getAllowKickIdlePlayers() const -> bool {
     return allow_kick_idle_players_;
   }
-  auto GetGameStream() const -> GameStream*;
-  auto DumpFullState(GameStream* out) -> void;
+  auto GetSceneStream() const -> SceneStream*;
+  auto DumpFullState(SceneStream* out) -> void;
   auto SetGlobalsNode(GlobalsNode* node) -> void;
   auto SetIsForeground(bool val) -> void;
   auto RegisterPyActivity(PyObject* pyActivity) -> void;

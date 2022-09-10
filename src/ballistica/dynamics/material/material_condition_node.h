@@ -50,7 +50,7 @@ class MaterialConditionNode : public Object {
     }
   }
   auto GetFlattenedSize() -> size_t;
-  void Flatten(char** buffer, GameStream* output_stream);
+  void Flatten(char** buffer, SceneStream* output_stream);
   void Restore(const char** buffer, ClientSession* cs);
 };
 

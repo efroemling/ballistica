@@ -14,13 +14,13 @@
 #include "ballistica/dynamics/material/material_component.h"
 #include "ballistica/dynamics/material/material_condition_node.h"
 #include "ballistica/dynamics/rigid_body.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -1063,7 +1063,7 @@ void ClientSession::GetCorrectionMessages(
   }
 }
 
-void ClientSession::DumpFullState(GameStream* out) {
+void ClientSession::DumpFullState(SceneStream* out) {
   // Add all scenes.
   for (auto&& i : scenes()) {
     if (Scene* sg = i.get()) {

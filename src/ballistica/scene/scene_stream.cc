@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/game/game_stream.h"
+#include "ballistica/scene/scene_stream.h"
 
 #include "ballistica/app/app.h"
 #include "ballistica/assets/assets_server.h"
@@ -25,7 +25,7 @@
 
 namespace ballistica {
 
-GameStream::GameStream(HostSession* host_session, bool save_replay)
+SceneStream::SceneStream(HostSession* host_session, bool save_replay)
     : time_(0),
       host_session_(host_session),
       next_flush_time_(0),
@@ -50,7 +50,7 @@ GameStream::GameStream(HostSession* host_session, bool save_replay)
   }
 }
 
-GameStream::~GameStream() {
+SceneStream::~SceneStream() {
   // Ship our last commands (if it matters..)
   Flush();
 
@@ -117,17 +117,17 @@ GameStream::~GameStream() {
 }
 
 // Pull the current built-up message.
-auto GameStream::GetOutMessage() const -> std::vector<uint8_t> {
+auto SceneStream::GetOutMessage() const -> std::vector<uint8_t> {
   assert(!host_session_);  // this should only be getting used for
   // standalone temp ones..
   if (!out_command_.empty()) {
-    Log("Error: GameStream shutting down with non-empty outCommand");
+    Log("Error: SceneStream shutting down with non-empty outCommand");
   }
   return out_message_;
 }
 
 template <typename T>
-auto GameStream::GetPointerCount(const std::vector<T*>& vec) -> size_t {
+auto SceneStream::GetPointerCount(const std::vector<T*>& vec) -> size_t {
   size_t count = 0;
 
   auto size = vec.size();
@@ -143,8 +143,8 @@ auto GameStream::GetPointerCount(const std::vector<T*>& vec) -> size_t {
 // Given a vector of pointers, return an index to an available (nullptr) entry,
 // expanding the vector if need be.
 template <typename T>
-auto GameStream::GetFreeIndex(std::vector<T*>* vec,
-                              std::vector<size_t>* free_indices) -> size_t {
+auto SceneStream::GetFreeIndex(std::vector<T*>* vec,
+                               std::vector<size_t>* free_indices) -> size_t {
   // If we have any free indices, use one of them.
   if (!free_indices->empty()) {
     size_t val = free_indices->back();
@@ -159,8 +159,8 @@ auto GameStream::GetFreeIndex(std::vector<T*>* vec,
 
 // Add an entry.
 template <typename T>
-void GameStream::Add(T* val, std::vector<T*>* vec,
-                     std::vector<size_t>* free_indices) {
+void SceneStream::Add(T* val, std::vector<T*>* vec,
+                      std::vector<size_t>* free_indices) {
   // This should only get used when we're being driven by the host-session.
   assert(host_session_);
   assert(val);
@@ -172,8 +172,8 @@ void GameStream::Add(T* val, std::vector<T*>* vec,
 
 // Remove an entry.
 template <typename T>
-void GameStream::Remove(T* val, std::vector<T*>* vec,
-                        std::vector<size_t>* free_indices) {
+void SceneStream::Remove(T* val, std::vector<T*>* vec,
+                         std::vector<size_t>* free_indices) {
   assert(val);
   assert(val->stream_id() >= 0);
   assert(static_cast<int>(vec->size()) > val->stream_id());
@@ -185,7 +185,7 @@ void GameStream::Remove(T* val, std::vector<T*>* vec,
   val->clear_stream_id();
 }
 
-void GameStream::Fail() {
+void SceneStream::Fail() {
   Log("Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
@@ -199,9 +199,9 @@ void GameStream::Fail() {
   }
 }
 
-void GameStream::Flush() {
+void SceneStream::Flush() {
   if (!out_command_.empty())
-    Log("Error: GameStream flushing down with non-empty outCommand");
+    Log("Error: SceneStream flushing down with non-empty outCommand");
   if (!out_message_.empty()) {
     ShipSessionCommandsMessage();
   }
@@ -211,7 +211,7 @@ void GameStream::Flush() {
 #pragma ide diagnostic ignored "ConstantParameter"
 
 // Writes just a command.
-void GameStream::WriteCommand(SessionCommand cmd) {
+void SceneStream::WriteCommand(SessionCommand cmd) {
   assert(out_command_.empty());
 
   // For now just use full size values.
@@ -224,7 +224,7 @@ void GameStream::WriteCommand(SessionCommand cmd) {
 #pragma clang diagnostic pop
 
 // Writes a command plus an int to the stream, using whatever size is optimal.
-void GameStream::WriteCommandInt32(SessionCommand cmd, int32_t value) {
+void SceneStream::WriteCommandInt32(SessionCommand cmd, int32_t value) {
   assert(out_command_.empty());
 
   // For now just use full size values.
@@ -236,8 +236,8 @@ void GameStream::WriteCommandInt32(SessionCommand cmd, int32_t value) {
   memcpy(ptr, vals, 4);
 }
 
-void GameStream::WriteCommandInt32_2(SessionCommand cmd, int32_t value1,
-                                     int32_t value2) {
+void SceneStream::WriteCommandInt32_2(SessionCommand cmd, int32_t value1,
+                                      int32_t value2) {
   assert(out_command_.empty());
 
   // For now just use full size vals.
@@ -249,8 +249,8 @@ void GameStream::WriteCommandInt32_2(SessionCommand cmd, int32_t value1,
   memcpy(ptr, vals, 8);
 }
 
-void GameStream::WriteCommandInt32_3(SessionCommand cmd, int32_t value1,
-                                     int32_t value2, int32_t value3) {
+void SceneStream::WriteCommandInt32_3(SessionCommand cmd, int32_t value1,
+                                      int32_t value2, int32_t value3) {
   assert(out_command_.empty());
 
   // For now just use full size vals.
@@ -262,9 +262,9 @@ void GameStream::WriteCommandInt32_3(SessionCommand cmd, int32_t value1,
   memcpy(ptr, vals, 12);
 }
 
-void GameStream::WriteCommandInt32_4(SessionCommand cmd, int32_t value1,
-                                     int32_t value2, int32_t value3,
-                                     int32_t value4) {
+void SceneStream::WriteCommandInt32_4(SessionCommand cmd, int32_t value1,
+                                      int32_t value2, int32_t value3,
+                                      int32_t value4) {
   assert(out_command_.empty());
 
   // For now just use full size vals.
@@ -280,33 +280,33 @@ void GameStream::WriteCommandInt32_4(SessionCommand cmd, int32_t value1,
 //  adding these placeholders for if/when we do.
 //  They will also catch values greater than 32 bits in debug mode.
 //  We'll need a protocol update to add support for 64 bit over the wire.
-void GameStream::WriteCommandInt64(SessionCommand cmd, int64_t value) {
+void SceneStream::WriteCommandInt64(SessionCommand cmd, int64_t value) {
   WriteCommandInt32(cmd, static_cast_check_fit<int32_t>(value));
 }
 
-void GameStream::WriteCommandInt64_2(SessionCommand cmd, int64_t value1,
-                                     int64_t value2) {
+void SceneStream::WriteCommandInt64_2(SessionCommand cmd, int64_t value1,
+                                      int64_t value2) {
   WriteCommandInt32_2(cmd, static_cast_check_fit<int32_t>(value1),
                       static_cast_check_fit<int32_t>(value2));
 }
 
-void GameStream::WriteCommandInt64_3(SessionCommand cmd, int64_t value1,
-                                     int64_t value2, int64_t value3) {
+void SceneStream::WriteCommandInt64_3(SessionCommand cmd, int64_t value1,
+                                      int64_t value2, int64_t value3) {
   WriteCommandInt32_3(cmd, static_cast_check_fit<int32_t>(value1),
                       static_cast_check_fit<int32_t>(value2),
                       static_cast_check_fit<int32_t>(value3));
 }
 
-void GameStream::WriteCommandInt64_4(SessionCommand cmd, int64_t value1,
-                                     int64_t value2, int64_t value3,
-                                     int64_t value4) {
+void SceneStream::WriteCommandInt64_4(SessionCommand cmd, int64_t value1,
+                                      int64_t value2, int64_t value3,
+                                      int64_t value4) {
   WriteCommandInt32_4(cmd, static_cast_check_fit<int32_t>(value1),
                       static_cast_check_fit<int32_t>(value2),
                       static_cast_check_fit<int32_t>(value3),
                       static_cast_check_fit<int32_t>(value4));
 }
 
-void GameStream::WriteString(const std::string& s) {
+void SceneStream::WriteString(const std::string& s) {
   // Write length int.
   auto string_size = s.size();
   auto size = out_command_.size();
@@ -317,13 +317,13 @@ void GameStream::WriteString(const std::string& s) {
   }
 }
 
-void GameStream::WriteFloat(float val) {
+void SceneStream::WriteFloat(float val) {
   auto size = static_cast<int>(out_command_.size());
   out_command_.resize(size + sizeof(val));
   memcpy(&out_command_[size], &val, 4);
 }
 
-void GameStream::WriteFloats(size_t count, const float* vals) {
+void SceneStream::WriteFloats(size_t count, const float* vals) {
   assert(count > 0);
   auto size = out_command_.size();
   size_t vals_size = sizeof(float) * count;
@@ -331,7 +331,7 @@ void GameStream::WriteFloats(size_t count, const float* vals) {
   memcpy(&(out_command_[size]), vals, vals_size);
 }
 
-void GameStream::WriteInts32(size_t count, const int32_t* vals) {
+void SceneStream::WriteInts32(size_t count, const int32_t* vals) {
   assert(count > 0);
   auto size = out_command_.size();
   size_t vals_size = sizeof(int32_t) * count;
@@ -339,7 +339,7 @@ void GameStream::WriteInts32(size_t count, const int32_t* vals) {
   memcpy(&(out_command_[size]), vals, vals_size);
 }
 
-void GameStream::WriteInts64(size_t count, const int64_t* vals) {
+void SceneStream::WriteInts64(size_t count, const int64_t* vals) {
   // FIXME: we don't actually support writing 64 bit values to the wire
   // at the moment; will need a protocol update for that.
   // This is just implemented as a placeholder.
@@ -350,7 +350,7 @@ void GameStream::WriteInts64(size_t count, const int64_t* vals) {
   WriteInts32(count, vals32.data());
 }
 
-void GameStream::WriteChars(size_t count, const char* vals) {
+void SceneStream::WriteChars(size_t count, const char* vals) {
   assert(count > 0);
   auto size = out_command_.size();
   auto vals_size = static_cast<size_t>(count);
@@ -358,7 +358,7 @@ void GameStream::WriteChars(size_t count, const char* vals) {
   memcpy(&(out_command_[size]), vals, vals_size);
 }
 
-void GameStream::ShipSessionCommandsMessage() {
+void SceneStream::ShipSessionCommandsMessage() {
   BA_PRECONDITION(!out_message_.empty());
 
   // Send this message to all client-connections we're attached to.
@@ -372,7 +372,7 @@ void GameStream::ShipSessionCommandsMessage() {
   last_send_time_ = GetRealTime();
 }
 
-void GameStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
+void SceneStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
   assert(writing_replay_);
   assert(g_assets_server);
 
@@ -392,7 +392,7 @@ void GameStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
   g_assets_server->PushAddMessageToReplayCall(message);
 }
 
-void GameStream::SendPhysicsCorrection(bool blend) {
+void SceneStream::SendPhysicsCorrection(bool blend) {
   assert(host_session_);
 
   std::vector<std::vector<uint8_t> > messages;
@@ -410,7 +410,7 @@ void GameStream::SendPhysicsCorrection(bool blend) {
   }
 }
 
-void GameStream::EndCommand(bool is_time_set) {
+void SceneStream::EndCommand(bool is_time_set) {
   assert(!out_command_.empty());
 
   int out_message_size;
@@ -456,7 +456,7 @@ void GameStream::EndCommand(bool is_time_set) {
   out_command_.clear();
 }
 
-auto GameStream::IsValidScene(Scene* s) -> bool {
+auto SceneStream::IsValidScene(Scene* s) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -465,7 +465,7 @@ auto GameStream::IsValidScene(Scene* s) -> bool {
           && scenes_[s->stream_id()] == s);
 }
 
-auto GameStream::IsValidNode(Node* n) -> bool {
+auto SceneStream::IsValidNode(Node* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -474,7 +474,7 @@ auto GameStream::IsValidNode(Node* n) -> bool {
           && nodes_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidTexture(Texture* n) -> bool {
+auto SceneStream::IsValidTexture(Texture* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -483,7 +483,7 @@ auto GameStream::IsValidTexture(Texture* n) -> bool {
           && textures_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidModel(Model* n) -> bool {
+auto SceneStream::IsValidModel(Model* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -492,7 +492,7 @@ auto GameStream::IsValidModel(Model* n) -> bool {
           && models_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidSound(Sound* n) -> bool {
+auto SceneStream::IsValidSound(Sound* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -501,7 +501,7 @@ auto GameStream::IsValidSound(Sound* n) -> bool {
           && sounds_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidData(Data* n) -> bool {
+auto SceneStream::IsValidData(Data* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -510,7 +510,7 @@ auto GameStream::IsValidData(Data* n) -> bool {
           && datas_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidCollideModel(CollideModel* n) -> bool {
+auto SceneStream::IsValidCollideModel(CollideModel* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -519,7 +519,7 @@ auto GameStream::IsValidCollideModel(CollideModel* n) -> bool {
           && collide_models_[n->stream_id()] == n);
 }
 
-auto GameStream::IsValidMaterial(Material* n) -> bool {
+auto SceneStream::IsValidMaterial(Material* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
   }
@@ -528,13 +528,13 @@ auto GameStream::IsValidMaterial(Material* n) -> bool {
           && materials_[n->stream_id()] == n);
 }
 
-void GameStream::SetTime(millisecs_t t) {
+void SceneStream::SetTime(millisecs_t t) {
   if (time_ == t) {
     return;  // Ignore redundants.
   }
   millisecs_t diff = t - time_;
   if (diff > 255) {
-    Log("Error: GameStream got time diff > 255; not expected.");
+    Log("Error: SceneStream got time diff > 255; not expected.");
     diff = 255;
   }
   WriteCommandInt64(SessionCommand::kBaseTimeStep, diff);
@@ -542,7 +542,7 @@ void GameStream::SetTime(millisecs_t t) {
   EndCommand(true);
 }
 
-void GameStream::AddScene(Scene* s) {
+void SceneStream::AddScene(Scene* s) {
   // Host mode.
   if (host_session_) {
     Add(s, &scenes_, &free_indices_scene_graphs_);
@@ -556,19 +556,19 @@ void GameStream::AddScene(Scene* s) {
   EndCommand();
 }
 
-void GameStream::RemoveScene(Scene* s) {
+void SceneStream::RemoveScene(Scene* s) {
   WriteCommandInt64(SessionCommand::kRemoveSceneGraph, s->stream_id());
   Remove(s, &scenes_, &free_indices_scene_graphs_);
   EndCommand();
 }
 
-void GameStream::StepScene(Scene* s) {
+void SceneStream::StepScene(Scene* s) {
   assert(IsValidScene(s));
   WriteCommandInt64(SessionCommand::kStepSceneGraph, s->stream_id());
   EndCommand();
 }
 
-void GameStream::AddNode(Node* n) {
+void SceneStream::AddNode(Node* n) {
   assert(n);
   if (host_session_) {
     Add(n, &nodes_, &free_indices_nodes_);
@@ -583,26 +583,26 @@ void GameStream::AddNode(Node* n) {
   EndCommand();
 }
 
-void GameStream::NodeOnCreate(Node* n) {
+void SceneStream::NodeOnCreate(Node* n) {
   assert(IsValidNode(n));
   WriteCommandInt64(SessionCommand::kNodeOnCreate, n->stream_id());
   EndCommand();
 }
 
-void GameStream::SetForegroundScene(Scene* sg) {
+void SceneStream::SetForegroundScene(Scene* sg) {
   assert(IsValidScene(sg));
   WriteCommandInt64(SessionCommand::kSetForegroundSceneGraph, sg->stream_id());
   EndCommand();
 }
 
-void GameStream::RemoveNode(Node* n) {
+void SceneStream::RemoveNode(Node* n) {
   assert(IsValidNode(n));
   WriteCommandInt64(SessionCommand::kRemoveNode, n->stream_id());
   Remove(n, &nodes_, &free_indices_nodes_);
   EndCommand();
 }
 
-void GameStream::AddTexture(Texture* t) {
+void SceneStream::AddTexture(Texture* t) {
   // Register an ID in host mode.
   if (host_session_) {
     Add(t, &textures_, &free_indices_textures_);
@@ -617,14 +617,14 @@ void GameStream::AddTexture(Texture* t) {
   EndCommand();
 }
 
-void GameStream::RemoveTexture(Texture* t) {
+void SceneStream::RemoveTexture(Texture* t) {
   assert(IsValidTexture(t));
   WriteCommandInt64(SessionCommand::kRemoveTexture, t->stream_id());
   Remove(t, &textures_, &free_indices_textures_);
   EndCommand();
 }
 
-void GameStream::AddModel(Model* t) {
+void SceneStream::AddModel(Model* t) {
   // Register an ID in host mode.
   if (host_session_) {
     Add(t, &models_, &free_indices_models_);
@@ -639,14 +639,14 @@ void GameStream::AddModel(Model* t) {
   EndCommand();
 }
 
-void GameStream::RemoveModel(Model* t) {
+void SceneStream::RemoveModel(Model* t) {
   assert(IsValidModel(t));
   WriteCommandInt64(SessionCommand::kRemoveModel, t->stream_id());
   Remove(t, &models_, &free_indices_models_);
   EndCommand();
 }
 
-void GameStream::AddSound(Sound* t) {
+void SceneStream::AddSound(Sound* t) {
   // Register an ID in host mode.
   if (host_session_) {
     Add(t, &sounds_, &free_indices_sounds_);
@@ -661,14 +661,14 @@ void GameStream::AddSound(Sound* t) {
   EndCommand();
 }
 
-void GameStream::RemoveSound(Sound* t) {
+void SceneStream::RemoveSound(Sound* t) {
   assert(IsValidSound(t));
   WriteCommandInt64(SessionCommand::kRemoveSound, t->stream_id());
   Remove(t, &sounds_, &free_indices_sounds_);
   EndCommand();
 }
 
-void GameStream::AddData(Data* t) {
+void SceneStream::AddData(Data* t) {
   // Register an ID in host mode.
   if (host_session_) {
     Add(t, &datas_, &free_indices_datas_);
@@ -683,14 +683,14 @@ void GameStream::AddData(Data* t) {
   EndCommand();
 }
 
-void GameStream::RemoveData(Data* t) {
+void SceneStream::RemoveData(Data* t) {
   assert(IsValidData(t));
   WriteCommandInt64(SessionCommand::kRemoveData, t->stream_id());
   Remove(t, &datas_, &free_indices_datas_);
   EndCommand();
 }
 
-void GameStream::AddCollideModel(CollideModel* t) {
+void SceneStream::AddCollideModel(CollideModel* t) {
   if (host_session_) {
     Add(t, &collide_models_, &free_indices_collide_models_);
   } else {
@@ -704,14 +704,14 @@ void GameStream::AddCollideModel(CollideModel* t) {
   EndCommand();
 }
 
-void GameStream::RemoveCollideModel(CollideModel* t) {
+void SceneStream::RemoveCollideModel(CollideModel* t) {
   assert(IsValidCollideModel(t));
   WriteCommandInt64(SessionCommand::kRemoveCollideModel, t->stream_id());
   Remove(t, &collide_models_, &free_indices_collide_models_);
   EndCommand();
 }
 
-void GameStream::AddMaterial(Material* m) {
+void SceneStream::AddMaterial(Material* m) {
   if (host_session_) {
     Add(m, &materials_, &free_indices_materials_);
   } else {
@@ -724,14 +724,14 @@ void GameStream::AddMaterial(Material* m) {
   EndCommand();
 }
 
-void GameStream::RemoveMaterial(Material* m) {
+void SceneStream::RemoveMaterial(Material* m) {
   assert(IsValidMaterial(m));
   WriteCommandInt64(SessionCommand::kRemoveMaterial, m->stream_id());
   Remove(m, &materials_, &free_indices_materials_);
   EndCommand();
 }
 
-void GameStream::AddMaterialComponent(Material* m, MaterialComponent* c) {
+void SceneStream::AddMaterialComponent(Material* m, MaterialComponent* c) {
   assert(IsValidMaterial(m));
   auto flattened_size = c->GetFlattenedSize();
   assert(flattened_size > 0 && flattened_size < 10000);
@@ -750,10 +750,10 @@ void GameStream::AddMaterialComponent(Material* m, MaterialComponent* c) {
   EndCommand();
 }
 
-void GameStream::ConnectNodeAttribute(Node* src_node,
-                                      NodeAttributeUnbound* src_attr,
-                                      Node* dst_node,
-                                      NodeAttributeUnbound* dst_attr) {
+void SceneStream::ConnectNodeAttribute(Node* src_node,
+                                       NodeAttributeUnbound* src_attr,
+                                       Node* dst_node,
+                                       NodeAttributeUnbound* dst_attr) {
   assert(IsValidNode(src_node));
   assert(IsValidNode(dst_node));
   assert(src_attr->node_type() == src_node->type());
@@ -768,7 +768,7 @@ void GameStream::ConnectNodeAttribute(Node* src_node,
   EndCommand();
 }
 
-void GameStream::NodeMessage(Node* node, const char* buffer, size_t size) {
+void SceneStream::NodeMessage(Node* node, const char* buffer, size_t size) {
   assert(IsValidNode(node));
   BA_PRECONDITION(size > 0 && size < 10000);
   WriteCommandInt64_2(SessionCommand::kNodeMessage, node->stream_id(),
@@ -777,7 +777,7 @@ void GameStream::NodeMessage(Node* node, const char* buffer, size_t size) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, float val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, float val) {
   assert(IsValidNode(attr.node));
   WriteCommandInt64_2(SessionCommand::kSetNodeAttrFloat, attr.node->stream_id(),
                       attr.index());
@@ -785,22 +785,22 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, float val) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, int64_t val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, int64_t val) {
   assert(IsValidNode(attr.node));
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrInt32, attr.node->stream_id(),
                       attr.index(), val);
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, bool val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, bool val) {
   assert(IsValidNode(attr.node));
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrBool, attr.node->stream_id(),
                       attr.index(), val);
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<float>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<float>& vals) {
   assert(IsValidNode(attr.node));
   size_t count{vals.size()};
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrFloats,
@@ -812,8 +812,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<int64_t>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<int64_t>& vals) {
   assert(IsValidNode(attr.node));
   size_t count{vals.size()};
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrInt32s,
@@ -825,8 +825,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::string& val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::string& val) {
   assert(IsValidNode(attr.node));
   WriteCommandInt64_2(SessionCommand::kSetNodeAttrString,
                       attr.node->stream_id(), attr.index());
@@ -834,7 +834,7 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, Node* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, Node* val) {
   assert(IsValidNode(attr.node));
   if (val) {
     assert(IsValidNode(val));
@@ -850,8 +850,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, Node* val) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<Node*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<Node*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -878,12 +878,12 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, Player* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, Player* val) {
   // cout << "SET PLAYER ATTR " << attr.getIndex() << endl;
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<Material*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<Material*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -911,7 +911,7 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, Texture* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, Texture* val) {
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidTexture(val));
@@ -927,8 +927,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, Texture* val) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<Texture*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<Texture*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -956,7 +956,7 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, Sound* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, Sound* val) {
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidSound(val));
@@ -972,8 +972,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, Sound* val) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<Sound*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<Sound*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -1001,7 +1001,7 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr, Model* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, Model* val) {
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidModel(val));
@@ -1017,8 +1017,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, Model* val) {
   EndCommand();
 }
 
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<Model*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<Model*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -1045,7 +1045,7 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   }
   EndCommand();
 }
-void GameStream::SetNodeAttr(const NodeAttribute& attr, CollideModel* val) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr, CollideModel* val) {
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidCollideModel(val));
@@ -1060,8 +1060,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr, CollideModel* val) {
   }
   EndCommand();
 }
-void GameStream::SetNodeAttr(const NodeAttribute& attr,
-                             const std::vector<CollideModel*>& vals) {
+void SceneStream::SetNodeAttr(const NodeAttribute& attr,
+                              const std::vector<CollideModel*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     for (auto val : vals) {
@@ -1089,8 +1089,8 @@ void GameStream::SetNodeAttr(const NodeAttribute& attr,
   EndCommand();
 }
 
-void GameStream::PlaySoundAtPosition(Sound* sound, float volume, float x,
-                                     float y, float z) {
+void SceneStream::PlaySoundAtPosition(Sound* sound, float volume, float x,
+                                      float y, float z) {
   assert(IsValidSound(sound));
   assert(IsValidScene(sound->scene()));
 
@@ -1103,7 +1103,7 @@ void GameStream::PlaySoundAtPosition(Sound* sound, float volume, float x,
   EndCommand();
 }
 
-void GameStream::EmitBGDynamics(const BGDynamicsEmission& e) {
+void SceneStream::EmitBGDynamics(const BGDynamicsEmission& e) {
   WriteCommandInt64_4(SessionCommand::kEmitBGDynamics,
                       static_cast<int64_t>(e.emit_type), e.count,
                       static_cast<int64_t>(e.chunk_type),
@@ -1121,7 +1121,7 @@ void GameStream::EmitBGDynamics(const BGDynamicsEmission& e) {
   EndCommand();
 }
 
-void GameStream::PlaySound(Sound* sound, float volume) {
+void SceneStream::PlaySound(Sound* sound, float volume) {
   assert(IsValidSound(sound));
   assert(IsValidScene(sound->scene()));
 
@@ -1131,11 +1131,11 @@ void GameStream::PlaySound(Sound* sound, float volume) {
   EndCommand();
 }
 
-void GameStream::ScreenMessageTop(const std::string& val, float r, float g,
-                                  float b, Texture* texture,
-                                  Texture* tint_texture, float tint_r,
-                                  float tint_g, float tint_b, float tint2_r,
-                                  float tint2_g, float tint2_b) {
+void SceneStream::ScreenMessageTop(const std::string& val, float r, float g,
+                                   float b, Texture* texture,
+                                   Texture* tint_texture, float tint_r,
+                                   float tint_g, float tint_b, float tint2_r,
+                                   float tint2_g, float tint2_b) {
   assert(IsValidTexture(texture));
   assert(IsValidTexture(tint_texture));
   assert(IsValidScene(texture->scene()));
@@ -1157,8 +1157,8 @@ void GameStream::ScreenMessageTop(const std::string& val, float r, float g,
   EndCommand();
 }
 
-void GameStream::ScreenMessageBottom(const std::string& val, float r, float g,
-                                     float b) {
+void SceneStream::ScreenMessageBottom(const std::string& val, float r, float g,
+                                      float b) {
   WriteCommand(SessionCommand::kScreenMessageBottom);
   WriteString(val);
   float color[3];
@@ -1169,27 +1169,27 @@ void GameStream::ScreenMessageBottom(const std::string& val, float r, float g,
   EndCommand();
 }
 
-auto GameStream::GetSoundID(Sound* s) -> int64_t {
+auto SceneStream::GetSoundID(Sound* s) -> int64_t {
   assert(IsValidSound(s));
   return s->stream_id();
 }
 
-auto GameStream::GetMaterialID(Material* m) -> int64_t {
+auto SceneStream::GetMaterialID(Material* m) -> int64_t {
   assert(IsValidMaterial(m));
   return m->stream_id();
 }
 
-void GameStream::OnClientConnected(ConnectionToClient* c) {
+void SceneStream::OnClientConnected(ConnectionToClient* c) {
   // Sanity check - abort if its on either of our lists already.
   for (auto& connections_to_client : connections_to_clients_) {
     if (connections_to_client == c) {
-      Log("Error: GameStream::OnClientConnected() got duplicate connection.");
+      Log("Error: SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
   for (auto& i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log("Error: GameStream::OnClientConnected() got duplicate connection.");
+      Log("Error: SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
@@ -1208,7 +1208,7 @@ void GameStream::OnClientConnected(ConnectionToClient* c) {
     // We create a temporary output stream just for the purpose of building
     // a giant session-commands message to reconstruct everything in our
     // host-session in its current form.
-    GameStream out(nullptr, false);
+    SceneStream out(nullptr, false);
 
     // Ask the host-session that we came from to dump it's complete state.
     host_session_->DumpFullState(&out);
@@ -1226,7 +1226,7 @@ void GameStream::OnClientConnected(ConnectionToClient* c) {
   }
 }
 
-void GameStream::OnClientDisconnected(ConnectionToClient* c) {
+void SceneStream::OnClientDisconnected(ConnectionToClient* c) {
   // Search for it on either our ignored or regular lists.
   for (auto i = connections_to_clients_.begin();
        i != connections_to_clients_.end(); i++) {
@@ -1242,7 +1242,7 @@ void GameStream::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log("Error: GameStream::OnClientDisconnected() called for connection not on "
+  Log("Error: SceneStream::OnClientDisconnected() called for connection not on "
       "lists");
 }
 

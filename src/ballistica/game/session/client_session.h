@@ -86,7 +86,7 @@ class ClientSession : public Session {
   virtual auto FetchMessages() -> void {}
   virtual void Error(const std::string& description);
   void End();
-  void DumpFullState(GameStream* out) override;
+  void DumpFullState(SceneStream* out) override;
 
   /// Reset target base time to equal current. This can be used during command
   /// buffer underruns to cause playback to pause momentarily instead of
