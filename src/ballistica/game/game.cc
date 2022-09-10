@@ -7,7 +7,6 @@
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
-#include "ballistica/game/account.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client_udp.h"
 #include "ballistica/game/connection/connection_to_host_udp.h"
@@ -19,6 +18,7 @@
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/game/session/net_client_session.h"
 #include "ballistica/game/session/replay_client_session.h"
+#include "ballistica/game/v1_account.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/graphics/graphics.h"
@@ -271,10 +271,11 @@ void Game::PushSetV1LoginCall(V1AccountType account_type,
                               V1LoginState account_state,
                               const std::string& account_name,
                               const std::string& account_id) {
-  thread()->PushCall([this, account_type, account_state, account_name,
-                      account_id] {
-    g_account->SetLogin(account_type, account_state, account_name, account_id);
-  });
+  thread()->PushCall(
+      [this, account_type, account_state, account_name, account_id] {
+        g_v1_account->SetLogin(account_type, account_state, account_name,
+                               account_id);
+      });
 }
 
 void Game::PushInitialScreenCreatedCall() {

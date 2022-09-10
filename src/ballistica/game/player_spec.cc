@@ -3,8 +3,8 @@
 #include "ballistica/game/player_spec.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/account.h"
 #include "ballistica/game/game.h"
+#include "ballistica/game/v1_account.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/platform/platform.h"
@@ -26,7 +26,8 @@ PlayerSpec::PlayerSpec(const std::string& s) {
 
       // Account type may technically be something we don't recognize,
       // but that's ok.. it'll just be 'invalid' to us in that case
-      account_type_ = Account::AccountTypeFromString(account_obj->valuestring);
+      account_type_ =
+          V1Account::AccountTypeFromString(account_obj->valuestring);
       success = true;
     }
     cJSON_Delete(root_obj);
@@ -40,7 +41,7 @@ PlayerSpec::PlayerSpec(const std::string& s) {
 }
 
 auto PlayerSpec::GetDisplayString() const -> std::string {
-  return Account::AccountTypeToIconString(account_type_) + name_;
+  return V1Account::AccountTypeToIconString(account_type_) + name_;
 }
 
 auto PlayerSpec::GetShortName() const -> std::string {
@@ -60,8 +61,8 @@ auto PlayerSpec::GetSpecString() const -> std::string {
   cJSON* root;
   root = cJSON_CreateObject();
   cJSON_AddStringToObject(root, "n", name_.c_str());
-  cJSON_AddStringToObject(root, "a",
-                          Account::AccountTypeToString(account_type_).c_str());
+  cJSON_AddStringToObject(
+      root, "a", V1Account::AccountTypeToString(account_type_).c_str());
   cJSON_AddStringToObject(root, "sn", short_name_.c_str());
   char* out = cJSON_PrintUnformatted(root);
   std::string out_s = out;
@@ -76,10 +77,10 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   PlayerSpec spec;
-  if (g_account->GetLoginState() == V1LoginState::kSignedIn) {
+  if (g_v1_account->GetLoginState() == V1LoginState::kSignedIn) {
     spec.account_type_ = g_app->account_type;
     spec.name_ =
-        Utils::GetValidUTF8(g_account->GetLoginName().c_str(), "bsgaps");
+        Utils::GetValidUTF8(g_v1_account->GetLoginName().c_str(), "bsgaps");
   } else {
     // Headless builds fall back to V1 public-party name if that's available.
     if (g_buildconfig.headless_build()

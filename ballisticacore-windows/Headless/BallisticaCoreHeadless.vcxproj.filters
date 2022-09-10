@@ -301,12 +301,6 @@
     <ClInclude Include="..\..\src\ballistica\dynamics\rigid_body.h">
       <Filter>ballistica\dynamics</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\account.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\account.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\game\client_controller_interface.h">
       <Filter>ballistica\game</Filter>
     </ClInclude>
@@ -411,6 +405,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\game\session\session.h">
       <Filter>ballistica\game\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\game\v1_account.cc">
+      <Filter>ballistica\game</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\game\v1_account.h">
+      <Filter>ballistica\game</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\generic\base64.cc">
       <Filter>ballistica\generic</Filter>

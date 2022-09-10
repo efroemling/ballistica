@@ -289,8 +289,6 @@
     <ClInclude Include="..\..\src\ballistica\dynamics\part.h" />
     <ClCompile Include="..\..\src\ballistica\dynamics\rigid_body.cc" />
     <ClInclude Include="..\..\src\ballistica\dynamics\rigid_body.h" />
-    <ClCompile Include="..\..\src\ballistica\game\account.cc" />
-    <ClInclude Include="..\..\src\ballistica\game\account.h" />
     <ClInclude Include="..\..\src\ballistica\game\client_controller_interface.h" />
     <ClCompile Include="..\..\src\ballistica\game\connection\connection.cc" />
     <ClInclude Include="..\..\src\ballistica\game\connection\connection.h" />
@@ -326,6 +324,8 @@
     <ClInclude Include="..\..\src\ballistica\game\session\replay_client_session.h" />
     <ClCompile Include="..\..\src\ballistica\game\session\session.cc" />
     <ClInclude Include="..\..\src\ballistica\game\session\session.h" />
+    <ClCompile Include="..\..\src\ballistica\game\v1_account.cc" />
+    <ClInclude Include="..\..\src\ballistica\game\v1_account.h" />
     <ClCompile Include="..\..\src\ballistica\generic\base64.cc" />
     <ClInclude Include="..\..\src\ballistica\generic\base64.h" />
     <ClInclude Include="..\..\src\ballistica\generic\buffer.h" />

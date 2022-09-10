@@ -117,7 +117,7 @@ const float kGameStepSeconds =
 
 // Globals.
 extern int g_early_log_writes;
-extern Account* g_account;
+extern V1Account* g_v1_account;
 extern AppFlavor* g_app_flavor;
 extern AppConfig* g_app_config;
 extern App* g_app;

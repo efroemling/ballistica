@@ -298,8 +298,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/dynamics/part.h
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.cc
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.h
-  ${BA_SRC_ROOT}/ballistica/game/account.cc
-  ${BA_SRC_ROOT}/ballistica/game/account.h
   ${BA_SRC_ROOT}/ballistica/game/client_controller_interface.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection.cc
   ${BA_SRC_ROOT}/ballistica/game/connection/connection.h
@@ -335,6 +333,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/session/replay_client_session.h
   ${BA_SRC_ROOT}/ballistica/game/session/session.cc
   ${BA_SRC_ROOT}/ballistica/game/session/session.h
+  ${BA_SRC_ROOT}/ballistica/game/v1_account.cc
+  ${BA_SRC_ROOT}/ballistica/game/v1_account.h
   ${BA_SRC_ROOT}/ballistica/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/generic/buffer.h

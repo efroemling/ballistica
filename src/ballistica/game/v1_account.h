@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_GAME_ACCOUNT_H_
-#define BALLISTICA_GAME_ACCOUNT_H_
+#ifndef BALLISTICA_GAME_V1_ACCOUNT_H_
+#define BALLISTICA_GAME_V1_ACCOUNT_H_
 
 #include <mutex>
 #include <string>
@@ -13,9 +13,9 @@
 namespace ballistica {
 
 /// Global account functionality.
-class Account {
+class V1Account {
  public:
-  Account();
+  V1Account();
   static auto AccountTypeFromString(const std::string& val) -> V1AccountType;
   static auto AccountTypeToString(V1AccountType type) -> std::string;
   static auto AccountTypeToIconString(V1AccountType type) -> std::string;
@@ -63,4 +63,4 @@ class Account {
 
 }  // namespace ballistica
 
-#endif  // BALLISTICA_GAME_ACCOUNT_H_
+#endif  // BALLISTICA_GAME_V1_ACCOUNT_H_

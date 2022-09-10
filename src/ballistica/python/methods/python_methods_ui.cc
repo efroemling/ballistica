@@ -4,9 +4,9 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_flavor.h"
-#include "ballistica/game/account.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
+#include "ballistica/game/v1_account.h"
 #include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/python/python.h"

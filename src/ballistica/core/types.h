@@ -34,7 +34,6 @@ typedef int64_t millisecs_t;
 // avoid pulling in their full headers as much as possible
 // to keep compile times down.
 
-class Account;
 class AppFlavor;
 class AppConfig;
 class App;
@@ -197,6 +196,7 @@ class Vector2f;
 class Vector3f;
 class Vector4f;
 class AppFlavorVR;
+class V1Account;
 class VRGraphics;
 class Widget;
 

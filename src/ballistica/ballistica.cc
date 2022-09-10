@@ -10,7 +10,7 @@
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/game/account.h"
+#include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/media/media_server.h"
@@ -22,7 +22,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20798;
+const int kAppBuildNumber = 20799;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -30,7 +30,7 @@ const char* kAppVersion = "1.7.7";
 // Everything else should go into App (or more ideally into a class).
 int g_early_log_writes{10};
 
-Account* g_account{};
+V1Account* g_v1_account{};
 AppConfig* g_app_config{};
 App* g_app{};
 AppInternal* g_app_internal{};
@@ -103,7 +103,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app_flavor = g_platform->CreateAppFlavor();
     g_app_flavor->PostInit();
 
-    g_account = new Account();
+    g_v1_account = new V1Account();
     g_utils = new Utils();
     Scene::Init();
 
