@@ -1181,9 +1181,9 @@ class Spaz(ba.Actor):
             except ba.NotFoundError:
                 return True
 
-            # Don't allow picking up of invincible dudes.
+            # Don't allow picking up of invincible and dead dudes.
             try:
-                if opposingnode.invincible:
+                if opposingnode.invincible or opposingnode.dead:
                     return True
             except Exception:
                 pass
