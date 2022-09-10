@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_DYNAMICS_MATERIAL_ROLL_SOUND_MATERIAL_ACTION_H_
 #define BALLISTICA_DYNAMICS_MATERIAL_ROLL_SOUND_MATERIAL_ACTION_H_
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/ballistica.h"
 #include "ballistica/dynamics/material/material_action.h"
-#include "ballistica/media/component/sound.h"
 
 namespace ballistica {
 

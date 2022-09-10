@@ -37,7 +37,7 @@ class AudioServer {
   void PushResetCall();
   void PushHavePendingLoadsCall();
   void PushComponentUnloadCall(
-      const std::vector<Object::Ref<MediaComponentData>*>& components);
+      const std::vector<Object::Ref<AssetComponentData>*>& components);
 
   /// For use by g_game_module().
   void ClearSoundRefDeleteList();
@@ -89,7 +89,7 @@ class AudioServer {
   void Process();
 
   /// Send a component to the audio thread to delete.
-  void DeleteMediaComponent(MediaComponentData* c);
+  void DeleteAssetComponent(AssetComponentData* c);
 
   void UpdateTimerInterval();
   void UpdateAvailableSources();

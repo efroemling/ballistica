@@ -2,6 +2,7 @@
 
 #include "ballistica/game/connection/connection_to_host.h"
 
+#include "ballistica/assets/assets.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/net_client_session.h"
@@ -10,7 +11,6 @@
 #include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/media.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -39,7 +39,7 @@ ConnectionToHost::~ConnectionToHost() {
         Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
       }
       ScreenMessage(s, {1, 0.5f, 0.0f});
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kCorkPop));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kCorkPop));
     } else {
       ScreenMessage(g_game->GetResourceString("connectionRejectedText"),
                     {1, 0, 0});
@@ -376,7 +376,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(str_buffer.data()).GetDisplayString());
         ScreenMessage(s, {0.5f, 1.0f, 0.5f});
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kGunCock));
+        g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kGunCock));
       }
       break;
     }
@@ -391,7 +391,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(&(str_buffer[0])).GetDisplayString());
         ScreenMessage(s, {1, 0.5f, 0.0f});
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kCorkPop));
+        g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kCorkPop));
       }
       break;
     }
@@ -486,7 +486,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     }
     ScreenMessage(s, {0.5f, 1, 0.5f});
-    g_audio->PlaySound(g_media->GetSound(SystemSoundID::kGunCock));
+    g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kGunCock));
 
     printed_connect_message_ = true;
   }

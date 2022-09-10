@@ -152,7 +152,7 @@ class Thread {
   static auto RunBGDynamicThread(void* data) -> int;
   static auto RunNetworkWriteThread(void* data) -> int;
   static auto RunStdInputThread(void* data) -> int;
-  static auto RunMediaThread(void* data) -> int;
+  static auto RunAssetsThread(void* data) -> int;
 
   auto ThreadMain() -> int;
   auto GetThreadMessages(std::list<ThreadMessage>* messages) -> void;

@@ -66,14 +66,14 @@ void ScorchNode::Draw(FrameDef* frame_def) {
   SimpleComponent c(frame_def->light_shadow_pass());
   c.SetTransparent(true);
   c.SetColor(color_[0], color_[1], color_[2], o * 0.35f);
-  c.SetTexture(g_media->GetTexture(big_ ? SystemTextureID::kScorchBig
-                                        : SystemTextureID::kScorch));
+  c.SetTexture(g_assets->GetTexture(big_ ? SystemTextureID::kScorchBig
+                                         : SystemTextureID::kScorch));
   c.PushTransform();
   c.Translate(position_[0], position_[1], position_[2]);
   c.Scale(o * size_ * rand_size_[0], o * size_ * rand_size_[1],
           o * size_ * rand_size_[2]);
   c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1, 0);
-  c.DrawModel(g_media->GetModel(SystemModelID::kScorch));
+  c.DrawModel(g_assets->GetModel(SystemModelID::kScorch));
   c.PopTransform();
   c.Submit();
 }

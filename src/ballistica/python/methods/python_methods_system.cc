@@ -8,6 +8,8 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
@@ -15,8 +17,6 @@
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/media/component/texture.h"
-#include "ballistica/media/media.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/python/python_sys.h"
@@ -362,7 +362,7 @@ auto PyPrintContext(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyPrintLoadInfo(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  g_media->PrintLoadInfo();
+  g_assets->PrintLoadInfo();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

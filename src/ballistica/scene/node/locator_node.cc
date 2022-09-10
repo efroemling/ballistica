@@ -140,11 +140,11 @@ void LocatorNode::Draw(FrameDef* frame_def) {
       c.SetTransparent(true);
     }
     c.SetColor(color_[0], color_[1], color_[2], opacity_);
-    c.SetTexture(g_media->GetTexture(texture));
+    c.SetTexture(g_assets->GetTexture(texture));
     c.PushTransform();
     c.Translate(position_[0], position_[1], position_[2]);
     c.Scale(size_[0], size_[1], size_[2]);
-    c.DrawModel(g_media->GetModel(model));
+    c.DrawModel(g_assets->GetModel(model));
     c.PopTransform();
     c.Submit();
   }
@@ -164,11 +164,11 @@ void LocatorNode::Draw(FrameDef* frame_def) {
       } else {
         c.SetColor(color_[0], color_[1], color_[2], opacity_);
       }
-      c.SetTexture(g_media->GetTexture(texture));
+      c.SetTexture(g_assets->GetTexture(texture));
       c.PushTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawModel(g_media->GetModel(model));
+      c.DrawModel(g_assets->GetModel(model));
       c.PopTransform();
       c.Submit();
     } else {
@@ -179,7 +179,7 @@ void LocatorNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawModel(g_media->GetModel(model));
+      c.DrawModel(g_assets->GetModel(model));
       c.PopTransform();
       c.Submit();
     }

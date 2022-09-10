@@ -331,7 +331,7 @@ void ImageNode::Draw(FrameDef* frame_def) {
     if (vr && fill_screen_) {
 #if BA_VR_BUILD
       model_opaque_used =
-          g_media->GetModel(SystemModelID::kImage1x1VRFullScreen);
+          g_assets->GetModel(SystemModelID::kImage1x1VRFullScreen);
 #else
       throw Exception();
 #endif  // BA_VR_BUILD
@@ -339,9 +339,9 @@ void ImageNode::Draw(FrameDef* frame_def) {
       SystemModelID m = fill_screen_ ? SystemModelID::kImage1x1FullScreen
                                      : SystemModelID::kImage1x1;
       if (has_alpha_channel) {
-        model_transparent_used = g_media->GetModel(m);
+        model_transparent_used = g_assets->GetModel(m);
       } else {
-        model_opaque_used = g_media->GetModel(m);
+        model_opaque_used = g_assets->GetModel(m);
       }
     }
   }

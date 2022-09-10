@@ -118,8 +118,8 @@ extern Graphics* g_graphics;
 extern GraphicsServer* g_graphics_server;
 extern Input* g_input;
 extern Thread* g_main_thread;
-extern Media* g_media;
-extern MediaServer* g_media_server;
+extern Assets* g_assets;
+extern AssetsServer* g_assets_server;
 extern Networking* g_networking;
 extern NetworkReader* g_network_reader;
 extern NetworkWriteModule* g_network_writer;
@@ -158,7 +158,7 @@ auto InGraphicsThread() -> bool;  // (main and graphics are same currently)
 auto InLogicThread() -> bool;
 auto InAudioThread() -> bool;
 auto InBGDynamicsThread() -> bool;
-auto InMediaThread() -> bool;
+auto InAssetsThread() -> bool;
 auto InNetworkWriteThread() -> bool;
 
 /// Return a human-readable name for the current thread.

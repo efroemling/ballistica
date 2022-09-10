@@ -176,7 +176,7 @@ void RootUI::Draw(FrameDef* frame_def) {
     if (draw_menu_button) {
       SimpleComponent c(frame_def->overlay_pass());
       c.SetTransparent(true);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kMenuButton));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kMenuButton));
 
       // Draw menu button.
       float width = g_graphics->screen_virtual_width();
@@ -191,7 +191,7 @@ void RootUI::Draw(FrameDef* frame_def) {
       c.Translate(width - menu_button_size_ * 0.5f,
                   height - menu_button_size_ * 0.38f, kMenuButtonDrawDepth);
       c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -224,7 +224,7 @@ void RootUI::Draw(FrameDef* frame_def) {
 
       SimpleComponent c(frame_def->overlay_pass());
       c.SetTransparent(true);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kUsersButton));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kUsersButton));
 
       // Draw button.
       float width = g_graphics->screen_virtual_width();
@@ -245,7 +245,7 @@ void RootUI::Draw(FrameDef* frame_def) {
       if (flash && frame_def->base_time() % 250 < 125) {
         c.SetColor(1.0f, 1.4f, 1.0f);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
 

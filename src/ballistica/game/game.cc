@@ -262,7 +262,7 @@ void Game::PushVRHandsState(const VRHandsState& state) {
 void Game::PushMediaPruneCall(int level) {
   thread()->PushCall([level] {
     assert(InLogicThread());
-    g_media->Prune(level);
+    g_assets->Prune(level);
   });
 }
 
@@ -288,7 +288,7 @@ void Game::InitialScreenCreated() {
 
   // We can now let the media thread go to town pre-loading system media
   // while we wait.
-  g_media->LoadSystemMedia();
+  g_assets->LoadSystemAssets();
 
   // FIXME: ideally we should create this as part of bootstrapping, but
   // we need it to be possible to load textures/etc. before the renderer
@@ -315,7 +315,7 @@ void Game::InitialScreenCreated() {
   RunAppLaunchCommands();
 }
 
-void Game::PruneMedia() { g_media->Prune(); }
+void Game::PruneMedia() { g_assets->Prune(); }
 
 // Launch into main menu or whatever else.
 void Game::RunAppLaunchCommands() {
@@ -1188,7 +1188,8 @@ void Game::ScoresToBeatResponse(bool success,
 }
 
 void Game::PushPlaySoundCall(SystemSoundID sound) {
-  thread()->PushCall([sound] { g_audio->PlaySound(g_media->GetSound(sound)); });
+  thread()->PushCall(
+      [sound] { g_audio->PlaySound(g_assets->GetSound(sound)); });
 }
 
 void Game::PushFriendScoreSetCall(const FriendScoreSet& score_set) {
@@ -1214,7 +1215,7 @@ void Game::PushConfirmQuitCall() {
         // this needs to be run in the UI context
         ScopedSetContext cp(GetUIContextTarget());
 
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
+        g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish));
         g_python->obj(Python::ObjID::kQuitWindowCall).Call();
 
         // if we have a keyboard, give it UI ownership
@@ -1443,8 +1444,8 @@ void Game::PushRemoveGraphicsServerRenderHoldCall() {
   });
 }
 
-void Game::PushFreeMediaComponentRefsCall(
-    const std::vector<Object::Ref<MediaComponentData>*>& components) {
+void Game::PushFreeAssetComponentRefsCall(
+    const std::vector<Object::Ref<AssetComponentData>*>& components) {
   thread()->PushCall([components] {
     for (auto&& i : components) {
       delete i;
@@ -1453,7 +1454,7 @@ void Game::PushFreeMediaComponentRefsCall(
 }
 
 void Game::PushHavePendingLoadsDoneCall() {
-  thread()->PushCall([] { g_media->ClearPendingLoadsDoneList(); });
+  thread()->PushCall([] { g_assets->ClearPendingLoadsDoneList(); });
 }
 
 void Game::ToggleConsole() {
@@ -1548,7 +1549,7 @@ void Game::SetRealTimerLength(int timer_id, millisecs_t length) {
 }
 
 void Game::Process() {
-  have_pending_loads_ = g_media->RunPendingLoadsLogicThread();
+  have_pending_loads_ = g_assets->RunPendingLoadsLogicThread();
   UpdateProcessTimer();
 }
 
@@ -1886,7 +1887,7 @@ void Game::LocalDisplayChatMessage(const std::vector<uint8_t>& buffer) {
         g_python->HandleLocalChatMessage(final_message);
       }
       if (!chat_muted_) {
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+        g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
       }
     }
   }

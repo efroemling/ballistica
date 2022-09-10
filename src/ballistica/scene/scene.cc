@@ -3,6 +3,7 @@
 #include "ballistica/scene/scene.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/dynamics.h"
@@ -12,7 +13,6 @@
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/anim_curve_node.h"

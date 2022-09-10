@@ -2,6 +2,7 @@
 
 #include "ballistica/scene/node/spaz_node.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/dynamics/bg/bg_dynamics_shadow.h"
@@ -17,7 +18,6 @@
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
@@ -1839,7 +1839,7 @@ void SpazNode::DoFlyPress() {
         } else {
           s_id = SystemSoundID::kSparkle3;
         }
-        s->Play(g_media->GetSound(s_id));
+        s->Play(g_assets->GetSound(s_id));
         s->End();
       }
     }
@@ -4000,9 +4000,9 @@ void SpazNode::DrawEyeBalls(RenderComponent* c, ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(LightShadowType::kObject);
-      oc->SetTexture(g_media->GetTexture(SystemTextureID::kEye));
+      oc->SetTexture(g_assets->GetTexture(SystemTextureID::kEye));
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(g_media->GetTexture(SystemTextureID::kEyeTint));
+      oc->SetColorizeTexture(g_assets->GetTexture(SystemTextureID::kEyeTint));
       oc->SetReflection(ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -4020,12 +4020,12 @@ void SpazNode::DrawEyeBalls(RenderComponent* c, ObjectComponent* oc,
     if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
 
     if (!frosty_ && !eyeless_) {
-      c->DrawModel(g_media->GetModel(SystemModelID::kEyeBall));
+      c->DrawModel(g_assets->GetModel(SystemModelID::kEyeBall));
       if (shading) {
         oc->SetReflectionScale(2, 2, 2);
       }
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawModel(g_media->GetModel(SystemModelID::kEyeBallIris));
+      c->DrawModel(g_assets->GetModel(SystemModelID::kEyeBallIris));
     }
 
     c->PopTransform();
@@ -4040,12 +4040,12 @@ void SpazNode::DrawEyeBalls(RenderComponent* c, ObjectComponent* oc,
       c->Rotate(eyes_lr_smooth_, 0, 1, 0);
       c->Scale(0.09f, 0.09f, 0.09f);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawModel(g_media->GetModel(SystemModelID::kEyeBall));
+      c->DrawModel(g_assets->GetModel(SystemModelID::kEyeBall));
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
       if (shading) {
         oc->SetReflectionScale(2, 2, 2);
       }
-      c->DrawModel(g_media->GetModel(SystemModelID::kEyeBallIris));
+      c->DrawModel(g_assets->GetModel(SystemModelID::kEyeBallIris));
       c->PopTransform();
     }
     c->PopTransform();
@@ -4054,7 +4054,7 @@ void SpazNode::DrawEyeBalls(RenderComponent* c, ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(g_media->GetTexture(SystemTextureID::kEye));
+  c->SetTexture(g_assets->GetTexture(SystemTextureID::kEye));
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -4097,7 +4097,7 @@ void SpazNode::DrawEyeLids(RenderComponent* c, float death_fade,
   }
 
   if (!frosty_ && !eyeless_) {
-    c->DrawModel(g_media->GetModel(SystemModelID::kEyeLid));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kEyeLid));
   }
   c->PopTransform();
 
@@ -4117,7 +4117,7 @@ void SpazNode::DrawEyeLids(RenderComponent* c, float death_fade,
   c->Scale(-0.09f, 0.09f, 0.09f);
   if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
   if (!pirate_ && !frosty_ && !eyeless_)
-    c->DrawModel(g_media->GetModel(SystemModelID::kEyeLid));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kEyeLid));
   c->PopTransform();
   c->FlipCullFace();  // back to normal
 }
@@ -4179,7 +4179,7 @@ void SpazNode::DrawBodyParts(ObjectComponent* c, bool shading, float death_fade,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    c->DrawModel(g_media->GetModel(SystemModelID::kHairTuft1));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kHairTuft1));
     c->PopTransform();
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4193,7 +4193,7 @@ void SpazNode::DrawBodyParts(ObjectComponent* c, bool shading, float death_fade,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    c->DrawModel(g_media->GetModel(SystemModelID::kHairTuft1b));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kHairTuft1b));
     c->PopTransform();
   }
 
@@ -4202,7 +4202,7 @@ void SpazNode::DrawBodyParts(ObjectComponent* c, bool shading, float death_fade,
     c->PushTransform();
     c->TransformToBody(*hair_front_left_body_);
     if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-    c->DrawModel(g_media->GetModel(SystemModelID::kHairTuft2));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kHairTuft2));
     c->PopTransform();
   }
 
@@ -4213,7 +4213,7 @@ void SpazNode::DrawBodyParts(ObjectComponent* c, bool shading, float death_fade,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    c->DrawModel(g_media->GetModel(SystemModelID::kHairTuft3));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kHairTuft3));
     c->PopTransform();
   }
 
@@ -4224,7 +4224,7 @@ void SpazNode::DrawBodyParts(ObjectComponent* c, bool shading, float death_fade,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    c->DrawModel(g_media->GetModel(SystemModelID::kHairTuft4));
+    c->DrawModel(g_assets->GetModel(SystemModelID::kHairTuft4));
     c->PopTransform();
   }
 
@@ -4864,7 +4864,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.Translate(torso_pos[0] - 0.3f, torso_pos[1] + 1.47f,
                   torso_pos[2] - 0.2f);
       c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -4966,7 +4966,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
     c.PushTransform();
     c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
     c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-    c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
     c.PopTransform();
     c.Submit();
 
@@ -4980,7 +4980,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c2.PushTransform();
       c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
       c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-      c2.DrawModel(g_media->GetModel(SystemModelID::kCrossOut));
+      c2.DrawModel(g_assets->GetModel(SystemModelID::kCrossOut));
       c2.PopTransform();
       c2.Submit();
     }
@@ -5028,7 +5028,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(0.5f, half_height);
       c.Scale(1.1f, height + 0.1f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
 
       c.SetColor(0, 0.35f * o, 0, 0.3f * o);
@@ -5036,7 +5036,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(p_left * 0.5f, half_height);
       c.Scale(p_left, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
 
       if (dead_ && scene()->stepnum() % 10 < 5) {
@@ -5048,7 +5048,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate((p_left + p_right) * 0.5f, half_height);
       c.Scale(p_right - p_left, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
 
       c.SetColor((dead_ && scene()->stepnum() % 10 < 5) ? 0.55f * o : 0.01f * o,
@@ -5057,7 +5057,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate((p_right + 1.0f) * 0.5f, half_height);
       c.Scale(1.0f - p_right, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
 
       c.PopTransform();
@@ -5098,7 +5098,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kWings));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kWings));
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5118,14 +5118,14 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
       c.Scale(0.05f, 0.05f, 0.05f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
 
       // Draw wing point.
       c.PushTransform();
       c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
       c.Scale(0.1f, 0.1f, 0.1f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
 
       // Draw target.
@@ -5134,14 +5134,14 @@ void SpazNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
       c.Scale(0.05f, 0.05f, 0.05f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
 
       // Draw wing point.
       c.PushTransform();
       c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
       c.Scale(0.1f, 0.1f, 0.1f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
     }
 
@@ -5167,7 +5167,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
     if (death_scale != 1.0f) {
       c.Scale(death_scale, death_scale, death_scale);
     }
-    c.DrawModel(g_media->GetModel(SystemModelID::kWing));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kWing));
     c.PopTransform();
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5185,7 +5185,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
     if (death_scale != 1.0f) {
       c.Scale(death_scale, death_scale, death_scale);
     }
-    c.DrawModel(g_media->GetModel(SystemModelID::kWing));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kWing));
     c.PopTransform();
     c.Submit();
   }
@@ -5222,14 +5222,14 @@ void SpazNode::Draw(FrameDef* frame_def) {
       }
     }
     c.SetLightShadow(LightShadowType::kObject);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
 
     c.PushTransform();
     c.TransformToBody(*lower_right_arm_body_);
     if (death_scale != 1.0f) {
       c.Scale(death_scale, death_scale, death_scale);
     }
-    c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
     c.PopTransform();
 
     c.FlipCullFace();
@@ -5239,7 +5239,7 @@ void SpazNode::Draw(FrameDef* frame_def) {
     if (death_scale != 1.0f) {
       c.Scale(death_scale, death_scale, death_scale);
     }
-    c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
     c.FlipCullFace();
     c.PopTransform();
     c.Submit();
@@ -6149,7 +6149,7 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
         tick_play_id_ =
-            s->Play(g_media->GetSound(SystemSoundID::kTickingCrazy));
+            s->Play(g_assets->GetSound(SystemSoundID::kTickingCrazy));
         s->End();
       }
     }

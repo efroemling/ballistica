@@ -2,9 +2,9 @@
 
 #include "ballistica/python/class/python_class_sound.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {

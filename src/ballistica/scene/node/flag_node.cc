@@ -307,7 +307,7 @@ void FlagNode::Draw(FrameDef* frame_def) {
 
     float s_scale, s_density;
     SimpleComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kShadow));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kShadow));
     c.SetTransparent(true);
 
     FullShadowSet* full_shadows = full_shadow_set_.get();
@@ -353,12 +353,12 @@ void FlagNode::Draw(FrameDef* frame_def) {
   // Flag pole.
   {
     ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kFlagPole));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kFlagPole));
     c.SetReflection(ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
     c.PushTransform();
     c.TransformToBody(*body_);
-    c.DrawModel(g_media->GetModel(SystemModelID::kFlagPole));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kFlagPole));
     c.PopTransform();
     c.Submit();
   }

@@ -2,9 +2,9 @@
 
 #include "ballistica/python/class/python_class_texture.h"
 
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {

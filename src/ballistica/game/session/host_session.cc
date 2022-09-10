@@ -2,6 +2,10 @@
 
 #include "ballistica/game/session/host_session.h"
 
+#include "ballistica/assets/component/data.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/sound.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
@@ -9,10 +13,6 @@
 #include "ballistica/generic/timer.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/media/component/data.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call.h"
@@ -206,27 +206,27 @@ auto HostSession::GetSound(const std::string& name) -> Object::Ref<Sound> {
   if (shutting_down_) {
     throw Exception("can't load assets during session shutdown");
   }
-  return Media::GetMedia(&sounds_, name, scene());
+  return Assets::GetAsset(&sounds_, name, scene());
 }
 
 auto HostSession::GetData(const std::string& name) -> Object::Ref<Data> {
   if (shutting_down_) {
     throw Exception("can't load assets during session shutdown");
   }
-  return Media::GetMedia(&datas_, name, scene());
+  return Assets::GetAsset(&datas_, name, scene());
 }
 
 auto HostSession::GetTexture(const std::string& name) -> Object::Ref<Texture> {
   if (shutting_down_) {
     throw Exception("can't load assets during session shutdown");
   }
-  return Media::GetMedia(&textures_, name, scene());
+  return Assets::GetAsset(&textures_, name, scene());
 }
 auto HostSession::GetModel(const std::string& name) -> Object::Ref<Model> {
   if (shutting_down_) {
     throw Exception("can't load media during session shutdown");
   }
-  return Media::GetMedia(&models_, name, scene());
+  return Assets::GetAsset(&models_, name, scene());
 }
 
 auto HostSession::GetForegroundContext() -> Context {

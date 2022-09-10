@@ -2,6 +2,7 @@
 
 #include "ballistica/game/connection/connection_to_client.h"
 
+#include "ballistica/assets/assets.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/client_controller_interface.h"
 #include "ballistica/game/connection/connection_set.h"
@@ -11,7 +12,6 @@
 #include "ballistica/generic/json.h"
 #include "ballistica/input/device/client_input_device.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/media.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
@@ -73,7 +73,7 @@ ConnectionToClient::~ConnectionToClient() {
     std::string s = g_game->GetResourceString("playerLeftPartyText");
     Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     ScreenMessage(s, {1, 0.5f, 0.0f});
-    g_audio->PlaySound(g_media->GetSound(SystemSoundID::kCorkPop));
+    g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kCorkPop));
   }
 }
 
@@ -215,7 +215,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           Utils::StringReplaceOne(&s, "${NAME}",
                                   peer_spec().GetDisplayString());
           ScreenMessage(s, {0.5f, 1, 0.5f});
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kGunCock));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kGunCock));
         }
 
         // Also mark the time for flashing the 'someone just joined your

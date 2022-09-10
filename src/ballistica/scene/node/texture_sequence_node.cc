@@ -2,7 +2,7 @@
 
 #include "ballistica/scene/node/texture_sequence_node.h"
 
-#include "ballistica/media/component/texture.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

@@ -210,6 +210,40 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/app/app_flavor_vr.h
   ${BA_SRC_ROOT}/ballistica/app/stress_test.cc
   ${BA_SRC_ROOT}/ballistica/app/stress_test.h
+  ${BA_SRC_ROOT}/ballistica/assets/assets.cc
+  ${BA_SRC_ROOT}/ballistica/assets/assets.h
+  ${BA_SRC_ROOT}/ballistica/assets/assets_server.cc
+  ${BA_SRC_ROOT}/ballistica/assets/assets_server.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/asset_component.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/asset_component.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/collide_model.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/collide_model.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/cube_map_texture.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/cube_map_texture.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/data.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/model.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/model.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/sound.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/sound.h
+  ${BA_SRC_ROOT}/ballistica/assets/component/texture.cc
+  ${BA_SRC_ROOT}/ballistica/assets/component/texture.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/asset_component_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/asset_component_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/collide_model_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/collide_model_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/data_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/data_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/model_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/model_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/model_renderer_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/sound_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/sound_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/texture_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/texture_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/texture_preload_data.cc
+  ${BA_SRC_ROOT}/ballistica/assets/data/texture_preload_data.h
+  ${BA_SRC_ROOT}/ballistica/assets/data/texture_renderer_data.h
   ${BA_SRC_ROOT}/ballistica/audio/al_sys.cc
   ${BA_SRC_ROOT}/ballistica/audio/al_sys.h
   ${BA_SRC_ROOT}/ballistica/audio/audio.cc
@@ -466,40 +500,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/math/vector3f.cc
   ${BA_SRC_ROOT}/ballistica/math/vector3f.h
   ${BA_SRC_ROOT}/ballistica/math/vector4f.h
-  ${BA_SRC_ROOT}/ballistica/media/component/collide_model.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/collide_model.h
-  ${BA_SRC_ROOT}/ballistica/media/component/cube_map_texture.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/cube_map_texture.h
-  ${BA_SRC_ROOT}/ballistica/media/component/data.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/data.h
-  ${BA_SRC_ROOT}/ballistica/media/component/media_component.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/media_component.h
-  ${BA_SRC_ROOT}/ballistica/media/component/model.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/model.h
-  ${BA_SRC_ROOT}/ballistica/media/component/sound.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/sound.h
-  ${BA_SRC_ROOT}/ballistica/media/component/texture.cc
-  ${BA_SRC_ROOT}/ballistica/media/component/texture.h
-  ${BA_SRC_ROOT}/ballistica/media/data/collide_model_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/collide_model_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/data_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/data_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/media_component_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/media_component_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/model_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/model_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/model_renderer_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/sound_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/sound_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/texture_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/texture_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/texture_preload_data.cc
-  ${BA_SRC_ROOT}/ballistica/media/data/texture_preload_data.h
-  ${BA_SRC_ROOT}/ballistica/media/data/texture_renderer_data.h
-  ${BA_SRC_ROOT}/ballistica/media/media.cc
-  ${BA_SRC_ROOT}/ballistica/media/media.h
-  ${BA_SRC_ROOT}/ballistica/media/media_server.cc
-  ${BA_SRC_ROOT}/ballistica/media/media_server.h
   ${BA_SRC_ROOT}/ballistica/networking/network_reader.cc
   ${BA_SRC_ROOT}/ballistica/networking/network_reader.h
   ${BA_SRC_ROOT}/ballistica/networking/network_writer.cc
@@ -557,14 +557,14 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/python/class/python_class_widget.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_app.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_app.h
+  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_assets.cc
+  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_assets.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_gameplay.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_gameplay.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_graphics.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_graphics.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_input.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_input.h
-  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_media.cc
-  ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_media.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_networking.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_networking.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_system.cc

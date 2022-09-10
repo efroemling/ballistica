@@ -2,6 +2,11 @@
 
 #include "ballistica/game/host_activity.h"
 
+#include "ballistica/assets/component/collide_model.h"
+#include "ballistica/assets/component/data.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/sound.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/player.h"
@@ -9,11 +14,6 @@
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/media/component/collide_model.h"
-#include "ballistica/media/component/data.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/python/python_sys.h"
@@ -183,28 +183,28 @@ auto HostActivity::GetTexture(const std::string& name) -> Object::Ref<Texture> {
   if (shutting_down_) {
     throw Exception("can't load assets during activity shutdown");
   }
-  return Media::GetMedia(&textures_, name, scene());
+  return Assets::GetAsset(&textures_, name, scene());
 }
 
 auto HostActivity::GetSound(const std::string& name) -> Object::Ref<Sound> {
   if (shutting_down_) {
     throw Exception("can't load assets during activity shutdown");
   }
-  return Media::GetMedia(&sounds_, name, scene());
+  return Assets::GetAsset(&sounds_, name, scene());
 }
 
 auto HostActivity::GetData(const std::string& name) -> Object::Ref<Data> {
   if (shutting_down_) {
     throw Exception("can't load assets during activity shutdown");
   }
-  return Media::GetMedia(&datas_, name, scene());
+  return Assets::GetAsset(&datas_, name, scene());
 }
 
 auto HostActivity::GetModel(const std::string& name) -> Object::Ref<Model> {
   if (shutting_down_) {
     throw Exception("can't load assets during activity shutdown");
   }
-  return Media::GetMedia(&models_, name, scene());
+  return Assets::GetAsset(&models_, name, scene());
 }
 
 auto HostActivity::GetCollideModel(const std::string& name)
@@ -212,7 +212,7 @@ auto HostActivity::GetCollideModel(const std::string& name)
   if (shutting_down_) {
     throw Exception("can't load assets during activity shutdown");
   }
-  return Media::GetMedia(&collide_models_, name, scene());
+  return Assets::GetAsset(&collide_models_, name, scene());
 }
 
 void HostActivity::SetPaused(bool val) {

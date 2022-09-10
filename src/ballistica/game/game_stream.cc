@@ -3,6 +3,12 @@
 #include "ballistica/game/game_stream.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/assets_server.h"
+#include "ballistica/assets/component/collide_model.h"
+#include "ballistica/assets/component/data.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/sound.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/dynamics/material/material_action.h"
@@ -12,12 +18,6 @@
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/session/host_session.h"
-#include "ballistica/media/component/collide_model.h"
-#include "ballistica/media/component/data.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
-#include "ballistica/media/media_server.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
@@ -37,8 +37,8 @@ GameStream::GameStream(HostSession* host_session, bool save_replay)
     if (g_app->replay_open) {
       Log("ERROR: g_replay_open true at replay start; shouldn't happen.");
     }
-    assert(g_media_server);
-    g_media_server->PushBeginWriteReplayCall();
+    assert(g_assets_server);
+    g_assets_server->PushBeginWriteReplayCall();
     writing_replay_ = true;
     g_app->replay_open = true;
   }
@@ -60,8 +60,8 @@ GameStream::~GameStream() {
       Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
     }
     g_app->replay_open = false;
-    assert(g_media_server);
-    g_media_server->PushEndWriteReplayCall();
+    assert(g_assets_server);
+    g_assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
   }
 
@@ -192,8 +192,8 @@ void GameStream::Fail() {
     if (!g_app->replay_open) {
       Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
     }
-    assert(g_media_server);
-    g_media_server->PushEndWriteReplayCall();
+    assert(g_assets_server);
+    g_assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
     g_app->replay_open = false;
   }
@@ -374,7 +374,7 @@ void GameStream::ShipSessionCommandsMessage() {
 
 void GameStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
   assert(writing_replay_);
-  assert(g_media_server);
+  assert(g_assets_server);
 
   assert(!message.empty());
   if (g_buildconfig.debug_build()) {
@@ -389,7 +389,7 @@ void GameStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
     }
   }
 
-  g_media_server->PushAddMessageToReplayCall(message);
+  g_assets_server->PushAddMessageToReplayCall(message);
 }
 
 void GameStream::SendPhysicsCorrection(bool blend) {

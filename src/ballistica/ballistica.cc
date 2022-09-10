@@ -5,6 +5,8 @@
 #include <map>
 
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/assets_server.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
@@ -13,8 +15,6 @@
 #include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/media.h"
-#include "ballistica/media/media_server.h"
 #include "ballistica/networking/network_writer.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -23,7 +23,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20803;
+const int kAppBuildNumber = 20806;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -45,8 +45,8 @@ Graphics* g_graphics{};
 GraphicsServer* g_graphics_server{};
 Input* g_input{};
 Thread* g_main_thread{};
-Media* g_media{};
-MediaServer* g_media_server{};
+Assets* g_assets{};
+AssetsServer* g_assets_server{};
 NetworkReader* g_network_reader{};
 Networking* g_networking{};
 NetworkWriteModule* g_network_writer{};
@@ -65,12 +65,12 @@ Utils* g_utils{};
 //    This event kicks off an initial-screen-creation message sent to the
 //    graphics-server thread. Other systems are informed that bootstrapping
 //    is complete and that they are free to talk to each other. Initial
-//    input-devices are added, media loads can begin (at least ones not
+//    input-devices are added, asset loads can begin (at least ones not
 //    dependent on the screen/renderer), etc.
 // 3: The initial screen is created on the graphics-server thread in response
 //    to the message sent from the game thread. A completion notice is sent
 //    back to the game thread when done.
-// 4: Back on the game thread, any renderer-dependent media-loads/etc. can begin
+// 4: Back on the game thread, any renderer-dependent asset-loads/etc. can begin
 //    and lastly the initial game session is kicked off.
 
 auto BallisticaMain(int argc, char** argv) -> int {
@@ -107,12 +107,12 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Various other subsystems.
     g_v1_account = new V1Account();
     g_utils = new Utils();
-    g_media = new Media();
+    g_assets = new Assets();
     Scene::Init();
 
     // Spin up our other standard threads.
-    auto* media_thread{new Thread(ThreadIdentifier::kMedia)};
-    g_app->pausable_threads.push_back(media_thread);
+    auto* assets_thread{new Thread(ThreadIdentifier::kAssets)};
+    g_app->pausable_threads.push_back(assets_thread);
     auto* audio_thread{new Thread(ThreadIdentifier::kAudio)};
     g_app->pausable_threads.push_back(audio_thread);
     auto* logic_thread{new Thread(ThreadIdentifier::kLogic)};
@@ -126,8 +126,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     network_write_thread->PushCallSynchronous([network_write_thread] {
       new NetworkWriteModule(network_write_thread);
     });
-    media_thread->PushCallSynchronous(
-        [media_thread] { new MediaServer(media_thread); });
+    assets_thread->PushCallSynchronous(
+        [assets_thread] { new AssetsServer(assets_thread); });
     new GraphicsServer(g_main_thread);
     audio_thread->PushCallSynchronous(
         [audio_thread] { new AudioServer(audio_thread); });
@@ -277,8 +277,8 @@ auto InBGDynamicsThread() -> bool {
   return (g_bg_dynamics_server && g_bg_dynamics_server->thread()->IsCurrent());
 }
 
-auto InMediaThread() -> bool {
-  return (g_media_server && g_media_server->thread()->IsCurrent());
+auto InAssetsThread() -> bool {
+  return (g_assets_server && g_assets_server->thread()->IsCurrent());
 }
 
 auto InNetworkWriteThread() -> bool {

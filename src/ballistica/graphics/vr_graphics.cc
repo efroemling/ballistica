@@ -241,7 +241,7 @@ void VRGraphics::DrawVROverlay(FrameDef* frame_def) {
     c.Scale(kBaseVirtualResX * (1.0f + kVRBorder),
             kBaseVirtualResY * (1.0f + kVRBorder),
             kBaseVirtualResX * (1.0f + kVRBorder));
-    c.DrawModel(g_media->GetModel(SystemModelID::kVROverlay));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kVROverlay));
     c.PopTransform();
     c.Submit();
   }
@@ -258,7 +258,7 @@ void VRGraphics::DrawOverlayBounds(RenderPass* pass) {
     // Slight offset in z to reduce z fighting.
     c.Translate(0.5f * width, 0.5f * height, 1.0f);
     c.Scale(width, height, 100.0f);
-    c.DrawModel(g_media->GetModel(SystemModelID::kOverlayGuide));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kOverlayGuide));
     c.PopTransform();
     c.Submit();
   }
@@ -277,14 +277,14 @@ void VRGraphics::DrawVRControllers(FrameDef* frame_def) {
   if (false) {
     ObjectComponent c(frame_def->beauty_pass());
     c.SetColor(1, 0, 0);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     c.PushTransform();
     c.VRTransformToHead();
     c.Translate(0, 0, 5);
     c.Scale(2, 2, 2);
-    c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
     c.PopTransform();
     c.Submit();
   }
@@ -297,13 +297,13 @@ void VRGraphics::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kDaydreamRemote: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 1, 0);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       c.PushTransform();
       c.VRTransformToRightHand();
       c.Scale(10, 10, 10);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
       break;
@@ -316,13 +316,13 @@ void VRGraphics::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kOculusTouchL: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 0, 1);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       c.PushTransform();
       c.VRTransformToLeftHand();
       c.Scale(10, 10, 10);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
       break;

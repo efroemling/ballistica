@@ -150,8 +150,8 @@ static auto GetCurrentThreadIdentifier() -> ThreadIdentifier {
     return ThreadIdentifier::kAudio;
   } else if (InNetworkWriteThread()) {
     return ThreadIdentifier::kNetworkWrite;
-  } else if (InMediaThread()) {
-    return ThreadIdentifier::kMedia;
+  } else if (InAssetsThread()) {
+    return ThreadIdentifier::kAssets;
   } else if (InBGDynamicsThread()) {
     return ThreadIdentifier::kBGDynamics;
   } else {
@@ -209,9 +209,9 @@ auto Object::ObjectThreadCheck() -> void {
         DO_FAIL("NetworkWrite");
       }
       break;
-    case ThreadIdentifier::kMedia:
-      if (!InMediaThread()) {
-        DO_FAIL("Media");
+    case ThreadIdentifier::kAssets:
+      if (!InAssetsThread()) {
+        DO_FAIL("Assets");
       }
       break;
     case ThreadIdentifier::kBGDynamics:

@@ -5,6 +5,7 @@
 #include <list>
 
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
@@ -17,7 +18,6 @@
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"

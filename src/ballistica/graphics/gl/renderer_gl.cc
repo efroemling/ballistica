@@ -3,11 +3,11 @@
 #if BA_ENABLE_OPENGL
 #include "ballistica/graphics/gl/renderer_gl.h"
 
+#include "ballistica/assets/data/texture_preload_data.h"
+#include "ballistica/assets/data/texture_renderer_data.h"
 #include "ballistica/graphics/component/special_component.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/mesh/mesh_renderer_data.h"
-#include "ballistica/media/data/texture_preload_data.h"
-#include "ballistica/media/data/texture_renderer_data.h"
 
 #if BA_OSTYPE_IOS_TVOS
 #include "ballistica/platform/apple/apple_utils.h"

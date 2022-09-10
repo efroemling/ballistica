@@ -153,7 +153,7 @@ void Console::ToggleState() {
       state_ = State::kInactive;
       break;
   }
-  g_audio->PlaySound(g_media->GetSound(SystemSoundID::kBlip));
+  g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kBlip));
   transition_start_ = GetRealTime();
 }
 
@@ -312,7 +312,7 @@ void Console::Draw(RenderPass* pass) {
       c.Translate(19.0f + g_text_graphics->GetStringWidth(input_string_) * 0.5f,
                   bottom + 23.0f, kConsoleZDepth);
       c.Scale(5, 11, 1.0f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }

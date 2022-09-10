@@ -3,10 +3,10 @@
 #include "ballistica/game/session/net_client_session.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/assets_server.h"
 #include "ballistica/game/connection/connection_to_host.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/net_graph.h"
-#include "ballistica/media/media_server.h"
 
 namespace ballistica {
 
@@ -15,8 +15,8 @@ NetClientSession::NetClientSession() {
   if (g_app->replay_open) {
     Log("ERROR: g_replay_open true at netclient start; shouldn't happen.");
   }
-  assert(g_media_server);
-  g_media_server->PushBeginWriteReplayCall();
+  assert(g_assets_server);
+  g_assets_server->PushBeginWriteReplayCall();
   writing_replay_ = true;
   g_app->replay_open = true;
 }
@@ -28,8 +28,8 @@ NetClientSession::~NetClientSession() {
       Log("ERROR: g_replay_open false at net-client close; shouldn't happen.");
     }
     g_app->replay_open = false;
-    assert(g_media_server);
-    g_media_server->PushEndWriteReplayCall();
+    assert(g_assets_server);
+    g_assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
   }
 }
@@ -192,8 +192,8 @@ void NetClientSession::HandleSessionMessage(
   ClientSession::HandleSessionMessage(message);
 
   if (writing_replay_) {
-    assert(g_media_server);
-    g_media_server->PushAddMessageToReplayCall(message);
+    assert(g_assets_server);
+    g_assets_server->PushAddMessageToReplayCall(message);
   }
 }
 

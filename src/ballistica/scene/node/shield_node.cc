@@ -174,25 +174,25 @@ void ShieldNode::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(0.5f, half_height);
       c.Scale(1.1f, height + 0.1f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
       c.PushTransform();
       c.Translate(p_left * 0.5f, half_height);
       c.Scale(p_left, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
       c.PushTransform();
       c.Translate((p_left + p_right) * 0.5f, half_height);
       c.Scale(p_right - p_left, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
       c.PushTransform();
       c.Translate((p_right + 1.0f) * 0.5f, half_height);
       c.Scale(1.0f - p_right, height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.PopTransform();
       c.Submit();
@@ -224,7 +224,7 @@ void ShieldNode::Draw(FrameDef* frame_def) {
     c.SetLightShadow(LightShadowType::kNone);
     c.SetReflection(ReflectionType::kSharp);
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kShield));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kShield));
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
     c.PushTransform();
     Vector3f to_cam =
@@ -245,7 +245,7 @@ void ShieldNode::Draw(FrameDef* frame_def) {
         * (0.97f
            + 0.05f * Utils::precalc_rand_2(rot_count_ % kPrecalcRandsCount));
     c.Scale(r2, r2, r2);
-    c.DrawModel(g_media->GetModel(SystemModelID::kShield),
+    c.DrawModel(g_assets->GetModel(SystemModelID::kShield),
                 kModelDrawFlagNoReflection);
     c.PopTransform();
     c.Submit();
@@ -259,7 +259,7 @@ void ShieldNode::Draw(FrameDef* frame_def) {
       c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
                 1, 0);
       c2.Scale(r2, r2, r2);
-      c2.DrawModel(g_media->GetModel(SystemModelID::kShield));
+      c2.DrawModel(g_assets->GetModel(SystemModelID::kShield));
       c2.PopTransform();
       c2.Submit();
     }
@@ -273,7 +273,7 @@ void ShieldNode::Draw(FrameDef* frame_def) {
                 1, 0);
       float sc = r2 * 1.1f;
       c2.Scale(sc, sc, sc);
-      c2.DrawModel(g_media->GetModel(SystemModelID::kShield));
+      c2.DrawModel(g_assets->GetModel(SystemModelID::kShield));
       c2.PopTransform();
       c2.Submit();
     }

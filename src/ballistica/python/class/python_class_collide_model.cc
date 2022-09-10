@@ -2,9 +2,9 @@
 
 #include "ballistica/python/class/python_class_collide_model.h"
 
+#include "ballistica/assets/component/collide_model.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
-#include "ballistica/media/component/collide_model.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {

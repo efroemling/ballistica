@@ -61,8 +61,8 @@ class Game {
   auto PushToggleDebugInfoDisplayCall() -> void;
   auto PushToggleManualCameraCall() -> void;
   auto PushHavePendingLoadsDoneCall() -> void;
-  auto PushFreeMediaComponentRefsCall(
-      const std::vector<Object::Ref<MediaComponentData>*>& components) -> void;
+  auto PushFreeAssetComponentRefsCall(
+      const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
   auto PushHavePendingLoadsCall() -> void;
   auto PushShutdownCall(bool soft) -> void;
 

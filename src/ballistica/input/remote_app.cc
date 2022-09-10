@@ -10,11 +10,11 @@
 #endif
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/assets.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/input/input.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/media.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/platform/min_sdl.h"
 #include "ballistica/platform/platform.h"

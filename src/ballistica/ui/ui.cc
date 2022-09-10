@@ -3,13 +3,13 @@
 #include "ballistica/ui/ui.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/component/data.h"
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/input.h"
-#include "ballistica/media/component/data.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
 #include "ballistica/ui/root_ui.h"
@@ -292,7 +292,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kErrorBeep));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kErrorBeep));
       print_menu_owner = true;
     }
     ret_val = nullptr;  // Rejected!
@@ -341,19 +341,19 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
 }
 
 auto UI::GetModel(const std::string& name) -> Object::Ref<Model> {
-  return Media::GetMedia(&models_, name, scene());
+  return Assets::GetAsset(&models_, name, scene());
 }
 
 auto UI::GetTexture(const std::string& name) -> Object::Ref<Texture> {
-  return Media::GetMedia(&textures_, name, scene());
+  return Assets::GetAsset(&textures_, name, scene());
 }
 
 auto UI::GetSound(const std::string& name) -> Object::Ref<Sound> {
-  return Media::GetMedia(&sounds_, name, scene());
+  return Assets::GetAsset(&sounds_, name, scene());
 }
 
 auto UI::GetData(const std::string& name) -> Object::Ref<Data> {
-  return Media::GetMedia(&datas_, name, scene());
+  return Assets::GetAsset(&datas_, name, scene());
 }
 
 auto UI::GetAsUIContext() -> UI* { return this; }

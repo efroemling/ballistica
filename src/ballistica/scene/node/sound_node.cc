@@ -2,9 +2,9 @@
 
 #include "ballistica/scene/node/sound_node.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

@@ -3,6 +3,8 @@
 #include "ballistica/audio/audio_server.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/data/sound_data.h"
 #include "ballistica/audio/al_sys.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
@@ -12,8 +14,6 @@
 #include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/data/sound_data.h"
-#include "ballistica/media/media.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -601,7 +601,7 @@ void AudioServer::Process() {
   // If we're paused we don't do nothin'.
   if (!paused_) {
     // Do some loading...
-    have_pending_loads_ = g_media->RunPendingAudioLoads();
+    have_pending_loads_ = g_assets->RunPendingAudioLoads();
 
     // Keep that available-sources list filled.
     UpdateAvailableSources();
@@ -666,7 +666,7 @@ void AudioServer::FadeSoundOut(uint32_t play_id, uint32_t time) {
       std::make_pair(play_id, SoundFadeNode(play_id, time, true)));
 }
 
-void AudioServer::DeleteMediaComponent(MediaComponentData* c) {
+void AudioServer::DeleteAssetComponent(AssetComponentData* c) {
   assert(InAudioThread());
   c->Unload();
   delete c;
@@ -1033,7 +1033,7 @@ void AudioServer::ThreadSource::Stop() {
     // to free up...
     // (we can't kill media-refs outside the main thread)
     if (source_sound_) {
-      assert(g_media);
+      assert(g_assets);
       g_audio_server->AddSoundRefDelete(source_sound_);
       source_sound_ = nullptr;
     }
@@ -1094,7 +1094,7 @@ void AudioServer::PushSetPausedCall(bool pause) {
 }
 
 void AudioServer::PushComponentUnloadCall(
-    const std::vector<Object::Ref<MediaComponentData>*>& components) {
+    const std::vector<Object::Ref<AssetComponentData>*>& components) {
   thread()->PushCall([this, components] {
     // Unload all components we were passed...
     for (auto&& i : components) {
@@ -1102,7 +1102,7 @@ void AudioServer::PushComponentUnloadCall(
     }
     // ...and then ship these pointers back to the game thread, so it can free
     // the references.
-    g_game->PushFreeMediaComponentRefsCall(components);
+    g_game->PushFreeAssetComponentRefsCall(components);
   });
 }
 

@@ -59,7 +59,7 @@ auto Thread::RunStdInputThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
 
-auto Thread::RunMediaThread(void* data) -> int {
+auto Thread::RunAssetsThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
 
@@ -221,8 +221,8 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
         case ThreadIdentifier::kLogic:
           func = RunLogicThread;
           break;
-        case ThreadIdentifier::kMedia:
-          func = RunMediaThread;
+        case ThreadIdentifier::kAssets:
+          func = RunAssetsThread;
           break;
         case ThreadIdentifier::kMain:
           // Shouldn't happen; this thread gets wrapped; not launched.
@@ -288,9 +288,9 @@ auto Thread::ThreadMain() -> int {
         name = "stdin";
         id_string = "ballistica stdin";
         break;
-      case ThreadIdentifier::kMedia:
-        name = "media";
-        id_string = "ballistica media";
+      case ThreadIdentifier::kAssets:
+        name = "assets";
+        id_string = "ballistica assets";
         break;
       case ThreadIdentifier::kFileOut:
         name = "fileout";

@@ -4,6 +4,7 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game_stream.h"
@@ -11,7 +12,6 @@
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/game/session/replay_client_session.h"
 #include "ballistica/graphics/graphics.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_session_data.h"
 #include "ballistica/python/python.h"

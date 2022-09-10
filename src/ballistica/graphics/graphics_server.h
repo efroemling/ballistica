@@ -29,7 +29,7 @@ class GraphicsServer {
   auto PushReloadMediaCall() -> void;
   auto PushRemoveRenderHoldCall() -> void;
   auto PushComponentUnloadCall(
-      const std::vector<Object::Ref<MediaComponentData>*>& components) -> void;
+      const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
   auto SetRenderHold() -> void;
 
   // Used by the game thread to pass frame-defs to the graphics server

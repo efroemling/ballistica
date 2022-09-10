@@ -3,6 +3,10 @@
 #include "ballistica/python/python.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/component/collide_model.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/sound.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
@@ -16,10 +20,6 @@
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/component/collide_model.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_collide_model.h"
 #include "ballistica/python/class/python_class_context.h"
@@ -37,10 +37,10 @@
 #include "ballistica/python/class/python_class_vec3.h"
 #include "ballistica/python/class/python_class_widget.h"
 #include "ballistica/python/methods/python_methods_app.h"
+#include "ballistica/python/methods/python_methods_assets.h"
 #include "ballistica/python/methods/python_methods_gameplay.h"
 #include "ballistica/python/methods/python_methods_graphics.h"
 #include "ballistica/python/methods/python_methods_input.h"
-#include "ballistica/python/methods/python_methods_media.h"
 #include "ballistica/python/methods/python_methods_networking.h"
 #include "ballistica/python/methods/python_methods_system.h"
 #include "ballistica/python/methods/python_methods_ui.h"
@@ -2045,7 +2045,7 @@ void Python::LaunchStringEdit(TextWidget* w) {
   BA_PRECONDITION(w);
 
   ScopedSetContext cp(g_game->GetUIContext());
-  g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
+  g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish));
 
   // Gotta run this in the next cycle.
   PythonRef args(Py_BuildValue("(Osi)", w->BorrowPyRef(),

@@ -596,7 +596,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+                g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -948,7 +948,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
     bg_center_x_ = l - l_border + bg_width_ * 0.5f;
     bg_center_y_ = b - b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_media->GetTexture(tex_id);
+      tex_ = g_assets->GetTexture(tex_id);
     }
     bg_dirty_ = false;
   }
@@ -974,8 +974,8 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
       c.PushTransform();
       c.Translate(bg_center_x_, bg_center_y_);
       c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-      c.DrawModel(g_media->GetModel(draw_transparent ? bg_model_transparent_i_d_
-                                                     : bg_model_opaque_i_d_));
+      c.DrawModel(g_assets->GetModel(
+          draw_transparent ? bg_model_transparent_i_d_ : bg_model_opaque_i_d_));
       c.PopTransform();
       c.Submit();
     }
@@ -1005,12 +1005,12 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kGlow));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kGlow));
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       c.PushTransform();
       c.Translate(glow_center_x_, glow_center_y_);
       c.Scale(glow_width_, glow_height_);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage4x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage4x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1582,7 +1582,7 @@ void ContainerWidget::SelectDownWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1646,7 +1646,7 @@ void ContainerWidget::SelectUpWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1697,7 +1697,7 @@ void ContainerWidget::SelectLeftWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1748,7 +1748,7 @@ void ContainerWidget::SelectRightWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1828,7 +1828,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::NEXT_SELECTED);
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
       return;
     }
     i++;
@@ -1843,7 +1843,7 @@ void ContainerWidget::PrintExitListInstructions(
     if ((t - old_last_prev_next_time > 250)
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kErrorBeep));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kErrorBeep));
       std::string s = g_game->GetResourceString("arrowsToExitListText");
       {
         // Left arrow.
@@ -1915,7 +1915,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::PREV_SELECTED);
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
       return;
     }
     i++;

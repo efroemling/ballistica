@@ -33,7 +33,7 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
     entry->max_flatness = 1.0f;
     entry->mesh.SetText(text, alignment_h, alignment_v, true, 0, 65535,
                         TextMeshEntryType::kRegular, nullptr);
-    entry->tex = g_media->GetTexture(SystemTextureID::kFontBig);
+    entry->tex = g_assets->GetTexture(SystemTextureID::kFontBig);
     entries_.push_back(std::move(entry));
 
   } else {
@@ -109,8 +109,8 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
         // There should only ever be one of these.
         assert(!os_texture_.exists());
         {
-          Media::MediaListsLock lock;
-          os_texture_ = g_media->GetTextureData(packer.get());
+          Assets::AssetListLock lock;
+          os_texture_ = g_assets->GetTextureData(packer.get());
         }
 
         // We also need to know what uv-scales to use for shadows/etc.
@@ -122,43 +122,43 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       }
       switch (*i) {
         case 0:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall0);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall0);
           break;
         case 1:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall1);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall1);
           break;
         case 2:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall2);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall2);
           break;
         case 3:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall3);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall3);
           break;
         case 4:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall4);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall4);
           break;
         case 5:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall5);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall5);
           break;
         case 6:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall6);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall6);
           break;
         case 7:
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontSmall7);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontSmall7);
           break;
         case static_cast<int>(TextGraphics::FontPage::kOSRendered):
           entry->tex = os_texture_;
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras1):
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontExtras);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontExtras);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras2):
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontExtras2);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontExtras2);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras3):
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontExtras3);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontExtras3);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras4):
-          entry->tex = g_media->GetTexture(SystemTextureID::kFontExtras4);
+          entry->tex = g_assets->GetTexture(SystemTextureID::kFontExtras4);
           break;
         default:
           throw Exception();

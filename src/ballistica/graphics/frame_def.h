@@ -6,9 +6,9 @@
 #include <memory>
 #include <vector>
 
+#include "ballistica/assets/data/asset_component_data.h"
 #include "ballistica/math/matrix44f.h"
 #include "ballistica/math/vector2f.h"
-#include "ballistica/media/data/media_component_data.h"
 
 namespace ballistica {
 
@@ -101,7 +101,7 @@ class FrameDef {
   auto has_depth_texture() const -> bool {
     return (quality_ >= GraphicsQuality::kHigh);
   }
-  void AddComponent(const Object::Ref<MediaComponentData>& component) {
+  void AddComponent(const Object::Ref<AssetComponentData>& component) {
     // Add a reference to this component only if we havn't yet.
     if (component->last_frame_def_num() != frame_number_) {
       component->set_last_frame_def_num(frame_number_);
@@ -156,7 +156,7 @@ class FrameDef {
     return mesh_index_sizes_;
   }
   auto media_components() const
-      -> const std::vector<Object::Ref<MediaComponentData>>& {
+      -> const std::vector<Object::Ref<AssetComponentData>>& {
     return media_components_;
   }
 
@@ -189,7 +189,7 @@ class FrameDef {
   std::vector<Object::Ref<MeshDataClientHandle>> meshes_;
   std::vector<Object::Ref<MeshBufferBase>> mesh_buffers_;
   std::vector<int8_t> mesh_index_sizes_;
-  std::vector<Object::Ref<MediaComponentData>> media_components_;
+  std::vector<Object::Ref<AssetComponentData>> media_components_;
 
 #if BA_DEBUG_BUILD
   // Sanity checking: make sure components are completely submitted

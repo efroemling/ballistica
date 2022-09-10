@@ -88,11 +88,11 @@ void CheckBoxWidget::Draw(RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kGlow));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kGlow));
     c.PushTransform();
     c.Translate(highlight_center_x_, highlight_center_y_);
     c.Scale(highlight_width_, highlight_height_);
-    c.DrawModel(g_media->GetModel(SystemModelID::kImage4x1));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kImage4x1));
     c.PopTransform();
     c.Submit();
   }
@@ -132,14 +132,14 @@ void CheckBoxWidget::Draw(RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(draw_transparent);
       c.SetColor(glow_amt * color_r_, glow_amt * color_g_, glow_amt * color_b_,
                  1);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kUIAtlas));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kUIAtlas));
       c.PushTransform();
       c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
                   0.1f);
       c.Scale(box_width_, box_height_, 0.4f);
-      c.DrawModel(g_media->GetModel(draw_transparent
-                                        ? SystemModelID::kButtonSmallTransparent
-                                        : SystemModelID::kButtonSmallOpaque));
+      c.DrawModel(g_assets->GetModel(
+          draw_transparent ? SystemModelID::kButtonSmallTransparent
+                           : SystemModelID::kButtonSmallOpaque));
       c.PopTransform();
       c.Submit();
     }
@@ -171,9 +171,9 @@ void CheckBoxWidget::Draw(RenderPass* pass, bool draw_transparent) {
       SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
       if (is_radio_button_) {
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kNub));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kNub));
       } else {
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kUIAtlas));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kUIAtlas));
       }
 
       if (mouse_over_ && g_platform->IsRunningOnDesktop()) {
@@ -188,12 +188,12 @@ void CheckBoxWidget::Draw(RenderPass* pass, bool draw_transparent) {
                     check_center_y_ + 2 + 3.0f * extra_offs_y, 0.5f);
         c.Scale(check_width_ * 0.45f, check_height_ * 0.45f, 0.5f);
         c.Translate(-0.17f, -0.17f, 0.5f);
-        c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+        c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       } else {
         c.Translate(check_center_x_ + 3.0f * extra_offs_x,
                     check_center_y_ + 3.0f * extra_offs_y, 0.5f);
         c.Scale(check_width_, check_height_, 0.5f);
-        c.DrawModel(g_media->GetModel(SystemModelID::kCheckTransparent));
+        c.DrawModel(g_assets->GetModel(SystemModelID::kCheckTransparent));
       }
       c.PopTransform();
       c.Submit();
@@ -235,7 +235,7 @@ void CheckBoxWidget::SetValue(bool value) {
 }
 
 void CheckBoxWidget::Activate() {
-  g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish3));
+  g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish3));
   checked_ = !checked_;
   check_dirty_ = true;
   last_change_time_ = GetRealTime();

@@ -2,6 +2,7 @@
 
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 
+#include "ballistica/assets/component/collide_model.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/dynamics/bg/bg_dynamics_fuse_data.h"
@@ -12,7 +13,6 @@
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
-#include "ballistica/media/component/collide_model.h"
 
 namespace ballistica {
 

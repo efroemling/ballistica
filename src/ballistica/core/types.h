@@ -39,6 +39,7 @@ class AppConfig;
 class App;
 class AppInternal;
 class AreaOfInterest;
+class Assets;
 class Audio;
 class AudioServer;
 class AudioStreamer;
@@ -102,9 +103,8 @@ class MaterialComponent;
 class MaterialConditionNode;
 class MaterialContext;
 class Matrix44f;
-class Media;
-class MediaComponentData;
-class MediaServer;
+class AssetComponentData;
+class AssetsServer;
 class MeshBufferBase;
 class MeshBufferVertexSprite;
 class MeshBufferVertexSimpleFull;
@@ -403,7 +403,7 @@ enum class SpecialChar {
   kLast  // Sentinel
 };
 
-enum class MediaType { kTexture, kCollideModel, kModel, kSound, kData, kLast };
+enum class AssetType { kTexture, kCollideModel, kModel, kSound, kData, kLast };
 
 /// Python exception types we can raise from our own exceptions.
 enum class PyExcType {
@@ -999,7 +999,7 @@ enum class ThreadType {
 enum class ThreadIdentifier {
   kInvalid,
   kLogic,
-  kMedia,
+  kAssets,
   kFileOut,
   kMain,
   kAudio,

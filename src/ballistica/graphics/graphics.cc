@@ -449,7 +449,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       {
         SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kSoftRectVertical));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kSoftRectVertical));
 
         float screen_width = g_graphics->screen_virtual_width();
 
@@ -533,7 +533,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
             // Align our bottom with where we just scaled from.
             c.Translate(0, 0.5f, 0);
           }
-          c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+          c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
           c.PopTransform();
 
           v += scale * (36 + str_height);
@@ -690,14 +690,14 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
             c2.SetMaskTexture(
-                g_media->GetTexture(SystemTextureID::kCharacterIconMask));
+                g_assets->GetTexture(SystemTextureID::kCharacterIconMask));
           }
           c2.SetColor(1, 1, 1, a);
           c2.PushTransform();
           c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
                        kScreenMessageZDepth);
           c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-          c2.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+          c2.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
           c2.PopTransform();
           c2.Submit();
         }
@@ -898,7 +898,7 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
 
   // Draw red if we've got graphics stuff loading. Green if only other stuff
   // left.
-  if (g_media->GetGraphicalPendingLoadCount() > 0) {
+  if (g_assets->GetGraphicalPendingLoadCount() > 0) {
     c.SetColor(0.2f, 0, 0, 1);
   } else {
     c.SetColor(0, 0.2f, 0, 1);
@@ -1076,7 +1076,7 @@ void Graphics::BuildAndPushFrameDef() {
       }
     }
 
-    if (g_media->GetPendingLoadCount() > 0) {
+    if (g_assets->GetPendingLoadCount() > 0) {
       DrawLoadDot(overlay_pass);
     }
 
@@ -1124,7 +1124,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       c.Translate(0, 7, -3.3f);
       c.Scale(10, 10, 10);
       c.Rotate(a, 0, 0, 1);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1132,14 +1132,14 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       c.PushTransform();
       c.Translate(0.0f, 3.7f, -3.3f);
       c.Scale(10.0f, 10.0f, 10.0f);
       c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1153,7 +1153,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       c.Translate(0.0f, 3.7f, -3.3f);
       c.Scale(10.0f, 10.0f, 10.0f);
       c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1168,7 +1168,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
       c.PushTransform();
       c.Translate(70, 400, kDebugImgZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1178,7 +1178,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
       c.PushTransform();
       c.Translate(70, 250, kDebugImgZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1190,18 +1190,18 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def,
   RenderPass* pass = frame_def->overlay_pass();
   UpdateProgressBarProgress(
       1.0f
-      - static_cast<float>(g_media->GetGraphicalPendingLoadCount())
+      - static_cast<float>(g_assets->GetGraphicalPendingLoadCount())
             / static_cast<float>(progress_bar_loads_));
   DrawProgressBar(pass, 1.0f);
 
   // If we were drawing a progress bar, see if everything is now loaded.. if
   // so, start rendering normally next frame.
-  int count = g_media->GetGraphicalPendingLoadCount();
+  int count = g_assets->GetGraphicalPendingLoadCount();
   if (count <= 0) {
     progress_bar_ = false;
     progress_bar_end_time_ = real_time;
   }
-  if (g_media->GetPendingLoadCount() > 0) {
+  if (g_assets->GetPendingLoadCount() > 0) {
     DrawLoadDot(pass);
   }
 }
@@ -1294,7 +1294,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       float inv_a = 1.0f - a;
       float s = 100.0f * inv_a + 5.0f * a;
       c.Scale(s, s, s);
-      c.DrawModel(g_media->GetModel(SystemModelID::kVRFade));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kVRFade));
       c.PopTransform();
       c.Submit();
 #else   // BA_VR_BUILD
@@ -1347,7 +1347,7 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       float csize = 50.0f;
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kCursor));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kCursor));
       c.PushTransform();
 
       // Note: we don't plug in known cursor position values here; we tell the
@@ -1356,7 +1356,7 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
       c.CursorTranslate();
       c.Translate(csize * 0.44f, csize * -0.44f, kCursorZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1372,7 +1372,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     this->shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         this->blotch_verts_.size(), &this->blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLight));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLight));
     c.DrawMesh(this->shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1385,7 +1385,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         Object::New<MeshBuffer<VertexSprite>>(this->blotch_soft_verts_.size(),
                                               &this->blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLightSoft));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLightSoft));
     c.DrawMesh(this->shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1401,7 +1401,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
             this->blotch_soft_obj_verts_.size(),
             &this->blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLightSoft));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLightSoft));
     c.DrawMesh(this->shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
@@ -1448,7 +1448,7 @@ void Graphics::AddMeshDataDestroy(MeshData* d) {
 
 void Graphics::EnableProgressBar(bool fade_in) {
   assert(InLogicThread());
-  progress_bar_loads_ = g_media->GetGraphicalPendingLoadCount();
+  progress_bar_loads_ = g_assets->GetGraphicalPendingLoadCount();
   assert(progress_bar_loads_ >= 0);
   if (progress_bar_loads_ > 0) {
     progress_bar_ = true;
