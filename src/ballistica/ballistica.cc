@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
@@ -22,19 +22,19 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20796;
+const int kAppBuildNumber = 20798;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
 // These are separated out for easy access.
-// Everything else should go into AppGlobals (or more ideally into a class).
+// Everything else should go into App (or more ideally into a class).
 int g_early_log_writes{10};
 
 Account* g_account{};
 AppConfig* g_app_config{};
-AppGlobals* g_app_globals{};
-AppInternal* g_app_internal{};
 App* g_app{};
+AppInternal* g_app_internal{};
+AppFlavor* g_app_flavor{};
 Audio* g_audio{};
 AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
@@ -86,28 +86,36 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 1: Create and provision all globals.
     // -------------------------------------------------------------------------
 
-    g_app_globals = new AppGlobals(argc, argv);
-    g_app_internal = GetAppInternal();
+    // Absolute bare-bones basics.
+    g_app = new App(argc, argv);
     g_platform = Platform::Create();
+
+    // If we're not running under a Python executable, we need to set up
+    // our own Python environment.
+    assert(g_python == nullptr);
+    g_python = new Python();
+
+    // Create a Thread wrapper around the current (main) thread.
+    g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
+    Thread::UpdateMainThreadID();
+
+    // Spin up our specific app variation (VR, headless, regular, etc.)
+    g_app_flavor = g_platform->CreateAppFlavor();
+    g_app_flavor->PostInit();
+
     g_account = new Account();
     g_utils = new Utils();
     Scene::Init();
 
-    // Create a Thread wrapper around the current (main) thread.
-    g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
-
-    // Spin up g_app.
-    g_platform->CreateApp();
-
     // Spin up our other standard threads.
-    auto* media_thread = new Thread(ThreadIdentifier::kMedia);
-    g_app_globals->pausable_threads.push_back(media_thread);
-    auto* audio_thread = new Thread(ThreadIdentifier::kAudio);
-    g_app_globals->pausable_threads.push_back(audio_thread);
-    auto* logic_thread = new Thread(ThreadIdentifier::kLogic);
-    g_app_globals->pausable_threads.push_back(logic_thread);
-    auto* network_write_thread = new Thread(ThreadIdentifier::kNetworkWrite);
-    g_app_globals->pausable_threads.push_back(network_write_thread);
+    auto* media_thread{new Thread(ThreadIdentifier::kMedia)};
+    g_app->pausable_threads.push_back(media_thread);
+    auto* audio_thread{new Thread(ThreadIdentifier::kAudio)};
+    g_app->pausable_threads.push_back(audio_thread);
+    auto* logic_thread{new Thread(ThreadIdentifier::kLogic)};
+    g_app->pausable_threads.push_back(logic_thread);
+    auto* network_write_thread{new Thread(ThreadIdentifier::kNetworkWrite)};
+    g_app->pausable_threads.push_back(network_write_thread);
 
     // Spin up our subsystems in those threads.
     logic_thread->PushCallSynchronous(
@@ -127,7 +135,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_platform->CreateAuxiliaryModules();
 
     // Ok at this point we can be considered up-and-running.
-    g_app_globals->is_bootstrapped = true;
+    g_app->is_bootstrapped = true;
 
     // -------------------------------------------------------------------------
     // Phase 2: Set things in motion.
@@ -135,7 +143,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
 
     // Let the app and platform do whatever else it wants here such as adding
     // initial input devices/etc.
-    g_app->OnBootstrapComplete();
+    g_app_flavor->OnBootstrapComplete();
     g_platform->OnBootstrapComplete();
 
     // Ok; now that we're bootstrapped, tell the game thread to read and apply
@@ -146,7 +154,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 3/4: Create a screen and/or kick off game (in other threads).
     // -------------------------------------------------------------------------
 
-    if (g_app->ManagesEventLoop()) {
+    if (g_app_flavor->ManagesEventLoop()) {
       // On our event-loop-managing platforms we now simply sit in our event
       // loop until the app is quit.
       g_main_thread->RunEventLoop(false);
@@ -157,7 +165,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
       // if the main thread event loop is driven by frame draws, it may need
       // to manually pump events until drawing begins (otherwise it will never
       // process the 'create-screen' event and wind up deadlocked).
-      g_app->PrimeEventPump();
+      g_app_flavor->PrimeEventPump();
     }
   } catch (const std::exception& exc) {
     std::string error_msg =
@@ -182,16 +190,16 @@ auto BallisticaMain(int argc, char** argv) -> int {
   }
 
   g_platform->WillExitMain(false);
-  return g_app_globals->return_value;
+  return g_app->return_value;
 }
 
 auto GetRealTime() -> millisecs_t {
   millisecs_t t = g_platform->GetTicks();
 
   // If we're at a different time than our last query, do our funky math.
-  if (t != g_app_globals->last_real_time_ticks) {
-    std::scoped_lock lock(g_app_globals->real_time_mutex);
-    millisecs_t passed = t - g_app_globals->last_real_time_ticks;
+  if (t != g_app->last_real_time_ticks) {
+    std::scoped_lock lock(g_app->real_time_mutex);
+    millisecs_t passed = t - g_app->last_real_time_ticks;
 
     // GetTicks() is supposed to be monotonic, but I've seen 'passed'
     // equal -1 even when it is using std::chrono::steady_clock. Let's do
@@ -205,10 +213,10 @@ auto GetRealTime() -> millisecs_t {
         passed = 250;
       }
     }
-    g_app_globals->real_time += passed;
-    g_app_globals->last_real_time_ticks = t;
+    g_app->real_time += passed;
+    g_app->last_real_time_ticks = t;
   }
-  return g_app_globals->real_time;
+  return g_app->real_time;
 }
 
 auto FatalError(const std::string& message) -> void {
@@ -251,8 +259,7 @@ auto InLogicThread() -> bool {
 }
 
 auto InMainThread() -> bool {
-  return (g_app_globals
-          && std::this_thread::get_id() == g_app_globals->main_thread_id);
+  return (g_app && std::this_thread::get_id() == g_app->main_thread_id);
 }
 
 auto InGraphicsThread() -> bool {
@@ -280,7 +287,7 @@ auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {
   Logging::Log(msg, to_stdout, to_server);
 }
 
-auto IsVRMode() -> bool { return g_app_globals->vr_mode; }
+auto IsVRMode() -> bool { return g_app->vr_mode; }
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
   if (g_game) {
@@ -298,7 +305,7 @@ auto GetCurrentThreadName() -> std::string {
   return Thread::GetCurrentThreadName();
 }
 
-auto IsBootstrapped() -> bool { return g_app_globals->is_bootstrapped; }
+auto IsBootstrapped() -> bool { return g_app->is_bootstrapped; }
 
 }  // namespace ballistica
 

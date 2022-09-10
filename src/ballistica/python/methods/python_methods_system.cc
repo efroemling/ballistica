@@ -7,7 +7,7 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
@@ -76,10 +76,10 @@ auto PyIsRunningOnOuya(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PySetUpSigInt(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app) {
+  if (g_app_flavor) {
     g_platform->SetupInterruptHandling();
   } else {
-    Log("SigInt handler called before g_app exists.");
+    Log("SigInt handler called before g_app_flavor exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -186,9 +186,8 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   const char* h =
-      ((g_app_globals->user_ran_commands || g_app_globals->workspaces_in_use)
-           ? "cjief3l"
-           : "wofocj8");
+      ((g_app->user_ran_commands || g_app->workspaces_in_use) ? "cjief3l"
+                                                              : "wofocj8");
   return PyUnicode_FromString(h);
   BA_PYTHON_CATCH;
 }
@@ -202,7 +201,7 @@ auto PyGetIdleTime(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app_globals->user_ran_commands) {
+  if (g_app->user_ran_commands) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -211,7 +210,7 @@ auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app_globals->workspaces_in_use) {
+  if (g_app->workspaces_in_use) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -257,33 +256,31 @@ auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
   double return_val = 0.0f;
   if (!strcmp(arg, "bufferTime")) {
     if (have_change) {
-      g_app_globals->buffer_time += static_cast<int>(change);
+      g_app->buffer_time += static_cast<int>(change);
     }
     if (have_absolute) {
-      g_app_globals->buffer_time = static_cast<int>(absolute);
+      g_app->buffer_time = static_cast<int>(absolute);
     }
-    g_app_globals->buffer_time = std::max(0, g_app_globals->buffer_time);
-    return_val = g_app_globals->buffer_time;
+    g_app->buffer_time = std::max(0, g_app->buffer_time);
+    return_val = g_app->buffer_time;
   } else if (!strcmp(arg, "delaySampling")) {
     if (have_change) {
-      g_app_globals->delay_bucket_samples += static_cast<int>(change);
+      g_app->delay_bucket_samples += static_cast<int>(change);
     }
     if (have_absolute) {
-      g_app_globals->buffer_time = static_cast<int>(absolute);
+      g_app->buffer_time = static_cast<int>(absolute);
     }
-    g_app_globals->delay_bucket_samples =
-        std::max(1, g_app_globals->delay_bucket_samples);
-    return_val = g_app_globals->delay_bucket_samples;
+    g_app->delay_bucket_samples = std::max(1, g_app->delay_bucket_samples);
+    return_val = g_app->delay_bucket_samples;
   } else if (!strcmp(arg, "dynamicsSyncTime")) {
     if (have_change) {
-      g_app_globals->dynamics_sync_time += static_cast<int>(change);
+      g_app->dynamics_sync_time += static_cast<int>(change);
     }
     if (have_absolute) {
-      g_app_globals->dynamics_sync_time = static_cast<int>(absolute);
+      g_app->dynamics_sync_time = static_cast<int>(absolute);
     }
-    g_app_globals->dynamics_sync_time =
-        std::max(0, g_app_globals->dynamics_sync_time);
-    return_val = g_app_globals->dynamics_sync_time;
+    g_app->dynamics_sync_time = std::max(0, g_app->dynamics_sync_time);
+    return_val = g_app->dynamics_sync_time;
   } else if (!strcmp(arg, "showNetInfo")) {
     if (have_change && change > 0.5f) {
       g_graphics->set_show_net_info(true);
@@ -524,7 +521,7 @@ auto PyGetVolatileDataDirectory(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app_globals->log_full) {
+  if (g_app->log_full) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -535,8 +532,8 @@ auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   std::string log_fin;
   {
-    std::scoped_lock lock(g_app_globals->log_mutex);
-    log_fin = g_app_globals->log;
+    std::scoped_lock lock(g_app->log_mutex);
+    log_fin = g_app->log;
   }
   // we want to use something with error handling here since the last
   // bit of this string could be truncated utf8 chars..
@@ -549,7 +546,7 @@ auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   // this way we won't try to send it at shutdown time and whatnot
-  g_app_globals->put_log = true;
+  g_app->put_log = true;
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

@@ -2,7 +2,7 @@
 
 #include "ballistica/networking/networking.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/player_spec.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/networking/sockaddr.h"

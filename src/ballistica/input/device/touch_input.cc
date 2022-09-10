@@ -2,8 +2,8 @@
 
 #include "ballistica/input/device/touch_input.h"
 
+#include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
-#include "ballistica/app/app_globals.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
@@ -82,8 +82,8 @@ TouchInput::TouchInput() {
       break;
   }
 
-  assert(g_app_globals->touch_input == nullptr);
-  g_app_globals->touch_input = this;
+  assert(g_app->touch_input == nullptr);
+  g_app->touch_input = this;
 }
 
 TouchInput::~TouchInput() = default;

@@ -2,7 +2,7 @@
 
 #include "ballistica/core/fatal_error.h"
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/internal/app_internal.h"
@@ -80,7 +80,7 @@ auto FatalError::ReportFatalError(const std::string& message,
 
   // If we have no globals yet, include this message explicitly
   // since it won't be part of the standard log.
-  if (g_app_globals == nullptr) {
+  if (g_app == nullptr) {
     suffix = logmsg;
   }
   g_app_internal->DirectSendLogs(prefix, suffix, true, &result);
@@ -110,7 +110,7 @@ auto FatalError::DoBlockingFatalErrorDialog(const std::string& message)
     bool finished{};
     bool* startedptr{&started};
     bool* finishedptr{&finished};
-    g_app->thread()->PushCall([message, startedptr, finishedptr] {
+    g_app_flavor->thread()->PushCall([message, startedptr, finishedptr] {
       *startedptr = true;
       g_platform->BlockingFatalErrorDialog(message);
       *finishedptr = true;

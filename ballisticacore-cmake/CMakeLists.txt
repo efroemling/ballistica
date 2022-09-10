@@ -202,14 +202,14 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/app/app.h
   ${BA_SRC_ROOT}/ballistica/app/app_config.cc
   ${BA_SRC_ROOT}/ballistica/app/app_config.h
-  ${BA_SRC_ROOT}/ballistica/app/app_globals.cc
-  ${BA_SRC_ROOT}/ballistica/app/app_globals.h
-  ${BA_SRC_ROOT}/ballistica/app/headless_app.cc
-  ${BA_SRC_ROOT}/ballistica/app/headless_app.h
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor.cc
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor.h
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor_headless.cc
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor_headless.h
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor_vr.cc
+  ${BA_SRC_ROOT}/ballistica/app/app_flavor_vr.h
   ${BA_SRC_ROOT}/ballistica/app/stress_test.cc
   ${BA_SRC_ROOT}/ballistica/app/stress_test.h
-  ${BA_SRC_ROOT}/ballistica/app/vr_app.cc
-  ${BA_SRC_ROOT}/ballistica/app/vr_app.h
   ${BA_SRC_ROOT}/ballistica/audio/al_sys.cc
   ${BA_SRC_ROOT}/ballistica/audio/al_sys.h
   ${BA_SRC_ROOT}/ballistica/audio/audio.cc

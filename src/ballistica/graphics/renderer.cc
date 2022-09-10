@@ -10,7 +10,7 @@
 #endif
 
 #if BA_VR_BUILD
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/graphics/vr_graphics.h"
 #endif
 
@@ -317,8 +317,8 @@ void Renderer::VRPreprocess(FrameDef* frame_def) {
       * Matrix44fTranslate(vr_raw_head_tx_, vr_raw_head_ty_, vr_raw_head_tz_)
       * vr_base_transform_;
 
-  if (g_app_globals->reset_vr_orientation) {
-    g_app_globals->reset_vr_orientation = false;
+  if (g_app->reset_vr_orientation) {
+    g_app->reset_vr_orientation = false;
   }
 
   Vector3f translate = vr_transform_head_.GetTranslate();

@@ -2,7 +2,7 @@
 
 #include "ballistica/game/session/net_client_session.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/connection/connection_to_host.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/net_graph.h"
@@ -12,22 +12,22 @@ namespace ballistica {
 
 NetClientSession::NetClientSession() {
   // Sanity check: we should only ever be writing one replay at once.
-  if (g_app_globals->replay_open) {
+  if (g_app->replay_open) {
     Log("ERROR: g_replay_open true at netclient start; shouldn't happen.");
   }
   assert(g_media_server);
   g_media_server->PushBeginWriteReplayCall();
   writing_replay_ = true;
-  g_app_globals->replay_open = true;
+  g_app->replay_open = true;
 }
 
 NetClientSession::~NetClientSession() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
-    if (!g_app_globals->replay_open) {
+    if (!g_app->replay_open) {
       Log("ERROR: g_replay_open false at net-client close; shouldn't happen.");
     }
-    g_app_globals->replay_open = false;
+    g_app->replay_open = false;
     assert(g_media_server);
     g_media_server->PushEndWriteReplayCall();
     writing_replay_ = false;
@@ -59,7 +59,7 @@ void NetClientSession::Update(int time_advance) {
 }
 
 auto NetClientSession::GetBucketNum() -> int {
-  return (delay_sample_counter_ / g_app_globals->delay_bucket_samples)
+  return (delay_sample_counter_ / g_app->delay_bucket_samples)
          % static_cast<int>(buckets_.size());
 }
 
@@ -69,8 +69,7 @@ auto NetClientSession::UpdateBuffering() -> void {
   {
     // Change bucket every `g_delay_samples` samples.
     int bucketnum{GetBucketNum()};
-    int bucket_iteration =
-        delay_sample_counter_ % g_app_globals->delay_bucket_samples;
+    int bucket_iteration = delay_sample_counter_ % g_app->delay_bucket_samples;
     delay_sample_counter_++;
     SampleBucket& bucket{buckets_[bucketnum]};
     if (bucket_iteration == 0) {
@@ -79,7 +78,7 @@ auto NetClientSession::UpdateBuffering() -> void {
 
     // After the last sample in each bucket, update our smoothed values with
     // the full sample set in the bucket.
-    if (bucket_iteration == g_app_globals->delay_bucket_samples - 1) {
+    if (bucket_iteration == g_app->delay_bucket_samples - 1) {
       float smoothing = 0.7f;
       last_bucket_max_delay_ =
           static_cast<float>(bucket.max_delay_from_projection);

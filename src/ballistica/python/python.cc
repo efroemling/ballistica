@@ -2,7 +2,7 @@
 
 #include "ballistica/python/python.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
@@ -889,6 +889,7 @@ static auto PyInit__ba() -> PyObject* {
 void Python::Reset(bool do_init) {
   assert(InLogicThread());
   assert(g_python);
+  assert(g_platform);
 
   bool was_inited = inited_;
 
@@ -2286,7 +2287,7 @@ void Python::LogContextAuto() {
 }
 
 void Python::AcquireGIL() {
-  auto debug_timing{g_app_globals->debug_timing};
+  auto debug_timing{g_app->debug_timing};
   millisecs_t startms{debug_timing ? Platform::GetCurrentMilliseconds() : 0};
 
   if (thread_state_) {

@@ -2,7 +2,7 @@
 
 #include "ballistica/game/account.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/internal/app_internal.h"
@@ -152,23 +152,22 @@ void Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
 
     // We call out to Python so need to be in game thread.
     assert(InLogicThread());
-    if (login_state_ != login_state
-        || g_app_globals->account_type != account_type || login_id_ != login_id
-        || login_name_ != login_name) {
+    if (login_state_ != login_state || g_app->account_type != account_type
+        || login_id_ != login_id || login_name_ != login_name) {
       // Special case: if they sent a sign-out for an account type that is
       // currently not signed in, ignore it.
       if (login_state == V1LoginState::kSignedOut
-          && (account_type != g_app_globals->account_type)) {
+          && (account_type != g_app->account_type)) {
         // No-op.
       } else {
         login_state_ = login_state;
-        g_app_globals->account_type = account_type;
+        g_app->account_type = account_type;
         login_id_ = login_id;
         login_name_ = Utils::GetValidUTF8(login_name.c_str(), "gthm");
 
         // If they signed out of an account, account type switches to invalid.
         if (login_state == V1LoginState::kSignedOut) {
-          g_app_globals->account_type = V1AccountType::kInvalid;
+          g_app->account_type = V1AccountType::kInvalid;
         }
         login_state_num_ += 1;
         call_login_did_change = true;

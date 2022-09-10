@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/ballistica.h"
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/generic/timer_list.h"
@@ -141,7 +141,7 @@ class Thread {
 
   // FIXME: Should generalize this to some sort of PlatformThreadData class.
 #if BA_XCODE_BUILD
-  void* auto_release_pool_ = nullptr;
+  void* auto_release_pool_{};
 #endif
 
   // These are all exactly the same, but by running different ones for

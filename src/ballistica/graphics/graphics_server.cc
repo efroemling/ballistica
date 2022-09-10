@@ -10,7 +10,7 @@
 #if BA_SDL_BUILD
 #include "ballistica/platform/sdl/sdl_app.h"
 #else
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/mesh/mesh_data.h"
 #include "ballistica/graphics/renderer.h"
@@ -70,7 +70,7 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
 
   // If the app says it's minimized minimized, don't do anything.
   // (on iOS we'll get shut down if we make GL calls in this state, etc)
-  if (g_app->paused()) {
+  if (g_app_flavor->paused()) {
     return nullptr;
   }
 
@@ -150,7 +150,7 @@ void GraphicsServer::FinishRenderFrameDef(FrameDef* frame_def) {
 
     // Let the app know a frame render is complete (it may need to do a
     // swap/etc).
-    g_app->DidFinishRenderingFrame(frame_def);
+    g_app_flavor->DidFinishRenderingFrame(frame_def);
   }
 }
 
@@ -749,7 +749,7 @@ void GraphicsServer::PushSetVSyncCall(bool sync, bool auto_sync) {
     if (g_buildconfig.sdl_build()) {
       // Even if we were built with SDL, we may not be running in sdl-app-mode
       // (for instance, Rift in VR mode). Only do this if we're an sdl app.
-      if (auto app = dynamic_cast<SDLApp*>(g_app)) {
+      if (auto app = dynamic_cast<SDLApp*>(g_app_flavor)) {
         v_sync_ = sync;
         auto_vsync_ = auto_sync;
         if (gl_context_) {

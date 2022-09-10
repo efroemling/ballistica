@@ -2,8 +2,8 @@
 
 #include "ballistica/game/game.h"
 
-#include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
@@ -105,11 +105,11 @@ Game::Game(Thread* thread)
     assert(g_input == nullptr);
     g_input = new Input();
 
+    g_app_internal = GetAppInternal();
+
     // Init python and apply our settings immediately.
     // This way we can get started loading stuff in the background
     // and it'll come in with the correct texture quality etc.
-    assert(g_python == nullptr);
-    g_python = new Python();
     g_python->Reset(true);
 
     // We're the thread that 'owns' python so we need to wrangle the GIL.
@@ -294,8 +294,8 @@ void Game::InitialScreenCreated() {
   // we need it to be possible to load textures/etc. before the renderer
   // exists.
   if (!HeadlessMode()) {
-    assert(!g_app_globals->console);
-    g_app_globals->console = new Console();
+    assert(!g_app->console);
+    g_app->console = new Console();
   }
 
   // Set up our timers.
@@ -331,8 +331,8 @@ void Game::RunAppLaunchCommands() {
   ran_app_launch_commands_ = true;
 
   // If we were passed launch command args, run them.
-  if (!g_app_globals->exec_command.empty()) {
-    bool success = PythonCommand(g_app_globals->exec_command, BA_BCFN).Run();
+  if (!g_app->exec_command.empty()) {
+    bool success = PythonCommand(g_app->exec_command, BA_BCFN).Run();
     if (!success) {
       exit(1);
     }
@@ -662,8 +662,7 @@ void Game::Update() {
   in_update_ = false;
 
   // Report excessively long updates.
-  if (g_app_globals->debug_timing
-      && real_time >= next_long_update_report_time_) {
+  if (g_app->debug_timing && real_time >= next_long_update_report_time_) {
     auto duration{Platform::GetCurrentMilliseconds() - startms};
 
     // Complain when our full update takes longer than 1/60th second.
@@ -690,9 +689,9 @@ void Game::Reset() {
   PruneSessions();
 
   // If all is well our sessions should all be dead.
-  if (g_app_globals->session_count != 0) {
+  if (g_app->session_count != 0) {
     Log("Error: session-count is non-zero ("
-        + std::to_string(g_app_globals->session_count) + ") on Game::Reset.");
+        + std::to_string(g_app->session_count) + ") on Game::Reset.");
   }
 
   // Note: we don't clear real-time timers anymore. Should we?..
@@ -897,7 +896,7 @@ void Game::LaunchHostSession(PyObject* session_type_obj,
 
 void Game::RunMainMenu() {
   assert(InLogicThread());
-  if (g_app_globals->shutting_down) {
+  if (g_app->shutting_down) {
     return;
   }
   assert(g_python);
@@ -917,8 +916,8 @@ void Game::PushInGameConsoleScriptCommand(const std::string& command) {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(GetForegroundContext());
     PythonCommand cmd(command, "<in-game-console>");
-    if (!g_app_globals->user_ran_commands) {
-      g_app_globals->user_ran_commands = true;
+    if (!g_app->user_ran_commands) {
+      g_app->user_ran_commands = true;
     }
     if (cmd.CanEval()) {
       PyObject* obj = cmd.RunReturnObj(true, nullptr);
@@ -926,8 +925,8 @@ void Game::PushInGameConsoleScriptCommand(const std::string& command) {
         PyObject* s = PyObject_Repr(obj);
         if (s) {
           const char* c = PyUnicode_AsUTF8(s);
-          if (g_app_globals->console) {
-            g_app_globals->console->Print(std::string(c) + "\n");
+          if (g_app->console) {
+            g_app->console->Print(std::string(c) + "\n");
           }
           Py_DECREF(s);
         }
@@ -946,8 +945,8 @@ void Game::PushStdinScriptCommand(const std::string& command) {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(GetForegroundContext());
     PythonCommand cmd(command, "<stdin>");
-    if (!g_app_globals->user_ran_commands) {
-      g_app_globals->user_ran_commands = true;
+    if (!g_app->user_ran_commands) {
+      g_app->user_ran_commands = true;
     }
 
     // Eval this if possible (so we can possibly print return value).
@@ -956,7 +955,7 @@ void Game::PushStdinScriptCommand(const std::string& command) {
         // Print the value if we're running directly from a terminal
         // (or being run under the server-manager)
         if ((g_platform->is_stdin_a_terminal()
-             || g_app->server_wrapper_managed())
+             || g_app_flavor->server_wrapper_managed())
             && obj != Py_None) {
           PyObject* s = PyObject_Repr(obj);
           if (s) {
@@ -981,7 +980,7 @@ void Game::PushInterruptSignalCall() {
 
     // Special case; when running under the server-wrapper, we completely
     // ignore interrupt signals (the wrapper acts on them).
-    if (g_app->server_wrapper_managed()) {
+    if (g_app_flavor->server_wrapper_managed()) {
       return;
     }
 
@@ -1206,8 +1205,7 @@ void Game::PushConfirmQuitCall() {
       // If input is locked, just quit immediately.. a confirm screen wouldn't
       // work anyway
       if (g_input->IsInputLocked()
-          || (g_app_globals->console != nullptr
-              && g_app_globals->console->active())) {
+          || (g_app->console != nullptr && g_app->console->active())) {
         // Just go through _ba.quit()
         // FIXME: Shouldn't need to go out to the python layer here...
         g_python->obj(Python::ObjID::kQuitCall).Call();
@@ -1342,7 +1340,7 @@ void Game::ApplyConfig() {
   }
 
   if (!HeadlessMode()) {
-    g_app_globals->remote_server_accepting_connections =
+    g_app->remote_server_accepting_connections =
         g_app_config->Resolve(AppConfig::BoolID::kEnableRemoteApp);
   }
 
@@ -1413,8 +1411,8 @@ void Game::ApplyConfig() {
   std::string telnet_password =
       g_app_config->Resolve(AppConfig::StringID::kTelnetPassword);
 
-  g_app->PushNetworkSetupCall(port, telnet_port, enable_telnet,
-                              telnet_password);
+  g_app_flavor->PushNetworkSetupCall(port, telnet_port, enable_telnet,
+                                     telnet_password);
 
   bool disable_camera_shake =
       g_app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
@@ -1460,7 +1458,7 @@ void Game::PushHavePendingLoadsDoneCall() {
 
 void Game::ToggleConsole() {
   assert(InLogicThread());
-  if (auto console = g_app_globals->console) {
+  if (auto console = g_app->console) {
     console->ToggleState();
   }
 }
@@ -1469,10 +1467,10 @@ void Game::PushConsolePrintCall(const std::string& msg) {
   thread()->PushCall([msg] {
     // Send them to the console if its been created or store them
     // for when it is (unless we're headless in which case it never will).
-    if (auto console = g_app_globals->console) {
+    if (auto console = g_app->console) {
       console->Print(msg);
     } else if (!HeadlessMode()) {
-      g_app_globals->console_startup_messages += msg;
+      g_app->console_startup_messages += msg;
     }
   });
 }
@@ -1491,8 +1489,8 @@ void Game::PushShutdownCall(bool soft) {
 void Game::Shutdown(bool soft) {
   assert(InLogicThread());
 
-  if (!g_app_globals->shutting_down) {
-    g_app_globals->shutting_down = true;
+  if (!g_app->shutting_down) {
+    g_app->shutting_down = true;
 
     // Nuke the app if we get stuck shutting down.
     Utils::StartSuicideTimer("shutdown", 10000);
@@ -1511,7 +1509,7 @@ void Game::Shutdown(bool soft) {
 
     // Ideally we'd want to give some of the above stuff
     // a few seconds to complete, but just calling it done for now.
-    g_app->PushShutdownCompleteCall();
+    g_app_flavor->PushShutdownCompleteCall();
   }
 }
 

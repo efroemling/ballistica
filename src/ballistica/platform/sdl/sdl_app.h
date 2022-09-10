@@ -7,12 +7,12 @@
 
 #include <vector>
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/math/vector2f.h"
 
 namespace ballistica {
 
-class SDLApp : public App {
+class SDLApp : public AppFlavor {
  public:
   static auto InitSDL() -> void;
   explicit SDLApp(Thread* thread);
@@ -24,11 +24,12 @@ class SDLApp : public App {
   static auto SDLJoystickDisconnected(int index) -> void;
   auto OnBootstrapComplete() -> void override;
 
-  /// Return g_app as a SDLApp. (assumes it actually is one).
+  /// Return g_app_flavor as a SDLApp. (assumes it actually is one).
   static SDLApp* get() {
-    assert(g_app != nullptr);
-    assert(dynamic_cast<SDLApp*>(g_app) == static_cast<SDLApp*>(g_app));
-    return static_cast<SDLApp*>(g_app);
+    assert(g_app_flavor != nullptr);
+    assert(dynamic_cast<SDLApp*>(g_app_flavor)
+           == static_cast<SDLApp*>(g_app_flavor));
+    return static_cast<SDLApp*>(g_app_flavor);
   }
   auto SetInitialScreenDimensions(const Vector2f& dimensions) -> void;
 

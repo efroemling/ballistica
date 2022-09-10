@@ -3,7 +3,7 @@
 
 #include "ballistica/graphics/vr_graphics.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"

@@ -2,7 +2,7 @@
 
 #include "ballistica/ui/console.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
@@ -36,9 +36,9 @@ Console::Console() {
   prompt_text_group_.SetText(">");
 
   // Print whatever is already in the log.
-  if (!g_app_globals->console_startup_messages.empty()) {
-    Print(g_app_globals->console_startup_messages);
-    g_app_globals->console_startup_messages = "";
+  if (!g_app->console_startup_messages.empty()) {
+    Print(g_app->console_startup_messages);
+    g_app->console_startup_messages = "";
   }
 }
 

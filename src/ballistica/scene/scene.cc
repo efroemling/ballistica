@@ -2,7 +2,7 @@
 
 #include "ballistica/scene/scene.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/dynamics.h"
@@ -69,10 +69,10 @@ void Scene::Init() {
                             TimeDisplayNode::InitType()};
 
   int next_type_id = 0;
-  assert(g_app_globals != nullptr);
+  assert(g_app != nullptr);
   for (auto* t : node_types) {
-    g_app_globals->node_types[t->name()] = t;
-    g_app_globals->node_types_by_id[next_type_id] = t;
+    g_app->node_types[t->name()] = t;
+    g_app->node_types_by_id[next_type_id] = t;
     t->set_id(next_type_id++);
   }
 
@@ -97,13 +97,13 @@ void Scene::Init() {
 
 void Scene::SetupNodeMessageType(const std::string& name, NodeMessageType val,
                                  const std::string& format) {
-  assert(g_app_globals != nullptr);
-  g_app_globals->node_message_types[name] = val;
+  assert(g_app != nullptr);
+  g_app->node_message_types[name] = val;
   assert(static_cast<int>(val) >= 0);
-  if (g_app_globals->node_message_formats.size() <= static_cast<size_t>(val)) {
-    g_app_globals->node_message_formats.resize(static_cast<size_t>(val) + 1);
+  if (g_app->node_message_formats.size() <= static_cast<size_t>(val)) {
+    g_app->node_message_formats.resize(static_cast<size_t>(val) + 1);
   }
-  g_app_globals->node_message_formats[static_cast<size_t>(val)] = format;
+  g_app->node_message_formats[static_cast<size_t>(val)] = format;
 }
 
 auto Scene::GetGameStream() const -> GameStream* {
@@ -191,17 +191,17 @@ void Scene::Draw(FrameDef* frame_def) {
 }
 
 auto Scene::GetNodeMessageType(const std::string& type) -> NodeMessageType {
-  assert(g_app_globals != nullptr);
-  auto i = g_app_globals->node_message_types.find(type);
-  if (i == g_app_globals->node_message_types.end()) {
+  assert(g_app != nullptr);
+  auto i = g_app->node_message_types.find(type);
+  if (i == g_app->node_message_types.end()) {
     throw Exception("Invalid node-message type: '" + type + "'");
   }
   return i->second;
 }
 
 auto Scene::GetNodeMessageTypeName(NodeMessageType t) -> std::string {
-  assert(g_app_globals != nullptr);
-  for (auto&& i : g_app_globals->node_message_types) {
+  assert(g_app != nullptr);
+  for (auto&& i : g_app->node_message_types) {
     if (i.second == t) {
       return i.first;
     }
@@ -335,11 +335,11 @@ void Scene::LanguageChanged() {
 }
 
 auto Scene::GetNodeMessageFormat(NodeMessageType type) -> const char* {
-  assert(g_app_globals != nullptr);
-  if ((unsigned int)type >= g_app_globals->node_message_formats.size()) {
+  assert(g_app != nullptr);
+  if ((unsigned int)type >= g_app->node_message_formats.size()) {
     return nullptr;
   }
-  return g_app_globals->node_message_formats[static_cast<int>(type)].c_str();
+  return g_app->node_message_formats[static_cast<int>(type)].c_str();
 }
 
 auto Scene::NewNode(const std::string& type_string, const std::string& name,
@@ -359,9 +359,9 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
 
   // Should never change the scene while we're stepping it.
   assert(!in_step_);
-  assert(g_app_globals != nullptr);
-  auto i = g_app_globals->node_types.find(type_string);
-  if (i == g_app_globals->node_types.end()) {
+  assert(g_app != nullptr);
+  auto i = g_app->node_types.find(type_string);
+  if (i == g_app->node_types.end()) {
     throw Exception("Invalid node type: '" + type_string + "'");
   }
   auto node = Object::MakeRefCounted<Node>(i->second->Create(this));

@@ -49,7 +49,7 @@ class Platform {
   virtual auto PostInit() -> void;
 
   /// Create the proper App module and add it to the main_thread.
-  auto CreateApp() -> void;
+  auto CreateAppFlavor() -> AppFlavor*;
 
   /// Create the appropriate Graphics subclass for the app.
   auto CreateGraphics() -> Graphics*;

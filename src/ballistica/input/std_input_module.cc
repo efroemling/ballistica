@@ -6,7 +6,7 @@
 #include <cstring>
 #endif
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
 #include "ballistica/platform/platform.h"
@@ -28,7 +28,7 @@ void StdInputModule::PushBeginReadCall() {
       // results of the last script-command message we may have just sent.
       if (stdin_is_terminal) {
         g_game->thread()->PushCall([] {
-          if (!g_app_globals->shutting_down) {
+          if (!g_app->shutting_down) {
             printf(">>> ");
             fflush(stdout);
           }
@@ -66,7 +66,7 @@ void StdInputModule::PushBeginReadCall() {
             if (g_buildconfig.windows_console_build()) {
               Platform::SleepMS(250);
             }
-            if (!g_app_globals->shutting_down) {
+            if (!g_app->shutting_down) {
               printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
               fflush(stdout);
             }

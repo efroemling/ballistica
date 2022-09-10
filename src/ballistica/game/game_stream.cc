@@ -2,7 +2,7 @@
 
 #include "ballistica/game/game_stream.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/dynamics/material/material_action.h"
@@ -34,13 +34,13 @@ GameStream::GameStream(HostSession* host_session, bool save_replay)
       writing_replay_(false) {
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
-    if (g_app_globals->replay_open) {
+    if (g_app->replay_open) {
       Log("ERROR: g_replay_open true at replay start; shouldn't happen.");
     }
     assert(g_media_server);
     g_media_server->PushBeginWriteReplayCall();
     writing_replay_ = true;
-    g_app_globals->replay_open = true;
+    g_app->replay_open = true;
   }
 
   // If we're the live output-stream from a host-session,
@@ -56,10 +56,10 @@ GameStream::~GameStream() {
 
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
-    if (!g_app_globals->replay_open) {
+    if (!g_app->replay_open) {
       Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
     }
-    g_app_globals->replay_open = false;
+    g_app->replay_open = false;
     assert(g_media_server);
     g_media_server->PushEndWriteReplayCall();
     writing_replay_ = false;
@@ -189,13 +189,13 @@ void GameStream::Fail() {
   Log("Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
-    if (!g_app_globals->replay_open) {
+    if (!g_app->replay_open) {
       Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
     }
     assert(g_media_server);
     g_media_server->PushEndWriteReplayCall();
     writing_replay_ = false;
-    g_app_globals->replay_open = false;
+    g_app->replay_open = false;
   }
 }
 
@@ -437,7 +437,7 @@ void GameStream::EndCommand(bool is_time_set) {
     // Now if its been long enough *AND* this is a time-step command, send.
     millisecs_t real_time = GetRealTime();
     millisecs_t diff = real_time - last_send_time_;
-    if (is_time_set && diff >= g_app_globals->buffer_time) {
+    if (is_time_set && diff >= g_app->buffer_time) {
       ShipSessionCommandsMessage();
 
       // Also, as long as we're here, fire off a physics-correction packet every
@@ -447,7 +447,7 @@ void GameStream::EndCommand(bool is_time_set) {
       // commands; otherwise the client will get the correction that accounts
       // for commands that they haven't been sent yet.
       diff = real_time - last_physics_correction_time_;
-      if (diff >= g_app_globals->dynamics_sync_time) {
+      if (diff >= g_app->dynamics_sync_time) {
         last_physics_correction_time_ = real_time;
         SendPhysicsCorrection(true);
       }

@@ -3,7 +3,7 @@
 #include "ballistica/python/methods/python_methods_app.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game_stream.h"
@@ -764,7 +764,7 @@ auto PyEnv(PyObject* self) -> PyObject* {
         "build_number", kAppBuildNumber,
         "config_file_path", config_path.c_str(),
         "locale", g_platform->GetLocale().c_str(),
-        "user_agent_string", g_app_globals->user_agent_string.c_str(),
+        "user_agent_string", g_app->user_agent_string.c_str(),
         "version", kAppVersion,
         "debug_build", is_debug_build_obj,
         "test_build", is_test_build_obj,
@@ -800,7 +800,8 @@ auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   if (!PyArg_ParseTuple(args, "pi", &testing, &player_count)) {
     return nullptr;
   }
-  g_app->PushSetStressTestingCall(static_cast<bool>(testing), player_count);
+  g_app_flavor->PushSetStressTestingCall(static_cast<bool>(testing),
+                                         player_count);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

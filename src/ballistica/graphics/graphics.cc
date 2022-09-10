@@ -3,7 +3,7 @@
 #include "ballistica/graphics/graphics.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
@@ -1043,8 +1043,8 @@ void Graphics::BuildAndPushFrameDef() {
     DrawMiscOverlays(overlay_pass);
 
     // Draw console.
-    if (!HeadlessMode() && g_app_globals->console) {
-      g_app_globals->console->Draw(overlay_pass);
+    if (!HeadlessMode() && g_app->console) {
+      g_app->console->Draw(overlay_pass);
     }
 
     DrawCursor(overlay_pass, real_time);
@@ -1339,7 +1339,7 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
         || real_time - last_cursor_visibility_event_time_ > 2000) {
       hardware_cursor_visible_ = new_cursor_visibility;
       last_cursor_visibility_event_time_ = real_time;
-      g_app->PushCursorUpdate(hardware_cursor_visible_);
+      g_app_flavor->PushCursorUpdate(hardware_cursor_visible_);
     }
   } else {
     // Draw software cursor.

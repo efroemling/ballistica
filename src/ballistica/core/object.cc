@@ -5,7 +5,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/platform/platform.h"
 
@@ -15,8 +15,8 @@ void Object::PrintObjects() {
 #if BA_DEBUG_BUILD
   std::string s;
   {
-    std::scoped_lock lock(g_app_globals->object_list_mutex);
-    s = std::to_string(g_app_globals->object_count) + " Objects at time "
+    std::scoped_lock lock(g_app->object_list_mutex);
+    s = std::to_string(g_app->object_count) + " Objects at time "
         + std::to_string(GetRealTime()) + ";";
 
     if (explicit_bool(true)) {
@@ -24,7 +24,7 @@ void Object::PrintObjects() {
 
       // Tally up counts for all types.
       int count = 0;
-      for (Object* o = g_app_globals->object_list_first; o != nullptr;
+      for (Object* o = g_app->object_list_first; o != nullptr;
            o = o->object_next_) {
         count++;
         std::string obj_name = o->GetObjectTypeName();
@@ -51,7 +51,7 @@ void Object::PrintObjects() {
       for (auto&& i : sorted) {
         s += "\n   " + std::to_string(i.first) + ": " + i.second;
       }
-      assert(count == g_app_globals->object_count);
+      assert(count == g_app->object_count);
     }
   }
   Log(s);
@@ -66,30 +66,30 @@ Object::Object() {
   object_birth_time_ = GetRealTime();
 
   // Add ourself to the global object list.
-  std::scoped_lock lock(g_app_globals->object_list_mutex);
+  std::scoped_lock lock(g_app->object_list_mutex);
   object_prev_ = nullptr;
-  object_next_ = g_app_globals->object_list_first;
-  g_app_globals->object_list_first = this;
+  object_next_ = g_app->object_list_first;
+  g_app->object_list_first = this;
   if (object_next_) {
     object_next_->object_prev_ = this;
   }
-  g_app_globals->object_count++;
+  g_app->object_count++;
 #endif  // BA_DEBUG_BUILD
 }
 
 Object::~Object() {
 #if BA_DEBUG_BUILD
   // Pull ourself from the global obj list.
-  std::scoped_lock lock(g_app_globals->object_list_mutex);
+  std::scoped_lock lock(g_app->object_list_mutex);
   if (object_next_) {
     object_next_->object_prev_ = object_prev_;
   }
   if (object_prev_) {
     object_prev_->object_next_ = object_next_;
   } else {
-    g_app_globals->object_list_first = object_next_;
+    g_app->object_list_first = object_next_;
   }
-  g_app_globals->object_count--;
+  g_app->object_count--;
 
   // More sanity checks.
   if (object_strong_ref_count_ != 0) {

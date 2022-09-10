@@ -2,19 +2,19 @@
 
 #include "ballistica/game/session/session.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 
 namespace ballistica {
 
 Session::Session() {
-  g_app_globals->session_count++;
+  g_app->session_count++;
 
   // New sessions immediately become foreground.
   g_game->SetForegroundSession(this);
 }
 
-Session::~Session() { g_app_globals->session_count--; }
+Session::~Session() { g_app->session_count--; }
 
 void Session::Update(int time_advance) {}
 

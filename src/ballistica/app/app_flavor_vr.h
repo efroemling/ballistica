@@ -1,15 +1,15 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_APP_VR_APP_H_
-#define BALLISTICA_APP_VR_APP_H_
+#ifndef BALLISTICA_APP_APP_FLAVOR_VR_H_
+#define BALLISTICA_APP_APP_FLAVOR_VR_H_
 
 #if BA_VR_BUILD
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 
 namespace ballistica {
 
-class VRApp : public App {
+class AppFlavorVR : public AppFlavor {
  public:
   /// For passing in state of Daydream remote (and maybe gear vr?..).
   struct VRSimpleRemoteState {
@@ -19,14 +19,15 @@ class VRApp : public App {
     float r2 = 0.0f;
   };
 
-  /// Return g_app as a VRApp. (assumes it actually is one).
-  static auto get() -> VRApp* {
-    assert(g_app != nullptr);
-    assert(dynamic_cast<VRApp*>(g_app) == static_cast<VRApp*>(g_app));
-    return static_cast<VRApp*>(g_app);
+  /// Return g_app_flavor as a AppFlavorVR. (assumes it actually is one).
+  static auto get() -> AppFlavorVR* {
+    assert(g_app_flavor != nullptr);
+    assert(dynamic_cast<AppFlavorVR*>(g_app_flavor)
+           == static_cast<AppFlavorVR*>(g_app_flavor));
+    return static_cast<AppFlavorVR*>(g_app_flavor);
   }
 
-  explicit VRApp(Thread* thread);
+  explicit AppFlavorVR(Thread* thread);
   auto PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) -> void;
   auto VRSetDrawDimensions(int w, int h) -> void;
   auto VRPreDraw() -> void;
@@ -46,4 +47,4 @@ class VRApp : public App {
 }  // namespace ballistica
 
 #endif  // BA_VR_BUILD
-#endif  // BALLISTICA_APP_VR_APP_H_
+#endif  // BALLISTICA_APP_APP_FLAVOR_VR_H_

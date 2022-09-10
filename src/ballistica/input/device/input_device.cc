@@ -5,7 +5,7 @@
 #include <list>
 #include <unordered_map>
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/connection/connection_to_host.h"
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"
@@ -251,7 +251,7 @@ void InputDevice::ShipBufferIfFull() {
   size_t size = remote_input_commands_buffer_.size();
   if (size > 2
       && (static_cast<int>(real_time - last_remote_input_commands_send_time_)
-              >= g_app_globals->buffer_time
+              >= g_app->buffer_time
           || size > 400)) {
     last_remote_input_commands_send_time_ = real_time;
     hc->SendReliableMessage(remote_input_commands_buffer_);

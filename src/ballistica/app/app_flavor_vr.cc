@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 #if BA_VR_BUILD
 
-#include "ballistica/app/vr_app.h"
+#include "ballistica/app/app_flavor_vr.h"
 
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
@@ -10,9 +10,9 @@
 
 namespace ballistica {
 
-VRApp::VRApp(Thread* thread) : App(thread) {}
+AppFlavorVR::AppFlavorVR(Thread* thread) : AppFlavor(thread) {}
 
-auto VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state)
+auto AppFlavorVR::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state)
     -> void {
   thread()->PushCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
@@ -36,11 +36,11 @@ auto VRApp::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state)
   });
 }
 
-auto VRApp::VRSetDrawDimensions(int w, int h) -> void {
+auto AppFlavorVR::VRSetDrawDimensions(int w, int h) -> void {
   g_graphics_server->VideoResize(w, h);
 }
 
-void VRApp::VRPreDraw() {
+void AppFlavorVR::VRPreDraw() {
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
   }
@@ -57,7 +57,7 @@ void VRApp::VRPreDraw() {
   }
 }
 
-auto VRApp::VRPostDraw() -> void {
+auto AppFlavorVR::VRPostDraw() -> void {
   assert(InMainThread());
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
@@ -69,15 +69,15 @@ auto VRApp::VRPostDraw() -> void {
   RunRenderUpkeepCycle();
 }
 
-auto VRApp::VRSetHead(float tx, float ty, float tz, float yaw, float pitch,
-                      float roll) -> void {
+auto AppFlavorVR::VRSetHead(float tx, float ty, float tz, float yaw,
+                            float pitch, float roll) -> void {
   assert(InMainThread());
   Renderer* renderer = g_graphics_server->renderer();
   if (renderer == nullptr) return;
   renderer->VRSetHead(tx, ty, tz, yaw, pitch, roll);
 }
 
-auto VRApp::VRSetHands(const VRHandsState& state) -> void {
+auto AppFlavorVR::VRSetHands(const VRHandsState& state) -> void {
   assert(InMainThread());
 
   // Pass this along to the renderer (in this same thread) for drawing
@@ -90,10 +90,10 @@ auto VRApp::VRSetHands(const VRHandsState& state) -> void {
   g_game->PushVRHandsState(state);
 }
 
-auto VRApp::VRDrawEye(int eye, float yaw, float pitch, float roll, float tan_l,
-                      float tan_r, float tan_b, float tan_t, float eye_x,
-                      float eye_y, float eye_z, int viewport_x, int viewport_y)
-    -> void {
+auto AppFlavorVR::VRDrawEye(int eye, float yaw, float pitch, float roll,
+                            float tan_l, float tan_r, float tan_b, float tan_t,
+                            float eye_x, float eye_y, float eye_z,
+                            int viewport_x, int viewport_y) -> void {
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
   }

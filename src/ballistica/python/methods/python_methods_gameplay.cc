@@ -4,7 +4,7 @@
 
 #include <list>
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
@@ -505,7 +505,7 @@ auto PyGetScoresToBeat(PyObject* self, PyObject* args, PyObject* keywds)
   // Allocate a Call object for this and pass its pointer to the main thread;
   // we'll ref/de-ref it when it comes back.
   auto* call = Object::NewDeferred<PythonContextCall>(callback_obj);
-  g_app->PushGetScoresToBeatCall(level, config, call);
+  g_app_flavor->PushGetScoresToBeatCall(level, config, call);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

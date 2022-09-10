@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/networking/telnet_server.h"
@@ -27,8 +27,8 @@ static void PrintCommon(const std::string& s) {
     }
   }
   // Print to any telnet clients.
-  if (g_app_globals && g_app_globals->telnet_server) {
-    g_app_globals->telnet_server->PushPrint(s);
+  if (g_app && g_app->telnet_server) {
+    g_app->telnet_server->PushPrint(s);
   }
 }
 
@@ -68,18 +68,18 @@ void Logging::Log(const std::string& msg, bool to_stdout, bool to_server) {
     }
 
     // Add to our complete log.
-    if (g_app_globals != nullptr) {
-      std::scoped_lock lock(g_app_globals->log_mutex);
-      if (!g_app_globals->log_full) {
-        (g_app_globals->log) += (msg + "\n");
-        if ((g_app_globals->log).size() > 10000) {
+    if (g_app != nullptr) {
+      std::scoped_lock lock(g_app->log_mutex);
+      if (!g_app->log_full) {
+        (g_app->log) += (msg + "\n");
+        if ((g_app->log).size() > 10000) {
           // Allow some reasonable overflow for last statement.
-          if ((g_app_globals->log).size() > 100000) {
+          if ((g_app->log).size() > 100000) {
             // FIXME: This could potentially chop up utf-8 chars.
-            (g_app_globals->log).resize(100000);
+            (g_app->log).resize(100000);
           }
-          g_app_globals->log += "\n<max log size reached>\n";
-          g_app_globals->log_full = true;
+          g_app->log += "\n<max log size reached>\n";
+          g_app->log_full = true;
         }
       }
     }
@@ -87,7 +87,7 @@ void Logging::Log(const std::string& msg, bool to_stdout, bool to_server) {
     // If the game is fully bootstrapped, let the Python layer handle logs.
     // It will group log messages intelligently  and ship them to the
     // master server with various other context info included.
-    if (g_app_globals && g_app_globals->is_bootstrapped) {
+    if (g_app && g_app->is_bootstrapped) {
       assert(g_python != nullptr);
       g_python->PushObjCall(Python::ObjID::kHandleLogCall);
     } else {
@@ -100,7 +100,7 @@ void Logging::Log(const std::string& msg, bool to_stdout, bool to_server) {
 
         // If we're an early enough error, our global log isn't even available,
         // so include this specific message as a suffix instead.
-        if (g_app_globals == nullptr) {
+        if (g_app == nullptr) {
           logsuffix = msg;
         }
         g_app_internal->DirectSendLogs(logprefix, logsuffix, false);

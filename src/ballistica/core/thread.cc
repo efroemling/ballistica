@@ -2,7 +2,7 @@
 
 #include "ballistica/core/thread.h"
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -10,16 +10,16 @@
 namespace ballistica {
 
 void Thread::SetInternalThreadName(const std::string& name) {
-  std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
+  std::scoped_lock lock(g_app->thread_name_map_mutex);
   std::thread::id thread_id = std::this_thread::get_id();
-  g_app_globals->thread_name_map[std::this_thread::get_id()] = name;
+  g_app->thread_name_map[std::this_thread::get_id()] = name;
 }
 
 void Thread::ClearCurrentThreadName() {
-  std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
-  auto i = g_app_globals->thread_name_map.find(std::this_thread::get_id());
-  if (i != g_app_globals->thread_name_map.end()) {
-    g_app_globals->thread_name_map.erase(i);
+  std::scoped_lock lock(g_app->thread_name_map_mutex);
+  auto i = g_app->thread_name_map.find(std::this_thread::get_id());
+  if (i != g_app->thread_name_map.end()) {
+    g_app->thread_name_map.erase(i);
   }
 }
 
@@ -28,11 +28,11 @@ void Thread::UpdateMainThreadID() {
 
   // This gets called a lot and it may happen before we are spun up,
   // so just ignore it in that case..
-  if (g_app_globals) {
-    g_app_globals->main_thread_id = current_id;
-  }
   if (g_app) {
-    g_app->thread()->set_thread_id(current_id);
+    g_app->main_thread_id = current_id;
+  }
+  if (g_app_flavor) {
+    g_app_flavor->thread()->set_thread_id(current_id);
   }
 }
 
@@ -66,7 +66,7 @@ auto Thread::RunMediaThread(void* data) -> int {
 
 void Thread::SetPaused(bool paused) {
   // Can be toggled from the main thread only.
-  assert(std::this_thread::get_id() == g_app_globals->main_thread_id);
+  assert(std::this_thread::get_id() == g_app->main_thread_id);
   PushThreadMessage(ThreadMessage(paused ? ThreadMessage::Type::kPause
                                          : ThreadMessage::Type::kResume));
 }
@@ -258,7 +258,7 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
     case ThreadType::kMain: {
       // We've got no thread of our own to launch
       // so we run our setup stuff right here instead of off in some.
-      assert(std::this_thread::get_id() == g_app_globals->main_thread_id);
+      assert(std::this_thread::get_id() == g_app->main_thread_id);
       thread_id_ = std::this_thread::get_id();
 
       // Set our own thread-id-to-name mapping.
@@ -452,8 +452,7 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       }
 
       // Show count periodically.
-      if ((std::this_thread::get_id() == g_app_globals->main_thread_id)
-          && foo > 100) {
+      if ((std::this_thread::get_id() == g_app->main_thread_id) && foo > 100) {
         foo = 0;
         Log("MSG COUNT " + std::to_string(thread_message_count_));
       }
@@ -482,15 +481,13 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
 }
 
 void Thread::SetThreadsPaused(bool paused) {
-  g_app_globals->threads_paused = paused;
-  for (auto&& i : g_app_globals->pausable_threads) {
+  g_app->threads_paused = paused;
+  for (auto&& i : g_app->pausable_threads) {
     i->SetPaused(paused);
   }
 }
 
-auto Thread::AreThreadsPaused() -> bool {
-  return g_app_globals->threads_paused;
-}
+auto Thread::AreThreadsPaused() -> bool { return g_app->threads_paused; }
 
 auto Thread::NewTimer(millisecs_t length, bool repeat,
                       const Object::Ref<Runnable>& runnable) -> Timer* {
@@ -500,13 +497,13 @@ auto Thread::NewTimer(millisecs_t length, bool repeat,
 }
 
 auto Thread::GetCurrentThreadName() -> std::string {
-  if (g_app_globals == nullptr) {
+  if (g_app == nullptr) {
     return "unknown(not-yet-inited)";
   }
   {
-    std::scoped_lock lock(g_app_globals->thread_name_map_mutex);
-    auto i = g_app_globals->thread_name_map.find(std::this_thread::get_id());
-    if (i != g_app_globals->thread_name_map.end()) {
+    std::scoped_lock lock(g_app->thread_name_map_mutex);
+    auto i = g_app->thread_name_map.find(std::this_thread::get_id());
+    if (i != g_app->thread_name_map.end()) {
       return i->second;
     }
   }

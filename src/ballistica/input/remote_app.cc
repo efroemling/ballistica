@@ -9,7 +9,7 @@
 
 #endif
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/input/input.h"
@@ -346,7 +346,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
                                 size_t addr_len, const char* name,
                                 bool using_v2) -> int {
   // If we're not accepting connections at all, reject 'em.
-  if (!g_app_globals->remote_server_accepting_connections) {
+  if (!g_app->remote_server_accepting_connections) {
     return -1;
   }
 

@@ -3,144 +3,90 @@
 #ifndef BALLISTICA_APP_APP_H_
 #define BALLISTICA_APP_APP_H_
 
-#include <memory>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
+#include <vector>
 
-#include "ballistica/app/stress_test.h"
 #include "ballistica/ballistica.h"
 
 namespace ballistica {
 
-/// Our high level app interface module.
-/// It runs in the main thread and is what platform wrappers
-/// should primarily interact with.
+// The first thing the engine does is allocate an instance of this as g_globals.
+// As much as possible, previously static/global values should be moved to here,
+// ideally as a temporary measure until they can be placed as non-static members
+// in the proper classes.
+// Any use of non-trivial global/static values such as class instances should be
+// avoided since it can introduce ambiguities during init and teardown.
+// For more explanation, see the 'Static and Global Variables' section in the
+// Google C++ Style Guide.
 class App {
  public:
-  explicit App(Thread* thread);
+  App(int argc, char** argv);
 
-  /// This gets run after the constructor completes.
-  /// Any setup that may trigger a virtual method/etc. should go here.
-  auto PostInit() -> void;
+  /// Program argument count (on applicable platforms).
+  int argc{};
 
-  /// Return whether this class runs its own event loop.
-  /// If true, BallisticaMain() will continuously ask the app for events
-  /// until the app is quit, at which point BallisticaMain() returns.
-  /// If false, BallisticaMain returns immediately and it is assumed
-  /// that the OS handles the app lifecycle and pushes events to the app
-  /// via callbacks/etc.
-  auto ManagesEventLoop() const -> bool;
+  /// Program argument values (on applicable platforms).
+  char** argv{};
 
-  /// Called for non-event-loop apps to give them an opportunity to
-  /// ensure they are self-sustaining. For instance, an app relying on
-  /// frame-draws for its main thread event processing may need to
-  /// manually pump events until frame rendering begins.
-  virtual auto PrimeEventPump() -> void;
+  bool threads_paused{};
+  std::unordered_map<std::string, NodeType*> node_types;
+  std::unordered_map<int, NodeType*> node_types_by_id;
+  std::unordered_map<std::string, NodeMessageType> node_message_types;
+  std::vector<std::string> node_message_formats;
+  bool workspaces_in_use{};
+  bool replay_open{};
+  std::vector<Thread*> pausable_threads;
+  TouchInput* touch_input{};
+  std::string console_startup_messages;
+  std::mutex log_mutex;
+  std::string log;
+  bool put_log{};
+  bool log_full{};
+  int master_server_source{0};
+  int session_count{};
+  bool shutting_down{};
+  bool have_incentivized_ad{true};
+  bool should_pause{};
+  TelnetServer* telnet_server{};
+  Console* console{};
+  bool reset_vr_orientation{};
+  bool user_ran_commands{};
+  V1AccountType account_type{V1AccountType::kInvalid};
+  bool remote_server_accepting_connections{true};
+  std::string exec_command;
+  std::string user_agent_string{"BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
+  int return_value{};
+  bool debug_timing{};
+  std::thread::id main_thread_id{};
+  bool is_bootstrapped{};
+  bool args_handled{};
+  std::string user_config_dir;
+  bool started_suicide{};
 
-  /// Handle any pending OS events.
-  /// On normal graphical builds this is triggered by RunRenderUpkeepCycle();
-  /// timer intervals for headless builds, etc.
-  /// Should process any pending OS events, etc.
-  virtual auto RunEvents() -> void;
+  // Maximum time in milliseconds to buffer game input/output before sending
+  // it over the network.
+  int buffer_time{0};
 
-  // These should be called by the window, view-controller, sdl,
-  // or whatever is driving the app. They must be called from the main thread.
+  // How often we send dynamics resync messages.
+  int dynamics_sync_time{500};
 
-  /// Should be called on mobile when the app is backgrounded.
-  /// Pauses threads, closes network sockets, etc.
-  auto PauseApp() -> void;
+  // How many steps we sample for each bucket.
+  int delay_bucket_samples{60};
 
-  auto paused() const -> bool { return actually_paused_; }
-
-  /// Should be called on mobile when the app is foregrounded.
-  /// Spins threads back up, re-opens network sockets, etc.
-  auto ResumeApp() -> void;
-
-  /// The last time the app was resumed (uses GetRealTime() value).
-  auto last_app_resume_time() const -> millisecs_t {
-    return last_app_resume_time_;
-  }
-
-  /// Should be called when the window/screen resolution changes.
-  auto SetScreenResolution(float width, float height) -> void;
-
-  /// Should be called if the platform detects the GL context was lost.
-  auto RebuildLostGLContext() -> void;
-
-  /// Attempt to draw a frame.
-  auto DrawFrame(bool during_resize = false) -> void;
-
-  /// Used on platforms where our main thread event processing is driven by
-  /// frame-draw commands given to us. This should be called after drawing
-  /// a frame in order to bring game state up to date and process OS events.
-  auto RunRenderUpkeepCycle() -> void;
-
-  /// Called by the graphics-server when drawing completes for a frame.
-  virtual auto DidFinishRenderingFrame(FrameDef* frame) -> void;
-
-  /// Return the price of an IAP product as a human-readable string,
-  /// or an empty string if not found.
-  /// FIXME: move this to platform.
-  auto GetProductPrice(const std::string& product) -> std::string;
-  auto SetProductPrice(const std::string& product, const std::string& price)
-      -> void;
-
-  auto done() const -> bool { return done_; }
-
-  /// Whether we're running under ballisticacore_server.py
-  /// (affects some app behavior).
-  auto server_wrapper_managed() const -> bool {
-    return server_wrapper_managed_;
-  }
-
-  virtual auto OnBootstrapComplete() -> void;
-
-  // Deferred calls that can be made from other threads.
-
-  auto PushCursorUpdate(bool vis) -> void;
-  auto PushShowOnlineScoreUICall(const std::string& show,
-                                 const std::string& game,
-                                 const std::string& game_version) -> void;
-  auto PushGetFriendScoresCall(const std::string& game,
-                               const std::string& game_version, void* data)
-      -> void;
-  auto PushSubmitScoreCall(const std::string& game,
-                           const std::string& game_version, int64_t score)
-      -> void;
-  auto PushAchievementReportCall(const std::string& achievement) -> void;
-  auto PushGetScoresToBeatCall(const std::string& level,
-                               const std::string& config, void* py_callback)
-      -> void;
-  auto PushOpenURLCall(const std::string& url) -> void;
-  auto PushStringEditCall(const std::string& name, const std::string& value,
-                          int max_chars) -> void;
-  auto PushSetStressTestingCall(bool enable, int player_count) -> void;
-  auto PushPurchaseCall(const std::string& item) -> void;
-  auto PushRestorePurchasesCall() -> void;
-  auto PushResetAchievementsCall() -> void;
-  auto PushPurchaseAckCall(const std::string& purchase,
-                           const std::string& order_id) -> void;
-  auto PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
-                            const std::string& telnet_password) -> void;
-  auto PushShutdownCompleteCall() -> void;
-  auto thread() const -> Thread* { return thread_; }
-
- private:
-  auto UpdatePauseResume() -> void;
-  auto OnPause() -> void;
-  auto OnResume() -> void;
-  auto ShutdownComplete() -> void;
-  Thread* thread_{};
-  bool done_{};
-  bool server_wrapper_managed_{};
-  bool sys_paused_app_{};
-  bool actually_paused_{};
-  std::unique_ptr<StressTest> stress_test_;
-  millisecs_t last_resize_draw_event_time_{};
-  millisecs_t last_app_resume_time_{};
-  std::unordered_map<std::string, std::string> product_prices_;
-  std::mutex product_prices_mutex_;
+  bool vr_mode{g_buildconfig.vr_build()};
+  millisecs_t real_time{};
+  millisecs_t last_real_time_ticks{};
+  std::mutex real_time_mutex;
+  std::mutex thread_name_map_mutex;
+  std::unordered_map<std::thread::id, std::string> thread_name_map;
+#if BA_DEBUG_BUILD
+  std::mutex object_list_mutex;
+  Object* object_list_first{};
+  int object_count{0};
+#endif
 };
 
 }  // namespace ballistica

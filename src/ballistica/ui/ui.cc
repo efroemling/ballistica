@@ -2,7 +2,7 @@
 
 #include "ballistica/ui/ui.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/component/empty_component.h"

@@ -2,7 +2,7 @@
 
 #include "ballistica/game/player_spec.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/account.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/json.h"
@@ -77,7 +77,7 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   PlayerSpec spec;
   if (g_account->GetLoginState() == V1LoginState::kSignedIn) {
-    spec.account_type_ = g_app_globals->account_type;
+    spec.account_type_ = g_app->account_type;
     spec.name_ =
         Utils::GetValidUTF8(g_account->GetLoginName().c_str(), "bsgaps");
   } else {

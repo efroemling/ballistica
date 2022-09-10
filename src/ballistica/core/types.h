@@ -35,9 +35,9 @@ typedef int64_t millisecs_t;
 // to keep compile times down.
 
 class Account;
-class App;
+class AppFlavor;
 class AppConfig;
-class AppGlobals;
+class App;
 class AppInternal;
 class AreaOfInterest;
 class Audio;
@@ -196,7 +196,7 @@ class Utils;
 class Vector2f;
 class Vector3f;
 class Vector4f;
-class VRApp;
+class AppFlavorVR;
 class VRGraphics;
 class Widget;
 

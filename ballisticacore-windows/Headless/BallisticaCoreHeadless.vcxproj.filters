@@ -13,28 +13,28 @@
     <ClInclude Include="..\..\src\ballistica\app\app_config.h">
       <Filter>ballistica\app</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\app\app_globals.cc">
+    <ClCompile Include="..\..\src\ballistica\app\app_flavor.cc">
       <Filter>ballistica\app</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\app\app_globals.h">
+    <ClInclude Include="..\..\src\ballistica\app\app_flavor.h">
       <Filter>ballistica\app</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\app\headless_app.cc">
+    <ClCompile Include="..\..\src\ballistica\app\app_flavor_headless.cc">
       <Filter>ballistica\app</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\app\headless_app.h">
+    <ClInclude Include="..\..\src\ballistica\app\app_flavor_headless.h">
+      <Filter>ballistica\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\app\app_flavor_vr.cc">
+      <Filter>ballistica\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\app\app_flavor_vr.h">
       <Filter>ballistica\app</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\app\stress_test.cc">
       <Filter>ballistica\app</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\app\stress_test.h">
-      <Filter>ballistica\app</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\app\vr_app.cc">
-      <Filter>ballistica\app</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\app\vr_app.h">
       <Filter>ballistica\app</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\audio\al_sys.cc">

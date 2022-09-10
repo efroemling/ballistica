@@ -2,7 +2,7 @@
 
 #include "ballistica/python/methods/python_methods_networking.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/connection/connection_to_host.h"
@@ -328,7 +328,7 @@ auto PySetMasterServerSource(PyObject* self, PyObject* args) -> PyObject* {
                 + ".");
     source = 1;
   }
-  g_app_globals->master_server_source = source;
+  g_app->master_server_source = source;
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -343,8 +343,8 @@ auto PySetTelnetAccessEnabled(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &enable)) {
     return nullptr;
   }
-  if (g_app_globals->telnet_server) {
-    g_app_globals->telnet_server->SetAccessEnabled(static_cast<bool>(enable));
+  if (g_app->telnet_server) {
+    g_app->telnet_server->SetAccessEnabled(static_cast<bool>(enable));
   } else {
     throw Exception("Telnet server not enabled.");
   }

@@ -3,7 +3,7 @@
 #include "ballistica/python/methods/python_methods_ui.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/game/account.h"
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
@@ -1872,7 +1872,7 @@ auto PyShowOnlineScoreUI(PyObject* self, PyObject* args, PyObject* keywds)
   if (game_version_obj != Py_None) {
     game_version = Python::GetPyString(game_version_obj);
   }
-  g_app->PushShowOnlineScoreUICall(show, game, game_version);
+  g_app_flavor->PushShowOnlineScoreUICall(show, game, game_version);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2102,7 +2102,7 @@ auto PyHaveIncentivizedAd(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (g_app_globals->have_incentivized_ad) {
+  if (g_app->have_incentivized_ad) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -2163,8 +2163,8 @@ auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
                                    const_cast<char**>(kwlist), &address)) {
     return nullptr;
   }
-  assert(g_app);
-  g_app->PushOpenURLCall(address);
+  assert(g_app_flavor);
+  g_app_flavor->PushOpenURLCall(address);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

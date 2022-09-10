@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/generic/huffman.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/generic/utf8.h"
@@ -113,14 +113,12 @@ Utils::Utils() {
 
   // Remember that results can vary per compiler; make sure we match
   // any one of the expected formats.
-  static_assert(static_type_name_constexpr<decltype(g_app_globals)>()
-                    == "ballistica::AppGlobals *"
-                || static_type_name_constexpr<decltype(g_app_globals)>()
-                       == "ballistica::AppGlobals*"
-                || static_type_name_constexpr<decltype(g_app_globals)>()
-                       == "class ballistica::AppGlobals*"
-                || static_type_name_constexpr<decltype(g_app_globals)>()
-                       == "AppGlobals*");
+  static_assert(
+      static_type_name_constexpr<decltype(g_app)>() == "ballistica::App *"
+      || static_type_name_constexpr<decltype(g_app)>() == "ballistica::App*"
+      || static_type_name_constexpr<decltype(g_app)>()
+             == "class ballistica::App*"
+      || static_type_name_constexpr<decltype(g_app)>() == "App*");
   Object::Ref<Node> testnode{};
   static_assert(
       static_type_name_constexpr<decltype(testnode)>()
@@ -502,9 +500,9 @@ static void WaitThenDie(millisecs_t wait, const std::string& action) {
 }
 
 void Utils::StartSuicideTimer(const std::string& action, millisecs_t delay) {
-  if (!g_app_globals->started_suicide) {
+  if (!g_app->started_suicide) {
     new std::thread(WaitThenDie, delay, action);
-    g_app_globals->started_suicide = true;
+    g_app->started_suicide = true;
   }
 }
 

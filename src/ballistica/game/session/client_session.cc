@@ -2,7 +2,7 @@
 
 #include "ballistica/game/session/client_session.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/material/material.h"
@@ -333,14 +333,13 @@ void ClientSession::Update(int time_advance) {
           int32_t vals[3];  // scene-id, nodetype-id, node-id
           ReadInt32_3(vals);
           Scene* scene = GetScene(vals[0]);
-          assert(g_app_globals != nullptr);
+          assert(g_app != nullptr);
           if (vals[1] < 0
-              || vals[1] >= static_cast<int>(
-                     g_app_globals->node_types_by_id.size())) {
+              || vals[1] >= static_cast<int>(g_app->node_types_by_id.size())) {
             throw Exception("invalid node type id");
           }
 
-          NodeType* node_type = g_app_globals->node_types_by_id[vals[1]];
+          NodeType* node_type = g_app->node_types_by_id[vals[1]];
 
           // Fail if we get a ridiculous number of nodes.
           // FIXME: should enforce this on the server side too.

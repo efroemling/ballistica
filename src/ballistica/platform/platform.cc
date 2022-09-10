@@ -19,7 +19,7 @@
 
 #include <csignal>
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/friend_score_set.h"
@@ -37,11 +37,11 @@
 #include "ballistica/python/python.h"
 
 #if BA_HEADLESS_BUILD
-#include "ballistica/app/headless_app.h"
+#include "ballistica/app/app_flavor_headless.h"
 #endif
 
 #if BA_VR_BUILD
-#include "ballistica/app/vr_app.h"
+#include "ballistica/app/app_flavor_vr.h"
 #endif
 
 // ------------------------- PLATFORM SELECTION --------------------------------
@@ -427,12 +427,12 @@ auto Platform::GetErrnoString() -> std::string {
 // This does not vary across versions.
 auto Platform::GetConfigDirectory() -> std::string {
   // Make sure args have been handled since we use them.
-  assert(g_app_globals->args_handled);
+  assert(g_app->args_handled);
 
   if (!have_config_dir_) {
     // If the user provided cfgdir as an arg.
-    if (!g_app_globals->user_config_dir.empty()) {
-      config_dir_ = g_app_globals->user_config_dir;
+    if (!g_app->user_config_dir.empty()) {
+      config_dir_ = g_app->user_config_dir;
     } else {
       config_dir_ = GetDefaultConfigDirectory();
     }
@@ -555,7 +555,7 @@ static void Init() {
     }
   }
 
-  g_app_globals->user_agent_string = g_platform->GetUserAgentString();
+  g_app->user_agent_string = g_platform->GetUserAgentString();
 
   // Figure out where our data is and chdir there.
   g_platform->SetupDataDirectory();
@@ -570,8 +570,8 @@ static void Init() {
 #pragma ide diagnostic ignored "NullDereferences"
 
 static void HandleArgs(int argc, char** argv) {
-  assert(!g_app_globals->args_handled);
-  g_app_globals->args_handled = true;
+  assert(!g_app->args_handled);
+  g_app->args_handled = true;
 
   // If there's just one arg and it's "--version", return the version.
   if (argc == 2 && !strcmp(argv[1], "--version")) {
@@ -583,10 +583,10 @@ static void HandleArgs(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     // In our rift build, a '-2d' arg causes us to run in regular 2d mode.
     if (g_buildconfig.rift_build() && !strcmp(argv[i], "-2d")) {
-      g_app_globals->vr_mode = false;
+      g_app->vr_mode = false;
     } else if (!strcmp(argv[i], "-exec")) {
       if (i + 1 < argc) {
-        g_app_globals->exec_command = argv[i + 1];
+        g_app->exec_command = argv[i + 1];
       } else {
         printf("%s", "Error: expected arg after -exec\n");
         fflush(stdout);
@@ -604,11 +604,11 @@ static void HandleArgs(int argc, char** argv) {
       }
     } else if (!strcmp(argv[i], "-cfgdir")) {
       if (i + 1 < argc) {
-        g_app_globals->user_config_dir = argv[i + 1];
+        g_app->user_config_dir = argv[i + 1];
 
         // Need to convert this to an abs path since we chdir soon.
         bool success =
-            g_platform->AbsPath(argv[i + 1], &g_app_globals->user_config_dir);
+            g_platform->AbsPath(argv[i + 1], &g_app->user_config_dir);
         if (!success) {
           // This can fail if the path doesn't exist.
           if (!g_platform->FilePathExists(argv[i + 1])) {
@@ -632,24 +632,24 @@ static void HandleArgs(int argc, char** argv) {
 
   // In Android's case we have to pull our exec arg from the java/kotlin layer.
   if (g_buildconfig.ostype_android()) {
-    g_app_globals->exec_command = g_platform->GetAndroidExecArg();
+    g_app->exec_command = g_platform->GetAndroidExecArg();
   }
 
   // TEMP/HACK: hard code launch args.
   if (explicit_bool(false)) {
     if (g_buildconfig.ostype_android()) {
-      g_app_globals->exec_command =
-          "import ba.internal; ba.internal.run_stress_test()";
+      g_app->exec_command = "import ba.internal; ba.internal.run_stress_test()";
     }
   }
 }
 
-void Platform::CreateApp() {
-  assert(g_app_globals);
+auto Platform::CreateAppFlavor() -> AppFlavor* {
+  assert(g_app);
   assert(InMainThread());
+  assert(g_main_thread);
 
   // Hmm do these belong here?...
-  HandleArgs(g_app_globals->argc, g_app_globals->argv);
+  HandleArgs(g_app->argc, g_app->argv);
   Init();
 
 // TEMP - need to init sdl on our legacy mac build even though its not
@@ -659,24 +659,21 @@ void Platform::CreateApp() {
 #endif
 
 #if BA_HEADLESS_BUILD
-  new HeadlessApp(g_main_thread);
+  return new AppFlavorHeadless(g_main_thread);
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
-  if (g_app_globals->vr_mode) {
-    new VRApp(g_main_thread);
+  if (g_app->vr_mode) {
+    return new AppFlavorVR(g_main_thread);
   } else {
-    new SDLApp(g_main_thread);
+    return new SDLApp(g_main_thread);
   }
 #elif BA_CARDBOARD_BUILD
-  new VRApp(g_main_thread);
+  return new AppFlavorVR(g_main_thread);
 #elif BA_SDL_BUILD
-  new SDLApp(g_main_thread);
+  return new SDLApp(g_main_thread);
 #else
-  new App(g_main_thread);
+  return new AppFlavor(g_main_thread);
 #endif
-
-  // Let app do any init it needs to after it is fully constructed.
-  g_app->PostInit();
 }
 
 auto Platform::CreateGraphics() -> Graphics* {
@@ -702,7 +699,7 @@ auto Platform::GetKeyName(int keycode) -> std::string {
 void Platform::CreateAuxiliaryModules() {
 #if !BA_HEADLESS_BUILD
   auto* bg_dynamics_thread = new Thread(ThreadIdentifier::kBGDynamics);
-  g_app_globals->pausable_threads.push_back(bg_dynamics_thread);
+  g_app->pausable_threads.push_back(bg_dynamics_thread);
 #endif
 #if !BA_HEADLESS_BUILD
   bg_dynamics_thread->PushCallSynchronous(
@@ -1096,7 +1093,7 @@ void Platform::SetHardwareCursorVisible(bool visible) {
 #endif
 }
 
-void Platform::QuitApp() { exit(g_app_globals->return_value); }
+void Platform::QuitApp() { exit(g_app->return_value); }
 
 void Platform::GetScoresToBeat(const std::string& level,
                                const std::string& config, void* py_callback) {

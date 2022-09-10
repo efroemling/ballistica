@@ -2,7 +2,7 @@
 
 #include "ballistica/ui/widget/text_widget.h"
 
-#include "ballistica/app/app.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
@@ -547,7 +547,7 @@ void TextWidget::BringUpEditDialog() {
         use_internal_dialog = false;
         // store ourself as the current text-widget and kick off an edit
         android_string_edit_widget_ = this;
-        g_app->PushStringEditCall(description_, text_raw_, max_chars_);
+        g_app_flavor->PushStringEditCall(description_, text_raw_, max_chars_);
       }
     }
   }

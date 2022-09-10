@@ -232,8 +232,8 @@ void SDLApp::HandleSDLEvent(const SDL_Event& event) {
 auto FilterSDLEvent(const SDL_Event* event) -> int {
   try {
     // If this event is coming from this thread, handle it immediately.
-    if (std::this_thread::get_id() == g_app_globals->main_thread_id) {
-      auto app = static_cast_check_type<SDLApp*>(g_app);
+    if (std::this_thread::get_id() == g_app->main_thread_id) {
+      auto app = static_cast_check_type<SDLApp*>(g_app_flavor);
       assert(app);
       if (app) {
         app->HandleSDLEvent(*event);
@@ -319,7 +319,7 @@ void SDLApp::InitSDL() {
 #endif
 }
 
-SDLApp::SDLApp(Thread* thread) : App(thread) {
+SDLApp::SDLApp(Thread* thread) : AppFlavor(thread) {
   InitSDL();
 
   // If we're not running our own even loop, we set up a filter to intercept
@@ -342,14 +342,14 @@ SDLApp::SDLApp(Thread* thread) : App(thread) {
     // thing, except that we're free to handle other matters concurrently
     // instead of being locked in a delay call.
     this->thread()->NewTimer(10, true, NewLambdaRunnable([this] {
-                               assert(g_app);
-                               g_app->RunEvents();
+                               assert(g_app_flavor);
+                               g_app_flavor->RunEvents();
                              }));
   }
 }
 
 void SDLApp::RunEvents() {
-  App::RunEvents();
+  AppFlavor::RunEvents();
 
   // Now run all pending SDL events until we run out or we're told to quit.
   SDL_Event event;
@@ -359,7 +359,7 @@ void SDLApp::RunEvents() {
 }
 
 void SDLApp::DidFinishRenderingFrame(FrameDef* frame) {
-  App::DidFinishRenderingFrame(frame);
+  AppFlavor::DidFinishRenderingFrame(frame);
   SwapBuffers();
 }
 
@@ -489,7 +489,7 @@ void SDLApp::SetAutoVSync(bool enable) {
 }
 
 void SDLApp::OnBootstrapComplete() {
-  App::OnBootstrapComplete();
+  AppFlavor::OnBootstrapComplete();
 
   if (!HeadlessMode() && g_buildconfig.enable_sdl_joysticks()) {
     // Add initial sdl joysticks. any added/removed after this will be handled
@@ -513,7 +513,7 @@ void SDLApp::SDLJoystickConnected(int device_index) {
 
   // We add all existing inputs when bootstrapping is complete; we should
   // never be getting these before that happens.
-  if (g_input == nullptr || g_app == nullptr || !IsBootstrapped()) {
+  if (g_input == nullptr || g_app_flavor == nullptr || !IsBootstrapped()) {
     Log("Unexpected SDLJoystickConnected early in boot sequence.");
     return;
   }

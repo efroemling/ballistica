@@ -2,8 +2,8 @@
 
 #include "ballistica/input/input.h"
 
+#include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
-#include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/player.h"
@@ -1095,8 +1095,7 @@ void Input::PushTextInputEvent(const std::string& text) {
     if (IsInputLocked()) {
       return;
     }
-    if (g_app_globals->console != nullptr
-        && g_app_globals->console->HandleTextEditing(text)) {
+    if (g_app->console != nullptr && g_app->console->HandleTextEditing(text)) {
       return;
     }
     g_ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kTextInput,
@@ -1213,8 +1212,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   }
 
   // Let the console intercept stuff if it wants at this point.
-  if (g_app_globals->console != nullptr
-      && g_app_globals->console->HandleKeyPress(keysym)) {
+  if (g_app->console != nullptr && g_app->console->HandleKeyPress(keysym)) {
     return;
   }
 
@@ -1351,8 +1349,7 @@ void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
 
   bool handled = false;
 
-  if (g_app_globals->console != nullptr
-      && g_app_globals->console->HandleKeyRelease(keysym)) {
+  if (g_app->console != nullptr && g_app->console->HandleKeyRelease(keysym)) {
     handled = true;
   }
 

@@ -2,7 +2,7 @@
 
 #include "ballistica/python/methods/python_methods_input.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/game/game.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/device/touch_input.h"
@@ -33,7 +33,7 @@ auto PyGetConfigurableGamePads(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyHaveTouchScreenInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app_globals->touch_input) {
+  if (g_app->touch_input) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -47,8 +47,8 @@ auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
   if (!PyArg_ParseTuple(args, "p", &editing)) {
     return nullptr;
   }
-  if (g_app_globals->touch_input) {
-    g_app_globals->touch_input->set_editing(static_cast<bool>(editing));
+  if (g_app->touch_input) {
+    g_app->touch_input->set_editing(static_cast<bool>(editing));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

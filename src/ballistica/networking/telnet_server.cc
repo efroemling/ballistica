@@ -2,7 +2,7 @@
 
 #include "ballistica/networking/telnet_server.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/core/context.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/game.h"
@@ -16,8 +16,8 @@ namespace ballistica {
 
 TelnetServer::TelnetServer(int port) : port_(port) {
   thread_ = new std::thread(RunThreadStatic, this);
-  assert(g_app_globals->telnet_server == nullptr);
-  g_app_globals->telnet_server = this;
+  assert(g_app->telnet_server == nullptr);
+  g_app->telnet_server = this;
 
   // NOTE: we consider access implicitly granted on headless builds
   // since we can't pop up the request dialog.
@@ -192,8 +192,8 @@ void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
   g_game->thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(g_game->GetForegroundContext());
-    if (!g_app_globals->user_ran_commands) {
-      g_app_globals->user_ran_commands = true;
+    if (!g_app->user_ran_commands) {
+      g_app->user_ran_commands = true;
     }
     PythonCommand cmd(command, "<telnet>");
     if (cmd.CanEval()) {

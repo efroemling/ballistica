@@ -3,7 +3,7 @@
 #include "ballistica/input/device/joystick.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/game/connection/connection_set.h"
@@ -304,9 +304,10 @@ Joystick::~Joystick() {
   // here in the game thread..
   if (sdl_joystick_) {
 #if BA_ENABLE_SDL_JOYSTICKS
-    assert(g_app);
+    assert(g_app_flavor);
     auto joystick = sdl_joystick_;
-    g_app->thread()->PushCall([joystick] { SDL_JoystickClose(joystick); });
+    g_app_flavor->thread()->PushCall(
+        [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
     Log("sdl_joystick_ set in non-sdl-joystick build destructor.");
@@ -770,7 +771,7 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
     if (e->jbutton.button == vr_reorient_button_ && IsVRMode()) {
       ScreenMessage(g_game->GetResourceString("vrOrientationResetText"),
                     {0, 1, 0});
-      g_app_globals->reset_vr_orientation = true;
+      g_app->reset_vr_orientation = true;
       return;
     }
   }

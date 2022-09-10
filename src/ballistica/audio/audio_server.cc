@@ -2,7 +2,7 @@
 
 #include "ballistica/audio/audio_server.h"
 
-#include "ballistica/app/app_globals.h"
+#include "ballistica/app/app.h"
 #include "ballistica/audio/al_sys.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
