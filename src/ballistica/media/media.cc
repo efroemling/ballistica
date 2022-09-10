@@ -22,7 +22,7 @@
 
 namespace ballistica {
 
-// Debug printing.
+// Debug printing:
 #define BA_SHOW_LOADS_UNLOADS 0
 #define SHOW_PRUNING_INFO 0
 
@@ -37,12 +37,6 @@ namespace ballistica {
 
 // How long we should spend loading media in each runPendingLoads() call.
 #define PENDING_LOAD_PROCESS_TIME 5
-
-void Media::Init() {
-  // Just create our singleton.
-  assert(g_media == nullptr);
-  g_media = new Media();
-}
 
 Media::Media() {
   media_paths_.emplace_back("ba_data");
@@ -288,8 +282,6 @@ void Media::LoadSystemMedia() {
   // Hooray!
   system_media_loaded_ = true;
 }
-
-Media::~Media() = default;
 
 void Media::PrintLoadInfo() {
   std::string s;
@@ -615,8 +607,19 @@ void Media::MarkComponentForLoad(MediaComponentData* c) {
   // ClearPendingLoadsDoneList)
 
   auto media_ptr = new Object::Ref<MediaComponentData>(c);
-  g_media_server->thread()->PushRunnable(
-      Object::NewDeferred<PreloadRunnable>(media_ptr));
+
+  g_media_server->thread()->PushCall([media_ptr] {
+    assert(InMediaThread());
+
+    // add our pointer to one of the preload lists and shake our preload thread
+    // to wake it up
+    if ((**media_ptr).GetMediaType() == MediaType::kSound) {
+      g_media_server->pending_preloads_audio_.push_back(media_ptr);
+    } else {
+      g_media_server->pending_preloads_.push_back(media_ptr);
+    }
+    g_media_server->process_timer_->SetLength(0);
+  });
 }
 
 #pragma clang diagnostic push
@@ -1214,19 +1217,6 @@ void Media::ClearPendingLoadsDoneList() {
     delete i;
   }
   pending_loads_done_.clear();
-}
-
-void Media::PreloadRunnable::Run() {
-  assert(InMediaThread());
-
-  // add our pointer to one of the preload lists and shake our preload thread to
-  // wake it up
-  if ((**c).GetMediaType() == MediaType::kSound) {
-    g_media_server->pending_preloads_audio_.push_back(c);
-  } else {
-    g_media_server->pending_preloads_.push_back(c);
-  }
-  g_media_server->process_timer_->SetLength(0);
 }
 
 void Media::AddPackage(const std::string& name, const std::string& path) {

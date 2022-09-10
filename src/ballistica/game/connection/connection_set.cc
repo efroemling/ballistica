@@ -9,7 +9,7 @@
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
@@ -463,7 +463,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
         PushClientDisconnectedCall(client_id);
 
         // Now send an ack so they know it's been taken care of.
-        g_network_write_module->PushSendToCall(
+        g_network_writer->PushSendToCall(
             {BA_PACKET_DISCONNECT_FROM_CLIENT_ACK, client_id}, addr);
       }
       break;
@@ -490,7 +490,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
         }
 
         // Now send an ack so they know it's been taken care of.
-        g_network_write_module->PushSendToCall(
+        g_network_writer->PushSendToCall(
             {BA_PACKET_DISCONNECT_FROM_HOST_ACK, client_id}, addr);
       }
       break;
@@ -516,7 +516,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
           return;
         } else {
           // Send a disconnect request aimed at them.
-          g_network_write_module->PushSendToCall(
+          g_network_writer->PushSendToCall(
               {BA_PACKET_DISCONNECT_FROM_HOST_REQUEST, client_id}, addr);
         }
       }
@@ -621,15 +621,15 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
 
           // Newer version have a specific party-full message; send that first
           // but also follow up with a generic deny message for older clients.
-          g_network_write_module->PushSendToCall(
+          g_network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_PARTY_FULL, request_id}, addr);
 
-          g_network_write_module->PushSendToCall(
-              {BA_PACKET_CLIENT_DENY, request_id}, addr);
+          g_network_writer->PushSendToCall({BA_PACKET_CLIENT_DENY, request_id},
+                                           addr);
 
         } else if (connection_to_host_.exists()) {
           // If we're connected to someone else, we can't have clients.
-          g_network_write_module->PushSendToCall(
+          g_network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
         } else {
           // Otherwise go ahead and make them a new client connection.
@@ -666,7 +666,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
               std::vector<uint8_t> msg_out(2);
               msg_out[0] = BA_PACKET_CLIENT_DENY;
               msg_out[1] = request_id;
-              g_network_write_module->PushSendToCall(msg_out, addr);
+              g_network_writer->PushSendToCall(msg_out, addr);
               Log("All client slots full; really?..");
               break;
             }
@@ -684,7 +684,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
           msg_out[1] =
               static_cast_check_fit<uint8_t>(connection_to_client->id());
           msg_out[2] = request_id;
-          g_network_write_module->PushSendToCall(msg_out, addr);
+          g_network_writer->PushSendToCall(msg_out, addr);
         }
       }
       break;

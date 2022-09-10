@@ -488,8 +488,8 @@
     <ClInclude Include="..\..\src\ballistica\media\media_server.h" />
     <ClCompile Include="..\..\src\ballistica\networking\network_reader.cc" />
     <ClInclude Include="..\..\src\ballistica\networking\network_reader.h" />
-    <ClCompile Include="..\..\src\ballistica\networking\network_write_module.cc" />
-    <ClInclude Include="..\..\src\ballistica\networking\network_write_module.h" />
+    <ClCompile Include="..\..\src\ballistica\networking\network_writer.cc" />
+    <ClInclude Include="..\..\src\ballistica\networking\network_writer.h" />
     <ClCompile Include="..\..\src\ballistica\networking\networking.cc" />
     <ClInclude Include="..\..\src\ballistica\networking\networking.h" />
     <ClInclude Include="..\..\src\ballistica\networking\networking_sys.h" />

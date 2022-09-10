@@ -8,7 +8,7 @@
 #include "ballistica/generic/json.h"
 #include "ballistica/input/remote_app.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -158,7 +158,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
     std::vector<uint8_t> msg_buffer(msg_len);
     memcpy(msg_buffer.data(), msg, msg_len);
 
-    g_network_write_module->PushSendToCall(msg_buffer, SockAddr(*from));
+    g_network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
 
   } else {
     Log("Error: Got invalid game-query packet of len " + std::to_string(size)
@@ -504,7 +504,5 @@ auto NetworkReader::OpenSockets() -> void {
         true, false);
   }
 }
-
-NetworkReader::~NetworkReader() = default;
 
 }  // namespace ballistica

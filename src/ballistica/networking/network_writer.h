@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_NETWORKING_NETWORK_WRITE_MODULE_H_
-#define BALLISTICA_NETWORKING_NETWORK_WRITE_MODULE_H_
+#ifndef BALLISTICA_NETWORKING_NETWORK_WRITER_H_
+#define BALLISTICA_NETWORKING_NETWORK_WRITER_H_
 
 #include <vector>
 
@@ -9,7 +9,7 @@
 
 namespace ballistica {
 
-// this thread handles network output and whatnot
+// A subsystem handling outbound network traffic.
 class NetworkWriteModule {
  public:
   void PushSendToCall(const std::vector<uint8_t>& msg, const SockAddr& addr);
@@ -22,4 +22,4 @@ class NetworkWriteModule {
 
 }  // namespace ballistica
 
-#endif  // BALLISTICA_NETWORKING_NETWORK_WRITE_MODULE_H_
+#endif  // BALLISTICA_NETWORKING_NETWORK_WRITER_H_

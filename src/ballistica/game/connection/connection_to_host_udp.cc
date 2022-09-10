@@ -5,7 +5,7 @@
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 
 namespace ballistica {
@@ -71,7 +71,7 @@ void ConnectionToHostUDP::Update() {
       memcpy(&(msg[1]), &p_version, 2);
       msg[3] = request_id_;
       memcpy(&(msg[4]), uuid.c_str(), uuid.size());
-      g_network_write_module->PushSendToCall(msg, *addr_);
+      g_network_writer->PushSendToCall(msg, *addr_);
     }
   }
 
@@ -128,7 +128,7 @@ void ConnectionToHostUDP::SendDisconnectRequest() {
     std::vector<uint8_t> data(2);
     data[0] = BA_PACKET_DISCONNECT_FROM_CLIENT_REQUEST;
     data[1] = static_cast_check_fit<uint8_t>(client_id_);
-    g_network_write_module->PushSendToCall(data, *addr_);
+    g_network_writer->PushSendToCall(data, *addr_);
   }
 }
 
@@ -152,8 +152,8 @@ void ConnectionToHostUDP::SendGamePacketCompressed(
 
   // Ship this off to the net-out thread to send; at this point we don't know
   // or care what happens to it.
-  assert(g_network_write_module);
-  g_network_write_module->PushSendToCall(data_full, *addr_);
+  assert(g_network_writer);
+  g_network_writer->PushSendToCall(data_full, *addr_);
 }
 
 void ConnectionToHostUDP::Error(const std::string& msg) {

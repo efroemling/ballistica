@@ -13,8 +13,8 @@
 
 namespace ballistica {
 
-// This is a special thread that manages the game's main network sockets;
-// it handles creating/destroying them as well as listening for incoming
+// A subsystem that manages the game's main network sockets.
+// It handles creating/destroying them as well as listening for incoming
 // packets. it is not a normal BA thread so doesn't have the ability to receive
 // messages (it generally sits blocked in a select() call). Writing to these
 // sockets takes place in other threads; just make sure to lock the mutex and
@@ -22,7 +22,6 @@ namespace ballistica {
 class NetworkReader {
  public:
   explicit NetworkReader(int port);
-  ~NetworkReader();
   auto Pause() -> void;
   auto Resume() -> void;
   auto port4() const { return port4_; }

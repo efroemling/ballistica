@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 
 #include "ballistica/core/thread.h"
 #include "ballistica/networking/networking.h"
@@ -10,8 +10,8 @@ namespace ballistica {
 
 NetworkWriteModule::NetworkWriteModule(Thread* thread) : thread_(thread) {
   // we're a singleton
-  assert(g_network_write_module == nullptr);
-  g_network_write_module = this;
+  assert(g_network_writer == nullptr);
+  g_network_writer = this;
 }
 
 void NetworkWriteModule::PushSendToCall(const std::vector<uint8_t>& msg,

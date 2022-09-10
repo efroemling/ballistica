@@ -4,7 +4,7 @@
 
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 
 namespace ballistica {
@@ -39,8 +39,8 @@ void ConnectionToClientUDP::SendGamePacketCompressed(
 
   // Ship this off to the net-out thread to send; at this point we don't know
   // or case what happens to it.
-  assert(g_network_write_module);
-  g_network_write_module->PushSendToCall(data_full, *addr_);
+  assert(g_network_writer);
+  g_network_writer->PushSendToCall(data_full, *addr_);
 }
 
 void ConnectionToClientUDP::Update() {
@@ -89,7 +89,7 @@ void ConnectionToClientUDP::SendDisconnectRequest() {
   std::vector<uint8_t> data(2);
   data[0] = BA_PACKET_DISCONNECT_FROM_HOST_REQUEST;
   data[1] = static_cast<uint8_t>(id());
-  g_network_write_module->PushSendToCall(data, *addr_);
+  g_network_writer->PushSendToCall(data, *addr_);
 }
 
 }  // namespace ballistica

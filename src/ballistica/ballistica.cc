@@ -13,8 +13,9 @@
 #include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/media/media.h"
 #include "ballistica/media/media_server.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
@@ -22,7 +23,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20800;
+const int kAppBuildNumber = 20803;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -48,7 +49,7 @@ Media* g_media{};
 MediaServer* g_media_server{};
 NetworkReader* g_network_reader{};
 Networking* g_networking{};
-NetworkWriteModule* g_network_write_module{};
+NetworkWriteModule* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
 StdInputModule* g_std_input_module{};
@@ -90,8 +91,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app = new App(argc, argv);
     g_platform = Platform::Create();
 
-    // If we're not running under a Python executable, we need to set up
-    // our own Python environment.
+    // Bootstrap our Python environment as early as we can (depends on
+    // g_platform for locating OS-specific paths).
     assert(g_python == nullptr);
     g_python = new Python();
 
@@ -103,8 +104,10 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app_flavor = g_platform->CreateAppFlavor();
     g_app_flavor->PostInit();
 
+    // Various other subsystems.
     g_v1_account = new V1Account();
     g_utils = new Utils();
+    g_media = new Media();
     Scene::Init();
 
     // Spin up our other standard threads.
@@ -279,8 +282,7 @@ auto InMediaThread() -> bool {
 }
 
 auto InNetworkWriteThread() -> bool {
-  return (g_network_write_module
-          && g_network_write_module->thread()->IsCurrent());
+  return (g_network_writer && g_network_writer->thread()->IsCurrent());
 }
 
 auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {

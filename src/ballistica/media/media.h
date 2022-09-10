@@ -8,17 +8,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/core/context.h"
 #include "ballistica/core/object.h"
-#include "ballistica/generic/runnable.h"
 
 namespace ballistica {
 
 /// Global media wrangling class.
 class Media {
  public:
-  static void Init();
-  ~Media();
+  Media();
 
   /// Handy function to try to return a bit of media from a std::unordered_map
   /// of weak-refs, loading/adding it if need be.
@@ -43,8 +40,8 @@ class Media {
     }
   }
 
-  void AddPackage(const std::string& name, const std::string& path);
-  void Prune(int level = 0);
+  auto AddPackage(const std::string& name, const std::string& path) -> void;
+  auto Prune(int level = 0) -> void;
 
   /// Finish loading any media that has been preloaded but still needs to be
   /// loaded by the proper thread.
@@ -55,26 +52,25 @@ class Media {
 
   /// Return true if graphics loads remain to be done.
   auto RunPendingGraphicsLoads() -> bool;
-  void ClearPendingLoadsDoneList();
+  auto ClearPendingLoadsDoneList() -> void;
   template <class T>
   auto RunPendingLoadList(std::vector<Object::Ref<T>*>* cList) -> bool;
 
   /// This function takes a newly allocated pointer which
   /// is deleted once the load is completed.
-  void AddPendingLoad(Object::Ref<MediaComponentData>* c);
-  struct PreloadRunnable;
+  auto AddPendingLoad(Object::Ref<MediaComponentData>* c) -> void;
   enum class FileType { kModel, kCollisionModel, kTexture, kSound, kData };
   auto FindMediaFile(FileType fileType, const std::string& file_in)
       -> std::string;
 
   /// Unload renderer-specific bits only (gl display lists, etc) - used when
   /// recreating/adjusting the renderer.
-  void UnloadRendererBits(bool textures, bool models);
+  auto UnloadRendererBits(bool textures, bool models) -> void;
 
   /// Should be called from the game thread after UnloadRendererBits();
   /// kicks off bg loads for all existing unloaded media.
-  void MarkAllMediaForLoad();
-  void PrintLoadInfo();
+  auto MarkAllMediaForLoad() -> void;
+  auto PrintLoadInfo() -> void;
 
   auto GetModelPendingLoadCount() -> int;
   auto GetTexturePendingLoadCount() -> int;
@@ -135,7 +131,7 @@ class Media {
   }
 
   /// Load up hard-coded media for interface, etc.
-  void LoadSystemMedia();
+  auto LoadSystemMedia() -> void;
 
   auto total_model_count() const -> uint32_t {
     return static_cast<uint32_t>(models_.size());
@@ -150,20 +146,15 @@ class Media {
   auto total_collide_model_count() const -> uint32_t {
     return static_cast<uint32_t>(collide_models_.size());
   }
-  struct PreloadRunnable : public Runnable {
-    explicit PreloadRunnable(Object::Ref<MediaComponentData>* c_in) : c(c_in) {}
-    void Run() override;
-    Object::Ref<MediaComponentData>* c;
-  };
 
  private:
-  Media();
-  static void MarkComponentForLoad(MediaComponentData* c);
-  void LoadSystemTexture(SystemTextureID id, const char* name);
-  void LoadSystemCubeMapTexture(SystemCubeMapTextureID id, const char* name);
-  void LoadSystemSound(SystemSoundID id, const char* name);
-  void LoadSystemData(SystemDataID id, const char* name);
-  void LoadSystemModel(SystemModelID id, const char* name);
+  static auto MarkComponentForLoad(MediaComponentData* c) -> void;
+  auto LoadSystemTexture(SystemTextureID id, const char* name) -> void;
+  auto LoadSystemCubeMapTexture(SystemCubeMapTextureID id, const char* name)
+      -> void;
+  auto LoadSystemSound(SystemSoundID id, const char* name) -> void;
+  auto LoadSystemData(SystemDataID id, const char* name) -> void;
+  auto LoadSystemModel(SystemModelID id, const char* name) -> void;
 
   template <class T>
   auto GetComponentPendingLoadCount(

@@ -28,7 +28,7 @@
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/python/python.h"
@@ -79,7 +79,6 @@ Game::Game(Thread* thread)
     assert(g_graphics == nullptr);
     g_graphics = g_platform->CreateGraphics();
     TextGraphics::Init();
-    Media::Init();
     Audio::Init();
     if (!HeadlessMode()) {
       BGDynamics::Init();

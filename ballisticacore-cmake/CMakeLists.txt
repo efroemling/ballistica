@@ -502,8 +502,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/media/media_server.h
   ${BA_SRC_ROOT}/ballistica/networking/network_reader.cc
   ${BA_SRC_ROOT}/ballistica/networking/network_reader.h
-  ${BA_SRC_ROOT}/ballistica/networking/network_write_module.cc
-  ${BA_SRC_ROOT}/ballistica/networking/network_write_module.h
+  ${BA_SRC_ROOT}/ballistica/networking/network_writer.cc
+  ${BA_SRC_ROOT}/ballistica/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/networking/networking.h
   ${BA_SRC_ROOT}/ballistica/networking/networking_sys.h
