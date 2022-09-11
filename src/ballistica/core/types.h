@@ -123,7 +123,7 @@ class NetClientThread;
 class NetGraph;
 class Networking;
 class NetworkReader;
-class NetworkWriteModule;
+class NetworkWriter;
 class Node;
 class NodeType;
 class NodeAttribute;

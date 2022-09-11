@@ -22,45 +22,47 @@ class AudioServer {
     return play_id >> 16u;
   }
 
-  explicit AudioServer(Thread* o);
+  AudioServer();
+  auto Start() -> void;
 
-  void PushSetVolumesCall(float music_volume, float sound_volume);
-  void PushSetSoundPitchCall(float val);
-  void PushSetPausedCall(bool pause);
+  auto PushSetVolumesCall(float music_volume, float sound_volume) -> void;
+  auto PushSetSoundPitchCall(float val) -> void;
+  auto PushSetPausedCall(bool pause) -> void;
 
-  static void BeginInterruption();
-  static void EndInterruption();
+  static auto BeginInterruption() -> void;
+  static auto EndInterruption() -> void;
 
-  void PushSetListenerPositionCall(const Vector3f& p);
-  void PushSetListenerOrientationCall(const Vector3f& forward,
-                                      const Vector3f& up);
-  void PushResetCall();
-  void PushHavePendingLoadsCall();
-  void PushComponentUnloadCall(
-      const std::vector<Object::Ref<AssetComponentData>*>& components);
+  auto PushSetListenerPositionCall(const Vector3f& p) -> void;
+  auto PushSetListenerOrientationCall(const Vector3f& forward,
+                                      const Vector3f& up) -> void;
+  auto PushResetCall() -> void;
+  auto PushHavePendingLoadsCall() -> void;
+  auto PushComponentUnloadCall(
+      const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
 
   /// For use by g_game_module().
-  void ClearSoundRefDeleteList();
+  auto ClearSoundRefDeleteList() -> void;
 
   auto paused() const -> bool { return paused_; }
 
   // Client sources use these to pass settings to the server.
-  void PushSourceSetIsMusicCall(uint32_t play_id, bool val);
-  void PushSourceSetPositionalCall(uint32_t play_id, bool val);
-  void PushSourceSetPositionCall(uint32_t play_id, const Vector3f& p);
-  void PushSourceSetGainCall(uint32_t play_id, float val);
-  void PushSourceSetFadeCall(uint32_t play_id, float val);
-  void PushSourceSetLoopingCall(uint32_t play_id, bool val);
-  void PushSourcePlayCall(uint32_t play_id, Object::Ref<SoundData>* sound);
-  void PushSourceStopCall(uint32_t play_id);
-  void PushSourceEndCall(uint32_t play_id);
+  auto PushSourceSetIsMusicCall(uint32_t play_id, bool val) -> void;
+  auto PushSourceSetPositionalCall(uint32_t play_id, bool val) -> void;
+  auto PushSourceSetPositionCall(uint32_t play_id, const Vector3f& p) -> void;
+  auto PushSourceSetGainCall(uint32_t play_id, float val) -> void;
+  auto PushSourceSetFadeCall(uint32_t play_id, float val) -> void;
+  auto PushSourceSetLoopingCall(uint32_t play_id, bool val) -> void;
+  auto PushSourcePlayCall(uint32_t play_id, Object::Ref<SoundData>* sound)
+      -> void;
+  auto PushSourceStopCall(uint32_t play_id) -> void;
+  auto PushSourceEndCall(uint32_t play_id) -> void;
 
   // Fade a playing sound out over the given time.  If it is already
   // fading or does not exist, does nothing.
-  void FadeSoundOut(uint32_t play_id, uint32_t time);
+  auto FadeSoundOut(uint32_t play_id, uint32_t time) -> void;
 
   // Stop a sound from playing if it exists.
-  void StopSound(uint32_t play_id);
+  auto StopSound(uint32_t play_id) -> void;
 
   auto thread() const -> Thread* { return thread_; }
 
@@ -68,16 +70,17 @@ class AudioServer {
   class ThreadSource;
   struct Impl;
 
+  auto StartInThread() -> void;
   ~AudioServer();
 
   auto OnThreadPause() -> void;
   auto OnThreadResume() -> void;
 
-  void SetPaused(bool paused);
+  auto SetPaused(bool paused) -> void;
 
-  void SetMusicVolume(float volume);
-  void SetSoundVolume(float volume);
-  void SetSoundPitch(float pitch);
+  auto SetMusicVolume(float volume) -> void;
+  auto SetSoundVolume(float volume) -> void;
+  auto SetSoundPitch(float pitch) -> void;
   auto music_volume() -> float { return music_volume_; }
   auto sound_volume() -> float { return sound_volume_; }
   auto sound_pitch() -> float { return sound_pitch_; }
@@ -85,22 +88,22 @@ class AudioServer {
   /// If a sound play id is currently playing, return the sound.
   auto GetPlayingSound(uint32_t play_id) -> ThreadSource*;
 
-  void Reset();
-  void Process();
+  auto Reset() -> void;
+  auto Process() -> void;
 
   /// Send a component to the audio thread to delete.
-  void DeleteAssetComponent(AssetComponentData* c);
+  auto DeleteAssetComponent(AssetComponentData* c) -> void;
 
-  void UpdateTimerInterval();
-  void UpdateAvailableSources();
-  void UpdateMusicPlayState();
-  void ProcessSoundFades();
+  auto UpdateTimerInterval() -> void;
+  auto UpdateAvailableSources() -> void;
+  auto UpdateMusicPlayState() -> void;
+  auto ProcessSoundFades() -> void;
 
   // Some threads such as audio hold onto allocated Media-Component-Refs to keep
   // media components alive that they need.  Media-Component-Refs, however, must
   // be disposed of in the game thread, so they are passed back to it through
   // this function.
-  void AddSoundRefDelete(const Object::Ref<SoundData>* c);
+  auto AddSoundRefDelete(const Object::Ref<SoundData>* c) -> void;
 
   // Note: should use unique_ptr for this, but build fails on raspberry pi
   // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.

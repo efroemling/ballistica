@@ -22,8 +22,6 @@ const float kTextRowHeight = 32.0f;
 // Encapsulates text-display functionality used by the game thread.
 class TextGraphics {
  public:
-  static void Init();
-
   TextGraphics();
 
   enum class FontPage {

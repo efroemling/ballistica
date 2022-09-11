@@ -19,12 +19,6 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
   std::list<Object::Ref<TextSpanBoundsCacheEntry>>::iterator list_iterator_;
 };
 
-void TextGraphics::Init() {
-  assert(InLogicThread());
-  assert(g_text_graphics == nullptr);
-  g_text_graphics = new TextGraphics();
-}
-
 TextGraphics::TextGraphics() {
   // Init glyph values for our custom font pages
   // (just a 5x5 array currently).

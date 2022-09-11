@@ -9,13 +9,7 @@
 
 namespace ballistica {
 
-Audio::Audio() { assert(InLogicThread()); }
-
-void Audio::Init() {
-  // Init our singleton.
-  assert(g_audio == nullptr);
-  g_audio = new Audio();
-}
+Audio::Audio() {}
 
 void Audio::Reset() {
   assert(InLogicThread());

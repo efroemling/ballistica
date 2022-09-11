@@ -657,26 +657,31 @@ auto Platform::CreateAppFlavor() -> AppFlavor* {
   SDLApp::InitSDL();
 #endif
 
+  AppFlavor* app_flavor{};
+
 #if BA_HEADLESS_BUILD
-  return new AppFlavorHeadless(g_main_thread);
+  app_flavor = new AppFlavorHeadless(g_main_thread);
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
   if (g_app->vr_mode) {
-    return new AppFlavorVR(g_main_thread);
+    app_flavor = new AppFlavorVR(g_main_thread);
   } else {
-    return new SDLApp(g_main_thread);
+    app_flavor = new SDLApp(g_main_thread);
   }
 #elif BA_CARDBOARD_BUILD
-  return new AppFlavorVR(g_main_thread);
+  app_flavor = new AppFlavorVR(g_main_thread);
 #elif BA_SDL_BUILD
-  return new SDLApp(g_main_thread);
+  app_flavor = new SDLApp(g_main_thread);
 #else
-  return new AppFlavor(g_main_thread);
+  app_flavor = new AppFlavor(g_main_thread);
 #endif
+
+  assert(app_flavor);
+  app_flavor->PostInit();
+  return app_flavor;
 }
 
 auto Platform::CreateGraphics() -> Graphics* {
-  assert(InLogicThread());
 #if BA_VR_BUILD
   return new VRGraphics();
 #else

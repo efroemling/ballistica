@@ -122,7 +122,7 @@ extern Assets* g_assets;
 extern AssetsServer* g_assets_server;
 extern Networking* g_networking;
 extern NetworkReader* g_network_reader;
-extern NetworkWriteModule* g_network_writer;
+extern NetworkWriter* g_network_writer;
 extern Platform* g_platform;
 extern Python* g_python;
 extern StdInputModule* g_std_input_module;

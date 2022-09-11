@@ -16,7 +16,7 @@ namespace ballistica {
 /// should not know or care about V2 accounts.
 class PlayerSpec {
  public:
-  /// Init an invalid player-spec
+  /// Create an invalid player-spec.
   PlayerSpec();
   auto operator==(const PlayerSpec& spec) const -> bool;
 

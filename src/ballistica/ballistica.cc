@@ -4,26 +4,33 @@
 
 #include <map>
 
+#include "ballistica/app/app_config.h"
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/assets/assets.h"
 #include "ballistica/assets/assets_server.h"
+#include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
+#include "ballistica/core/context.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/graphics/text/text_graphics.h"
+#include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/networking/network_writer.h"
+#include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20809;
+const int kAppBuildNumber = 20821;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -40,6 +47,7 @@ Audio* g_audio{};
 AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
 BGDynamicsServer* g_bg_dynamics_server{};
+Context* g_context{};
 Game* g_game{};
 Graphics* g_graphics{};
 GraphicsServer* g_graphics_server{};
@@ -49,7 +57,7 @@ Assets* g_assets{};
 AssetsServer* g_assets_server{};
 NetworkReader* g_network_reader{};
 Networking* g_networking{};
-NetworkWriteModule* g_network_writer{};
+NetworkWriter* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
 StdInputModule* g_std_input_module{};
@@ -93,28 +101,35 @@ auto BallisticaMain(int argc, char** argv) -> int {
 
     // Bootstrap our Python environment as early as we can (depends on
     // g_platform for locating OS-specific paths).
-    assert(g_python == nullptr);
     g_python = new Python();
 
     // Create a Thread wrapper around the current (main) thread.
     g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
     Thread::UpdateMainThreadID();
 
-    // Spin up our specific app variation (VR, headless, regular, etc.)
+    // Spin up our specific app and graphics variations
+    // (VR, headless, regular, etc.)
     g_app_flavor = g_platform->CreateAppFlavor();
-    g_app_flavor->PostInit();
+    g_graphics = g_platform->CreateGraphics();
 
     // Various other subsystems.
+    g_graphics_server = new GraphicsServer();
+    g_audio = new Audio();
+    g_audio_server = new AudioServer();
+    g_context = new Context(nullptr);
+    g_text_graphics = new TextGraphics();
+    g_app_config = new AppConfig();
     g_v1_account = new V1Account();
     g_utils = new Utils();
     g_assets = new Assets();
+    g_assets_server = new AssetsServer();
+    g_ui = Object::NewUnmanaged<UI>();
+    g_networking = new Networking();
+    g_input = new Input();
+    g_app_internal = GetAppInternal();
     Scene::Init();
 
     // Spin up our other standard threads.
-    auto* assets_thread{new Thread(ThreadIdentifier::kAssets)};
-    g_app->pausable_threads.push_back(assets_thread);
-    auto* audio_thread{new Thread(ThreadIdentifier::kAudio)};
-    g_app->pausable_threads.push_back(audio_thread);
     auto* logic_thread{new Thread(ThreadIdentifier::kLogic)};
     g_app->pausable_threads.push_back(logic_thread);
     auto* network_write_thread{new Thread(ThreadIdentifier::kNetworkWrite)};
@@ -123,14 +138,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Spin up our subsystems in those threads.
     logic_thread->PushCallSynchronous(
         [logic_thread] { new Game(logic_thread); });
-    network_write_thread->PushCallSynchronous([network_write_thread] {
-      new NetworkWriteModule(network_write_thread);
-    });
-    assets_thread->PushCallSynchronous(
-        [assets_thread] { new AssetsServer(assets_thread); });
-    new GraphicsServer(g_main_thread);
-    audio_thread->PushCallSynchronous(
-        [audio_thread] { new AudioServer(audio_thread); });
+    network_write_thread->PushCallSynchronous(
+        [network_write_thread] { new NetworkWriter(network_write_thread); });
 
     // Now let the platform spin up any other threads/modules it uses.
     // (bg-dynamics in non-headless builds, stdin/stdout where applicable,
@@ -143,6 +152,9 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // -------------------------------------------------------------------------
     // Phase 2: Set things in motion.
     // -------------------------------------------------------------------------
+
+    g_audio_server->Start();
+    g_assets_server->Start();
 
     // Let the app and platform do whatever else it wants here such as adding
     // initial input devices/etc.

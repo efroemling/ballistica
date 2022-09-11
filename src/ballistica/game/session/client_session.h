@@ -85,8 +85,8 @@ class ClientSession : public Session {
   virtual auto OnReset(bool rewind) -> void;
   virtual auto FetchMessages() -> void {}
   virtual void Error(const std::string& description);
-  void End();
-  void DumpFullState(SceneStream* out) override;
+  auto End() -> void;
+  auto DumpFullState(SceneStream* out) -> void override;
 
   /// Reset target base time to equal current. This can be used during command
   /// buffer underruns to cause playback to pause momentarily instead of
@@ -95,8 +95,8 @@ class ClientSession : public Session {
   auto ResetTargetBaseTime() -> void { target_base_time_ = base_time_; }
 
  private:
-  void ClearSessionObjs();
-  void AddCommand(const std::vector<uint8_t>& command);
+  auto ClearSessionObjs() -> void;
+  auto AddCommand(const std::vector<uint8_t>& command) -> void;
 
   auto ReadByte() -> uint8_t;
   auto ReadInt32() -> int32_t;

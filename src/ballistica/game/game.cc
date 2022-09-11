@@ -73,45 +73,27 @@ Game::Game(Thread* thread)
   g_game = this;
 
   try {
-    // Spin up some other game-thread-based stuff.
-    AppConfig::Init();
-    assert(g_graphics == nullptr);
-    g_graphics = g_platform->CreateGraphics();
-    TextGraphics::Init();
-    Audio::Init();
+    // Our thread should hold the Python GIL by default.
+    // TODO(ericf): It could be better to have each individual Python call
+    // we make acquire the GIL. Then we're not holding it during long
+    // bits of C++ logic.
+    thread->SetHoldsPythonGIL();
+
     if (!HeadlessMode()) {
       BGDynamics::Init();
     }
 
     InitSpecialChars();
 
-    Context::Init();
-
     // We want to be informed when our thread is pausing.
     thread->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
 
-    // Waaah does UI need to be a bs::Object?
-    // Update: yes it does in order to be a context target.
-    // (need to be able to create weak-refs to it).
-    assert(g_ui == nullptr);
-    g_ui = Object::NewUnmanaged<UI>();
-    g_ui->PostInit();
-
-    assert(g_networking == nullptr);
-    g_networking = new Networking();
-
-    assert(g_input == nullptr);
-    g_input = new Input();
-
-    g_app_internal = GetAppInternal();
+    g_ui->LogicThreadInit();
 
     // Init python and apply our settings immediately.
     // This way we can get started loading stuff in the background
     // and it'll come in with the correct texture quality etc.
     g_python->Reset(true);
-
-    // We're the thread that 'owns' python so we need to wrangle the GIL.
-    thread->SetOwnsPython();
   } catch (const std::exception& e) {
     // If anything went wrong, trigger a deferred error.
     // This way it is more likely we can show a fatal error dialog

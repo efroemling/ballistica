@@ -12,14 +12,17 @@ namespace ballistica {
 
 class AssetsServer {
  public:
-  explicit AssetsServer(Thread* thread);
-  ~AssetsServer();
-  void PushBeginWriteReplayCall();
-  void PushEndWriteReplayCall();
-  void PushAddMessageToReplayCall(const std::vector<uint8_t>& data);
+  AssetsServer();
+  auto Start() -> void;
+  auto PushBeginWriteReplayCall() -> void;
+  auto PushEndWriteReplayCall() -> void;
+  auto PushAddMessageToReplayCall(const std::vector<uint8_t>& data) -> void;
+  auto PushPendingPreload(Object::Ref<AssetComponentData>* asset_ref_ptr)
+      -> void;
   auto thread() const -> Thread* { return thread_; }
 
  private:
+  auto StartInThread() -> void;
   void Process();
   void WriteReplayMessages();
   Thread* thread_{};
@@ -32,8 +35,6 @@ class AssetsServer {
   Timer* process_timer_{};
   std::vector<Object::Ref<AssetComponentData>*> pending_preloads_;
   std::vector<Object::Ref<AssetComponentData>*> pending_preloads_audio_;
-  friend struct PreloadRunnable;
-  friend class Assets;
 };
 
 }  // namespace ballistica

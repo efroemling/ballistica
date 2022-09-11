@@ -27,25 +27,19 @@ UI::UI() {
 
   // Allow overriding via an environment variable.
   auto* ui_override = getenv("BA_UI_SCALE");
-  bool force_test_small{};
-  bool force_test_medium{};
-  bool force_test_large{};
   if (ui_override) {
     if (ui_override == std::string("small")) {
-      force_test_small = true;
+      scale_ = UIScale::kSmall;
+      force_scale_ = true;
     } else if (ui_override == std::string("medium")) {
-      force_test_medium = true;
+      scale_ = UIScale::kMedium;
+      force_scale_ = true;
     } else if (ui_override == std::string("large")) {
-      force_test_large = true;
+      scale_ = UIScale::kLarge;
+      force_scale_ = true;
     }
   }
-  if (force_test_small) {
-    scale_ = UIScale::kSmall;
-  } else if (force_test_medium) {
-    scale_ = UIScale::kMedium;
-  } else if (force_test_large) {
-    scale_ = UIScale::kLarge;
-  } else {
+  if (!force_scale_) {
     // Use automatic val.
     if (g_buildconfig.iircade_build()) {  // NOLINT(bugprone-branch-clone)
       scale_ = UIScale::kMedium;
@@ -56,17 +50,24 @@ UI::UI() {
       scale_ = g_platform->GetUIScale();
     }
   }
+}
 
+auto UI::LogicThreadInit() -> void {
+  root_ui_ = new RootUI();
   // Make sure we know when forced-ui-scale is enabled.
-  if (force_test_small) {
-    ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING SMALL UI FOR TESTING");
-  } else if (force_test_medium) {
-    ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING MEDIUM UI FOR TESTING");
-  } else if (force_test_large) {
-    ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING LARGE UI FOR TESTING");
+  if (force_scale_) {
+    if (scale_ == UIScale::kSmall) {
+      ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
+      Log("FORCING SMALL UI FOR TESTING");
+    } else if (scale_ == UIScale::kMedium) {
+      ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
+      Log("FORCING MEDIUM UI FOR TESTING");
+    } else if (scale_ == UIScale::kLarge) {
+      ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
+      Log("FORCING LARGE UI FOR TESTING");
+    } else {
+      FatalError("Unhandled scale.");
+    }
   }
 
   step_scene_timer_ =
@@ -74,8 +75,6 @@ UI::UI() {
                             NewLambdaRunnable([this] { StepScene(); }));
   scene_ = Object::New<Scene>(0);
 }
-
-auto UI::PostInit() -> void { root_ui_ = new RootUI(); }
 
 // Currently the UI never dies so we don't bother doing a clean tear-down..
 // (verifying scene cleanup, etc)

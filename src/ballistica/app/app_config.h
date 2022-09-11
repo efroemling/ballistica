@@ -94,7 +94,6 @@ class AppConfig {
     std::string name_;
   };
 
-  static void Init();
   AppConfig();
 
   // Given specific ids, returns resolved values (fastest access).

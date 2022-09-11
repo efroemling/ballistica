@@ -318,17 +318,7 @@ static const char* const scancode_names[SDL_NUM_SCANCODES] = {
 };
 #endif  // BA_SDL2_BUILD || BA_MINSDL_BUILD
 
-Input::Input() {
-  // We're a singleton.
-  // assert(g_input == nullptr);
-  // g_input = this;
-
-  assert(InLogicThread());
-
-  // Config should have always been read by this point; right?
-  // assert(g_python);
-  // UpdateEnabledControllerSubsystems();
-}
+Input::Input() {}
 
 void Input::PushCreateKeyboardInputDevices() {
   g_game->thread()->PushCall([this] { CreateKeyboardInputDevices(); });
@@ -361,8 +351,6 @@ void Input::DestroyKeyboardInputDevices() {
   RemoveInputDevice(keyboard_input_2_, false);
   keyboard_input_2_ = nullptr;
 }
-
-Input::~Input() = default;
 
 auto Input::GetInputDevice(int id) -> InputDevice* {
   if (id < 0 || id >= static_cast<int>(input_devices_.size())) {

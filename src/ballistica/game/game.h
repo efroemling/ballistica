@@ -324,7 +324,7 @@ class Game {
   int last_kick_votes_needed_{-1};
   Object::WeakRef<ConnectionToClient> kick_vote_starter_;
   Object::WeakRef<ConnectionToClient> kick_vote_target_;
-  bool public_party_enabled_{false};
+  bool public_party_enabled_{};
   int public_party_size_{1};  // Always count ourself (is that what we want?).
   int public_party_max_size_{8};
   int public_party_player_count_{0};

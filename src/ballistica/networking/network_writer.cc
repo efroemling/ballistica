@@ -8,14 +8,14 @@
 
 namespace ballistica {
 
-NetworkWriteModule::NetworkWriteModule(Thread* thread) : thread_(thread) {
+NetworkWriter::NetworkWriter(Thread* thread) : thread_(thread) {
   // we're a singleton
   assert(g_network_writer == nullptr);
   g_network_writer = this;
 }
 
-void NetworkWriteModule::PushSendToCall(const std::vector<uint8_t>& msg,
-                                        const SockAddr& addr) {
+void NetworkWriter::PushSendToCall(const std::vector<uint8_t>& msg,
+                                   const SockAddr& addr) {
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!thread()->CheckPushSafety()) {

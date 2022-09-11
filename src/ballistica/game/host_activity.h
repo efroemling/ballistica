@@ -87,8 +87,8 @@ class HostActivity : public ContextTarget {
   auto StepScene() -> void;
 
   Object::WeakRef<GlobalsNode> globals_node_;
-  bool allow_kick_idle_players_ = false;
-  Timer* step_scene_timer_ = nullptr;
+  bool allow_kick_idle_players_{};
+  Timer* step_scene_timer_{};
   std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;
   std::unordered_map<std::string, Object::WeakRef<Sound> > sounds_;
   std::unordered_map<std::string, Object::WeakRef<Data> > datas_;
@@ -96,18 +96,18 @@ class HostActivity : public ContextTarget {
       collide_models_;
   std::unordered_map<std::string, Object::WeakRef<Model> > models_;
   std::list<Object::WeakRef<Material> > materials_;
-  bool shutting_down_ = false;
+  bool shutting_down_{};
 
   // Our list of python calls created in the context of this activity;
   // we clear them as we are shutting down and ensure nothing runs after
   // that point.
   std::list<Object::WeakRef<PythonContextCall> > python_calls_;
-  millisecs_t next_prune_time_ = 0;
-  bool _started = false;
-  int out_of_bounds_in_a_row_ = 0;
-  bool paused_ = false;
-  float game_speed_ = 0.0f;
-  millisecs_t base_time_ = 0;
+  millisecs_t next_prune_time_{};
+  bool _started{};
+  int out_of_bounds_in_a_row_{};
+  bool paused_{};
+  float game_speed_{};
+  millisecs_t base_time_{};
   Object::Ref<Scene> scene_;
   Object::WeakRef<HostSession> host_session_;
   PythonRef py_activity_weak_ref_;

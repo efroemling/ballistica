@@ -17,12 +17,7 @@ struct Networking::ScanResultsEntryPriv {
   millisecs_t last_contact_time{};
 };
 
-Networking::Networking() {
-  assert(InLogicThread());
-  Resume();
-}
-
-Networking::~Networking() = default;
+Networking::Networking() {}
 
 // Note: for now we're making our host-scan network calls directly from the game
 // thread. This is generally not a good idea since it appears that even in
@@ -232,7 +227,9 @@ void Networking::EndHostScanning() {
 }
 
 void Networking::Pause() {
-  if (!running_) Log("Networking::pause() called with running_ already false");
+  if (!running_) {
+    Log("Networking::pause() called with running_ already false");
+  }
   running_ = false;
 
   // Game is going into background or whatnot. Kill any sockets/etc.

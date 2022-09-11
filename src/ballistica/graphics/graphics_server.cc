@@ -30,10 +30,9 @@ void GraphicsServer::FullscreenCheck() {
 }
 #endif
 
-GraphicsServer::GraphicsServer(Thread* thread) : thread_(thread) {
-  // We're a singleton.
+GraphicsServer::GraphicsServer() : thread_(g_main_thread) {
+  // We're a singleton; make sure we don't already exist.
   assert(g_graphics_server == nullptr);
-  g_graphics_server = this;
 
   // For janky old non-event-push mode, just fall back on a timer for rendering.
   if (!g_platform->IsEventPushMode()) {

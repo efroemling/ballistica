@@ -18,7 +18,6 @@ namespace ballistica {
 class Input {
  public:
   Input();
-  virtual ~Input();
 
   // Add an input device. Must be called from the game thread; otherwise use
   // PushAddInputDeviceCall.

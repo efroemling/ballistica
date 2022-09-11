@@ -8,14 +8,6 @@
 
 namespace ballistica {
 
-// Dynamically allocate this; don't want it torn down on quit.
-Context* g_context = nullptr;
-
-void Context::Init() {
-  assert(!g_context);
-  g_context = new Context(nullptr);
-}
-
 ContextTarget::ContextTarget() = default;
 ContextTarget::~ContextTarget() = default;
 

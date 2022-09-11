@@ -1,4 +1,4 @@
-### 1.7.7 (build 20809, api 7, 2022-09-10)
+### 1.7.7 (build 20821, api 7, 2022-09-11)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -23,6 +23,7 @@
 - Renamed C++ App to AppFlavor and AppGlobals to App.
 - Renamed C++ Media to Assets.
 - Removed 'scores to beat' list in coop which was only ever functional in limited cases on the Mac version. Perhaps that feature can reappear in a cross-platform way sometime.
+- Simplified C++ bootstrapping to allocate all globals in one place.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

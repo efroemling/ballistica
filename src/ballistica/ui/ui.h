@@ -31,7 +31,7 @@ namespace ballistica {
 class UI : public ContextTarget {
  public:
   UI();
-  auto PostInit() -> void;
+  auto LogicThreadInit() -> void;
   ~UI() override;
   auto Reset() -> void;
 
@@ -142,6 +142,7 @@ class UI : public ContextTarget {
   Object::Ref<RootWidget> root_widget_;
   int ui_lock_count_{};
   UIScale scale_{UIScale::kLarge};
+  bool force_scale_{};
 
   // Media loaded in the UI context.
   std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;

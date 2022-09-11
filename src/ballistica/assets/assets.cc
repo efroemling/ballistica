@@ -607,20 +607,8 @@ void Assets::MarkComponentForLoad(AssetComponentData* c) {
   // once it makes it back to us we can delete the ref (in
   // ClearPendingLoadsDoneList)
 
-  auto asset_ptr = new Object::Ref<AssetComponentData>(c);
-
-  g_assets_server->thread()->PushCall([asset_ptr] {
-    assert(InAssetsThread());
-
-    // add our pointer to one of the preload lists and shake our preload thread
-    // to wake it up
-    if ((**asset_ptr).GetAssetType() == AssetType::kSound) {
-      g_assets_server->pending_preloads_audio_.push_back(asset_ptr);
-    } else {
-      g_assets_server->pending_preloads_.push_back(asset_ptr);
-    }
-    g_assets_server->process_timer_->SetLength(0);
-  });
+  auto asset_ref_ptr = new Object::Ref<AssetComponentData>(c);
+  g_assets_server->PushPendingPreload(asset_ref_ptr);
 }
 
 #pragma clang diagnostic push

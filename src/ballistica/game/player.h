@@ -147,7 +147,7 @@ class Player : public Object {
 
   // Player's position for use by input devices and whatnot for guides.
   // FIXME: This info should be acquired through the player node.
-  bool have_position_{false};
+  bool have_position_{};
   Vector3f position_{0.0f, 0.0f, 0.0f};
 
   // These should be destructed before the rest of our class goes down,

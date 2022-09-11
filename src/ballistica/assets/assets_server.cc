@@ -12,21 +12,45 @@
 
 namespace ballistica {
 
-AssetsServer::AssetsServer(Thread* thread)
-    : thread_(thread),
-      writing_replay_(false),
+AssetsServer::AssetsServer()
+    : writing_replay_(false),
       replay_message_bytes_(0),
       replays_broken_(false),
       replay_out_file_(nullptr) {
+  // We're a singleton; make sure we don't already exist.
   assert(g_assets_server == nullptr);
-  g_assets_server = this;
 
-  // get our thread to give us periodic processing time...
-  process_timer_ = this->thread()->NewTimer(
-      1000, true, NewLambdaRunnable([this] { Process(); }));
+  // Spin up our thread.
+  thread_ = new Thread(ThreadIdentifier::kAssets);
+  g_app->pausable_threads.push_back(thread_);
 }
 
-AssetsServer::~AssetsServer() = default;
+auto AssetsServer::Start() -> void {
+  thread_->PushCallSynchronous([this] { StartInThread(); });
+}
+
+auto AssetsServer::StartInThread() -> void {
+  assert(InAssetsThread());
+  // get our thread to give us periodic processing time...
+  process_timer_ =
+      thread()->NewTimer(1000, true, NewLambdaRunnable([this] { Process(); }));
+}
+
+auto AssetsServer::PushPendingPreload(
+    Object::Ref<AssetComponentData>* asset_ref_ptr) -> void {
+  thread()->PushCall([this, asset_ref_ptr] {
+    assert(InAssetsThread());
+
+    // Add our pointer to one of the preload lists and shake our preload thread
+    // to wake it up
+    if ((**asset_ref_ptr).GetAssetType() == AssetType::kSound) {
+      pending_preloads_audio_.push_back(asset_ref_ptr);
+    } else {
+      pending_preloads_.push_back(asset_ref_ptr);
+    }
+    process_timer_->SetLength(0);
+  });
+}
 
 void AssetsServer::PushBeginWriteReplayCall() {
   thread()->PushCall([this] {

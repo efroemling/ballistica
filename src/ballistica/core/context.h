@@ -14,8 +14,6 @@ namespace ballistica {
 // effects properly apply to the place they came from.
 class Context {
  public:
-  static void Init();
-
   static auto current() -> const Context& {
     assert(g_context);
 
