@@ -6,7 +6,7 @@
 // note: define overrides BEFORE common header
 #define BA_HEADLESS_BUILD 1
 
-#define BA_USE_STDIN_THREAD 1
+#define BA_ENABLE_STDIO_CONSOLE 1
 
 #define BA_MINSDL_BUILD 1
 

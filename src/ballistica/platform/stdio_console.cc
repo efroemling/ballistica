@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/input/std_input_module.h"
+#include "ballistica/platform/stdio_console.h"
 
 #if BA_OSTYPE_LINUX
 #include <cstring>
@@ -13,12 +13,17 @@
 
 namespace ballistica {
 
-StdInputModule::StdInputModule(Thread* thread) : thread_(thread) {
-  assert(g_std_input_module == nullptr);
-  g_std_input_module = this;
+StdioConsole::StdioConsole() {
+  // We're a singleton; make sure we don't already exist.
+  assert(g_stdio_console == nullptr);
+
+  // Spin up our thread.
+  thread_ = new Thread(ThreadIdentifier::kAssets);
+  g_app->pausable_threads.push_back(thread_);
 }
 
-void StdInputModule::PushBeginReadCall() {
+auto StdioConsole::OnAppStart() -> void {
+  // Tell our thread to start reading.
   thread()->PushCall([this] {
     bool stdin_is_terminal = g_platform->is_stdin_a_terminal();
 
@@ -72,7 +77,7 @@ void StdInputModule::PushBeginReadCall() {
             }
           }
         } else {
-          Log("StdInputModule got non-eof error reading stdin: "
+          Log("StdioConsole got non-eof error reading stdin: "
               + std::to_string(ferror(stdin)));
         }
         break;

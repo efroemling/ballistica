@@ -125,7 +125,7 @@ extern NetworkReader* g_network_reader;
 extern NetworkWriter* g_network_writer;
 extern Platform* g_platform;
 extern Python* g_python;
-extern StdInputModule* g_std_input_module;
+extern StdioConsole* g_stdio_console;
 extern TextGraphics* g_text_graphics;
 extern UI* g_ui;
 extern Utils* g_utils;

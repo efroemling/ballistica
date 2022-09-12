@@ -30,9 +30,9 @@
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/input/std_input_module.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
+#include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
 
 #if BA_HEADLESS_BUILD
@@ -120,7 +120,7 @@ auto Platform::PostInit() -> void {
   ran_base_post_init_ = true;
 
   // Are we running in a terminal?
-  if (g_buildconfig.use_stdin_thread()) {
+  if (g_buildconfig.enable_stdio_console()) {
     is_stdin_a_terminal_ = GetIsStdinATerminal();
   } else {
     is_stdin_a_terminal_ = false;
@@ -531,40 +531,6 @@ void Platform::SleepMS(millisecs_t ms) {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
-// General one-time initialization stuff
-static void Init() {
-  // Sanity check: make sure asserts are stripped out of release builds
-  // (NDEBUG should do this).
-#if !BA_DEBUG_BUILD
-#ifndef NDEBUG
-#error Expected NDEBUG to be defined for release builds.
-#endif  // NDEBUG
-  assert(true);
-#endif  // !BA_DEBUG_BUILD
-
-  // If we're running in a terminal, print some info.
-  if (g_platform->is_stdin_a_terminal()) {
-    if (g_buildconfig.headless_build()) {
-      printf("BallisticaCore Headless %s build %d.\n", kAppVersion,
-             kAppBuildNumber);
-      fflush(stdout);
-    } else {
-      printf("BallisticaCore %s build %d.\n", kAppVersion, kAppBuildNumber);
-      fflush(stdout);
-    }
-  }
-
-  g_app->user_agent_string = g_platform->GetUserAgentString();
-
-  // Figure out where our data is and chdir there.
-  g_platform->SetupDataDirectory();
-
-  // Run these just to make sure these dirs exist.
-  // (otherwise they might not get made if nothing writes to them).
-  g_platform->GetConfigDirectory();
-  g_platform->GetUserPythonDirectory();
-}
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
@@ -649,7 +615,6 @@ auto Platform::CreateAppFlavor() -> AppFlavor* {
 
   // Hmm do these belong here?...
   HandleArgs(g_app->argc, g_app->argv);
-  Init();
 
 // TEMP - need to init sdl on our legacy mac build even though its not
 // technically an SDL app. Kill this once the old mac build is gone.
@@ -698,18 +663,6 @@ auto Platform::GetKeyName(int keycode) -> std::string {
 #else
   return g_input->GetKeyName(keycode);
 #endif
-}
-
-void Platform::CreateAuxiliaryModules() {
-  if (g_buildconfig.use_stdin_thread()) {
-    // Start listening for stdin commands (on platforms where that makes sense).
-    // Note: this thread blocks indefinitely for input so we don't add it to the
-    // pausable list.
-    auto* std_input_thread = new Thread(ThreadIdentifier::kStdin);
-    std_input_thread->PushCallSynchronous(
-        [std_input_thread] { new StdInputModule(std_input_thread); });
-    g_std_input_module->PushBeginReadCall();
-  }
 }
 
 void Platform::WillExitMain(bool errored) {}
@@ -885,7 +838,7 @@ auto Platform::CreateTextTexture(int width, int height,
 
 auto Platform::GetTextTextureData(void* tex) -> uint8_t* { throw Exception(); }
 
-void Platform::OnBootstrapComplete() {}
+void Platform::OnAppStart() {}
 
 auto Platform::ConvertIncomingLeaderboardScore(
     const std::string& leaderboard_id, int score) -> int {

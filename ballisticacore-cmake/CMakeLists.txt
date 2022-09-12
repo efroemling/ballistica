@@ -484,8 +484,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/input/input.h
   ${BA_SRC_ROOT}/ballistica/input/remote_app.cc
   ${BA_SRC_ROOT}/ballistica/input/remote_app.h
-  ${BA_SRC_ROOT}/ballistica/input/std_input_module.cc
-  ${BA_SRC_ROOT}/ballistica/input/std_input_module.h
   ${BA_SRC_ROOT}/ballistica/internal/app_internal.h
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.h
@@ -516,6 +514,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/platform/sdl/sdl_app.cc
   ${BA_SRC_ROOT}/ballistica/platform/sdl/sdl_app.h
+  ${BA_SRC_ROOT}/ballistica/platform/stdio_console.cc
+  ${BA_SRC_ROOT}/ballistica/platform/stdio_console.h
   ${BA_SRC_ROOT}/ballistica/platform/windows/platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/python/class/python_class.cc

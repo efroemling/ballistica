@@ -13,7 +13,7 @@ namespace ballistica {
 class AssetsServer {
  public:
   AssetsServer();
-  auto Start() -> void;
+  auto OnAppStart() -> void;
   auto PushBeginWriteReplayCall() -> void;
   auto PushEndWriteReplayCall() -> void;
   auto PushAddMessageToReplayCall(const std::vector<uint8_t>& data) -> void;

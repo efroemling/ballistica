@@ -173,7 +173,7 @@ class SoundData;
 class SpriteMesh;
 class StackWidget;
 class StressTest;
-class StdInputModule;
+class StdioConsole;
 class Module;
 class TelnetServer;
 class TestInput;

@@ -859,12 +859,6 @@
     <ClInclude Include="..\..\src\ballistica\input\remote_app.h">
       <Filter>ballistica\input</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\input\std_input_module.cc">
-      <Filter>ballistica\input</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\input\std_input_module.h">
-      <Filter>ballistica\input</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\internal\app_internal.h">
       <Filter>ballistica\internal</Filter>
     </ClInclude>
@@ -954,6 +948,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\platform\sdl\sdl_app.h">
       <Filter>ballistica\platform\sdl</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\platform\stdio_console.cc">
+      <Filter>ballistica\platform</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\platform\stdio_console.h">
+      <Filter>ballistica\platform</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\platform\windows\platform_windows.cc">
       <Filter>ballistica\platform\windows</Filter>

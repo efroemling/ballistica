@@ -82,7 +82,7 @@ Game::Game()
   // bits of C++ logic.
   thread_->SetAcquiresPythonGIL();
 }
-auto Game::Start() -> void {
+auto Game::OnAppStart() -> void {
   thread_->PushCallSynchronous([this] { StartInThread(); });
 }
 

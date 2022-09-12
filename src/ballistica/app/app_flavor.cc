@@ -18,20 +18,30 @@ namespace ballistica {
 
 AppFlavor::AppFlavor(Thread* thread)
     : thread_(thread), stress_test_(std::make_unique<StressTest>()) {
-  // assert(g_app_flavor == nullptr);
-  // g_app_flavor = this;
-
   // We modify some app behavior when run under the server manager.
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
 }
 
 void AppFlavor::PostInit() {
-  // If we've got a nice themed hardware cursor, show it.
-  // Otherwise, hide the hardware cursor; we'll draw it in software.
-  // (need to run this in postinit because SDL/etc. may not be inited yet
-  // as of AppFlavor::AppFlavor()).
-  g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
+  // Sanity check: make sure asserts are stripped out of release builds
+  // (NDEBUG should do this).
+#if !BA_DEBUG_BUILD
+#ifndef NDEBUG
+#error Expected NDEBUG to be defined for release builds.
+#endif  // NDEBUG
+  assert(true);
+#endif  // !BA_DEBUG_BUILD
+
+  g_app->user_agent_string = g_platform->GetUserAgentString();
+
+  // Figure out where our data is and chdir there.
+  g_platform->SetupDataDirectory();
+
+  // Run these just to make sure these dirs exist.
+  // (otherwise they might not get made if nothing writes to them).
+  g_platform->GetConfigDirectory();
+  g_platform->GetUserPythonDirectory();
 }
 
 auto AppFlavor::ManagesEventLoop() const -> bool {
@@ -357,9 +367,27 @@ void AppFlavor::PushResetAchievementsCall() {
   thread()->PushCall([] { g_platform->ResetAchievements(); });
 }
 
-void AppFlavor::OnBootstrapComplete() {
+void AppFlavor::OnAppStart() {
   assert(InMainThread());
   assert(g_input);
+
+  // If we're running in a terminal, print some info.
+  if (g_platform->is_stdin_a_terminal()) {
+    if (g_buildconfig.headless_build()) {
+      printf("BallisticaCore Headless %s build %d.\n", kAppVersion,
+             kAppBuildNumber);
+      fflush(stdout);
+    } else {
+      printf("BallisticaCore %s build %d.\n", kAppVersion, kAppBuildNumber);
+      fflush(stdout);
+    }
+  }
+
+  // If we've got a nice themed hardware cursor, show it.
+  // Otherwise, hide the hardware cursor; we'll draw it in software.
+  // (need to run this in postinit because SDL/etc. may not be inited yet
+  // as of AppFlavor::AppFlavor()).
+  g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
 
   if (!HeadlessMode()) {
     // On desktop systems we just assume keyboard input exists and add it

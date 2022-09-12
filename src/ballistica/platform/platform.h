@@ -54,12 +54,11 @@ class Platform {
   /// Create the appropriate Graphics subclass for the app.
   auto CreateGraphics() -> Graphics*;
 
-  virtual auto CreateAuxiliaryModules() -> void;
   virtual auto WillExitMain(bool errored) -> void;
 
   /// Inform the platform that all subsystems are up and running and it can
   /// start talking to them.
-  virtual auto OnBootstrapComplete() -> void;
+  virtual auto OnAppStart() -> void;
 
   // Get/set values before standard game settings are available
   // (for values needed before SDL init/etc).

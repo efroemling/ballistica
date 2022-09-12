@@ -122,8 +122,8 @@ namespace ballistica {
 #error platform string undefined
 #endif
 
-#ifndef BA_USE_STDIN_THREAD
-#define BA_USE_STDIN_THREAD 0
+#ifndef BA_ENABLE_STDIO_CONSOLE
+#define BA_ENABLE_STDIO_CONSOLE 0
 #endif
 
 #ifndef BA_HARDWARE_CURSOR
@@ -240,7 +240,9 @@ class BuildConfig {
 
   bool use_store_kit() const { return EXPBOOL_(BA_USE_STORE_KIT); }
   bool use_game_center() const { return EXPBOOL_(BA_USE_GAME_CENTER); }
-  bool use_stdin_thread() const { return EXPBOOL_(BA_USE_STDIN_THREAD); }
+  bool enable_stdio_console() const {
+    return EXPBOOL_(BA_ENABLE_STDIO_CONSOLE);
+  }
   bool enable_os_font_rendering() const {
     return EXPBOOL_(BA_ENABLE_OS_FONT_RENDERING);
   }

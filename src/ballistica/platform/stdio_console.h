@@ -1,16 +1,16 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_INPUT_STD_INPUT_MODULE_H_
-#define BALLISTICA_INPUT_STD_INPUT_MODULE_H_
+#ifndef BALLISTICA_PLATFORM_STDIO_CONSOLE_H_
+#define BALLISTICA_PLATFORM_STDIO_CONSOLE_H_
 
 #include "ballistica/ballistica.h"
 
 namespace ballistica {
 
-class StdInputModule {
+class StdioConsole {
  public:
-  explicit StdInputModule(Thread* thread);
-  void PushBeginReadCall();
+  StdioConsole();
+  void OnAppStart();
   auto thread() const -> Thread* { return thread_; }
 
  private:
@@ -20,4 +20,4 @@ class StdInputModule {
 
 }  // namespace ballistica
 
-#endif  // BALLISTICA_INPUT_STD_INPUT_MODULE_H_
+#endif  // BALLISTICA_PLATFORM_STDIO_CONSOLE_H_

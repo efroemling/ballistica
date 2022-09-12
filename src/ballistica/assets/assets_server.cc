@@ -12,11 +12,7 @@
 
 namespace ballistica {
 
-AssetsServer::AssetsServer()
-    : writing_replay_(false),
-      replay_message_bytes_(0),
-      replays_broken_(false),
-      replay_out_file_(nullptr) {
+AssetsServer::AssetsServer() {
   // We're a singleton; make sure we don't already exist.
   assert(g_assets_server == nullptr);
 
@@ -25,7 +21,7 @@ AssetsServer::AssetsServer()
   g_app->pausable_threads.push_back(thread_);
 }
 
-auto AssetsServer::Start() -> void {
+auto AssetsServer::OnAppStart() -> void {
   thread_->PushCallSynchronous([this] { StartInThread(); });
 }
 

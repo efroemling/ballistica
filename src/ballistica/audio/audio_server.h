@@ -23,7 +23,7 @@ class AudioServer {
   }
 
   AudioServer();
-  auto Start() -> void;
+  auto OnAppStart() -> void;
 
   auto PushSetVolumesCall(float music_volume, float sound_volume) -> void;
   auto PushSetSoundPitchCall(float val) -> void;

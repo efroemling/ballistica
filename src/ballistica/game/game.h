@@ -25,7 +25,7 @@ const int kMaxPartyNameCombinedSize = 25;
 class Game {
  public:
   Game();
-  auto Start() -> void;
+  auto OnAppStart() -> void;
 
   auto LaunchHostSession(PyObject* session_type_obj,
                          BenchmarkType benchmark_type = BenchmarkType::kNone)

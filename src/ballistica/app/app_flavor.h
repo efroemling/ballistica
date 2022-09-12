@@ -93,7 +93,7 @@ class AppFlavor {
     return server_wrapper_managed_;
   }
 
-  virtual auto OnBootstrapComplete() -> void;
+  virtual auto OnAppStart() -> void;
 
   // Deferred calls that can be made from other threads.
 

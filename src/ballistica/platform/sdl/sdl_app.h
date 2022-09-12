@@ -22,7 +22,7 @@ class SDLApp : public AppFlavor {
   auto SetAutoVSync(bool enable) -> void;
   static auto SDLJoystickConnected(int index) -> void;
   static auto SDLJoystickDisconnected(int index) -> void;
-  auto OnBootstrapComplete() -> void override;
+  auto OnAppStart() -> void override;
 
   /// Return g_app_flavor as a SDLApp. (assumes it actually is one).
   static SDLApp* get() {

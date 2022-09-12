@@ -24,6 +24,7 @@
 #include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
+#include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
 #include "ballistica/ui/ui.h"
@@ -31,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20823;
+const int kAppBuildNumber = 20825;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -61,7 +62,7 @@ NetworkReader* g_network_reader{};
 NetworkWriter* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
-StdInputModule* g_std_input_module{};
+StdioConsole* g_stdio_console{};
 TextGraphics* g_text_graphics{};
 UI* g_ui{};
 Utils* g_utils{};
@@ -70,9 +71,9 @@ Utils* g_utils{};
 // 1: All threads and globals are created and provisioned. Everything above
 //    should exist at the end of this step (if it is going to exist).
 //    Threads should not be talking to each other yet at this point.
-// 2: The system is set in motion. Game thread is told to load/apply the config.
-//    This event kicks off an initial-screen-creation message sent to the
-//    graphics-server thread. Other systems are informed that bootstrapping
+// 2: The system is set in motion. The logic thread is told to load/apply the
+//    config. This event kicks off an initial-screen-creation message sent to
+//    the graphics-server thread. Other systems are informed that bootstrapping
 //    is complete and that they are free to talk to each other. Initial
 //    input-devices are added, asset loads can begin (at least ones not
 //    dependent on the screen/renderer), etc.
@@ -97,8 +98,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // -------------------------------------------------------------------------
 
     // Absolute bare-bones basics.
-    g_app = new App(argc, argv);
     g_platform = Platform::Create();
+    g_app = new App(argc, argv);
 
     // Create a Thread wrapper around the current (main) thread.
     g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
@@ -134,13 +135,9 @@ auto BallisticaMain(int argc, char** argv) -> int {
       g_bg_dynamics = new BGDynamics();
       g_bg_dynamics_server = new BGDynamicsServer();
     }
-
-    // FIXME - move this later but need to init Python earlier then.
-    g_game->Start();
-
-    // NOTE TO SELF: this starts reading stdin and py-init hangs if we do
-    // it after here.
-    g_platform->CreateAuxiliaryModules();
+    if (g_buildconfig.enable_stdio_console()) {
+      g_stdio_console = new StdioConsole();
+    }
 
     // Ok at this point we can be considered up-and-running.
     g_app->is_bootstrapped = true;
@@ -149,14 +146,14 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 2: Set things in motion.
     // -------------------------------------------------------------------------
 
-    g_audio_server->Start();
-    g_assets_server->Start();
-
-    // Let the app and platform do whatever else it wants here such as adding
-    // initial input devices/etc.
-    g_app_flavor->OnBootstrapComplete();
-    g_platform->OnBootstrapComplete();
-
+    g_game->OnAppStart();
+    g_audio_server->OnAppStart();
+    g_assets_server->OnAppStart();
+    g_platform->OnAppStart();
+    g_app_flavor->OnAppStart();
+    if (g_stdio_console) {
+      g_stdio_console->OnAppStart();
+    }
     // Ok; now that we're bootstrapped, tell the game thread to read and apply
     // the config which should kick off the real action.
     g_game->PushApplyConfigCall();

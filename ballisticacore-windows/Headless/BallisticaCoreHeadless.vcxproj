@@ -470,8 +470,6 @@
     <ClInclude Include="..\..\src\ballistica\input\input.h" />
     <ClCompile Include="..\..\src\ballistica\input\remote_app.cc" />
     <ClInclude Include="..\..\src\ballistica\input\remote_app.h" />
-    <ClCompile Include="..\..\src\ballistica\input\std_input_module.cc" />
-    <ClInclude Include="..\..\src\ballistica\input\std_input_module.h" />
     <ClInclude Include="..\..\src\ballistica\internal\app_internal.h" />
     <ClCompile Include="..\..\src\ballistica\math\matrix44f.cc" />
     <ClInclude Include="..\..\src\ballistica\math\matrix44f.h" />
@@ -502,6 +500,8 @@
     <ClInclude Include="..\..\src\ballistica\platform\platform.h" />
     <ClCompile Include="..\..\src\ballistica\platform\sdl\sdl_app.cc" />
     <ClInclude Include="..\..\src\ballistica\platform\sdl\sdl_app.h" />
+    <ClCompile Include="..\..\src\ballistica\platform\stdio_console.cc" />
+    <ClInclude Include="..\..\src\ballistica\platform\stdio_console.h" />
     <ClCompile Include="..\..\src\ballistica\platform\windows\platform_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\python\class\python_class.cc" />

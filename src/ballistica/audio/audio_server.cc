@@ -330,7 +330,7 @@ AudioServer::AudioServer() : impl_{new AudioServer::Impl()} {
   g_app->pausable_threads.push_back(thread_);
 }
 
-auto AudioServer::Start() -> void {
+auto AudioServer::OnAppStart() -> void {
   thread_->PushCallSynchronous([this] { StartInThread(); });
 }
 

@@ -488,8 +488,8 @@ void SDLApp::SetAutoVSync(bool enable) {
   }
 }
 
-void SDLApp::OnBootstrapComplete() {
-  AppFlavor::OnBootstrapComplete();
+void SDLApp::OnAppStart() {
+  AppFlavor::OnAppStart();
 
   if (!HeadlessMode() && g_buildconfig.enable_sdl_joysticks()) {
     // Add initial sdl joysticks. any added/removed after this will be handled
