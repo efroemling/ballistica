@@ -162,6 +162,7 @@ class RootUI;
 class RootWidget;
 class Runnable;
 class Scene;
+class SceneV1;
 class SceneStream;
 class ScoreToBeat;
 class SDLApp;

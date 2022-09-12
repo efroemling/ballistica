@@ -637,6 +637,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/scene/scene.h
   ${BA_SRC_ROOT}/ballistica/scene/scene_stream.cc
   ${BA_SRC_ROOT}/ballistica/scene/scene_stream.h
+  ${BA_SRC_ROOT}/ballistica/scene/v1/scene_v1.cc
+  ${BA_SRC_ROOT}/ballistica/scene/v1/scene_v1.h
   ${BA_SRC_ROOT}/ballistica/ui/console.cc
   ${BA_SRC_ROOT}/ballistica/ui/console.h
   ${BA_SRC_ROOT}/ballistica/ui/root_ui.cc

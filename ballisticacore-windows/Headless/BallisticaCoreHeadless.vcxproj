@@ -623,6 +623,8 @@
     <ClInclude Include="..\..\src\ballistica\scene\scene.h" />
     <ClCompile Include="..\..\src\ballistica\scene\scene_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\scene\scene_stream.h" />
+    <ClCompile Include="..\..\src\ballistica\scene\v1\scene_v1.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene\v1\scene_v1.h" />
     <ClCompile Include="..\..\src\ballistica\ui\console.cc" />
     <ClInclude Include="..\..\src\ballistica\ui\console.h" />
     <ClCompile Include="..\..\src\ballistica\ui\root_ui.cc" />

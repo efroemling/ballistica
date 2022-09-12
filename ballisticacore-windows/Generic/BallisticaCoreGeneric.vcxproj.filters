@@ -1318,6 +1318,12 @@
     <ClInclude Include="..\..\src\ballistica\scene\scene_stream.h">
       <Filter>ballistica\scene</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene\v1\scene_v1.cc">
+      <Filter>ballistica\scene\v1</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene\v1\scene_v1.h">
+      <Filter>ballistica\scene\v1</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui\console.cc">
       <Filter>ballistica\ui</Filter>
     </ClCompile>
@@ -1677,6 +1683,7 @@
     <Filter Include="ballistica\python\methods" />
     <Filter Include="ballistica\scene" />
     <Filter Include="ballistica\scene\node" />
+    <Filter Include="ballistica\scene\v1" />
     <Filter Include="ballistica\ui" />
     <Filter Include="ballistica\ui\widget" />
     <Filter Include="external" />

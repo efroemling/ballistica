@@ -10,11 +10,9 @@
 #include "ballistica/assets/assets_server.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
-#include "ballistica/core/context.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/text/text_graphics.h"
@@ -27,12 +25,13 @@
 #include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/v1/scene_v1.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20831;
+const int kAppBuildNumber = 20833;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -62,6 +61,7 @@ NetworkReader* g_network_reader{};
 NetworkWriter* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
+SceneV1* g_scene_v1{};
 StdioConsole* g_stdio_console{};
 TextGraphics* g_text_graphics{};
 UI* g_ui{};
@@ -104,7 +104,6 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Create a Thread wrapper around the current (main) thread.
     g_main_thread =
         new Thread(ThreadIdentifier::kMain, ThreadSource::kWrapMain);
-    Thread::UpdateMainThreadID();
 
     // Bootstrap our Python environment as early as we can (depends on
     // g_platform for locating OS-specific paths).
@@ -131,7 +130,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_input = new Input();
     g_app_internal = CreateAppInternal();
     g_logic = new Logic();
-    Scene::Init();
+    g_scene_v1 = new SceneV1();
     if (!HeadlessMode()) {
       g_bg_dynamics = new BGDynamics();
       g_bg_dynamics_server = new BGDynamicsServer();
@@ -140,7 +139,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
       g_stdio_console = new StdioConsole();
     }
 
-    // Ok at this point we can be considered up-and-running.
+    // At this point all of our globals should exist.
     g_app->is_bootstrapped = true;
 
     // -------------------------------------------------------------------------

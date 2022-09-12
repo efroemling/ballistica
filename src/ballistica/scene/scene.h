@@ -15,7 +15,6 @@ namespace ballistica {
 
 class Scene : public Object {
  public:
-  static auto Init() -> void;
   explicit Scene(millisecs_t starttime);
   ~Scene() override;
   auto Step() -> void;
@@ -85,9 +84,6 @@ class Scene : public Object {
   auto set_globals_node(GlobalsNode* node) -> void { globals_node_ = node; }
 
  private:
-  static auto SetupNodeMessageType(const std::string& name, NodeMessageType val,
-                                   const std::string& format) -> void;
-
   GlobalsNode* globals_node_{};  // Current globals node (if any).
   std::unordered_map<int, Object::WeakRef<PlayerNode> > player_nodes_;
   int64_t stream_id_{-1};
