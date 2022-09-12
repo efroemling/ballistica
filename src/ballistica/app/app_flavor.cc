@@ -278,11 +278,7 @@ void AppFlavor::PushNetworkSetupCall(int port, int telnet_port,
                                      const std::string& telnet_password) {
   thread()->PushCall([port, telnet_port, enable_telnet, telnet_password] {
     assert(InMainThread());
-    // Kick these off if they don't exist.
-    // (do we want to support changing ports on existing ones?)
-    if (g_network_reader == nullptr) {
-      new NetworkReader(port);
-    }
+    g_network_reader->SetPort(port);
     if (g_app->telnet_server == nullptr && enable_telnet) {
       new TelnetServer(telnet_port);
       assert(g_app->telnet_server);

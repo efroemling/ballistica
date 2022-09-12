@@ -19,6 +19,7 @@
 #include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
 #include "ballistica/logic/v1_account.h"
+#include "ballistica/networking/network_reader.h"
 #include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
@@ -31,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20835;
+const int kAppBuildNumber = 20837;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -103,6 +104,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_assets_server = new AssetsServer();
     g_ui = Object::NewUnmanaged<UI>();
     g_networking = new Networking();
+    g_network_reader = new NetworkReader();
     g_network_writer = new NetworkWriter();
     g_input = new Input();
     g_app_internal = CreateAppInternal();

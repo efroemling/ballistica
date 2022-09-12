@@ -15,10 +15,19 @@
 
 namespace ballistica {
 
-NetworkReader::NetworkReader(int port) : port4_(port), port6_(port) {
-  thread_ = new std::thread(RunThreadStatic, this);
+NetworkReader::NetworkReader() {
+  // We're a singleton; make sure we don't exist.
   assert(g_network_reader == nullptr);
-  g_network_reader = this;
+}
+
+auto NetworkReader::SetPort(int port) -> void {
+  assert(InMainThread());
+  // Currently can't switch once this is set.
+  if (port4_ != -1) {
+    return;
+  }
+  port4_ = port6_ = port;
+  thread_ = new std::thread(RunThreadStatic, this);
 }
 
 auto NetworkReader::Pause() -> void {

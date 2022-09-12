@@ -21,7 +21,8 @@ namespace ballistica {
 // ensure the sockets exist before doing the actual write.
 class NetworkReader {
  public:
-  explicit NetworkReader(int port);
+  NetworkReader();
+  auto SetPort(int port) -> void;
   auto Pause() -> void;
   auto Resume() -> void;
   auto port4() const { return port4_; }
