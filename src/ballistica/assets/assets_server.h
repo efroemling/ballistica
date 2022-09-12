@@ -22,7 +22,7 @@ class AssetsServer {
   auto thread() const -> Thread* { return thread_; }
 
  private:
-  auto StartInThread() -> void;
+  auto OnAppStartInThread() -> void;
   void Process();
   void WriteReplayMessages();
   Thread* thread_{};

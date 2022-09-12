@@ -76,23 +76,24 @@ Logic::Logic()
   // Spin up our thread.
   thread_ = new Thread(ThreadIdentifier::kLogic);
   g_app->pausable_threads.push_back(thread_);
-  // Our thread should hold the Python GIL by default.
-  // TODO(ericf): It could be better to have each individual Python call
-  // we make acquire the GIL. Then we're not holding it during long
-  // bits of C++ logic.
-  thread_->SetAcquiresPythonGIL();
 }
 auto Logic::OnAppStart() -> void {
-  thread_->PushCallSynchronous([this] { StartInThread(); });
+  thread_->PushCallSynchronous([this] { OnAppStartInThread(); });
 }
 
-auto Logic::StartInThread() -> void {
+auto Logic::OnAppStartInThread() -> void {
   try {
+    // Our thread should hold the Python GIL any time it is running.
+    // TODO(ericf): It could be better to have each individual Python call
+    // we make acquire the GIL. Then we're not holding it during long
+    // bits of C++ logic.
+    thread_->SetAcquiresPythonGIL();
+
     // We want to be informed when our thread is pausing.
     thread()->AddPauseCallback(
         NewLambdaRunnableRaw([this] { OnThreadPause(); }));
 
-    g_ui->LogicThreadInit();
+    g_ui->OnAppStart();
 
     // Init python and apply our settings immediately.
     // This way we can get started loading stuff in the background

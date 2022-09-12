@@ -32,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20829;
+const int kAppBuildNumber = 20831;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -102,7 +102,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app = new App(argc, argv);
 
     // Create a Thread wrapper around the current (main) thread.
-    g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
+    g_main_thread =
+        new Thread(ThreadIdentifier::kMain, ThreadSource::kWrapMain);
     Thread::UpdateMainThreadID();
 
     // Bootstrap our Python environment as early as we can (depends on

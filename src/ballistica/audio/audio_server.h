@@ -70,7 +70,7 @@ class AudioServer {
   class ThreadSource;
   struct Impl;
 
-  auto StartInThread() -> void;
+  auto OnAppStartInThread() -> void;
   ~AudioServer();
 
   auto OnThreadPause() -> void;

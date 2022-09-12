@@ -986,11 +986,11 @@ enum class NodeAttributeType {
   kCollideModelArray
 };
 
-enum class ThreadType {
+enum class ThreadSource {
   /// A normal thread spun up by us.
-  kStandard,
+  kCreate,
   /// For wrapping a ballistica thread around the existing main thread.
-  kMain
+  kWrapMain
 };
 
 /// Used for module-thread identification.

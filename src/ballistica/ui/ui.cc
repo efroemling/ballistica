@@ -52,7 +52,9 @@ UI::UI() {
   }
 }
 
-auto UI::LogicThreadInit() -> void {
+auto UI::OnAppStart() -> void {
+  assert(InLogicThread());
+
   root_ui_ = new RootUI();
   // Make sure we know when forced-ui-scale is enabled.
   if (force_scale_) {

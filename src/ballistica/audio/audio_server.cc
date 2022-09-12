@@ -331,10 +331,10 @@ AudioServer::AudioServer() : impl_{new AudioServer::Impl()} {
 }
 
 auto AudioServer::OnAppStart() -> void {
-  thread_->PushCallSynchronous([this] { StartInThread(); });
+  thread_->PushCallSynchronous([this] { OnAppStartInThread(); });
 }
 
-auto AudioServer::StartInThread() -> void {
+auto AudioServer::OnAppStartInThread() -> void {
   assert(InAudioThread());
   thread()->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
   thread()->AddResumeCallback(

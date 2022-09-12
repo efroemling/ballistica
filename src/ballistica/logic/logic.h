@@ -245,7 +245,7 @@ class Logic {
   auto thread() const -> Thread* { return thread_; }
 
  private:
-  auto StartInThread() -> void;
+  auto OnAppStartInThread() -> void;
   auto HandleQuitOnIdle() -> void;
   auto InitSpecialChars() -> void;
   auto Draw() -> void;

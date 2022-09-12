@@ -24,7 +24,7 @@ const int kThreadMessageSafetyThreshold{500};
 class Thread {
  public:
   explicit Thread(ThreadIdentifier id,
-                  ThreadType type_in = ThreadType::kStandard);
+                  ThreadSource source = ThreadSource::kCreate);
   virtual ~Thread();
 
   auto ClearCurrentThreadName() -> void;
@@ -56,12 +56,6 @@ class Thread {
 
   auto RunEventLoop(bool single_cycle = false) -> int;
   auto identifier() const -> ThreadIdentifier { return identifier_; }
-
-  auto CheckPushRunnableSafety() -> bool {
-    // We first complain when we get to 1000 queued messages so
-    // let's consider things unsafe when we're halfway there.
-    return (thread_message_count_ < kThreadMessageSafetyThreshold);
-  }
 
   // Register a timer to run on the thread.
   auto NewTimer(millisecs_t length, bool repeat,
@@ -116,7 +110,7 @@ class Thread {
     explicit ThreadMessage(Type type, Runnable* runnable, bool* completion_flag)
         : type(type), runnable(runnable), completion_flag{completion_flag} {}
   };
-
+  auto CheckPushRunnableSafety() -> bool;
   auto SetInternalThreadName(const std::string& name) -> void;
   auto WaitForNextEvent(bool single_cycle) -> void;
   auto LoopUpkeep(bool once) -> void;
@@ -132,7 +126,7 @@ class Thread {
   int messages_since_paused_{};
   millisecs_t last_paused_message_report_time_{};
   bool done_{};
-  ThreadType type_;
+  ThreadSource source_;
   int listen_sd_{};
   std::thread::id thread_id_{};
   ThreadIdentifier identifier_{ThreadIdentifier::kInvalid};
@@ -162,7 +156,6 @@ class Thread {
   auto RunPauseCallbacks() -> void;
   auto RunResumeCallbacks() -> void;
 
-  int thread_message_count_{};
   bool bootstrapped_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> pause_callbacks_;

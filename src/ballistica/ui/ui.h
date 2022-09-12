@@ -31,7 +31,7 @@ namespace ballistica {
 class UI : public ContextTarget {
  public:
   UI();
-  auto LogicThreadInit() -> void;
+  auto OnAppStart() -> void;
   ~UI() override;
   auto Reset() -> void;
 

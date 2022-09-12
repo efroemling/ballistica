@@ -22,10 +22,10 @@ AssetsServer::AssetsServer() {
 }
 
 auto AssetsServer::OnAppStart() -> void {
-  thread_->PushCallSynchronous([this] { StartInThread(); });
+  thread_->PushCallSynchronous([this] { OnAppStartInThread(); });
 }
 
-auto AssetsServer::StartInThread() -> void {
+auto AssetsServer::OnAppStartInThread() -> void {
   assert(InAssetsThread());
   // get our thread to give us periodic processing time...
   process_timer_ =

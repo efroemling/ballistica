@@ -95,24 +95,24 @@ void Thread::WaitForNextEvent(bool single_cycle) {
     millisecs_t wait_time = timers_.GetTimeToNextExpire(real_time);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
-      if (thread_message_count_ == 0) {
+      if (thread_messages_.empty()) {
         thread_message_cv_.wait_for(lock, std::chrono::milliseconds(wait_time),
                                     [this] {
                                       // Go back to sleep on spurious wakeups
                                       // if we didn't wind up with any new
                                       // messages.
-                                      return (thread_message_count_ > 0);
+                                      return !thread_messages_.empty();
                                     });
       }
     }
   } else {
     // Not running timers; just wait indefinitely for the next message.
     std::unique_lock<std::mutex> lock(thread_message_mutex_);
-    if (thread_message_count_ == 0) {
+    if (thread_messages_.empty()) {
       thread_message_cv_.wait(lock, [this] {
         // Go back to sleep on spurious wakeups
         // (if we didn't wind up with any new messages).
-        return (thread_message_count_ > 0);
+        return !(thread_messages_.empty());
       });
     }
   }
@@ -202,20 +202,16 @@ void Thread::GetThreadMessages(std::list<ThreadMessage>* messages) {
 
   // Make sure they passed an empty one in.
   assert(messages->empty());
-  if (thread_message_count_ > 0) {
-    std::unique_lock<std::mutex> lock(thread_message_mutex_);
-    assert(thread_messages_.size() == thread_message_count_);
+  std::scoped_lock lock(thread_message_mutex_);
+  if (!thread_messages_.empty()) {
     messages->swap(thread_messages_);
-    thread_message_count_ = 0;
   }
 }
 
-Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
-    : type_(type_in), identifier_(identifier_in) {
-  switch (type_) {
-    case ThreadType::kStandard: {
-      // Lock down until the thread is up and running. It'll unlock us when
-      // it's ready to go.
+Thread::Thread(ThreadIdentifier identifier_in, ThreadSource source)
+    : source_(source), identifier_(identifier_in) {
+  switch (source_) {
+    case ThreadSource::kCreate: {
       int (*func)(void*);
       switch (identifier_) {
         case ThreadIdentifier::kLogic:
@@ -254,7 +250,7 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
 
       break;
     }
-    case ThreadType::kMain: {
+    case ThreadSource::kWrapMain: {
       // We've got no thread of our own to launch
       // so we run our setup stuff right here instead of off in some.
       assert(std::this_thread::get_id() == g_app->main_thread_id);
@@ -274,7 +270,7 @@ Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
 
 auto Thread::ThreadMain() -> int {
   try {
-    assert(type_ == ThreadType::kStandard);
+    assert(source_ == ThreadSource::kCreate);
     thread_id_ = std::this_thread::get_id();
     const char* name;
     const char* id_string;
@@ -321,10 +317,7 @@ auto Thread::ThreadMain() -> int {
 
     // Mark ourself as bootstrapped and signal listeners so
     // anyone waiting for us to spin up can move along.
-    {
-      std::scoped_lock lock(client_listener_mutex_);
-      bootstrapped_ = true;
-    }
+    bootstrapped_ = true;
     client_listener_cv_.notify_all();
 
     // Now just run our loop until we die.
@@ -358,14 +351,16 @@ auto Thread::ThreadMain() -> int {
 }
 
 void Thread::SetAcquiresPythonGIL() {
+  assert(!acquires_python_gil_);  // This should be called exactly once.
+  assert(IsCurrent());
   acquires_python_gil_ = true;
   g_python->AcquireGIL();
 }
 
 // Explicitly kill the main thread.
 void Thread::Quit() {
-  assert(type_ == ThreadType::kMain);
-  if (type_ == ThreadType::kMain) {
+  assert(source_ == ThreadSource::kWrapMain);
+  if (source_ == ThreadSource::kWrapMain) {
     done_ = true;
   }
 }
@@ -431,13 +426,10 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
 
-    // Keep our own count; apparently size() on an stl list involves
-    // iterating.
+    // Keep our own count; apparently size() on an stl list involves iterating.
     // FIXME: Actually I don't think this is the case anymore; should check.
-    thread_message_count_++;
-    assert(thread_message_count_ == thread_messages_.size());
 
-    // Show message count states.
+    // Debugging: show message count states.
     if (explicit_bool(false)) {
       static int one_off = 0;
       static int foo = 0;
@@ -445,7 +437,7 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       one_off++;
 
       // Show momemtary spikes.
-      if (thread_message_count_ > 100 && one_off > 100) {
+      if (thread_messages_.size() > 100 && one_off > 100) {
         one_off = 0;
         foo = 999;
       }
@@ -453,11 +445,11 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       // Show count periodically.
       if ((std::this_thread::get_id() == g_app->main_thread_id) && foo > 100) {
         foo = 0;
-        Log("MSG COUNT " + std::to_string(thread_message_count_));
+        Log("MSG COUNT " + std::to_string(thread_messages_.size()));
       }
     }
 
-    if (thread_message_count_ > 1000) {
+    if (thread_messages_.size() > 1000) {
       static bool sent_error = false;
       if (!sent_error) {
         sent_error = true;
@@ -468,9 +460,9 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
     }
 
     // Prevent runaway mem usage if the list gets out of control.
-    if (thread_message_count_ > 10000) {
-      throw Exception("KILLING APP: ThreadMessage list > 10000 in thread: "
-                      + GetCurrentThreadName());
+    if (thread_messages_.size() > 10000) {
+      FatalError("ThreadMessage list > 10000 in thread: "
+                 + GetCurrentThreadName());
     }
 
     // Unlock thread-message list and inform thread that there's something
@@ -616,6 +608,13 @@ auto Thread::CheckPushSafety() -> bool {
   } else {
     return CheckPushRunnableSafety();
   }
+}
+auto Thread::CheckPushRunnableSafety() -> bool {
+  std::scoped_lock lock(client_listener_mutex_);
+
+  // We first complain when we get to 1000 queued messages so
+  // let's consider things unsafe when we're halfway there.
+  return (thread_messages_.size() < kThreadMessageSafetyThreshold);
 }
 
 }  // namespace ballistica
