@@ -997,7 +997,7 @@ enum class ThreadSource {
 /// Used for module-thread identification.
 /// Mostly just for debugging, through a few things are affected by this
 /// (the Logic thread manages the python GIL, etc).
-enum class ThreadIdentifier {
+enum class ThreadTag {
   kInvalid,
   kLogic,
   kAssets,

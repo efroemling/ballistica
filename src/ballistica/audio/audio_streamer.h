@@ -15,8 +15,8 @@ namespace ballistica {
 // Provider for streamed audio data.
 class AudioStreamer : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kAudio;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kAudio;
   }
   AudioStreamer(const char* file_name, ALuint source, bool loop);
   ~AudioStreamer() override;

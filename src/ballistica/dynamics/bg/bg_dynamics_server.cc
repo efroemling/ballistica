@@ -667,7 +667,7 @@ BGDynamicsServer::BGDynamicsServer()
   BA_PRECONDITION(g_bg_dynamics_server == nullptr);
 
   // Spin up our thread.
-  thread_ = new Thread(ThreadIdentifier::kBGDynamics);
+  thread_ = new Thread(ThreadTag::kBGDynamics);
   g_app->pausable_threads.push_back(thread_);
 
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)

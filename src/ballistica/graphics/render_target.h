@@ -11,8 +11,8 @@ namespace ballistica {
 // Encapsulates framebuffers, main windows, etc.
 class RenderTarget : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kMain;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kMain;
   }
   enum class Type { kScreen, kFramebuffer };
   explicit RenderTarget(Type type);

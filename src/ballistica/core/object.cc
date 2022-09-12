@@ -126,8 +126,8 @@ auto Object::GetObjectDescription() const -> std::string {
          + ">";
 }
 
-auto Object::GetDefaultOwnerThread() const -> ThreadIdentifier {
-  return ThreadIdentifier::kLogic;
+auto Object::GetDefaultOwnerThread() const -> ThreadTag {
+  return ThreadTag::kLogic;
 }
 
 auto Object::GetThreadOwnership() const -> Object::ThreadOwnership {
@@ -141,19 +141,19 @@ auto Object::GetThreadOwnership() const -> Object::ThreadOwnership {
 
 #if BA_DEBUG_BUILD
 
-static auto GetCurrentThreadIdentifier() -> ThreadIdentifier {
+static auto GetCurrentThreadTag() -> ThreadTag {
   if (InMainThread()) {
-    return ThreadIdentifier::kMain;
+    return ThreadTag::kMain;
   } else if (InLogicThread()) {
-    return ThreadIdentifier::kLogic;
+    return ThreadTag::kLogic;
   } else if (InAudioThread()) {
-    return ThreadIdentifier::kAudio;
+    return ThreadTag::kAudio;
   } else if (InNetworkWriteThread()) {
-    return ThreadIdentifier::kNetworkWrite;
+    return ThreadTag::kNetworkWrite;
   } else if (InAssetsThread()) {
-    return ThreadIdentifier::kAssets;
+    return ThreadTag::kAssets;
   } else if (InBGDynamicsThread()) {
-    return ThreadIdentifier::kBGDynamics;
+    return ThreadTag::kBGDynamics;
   } else {
     throw Exception(std::string("unrecognized thread: ")
                     + GetCurrentThreadName());
@@ -166,8 +166,8 @@ auto Object::ObjectUpdateForAcquire() -> void {
   // If we're set to use the next-referencing thread and haven't set one
   // yet, do so.
   if (thread_ownership == ThreadOwnership::kNextReferencing
-      && owner_thread_ == ThreadIdentifier::kInvalid) {
-    owner_thread_ = GetCurrentThreadIdentifier();
+      && owner_thread_ == ThreadTag::kInvalid) {
+    owner_thread_ = GetCurrentThreadTag();
   }
 }
 
@@ -178,7 +178,7 @@ auto Object::ObjectThreadCheck() -> void {
 
   ThreadOwnership thread_ownership = GetThreadOwnership();
 
-  ThreadIdentifier t;
+  ThreadTag t;
   if (thread_ownership == ThreadOwnership::kClassDefault) {
     t = GetDefaultOwnerThread();
   } else {
@@ -189,32 +189,32 @@ auto Object::ObjectThreadCheck() -> void {
                   + "; expected " THREADNAME " thread; got "               \
                   + GetCurrentThreadName())
   switch (t) {
-    case ThreadIdentifier::kMain:
+    case ThreadTag::kMain:
       if (!InMainThread()) {
         DO_FAIL("Main");
       }
       break;
-    case ThreadIdentifier::kLogic:
+    case ThreadTag::kLogic:
       if (!InLogicThread()) {
         DO_FAIL("Logic");
       }
       break;
-    case ThreadIdentifier::kAudio:
+    case ThreadTag::kAudio:
       if (!InAudioThread()) {
         DO_FAIL("Audio");
       }
       break;
-    case ThreadIdentifier::kNetworkWrite:
+    case ThreadTag::kNetworkWrite:
       if (!InNetworkWriteThread()) {
         DO_FAIL("NetworkWrite");
       }
       break;
-    case ThreadIdentifier::kAssets:
+    case ThreadTag::kAssets:
       if (!InAssetsThread()) {
         DO_FAIL("Assets");
       }
       break;
-    case ThreadIdentifier::kBGDynamics:
+    case ThreadTag::kBGDynamics:
       if (!InBGDynamicsThread()) {
         DO_FAIL("BGDynamics");
       }

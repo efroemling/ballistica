@@ -18,7 +18,7 @@ StdioConsole::StdioConsole() {
   assert(g_stdio_console == nullptr);
 
   // Spin up our thread.
-  thread_ = new Thread(ThreadIdentifier::kAssets);
+  thread_ = new Thread(ThreadTag::kAssets);
   g_app->pausable_threads.push_back(thread_);
 }
 

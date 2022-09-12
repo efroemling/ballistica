@@ -11,8 +11,8 @@ namespace ballistica {
 // this is provided by the renderer
 class ModelRendererData : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kMain;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kMain;
   }
 };
 

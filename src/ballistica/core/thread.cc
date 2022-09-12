@@ -208,31 +208,31 @@ void Thread::GetThreadMessages(std::list<ThreadMessage>* messages) {
   }
 }
 
-Thread::Thread(ThreadIdentifier identifier_in, ThreadSource source)
+Thread::Thread(ThreadTag identifier_in, ThreadSource source)
     : source_(source), identifier_(identifier_in) {
   switch (source_) {
     case ThreadSource::kCreate: {
       int (*func)(void*);
       switch (identifier_) {
-        case ThreadIdentifier::kLogic:
+        case ThreadTag::kLogic:
           func = RunLogicThread;
           break;
-        case ThreadIdentifier::kAssets:
+        case ThreadTag::kAssets:
           func = RunAssetsThread;
           break;
-        case ThreadIdentifier::kMain:
+        case ThreadTag::kMain:
           // Shouldn't happen; this thread gets wrapped; not launched.
           throw Exception();
-        case ThreadIdentifier::kAudio:
+        case ThreadTag::kAudio:
           func = RunAudioThread;
           break;
-        case ThreadIdentifier::kBGDynamics:
+        case ThreadTag::kBGDynamics:
           func = RunBGDynamicThread;
           break;
-        case ThreadIdentifier::kNetworkWrite:
+        case ThreadTag::kNetworkWrite:
           func = RunNetworkWriteThread;
           break;
-        case ThreadIdentifier::kStdin:
+        case ThreadTag::kStdin:
           func = RunStdInputThread;
           break;
         default:
@@ -276,35 +276,35 @@ auto Thread::ThreadMain() -> int {
     const char* id_string;
 
     switch (identifier_) {
-      case ThreadIdentifier::kLogic:
+      case ThreadTag::kLogic:
         name = "logic";
         id_string = "ballistica logic";
         break;
-      case ThreadIdentifier::kStdin:
+      case ThreadTag::kStdin:
         name = "stdin";
         id_string = "ballistica stdin";
         break;
-      case ThreadIdentifier::kAssets:
+      case ThreadTag::kAssets:
         name = "assets";
         id_string = "ballistica assets";
         break;
-      case ThreadIdentifier::kFileOut:
+      case ThreadTag::kFileOut:
         name = "fileout";
         id_string = "ballistica file-out";
         break;
-      case ThreadIdentifier::kMain:
+      case ThreadTag::kMain:
         name = "main";
         id_string = "ballistica main";
         break;
-      case ThreadIdentifier::kAudio:
+      case ThreadTag::kAudio:
         name = "audio";
         id_string = "ballistica audio";
         break;
-      case ThreadIdentifier::kBGDynamics:
+      case ThreadTag::kBGDynamics:
         name = "bgdynamics";
         id_string = "ballistica bg-dynamics";
         break;
-      case ThreadIdentifier::kNetworkWrite:
+      case ThreadTag::kNetworkWrite:
         name = "networkwrite";
         id_string = "ballistica network writing";
         break;

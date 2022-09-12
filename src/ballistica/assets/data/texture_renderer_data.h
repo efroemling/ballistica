@@ -9,8 +9,8 @@ namespace ballistica {
 // this is extended by the renderer
 class TextureRendererData : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kMain;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kMain;
   }
 
   // Create the renderer data but don't load it in yet.

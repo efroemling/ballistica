@@ -74,7 +74,7 @@ Logic::Logic()
   InitSpecialChars();
 
   // Spin up our thread.
-  thread_ = new Thread(ThreadIdentifier::kLogic);
+  thread_ = new Thread(ThreadTag::kLogic);
   g_app->pausable_threads.push_back(thread_);
 }
 auto Logic::OnAppStart() -> void {
@@ -1241,6 +1241,10 @@ void Logic::PushOnAppResumeCall() {
   });
 }
 
+void Logic::PushApplyConfigCall() {
+  thread()->PushCall([this] { ApplyConfig(); });
+}
+
 // Look through everything in our config dict and act on it.
 void Logic::ApplyConfig() {
   assert(InLogicThread());
@@ -1398,10 +1402,6 @@ void Logic::ApplyConfig() {
 
   // Any platform-specific settings.
   g_platform->ApplyConfig();
-}
-
-void Logic::PushApplyConfigCall() {
-  thread()->PushCall([this] { ApplyConfig(); });
 }
 
 void Logic::PushRemoveGraphicsServerRenderHoldCall() {

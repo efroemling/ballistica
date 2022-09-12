@@ -31,7 +31,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20833;
+const int kAppBuildNumber = 20835;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -39,23 +39,22 @@ const char* kAppVersion = "1.7.7";
 // Everything else should go into App (or more ideally into a class).
 int g_early_log_writes{10};
 
-V1Account* g_v1_account{};
-AppConfig* g_app_config{};
 App* g_app{};
+AppConfig* g_app_config{};
 AppInternal* g_app_internal{};
 AppFlavor* g_app_flavor{};
+Assets* g_assets{};
+AssetsServer* g_assets_server{};
 Audio* g_audio{};
 AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
 BGDynamicsServer* g_bg_dynamics_server{};
 Context* g_context{};
-Logic* g_logic{};
 Graphics* g_graphics{};
 GraphicsServer* g_graphics_server{};
 Input* g_input{};
+Logic* g_logic{};
 Thread* g_main_thread{};
-Assets* g_assets{};
-AssetsServer* g_assets_server{};
 Networking* g_networking{};
 NetworkReader* g_network_reader{};
 NetworkWriter* g_network_writer{};
@@ -66,22 +65,7 @@ StdioConsole* g_stdio_console{};
 TextGraphics* g_text_graphics{};
 UI* g_ui{};
 Utils* g_utils{};
-
-// Basic overview of our bootstrapping process:
-// 1: All threads and globals are created and provisioned. Everything above
-//    should exist at the end of this step (if it is going to exist).
-//    Threads should not be talking to each other yet at this point.
-// 2: The system is set in motion. The logic thread is told to load/apply the
-//    config. This event kicks off an initial-screen-creation message sent to
-//    the graphics-server thread. Other systems are informed that bootstrapping
-//    is complete and that they are free to talk to each other. Initial
-//    input-devices are added, asset loads can begin (at least ones not
-//    dependent on the screen/renderer), etc.
-// 3: The initial screen is created on the graphics-server thread in response
-//    to the message sent from the game thread. A completion notice is sent
-//    back to the game thread when done.
-// 4: Back on the game thread, any renderer-dependent asset-loads/etc. can begin
-//    and lastly the initial game session is kicked off.
+V1Account* g_v1_account{};
 
 auto BallisticaMain(int argc, char** argv) -> int {
   try {
@@ -94,26 +78,19 @@ auto BallisticaMain(int argc, char** argv) -> int {
     }
 
     // -------------------------------------------------------------------------
-    // Phase 1: Create and provision all globals.
+    // Phase 1: "The board is set."
     // -------------------------------------------------------------------------
 
-    // Absolute bare-bones basics.
+    // Here we instantiate all of our globals. Code here should
+    // avoid any logic that accesses other globals since they may
+    // not yet exist.
+
     g_platform = Platform::Create();
     g_app = new App(argc, argv);
-
-    // Create a Thread wrapper around the current (main) thread.
-    g_main_thread =
-        new Thread(ThreadIdentifier::kMain, ThreadSource::kWrapMain);
-
-    // Bootstrap our Python environment as early as we can (depends on
-    // g_platform for locating OS-specific paths).
+    g_main_thread = new Thread(ThreadTag::kMain, ThreadSource::kWrapMain);
     g_python = new Python();
-
-    // Spin up our specific app and graphics variations (VR, headless, etc.)
     g_app_flavor = g_platform->CreateAppFlavor();
     g_graphics = g_platform->CreateGraphics();
-
-    // Various other subsystems.
     g_graphics_server = new GraphicsServer();
     g_audio = new Audio();
     g_audio_server = new AudioServer();
@@ -138,13 +115,18 @@ auto BallisticaMain(int argc, char** argv) -> int {
     if (g_buildconfig.enable_stdio_console()) {
       g_stdio_console = new StdioConsole();
     }
-
-    // At this point all of our globals should exist.
     g_app->is_bootstrapped = true;
 
     // -------------------------------------------------------------------------
-    // Phase 2: Set things in motion.
+    // Phase 2: "The pieces are moving."
     // -------------------------------------------------------------------------
+
+    // Allow our subsystems to start doing work in their own threads
+    // and communicating with other subsystems. Note that we may still
+    // want to run some things serially here and ordering may be important
+    // (for instance we want to give our main thread a chance to register
+    // all initial input devices with the logic thread before the logic
+    // thread applies the current config to them).
 
     g_logic->OnAppStart();
     g_audio_server->OnAppStart();
@@ -154,13 +136,18 @@ auto BallisticaMain(int argc, char** argv) -> int {
     if (g_stdio_console) {
       g_stdio_console->OnAppStart();
     }
-    // Ok; now that we're bootstrapped, tell the game thread to read and apply
-    // the config which should kick off the real action.
+
+    // As the last step of this phase, tell the logic thread to apply
+    // the app config which will kick off screen creation and otherwise
+    // get the ball rolling.
     g_logic->PushApplyConfigCall();
 
     // -------------------------------------------------------------------------
-    // Phase 3/4: Create a screen and/or kick off game (in other threads).
+    // Phase 3: "We come to it at last; the great battle of our time."
     // -------------------------------------------------------------------------
+
+    // At this point all threads are off and running and we simply
+    // feed events until things end (or return and let the OS do that).
 
     if (g_app_flavor->ManagesEventLoop()) {
       // On our event-loop-managing platforms we now simply sit in our event

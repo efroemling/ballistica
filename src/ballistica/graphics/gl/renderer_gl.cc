@@ -1001,8 +1001,8 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
 // Base class for fragment/vertex shaders.
 class RendererGL::ShaderGL : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kMain;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kMain;
   }
 
   ShaderGL(GLenum type_in, const std::string& src_in) : type_(type_in) {

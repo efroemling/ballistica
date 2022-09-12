@@ -87,7 +87,7 @@ class AudioServer::ThreadSource : public Object {
     return (play_count_ << 16u) | (static_cast<uint32_t>(id_) & 0xFFFFu);
   }
   void UpdateAvailability();
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override;
+  auto GetDefaultOwnerThread() const -> ThreadTag override;
   auto client_source() const -> AudioSource* { return client_source_.get(); }
   auto source_sound() const -> SoundData* {
     return source_sound_ ? source_sound_->get() : nullptr;
@@ -326,7 +326,7 @@ AudioServer::AudioServer() : impl_{new AudioServer::Impl()} {
   assert(g_audio_server == nullptr);
 
   // Spin up our thread.
-  thread_ = new Thread(ThreadIdentifier::kAudio);
+  thread_ = new Thread(ThreadTag::kAudio);
   g_app->pausable_threads.push_back(thread_);
 }
 
@@ -746,9 +746,8 @@ AudioServer::ThreadSource::~ThreadSource() {
 #endif  // BA_ENABLE_AUDIO
 }
 
-auto AudioServer::ThreadSource::GetDefaultOwnerThread() const
-    -> ThreadIdentifier {
-  return ThreadIdentifier::kAudio;
+auto AudioServer::ThreadSource::GetDefaultOwnerThread() const -> ThreadTag {
+  return ThreadTag::kAudio;
 }
 
 void AudioServer::ThreadSource::UpdateAvailability() {

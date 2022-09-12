@@ -13,8 +13,8 @@ namespace ballistica {
 // A component of a material - comprises one or more conditions and actions.
 class MaterialComponent : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kLogic;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kLogic;
   }
 
   auto GetFlattenedSize() -> size_t;

@@ -66,8 +66,8 @@ class BGDynamicsServer {
   };
   class StepData : public Object {
    public:
-    auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-      return ThreadIdentifier::kBGDynamics;
+    auto GetDefaultOwnerThread() const -> ThreadTag override {
+      return ThreadTag::kBGDynamics;
     }
     Vector3f cam_pos{0.0f, 0.0f, 0.0f};
 

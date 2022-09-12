@@ -23,8 +23,7 @@ const int kThreadMessageSafetyThreshold{500};
 // A thread with a built-in event loop.
 class Thread {
  public:
-  explicit Thread(ThreadIdentifier id,
-                  ThreadSource source = ThreadSource::kCreate);
+  explicit Thread(ThreadTag id, ThreadSource source = ThreadSource::kCreate);
   virtual ~Thread();
 
   auto ClearCurrentThreadName() -> void;
@@ -55,7 +54,7 @@ class Thread {
   void set_thread_id(std::thread::id id) { thread_id_ = id; }
 
   auto RunEventLoop(bool single_cycle = false) -> int;
-  auto identifier() const -> ThreadIdentifier { return identifier_; }
+  auto identifier() const -> ThreadTag { return identifier_; }
 
   // Register a timer to run on the thread.
   auto NewTimer(millisecs_t length, bool repeat,
@@ -129,7 +128,7 @@ class Thread {
   ThreadSource source_;
   int listen_sd_{};
   std::thread::id thread_id_{};
-  ThreadIdentifier identifier_{ThreadIdentifier::kInvalid};
+  ThreadTag identifier_{ThreadTag::kInvalid};
   millisecs_t last_complaint_time_{};
   bool acquires_python_gil_{};
 

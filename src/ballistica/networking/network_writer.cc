@@ -13,7 +13,7 @@ NetworkWriter::NetworkWriter() {
   assert(g_network_writer == nullptr);
 
   // Spin up our thread.
-  thread_ = new Thread(ThreadIdentifier::kNetworkWrite);
+  thread_ = new Thread(ThreadTag::kNetworkWrite);
   g_app->pausable_threads.push_back(thread_);
 }
 
