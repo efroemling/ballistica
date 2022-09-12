@@ -80,7 +80,7 @@ class BGDynamicsServer {
     std::vector<std::pair<BGDynamicsFuseData*, FuseStepData> > fuse_step_data_;
   };
 
-  explicit BGDynamicsServer(Thread* thread);
+  BGDynamicsServer();
 
   auto time() const -> uint32_t { return time_; }
   auto graphics_quality() const -> GraphicsQuality { return graphics_quality_; }

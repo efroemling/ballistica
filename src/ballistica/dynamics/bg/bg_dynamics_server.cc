@@ -660,12 +660,15 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
   current_set = !current_set;
 }
 
-BGDynamicsServer::BGDynamicsServer(Thread* thread)
-    : thread_(thread),
-      height_cache_(new BGDynamicsHeightCache()),
+BGDynamicsServer::BGDynamicsServer()
+    : height_cache_(new BGDynamicsHeightCache()),
       collision_cache_(new CollisionCache) {
+  // We're a singleton; make sure we don't already exist.
   BA_PRECONDITION(g_bg_dynamics_server == nullptr);
-  g_bg_dynamics_server = this;
+
+  // Spin up our thread.
+  thread_ = new Thread(ThreadIdentifier::kBGDynamics);
+  g_app->pausable_threads.push_back(thread_);
 
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
   ode_world_ = dWorldCreate();

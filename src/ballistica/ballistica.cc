@@ -14,6 +14,7 @@
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
+#include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
@@ -30,7 +31,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20821;
+const int kAppBuildNumber = 20822;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -55,8 +56,8 @@ Input* g_input{};
 Thread* g_main_thread{};
 Assets* g_assets{};
 AssetsServer* g_assets_server{};
-NetworkReader* g_network_reader{};
 Networking* g_networking{};
+NetworkReader* g_network_reader{};
 NetworkWriter* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
@@ -99,16 +100,15 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app = new App(argc, argv);
     g_platform = Platform::Create();
 
-    // Bootstrap our Python environment as early as we can (depends on
-    // g_platform for locating OS-specific paths).
-    g_python = new Python();
-
     // Create a Thread wrapper around the current (main) thread.
     g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
     Thread::UpdateMainThreadID();
 
-    // Spin up our specific app and graphics variations
-    // (VR, headless, regular, etc.)
+    // Bootstrap our Python environment as early as we can (depends on
+    // g_platform for locating OS-specific paths).
+    g_python = new Python();
+
+    // Spin up our specific app and graphics variations (VR, headless, etc.)
     g_app_flavor = g_platform->CreateAppFlavor();
     g_graphics = g_platform->CreateGraphics();
 
@@ -125,25 +125,21 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_assets_server = new AssetsServer();
     g_ui = Object::NewUnmanaged<UI>();
     g_networking = new Networking();
+    g_network_writer = new NetworkWriter();
     g_input = new Input();
-    g_app_internal = GetAppInternal();
+    g_app_internal = CreateAppInternal();
+    g_game = new Game();
     Scene::Init();
+    if (!HeadlessMode()) {
+      g_bg_dynamics = new BGDynamics();
+      g_bg_dynamics_server = new BGDynamicsServer();
+    }
 
-    // Spin up our other standard threads.
-    auto* logic_thread{new Thread(ThreadIdentifier::kLogic)};
-    g_app->pausable_threads.push_back(logic_thread);
-    auto* network_write_thread{new Thread(ThreadIdentifier::kNetworkWrite)};
-    g_app->pausable_threads.push_back(network_write_thread);
+    // FIXME - move this later but need to init Python earlier then.
+    g_game->Start();
 
-    // Spin up our subsystems in those threads.
-    logic_thread->PushCallSynchronous(
-        [logic_thread] { new Game(logic_thread); });
-    network_write_thread->PushCallSynchronous(
-        [network_write_thread] { new NetworkWriter(network_write_thread); });
-
-    // Now let the platform spin up any other threads/modules it uses.
-    // (bg-dynamics in non-headless builds, stdin/stdout where applicable,
-    // etc.)
+    // NOTE TO SELF: this starts reading stdin and py-init hangs if we do
+    // it after here.
     g_platform->CreateAuxiliaryModules();
 
     // Ok at this point we can be considered up-and-running.

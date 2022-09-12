@@ -701,15 +701,6 @@ auto Platform::GetKeyName(int keycode) -> std::string {
 }
 
 void Platform::CreateAuxiliaryModules() {
-#if !BA_HEADLESS_BUILD
-  auto* bg_dynamics_thread = new Thread(ThreadIdentifier::kBGDynamics);
-  g_app->pausable_threads.push_back(bg_dynamics_thread);
-#endif
-#if !BA_HEADLESS_BUILD
-  bg_dynamics_thread->PushCallSynchronous(
-      [bg_dynamics_thread] { new BGDynamicsServer(bg_dynamics_thread); });
-#endif
-
   if (g_buildconfig.use_stdin_thread()) {
     // Start listening for stdin commands (on platforms where that makes sense).
     // Note: this thread blocks indefinitely for input so we don't add it to the

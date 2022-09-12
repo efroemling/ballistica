@@ -14,15 +14,9 @@
 
 namespace ballistica {
 
-void BGDynamics::Init() {
-  // Just init our singleton.
-  new BGDynamics();
-}
-
 BGDynamics::BGDynamics() {
-  assert(InLogicThread());
+  // We're a singleton; make sure we don't already exist.
   assert(g_bg_dynamics == nullptr);
-  g_bg_dynamics = this;
 }
 
 void BGDynamics::AddTerrain(CollideModelData* o) {

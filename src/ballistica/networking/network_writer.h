@@ -12,8 +12,8 @@ namespace ballistica {
 // A subsystem handling outbound network traffic.
 class NetworkWriter {
  public:
+  NetworkWriter();
   void PushSendToCall(const std::vector<uint8_t>& msg, const SockAddr& addr);
-  explicit NetworkWriter(Thread* thread);
   auto thread() const -> Thread* { return thread_; }
 
  private:

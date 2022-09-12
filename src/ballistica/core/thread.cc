@@ -84,7 +84,7 @@ void Thread::WaitForNextEvent(bool single_cycle) {
   }
 
   // While we're waiting, allow other python threads to run.
-  if (holds_python_gil_) {
+  if (acquires_python_gil_) {
     g_python->ReleaseGIL();
   }
 
@@ -117,7 +117,7 @@ void Thread::WaitForNextEvent(bool single_cycle) {
     }
   }
 
-  if (holds_python_gil_) {
+  if (acquires_python_gil_) {
     g_python->AcquireGIL();
   }
 }
@@ -357,8 +357,8 @@ auto Thread::ThreadMain() -> int {
   }
 }
 
-void Thread::SetHoldsPythonGIL() {
-  holds_python_gil_ = true;
+void Thread::SetAcquiresPythonGIL() {
+  acquires_python_gil_ = true;
   g_python->AcquireGIL();
 }
 

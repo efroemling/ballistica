@@ -24,7 +24,7 @@ void StdInputModule::PushBeginReadCall() {
 
     while (true) {
       // Print a prompt if we're a tty.
-      // We send this to the game thread so it happens AFTER the
+      // We send this to the logic thread so it happens AFTER the
       // results of the last script-command message we may have just sent.
       if (stdin_is_terminal) {
         g_game->thread()->PushCall([] {

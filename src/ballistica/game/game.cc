@@ -64,29 +64,33 @@ const int kMaxChatMessages = 40;
 // Go with 5 minute ban.
 const int kKickBanSeconds = 5 * 60;
 
-Game::Game(Thread* thread)
-    : thread_(thread),
-      game_roster_(cJSON_CreateArray()),
+Game::Game()
+    : game_roster_(cJSON_CreateArray()),
       realtimers_(new TimerList()),
       connections_(std::make_unique<ConnectionSet>()) {
+  // We're a singleton; make sure we don't already exist.
   assert(g_game == nullptr);
-  g_game = this;
 
+  InitSpecialChars();
+
+  // Spin up our thread.
+  thread_ = new Thread(ThreadIdentifier::kLogic);
+  g_app->pausable_threads.push_back(thread_);
+  // Our thread should hold the Python GIL by default.
+  // TODO(ericf): It could be better to have each individual Python call
+  // we make acquire the GIL. Then we're not holding it during long
+  // bits of C++ logic.
+  thread_->SetAcquiresPythonGIL();
+}
+auto Game::Start() -> void {
+  thread_->PushCallSynchronous([this] { StartInThread(); });
+}
+
+auto Game::StartInThread() -> void {
   try {
-    // Our thread should hold the Python GIL by default.
-    // TODO(ericf): It could be better to have each individual Python call
-    // we make acquire the GIL. Then we're not holding it during long
-    // bits of C++ logic.
-    thread->SetHoldsPythonGIL();
-
-    if (!HeadlessMode()) {
-      BGDynamics::Init();
-    }
-
-    InitSpecialChars();
-
     // We want to be informed when our thread is pausing.
-    thread->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
+    thread()->AddPauseCallback(
+        NewLambdaRunnableRaw([this] { OnThreadPause(); }));
 
     g_ui->LogicThreadInit();
 

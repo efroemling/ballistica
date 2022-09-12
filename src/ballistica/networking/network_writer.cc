@@ -8,10 +8,13 @@
 
 namespace ballistica {
 
-NetworkWriter::NetworkWriter(Thread* thread) : thread_(thread) {
-  // we're a singleton
+NetworkWriter::NetworkWriter() {
+  // We're a singleton; make sure we don't already exist.
   assert(g_network_writer == nullptr);
-  g_network_writer = this;
+
+  // Spin up our thread.
+  thread_ = new Thread(ThreadIdentifier::kNetworkWrite);
+  g_app->pausable_threads.push_back(thread_);
 }
 
 void NetworkWriter::PushSendToCall(const std::vector<uint8_t>& msg,

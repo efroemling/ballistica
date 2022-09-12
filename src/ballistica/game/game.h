@@ -24,7 +24,8 @@ const int kMaxPartyNameCombinedSize = 25;
 /// rendering, etc.
 class Game {
  public:
-  explicit Game(Thread* thread);
+  Game();
+  auto Start() -> void;
 
   auto LaunchHostSession(PyObject* session_type_obj,
                          BenchmarkType benchmark_type = BenchmarkType::kNone)
@@ -244,6 +245,7 @@ class Game {
   auto thread() const -> Thread* { return thread_; }
 
  private:
+  auto StartInThread() -> void;
   auto HandleQuitOnIdle() -> void;
   auto InitSpecialChars() -> void;
   auto Draw() -> void;

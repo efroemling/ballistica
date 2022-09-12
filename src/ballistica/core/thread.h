@@ -44,7 +44,7 @@ class Thread {
   // Used to quit the main thread.
   void Quit();
 
-  void SetHoldsPythonGIL();
+  void SetAcquiresPythonGIL();
 
   void SetPaused(bool paused);
   auto thread_id() const -> std::thread::id { return thread_id_; }
@@ -137,7 +137,7 @@ class Thread {
   std::thread::id thread_id_{};
   ThreadIdentifier identifier_{ThreadIdentifier::kInvalid};
   millisecs_t last_complaint_time_{};
-  bool holds_python_gil_{};
+  bool acquires_python_gil_{};
 
   // FIXME: Should generalize this to some sort of PlatformThreadData class.
 #if BA_XCODE_BUILD

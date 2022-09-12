@@ -10,7 +10,7 @@
 
 namespace ballistica {
 
-auto GetAppInternal() -> AppInternal*;
+auto CreateAppInternal() -> AppInternal*;
 
 class AppInternal {
  public:

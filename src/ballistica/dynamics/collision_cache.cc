@@ -17,12 +17,12 @@ CollisionCache::~CollisionCache() {
   dGeomDestroy(test_box_);
 }
 
-void CollisionCache::SetGeoms(const std::vector<dGeomID>& geoms) {
+auto CollisionCache::SetGeoms(const std::vector<dGeomID>& geoms) -> void {
   dirty_ = true;
   geoms_ = geoms;
 }
 
-void CollisionCache::Draw(FrameDef* frame_def) {
+auto CollisionCache::Draw(FrameDef* frame_def) -> void {
   if (cells_.empty()) {
     return;
   }
@@ -124,7 +124,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
   }
 }
 
-void CollisionCache::Precalc() {
+auto CollisionCache::Precalc() -> void {
   Update();
 
   if (precalc_index_ >= cells_.size()) {
@@ -138,8 +138,8 @@ void CollisionCache::Precalc() {
   TestCell(precalc_index_++, x, z);
 }
 
-void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
-                                        dNearCallback* callback) {
+auto CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
+                                        dNearCallback* callback) -> void {
   // Update bounds, test for quick out against our height map,
   // and proceed to a full test on a positive result.
   g1->recomputeAABB();
@@ -204,7 +204,7 @@ void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
   }
 }
 
-void CollisionCache::TestCell(size_t cell_index, int x, int z) {
+auto CollisionCache::TestCell(size_t cell_index, int x, int z) -> void {
   int t_count = static_cast<int>(geoms_.size());
   float top = cells_[cell_index].height_confirmed_empty_;
 
@@ -252,8 +252,8 @@ void CollisionCache::TestCell(size_t cell_index, int x, int z) {
   }
 }
 
-void CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
-                                         dNearCallback* callback) {
+auto CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
+                                         dNearCallback* callback) -> void {
   // We handle our own testing against trimeshes, so we can bring our fancy
   // caching into play.
   if (!geoms_.empty()) {
@@ -264,7 +264,7 @@ void CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
   }
 }
 
-void CollisionCache::Update() {
+auto CollisionCache::Update() -> void {
   if (!dirty_) {
     return;
   }
