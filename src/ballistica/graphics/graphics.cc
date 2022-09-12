@@ -5,10 +5,6 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/connection/connection_to_host.h"
-#include "ballistica/game/session/session.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/empty_component.h"
@@ -22,6 +18,10 @@
 #include "ballistica/graphics/net_graph.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/connection/connection_to_host.h"
+#include "ballistica/logic/session/session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/globals_node.h"
@@ -293,7 +293,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
 
     // Add in/out data for any host connection.
     if (ConnectionToHost* connection_to_host =
-            g_game->connections()->connection_to_host()) {
+            g_logic->connections()->connection_to_host()) {
       if (connection_to_host->can_communicate()) show = true;
       in_size += connection_to_host->GetBytesInPerSecond();
       in_size_compressed += connection_to_host->GetBytesInPerSecondCompressed();
@@ -307,7 +307,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       ping = connection_to_host->average_ping();
     } else {
       int connected_count = 0;
-      for (auto&& i : g_game->connections()->connections_to_clients()) {
+      for (auto&& i : g_logic->connections()->connections_to_clients()) {
         ConnectionToClient* client = i.second.get();
         if (client->can_communicate()) {
           show = true;
@@ -879,7 +879,7 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
     if (g_buildconfig.debug_build()) {
       Log("WARNING: 2 fades overlapping; running first fade-end-call early");
     }
-    g_game->PushPythonCall(fade_end_call_);
+    g_logic->PushPythonCall(fade_end_call_);
     fade_end_call_.Clear();
   }
   set_fade_start_on_next_draw_ = true;
@@ -991,17 +991,17 @@ void Graphics::BuildAndPushFrameDef() {
 
   // We should not be building/pushing any frames until after
   // app-launch-commands have been run..
-  BA_PRECONDITION_FATAL(g_game->ran_app_launch_commands());
+  BA_PRECONDITION_FATAL(g_logic->ran_app_launch_commands());
 
   // This should no longer be necessary..
   WaitForRendererToExist();
 
-  Session* session = g_game->GetForegroundSession();
+  Session* session = g_logic->GetForegroundSession();
   bool session_fills_screen = session ? session->DoesFillScreen() : false;
   millisecs_t real_time = GetRealTime();
 
   // Store how much time this frame_def represents.
-  millisecs_t net_time = g_game->master_time();
+  millisecs_t net_time = g_logic->master_time();
   millisecs_t elapsed =
       std::min(millisecs_t{50}, net_time - last_create_frame_def_time_);
   last_create_frame_def_time_ = net_time;
@@ -1010,7 +1010,7 @@ void Graphics::BuildAndPushFrameDef() {
 
   FrameDef* frame_def = GetEmptyFrameDef();
   frame_def->set_real_time(real_time);
-  frame_def->set_base_time(g_game->master_time());
+  frame_def->set_base_time(g_logic->master_time());
   frame_def->set_base_time_elapsed(elapsed);
   frame_def->set_frame_number(frame_def_count_++);
 
@@ -1238,7 +1238,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
     } else {
       fade_ = 0;
       if (!was_done && fade_end_call_.exists()) {
-        g_game->PushPythonCall(fade_end_call_);
+        g_logic->PushPythonCall(fade_end_call_);
         fade_end_call_.Clear();
       }
     }
@@ -1801,7 +1801,7 @@ void Graphics::ScreenResize(float virtual_width, float virtual_height,
 
 void Graphics::ScreenMessageEntry::UpdateTranslation() {
   if (translation_dirty) {
-    s_translated = g_game->CompileResourceString(
+    s_translated = g_logic->CompileResourceString(
         s_raw, "Graphics::ScreenMessageEntry::UpdateTranslation");
     translation_dirty = false;
     mesh_dirty = true;

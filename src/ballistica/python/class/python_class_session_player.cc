@@ -3,10 +3,10 @@
 #include "ballistica/python/class/python_class_session_player.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/player.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/input/device/input_device.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/player.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -188,7 +188,7 @@ void PythonClassSessionPlayer::tp_dealloc(PythonClassSessionPlayer* self) {
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<Player>* p = self->player_;
-    g_game->thread()->PushCall([p] { delete p; });
+    g_logic->thread()->PushCall([p] { delete p; });
   } else {
     delete self->player_;
   }

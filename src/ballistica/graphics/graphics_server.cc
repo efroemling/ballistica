@@ -86,7 +86,7 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
 
       // Tell the game thread we're ready for the next frame_def so it can start
       // building it while we render this one.
-      g_game->PushFrameDefRequest();
+      g_logic->PushFrameDefRequest();
       return frame_def;
     }
 
@@ -197,7 +197,7 @@ void GraphicsServer::ReloadMedia() {
   // Now tell the game thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->thread()->PushCall([this] {
+  g_logic->thread()->PushCall([this] {
     g_assets->MarkAllAssetsForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
@@ -248,7 +248,7 @@ void GraphicsServer::RebuildLostContext() {
 
   // Now tell the game thread to kick off loads for everything, flip on progress
   // bar drawing, and then tell the graphics thread to stop ignoring frame-defs.
-  g_game->thread()->PushCall([this] {
+  g_logic->thread()->PushCall([this] {
     g_assets->MarkAllAssetsForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
@@ -356,7 +356,7 @@ void GraphicsServer::SetScreen(bool fullscreen, int width, int height,
   // what types of textures to load, etc)
   if (!initial_screen_created_) {
     initial_screen_created_ = true;
-    g_game->PushInitialScreenCreatedCall();
+    g_logic->PushInitialScreenCreatedCall();
   }
 }
 
@@ -403,8 +403,8 @@ void GraphicsServer::HandleFullContextScreenRebuild(
     UpdateVirtualScreenRes();
 
     // Inform the game thread of the latest values.
-    g_game->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_,
-                                 res_y_);
+    g_logic->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_,
+                                  res_y_);
   }
 
   if (!renderer_) {
@@ -462,7 +462,7 @@ void GraphicsServer::HandleFullContextScreenRebuild(
   // Now tell the game thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->thread()->PushCall([this] {
+  g_logic->thread()->PushCall([this] {
     g_assets->MarkAllAssetsForLoad();
     g_graphics->set_internal_components_inited(false);
     g_graphics->EnableProgressBar(false);
@@ -514,7 +514,7 @@ void GraphicsServer::VideoResize(float h, float v) {
   UpdateVirtualScreenRes();
 
   // Inform the game thread of the latest values.
-  g_game->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_, res_y_);
+  g_logic->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_, res_y_);
   if (renderer_) {
     renderer_->ScreenSizeChanged();
   }
@@ -775,7 +775,7 @@ void GraphicsServer::PushComponentUnloadCall(
     }
     // ..and then ship these pointers back to the game thread so it can free the
     // references.
-    g_game->PushFreeAssetComponentRefsCall(components);
+    g_logic->PushFreeAssetComponentRefsCall(components);
   });
 }
 

@@ -40,7 +40,7 @@ class AudioServer {
   auto PushComponentUnloadCall(
       const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
 
-  /// For use by g_game_module().
+  /// For use by g_logic_module().
   auto ClearSoundRefDeleteList() -> void;
 
   auto paused() const -> bool { return paused_; }

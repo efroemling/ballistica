@@ -4,7 +4,7 @@
 
 #include "ballistica/assets/component/collide_model.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -105,7 +105,7 @@ void PythonClassCollideModel::tp_dealloc(PythonClassCollideModel* self) {
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<CollideModel>* c = self->collide_model_;
-    g_game->thread()->PushCall([c] { Delete(c); });
+    g_logic->thread()->PushCall([c] { Delete(c); });
   } else {
     Delete(self->collide_model_);
   }

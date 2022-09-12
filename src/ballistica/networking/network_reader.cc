@@ -2,11 +2,11 @@
 
 #include "ballistica/networking/network_reader.h"
 
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/player_spec.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/input/remote_app.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/player_spec.h"
 #include "ballistica/math/vector3f.h"
 #include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
@@ -97,8 +97,8 @@ static auto HandleJSONPing(const std::string& data_str) -> std::string {
   int party_size = 0;
   int party_size_max = 10;
   if (g_python != nullptr) {
-    party_size = g_game->public_party_size();
-    party_size_max = g_game->public_party_max_size();
+    party_size = g_logic->public_party_size();
+    party_size_max = g_logic->public_party_max_size();
   }
   snprintf(buffer, sizeof(buffer), R"({"b":%d,"ps":%d,"psmx":%d})",
            kAppBuildNumber, party_size, party_size_max);
@@ -110,7 +110,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
   if (size == 5) {
     // If we're already in a party, don't advertise since they
     // wouldn't be able to join us anyway.
-    if (g_game->connections()->has_connection_to_host()) {
+    if (g_logic->connections()->has_connection_to_host()) {
       return;
     }
 
@@ -348,7 +348,7 @@ auto NetworkReader::RunThread() -> int {
                 // connections.. pass them to the game thread to wrangle.
                 std::vector<uint8_t> msg_buffer(rresult2);
                 memcpy(&(msg_buffer[0]), buffer, rresult2);
-                g_game->connections()->PushUDPConnectionPacketCall(
+                g_logic->connections()->PushUDPConnectionPacketCall(
                     msg_buffer, SockAddr(from));
                 break;
               }

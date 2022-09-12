@@ -82,7 +82,7 @@ void StressTest::Update() {
           texture_count = g_assets->total_texture_count();
           sound_count = g_assets->total_sound_count();
         }
-        assert(g_game);
+        assert(g_logic);
         std::string mem_usage = g_platform->GetMemUsageInfo();
         fprintf(stress_test_stats_file_, "%d,%.1f,%d,%d,%d,%d,%d,%s\n",
                 static_cast_check_fit<int>(GetRealTime()), avg, node_count,

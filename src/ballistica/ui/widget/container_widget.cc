@@ -4,10 +4,10 @@
 
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -32,7 +32,7 @@ namespace ballistica {
 ContainerWidget::ContainerWidget(float width_in, float height_in)
     : width_(width_in),
       height_(height_in),
-      dynamics_update_time_(g_game->master_time()) {}
+      dynamics_update_time_(g_logic->master_time()) {}
 
 ContainerWidget::~ContainerWidget() {
   BA_DEBUG_UI_READ_LOCK;
@@ -343,7 +343,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
 
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          g_game->PushPythonWeakCall(
+          g_logic->PushPythonWeakCall(
               Object::WeakRef<PythonContextCall>(on_cancel_call_));
         } else {
           OnCancelCustom();
@@ -619,7 +619,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
         if (!claimed && on_outside_click_call_.exists()) {
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          g_game->PushPythonWeakCall(
+          g_logic->PushPythonWeakCall(
               Object::WeakRef<PythonContextCall>(on_outside_click_call_));
         }
 
@@ -809,7 +809,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
             // Probably not safe to delete ourself here since we're in
             // the draw loop, but we can push a call to do it.
             Object::WeakRef<Widget> weakref(this);
-            g_game->thread()->PushCall([weakref] {
+            g_logic->thread()->PushCall([weakref] {
               Widget* w = weakref.get();
               if (w) g_ui->DeleteWidget(w);
             });
@@ -864,7 +864,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
                   // Probably not safe to delete ourself here since we're in the
                   // draw loop, but we can set up an event to do it.
                   Object::WeakRef<Widget> weakref(this);
-                  g_game->thread()->PushCall([weakref] {
+                  g_logic->thread()->PushCall([weakref] {
                     Widget* w = weakref.get();
                     if (w) g_ui->DeleteWidget(w);
                   });
@@ -1046,11 +1046,11 @@ void ContainerWidget::TransformPointFromChild(float* x, float* y,
 }
 
 void ContainerWidget::Activate() {
-  last_activate_time_ = g_game->master_time();
+  last_activate_time_ = g_logic->master_time();
   if (on_activate_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from within
     // a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
   }
 }
@@ -1143,7 +1143,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
     return;
   }
   parent->CheckLayout();
-  millisecs_t net_time = g_game->master_time();
+  millisecs_t net_time = g_logic->master_time();
   transition_type_ = t;
 
   // Scale transitions are simpler.
@@ -1779,7 +1779,7 @@ void ContainerWidget::SelectNextWidget() {
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_;
   if (should_print_list_exit_instructions_) {
-    last_prev_next_time_ = g_game->master_time();
+    last_prev_next_time_ = g_logic->master_time();
   }
 
   // Grab the iterator for our selected widget if possible.
@@ -1839,21 +1839,21 @@ void ContainerWidget::SelectNextWidget() {
 void ContainerWidget::PrintExitListInstructions(
     millisecs_t old_last_prev_next_time) {
   if (should_print_list_exit_instructions_) {
-    millisecs_t t = g_game->master_time();
+    millisecs_t t = g_logic->master_time();
     if ((t - old_last_prev_next_time > 250)
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
       g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kErrorBeep));
-      std::string s = g_game->GetResourceString("arrowsToExitListText");
+      std::string s = g_logic->GetResourceString("arrowsToExitListText");
       {
         // Left arrow.
         Utils::StringReplaceOne(&s, "${LEFT}",
-                                g_game->CharStr(SpecialChar::kLeftArrow));
+                                g_logic->CharStr(SpecialChar::kLeftArrow));
       }
       {
         // Right arrow.
         Utils::StringReplaceOne(&s, "${RIGHT}",
-                                g_game->CharStr(SpecialChar::kRightArrow));
+                                g_logic->CharStr(SpecialChar::kRightArrow));
       }
       ScreenMessage(s);
     }
@@ -1865,7 +1865,7 @@ void ContainerWidget::SelectPrevWidget() {
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_;
   if (should_print_list_exit_instructions_) {
-    last_prev_next_time_ = g_game->master_time();
+    last_prev_next_time_ = g_logic->master_time();
   }
 
   // Grab the iterator for our selected widget if possible.

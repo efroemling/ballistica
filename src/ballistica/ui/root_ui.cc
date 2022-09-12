@@ -2,13 +2,13 @@
 
 #include "ballistica/ui/root_ui.h"
 
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/container_widget.h"
@@ -43,7 +43,8 @@ RootUI::~RootUI() = default;
 
 void RootUI::TogglePartyWindowKeyPress() {
   assert(InLogicThread());
-  if (g_game->GetPartySize() > 1 || g_game->connections()->connection_to_host()
+  if (g_logic->GetPartySize() > 1
+      || g_logic->connections()->connection_to_host()
       || always_draw_party_icon()) {
     ActivatePartyIcon();
   }
@@ -51,7 +52,7 @@ void RootUI::TogglePartyWindowKeyPress() {
 
 void RootUI::ActivatePartyIcon() const {
   assert(InLogicThread());
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
 
   // Originate from center of party icon. If menu button is shown, it is to the
   // left of that.
@@ -78,8 +79,8 @@ auto RootUI::HandleMouseButtonDown(float x, float y) -> bool {
   if (explicit_bool(DO_OLD_MENU_PARTY_BUTTONS)) {
     bool party_button_active =
         (!party_window_open_
-         && (g_game->connections()->GetConnectedClientCount() > 0
-             || g_game->connections()->connection_to_host()
+         && (g_logic->connections()->GetConnectedClientCount() > 0
+             || g_logic->connections()->connection_to_host()
              || always_draw_party_icon()));
     float party_button_left =
         menu_active ? 2 * menu_button_size_ : menu_button_size_;
@@ -123,7 +124,7 @@ void RootUI::HandleMouseButtonUp(float x, float y) {
     }
     if ((g_graphics->screen_virtual_width() - x < menu_button_size_)
         && (g_graphics->screen_virtual_height() - y < menu_button_size_)) {
-      g_game->PushMainMenuPressCall(input_device);
+      g_logic->PushMainMenuPressCall(input_device);
       last_menu_button_press_time_ = GetRealTime();
     }
   }
@@ -199,17 +200,17 @@ void RootUI::Draw(FrameDef* frame_def) {
     // To the left of the menu button, draw our connected-players indicator
     // (this probably shouldn't live here).
     bool draw_connected_players_icon = false;
-    int party_size = g_game->GetPartySize();
-    bool is_host = (g_game->connections()->connection_to_host() == nullptr);
+    int party_size = g_logic->GetPartySize();
+    bool is_host = (g_logic->connections()->connection_to_host() == nullptr);
     millisecs_t last_connection_to_client_join_time =
-        g_game->last_connection_to_client_join_time();
+        g_logic->last_connection_to_client_join_time();
 
     bool show_client_joined =
         (is_host && last_connection_to_client_join_time != 0
          && real_time - last_connection_to_client_join_time < 5000);
 
     if (!party_window_open_
-        && (party_size != 0 || g_game->connections()->connection_to_host()
+        && (party_size != 0 || g_logic->connections()->connection_to_host()
             || always_draw_party_icon_)) {
       draw_connected_players_icon = true;
     }
@@ -218,7 +219,7 @@ void RootUI::Draw(FrameDef* frame_def) {
       // Flash and show a message if we're in the main menu instructing the
       // player to start a game.
       bool flash = false;
-      HostSession* s = g_game->GetForegroundContext().GetHostSession();
+      HostSession* s = g_logic->GetForegroundContext().GetHostSession();
       if (s && s->is_main_menu() && party_size > 0 && show_client_joined)
         flash = true;
 
@@ -306,7 +307,7 @@ void RootUI::Draw(FrameDef* frame_def) {
             }
             if (party_size == 2) {  // (includes us as host)
               start_a_game_text_group_->SetText(
-                  g_game->GetResourceString("joinedPartyInstructionsText"),
+                  g_logic->GetResourceString("joinedPartyInstructionsText"),
                   TextMesh::HAlign::kRight, TextMesh::VAlign::kTop);
             } else if (party_size > 2) {
               start_a_game_text_group_->SetText(

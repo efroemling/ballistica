@@ -4,7 +4,7 @@
 
 #include "ballistica/assets/component/model.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -103,7 +103,7 @@ void PythonClassModel::tp_dealloc(PythonClassModel* self) {
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<Model>* m = self->model_;
-    g_game->thread()->PushCall([m] { Delete(m); });
+    g_logic->thread()->PushCall([m] { Delete(m); });
   } else {
     Delete(self->model_);
   }

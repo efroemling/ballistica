@@ -4,8 +4,8 @@
 
 #include <cmath>
 
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 
@@ -48,10 +48,10 @@ auto TimeDisplayNode::GetOutput() -> std::string {
   assert(InLogicThread());
   if (translations_dirty_) {
     time_suffix_hours_ =
-        g_game->CompileResourceString(R"({"r":"timeSuffixHoursText"})", "tda");
-    time_suffix_minutes_ = g_game->CompileResourceString(
+        g_logic->CompileResourceString(R"({"r":"timeSuffixHoursText"})", "tda");
+    time_suffix_minutes_ = g_logic->CompileResourceString(
         R"({"r":"timeSuffixMinutesText"})", "tdb");
-    time_suffix_seconds_ = g_game->CompileResourceString(
+    time_suffix_seconds_ = g_logic->CompileResourceString(
         R"({"r":"timeSuffixSecondsText"})", "tdc");
     translations_dirty_ = false;
     output_dirty_ = true;

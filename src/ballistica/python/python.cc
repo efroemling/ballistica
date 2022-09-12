@@ -10,14 +10,14 @@
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/game/friend_score_set.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/player.h"
-#include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/friend_score_set.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/player.h"
+#include "ballistica/logic/v1_account.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_collide_model.h"
 #include "ballistica/python/class/python_class_context.h"
@@ -1099,15 +1099,15 @@ auto Python::InitModuleClasses(PyObject* module) -> void {
 }
 
 void Python::PushObjCall(ObjID obj_id) {
-  g_game->thread()->PushCall([obj_id] {
-    ScopedSetContext cp(g_game->GetUIContext());
+  g_logic->thread()->PushCall([obj_id] {
+    ScopedSetContext cp(g_logic->GetUIContext());
     g_python->obj(obj_id).Call();
   });
 }
 
 void Python::PushObjCall(ObjID obj_id, const std::string& arg) {
-  g_game->thread()->PushCall([this, obj_id, arg] {
-    ScopedSetContext cp(g_game->GetUIContext());
+  g_logic->thread()->PushCall([this, obj_id, arg] {
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", arg.c_str()),
                    ballistica::PythonRef::kSteal);
     obj(obj_id).Call(args);
@@ -1191,7 +1191,7 @@ auto Python::GetTranslation(const char* category, const char* s)
 void Python::RunDeepLink(const std::string& url) {
   assert(InLogicThread());
   if (objexists(ObjID::kDeepLinkCall)) {
-    ScopedSetContext cp(g_game->GetUIContext());
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kDeepLinkCall).Call(args);
   } else {
@@ -1216,7 +1216,7 @@ void Python::PlayMusic(const std::string& music_type, bool continuous) {
 
 void Python::ShowURL(const std::string& url) {
   if (objexists(ObjID::kShowURLWindowCall)) {
-    ScopedSetContext cp(g_game->GetUIContext());
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kShowURLWindowCall).Call(args);
   } else {
@@ -1244,7 +1244,7 @@ auto Python::SingleMemberTuple(const PythonRef& member) -> PythonRef {
 
 auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
   assert(message);
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(si)", message->c_str(), client_id),
                  PythonRef::kSteal);
   PythonRef result = obj(ObjID::kFilterChatMessageCall).Call(args);
@@ -1269,7 +1269,7 @@ auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
 }
 
 void Python::HandleLocalChatMessage(const std::string& message) {
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(s)", message.c_str()), PythonRef::kSteal);
   obj(ObjID::kHandleLocalChatMessageCall).Call(args);
 }
@@ -2016,14 +2016,14 @@ void Python::LaunchStringEdit(TextWidget* w) {
   assert(InLogicThread());
   BA_PRECONDITION(w);
 
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish));
 
   // Gotta run this in the next cycle.
   PythonRef args(Py_BuildValue("(Osi)", w->BorrowPyRef(),
                                w->description().c_str(), w->max_chars()),
                  PythonRef::kSteal);
-  g_game->PushPythonCallArgs(
+  g_logic->PushPythonCallArgs(
       Object::New<PythonContextCall>(obj(ObjID::kOnScreenKeyboardClass).get()),
       args);
 }
@@ -2066,11 +2066,11 @@ void Python::HandleFriendScoresCB(const FriendScoreSet& score_set) {
     PyObject* py_list = PyList_New(0);
     std::string icon_str;
 #if BA_USE_GOOGLE_PLAY_GAME_SERVICES
-    icon_str = g_game->CharStr(SpecialChar::kGooglePlayGamesLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGooglePlayGamesLogo);
 #elif BA_USE_GAME_CIRCLE
-    icon_str = g_game->CharStr(SpecialChar::kGameCircleLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGameCircleLogo);
 #elif BA_USE_GAME_CENTER
-    icon_str = g_game->CharStr(SpecialChar::kGameCenterLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGameCenterLogo);
 #endif
     for (auto&& i : score_set.entries) {
       PyObject* obj =
@@ -2090,7 +2090,7 @@ auto Python::HandleKeyPressEvent(const SDL_Keysym& keysym) -> bool {
   if (!keyboard_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* keyboard = g_input->keyboard_input();
   PythonRef args(
       Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONDOWN", "button",
@@ -2105,7 +2105,7 @@ auto Python::HandleKeyReleaseEvent(const SDL_Keysym& keysym) -> bool {
   if (!keyboard_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* keyboard = g_input->keyboard_input();
   PythonRef args(Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONUP", "button",
                                static_cast<int>(keysym.sym), "input_device",
@@ -2122,7 +2122,7 @@ auto Python::HandleJoystickEvent(const SDL_Event& event,
   if (!game_pad_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* device{};
 
   device = input_device;
@@ -2335,7 +2335,7 @@ void Python::HandleDeviceMenuPress(InputDevice* input_device) {
   if (g_input->IsInputLocked()) {
     return;
   }
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(O)", input_device ? input_device->BorrowPyRef()
                                                    : Py_None),
                  PythonRef::kSteal);

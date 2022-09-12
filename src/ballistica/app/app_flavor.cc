@@ -4,11 +4,11 @@
 
 #include "ballistica/app/stress_test.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/networking/telnet_server.h"
@@ -196,7 +196,7 @@ void AppFlavor::OnResume() {
   // Also let the Python layer do what it needs to
   // (starting/stopping music, etc.).
   g_python->PushObjCall(Python::ObjID::kHandleAppResumeCall);
-  g_game->PushOnAppResumeCall();
+  g_logic->PushOnAppResumeCall();
 
   g_graphics->SetGyroEnabled(true);
 
@@ -211,7 +211,7 @@ void AppFlavor::OnResume() {
     // If we've been completely backgrounded,
     // send a menu-press command to the game; this will
     // bring up a pause menu if we're in the game/etc.
-    g_game->PushMainMenuPressCall(nullptr);
+    g_logic->PushMainMenuPressCall(nullptr);
   }
 }
 

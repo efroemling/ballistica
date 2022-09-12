@@ -4,10 +4,10 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/simple_component.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/player_node.h"
 #include "ballistica/ui/ui.h"
@@ -504,12 +504,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
     // to pull a node for the player we're attached to.
 
     if (HostActivity* host_activity =
-            g_game->GetForegroundContext().GetHostActivity()) {
+            g_logic->GetForegroundContext().GetHostActivity()) {
       if (Player* player = GetPlayer()) {
         player_node = host_activity->scene()->GetPlayerNode(player->id());
       }
     } else {
-      if (Scene* scene = g_game->GetForegroundScene()) {
+      if (Scene* scene = g_logic->GetForegroundScene()) {
         player_node = scene->GetPlayerNode(remote_player_id());
       }
     }
@@ -944,8 +944,9 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
         // ..so lets issue a warning to that effect if there's already
         // controllers active.. (only if we got a player though).
         if (attached_to_player() && g_input->HaveControllerWithPlayer()) {
-          ScreenMessage(g_game->GetResourceString("touchScreenJoinWarningText"),
-                        {1.0f, 1.0f, 0.0f});
+          ScreenMessage(
+              g_logic->GetResourceString("touchScreenJoinWarningText"),
+              {1.0f, 1.0f, 0.0f});
         }
       }
     } else {

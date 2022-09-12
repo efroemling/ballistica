@@ -2,8 +2,8 @@
 
 #include "ballistica/core/context.h"
 
-#include "ballistica/game/host_activity.h"
 #include "ballistica/generic/runnable.h"
+#include "ballistica/logic/host_activity.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {

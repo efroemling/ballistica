@@ -15,8 +15,8 @@
 #include "ballistica/dynamics/material/roll_sound_material_action.h"
 #include "ballistica/dynamics/material/skid_sound_material_action.h"
 #include "ballistica/dynamics/material/sound_material_action.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -148,7 +148,7 @@ void PythonClassMaterial::tp_dealloc(PythonClassMaterial* self) {
   // need be.. otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Material>* ptr = self->material_;
-    g_game->thread()->PushCall([ptr] { Delete(ptr); });
+    g_logic->thread()->PushCall([ptr] { Delete(ptr); });
   } else {
     Delete(self->material_);
   }

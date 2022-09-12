@@ -5,8 +5,8 @@
 
 #include "ballistica/ballistica.h"
 #include "ballistica/core/object.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/runnable.h"
+#include "ballistica/logic/logic.h"
 
 namespace ballistica {
 
@@ -16,18 +16,18 @@ template <typename T>
 class RealTimer : public Object {
  public:
   RealTimer(millisecs_t length, bool repeat, T* delegate) {
-    assert(g_game);
+    assert(g_logic);
     assert(InLogicThread());
-    timer_id_ = g_game->NewRealTimer(
+    timer_id_ = g_logic->NewRealTimer(
         length, repeat, Object::New<Runnable, Callback>(delegate, this));
   }
   void SetLength(uint32_t length) {
     assert(InLogicThread());
-    g_game->SetRealTimerLength(timer_id_, length);
+    g_logic->SetRealTimerLength(timer_id_, length);
   }
   ~RealTimer() override {
     assert(InLogicThread());
-    g_game->DeleteRealTimer(timer_id_);
+    g_logic->DeleteRealTimer(timer_id_);
   }
 
  private:

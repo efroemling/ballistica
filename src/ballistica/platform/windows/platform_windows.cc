@@ -32,7 +32,7 @@
 #pragma comment(lib, "SDL2main.lib")
 #endif
 
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/min_sdl.h"
 
@@ -108,10 +108,10 @@ PlatformWindows::PlatformWindows() {
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   switch (fdwCtrlType) {
     case CTRL_C_EVENT:
-      if (g_game) {
-        g_game->PushInterruptSignalCall();
+      if (g_logic) {
+        g_logic->PushInterruptSignalCall();
       } else {
-        Log("SigInt handler called before g_game exists.");
+        Log("SigInt handler called before g_logic exists.");
       }
       return TRUE;
 

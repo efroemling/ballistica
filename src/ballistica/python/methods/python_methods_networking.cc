@@ -3,10 +3,10 @@
 #include "ballistica/python/methods/python_methods_networking.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/connection/connection_to_host.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/connection/connection_to_host.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/math/vector3f.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/networking/networking.h"
@@ -30,7 +30,7 @@ auto PyGetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist)))
     return nullptr;
   assert(g_python);
-  if (g_game->public_party_enabled()) {
+  if (g_logic->public_party_enabled()) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -48,7 +48,7 @@ auto PySetPublicPartyEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(g_python);
-  g_game->SetPublicPartyEnabled(static_cast<bool>(enable));
+  g_logic->SetPublicPartyEnabled(static_cast<bool>(enable));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -64,7 +64,7 @@ auto PySetPublicPartyName(PyObject* self, PyObject* args, PyObject* keywds)
   }
   std::string name = Python::GetPyString(name_obj);
   assert(g_python);
-  g_game->SetPublicPartyName(name);
+  g_logic->SetPublicPartyName(name);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -81,7 +81,7 @@ auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args, PyObject* keywds)
   // The call expects an empty string for the no-url option.
   std::string url = (url_obj == Py_None) ? "" : Python::GetPyString(url_obj);
   assert(g_python);
-  g_game->SetPublicPartyStatsURL(url);
+  g_logic->SetPublicPartyStatsURL(url);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -95,7 +95,7 @@ auto PyGetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(g_python);
-  return PyLong_FromLong(g_game->public_party_max_size());
+  return PyLong_FromLong(g_logic->public_party_max_size());
   BA_PYTHON_CATCH;
 }
 
@@ -109,7 +109,7 @@ auto PySetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(g_python);
-  g_game->SetPublicPartyMaxSize(max_size);
+  g_logic->SetPublicPartyMaxSize(max_size);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -123,8 +123,8 @@ auto PySetAuthenticateClients(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &enable)) {
     return nullptr;
   }
-  assert(g_game);
-  g_game->set_require_client_authentication(static_cast<bool>(enable));
+  assert(g_logic);
+  g_logic->set_require_client_authentication(static_cast<bool>(enable));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -138,14 +138,14 @@ auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &admins_obj)) {
     return nullptr;
   }
-  assert(g_game);
+  assert(g_logic);
 
   auto admins = Python::GetPyStrings(admins_obj);
   std::set<std::string> adminset;
   for (auto&& admin : admins) {
     adminset.insert(admin);
   }
-  g_game->set_admin_public_ids(adminset);
+  g_logic->set_admin_public_ids(adminset);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -160,8 +160,8 @@ auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &enable)) {
     return nullptr;
   }
-  assert(g_game);
-  g_game->set_kick_voting_enabled(static_cast<bool>(enable));
+  assert(g_logic);
+  g_logic->set_kick_voting_enabled(static_cast<bool>(enable));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -202,11 +202,11 @@ auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception();
     }
   } catch (const std::exception&) {
-    ScreenMessage(g_game->GetResourceString("invalidAddressErrorText"),
+    ScreenMessage(g_logic->GetResourceString("invalidAddressErrorText"),
                   {1, 0, 0});
     Py_RETURN_NONE;
   }
-  g_game->connections()->PushHostConnectedUDPCall(
+  g_logic->connections()->PushHostConnectedUDPCall(
       s, static_cast<bool>(print_progress));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -223,7 +223,7 @@ auto PyClientInfoQueryResponse(PyObject* self, PyObject* args, PyObject* keywds)
                                    &response_obj)) {
     return nullptr;
   }
-  g_game->connections()->SetClientInfoFromMasterServer(token, response_obj);
+  g_logic->connections()->SetClientInfoFromMasterServer(token, response_obj);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -236,7 +236,7 @@ auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  ConnectionToHost* hc = g_game->connections()->connection_to_host();
+  ConnectionToHost* hc = g_logic->connections()->connection_to_host();
   if (hc) {
     return Py_BuildValue("{sssi}", "name", hc->party_name().c_str(),
                          "build_number", hc->build_number());
@@ -255,7 +255,7 @@ auto PyDisconnectFromHost(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  g_game->connections()->PushDisconnectFromHostCall();
+  g_logic->connections()->PushDisconnectFromHostCall();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -271,7 +271,7 @@ auto PyDisconnectClient(PyObject* self, PyObject* args, PyObject* keywds)
                                    &ban_time)) {
     return nullptr;
   }
-  bool kickable = g_game->connections()->DisconnectClient(client_id, ban_time);
+  bool kickable = g_logic->connections()->DisconnectClient(client_id, ban_time);
   if (kickable) {
     Py_RETURN_TRUE;
   } else {
@@ -290,10 +290,10 @@ auto PyGetClientPublicDeviceUUID(PyObject* self, PyObject* args,
     return nullptr;
   }
   auto&& connection{
-      g_game->connections()->connections_to_clients().find(client_id)};
+      g_logic->connections()->connections_to_clients().find(client_id)};
 
   // Does this connection exist?
-  if (connection == g_game->connections()->connections_to_clients().end()) {
+  if (connection == g_logic->connections()->connections_to_clients().end()) {
     Py_RETURN_NONE;
   }
 
@@ -379,7 +379,7 @@ auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyHaveConnectedClients(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_game->connections()->GetConnectedClientCount() > 0) {
+  if (g_logic->connections()->GetConnectedClientCount() > 0) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;

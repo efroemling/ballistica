@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "ballistica/core/object.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/scene/node/node.h"
 
 namespace ballistica {

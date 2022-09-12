@@ -2,10 +2,10 @@
 
 #include "ballistica/python/methods/python_methods_graphics.h"
 
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
@@ -52,7 +52,7 @@ auto PySetCameraPosition(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &x, &y, &z)) {
     return nullptr;
   }
-  assert(g_game);
+  assert(g_logic);
   g_graphics->camera()->SetPosition(x, y, z);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -69,7 +69,7 @@ auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &x, &y, &z)) {
     return nullptr;
   }
-  assert(g_game);
+  assert(g_logic);
   g_graphics->camera()->SetTarget(x, y, z);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -84,7 +84,7 @@ auto PySetCameraManual(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  assert(g_game);
+  assert(g_logic);
   g_graphics->camera()->SetManual(value);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -98,10 +98,10 @@ auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
                                    const_cast<char**>(kwlist), &name_obj)) {
     return nullptr;
   }
-  assert(g_game);
+  assert(g_logic);
   auto id(Python::GetPyEnum_SpecialChar(name_obj));
-  assert(Utils::IsValidUTF8(g_game->CharStr(id)));
-  return PyUnicode_FromString(g_game->CharStr(id).c_str());
+  assert(Utils::IsValidUTF8(g_logic->CharStr(id)));
+  return PyUnicode_FromString(g_logic->CharStr(id).c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -164,7 +164,7 @@ auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   return PyUnicode_FromString(
-      g_game->CompileResourceString(value, "evaluate_lstr").c_str());
+      g_logic->CompileResourceString(value, "evaluate_lstr").c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -188,7 +188,7 @@ auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = Python::GetPyString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_game->CompileResourceString(s, "get_string_height test") != s) {
+  if (g_logic->CompileResourceString(s, "get_string_height test") != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_height; this should be avoided");
   }
@@ -218,7 +218,7 @@ auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = Python::GetPyString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_game->CompileResourceString(s, "get_string_width debug test") != s) {
+  if (g_logic->CompileResourceString(s, "get_string_width debug test") != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_width; this should be avoided");
   }

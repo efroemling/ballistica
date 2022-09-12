@@ -14,10 +14,10 @@
 #include "ballistica/assets/data/sound_data.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/text/text_packer.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python_sys.h"
 
 namespace ballistica {
@@ -813,8 +813,8 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   // if we dumped anything on the pending loads done list, shake the game thread
   // to tell it to kill the reference..
   if (!l_finished.empty()) {
-    assert(g_game);
-    g_game->PushHavePendingLoadsDoneCall();
+    assert(g_logic);
+    g_logic->PushHavePendingLoadsDoneCall();
   }
   return (!l.empty());
 }
@@ -1186,7 +1186,7 @@ void Assets::AddPendingLoad(Object::Ref<AssetComponentData>* c) {
         std::scoped_lock lock(pending_load_list_mutex_);
         pending_loads_other_.push_back(c);
       }
-      g_game->PushHavePendingLoadsCall();
+      g_logic->PushHavePendingLoadsCall();
       break;
     }
   }

@@ -6,11 +6,11 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/assets/component/texture.h"
 #include "ballistica/core/logging.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
-#include "ballistica/game/session/replay_client_session.h"
 #include "ballistica/graphics/graphics.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/session/host_session.h"
+#include "ballistica/logic/session/replay_client_session.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_session_data.h"
 #include "ballistica/python/python.h"
@@ -107,7 +107,7 @@ auto PyNewHostSession(PyObject* self, PyObject* args, PyObject* keywds)
           PyExcType::kValue);
     }
   }
-  g_game->LaunchHostSession(sessiontype_obj, benchmark_type);
+  g_logic->LaunchHostSession(sessiontype_obj, benchmark_type);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -123,7 +123,7 @@ auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   file_name = Python::GetPyString(file_name_obj);
-  g_game->LaunchReplaySession(file_name);
+  g_logic->LaunchReplaySession(file_name);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -137,7 +137,7 @@ auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (dynamic_cast<ReplayClientSession*>(g_game->GetForegroundSession())) {
+  if (dynamic_cast<ReplayClientSession*>(g_logic->GetForegroundSession())) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -199,7 +199,7 @@ auto PyGetForegroundHostSession(PyObject* self, PyObject* args,
 
   // Note: we return None if not in the game thread.
   HostSession* s = InLogicThread()
-                       ? g_game->GetForegroundContext().GetHostSession()
+                       ? g_logic->GetForegroundContext().GetHostSession()
                        : nullptr;
   if (s != nullptr) {
     PyObject* obj = s->GetSessionPyObj();
@@ -303,12 +303,12 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     // just increment the python object's refcount and pass it along raw;
     // the game thread decrements it on the other end.
     Py_INCREF(call_obj);
-    g_game->PushPythonRawCallable(call_obj);
+    g_logic->PushPythonRawCallable(call_obj);
   } else {
     if (!InLogicThread()) {
       throw Exception("You must use from_other_thread mode.");
     }
-    g_game->PushPythonCall(Object::New<PythonContextCall>(call_obj));
+    g_logic->PushPythonCall(Object::New<PythonContextCall>(call_obj));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -483,11 +483,11 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     std::vector<int32_t> client_ids;
     if (clients_obj != Py_None) {
       std::vector<int> client_ids2 = Python::GetPyInts(clients_obj);
-      g_game->connections()->SendScreenMessageToSpecificClients(
+      g_logic->connections()->SendScreenMessageToSpecificClients(
           message, color.x, color.y, color.z, client_ids2);
     } else {
-      g_game->connections()->SendScreenMessageToAll(message, color.x, color.y,
-                                                    color.z);
+      g_logic->connections()->SendScreenMessageToAll(message, color.x, color.y,
+                                                     color.z);
     }
   } else {
     // Currently specifying client_ids only works for transient messages; we'd
@@ -610,7 +610,7 @@ auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     }
   }
   if (!handled) {
-    g_game->PushShutdownCall(false);
+    g_logic->PushShutdownCall(false);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -630,7 +630,7 @@ auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
 
   // Hmm; python runs in the game thread; technically we could just run
   // ApplyConfig() immediately (though pushing is probably safer).
-  g_game->PushApplyConfigCall();
+  g_logic->PushApplyConfigCall();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

@@ -4,9 +4,9 @@
 
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
-#include "ballistica/game/host_activity.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
+#include "ballistica/logic/host_activity.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
@@ -121,7 +121,7 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
 
   // If our scene is currently the game's foreground one, go ahead and
   // push our values globally.
-  if (g_game->GetForegroundScene() == this->scene()) {
+  if (g_logic->GetForegroundScene() == this->scene()) {
     SetAsForeground();
   }
 }
@@ -154,7 +154,7 @@ auto GlobalsNode::IsCurrentGlobals() const -> bool {
   // node for our scene.
   Scene* scene = this->scene();
   assert(scene);
-  return (g_game->GetForegroundScene() == this->scene()
+  return (g_logic->GetForegroundScene() == this->scene()
           && scene->globals_node() == this);
 }
 

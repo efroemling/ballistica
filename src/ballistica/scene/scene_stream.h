@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "ballistica/core/object.h"
-#include "ballistica/game/client_controller_interface.h"
+#include "ballistica/logic/client_controller_interface.h"
 
 namespace ballistica {
 

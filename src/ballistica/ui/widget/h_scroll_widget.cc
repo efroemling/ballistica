@@ -348,7 +348,7 @@ auto HScrollWidget::HandleMessage(const WidgetMessage& m) -> bool {
           inertia_scroll_rate_ =
               smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * new_val;
         }
-        last_velocity_event_time_ = g_game->master_time();
+        last_velocity_event_time_ = g_logic->master_time();
         MarkForUpdate();
       } else {
         // Not within our widget; dont allow children to claim.

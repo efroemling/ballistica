@@ -4,13 +4,13 @@
 
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -39,7 +39,7 @@ TextWidget::TextWidget() {
     }
   }
 
-  birth_time_ = g_game->master_time();
+  birth_time_ = g_logic->master_time();
 }
 
 TextWidget::~TextWidget() = default;
@@ -461,8 +461,8 @@ void TextWidget::SetText(const std::string& text_in_raw) {
 
   if (do_format_check) {
     bool valid;
-    g_game->CompileResourceString(text_in_raw,
-                                  "TextWidget::SetText format check", &valid);
+    g_logic->CompileResourceString(text_in_raw,
+                                   "TextWidget::SetText format check", &valid);
     if (!valid) {
       BA_LOG_ONCE("Invalid resource string: '" + text_in_raw + "'");
       Python::PrintStackTrace();
@@ -557,12 +557,12 @@ void TextWidget::BringUpEditDialog() {
 }
 
 void TextWidget::Activate() {
-  last_activate_time_ = g_game->master_time();
+  last_activate_time_ = g_logic->master_time();
 
   if (on_activate_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from within
     // a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
   }
 
@@ -603,7 +603,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
   }
   // If we're doing inline editing, handle some key events.
   if (m.has_keysym && !ShouldUseStringEditDialog()) {
-    last_carat_change_time_ = g_game->master_time();
+    last_carat_change_time_ = g_logic->master_time();
 
     text_group_dirty_ = true;
     bool claimed = false;
@@ -626,7 +626,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
             if (on_return_press_call_.exists()) {
               // Call this in the next cycle (don't wanna risk mucking with UI
               // from within a UI loop)
-              g_game->PushPythonWeakCall(
+              g_logic->PushPythonWeakCall(
                   Object::WeakRef<PythonContextCall>(on_return_press_call_));
             }
           }
@@ -933,7 +933,7 @@ void TextWidget::UpdateTranslation() {
     if (editable()) {
       text_translated_ = text_raw_;
     } else {
-      text_translated_ = g_game->CompileResourceString(
+      text_translated_ = g_logic->CompileResourceString(
           text_raw_, "TextWidget::UpdateTranslation");
     }
     text_translation_dirty_ = false;

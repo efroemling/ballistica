@@ -6,9 +6,9 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/player.h"
 #include "ballistica/graphics/renderer.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_command.h"
 #include "ballistica/ui/root_ui.h"
@@ -183,13 +183,13 @@ auto Joystick::GetButtonName(int index) -> std::string {
     if (strstr(GetDeviceName().c_str(), "Samsung Game Pad EI")) {
       switch (index) {
         case 101:
-          return g_game->CharStr(SpecialChar::kDiceButton4);  // Y
+          return g_logic->CharStr(SpecialChar::kDiceButton4);  // Y
         case 100:
-          return g_game->CharStr(SpecialChar::kDiceButton3);  // X
+          return g_logic->CharStr(SpecialChar::kDiceButton3);  // X
         case 98:
-          return g_game->CharStr(SpecialChar::kDiceButton2);  // B
+          return g_logic->CharStr(SpecialChar::kDiceButton2);  // B
         case 97:
-          return g_game->CharStr(SpecialChar::kDiceButton1);  // A
+          return g_logic->CharStr(SpecialChar::kDiceButton1);  // A
         default:
           break;
       }
@@ -272,13 +272,13 @@ auto Joystick::GetButtonName(int index) -> std::string {
       case 204:
         return "B16";
       case 90:
-        return g_game->CharStr(SpecialChar::kRewindButton);
+        return g_logic->CharStr(SpecialChar::kRewindButton);
       case 91:
-        return g_game->CharStr(SpecialChar::kFastForwardButton);
+        return g_logic->CharStr(SpecialChar::kFastForwardButton);
       case 24:
-        return g_game->CharStr(SpecialChar::kDpadCenterButton);
+        return g_logic->CharStr(SpecialChar::kDpadCenterButton);
       case 86:
-        return g_game->CharStr(SpecialChar::kPlayPauseButton);
+        return g_logic->CharStr(SpecialChar::kPlayPauseButton);
       default:
         break;
     }
@@ -536,7 +536,7 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
 
   // If we've got a child joystick, send them any events they're set to handle.
   if (child_joy_stick_) {
-    assert(g_game);
+    assert(g_logic);
 
     bool send = false;
     switch (e->type) {
@@ -762,14 +762,14 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
       } else {
         // If there's no menu up,
         // tell the game to pop it up and snag menu ownership for ourself.
-        g_game->PushMainMenuPressCall(this);
+        g_logic->PushMainMenuPressCall(this);
         return;
       }
     }
 
     // On our oculus build, select presses reset the orientation.
     if (e->jbutton.button == vr_reorient_button_ && IsVRMode()) {
-      ScreenMessage(g_game->GetResourceString("vrOrientationResetText"),
+      ScreenMessage(g_logic->GetResourceString("vrOrientationResetText"),
                     {0, 1, 0});
       g_app->reset_vr_orientation = true;
       return;
@@ -991,8 +991,8 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
           } else {
             // FIXME: Need a call we can make for this.
             bool do_party_button = false;
-            int party_size = g_game->GetPartySize();
-            if (party_size > 1 || g_game->connections()->connection_to_host()
+            int party_size = g_logic->GetPartySize();
+            if (party_size > 1 || g_logic->connections()->connection_to_host()
                 || g_ui->root_ui()->always_draw_party_icon()) {
               do_party_button = true;
             }
@@ -1533,7 +1533,7 @@ auto Joystick::GetPartyButtonName() const -> std::string {
   if (g_buildconfig.iircade_build()) {
     return "X";
   }
-  return g_game->CharStr(SpecialChar::kTopButton);
+  return g_logic->CharStr(SpecialChar::kTopButton);
 }
 
 }  // namespace ballistica

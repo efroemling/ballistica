@@ -4,7 +4,7 @@
 
 #include "ballistica/assets/component/texture.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -95,7 +95,7 @@ void PythonClassTexture::tp_dealloc(PythonClassTexture* self) {
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Texture>* t = self->texture_;
-    g_game->thread()->PushCall([t] { Delete(t); });
+    g_logic->thread()->PushCall([t] { Delete(t); });
   } else {
     Delete(self->texture_);
   }

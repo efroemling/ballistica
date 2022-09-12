@@ -22,14 +22,14 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/game/friend_score_set.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/friend_score_set.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
 #include "ballistica/platform/stdio_console.h"
@@ -849,7 +849,7 @@ void Platform::GetFriendScores(const std::string& game,
                                const std::string& game_version, void* data) {
   // As a default, just fail gracefully.
   Log("FIXME: GetFriendScores unimplemented");
-  g_game->PushFriendScoreSetCall(FriendScoreSet(false, data));
+  g_logic->PushFriendScoreSetCall(FriendScoreSet(false, data));
 }
 
 void Platform::SubmitScore(const std::string& game, const std::string& version,
@@ -940,7 +940,7 @@ void Platform::DrainAutoReleasePool(void* pool) { throw Exception(); }
 void Platform::OpenURL(const std::string& url) {
   // Can't open URLs in VR - just tell the game thread to show the url.
   if (IsVRMode()) {
-    g_game->PushShowURLCall(url);
+    g_logic->PushShowURLCall(url);
     return;
   }
 
@@ -1277,10 +1277,10 @@ auto Platform::HavePermission(Permission p) -> bool {
 
 #if !BA_OSTYPE_WINDOWS
 static void HandleSIGINT(int s) {
-  if (g_game) {
-    g_game->PushInterruptSignalCall();
+  if (g_logic) {
+    g_logic->PushInterruptSignalCall();
   } else {
-    Log("SigInt handler called before g_game exists.");
+    Log("SigInt handler called before g_logic exists.");
   }
 }
 #endif

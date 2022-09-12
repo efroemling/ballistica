@@ -219,7 +219,7 @@ void UI::AddWidget(Widget* w, ContainerWidget* parent) {
   // will not get stuck running or whatnot.
   if (screen_root_widget_.exists() && !screen_root_widget_->HasChildren()
       && parent == &(*screen_root_widget_)) {
-    g_game->ResetInput();
+    g_logic->ResetInput();
   }
 
   parent->AddWidget(w);
@@ -305,18 +305,18 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
           kUIOwnerTimeoutSeconds - (time - last_input_device_use_time_) / 1000;
       std::string time_out_str;
       if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 10)) {
-        time_out_str = " " + g_game->GetResourceString("timeOutText");
+        time_out_str = " " + g_logic->GetResourceString("timeOutText");
         Utils::StringReplaceOne(&time_out_str, "${TIME}",
                                 std::to_string(timeout));
       } else {
-        time_out_str = " " + g_game->GetResourceString("willTimeOutText");
+        time_out_str = " " + g_logic->GetResourceString("willTimeOutText");
       }
 
       std::string name;
       if (input->GetDeviceName() == "Keyboard") {
-        name = g_game->GetResourceString("keyboardText");
+        name = g_logic->GetResourceString("keyboardText");
       } else if (input->GetDeviceName() == "TouchScreen") {
-        name = g_game->GetResourceString("touchScreenText");
+        name = g_logic->GetResourceString("touchScreenText");
       } else {
         // We used to use player names here, but that's kinda sloppy and random;
         // lets just go with device names/numbers.
@@ -331,7 +331,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
         }
       }
 
-      std::string b = g_game->GetResourceString("hasMenuControlText");
+      std::string b = g_logic->GetResourceString("hasMenuControlText");
       Utils::StringReplaceOne(&b, "${NAME}", name);
       ScreenMessage(b + time_out_str, {0.45f, 0.4f, 0.5f});
     }
@@ -371,7 +371,7 @@ auto UI::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
     case TimeType::kSim:
     case TimeType::kBase:
     case TimeType::kReal:
-      return g_game->NewRealTimer(length, repeat, runnable);
+      return g_logic->NewRealTimer(length, repeat, runnable);
     default:
       // Fall back to default for descriptive error otherwise.
       return ContextTarget::NewTimer(timetype, length, repeat, runnable);
@@ -383,7 +383,7 @@ void UI::DeleteTimer(TimeType timetype, int timer_id) {
     case TimeType::kSim:
     case TimeType::kBase:
     case TimeType::kReal:
-      g_game->DeleteRealTimer(timer_id);
+      g_logic->DeleteRealTimer(timer_id);
       break;
     default:
       // Fall back to default for descriptive error otherwise.

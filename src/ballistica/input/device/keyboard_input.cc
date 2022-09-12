@@ -2,7 +2,7 @@
 
 #include "ballistica/input/device/keyboard_input.h"
 
-#include "ballistica/game/player.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
@@ -139,7 +139,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
   // Bring up menu if start is pressed.
   if (keysym->sym == start_key_ && !repeat && g_ui && g_ui->screen_root_widget()
       && g_ui->screen_root_widget()->GetChildCount() == 0) {
-    g_game->PushMainMenuPressCall(this);
+    g_logic->PushMainMenuPressCall(this);
     return true;
   }
 

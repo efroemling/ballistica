@@ -8,7 +8,7 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {
@@ -32,7 +32,7 @@ auto StdioConsole::OnAppStart() -> void {
       // We send this to the logic thread so it happens AFTER the
       // results of the last script-command message we may have just sent.
       if (stdin_is_terminal) {
-        g_game->thread()->PushCall([] {
+        g_logic->thread()->PushCall([] {
           if (!g_app->shutting_down) {
             printf(">>> ");
             fflush(stdout);
@@ -53,7 +53,7 @@ auto StdioConsole::OnAppStart() -> void {
             && pending_input_[pending_input_.size() - 1] == '\n') {
           // Get rid of the last newline and ship it to the game.
           pending_input_.pop_back();
-          g_game->PushStdinScriptCommand(pending_input_);
+          g_logic->PushStdinScriptCommand(pending_input_);
           pending_input_.clear();
         }
       } else {

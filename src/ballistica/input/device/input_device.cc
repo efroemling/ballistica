@@ -6,11 +6,11 @@
 #include <unordered_map>
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/connection/connection_to_host.h"
-#include "ballistica/game/player.h"
-#include "ballistica/game/session/host_session.h"
-#include "ballistica/game/session/net_client_session.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/connection/connection_to_host.h"
+#include "ballistica/logic/player.h"
+#include "ballistica/logic/session/host_session.h"
+#include "ballistica/logic/session/net_client_session.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/class/python_class_input_device.h"
 #include "ballistica/python/python.h"
@@ -109,13 +109,13 @@ auto InputDevice::GetDefaultPlayerName() -> std::string {
 auto InputDevice::GetButtonName(int id) -> std::string {
   // By default just say 'button 1' or whatnot.
   // FIXME: should return this in Lstr json form.
-  return g_game->GetResourceString("buttonText") + " " + std::to_string(id);
+  return g_logic->GetResourceString("buttonText") + " " + std::to_string(id);
 }
 
 auto InputDevice::GetAxisName(int id) -> std::string {
   // By default just return 'axis 5' or whatnot.
   // FIXME: should return this in Lstr json form.
-  return g_game->GetResourceString("axisText") + " " + std::to_string(id);
+  return g_logic->GetResourceString("axisText") + " " + std::to_string(id);
 }
 
 auto InputDevice::HasMeaningfulButtonNames() -> bool { return false; }
@@ -207,7 +207,7 @@ void InputDevice::RequestPlayer() {
   assert(InLogicThread());
 
   // Make note that we're being used in some way.
-  last_input_time_ = g_game->master_time();
+  last_input_time_ = g_logic->master_time();
 
   if (player_.exists()) {
     Log("Error: InputDevice::RequestPlayer()"
@@ -222,14 +222,14 @@ void InputDevice::RequestPlayer() {
 
   // If we have a local host-session, ask it for a player.. otherwise if we have
   // a client-session, ask it for a player.
-  assert(g_game);
-  if (auto* hs = dynamic_cast<HostSession*>(g_game->GetForegroundSession())) {
+  assert(g_logic);
+  if (auto* hs = dynamic_cast<HostSession*>(g_logic->GetForegroundSession())) {
     {
       Python::ScopedCallLabel label("requestPlayer");
       hs->RequestPlayer(this);
     }
   } else if (auto* client_session = dynamic_cast<NetClientSession*>(
-                 g_game->GetForegroundSession())) {
+                 g_logic->GetForegroundSession())) {
     if (ConnectionToHost* connection_to_host =
             client_session->connection_to_host()) {
       std::vector<uint8_t> data(2);
@@ -270,7 +270,7 @@ void InputDevice::Update() {
 void InputDevice::UpdateLastInputTime() {
   // Keep our own individual time, and also let
   // the overall input system know something happened.
-  last_input_time_ = g_game->master_time();
+  last_input_time_ = g_logic->master_time();
   g_input->mark_input_active();
 }
 

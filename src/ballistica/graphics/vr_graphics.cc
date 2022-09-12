@@ -4,13 +4,13 @@
 #include "ballistica/graphics/vr_graphics.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/graphics/component/special_component.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/render_pass.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/scene/node/globals_node.h"
 
 namespace ballistica {
@@ -290,7 +290,7 @@ void VRGraphics::DrawVRControllers(FrameDef* frame_def) {
   }
 
   // test right hand
-  const VRHandsState& s(g_game->vr_hands_state());
+  const VRHandsState& s(g_logic->vr_hands_state());
 
   switch (s.r.type) {
     case VRHandType::kOculusTouchR:

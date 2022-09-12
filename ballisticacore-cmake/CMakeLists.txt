@@ -332,40 +332,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/dynamics/part.h
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.cc
   ${BA_SRC_ROOT}/ballistica/dynamics/rigid_body.h
-  ${BA_SRC_ROOT}/ballistica/game/client_controller_interface.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_set.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_set.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client_udp.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client_udp.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host.h
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host_udp.cc
-  ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host_udp.h
-  ${BA_SRC_ROOT}/ballistica/game/friend_score_set.h
-  ${BA_SRC_ROOT}/ballistica/game/game.cc
-  ${BA_SRC_ROOT}/ballistica/game/game.h
-  ${BA_SRC_ROOT}/ballistica/game/host_activity.cc
-  ${BA_SRC_ROOT}/ballistica/game/host_activity.h
-  ${BA_SRC_ROOT}/ballistica/game/player.cc
-  ${BA_SRC_ROOT}/ballistica/game/player.h
-  ${BA_SRC_ROOT}/ballistica/game/player_spec.cc
-  ${BA_SRC_ROOT}/ballistica/game/player_spec.h
-  ${BA_SRC_ROOT}/ballistica/game/session/client_session.cc
-  ${BA_SRC_ROOT}/ballistica/game/session/client_session.h
-  ${BA_SRC_ROOT}/ballistica/game/session/host_session.cc
-  ${BA_SRC_ROOT}/ballistica/game/session/host_session.h
-  ${BA_SRC_ROOT}/ballistica/game/session/net_client_session.cc
-  ${BA_SRC_ROOT}/ballistica/game/session/net_client_session.h
-  ${BA_SRC_ROOT}/ballistica/game/session/replay_client_session.cc
-  ${BA_SRC_ROOT}/ballistica/game/session/replay_client_session.h
-  ${BA_SRC_ROOT}/ballistica/game/session/session.cc
-  ${BA_SRC_ROOT}/ballistica/game/session/session.h
-  ${BA_SRC_ROOT}/ballistica/game/v1_account.cc
-  ${BA_SRC_ROOT}/ballistica/game/v1_account.h
   ${BA_SRC_ROOT}/ballistica/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/generic/buffer.h
@@ -485,6 +451,40 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/input/remote_app.cc
   ${BA_SRC_ROOT}/ballistica/input/remote_app.h
   ${BA_SRC_ROOT}/ballistica/internal/app_internal.h
+  ${BA_SRC_ROOT}/ballistica/logic/client_controller_interface.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_set.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_set.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_client.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_client.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_client_udp.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_client_udp.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host.h
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host_udp.cc
+  ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host_udp.h
+  ${BA_SRC_ROOT}/ballistica/logic/friend_score_set.h
+  ${BA_SRC_ROOT}/ballistica/logic/host_activity.cc
+  ${BA_SRC_ROOT}/ballistica/logic/host_activity.h
+  ${BA_SRC_ROOT}/ballistica/logic/logic.cc
+  ${BA_SRC_ROOT}/ballistica/logic/logic.h
+  ${BA_SRC_ROOT}/ballistica/logic/player.cc
+  ${BA_SRC_ROOT}/ballistica/logic/player.h
+  ${BA_SRC_ROOT}/ballistica/logic/player_spec.cc
+  ${BA_SRC_ROOT}/ballistica/logic/player_spec.h
+  ${BA_SRC_ROOT}/ballistica/logic/session/client_session.cc
+  ${BA_SRC_ROOT}/ballistica/logic/session/client_session.h
+  ${BA_SRC_ROOT}/ballistica/logic/session/host_session.cc
+  ${BA_SRC_ROOT}/ballistica/logic/session/host_session.h
+  ${BA_SRC_ROOT}/ballistica/logic/session/net_client_session.cc
+  ${BA_SRC_ROOT}/ballistica/logic/session/net_client_session.h
+  ${BA_SRC_ROOT}/ballistica/logic/session/replay_client_session.cc
+  ${BA_SRC_ROOT}/ballistica/logic/session/replay_client_session.h
+  ${BA_SRC_ROOT}/ballistica/logic/session/session.cc
+  ${BA_SRC_ROOT}/ballistica/logic/session/session.h
+  ${BA_SRC_ROOT}/ballistica/logic/v1_account.cc
+  ${BA_SRC_ROOT}/ballistica/logic/v1_account.h
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/math/matrix44f.h
   ${BA_SRC_ROOT}/ballistica/math/point2d.h

@@ -2,8 +2,8 @@
 
 #include "ballistica/python/python_context_call.h"
 
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
 

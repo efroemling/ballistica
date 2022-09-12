@@ -3,9 +3,9 @@
 #include "ballistica/ui/widget/check_box_widget.h"
 
 #include "ballistica/audio/audio.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/python/python_sys.h"
 #include "ballistica/ui/ui.h"
@@ -245,7 +245,7 @@ void CheckBoxWidget::Activate() {
 
     // Call this in the next cycle (don't want to risk mucking with UI from
     // within a UI loop)
-    g_game->PushPythonWeakCallArgs(
+    g_logic->PushPythonWeakCallArgs(
         Object::WeakRef<PythonContextCall>(on_value_change_call_), args);
   }
 }

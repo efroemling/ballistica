@@ -2,8 +2,8 @@
 
 #include "ballistica/input/device/client_input_device.h"
 
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/player.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/networking/networking.h"
 
 namespace ballistica {

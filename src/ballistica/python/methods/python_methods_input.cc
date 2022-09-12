@@ -3,10 +3,10 @@
 #include "ballistica/python/methods/python_methods_input.h"
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/game.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"

@@ -4,10 +4,10 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/graphics/text/text_graphics.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/platform/min_sdl.h"
 
 namespace ballistica {
@@ -53,8 +53,8 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     case kActivateKey2: {
       if (!g_buildconfig.demo_build() && !g_buildconfig.arcade_build()) {
         // (reset input so characters don't continue walking and stuff)
-        g_game->ResetInput();
-        g_game->ToggleConsole();
+        g_logic->ResetInput();
+        g_logic->ToggleConsole();
       }
       return true;
     }
@@ -113,7 +113,7 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         last_line_.clear();
         lines_.clear();
       } else {
-        g_game->PushInGameConsoleScriptCommand(input_string_);
+        g_logic->PushInGameConsoleScriptCommand(input_string_);
       }
       input_history_.push_front(input_string_);
       if (input_history_.size() > 100) input_history_.pop_back();

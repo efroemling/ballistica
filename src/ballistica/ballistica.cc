@@ -16,11 +16,11 @@
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/game/v1_account.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/v1_account.h"
 #include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
@@ -32,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20825;
+const int kAppBuildNumber = 20829;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -50,7 +50,7 @@ AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
 BGDynamicsServer* g_bg_dynamics_server{};
 Context* g_context{};
-Game* g_game{};
+Logic* g_logic{};
 Graphics* g_graphics{};
 GraphicsServer* g_graphics_server{};
 Input* g_input{};
@@ -129,7 +129,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_network_writer = new NetworkWriter();
     g_input = new Input();
     g_app_internal = CreateAppInternal();
-    g_game = new Game();
+    g_logic = new Logic();
     Scene::Init();
     if (!HeadlessMode()) {
       g_bg_dynamics = new BGDynamics();
@@ -146,7 +146,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 2: Set things in motion.
     // -------------------------------------------------------------------------
 
-    g_game->OnAppStart();
+    g_logic->OnAppStart();
     g_audio_server->OnAppStart();
     g_assets_server->OnAppStart();
     g_platform->OnAppStart();
@@ -156,7 +156,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     }
     // Ok; now that we're bootstrapped, tell the game thread to read and apply
     // the config which should kick off the real action.
-    g_game->PushApplyConfigCall();
+    g_logic->PushApplyConfigCall();
 
     // -------------------------------------------------------------------------
     // Phase 3/4: Create a screen and/or kick off game (in other threads).
@@ -263,7 +263,7 @@ auto GetAppInstanceUUID() -> const std::string& {
 }
 
 auto InLogicThread() -> bool {
-  return (g_game && g_game->thread()->IsCurrent());
+  return (g_logic && g_logic->thread()->IsCurrent());
 }
 
 auto InMainThread() -> bool {
@@ -297,10 +297,10 @@ auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {
 auto IsVRMode() -> bool { return g_app->vr_mode; }
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
-  if (g_game) {
-    g_game->PushScreenMessage(s, color);
+  if (g_logic) {
+    g_logic->PushScreenMessage(s, color);
   } else {
-    Log("ScreenMessage before g_game init (will be lost): '" + s + "'");
+    Log("ScreenMessage before g_logic init (will be lost): '" + s + "'");
   }
 }
 

@@ -114,7 +114,7 @@ void PythonClassNode::tp_dealloc(PythonClassNode* self) {
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<Node>* n = self->node_;
-    g_game->thread()->PushCall([n] { delete n; });
+    g_logic->thread()->PushCall([n] { delete n; });
   } else {
     delete self->node_;
   }

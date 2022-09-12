@@ -15,9 +15,9 @@
 #include "ballistica/dynamics/material/material_component.h"
 #include "ballistica/dynamics/material/material_condition_node.h"
 #include "ballistica/dynamics/part.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/session/host_session.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
@@ -46,7 +46,7 @@ SceneStream::SceneStream(HostSession* host_session, bool save_replay)
   // If we're the live output-stream from a host-session,
   // take responsibility for feeding all clients to this device.
   if (host_session_) {
-    g_game->connections()->RegisterClientController(this);
+    g_logic->connections()->RegisterClientController(this);
   }
 }
 
@@ -67,7 +67,7 @@ SceneStream::~SceneStream() {
 
   // If we're wired to the host-session, go ahead and release clients.
   if (host_session_) {
-    g_game->connections()->UnregisterClientController(this);
+    g_logic->connections()->UnregisterClientController(this);
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnreachableCode"

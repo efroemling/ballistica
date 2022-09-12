@@ -111,7 +111,7 @@ class Python {
   /// results.
   static auto generic_dir(PyObject* self) -> PyObject*;
 
-  /// For use by g_game in passing events along to the python layer (for
+  /// For use by g_logic in passing events along to the python layer (for
   /// captured input, etc).
   auto HandleJoystickEvent(const SDL_Event& event,
                            InputDevice* input_device = nullptr) -> bool;

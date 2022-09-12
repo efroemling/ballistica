@@ -3,7 +3,7 @@
 #include "ballistica/python/class/python_class_timer.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python_context_call_runnable.h"
 
 namespace ballistica {
@@ -167,7 +167,7 @@ void PythonClassTimer::tp_dealloc(PythonClassTimer* self) {
     auto a1 = self->time_type_;
     auto a2 = self->timer_id_;
     auto a3 = self->context_;
-    g_game->thread()->PushCall(
+    g_logic->thread()->PushCall(
         [a0, a1, a2, a3] { PythonClassTimer::DoDelete(a0, a1, a2, a3); });
   } else {
     DoDelete(self->have_timer_, self->time_type_, self->timer_id_,

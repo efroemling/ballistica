@@ -10,9 +10,9 @@
 #include "ballistica/dynamics/bg/bg_dynamics_shadow_data.h"
 #include "ballistica/dynamics/bg/bg_dynamics_volume_light_data.h"
 #include "ballistica/dynamics/collision_cache.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/logic/logic.h"
 
 namespace ballistica {
 
@@ -87,7 +87,7 @@ class BGDynamicsServer::Terrain {
     // back to the main thread to get freed.
     if (collide_model_) {
       Object::Ref<CollideModelData>* ref = collide_model_;
-      g_game->thread()->PushCall([ref] {
+      g_logic->thread()->PushCall([ref] {
         (**ref).set_last_used_time(GetRealTime());
         delete ref;
       });
@@ -2315,7 +2315,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // Now generate a snapshot of our state and send it to the game thread,
   // so they can draw us.
   BGDynamicsDrawSnapshot* snapshot = CreateDrawSnapshot();
-  g_game->thread()->PushCall([snapshot] {
+  g_logic->thread()->PushCall([snapshot] {
     snapshot->SetLogicThreadOwnership();
     g_bg_dynamics->SetDrawSnapshot(snapshot);
   });

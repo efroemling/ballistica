@@ -2,7 +2,7 @@
 
 #include "ballistica/ui/widget/widget.h"
 
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/class/python_class_widget.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -87,7 +87,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
   if (selected_ && on_select_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking
     // with UI from within a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_select_call_));
   }
 }

@@ -14,7 +14,7 @@
 
 namespace ballistica {
 
-ButtonWidget::ButtonWidget() : birth_time_{g_game->master_time()} {
+ButtonWidget::ButtonWidget() : birth_time_{g_logic->master_time()} {
   text_ = Object::New<TextWidget>();
   SetText("Button");
   text_->set_valign(TextWidget::VAlign::kCenter);
@@ -560,7 +560,7 @@ void ButtonWidget::DoActivate(bool isRepeat) {
 
   // We don't want holding down a repeat-button to keep flashing it.
   if (!isRepeat) {
-    last_activate_time_ = g_game->master_time();
+    last_activate_time_ = g_logic->master_time();
   }
   if (sound_enabled_) {
     int r = rand() % 3;  // NOLINT
@@ -575,7 +575,7 @@ void ButtonWidget::DoActivate(bool isRepeat) {
   if (on_activate_call_.exists()) {
     // Call this in the next cycle (don't want to risk mucking with UI from
     // within a UI loop.)
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
     return;
   }

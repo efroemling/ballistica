@@ -11,8 +11,8 @@
 #include "ballistica/audio/audio_streamer.h"
 #include "ballistica/audio/ogg_stream.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/math/vector3f.h"
 
 // Need to move away from OpenAL on Apple stuff.
@@ -1114,7 +1114,7 @@ void AudioServer::PushComponentUnloadCall(
     }
     // ...and then ship these pointers back to the game thread, so it can free
     // the references.
-    g_game->PushFreeAssetComponentRefsCall(components);
+    g_logic->PushFreeAssetComponentRefsCall(components);
   });
 }
 
@@ -1131,7 +1131,8 @@ void AudioServer::AddSoundRefDelete(const Object::Ref<SoundData>* c) {
     sound_ref_delete_list_.push_back(c);
   }
   // Now push a call to the game thread to do the deletes.
-  g_game->thread()->PushCall([] { g_audio_server->ClearSoundRefDeleteList(); });
+  g_logic->thread()->PushCall(
+      [] { g_audio_server->ClearSoundRefDeleteList(); });
 }
 
 void AudioServer::ClearSoundRefDeleteList() {

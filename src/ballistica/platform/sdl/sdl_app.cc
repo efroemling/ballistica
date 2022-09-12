@@ -7,11 +7,11 @@
 #include "ballistica/app/stress_test.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/gl/gl_sys.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 
@@ -155,7 +155,7 @@ void SDLApp::HandleSDLEvent(const SDL_Event& event) {
 #endif
 
     case SDL_QUIT:
-      g_game->PushShutdownCall(false);
+      g_logic->PushShutdownCall(false);
       break;
 
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD

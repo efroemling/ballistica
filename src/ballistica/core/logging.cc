@@ -5,8 +5,8 @@
 #include <map>
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/game.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
@@ -16,8 +16,8 @@ namespace ballistica {
 static void PrintCommon(const std::string& s) {
   // Print to in-game console.
   {
-    if (g_game != nullptr) {
-      g_game->PushConsolePrintCall(s);
+    if (g_logic != nullptr) {
+      g_logic->PushConsolePrintCall(s);
     } else {
       if (g_platform != nullptr) {
         g_platform->HandleLog(

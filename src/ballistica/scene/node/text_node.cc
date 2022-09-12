@@ -113,7 +113,7 @@ void TextNode::SetText(const std::string& val) {
 
     if (do_format_check) {
       bool valid;
-      g_game->CompileResourceString(val, "setText format check", &valid);
+      g_logic->CompileResourceString(val, "setText format check", &valid);
       if (!valid) {
         BA_LOG_ONCE("Invalid resource string: '" + val + "' on node '" + label()
                     + "'");
@@ -348,7 +348,7 @@ void TextNode::Draw(FrameDef* frame_def) {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
     text_translated_ =
-        g_game->CompileResourceString(text_raw_, "TextNode::OnDraw");
+        g_logic->CompileResourceString(text_raw_, "TextNode::OnDraw");
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
     text_width_dirty_ = true;

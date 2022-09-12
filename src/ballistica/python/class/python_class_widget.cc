@@ -3,9 +3,9 @@
 #include "ballistica/python/class/python_class_widget.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/widget/container_widget.h"
 
@@ -93,7 +93,7 @@ void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
   // need be
   if (!InLogicThread()) {
     Object::WeakRef<Widget>* w = self->widget_;
-    g_game->thread()->PushCall([w] { delete w; });
+    g_logic->thread()->PushCall([w] { delete w; });
   } else {
     delete self->widget_;
   }

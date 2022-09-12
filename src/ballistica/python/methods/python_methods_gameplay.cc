@@ -10,13 +10,13 @@
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_action.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/host_activity.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/host_activity.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
@@ -45,7 +45,7 @@ auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   HostActivity* host_activity =
-      g_game->GetForegroundContext().GetHostActivity();
+      g_logic->GetForegroundContext().GetHostActivity();
   if (!host_activity) {
     throw Exception(PyExcType::kContext);
   }
@@ -383,7 +383,7 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
 
   // Note: we return None if not in the game thread.
   HostActivity* h = InLogicThread()
-                        ? g_game->GetForegroundContext().GetHostActivity()
+                        ? g_logic->GetForegroundContext().GetHostActivity()
                         : nullptr;
   if (h != nullptr) {
     PyObject* obj = h->GetPyActivity();
@@ -404,7 +404,7 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
-  cJSON* party = g_game->game_roster();
+  cJSON* party = g_logic->game_roster();
   assert(party);
   int len = cJSON_GetArraySize(party);
   for (int i = 0; i < len; i++) {
@@ -458,8 +458,8 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
       account_id = g_app_internal->GetPublicV1AccountID();
     } else {
       auto client2 =
-          g_game->connections()->connections_to_clients().find(clientid);
-      if (client2 != g_game->connections()->connections_to_clients().end()) {
+          g_logic->connections()->connections_to_clients().find(clientid);
+      if (client2 != g_logic->connections()->connections_to_clients().end()) {
         account_id = client2->second->peer_public_account_id();
       }
     }
@@ -500,7 +500,7 @@ auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
     throw Exception(PyExcType::kContext);
   }
 #if BA_DEBUG_BUILD
-  g_game->SetDebugSpeedExponent(speed);
+  g_logic->SetDebugSpeedExponent(speed);
 #else
   throw Exception("This call only functions in the debug build.");
 #endif
@@ -510,8 +510,8 @@ auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(g_game);
-  return PyLong_FromLong(g_game->replay_speed_exponent());
+  assert(g_logic);
+  return PyLong_FromLong(g_logic->replay_speed_exponent());
   BA_PYTHON_CATCH;
 }
 
@@ -519,8 +519,8 @@ auto PySetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) return nullptr;
-  assert(g_game);
-  g_game->SetReplaySpeedExponent(speed);
+  assert(g_logic);
+  g_logic->SetReplaySpeedExponent(speed);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -533,8 +533,8 @@ auto PyResetGameActivityTracking(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (g_game) {
-    g_game->ResetActivityTracking();
+  if (g_logic) {
+    g_logic->ResetActivityTracking();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

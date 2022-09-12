@@ -3,8 +3,8 @@
 #include "ballistica/dynamics/material/material_condition_node.h"
 
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/logic/session/client_session.h"
 #include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {

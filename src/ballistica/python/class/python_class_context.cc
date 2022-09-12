@@ -3,9 +3,9 @@
 #include "ballistica/python/class/python_class_context.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
 
@@ -145,11 +145,11 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
   if (Python::IsPyString(source_obj)) {
     std::string source = Python::GetPyString(source_obj);
     if (source == "ui") {
-      cs = Context(g_game->GetUIContextTarget());
+      cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "UI") {
       BA_LOG_ONCE("'UI' context-target option is deprecated; please use 'ui'");
       Python::PrintStackTrace();
-      cs = Context(g_game->GetUIContextTarget());
+      cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "current") {
       cs = Context::current();
     } else if (source == "empty") {
@@ -188,7 +188,7 @@ void PythonClassContext::tp_dealloc(PythonClassContext* self) {
   if (!InLogicThread()) {
     Context* c = self->context_;
     Context* c2 = self->context_prev_;
-    g_game->thread()->PushCall([c, c2] {
+    g_logic->thread()->PushCall([c, c2] {
       delete c;
       delete c2;
     });

@@ -403,108 +403,6 @@
     <ClInclude Include="..\..\src\ballistica\dynamics\rigid_body.h">
       <Filter>ballistica\dynamics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\game\client_controller_interface.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection_set.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection_set.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_client.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_client.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_client_udp.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_client_udp.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_host.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_host.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\connection\connection_to_host_udp.cc">
-      <Filter>ballistica\game\connection</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\connection\connection_to_host_udp.h">
-      <Filter>ballistica\game\connection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\game\friend_score_set.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\game.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\game.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\host_activity.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\host_activity.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\player.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\player.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\player_spec.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\player_spec.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\session\client_session.cc">
-      <Filter>ballistica\game\session</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\session\client_session.h">
-      <Filter>ballistica\game\session</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\session\host_session.cc">
-      <Filter>ballistica\game\session</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\session\host_session.h">
-      <Filter>ballistica\game\session</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\session\net_client_session.cc">
-      <Filter>ballistica\game\session</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\session\net_client_session.h">
-      <Filter>ballistica\game\session</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\session\replay_client_session.cc">
-      <Filter>ballistica\game\session</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\session\replay_client_session.h">
-      <Filter>ballistica\game\session</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\session\session.cc">
-      <Filter>ballistica\game\session</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\session\session.h">
-      <Filter>ballistica\game\session</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\game\v1_account.cc">
-      <Filter>ballistica\game</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\game\v1_account.h">
-      <Filter>ballistica\game</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\generic\base64.cc">
       <Filter>ballistica\generic</Filter>
     </ClCompile>
@@ -861,6 +759,108 @@
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\internal\app_internal.h">
       <Filter>ballistica\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\logic\client_controller_interface.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection_set.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection_set.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection_to_client.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_client.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection_to_client_udp.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_client_udp.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection_to_host.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_host.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\connection\connection_to_host_udp.cc">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_host_udp.h">
+      <Filter>ballistica\logic\connection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\logic\friend_score_set.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\host_activity.cc">
+      <Filter>ballistica\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\host_activity.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\logic.cc">
+      <Filter>ballistica\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\logic.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\player.cc">
+      <Filter>ballistica\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\player.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\player_spec.cc">
+      <Filter>ballistica\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\player_spec.h">
+      <Filter>ballistica\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\session\client_session.cc">
+      <Filter>ballistica\logic\session</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\session\client_session.h">
+      <Filter>ballistica\logic\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\session\host_session.cc">
+      <Filter>ballistica\logic\session</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\session\host_session.h">
+      <Filter>ballistica\logic\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\session\net_client_session.cc">
+      <Filter>ballistica\logic\session</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\session\net_client_session.h">
+      <Filter>ballistica\logic\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\session\replay_client_session.cc">
+      <Filter>ballistica\logic\session</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\session\replay_client_session.h">
+      <Filter>ballistica\logic\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\session\session.cc">
+      <Filter>ballistica\logic\session</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\session\session.h">
+      <Filter>ballistica\logic\session</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\logic\v1_account.cc">
+      <Filter>ballistica\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\logic\v1_account.h">
+      <Filter>ballistica\logic</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\math\matrix44f.cc">
       <Filter>ballistica\math</Filter>
@@ -1652,9 +1652,6 @@
     <Filter Include="ballistica\dynamics" />
     <Filter Include="ballistica\dynamics\bg" />
     <Filter Include="ballistica\dynamics\material" />
-    <Filter Include="ballistica\game" />
-    <Filter Include="ballistica\game\connection" />
-    <Filter Include="ballistica\game\session" />
     <Filter Include="ballistica\generic" />
     <Filter Include="ballistica\graphics" />
     <Filter Include="ballistica\graphics\component" />
@@ -1665,6 +1662,9 @@
     <Filter Include="ballistica\input" />
     <Filter Include="ballistica\input\device" />
     <Filter Include="ballistica\internal" />
+    <Filter Include="ballistica\logic" />
+    <Filter Include="ballistica\logic\connection" />
+    <Filter Include="ballistica\logic\session" />
     <Filter Include="ballistica\math" />
     <Filter Include="ballistica\networking" />
     <Filter Include="ballistica\platform" />

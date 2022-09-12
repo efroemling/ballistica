@@ -2,12 +2,12 @@
 
 #include "ballistica/ui/widget/image_widget.h"
 
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/component/simple_component.h"
+#include "ballistica/logic/logic.h"
 
 namespace ballistica {
 
-ImageWidget::ImageWidget() : birth_time_{g_game->master_time()} {}
+ImageWidget::ImageWidget() : birth_time_{g_logic->master_time()} {}
 
 ImageWidget::~ImageWidget() = default;
 

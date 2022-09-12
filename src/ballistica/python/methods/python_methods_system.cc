@@ -10,12 +10,12 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/assets/assets.h"
 #include "ballistica/assets/component/texture.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
-#include "ballistica/game/session/replay_client_session.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/session/host_session.h"
+#include "ballistica/logic/session/replay_client_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/python/python_sys.h"
@@ -652,8 +652,8 @@ auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
     random_names.emplace_back(PyUnicode_AsUTF8(entry));
   }
   Utils::SetRandomNameList(random_names);
-  assert(g_game);
-  g_game->SetLanguageKeys(language);
+  assert(g_logic);
+  g_logic->SetLanguageKeys(language);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
