@@ -32,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20840;
+const int kAppBuildNumber = 20842;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -86,37 +86,66 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // avoid any logic that accesses other globals since they may
     // not yet exist.
 
+    // Minimal globals we must assign immediately as they are needed
+    // during construction of the others.
     g_platform = Platform::Create();
     g_app = new App(argc, argv);
     g_app_internal = CreateAppInternal();
     g_main_thread = new Thread(ThreadTag::kMain, ThreadSource::kWrapMain);
-    g_app_flavor = g_platform->CreateAppFlavor();
-    g_python = Python::Create();
-    g_graphics = g_platform->CreateGraphics();
-    g_graphics_server = new GraphicsServer();
-    g_audio = new Audio();
-    g_audio_server = new AudioServer();
-    g_context = new Context(nullptr);
-    g_text_graphics = new TextGraphics();
-    g_app_config = new AppConfig();
-    g_v1_account = new V1Account();
-    g_utils = new Utils();
-    g_assets = new Assets();
-    g_assets_server = new AssetsServer();
-    g_ui = Object::NewUnmanaged<UI>();
-    g_networking = new Networking();
-    g_network_reader = new NetworkReader();
-    g_network_writer = new NetworkWriter();
-    g_input = new Input();
-    g_logic = new Logic();
-    g_scene_v1 = new SceneV1();
-    if (!HeadlessMode()) {
-      g_bg_dynamics = new BGDynamics();
-      g_bg_dynamics_server = new BGDynamicsServer();
-    }
-    if (g_buildconfig.enable_stdio_console()) {
-      g_stdio_console = new StdioConsole();
-    }
+
+    // For everything else, we hold off until the end to actually assign
+    // them to their globals. This keeps us honest and catches any stray
+    // inter-global access that we might accidentally include in a
+    // constructor.
+    auto* app_flavor = g_platform->CreateAppFlavor();
+    auto* python = Python::Create();
+    auto* graphics = g_platform->CreateGraphics();
+    auto* graphics_server = new GraphicsServer();
+    auto* audio = new Audio();
+    auto* audio_server = new AudioServer();
+    auto* context = new Context(nullptr);
+    auto* text_graphics = new TextGraphics();
+    auto* app_config = new AppConfig();
+    auto* v1_account = new V1Account();
+    auto* utils = new Utils();
+    auto* assets = new Assets();
+    auto* assets_server = new AssetsServer();
+    auto* ui = Object::NewUnmanaged<UI>();
+    auto* networking = new Networking();
+    auto* network_reader = new NetworkReader();
+    auto* network_writer = new NetworkWriter();
+    auto* input = new Input();
+    auto* logic = new Logic();
+    auto* scene_v1 = new SceneV1();
+    auto* bg_dynamics = HeadlessMode() ? nullptr : new BGDynamics;
+    auto* bg_dynamics_server = HeadlessMode() ? nullptr : new BGDynamicsServer;
+    auto* stdio_console =
+        g_buildconfig.enable_stdio_console() ? new StdioConsole() : nullptr;
+
+    g_app_flavor = app_flavor;
+    g_python = python;
+    g_graphics = graphics;
+    g_graphics_server = graphics_server;
+    g_audio = audio;
+    g_audio_server = audio_server;
+    g_context = context;
+    g_text_graphics = text_graphics;
+    g_app_config = app_config;
+    g_v1_account = v1_account;
+    g_utils = utils;
+    g_assets = assets;
+    g_assets_server = assets_server;
+    g_ui = ui;
+    g_networking = networking;
+    g_network_reader = network_reader;
+    g_network_writer = network_writer;
+    g_input = input;
+    g_logic = logic;
+    g_scene_v1 = scene_v1;
+    g_bg_dynamics = bg_dynamics;
+    g_bg_dynamics_server = bg_dynamics_server;
+    g_stdio_console = stdio_console;
+
     g_app->is_bootstrapped = true;
 
     // -------------------------------------------------------------------------
