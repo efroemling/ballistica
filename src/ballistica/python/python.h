@@ -80,9 +80,11 @@ class Python {
   static auto LogContextAuto() -> void;
   static auto LogContextNonLogicThread() -> void;
   Python();
-  ~Python();
+  static auto Create() -> Python*;
 
-  auto Reset(bool init = true) -> void;
+  auto InitCorePython() -> void;
+  auto InitBallisticaPython() -> void;
+  auto Reset() -> void;
 
   /// Add classes to the newly created ba module.
   static auto InitModuleClasses(PyObject* module) -> void;
@@ -424,7 +426,7 @@ class Python {
   PyObject* empty_dict_object_{};
   PyObject* main_dict_{};
   PyObject* env_{};
-  PyThreadState* thread_state_{};
+  PyThreadState* logic_thread_state_{};
 };
 
 }  // namespace ballistica

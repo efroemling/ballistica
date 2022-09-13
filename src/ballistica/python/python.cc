@@ -853,6 +853,19 @@ auto Python::GetPyVector3f(PyObject* o) -> Vector3f {
 
 Python::Python() = default;
 
+auto Python::Create() -> Python* {
+  assert(InMainThread());
+
+  Python* python = new Python();
+  python->InitCorePython();
+
+  // After we bootstrap Python here in the main thread we release the GIL.
+  // We'll explicitly reacquire it anytime we need it (mainly in the logic
+  // thread once that comes up later).
+  PyEval_SaveThread();
+  return python;
+}
+
 static struct PyModuleDef ba_module_def = {PyModuleDef_HEAD_INIT};
 
 static auto ba_exec(PyObject* module) -> int {
@@ -885,161 +898,183 @@ static auto PyInit__ba() -> PyObject* {
   return module;
 }
 
-void Python::Reset(bool do_init) {
+auto Python::InitCorePython() -> void {
+  assert(!inited_);
+  assert(InMainThread());
+  // Flip on some extra runtime debugging options in debug builds.
+  // https://docs.python.org/3/library/devmode.html#devmode
+  int dev_mode{g_buildconfig.debug_build()};
+
+  // Pre-config as isolated if we include our own Python and as standard
+  // otherwise.
+  PyPreConfig preconfig;
+  if (g_platform->ContainsPythonDist()) {
+    PyPreConfig_InitIsolatedConfig(&preconfig);
+  } else {
+    PyPreConfig_InitPythonConfig(&preconfig);
+  }
+  preconfig.dev_mode = dev_mode;
+
+  // We want consistent utf-8 everywhere (Python used to default to
+  // windows-specific file encodings, etc.)
+  preconfig.utf8_mode = 1;
+
+  PyStatus status = Py_PreInitialize(&preconfig);
+  BA_PRECONDITION(!PyStatus_Exception(status));
+
+  // Configure as isolated if we include our own Python and as standard
+  // otherwise.
+  PyConfig config;
+  if (g_platform->ContainsPythonDist()) {
+    PyConfig_InitIsolatedConfig(&config);
+  } else {
+    PyConfig_InitPythonConfig(&config);
+  }
+  config.dev_mode = dev_mode;
+  if (!g_buildconfig.debug_build()) {
+    config.optimization_level = 1;
+  }
+
+  // In cases where we bundle Python, set up all paths explicitly.
+  // https://docs.python.org/3/c-api/init_config.html#path-configuration
+  if (g_platform->ContainsPythonDist()) {
+    PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
+    PyConfig_SetBytesString(&config, &config.base_executable, "");
+    PyConfig_SetBytesString(&config, &config.base_prefix, "");
+    PyConfig_SetBytesString(&config, &config.exec_prefix, "");
+    PyConfig_SetBytesString(&config, &config.executable, "");
+    PyConfig_SetBytesString(&config, &config.prefix, "");
+
+    // Interesting note: it seems we can pass relative paths here but
+    // they wind up in sys.path as absolute paths (unlike entries we add
+    // to sys.path after things are up and running).
+    if (g_buildconfig.ostype_windows()) {
+      // Windows Python looks for Lib and DLLs dirs by default, along with
+      // some others, but we want to be more explicit in limiting to these. It
+      // also seems that windows Python's paths can be incorrect if we're in
+      // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
+      // setups.
+
+      // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
+      // it seems the interpreter defaults point to ./lib (as of 3.8.5).
+      // Normally this doesn't matter since windows is case-insensitive but
+      // under WSL it does.
+      // So we currently bundle the dir as 'lib' and use that in our path so
+      // that everything is happy (both with us and with python.exe).
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("lib", nullptr));
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("DLLs", nullptr));
+    } else {
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("pylib", nullptr));
+    }
+    config.module_search_paths_set = 1;
+  }
+
+  // Let Python know how to spin up our _ba module.
+  PyImport_AppendInittab("_ba", &PyInit__ba);
+
+  // Let Python know how to spin up the _bainternal module.
+  g_app_internal->DefineInternalModule();
+
+  // Init Python.
+  status = Py_InitializeFromConfig(&config);
+  BA_PRECONDITION(!PyStatus_Exception(status));
+
+  // Create a dict for execing just this bootstrap code in so
+  // we don't pollute the __main__ namespace.
+  auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
+
+  // Do a bit of basic bootstrapping here in the main thread.
+#include "ballistica/generated/python_embedded/bootstrap_monolithic.inc"
+  PyObject* result =
+      PyRun_String(bootstrap_monolithic_code, Py_file_input,
+                   bootstrap_context.get(), bootstrap_context.get());
+  if (result == nullptr) {
+    PyErr_PrintEx(0);
+
+    // Throw a simple exception so we don't get a stack trace.
+    throw std::logic_error(
+        "Error in ba Python bootstrapping. See log for details.");
+  }
+  Py_DECREF(result);
+
+  // Grab __main__ in case we need to use it later.
+  // FIXME: put this in objs_ with everything else.
+  PyObject* m;
+  BA_PRECONDITION(m = PyImport_AddModule("__main__"));
+  BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
+
+  // Make sure we're running the Python version we require.
+  const char* ver = Py_GetVersion();
+  if (strncmp(ver, "3.10", 4) != 0) {
+    FatalError("We require Python 3.10.x; instead found " + std::string(ver));
+  }
+}
+
+auto Python::InitBallisticaPython() -> void {
+  assert(InLogicThread());
+
+  // Create a dict for execing just this bootstrap code in so
+  // we don't pollute the __main__ namespace.
+  auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
+
+  // Get the app up and running.
+  // Run a few core bootstrappy things first:
+  // - get stdout/stderr redirection up so we can intercept python output
+  // - add our user and system script dirs to python path
+  // - create the ba.app instance.
+
+#include "ballistica/generated/python_embedded/bootstrap.inc"
+  PyObject* result =
+      PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
+                   bootstrap_context.get());
+  if (result == nullptr) {
+    PyErr_PrintEx(0);
+
+    // Throw a simple exception so we don't get a stack trace.
+    throw std::logic_error(
+        "Error in ba Python bootstrapping. See log for details.");
+  }
+  Py_DECREF(result);
+
+  // Import and grab all the Python stuff we use from C++.
+#include "ballistica/generated/python_embedded/binding.inc"
+
+  g_app_internal->PythonPostInit();
+
+  // Alright I guess let's pull ba in to main, since pretty
+  // much all interactive commands will be using it.
+  // If we ever build the game as a pure python module we should
+  // of course not do this.
+  BA_PRECONDITION(PyRun_SimpleString("import ba") == 0);
+
+  // Read the config file and store the config dict for easy access.
+  obj(ObjID::kReadConfigCall).Call();
+  StoreObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
+  assert(PyDict_Check(obj(ObjID::kConfig).get()));
+
+  // Turn off fancy-pants cyclic garbage-collection.
+  // We run it only at explicit times to avoid random hitches and keep
+  // things more deterministic.
+  // Non-reference-looped objects will still get cleaned up
+  // immediately, so we should try to structure things to avoid
+  // reference loops (just like Swift, ObjC, etc).
+  // FIXME - move this to Python code.
+  g_python->obj(Python::ObjID::kGCDisableCall).Call();
+  inited_ = true;
+}
+
+auto Python::Reset() -> void {
   assert(InLogicThread());
   assert(g_python);
   assert(g_platform);
+  assert(inited_);
 
-  bool was_inited = inited_;
-
-  if (inited_) {
-    ReleaseGamePadInput();
-    ReleaseKeyboardInput();
-    g_graphics->ReleaseFadeEndCommand();
-    inited_ = false;
-  }
-
-  if (!was_inited && do_init) {
-    // Flip on some extra runtime debugging options in debug builds.
-    // https://docs.python.org/3.10/library/devmode.html#devmode
-    int dev_mode{g_buildconfig.debug_build()};
-
-    // Pre-config as isolated if we include our own Python and as standard
-    // otherwise.
-    PyPreConfig preconfig;
-    if (g_platform->ContainsPythonDist()) {
-      PyPreConfig_InitIsolatedConfig(&preconfig);
-    } else {
-      PyPreConfig_InitPythonConfig(&preconfig);
-    }
-    preconfig.dev_mode = dev_mode;
-
-    // We want consistent utf-8 everywhere (Python used to default to
-    // windows-specific file encodings, etc.)
-    preconfig.utf8_mode = 1;
-
-    PyStatus status = Py_PreInitialize(&preconfig);
-    BA_PRECONDITION(!PyStatus_Exception(status));
-
-    // Configure as isolated if we include our own Python and as standard
-    // otherwise.
-    PyConfig config;
-    if (g_platform->ContainsPythonDist()) {
-      PyConfig_InitIsolatedConfig(&config);
-    } else {
-      PyConfig_InitPythonConfig(&config);
-    }
-    config.dev_mode = dev_mode;
-    if (!g_buildconfig.debug_build()) {
-      config.optimization_level = 1;
-    }
-
-    // In cases where we bundle Python, set up all paths explicitly.
-    // see https://docs.python.org/3.8/
-    //     c-api/init_config.html#path-configuration
-    if (g_platform->ContainsPythonDist()) {
-      PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
-      PyConfig_SetBytesString(&config, &config.base_executable, "");
-      PyConfig_SetBytesString(&config, &config.base_prefix, "");
-      PyConfig_SetBytesString(&config, &config.exec_prefix, "");
-      PyConfig_SetBytesString(&config, &config.executable, "");
-      PyConfig_SetBytesString(&config, &config.prefix, "");
-
-      // Interesting note: it seems we can pass relative paths here but
-      // they wind up in sys.path as absolute paths (unlike entries we add
-      // to sys.path after things are up and running).
-      if (g_buildconfig.ostype_windows()) {
-        // Windows Python looks for Lib and DLLs dirs by default, along with
-        // some others, but we want to be more explicit in limiting to these. It
-        // also seems that windows Python's paths can be incorrect if we're in
-        // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
-        // setups.
-
-        // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
-        // it seems the interpreter defaults point to ./lib (as of 3.8.5).
-        // Normally this doesn't matter since windows is case-insensitive but
-        // under WSL it does.
-        // So we currently bundle the dir as 'lib' and use that in our path so
-        // that everything is happy (both with us and with python.exe).
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("lib", nullptr));
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("DLLs", nullptr));
-      } else {
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("pylib", nullptr));
-      }
-      config.module_search_paths_set = 1;
-    }
-
-    // Let Python know how to spin up our _ba module.
-    PyImport_AppendInittab("_ba", &PyInit__ba);
-
-    // Inits our _ba module and runs Py_Initialize().
-    g_app_internal->PyInitialize(&config);
-
-    // Grab __main__ in case we need to use it later.
-    PyObject* m;
-    BA_PRECONDITION(m = PyImport_AddModule("__main__"));
-    BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
-
-    // Make sure we're running the Python version we require.
-    const char* ver = Py_GetVersion();
-    if (strncmp(ver, "3.10", 4) != 0) {
-      throw Exception("We require Python 3.10.x; instead found "
-                      + std::string(ver));
-    }
-
-    // Create a dict for execing our bootstrap code in so
-    // we don't pollute the __main__ namespace.
-    auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
-
-    // Get the app up and running.
-    // Run a few core bootstrappy things first:
-    // - get stdout/stderr redirection up so we can intercept python output
-    // - add our user and system script dirs to python path
-    // - create the ba.app instance.
-
-#include "ballistica/generated/python_embedded/bootstrap.inc"
-    PyObject* result =
-        PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
-                     bootstrap_context.get());
-    if (result == nullptr) {
-      PyErr_PrintEx(0);
-
-      // Throw a simple exception so we don't get a stack trace.
-      throw std::logic_error(
-          "Error in ba Python bootstrapping. See log for details.");
-    }
-    Py_DECREF(result);
-
-    // Import and grab all the Python stuff we use from C++.
-#include "ballistica/generated/python_embedded/binding.inc"
-
-    g_app_internal->PythonPostInit();
-
-    // Alright I guess let's pull ba in to main, since pretty
-    // much all interactive commands will be using it.
-    // If we ever build the game as a pure python module we should
-    // of course not do this.
-    BA_PRECONDITION(PyRun_SimpleString("import ba") == 0);
-
-    // Read the config file and store the config dict for easy access.
-    obj(ObjID::kReadConfigCall).Call();
-    StoreObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
-    assert(PyDict_Check(obj(ObjID::kConfig).get()));
-
-    // Turn off fancy-pants cyclic garbage-collection.
-    // We run it only at explicit times to avoid random hitches and keep
-    // things more deterministic.
-    // Non-reference-looped objects will still get cleaned up
-    // immediately, so we should try to structure things to avoid
-    // reference loops (just like Swift, ObjC, etc).
-    g_python->obj(Python::ObjID::kGCDisableCall).Call();
-  }
-  if (do_init) {
-    inited_ = true;
-  }
+  ReleaseGamePadInput();
+  ReleaseKeyboardInput();
+  g_graphics->ReleaseFadeEndCommand();
 }
 
 auto Python::GetModuleMethods() -> std::vector<PyMethodDef> {
@@ -1113,8 +1148,6 @@ void Python::PushObjCall(ObjID obj_id, const std::string& arg) {
     obj(obj_id).Call(args);
   });
 }
-
-Python::~Python() { Reset(false); }
 
 auto Python::GetResource(const char* key, const char* fallback_resource,
                          const char* fallback_value) -> std::string {
@@ -2259,12 +2292,13 @@ void Python::LogContextAuto() {
 }
 
 void Python::AcquireGIL() {
+  assert(InLogicThread());
   auto debug_timing{g_app->debug_timing};
   millisecs_t startms{debug_timing ? Platform::GetCurrentMilliseconds() : 0};
 
-  if (thread_state_) {
-    PyEval_RestoreThread(thread_state_);
-    thread_state_ = nullptr;
+  if (logic_thread_state_) {
+    PyEval_RestoreThread(logic_thread_state_);
+    logic_thread_state_ = nullptr;
   }
 
   if (debug_timing) {
@@ -2275,9 +2309,11 @@ void Python::AcquireGIL() {
     }
   }
 }
+
 void Python::ReleaseGIL() {
-  assert(thread_state_ == nullptr);
-  thread_state_ = PyEval_SaveThread();
+  assert(InLogicThread());
+  assert(logic_thread_state_ == nullptr);
+  logic_thread_state_ = PyEval_SaveThread();
 }
 
 void Python::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {

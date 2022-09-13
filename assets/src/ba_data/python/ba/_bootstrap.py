@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import sys
-import signal
 import threading
 from typing import TYPE_CHECKING
 
@@ -38,7 +37,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20837
+    expected_build = 20840
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -48,16 +47,11 @@ def bootstrap() -> None:
             f' This might cause the app to error or misbehave.',
             file=sys.stderr)
 
-    # Tell Python to not handle SIGINT itself (it normally generates
-    # KeyboardInterrupts which make a mess; we want to intercept them
-    # for simple clean exit). We capture interrupts per-platform in
-    # the C++ layer.
-    # Note: I tried creating a handler in Python but it seemed to often have
-    # a delay of up to a second before getting called. (not a huge deal
-    # but I'm picky).
-    signal.signal(signal.SIGINT, signal.SIG_DFL)  # Do default handling.
+    # In bootstrap_monolithic.py we told Python not to handle SIGINT itself
+    # (because that must be done in the main thread). Now we finish the
+    # job by adding our own handler to replace it.
 
-    # ..though it turns out we need to set up our C signal handling AFTER
+    # Note: I've found we need to set up our C signal handling AFTER
     # we've told Python to disable its own; otherwise (on Mac at least) it
     # wipes out our existing C handler.
     _ba.setup_sigint()

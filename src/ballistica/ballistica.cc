@@ -32,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20837;
+const int kAppBuildNumber = 20840;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -88,9 +88,10 @@ auto BallisticaMain(int argc, char** argv) -> int {
 
     g_platform = Platform::Create();
     g_app = new App(argc, argv);
+    g_app_internal = CreateAppInternal();
     g_main_thread = new Thread(ThreadTag::kMain, ThreadSource::kWrapMain);
-    g_python = new Python();
     g_app_flavor = g_platform->CreateAppFlavor();
+    g_python = Python::Create();
     g_graphics = g_platform->CreateGraphics();
     g_graphics_server = new GraphicsServer();
     g_audio = new Audio();
@@ -107,7 +108,6 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_network_reader = new NetworkReader();
     g_network_writer = new NetworkWriter();
     g_input = new Input();
-    g_app_internal = CreateAppInternal();
     g_logic = new Logic();
     g_scene_v1 = new SceneV1();
     if (!HeadlessMode()) {
@@ -220,7 +220,7 @@ auto FatalError(const std::string& message) -> void {
   FatalError::ReportFatalError(message, false);
   bool exit_cleanly = !IsUnmodifiedBlessedBuild();
   bool handled = FatalError::HandleFatalError(exit_cleanly, false);
-  assert(handled);
+  BA_PRECONDITION(handled);
 }
 
 auto GetAppInstanceUUID() -> const std::string& {

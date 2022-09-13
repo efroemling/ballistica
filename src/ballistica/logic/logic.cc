@@ -83,10 +83,20 @@ auto Logic::OnAppStart() -> void {
 
 auto Logic::OnAppStartInThread() -> void {
   try {
-    // Our thread should hold the Python GIL any time it is running.
-    // TODO(ericf): It could be better to have each individual Python call
-    // we make acquire the GIL. Then we're not holding it during long
-    // bits of C++ logic.
+    // Our thread should not be holding the GIL here at the start (and
+    // probably not have any Python state at all). So here we set both
+    // of those up.
+    assert(!PyGILState_Check());
+    PyGILState_Ensure();
+
+    // Tell our thread that it should grab the Python GIL any time it
+    // is running something and release it when done.
+    // TODO(ericf): It could be good to explore the idea of having
+    // individual runnables grab the GIL instead of doing it here at the
+    // thread level. Though its a bit freeing to know that we can run
+    // Python code at any time in the logic thread without worry. We can
+    // also consider explicitly releasing the GIL in the logic thread
+    // during long operations where we know no Python will occur.
     thread_->SetAcquiresPythonGIL();
 
     // We want to be informed when our thread is pausing.
@@ -98,7 +108,7 @@ auto Logic::OnAppStartInThread() -> void {
     // Init python and apply our settings immediately.
     // This way we can get started loading stuff in the background
     // and it'll come in with the correct texture quality etc.
-    g_python->Reset(true);
+    g_python->InitBallisticaPython();
   } catch (const std::exception& e) {
     // If anything went wrong, trigger a deferred error.
     // This way it is more likely we can show a fatal error dialog

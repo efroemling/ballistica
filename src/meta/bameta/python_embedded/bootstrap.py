@@ -1,6 +1,8 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Initial ballistica bootstrapping."""
+"""Ballistica bootstrapping."""
+
+# This code runs in the logic thread to bootstrap ballistica.
 
 from __future__ import annotations
 

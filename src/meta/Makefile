@@ -17,13 +17,17 @@ sources: \
   ../../assets/src/ba_data/python/ba/_generated/__init__.py \
   ../../assets/src/ba_data/python/ba/_generated/enums.py \
   ../ballistica/generated/python_embedded/binding.inc \
-  ../ballistica/generated/python_embedded/bootstrap.inc
+  ../ballistica/generated/python_embedded/bootstrap.inc \
+  ../ballistica/generated/python_embedded/bootstrap_monolithic.inc
 
 ../ballistica/generated/python_embedded/binding.inc : bameta/python_embedded/binding.py
 	@$(PCOMMAND) gen_binding_code $< $@
 
 ../ballistica/generated/python_embedded/bootstrap.inc : bameta/python_embedded/bootstrap.py
 	@$(PCOMMAND) gen_flat_data_code $< $@ bootstrap_code
+
+../ballistica/generated/python_embedded/bootstrap_monolithic.inc : bameta/python_embedded/bootstrap_monolithic.py
+	@$(PCOMMAND) gen_flat_data_code $< $@ bootstrap_monolithic_code
 
 ../../assets/src/ba_data/python/ba/_generated/__init__.py : ../../tools/batools/pcommand.py
 	@$(PCOMMAND) gen_python_init_module $@
@@ -45,7 +49,8 @@ efrocache-list:
 	@echo "../../assets/src/ba_data/python/ba/_generated/__init__.py" \
         "../../assets/src/ba_data/python/ba/_generated/enums.py" \
         "../ballistica/generated/python_embedded/binding.inc" \
-        "../ballistica/generated/python_embedded/bootstrap.inc"
+        "../ballistica/generated/python_embedded/bootstrap.inc" \
+        "../ballistica/generated/python_embedded/bootstrap_monolithic.inc"
 
 efrocache-build: sources
 

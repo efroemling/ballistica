@@ -119,6 +119,7 @@
       <w>bdea</w>
       <w>benning</w>
       <w>bezanson</w>
+      <w>bgdynamics</w>
       <w>bgra</w>
       <w>bigendian</w>
       <w>bilinear</w>
@@ -226,6 +227,7 @@
       <w>classdict</w>
       <w>classline</w>
       <w>cleanupcheck</w>
+      <w>clearsign</w>
       <w>clientid</w>
       <w>clientinfo</w>
       <w>clienttobasn</w>
@@ -849,6 +851,7 @@
       <w>netcode</w>
       <w>netplay</w>
       <w>nettest</w>
+      <w>networkwrite</w>
       <w>newactivity</w>
       <w>newchild</w>
       <w>newimg</w>

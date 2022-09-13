@@ -58,6 +58,7 @@
     <inspection_tool class="NotAssignable" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NotImplementedFunctions" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NotSuperclass" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NullDereference" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OCDFA" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OCLoopDoesntUseConditionVariable" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OCUnusedGlobalDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />

@@ -1,4 +1,4 @@
-### 1.7.7 (build 20837, api 7, 2022-09-12)
+### 1.7.7 (build 20840, api 7, 2022-09-13)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -24,7 +24,9 @@
 - Renamed C++ Media to Assets.
 - Removed 'scores to beat' list in coop which was only ever functional in limited cases on the Mac version. Perhaps that feature can reappear in a cross-platform way sometime.
 - Simplified C++ bootstrapping to allocate all globals in one place.
-- Renamed C++ Game class to Logic.
+- Renamed C++ Game classes to Logic.
+- The app now bootstraps Python in the main thread instead of the logic thread. This will keep things more consistent later when we are able to run under an already-existing Python interpreter.
+- Python and _ba are now completely initialized in public source code. Now we just need to enable the app to survive without _bainternal and it'll be possible to build a 100% open source app.
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

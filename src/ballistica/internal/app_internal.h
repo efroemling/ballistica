@@ -16,7 +16,7 @@ class AppInternal {
  public:
   virtual ~AppInternal() {}
 
-  virtual auto PyInitialize(void* pyconfig) -> void = 0;
+  virtual auto DefineInternalModule() -> void = 0;
   virtual auto PythonPostInit() -> void = 0;
   virtual auto HasBlessingHash() -> bool = 0;
   virtual auto PutLog(bool fatal) -> bool = 0;

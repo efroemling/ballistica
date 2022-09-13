@@ -701,6 +701,7 @@ auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
 
 auto PyEnv(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+  assert(g_app->is_bootstrapped);
 
   static PyObject* env_obj = nullptr;
 

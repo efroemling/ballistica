@@ -86,7 +86,7 @@ class AudioServer::ThreadSource : public Object {
   auto play_id() const -> uint32_t {
     return (play_count_ << 16u) | (static_cast<uint32_t>(id_) & 0xFFFFu);
   }
-  void UpdateAvailability();
+  auto UpdateAvailability() -> void;
   auto GetDefaultOwnerThread() const -> ThreadTag override;
   auto client_source() const -> AudioSource* { return client_source_.get(); }
   auto source_sound() const -> SoundData* {
