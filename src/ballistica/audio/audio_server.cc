@@ -367,8 +367,8 @@ auto AudioServer::OnAppStartInThread() -> void {
         // If the string is blank, we weren't able to find the oculus
         // audio device.  In that case we'll just go with default.
         if (g_rift_audio_device_name != "") {
-          // Log("AL Devices list:");
-          // Log("----------");
+          // Log(LogLevel::kInfo, "AL Devices list:");
+          // Log(LogLevel::kInfo, "----------");
           while (device && *device != '\0' && next && *next != '\0') {
             // These names seem to be things like "OpenAL Soft on FOO"
             // ..we should be able to search for FOO.
@@ -379,7 +379,7 @@ auto AudioServer::OnAppStartInThread() -> void {
             device += (len + 1);
             next += (len + 2);
           }
-          // Log("----------");
+          // Log(LogLevel::kInfo, "----------");
         }
       }
     }

@@ -32,7 +32,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   is_main_menu_ =
       static_cast<bool>(strstr(Python::ObjToString(session_type_obj).c_str(),
                                "bastd.mainmenu.MainMenuSession"));
-  // Log("MAIN MENU? " + std::to_string(is_main_menu()));
+  // Log(LogLevel::kInfo, "MAIN MENU? " + std::to_string(is_main_menu()));
 
   kick_idle_players_ = g_logic->kick_idle_players();
 

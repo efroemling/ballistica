@@ -769,7 +769,6 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
       GLenum format = GL_UNSIGNED_BYTE;
 #endif
       // if (srgbTest) {
-      //   Log("YOOOOOOO");
       //   glTexImage2D(GL_TEXTURE_2D, 0, alpha_?GL_SRGB8_ALPHA8:GL_SRGB8,
       //   _width, _height, 0, alpha_?GL_RGBA:GL_RGB, format, nullptr);
       // } else {
@@ -910,11 +909,11 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
     // glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER,
     // GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &enc); if
     // (enc == GL_SRGB) {
-    //   Log("GOT SRGB!!!!!!!!!!!");
+    //   Log(LogLevel::kInfo, "GOT SRGB!!!!!!!!!!!");
     // } else if (enc == GL_LINEAR) {
-    //   Log("GOT LINEAR...");
+    //   Log(LogLevel::kInfo, "GOT LINEAR...");
     // } else {
-    //   Log("GOT OTHER..");
+    //   Log(LogLevel::kInfo, "GOT OTHER..");
     // }
     loaded_ = true;
   }
@@ -2464,7 +2463,8 @@ class RendererGL::PostProcessProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   string GetFragmentCode(int flags) {
@@ -2478,7 +2478,8 @@ class RendererGL::PostProcessProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
 

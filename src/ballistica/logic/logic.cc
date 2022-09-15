@@ -619,7 +619,7 @@ void Logic::Update() {
     } else {
       // If we've gone too far already, bail.
       if (master_time_ >= max_target_master_time) {
-        // Log("BAILING EARLY");
+        // Log(LogLevel::kError, "BAILING EARLY");
         // On rift if this is a 2-step and we bailed after 1, aim for 2 again
         // next time (otherwise we'll always get 3 singles in a row when this
         // happens).

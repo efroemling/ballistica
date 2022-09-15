@@ -380,8 +380,8 @@ void Player::InputCommand(InputType type, float value) {
       RunInput(type, value);
       break;
     // case InputType::kReset:
-    //   Log("Error: FIXME: player-input-reset command unimplemented");
-    //   break;
+    //   Log(LogLevel::kError, "FIXME: player-input-reset command
+    //   unimplemented"); break;
     default:
       RunInput(type);
       break;

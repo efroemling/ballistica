@@ -43,7 +43,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20855
+    expected_build = 20856
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(

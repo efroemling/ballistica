@@ -24,12 +24,12 @@
 #endif
 
 #if BA_DEBUG_BUILD
-#define DEBUG_CHECK_GL_ERROR                                        \
-  {                                                                 \
-    GLenum err = glGetError();                                      \
-    if (err != GL_NO_ERROR)                                         \
-      Log("OPENGL ERROR AT LINE " + std::to_string(__LINE__) + ": " \
-          + GLErrorToString(err));                                  \
+#define DEBUG_CHECK_GL_ERROR                                                   \
+  {                                                                            \
+    GLenum err = glGetError();                                                 \
+    if (err != GL_NO_ERROR)                                                    \
+      Log(LogLevel::kError, "OPENGL ERROR AT LINE " + std::to_string(__LINE__) \
+                                + ": " + GLErrorToString(err));                \
   }
 #else
 #define DEBUG_CHECK_GL_ERROR

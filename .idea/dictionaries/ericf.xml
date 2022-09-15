@@ -1346,6 +1346,7 @@
       <w>levelgametype</w>
       <w>levelmodule</w>
       <w>levelname</w>
+      <w>levelno</w>
       <w>lfull</w>
       <w>lfval</w>
       <w>libballisticacore</w>

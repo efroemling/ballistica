@@ -37,15 +37,15 @@ class LogLevel(Enum):
     CRITICAL = 4
 
 
-LOG_NAMES_TO_LEVELS = {
-    'DEBUG': LogLevel.DEBUG,
-    'INFO': LogLevel.INFO,
-    'WARNING': LogLevel.WARNING,
-    'ERROR': LogLevel.ERROR,
-    'CRITICAL': LogLevel.CRITICAL
+LEVELNO_LOG_LEVELS = {
+    logging.DEBUG: LogLevel.DEBUG,
+    logging.INFO: LogLevel.INFO,
+    logging.WARNING: LogLevel.WARNING,
+    logging.ERROR: LogLevel.ERROR,
+    logging.CRITICAL: LogLevel.CRITICAL
 }
 
-LOG_LEVEL_NUMS_TO_COLOR_CODES: dict[int, tuple[str, str]] = {
+LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
     logging.DEBUG: (TerminalColor.CYAN.value, TerminalColor.RESET.value),
     logging.INFO: ('', ''),
     logging.WARNING: (TerminalColor.YELLOW.value, TerminalColor.RESET.value),
@@ -150,24 +150,20 @@ class LogHandler(logging.Handler):
         if self._echofile is not None:
             cbegin: str
             cend: str
-            cbegin, cend = LOG_LEVEL_NUMS_TO_COLOR_CODES.get(
-                record.levelno, ('', ''))
-
-            # Should we be flushing here?
+            cbegin, cend = LEVELNO_COLOR_CODES.get(record.levelno, ('', ''))
             self._echofile.write(f'{cbegin}{msg}{cend}\n')
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._emit_in_loop, record.name, record.levelname,
+            tpartial(self._emit_in_loop, record.name, record.levelno,
                      record.created, msg))
 
-    def _emit_in_loop(self, name: str, levelname: str, created: float,
+    def _emit_in_loop(self, name: str, levelno: int, created: float,
                       message: str) -> None:
         try:
             self._emit_entry(
                 LogEntry(name=name,
                          message=message,
-                         level=LOG_NAMES_TO_LEVELS.get(levelname,
-                                                       LogLevel.INFO),
+                         level=LEVELNO_LOG_LEVELS.get(levelno, LogLevel.INFO),
                          time=datetime.datetime.fromtimestamp(
                              created, datetime.timezone.utc)))
         except Exception:

@@ -165,9 +165,13 @@ auto InNetworkWriteThread() -> bool;
 /// Return a human-readable name for the current thread.
 auto GetCurrentThreadName() -> std::string;
 
-/// Write a string to the log.
-/// This will go to stdout, windows debug log, android log, etc.
-/// A trailing newline will be added.
+/// Submit a log entry.
+/// Can be called from any thread at any time.
+/// Use either this or Python printing functionality for anything
+/// that should be seen by the user, as both of those will end up
+/// in the in-app console, cloud based consoles, android log, etc.
+/// Regular C level prints to stdout/stderr will not and will only
+/// be visible on some platforms.
 auto Log(LogLevel level, const std::string& msg) -> void;
 
 /// Log a fatal error and kill the app.

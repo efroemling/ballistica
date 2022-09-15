@@ -1058,7 +1058,7 @@ void Input::HandleBackPress(bool from_toolbar) {
   if (g_ui == nullptr || g_ui->screen_root_widget() == nullptr
       || g_ui->overlay_root_widget() == nullptr
       || g_ui->root_widget() == nullptr) {
-    // Log("HandleBackPress() called without main UI");
+    // Log(LogLevel::kError, "HandleBackPress() called without main UI");
     return;
   }
 
