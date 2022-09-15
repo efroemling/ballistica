@@ -45,6 +45,16 @@ LOG_NAMES_TO_LEVELS = {
     'CRITICAL': LogLevel.CRITICAL
 }
 
+LOG_LEVEL_NUMS_TO_COLOR_CODES: dict[int, tuple[str, str]] = {
+    logging.DEBUG: (TerminalColor.CYAN.value, TerminalColor.RESET.value),
+    logging.INFO: ('', ''),
+    logging.WARNING: (TerminalColor.YELLOW.value, TerminalColor.RESET.value),
+    logging.ERROR: (TerminalColor.RED.value, TerminalColor.RESET.value),
+    logging.CRITICAL:
+        (TerminalColor.STRONG_MAGENTA.value + TerminalColor.BOLD.value +
+         TerminalColor.BG_BLACK.value, TerminalColor.RESET.value),
+}
+
 
 @ioprepped
 @dataclass
@@ -132,6 +142,19 @@ class LogHandler(logging.Handler):
         # it could cause problems stringifying things in threads where they
         # didn't expect to be stringified.
         msg = self.format(record)
+
+        # Also print pretty colored output to our echo file (generally
+        # stderr). We do this part here instead of in our bg thread
+        # because the delay can throw off command line prompts or make
+        # tight debugging harder.
+        if self._echofile is not None:
+            cbegin: str
+            cend: str
+            cbegin, cend = LOG_LEVEL_NUMS_TO_COLOR_CODES.get(
+                record.levelno, ('', ''))
+
+            # Should we be flushing here?
+            self._echofile.write(f'{cbegin}{msg}{cend}\n')
 
         self._event_loop.call_soon_threadsafe(
             tpartial(self._emit_in_loop, record.name, record.levelname,
@@ -222,31 +245,6 @@ class LogHandler(logging.Handler):
             entry_s = dataclass_to_json(entry)
             assert '\n' not in entry_s  # Make sure its a single line.
             print(entry_s, file=self._file, flush=True)
-
-        # Also print pretty colored output to our echo file (stdout/stderr).
-        # Note that we don't do this for log entries generated from
-        # stdout/stderr since that would result in them being printed
-        # twice.
-        if (self._echofile is not None
-                and entry.name not in ('stdout', 'stderr')):
-            cbegin: str
-            cend: str
-            cbegin, cend = {
-                LogLevel.DEBUG:
-                    (TerminalColor.CYAN.value, TerminalColor.RESET.value),
-                LogLevel.INFO: ('', ''),
-                LogLevel.WARNING:
-                    (TerminalColor.YELLOW.value, TerminalColor.RESET.value),
-                LogLevel.ERROR:
-                    (TerminalColor.RED.value, TerminalColor.RESET.value),
-                LogLevel.CRITICAL:
-                    (TerminalColor.STRONG_MAGENTA.value +
-                     TerminalColor.BOLD.value + TerminalColor.BG_BLACK.value,
-                     TerminalColor.RESET.value),
-            }[entry.level]
-
-            # Should we be flushing here?
-            self._echofile.write(f'{cbegin}{entry.message}{cend}\n')
 
 
 class FileLogEcho:
