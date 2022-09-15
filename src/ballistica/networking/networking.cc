@@ -32,14 +32,14 @@ void Networking::HostScanCycle() {
     scan_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (scan_socket_ == -1) {
-      Log("Error opening scan socket: " + g_platform->GetSocketErrorString()
-          + ".");
+      Log(LogLevel::kError, "Error opening scan socket: "
+                                + g_platform->GetSocketErrorString() + ".");
       return;
     }
 
     // Since this guy lives in the game-thread we need it to not block.
     if (!g_platform->SetSocketNonBlocking(scan_socket_)) {
-      Log("Error setting socket non-blocking.");
+      Log(LogLevel::kError, "Error setting socket non-blocking.");
       g_platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -54,7 +54,8 @@ void Networking::HostScanCycle() {
     int result =
         ::bind(scan_socket_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result == 1) {
-      Log("Error binding socket: " + g_platform->GetSocketErrorString() + ".");
+      Log(LogLevel::kError,
+          "Error binding socket: " + g_platform->GetSocketErrorString() + ".");
       g_platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -66,8 +67,8 @@ void Networking::HostScanCycle() {
                         sizeof(op_val));
 
     if (result != 0) {
-      Log("Error enabling broadcast for scan-socket: "
-          + g_platform->GetSocketErrorString() + ".");
+      Log(LogLevel::kError, "Error enabling broadcast for scan-socket: "
+                                + g_platform->GetSocketErrorString() + ".");
       g_platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -99,8 +100,8 @@ void Networking::HostScanCycle() {
         case ENETUNREACH:
           break;
         default:
-          Log("Error on scanSocket sendto: "
-              + g_platform->GetSocketErrorString());
+          Log(LogLevel::kError, "Error on scanSocket sendto: "
+                                    + g_platform->GetSocketErrorString());
       }
     }
   }
@@ -122,7 +123,8 @@ void Networking::HostScanCycle() {
         case EWOULDBLOCK:
           break;
         default:
-          Log("Error: recvfrom error: " + g_platform->GetSocketErrorString());
+          Log(LogLevel::kError,
+              "Error: recvfrom error: " + g_platform->GetSocketErrorString());
           break;
       }
       break;
@@ -179,10 +181,12 @@ void Networking::HostScanCycle() {
             PruneScanResults();
           }
         } else {
-          Log("Error: Got invalid BA_PACKET_GAME_QUERY_RESPONSE packet");
+          Log(LogLevel::kError,
+              "Got invalid BA_PACKET_GAME_QUERY_RESPONSE packet");
         }
       } else {
-        Log("Error: Got invalid BA_PACKET_GAME_QUERY_RESPONSE packet");
+        Log(LogLevel::kError,
+            "Got invalid BA_PACKET_GAME_QUERY_RESPONSE packet");
       }
     }
   }
@@ -228,7 +232,8 @@ void Networking::EndHostScanning() {
 
 void Networking::Pause() {
   if (!running_) {
-    Log("Networking::pause() called with running_ already false");
+    Log(LogLevel::kError,
+        "Networking::pause() called with running_ already false");
   }
   running_ = false;
 
@@ -238,7 +243,8 @@ void Networking::Pause() {
 
 void Networking::Resume() {
   if (running_) {
-    Log("Networking::resume() called with running_ already true");
+    Log(LogLevel::kError,
+        "Networking::resume() called with running_ already true");
   }
   running_ = true;
 }

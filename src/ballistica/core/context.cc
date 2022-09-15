@@ -100,7 +100,7 @@ auto ContextTarget::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
 void ContextTarget::DeleteTimer(TimeType timetype, int timer_id) {
   // We throw on NewTimer; lets just ignore anything that comes
   // through here to avoid messing up destructors.
-  Log("ContextTarget::DeleteTimer() called; unexpected.");
+  Log(LogLevel::kError, "ContextTarget::DeleteTimer() called; unexpected.");
 }
 
 auto ContextTarget::GetTime(TimeType timetype) -> millisecs_t {

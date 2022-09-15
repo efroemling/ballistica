@@ -32,13 +32,13 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20842;
+const int kAppBuildNumber = 20849;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
 // These are separated out for easy access.
 // Everything else should go into App (or more ideally into a class).
-int g_early_log_writes{10};
+int g_early_v1_cloud_log_writes{10};
 
 App* g_app{};
 AppConfig* g_app_config{};
@@ -86,8 +86,8 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // avoid any logic that accesses other globals since they may
     // not yet exist.
 
-    // Minimal globals we must assign immediately as they are needed
-    // during construction of the others.
+    // Minimal globals we must assign immediately as they ARE needed
+    // for construction of the others (would be great to eliminate this need).
     g_platform = Platform::Create();
     g_app = new App(argc, argv);
     g_app_internal = CreateAppInternal();
@@ -267,49 +267,56 @@ auto GetAppInstanceUUID() -> const std::string& {
     }
     if (!have_session_id) {
       // As an emergency fallback simply use a single random number.
-      Log("WARNING: GetSessionUUID() using rand fallback.");
+      Log(LogLevel::kWarning, "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           Platform::GetCurrentMilliseconds()));                    // NOLINT
       session_id = std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
       have_session_id = true;
     }
     if (session_id.size() >= 100) {
-      Log("WARNING: session id longer than it should be.");
+      Log(LogLevel::kWarning, "session id longer than it should be.");
     }
   }
   return session_id;
 }
 
+auto InMainThread() -> bool {
+  assert(g_main_thread);  // Root out early use of this.
+  return (g_main_thread->IsCurrent());
+}
+
 auto InLogicThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_logic && g_logic->thread()->IsCurrent());
 }
 
-auto InMainThread() -> bool {
-  return (g_app && std::this_thread::get_id() == g_app->main_thread_id);
-}
-
 auto InGraphicsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_graphics_server && g_graphics_server->thread()->IsCurrent());
 }
 
 auto InAudioThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_audio_server && g_audio_server->thread()->IsCurrent());
 }
 
 auto InBGDynamicsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_bg_dynamics_server && g_bg_dynamics_server->thread()->IsCurrent());
 }
 
 auto InAssetsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_assets_server && g_assets_server->thread()->IsCurrent());
 }
 
 auto InNetworkWriteThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_network_writer && g_network_writer->thread()->IsCurrent());
 }
 
-auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {
-  Logging::Log(msg, to_stdout, to_server);
+auto Log(LogLevel level, const std::string& msg) -> void {
+  Logging::Log(level, msg);
 }
 
 auto IsVRMode() -> bool { return g_app->vr_mode; }
@@ -318,7 +325,8 @@ void ScreenMessage(const std::string& s, const Vector3f& color) {
   if (g_logic) {
     g_logic->PushScreenMessage(s, color);
   } else {
-    Log("ScreenMessage before g_logic init (will be lost): '" + s + "'");
+    Log(LogLevel::kError,
+        "ScreenMessage before g_logic init (will be lost): '" + s + "'");
   }
 }
 

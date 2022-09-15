@@ -424,6 +424,8 @@ enum class PyExcType {
   kWidgetNotFound
 };
 
+enum class LogLevel { kDebug, kInfo, kWarning, kError, kCritical };
+
 enum class SystemTextureID {
   kUIAtlas,
   kButtonSquare,

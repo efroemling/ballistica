@@ -112,7 +112,7 @@ namespace ballistica {
 #define HUFFMAN_TRAINING_MODE 0
 #endif
 
-// Bits used by the game thread for network communication.
+// Bits used by the logic thread for network communication.
 class Networking {
  public:
   // Send a message to an address.  This may block for a brief moment, so it can

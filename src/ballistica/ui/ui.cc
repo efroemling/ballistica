@@ -60,13 +60,13 @@ auto UI::OnAppStart() -> void {
   if (force_scale_) {
     if (scale_ == UIScale::kSmall) {
       ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-      Log("FORCING SMALL UI FOR TESTING");
+      Log(LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
     } else if (scale_ == UIScale::kMedium) {
       ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-      Log("FORCING MEDIUM UI FOR TESTING");
+      Log(LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
     } else if (scale_ == UIScale::kLarge) {
       ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-      Log("FORCING LARGE UI FOR TESTING");
+      Log(LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
     } else {
       FatalError("Unhandled scale.");
     }
@@ -151,7 +151,7 @@ void UI::Update(millisecs_t time_advance) {
       if (node_warning_count_ > 3) {
         static bool complained = false;
         if (!complained) {
-          Log(">10 nodes in UI context!");
+          Log(LogLevel::kError, ">10 nodes in UI context!");
           complained = true;
         }
       }

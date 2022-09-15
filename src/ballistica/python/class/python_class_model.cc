@@ -69,7 +69,7 @@ auto PythonClassModel::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     if (!s_create_empty_) {
@@ -99,7 +99,7 @@ void PythonClassModel::Delete(Object::Ref<Model>* ref) {
 
 void PythonClassModel::tp_dealloc(PythonClassModel* self) {
   BA_PYTHON_TRY;
-  // these have to be deleted in the game thread - send the ptr along if need
+  // these have to be deleted in the logic thread - send the ptr along if need
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<Model>* m = self->model_;

@@ -50,7 +50,7 @@ def should_submit_debug_info() -> bool:
     return _ba.app.config.get('Submit Debug Info', True)
 
 
-def handle_log() -> None:
+def handle_v1_cloud_log() -> None:
     """Called on debug log prints.
 
     When this happens, we can upload our log to the server
@@ -74,7 +74,7 @@ def handle_log() -> None:
                 activityname = 'unavailable'
 
             info = {
-                'log': _ba.getlog(),
+                'log': _ba.get_v1_cloud_log(),
                 'version': app.version,
                 'build': app.build_number,
                 'userAgentString': app.user_agent_string,
@@ -108,7 +108,7 @@ def handle_log() -> None:
         def _reset() -> None:
             app.log_upload_timer_started = False
             if app.log_have_new:
-                handle_log()
+                handle_v1_cloud_log()
 
         if not _ba.is_log_full():
             with _ba.Context('ui'):
@@ -118,14 +118,15 @@ def handle_log() -> None:
                           suppress_format_warning=True)
 
 
-def handle_leftover_log_file() -> None:
-    """Handle an un-uploaded log from a previous run."""
+def handle_leftover_v1_cloud_log_file() -> None:
+    """Handle an un-uploaded v1-cloud-log from a previous run."""
     try:
         import json
         from ba._net import master_server_post
 
-        if os.path.exists(_ba.get_log_file_path()):
-            with open(_ba.get_log_file_path(), encoding='utf-8') as infile:
+        if os.path.exists(_ba.get_v1_cloud_log_file_path()):
+            with open(_ba.get_v1_cloud_log_file_path(),
+                      encoding='utf-8') as infile:
                 info = json.loads(infile.read())
             infile.close()
             do_send = should_submit_debug_info()
@@ -136,7 +137,7 @@ def handle_leftover_log_file() -> None:
                     # lets kill it.
                     if data is not None:
                         try:
-                            os.remove(_ba.get_log_file_path())
+                            os.remove(_ba.get_v1_cloud_log_file_path())
                         except FileNotFoundError:
                             # Saw this in the wild. The file just existed
                             # a moment ago but I suppose something could have
@@ -146,7 +147,7 @@ def handle_leftover_log_file() -> None:
                 master_server_post('bsLog', info, response)
             else:
                 # If they don't want logs uploaded just kill it.
-                os.remove(_ba.get_log_file_path())
+                os.remove(_ba.get_v1_cloud_log_file_path())
     except Exception:
         from ba import _error
         _error.print_exception('Error handling leftover log file.')

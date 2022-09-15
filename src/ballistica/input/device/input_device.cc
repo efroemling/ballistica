@@ -139,13 +139,15 @@ InputDevice::~InputDevice() {
 // when the host-session tells us to attach to a player
 void InputDevice::AttachToLocalPlayer(Player* player) {
   if (player_.exists()) {
-    Log("Error: InputDevice::AttachToLocalPlayer() called with already "
+    Log(LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::AttachToLocalPlayer() called with already "
+    Log(LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "remote-player");
     return;
@@ -158,13 +160,15 @@ void InputDevice::AttachToRemotePlayer(ConnectionToHost* connection_to_host,
                                        int remote_player_id) {
   assert(connection_to_host);
   if (player_.exists()) {
-    Log("Error: InputDevice::AttachToRemotePlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::AttachToRemotePlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "remote-player");
     return;
@@ -180,7 +184,8 @@ void InputDevice::RemoveRemotePlayerFromGame() {
     data[1] = static_cast_check_fit<unsigned char>(index());
     connection_to_host->SendReliableMessage(data);
   } else {
-    Log("Error: RemoveRemotePlayerFromGame called without remote player");
+    Log(LogLevel::kError,
+        "RemoveRemotePlayerFromGame called without remote player");
   }
 }
 
@@ -210,12 +215,14 @@ void InputDevice::RequestPlayer() {
   last_input_time_ = g_logic->master_time();
 
   if (player_.exists()) {
-    Log("Error: InputDevice::RequestPlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::RequestPlayer()"
         " called with already-existing player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::RequestPlayer() called with already-existing "
+    Log(LogLevel::kError,
+        "InputDevice::RequestPlayer() called with already-existing "
         "remote-player");
     return;
   }

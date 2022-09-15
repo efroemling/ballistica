@@ -18,7 +18,7 @@ import os
 if TYPE_CHECKING:
     import ba
 
-# Our timer and event loop for the ballistica game thread.
+# Our timer and event loop for the ballistica logic thread.
 _asyncio_timer: ba.Timer | None = None
 _asyncio_event_loop: asyncio.AbstractEventLoop | None = None
 

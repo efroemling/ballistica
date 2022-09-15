@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     import asyncio
     from typing import Any, Callable
 
+    import efro.log
     import ba
     from ba._cloud import CloudSubsystem
     from bastd.actor import spazappearance
@@ -49,6 +50,7 @@ class App:
     # Implementations for these will be filled in by internal libs.
     accounts_v2: AccountV2Subsystem
     cloud: CloudSubsystem
+    log_handler: efro.log.LogHandler
 
     class State(Enum):
         """High level state the app can be in."""
@@ -384,7 +386,7 @@ class App:
 
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.
-        _apputils.handle_leftover_log_file()
+        _apputils.handle_leftover_v1_cloud_log_file()
 
         # Only do this stuff if our config file is healthy so we don't
         # overwrite a broken one or whatnot and wipe out data.

@@ -192,13 +192,13 @@ class MetadataSubsystem:
                               color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))
             if results.warnings:
-                _ba.log(textwrap.indent('\n'.join(results.warnings),
-                                        'Warning (meta-scan): '),
-                        to_server=False)
+                allwarnings = textwrap.indent('\n'.join(results.warnings),
+                                              'Warning (meta-scan): ')
+                logging.warning(allwarnings)
             if results.errors:
-                _ba.log(
-                    textwrap.indent('\n'.join(results.errors),
-                                    'Error (meta-scan): '))
+                allerrors = textwrap.indent('\n'.join(results.errors),
+                                            'Error (meta-scan): ')
+                logging.error(allerrors)
 
         # Let the game know we're done.
         assert self._scan_complete_cb is not None

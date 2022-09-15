@@ -26,7 +26,8 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   // This shouldn't happen, but if there's already a controller registered,
   // detach all clients from it.
   if (client_controller_) {
-    Log("RegisterClientController() called "
+    Log(LogLevel::kError,
+        "RegisterClientController() called "
         "but already have a controller; bad.");
     for (auto&& i : connections_to_clients_) {
       assert(i.second.exists());
@@ -206,7 +207,8 @@ auto ConnectionSet::GetConnectionsToClients()
     if (connections_to_client.second.exists()) {
       connections.push_back(connections_to_client.second.get());
     } else {
-      Log("HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
+      Log(LogLevel::kError,
+          "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
     }
   }
   return connections;
@@ -218,6 +220,7 @@ void ConnectionSet::PushUDPConnectionPacketCall(
   // these are unreliable messages so its ok to just drop them.
   if (!g_logic->thread()->CheckPushSafety()) {
     BA_LOG_ONCE(
+        LogLevel::kError,
         "Ignoring excessive udp-connection input packets; (could this be a "
         "flood attack?).");
     return;
@@ -280,7 +283,8 @@ void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
 auto ConnectionSet::PrepareForLaunchHostSession() -> void {
   // If for some reason we're still attached to a host, kill the connection.
   if (connection_to_host_.exists()) {
-    Log("Had host-connection during LaunchHostSession(); shouldn't happen.");
+    Log(LogLevel::kError,
+        "Had host-connection during LaunchHostSession(); shouldn't happen.");
     connection_to_host_->RequestDisconnect();
     connection_to_host_.Clear();
     has_connection_to_host_ = false;
@@ -322,8 +326,8 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
       return false;
     }
     if (client_id > 255) {
-      Log("DisconnectClient got client_id > 255 (" + std::to_string(client_id)
-          + ")");
+      Log(LogLevel::kError, "DisconnectClient got client_id > 255 ("
+                                + std::to_string(client_id) + ")");
     } else {
       std::vector<uint8_t> msg_out(2);
       msg_out[0] = BA_MESSAGE_KICK_VOTE;
@@ -404,7 +408,8 @@ auto ConnectionSet::UnregisterClientController(ClientControllerInterface* c)
 
   // This shouldn't happen.
   if (client_controller_ != c) {
-    Log("UnregisterClientController() called with a non-registered "
+    Log(LogLevel::kError,
+        "UnregisterClientController() called with a non-registered "
         "controller");
     return;
   }
@@ -668,7 +673,7 @@ auto ConnectionSet::UDPConnectionPacket(const std::vector<uint8_t>& data_in,
               msg_out[0] = BA_PACKET_CLIENT_DENY;
               msg_out[1] = request_id;
               g_network_writer->PushSendToCall(msg_out, addr);
-              Log("All client slots full; really?..");
+              Log(LogLevel::kError, "All client slots full; really?..");
               break;
             }
             connection_to_client = Object::New<ConnectionToClientUDP>(
@@ -710,8 +715,9 @@ auto ConnectionSet::VerifyClientAddr(uint8_t client_id, const SockAddr& addr)
     if (addr == connection_to_client_udp->addr()) {
       return true;
     }
-    BA_LOG_ONCE("VerifyClientAddr() found mismatch for client "
-                + std::to_string(client_id) + ".");
+    BA_LOG_ONCE(LogLevel::kError,
+                "VerifyClientAddr() found mismatch for client "
+                    + std::to_string(client_id) + ".");
     return false;
   }
 
@@ -722,8 +728,9 @@ void ConnectionSet::SetClientInfoFromMasterServer(
     const std::string& client_token, PyObject* info_obj) {
   // NOLINTNEXTLINE  (python doing bitwise math on signed int)
   if (!PyDict_Check(info_obj)) {
-    Log("got non-dict for master-server client info for token " + client_token
-        + ": " + Python::ObjToString(info_obj));
+    Log(LogLevel::kError,
+        "got non-dict for master-server client info for token " + client_token
+            + ": " + Python::ObjToString(info_obj));
     return;
   }
   for (ConnectionToClient* client : GetConnectionsToClients()) {

@@ -13,7 +13,8 @@ namespace ballistica {
 NetClientSession::NetClientSession() {
   // Sanity check: we should only ever be writing one replay at once.
   if (g_app->replay_open) {
-    Log("ERROR: g_replay_open true at netclient start; shouldn't happen.");
+    Log(LogLevel::kError,
+        "g_replay_open true at netclient start; shouldn't happen.");
   }
   assert(g_assets_server);
   g_assets_server->PushBeginWriteReplayCall();
@@ -25,7 +26,8 @@ NetClientSession::~NetClientSession() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
     if (!g_app->replay_open) {
-      Log("ERROR: g_replay_open false at net-client close; shouldn't happen.");
+      Log(LogLevel::kError,
+          "g_replay_open false at net-client close; shouldn't happen.");
     }
     g_app->replay_open = false;
     assert(g_assets_server);

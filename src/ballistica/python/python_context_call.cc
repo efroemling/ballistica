@@ -75,7 +75,7 @@ void PythonContextCall::Run(PyObject* args) {
   if (!g_python) {
     // This probably means the game is dying; let's not
     // throw an exception here so we don't mask the original error.
-    Log("PythonCommand: not running due to null g_python");
+    Log(LogLevel::kError, "PythonCommand: not running due to null g_python");
     return;
   }
 
@@ -86,7 +86,8 @@ void PythonContextCall::Run(PyObject* args) {
   // Sanity test: make sure our context didn't go away.
 #if BA_DEBUG_BUILD
   if (context_.target.get() != context_target_sanity_test_) {
-    Log("WARNING: running Call after it's context has died: " + object_.Str());
+    Log(LogLevel::kWarning,
+        "Running Call after it's context has died: " + object_.Str());
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -112,8 +113,8 @@ void PythonContextCall::Run(PyObject* args) {
     // Save/restore python error or it can mess with context print calls.
     BA_PYTHON_ERROR_SAVE;
 
-    Log("ERROR: exception in Python call:");
-    LogContext();
+    PySys_WriteStderr("Exception in Python call:\n");
+    PrintContext();
     BA_PYTHON_ERROR_RESTORE;
 
     // We pass zero here to avoid grabbing references to this exception
@@ -124,12 +125,12 @@ void PythonContextCall::Run(PyObject* args) {
   }
 }
 
-void PythonContextCall::LogContext() {
+void PythonContextCall::PrintContext() {
   assert(InLogicThread());
   std::string s = std::string("  root call: ") + object().Str();
   s += ("\n  root call origin: " + file_loc());
   s += g_python->GetContextBaseString();
-  Log(s);
+  Log(LogLevel::kError, s);
 }
 
 }  // namespace ballistica

@@ -168,7 +168,7 @@ auto RigidBody::Check() -> void {
     if (std::isnan(q[3])) err = true;
 
     if (err) {
-      Log("Error: Got error in rbd values!");
+      Log(LogLevel::kError, "Got error in rbd values!");
     }
 #if BA_DEBUG_BUILD
     for (int i = 0; i < 3; i++) {

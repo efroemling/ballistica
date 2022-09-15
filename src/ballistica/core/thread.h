@@ -141,11 +141,17 @@ class Thread {
   // different thread groups makes its easy to see which thread is which
   // in profilers, backtraces, etc.
   static auto RunLogicThread(void* data) -> int;
+  static auto RunLogicThreadP(void* data) -> void*;
   static auto RunAudioThread(void* data) -> int;
+  static auto RunAudioThreadP(void* data) -> void*;
   static auto RunBGDynamicThread(void* data) -> int;
+  static auto RunBGDynamicThreadP(void* data) -> void*;
   static auto RunNetworkWriteThread(void* data) -> int;
+  static auto RunNetworkWriteThreadP(void* data) -> void*;
   static auto RunStdInputThread(void* data) -> int;
+  static auto RunStdInputThreadP(void* data) -> void*;
   static auto RunAssetsThread(void* data) -> int;
+  static auto RunAssetsThreadP(void* data) -> void*;
 
   auto ThreadMain() -> int;
   auto GetThreadMessages(std::list<ThreadMessage>* messages) -> void;
@@ -159,7 +165,7 @@ class Thread {
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> pause_callbacks_;
   std::list<Runnable*> resume_callbacks_;
-  std::thread* thread_{};
+  // std::thread* thread_{};
   std::condition_variable thread_message_cv_;
   std::mutex thread_message_mutex_;
   std::list<ThreadMessage> thread_messages_;

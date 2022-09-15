@@ -110,14 +110,15 @@ void ConnectionToHostUDP::Update() {
 // departure before doing this when possible.
 void ConnectionToHostUDP::Die() {
   if (did_die_) {
-    Log("Error: posting multiple die messages; probably not good.");
+    Log(LogLevel::kError, "Posting multiple die messages; probably not good.");
     return;
   }
   if (g_logic->connections()->connection_to_host() == this) {
     g_logic->connections()->PushDisconnectedFromHostCall();
     did_die_ = true;
   } else {
-    Log("Error: Running update for non-current host-connection; shouldn't "
+    Log(LogLevel::kError,
+        "Running update for non-current host-connection; shouldn't "
         "happen.");
   }
 }

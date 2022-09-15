@@ -85,7 +85,7 @@ auto PythonCommand::Run() -> bool {
   if (!g_python) {
     // This probably means the game is dying; let's not
     // throw an exception here so we don't mask the original error.
-    Log("PythonCommand: not running due to null g_python");
+    Log(LogLevel::kError, "PythonCommand: not running due to null g_python.");
     return false;
   }
   assert(!dead_);
@@ -99,14 +99,14 @@ auto PythonCommand::Run() -> bool {
                                   g_python->main_dict());
     POP_PYCOMMAND();
 
-    // Technically the python call could have killed us;
+    // Technically the Python call could have killed us;
     // make sure that didn't happen.
     assert(!dead_);
     if (v == nullptr) {
       // Save/restore error or it can mess with context print calls.
       BA_PYTHON_ERROR_SAVE;
-      Log("ERROR: exception in Python call:");
-      LogContext();
+      PySys_WriteStderr("Exception in Python call:\n");
+      PrintContext();
       BA_PYTHON_ERROR_RESTORE;
 
       // We pass zero here to avoid grabbing references to this exception
@@ -158,8 +158,8 @@ auto PythonCommand::RunReturnObj(bool print_errors, PyObject* context)
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
       BA_PYTHON_ERROR_SAVE;
-      Log("ERROR: exception in Python call:");
-      LogContext();
+      PySys_WriteStderr("Exception in Python call:\n");
+      PrintContext();
       BA_PYTHON_ERROR_RESTORE;
       // We pass zero here to avoid grabbing references to this exception
       // which can cause objects to stick around and trip up our deletion checks
@@ -181,8 +181,8 @@ auto PythonCommand::RunReturnObj(bool print_errors, PyObject* context)
     if (print_errors) {
       // save/restore error or it can mess with context print calls
       BA_PYTHON_ERROR_SAVE;
-      Log("ERROR: exception in Python call:");
-      LogContext();
+      PySys_WriteStderr("Exception in Python call:\n");
+      PrintContext();
       BA_PYTHON_ERROR_RESTORE;
       // we pass zero here to avoid grabbing references to this exception
       // which can cause objects to stick around and trip up our deletion checks
@@ -199,11 +199,11 @@ auto PythonCommand::RunReturnObj(bool print_errors, PyObject* context)
   return v;
 }
 
-void PythonCommand::LogContext() {
+void PythonCommand::PrintContext() {
   assert(Python::HaveGIL());
   std::string s = std::string("  call: ") + command();
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
 }  // namespace ballistica

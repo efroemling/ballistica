@@ -111,7 +111,7 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
       if (g_logic) {
         g_logic->PushInterruptSignalCall();
       } else {
-        Log("SigInt handler called before g_logic exists.");
+        Log(LogLevel::kError, "SigInt handler called before g_logic exists.");
       }
       return TRUE;
 
@@ -123,7 +123,7 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 void PlatformWindows::SetupInterruptHandling() {
   // Set up Ctrl-C handling.
   if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
-    Log("Error on SetConsoleCtrlHandler()");
+    Log(LogLevel::kError, "Error on SetConsoleCtrlHandler()");
   }
 }
 
@@ -719,10 +719,11 @@ std::string PlatformWindows::DoGetDeviceName() {
 
 bool PlatformWindows::DoHasTouchScreen() { return false; }
 
-void PlatformWindows::HandleLog(const std::string& msg) {
+void PlatformWindows::DisplayLog(const std::string& name, LogLevel level,
+                                 const std::string& msg) {
   // if (have_stdin_stdout_) {
   //   // On headless builds we use default handler (simple stdout).
-  //   return Platform::HandleLog(msg);
+  //   return Platform::DisplayLog(msg);
   // }
 
   // Also spit this out as a debug-string for when running from msvc.
@@ -822,7 +823,8 @@ void PlatformWindows::DoOpenURL(const std::string& url) {
 
   // This should return > 32 on success.
   if (r <= 32) {
-    Log("Error " + std::to_string(r) + " opening URL '" + url + "'");
+    Log(LogLevel::kError,
+        "Error " + std::to_string(r) + " opening URL '" + url + "'");
   }
 }
 
@@ -831,8 +833,8 @@ void PlatformWindows::OpenFileExternally(const std::string& path) {
       ShellExecute(nullptr, _T("open"), _T("notepad.exe"),
                    utf8_decode(path).c_str(), nullptr, SW_SHOWNORMAL));
   if (r <= 32) {
-    Log("Error " + std::to_string(r) + " on open_file_externally for '" + path
-        + "'");
+    Log(LogLevel::kError, "Error " + std::to_string(r)
+                              + " on open_file_externally for '" + path + "'");
   }
 }
 
@@ -841,8 +843,8 @@ void PlatformWindows::OpenDirExternally(const std::string& path) {
       ShellExecute(nullptr, _T("open"), _T("explorer.exe"),
                    utf8_decode(path).c_str(), nullptr, SW_SHOWNORMAL));
   if (r <= 32) {
-    Log("Error " + std::to_string(r) + " on open_dir_externally for '" + path
-        + "'");
+    Log(LogLevel::kError, "Error " + std::to_string(r)
+                              + " on open_dir_externally for '" + path + "'");
   }
 }
 
@@ -873,15 +875,15 @@ std::vector<uint32_t> PlatformWindows::GetBroadcastAddrs() {
       pIPAddrTable = static_cast<MIB_IPADDRTABLE*>(MALLOC(dwSize));
     }
     if (pIPAddrTable == nullptr) {
-      Log("Error: Memory allocation failed for GetIpAddrTable\n");
+      Log(LogLevel::kError, "Memory allocation failed for GetIpAddrTable\n");
       err = true;
     }
 
     if (!err) {
       // Make a second call to GetIpAddrTable to get the actual data we want
       if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR) {
-        Log("Error: GetIpAddrTable failed with error "
-            + std::to_string(dwRetVal));
+        Log(LogLevel::kError,
+            "GetIpAddrTable failed with error " + std::to_string(dwRetVal));
         err = true;
       }
     }
@@ -916,8 +918,8 @@ bool PlatformWindows::SetSocketNonBlocking(int sd) {
   unsigned long dataval = 1;  // NOLINT (func signature wants long)
   int result = ioctlsocket(sd, FIONBIO, &dataval);
   if (result != 0) {
-    Log("Error setting non-blocking socket: "
-        + g_platform->GetSocketErrorString());
+    Log(LogLevel::kError, "Error setting non-blocking socket: "
+                              + g_platform->GetSocketErrorString());
     return false;
   }
   return true;

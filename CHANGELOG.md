@@ -1,4 +1,4 @@
-### 1.7.7 (build 20842, api 7, 2022-09-13)
+### 1.7.7 (build 20849, api 7, 2022-09-14)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -26,7 +26,16 @@
 - Simplified C++ bootstrapping to allocate all globals in one place.
 - Renamed C++ Game classes to Logic.
 - The app now bootstraps Python in the main thread instead of the logic thread. This will keep things more consistent later when we are able to run under an already-existing Python interpreter.
+- As a side-effect of initing Python in the main thread, it seems that Python now catches segfaults in our debug builds and prints Python stack traces. (see https://docs.python.org/3/library/faulthandler.html). We'll have to experiment and see if this is a net positive or something we want to disable or make optional.
 - Python and _ba are now completely initialized in public source code. Now we just need to enable the app to survive without _bainternal and it'll be possible to build a 100% open source app.
+- `Logging::Log()` in the C++ layer now takes a LogLevel arg (kDebug, kWarning, kError, etc.) and simply calls the equivalent Python logging.XXX call. This unifies our C++ and Python logging to go through the same place.
+- `ba.log()` is no more. Instead just use standard Python logging functions (logging.info(), logging.error(), etc.).
+- `_ba.getlog()` is now `_ba.get_v1_cloud_log()`. Note that this functionality will go away eventually so you should use ba.app.log_handler and/or standard Python logging functions to get at app logs.
+- Along the same lines, `_ba.get_log_file_path()` is now `_ba.get_v1_cloud_log_file_path()`.
+- Added `_ba.display_log()` function which ships a log message to the in-game terminal and platform-specific places like the Android log. The engine wires up standard Python logging output to go through this.
+- Added `_ba.v1_cloud_log()` which ships a message to the old v1-cloud-log (the log which is gathered and sent to the v1 master server to help me identify problems people are seeing). This is presently wired up to a subset of Python logging output to approximate how it used to work.
+- Note: Previously in the C++ layer some code would mix Python print calls (such as PyErr_PrintEx()) with ballistica::Log() calls. Previously these all wound up going to the same place (Python's sys.stderr) so it worked, but now they no longer do and so this sort of mixing should be avoided. So if you see a weird combination of colored log output lines with non-colored lines that seem to go together, please holler as it means something needs to be fixed.
+
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
 - Cleaned up da MetaSubsystem code.

@@ -877,7 +877,8 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
-      Log("WARNING: 2 fades overlapping; running first fade-end-call early");
+      Log(LogLevel::kWarning,
+          "2 fades overlapping; running first fade-end-call early");
     }
     g_logic->PushPythonCall(fade_end_call_);
     fade_end_call_.Clear();
@@ -1070,6 +1071,7 @@ void Graphics::BuildAndPushFrameDef() {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
         if (!g_ui->IsWindowPresent()) {
           BA_LOG_ONCE(
+              LogLevel::kError,
               "Drawing in overlay pass in VR mode without UI; shouldn't "
               "happen!");
         }
@@ -1213,7 +1215,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
   if (fade_ <= 0.0f && fade_out_) {
     millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
     if (faded_time > 15000) {
-      Log("FORCE-ENDING STUCK FADE");
+      Log(LogLevel::kError, "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
@@ -1503,6 +1505,7 @@ void Graphics::WaitForRendererToExist() {
   while (g_graphics_server == nullptr
          || g_graphics_server->renderer() == nullptr) {
     BA_LOG_ONCE(
+        LogLevel::kWarning,
         "BuildAndPushFrameDef() called before renderer is up; spinning...");
     Platform::SleepMS(100);
     sleep_count++;

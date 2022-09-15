@@ -288,7 +288,7 @@ auto Joystick::GetButtonName(int index) -> std::string {
 
 Joystick::~Joystick() {
   if (!InLogicThread()) {
-    Log("Error: Joystick dying in wrong thread.");
+    Log(LogLevel::kError, "Joystick dying in wrong thread.");
   }
 
   // Kill our child if need be.
@@ -301,7 +301,7 @@ Joystick::~Joystick() {
   // Send a message back to the main thread to close this SDL Joystick.
   // HMMM - can we just have the main thread close the joystick immediately
   // before informing us its dead?.. i don't think we actually use it at all
-  // here in the game thread..
+  // here in the logic thread..
   if (sdl_joystick_) {
 #if BA_ENABLE_SDL_JOYSTICKS
     assert(g_app_flavor);
@@ -310,7 +310,8 @@ Joystick::~Joystick() {
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
-    Log("sdl_joystick_ set in non-sdl-joystick build destructor.");
+    Log(LogLevel::kError,
+        "sdl_joystick_ set in non-sdl-joystick build destructor.");
 #endif  // BA_ENABLE_SDL_JOYSTICKS
   }
 }
@@ -692,8 +693,9 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
         hat_held_ = true;
         break;
       default:
-        BA_LOG_ONCE("Error: Invalid hat value: "
-                    + std::to_string(static_cast<int>(e->jhat.value)));
+        BA_LOG_ONCE(LogLevel::kError,
+                    "Invalid hat value: "
+                        + std::to_string(static_cast<int>(e->jhat.value)));
         break;
     }
   }

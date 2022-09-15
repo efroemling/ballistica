@@ -324,8 +324,8 @@ auto PySetMasterServerSource(PyObject* self, PyObject* args) -> PyObject* {
   int source;
   if (!PyArg_ParseTuple(args, "i", &source)) return nullptr;
   if (source != 0 && source != 1) {
-    BA_LOG_ONCE("Error: Invalid server source: " + std::to_string(source)
-                + ".");
+    BA_LOG_ONCE(LogLevel::kError,
+                "Invalid server source: " + std::to_string(source) + ".");
     source = 1;
   }
   g_app->master_server_source = source;

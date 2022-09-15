@@ -315,7 +315,7 @@ void GLContext::SetVSync(bool enable) {
 
 GLContext::~GLContext() {
   if (!InMainThread()) {
-    Log("Error: GLContext dying in non-graphics thread");
+    Log(LogLevel::kError, "GLContext dying in non-graphics thread");
   }
 #if BA_SDL2_BUILD
 

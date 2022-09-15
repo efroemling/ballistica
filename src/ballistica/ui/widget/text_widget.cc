@@ -464,10 +464,12 @@ void TextWidget::SetText(const std::string& text_in_raw) {
     g_logic->CompileResourceString(text_in_raw,
                                    "TextWidget::SetText format check", &valid);
     if (!valid) {
-      BA_LOG_ONCE("Invalid resource string: '" + text_in_raw + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Invalid resource string: '" + text_in_raw + "'");
       Python::PrintStackTrace();
     } else if (explicit_bool(print_false_positives)) {
-      BA_LOG_ONCE("Got false positive for json check on '" + text_in_raw + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Got false positive for json check on '" + text_in_raw + "'");
       Python::PrintStackTrace();
     }
   }

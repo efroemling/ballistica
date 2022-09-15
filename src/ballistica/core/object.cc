@@ -54,9 +54,9 @@ void Object::PrintObjects() {
       assert(count == g_app->object_count);
     }
   }
-  Log(s);
+  Log(LogLevel::kInfo, s);
 #else
-  Log("PrintObjects() only functions in debug builds.");
+  Log(LogLevel::kInfo, "PrintObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 

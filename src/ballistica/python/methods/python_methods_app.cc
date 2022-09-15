@@ -197,7 +197,7 @@ auto PyGetForegroundHostSession(PyObject* self, PyObject* args,
     return nullptr;
   }
 
-  // Note: we return None if not in the game thread.
+  // Note: we return None if not in the logic thread.
   HostSession* s = InLogicThread()
                        ? g_logic->GetForegroundContext().GetHostSession()
                        : nullptr;
@@ -259,7 +259,7 @@ auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  // Fail gracefully if called from outside the game thread.
+  // Fail gracefully if called from outside the logic thread.
   if (!InLogicThread()) {
     Py_RETURN_NONE;
   }
@@ -292,7 +292,7 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
   // The from-other-thread case is basically a different call.
   if (from_other_thread) {
-    // Warn the user not to use this from the game thread since it doesnt
+    // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && InLogicThread()) {
       g_python->IssueCallInLogicThreadWarning(call_obj);
@@ -301,7 +301,7 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     // This gets called from other python threads so we can't construct
     // Objects and things here or we'll trip our thread-checks. Instead we
     // just increment the python object's refcount and pass it along raw;
-    // the game thread decrements it on the other end.
+    // the logic thread decrements it on the other end.
     Py_INCREF(call_obj);
     g_logic->PushPythonRawCallable(call_obj);
   } else {
@@ -461,7 +461,7 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   if (log) {
-    Log(message);
+    Log(LogLevel::kInfo, message);
   }
 
   // Transient messages get sent to clients as high-level messages instead of
@@ -552,7 +552,7 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
             tint2_color.y, tint2_color.z);
       } else {
-        Log("Error: unhandled screenmessage output_stream case");
+        Log(LogLevel::kError, "Unhandled screenmessage output_stream case.");
       }
     }
 
@@ -581,7 +581,7 @@ auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
   if (g_buildconfig.ostype_ios_tvos()) {
     // This should never be called on iOS
-    Log("Error: Quit called.");
+    Log(LogLevel::kError, "Quit called.");
   }
 
   bool handled = false;
@@ -628,7 +628,7 @@ auto PyBless(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
 
-  // Hmm; python runs in the game thread; technically we could just run
+  // Hmm; python runs in the logic thread; technically we could just run
   // ApplyConfig() immediately (though pushing is probably safer).
   g_logic->PushApplyConfigCall();
   Py_RETURN_NONE;
@@ -807,42 +807,53 @@ auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PyPrintStdout(PyObject* self, PyObject* args) -> PyObject* {
+auto PyDisplayLog(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
-  const char* s;
-  if (!PyArg_ParseTuple(args, "s", &s)) {
+  static const char* kwlist[] = {"name", "level", "message", nullptr};
+  const char* name;
+  const char* levelstr;
+  const char* message;
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sss",
+                                   const_cast<char**>(kwlist), &name, &levelstr,
+                                   &message)) {
     return nullptr;
   }
-  Logging::PrintStdout(s);
+
+  // Calc LogLevel enum val from their string val.
+  LogLevel level;
+  if (levelstr == std::string("DEBUG")) {
+    level = LogLevel::kDebug;
+  } else if (levelstr == std::string("INFO")) {
+    level = LogLevel::kInfo;
+  } else if (levelstr == std::string("WARNING")) {
+    level = LogLevel::kWarning;
+  } else if (levelstr == std::string("ERROR")) {
+    level = LogLevel::kError;
+  } else if (levelstr == std::string("CRITICAL")) {
+    level = LogLevel::kCritical;
+  } else {
+    // Assume we should avoid Log() calls here since it could infinite loop.
+    fprintf(stderr, "Invalid log level to display_log(): %s\n", levelstr);
+    level = LogLevel::kInfo;
+  }
+  Logging::DisplayLog(name, level, message);
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-auto PyPrintStderr(PyObject* self, PyObject* args) -> PyObject* {
+auto PyV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
-  const char* s;
-  if (!PyArg_ParseTuple(args, "s", &s)) {
+  const char* message;
+  static const char* kwlist[] = {"message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &message)) {
     return nullptr;
   }
-  Logging::PrintStderr(s);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
+  Logging::V1CloudLog(message);
 
-auto PyLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {"message", "to_stdout", "to_server", nullptr};
-  int to_server = 1;
-  int to_stdout = 1;
-  std::string message;
-  PyObject* message_obj;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|pp",
-                                   const_cast<char**>(kwlist), &message_obj,
-                                   &to_stdout, &to_server)) {
-    return nullptr;
-  }
-  message = Python::GetPyString(message_obj);
-  Log(message, static_cast<bool>(to_stdout), static_cast<bool>(to_server));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -900,39 +911,22 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          "(for helping with the transition from milliseconds-based time calls\n"
          "to seconds-based ones)"},
 
-        {"log", (PyCFunction)PyLog, METH_VARARGS | METH_KEYWORDS,
-         "log(message: str, to_stdout: bool = True,\n"
-         "    to_server: bool = True) -> None\n"
-         "\n"
-         "Category: **General Utility Functions**\n"
-         "\n"
-         "Log a message. This goes to the default logging mechanism depending\n"
-         "on the platform (stdout on mac, android log on android, etc).\n"
-         "\n"
-         "Log messages also go to the in-game console unless 'to_console'\n"
-         "is False. They are also sent to the master-server for use in "
-         "analyzing\n"
-         "issues unless to_server is False.\n"
-         "\n"
-         "Python's standard print() is wired to call this (with default "
-         "values)\n"
-         "so in most cases you can just use that."},
-
-        {"print_stdout", PyPrintStdout, METH_VARARGS,
-         "print_stdout(message: str) -> None\n"
-         "\n"
-         "(internal)"
-         "\n"
-         "Print to system stdout.\n"
-         "Also forwards to the internal console, etc."},
-
-        {"print_stderr", PyPrintStderr, METH_VARARGS,
-         "print_stderr(message: str) -> None\n"
+        {"display_log", (PyCFunction)PyDisplayLog, METH_VARARGS | METH_KEYWORDS,
+         "display_log(name: str, level: str, message: str) -> None\n"
          "\n"
          "(internal)\n"
          "\n"
-         "Print to system stderr.\n"
-         "Also forwards to the internal console, etc."},
+         "Sends a log message to the in-game console and any per-platform\n"
+         "log destinations (Android log, etc.). This generally is not called\n"
+         "directly and should instead be fed Python logging output."},
+
+        {"v1_cloud_log", (PyCFunction)PyV1CloudLog,
+         METH_VARARGS | METH_KEYWORDS,
+         "v1_cloud_log(message: str) -> None\n"
+         "\n"
+         "(internal)\n"
+         "\n"
+         "Push messages to the old v1 cloud log."},
 
         {"set_stress_testing", PySetStressTesting, METH_VARARGS,
          "set_stress_testing(testing: bool, player_count: int) -> None\n"
@@ -1120,13 +1114,13 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          "This can be handy for calls that are disallowed from within other\n"
          "callbacks, etc.\n"
          "\n"
-         "This call expects to be used in the game thread, and will "
+         "This call expects to be used in the logic thread, and will "
          "automatically\n"
          "save and restore the ba.Context to behave seamlessly.\n"
          "\n"
-         "If you want to push a call from outside of the game thread,\n"
+         "If you want to push a call from outside of the logic thread,\n"
          "however, you can pass 'from_other_thread' as True. In this case\n"
-         "the call will always run in the UI context on the game thread."},
+         "the call will always run in the UI context on the logic thread."},
 
         {"getactivity", (PyCFunction)PyGetActivity,
          METH_VARARGS | METH_KEYWORDS,

@@ -35,7 +35,8 @@ SceneStream::SceneStream(HostSession* host_session, bool save_replay)
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
     if (g_app->replay_open) {
-      Log("ERROR: g_replay_open true at replay start; shouldn't happen.");
+      Log(LogLevel::kError,
+          "g_replay_open true at replay start; shouldn't happen.");
     }
     assert(g_assets_server);
     g_assets_server->PushBeginWriteReplayCall();
@@ -57,7 +58,8 @@ SceneStream::~SceneStream() {
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_app->replay_open) {
-      Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
+      Log(LogLevel::kError,
+          "g_replay_open false at replay close; shouldn't happen.");
     }
     g_app->replay_open = false;
     assert(g_assets_server);
@@ -77,38 +79,40 @@ SceneStream::~SceneStream() {
       size_t count;
       count = GetPointerCount(scenes_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " scene graphs in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count)
+                + " scene graphs in output stream at shutdown");
       }
       count = GetPointerCount(nodes_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " nodes in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count) + " nodes in output stream at shutdown");
       }
       count = GetPointerCount(materials_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " materials in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count) + " materials in output stream at shutdown");
       }
       count = GetPointerCount(textures_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " textures in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count) + " textures in output stream at shutdown");
       }
       count = GetPointerCount(models_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " models in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count) + " models in output stream at shutdown");
       }
       count = GetPointerCount(sounds_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " sounds in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count) + " sounds in output stream at shutdown");
       }
       count = GetPointerCount(collide_models_);
       if (count != 0) {
-        Log("ERROR: " + std::to_string(count)
-            + " collide_models in output stream at shutdown");
+        Log(LogLevel::kError,
+            std::to_string(count)
+                + " collide_models in output stream at shutdown");
       }
     }
   }
@@ -121,7 +125,8 @@ auto SceneStream::GetOutMessage() const -> std::vector<uint8_t> {
   assert(!host_session_);  // this should only be getting used for
   // standalone temp ones..
   if (!out_command_.empty()) {
-    Log("Error: SceneStream shutting down with non-empty outCommand");
+    Log(LogLevel::kError,
+        "SceneStream shutting down with non-empty outCommand");
   }
   return out_message_;
 }
@@ -186,11 +191,12 @@ void SceneStream::Remove(T* val, std::vector<T*>* vec,
 }
 
 void SceneStream::Fail() {
-  Log("Error writing replay file");
+  Log(LogLevel::kError, "Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_app->replay_open) {
-      Log("ERROR: g_replay_open false at replay close; shouldn't happen.");
+      Log(LogLevel::kError,
+          "g_replay_open false at replay close; shouldn't happen.");
     }
     assert(g_assets_server);
     g_assets_server->PushEndWriteReplayCall();
@@ -201,7 +207,8 @@ void SceneStream::Fail() {
 
 void SceneStream::Flush() {
   if (!out_command_.empty())
-    Log("Error: SceneStream flushing down with non-empty outCommand");
+    Log(LogLevel::kError,
+        "SceneStream flushing down with non-empty outCommand");
   if (!out_message_.empty()) {
     ShipSessionCommandsMessage();
   }
@@ -534,7 +541,7 @@ void SceneStream::SetTime(millisecs_t t) {
   }
   millisecs_t diff = t - time_;
   if (diff > 255) {
-    Log("Error: SceneStream got time diff > 255; not expected.");
+    Log(LogLevel::kError, "SceneStream got time diff > 255; not expected.");
     diff = 255;
   }
   WriteCommandInt64(SessionCommand::kBaseTimeStep, diff);
@@ -1183,13 +1190,15 @@ void SceneStream::OnClientConnected(ConnectionToClient* c) {
   // Sanity check - abort if its on either of our lists already.
   for (auto& connections_to_client : connections_to_clients_) {
     if (connections_to_client == c) {
-      Log("Error: SceneStream::OnClientConnected() got duplicate connection.");
+      Log(LogLevel::kError,
+          "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
   for (auto& i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log("Error: SceneStream::OnClientConnected() got duplicate connection.");
+      Log(LogLevel::kError,
+          "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
@@ -1242,7 +1251,8 @@ void SceneStream::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log("Error: SceneStream::OnClientDisconnected() called for connection not on "
+  Log(LogLevel::kError,
+      "SceneStream::OnClientDisconnected() called for connection not on "
       "lists");
 }
 

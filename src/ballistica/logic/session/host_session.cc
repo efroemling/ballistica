@@ -242,7 +242,8 @@ void HostSession::RequestPlayer(InputDevice* device) {
 
   // Ignore if we have no Python session obj.
   if (!GetSessionPyObj()) {
-    Log("Error: HostSession::RequestPlayer() called w/no session_py_obj_.");
+    Log(LogLevel::kError,
+        "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
 
@@ -325,11 +326,13 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      Log("WARNING: HostSession: IssuePlayerLeft caled with no "
+      Log(LogLevel::kWarning,
+          "HostSession: IssuePlayerLeft caled with no "
           "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    Log(std::string("Error calling on_player_leave(): ") + e.what());
+    Log(LogLevel::kError,
+        std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
 
@@ -347,7 +350,8 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   assert(InLogicThread());
 
   if (shutting_down_) {
-    Log("WARNING: SetForegroundHostActivity called during session shutdown; "
+    Log(LogLevel::kWarning,
+        "SetForegroundHostActivity called during session shutdown; "
         "ignoring.");
     return;
   }
@@ -603,7 +607,7 @@ HostSession::~HostSession() {
     if (g_buildconfig.debug_build()) {
       PruneDeadRefs(&python_calls_);
       if (python_calls_.size() > 1) {
-        std::string s = "WARNING: " + std::to_string(python_calls_.size())
+        std::string s = std::to_string(python_calls_.size())
                         + " live PythonContextCalls at shutdown for "
                         + "HostSession" + " (1 call is expected):";
         int count = 1;
@@ -611,11 +615,12 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        Log(s);
+        Log(LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    Log("Exception in HostSession destructor: " + std::string(e.what()));
+    Log(LogLevel::kError,
+        "Exception in HostSession destructor: " + std::string(e.what()));
   }
 }
 
@@ -626,8 +631,9 @@ void HostSession::RegisterCall(PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    Log("WARNING: adding call to expired session; call will not function: "
-        + call->GetObjectDescription());
+    Log(LogLevel::kWarning,
+        "Adding call to expired session; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }

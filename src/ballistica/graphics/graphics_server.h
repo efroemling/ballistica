@@ -32,7 +32,7 @@ class GraphicsServer {
       const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
   auto SetRenderHold() -> void;
 
-  // Used by the game thread to pass frame-defs to the graphics server
+  // Used by the logic thread to pass frame-defs to the graphics server
   // for rendering.
   auto SetFrameDef(FrameDef* framedef) -> void;
 

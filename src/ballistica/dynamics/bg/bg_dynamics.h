@@ -45,7 +45,7 @@ class BGDynamicsEmission {
   BGDynamicsTendrilType tendril_type{BGDynamicsTendrilType::kSmoke};
 };
 
-// client (game thread) functionality for bg dynamics
+// client (logic thread) functionality for bg dynamics
 class BGDynamics {
  public:
   BGDynamics();

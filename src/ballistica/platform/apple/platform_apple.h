@@ -25,7 +25,8 @@ class PlatformApple : public Platform {
   auto DoHasTouchScreen() -> bool override;
   auto GetUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
-  auto HandleLog(const std::string& msg) -> void override;
+  auto DisplayLog(const std::string& name, LogLevel level,
+                  const std::string& msg) -> void override;
   auto SetupDataDirectory() -> void override;
   auto GetTextBoundsAndWidth(const std::string& text, Rect* r, float* width)
       -> void override;

@@ -125,6 +125,11 @@ class WidgetNotFoundError(NotFoundError):
     """
 
 
+# TODO: Should integrate some sort of context printing into our
+# log handling so we can just use logging.exception() and kill these
+# two functions.
+
+
 def print_exception(*args: Any, **keywds: Any) -> None:
     """Print info about an exception along with pertinent context state.
 

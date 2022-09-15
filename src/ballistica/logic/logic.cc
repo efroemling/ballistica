@@ -373,7 +373,8 @@ void Logic::PruneSessions() {
         try {
           i.Clear();
         } catch (const std::exception& e) {
-          Log("Exception killing Session: " + std::string(e.what()));
+          Log(LogLevel::kError,
+              "Exception killing Session: " + std::string(e.what()));
         }
         have_dead_session = true;
       }
@@ -663,8 +664,8 @@ void Logic::Update() {
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {
-      Log("Game update took too long (" + std::to_string(duration) + " ms).",
-          true, false);
+      Log(LogLevel::kInfo,
+          "Logic update took too long (" + std::to_string(duration) + " ms).");
 
       // Limit these if we want (not doing so for now).
       next_long_update_report_time_ = real_time;
@@ -686,8 +687,9 @@ void Logic::Reset() {
 
   // If all is well our sessions should all be dead.
   if (g_app->session_count != 0) {
-    Log("Error: session-count is non-zero ("
-        + std::to_string(g_app->session_count) + ") on Logic::Reset.");
+    Log(LogLevel::kError, "Session-count is non-zero ("
+                              + std::to_string(g_app->session_count)
+                              + ") on Logic::Reset.");
   }
 
   // Note: we don't clear real-time timers anymore. Should we?..
@@ -754,7 +756,7 @@ void Logic::PushBackButtonCall(InputDevice* input_device) {
 void Logic::PushStringEditSetCall(const std::string& value) {
   thread()->PushCall([value] {
     if (!g_ui) {
-      Log("Error: No ui on StringEditSetEvent.");
+      Log(LogLevel::kError, "No ui on StringEditSetEvent.");
       return;
     }
 #if BA_OSTYPE_ANDROID
@@ -771,7 +773,7 @@ void Logic::PushStringEditSetCall(const std::string& value) {
 void Logic::PushStringEditCancelCall() {
   thread()->PushCall([] {
     if (!g_ui) {
-      Log("Error: No ui in PushStringEditCancelCall.");
+      Log(LogLevel::kError, "No ui in PushStringEditCancelCall.");
       return;
     }
   });
@@ -994,7 +996,7 @@ void Logic::PushAskUserForTelnetAccessCall() {
 }
 
 void Logic::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
-  // Since we're mucking with refs, need to limit to game thread.
+  // Since we're mucking with refs, need to limit to logic thread.
   BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
   thread()->PushCall([call] {
@@ -1005,7 +1007,7 @@ void Logic::PushPythonCall(const Object::Ref<PythonContextCall>& call) {
 
 void Logic::PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
                                const PythonRef& args) {
-  // Since we're mucking with refs, need to limit to game thread.
+  // Since we're mucking with refs, need to limit to logic thread.
   BA_PRECONDITION(InLogicThread());
   BA_PRECONDITION(call->object_strong_ref_count() > 0);
   thread()->PushCall([call, args] {
@@ -1015,7 +1017,7 @@ void Logic::PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
 }
 
 void Logic::PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call) {
-  // Since we're mucking with refs, need to limit to game thread.
+  // Since we're mucking with refs, need to limit to logic thread.
   BA_PRECONDITION(InLogicThread());
 
   // Even though we only hold a weak ref, we expect a valid strong-reffed
@@ -1032,7 +1034,7 @@ void Logic::PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call) {
 
 void Logic::PushPythonWeakCallArgs(
     const Object::WeakRef<PythonContextCall>& call, const PythonRef& args) {
-  // Since we're mucking with refs, need to limit to game thread.
+  // Since we're mucking with refs, need to limit to logic thread.
   BA_PRECONDITION(InLogicThread());
 
   // Even though we only hold a weak ref, we expect a valid strong-reffed
@@ -1181,7 +1183,7 @@ void Logic::PushConfirmQuitCall() {
   thread()->PushCall([this] {
     assert(InLogicThread());
     if (HeadlessMode()) {
-      Log("PushConfirmQuitCall() unhandled on headless.");
+      Log(LogLevel::kError, "PushConfirmQuitCall() unhandled on headless.");
     } else {
       // If input is locked, just quit immediately.. a confirm screen wouldn't
       // work anyway
@@ -1233,7 +1235,7 @@ void Logic::Draw() {
     HostActivity* ha = GetForegroundContext().GetHostActivity();
     if (ha) {
       int64_t step = ha->scene()->stepnum();
-      Log(std::to_string(step - last_step));
+      Log(LogLevel::kInfo, std::to_string(step - last_step));
       last_step = step;
     }
   }
@@ -1278,7 +1280,8 @@ void Logic::ApplyConfig() {
   } else if (texqualstr == "Low") {
     texture_quality_requested = TextureQuality::kLow;
   } else {
-    Log("Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
+    Log(LogLevel::kError,
+        "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
     texture_quality_requested = TextureQuality::kLow;
   }
 
@@ -1298,8 +1301,8 @@ void Logic::ApplyConfig() {
   } else if (gqualstr == "Low") {
     graphics_quality_requested = GraphicsQuality::kLow;
   } else {
-    Log("Error: Invalid graphics quality: '" + gqualstr
-        + "'; defaulting to auto.");
+    Log(LogLevel::kError,
+        "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
     graphics_quality_requested = GraphicsQuality::kAuto;
   }
 
@@ -1365,7 +1368,7 @@ void Logic::ApplyConfig() {
   } else {
     do_v_sync = false;
     auto_v_sync = false;
-    Log("Error: Invalid 'Vertical Sync' value: '" + v_sync + "'");
+    Log(LogLevel::kError, "Invalid 'Vertical Sync' value: '" + v_sync + "'");
   }
   g_graphics_server->PushSetVSyncCall(do_v_sync, auto_v_sync);
 
@@ -1505,7 +1508,7 @@ auto Logic::RemovePlayer(Player* player) -> void {
   if (HostSession* host_session = player->GetHostSession()) {
     host_session->RemovePlayer(player);
   } else {
-    Log("Got RemovePlayer call but have no host_session");
+    Log(LogLevel::kError, "Got RemovePlayer call but have no host_session");
   }
 }
 
@@ -1526,7 +1529,8 @@ void Logic::SetRealTimerLength(int timer_id, millisecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log("Error: Logic::SetRealTimerLength() called on nonexistent timer.");
+    Log(LogLevel::kError,
+        "Logic::SetRealTimerLength() called on nonexistent timer.");
   }
 }
 
@@ -1577,8 +1581,9 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       if (!printed) {
         printed = true;
         char* c = cJSON_Print(obj);
-        BA_LOG_ONCE("found long key 'resource' in raw lstr json: "
-                    + std::string(c));
+        BA_LOG_ONCE(
+            LogLevel::kError,
+            "found long key 'resource' in raw lstr json: " + std::string(c));
         free(c);
       }
     }
@@ -1596,8 +1601,9 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
         if (!printed) {
           printed = true;
           char* c = cJSON_Print(obj);
-          BA_LOG_ONCE("found long key 'fallback' in raw lstr json: "
-                      + std::string(c));
+          BA_LOG_ONCE(
+              LogLevel::kError,
+              "found long key 'fallback' in raw lstr json: " + std::string(c));
           free(c);
         }
       }
@@ -1620,8 +1626,9 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
         if (!printed) {
           printed = true;
           char* c = cJSON_Print(obj);
-          BA_LOG_ONCE("found long key 'translate' in raw lstr json: "
-                      + std::string(c));
+          BA_LOG_ONCE(
+              LogLevel::kError,
+              "found long key 'translate' in raw lstr json: " + std::string(c));
           free(c);
         }
       }
@@ -1658,8 +1665,9 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
           if (!printed) {
             printed = true;
             char* c = cJSON_Print(obj);
-            BA_LOG_ONCE("found long key 'value' in raw lstr json: "
-                        + std::string(c));
+            BA_LOG_ONCE(
+                LogLevel::kError,
+                "found long key 'value' in raw lstr json: " + std::string(c));
             free(c);
           }
         }
@@ -1689,8 +1697,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       if (!printed) {
         printed = true;
         char* c = cJSON_Print(obj);
-        BA_LOG_ONCE("found long key 'subs' in raw lstr json: "
-                    + std::string(c));
+        BA_LOG_ONCE(LogLevel::kError, "found long key 'subs' in raw lstr json: "
+                                          + std::string(c));
         free(c);
       }
     }
@@ -1761,8 +1769,8 @@ auto Logic::CompileResourceString(const std::string& s, const std::string& loc,
 
   cJSON* root = cJSON_Parse(s.c_str());
   if (root == nullptr) {
-    Log("CompileResourceString failed (loc " + loc + "); invalid json: '" + s
-        + "'");
+    Log(LogLevel::kError, "CompileResourceString failed (loc " + loc
+                              + "); invalid json: '" + s + "'");
     *valid = false;
     return "";
   }
@@ -1771,8 +1779,8 @@ auto Logic::CompileResourceString(const std::string& s, const std::string& loc,
     result = DoCompileResourceString(root);
     *valid = true;
   } catch (const std::exception& e) {
-    Log("CompileResourceString failed (loc " + loc
-        + "): " + std::string(e.what()) + "; str='" + s + "'");
+    Log(LogLevel::kError, "CompileResourceString failed (loc " + loc + "): "
+                              + std::string(e.what()) + "; str='" + s + "'");
     result = "<error>";
     *valid = false;
   }

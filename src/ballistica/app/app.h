@@ -32,10 +32,10 @@ class App {
   std::vector<Thread*> pausable_threads;
   TouchInput* touch_input{};
   std::string console_startup_messages;
-  std::mutex log_mutex;
-  std::string log;
-  bool put_log{};
-  bool log_full{};
+  std::mutex v1_cloud_log_mutex;
+  std::string v1_cloud_log;
+  bool did_put_v1_cloud_log{};
+  bool v1_cloud_log_full{};
   int master_server_source{0};
   int session_count{};
   bool shutting_down{};

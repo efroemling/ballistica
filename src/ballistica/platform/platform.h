@@ -126,10 +126,10 @@ class Platform {
 
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
-  // Send a message to the default platform handler.
-  // IMPORTANT: No Object::Refs should be created or destroyed within this call,
-  // or deadlock can occur.
-  virtual auto HandleLog(const std::string& msg) -> void;
+  /// Display a message to any default log for the platform (android log, etc.)
+  /// Note that this can be called from any thread.
+  virtual auto DisplayLog(const std::string& name, LogLevel level,
+                          const std::string& msg) -> void;
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
@@ -427,11 +427,10 @@ class Platform {
       -> void;
 
   /// Print a log message to be included in crash logs or other debug
-  /// mechanisms. Standard log messages (at least with to_server=true) get
-  /// send here as well. It can be useful to call this directly to report
-  /// extra details that may help in debugging, as these calls are not
-  /// considered 'noteworthy' or presented to the user as standard Log()
-  /// calls are.
+  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
+  /// to here as well. It can be useful to call this directly to report extra
+  /// details that may help in debugging, as these calls are not considered
+  /// 'noteworthy' or presented to the user as standard Log() calls are.
   virtual auto HandleDebugLog(const std::string& msg) -> void;
 
   static auto DebugLog(const std::string& msg) -> void {

@@ -81,7 +81,8 @@ void SoundNode::SetLoop(bool val) {
 
   // We don't actually update looping on a playing sound.
   if (playing_)
-    BA_LOG_ONCE("Error: can't set 'loop' attr on already-playing sound.");
+    BA_LOG_ONCE(LogLevel::kError,
+                "Can't set 'loop' attr on already-playing sound.");
 }
 
 void SoundNode::SetSound(Sound* s) {
@@ -97,7 +98,8 @@ void SoundNode::SetPositional(bool val) {
   if (val == positional_) return;
   positional_ = val;
   if (playing_)
-    BA_LOG_ONCE("Error: can't set 'positional' attr on already-playing sound");
+    BA_LOG_ONCE(LogLevel::kError,
+                "Can't set 'positional' attr on already-playing sound");
 }
 
 void SoundNode::SetMusic(bool val) {

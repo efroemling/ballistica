@@ -69,7 +69,8 @@ auto TelnetServer::RunThread() -> int {
 
     sd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sd_ < 0) {
-      Log("Error: Unable to open host socket; errno " + std::to_string(errno));
+      Log(LogLevel::kError,
+          "Unable to open host socket; errno " + std::to_string(errno));
       return 1;
     }
 
@@ -78,7 +79,7 @@ auto TelnetServer::RunThread() -> int {
     int status =
         setsockopt(sd_, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on));
     if (-1 == status) {
-      Log("Error setting SO_REUSEADDR on telnet server");
+      Log(LogLevel::kError, "Error setting SO_REUSEADDR on telnet server");
     }
 
     // Bind to local server port.
@@ -221,7 +222,7 @@ void TelnetServer::PushPrint(const std::string& s) {
 }
 
 void TelnetServer::Print(const std::string& s) {
-  // Currently we make the assumption that *only* the game thread writes to our
+  // Currently we make the assumption that *only* the logic thread writes to our
   // socket.
   assert(InLogicThread());
   if (client_sd_ != -1) {

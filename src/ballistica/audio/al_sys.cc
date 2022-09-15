@@ -16,13 +16,14 @@ namespace ballistica {
 
 void _check_al_error(const char* file, int line) {
   if (g_audio_server->paused()) {
-    Log(Utils::BaseName(file) + ":" + std::to_string(line)
-        + ": Checking OpenAL error while paused.");
+    Log(LogLevel::kError, Utils::BaseName(file) + ":" + std::to_string(line)
+                              + ": Checking OpenAL error while paused.");
   }
   ALenum al_err = alGetError();
   if (al_err != AL_NO_ERROR) {
-    Log(Utils::BaseName(file) + ":" + std::to_string(line)
-        + ": OpenAL Error: " + GetALErrorString(al_err) + ";");
+    Log(LogLevel::kError, Utils::BaseName(file) + ":" + std::to_string(line)
+                              + ": OpenAL Error: " + GetALErrorString(al_err)
+                              + ";");
   }
 }
 

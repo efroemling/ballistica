@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import copy
+import logging
 from typing import TYPE_CHECKING
 
 import ba
@@ -50,7 +51,7 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.orientation_reset_cb_message,  # kVROrientationResetCBMessageCall
         _hooks.orientation_reset_message,  # kVROrientationResetMessageCall
         _hooks.on_app_resume,  # kHandleAppResumeCall
-        _apputils.handle_log,  # kHandleLogCall
+        _apputils.handle_v1_cloud_log,  # kHandleV1CloudLogCall
         _hooks.launch_main_menu_session,  # kLaunchMainMenuSessionCall
         _hooks.language_test_toggle,  # kLanguageTestToggleCall
         _hooks.award_in_control_achievement,  # kAwardInControlAchievementCall
@@ -136,4 +137,9 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.uuid_str,  # kUUIDStrCall
         _hooks.hash_strings,  # kHashStringsCall
         _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
+        logging.debug,  # kLoggingDebugCall
+        logging.info,  # kLoggingInfoCall
+        logging.warning,  # kLoggingWarningCall
+        logging.error,  # kLoggingErrorCall
+        logging.critical,  # kLoggingCriticalCall
     )  # yapf: disable

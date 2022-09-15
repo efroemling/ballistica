@@ -141,7 +141,8 @@ Dynamics::Dynamics(Scene* scene_in)
 
 Dynamics::~Dynamics() {
   if (in_process_) {
-    Log("Error: Dynamics going down within Process() call;"
+    Log(LogLevel::kError,
+        "Dynamics going down within Process() call;"
         " should not happen.");
   }
   ShutdownODE();

@@ -101,7 +101,7 @@ class AudioServer {
 
   // Some threads such as audio hold onto allocated Media-Component-Refs to keep
   // media components alive that they need.  Media-Component-Refs, however, must
-  // be disposed of in the game thread, so they are passed back to it through
+  // be disposed of in the logic thread, so they are passed back to it through
   // this function.
   auto AddSoundRefDelete(const Object::Ref<SoundData>* c) -> void;
 

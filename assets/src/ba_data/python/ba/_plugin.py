@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -127,8 +128,7 @@ class PluginSubsystem:
                                        subs=[('${PLUGIN}', plugkey),
                                              ('${ERROR}', str(exc))]),
                                   color=(1, 0, 0))
-                _ba.log(f"Error loading plugin class '{plugkey}': {exc}",
-                        to_server=False)
+                logging.exception("Error loading plugin class '%s'", plugkey)
                 continue
             try:
                 plugin = cls()
@@ -155,10 +155,8 @@ class PluginSubsystem:
                 color=(1, 1, 0),
             )
             plugnames = ', '.join(disappeared_plugs)
-            _ba.log(
-                f'{len(disappeared_plugs)} plugin(s) no longer found:'
-                f' {plugnames}.',
-                to_server=False)
+            logging.warning('%d plugin(s) no longer found: %s.',
+                            len(disappeared_plugs), plugnames)
             for goneplug in disappeared_plugs:
                 del _ba.app.config['Plugins'][goneplug]
             _ba.app.config.commit()

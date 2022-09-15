@@ -77,8 +77,8 @@ auto StdioConsole::OnAppStart() -> void {
             }
           }
         } else {
-          Log("StdioConsole got non-eof error reading stdin: "
-              + std::to_string(ferror(stdin)));
+          Log(LogLevel::kError, "StdioConsole got non-eof error reading stdin: "
+                                    + std::to_string(ferror(stdin)));
         }
         break;
       }

@@ -43,8 +43,8 @@ void SDLApp::HandleSDLEvent(const SDL_Event& event) {
           g_input->PushJoystickEvent(event, js);
         }
       } else {
-        Log("Error: Unable to get SDL Joystick for event type "
-            + std::to_string(event.type));
+        Log(LogLevel::kError, "Unable to get SDL Joystick for event type "
+                                  + std::to_string(event.type));
       }
       break;
     }
@@ -245,8 +245,8 @@ auto FilterSDLEvent(const SDL_Event* event) -> int {
       return true;  // sdl should keep this.
     }
   } catch (const std::exception& e) {
-    BA_LOG_ONCE(std::string("Exception in inline SDL-Event handling: ")
-                + e.what());
+    BA_LOG_ONCE(LogLevel::kError,
+                std::string("Error in inline SDL-Event handling: ") + e.what());
     throw;
   }
 }
@@ -369,7 +369,7 @@ void SDLApp::DoSwap() {
   if (g_buildconfig.debug_build()) {
     millisecs_t diff = GetRealTime() - swap_start_time_;
     if (diff > 5) {
-      Log("WARNING: Swap handling delay of " + std::to_string(diff));
+      Log(LogLevel::kWarning, "Swap handling delay of " + std::to_string(diff));
     }
   }
 
@@ -514,14 +514,15 @@ void SDLApp::SDLJoystickConnected(int device_index) {
   // We add all existing inputs when bootstrapping is complete; we should
   // never be getting these before that happens.
   if (g_input == nullptr || g_app_flavor == nullptr || !IsBootstrapped()) {
-    Log("Unexpected SDLJoystickConnected early in boot sequence.");
+    Log(LogLevel::kError,
+        "Unexpected SDLJoystickConnected early in boot sequence.");
     return;
   }
 
   // Create the joystick here in the main thread and then pass it over to the
-  // game thread to be added to the game.
+  // logic thread to be added to the game.
   if (g_buildconfig.ostype_ios_tvos()) {
-    BA_LOG_ONCE("WTF GOT SDL-JOY-CONNECTED ON IOS");
+    BA_LOG_ONCE(LogLevel::kError, "WTF GOT SDL-JOY-CONNECTED ON IOS");
   } else {
     auto* j = Object::NewDeferred<Joystick>(device_index);
     if (g_buildconfig.sdl2_build() && g_buildconfig.enable_sdl_joysticks()) {
@@ -566,9 +567,9 @@ void SDLApp::RemoveSDLInputDevice(int index) {
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) > index) {
     sdl_joysticks_[index] = nullptr;
   } else {
-    Log("Error: Invalid index on RemoveSDLInputDevice: size is "
-        + std::to_string(sdl_joysticks_.size()) + "; index is "
-        + std::to_string(index));
+    Log(LogLevel::kError, "Invalid index on RemoveSDLInputDevice: size is "
+                              + std::to_string(sdl_joysticks_.size())
+                              + "; index is " + std::to_string(index));
   }
   g_input->PushRemoveInputDeviceCall(j, true);
 }

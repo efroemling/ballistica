@@ -45,14 +45,16 @@ void ReplayClientSession::OnClientConnected(ConnectionToClient* c) {
   // sanity check - abort if its on either of our lists already
   for (ConnectionToClient* i : connections_to_clients_) {
     if (i == c) {
-      Log("Error: ReplayClientSession::OnClientConnected()"
+      Log(LogLevel::kError,
+          "ReplayClientSession::OnClientConnected()"
           " got duplicate connection");
       return;
     }
   }
   for (ConnectionToClient* i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log("Error: ReplayClientSession::OnClientConnected()"
+      Log(LogLevel::kError,
+          "ReplayClientSession::OnClientConnected()"
           " got duplicate connection");
       return;
     }
@@ -113,7 +115,8 @@ void ReplayClientSession::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log("Error: ReplayClientSession::OnClientDisconnected()"
+  Log(LogLevel::kError,
+      "ReplayClientSession::OnClientDisconnected()"
       " called for connection not on lists");
 }
 

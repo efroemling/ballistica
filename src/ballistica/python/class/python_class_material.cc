@@ -92,7 +92,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     PyObject* name_obj = Py_None;
@@ -144,7 +144,7 @@ void PythonClassMaterial::Delete(Object::Ref<Material>* m) {
 void PythonClassMaterial::tp_dealloc(PythonClassMaterial* self) {
   BA_PYTHON_TRY;
 
-  // These have to be deleted in the game thread - push a call if
+  // These have to be deleted in the logic thread - push a call if
   // need be.. otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Material>* ptr = self->material_;

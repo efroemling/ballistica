@@ -1108,12 +1108,6 @@ def add_clean_frame_callback(call: Callable) -> None:
     return None
 
 
-def add_transaction(transaction: dict,
-                    callback: Callable | None = None) -> None:
-    """(internal)"""
-    return None
-
-
 def android_get_external_files_dir() -> str:
     """(internal)
 
@@ -1472,6 +1466,16 @@ def disconnect_from_host() -> None:
     return None
 
 
+def display_log(name: str, level: str, message: str) -> None:
+    """(internal)
+
+    Sends a log message to the in-game console and any per-platform
+    log destinations (Android log, etc.). This generally is not called
+    directly and should instead be fed Python logging output.
+    """
+    return None
+
+
 def do_once() -> bool:
     """Return whether this is the first time running a line of code.
 
@@ -1559,15 +1563,6 @@ def focus_window() -> None:
     A workaround for some unintentional backgrounding that occurs on mac
     """
     return None
-
-
-def game_service_has_leaderboard(game: str, config: str) -> bool:
-    """(internal)
-
-    Given a game and config string, returns whether there is a leaderboard
-    for it on the game service.
-    """
-    return bool()
 
 
 def get_appconfig_builtin_keys() -> list[str]:
@@ -1700,27 +1695,9 @@ def get_local_active_input_devices_count() -> int:
     return int()
 
 
-def get_log_file_path() -> str:
-    """(internal)
-
-    Return the path to the app log file.
-    """
-    return str()
-
-
 def get_low_level_config_value(key: str, default_value: int) -> int:
     """(internal)"""
     return int()
-
-
-def get_master_server_address(source: int = -1,
-                              version: int = 1,
-                              internal: bool = False) -> str:
-    """(internal)
-
-    Return the address of the master server.
-    """
-    return str()
 
 
 def get_max_graphics_quality() -> str:
@@ -1728,11 +1705,6 @@ def get_max_graphics_quality() -> str:
 
     Return the max graphics-quality supported on the current hardware.
     """
-    return str()
-
-
-def get_news_show() -> str:
-    """(internal)"""
     return str()
 
 
@@ -1767,32 +1739,12 @@ def get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture:
     return ba.Texture()
 
 
-def get_price(item: str) -> str | None:
-    """(internal)"""
-    return ''
-
-
-def get_public_login_id() -> str | None:
-    """(internal)"""
-    return ''
-
-
 def get_public_party_enabled() -> bool:
     """(internal)"""
     return bool()
 
 
 def get_public_party_max_size() -> int:
-    """(internal)"""
-    return int()
-
-
-def get_purchased(item: str) -> bool:
-    """(internal)"""
-    return bool()
-
-
-def get_purchases_state() -> int:
     """(internal)"""
     return int()
 
@@ -1822,11 +1774,6 @@ def get_replay_speed_exponent() -> int:
 def get_replays_dir() -> str:
     """(internal)"""
     return str()
-
-
-def get_scores_to_beat(level: str, config: str, callback: Callable) -> None:
-    """(internal)"""
-    return None
 
 
 def get_special_widget(name: str) -> Widget:
@@ -1872,56 +1819,16 @@ def get_ui_input_device() -> ba.InputDevice:
     return ba.InputDevice()
 
 
-def get_v1_account_display_string(full: bool = True) -> str:
+def get_v1_cloud_log() -> str:
     """(internal)"""
     return str()
 
 
-def get_v1_account_misc_read_val(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_v1_account_misc_read_val_2(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_v1_account_misc_val(name: str, default_value: Any) -> Any:
-    """(internal)"""
-    return _uninferrable()
-
-
-def get_v1_account_name() -> str:
-    """(internal)"""
-    return str()
-
-
-def get_v1_account_state() -> str:
-    """(internal)"""
-    return str()
-
-
-def get_v1_account_state_num() -> int:
-    """(internal)"""
-    return int()
-
-
-def get_v1_account_ticket_count() -> int:
+def get_v1_cloud_log_file_path() -> str:
     """(internal)
 
-    Returns the number of tickets for the current account.
+    Return the path to the app log file.
     """
-    return int()
-
-
-def get_v1_account_type() -> str:
-    """(internal)"""
-    return str()
-
-
-def get_v2_fleet() -> str:
-    """(internal)"""
     return str()
 
 
@@ -2013,11 +1920,6 @@ def getinputdevice(name: str, unique_id: str, doraise: bool = True) -> Any:
     if 'doraise' is False.
     """
     return None
-
-
-def getlog() -> str:
-    """(internal)"""
-    return str()
 
 
 def getmodel(name: str) -> ba.Model:
@@ -2129,11 +2031,6 @@ def have_incentivized_ad() -> bool:
     return bool()
 
 
-def have_outstanding_transactions() -> bool:
-    """(internal)"""
-    return bool()
-
-
 def have_permission(permission: ba.Permission) -> bool:
     """(internal)"""
     return bool()
@@ -2210,15 +2107,10 @@ def imagewidget(edit: ba.Widget | None = None,
     return ba.Widget()
 
 
-def in_game_purchase(item: str, price: int) -> None:
-    """(internal)"""
-    return None
-
-
 def in_logic_thread() -> bool:
     """(internal)
 
-    Returns whether or not the current thread is the game thread.
+    Returns whether or not the current thread is the logic thread.
     """
     return bool()
 
@@ -2238,11 +2130,6 @@ def increment_analytics_count_raw_2(name: str,
 def increment_analytics_counts_raw(name: str, increment: int = 1) -> None:
     """(internal)"""
     return None
-
-
-def is_blessed() -> bool:
-    """(internal)"""
-    return bool()
 
 
 def is_in_replay() -> bool:
@@ -2301,22 +2188,6 @@ def lock_all_input() -> None:
     return None
 
 
-def log(message: str, to_stdout: bool = True, to_server: bool = True) -> None:
-    """Category: **General Utility Functions**
-
-    Log a message. This goes to the default logging mechanism depending
-    on the platform (stdout on mac, android log on android, etc).
-
-    Log messages also go to the in-game console unless 'to_console'
-    is False. They are also sent to the master-server for use in analyzing
-    issues unless to_server is False.
-
-    Python's standard print() is wired to call this (with default values)
-    so in most cases you can just use that.
-    """
-    return None
-
-
 def mac_music_app_get_library_source() -> None:
     """(internal)"""
     return None
@@ -2349,14 +2220,6 @@ def mac_music_app_set_volume(volume: int) -> None:
 
 def mac_music_app_stop() -> None:
     """(internal)"""
-    return None
-
-
-def mark_config_dirty() -> None:
-    """(internal)
-
-    Category: General Utility Functions
-    """
     return None
 
 
@@ -2488,11 +2351,6 @@ def playsound(sound: Sound,
     return None
 
 
-def power_ranking_query(callback: Callable, season: Any = None) -> None:
-    """(internal)"""
-    return None
-
-
 def print_context() -> None:
     """(internal)
 
@@ -2505,23 +2363,6 @@ def print_load_info() -> None:
     """(internal)
 
     Category: **General Utility Functions**
-    """
-    return None
-
-
-def print_stderr(message: str) -> None:
-    """(internal)
-
-    Print to system stderr.
-    Also forwards to the internal console, etc.
-    """
-    return None
-
-
-def print_stdout(message: str) -> None:
-    """(internal)
-    Print to system stdout.
-    Also forwards to the internal console, etc.
     """
     return None
 
@@ -2545,11 +2386,6 @@ def printobjects() -> None:
     return None
 
 
-def purchase(item: str) -> None:
-    """(internal)"""
-    return None
-
-
 def pushcall(call: Callable,
              from_other_thread: bool = False,
              suppress_other_thread_warning: bool = False) -> None:
@@ -2560,12 +2396,12 @@ def pushcall(call: Callable,
     This can be handy for calls that are disallowed from within other
     callbacks, etc.
 
-    This call expects to be used in the game thread, and will automatically
+    This call expects to be used in the logic thread, and will automatically
     save and restore the ba.Context to behave seamlessly.
 
-    If you want to push a call from outside of the game thread,
+    If you want to push a call from outside of the logic thread,
     however, you can pass 'from_other_thread' as True. In this case
-    the call will always run in the UI context on the game thread.
+    the call will always run in the UI context on the logic thread.
     """
     return None
 
@@ -2616,17 +2452,7 @@ def reload_media() -> None:
     return None
 
 
-def report_achievement(achievement: str, pass_to_account: bool = True) -> None:
-    """(internal)"""
-    return None
-
-
 def request_permission(permission: ba.Permission) -> None:
-    """(internal)"""
-    return None
-
-
-def reset_achievements() -> None:
     """(internal)"""
     return None
 
@@ -2644,11 +2470,6 @@ def reset_random_player_names() -> None:
 def resolve_appconfig_value(key: str) -> Any:
     """(internal)"""
     return _uninferrable()
-
-
-def restore_purchases() -> None:
-    """(internal)"""
-    return None
 
 
 def rowwidget(edit: ba.Widget | None = None,
@@ -2671,11 +2492,6 @@ def rowwidget(edit: ba.Widget | None = None,
     """
     import ba  # pylint: disable=cyclic-import
     return ba.Widget()
-
-
-def run_transactions() -> None:
-    """(internal)"""
-    return None
 
 
 def safecolor(color: Sequence[float],
@@ -2953,45 +2769,8 @@ def show_progress_bar() -> None:
     return None
 
 
-def sign_in_v1(account_type: str) -> None:
-    """(internal)
-
-    Category: General Utility Functions
-    """
-    return None
-
-
-def sign_out_v1(v2_embedded: bool = False) -> None:
-    """(internal)
-
-    Category: General Utility Functions
-    """
-    return None
-
-
 def submit_analytics_counts() -> None:
     """(internal)"""
-    return None
-
-
-def submit_score(game: str,
-                 config: str,
-                 name: Any,
-                 score: int | None,
-                 callback: Callable,
-                 friend_callback: Callable | None,
-                 order: str = 'increasing',
-                 tournament_id: str | None = None,
-                 score_type: str = 'points',
-                 campaign: str | None = None,
-                 level: str | None = None) -> None:
-    """(internal)
-
-    Submit a score to the server; callback will be called with the results.
-    As a courtesy, please don't send fake scores to the server. I'd prefer
-    to devote my time to improving the game instead of trying to make the
-    score server more mischief-proof.
-    """
     return None
 
 
@@ -3173,12 +2952,6 @@ def timer(time: float,
     return None
 
 
-def tournament_query(callback: Callable[[dict | None], None],
-                     args: dict) -> None:
-    """(internal)"""
-    return None
-
-
 def uibounds() -> tuple[float, float, float, float]:
     """(internal)
 
@@ -3194,6 +2967,14 @@ def unlock_all_input() -> None:
     """(internal)
 
     Resumes normal keyboard, mouse, and gamepad event processing.
+    """
+    return None
+
+
+def v1_cloud_log(message: str) -> None:
+    """(internal)
+
+    Push messages to the old v1 cloud log.
     """
     return None
 

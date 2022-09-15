@@ -81,7 +81,7 @@ void Scene::PlaySound(Sound* sound, float volume, bool host_only) {
 auto Scene::IsOutOfBounds(float x, float y, float z) -> bool {
   if (std::isnan(x) || std::isnan(y) || std::isnan(z) || std::isinf(x)
       || std::isinf(y) || std::isinf(z))
-    BA_LOG_ONCE("ERROR: got INF/NAN value on IsOutOfBounds() check");
+    BA_LOG_ONCE(LogLevel::kError, "Got INF/NAN value on IsOutOfBounds() check");
 
   return ((x < bounds_min_[0]) || (x > bounds_max_[0]) || (y < bounds_min_[1])
           || (y > bounds_max_[1]) || (z < bounds_min_[2])
@@ -206,7 +206,7 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
   if (temp_weak_ref.exists()) {
-    Log("Error: node still exists after ref release!!");
+    Log(LogLevel::kError, "Node still exists after ref release!!");
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -396,8 +396,9 @@ void Scene::DumpNodes(SceneStream* out) {
             break;
           }
           default:
-            Log("Invalid attr type for Scene::DumpNodes() attr set: "
-                + std::to_string(static_cast<int>(attr.type())));
+            Log(LogLevel::kError,
+                "Invalid attr type for Scene::DumpNodes() attr set: "
+                    + std::to_string(static_cast<int>(attr.type())));
             break;
         }
       }

@@ -31,7 +31,7 @@ class PythonContextCall : public Object {
   void MarkDead();
   auto object() const -> const PythonRef& { return object_; }
   auto file_loc() const -> const std::string& { return file_loc_; }
-  void LogContext();
+  auto PrintContext() -> void;
 
  private:
   void GetTrace();  // we try to grab basic trace info

@@ -27,7 +27,8 @@ auto ClientInputDevice::GetClientID() const -> int {
   if (ConnectionToClient* c = connection_to_client_.get()) {
     return c->id();
   } else {
-    Log("ClientInputDevice::get_client_id(): connection_to_client no longer "
+    Log(LogLevel::kError,
+        "ClientInputDevice::get_client_id(): connection_to_client no longer "
         "exists; returning -1..");
     return -1;
   }

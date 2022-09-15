@@ -86,11 +86,11 @@
   }                                                            \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
-#define BA_LOG_ONCE(msg)              \
+#define BA_LOG_ONCE(lvl, msg)         \
   {                                   \
     static bool did_log_here = false; \
     if (!did_log_here) {              \
-      ballistica::Log(msg);           \
+      ballistica::Log(lvl, msg);      \
       did_log_here = true;            \
     }                                 \
   }                                   \
@@ -120,12 +120,12 @@
 
 /// Test a condition and simply print a log message if it fails (on both debug
 /// and release builds)
-#define BA_PRECONDITION_LOG(b)         \
-  {                                    \
-    if (!(b)) {                        \
-      Log("Precondition failed: " #b); \
-    }                                  \
-  }                                    \
+#define BA_PRECONDITION_LOG(b)                           \
+  {                                                      \
+    if (!(b)) {                                          \
+      Log(LogLevel::kError, "Precondition failed: " #b); \
+    }                                                    \
+  }                                                      \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 /// Test a condition and abort the program if it fails (on both debug

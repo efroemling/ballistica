@@ -20,8 +20,8 @@ void DataData::DoPreload() {
   // in the following case:
   // - asset thread grabs payload lock for Preload()
   // - asset thread tries to grab GIL in Preload(); spins.
-  // - meanwhile, something in game thread has called Load()
-  // - game thread holds GIL by default and now spins waiting on payload lock.
+  // - meanwhile, something in logic thread has called Load()
+  // - logic thread holds GIL by default and now spins waiting on payload lock.
   // - deadlock :-(
 
   // ...so the new plan is to simply load the file into a string in Preload()

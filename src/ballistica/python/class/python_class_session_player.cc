@@ -157,7 +157,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
 
@@ -184,7 +184,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
 void PythonClassSessionPlayer::tp_dealloc(PythonClassSessionPlayer* self) {
   BA_PYTHON_TRY;
 
-  // These have to be deleted in the game thread - send the ptr along if need
+  // These have to be deleted in the logic thread - send the ptr along if need
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<Player>* p = self->player_;
@@ -258,8 +258,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE("Error: Calling getAttr for player attr '" + std::string(s)
-                  + "' without data set.");
+      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
+                                        + std::string(s)
+                                        + "' without data set.");
     }
     PyObject* obj = p->GetPyCharacter();
     Py_INCREF(obj);
@@ -270,8 +271,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE("Error: Calling getAttr for player attr '" + std::string(s)
-                  + "' without data set.");
+      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
+                                        + std::string(s)
+                                        + "' without data set.");
     }
     PyObject* obj = p->GetPyColor();
     Py_INCREF(obj);
@@ -282,8 +284,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE("Error: Calling getAttr for player attr '" + std::string(s)
-                  + "' without data set.");
+      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
+                                        + std::string(s)
+                                        + "' without data set.");
     }
     PyObject* obj = p->GetPyHighlight();
     Py_INCREF(obj);
@@ -294,8 +297,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE("Error: Calling getAttr for player attr '" + std::string(s)
-                  + "' without data set.");
+      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
+                                        + std::string(s)
+                                        + "' without data set.");
     }
     PyObject* obj = p->GetPyActivityPlayer();
     Py_INCREF(obj);

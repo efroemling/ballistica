@@ -31,7 +31,8 @@ void Session::GraphicsQualityChanged(GraphicsQuality q) {}
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SceneStream* out) {
-  Log("Session::DumpFullState() being called; shouldn't happen.");
+  Log(LogLevel::kError,
+      "Session::DumpFullState() being called; shouldn't happen.");
 }
 
 }  // namespace ballistica

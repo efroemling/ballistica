@@ -76,7 +76,7 @@ auto PythonClassTimer::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
 
@@ -161,7 +161,7 @@ void PythonClassTimer::DoDelete(bool have_timer, TimeType time_type,
 
 void PythonClassTimer::tp_dealloc(PythonClassTimer* self) {
   BA_PYTHON_TRY;
-  // These have to be deleted in the game thread.
+  // These have to be deleted in the logic thread.
   if (!InLogicThread()) {
     auto a0 = self->have_timer_;
     auto a1 = self->time_type_;

@@ -196,10 +196,12 @@ void ClientSession::Update(int time_advance) {
         if (g_buildconfig.debug_build()) {
           if (current_cmd_ptr_ != nullptr) {
             if (current_cmd_ptr_ != &(current_cmd_[0]) + current_cmd_.size()) {
-              Log("SIZE ERROR FOR CMD "
-                  + std::to_string(static_cast<int>(current_cmd_[0]))
-                  + " expected " + std::to_string(current_cmd_.size()) + " got "
-                  + std::to_string(current_cmd_ptr_ - &(current_cmd_[0])));
+              Log(LogLevel::kError,
+                  "SIZE ERROR FOR CMD "
+                      + std::to_string(static_cast<int>(current_cmd_[0]))
+                      + " expected " + std::to_string(current_cmd_.size())
+                      + " got "
+                      + std::to_string(current_cmd_ptr_ - &(current_cmd_[0])));
             }
           }
           assert(current_cmd_ptr_ == current_cmd_.data() + current_cmd_.size());
@@ -953,7 +955,7 @@ auto ClientSession::GetCollideModel(int id) const -> CollideModel* {
 }
 
 void ClientSession::Error(const std::string& description) {
-  Log("ERROR: client session error: " + description);
+  Log(LogLevel::kError, "Client session error: " + description);
   End();
 }
 

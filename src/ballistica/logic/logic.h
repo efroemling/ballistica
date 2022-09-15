@@ -44,7 +44,7 @@ class Logic {
 
   /// Push a generic 'menu press' event, optionally associated with an
   /// input device (nullptr to specify none). Note: caller must ensure
-  /// a RemoveInputDevice() call does not arrive at the game thread
+  /// a RemoveInputDevice() call does not arrive at the logic thread
   /// before this one.
   auto PushMainMenuPressCall(InputDevice* device) -> void;
 
@@ -71,12 +71,13 @@ class Logic {
   auto PushMediaPruneCall(int level) -> void;
   auto PushAskUserForTelnetAccessCall() -> void;
 
-  // Push Python call and keep it alive; must be called from game thread.
+  // Push Python call and keep it alive; must be called from logic thread.
   auto PushPythonCall(const Object::Ref<PythonContextCall>& call) -> void;
   auto PushPythonCallArgs(const Object::Ref<PythonContextCall>& call,
                           const PythonRef& args) -> void;
 
-  // Push Python call without keeping it alive; must be called from game thread.
+  // Push Python call without keeping it alive; must be called from logic
+  // thread.
   auto PushPythonWeakCall(const Object::WeakRef<PythonContextCall>& call)
       -> void;
   auto PushPythonWeakCallArgs(const Object::WeakRef<PythonContextCall>& call,

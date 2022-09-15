@@ -32,7 +32,8 @@ class PlatformWindows : public Platform {
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  void HandleLog(const std::string& msg) override;
+  void DisplayLog(const std::string& name, LogLevel level,
+                  const std::string& msg) override;
   void SetupDataDirectory() override;
   void SetEnv(const std::string& name, const std::string& value) override;
   auto GetIsStdinATerminal() -> bool override;

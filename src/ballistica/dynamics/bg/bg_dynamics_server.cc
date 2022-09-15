@@ -539,12 +539,12 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
 
   auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(p_count * 6);
 
-  // Game thread is default owner; needs to be us until we hand it over.
+  // Logic thread is default owner; needs to be us until we hand it over.
   ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
   *index_buffer = Object::MakeRefCounted(ibuf);
   auto* vbuf = Object::NewDeferred<MeshBufferVertexSprite>(p_count * 4);
 
-  // Game thread is default owner; needs to be us until we hand it over.
+  // Logic thread is default owner; needs to be us until we hand it over.
   vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
   *buffer = Object::MakeRefCounted(vbuf);
 
@@ -1359,7 +1359,8 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     }
     default: {
       int t = static_cast<int>(def.emit_type);
-      BA_LOG_ONCE("Invalid bg-dynamics emit type: " + std::to_string(t));
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Invalid bg-dynamics emit type: " + std::to_string(t));
       break;
     }
   }
@@ -1596,14 +1597,14 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   if (shadow_max_count > 0) {
     auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(shadow_max_count * 6);
 
-    // Game thread is default owner; needs to be us until we hand it over.
+    // Logic thread is default owner; needs to be us until we hand it over.
     ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
     ss->shadow_indices = Object::MakeRefCounted(ibuf);
     s_index = &ss->shadow_indices->elements[0];
     auto* vbuf =
         Object::NewDeferred<MeshBufferVertexSprite>(shadow_max_count * 4);
 
-    // Game thread is default owner; needs to be us until we hand it over.
+    // Logic thread is default owner; needs to be us until we hand it over.
     vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
     ss->shadow_vertices = Object::MakeRefCounted(vbuf);
     s_vertex = &ss->shadow_vertices->elements[0];
@@ -1612,14 +1613,14 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   if (light_max_count > 0) {
     auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(light_max_count * 6);
 
-    // Game thread is default owner; needs to be us until we hand it over.
+    // Logic thread is default owner; needs to be us until we hand it over.
     ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
     ss->light_indices = Object::MakeRefCounted(ibuf);
     l_index = &ss->light_indices->elements[0];
     auto* vbuf =
         Object::NewDeferred<MeshBufferVertexSprite>(light_max_count * 4);
 
-    // Game thread is default owner; needs to be us until we hand it over.
+    // Logic thread is default owner; needs to be us until we hand it over.
     vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
     ss->light_vertices = Object::MakeRefCounted(vbuf);
     l_vertex = &ss->light_vertices->elements[0];
@@ -1968,14 +1969,14 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
     if (smoke_slice_count > 0) {
       auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(smoke_index_count);
 
-      // Game thread is default owner; needs to be us until we hand it over.
+      // Logic thread is default owner; needs to be us until we hand it over.
       ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
       ss->tendril_indices = Object::MakeRefCounted(ibuf);
       uint16_t* index = &ss->tendril_indices->elements[0];
       auto* vbuf =
           Object::NewDeferred<MeshBufferVertexSmokeFull>(smoke_slice_count * 2);
 
-      // Game thread is default owner; needs to be us until we hand it over.
+      // Logic thread is default owner; needs to be us until we hand it over.
       vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
       ss->tendril_vertices = Object::MakeRefCounted(vbuf);
       VertexSmokeFull* v = &ss->tendril_vertices->elements[0];
@@ -2133,13 +2134,13 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
 
       auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(index_count);
 
-      // Game thread is default owner; needs to be us until we hand it over.
+      // Logic thread is default owner; needs to be us until we hand it over.
       ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
       ss->fuse_indices = Object::MakeRefCounted(ibuf);
       auto* vbuf =
           Object::NewDeferred<MeshBufferVertexSimpleFull>(vertex_count);
 
-      // Game thread is default owner; needs to be us until we hand it over.
+      // Logic thread is default owner; needs to be us until we hand it over.
       vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
       ss->fuse_vertices = Object::MakeRefCounted(vbuf);
 

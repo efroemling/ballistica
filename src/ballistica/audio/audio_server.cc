@@ -144,7 +144,7 @@ struct AudioServer::SoundFadeNode {
 void AudioServer::SetPaused(bool pause) {
   if (!paused_) {
     if (!pause) {
-      Log("Error: got audio unpause request when already unpaused.");
+      Log(LogLevel::kError, "Got audio unpause request when already unpaused.");
     } else {
 #if BA_OSTYPE_IOS_TVOS
       // apple recommends this during audio-interruptions..
@@ -163,7 +163,7 @@ void AudioServer::SetPaused(bool pause) {
   } else {
     // unpause if requested..
     if (pause) {
-      Log("Error: Got audio pause request when already paused.");
+      Log(LogLevel::kError, "Got audio pause request when already paused.");
     } else {
 #if BA_OSTYPE_IOS_TVOS
       // apple recommends this during audio-interruptions..
@@ -357,7 +357,7 @@ auto AudioServer::OnAppStartInThread() -> void {
       ALboolean enumeration =
           alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
       if (enumeration == AL_FALSE) {
-        Log("OpenAL enumeration extensions missing.");
+        Log(LogLevel::kError, "OpenAL enumeration extensions missing.");
       } else {
         const ALCchar* devices =
             alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
@@ -414,8 +414,8 @@ auto AudioServer::OnAppStartInThread() -> void {
       sound_source_refs_.push_back(s);
       sources_.push_back(&(*s));
     } else {
-      Log("Error: Made " + std::to_string(i) + " sources; (wanted "
-          + std::to_string(target_source_count) + ").");
+      Log(LogLevel::kError, "Made " + std::to_string(i) + " sources; (wanted "
+                                + std::to_string(target_source_count) + ").");
       break;
     }
   }
@@ -473,9 +473,10 @@ void AudioServer::UpdateAvailableSources() {
         // that probably means somebody's grabbing a source but never
         // resubmitting it.
         if (t - i->client_source()->last_lock_time() > 10000) {
-          Log("Error: Client audio source has been locked for too long; "
+          Log(LogLevel::kError,
+              "Client audio source has been locked for too long; "
               "probably leaked. (debug id "
-              + std::to_string(i->client_source()->lock_debug_id()) + ")");
+                  + std::to_string(i->client_source()->lock_debug_id()) + ")");
         }
         continue;
       }
@@ -694,8 +695,8 @@ AudioServer::ThreadSource::ThreadSource(AudioServer* audio_thread_in, int id_in,
   ALenum err = alGetError();
   valid_ = (err == AL_NO_ERROR);
   if (!valid_) {
-    Log(std::string("Error: AL Error ") + GetALErrorString(err)
-        + " on source creation.");
+    Log(LogLevel::kError, std::string("AL Error ") + GetALErrorString(err)
+                              + " on source creation.");
   } else {
     // In vr mode we keep the microphone a bit closer to the camera
     // for realism purposes, so we need stuff louder in general.
@@ -878,9 +879,9 @@ void AudioServer::ThreadSource::SetPosition(float x, float y, float z) {
       z = 500;
     }
     if (oob) {
-      BA_LOG_ONCE(
-          "Error: AudioServer::ThreadSource::SetPosition"
-          " got out-of-bounds value.");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "AudioServer::ThreadSource::SetPosition"
+                  " got out-of-bounds value.");
     }
     ALfloat source_pos[] = {x, y, z};
     alSourcefv(source_, AL_POSITION, source_pos);
@@ -1098,7 +1099,7 @@ void AudioServer::PushSetSoundPitchCall(float val) {
 void AudioServer::PushSetPausedCall(bool pause) {
   thread()->PushCall([this, pause] {
     if (g_buildconfig.ostype_android()) {
-      Log("Error: Shouldn't be getting SetPausedCall on android.");
+      Log(LogLevel::kError, "Shouldn't be getting SetPausedCall on android.");
     }
     SetPaused(pause);
   });
@@ -1111,7 +1112,7 @@ void AudioServer::PushComponentUnloadCall(
     for (auto&& i : components) {
       (**i).Unload();
     }
-    // ...and then ship these pointers back to the game thread, so it can free
+    // ...and then ship these pointers back to the logic thread, so it can free
     // the references.
     g_logic->PushFreeAssetComponentRefsCall(components);
   });
@@ -1129,7 +1130,7 @@ void AudioServer::AddSoundRefDelete(const Object::Ref<SoundData>* c) {
     std::scoped_lock lock(sound_ref_delete_list_mutex_);
     sound_ref_delete_list_.push_back(c);
   }
-  // Now push a call to the game thread to do the deletes.
+  // Now push a call to the logic thread to do the deletes.
   g_logic->thread()->PushCall(
       [] { g_audio_server->ClearSoundRefDeleteList(); });
 }
@@ -1154,7 +1155,7 @@ void AudioServer::BeginInterruption() {
       break;
     }
     if (GetRealTime() - t > 1000) {
-      Log("Error: Timed out waiting for audio pause.");
+      Log(LogLevel::kError, "Timed out waiting for audio pause.");
       break;
     }
     Platform::SleepMS(2);
@@ -1176,7 +1177,7 @@ void AudioServer::EndInterruption() {
       break;
     }
     if (GetRealTime() - t > 1000) {
-      Log("Error: Timed out waiting for audio unpause.");
+      Log(LogLevel::kError, "Timed out waiting for audio unpause.");
       break;
     }
     Platform::SleepMS(2);

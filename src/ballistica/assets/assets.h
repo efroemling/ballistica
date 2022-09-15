@@ -67,7 +67,7 @@ class Assets {
   /// recreating/adjusting the renderer.
   auto UnloadRendererBits(bool textures, bool models) -> void;
 
-  /// Should be called from the game thread after UnloadRendererBits();
+  /// Should be called from the logic thread after UnloadRendererBits();
   /// kicks off bg loads for all existing unloaded assets.
   auto MarkAllAssetsForLoad() -> void;
   auto PrintLoadInfo() -> void;

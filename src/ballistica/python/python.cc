@@ -68,6 +68,46 @@ namespace ballistica {
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
 
+auto Python::LoggingCall(LogLevel loglevel, const std::string& msg) -> void {
+  // If we've not yet captured our Python logging calls, stash this call away.
+  // We'll submit all accumulated entries after we bootstrap python.
+  if (!objexists(ObjID::kLoggingCriticalCall)) {
+    std::scoped_lock lock(early_log_lock_);
+    early_logs_.emplace_back(std::make_pair(loglevel, msg));
+    return;
+  }
+
+  // Ok; seems we've got Python calls. Run the right one for our log level.
+  ObjID logcallobj;
+  switch (loglevel) {
+    case LogLevel::kDebug:
+      logcallobj = Python::ObjID::kLoggingDebugCall;
+      break;
+    case LogLevel::kInfo:
+      logcallobj = Python::ObjID::kLoggingInfoCall;
+      break;
+    case LogLevel::kWarning:
+      logcallobj = Python::ObjID::kLoggingWarningCall;
+      break;
+    case LogLevel::kError:
+      logcallobj = Python::ObjID::kLoggingErrorCall;
+      break;
+    case LogLevel::kCritical:
+      logcallobj = Python::ObjID::kLoggingCriticalCall;
+      break;
+    default:
+      logcallobj = Python::ObjID::kLoggingInfoCall;
+      fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
+      break;
+  }
+
+  // Make sure we're good to go from any thread.
+  ScopedInterpreterLock lock;
+
+  PythonRef args(Py_BuildValue("(s)", msg.c_str()), PythonRef::kSteal);
+  obj(logcallobj).Call(args);
+}
+
 void Python::SetPythonException(const Exception& exc) {
   PyExcType exctype{exc.python_type()};
   const char* description{GetShortExceptionDescription(exc)};
@@ -130,7 +170,8 @@ void Python::PrintStackTrace() {
   if (g_python->objexists(objid)) {
     g_python->obj(objid).Call();
   } else {
-    Log("Warning: Python::PrintStackTrace() called before bootstrap complete; "
+    Log(LogLevel::kWarning,
+        "Python::PrintStackTrace() called before bootstrap complete; "
         "not printing.");
   }
 }
@@ -1042,6 +1083,16 @@ auto Python::InitBallisticaPython() -> void {
   // Import and grab all the Python stuff we use from C++.
 #include "ballistica/generated/python_embedded/binding.inc"
 
+  // If we've got any early log calls, it is now safe to push them along
+  // to Python.
+  assert(objexists(ObjID::kLoggingCriticalCall));
+  {
+    std::scoped_lock lock(early_log_lock_);
+    for (auto&& entry : early_logs_) {
+      LoggingCall(entry.first, "DEFERRED-EARLY-LOG: " + entry.second);
+    }
+    early_logs_.clear();
+  }
   g_app_internal->PythonPostInit();
 
   // Alright I guess let's pull ba in to main, since pretty
@@ -1187,14 +1238,15 @@ auto Python::GetResource(const char* key, const char* fallback_resource,
     try {
       return GetPyString(results.get());
     } catch (const std::exception&) {
-      Log("GetResource failed for '" + std::string(key) + "'");
+      Log(LogLevel::kError,
+          "GetResource failed for '" + std::string(key) + "'");
 
       // Hmm; I guess let's just return the key to help identify/fix the
       // issue?..
       return std::string("<res-err: ") + key + ">";
     }
   } else {
-    Log("GetResource failed for '" + std::string(key) + "'");
+    Log(LogLevel::kError, "GetResource failed for '" + std::string(key) + "'");
   }
 
   // Hmm; I guess let's just return the key to help identify/fix the issue?..
@@ -1212,11 +1264,13 @@ auto Python::GetTranslation(const char* category, const char* s)
     try {
       return GetPyString(results.get());
     } catch (const std::exception&) {
-      Log("GetTranslation failed for '" + std::string(category) + "'");
+      Log(LogLevel::kError,
+          "GetTranslation failed for '" + std::string(category) + "'");
       return "";
     }
   } else {
-    Log("GetTranslation failed for category '" + std::string(category) + "'");
+    Log(LogLevel::kError,
+        "GetTranslation failed for category '" + std::string(category) + "'");
   }
   return "";
 }
@@ -1228,7 +1282,7 @@ void Python::RunDeepLink(const std::string& url) {
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kDeepLinkCall).Call(args);
   } else {
-    Log("Error on deep-link call");
+    Log(LogLevel::kError, "Error on deep-link call");
   }
 }
 
@@ -1253,7 +1307,7 @@ void Python::ShowURL(const std::string& url) {
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kShowURLWindowCall).Call(args);
   } else {
-    Log("Error: ShowURLWindowCall nonexistent.");
+    Log(LogLevel::kError, "ShowURLWindowCall nonexistent.");
   }
 }
 
@@ -1296,7 +1350,8 @@ auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
   try {
     *message = Python::GetPyString(result.get());
   } catch (const std::exception& e) {
-    Log("Error getting string from chat filter: " + std::string(e.what()));
+    Log(LogLevel::kError,
+        "Error getting string from chat filter: " + std::string(e.what()));
   }
   return true;
 }
@@ -1781,9 +1836,9 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
         attr_vals.emplace_back(
             t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
       } catch (const std::exception&) {
-        Log("ERROR: Attr not found on initial attr set: '"
-            + std::string(PyUnicode_AsUTF8(key)) + "' on " + type + " node '"
-            + name + "'");
+        Log(LogLevel::kError, "Attr not found on initial attr set: '"
+                                  + std::string(PyUnicode_AsUTF8(key)) + "' on "
+                                  + type + " node '" + name + "'");
       }
     }
 
@@ -1793,8 +1848,9 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
       try {
         SetNodeAttr(node, i.first->name().c_str(), i.second);
       } catch (const std::exception& e) {
-        Log("ERROR: exception in initial attr set for attr '" + i.first->name()
-            + "' on " + type + " node '" + name + "':" + e.what());
+        Log(LogLevel::kError, "Exception in initial attr set for attr '"
+                                  + i.first->name() + "' on " + type + " node '"
+                                  + name + "':" + e.what());
       }
     }
   }
@@ -1807,10 +1863,12 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     if (PythonClassNode::Check(owner_obj)) {
       Node* owner_node = GetPyNode(owner_obj, true);
       if (owner_node == nullptr) {
-        Log("ERROR: empty node-ref passed for 'owner'; pass None if you want "
+        Log(LogLevel::kError,
+            "Empty node-ref passed for 'owner'; pass None if you want "
             "no owner.");
       } else if (owner_node->scene() != node->scene()) {
-        Log("ERROR: owner node is from a different scene; ignoring.");
+        Log(LogLevel::kError,
+            "Owner node is from a different scene; ignoring.");
       } else {
         owner_node->AddDependentNode(node);
       }
@@ -1830,8 +1888,9 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     }
     node->OnCreate();
   } catch (const std::exception& e) {
-    Log("ERROR: exception in OnCreate() for node "
-        + ballistica::ObjToString(node) + "':" + e.what());
+    Log(LogLevel::kError, "Exception in OnCreate() for node "
+                              + ballistica::ObjToString(node)
+                              + "':" + e.what());
   }
 
   return node;
@@ -2039,10 +2098,11 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
 }
 
 void Python::IssueCallInLogicThreadWarning(PyObject* call_obj) {
-  Log("WARNING: ba.pushcall() called from the game thread with "
+  Log(LogLevel::kWarning,
+      "ba.pushcall() called from the logic thread with "
       "from_other_thread set to true (call "
-      + ObjToString(call_obj) + " at " + GetPythonFileLocation()
-      + "). That arg should only be used from other threads.");
+          + ObjToString(call_obj) + " at " + GetPythonFileLocation()
+          + "). That arg should only be used from other threads.");
 }
 
 void Python::LaunchStringEdit(TextWidget* w) {
@@ -2253,41 +2313,41 @@ auto Python::GetContextBaseString() -> std::string {
   return s;
 }
 
-void Python::LogContextForCallableLabel(const char* label) {
+void Python::PrintContextForCallableLabel(const char* label) {
   assert(InLogicThread());
   assert(label);
   std::string s = std::string("  root call: ") + label;
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextNonLogicThread() {
+void Python::PrintContextNonLogicThread() {
   std::string s =
-      std::string("  root call: <not in game thread; context unavailable>");
-  Log(s);
+      std::string("  root call: <not in logic thread; context unavailable>");
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextEmpty() {
+void Python::PrintContextEmpty() {
   assert(InLogicThread());
   std::string s = std::string("  root call: <unavailable>");
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextAuto() {
+void Python::PrintContextAuto() {
   // Lets print whatever context info is available.
   // FIXME: If we have recursive calls this may not print
   // the context we'd expect; we'd need a unified stack.
   if (!InLogicThread()) {
-    LogContextNonLogicThread();
+    PrintContextNonLogicThread();
   } else if (const char* label = ScopedCallLabel::current_label()) {
-    LogContextForCallableLabel(label);
+    PrintContextForCallableLabel(label);
   } else if (PythonCommand* cmd = PythonCommand::current_command()) {
-    cmd->LogContext();
+    cmd->PrintContext();
   } else if (PythonContextCall* call = PythonContextCall::current_call()) {
-    call->LogContext();
+    call->PrintContext();
   } else {
-    LogContextEmpty();
+    PrintContextEmpty();
   }
 }
 
@@ -2304,8 +2364,8 @@ void Python::AcquireGIL() {
   if (debug_timing) {
     auto duration{Platform::GetCurrentMilliseconds() - startms};
     if (duration > (1000 / 120)) {
-      Log("GIL acquire took too long (" + std::to_string(duration) + " ms).",
-          true, false);
+      Log(LogLevel::kInfo,
+          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
     }
   }
 }
@@ -2491,7 +2551,8 @@ auto Python::GetRawConfigValue(const char* name, float default_value) -> float {
   try {
     return GetPyFloat(value);
   } catch (const std::exception&) {
-    Log("expected a float for config value '" + std::string(name) + "'");
+    Log(LogLevel::kError,
+        "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
 }
@@ -2511,7 +2572,8 @@ auto Python::GetRawConfigValue(const char* name,
     }
     return GetPyFloat(value);
   } catch (const std::exception&) {
-    Log("expected a float for config value '" + std::string(name) + "'");
+    Log(LogLevel::kError,
+        "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
 }
@@ -2526,7 +2588,8 @@ auto Python::GetRawConfigValue(const char* name, int default_value) -> int {
   try {
     return static_cast_check_fit<int>(GetPyInt64(value));
   } catch (const std::exception&) {
-    Log("Expected an int value for config value '" + std::string(name) + "'.");
+    Log(LogLevel::kError,
+        "Expected an int value for config value '" + std::string(name) + "'.");
     return default_value;
   }
 }
@@ -2541,7 +2604,8 @@ auto Python::GetRawConfigValue(const char* name, bool default_value) -> bool {
   try {
     return GetPyBool(value);
   } catch (const std::exception&) {
-    Log("Expected a bool value for config value '" + std::string(name) + "'.");
+    Log(LogLevel::kError,
+        "Expected a bool value for config value '" + std::string(name) + "'.");
     return default_value;
   }
 }
@@ -2564,7 +2628,7 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
     if (length >= 200.0) {
       static bool warned = false;
       if (!warned) {
-        Log("Warning: time value "
+        Log(LogLevel::kWarning, "Time value "
             +std::to_string(length)+" passed as seconds;"
             " did you mean milliseconds?"
             " (if so, pass suppress_format_warning=True to stop this warning)");
@@ -2578,7 +2642,7 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
     if (length < 1.0 && length > 0.0000001) {
       static bool warned = false;
       if (!warned) {
-        Log("Warning: time value "
+        Log(LogLevel::kWarning, "Time value "
             + std::to_string(length) + " passed as milliseconds;"
             " did you mean seconds?"
             " (if so, pass suppress_format_warning=True to stop this warning)");
@@ -2589,8 +2653,9 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
   } else {
     static bool warned = false;
     if (!warned) {
-      BA_LOG_ONCE("TimeFormatCheck got timeformat value: '"
-                  + std::to_string(static_cast<int>(time_format)) + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "TimeFormatCheck got timeformat value: '"
+                      + std::to_string(static_cast<int>(time_format)) + "'");
       warned = true;
     }
   }

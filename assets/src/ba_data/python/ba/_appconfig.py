@@ -128,12 +128,6 @@ def read_config() -> tuple[AppConfig, bool]:
             shutil.copyfile(config_file_path, config_file_path + '.broken')
         except Exception as exc2:
             print('EXC copying broken config:', exc2)
-        try:
-            _ba.log('broken config contents:\n' +
-                    config_contents.replace('\000', '<NULL_BYTE>'),
-                    to_stdout=False)
-        except Exception as exc2:
-            print('EXC logging broken config contents:', exc2)
         config = AppConfig()
 
         # Now attempt to read one of our 'prev' backup copies.

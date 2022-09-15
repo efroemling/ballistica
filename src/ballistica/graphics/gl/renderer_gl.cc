@@ -144,10 +144,10 @@ static void _check_gl_error(int line) {
     const char* version = (const char*)glGetString(GL_VERSION);
     const char* vendor = (const char*)glGetString(GL_VENDOR);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
-    Log("Error: OpenGL Error at line " + std::to_string(line) + ": "
-        + GLErrorToString(err) + "\nrenderer: " + renderer
-        + "\nvendor: " + vendor + "\nversion: " + version
-        + "\ntime: " + std::to_string(GetRealTime()));
+    Log(LogLevel::kError, "OpenGL Error at line " + std::to_string(line) + ": "
+                              + GLErrorToString(err) + "\nrenderer: " + renderer
+                              + "\nvendor: " + vendor + "\nversion: " + version
+                              + "\ntime: " + std::to_string(GetRealTime()));
   }
 }
 
@@ -256,16 +256,16 @@ void RendererGL::CheckGLExtensions() {
   // if we require ES3
   if (have_es3) {
     g_running_es3 = true;
-    Log(std::string("Using OpenGL ES 3 (vendor: ") + vendor
-            + ", renderer: " + renderer + ", version: " + version_str + ")",
-        false, false);
+    Log(LogLevel::kInfo, std::string("Using OpenGL ES 3 (vendor: ") + vendor
+                             + ", renderer: " + renderer
+                             + ", version: " + version_str + ")");
 
   } else {
 #if !BA_USE_ES3_INCLUDES
     g_running_es3 = false;
-    Log(std::string("USING OPENGL ES2 (vendor: ") + vendor
-            + ", renderer: " + renderer + ", version: " + version_str + ")",
-        false, false);
+    Log(LogLevel::kInfo, std::string("USING OPENGL ES2 (vendor: ") + vendor
+                             + ", renderer: " + renderer
+                             + ", version: " + version_str + ")");
 
     // Can still support some stuff like framebuffer-blit with es2 extensions.
     assert(glBlitFramebuffer == nullptr || !first_extension_check_);
@@ -381,7 +381,7 @@ void RendererGL::CheckGLExtensions() {
     c_types.push_back(TextureCompressionType::kETC1);
   } else {
 #if BA_OSTYPE_ANDROID
-    Log("Android device missing ETC1 support");
+    Log(LogLevel::kError, "Android device missing ETC1 support");
 #endif
   }
 
@@ -509,7 +509,7 @@ void RendererGL::CheckGLExtensions() {
                               &samples[0]);
         g_msaa_max_samples_rgb565 = samples[0];
       } else {
-        BA_LOG_ONCE("Got 0 samplecounts for RGB565");
+        BA_LOG_ONCE(LogLevel::kError, "Got 0 samplecounts for RGB565");
         g_msaa_max_samples_rgb565 = 0;
       }
     }
@@ -525,7 +525,7 @@ void RendererGL::CheckGLExtensions() {
                               &samples[0]);
         g_msaa_max_samples_rgb8 = samples[0];
       } else {
-        BA_LOG_ONCE("Got 0 samplecounts for RGB8");
+        BA_LOG_ONCE(LogLevel::kError, "Got 0 samplecounts for RGB8");
         g_msaa_max_samples_rgb8 = 0;
       }
     }
@@ -539,10 +539,10 @@ void RendererGL::CheckGLExtensions() {
 #if MSAA_ERROR_TEST
   if (enable_msaa_) {
     ScreenMessage("MSAA ENABLED");
-    Log("Ballistica MSAA Test: MSAA ENABLED", false, false);
+    Log(LogLevel::kInfo, "Ballistica MSAA Test: MSAA ENABLED");
   } else {
     ScreenMessage("MSAA DISABLED");
-    Log("Ballistica MSAA Test: MSAA DISABLED", false, false);
+    Log(LogLevel::kInfo, "Ballistica MSAA Test: MSAA DISABLED");
   }
 #endif  // MSAA_ERROR_TEST
 
@@ -1023,11 +1023,12 @@ class RendererGL::ShaderGL : public Object {
       const char* renderer = (const char*)glGetString(GL_RENDERER);
       // Let's not crash here. We have a better chance of calling home this way
       // and theres a chance the game will still be playable.
-      Log(std::string("Compile failed for ") + GetTypeName()
-          + " shader:\n------------SOURCE BEGIN-------------\n" + src_in
-          + "\n-----------SOURCE END-------------\n" + GetInfo()
-          + "\nrenderer: " + renderer + "\nvendor: " + vendor
-          + "\nversion:" + version);
+      Log(LogLevel::kError,
+          std::string("Compile failed for ") + GetTypeName()
+              + " shader:\n------------SOURCE BEGIN-------------\n" + src_in
+              + "\n-----------SOURCE END-------------\n" + GetInfo()
+              + "\nrenderer: " + renderer + "\nvendor: " + vendor
+              + "\nversion:" + version);
     } else {
       assert(compile_status == GL_TRUE);
       std::string info = GetInfo();
@@ -1038,10 +1039,12 @@ class RendererGL::ShaderGL : public Object {
         const char* version = (const char*)glGetString(GL_VERSION);
         const char* vendor = (const char*)glGetString(GL_VENDOR);
         const char* renderer = (const char*)glGetString(GL_RENDERER);
-        Log(std::string("WARNING: info returned for ") + GetTypeName()
-            + " shader:\n------------SOURCE BEGIN-------------\n" + src_in
-            + "\n-----------SOURCE END-------------\n" + info + "\nrenderer: "
-            + renderer + "\nvendor: " + vendor + "\nversion:" + version);
+        Log(LogLevel::kError,
+            std::string("WARNING: info returned for ") + GetTypeName()
+                + " shader:\n------------SOURCE BEGIN-------------\n" + src_in
+                + "\n-----------SOURCE END-------------\n" + info
+                + "\nrenderer: " + renderer + "\nvendor: " + vendor
+                + "\nversion:" + version);
       }
     }
     DEBUG_CHECK_GL_ERROR;
@@ -1131,7 +1134,8 @@ class RendererGL::ProgramGL {
     GLint linkStatus;
     glGetProgramiv(program_, GL_LINK_STATUS, &linkStatus);
     if (linkStatus == GL_FALSE) {
-      Log("Link failed for program '" + name_ + "':\n" + GetInfo());
+      Log(LogLevel::kError,
+          "Link failed for program '" + name_ + "':\n" + GetInfo());
     } else {
       assert(linkStatus == GL_TRUE);
 
@@ -1140,8 +1144,8 @@ class RendererGL::ProgramGL {
           && (strstr(info.c_str(), "error:") || strstr(info.c_str(), "warning:")
               || strstr(info.c_str(), "Error:")
               || strstr(info.c_str(), "Warning:"))) {
-        Log("WARNING: program using frag shader '" + name_
-            + "' returned info:\n" + info);
+        Log(LogLevel::kError, "WARNING: program using frag shader '" + name_
+                                  + "' returned info:\n" + info);
       }
     }
 
@@ -1278,8 +1282,9 @@ class RendererGL::ProgramGL {
     int c = glGetUniformLocation(program_, tex_name);
     if (c == -1) {
 #if !MSAA_ERROR_TEST
-      Log("Error: ShaderGL: " + name_ + ": Can't set texture unit for texture '"
-          + tex_name + "'");
+      Log(LogLevel::kError, "ShaderGL: " + name_
+                                + ": Can't set texture unit for texture '"
+                                + tex_name + "'");
       DEBUG_CHECK_GL_ERROR;
 #endif
     } else {
@@ -1511,7 +1516,8 @@ class RendererGL::SimpleProgramGL : public RendererGL::ProgramGL {
          "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -1613,7 +1619,8 @@ class RendererGL::SimpleProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   float r_{}, g_{}, b_{}, a_{};
@@ -1846,7 +1853,8 @@ class RendererGL::ObjectProgramGL : public RendererGL::ProgramGL {
     }
     s += "}";
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -1918,7 +1926,8 @@ class RendererGL::ObjectProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   float r_, g_, b_, a_;
@@ -2035,7 +2044,8 @@ class RendererGL::SmokeProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -2077,7 +2087,8 @@ class RendererGL::SmokeProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   float r_, g_, b_, a_;
@@ -2164,7 +2175,8 @@ class RendererGL::BlurProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -2198,7 +2210,8 @@ class RendererGL::BlurProgramGL : public RendererGL::ProgramGL {
         "                     + texture2D(colorTex,vUV8));\n"
         "}";
     if (flags & SHD_DEBUG_PRINT) {
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     }
     return s;
   }
@@ -2248,7 +2261,8 @@ class RendererGL::ShieldProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -2301,7 +2315,8 @@ class RendererGL::ShieldProgramGL : public RendererGL::ProgramGL {
     //"    gl_FragColor = vec4(vec3(depth),1);\n"
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
 
@@ -2510,7 +2525,8 @@ class RendererGL::PostProcessProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -2636,7 +2652,8 @@ class RendererGL::PostProcessProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
 #endif  // msaa bug test
@@ -2751,7 +2768,8 @@ class RendererGL::SpriteProgramGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   auto GetFragmentCode(int flags) -> std::string {
@@ -2787,7 +2805,8 @@ class RendererGL::SpriteProgramGL : public RendererGL::ProgramGL {
     }
     s += "}";
     if (flags & SHD_DEBUG_PRINT)
-      Log("\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
+      Log(LogLevel::kInfo,
+          "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
   float r_, g_, b_, a_;
@@ -2808,7 +2827,7 @@ class RendererGL::TextureDataGL : public TextureRendererData {
 
   ~TextureDataGL() override {
     if (!InGraphicsThread()) {
-      Log("Error: TextureDataGL dying outside of graphics thread.");
+      Log(LogLevel::kError, "TextureDataGL dying outside of graphics thread.");
     } else {
       // if we're currently bound as anything, clear that out
       // (otherwise a new texture with that same ID won't be bindable)
@@ -3272,6 +3291,7 @@ class RendererGL::ModelDataGL : public ModelRendererData {
       }
       case 4: {
         BA_LOG_ONCE(
+            LogLevel::kWarning,
             "GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
         elem_count_ = static_cast<uint32_t>(model.indices32().size());
         index_type_ = GL_UNSIGNED_INT;
@@ -3473,7 +3493,8 @@ class RendererGL::MeshDataGL : public MeshRendererData {
                    dynamic_draw_ ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
       index_state_ = data->state;
       have_index_data_ = true;
-      BA_LOG_ONCE("GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
+      BA_LOG_ONCE(LogLevel::kWarning,
+                  "GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
       index_type_ = GL_UNSIGNED_INT;
     }
   }
@@ -3889,6 +3910,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
         //  this needs to be on for glClear to work on depth.
         if (!renderer_->depth_writing_enabled_) {
           BA_LOG_ONCE(
+              LogLevel::kWarning,
               "RendererGL: depth-writing not enabled when clearing depth");
         }
         clear_mask |= GL_DEPTH_BUFFER_BIT;
@@ -5743,7 +5765,8 @@ void RendererGL::UpdateVignetteTex(bool force) {
     if (err != GL_NO_ERROR) {
       static bool reported = false;
       if (!reported) {
-        Log("Error: 32-bit vignette creation failed; falling back to 16.");
+        Log(LogLevel::kError,
+            "32-bit vignette creation failed; falling back to 16.");
         reported = true;
       }
       const int kVignetteTexWidth = 64;
@@ -5800,14 +5823,15 @@ void RendererGL::UpdateVignetteTex(bool force) {
 
 auto RendererGL::GetFunkyDepthIssue() -> bool {
   if (!funky_depth_issue_set_) {
-    BA_LOG_ONCE("fetching funky depth issue but not set");
+    BA_LOG_ONCE(LogLevel::kError, "fetching funky depth issue but not set");
   }
   return funky_depth_issue_;
 }
 
 auto RendererGL::GetDrawsShieldsFunny() -> bool {
   if (!draws_shields_funny_set_) {
-    BA_LOG_ONCE("fetching draws-shields-funny value but not set");
+    BA_LOG_ONCE(LogLevel::kError,
+                "fetching draws-shields-funny value but not set");
   }
   return draws_shields_funny_;
 }

@@ -10,7 +10,7 @@
 namespace ballistica {
 
 // Big chunk of data sent back from the bg-dynamics server thread
-// to the game thread for drawing.
+// to the logic thread for drawing.
 class BGDynamicsDrawSnapshot {
  public:
   struct TendrilShadow {

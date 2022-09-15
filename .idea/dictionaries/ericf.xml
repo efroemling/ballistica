@@ -64,9 +64,11 @@
       <w>aiomain</w>
       <w>alarmsound</w>
       <w>alibaba</w>
+      <w>allerrors</w>
       <w>allpaths</w>
       <w>allsettings</w>
       <w>allteams</w>
+      <w>allwarnings</w>
       <w>aman</w>
       <w>amazonaws</w>
       <w>aname</w>
@@ -2384,6 +2386,7 @@
       <w>startscan</w>
       <w>startsplits</w>
       <w>starttime</w>
+      <w>startupmsg</w>
       <w>statestr</w>
       <w>statictest</w>
       <w>statictestfiles</w>
@@ -2412,6 +2415,7 @@
       <w>stot</w>
       <w>strftime</w>
       <w>stringified</w>
+      <w>stringifying</w>
       <w>stringprep</w>
       <w>stringptr</w>
       <w>strippable</w>

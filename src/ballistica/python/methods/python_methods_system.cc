@@ -79,7 +79,7 @@ auto PySetUpSigInt(PyObject* self) -> PyObject* {
   if (g_app_flavor) {
     g_platform->SetupInterruptHandling();
   } else {
-    Log("SigInt handler called before g_app_flavor exists.");
+    Log(LogLevel::kError, "SigInt handler called before g_app_flavor exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -354,7 +354,7 @@ auto PyPrintContext(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  Python::LogContextAuto();
+  Python::PrintContextAuto();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -521,19 +521,20 @@ auto PyGetVolatileDataDirectory(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_app->log_full) {
+  if (g_app->v1_cloud_log_full) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
-auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
+auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string log_fin;
   {
-    std::scoped_lock lock(g_app->log_mutex);
-    log_fin = g_app->log;
+    std::scoped_lock lock(g_app->v1_cloud_log_mutex);
+    log_fin = g_app->v1_cloud_log;
   }
   // we want to use something with error handling here since the last
   // bit of this string could be truncated utf8 chars..
@@ -545,8 +546,8 @@ auto PyGetLog(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  // this way we won't try to send it at shutdown time and whatnot
-  g_app->put_log = true;
+  // This way we won't try to send it at shutdown time and whatnot
+  g_app->did_put_v1_cloud_log = true;
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -902,8 +903,9 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)"},
 
-      {"getlog", (PyCFunction)PyGetLog, METH_VARARGS | METH_KEYWORDS,
-       "getlog() -> str\n"
+      {"get_v1_cloud_log", (PyCFunction)PyGetV1CloudLog,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_v1_cloud_log() -> str\n"
        "\n"
        "(internal)"},
 
@@ -912,8 +914,8 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)"},
 
-      {"get_log_file_path", PyGetLogFilePath, METH_VARARGS,
-       "get_log_file_path() -> str\n"
+      {"get_v1_cloud_log_file_path", PyGetLogFilePath, METH_VARARGS,
+       "get_v1_cloud_log_file_path() -> str\n"
        "\n"
        "(internal)\n"
        "\n"
@@ -1055,7 +1057,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Returns whether or not the current thread is the game thread."},
+       "Returns whether or not the current thread is the logic thread."},
 
       {"request_permission", (PyCFunction)PyRequestPermission,
        METH_VARARGS | METH_KEYWORDS,

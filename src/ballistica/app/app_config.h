@@ -13,7 +13,7 @@ namespace ballistica {
 
 // This class wrangles user config values for the app.
 // The underlying config data currently lives in the Python layer,
-// so at the moment these calls are only usable from the game thread,
+// so at the moment these calls are only usable from the logic thread,
 // but that may change in the future.
 class AppConfig {
  public:

@@ -57,7 +57,7 @@ auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
     snprintf(buffer, sizeof(buffer), "#%d:   type: %-14s desc: %s", count,
              i->type()->name().c_str(), i->label().c_str());
     s += buffer;
-    Log(buffer);
+    Log(LogLevel::kInfo, buffer);
     count++;
   }
   Py_RETURN_NONE;
@@ -381,7 +381,7 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
     return nullptr;
   }
 
-  // Note: we return None if not in the game thread.
+  // Note: we return None if not in the logic thread.
   HostActivity* h = InLogicThread()
                         ? g_logic->GetForegroundContext().GetHostActivity()
                         : nullptr;

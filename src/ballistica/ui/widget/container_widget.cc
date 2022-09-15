@@ -1346,7 +1346,8 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
   } else {
     if (root_selectable_) {
-      Log("Error: SelectWidget() called on a ContainerWidget which is itself "
+      Log(LogLevel::kError,
+          "SelectWidget() called on a ContainerWidget which is itself "
           "selectable. Ignoring.");
       return;
     }
@@ -1372,8 +1373,9 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
         } else {
           static bool printed = false;
           if (!printed) {
-            Log("Warning: SelectWidget called on unselectable widget: "
-                + w->GetWidgetTypeName());
+            Log(LogLevel::kWarning,
+                "SelectWidget called on unselectable widget: "
+                    + w->GetWidgetTypeName());
             Python::PrintStackTrace();
             printed = true;
           }
@@ -1543,7 +1545,7 @@ void ContainerWidget::SelectDownWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectDownWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectDownWidget called before UI init.");
     return;
   }
 
@@ -1576,7 +1578,7 @@ void ContainerWidget::SelectDownWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: Down_widget is not selectable.");
+        Log(LogLevel::kError, "Down_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1607,7 +1609,7 @@ void ContainerWidget::SelectUpWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectUpWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectUpWidget called before UI init.");
     return;
   }
 
@@ -1640,7 +1642,7 @@ void ContainerWidget::SelectUpWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: up_widget is not selectable.");
+        Log(LogLevel::kError, "up_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1671,7 +1673,7 @@ void ContainerWidget::SelectLeftWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectLeftWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectLeftWidget called before UI init.");
     return;
   }
 
@@ -1691,7 +1693,7 @@ void ContainerWidget::SelectLeftWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: left_widget is not selectable.");
+        Log(LogLevel::kError, "left_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1721,7 +1723,7 @@ void ContainerWidget::SelectRightWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectRightWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectRightWidget called before UI init.");
     return;
   }
 
@@ -1742,7 +1744,7 @@ void ContainerWidget::SelectRightWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: right_widget is not selectable.");
+        Log(LogLevel::kError, "right_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1773,7 +1775,7 @@ void ContainerWidget::SelectNextWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectNextWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectNextWidget called before UI init.");
     return;
   }
 

@@ -78,7 +78,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     self->widget_ = new Object::WeakRef<Widget>();
@@ -89,7 +89,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
   BA_PYTHON_TRY;
-  // these have to be destructed in the game thread - send them along to it if
+  // these have to be destructed in the logic thread - send them along to it if
   // need be
   if (!InLogicThread()) {
     Object::WeakRef<Widget>* w = self->widget_;
@@ -222,7 +222,7 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      Log("Error: Can't delete widget: no parent.");
+      Log(LogLevel::kError, "Can't delete widget: no parent.");
     }
   }
   Py_RETURN_NONE;

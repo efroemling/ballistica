@@ -22,7 +22,8 @@ void NetworkWriter::PushSendToCall(const std::vector<uint8_t>& msg,
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!thread()->CheckPushSafety()) {
-    BA_LOG_ONCE("Excessive send-to calls in net-write-module.");
+    BA_LOG_ONCE(LogLevel::kError,
+                "Excessive send-to calls in net-write-module.");
     return;
   }
   thread()->PushCall([this, msg, addr] {

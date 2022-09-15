@@ -294,7 +294,7 @@ void Assets::PrintLoadInfo() {
   snprintf(buffer, sizeof(buffer), "    %-50s %10s %10s", "FILE",
            "PRELOAD_TIME", "LOAD_TIME");
   s += buffer;
-  Log(s, true, false);
+  Log(LogLevel::kInfo, s);
   millisecs_t total_preload_time = 0;
   millisecs_t total_load_time = 0;
   assert(asset_lists_locked_);
@@ -307,7 +307,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    Log(buffer, true, false);
+    Log(LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -320,7 +320,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    Log(buffer, true, false);
+    Log(LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -333,7 +333,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    Log(buffer, true, false);
+    Log(LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -346,7 +346,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    Log(buffer, true, false);
+    Log(LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -359,7 +359,7 @@ void Assets::PrintLoadInfo() {
              i.second->file_name_full().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    Log(buffer, true, false);
+    Log(LogLevel::kInfo, buffer);
     num++;
   }
   snprintf(buffer, sizeof(buffer),
@@ -367,7 +367,7 @@ void Assets::PrintLoadInfo() {
            "(feeding data to OpenGL, etc): %i",
            static_cast<int>(total_preload_time),
            static_cast<int>(total_load_time));
-  Log(buffer, true, false);
+  Log(LogLevel::kInfo, buffer);
 }
 
 void Assets::MarkAllAssetsForLoad() {
@@ -810,8 +810,8 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
     }
   }
 
-  // if we dumped anything on the pending loads done list, shake the game thread
-  // to tell it to kill the reference..
+  // if we dumped anything on the pending loads done list, shake the logic
+  // thread to tell it to kill the reference..
   if (!l_finished.empty()) {
     assert(g_logic);
     g_logic->PushHavePendingLoadsDoneCall();
@@ -977,7 +977,7 @@ void Assets::Prune(int level) {
     if (current_time - collide_model_data->last_used_time()
             > standard_asset_prune_time
         && (collide_model_data->object_strong_ref_count() <= 1)) {
-      // we can unload it immediately since that happens in the game thread...
+      // we can unload it immediately since that happens in the logic thread...
       collide_model_data->Unload();
       auto i_next = i;
       ++i_next;
@@ -1151,10 +1151,12 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
 
   // We wanna fail gracefully for some types.
   if (type == FileType::kSound && name != "blank") {
-    Log("Unable to load audio: '" + name + "'; trying fallback...");
+    Log(LogLevel::kError,
+        "Unable to load audio: '" + name + "'; trying fallback...");
     return FindAssetFile(type, "blank");
   } else if (type == FileType::kTexture && name != "white") {
-    Log("Unable to load texture: '" + name + "'; trying fallback...");
+    Log(LogLevel::kError,
+        "Unable to load texture: '" + name + "'; trying fallback...");
     return FindAssetFile(type, "white");
   }
 
@@ -1181,7 +1183,7 @@ void Assets::AddPendingLoad(Object::Ref<AssetComponentData>* c) {
       break;
     }
     default: {
-      // Tell the game thread there's pending loads.
+      // Tell the logic thread there's pending loads.
       {
         std::scoped_lock lock(pending_load_list_mutex_);
         pending_loads_other_.push_back(c);
@@ -1198,7 +1200,7 @@ void Assets::ClearPendingLoadsDoneList() {
   std::scoped_lock lock(pending_load_list_mutex_);
 
   // Our explicitly-allocated reference pointer has made it back to us here in
-  // the game thread.
+  // the logic thread.
   // We can now kill the reference knowing that it's safe for this component
   // to die at any time (anyone needing it to be alive now should be holding a
   // reference themselves).
@@ -1213,7 +1215,7 @@ void Assets::AddPackage(const std::string& name, const std::string& path) {
   assert(InLogicThread());
 #if BA_DEBUG_BUILD
   if (packages_.find(name) != packages_.end()) {
-    Log("WARNING: adding duplicate package: '" + name + "'");
+    Log(LogLevel::kWarning, "adding duplicate package: '" + name + "'");
   }
 #endif  // BA_DEBUG_BUILD
   packages_[name] = path;

@@ -5885,7 +5885,8 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
       return hair_ponytail_bottom_body_.get();
       break;
     default:
-      Log("Error: Request for unknown spaz body: " + std::to_string(id));
+      Log(LogLevel::kError,
+          "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
 
@@ -6491,7 +6492,7 @@ void SpazNode::SetStyle(const std::string& val) {
     shoulder_offset_y_ = -0.05f;
     reflection_scale_ = 0.02f;
   } else {
-    BA_LOG_ONCE("Error: Unrecognized spaz style: '" + style_ + "'");
+    BA_LOG_ONCE(LogLevel::kError, "Unrecognized spaz style: '" + style_ + "'");
   }
   UpdateBodiesForStyle();
 }
@@ -6620,20 +6621,25 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          Log("SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          Log("OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          Log("SRC BODY "
-              + std::to_string(dynamics->GetCollideMessageReverseOrder()
-                                   ? c->body_id_1
-                                   : c->body_id_2));
-          Log("OPP BODY "
-              + std::to_string(dynamics->GetCollideMessageReverseOrder()
-                                   ? c->body_id_2
-                                   : c->body_id_1));
-          Log("REVERSE "
-              + std::to_string(dynamics->GetCollideMessageReverseOrder()));
+          Log(LogLevel::kError,
+              "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
+          Log(LogLevel::kError,
+              "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
+          Log(LogLevel::kError,
+              "SRC BODY "
+                  + std::to_string(dynamics->GetCollideMessageReverseOrder()
+                                       ? c->body_id_1
+                                       : c->body_id_2));
+          Log(LogLevel::kError,
+              "OPP BODY "
+                  + std::to_string(dynamics->GetCollideMessageReverseOrder()
+                                       ? c->body_id_2
+                                       : c->body_id_1));
+          Log(LogLevel::kError,
+              "REVERSE "
+                  + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          Log("<NO ACTIVE COLLISION>");
+          Log(LogLevel::kError, "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)

@@ -56,8 +56,8 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   f = g_platform->FOpen(file_name, "rb");
   if (f == nullptr) {
     fallback = true;
-    Log(std::string("Error: Can't open sound file '") + file_name
-        + "' for reading...");
+    Log(LogLevel::kError, std::string("Can't open sound file '") + file_name
+                              + "' for reading...");
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
@@ -77,7 +77,8 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
   // Try opening the given file
   if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    Log(std::string("Error decoding sound file '") + file_name + "'");
+    Log(LogLevel::kError,
+        std::string("Error decoding sound file '") + file_name + "'");
 
     fclose(f);
 
@@ -199,8 +200,9 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
       // with invalid formats of 0 once. Report and ignore if we see
       // something like that.
       if (*format != AL_FORMAT_MONO16 && *format != AL_FORMAT_STEREO16) {
-        Log(std::string("Ignoring invalid audio cache of ") + file_name
-            + " with format " + std::to_string(*format));
+        Log(LogLevel::kError, std::string("Ignoring invalid audio cache of ")
+                                  + file_name + " with format "
+                                  + std::to_string(*format));
       } else {
         return;  // SUCCESS!!!!
       }

@@ -76,9 +76,10 @@ class MeshIndexedBase : public Mesh {
   // For use by subclasses in their IsValid() overrides
   auto IndexSizeIsValid(size_t data_size) const -> bool {
     if (index_data_size() == 2 && data_size > 65535) {
-      BA_LOG_ONCE("ERROR: got mesh data with > 65535 elems and 16 bit indices: "
-                  + GetObjectDescription()
-                  + ". This case requires 32 bit indices.");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Got mesh data with > 65535 elems and 16 bit indices: "
+                      + GetObjectDescription()
+                      + ". This case requires 32 bit indices.");
       return false;
     }
     return true;

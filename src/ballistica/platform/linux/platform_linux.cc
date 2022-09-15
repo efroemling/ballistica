@@ -63,8 +63,8 @@ void PlatformLinux::OpenFileExternally(const std::string& path) {
   std::string cmd = std::string("xdg-open \"") + path + "\"";
   int result = system(cmd.c_str());
   if (result != 0) {
-    Log("Error: Got return value " + std::to_string(result)
-        + " on xdg-open cmd '" + cmd + "'");
+    Log(LogLevel::kError, "Got return value " + std::to_string(result)
+                              + " on xdg-open cmd '" + cmd + "'");
   }
 }
 
@@ -72,8 +72,8 @@ void PlatformLinux::OpenDirExternally(const std::string& path) {
   std::string cmd = std::string("xdg-open \"") + path + "\"";
   int result = system(cmd.c_str());
   if (result != 0) {
-    Log("Error: Got return value " + std::to_string(result)
-        + " on xdg-open cmd '" + cmd + "'");
+    Log(LogLevel::kError, "Got return value " + std::to_string(result)
+                              + " on xdg-open cmd '" + cmd + "'");
   }
 }
 

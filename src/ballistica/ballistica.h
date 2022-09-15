@@ -102,7 +102,7 @@ const float kGameStepSeconds =
     (static_cast<float>(kGameStepMilliseconds) / 1000.0f);
 
 // Globals.
-extern int g_early_log_writes;
+extern int g_early_v1_cloud_log_writes;
 extern V1Account* g_v1_account;
 extern AppFlavor* g_app_flavor;
 extern AppConfig* g_app_config;
@@ -168,8 +168,7 @@ auto GetCurrentThreadName() -> std::string;
 /// Write a string to the log.
 /// This will go to stdout, windows debug log, android log, etc.
 /// A trailing newline will be added.
-auto Log(const std::string& msg, bool to_stdout = true, bool to_server = true)
-    -> void;
+auto Log(LogLevel level, const std::string& msg) -> void;
 
 /// Log a fatal error and kill the app.
 /// Can be called from any thread at any time.

@@ -20,7 +20,7 @@
 
 namespace ballistica {
 
-// Though it seems strange, input is actually owned by the game thread, not the
+// Though it seems strange, input is actually owned by the logic thread, not the
 // app thread. This keeps things simple for game logic interacting with input
 // stuff (controller names, counts, etc) but means we need to be prudent about
 // properly passing stuff between the game and app thread as needed.
@@ -327,7 +327,8 @@ void Input::PushCreateKeyboardInputDevices() {
 void Input::CreateKeyboardInputDevices() {
   assert(InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    Log("Error: CreateKeyboardInputDevices called with existing kbs.");
+    Log(LogLevel::kError,
+        "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
   keyboard_input_ = Object::NewDeferred<KeyboardInput>(nullptr);
@@ -343,7 +344,8 @@ void Input::PushDestroyKeyboardInputDevices() {
 void Input::DestroyKeyboardInputDevices() {
   assert(InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    Log("Error: DestroyKeyboardInputDevices called with null kb(s).");
+    Log(LogLevel::kError,
+        "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
   RemoveInputDevice(keyboard_input_, false);
@@ -812,7 +814,8 @@ void Input::UpdateEnabledControllerSubsystems() {
       ignore_mfi_controllers_ = false;
       ignore_sdl_controllers_ = false;
     } else {
-      BA_LOG_ONCE("Invalid mac-controller-subsystem value: '" + sys + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Invalid mac-controller-subsystem value: '" + sys + "'");
     }
   }
 }
@@ -842,7 +845,8 @@ void Input::Update() {
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      Log("Error: Input has been temp-locked for 10 seconds; unlocking.");
+      Log(LogLevel::kError,
+          "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels();
       input_lock_temp_labels_.clear();
@@ -938,8 +942,9 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      Log("WARNING: temp input unlock at time " + std::to_string(GetRealTime())
-          + " with no active lock: '" + label + "'");
+      Log(LogLevel::kWarning, "temp input unlock at time "
+                                  + std::to_string(GetRealTime())
+                                  + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
     }
@@ -991,7 +996,7 @@ void Input::PrintLockLabels() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  Log(s);
+  Log(LogLevel::kError, s);
 }
 
 void Input::ProcessStressTesting(int player_count) {
@@ -1653,7 +1658,8 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     // overall multitouch gesture, it should always be winding up as our
     // single_touch_.
     if (e.type == TouchEvent::Type::kDown && single_touch_ != nullptr) {
-      BA_LOG_ONCE("Got touch labeled first but will not be our single.");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Got touch labeled first but will not be our single.");
     }
 
     // Also: if the OS tells us that this is the end of an overall multi-touch
@@ -1661,7 +1667,8 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     if ((e.type == TouchEvent::Type::kUp
          || e.type == TouchEvent::Type::kCanceled)
         && single_touch_ != nullptr && single_touch_ != e.touch) {
-      BA_LOG_ONCE("Last touch coming up is not single touch!");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Last touch coming up is not single touch!");
     }
   }
 
@@ -1792,8 +1799,9 @@ const char* GetScancodeName(SDL_Scancode scancode) {
   const char* name;
   if (static_cast<int>(scancode) < SDL_SCANCODE_UNKNOWN
       || scancode >= SDL_NUM_SCANCODES) {
-    BA_LOG_ONCE("GetScancodeName passed invalid scancode "
-                + std::to_string(static_cast<int>(scancode)));
+    BA_LOG_ONCE(LogLevel::kError,
+                "GetScancodeName passed invalid scancode "
+                    + std::to_string(static_cast<int>(scancode)));
     return "";
   }
 

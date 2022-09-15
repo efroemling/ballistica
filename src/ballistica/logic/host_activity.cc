@@ -98,14 +98,14 @@ HostActivity::~HostActivity() {
   if (g_buildconfig.debug_build()) {
     PruneDeadRefs(&python_calls_);
     if (python_calls_.size() > 1) {
-      std::string s = "WARNING: " + std::to_string(python_calls_.size())
+      std::string s = std::to_string(python_calls_.size())
                       + " live PythonContextCalls at shutdown for "
                       + "HostActivity" + " (1 call is expected):";
       int count = 1;
       for (auto& python_call : python_calls_)
         s += "\n  " + std::to_string(count++) + ": "
              + (*python_call).GetObjectDescription();
-      Log(s);
+      Log(LogLevel::kWarning, s);
     }
   }
 }
@@ -153,15 +153,16 @@ void HostActivity::RegisterCall(PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down)
   if (shutting_down_) {
-    Log("WARNING: adding call to expired activity; call will not function: "
-        + call->GetObjectDescription());
+    Log(LogLevel::kWarning,
+        "Adding call to expired activity; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }
 
 void HostActivity::start() {
   if (_started) {
-    Log("Error: Start called twice for activity.");
+    Log(LogLevel::kError, "Start called twice for activity.");
   }
   _started = true;
 }
@@ -253,7 +254,8 @@ void HostActivity::HandleOutOfBoundsNodes() {
   // Make sure someone's handling our out-of-bounds messages.
   out_of_bounds_in_a_row_++;
   if (out_of_bounds_in_a_row_ > 100) {
-    Log("Warning: 100 consecutive out-of-bounds messages sent."
+    Log(LogLevel::kWarning,
+        "100 consecutive out-of-bounds messages sent."
         " They are probably not being handled properly");
     int j = 0;
     for (auto&& i : scene()->out_of_bounds_nodes()) {
@@ -265,9 +267,10 @@ void HostActivity::HandleOutOfBoundsNodes() {
         if (delegate) {
           dstr = PythonRef(delegate, PythonRef::kAcquire).Str();
         }
-        Log("   node #" + std::to_string(j) + ": type='" + n->type()->name()
-            + "' addr=" + Utils::PtrToString(i.get()) + " name='" + n->label()
-            + "' delegate=" + dstr);
+        Log(LogLevel::kWarning,
+            "   node #" + std::to_string(j) + ": type='" + n->type()->name()
+                + "' addr=" + Utils::PtrToString(i.get()) + " name='"
+                + n->label() + "' delegate=" + dstr);
       }
     }
     out_of_bounds_in_a_row_ = 0;

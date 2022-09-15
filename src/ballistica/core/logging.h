@@ -5,23 +5,33 @@
 
 #include <string>
 
+#include "ballistica/ballistica.h"
+
 namespace ballistica {
 
 class Logging {
  public:
-  /// Print a string directly to stdout as well as the in-game console
-  /// and any connected telnet consoles.
-  static auto PrintStdout(const std::string& s, bool flush = false) -> void;
+  /// Write a message to the log. Intended for logging use in C++ code.
+  /// This is safe to call by any thread at any time. In general it simply
+  /// passes through to the equivalent Python log calls: logging.info,
+  /// logging.warning, etc.
+  /// Note that log messages often must go through some background
+  /// processing before being seen by the user, meaning they may not
+  /// always work well for tight debugging purposes. In cases such as these,
+  /// printf() type calls or calling DisplayLog() directly may work better.
+  /// (though both of these should be avoided in permanent code).
+  static auto Log(LogLevel level, const std::string& msg) -> void;
 
-  /// Print a string directly to stderr as well as the in-game console
-  /// and any connected telnet consoles.
-  static auto PrintStderr(const std::string& s, bool flush = false) -> void;
+  /// Immediately display a log message in the in-game console,
+  /// platform-specific logs, etc. This generally should not be called
+  /// directly but instead wired up to display messages coming from the
+  /// Python logging system.
+  static auto DisplayLog(const std::string& name, LogLevel level,
+                         const std::string& msg) -> void;
 
-  /// Write a string to the debug log.
-  /// This will go to stdout, windows debug log, android log, etc. depending
-  /// on the platform.
-  static auto Log(const std::string& msg, bool to_stdout = true,
-                  bool to_server = true) -> void;
+  /// Write a message to the v1 cloud log. This is considered legacy
+  /// and will be phased out eventually.
+  static auto V1CloudLog(const std::string& msg) -> void;
 };
 
 }  // namespace ballistica

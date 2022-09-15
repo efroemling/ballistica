@@ -219,7 +219,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           PyObject* profiles = g_python->GetRawConfigValue("Player Profiles");
           PythonRef empty_dict;
           if (!profiles) {
-            Log("No profiles found; sending empty list to host");
+            Log(LogLevel::kError,
+                "No profiles found; sending empty list to host");
             empty_dict.Steal(PyDict_New());
             profiles = empty_dict.get();
           }
@@ -231,7 +232,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             PythonRef results =
                 g_python->obj(Python::ObjID::kJsonDumpsCall).Call(args, keywds);
             if (!results.exists()) {
-              Log("Error getting json dump of local profiles");
+              Log(LogLevel::kError,
+                  "Error getting json dump of local profiles");
             } else {
               try {
                 // Pull the string as utf8 and send.
@@ -241,13 +243,15 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                 memcpy(&(msg[1]), &s[0], s.size());
                 SendReliableMessage(msg);
               } catch (const std::exception& e) {
-                Log(std::string("exc sending player profiles to host: ")
-                    + e.what());
+                Log(LogLevel::kError,
+                    std::string("exc sending player profiles to host: ")
+                        + e.what());
               }
             }
           }
         } else {
-          Log("Connected to old protocol; can't send player profiles");
+          Log(LogLevel::kError,
+              "Connected to old protocol; can't send player profiles");
         }
       }
       break;
@@ -274,7 +278,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
   assert(InLogicThread());
 
   if (buffer.empty()) {
-    Log("Error: got invalid HandleMessagePacket");
+    Log(LogLevel::kError, "Got invalid HandleMessagePacket");
     return;
   }
 
@@ -298,7 +302,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           if (b) {
             build_number_ = b->valueint;
           } else {
-            Log("no buildnumber in hostinfo msg");
+            Log(LogLevel::kError, "no buildnumber in hostinfo msg");
           }
           // Party name.
           cJSON* n = cJSON_GetObjectItem(info, "n");
@@ -307,7 +311,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           }
           cJSON_Delete(info);
         } else {
-          Log("got invalid json in hostinfo message");
+          Log(LogLevel::kError, "got invalid json in hostinfo message");
         }
       }
       got_host_info_ = true;
@@ -399,7 +403,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     case BA_MESSAGE_ATTACH_REMOTE_PLAYER_2: {
       // New-style packet which includes a 32-bit player_id.
       if (buffer.size() != 6) {
-        Log("Error: invalid attach-remote-player-2 msg");
+        Log(LogLevel::kError, "Invalid attach-remote-player-2 msg");
         break;
       }
 
@@ -426,7 +430,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         // public servers.
         // TODO(ericf): can remove this once back-compat-protocol > 29.
         if (buffer.size() != 3) {
-          Log("Error: Invalid attach-remote-player msg.");
+          Log(LogLevel::kError, "Invalid attach-remote-player msg.");
           break;
         }
 
@@ -447,7 +451,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
 
     case BA_MESSAGE_DETACH_REMOTE_PLAYER: {
       if (buffer.size() != 2) {
-        Log("Error: Invalid detach-remote-player msg");
+        Log(LogLevel::kError, "Invalid detach-remote-player msg");
         break;
       }
       InputDevice* input_device = g_input->GetInputDevice(buffer[1]);

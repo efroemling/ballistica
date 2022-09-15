@@ -155,8 +155,8 @@ auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
       BA_PYTHON_ERROR_SAVE;
-      Log("ERROR: exception in Python call:");
-      Python::LogContextAuto();
+      PySys_WriteStderr("Exception in Python call:\n");
+      Python::PrintContextAuto();
       BA_PYTHON_ERROR_RESTORE;
 
       // We pass zero here to avoid grabbing references to this exception

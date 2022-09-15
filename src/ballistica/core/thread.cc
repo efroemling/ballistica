@@ -43,24 +43,52 @@ auto Thread::RunLogicThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
 
+auto Thread::RunLogicThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
+}
+
 auto Thread::RunAudioThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
+}
+auto Thread::RunAudioThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
 }
 
 auto Thread::RunBGDynamicThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
 
+auto Thread::RunBGDynamicThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
+}
+
 auto Thread::RunNetworkWriteThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
+}
+
+auto Thread::RunNetworkWriteThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
 }
 
 auto Thread::RunStdInputThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
 }
+auto Thread::RunStdInputThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
+}
 
 auto Thread::RunAssetsThread(void* data) -> int {
   return static_cast<Thread*>(data)->ThreadMain();
+}
+
+auto Thread::RunAssetsThreadP(void* data) -> void* {
+  static_cast<Thread*>(data)->ThreadMain();
+  return nullptr;
 }
 
 void Thread::SetPaused(bool paused) {
@@ -213,34 +241,58 @@ Thread::Thread(ThreadTag identifier_in, ThreadSource source)
   switch (source_) {
     case ThreadSource::kCreate: {
       int (*func)(void*);
+      void* (*funcp)(void*);
       switch (identifier_) {
         case ThreadTag::kLogic:
           func = RunLogicThread;
+          funcp = RunLogicThreadP;
           break;
         case ThreadTag::kAssets:
           func = RunAssetsThread;
+          funcp = RunAssetsThreadP;
           break;
         case ThreadTag::kMain:
           // Shouldn't happen; this thread gets wrapped; not launched.
           throw Exception();
         case ThreadTag::kAudio:
           func = RunAudioThread;
+          funcp = RunAudioThreadP;
           break;
         case ThreadTag::kBGDynamics:
           func = RunBGDynamicThread;
+          funcp = RunBGDynamicThreadP;
           break;
         case ThreadTag::kNetworkWrite:
           func = RunNetworkWriteThread;
+          funcp = RunNetworkWriteThreadP;
           break;
         case ThreadTag::kStdin:
           func = RunStdInputThread;
+          funcp = RunStdInputThreadP;
           break;
         default:
           throw Exception();
       }
 
-      // Let 'er rip.
-      thread_ = new std::thread(func, this);
+        // Let 'er rip.
+
+        // NOTE: Apple platforms have a default secondary thread stack size
+        // of 512k which I've found to be insufficient in cases of heavy
+        // Python recursion or large simulations. It sounds like Windows
+        // and Android might have 1mb as default; let's try to standardize
+        // on that across the board. Unfortunately we have to use pthreads
+        // to get custom stack sizes; std::thread stupidly doesn't support it.
+
+        // FIXME - move this to platform.
+#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+      pthread_attr_t attr;
+      BA_PRECONDITION(pthread_attr_init(&attr) == 0);
+      BA_PRECONDITION(pthread_attr_setstacksize(&attr, 1024 * 1024) == 0);
+      pthread_t thread;
+      pthread_create(&thread, &attr, funcp, this);
+#else
+      new std::thread(func, this);
+#endif
 
       // Block until the thread is bootstrapped.
       // (maybe not necessary, but let's be cautious in case we'd
@@ -376,8 +428,9 @@ void Thread::LogThreadMessageTally() {
     writing_tally_ = true;
 
     std::unordered_map<std::string, int> tally;
-    Log("Thread message tally (" + std::to_string(thread_messages_.size())
-        + " in list):");
+    Log(LogLevel::kError, "Thread message tally ("
+                              + std::to_string(thread_messages_.size())
+                              + " in list):");
     for (auto&& m : thread_messages_) {
       std::string s;
       switch (m.type) {
@@ -411,8 +464,8 @@ void Thread::LogThreadMessageTally() {
     }
     int entry = 1;
     for (auto&& i : tally) {
-      Log("  #" + std::to_string(entry++) + " (" + std::to_string(i.second)
-          + "x): " + i.first);
+      Log(LogLevel::kError, "  #" + std::to_string(entry++) + " ("
+                                + std::to_string(i.second) + "x): " + i.first);
     }
     writing_tally_ = false;
   }
@@ -445,7 +498,8 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       // Show count periodically.
       if ((std::this_thread::get_id() == g_app->main_thread_id) && foo > 100) {
         foo = 0;
-        Log("MSG COUNT " + std::to_string(thread_messages_.size()));
+        Log(LogLevel::kInfo,
+            "MSG COUNT " + std::to_string(thread_messages_.size()));
       }
     }
 
@@ -453,8 +507,8 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       static bool sent_error = false;
       if (!sent_error) {
         sent_error = true;
-        Log("Error: ThreadMessage list > 1000 in thread: "
-            + GetCurrentThreadName());
+        Log(LogLevel::kError,
+            "ThreadMessage list > 1000 in thread: " + GetCurrentThreadName());
         LogThreadMessageTally();
       }
     }

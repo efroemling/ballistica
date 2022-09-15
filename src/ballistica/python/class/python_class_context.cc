@@ -136,7 +136,7 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
   if (!InLogicThread()) {
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
-        + " objects must only be created in the game thread (current is ("
+        + " objects must only be created in the logic thread (current is ("
         + GetCurrentThreadName() + ").");
   }
 
@@ -147,7 +147,8 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
     if (source == "ui") {
       cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "UI") {
-      BA_LOG_ONCE("'UI' context-target option is deprecated; please use 'ui'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "'UI' context-target option is deprecated; please use 'ui'");
       Python::PrintStackTrace();
       cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "current") {
@@ -183,7 +184,7 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassContext::tp_dealloc(PythonClassContext* self) {
   BA_PYTHON_TRY;
-  // Contexts have to be deleted in the game thread;
+  // Contexts have to be deleted in the logic thread;
   // ship them to it for deletion if need be; otherwise do it immediately.
   if (!InLogicThread()) {
     Context* c = self->context_;
