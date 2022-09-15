@@ -67,6 +67,21 @@ class LogEntry:
     time: Annotated[datetime.datetime, IOAttrs('t')]
 
 
+@ioprepped
+@dataclass
+class LogArchive:
+    """Info and data for a log."""
+
+    # Total number of entries submitted to the log.
+    log_size: Annotated[int, IOAttrs('t')]
+
+    # Offset for the entries contained here.
+    # (10 means our first entry is the 10th in the log, etc.)
+    start_index: Annotated[int, IOAttrs('c')]
+
+    entries: Annotated[list[LogEntry], IOAttrs('e')]
+
+
 class LogHandler(logging.Handler):
     """Fancy-pants handler for logging output.
 
@@ -83,7 +98,8 @@ class LogHandler(logging.Handler):
     def __init__(self,
                  path: str | Path | None,
                  echofile: TextIO | None,
-                 suppress_non_root_debug: bool = False):
+                 suppress_non_root_debug: bool = False,
+                 cache_size_limit: int = 0):
         super().__init__()
         # pylint: disable=consider-using-with
         self._file = (None
@@ -97,14 +113,20 @@ class LogHandler(logging.Handler):
             'stdout': None,
             'stderr': None
         }
+        self._cache_size = 0
+        assert cache_size_limit >= 0
+        self._cache_size_limit = cache_size_limit
+        self._cache: list[tuple[int, LogEntry]] = []
+        self._cache_index_offset = 0
+        self._cache_lock = Lock()
         self._printed_callback_error = False
         self._thread_bootstrapped = False
         self._thread = Thread(target=self._thread_main, daemon=True)
         self._thread.start()
 
-        # Spin until our thread has set up its basic stuff;
-        # otherwise we could wind up trying to push stuff to our
-        # event loop before the loop exists.
+        # Spin until our thread is up and running; otherwise we could
+        # wind up trying to push stuff to our event loop before the
+        # loop exists.
         while not self._thread_bootstrapped:
             time.sleep(0.001)
 
@@ -123,6 +145,37 @@ class LogHandler(logging.Handler):
         asyncio.set_event_loop(self._event_loop)
         self._thread_bootstrapped = True
         self._event_loop.run_forever()
+
+    def get_archive(self,
+                    start_index: int = 0,
+                    max_entries: int | None = None) -> LogArchive:
+        """Build and return an archive of log entries.
+
+        This will only return entries that have been processed by the
+        background thread so may not include just-submitted logs.
+        Entries in the range [start_index:start_index+max_entries] that
+        are still in the cache will be returned. Be aware that this may
+        not be the full requested range.
+        """
+
+        assert start_index >= 0
+        if max_entries is not None:
+            assert max_entries >= 0
+        with self._cache_lock:
+            # Transform start_index to our present cache space.
+            start_index -= self._cache_index_offset
+            # Calc end-index in our present cache space.
+            end_index = (len(self._cache)
+                         if max_entries is None else start_index + max_entries)
+
+            # Clamp both indexes to both ends of our present space.
+            start_index = max(0, min(start_index, len(self._cache)))
+            end_index = max(0, min(end_index, len(self._cache)))
+
+            return LogArchive(
+                log_size=self._cache_index_offset + len(self._cache),
+                start_index=start_index + self._cache_index_offset,
+                entries=[e[1] for e in self._cache[start_index:end_index]])
 
     def emit(self, record: logging.LogRecord) -> None:
         # Called by logging to send us records.
@@ -143,22 +196,23 @@ class LogHandler(logging.Handler):
         # didn't expect to be stringified.
         msg = self.format(record)
 
-        # Also print pretty colored output to our echo file (generally
-        # stderr). We do this part here instead of in our bg thread
-        # because the delay can throw off command line prompts or make
-        # tight debugging harder.
+        # Also immediately print pretty colored output to our echo file
+        # (generally stderr). We do this part here instead of in our bg
+        # thread because the delay can throw off command line prompts or
+        # make tight debugging harder.
         if self._echofile is not None:
-            cbegin: str
-            cend: str
-            cbegin, cend = LEVELNO_COLOR_CODES.get(record.levelno, ('', ''))
-            self._echofile.write(f'{cbegin}{msg}{cend}\n')
+            ends = LEVELNO_COLOR_CODES.get(record.levelno)
+            if ends is not None:
+                self._echofile.write(f'{ends[0]}{msg}{ends[1]}\n')
+            else:
+                self._echofile.write(f'{msg}\n')
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._emit_in_loop, record.name, record.levelno,
+            tpartial(self._emit_in_thread, record.name, record.levelno,
                      record.created, msg))
 
-    def _emit_in_loop(self, name: str, levelno: int, created: float,
-                      message: str) -> None:
+    def _emit_in_thread(self, name: str, levelno: int, created: float,
+                        message: str) -> None:
         try:
             self._emit_entry(
                 LogEntry(name=name,
@@ -174,9 +228,9 @@ class LogHandler(logging.Handler):
         """Send raw stdout/stderr output to the logger to be collated."""
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._file_write_in_loop, name, output))
+            tpartial(self._file_write_in_thread, name, output))
 
-    def _file_write_in_loop(self, name: str, output: str) -> None:
+    def _file_write_in_thread(self, name: str, output: str) -> None:
         try:
             assert name in ('stdout', 'stderr')
 
@@ -222,9 +276,26 @@ class LogHandler(logging.Handler):
         self._file_chunk_ship_task[name] = None
 
     def _emit_entry(self, entry: LogEntry) -> None:
-        # This runs in our bg event loop thread and does most of the work.
         assert current_thread() is self._thread
 
+        # Store to our cache.
+        if self._cache_size_limit > 0:
+            with self._cache_lock:
+                # Do a rough calc of how many bytes this entry consumes.
+                entry_size = sum(
+                    sys.getsizeof(x)
+                    for x in (entry, entry.name, entry.message, entry.level,
+                              entry.time))
+                self._cache.append((entry_size, entry))
+                self._cache_size += entry_size
+
+                # Prune old until we are back at or under our limit.
+                while self._cache_size > self._cache_size_limit:
+                    popped = self._cache.pop(0)
+                    self._cache_size -= popped[0]
+                    self._cache_index_offset += 1
+
+        # Pass to callbacks.
         with self._callbacks_lock:
             for call in self._callbacks:
                 try:
@@ -271,11 +342,12 @@ class FileLogEcho:
 def setup_logging(log_path: str | Path | None,
                   level: LogLevel,
                   suppress_non_root_debug: bool = False,
-                  log_stdout_stderr: bool = False) -> LogHandler:
+                  log_stdout_stderr: bool = False,
+                  cache_size_limit: int = 0) -> LogHandler:
     """Set up our logging environment.
 
     Returns the custom handler which can be used to fetch information
-    about logs that have passed through it. (worst log-levels, etc.).
+    about logs that have passed through it. (worst log-levels, caches, etc.).
     """
 
     lmap = {
@@ -295,7 +367,8 @@ def setup_logging(log_path: str | Path | None,
     loghandler = LogHandler(
         log_path,
         echofile=sys.stderr if sys.stderr.isatty() else None,
-        suppress_non_root_debug=suppress_non_root_debug)
+        suppress_non_root_debug=suppress_non_root_debug,
+        cache_size_limit=cache_size_limit)
 
     # Note: going ahead with force=True here so that we replace any
     # existing logger. Though we warn if it looks like we are doing

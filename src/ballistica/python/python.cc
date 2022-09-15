@@ -70,7 +70,7 @@ namespace ballistica {
 
 auto Python::LoggingCall(LogLevel loglevel, const std::string& msg) -> void {
   // If we've not yet captured our Python logging calls, stash this call away.
-  // We'll submit all accumulated entries after we bootstrap python.
+  // We'll submit all accumulated entries after we bootstrap Python.
   if (!objexists(ObjID::kLoggingCriticalCall)) {
     std::scoped_lock lock(early_log_lock_);
     early_logs_.emplace_back(std::make_pair(loglevel, msg));

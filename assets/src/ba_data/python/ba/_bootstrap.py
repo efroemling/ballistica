@@ -35,7 +35,8 @@ def bootstrap() -> None:
     log_handler = setup_logging(log_path=None,
                                 level=LogLevel.DEBUG,
                                 suppress_non_root_debug=True,
-                                log_stdout_stderr=True)
+                                log_stdout_stderr=True,
+                                cache_size_limit=1024 * 1024)
 
     log_handler.add_callback(_on_log)
 
@@ -43,7 +44,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20856
+    expected_build = 20857
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(

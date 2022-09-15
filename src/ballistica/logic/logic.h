@@ -19,9 +19,9 @@ namespace ballistica {
 
 const int kMaxPartyNameCombinedSize = 25;
 
-/// The Game Module generally runs on a dedicated thread; it manages
-/// all game logic, builds frame_defs to send to the graphics-server for
-/// rendering, etc.
+/// The logic subsystem of the app. This runs on a dedicated thread
+/// and is where high level app logic happens. Much app functionality
+/// including UI calls must be run on the logic thread.
 class Logic {
  public:
   Logic();

@@ -2518,11 +2518,12 @@ def screenmessage(message: str | ba.Lstr,
     Category: **General Utility Functions**
 
     If 'top' is True, the message will go to the top message area.
-    For 'top' messages, 'image' can be a texture to display alongside the
-    message.
-    If 'log' is True, the message will also be printed to the output log
-    'clients' can be a list of client-ids the message should be sent to,
-    or None to specify that everyone should receive it.
+    For 'top' messages, 'image' must be a dict containing 'texture'
+    and 'tint_texture' textures and 'tint_color' and 'tint2_color'
+    colors. This defines an icon to display alongside the message.
+    If 'log' is True, the message will also be submitted to the log.
+    'clients' can be a list of client-ids the message should be sent
+    to, or None to specify that everyone should receive it.
     If 'transient' is True, the message will not be included in the
     game-stream and thus will not show up when viewing replays.
     Currently the 'clients' option only works for transient messages.
