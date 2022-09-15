@@ -34,10 +34,12 @@ auto Logging::Log(LogLevel level, const std::string& msg) -> void {
 
 auto Logging::DisplayLog(const std::string& name, LogLevel level,
                          const std::string& msg) -> void {
+  auto msgnewline{msg + "\n"};
+
   // Print to in-game console.
   {
     if (g_logic != nullptr) {
-      g_logic->PushConsolePrintCall(msg);
+      g_logic->PushConsolePrintCall(msgnewline);
     } else {
       if (g_platform != nullptr) {
         g_platform->DisplayLog("root", LogLevel::kWarning,
@@ -49,7 +51,7 @@ auto Logging::DisplayLog(const std::string& name, LogLevel level,
 
   // Print to any telnet clients.
   if (g_app && g_app->telnet_server) {
-    g_app->telnet_server->PushPrint(msg);
+    g_app->telnet_server->PushPrint(msgnewline);
   }
 
   // Ship to platform-specific display mechanisms (android log, etc).
