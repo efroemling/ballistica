@@ -166,7 +166,8 @@ class LogHandler(logging.Handler):
             self._emit_entry(
                 LogEntry(name=name,
                          message=message,
-                         level=LOG_NAMES_TO_LEVELS[levelname],
+                         level=LOG_NAMES_TO_LEVELS.get(levelname,
+                                                       LogLevel.INFO),
                          time=datetime.datetime.fromtimestamp(
                              created, datetime.timezone.utc)))
         except Exception:
