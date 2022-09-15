@@ -146,16 +146,16 @@ class LogHandler(logging.Handler):
         self._thread_bootstrapped = True
         self._event_loop.run_forever()
 
-    def get_archive(self,
-                    start_index: int = 0,
-                    max_entries: int | None = None) -> LogArchive:
-        """Build and return an archive of log entries.
+    def get_cached(self,
+                   start_index: int = 0,
+                   max_entries: int | None = None) -> LogArchive:
+        """Build and return an archive of cached log entries.
 
-        This will only return entries that have been processed by the
-        background thread so may not include just-submitted logs.
-        Entries in the range [start_index:start_index+max_entries] that
-        are still in the cache will be returned. Be aware that this may
-        not be the full requested range.
+        This will only include entries that have been processed by the
+        background thread, so may not include just-submitted logs or
+        entries for partially written stdout/stderr lines.
+        Entries from the range [start_index:start_index+max_entries]
+        which are still present in the cache will be returned.
         """
 
         assert start_index >= 0

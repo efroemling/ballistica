@@ -36,6 +36,7 @@
 - Added `_ba.v1_cloud_log()` which ships a message to the old v1-cloud-log (the log which is gathered and sent to the v1 master server to help me identify problems people are seeing). This is presently wired up to a subset of Python logging output to approximate how it used to work.
 - Note: Previously in the C++ layer some code would mix Python print calls (such as PyErr_PrintEx()) with ballistica::Log() calls. Previously these all wound up going to the same place (Python's sys.stderr) so it worked, but now they no longer do and so this sort of mixing should be avoided. So if you see a weird combination of colored log output lines with non-colored lines that seem to go together, please holler as it means something needs to be fixed.
 - Builds for Apple devices now set a thread stack size of 1MB. The default there is 512k and I was seeing some stack overflows for heavy Physics sims or very recursive Python stuff.
+- If you want to grab recent logs, you can now use `ba.app.log_handler.get_cached()` This will give you everything that has gone through Python logging, Python stdout/stderr, and the C++ Log() call (up to the max cache size that is).
 
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
