@@ -1,4 +1,4 @@
-### 1.7.7 (build 20858, api 7, 2022-09-15)
+### 1.7.7 (build 20860, api 7, 2022-09-16)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -37,6 +37,8 @@
 - Note: Previously in the C++ layer some code would mix Python print calls (such as PyErr_PrintEx()) with ballistica::Log() calls. Previously these all wound up going to the same place (Python's sys.stderr) so it worked, but now they no longer do and so this sort of mixing should be avoided. So if you see a weird combination of colored log output lines with non-colored lines that seem to go together, please holler as it means something needs to be fixed.
 - Builds for Apple devices now explicitly set a thread stack size of 1MB. The default there is 512k and I was seeing some stack overflows for heavy physics sims or very recursive Python stuff.
 - If you want to grab recent logs, you can now use `ba.app.log_handler.get_cached()`. This will give you everything that has gone through Python logging, Python stdout/stderr, and the C++ Log() call (up to the max cache size that is).
+- LogHandler output now ALWAYS goes to stderr. Previously it only would if an interactive terminal was detected. This should make the binary easier to debug if run from scripts/etc. We can add a `--quiet` option if needed or whatnot.
+- (build 20859) Fixed an error setting up asyncio loops under Windows related to the fact that Python is now inited in the main thread.
 
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)

@@ -130,7 +130,7 @@ void PythonContextCall::PrintContext() {
   std::string s = std::string("  root call: ") + object().Str();
   s += ("\n  root call origin: " + file_loc());
   s += g_python->GetContextBaseString();
-  Log(LogLevel::kError, s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
 }  // namespace ballistica

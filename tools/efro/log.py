@@ -360,13 +360,19 @@ def setup_logging(log_path: str | Path | None,
 
     # Wire logger output to go to a structured log file.
     # Also echo it to stderr IF we're running in a terminal.
+    # UPDATE: Actually gonna always go to stderr. Is there a
+    # reason we shouldn't? This makes debugging possible if all
+    # we have is access to a non-interactive terminal or file dump.
+    # We could add a '--quiet' arg or whatnot to change this behavior.
+
     # Note: by passing in the *original* stderr here before we
     # (potentially) replace it, we ensure that our log echos
     # won't themselves be intercepted and sent to the logger
     # which would create an infinite loop.
     loghandler = LogHandler(
         log_path,
-        echofile=sys.stderr if sys.stderr.isatty() else None,
+        # echofile=sys.stderr if sys.stderr.isatty() else None,
+        echofile=sys.stderr,
         suppress_non_root_debug=suppress_non_root_debug,
         cache_size_limit=cache_size_limit)
 

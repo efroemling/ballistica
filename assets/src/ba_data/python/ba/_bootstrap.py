@@ -44,7 +44,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20858
+    expected_build = 20860
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -91,6 +91,19 @@ def bootstrap() -> None:
         # Let both OpenSSL and requests (if present) know to use this.
         os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
             certifi.where())
+
+    # On Windows I'm seeing the following error creating asyncio loops in
+    # background threads with the default proactor setup:
+    # ValueError: set_wakeup_fd only works in main thread of the main
+    #   interpreter
+    # So let's explicitly request selector loops.
+    # Interestingly this error only started showing up once I moved
+    # Python init to the main thread; previously the various asyncio
+    # bg thread loops were working fine (maybe something caused them
+    # to default to selector in that case?..
+    if sys.platform == 'win32':
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # Clear out the standard quit/exit messages since they don't work for us.
     # pylint: disable=c-extension-no-member
