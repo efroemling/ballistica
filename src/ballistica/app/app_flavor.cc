@@ -368,16 +368,19 @@ void AppFlavor::OnAppStart() {
   assert(g_input);
 
   // If we're running in a terminal, print some info.
-  if (g_platform->is_stdin_a_terminal()) {
+  // if (g_platform->is_stdin_a_terminal()) {
+  {
+    char buffer[256];
     if (g_buildconfig.headless_build()) {
-      printf("BallisticaCore Headless %s build %d.\n", kAppVersion,
-             kAppBuildNumber);
-      fflush(stdout);
+      snprintf(buffer, sizeof(buffer), "BallisticaCore Headless %s build %d.",
+               kAppVersion, kAppBuildNumber);
     } else {
-      printf("BallisticaCore %s build %d.\n", kAppVersion, kAppBuildNumber);
-      fflush(stdout);
+      snprintf(buffer, sizeof(buffer), "BallisticaCore %s build %d.",
+               kAppVersion, kAppBuildNumber);
     }
+    Log(LogLevel::kInfo, buffer);
   }
+  // }
 
   // If we've got a nice themed hardware cursor, show it.
   // Otherwise, hide the hardware cursor; we'll draw it in software.

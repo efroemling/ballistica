@@ -543,7 +543,7 @@ static void HandleArgs(int argc, char** argv) {
 
   // If there's just one arg and it's "--version", return the version.
   if (argc == 2 && !strcmp(argv[1], "--version")) {
-    printf("Ballistica %s build %d\n", kAppVersion, kAppBuildNumber);
+    printf("BallisticaCore %s build %d\n", kAppVersion, kAppBuildNumber);
     fflush(stdout);
     exit(0);
   }

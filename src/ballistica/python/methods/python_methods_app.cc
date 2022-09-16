@@ -145,6 +145,31 @@ auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
+auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(GetAppInstanceUUID().c_str());
+  BA_PYTHON_CATCH;
+}
+
+auto PyUserRanCommands(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  g_app->user_ran_commands = true;
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -282,11 +307,14 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   PyObject* call_obj;
   int from_other_thread{};
   int suppress_warning{};
+  int other_thread_use_fg_context{};
   static const char* kwlist[] = {"call", "from_other_thread",
-                                 "suppress_other_thread_warning", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ip",
+                                 "suppress_other_thread_warning",
+                                 "other_thread_use_fg_context", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ppp",
                                    const_cast<char**>(kwlist), &call_obj,
-                                   &from_other_thread, &suppress_warning)) {
+                                   &from_other_thread, &suppress_warning,
+                                   &other_thread_use_fg_context)) {
     return nullptr;
   }
 
@@ -303,7 +331,7 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     // just increment the python object's refcount and pass it along raw;
     // the logic thread decrements it on the other end.
     Py_INCREF(call_obj);
-    g_logic->PushPythonRawCallable(call_obj);
+    g_logic->PushPythonRawCallable(call_obj, other_thread_use_fg_context);
   } else {
     if (!InLogicThread()) {
       throw Exception("You must use from_other_thread mode.");
@@ -1103,7 +1131,8 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
 
         {"pushcall", (PyCFunction)PyPushCall, METH_VARARGS | METH_KEYWORDS,
          "pushcall(call: Callable, from_other_thread: bool = False,\n"
-         "     suppress_other_thread_warning: bool = False ) -> None\n"
+         "     suppress_other_thread_warning: bool = False,\n"
+         "     other_thread_use_fg_context: bool = False) -> None\n"
          "\n"
          "Pushes a call onto the event loop to be run during the next cycle.\n"
          "\n"
@@ -1118,7 +1147,9 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          "\n"
          "If you want to push a call from outside of the logic thread,\n"
          "however, you can pass 'from_other_thread' as True. In this case\n"
-         "the call will always run in the UI context on the logic thread."},
+         "the call will always run in the UI context on the logic thread\n"
+         "or whichever context is in the foreground if\n"
+         "other_thread_use_fg_context is True."},
 
         {"getactivity", (PyCFunction)PyGetActivity,
          METH_VARARGS | METH_KEYWORDS,
@@ -1172,6 +1203,18 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"is_in_replay", (PyCFunction)PyIsInReplay,
          METH_VARARGS | METH_KEYWORDS,
          "is_in_replay() -> bool\n"
+         "\n"
+         "(internal)"},
+
+        {"app_instance_uuid", (PyCFunction)PyAppInstanceUUID,
+         METH_VARARGS | METH_KEYWORDS,
+         "app_instance_uuid() -> str\n"
+         "\n"
+         "(internal)"},
+
+        {"user_ran_commands", (PyCFunction)PyUserRanCommands,
+         METH_VARARGS | METH_KEYWORDS,
+         "user_ran_commands() -> None\n"
          "\n"
          "(internal)"},
 

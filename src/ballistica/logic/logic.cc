@@ -913,7 +913,7 @@ void Logic::PushInGameConsoleScriptCommand(const std::string& command) {
   thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext cp(GetForegroundContext());
-    PythonCommand cmd(command, "<in-game-console>");
+    PythonCommand cmd(command, "<console>");
     if (!g_app->user_ran_commands) {
       g_app->user_ran_commands = true;
     }
@@ -1046,13 +1046,13 @@ void Logic::PushPythonWeakCallArgs(
   });
 }
 
-void Logic::PushPythonRawCallable(PyObject* callable) {
-  thread()->PushCall([this, callable] {
+void Logic::PushPythonRawCallable(PyObject* callable, bool fg_context) {
+  thread()->PushCall([this, callable, fg_context] {
     assert(InLogicThread());
 
     // Lets run this in the UI context.
     // (can add other options if we need later)
-    ScopedSetContext cp(GetUIContext());
+    ScopedSetContext cp(fg_context ? GetForegroundContext() : GetUIContext());
 
     // This event contains a raw python obj with an incremented ref-count.
     auto call(Object::New<PythonContextCall>(callable));

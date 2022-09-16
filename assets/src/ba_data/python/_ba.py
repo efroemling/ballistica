@@ -1131,6 +1131,11 @@ def android_show_wifi_settings() -> None:
     return None
 
 
+def app_instance_uuid() -> str:
+    """(internal)"""
+    return str()
+
+
 def apply_config() -> None:
     """(internal)"""
     return None
@@ -2388,7 +2393,8 @@ def printobjects() -> None:
 
 def pushcall(call: Callable,
              from_other_thread: bool = False,
-             suppress_other_thread_warning: bool = False) -> None:
+             suppress_other_thread_warning: bool = False,
+             other_thread_use_fg_context: bool = False) -> None:
     """Pushes a call onto the event loop to be run during the next cycle.
 
     Category: **General Utility Functions**
@@ -2401,7 +2407,9 @@ def pushcall(call: Callable,
 
     If you want to push a call from outside of the logic thread,
     however, you can pass 'from_other_thread' as True. In this case
-    the call will always run in the UI context on the logic thread.
+    the call will always run in the UI context on the logic thread
+    or whichever context is in the foreground if
+    other_thread_use_fg_context is True.
     """
     return None
 
@@ -2969,6 +2977,11 @@ def unlock_all_input() -> None:
 
     Resumes normal keyboard, mouse, and gamepad event processing.
     """
+    return None
+
+
+def user_ran_commands() -> None:
+    """(internal)"""
     return None
 
 

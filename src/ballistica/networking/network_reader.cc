@@ -128,7 +128,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
     memcpy(&query_id, buffer + 1, 4);
 
     // Ship them a response packet containing the query id,
-    // our protocol version, our unique-session-id, and our
+    // our protocol version, our unique-app-instance-id, and our
     // player_spec.
     char msg[400];
 

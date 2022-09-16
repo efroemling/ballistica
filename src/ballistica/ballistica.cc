@@ -32,7 +32,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20857;
+const int kAppBuildNumber = 20858;
 const char* kAppVersion = "1.7.7";
 
 // Our standalone globals.
@@ -252,32 +252,35 @@ auto FatalError(const std::string& message) -> void {
   BA_PRECONDITION(handled);
 }
 
+// FIXME: move this to g_app or whatnot.
 auto GetAppInstanceUUID() -> const std::string& {
-  static std::string session_id;
-  static bool have_session_id = false;
+  static std::string app_instance_uuid;
+  static bool have_app_instance_uuid = false;
 
-  if (!have_session_id) {
+  if (!have_app_instance_uuid) {
     if (g_python) {
       Python::ScopedInterpreterLock gil;
       auto uuid = g_python->obj(Python::ObjID::kUUIDStrCall).Call();
       if (uuid.exists()) {
-        session_id = uuid.ValueAsString().c_str();
-        have_session_id = true;
+        app_instance_uuid = uuid.ValueAsString().c_str();
+        have_app_instance_uuid = true;
       }
     }
-    if (!have_session_id) {
+    if (!have_app_instance_uuid) {
       // As an emergency fallback simply use a single random number.
+      // We should probably simply disallow this before Python is up.
       Log(LogLevel::kWarning, "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
-          Platform::GetCurrentMilliseconds()));                    // NOLINT
-      session_id = std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
-      have_session_id = true;
+          Platform::GetCurrentMilliseconds()));  // NOLINT
+      app_instance_uuid =
+          std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
+      have_app_instance_uuid = true;
     }
-    if (session_id.size() >= 100) {
+    if (app_instance_uuid.size() >= 100) {
       Log(LogLevel::kWarning, "session id longer than it should be.");
     }
   }
-  return session_id;
+  return app_instance_uuid;
 }
 
 auto InMainThread() -> bool {

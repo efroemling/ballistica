@@ -85,7 +85,8 @@ class Logic {
 
   // Push a raw Python call, decrements its refcount after running.
   // Can be pushed from any thread.
-  auto PushPythonRawCallable(PyObject* callable) -> void;
+  auto PushPythonRawCallable(PyObject* callable, bool fg_context = false)
+      -> void;
   auto PushScreenMessage(const std::string& message, const Vector3f& color)
       -> void;
   auto RemovePlayer(Player* player) -> void;
