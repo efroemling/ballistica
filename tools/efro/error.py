@@ -188,7 +188,14 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
     # Let's still complain, however, if we get any SSL errors besides
     # this one. https://bugs.python.org/issue39951
     if isinstance(exc, ssl.SSLError):
-        if 'APPLICATION_DATA_AFTER_CLOSE_NOTIFY' in str(exc):
+        excstr = str(exc)
+        if 'APPLICATION_DATA_AFTER_CLOSE_NOTIFY' in excstr:
+            return True
+
+        # Also occasionally am getting WRONG_VERSION_NUMBER ssl errors;
+        # Assuming this just means client is attempting to connect from some
+        # outdated browser or whatnot.
+        if 'SSL: WRONG_VERSION_NUMBER' in excstr:
             return True
 
     return False

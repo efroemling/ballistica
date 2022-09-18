@@ -149,7 +149,7 @@ class MessageProtocol:
 
         # Log any errors we got during handling if so desired.
         if self.receiver_logs_exceptions:
-            logging.exception('Error handling message.')
+            logging.exception('Error in efro.message handling.')
 
         # If anything goes wrong, return a ErrorResponse instead.
         # (either CLEAN or generic REMOTE)
