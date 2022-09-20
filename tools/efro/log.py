@@ -144,7 +144,16 @@ class LogHandler(logging.Handler):
         # setting it for our loop.
         asyncio.set_event_loop(self._event_loop)
         self._thread_bootstrapped = True
-        self._event_loop.run_forever()
+        try:
+            self._event_loop.run_forever()
+        except BaseException:
+            # If this ever goes down we're in trouble.
+            # We won't be able to log about it though...
+            # Try to make some noise however we can.
+            print('LogHandler died!!!', file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            raise
 
     def get_cached(self,
                    start_index: int = 0,
@@ -180,8 +189,10 @@ class LogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         # Called by logging to send us records.
         # We simply package them up and ship them to our thread.
-
-        assert current_thread() is not self._thread
+        # UPDATE: turns out we CAN get log messages from this thread
+        # (the C++ layer can spit out some performance metrics when
+        # calls take too long/etc.)
+        # assert current_thread() is not self._thread
 
         # Special case - filter out this common extra-chatty category.
         # TODO - should use a standard logging.Filter for this.

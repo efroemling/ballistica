@@ -1,4 +1,4 @@
-### 1.7.7 (build 20866, api 7, 2022-09-19)
+### 1.7.7 (build 20868, api 7, 2022-09-20)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -41,7 +41,7 @@
 - (build 20859) Fixed an error setting up asyncio loops under Windows related to the fact that Python is now inited in the main thread.
 - (build 20864) Fatal-error message/traceback now properly prints to stderr again (I think the reject logging rejiggering caused it to stop).
 - (build 20864) Fixed an issue where the app could crash when connected to the cloud console while in a network game.
-- Added a simplified help() command which behaves reasonably under the in-game console or cloud console.
+- Added a simplified help() command which behaves reasonably under the in-game console or cloud-console.
 
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)

@@ -45,7 +45,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20866
+    expected_build = 20868
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -133,6 +133,18 @@ class _CustomHelper:
         return 'Type help(object) for help about object.'
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
+        # We get an ugly error importing pydoc on our embedded
+        # platforms due to _sysconfigdata_xxx.py not being present
+        # (but then things mostly work). Let's get the ugly error out
+        # of the way explicitly.
+        import sysconfig
+        try:
+            # This errors once but seems to run cleanly after, so let's
+            # get the error out of the way.
+            sysconfig.get_path('stdlib')
+        except ModuleNotFoundError:
+            pass
+
         import pydoc
         # Disable pager and interactive help since neither works well
         # with our funky multi-threaded setup or in-game/cloud consoles.
@@ -149,9 +161,11 @@ def _on_log(entry: LogEntry) -> None:
 
     # Just forward this along to the engine to display in the in-game console,
     # in the Android log, etc.
-    _ba.display_log(name=entry.name,
-                    level=entry.level.name,
-                    message=entry.message)
+    _ba.display_log(
+        name=entry.name,
+        level=entry.level.name,
+        message=entry.message,
+    )
 
     # We also want to feed some logs to the old V1-cloud-log system.
     # Let's go with anything warning or higher as well as the stdout/stderr
