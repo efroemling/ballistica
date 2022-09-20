@@ -11,6 +11,7 @@ from efro.log import setup_logging, LogLevel
 import _ba
 
 if TYPE_CHECKING:
+    from typing import Any
     from efro.log import LogEntry
 
 _g_did_bootstrap = False  # pylint: disable=invalid-name
@@ -44,7 +45,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20865
+    expected_build = 20866
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -105,18 +106,43 @@ def bootstrap() -> None:
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    # Clear out the standard quit/exit messages since they don't work for us.
     # pylint: disable=c-extension-no-member
     if not TYPE_CHECKING:
         import __main__
+
+        # Clear out the standard quit/exit messages since they don't
+        # work for us.
         del __main__.__builtins__.quit
         del __main__.__builtins__.exit
+
+        # Also replace standard interactive help with our simplified
+        # one which is more friendly to cloud/in-game console situations.
+        __main__.__builtins__.help = _CustomHelper()
 
     # Now spin up our App instance and store it on both _ba and ba.
     from ba._app import App
     import ba
     _ba.app = ba.app = App()
     _ba.app.log_handler = log_handler
+
+
+class _CustomHelper:
+    """Replacement 'help' that behaves better for our setup."""
+
+    def __repr__(self) -> str:
+        return 'Type help(object) for help about object.'
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        import pydoc
+        # Disable pager and interactive help since neither works well
+        # with our funky multi-threaded setup or in-game/cloud consoles.
+        # Let's just do simple text dumps.
+        pydoc.pager = pydoc.plainpager
+        if not args and not kwds:
+            print('Interactive help is not available in this environment.\n'
+                  'Type help(object) for help about object.')
+            return None
+        return pydoc.help(*args, **kwds)
 
 
 def _on_log(entry: LogEntry) -> None:
