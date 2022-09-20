@@ -11,8 +11,9 @@ import inspect
 import logging
 from typing import TYPE_CHECKING
 
-from efro.message._message import (Message, Response, EmptyResponse,
-                                   ErrorResponse, UnregisteredMessageIDError)
+from efro.message._message import (Message, Response, EmptySysResponse,
+                                   ErrorSysResponse,
+                                   UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
@@ -123,8 +124,8 @@ class MessageReceiver:
             # types.UnionType above.
             responsetypes = (ret, )  # type: ignore
 
-        # Return type of None translates to EmptyResponse.
-        responsetypes = tuple(EmptyResponse if r is type(None) else r
+        # Return type of None translates to EmptySysResponse.
+        responsetypes = tuple(EmptySysResponse if r is type(None) else r
                               for r in responsetypes)  # noqa
 
         # Make sure our protocol has this message type registered and our
@@ -236,13 +237,13 @@ class MessageReceiver:
                              response: Response | None) -> str:
         """Encode a response provided by the user for sending."""
 
-        # A return value of None equals EmptyResponse.
+        # A return value of None equals EmptySysResponse.
         if response is None:
-            response = EmptyResponse()
+            response = EmptySysResponse()
 
         assert isinstance(response, Response)
         # (user should never explicitly return error-responses)
-        assert not isinstance(response, ErrorResponse)
+        assert not isinstance(response, ErrorSysResponse)
         assert type(response) in message.get_response_types()
         response_dict = self.protocol.response_to_dict(response)
         if self._encode_filter_call is not None:

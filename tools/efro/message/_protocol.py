@@ -14,8 +14,9 @@ import json
 from efro.error import CleanError
 from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
                               dataclass_from_dict)
-from efro.message._message import (Message, Response, ErrorResponse,
-                                   EmptyResponse, UnregisteredMessageIDError)
+from efro.message._message import (Message, Response, ErrorSysResponse,
+                                   EmptySysResponse,
+                                   UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
     from typing import Any, Literal
@@ -33,29 +34,20 @@ class MessageProtocol:
     def __init__(self,
                  message_types: dict[int, type[Message]],
                  response_types: dict[int, type[Response]],
-                 preserve_clean_errors: bool = True,
-                 receiver_logs_exceptions: bool = True,
-                 receiver_returns_stack_traces: bool = False) -> None:
+                 forward_clean_errors: bool = False,
+                 remote_errors_include_stack_traces: bool = False) -> None:
         """Create a protocol with a given configuration.
 
         Note that common response types are automatically registered
         with (unchanging negative ids) so they don't need to be passed
         explicitly (but can be if a different id is desired).
 
-        If 'preserve_clean_errors' is True, efro.error.CleanError
+        If 'forward_clean_errors' is True, efro.error.CleanError
         exceptions raised on the receiver end will result in a matching
         CleanError raised back on the sender. All other Exception types
         come across as efro.error.RemoteError.
 
-        When 'receiver_logs_exceptions' is True, any uncaught Exceptions
-        on the receiver end will be logged there via logging.exception()
-        (in addition to the usual behavior of returning an ErrorResponse
-        to the sender). This is good to leave enabled if your
-        intention is to never return ErrorResponses. Looser setups
-        making routine use of CleanErrors or whatnot may want to
-        disable this, however.
-
-        If 'receiver_returns_stack_traces' is True, stringified stack
+        If 'remote_errors_include_stack_traces' is True, stringified stack
         traces will be returned to the sender for exceptions occurring
         on the receiver end. This can make debugging easier but should
         only be used when the client is trusted to see such info.
@@ -88,15 +80,20 @@ class MessageProtocol:
         # Go ahead and auto-register a few common response types
         # if the user has not done so explicitly. Use unique negative
         # IDs which will never change or overlap with user ids.
-        def _reg_if_not(reg_tp: type[Response], reg_id: int) -> None:
+        def _reg_sys(reg_tp: type[Response], reg_id: int) -> None:
+
+            # If we have a positive id registered already, we still point
+            # negative sys id at this type but not the opposite.
             if reg_tp in self.response_ids_by_type:
+                self.response_types_by_id[reg_id] = reg_tp
                 return
+
             assert self.response_types_by_id.get(reg_id) is None
             self.response_types_by_id[reg_id] = reg_tp
             self.response_ids_by_type[reg_tp] = reg_id
 
-        _reg_if_not(ErrorResponse, -1)
-        _reg_if_not(EmptyResponse, -2)
+        _reg_sys(ErrorSysResponse, -1)
+        _reg_sys(EmptySysResponse, -2)
 
         # Some extra-thorough validation in debug mode.
         if __debug__:
@@ -127,9 +124,9 @@ class MessageProtocol:
                     'message_types contains duplicate __name__s;'
                     ' all types are required to have unique names.')
 
-        self.preserve_clean_errors = preserve_clean_errors
-        self.receiver_logs_exceptions = receiver_logs_exceptions
-        self.receiver_returns_stack_traces = receiver_returns_stack_traces
+        self.forward_clean_errors = forward_clean_errors
+        self.remote_errors_include_stack_traces = (
+            remote_errors_include_stack_traces)
 
     @staticmethod
     def encode_dict(obj: dict) -> str:
@@ -147,21 +144,20 @@ class MessageProtocol:
     def error_to_response(self, exc: Exception) -> Response:
         """Translate an error to a response."""
 
-        # Log any errors we got during handling if so desired.
-        if self.receiver_logs_exceptions:
-            logging.exception('Error in efro.message handling.')
+        # Log any errors we got during handling.
+        logging.exception('Error in efro.message handling.')
 
-        # If anything goes wrong, return a ErrorResponse instead.
+        # If anything goes wrong, return a ErrorSysResponse instead.
         # (either CLEAN or generic REMOTE)
-        if isinstance(exc, CleanError) and self.preserve_clean_errors:
-            return ErrorResponse(
+        if isinstance(exc, CleanError) and self.forward_clean_errors:
+            return ErrorSysResponse(
                 error_message=str(exc),
-                error_type=ErrorResponse.ErrorType.REMOTE_CLEAN)
-        return ErrorResponse(
+                error_type=ErrorSysResponse.ErrorType.REMOTE_CLEAN)
+        return ErrorSysResponse(
             error_message=(traceback.format_exc()
-                           if self.receiver_returns_stack_traces else
+                           if self.remote_errors_include_stack_traces else
                            'An internal error has occurred.'),
-            error_type=ErrorResponse.ErrorType.REMOTE)
+            error_type=ErrorSysResponse.ErrorType.REMOTE)
 
     def _to_dict(self, message: Any, ids_by_type: dict[type, int],
                  opname: str) -> dict:
@@ -236,7 +232,7 @@ class MessageProtocol:
             rsptypes.append(Response)
         for rsp_tp in rsptypes:
             # Skip these as they don't actually show up in code.
-            if rsp_tp is EmptyResponse or rsp_tp is ErrorResponse:
+            if rsp_tp is EmptySysResponse or rsp_tp is ErrorSysResponse:
                 continue
             if (single_message_type and part == 'sender'
                     and rsp_tp is not Response):
@@ -344,9 +340,9 @@ class MessageProtocol:
                 f'    """Protocol-specific bound sender."""\n')
 
         def _filt_tp_name(rtype: type[Response]) -> str:
-            # We accept None to equal EmptyResponse so reflect that
+            # We accept None to equal EmptySysResponse so reflect that
             # in the type annotation.
-            return 'None' if rtype is EmptyResponse else rtype.__name__
+            return 'None' if rtype is EmptySysResponse else rtype.__name__
 
         # Define handler() overloads for all registered message types.
         if msgtypes:
@@ -441,9 +437,9 @@ class MessageProtocol:
         # Define handler() overloads for all registered message types.
 
         def _filt_tp_name(rtype: type[Response]) -> str:
-            # We accept None to equal EmptyResponse so reflect that
+            # We accept None to equal EmptySysResponse so reflect that
             # in the type annotation.
-            return 'None' if rtype is EmptyResponse else rtype.__name__
+            return 'None' if rtype is EmptySysResponse else rtype.__name__
 
         if msgtypes:
             cbgn = 'Awaitable[' if is_async else ''

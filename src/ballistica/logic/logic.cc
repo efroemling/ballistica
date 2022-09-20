@@ -1050,15 +1050,10 @@ void Logic::PushPythonRawCallable(PyObject* callable, bool fg_context) {
   thread()->PushCall([this, callable, fg_context] {
     assert(InLogicThread());
 
-    // Lets run this in the UI context.
-    // (can add other options if we need later)
+    // Run this in the UI context by default, or foreground if requested.
     ScopedSetContext cp(fg_context ? GetForegroundContext() : GetUIContext());
 
-    // This event contains a raw python obj with an incremented ref-count.
-    auto call(Object::New<PythonContextCall>(callable));
-    Py_DECREF(callable);  // now just held by call
-
-    call->Run();
+    PythonRef(callable, PythonRef::kSteal).Call();
   });
 }
 

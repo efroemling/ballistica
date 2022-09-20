@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError, RemoteError, CommunicationError
-from efro.message._message import EmptyResponse, ErrorResponse
+from efro.message._message import EmptySysResponse, ErrorSysResponse
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
@@ -139,12 +139,12 @@ class MessageSender:
         except Exception as exc:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
-            return ErrorResponse(
+            return ErrorSysResponse(
                 error_message=
                 f'Error in MessageSender @send_method ({type(exc)}): {exc}',
-                error_type=(ErrorResponse.ErrorType.COMMUNICATION
+                error_type=(ErrorSysResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
-                            ErrorResponse.ErrorType.LOCAL))
+                            ErrorSysResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     async def send_split_part_1_async(self, bound_obj: Any,
@@ -166,13 +166,13 @@ class MessageSender:
         except Exception as exc:
             # Any error in the raw send call gets recorded as either
             # a local or communication error.
-            return ErrorResponse(
+            return ErrorSysResponse(
                 error_message=
                 f'Error in MessageSender @send_async_method ({type(exc)}):'
                 f' {exc}',
-                error_type=(ErrorResponse.ErrorType.COMMUNICATION
+                error_type=(ErrorSysResponse.ErrorType.COMMUNICATION
                             if isinstance(exc, CommunicationError) else
-                            ErrorResponse.ErrorType.LOCAL))
+                            ErrorSysResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     def send_split_part_2(self, message: Message,
@@ -214,13 +214,13 @@ class MessageSender:
             # If we got to this point, we successfully communicated
             # with the other end so errors represent protocol mismatches
             # or other invalid data. For now let's just log it but perhaps
-            # we'd want to somehow embed it in the ErrorResponse to be
+            # we'd want to somehow embed it in the ErrorSysResponse to be
             # available directly to the user later.
             logging.exception('Error decoding raw response')
-            response = ErrorResponse(
+            response = ErrorSysResponse(
                 error_message=
                 'Error decoding raw response; see log for details.',
-                error_type=ErrorResponse.ErrorType.LOCAL)
+                error_type=ErrorSysResponse.ErrorType.LOCAL)
         return response
 
     def _unpack_raw_response(self, raw_response: Response) -> Response | None:
@@ -232,25 +232,25 @@ class MessageSender:
         run such that any raised Exception is active when the callback
         fires; not on the thread where the message was sent.
         """
-        # EmptyResponse translates to None
-        if isinstance(raw_response, EmptyResponse):
+        # EmptySysResponse translates to None
+        if isinstance(raw_response, EmptySysResponse):
             return None
 
         # Some error occurred. Raise a local Exception for it.
-        if isinstance(raw_response, ErrorResponse):
+        if isinstance(raw_response, ErrorSysResponse):
 
             if (raw_response.error_type is
-                    ErrorResponse.ErrorType.COMMUNICATION):
+                    ErrorSysResponse.ErrorType.COMMUNICATION):
                 raise CommunicationError(raw_response.error_message)
 
             # If something went wrong on *our* end of the connection,
             # don't say it was a remote error.
-            if raw_response.error_type is ErrorResponse.ErrorType.LOCAL:
+            if raw_response.error_type is ErrorSysResponse.ErrorType.LOCAL:
                 raise RuntimeError(raw_response.error_message)
 
             # If they want to support clean errors, do those.
-            if (self.protocol.preserve_clean_errors and raw_response.error_type
-                    is ErrorResponse.ErrorType.REMOTE_CLEAN):
+            if (self.protocol.forward_clean_errors and raw_response.error_type
+                    is ErrorSysResponse.ErrorType.REMOTE_CLEAN):
                 raise CleanError(raw_response.error_message)
 
             # Everything else gets lumped in as a remote error.

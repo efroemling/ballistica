@@ -27,7 +27,7 @@ auto FatalError::ReportFatalError(const std::string& message,
   // error to the user and exiting the app cleanly (so we don't pollute our
   // crash records with results of user tinkering).
 
-  // Give the platform the opportunity to completely override our handling.
+  // Give the platform the opportunity to augment or override our handling.
   if (g_platform) {
     auto handled =
         g_platform->ReportFatalError(message, in_top_level_exception_handler);
@@ -38,7 +38,8 @@ auto FatalError::ReportFatalError(const std::string& message,
 
   std::string dialog_msg = message;
   if (!dialog_msg.empty()) {
-    dialog_msg += "\n";
+    // Why was this here?
+    // dialog_msg += "\n";
   }
 
   auto starttime = time(nullptr);
@@ -75,9 +76,10 @@ auto FatalError::ReportFatalError(const std::string& message,
   g_early_v1_cloud_log_writes = 0;
 
   // Add this to our V1CloudLog which we'll be attempting to send momentarily,
-  // and also try to present it directly to the user.
+  // and also go to platform-specific logging and good ol' stderr.
   Logging::V1CloudLog(logmsg);
   Logging::DisplayLog("root", LogLevel::kCritical, logmsg);
+  fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
   std::string suffix;

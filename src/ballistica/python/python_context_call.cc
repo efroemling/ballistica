@@ -14,17 +14,17 @@ PythonContextCall* PythonContextCall::current_call_ = nullptr;
 
 PythonContextCall::PythonContextCall(PyObject* obj_in) {
   assert(InLogicThread());
-  // as a sanity test, store the current context ptr just to make sure it
-  // hasn't changed when we run
+  // As a sanity test, store the current context ptr just to make sure it
+  // hasn't changed when we run.
 #if BA_DEBUG_BUILD
   context_target_sanity_test_ = context_.target.get();
 #endif  // BA_DEBUG_BUILD
   BA_PRECONDITION(PyCallable_Check(obj_in));
   object_.Acquire(obj_in);
   GetTrace();
-  // ok now we need to register this call with whatever the context is;
+  // Ok now we need to register this call with whatever the context is;
   // it can be stored in a host-activity, a host-session, or the UI context.
-  // whoever it is registered with will explicitly release its contents on
+  // Whoever it is registered with will explicitly release its contents on
   // shutdown and ensure that nothing gets run after that point.
   if (HostActivity* ha = context_.GetHostActivity()) {
     ha->RegisterCall(this);

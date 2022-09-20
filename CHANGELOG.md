@@ -1,4 +1,4 @@
-### 1.7.7 (build 20862, api 7, 2022-09-17)
+### 1.7.7 (build 20865, api 7, 2022-09-19)
 - Added `ba.app.meta.load_exported_classes()` for loading classes discovered by the meta subsystem cleanly in a background thread.
 - Improved logging of missing playlist game types.
 - Some ba.Lstr functionality can now be used in background threads.
@@ -39,6 +39,8 @@
 - If you want to grab recent logs, you can now use `ba.app.log_handler.get_cached()`. This will give you everything that has gone through Python logging, Python stdout/stderr, and the C++ Log() call (up to the max cache size that is).
 - LogHandler output now ALWAYS goes to stderr. Previously it only would if an interactive terminal was detected. This should make the binary easier to debug if run from scripts/etc. We can add a `--quiet` option if needed or whatnot.
 - (build 20859) Fixed an error setting up asyncio loops under Windows related to the fact that Python is now inited in the main thread.
+- (build 20864) Fatal-error message/traceback now properly prints to stderr again (I think the reject logging rejiggering caused it to stop).
+- (build 20864) Fixed an issue where the app could crash when connected to the cloud console while in a network game.
 
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)

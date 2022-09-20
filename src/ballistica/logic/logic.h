@@ -83,8 +83,8 @@ class Logic {
   auto PushPythonWeakCallArgs(const Object::WeakRef<PythonContextCall>& call,
                               const PythonRef& args) -> void;
 
-  // Push a raw Python call, decrements its refcount after running.
-  // Can be pushed from any thread.
+  // Push a raw Python call from any thread. Refcount should be incremented
+  // beforehand and will be decremented after running.
   auto PushPythonRawCallable(PyObject* callable, bool fg_context = false)
       -> void;
   auto PushScreenMessage(const std::string& message, const Vector3f& color)
