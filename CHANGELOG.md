@@ -1,4 +1,4 @@
-### 1.7.9 (build 20877, api 7, 2022-09-21)
+### 1.7.9 (build 20878, api 7, 2022-09-22)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).
 - Fixed bug with 'Disable Camera Shake' option. (GitHub #511)
 - Fixed an issue where Co-op football would play no music.

@@ -253,7 +253,8 @@ class AccountSettingsWindow(ba.Window):
         reset_progress_button_space = 70.0
 
         show_manage_v2_account_button = (self._signed_in
-                                         and account_type == 'V2')
+                                         and account_type == 'V2'
+                                         and bool(False))  # Disabled for now.
         manage_v2_account_button_space = 100.0
 
         show_player_profiles_button = self._signed_in
