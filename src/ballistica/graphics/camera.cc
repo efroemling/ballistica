@@ -727,7 +727,7 @@ void Camera::Update(millisecs_t elapsed) {
     }
 
     if (g_graphics->camera_shake_disabled()) {
-      shake_vel_ = {0, 0, 0};
+      shake_pos_ = {0, 0, 0};
     }
   }
 
