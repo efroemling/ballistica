@@ -2,23 +2,32 @@
 
 #include "ballistica/networking/network_reader.h"
 
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/player_spec.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/input/remote_app.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/player_spec.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/networking/network_writer.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
 
-NetworkReader::NetworkReader(int port) : port4_(port), port6_(port) {
-  thread_ = new std::thread(RunThreadStatic, this);
+NetworkReader::NetworkReader() {
+  // We're a singleton; make sure we don't exist.
   assert(g_network_reader == nullptr);
-  g_network_reader = this;
+}
+
+auto NetworkReader::SetPort(int port) -> void {
+  assert(InMainThread());
+  // Currently can't switch once this is set.
+  if (port4_ != -1) {
+    return;
+  }
+  port4_ = port6_ = port;
+  thread_ = new std::thread(RunThreadStatic, this);
 }
 
 auto NetworkReader::Pause() -> void {
@@ -34,7 +43,7 @@ auto NetworkReader::Pause() -> void {
   if (port4_ != -1) {
     PokeSelf();
   } else {
-    Log("Error: NetworkReader port is -1 on pause");
+    Log(LogLevel::kError, "NetworkReader port is -1 on pause");
   }
 }
 
@@ -54,8 +63,8 @@ void NetworkReader::Resume() {
 void NetworkReader::PokeSelf() {
   int sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd < 0) {
-    Log("ERROR: unable to create sleep ping socket; errno "
-        + g_platform->GetSocketErrorString());
+    Log(LogLevel::kError, "Unable to create sleep ping socket; errno "
+                              + g_platform->GetSocketErrorString());
   } else {
     struct sockaddr_in serv_addr {};
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -64,8 +73,8 @@ void NetworkReader::PokeSelf() {
     serv_addr.sin_port = 0;                         // any
     int bresult = ::bind(sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (bresult == 1) {
-      Log("ERROR: unable to bind sleep socket: "
-          + g_platform->GetSocketErrorString());
+      Log(LogLevel::kError,
+          "Unable to bind sleep socket: " + g_platform->GetSocketErrorString());
     } else {
       struct sockaddr_in t_addr {};
       memset(&t_addr, 0, sizeof(t_addr));
@@ -76,8 +85,8 @@ void NetworkReader::PokeSelf() {
       ssize_t sresult =
           sendto(sd, b, 1, 0, (struct sockaddr*)(&t_addr), sizeof(t_addr));
       if (sresult == -1) {
-        Log("Error on sleep self-sendto: "
-            + g_platform->GetSocketErrorString());
+        Log(LogLevel::kError, "Error on sleep self-sendto: "
+                                  + g_platform->GetSocketErrorString());
       }
     }
     g_platform->CloseSocket(sd);
@@ -97,8 +106,8 @@ static auto HandleJSONPing(const std::string& data_str) -> std::string {
   int party_size = 0;
   int party_size_max = 10;
   if (g_python != nullptr) {
-    party_size = g_game->public_party_size();
-    party_size_max = g_game->public_party_max_size();
+    party_size = g_logic->public_party_size();
+    party_size_max = g_logic->public_party_max_size();
   }
   snprintf(buffer, sizeof(buffer), R"({"b":%d,"ps":%d,"psmx":%d})",
            kAppBuildNumber, party_size, party_size_max);
@@ -110,7 +119,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
   if (size == 5) {
     // If we're already in a party, don't advertise since they
     // wouldn't be able to join us anyway.
-    if (g_game->connections()->has_connection_to_host()) {
+    if (g_logic->connections()->has_connection_to_host()) {
       return;
     }
 
@@ -119,7 +128,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
     memcpy(&query_id, buffer + 1, 4);
 
     // Ship them a response packet containing the query id,
-    // our protocol version, our unique-session-id, and our
+    // our protocol version, our unique-app-instance-id, and our
     // player_spec.
     char msg[400];
 
@@ -135,7 +144,7 @@ static auto HandleGameQuery(const char* buffer, size_t size,
 
     BA_PRECONDITION_FATAL(!usid.empty());
     if (usid.size() > 100) {
-      Log("had to truncate session-id; shouldn't happen");
+      Log(LogLevel::kError, "had to truncate session-id; shouldn't happen");
       usid.resize(100);
     }
     if (usid.empty()) {
@@ -158,11 +167,11 @@ static auto HandleGameQuery(const char* buffer, size_t size,
     std::vector<uint8_t> msg_buffer(msg_len);
     memcpy(msg_buffer.data(), msg, msg_len);
 
-    g_network_write_module->PushSendToCall(msg_buffer, SockAddr(*from));
+    g_network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
 
   } else {
-    Log("Error: Got invalid game-query packet of len " + std::to_string(size)
-        + "; expected 5.");
+    Log(LogLevel::kError, "Got invalid game-query packet of len "
+                              + std::to_string(size) + "; expected 5.");
   }
 }
 
@@ -223,7 +232,8 @@ auto NetworkReader::RunThread() -> int {
           // Aint no thang.
         } else {
           // Let's complain for anything else though.
-          Log("Error on select: " + g_platform->GetSocketErrorString());
+          Log(LogLevel::kError,
+              "Error on select: " + g_platform->GetSocketErrorString());
         }
       } else {
         // Wait for any data on either of our sockets.
@@ -235,7 +245,8 @@ auto NetworkReader::RunThread() -> int {
               recvfrom(sd, buffer, sizeof(buffer), 0,
                        reinterpret_cast<sockaddr*>(&from), &from_size);
           if (rresult == 0) {
-            Log("ERROR: NetworkReader Recv got length 0; this shouldn't "
+            Log(LogLevel::kError,
+                "NetworkReader Recv got length 0; this shouldn't "
                 "happen");
           } else if (rresult == -1) {
             // This needs to be locked during any sd changes/writes.
@@ -345,10 +356,10 @@ auto NetworkReader::RunThread() -> int {
               case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED:
               case BA_PACKET_HOST_GAMEPACKET_COMPRESSED: {
                 // These messages are associated with udp host/client
-                // connections.. pass them to the game thread to wrangle.
+                // connections.. pass them to the logic thread to wrangle.
                 std::vector<uint8_t> msg_buffer(rresult2);
                 memcpy(&(msg_buffer[0]), buffer, rresult2);
-                g_game->connections()->PushUDPConnectionPacketCall(
+                g_logic->connections()->PushUDPConnectionPacketCall(
                     msg_buffer, SockAddr(from));
                 break;
               }
@@ -386,8 +397,8 @@ auto NetworkReader::OpenSockets() -> void {
 
   sd4_ = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd4_ < 0) {
-    Log("ERROR: Unable to open host socket; errno "
-        + g_platform->GetSocketErrorString());
+    Log(LogLevel::kError, "Unable to open host socket; errno "
+                              + g_platform->GetSocketErrorString());
   } else {
     g_platform->SetSocketNonBlocking(sd4_);
 
@@ -404,9 +415,8 @@ auto NetworkReader::OpenSockets() -> void {
       // If we're headless then we abort here; we're useless if we don't get
       // the port we wanted.
       if (HeadlessMode()) {
-        Log("FATAL ERROR: unable to bind to requested udp port "
-            + std::to_string(port4_) + " (ipv4)");
-        exit(1);
+        FatalError("Unable to bind to requested udp port "
+                   + std::to_string(port4_) + " (ipv4)");
       }
 
       // Primary ipv4 bind failed; try on any port as a backup.
@@ -441,8 +451,8 @@ auto NetworkReader::OpenSockets() -> void {
   // available everywhere (win XP, etc) so let's do this for now.
   sd6_ = socket(AF_INET6, SOCK_DGRAM, 0);
   if (sd6_ < 0) {
-    Log("ERROR: Unable to open ipv6 socket: "
-        + g_platform->GetSocketErrorString());
+    Log(LogLevel::kError,
+        "Unable to open ipv6 socket: " + g_platform->GetSocketErrorString());
   } else {
     // Since we're explicitly creating both a v4 and v6 socket, tell the v6
     // to *not* do both itself (not sure if this is necessary; on mac it
@@ -451,7 +461,7 @@ auto NetworkReader::OpenSockets() -> void {
     if (setsockopt(sd6_, IPPROTO_IPV6, IPV6_V6ONLY,
                    reinterpret_cast<char*>(&on), sizeof(on))
         == -1) {
-      Log("error setting socket as ipv6-only");
+      Log(LogLevel::kError, "Error setting socket as ipv6-only");
     }
 
     g_platform->SetSocketNonBlocking(sd6_);
@@ -464,9 +474,8 @@ auto NetworkReader::OpenSockets() -> void {
 
     if (result != 0) {
       if (HeadlessMode()) {
-        Log("FATAL ERROR: unable to bind to requested udp port "
-            + std::to_string(port6_) + " (ipv6)");
-        exit(1);
+        FatalError("Unable to bind to requested udp port "
+                   + std::to_string(port6_) + " (ipv6)");
       }
       // Primary ipv6 bind failed; try backup.
 
@@ -499,12 +508,10 @@ auto NetworkReader::OpenSockets() -> void {
                       + std::to_string(initial_requested_port)
                       + "; some network functionality may fail.",
                   {1, 0.5f, 0});
-    Log("Unable to bind udp port " + std::to_string(initial_requested_port)
-            + "; some network functionality may fail.",
-        true, false);
+    Log(LogLevel::kWarning, "Unable to bind udp port "
+                                + std::to_string(initial_requested_port)
+                                + "; some network functionality may fail.");
   }
 }
-
-NetworkReader::~NetworkReader() = default;
 
 }  // namespace ballistica

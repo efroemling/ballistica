@@ -2,20 +2,14 @@
 
 #include "ballistica/audio/audio.h"
 
+#include "ballistica/assets/data/sound_data.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/media/data/sound_data.h"
 
 namespace ballistica {
 
-Audio::Audio() { assert(InLogicThread()); }
-
-void Audio::Init() {
-  // Init our singleton.
-  assert(g_audio == nullptr);
-  g_audio = new Audio();
-}
+Audio::Audio() {}
 
 void Audio::Reset() {
   assert(InLogicThread());

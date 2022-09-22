@@ -23,8 +23,7 @@ const int kThreadMessageSafetyThreshold{500};
 // A thread with a built-in event loop.
 class Thread {
  public:
-  explicit Thread(ThreadIdentifier id,
-                  ThreadType type_in = ThreadType::kStandard);
+  explicit Thread(ThreadTag id, ThreadSource source = ThreadSource::kCreate);
   virtual ~Thread();
 
   auto ClearCurrentThreadName() -> void;
@@ -44,7 +43,7 @@ class Thread {
   // Used to quit the main thread.
   void Quit();
 
-  void SetOwnsPython();
+  void SetAcquiresPythonGIL();
 
   void SetPaused(bool paused);
   auto thread_id() const -> std::thread::id { return thread_id_; }
@@ -55,13 +54,7 @@ class Thread {
   void set_thread_id(std::thread::id id) { thread_id_ = id; }
 
   auto RunEventLoop(bool single_cycle = false) -> int;
-  auto identifier() const -> ThreadIdentifier { return identifier_; }
-
-  auto CheckPushRunnableSafety() -> bool {
-    // We first complain when we get to 1000 queued messages so
-    // let's consider things unsafe when we're halfway there.
-    return (thread_message_count_ < kThreadMessageSafetyThreshold);
-  }
+  auto identifier() const -> ThreadTag { return identifier_; }
 
   // Register a timer to run on the thread.
   auto NewTimer(millisecs_t length, bool repeat,
@@ -116,7 +109,7 @@ class Thread {
     explicit ThreadMessage(Type type, Runnable* runnable, bool* completion_flag)
         : type(type), runnable(runnable), completion_flag{completion_flag} {}
   };
-
+  auto CheckPushRunnableSafety() -> bool;
   auto SetInternalThreadName(const std::string& name) -> void;
   auto WaitForNextEvent(bool single_cycle) -> void;
   auto LoopUpkeep(bool once) -> void;
@@ -132,12 +125,12 @@ class Thread {
   int messages_since_paused_{};
   millisecs_t last_paused_message_report_time_{};
   bool done_{};
-  ThreadType type_;
+  ThreadSource source_;
   int listen_sd_{};
   std::thread::id thread_id_{};
-  ThreadIdentifier identifier_{ThreadIdentifier::kInvalid};
+  ThreadTag identifier_{ThreadTag::kInvalid};
   millisecs_t last_complaint_time_{};
-  bool owns_python_{};
+  bool acquires_python_gil_{};
 
   // FIXME: Should generalize this to some sort of PlatformThreadData class.
 #if BA_XCODE_BUILD
@@ -148,11 +141,17 @@ class Thread {
   // different thread groups makes its easy to see which thread is which
   // in profilers, backtraces, etc.
   static auto RunLogicThread(void* data) -> int;
+  static auto RunLogicThreadP(void* data) -> void*;
   static auto RunAudioThread(void* data) -> int;
+  static auto RunAudioThreadP(void* data) -> void*;
   static auto RunBGDynamicThread(void* data) -> int;
+  static auto RunBGDynamicThreadP(void* data) -> void*;
   static auto RunNetworkWriteThread(void* data) -> int;
+  static auto RunNetworkWriteThreadP(void* data) -> void*;
   static auto RunStdInputThread(void* data) -> int;
-  static auto RunMediaThread(void* data) -> int;
+  static auto RunStdInputThreadP(void* data) -> void*;
+  static auto RunAssetsThread(void* data) -> int;
+  static auto RunAssetsThreadP(void* data) -> void*;
 
   auto ThreadMain() -> int;
   auto GetThreadMessages(std::list<ThreadMessage>* messages) -> void;
@@ -162,12 +161,11 @@ class Thread {
   auto RunPauseCallbacks() -> void;
   auto RunResumeCallbacks() -> void;
 
-  int thread_message_count_{};
   bool bootstrapped_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> pause_callbacks_;
   std::list<Runnable*> resume_callbacks_;
-  std::thread* thread_{};
+  // std::thread* thread_{};
   std::condition_variable thread_message_cv_;
   std::mutex thread_message_mutex_;
   std::list<ThreadMessage> thread_messages_;

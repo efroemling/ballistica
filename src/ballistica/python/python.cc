@@ -3,23 +3,21 @@
 #include "ballistica/python/python.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/component/collide_model.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/sound.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/game/account.h"
-#include "ballistica/game/friend_score_set.h"
-#include "ballistica/game/game_stream.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/player.h"
-#include "ballistica/game/score_to_beat.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/component/collide_model.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
+#include "ballistica/logic/friend_score_set.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/player.h"
+#include "ballistica/logic/v1_account.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_collide_model.h"
 #include "ballistica/python/class/python_class_context.h"
@@ -37,16 +35,17 @@
 #include "ballistica/python/class/python_class_vec3.h"
 #include "ballistica/python/class/python_class_widget.h"
 #include "ballistica/python/methods/python_methods_app.h"
+#include "ballistica/python/methods/python_methods_assets.h"
 #include "ballistica/python/methods/python_methods_gameplay.h"
 #include "ballistica/python/methods/python_methods_graphics.h"
 #include "ballistica/python/methods/python_methods_input.h"
-#include "ballistica/python/methods/python_methods_media.h"
 #include "ballistica/python/methods/python_methods_networking.h"
 #include "ballistica/python/methods/python_methods_system.h"
 #include "ballistica/python/methods/python_methods_ui.h"
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/node/node_attribute.h"
+#include "ballistica/scene/scene_stream.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/text_widget.h"
 
@@ -68,6 +67,46 @@ namespace ballistica {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
+
+auto Python::LoggingCall(LogLevel loglevel, const std::string& msg) -> void {
+  // If we've not yet captured our Python logging calls, stash this call away.
+  // We'll submit all accumulated entries after we bootstrap Python.
+  if (!objexists(ObjID::kLoggingCriticalCall)) {
+    std::scoped_lock lock(early_log_lock_);
+    early_logs_.emplace_back(std::make_pair(loglevel, msg));
+    return;
+  }
+
+  // Ok; seems we've got Python calls. Run the right one for our log level.
+  ObjID logcallobj;
+  switch (loglevel) {
+    case LogLevel::kDebug:
+      logcallobj = Python::ObjID::kLoggingDebugCall;
+      break;
+    case LogLevel::kInfo:
+      logcallobj = Python::ObjID::kLoggingInfoCall;
+      break;
+    case LogLevel::kWarning:
+      logcallobj = Python::ObjID::kLoggingWarningCall;
+      break;
+    case LogLevel::kError:
+      logcallobj = Python::ObjID::kLoggingErrorCall;
+      break;
+    case LogLevel::kCritical:
+      logcallobj = Python::ObjID::kLoggingCriticalCall;
+      break;
+    default:
+      logcallobj = Python::ObjID::kLoggingInfoCall;
+      fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
+      break;
+  }
+
+  // Make sure we're good to go from any thread.
+  ScopedInterpreterLock lock;
+
+  PythonRef args(Py_BuildValue("(s)", msg.c_str()), PythonRef::kSteal);
+  obj(logcallobj).Call(args);
+}
 
 void Python::SetPythonException(const Exception& exc) {
   PyExcType exctype{exc.python_type()};
@@ -131,7 +170,8 @@ void Python::PrintStackTrace() {
   if (g_python->objexists(objid)) {
     g_python->obj(objid).Call();
   } else {
-    Log("Warning: Python::PrintStackTrace() called before bootstrap complete; "
+    Log(LogLevel::kWarning,
+        "Python::PrintStackTrace() called before bootstrap complete; "
         "not printing.");
   }
 }
@@ -854,6 +894,19 @@ auto Python::GetPyVector3f(PyObject* o) -> Vector3f {
 
 Python::Python() = default;
 
+auto Python::Create() -> Python* {
+  assert(InMainThread());
+
+  Python* python = new Python();
+  python->InitCorePython();
+
+  // After we bootstrap Python here in the main thread we release the GIL.
+  // We'll explicitly reacquire it anytime we need it (mainly in the logic
+  // thread once that comes up later).
+  PyEval_SaveThread();
+  return python;
+}
+
 static struct PyModuleDef ba_module_def = {PyModuleDef_HEAD_INIT};
 
 static auto ba_exec(PyObject* module) -> int {
@@ -886,161 +939,193 @@ static auto PyInit__ba() -> PyObject* {
   return module;
 }
 
-void Python::Reset(bool do_init) {
+auto Python::InitCorePython() -> void {
+  assert(!inited_);
+  assert(InMainThread());
+  // Flip on some extra runtime debugging options in debug builds.
+  // https://docs.python.org/3/library/devmode.html#devmode
+  int dev_mode{g_buildconfig.debug_build()};
+
+  // Pre-config as isolated if we include our own Python and as standard
+  // otherwise.
+  PyPreConfig preconfig;
+  if (g_platform->ContainsPythonDist()) {
+    PyPreConfig_InitIsolatedConfig(&preconfig);
+  } else {
+    PyPreConfig_InitPythonConfig(&preconfig);
+  }
+  preconfig.dev_mode = dev_mode;
+
+  // We want consistent utf-8 everywhere (Python used to default to
+  // windows-specific file encodings, etc.)
+  preconfig.utf8_mode = 1;
+
+  PyStatus status = Py_PreInitialize(&preconfig);
+  BA_PRECONDITION(!PyStatus_Exception(status));
+
+  // Configure as isolated if we include our own Python and as standard
+  // otherwise.
+  PyConfig config;
+  if (g_platform->ContainsPythonDist()) {
+    PyConfig_InitIsolatedConfig(&config);
+  } else {
+    PyConfig_InitPythonConfig(&config);
+  }
+  config.dev_mode = dev_mode;
+  if (!g_buildconfig.debug_build()) {
+    config.optimization_level = 1;
+  }
+
+  // In cases where we bundle Python, set up all paths explicitly.
+  // https://docs.python.org/3/c-api/init_config.html#path-configuration
+  if (g_platform->ContainsPythonDist()) {
+    PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
+    PyConfig_SetBytesString(&config, &config.base_executable, "");
+    PyConfig_SetBytesString(&config, &config.base_prefix, "");
+    PyConfig_SetBytesString(&config, &config.exec_prefix, "");
+    PyConfig_SetBytesString(&config, &config.executable, "");
+    PyConfig_SetBytesString(&config, &config.prefix, "");
+
+    // Interesting note: it seems we can pass relative paths here but
+    // they wind up in sys.path as absolute paths (unlike entries we add
+    // to sys.path after things are up and running).
+    if (g_buildconfig.ostype_windows()) {
+      // Windows Python looks for Lib and DLLs dirs by default, along with
+      // some others, but we want to be more explicit in limiting to these. It
+      // also seems that windows Python's paths can be incorrect if we're in
+      // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
+      // setups.
+
+      // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
+      // it seems the interpreter defaults point to ./lib (as of 3.8.5).
+      // Normally this doesn't matter since windows is case-insensitive but
+      // under WSL it does.
+      // So we currently bundle the dir as 'lib' and use that in our path so
+      // that everything is happy (both with us and with python.exe).
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("lib", nullptr));
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("DLLs", nullptr));
+    } else {
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale("pylib", nullptr));
+    }
+    config.module_search_paths_set = 1;
+  }
+
+  // Let Python know how to spin up our _ba module.
+  PyImport_AppendInittab("_ba", &PyInit__ba);
+
+  // Let Python know how to spin up the _bainternal module.
+  g_app_internal->DefineInternalModule();
+
+  // Init Python.
+  status = Py_InitializeFromConfig(&config);
+  BA_PRECONDITION(!PyStatus_Exception(status));
+
+  // Create a dict for execing just this bootstrap code in so
+  // we don't pollute the __main__ namespace.
+  auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
+
+  // Do a bit of basic bootstrapping here in the main thread.
+#include "ballistica/generated/python_embedded/bootstrap_monolithic.inc"
+  PyObject* result =
+      PyRun_String(bootstrap_monolithic_code, Py_file_input,
+                   bootstrap_context.get(), bootstrap_context.get());
+  if (result == nullptr) {
+    PyErr_PrintEx(0);
+
+    // Throw a simple exception so we don't get a stack trace.
+    throw std::logic_error(
+        "Error in ba Python bootstrapping. See log for details.");
+  }
+  Py_DECREF(result);
+
+  // Grab __main__ in case we need to use it later.
+  // FIXME: put this in objs_ with everything else.
+  PyObject* m;
+  BA_PRECONDITION(m = PyImport_AddModule("__main__"));
+  BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
+
+  // Make sure we're running the Python version we require.
+  const char* ver = Py_GetVersion();
+  if (strncmp(ver, "3.10", 4) != 0) {
+    FatalError("We require Python 3.10.x; instead found " + std::string(ver));
+  }
+}
+
+auto Python::InitBallisticaPython() -> void {
+  assert(InLogicThread());
+
+  // Create a dict for execing just this bootstrap code in so
+  // we don't pollute the __main__ namespace.
+  auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
+
+  // Get the app up and running.
+  // Run a few core bootstrappy things first:
+  // - get stdout/stderr redirection up so we can intercept python output
+  // - add our user and system script dirs to python path
+  // - create the ba.app instance.
+
+#include "ballistica/generated/python_embedded/bootstrap.inc"
+  PyObject* result =
+      PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
+                   bootstrap_context.get());
+  if (result == nullptr) {
+    PyErr_PrintEx(0);
+
+    // Throw a simple exception so we don't get a stack trace.
+    throw std::logic_error(
+        "Error in ba Python bootstrapping. See log for details.");
+  }
+  Py_DECREF(result);
+
+  // Import and grab all the Python stuff we use from C++.
+#include "ballistica/generated/python_embedded/binding.inc"
+
+  // If we've got any early log calls, it is now safe to push them along
+  // to Python.
+  assert(objexists(ObjID::kLoggingCriticalCall));
+  {
+    std::scoped_lock lock(early_log_lock_);
+    for (auto&& entry : early_logs_) {
+      LoggingCall(entry.first, "DEFERRED-EARLY-LOG: " + entry.second);
+    }
+    early_logs_.clear();
+  }
+  g_app_internal->PythonPostInit();
+
+  // Alright I guess let's pull ba in to main, since pretty
+  // much all interactive commands will be using it.
+  // If we ever build the game as a pure python module we should
+  // of course not do this.
+  BA_PRECONDITION(PyRun_SimpleString("import ba") == 0);
+
+  // Read the config file and store the config dict for easy access.
+  obj(ObjID::kReadConfigCall).Call();
+  StoreObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
+  assert(PyDict_Check(obj(ObjID::kConfig).get()));
+
+  // Turn off fancy-pants cyclic garbage-collection.
+  // We run it only at explicit times to avoid random hitches and keep
+  // things more deterministic.
+  // Non-reference-looped objects will still get cleaned up
+  // immediately, so we should try to structure things to avoid
+  // reference loops (just like Swift, ObjC, etc).
+  // FIXME - move this to Python code.
+  g_python->obj(Python::ObjID::kGCDisableCall).Call();
+  inited_ = true;
+}
+
+auto Python::Reset() -> void {
   assert(InLogicThread());
   assert(g_python);
   assert(g_platform);
+  assert(inited_);
 
-  bool was_inited = inited_;
-
-  if (inited_) {
-    ReleaseGamePadInput();
-    ReleaseKeyboardInput();
-    g_graphics->ReleaseFadeEndCommand();
-    inited_ = false;
-  }
-
-  if (!was_inited && do_init) {
-    // Flip on some extra runtime debugging options in debug builds.
-    // https://docs.python.org/3.10/library/devmode.html#devmode
-    int dev_mode{g_buildconfig.debug_build()};
-
-    // Pre-config as isolated if we include our own Python and as standard
-    // otherwise.
-    PyPreConfig preconfig;
-    if (g_platform->ContainsPythonDist()) {
-      PyPreConfig_InitIsolatedConfig(&preconfig);
-    } else {
-      PyPreConfig_InitPythonConfig(&preconfig);
-    }
-    preconfig.dev_mode = dev_mode;
-
-    // We want consistent utf-8 everywhere (Python used to default to
-    // windows-specific file encodings, etc.)
-    preconfig.utf8_mode = 1;
-
-    PyStatus status = Py_PreInitialize(&preconfig);
-    BA_PRECONDITION(!PyStatus_Exception(status));
-
-    // Configure as isolated if we include our own Python and as standard
-    // otherwise.
-    PyConfig config;
-    if (g_platform->ContainsPythonDist()) {
-      PyConfig_InitIsolatedConfig(&config);
-    } else {
-      PyConfig_InitPythonConfig(&config);
-    }
-    config.dev_mode = dev_mode;
-    if (!g_buildconfig.debug_build()) {
-      config.optimization_level = 1;
-    }
-
-    // In cases where we bundle Python, set up all paths explicitly.
-    // see https://docs.python.org/3.8/
-    //     c-api/init_config.html#path-configuration
-    if (g_platform->ContainsPythonDist()) {
-      PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
-      PyConfig_SetBytesString(&config, &config.base_executable, "");
-      PyConfig_SetBytesString(&config, &config.base_prefix, "");
-      PyConfig_SetBytesString(&config, &config.exec_prefix, "");
-      PyConfig_SetBytesString(&config, &config.executable, "");
-      PyConfig_SetBytesString(&config, &config.prefix, "");
-
-      // Interesting note: it seems we can pass relative paths here but
-      // they wind up in sys.path as absolute paths (unlike entries we add
-      // to sys.path after things are up and running).
-      if (g_buildconfig.ostype_windows()) {
-        // Windows Python looks for Lib and DLLs dirs by default, along with
-        // some others, but we want to be more explicit in limiting to these. It
-        // also seems that windows Python's paths can be incorrect if we're in
-        // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
-        // setups.
-
-        // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
-        // it seems the interpreter defaults point to ./lib (as of 3.8.5).
-        // Normally this doesn't matter since windows is case-insensitive but
-        // under WSL it does.
-        // So we currently bundle the dir as 'lib' and use that in our path so
-        // that everything is happy (both with us and with python.exe).
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("lib", nullptr));
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("DLLs", nullptr));
-      } else {
-        PyWideStringList_Append(&config.module_search_paths,
-                                Py_DecodeLocale("pylib", nullptr));
-      }
-      config.module_search_paths_set = 1;
-    }
-
-    // Let Python know how to spin up our _ba module.
-    PyImport_AppendInittab("_ba", &PyInit__ba);
-
-    // Inits our _ba module and runs Py_Initialize().
-    g_app_internal->PyInitialize(&config);
-
-    // Grab __main__ in case we need to use it later.
-    PyObject* m;
-    BA_PRECONDITION(m = PyImport_AddModule("__main__"));
-    BA_PRECONDITION(main_dict_ = PyModule_GetDict(m));
-
-    // Make sure we're running the Python version we require.
-    const char* ver = Py_GetVersion();
-    if (strncmp(ver, "3.10", 4) != 0) {
-      throw Exception("We require Python 3.10.x; instead found "
-                      + std::string(ver));
-    }
-
-    // Create a dict for execing our bootstrap code in so
-    // we don't pollute the __main__ namespace.
-    auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
-
-    // Get the app up and running.
-    // Run a few core bootstrappy things first:
-    // - get stdout/stderr redirection up so we can intercept python output
-    // - add our user and system script dirs to python path
-    // - create the ba.app instance.
-
-#include "ballistica/generated/python_embedded/bootstrap.inc"
-    PyObject* result =
-        PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
-                     bootstrap_context.get());
-    if (result == nullptr) {
-      PyErr_PrintEx(0);
-
-      // Throw a simple exception so we don't get a stack trace.
-      throw std::logic_error(
-          "Error in ba Python bootstrapping. See log for details.");
-    }
-    Py_DECREF(result);
-
-    // Import and grab all the Python stuff we use from C++.
-#include "ballistica/generated/python_embedded/binding.inc"
-
-    g_app_internal->PythonPostInit();
-
-    // Alright I guess let's pull ba in to main, since pretty
-    // much all interactive commands will be using it.
-    // If we ever build the game as a pure python module we should
-    // of course not do this.
-    BA_PRECONDITION(PyRun_SimpleString("import ba") == 0);
-
-    // Read the config file and store the config dict for easy access.
-    obj(ObjID::kReadConfigCall).Call();
-    StoreObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
-    assert(PyDict_Check(obj(ObjID::kConfig).get()));
-
-    // Turn off fancy-pants cyclic garbage-collection.
-    // We run it only at explicit times to avoid random hitches and keep
-    // things more deterministic.
-    // Non-reference-looped objects will still get cleaned up
-    // immediately, so we should try to structure things to avoid
-    // reference loops (just like Swift, ObjC, etc).
-    g_python->obj(Python::ObjID::kGCDisableCall).Call();
-  }
-  if (do_init) {
-    inited_ = true;
-  }
+  ReleaseGamePadInput();
+  ReleaseKeyboardInput();
+  g_graphics->ReleaseFadeEndCommand();
 }
 
 auto Python::GetModuleMethods() -> std::vector<PyMethodDef> {
@@ -1100,22 +1185,20 @@ auto Python::InitModuleClasses(PyObject* module) -> void {
 }
 
 void Python::PushObjCall(ObjID obj_id) {
-  g_game->thread()->PushCall([obj_id] {
-    ScopedSetContext cp(g_game->GetUIContext());
+  g_logic->thread()->PushCall([obj_id] {
+    ScopedSetContext cp(g_logic->GetUIContext());
     g_python->obj(obj_id).Call();
   });
 }
 
 void Python::PushObjCall(ObjID obj_id, const std::string& arg) {
-  g_game->thread()->PushCall([this, obj_id, arg] {
-    ScopedSetContext cp(g_game->GetUIContext());
+  g_logic->thread()->PushCall([this, obj_id, arg] {
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", arg.c_str()),
                    ballistica::PythonRef::kSteal);
     obj(obj_id).Call(args);
   });
 }
-
-Python::~Python() { Reset(false); }
 
 auto Python::GetResource(const char* key, const char* fallback_resource,
                          const char* fallback_value) -> std::string {
@@ -1155,14 +1238,15 @@ auto Python::GetResource(const char* key, const char* fallback_resource,
     try {
       return GetPyString(results.get());
     } catch (const std::exception&) {
-      Log("GetResource failed for '" + std::string(key) + "'");
+      Log(LogLevel::kError,
+          "GetResource failed for '" + std::string(key) + "'");
 
       // Hmm; I guess let's just return the key to help identify/fix the
       // issue?..
       return std::string("<res-err: ") + key + ">";
     }
   } else {
-    Log("GetResource failed for '" + std::string(key) + "'");
+    Log(LogLevel::kError, "GetResource failed for '" + std::string(key) + "'");
   }
 
   // Hmm; I guess let's just return the key to help identify/fix the issue?..
@@ -1180,11 +1264,13 @@ auto Python::GetTranslation(const char* category, const char* s)
     try {
       return GetPyString(results.get());
     } catch (const std::exception&) {
-      Log("GetTranslation failed for '" + std::string(category) + "'");
+      Log(LogLevel::kError,
+          "GetTranslation failed for '" + std::string(category) + "'");
       return "";
     }
   } else {
-    Log("GetTranslation failed for category '" + std::string(category) + "'");
+    Log(LogLevel::kError,
+        "GetTranslation failed for category '" + std::string(category) + "'");
   }
   return "";
 }
@@ -1192,11 +1278,11 @@ auto Python::GetTranslation(const char* category, const char* s)
 void Python::RunDeepLink(const std::string& url) {
   assert(InLogicThread());
   if (objexists(ObjID::kDeepLinkCall)) {
-    ScopedSetContext cp(g_game->GetUIContext());
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kDeepLinkCall).Call(args);
   } else {
-    Log("Error on deep-link call");
+    Log(LogLevel::kError, "Error on deep-link call");
   }
 }
 
@@ -1217,11 +1303,11 @@ void Python::PlayMusic(const std::string& music_type, bool continuous) {
 
 void Python::ShowURL(const std::string& url) {
   if (objexists(ObjID::kShowURLWindowCall)) {
-    ScopedSetContext cp(g_game->GetUIContext());
+    ScopedSetContext cp(g_logic->GetUIContext());
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     obj(ObjID::kShowURLWindowCall).Call(args);
   } else {
-    Log("Error: ShowURLWindowCall nonexistent.");
+    Log(LogLevel::kError, "ShowURLWindowCall nonexistent.");
   }
 }
 
@@ -1245,7 +1331,7 @@ auto Python::SingleMemberTuple(const PythonRef& member) -> PythonRef {
 
 auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
   assert(message);
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(si)", message->c_str(), client_id),
                  PythonRef::kSteal);
   PythonRef result = obj(ObjID::kFilterChatMessageCall).Call(args);
@@ -1264,42 +1350,16 @@ auto Python::FilterChatMessage(std::string* message, int client_id) -> bool {
   try {
     *message = Python::GetPyString(result.get());
   } catch (const std::exception& e) {
-    Log("Error getting string from chat filter: " + std::string(e.what()));
+    Log(LogLevel::kError,
+        "Error getting string from chat filter: " + std::string(e.what()));
   }
   return true;
 }
 
 void Python::HandleLocalChatMessage(const std::string& message) {
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(s)", message.c_str()), PythonRef::kSteal);
   obj(ObjID::kHandleLocalChatMessageCall).Call(args);
-}
-
-void Python::DispatchScoresToBeatResponse(
-    bool success, const std::list<ScoreToBeat>& scores_to_beat,
-    void* callback_in) {
-  // callback_in was a newly allocated PythonContextCall.
-  // This will make it ref-counted so it'll die when we're done with it
-  auto callback(
-      Object::MakeRefCounted(static_cast<PythonContextCall*>(callback_in)));
-
-  // Empty type denotes error.
-  if (!success) {
-    PythonRef args(Py_BuildValue("(O)", Py_None), PythonRef::kSteal);
-    callback->Run(args);
-  } else {
-    PyObject* py_list = PyList_New(0);
-    for (const auto& i : scores_to_beat) {
-      PyObject* val = Py_BuildValue("{sssssssd}", "player", i.player.c_str(),
-                                    "type", i.type.c_str(), "value",
-                                    i.value.c_str(), "time", i.time);
-      PyList_Append(py_list, val);
-      Py_DECREF(val);
-    }
-    PythonRef args(Py_BuildValue("(O)", py_list), PythonRef::kSteal);
-    Py_DECREF(py_list);
-    callback->Run(args);
-  }
 }
 
 // Put together a node message with all args on the provided tuple (starting
@@ -1506,7 +1566,7 @@ auto Python::GetPythonFileLocation(bool pretty) -> std::string {
 void Python::SetNodeAttr(Node* node, const char* attr_name,
                          PyObject* value_obj) {
   assert(node);
-  GameStream* out_stream = node->scene()->GetGameStream();
+  SceneStream* out_stream = node->scene()->GetSceneStream();
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
     case NodeAttributeType::kFloat: {
@@ -1776,9 +1836,9 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
         attr_vals.emplace_back(
             t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
       } catch (const std::exception&) {
-        Log("ERROR: Attr not found on initial attr set: '"
-            + std::string(PyUnicode_AsUTF8(key)) + "' on " + type + " node '"
-            + name + "'");
+        Log(LogLevel::kError, "Attr not found on initial attr set: '"
+                                  + std::string(PyUnicode_AsUTF8(key)) + "' on "
+                                  + type + " node '" + name + "'");
       }
     }
 
@@ -1788,8 +1848,9 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
       try {
         SetNodeAttr(node, i.first->name().c_str(), i.second);
       } catch (const std::exception& e) {
-        Log("ERROR: exception in initial attr set for attr '" + i.first->name()
-            + "' on " + type + " node '" + name + "':" + e.what());
+        Log(LogLevel::kError, "Exception in initial attr set for attr '"
+                                  + i.first->name() + "' on " + type + " node '"
+                                  + name + "':" + e.what());
       }
     }
   }
@@ -1802,10 +1863,12 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     if (PythonClassNode::Check(owner_obj)) {
       Node* owner_node = GetPyNode(owner_obj, true);
       if (owner_node == nullptr) {
-        Log("ERROR: empty node-ref passed for 'owner'; pass None if you want "
+        Log(LogLevel::kError,
+            "Empty node-ref passed for 'owner'; pass None if you want "
             "no owner.");
       } else if (owner_node->scene() != node->scene()) {
-        Log("ERROR: owner node is from a different scene; ignoring.");
+        Log(LogLevel::kError,
+            "Owner node is from a different scene; ignoring.");
       } else {
         owner_node->AddDependentNode(node);
       }
@@ -1820,13 +1883,14 @@ auto Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
   // do.
   try {
     // Tell clients to do the same.
-    if (GameStream* output_stream = scene->GetGameStream()) {
+    if (SceneStream* output_stream = scene->GetSceneStream()) {
       output_stream->NodeOnCreate(node);
     }
     node->OnCreate();
   } catch (const std::exception& e) {
-    Log("ERROR: exception in OnCreate() for node "
-        + ballistica::ObjToString(node) + "':" + e.what());
+    Log(LogLevel::kError, "Exception in OnCreate() for node "
+                              + ballistica::ObjToString(node)
+                              + "':" + e.what());
   }
 
   return node;
@@ -2034,24 +2098,25 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
 }
 
 void Python::IssueCallInLogicThreadWarning(PyObject* call_obj) {
-  Log("WARNING: ba.pushcall() called from the game thread with "
+  Log(LogLevel::kWarning,
+      "ba.pushcall() called from the logic thread with "
       "from_other_thread set to true (call "
-      + ObjToString(call_obj) + " at " + GetPythonFileLocation()
-      + "). That arg should only be used from other threads.");
+          + ObjToString(call_obj) + " at " + GetPythonFileLocation()
+          + "). That arg should only be used from other threads.");
 }
 
 void Python::LaunchStringEdit(TextWidget* w) {
   assert(InLogicThread());
   BA_PRECONDITION(w);
 
-  ScopedSetContext cp(g_game->GetUIContext());
-  g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
+  ScopedSetContext cp(g_logic->GetUIContext());
+  g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish));
 
   // Gotta run this in the next cycle.
   PythonRef args(Py_BuildValue("(Osi)", w->BorrowPyRef(),
                                w->description().c_str(), w->max_chars()),
                  PythonRef::kSteal);
-  g_game->PushPythonCallArgs(
+  g_logic->PushPythonCallArgs(
       Object::New<PythonContextCall>(obj(ObjID::kOnScreenKeyboardClass).get()),
       args);
 }
@@ -2094,11 +2159,11 @@ void Python::HandleFriendScoresCB(const FriendScoreSet& score_set) {
     PyObject* py_list = PyList_New(0);
     std::string icon_str;
 #if BA_USE_GOOGLE_PLAY_GAME_SERVICES
-    icon_str = g_game->CharStr(SpecialChar::kGooglePlayGamesLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGooglePlayGamesLogo);
 #elif BA_USE_GAME_CIRCLE
-    icon_str = g_game->CharStr(SpecialChar::kGameCircleLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGameCircleLogo);
 #elif BA_USE_GAME_CENTER
-    icon_str = g_game->CharStr(SpecialChar::kGameCenterLogo);
+    icon_str = g_logic->CharStr(SpecialChar::kGameCenterLogo);
 #endif
     for (auto&& i : score_set.entries) {
       PyObject* obj =
@@ -2118,7 +2183,7 @@ auto Python::HandleKeyPressEvent(const SDL_Keysym& keysym) -> bool {
   if (!keyboard_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* keyboard = g_input->keyboard_input();
   PythonRef args(
       Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONDOWN", "button",
@@ -2133,7 +2198,7 @@ auto Python::HandleKeyReleaseEvent(const SDL_Keysym& keysym) -> bool {
   if (!keyboard_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* keyboard = g_input->keyboard_input();
   PythonRef args(Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONUP", "button",
                                static_cast<int>(keysym.sym), "input_device",
@@ -2150,7 +2215,7 @@ auto Python::HandleJoystickEvent(const SDL_Event& event,
   if (!game_pad_call_.exists()) {
     return false;
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   InputDevice* device{};
 
   device = input_device;
@@ -2248,64 +2313,67 @@ auto Python::GetContextBaseString() -> std::string {
   return s;
 }
 
-void Python::LogContextForCallableLabel(const char* label) {
+void Python::PrintContextForCallableLabel(const char* label) {
   assert(InLogicThread());
   assert(label);
   std::string s = std::string("  root call: ") + label;
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextNonLogicThread() {
+void Python::PrintContextNonLogicThread() {
   std::string s =
-      std::string("  root call: <not in game thread; context unavailable>");
-  Log(s);
+      std::string("  root call: <not in logic thread; context unavailable>");
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextEmpty() {
+void Python::PrintContextEmpty() {
   assert(InLogicThread());
   std::string s = std::string("  root call: <unavailable>");
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void Python::LogContextAuto() {
+void Python::PrintContextAuto() {
   // Lets print whatever context info is available.
   // FIXME: If we have recursive calls this may not print
   // the context we'd expect; we'd need a unified stack.
   if (!InLogicThread()) {
-    LogContextNonLogicThread();
+    PrintContextNonLogicThread();
   } else if (const char* label = ScopedCallLabel::current_label()) {
-    LogContextForCallableLabel(label);
+    PrintContextForCallableLabel(label);
   } else if (PythonCommand* cmd = PythonCommand::current_command()) {
-    cmd->LogContext();
+    cmd->PrintContext();
   } else if (PythonContextCall* call = PythonContextCall::current_call()) {
-    call->LogContext();
+    call->PrintContext();
   } else {
-    LogContextEmpty();
+    PrintContextEmpty();
   }
 }
 
 void Python::AcquireGIL() {
+  assert(InLogicThread());
   auto debug_timing{g_app->debug_timing};
   millisecs_t startms{debug_timing ? Platform::GetCurrentMilliseconds() : 0};
 
-  if (thread_state_) {
-    PyEval_RestoreThread(thread_state_);
-    thread_state_ = nullptr;
+  if (logic_thread_state_) {
+    PyEval_RestoreThread(logic_thread_state_);
+    logic_thread_state_ = nullptr;
   }
 
   if (debug_timing) {
     auto duration{Platform::GetCurrentMilliseconds() - startms};
     if (duration > (1000 / 120)) {
-      Log("GIL acquire took too long (" + std::to_string(duration) + " ms).",
-          true, false);
+      Log(LogLevel::kInfo,
+          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
     }
   }
 }
+
 void Python::ReleaseGIL() {
-  assert(thread_state_ == nullptr);
-  thread_state_ = PyEval_SaveThread();
+  assert(InLogicThread());
+  assert(logic_thread_state_ == nullptr);
+  logic_thread_state_ = PyEval_SaveThread();
 }
 
 void Python::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
@@ -2363,7 +2431,7 @@ void Python::HandleDeviceMenuPress(InputDevice* input_device) {
   if (g_input->IsInputLocked()) {
     return;
   }
-  ScopedSetContext cp(g_game->GetUIContext());
+  ScopedSetContext cp(g_logic->GetUIContext());
   PythonRef args(Py_BuildValue("(O)", input_device ? input_device->BorrowPyRef()
                                                    : Py_None),
                  PythonRef::kSteal);
@@ -2483,7 +2551,8 @@ auto Python::GetRawConfigValue(const char* name, float default_value) -> float {
   try {
     return GetPyFloat(value);
   } catch (const std::exception&) {
-    Log("expected a float for config value '" + std::string(name) + "'");
+    Log(LogLevel::kError,
+        "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
 }
@@ -2503,7 +2572,8 @@ auto Python::GetRawConfigValue(const char* name,
     }
     return GetPyFloat(value);
   } catch (const std::exception&) {
-    Log("expected a float for config value '" + std::string(name) + "'");
+    Log(LogLevel::kError,
+        "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
 }
@@ -2518,7 +2588,8 @@ auto Python::GetRawConfigValue(const char* name, int default_value) -> int {
   try {
     return static_cast_check_fit<int>(GetPyInt64(value));
   } catch (const std::exception&) {
-    Log("Expected an int value for config value '" + std::string(name) + "'.");
+    Log(LogLevel::kError,
+        "Expected an int value for config value '" + std::string(name) + "'.");
     return default_value;
   }
 }
@@ -2533,7 +2604,8 @@ auto Python::GetRawConfigValue(const char* name, bool default_value) -> bool {
   try {
     return GetPyBool(value);
   } catch (const std::exception&) {
-    Log("Expected a bool value for config value '" + std::string(name) + "'.");
+    Log(LogLevel::kError,
+        "Expected a bool value for config value '" + std::string(name) + "'.");
     return default_value;
   }
 }
@@ -2556,7 +2628,7 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
     if (length >= 200.0) {
       static bool warned = false;
       if (!warned) {
-        Log("Warning: time value "
+        Log(LogLevel::kWarning, "Time value "
             +std::to_string(length)+" passed as seconds;"
             " did you mean milliseconds?"
             " (if so, pass suppress_format_warning=True to stop this warning)");
@@ -2570,7 +2642,7 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
     if (length < 1.0 && length > 0.0000001) {
       static bool warned = false;
       if (!warned) {
-        Log("Warning: time value "
+        Log(LogLevel::kWarning, "Time value "
             + std::to_string(length) + " passed as milliseconds;"
             " did you mean seconds?"
             " (if so, pass suppress_format_warning=True to stop this warning)");
@@ -2581,8 +2653,9 @@ void Python::TimeFormatCheck(TimeFormat time_format, PyObject* length_obj) {
   } else {
     static bool warned = false;
     if (!warned) {
-      BA_LOG_ONCE("TimeFormatCheck got timeformat value: '"
-                  + std::to_string(static_cast<int>(time_format)) + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "TimeFormatCheck got timeformat value: '"
+                      + std::to_string(static_cast<int>(time_format)) + "'");
       warned = true;
     }
   }

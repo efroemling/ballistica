@@ -2,8 +2,8 @@
 
 #include "ballistica/python/python_context_call.h"
 
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
 
@@ -14,17 +14,17 @@ PythonContextCall* PythonContextCall::current_call_ = nullptr;
 
 PythonContextCall::PythonContextCall(PyObject* obj_in) {
   assert(InLogicThread());
-  // as a sanity test, store the current context ptr just to make sure it
-  // hasn't changed when we run
+  // As a sanity test, store the current context ptr just to make sure it
+  // hasn't changed when we run.
 #if BA_DEBUG_BUILD
   context_target_sanity_test_ = context_.target.get();
 #endif  // BA_DEBUG_BUILD
   BA_PRECONDITION(PyCallable_Check(obj_in));
   object_.Acquire(obj_in);
   GetTrace();
-  // ok now we need to register this call with whatever the context is;
+  // Ok now we need to register this call with whatever the context is;
   // it can be stored in a host-activity, a host-session, or the UI context.
-  // whoever it is registered with will explicitly release its contents on
+  // Whoever it is registered with will explicitly release its contents on
   // shutdown and ensure that nothing gets run after that point.
   if (HostActivity* ha = context_.GetHostActivity()) {
     ha->RegisterCall(this);
@@ -75,7 +75,7 @@ void PythonContextCall::Run(PyObject* args) {
   if (!g_python) {
     // This probably means the game is dying; let's not
     // throw an exception here so we don't mask the original error.
-    Log("PythonCommand: not running due to null g_python");
+    Log(LogLevel::kError, "PythonCommand: not running due to null g_python");
     return;
   }
 
@@ -86,7 +86,8 @@ void PythonContextCall::Run(PyObject* args) {
   // Sanity test: make sure our context didn't go away.
 #if BA_DEBUG_BUILD
   if (context_.target.get() != context_target_sanity_test_) {
-    Log("WARNING: running Call after it's context has died: " + object_.Str());
+    Log(LogLevel::kWarning,
+        "Running Call after it's context has died: " + object_.Str());
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -112,8 +113,8 @@ void PythonContextCall::Run(PyObject* args) {
     // Save/restore python error or it can mess with context print calls.
     BA_PYTHON_ERROR_SAVE;
 
-    Log("ERROR: exception in Python call:");
-    LogContext();
+    PySys_WriteStderr("Exception in Python call:\n");
+    PrintContext();
     BA_PYTHON_ERROR_RESTORE;
 
     // We pass zero here to avoid grabbing references to this exception
@@ -124,12 +125,12 @@ void PythonContextCall::Run(PyObject* args) {
   }
 }
 
-void PythonContextCall::LogContext() {
+void PythonContextCall::PrintContext() {
   assert(InLogicThread());
   std::string s = std::string("  root call: ") + object().Str();
   s += ("\n  root call origin: " + file_loc());
   s += g_python->GetContextBaseString();
-  Log(s);
+  PySys_WriteStderr("%s\n", s.c_str());
 }
 
 }  // namespace ballistica

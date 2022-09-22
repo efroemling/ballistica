@@ -21,7 +21,7 @@ class LoginProxyRequestMessage(Message):
     """Request send to the cloud to ask for a login-proxy."""
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [LoginProxyRequestResponse]
 
 
@@ -48,7 +48,7 @@ class LoginProxyStateQueryMessage(Message):
     proxykey: Annotated[str, IOAttrs('k')]
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [LoginProxyStateQueryResponse]
 
 
@@ -82,7 +82,7 @@ class PingMessage(Message):
     """Standard ping."""
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [PingResponse]
 
 
@@ -99,7 +99,7 @@ class TestMessage(Message):
     testfoo: Annotated[int, IOAttrs('f')]
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [TestResponse]
 
 
@@ -130,7 +130,7 @@ class WorkspaceFetchMessage(Message):
     state: Annotated[WorkspaceFetchState, IOAttrs('s')]
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [WorkspaceFetchResponse]
 
 

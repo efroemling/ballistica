@@ -2,7 +2,7 @@
 
 #include "ballistica/ui/widget/widget.h"
 
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/class/python_class_widget.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -46,7 +46,8 @@ void Widget::SetDepthRange(float min_depth, float max_depth) {
 
 auto Widget::IsInMainStack() const -> bool {
   if (!g_ui) {
-    BA_LOG_ONCE("Widget::IsInMainStack() called before ui creation.");
+    BA_LOG_ONCE(LogLevel::kError,
+                "Widget::IsInMainStack() called before ui creation.");
     return false;
   }
   // Navigate up to the top of the hierarchy and see if the
@@ -87,7 +88,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
   if (selected_ && on_select_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking
     // with UI from within a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_select_call_));
   }
 }
@@ -200,9 +201,10 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
   if (std::abs(x_test - x_old) > 0.01f || std::abs(y_test - y_old) > 0.01f) {
-    Log("ScreenPointToWidget sanity check error: expected ("
-        + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
-        + std::to_string(x_test) + "," + std::to_string(y_test) + ")");
+    Log(LogLevel::kError,
+        "ScreenPointToWidget sanity check error: expected ("
+            + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
+            + std::to_string(x_test) + "," + std::to_string(y_test) + ")");
   }
 #endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
 }

@@ -5,19 +5,18 @@
 #include <list>
 
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_action.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/game_stream.h"
-#include "ballistica/game/host_activity.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/component/sound.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/host_activity.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
@@ -25,6 +24,7 @@
 #include "ballistica/scene/node/node.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -45,7 +45,7 @@ auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   HostActivity* host_activity =
-      g_game->GetForegroundContext().GetHostActivity();
+      g_logic->GetForegroundContext().GetHostActivity();
   if (!host_activity) {
     throw Exception(PyExcType::kContext);
   }
@@ -57,7 +57,7 @@ auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
     snprintf(buffer, sizeof(buffer), "#%d:   type: %-14s desc: %s", count,
              i->type()->name().c_str(), i->label().c_str());
     s += buffer;
-    Log(buffer);
+    Log(LogLevel::kInfo, buffer);
     count++;
   }
   Py_RETURN_NONE;
@@ -343,7 +343,7 @@ auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     e.spread = spread;
     e.chunk_type = chunk_type;
     e.tendril_type = tendril_type;
-    if (GameStream* output_stream = scene->GetGameStream()) {
+    if (SceneStream* output_stream = scene->GetSceneStream()) {
       output_stream->EmitBGDynamics(e);
     }
 #if !BA_HEADLESS_BUILD
@@ -383,9 +383,9 @@ auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
     return nullptr;
   }
 
-  // Note: we return None if not in the game thread.
+  // Note: we return None if not in the logic thread.
   HostActivity* h = InLogicThread()
-                        ? g_game->GetForegroundContext().GetHostActivity()
+                        ? g_logic->GetForegroundContext().GetHostActivity()
                         : nullptr;
   if (h != nullptr) {
     PyObject* obj = h->GetPyActivity();
@@ -406,7 +406,7 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
-  cJSON* party = g_game->game_roster();
+  cJSON* party = g_logic->game_roster();
   assert(party);
   int len = cJSON_GetArraySize(party);
   for (int i = 0; i < len; i++) {
@@ -460,8 +460,8 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
       account_id = g_app_internal->GetPublicV1AccountID();
     } else {
       auto client2 =
-          g_game->connections()->connections_to_clients().find(clientid);
-      if (client2 != g_game->connections()->connections_to_clients().end()) {
+          g_logic->connections()->connections_to_clients().find(clientid);
+      if (client2 != g_logic->connections()->connections_to_clients().end()) {
         account_id = client2->second->peer_public_account_id();
       }
     }
@@ -491,27 +491,6 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-auto PyGetScoresToBeat(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* level;
-  const char* config;
-  PyObject* callback_obj = Py_None;
-  static const char* kwlist[] = {"level", "config", "callback", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
-                                   const_cast<char**>(kwlist), &level, &config,
-                                   &callback_obj)) {
-    return nullptr;
-  }
-
-  // Allocate a Call object for this and pass its pointer to the main thread;
-  // we'll ref/de-ref it when it comes back.
-  auto* call = Object::NewDeferred<PythonContextCall>(callback_obj);
-  g_app_flavor->PushGetScoresToBeatCall(level, config, call);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
 auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
@@ -523,7 +502,7 @@ auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
     throw Exception(PyExcType::kContext);
   }
 #if BA_DEBUG_BUILD
-  g_game->SetDebugSpeedExponent(speed);
+  g_logic->SetDebugSpeedExponent(speed);
 #else
   throw Exception("This call only functions in the debug build.");
 #endif
@@ -533,8 +512,8 @@ auto PySetDebugSpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
 
 auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(g_game);
-  return PyLong_FromLong(g_game->replay_speed_exponent());
+  assert(g_logic);
+  return PyLong_FromLong(g_logic->replay_speed_exponent());
   BA_PYTHON_CATCH;
 }
 
@@ -542,8 +521,8 @@ auto PySetReplaySpeedExponent(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) return nullptr;
-  assert(g_game);
-  g_game->SetReplaySpeedExponent(speed);
+  assert(g_logic);
+  g_logic->SetReplaySpeedExponent(speed);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -556,8 +535,8 @@ auto PyResetGameActivityTracking(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (g_game) {
-    g_game->ResetActivityTracking();
+  if (g_logic) {
+    g_logic->ResetActivityTracking();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -628,13 +607,6 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Sets the debug speed scale for the game. Actual speed is "
        "pow(2,speed)."},
-
-      {"get_scores_to_beat", (PyCFunction)PyGetScoresToBeat,
-       METH_VARARGS | METH_KEYWORDS,
-       "get_scores_to_beat(level: str, config: str, callback: Callable) -> "
-       "None\n"
-       "\n"
-       "(internal)"},
 
       {"get_game_roster", (PyCFunction)PyGetGameRoster,
        METH_VARARGS | METH_KEYWORDS,

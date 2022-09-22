@@ -19,12 +19,6 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
   std::list<Object::Ref<TextSpanBoundsCacheEntry>>::iterator list_iterator_;
 };
 
-void TextGraphics::Init() {
-  assert(InLogicThread());
-  assert(g_text_graphics == nullptr);
-  g_text_graphics = new TextGraphics();
-}
-
 TextGraphics::TextGraphics() {
   // Init glyph values for our custom font pages
   // (just a 5x5 array currently).
@@ -337,7 +331,7 @@ TextGraphics::TextGraphics() {
         if (g.tex_max_x > 1.0f || g.tex_max_x < 0.0f || g.tex_min_x > 1.0
             || g.tex_min_x < 0.0f || g.tex_max_y > 1.0f || g.tex_max_y < 0.0
             || g.tex_min_y > 1.0f || g.tex_min_y < 0.0f) {
-          BA_LOG_ONCE("Warning: glyph bounds error");
+          BA_LOG_ONCE(LogLevel::kWarning, "glyph bounds error");
         }
       }
     }
@@ -1027,6 +1021,7 @@ void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
     g_platform->GetTextBoundsAndWidth(s, &entry->r, &entry->width);
   } else {
     BA_LOG_ONCE(
+        LogLevel::kError,
         "FIXME: GetOSTextSpanBoundsAndWidth unimplemented on this platform");
     r->l = 0.0f;
     r->r = 1.0f;

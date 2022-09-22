@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import sys
 import time
+import logging
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
@@ -334,11 +335,11 @@ class ServerController:
 
         if self._first_run:
             curtimestr = time.strftime('%c')
-            _ba.log(
+            startupmsg = (
                 f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
                 f' ({app.build_number})'
-                f' entering server-mode {curtimestr}{Clr.RST}',
-                to_server=False)
+                f' entering server-mode {curtimestr}{Clr.RST}')
+            logging.info(startupmsg)
 
         if sessiontype is FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name

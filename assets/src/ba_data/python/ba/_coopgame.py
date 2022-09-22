@@ -55,19 +55,6 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         # Preload achievement images in case we get some.
         _ba.timer(2.0, WeakCall(self._preload_achievements))
 
-        # Let's ask the server for a 'time-to-beat' value.
-        levelname = self._get_coop_level_name()
-        campaign = self.session.campaign
-        assert campaign is not None
-        config_str = (str(len(self.players)) + 'p' + campaign.getlevel(
-            self.settings_raw['name']).get_score_version_string().replace(
-                ' ', '_'))
-        _ba.get_scores_to_beat(levelname, config_str,
-                               WeakCall(self._on_got_scores_to_beat))
-
-    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
-        pass
-
     def _show_standard_scores_to_beat_ui(self,
                                          scores: list[dict[str, Any]]) -> None:
         from efro.util import asserttype

@@ -407,7 +407,8 @@ void Huffman::decompress(const char* data, uint32_t length,
 
     // fixme??
     if (bytes > kMaxPacketSize) {
-      Log("HUFFMAN DECOMPRESSING TO TOO LARGE: " + std::to_string(bytes));
+      Log(LogLevel::kError, "HUFFMAN DECOMPRESSING TO TOO LARGE: "
+          + std::to_string(bytes));
     }
     assert(bytes <= kMaxPacketSize);
 
@@ -459,7 +460,7 @@ void Huffman::train(const char* buffer, int len) {
     len--;
   }
   if (total_length > kTrainingLength) {
-    Log("HUFFMAN TRAINING COMPLETE:");
+    Log(LogLevel::kInfo, "HUFFMAN TRAINING COMPLETE:");
 
     build();
 
@@ -470,7 +471,7 @@ void Huffman::train(const char* buffer, int len) {
       if (i < 255) s += ",";
     }
     s += "}";
-    Log("FINAL: " + s);
+    Log(LogLevel::kInfo, "FINAL: " + s);
   }
 }
 #endif  // HUFFMAN_TRAINING_MODE

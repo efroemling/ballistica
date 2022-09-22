@@ -66,8 +66,8 @@ class BGDynamicsServer {
   };
   class StepData : public Object {
    public:
-    auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-      return ThreadIdentifier::kBGDynamics;
+    auto GetDefaultOwnerThread() const -> ThreadTag override {
+      return ThreadTag::kBGDynamics;
     }
     Vector3f cam_pos{0.0f, 0.0f, 0.0f};
 
@@ -80,7 +80,7 @@ class BGDynamicsServer {
     std::vector<std::pair<BGDynamicsFuseData*, FuseStepData> > fuse_step_data_;
   };
 
-  explicit BGDynamicsServer(Thread* thread);
+  BGDynamicsServer();
 
   auto time() const -> uint32_t { return time_; }
   auto graphics_quality() const -> GraphicsQuality { return graphics_quality_; }

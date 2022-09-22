@@ -11,10 +11,10 @@
 #include "ballistica/platform/sdl/sdl_app.h"
 #else
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/assets.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/mesh/mesh_data.h"
 #include "ballistica/graphics/renderer.h"
-#include "ballistica/media/media.h"
 #include "ballistica/platform/platform.h"
 #endif
 
@@ -30,10 +30,9 @@ void GraphicsServer::FullscreenCheck() {
 }
 #endif
 
-GraphicsServer::GraphicsServer(Thread* thread) : thread_(thread) {
-  // We're a singleton.
+GraphicsServer::GraphicsServer() : thread_(g_main_thread) {
+  // We're a singleton; make sure we don't already exist.
   assert(g_graphics_server == nullptr);
-  g_graphics_server = this;
 
   // For janky old non-event-push mode, just fall back on a timer for rendering.
   if (!g_platform->IsEventPushMode()) {
@@ -51,7 +50,7 @@ void GraphicsServer::SetRenderHold() {
 
 void GraphicsServer::SetFrameDef(FrameDef* framedef) {
   // Note: we're just setting the framedef directly here
-  // even though this gets called from the game thread.
+  // even though this gets called from the logic thread.
   // Ideally it would seem we should push these to our thread
   // event list, but currently we spin-lock waiting for new
   // frames to appear which would prevent that from working;
@@ -75,19 +74,19 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
   }
 
   // Do some incremental loading every time we try to render.
-  g_media->RunPendingGraphicsLoads();
+  g_assets->RunPendingGraphicsLoads();
 
   // Spin and wait for a short bit for a frame_def to appear. If it does, we
-  // grab it, render it, and also message the game thread to start generating
+  // grab it, render it, and also message the logic thread to start generating
   // another one.
   while (true) {
     if (frame_def_) {
       FrameDef* frame_def = frame_def_;
       frame_def_ = nullptr;
 
-      // Tell the game thread we're ready for the next frame_def so it can start
-      // building it while we render this one.
-      g_game->PushFrameDefRequest();
+      // Tell the logic thread we're ready for the next frame_def so it can
+      // start building it while we render this one.
+      g_logic->PushFrameDefRequest();
       return frame_def;
     }
 
@@ -174,7 +173,7 @@ void GraphicsServer::TryRender() {
       FinishRenderFrameDef(frame_def);
     }
 
-    // Send this frame_def back to the game thread for deletion.
+    // Send this frame_def back to the logic thread for deletion.
     g_graphics->ReturnCompletedFrameDef(frame_def);
   }
 }
@@ -185,7 +184,7 @@ void GraphicsServer::ReloadMedia() {
 
   // Immediately unload all renderer data here in this thread.
   if (renderer_) {
-    g_media->UnloadRendererBits(true, true);
+    g_assets->UnloadRendererBits(true, true);
   }
 
   // Set a render-hold so we ignore all frame_defs up until the point at which
@@ -195,11 +194,11 @@ void GraphicsServer::ReloadMedia() {
   assert(g_graphics_server);
   SetRenderHold();
 
-  // Now tell the game thread to kick off loads for everything, flip on
+  // Now tell the logic thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->thread()->PushCall([this] {
-    g_media->MarkAllMediaForLoad();
+  g_logic->thread()->PushCall([this] {
+    g_assets->MarkAllAssetsForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
   });
@@ -210,7 +209,7 @@ void GraphicsServer::RebuildLostContext() {
   assert(InGraphicsThread());
 
   if (!renderer_) {
-    Log("Error: No renderer on GraphicsServer::_rebuildContext.");
+    Log(LogLevel::kError, "No renderer on GraphicsServer::_rebuildContext.");
     return;
   }
 
@@ -219,7 +218,7 @@ void GraphicsServer::RebuildLostContext() {
   set_renderer_context_lost(true);
 
   // Unload all texture and model data here in the render thread.
-  g_media->UnloadRendererBits(true, true);
+  g_assets->UnloadRendererBits(true, true);
 
   // Also unload dynamic meshes.
   for (auto&& i : mesh_datas_) {
@@ -247,10 +246,11 @@ void GraphicsServer::RebuildLostContext() {
   // we won't hitch if we actually render them.)
   SetRenderHold();
 
-  // Now tell the game thread to kick off loads for everything, flip on progress
-  // bar drawing, and then tell the graphics thread to stop ignoring frame-defs.
-  g_game->thread()->PushCall([this] {
-    g_media->MarkAllMediaForLoad();
+  // Now tell the logic thread to kick off loads for everything, flip on
+  // progress bar drawing, and then tell the graphics thread to stop ignoring
+  // frame-defs.
+  g_logic->thread()->PushCall([this] {
+    g_assets->MarkAllAssetsForLoad();
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
   });
@@ -352,12 +352,12 @@ void GraphicsServer::SetScreen(bool fullscreen, int width, int height,
   }
 
   // The first time we complete setting up our screen, we send a message
-  // back to the game thread to complete the init process.. (they can't start
+  // back to the logic thread to complete the init process.. (they can't start
   // loading graphics and things until we have our context set up so we know
   // what types of textures to load, etc)
   if (!initial_screen_created_) {
     initial_screen_created_ = true;
-    g_game->PushInitialScreenCreatedCall();
+    g_logic->PushInitialScreenCreatedCall();
   }
 }
 
@@ -373,7 +373,7 @@ void GraphicsServer::HandleFullContextScreenRebuild(
   if (renderer_) {
     // Unload all textures and models.. these will be reloaded as-needed
     // automatically for the new context..
-    g_media->UnloadRendererBits(true, true);
+    g_assets->UnloadRendererBits(true, true);
 
     // Also unload all dynamic meshes.
     for (auto&& i : mesh_datas_) {
@@ -403,9 +403,9 @@ void GraphicsServer::HandleFullContextScreenRebuild(
 
     UpdateVirtualScreenRes();
 
-    // Inform the game thread of the latest values.
-    g_game->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_,
-                                 res_y_);
+    // Inform the logic thread of the latest values.
+    g_logic->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_,
+                                  res_y_);
   }
 
   if (!renderer_) {
@@ -460,11 +460,11 @@ void GraphicsServer::HandleFullContextScreenRebuild(
   // so we won't hitch if we actually render them.)
   SetRenderHold();
 
-  // Now tell the game thread to kick off loads for everything, flip on
+  // Now tell the logic thread to kick off loads for everything, flip on
   // progress bar drawing, and then tell the graphics thread to stop ignoring
   // frame-defs.
-  g_game->thread()->PushCall([this] {
-    g_media->MarkAllMediaForLoad();
+  g_logic->thread()->PushCall([this] {
+    g_assets->MarkAllAssetsForLoad();
     g_graphics->set_internal_components_inited(false);
     g_graphics->EnableProgressBar(false);
     PushRemoveRenderHoldCall();
@@ -514,8 +514,8 @@ void GraphicsServer::VideoResize(float h, float v) {
   res_y_ = v;
   UpdateVirtualScreenRes();
 
-  // Inform the game thread of the latest values.
-  g_game->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_, res_y_);
+  // Inform the logic thread of the latest values.
+  g_logic->PushScreenResizeCall(res_x_virtual_, res_y_virtual_, res_x_, res_y_);
   if (renderer_) {
     renderer_->ScreenSizeChanged();
   }
@@ -759,7 +759,7 @@ void GraphicsServer::PushSetVSyncCall(bool sync, bool auto_sync) {
             gl_context_->SetVSync(v_sync_);
           }
         } else {
-          Log("Error: Got SetVSyncCall with no gl context.");
+          Log(LogLevel::kError, "Got SetVSyncCall with no gl context.");
         }
       }
     }
@@ -768,15 +768,15 @@ void GraphicsServer::PushSetVSyncCall(bool sync, bool auto_sync) {
 }
 
 void GraphicsServer::PushComponentUnloadCall(
-    const std::vector<Object::Ref<MediaComponentData>*>& components) {
+    const std::vector<Object::Ref<AssetComponentData>*>& components) {
   thread()->PushCall([this, components] {
     // Unload all components we were passed.
     for (auto&& i : components) {
       (**i).Unload();
     }
-    // ..and then ship these pointers back to the game thread so it can free the
-    // references.
-    g_game->PushFreeMediaComponentRefsCall(components);
+    // ..and then ship these pointers back to the logic thread so it can free
+    // the references.
+    g_logic->PushFreeAssetComponentRefsCall(components);
   });
 }
 
@@ -785,7 +785,7 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
     assert(render_hold_);
     render_hold_--;
     if (render_hold_ < 0) {
-      Log("Error: RenderHold < 0");
+      Log(LogLevel::kError, "RenderHold < 0");
       render_hold_ = 0;
     }
   });

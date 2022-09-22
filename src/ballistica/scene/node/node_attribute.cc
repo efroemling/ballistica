@@ -48,8 +48,8 @@ auto NodeAttributeUnbound::GetNodeAttributeTypeName(NodeAttributeType t)
     case NodeAttributeType::kCollideModelArray:
       return "collide-model-array";
     default:
-      Log("Error: Unknown attr type name: "
-          + std::to_string(static_cast<int>(t)));
+      Log(LogLevel::kError,
+          "Unknown attr type name: " + std::to_string(static_cast<int>(t)));
       return "unknown";
   }
 }
@@ -98,7 +98,7 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
 
 #if BA_DEBUG_BUILD
     if (test_ref.exists()) {
-      Log("Error: Attr connection still exists after ref releases!");
+      Log(LogLevel::kError, "Attr connection still exists after ref releases!");
     }
 #endif
   }

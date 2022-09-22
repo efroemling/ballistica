@@ -25,7 +25,8 @@ class PlatformApple : public Platform {
   auto DoHasTouchScreen() -> bool override;
   auto GetUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
-  auto HandleLog(const std::string& msg) -> void override;
+  auto DisplayLog(const std::string& name, LogLevel level,
+                  const std::string& msg) -> void override;
   auto SetupDataDirectory() -> void override;
   auto GetTextBoundsAndWidth(const std::string& text, Rect* r, float* width)
       -> void override;
@@ -57,8 +58,6 @@ class PlatformApple : public Platform {
   auto IsOSPlayingMusic() -> bool override;
   auto SetHardwareCursorVisible(bool visible) -> void override;
   auto QuitApp() -> void override;
-  auto GetScoresToBeat(const std::string& level, const std::string& config,
-                       void* py_callback) -> void override;
   auto OpenFileExternally(const std::string& path) -> void override;
   auto OpenDirExternally(const std::string& path) -> void override;
   auto MacMusicAppInit() -> void override;

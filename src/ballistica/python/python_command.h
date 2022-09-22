@@ -51,7 +51,7 @@ class PythonCommand {
   /// Returns nullptr on errors, but Python error state will be cleared.
   auto RunReturnObj(bool print_errors, PyObject* context) -> PyObject*;
 
-  void LogContext();
+  void PrintContext();
 
   /// Return true if the command can be evaluated; otherwise it can only be
   /// executed

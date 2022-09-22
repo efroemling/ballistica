@@ -22,18 +22,17 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/game/friend_score_set.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/score_to_beat.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/input/std_input_module.h"
+#include "ballistica/logic/friend_score_set.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
+#include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
 
 #if BA_HEADLESS_BUILD
@@ -121,7 +120,7 @@ auto Platform::PostInit() -> void {
   ran_base_post_init_ = true;
 
   // Are we running in a terminal?
-  if (g_buildconfig.use_stdin_thread()) {
+  if (g_buildconfig.enable_stdio_console()) {
     is_stdin_a_terminal_ = GetIsStdinATerminal();
   } else {
     is_stdin_a_terminal_ = false;
@@ -170,10 +169,12 @@ auto Platform::GetLegacyDeviceUUID() -> const std::string& {
         legacy_device_uuid_ += val;
         if (FILE* f2 = FOpen(path.c_str(), "wb")) {
           size_t result = fwrite(val.c_str(), val.size(), 1, f2);
-          if (result != 1) Log("unable to write bsuuid file.");
+          if (result != 1)
+            Log(LogLevel::kError, "unable to write bsuuid file.");
           fclose(f2);
         } else {
-          Log("unable to open bsuuid file for writing: '" + path + "'");
+          Log(LogLevel::kError,
+              "unable to open bsuuid file for writing: '" + path + "'");
         }
       }
     }
@@ -183,7 +184,7 @@ auto Platform::GetLegacyDeviceUUID() -> const std::string& {
 }
 
 auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
-  Log("GetDeviceV1AccountUUIDPrefix() unimplemented");
+  Log(LogLevel::kError, "GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
 }
 
@@ -262,10 +263,11 @@ void Platform::SetLowLevelConfigValue(const char* key, int value) {
   FILE* f = FOpen(path.c_str(), "w");
   if (f) {
     size_t result = fwrite(out.c_str(), out.size(), 1, f);
-    if (result != 1) Log("unable to write low level config file.");
+    if (result != 1)
+      Log(LogLevel::kError, "unable to write low level config file.");
     fclose(f);
   } else {
-    Log("unable to open low level config file for writing.");
+    Log(LogLevel::kError, "unable to open low level config file for writing.");
   }
 }
 
@@ -307,11 +309,10 @@ auto Platform::GetAppPythonDirectory() -> std::string {
     // Fall back to our default if that doesn't exist.
     if (FilePathExists(app_python_dir_)) {
       using_custom_app_python_dir_ = true;
-      Log("Using custom app Python path: '"
-              + (GetUserPythonDirectory() + BA_DIRSLASH + "sys" + BA_DIRSLASH
-                 + kAppVersion)
-              + "'.",
-          true, false);
+      Log(LogLevel::kInfo, "Using custom app Python path: '"
+                               + (GetUserPythonDirectory() + BA_DIRSLASH + "sys"
+                                  + BA_DIRSLASH + kAppVersion)
+                               + "'.");
 
     } else {
       // Going with relative paths for cleaner tracebacks...
@@ -485,7 +486,8 @@ auto Platform::GetLocale() -> std::string {
     return lang;
   } else {
     if (!g_buildconfig.headless_build()) {
-      BA_LOG_ONCE("No LANG value available; defaulting to en_US");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "No LANG value available; defaulting to en_US");
     }
     return "en_US";
   }
@@ -532,40 +534,6 @@ void Platform::SleepMS(millisecs_t ms) {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
-// General one-time initialization stuff
-static void Init() {
-  // Sanity check: make sure asserts are stripped out of release builds
-  // (NDEBUG should do this).
-#if !BA_DEBUG_BUILD
-#ifndef NDEBUG
-#error Expected NDEBUG to be defined for release builds.
-#endif  // NDEBUG
-  assert(true);
-#endif  // !BA_DEBUG_BUILD
-
-  // If we're running in a terminal, print some info.
-  if (g_platform->is_stdin_a_terminal()) {
-    if (g_buildconfig.headless_build()) {
-      printf("BallisticaCore Headless %s build %d.\n", kAppVersion,
-             kAppBuildNumber);
-      fflush(stdout);
-    } else {
-      printf("BallisticaCore %s build %d.\n", kAppVersion, kAppBuildNumber);
-      fflush(stdout);
-    }
-  }
-
-  g_app->user_agent_string = g_platform->GetUserAgentString();
-
-  // Figure out where our data is and chdir there.
-  g_platform->SetupDataDirectory();
-
-  // Run these just to make sure these dirs exist.
-  // (otherwise they might not get made if nothing writes to them).
-  g_platform->GetConfigDirectory();
-  g_platform->GetUserPythonDirectory();
-}
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
@@ -575,7 +543,7 @@ static void HandleArgs(int argc, char** argv) {
 
   // If there's just one arg and it's "--version", return the version.
   if (argc == 2 && !strcmp(argv[1], "--version")) {
-    printf("Ballistica %s build %d\n", kAppVersion, kAppBuildNumber);
+    printf("BallisticaCore %s build %d\n", kAppVersion, kAppBuildNumber);
     fflush(stdout);
     exit(0);
   }
@@ -623,7 +591,7 @@ static void HandleArgs(int argc, char** argv) {
           exit(-1);
         }
       } else {
-        Log("ERROR: expected arg after -cfgdir");
+        Log(LogLevel::kError, "Expected arg after -cfgdir.");
         exit(-1);
       }
     }
@@ -650,7 +618,6 @@ auto Platform::CreateAppFlavor() -> AppFlavor* {
 
   // Hmm do these belong here?...
   HandleArgs(g_app->argc, g_app->argv);
-  Init();
 
 // TEMP - need to init sdl on our legacy mac build even though its not
 // technically an SDL app. Kill this once the old mac build is gone.
@@ -658,26 +625,31 @@ auto Platform::CreateAppFlavor() -> AppFlavor* {
   SDLApp::InitSDL();
 #endif
 
+  AppFlavor* app_flavor{};
+
 #if BA_HEADLESS_BUILD
-  return new AppFlavorHeadless(g_main_thread);
+  app_flavor = new AppFlavorHeadless(g_main_thread);
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
   if (g_app->vr_mode) {
-    return new AppFlavorVR(g_main_thread);
+    app_flavor = new AppFlavorVR(g_main_thread);
   } else {
-    return new SDLApp(g_main_thread);
+    app_flavor = new SDLApp(g_main_thread);
   }
 #elif BA_CARDBOARD_BUILD
-  return new AppFlavorVR(g_main_thread);
+  app_flavor = new AppFlavorVR(g_main_thread);
 #elif BA_SDL_BUILD
-  return new SDLApp(g_main_thread);
+  app_flavor = new SDLApp(g_main_thread);
 #else
-  return new AppFlavor(g_main_thread);
+  app_flavor = new AppFlavor(g_main_thread);
 #endif
+
+  assert(app_flavor);
+  app_flavor->PostInit();
+  return app_flavor;
 }
 
 auto Platform::CreateGraphics() -> Graphics* {
-  assert(InLogicThread());
 #if BA_VR_BUILD
   return new VRGraphics();
 #else
@@ -696,27 +668,6 @@ auto Platform::GetKeyName(int keycode) -> std::string {
 #endif
 }
 
-void Platform::CreateAuxiliaryModules() {
-#if !BA_HEADLESS_BUILD
-  auto* bg_dynamics_thread = new Thread(ThreadIdentifier::kBGDynamics);
-  g_app->pausable_threads.push_back(bg_dynamics_thread);
-#endif
-#if !BA_HEADLESS_BUILD
-  bg_dynamics_thread->PushCallSynchronous(
-      [bg_dynamics_thread] { new BGDynamicsServer(bg_dynamics_thread); });
-#endif
-
-  if (g_buildconfig.use_stdin_thread()) {
-    // Start listening for stdin commands (on platforms where that makes sense).
-    // Note: this thread blocks indefinitely for input so we don't add it to the
-    // pausable list.
-    auto* std_input_thread = new Thread(ThreadIdentifier::kStdin);
-    std_input_thread->PushCallSynchronous(
-        [std_input_thread] { new StdInputModule(std_input_thread); });
-    g_std_input_module->PushBeginReadCall();
-  }
-}
-
 void Platform::WillExitMain(bool errored) {}
 
 auto Platform::GetUIScale() -> UIScale {
@@ -724,7 +675,8 @@ auto Platform::GetUIScale() -> UIScale {
   return UIScale::kLarge;
 }
 
-void Platform::HandleLog(const std::string& msg) {
+void Platform::DisplayLog(const std::string& name, LogLevel level,
+                          const std::string& msg) {
   // Do nothing by default.
 }
 
@@ -890,7 +842,7 @@ auto Platform::CreateTextTexture(int width, int height,
 
 auto Platform::GetTextTextureData(void* tex) -> uint8_t* { throw Exception(); }
 
-void Platform::OnBootstrapComplete() {}
+void Platform::OnAppStart() {}
 
 auto Platform::ConvertIncomingLeaderboardScore(
     const std::string& leaderboard_id, int score) -> int {
@@ -900,13 +852,13 @@ auto Platform::ConvertIncomingLeaderboardScore(
 void Platform::GetFriendScores(const std::string& game,
                                const std::string& game_version, void* data) {
   // As a default, just fail gracefully.
-  Log("FIXME: GetFriendScores unimplemented");
-  g_game->PushFriendScoreSetCall(FriendScoreSet(false, data));
+  Log(LogLevel::kError, "FIXME: GetFriendScores unimplemented");
+  g_logic->PushFriendScoreSetCall(FriendScoreSet(false, data));
 }
 
 void Platform::SubmitScore(const std::string& game, const std::string& version,
                            int64_t score) {
-  Log("FIXME: SubmitScore() unimplemented");
+  Log(LogLevel::kError, "FIXME: SubmitScore() unimplemented");
 }
 
 void Platform::ReportAchievement(const std::string& achievement) {}
@@ -918,13 +870,13 @@ auto Platform::HaveLeaderboard(const std::string& game,
 
 void Platform::EditText(const std::string& title, const std::string& value,
                         int max_chars) {
-  Log("FIXME: EditText() unimplemented");
+  Log(LogLevel::kError, "FIXME: EditText() unimplemented");
 }
 
 void Platform::ShowOnlineScoreUI(const std::string& show,
                                  const std::string& game,
                                  const std::string& game_version) {
-  Log("FIXME: ShowOnlineScoreUI() unimplemented");
+  Log(LogLevel::kError, "FIXME: ShowOnlineScoreUI() unimplemented");
 }
 
 void Platform::Purchase(const std::string& item) {
@@ -932,7 +884,9 @@ void Platform::Purchase(const std::string& item) {
   g_python->PushObjCall(Python::ObjID::kUnavailableMessageCall);
 }
 
-void Platform::RestorePurchases() { Log("RestorePurchases() unimplemented"); }
+void Platform::RestorePurchases() {
+  Log(LogLevel::kError, "RestorePurchases() unimplemented");
+}
 
 void Platform::AndroidSetResString(const std::string& res) {
   throw Exception();
@@ -941,11 +895,11 @@ void Platform::AndroidSetResString(const std::string& res) {
 void Platform::ApplyConfig() {}
 
 void Platform::AndroidSynthesizeBackPress() {
-  Log("AndroidSynthesizeBackPress() unimplemented");
+  Log(LogLevel::kError, "AndroidSynthesizeBackPress() unimplemented");
 }
 
 void Platform::AndroidQuitActivity() {
-  Log("AndroidQuitActivity() unimplemented");
+  Log(LogLevel::kError, "AndroidQuitActivity() unimplemented");
 }
 
 auto Platform::GetDeviceV1AccountID() -> std::string {
@@ -972,7 +926,8 @@ auto Platform::DemangleCXXSymbol(const std::string& s) -> std::string {
       abi::__cxa_demangle(s.c_str(), nullptr, nullptr, &demangle_status);
   if (demangled_name != nullptr) {
     if (demangle_status != 0) {
-      BA_LOG_ONCE("__cxa_demangle got buffer but non-zero status; unexpected");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "__cxa_demangle got buffer but non-zero status; unexpected");
     }
     std::string retval = demangled_name;
     free(static_cast<void*>(demangled_name));
@@ -990,9 +945,9 @@ auto Platform::NewAutoReleasePool() -> void* { throw Exception(); }
 void Platform::DrainAutoReleasePool(void* pool) { throw Exception(); }
 
 void Platform::OpenURL(const std::string& url) {
-  // Can't open URLs in VR - just tell the game thread to show the url.
+  // Can't open URLs in VR - just tell the logic thread to show the url.
   if (IsVRMode()) {
-    g_game->PushShowURLCall(url);
+    g_logic->PushShowURLCall(url);
     return;
   }
 
@@ -1001,16 +956,18 @@ void Platform::OpenURL(const std::string& url) {
 }
 
 void Platform::DoOpenURL(const std::string& url) {
-  Log("DoOpenURL unimplemented on this platform.");
+  Log(LogLevel::kError, "DoOpenURL unimplemented on this platform.");
 }
 
-void Platform::ResetAchievements() { Log("ResetAchievements() unimplemented"); }
+void Platform::ResetAchievements() {
+  Log(LogLevel::kError, "ResetAchievements() unimplemented");
+}
 
 void Platform::GameCenterLogin() { throw Exception(); }
 
 void Platform::PurchaseAck(const std::string& purchase,
                            const std::string& order_id) {
-  Log("PurchaseAck() unimplemented");
+  Log(LogLevel::kError, "PurchaseAck() unimplemented");
 }
 
 void Platform::RunEvents() {}
@@ -1021,17 +978,18 @@ void Platform::OnAppPause() {}
 void Platform::OnAppResume() {}
 
 void Platform::MusicPlayerPlay(PyObject* target) {
-  Log("MusicPlayerPlay() unimplemented on this platform");
+  Log(LogLevel::kError, "MusicPlayerPlay() unimplemented on this platform");
 }
 void Platform::MusicPlayerStop() {
-  Log("MusicPlayerStop() unimplemented on this platform");
+  Log(LogLevel::kError, "MusicPlayerStop() unimplemented on this platform");
 }
 void Platform::MusicPlayerShutdown() {
-  Log("MusicPlayerShutdown() unimplemented on this platform");
+  Log(LogLevel::kError, "MusicPlayerShutdown() unimplemented on this platform");
 }
 
 void Platform::MusicPlayerSetVolume(float volume) {
-  Log("MusicPlayerSetVolume() unimplemented on this platform");
+  Log(LogLevel::kError,
+      "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
 auto Platform::IsOSPlayingMusic() -> bool { return false; }
@@ -1039,7 +997,7 @@ auto Platform::IsOSPlayingMusic() -> bool { return false; }
 void Platform::AndroidShowAppInvite(const std::string& title,
                                     const std::string& message,
                                     const std::string& code) {
-  Log("AndroidShowAppInvite() unimplemented");
+  Log(LogLevel::kError, "AndroidShowAppInvite() unimplemented");
 }
 
 void Platform::IncrementAnalyticsCount(const std::string& name, int increment) {
@@ -1058,11 +1016,11 @@ void Platform::SubmitAnalyticsCounts() {}
 void Platform::SetPlatformMiscReadVals(const std::string& vals) {}
 
 void Platform::AndroidRefreshFile(const std::string& file) {
-  Log("AndroidRefreshFile() unimplemented");
+  Log(LogLevel::kError, "AndroidRefreshFile() unimplemented");
 }
 
 void Platform::ShowAd(const std::string& purpose) {
-  Log("ShowAd() unimplemented");
+  Log(LogLevel::kError, "ShowAd() unimplemented");
 }
 
 auto Platform::GetHasAds() -> bool { return false; }
@@ -1073,17 +1031,19 @@ auto Platform::GetHasVideoAds() -> bool {
 }
 
 void Platform::SignInV1(const std::string& account_type) {
-  Log("SignInV1() unimplemented");
+  Log(LogLevel::kError, "SignInV1() unimplemented");
 }
 
 void Platform::V1LoginDidChange() {
   // Default is no-op.
 }
 
-void Platform::SignOutV1() { Log("SignOutV1() unimplemented"); }
+void Platform::SignOutV1() {
+  Log(LogLevel::kError, "SignOutV1() unimplemented");
+}
 
 void Platform::AndroidShowWifiSettings() {
-  Log("AndroidShowWifiSettings() unimplemented");
+  Log(LogLevel::kError, "AndroidShowWifiSettings() unimplemented");
 }
 
 void Platform::SetHardwareCursorVisible(bool visible) {
@@ -1093,50 +1053,47 @@ void Platform::SetHardwareCursorVisible(bool visible) {
 #endif
 }
 
-void Platform::QuitApp() { exit(g_app->return_value); }
+auto Platform::QuitApp() -> void { exit(g_app->return_value); }
 
-void Platform::GetScoresToBeat(const std::string& level,
-                               const std::string& config, void* py_callback) {
-  // By default, return nothing.
-  g_game->PushScoresToBeatResponseCall(false, std::list<ScoreToBeat>(),
-                                       py_callback);
+auto Platform::OpenFileExternally(const std::string& path) -> void {
+  Log(LogLevel::kError, "OpenFileExternally() unimplemented");
 }
 
-void Platform::OpenFileExternally(const std::string& path) {
-  Log("OpenFileExternally() unimplemented");
+auto Platform::OpenDirExternally(const std::string& path) -> void {
+  Log(LogLevel::kError, "OpenDirExternally() unimplemented");
 }
 
-void Platform::OpenDirExternally(const std::string& path) {
-  Log("OpenDirExternally() unimplemented");
+auto Platform::MacMusicAppInit() -> void {
+  Log(LogLevel::kError, "MacMusicAppInit() unimplemented");
 }
-
-void Platform::MacMusicAppInit() { Log("MacMusicAppInit() unimplemented"); }
 
 auto Platform::MacMusicAppGetVolume() -> int {
-  Log("MacMusicAppGetVolume() unimplemented");
+  Log(LogLevel::kError, "MacMusicAppGetVolume() unimplemented");
   return 0;
 }
 
-void Platform::MacMusicAppSetVolume(int volume) {
-  Log("MacMusicAppSetVolume() unimplemented");
+auto Platform::MacMusicAppSetVolume(int volume) -> void {
+  Log(LogLevel::kError, "MacMusicAppSetVolume() unimplemented");
 }
 
-void Platform::MacMusicAppGetLibrarySource() {
-  Log("MacMusicAppGetLibrarySource() unimplemented");
+auto Platform::MacMusicAppGetLibrarySource() -> void {
+  Log(LogLevel::kError, "MacMusicAppGetLibrarySource() unimplemented");
 }
 
-void Platform::MacMusicAppStop() { Log("MacMusicAppStop() unimplemented"); }
+auto Platform::MacMusicAppStop() -> void {
+  Log(LogLevel::kError, "MacMusicAppStop() unimplemented");
+}
 
 auto Platform::MacMusicAppPlayPlaylist(const std::string& playlist) -> bool {
-  Log("MacMusicAppPlayPlaylist() unimplemented");
+  Log(LogLevel::kError, "MacMusicAppPlayPlaylist() unimplemented");
   return false;
 }
 auto Platform::MacMusicAppGetPlaylists() -> std::list<std::string> {
-  Log("MacMusicAppGetPlaylists() unimplemented");
+  Log(LogLevel::kError, "MacMusicAppGetPlaylists() unimplemented");
   return {};
 }
 
-void Platform::SetCurrentThreadName(const std::string& name) {
+auto Platform::SetCurrentThreadName(const std::string& name) -> void {
   // Currently we leave the main thread alone, otherwise we show up as
   // "BallisticaMainThread" under "top" on linux (should check other platforms).
   if (InMainThread()) {
@@ -1149,7 +1106,7 @@ void Platform::SetCurrentThreadName(const std::string& name) {
 #endif
 }
 
-void Platform::Unlink(const char* path) {
+auto Platform::Unlink(const char* path) -> void {
 // This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
@@ -1186,7 +1143,7 @@ auto Platform::IsEventPushMode() -> bool { return false; }
 
 auto Platform::GetDisplayResolution(int* x, int* y) -> bool { return false; }
 
-void Platform::CloseSocket(int socket) {
+auto Platform::CloseSocket(int socket) -> void {
 // This default implementation covers non-windows platforms.
 #if BA_OSTYPE_WINDOWS
   throw Exception();
@@ -1236,8 +1193,8 @@ auto Platform::SetSocketNonBlocking(int sd) -> bool {
 #else
   int result = fcntl(sd, F_SETFL, O_NONBLOCK);
   if (result != 0) {
-    Log("Error setting non-blocking socket: "
-        + g_platform->GetSocketErrorString());
+    Log(LogLevel::kError, "Error setting non-blocking socket: "
+                              + g_platform->GetSocketErrorString());
     return false;
   }
   return true;
@@ -1332,10 +1289,10 @@ auto Platform::HavePermission(Permission p) -> bool {
 
 #if !BA_OSTYPE_WINDOWS
 static void HandleSIGINT(int s) {
-  if (g_game) {
-    g_game->PushInterruptSignalCall();
+  if (g_logic) {
+    g_logic->PushInterruptSignalCall();
   } else {
-    Log("SigInt handler called before g_game exists.");
+    Log(LogLevel::kError, "SigInt handler called before g_logic exists.");
   }
 }
 #endif

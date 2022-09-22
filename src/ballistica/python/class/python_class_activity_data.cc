@@ -3,10 +3,10 @@
 #include "ballistica/python/class/python_class_activity_data.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/generic/utils.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -69,7 +69,7 @@ auto PythonClassActivityData::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     self->host_activity_ = new Object::WeakRef<HostActivity>();
@@ -81,11 +81,11 @@ auto PythonClassActivityData::tp_new(PyTypeObject* type, PyObject* args,
 void PythonClassActivityData::tp_dealloc(PythonClassActivityData* self) {
   BA_PYTHON_TRY;
 
-  // These have to be destructed in the game thread; send them along to
+  // These have to be destructed in the logic thread; send them along to
   // it if need be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<HostActivity>* h = self->host_activity_;
-    g_game->thread()->PushCall([h] { delete h; });
+    g_logic->thread()->PushCall([h] { delete h; });
   } else {
     delete self->host_activity_;
   }

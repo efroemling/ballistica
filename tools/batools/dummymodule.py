@@ -770,7 +770,7 @@ def update(projroot: str, check: bool, force: bool) -> None:
     for mname in ('_ba', '_bainternal'):
         # Skip internal module in public since it might
         # not exist and is read-only anyway.
-        if mname == '_ba' and public:
+        if mname == '_bainternal' and public:
             continue
 
         outfilename = os.path.abspath(

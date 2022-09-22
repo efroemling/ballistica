@@ -45,7 +45,7 @@ class Object {
   /// it can perform sanity-tests to make sure references are not being
   /// added at incorrect times or from incorrect threads.
   /// The default implementation uses the per-object
-  /// ThreadOwnership/ThreadIdentifier values accessible below. NOTE: this
+  /// ThreadOwnership/ThreadTag values accessible below. NOTE: this
   /// check runs only in the debug build so don't add any logical side-effects!
   virtual void ObjectThreadCheck();
 
@@ -59,15 +59,15 @@ class Object {
 
   /// Return the exact thread to check for with ThreadOwnership::kClassDefault
   /// (in the default ObjectThreadCheck implementation at least).
-  /// Default returns ThreadIdentifier::kLogic
-  virtual auto GetDefaultOwnerThread() const -> ThreadIdentifier;
+  /// Default returns ThreadTag::kLogic
+  virtual auto GetDefaultOwnerThread() const -> ThreadTag;
 
   /// Set thread ownership for an individual object.
   void SetThreadOwnership(ThreadOwnership ownership) {
 #if BA_DEBUG_BUILD
     thread_ownership_ = ownership;
     if (thread_ownership_ == ThreadOwnership::kNextReferencing) {
-      owner_thread_ = ThreadIdentifier::kInvalid;
+      owner_thread_ = ThreadTag::kInvalid;
     }
 #endif
   }
@@ -560,7 +560,7 @@ class Object {
   Object* object_next_{};
   Object* object_prev_{};
   ThreadOwnership thread_ownership_{ThreadOwnership::kClassDefault};
-  ThreadIdentifier owner_thread_{ThreadIdentifier::kInvalid};
+  ThreadTag owner_thread_{ThreadTag::kInvalid};
   bool thread_checks_enabled_{true};
   millisecs_t object_birth_time_{};
   bool object_printed_warning_{};

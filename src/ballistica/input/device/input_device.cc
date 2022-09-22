@@ -6,11 +6,11 @@
 #include <unordered_map>
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/connection/connection_to_host.h"
-#include "ballistica/game/player.h"
-#include "ballistica/game/session/host_session.h"
-#include "ballistica/game/session/net_client_session.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/connection/connection_to_host.h"
+#include "ballistica/logic/player.h"
+#include "ballistica/logic/session/host_session.h"
+#include "ballistica/logic/session/net_client_session.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/python/class/python_class_input_device.h"
 #include "ballistica/python/python.h"
@@ -109,13 +109,13 @@ auto InputDevice::GetDefaultPlayerName() -> std::string {
 auto InputDevice::GetButtonName(int id) -> std::string {
   // By default just say 'button 1' or whatnot.
   // FIXME: should return this in Lstr json form.
-  return g_game->GetResourceString("buttonText") + " " + std::to_string(id);
+  return g_logic->GetResourceString("buttonText") + " " + std::to_string(id);
 }
 
 auto InputDevice::GetAxisName(int id) -> std::string {
   // By default just return 'axis 5' or whatnot.
   // FIXME: should return this in Lstr json form.
-  return g_game->GetResourceString("axisText") + " " + std::to_string(id);
+  return g_logic->GetResourceString("axisText") + " " + std::to_string(id);
 }
 
 auto InputDevice::HasMeaningfulButtonNames() -> bool { return false; }
@@ -139,13 +139,15 @@ InputDevice::~InputDevice() {
 // when the host-session tells us to attach to a player
 void InputDevice::AttachToLocalPlayer(Player* player) {
   if (player_.exists()) {
-    Log("Error: InputDevice::AttachToLocalPlayer() called with already "
+    Log(LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::AttachToLocalPlayer() called with already "
+    Log(LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "remote-player");
     return;
@@ -158,13 +160,15 @@ void InputDevice::AttachToRemotePlayer(ConnectionToHost* connection_to_host,
                                        int remote_player_id) {
   assert(connection_to_host);
   if (player_.exists()) {
-    Log("Error: InputDevice::AttachToRemotePlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::AttachToRemotePlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "remote-player");
     return;
@@ -180,7 +184,8 @@ void InputDevice::RemoveRemotePlayerFromGame() {
     data[1] = static_cast_check_fit<unsigned char>(index());
     connection_to_host->SendReliableMessage(data);
   } else {
-    Log("Error: RemoveRemotePlayerFromGame called without remote player");
+    Log(LogLevel::kError,
+        "RemoveRemotePlayerFromGame called without remote player");
   }
 }
 
@@ -207,29 +212,31 @@ void InputDevice::RequestPlayer() {
   assert(InLogicThread());
 
   // Make note that we're being used in some way.
-  last_input_time_ = g_game->master_time();
+  last_input_time_ = g_logic->master_time();
 
   if (player_.exists()) {
-    Log("Error: InputDevice::RequestPlayer()"
+    Log(LogLevel::kError,
+        "InputDevice::RequestPlayer()"
         " called with already-existing player");
     return;
   }
   if (remote_player_.exists()) {
-    Log("Error: InputDevice::RequestPlayer() called with already-existing "
+    Log(LogLevel::kError,
+        "InputDevice::RequestPlayer() called with already-existing "
         "remote-player");
     return;
   }
 
   // If we have a local host-session, ask it for a player.. otherwise if we have
   // a client-session, ask it for a player.
-  assert(g_game);
-  if (auto* hs = dynamic_cast<HostSession*>(g_game->GetForegroundSession())) {
+  assert(g_logic);
+  if (auto* hs = dynamic_cast<HostSession*>(g_logic->GetForegroundSession())) {
     {
       Python::ScopedCallLabel label("requestPlayer");
       hs->RequestPlayer(this);
     }
   } else if (auto* client_session = dynamic_cast<NetClientSession*>(
-                 g_game->GetForegroundSession())) {
+                 g_logic->GetForegroundSession())) {
     if (ConnectionToHost* connection_to_host =
             client_session->connection_to_host()) {
       std::vector<uint8_t> data(2);
@@ -270,7 +277,7 @@ void InputDevice::Update() {
 void InputDevice::UpdateLastInputTime() {
   // Keep our own individual time, and also let
   // the overall input system know something happened.
-  last_input_time_ = g_game->master_time();
+  last_input_time_ = g_logic->master_time();
   g_input->mark_input_active();
 }
 

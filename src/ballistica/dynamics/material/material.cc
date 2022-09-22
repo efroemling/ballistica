@@ -5,9 +5,9 @@
 // #include "ballistica/dynamics/material/material_action.h"
 #include "ballistica/dynamics/material/material_component.h"
 #include "ballistica/dynamics/material/material_condition_node.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/python/python_sys.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -16,7 +16,7 @@ Material::Material(std::string name_in, Scene* scene)
   // If we're being made in a scene with an output stream,
   // write ourself to it.
   assert(scene);
-  if (GameStream* os = scene->GetGameStream()) {
+  if (SceneStream* os = scene->GetSceneStream()) {
     os->AddMaterial(this);
   }
 }
@@ -30,7 +30,7 @@ void Material::MarkDead() {
   // If we're in a scene with an output-stream, inform them of our demise.
   Scene* scene = scene_.get();
   if (scene) {
-    if (GameStream* os = scene->GetGameStream()) {
+    if (SceneStream* os = scene->GetSceneStream()) {
       os->RemoveMaterial(this);
     }
   }
@@ -62,13 +62,13 @@ void Material::Apply(MaterialContext* s, const Part* src_part,
 
 void Material::AddComponent(const Object::Ref<MaterialComponent>& c) {
   // If there's an output stream, push this to that first
-  if (GameStream* output_stream = scene()->GetGameStream()) {
+  if (SceneStream* output_stream = scene()->GetSceneStream()) {
     output_stream->AddMaterialComponent(this, c.get());
   }
   components_.push_back(c);
 }
 
-void Material::DumpComponents(GameStream* out) {
+void Material::DumpComponents(SceneStream* out) {
   for (auto& i : components_) {
     assert(i.exists());
     out->AddMaterialComponent(this, i.get());

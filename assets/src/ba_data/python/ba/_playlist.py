@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import copy
+import logging
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -29,7 +30,6 @@ def filter_playlist(playlist: PlaylistType,
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    import _ba
     from ba._map import get_filtered_map_name
     from ba._store import get_unowned_maps, get_unowned_game_types
     from ba._general import getclass
@@ -140,8 +140,8 @@ def filter_playlist(playlist: PlaylistType,
                     entry['settings'][setting.name] = setting.default
             goodlist.append(entry)
         except ImportError as exc:
-            _ba.log(f'Import failed while scanning playlist \'{name}\': {exc}',
-                    to_server=False)
+            logging.warning('Import failed while scanning playlist \'%s\': %s',
+                            name, exc)
         except Exception:
             from ba import _error
             _error.print_exception()

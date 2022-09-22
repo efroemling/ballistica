@@ -3,8 +3,8 @@
 #include "ballistica/python/class/python_class_input_device.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/player.h"
 #include "ballistica/input/device/input_device.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -126,7 +126,7 @@ auto PythonClassInputDevice::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     self->input_device_ = new Object::WeakRef<InputDevice>();
@@ -137,13 +137,13 @@ auto PythonClassInputDevice::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassInputDevice::tp_dealloc(PythonClassInputDevice* self) {
   BA_PYTHON_TRY;
-  // These have to be destructed in the game thread - send them along to it if
+  // These have to be destructed in the logic thread - send them along to it if
   // need be.
   // FIXME: Technically the main thread has a pointer to a dead PyObject
   //  until the delete goes through; could that ever be a problem?
   if (!InLogicThread()) {
     Object::WeakRef<InputDevice>* d = self->input_device_;
-    g_game->thread()->PushCall([d] { delete d; });
+    g_logic->thread()->PushCall([d] { delete d; });
   } else {
     delete self->input_device_;
   }
@@ -391,7 +391,8 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
   PythonRef results =
       g_python->obj(Python::ObjID::kLstrFromJsonCall).Call(args2);
   if (!results.exists()) {
-    Log("Error creating Lstr from raw button name: '" + bname + "'");
+    Log(LogLevel::kError,
+        "Error creating Lstr from raw button name: '" + bname + "'");
     PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
     results = g_python->obj(Python::ObjID::kLstrFromJsonCall).Call(args3);
   }

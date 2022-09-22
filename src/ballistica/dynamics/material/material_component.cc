@@ -143,7 +143,7 @@ auto MaterialComponent::GetFlattenedSize() -> size_t {
   return size;
 }
 
-void MaterialComponent::Flatten(char** buffer, GameStream* output_stream) {
+void MaterialComponent::Flatten(char** buffer, SceneStream* output_stream) {
   // Embed a byte telling whether we have conditions.
   Utils::EmbedInt8(buffer, conditions.exists());
 
@@ -213,8 +213,9 @@ void MaterialComponent::Restore(const char** buffer, ClientSession* cs) {
         action = Object::New<NodeModMaterialAction>();
         break;
       default:
-        Log("Error: Invalid material action: '"
-            + std::to_string(static_cast<int>(type)) + "'.");
+        Log(LogLevel::kError, "Invalid material action: '"
+                                  + std::to_string(static_cast<int>(type))
+                                  + "'.");
         throw Exception();
     }
     action->Restore(buffer, cs);

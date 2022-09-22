@@ -50,7 +50,7 @@ void FlashNode::Draw(FrameDef* frame_def) {
   c.Translate(position_[0], position_[1], position_[2]);
   c.Scale(size_, size_, size_);
   c.Rotate(RandomFloat() * 360.0f, 1, 1, 0);
-  c.DrawModel(g_media->GetModel(SystemModelID::kFlash));
+  c.DrawModel(g_assets->GetModel(SystemModelID::kFlash));
   c.PopTransform();
   c.Submit();
 }

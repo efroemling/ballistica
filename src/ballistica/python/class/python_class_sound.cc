@@ -2,9 +2,9 @@
 
 #include "ballistica/python/class/python_class_sound.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
-#include "ballistica/media/component/sound.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -68,7 +68,7 @@ auto PythonClassSound::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     if (!s_create_empty_) {
@@ -98,11 +98,11 @@ void PythonClassSound::Delete(Object::Ref<Sound>* ref) {
 
 void PythonClassSound::tp_dealloc(PythonClassSound* self) {
   BA_PYTHON_TRY;
-  // these have to be deleted in the game thread - send the ptr along if need
+  // these have to be deleted in the logic thread - send the ptr along if need
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<Sound>* s = self->sound_;
-    g_game->thread()->PushCall([s] { Delete(s); });
+    g_logic->thread()->PushCall([s] { Delete(s); });
   } else {
     Delete(self->sound_);
   }

@@ -2,11 +2,11 @@
 
 #include "ballistica/dynamics/rigid_body.h"
 
+#include "ballistica/assets/component/collide_model.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/part.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/renderer.h"
-#include "ballistica/media/component/collide_model.h"
 #include "ballistica/scene/scene.h"
 #include "ode/ode_collision_util.h"
 
@@ -168,7 +168,7 @@ auto RigidBody::Check() -> void {
     if (std::isnan(q[3])) err = true;
 
     if (err) {
-      Log("Error: Got error in rbd values!");
+      Log(LogLevel::kError, "Got error in rbd values!");
     }
 #if BA_DEBUG_BUILD
     for (int i = 0; i < 3; i++) {

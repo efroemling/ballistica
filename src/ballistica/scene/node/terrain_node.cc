@@ -2,10 +2,10 @@
 
 #include "ballistica/scene/node/terrain_node.h"
 
+#include "ballistica/assets/component/collide_model.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/graphics/component/object_component.h"
-#include "ballistica/media/component/collide_model.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

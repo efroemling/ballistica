@@ -5,28 +5,14 @@
 
 // Try to ensure they're providing proper config stuff.
 #ifndef BA_HAVE_CONFIG
-#error platform config has not been defined!
+#error ballistica platform config has not been defined!
 #endif
 
-// FIXME: We need to update to C++17 to get unified std::abs().
-//  Until we do that, int types are defined in <cstdlib>
-//  and float/double in <cmath>, meaning its possible to call the wrong
-//  version if we aren't careful and only include one header.
-//  For now just including both here at the top level to hopefully
-//  minimize problems.
-// UPDATE: We should now be building with C++17 everywhere; should add a
-// check to ensure that is the case and can simplify this.
 #ifdef __cplusplus
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-#include <set>
-#include <stdexcept>
 #include <string>
-#include <thread>
-#include <vector>
 #endif
 
+// Minimum functionality we want available everywhere we are included.
 #include "ballistica/core/exception.h"
 #include "ballistica/core/inline.h"
 #include "ballistica/core/macros.h"
@@ -116,8 +102,8 @@ const float kGameStepSeconds =
     (static_cast<float>(kGameStepMilliseconds) / 1000.0f);
 
 // Globals.
-extern int g_early_log_writes;
-extern Account* g_account;
+extern int g_early_v1_cloud_log_writes;
+extern V1Account* g_v1_account;
 extern AppFlavor* g_app_flavor;
 extern AppConfig* g_app_config;
 extern App* g_app;
@@ -127,19 +113,20 @@ extern AudioServer* g_audio_server;
 extern BGDynamics* g_bg_dynamics;
 extern BGDynamicsServer* g_bg_dynamics_server;
 extern Context* g_context;
-extern Game* g_game;
 extern Graphics* g_graphics;
 extern GraphicsServer* g_graphics_server;
 extern Input* g_input;
+extern Logic* g_logic;
 extern Thread* g_main_thread;
-extern Media* g_media;
-extern MediaServer* g_media_server;
+extern Assets* g_assets;
+extern AssetsServer* g_assets_server;
 extern Networking* g_networking;
 extern NetworkReader* g_network_reader;
-extern NetworkWriteModule* g_network_write_module;
+extern NetworkWriter* g_network_writer;
 extern Platform* g_platform;
 extern Python* g_python;
-extern StdInputModule* g_std_input_module;
+extern SceneV1* g_scene_v1;
+extern StdioConsole* g_stdio_console;
 extern TextGraphics* g_text_graphics;
 extern UI* g_ui;
 extern Utils* g_utils;
@@ -172,17 +159,20 @@ auto InGraphicsThread() -> bool;  // (main and graphics are same currently)
 auto InLogicThread() -> bool;
 auto InAudioThread() -> bool;
 auto InBGDynamicsThread() -> bool;
-auto InMediaThread() -> bool;
+auto InAssetsThread() -> bool;
 auto InNetworkWriteThread() -> bool;
 
 /// Return a human-readable name for the current thread.
 auto GetCurrentThreadName() -> std::string;
 
-/// Write a string to the log.
-/// This will go to stdout, windows debug log, android log, etc.
-/// A trailing newline will be added.
-auto Log(const std::string& msg, bool to_stdout = true, bool to_server = true)
-    -> void;
+/// Submit a log entry.
+/// Can be called from any thread at any time.
+/// Use either this or Python printing functionality for anything
+/// that should be seen by the user, as both of those will end up
+/// in the in-app console, cloud based consoles, android log, etc.
+/// Regular C level prints to stdout/stderr will not and will only
+/// be visible on some platforms.
+auto Log(LogLevel level, const std::string& msg) -> void;
 
 /// Log a fatal error and kill the app.
 /// Can be called from any thread at any time.

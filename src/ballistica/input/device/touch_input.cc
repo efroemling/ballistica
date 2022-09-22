@@ -4,10 +4,10 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/simple_component.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/player_node.h"
 #include "ballistica/ui/ui.h"
@@ -429,7 +429,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) sc2 *= 0.6f;
 
       if (movement_control_type_ == MovementControlType::kSwipe) {
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kTouchArrows));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kTouchArrows));
         if (editing_) {
           float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
@@ -442,7 +442,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
           val = 0.35f;
         }
         c.SetColor(0.5f, 0.3f, 0.8f, val);
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kCircle));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kCircle));
       }
 
       float x_offs =
@@ -453,7 +453,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       c.PushTransform();
       c.Translate(d_pad_base_x_ + x_offs, d_pad_base_y_ + y_offs, kDrawDepth);
       c.Scale(sc2, sc2);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
 
       if (movement_control_type_ == MovementControlType::kJoystick) {
@@ -467,7 +467,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         c.PushTransform();
         c.Translate(d_pad_x_ + x_offs, d_pad_y_ + y_offs, kDrawDepth);
         c.Scale(sc_move * 0.5f, sc_move * 0.5f);
-        c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+        c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
         c.PopTransform();
       }
     }
@@ -475,7 +475,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
       float sc2{sc_actions * 0.6f};
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kTouchArrowsActions));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kTouchArrowsActions));
       if (editing_) {
         float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
@@ -489,7 +489,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
           height * (-0.1f - buttons_default_frac_y_) * (1.0f - presence_);
       c.Translate(buttons_x_ + x_offs, buttons_y_ + y_offs, kDrawDepth);
       c.Scale(sc2, sc2);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
     }
     c.Submit();
@@ -504,12 +504,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
     // to pull a node for the player we're attached to.
 
     if (HostActivity* host_activity =
-            g_game->GetForegroundContext().GetHostActivity()) {
+            g_logic->GetForegroundContext().GetHostActivity()) {
       if (Player* player = GetPlayer()) {
         player_node = host_activity->scene()->GetPlayerNode(player->id());
       }
     } else {
-      if (Scene* scene = g_game->GetForegroundScene()) {
+      if (Scene* scene = g_logic->GetForegroundScene()) {
         player_node = scene->GetPlayerNode(remote_player_id());
       }
     }
@@ -539,7 +539,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kActionButtons));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kActionButtons));
     }
 
     float x_offs;
@@ -632,7 +632,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       } else {
         c.Scale(b_width, b_width);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kActionButtonRight));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kActionButtonRight));
       c.PopTransform();
     }
 
@@ -659,7 +659,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       } else {
         c.Scale(b_width, b_width);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kActionButtonLeft));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kActionButtonLeft));
       c.PopTransform();
     }
 
@@ -685,7 +685,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       } else {
         c.Scale(b_width, b_width);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kActionButtonBottom));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kActionButtonBottom));
       c.PopTransform();
     }
 
@@ -713,13 +713,13 @@ void TouchInput::Draw(FrameDef* frame_def) {
       } else {
         c.Scale(b_width, b_width);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kActionButtonTop));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kActionButtonTop));
       c.PopTransform();
     }
 
     // Center point.
     if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kCircle));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kCircle));
       c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
       c.PushTransform();
 
@@ -744,7 +744,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
                     kDrawDepth);
       }
       c.Scale(b_width * 0.3f, b_width * 0.3f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
     }
     c.PopTransform();
@@ -784,7 +784,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       dist = 0.05f;
     }
 
-    c2.SetTexture(g_media->GetTexture(SystemTextureID::kArrow));
+    c2.SetTexture(g_assets->GetTexture(SystemTextureID::kArrow));
     Matrix44f orient =
         Matrix44fOrient(d_pad_draw_dir_, Vector3f(0.0f, 1.0f, 0.0f));
     c2.PushTransform();
@@ -816,13 +816,13 @@ void TouchInput::Draw(FrameDef* frame_def) {
     c2.PushTransform();
     c2.Translate(0.0f, dist * -0.5f, 0.0f);
     c2.Scale(0.15f, dist, 0.2f);
-    c2.DrawModel(g_media->GetModel(SystemModelID::kArrowBack));
+    c2.DrawModel(g_assets->GetModel(SystemModelID::kArrowBack));
     c2.PopTransform();
 
     c2.PushTransform();
     c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
     c2.Scale(0.45f, 0.3f, 0.3f);
-    c2.DrawModel(g_media->GetModel(SystemModelID::kArrowFront));
+    c2.DrawModel(g_assets->GetModel(SystemModelID::kArrowFront));
     c2.PopTransform();
 
     c2.PopTransform();
@@ -840,7 +840,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_movement_type == "joystick") {
     movement_control_type_ = TouchInput::MovementControlType::kJoystick;
   } else {
-    Log("Error: Invalid touch-movement-type: " + touch_movement_type);
+    Log(LogLevel::kError,
+        "Invalid touch-movement-type: " + touch_movement_type);
     movement_control_type_ = TouchInput::MovementControlType::kSwipe;
   }
   std::string touch_action_type =
@@ -850,7 +851,7 @@ void TouchInput::UpdateMapping() {
   } else if (touch_action_type == "buttons") {
     action_control_type_ = TouchInput::ActionControlType::kButtons;
   } else {
-    Log("Error: Invalid touch-action-type: " + touch_action_type);
+    Log(LogLevel::kError, "Invalid touch-action-type: " + touch_action_type);
     action_control_type_ = TouchInput::ActionControlType::kSwipe;
   }
 
@@ -944,8 +945,9 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
         // ..so lets issue a warning to that effect if there's already
         // controllers active.. (only if we got a player though).
         if (attached_to_player() && g_input->HaveControllerWithPlayer()) {
-          ScreenMessage(g_game->GetResourceString("touchScreenJoinWarningText"),
-                        {1.0f, 1.0f, 0.0f});
+          ScreenMessage(
+              g_logic->GetResourceString("touchScreenJoinWarningText"),
+              {1.0f, 1.0f, 0.0f});
         }
       }
     } else {

@@ -28,7 +28,7 @@ class MaterialAction : public Object {
                      const Object::Ref<MaterialAction>& p) = 0;
   virtual void Execute(Node* node1, Node* node2, Scene* scene) {}
   virtual auto GetFlattenedSize() -> size_t { return 0; }
-  virtual void Flatten(char** buffer, GameStream* output_stream) {}
+  virtual void Flatten(char** buffer, SceneStream* output_stream) {}
   virtual void Restore(const char** buffer, ClientSession* cs) {}
   auto IsNeededOnClient() -> bool {
     switch (GetType()) {

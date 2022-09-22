@@ -348,7 +348,7 @@ auto HScrollWidget::HandleMessage(const WidgetMessage& m) -> bool {
           inertia_scroll_rate_ =
               smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * new_val;
         }
-        last_velocity_event_time_ = g_game->master_time();
+        last_velocity_event_time_ = g_logic->master_time();
         MarkForUpdate();
       } else {
         // Not within our widget; dont allow children to claim.
@@ -625,12 +625,12 @@ void HScrollWidget::Draw(RenderPass* pass, bool draw_transparent) {
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, border_opacity_);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kUIAtlas));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kUIAtlas));
     c.PushTransform();
     c.Translate(trough_center_x_, trough_center_y_, 0.7f);
     c.Scale(trough_width_, trough_height_, 0.1f);
     c.Rotate(-90, 0, 0, 1);
-    c.DrawModel(g_media->GetModel(SystemModelID::kScrollBarTroughTransparent));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kScrollBarTroughTransparent));
     c.PopTransform();
     c.Submit();
   }
@@ -710,20 +710,21 @@ void HScrollWidget::Draw(RenderPass* pass, bool draw_transparent) {
       // on touch, just draw these transiently
 #if 1
       if (draw_transparent) {
-        c.DrawModel(g_media->GetModel(
+        c.DrawModel(g_assets->GetModel(
             sb_thumb_width > 100 ? SystemModelID::kScrollBarThumbSimple
                                  : SystemModelID::kScrollBarThumbShortSimple));
       }
 #else
       if (draw_transparent) {
-        c.DrawModel(g_media->GetModel(
+        c.DrawModel(g_assets->GetModel(
             sb_thumb_width > 100
-                ? Media::SCROLL_BAR_THUMB_TRANSPARENT_MODEL
-                : Media::SCROLL_BAR_THUMB_SHORT_TRANSPARENT_MODEL));
+                ? Assets::SCROLL_BAR_THUMB_TRANSPARENT_MODEL
+                : Assets::SCROLL_BAR_THUMB_SHORT_TRANSPARENT_MODEL));
       } else {
-        c.DrawModel(g_media->GetModel(
-            sb_thumb_width > 100 ? Media::SCROLL_BAR_THUMB_OPAQUE_MODEL
-                                 : Media::SCROLL_BAR_THUMB_SHORT_OPAQUE_MODEL));
+        c.DrawModel(g_assets->GetModel(
+            sb_thumb_width > 100
+                ? Assets::SCROLL_BAR_THUMB_OPAQUE_MODEL
+                : Assets::SCROLL_BAR_THUMB_SHORT_OPAQUE_MODEL));
       }
 #endif
 
@@ -755,11 +756,11 @@ void HScrollWidget::Draw(RenderPass* pass, bool draw_transparent) {
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, border_opacity_);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kScrollWidget));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kScrollWidget));
     c.PushTransform();
     c.Translate(outline_center_x_, outline_center_y_, 0.9f);
     c.Scale(outline_width_, outline_height_, 0.1f);
-    c.DrawModel(g_media->GetModel(SystemModelID::kSoftEdgeOutside));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kSoftEdgeOutside));
     c.PopTransform();
     c.Submit();
   }
@@ -792,11 +793,11 @@ void HScrollWidget::Draw(RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kScrollWidgetGlow));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kScrollWidgetGlow));
     c.PushTransform();
     c.Translate(glow_center_x_, glow_center_y_, 0.9f);
     c.Scale(glow_width_, glow_height_, 0.1f);
-    c.DrawModel(g_media->GetModel(SystemModelID::kSoftEdgeOutside));
+    c.DrawModel(g_assets->GetModel(SystemModelID::kSoftEdgeOutside));
     c.PopTransform();
     c.Submit();
   }

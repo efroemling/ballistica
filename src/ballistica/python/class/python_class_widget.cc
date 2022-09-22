@@ -3,9 +3,9 @@
 #include "ballistica/python/class/python_class_widget.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/widget/container_widget.h"
 
@@ -78,7 +78,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     self->widget_ = new Object::WeakRef<Widget>();
@@ -89,11 +89,11 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
   BA_PYTHON_TRY;
-  // these have to be destructed in the game thread - send them along to it if
+  // these have to be destructed in the logic thread - send them along to it if
   // need be
   if (!InLogicThread()) {
     Object::WeakRef<Widget>* w = self->widget_;
-    g_game->thread()->PushCall([w] { delete w; });
+    g_logic->thread()->PushCall([w] { delete w; });
   } else {
     delete self->widget_;
   }
@@ -222,7 +222,7 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      Log("Error: Can't delete widget: no parent.");
+      Log(LogLevel::kError, "Can't delete widget: no parent.");
     }
   }
   Py_RETURN_NONE;

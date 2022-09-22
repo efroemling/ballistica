@@ -136,9 +136,10 @@ Utils::Utils() {
   // it was parsed from. Use this to adjust the filtering as necessary so
   // the resulting type name matches what is expected.
   if (explicit_bool(false)) {
-    Log("static_type_name check; name is '"
-        + static_type_name<decltype(testnode)>() + "' debug_full is '"
-        + static_type_name<decltype(testnode)>(true) + "'");
+    Log(LogLevel::kError,
+        "static_type_name check; name is '"
+            + static_type_name<decltype(testnode)>() + "' debug_full is '"
+            + static_type_name<decltype(testnode)>(true) + "'");
   }
 
   // We now bake these in so they match across platforms...
@@ -261,8 +262,9 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      Log("GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '" + to
-          + "'; LOC '" + loc + "'");
+      Log(LogLevel::kError, "GOT INVALID UTF8 SEQUENCE: (" + log_str
+                                + "); RETURNING '" + to + "'; LOC '" + loc
+                                + "'");
     }
 
   } else {

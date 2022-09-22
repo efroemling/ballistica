@@ -5,10 +5,6 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/connection/connection_to_client.h"
-#include "ballistica/game/connection/connection_to_host.h"
-#include "ballistica/game/session/session.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/empty_component.h"
@@ -22,6 +18,10 @@
 #include "ballistica/graphics/net_graph.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/connection/connection_to_client.h"
+#include "ballistica/logic/connection/connection_to_host.h"
+#include "ballistica/logic/session/session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/globals_node.h"
@@ -293,7 +293,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
 
     // Add in/out data for any host connection.
     if (ConnectionToHost* connection_to_host =
-            g_game->connections()->connection_to_host()) {
+            g_logic->connections()->connection_to_host()) {
       if (connection_to_host->can_communicate()) show = true;
       in_size += connection_to_host->GetBytesInPerSecond();
       in_size_compressed += connection_to_host->GetBytesInPerSecondCompressed();
@@ -307,7 +307,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       ping = connection_to_host->average_ping();
     } else {
       int connected_count = 0;
-      for (auto&& i : g_game->connections()->connections_to_clients()) {
+      for (auto&& i : g_logic->connections()->connections_to_clients()) {
         ConnectionToClient* client = i.second.get();
         if (client->can_communicate()) {
           show = true;
@@ -449,7 +449,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       {
         SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetTexture(g_media->GetTexture(SystemTextureID::kSoftRectVertical));
+        c.SetTexture(g_assets->GetTexture(SystemTextureID::kSoftRectVertical));
 
         float screen_width = g_graphics->screen_virtual_width();
 
@@ -533,7 +533,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
             // Align our bottom with where we just scaled from.
             c.Translate(0, 0.5f, 0);
           }
-          c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+          c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
           c.PopTransform();
 
           v += scale * (36 + str_height);
@@ -690,14 +690,14 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
             c2.SetMaskTexture(
-                g_media->GetTexture(SystemTextureID::kCharacterIconMask));
+                g_assets->GetTexture(SystemTextureID::kCharacterIconMask));
           }
           c2.SetColor(1, 1, 1, a);
           c2.PushTransform();
           c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
                        kScreenMessageZDepth);
           c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-          c2.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+          c2.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
           c2.PopTransform();
           c2.Submit();
         }
@@ -877,9 +877,10 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
-      Log("WARNING: 2 fades overlapping; running first fade-end-call early");
+      Log(LogLevel::kWarning,
+          "2 fades overlapping; running first fade-end-call early");
     }
-    g_game->PushPythonCall(fade_end_call_);
+    g_logic->PushPythonCall(fade_end_call_);
     fade_end_call_.Clear();
   }
   set_fade_start_on_next_draw_ = true;
@@ -898,7 +899,7 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
 
   // Draw red if we've got graphics stuff loading. Green if only other stuff
   // left.
-  if (g_media->GetGraphicalPendingLoadCount() > 0) {
+  if (g_assets->GetGraphicalPendingLoadCount() > 0) {
     c.SetColor(0.2f, 0, 0, 1);
   } else {
     c.SetColor(0, 0.2f, 0, 1);
@@ -991,17 +992,17 @@ void Graphics::BuildAndPushFrameDef() {
 
   // We should not be building/pushing any frames until after
   // app-launch-commands have been run..
-  BA_PRECONDITION_FATAL(g_game->ran_app_launch_commands());
+  BA_PRECONDITION_FATAL(g_logic->ran_app_launch_commands());
 
   // This should no longer be necessary..
   WaitForRendererToExist();
 
-  Session* session = g_game->GetForegroundSession();
+  Session* session = g_logic->GetForegroundSession();
   bool session_fills_screen = session ? session->DoesFillScreen() : false;
   millisecs_t real_time = GetRealTime();
 
   // Store how much time this frame_def represents.
-  millisecs_t net_time = g_game->master_time();
+  millisecs_t net_time = g_logic->master_time();
   millisecs_t elapsed =
       std::min(millisecs_t{50}, net_time - last_create_frame_def_time_);
   last_create_frame_def_time_ = net_time;
@@ -1010,7 +1011,7 @@ void Graphics::BuildAndPushFrameDef() {
 
   FrameDef* frame_def = GetEmptyFrameDef();
   frame_def->set_real_time(real_time);
-  frame_def->set_base_time(g_game->master_time());
+  frame_def->set_base_time(g_logic->master_time());
   frame_def->set_base_time_elapsed(elapsed);
   frame_def->set_frame_number(frame_def_count_++);
 
@@ -1070,13 +1071,14 @@ void Graphics::BuildAndPushFrameDef() {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
         if (!g_ui->IsWindowPresent()) {
           BA_LOG_ONCE(
+              LogLevel::kError,
               "Drawing in overlay pass in VR mode without UI; shouldn't "
               "happen!");
         }
       }
     }
 
-    if (g_media->GetPendingLoadCount() > 0) {
+    if (g_assets->GetPendingLoadCount() > 0) {
       DrawLoadDot(overlay_pass);
     }
 
@@ -1124,7 +1126,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       c.Translate(0, 7, -3.3f);
       c.Scale(10, 10, 10);
       c.Rotate(a, 0, 0, 1);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1132,14 +1134,14 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kBoxingGlove));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       c.PushTransform();
       c.Translate(0.0f, 3.7f, -3.3f);
       c.Scale(10.0f, 10.0f, 10.0f);
       c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1153,7 +1155,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       c.Translate(0.0f, 3.7f, -3.3f);
       c.Scale(10.0f, 10.0f, 10.0f);
       c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBoxingGlove));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBoxingGlove));
       c.PopTransform();
       c.Submit();
     }
@@ -1168,7 +1170,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
       c.PushTransform();
       c.Translate(70, 400, kDebugImgZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1178,7 +1180,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
       c.PushTransform();
       c.Translate(70, 250, kDebugImgZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1190,18 +1192,18 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def,
   RenderPass* pass = frame_def->overlay_pass();
   UpdateProgressBarProgress(
       1.0f
-      - static_cast<float>(g_media->GetGraphicalPendingLoadCount())
+      - static_cast<float>(g_assets->GetGraphicalPendingLoadCount())
             / static_cast<float>(progress_bar_loads_));
   DrawProgressBar(pass, 1.0f);
 
   // If we were drawing a progress bar, see if everything is now loaded.. if
   // so, start rendering normally next frame.
-  int count = g_media->GetGraphicalPendingLoadCount();
+  int count = g_assets->GetGraphicalPendingLoadCount();
   if (count <= 0) {
     progress_bar_ = false;
     progress_bar_end_time_ = real_time;
   }
-  if (g_media->GetPendingLoadCount() > 0) {
+  if (g_assets->GetPendingLoadCount() > 0) {
     DrawLoadDot(pass);
   }
 }
@@ -1213,7 +1215,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
   if (fade_ <= 0.0f && fade_out_) {
     millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
     if (faded_time > 15000) {
-      Log("FORCE-ENDING STUCK FADE");
+      Log(LogLevel::kError, "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
@@ -1238,7 +1240,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
     } else {
       fade_ = 0;
       if (!was_done && fade_end_call_.exists()) {
-        g_game->PushPythonCall(fade_end_call_);
+        g_logic->PushPythonCall(fade_end_call_);
         fade_end_call_.Clear();
       }
     }
@@ -1294,7 +1296,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       float inv_a = 1.0f - a;
       float s = 100.0f * inv_a + 5.0f * a;
       c.Scale(s, s, s);
-      c.DrawModel(g_media->GetModel(SystemModelID::kVRFade));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kVRFade));
       c.PopTransform();
       c.Submit();
 #else   // BA_VR_BUILD
@@ -1347,7 +1349,7 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       float csize = 50.0f;
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kCursor));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kCursor));
       c.PushTransform();
 
       // Note: we don't plug in known cursor position values here; we tell the
@@ -1356,7 +1358,7 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
       c.CursorTranslate();
       c.Translate(csize * 0.44f, csize * -0.44f, kCursorZDepth);
       c.Scale(csize, csize);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1372,7 +1374,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     this->shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         this->blotch_verts_.size(), &this->blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLight));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLight));
     c.DrawMesh(this->shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1385,7 +1387,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         Object::New<MeshBuffer<VertexSprite>>(this->blotch_soft_verts_.size(),
                                               &this->blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLightSoft));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLightSoft));
     c.DrawMesh(this->shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1401,7 +1403,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
             this->blotch_soft_obj_verts_.size(),
             &this->blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_media->GetTexture(SystemTextureID::kLightSoft));
+    c.SetTexture(g_assets->GetTexture(SystemTextureID::kLightSoft));
     c.DrawMesh(this->shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
@@ -1448,7 +1450,7 @@ void Graphics::AddMeshDataDestroy(MeshData* d) {
 
 void Graphics::EnableProgressBar(bool fade_in) {
   assert(InLogicThread());
-  progress_bar_loads_ = g_media->GetGraphicalPendingLoadCount();
+  progress_bar_loads_ = g_assets->GetGraphicalPendingLoadCount();
   assert(progress_bar_loads_ >= 0);
   if (progress_bar_loads_ > 0) {
     progress_bar_ = true;
@@ -1503,6 +1505,7 @@ void Graphics::WaitForRendererToExist() {
   while (g_graphics_server == nullptr
          || g_graphics_server->renderer() == nullptr) {
     BA_LOG_ONCE(
+        LogLevel::kWarning,
         "BuildAndPushFrameDef() called before renderer is up; spinning...");
     Platform::SleepMS(100);
     sleep_count++;
@@ -1801,7 +1804,7 @@ void Graphics::ScreenResize(float virtual_width, float virtual_height,
 
 void Graphics::ScreenMessageEntry::UpdateTranslation() {
   if (translation_dirty) {
-    s_translated = g_game->CompileResourceString(
+    s_translated = g_logic->CompileResourceString(
         s_raw, "Graphics::ScreenMessageEntry::UpdateTranslation");
     translation_dirty = false;
     mesh_dirty = true;

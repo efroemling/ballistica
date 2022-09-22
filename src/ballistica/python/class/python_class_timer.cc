@@ -3,7 +3,7 @@
 #include "ballistica/python/class/python_class_timer.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python_context_call_runnable.h"
 
 namespace ballistica {
@@ -76,7 +76,7 @@ auto PythonClassTimer::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
 
@@ -161,13 +161,13 @@ void PythonClassTimer::DoDelete(bool have_timer, TimeType time_type,
 
 void PythonClassTimer::tp_dealloc(PythonClassTimer* self) {
   BA_PYTHON_TRY;
-  // These have to be deleted in the game thread.
+  // These have to be deleted in the logic thread.
   if (!InLogicThread()) {
     auto a0 = self->have_timer_;
     auto a1 = self->time_type_;
     auto a2 = self->timer_id_;
     auto a3 = self->context_;
-    g_game->thread()->PushCall(
+    g_logic->thread()->PushCall(
         [a0, a1, a2, a3] { PythonClassTimer::DoDelete(a0, a1, a2, a3); });
   } else {
     DoDelete(self->have_timer_, self->time_type_, self->timer_id_,

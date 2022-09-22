@@ -45,10 +45,10 @@ class BGDynamicsEmission {
   BGDynamicsTendrilType tendril_type{BGDynamicsTendrilType::kSmoke};
 };
 
-// client (game thread) functionality for bg dynamics
+// client (logic thread) functionality for bg dynamics
 class BGDynamics {
  public:
-  static void Init();
+  BGDynamics();
 
   void Emit(const BGDynamicsEmission& def);
   void Step(const Vector3f& cam_pos);
@@ -68,7 +68,6 @@ class BGDynamics {
   void SetDrawSnapshot(BGDynamicsDrawSnapshot* s);
 
  private:
-  BGDynamics();
   void DrawChunks(FrameDef* frame_def, std::vector<Matrix44f>* instances,
                   BGDynamicsChunkType chunk_type);
   Object::Ref<SpriteMesh> lights_mesh_;

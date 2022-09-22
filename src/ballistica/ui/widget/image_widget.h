@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/texture.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/ui/widget/widget.h"
 
 namespace ballistica {

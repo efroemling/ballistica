@@ -13,24 +13,15 @@
 
 namespace ballistica {
 
-// The first thing the engine does is allocate an instance of this as g_globals.
-// As much as possible, previously static/global values should be moved to here,
-// ideally as a temporary measure until they can be placed as non-static members
-// in the proper classes.
-// Any use of non-trivial global/static values such as class instances should be
-// avoided since it can introduce ambiguities during init and teardown.
-// For more explanation, see the 'Static and Global Variables' section in the
-// Google C++ Style Guide.
+// The first thing the engine does is allocate an instance of this as g_app.
 class App {
  public:
   App(int argc, char** argv);
 
-  /// Program argument count (on applicable platforms).
+  // The following are misc values that should be migrated to applicable
+  // subsystem classes.
   int argc{};
-
-  /// Program argument values (on applicable platforms).
   char** argv{};
-
   bool threads_paused{};
   std::unordered_map<std::string, NodeType*> node_types;
   std::unordered_map<int, NodeType*> node_types_by_id;
@@ -41,10 +32,10 @@ class App {
   std::vector<Thread*> pausable_threads;
   TouchInput* touch_input{};
   std::string console_startup_messages;
-  std::mutex log_mutex;
-  std::string log;
-  bool put_log{};
-  bool log_full{};
+  std::mutex v1_cloud_log_mutex;
+  std::string v1_cloud_log;
+  bool did_put_v1_cloud_log{};
+  bool v1_cloud_log_full{};
   int master_server_source{0};
   int session_count{};
   bool shutting_down{};

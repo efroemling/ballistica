@@ -3,18 +3,19 @@
 #include "ballistica/scene/node/node.h"
 
 #include "ballistica/dynamics/part.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/python/class/python_class_node.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_attribute_connection.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
 NodeType::~NodeType() {
-  Log("ERROR: SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
+  Log(LogLevel::kError,
+      "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
 }
 
 Node::Node(Scene* scene_in, NodeType* node_type)
@@ -30,7 +31,7 @@ void Node::AddToScene(Scene* scene) {
   // id_ = scene->next_node_id_++;
   // our_iterator_ =
   //     scene->nodes_.insert(scene->nodes_.end(), Object::Ref<Node>(this));
-  if (GameStream* os = scene->GetGameStream()) {
+  if (SceneStream* os = scene->GetSceneStream()) {
     os->AddNode(this);
   }
 }
@@ -71,7 +72,7 @@ Node::~Node() {
 
   // If we were going to an output stream, inform them of our demise.
   assert(scene());
-  if (GameStream* output_stream = scene()->GetGameStream()) {
+  if (SceneStream* output_stream = scene()->GetSceneStream()) {
     output_stream->RemoveNode(this);
   }
 }
@@ -260,7 +261,7 @@ void Node::DispatchOutOfBoundsMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node OutOfBoundsMessage dispatch");
   } else {
-    Log("Error creating OutOfBoundsMessage");
+    Log(LogLevel::kError, "Error creating OutOfBoundsMessage");
   }
 }
 
@@ -275,7 +276,7 @@ void Node::DispatchPickUpMessage(Node* node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickUpMessage dispatch");
   } else {
-    Log("Error creating PickUpMessage");
+    Log(LogLevel::kError, "Error creating PickUpMessage");
   }
 }
 
@@ -288,7 +289,7 @@ void Node::DispatchDropMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DropMessage dispatch");
   } else {
-    Log("Error creating DropMessage");
+    Log(LogLevel::kError, "Error creating DropMessage");
   }
 }
 
@@ -304,7 +305,7 @@ void Node::DispatchPickedUpMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickedUpMessage dispatch");
   } else {
-    Log("Error creating PickedUpMessage");
+    Log(LogLevel::kError, "Error creating PickedUpMessage");
   }
 }
 
@@ -320,7 +321,7 @@ void Node::DispatchDroppedMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DroppedMessage dispatch");
   } else {
-    Log("Error creating DroppedMessage");
+    Log(LogLevel::kError, "Error creating DroppedMessage");
   }
 }
 
@@ -333,7 +334,7 @@ void Node::DispatchShouldShatterMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ShouldShatterMessage dispatch");
   } else {
-    Log("Error creating ShouldShatterMessage");
+    Log(LogLevel::kError, "Error creating ShouldShatterMessage");
   }
 }
 
@@ -348,7 +349,7 @@ void Node::DispatchImpactDamageMessage(float intensity) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ImpactDamageMessage dispatch");
   } else {
-    Log("Error creating ImpactDamageMessage");
+    Log(LogLevel::kError, "Error creating ImpactDamageMessage");
   }
 }
 
@@ -376,8 +377,10 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
         c.Call(PythonRef(Py_BuildValue("(O)", obj), PythonRef::kSteal));
       }
     } catch (const std::exception& e) {
-      Log(std::string("Error in handlemessage() with message ")
-          + PythonRef(obj, PythonRef::kAcquire).Str() + ": '" + e.what() + "'");
+      Log(LogLevel::kError,
+          std::string("Error in handlemessage() with message ")
+              + PythonRef(obj, PythonRef::kAcquire).Str() + ": '" + e.what()
+              + "'");
     }
   }
 }

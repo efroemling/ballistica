@@ -17,12 +17,12 @@ CollisionCache::~CollisionCache() {
   dGeomDestroy(test_box_);
 }
 
-void CollisionCache::SetGeoms(const std::vector<dGeomID>& geoms) {
+auto CollisionCache::SetGeoms(const std::vector<dGeomID>& geoms) -> void {
   dirty_ = true;
   geoms_ = geoms;
 }
 
-void CollisionCache::Draw(FrameDef* frame_def) {
+auto CollisionCache::Draw(FrameDef* frame_def) -> void {
   if (cells_.empty()) {
     return;
   }
@@ -36,7 +36,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
   c.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
   c.PushTransform();
   c.Scale(1, 0.01f, 1);
-  c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+  c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
   c.PopTransform();
   c.Translate(-0.5f + 0.5f * cell_width, 0, -0.5f + 0.5f * cell_height);
   for (int x = 0; x < grid_width_; x++) {
@@ -53,7 +53,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                   cells_[cell_index].height_confirmed_collide_,
                   static_cast<float>(z) / static_cast<float>(grid_height_));
       c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
       if (glow_[cell_index]) {
         c.SetColor(1, 1, 1, 0.2f);
@@ -65,7 +65,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                   cells_[cell_index].height_confirmed_empty_,
                   static_cast<float>(z) / static_cast<float>(grid_height_));
       c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
-      c.DrawModel(g_media->GetModel(SystemModelID::kBox));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kBox));
       c.PopTransform();
       glow_[cell_index] = 0;
     }
@@ -84,7 +84,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
     c2.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
     c2.PushTransform();
     c2.Scale(1, 0.01f, 1);
-    c2.DrawModel(g_media->GetModel(SystemModelID::kBox));
+    c2.DrawModel(g_assets->GetModel(SystemModelID::kBox));
     c2.PopTransform();
     c2.Translate(-0.5f + 0.5f * cell_width2, 0, -0.5f + 0.5f * cell_height2);
     for (int x = 0; x < grid_width_; x++) {
@@ -101,7 +101,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                      cells_[cell_index].height_confirmed_empty_,
                      static_cast<float>(z) / static_cast<float>(grid_height_));
         c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-        c2.DrawModel(g_media->GetModel(SystemModelID::kBox));
+        c2.DrawModel(g_assets->GetModel(SystemModelID::kBox));
         c2.PopTransform();
         if (glow_[cell_index]) {
           c2.SetColor(1, 1, 1, 0.2f);
@@ -113,7 +113,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                      cells_[cell_index].height_confirmed_collide_,
                      static_cast<float>(z) / static_cast<float>(grid_height_));
         c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-        c2.DrawModel(g_media->GetModel(SystemModelID::kBox));
+        c2.DrawModel(g_assets->GetModel(SystemModelID::kBox));
         c2.PopTransform();
 
         glow_[cell_index] = 0;
@@ -124,7 +124,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
   }
 }
 
-void CollisionCache::Precalc() {
+auto CollisionCache::Precalc() -> void {
   Update();
 
   if (precalc_index_ >= cells_.size()) {
@@ -138,8 +138,8 @@ void CollisionCache::Precalc() {
   TestCell(precalc_index_++, x, z);
 }
 
-void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
-                                        dNearCallback* callback) {
+auto CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
+                                        dNearCallback* callback) -> void {
   // Update bounds, test for quick out against our height map,
   // and proceed to a full test on a positive result.
   g1->recomputeAABB();
@@ -204,7 +204,7 @@ void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
   }
 }
 
-void CollisionCache::TestCell(size_t cell_index, int x, int z) {
+auto CollisionCache::TestCell(size_t cell_index, int x, int z) -> void {
   int t_count = static_cast<int>(geoms_.size());
   float top = cells_[cell_index].height_confirmed_empty_;
 
@@ -252,8 +252,8 @@ void CollisionCache::TestCell(size_t cell_index, int x, int z) {
   }
 }
 
-void CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
-                                         dNearCallback* callback) {
+auto CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
+                                         dNearCallback* callback) -> void {
   // We handle our own testing against trimeshes, so we can bring our fancy
   // caching into play.
   if (!geoms_.empty()) {
@@ -264,7 +264,7 @@ void CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
   }
 }
 
-void CollisionCache::Update() {
+auto CollisionCache::Update() -> void {
   if (!dirty_) {
     return;
   }

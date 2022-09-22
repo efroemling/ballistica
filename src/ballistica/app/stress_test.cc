@@ -76,13 +76,13 @@ void StressTest::Update() {
         uint32_t texture_count = 0;
         uint32_t sound_count = 0;
         uint32_t node_count = 0;
-        if (g_media) {
-          model_count = g_media->total_model_count();
-          collide_model_count = g_media->total_collide_model_count();
-          texture_count = g_media->total_texture_count();
-          sound_count = g_media->total_sound_count();
+        if (g_assets) {
+          model_count = g_assets->total_model_count();
+          collide_model_count = g_assets->total_collide_model_count();
+          texture_count = g_assets->total_texture_count();
+          sound_count = g_assets->total_sound_count();
         }
-        assert(g_game);
+        assert(g_logic);
         std::string mem_usage = g_platform->GetMemUsageInfo();
         fprintf(stress_test_stats_file_, "%d,%.1f,%d,%d,%d,%d,%d,%s\n",
                 static_cast_check_fit<int>(GetRealTime()), avg, node_count,

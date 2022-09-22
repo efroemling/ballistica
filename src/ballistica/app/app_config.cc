@@ -8,8 +8,6 @@
 
 namespace ballistica {
 
-void AppConfig::Init() { new AppConfig(); }
-
 auto AppConfig::Entry::FloatValue() const -> float {
   throw Exception("not a float entry");
 }
@@ -137,12 +135,7 @@ class AppConfig::BoolEntry : public AppConfig::Entry {
   bool default_value_{};
 };
 
-AppConfig::AppConfig() {
-  // (We're a singleton).
-  assert(g_app_config == nullptr);
-  g_app_config = this;
-  SetupEntries();
-}
+AppConfig::AppConfig() { SetupEntries(); }
 
 // Clion think all calls of this are unreachable.
 #pragma clang diagnostic push

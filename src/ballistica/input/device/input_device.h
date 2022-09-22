@@ -13,8 +13,8 @@ namespace ballistica {
 /// Base class for game input devices (keyboard, joystick, etc).
 /// InputDevices can be allocated in any thread (generally on the main
 /// thread in response to some system event).  An AddInputDevice() call
-/// should then be pushed to the game thread to inform it of the new device.
-/// Deletion of the input-device is then handled by the game thread
+/// should then be pushed to the logic thread to inform it of the new device.
+/// Deletion of the input-device is then handled by the logic thread
 /// and can be triggered by pushing a RemoveInputDevice() call to it.
 class InputDevice : public Object {
  public:

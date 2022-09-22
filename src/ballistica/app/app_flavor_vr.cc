@@ -4,9 +4,9 @@
 #include "ballistica/app/app_flavor_vr.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
+#include "ballistica/logic/logic.h"
 
 namespace ballistica {
 
@@ -87,7 +87,7 @@ auto AppFlavorVR::VRSetHands(const VRHandsState& state) -> void {
   renderer->VRSetHands(state);
 
   // ALSO ship it off to the game/ui thread to actually handle input from it.
-  g_game->PushVRHandsState(state);
+  g_logic->PushVRHandsState(state);
 }
 
 auto AppFlavorVR::VRDrawEye(int eye, float yaw, float pitch, float roll,

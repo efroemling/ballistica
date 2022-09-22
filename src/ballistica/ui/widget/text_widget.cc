@@ -4,13 +4,13 @@
 
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/audio/audio.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -39,7 +39,7 @@ TextWidget::TextWidget() {
     }
   }
 
-  birth_time_ = g_game->master_time();
+  birth_time_ = g_logic->master_time();
 }
 
 TextWidget::~TextWidget() = default;
@@ -177,11 +177,11 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(true);
       c.SetPremultiplied(true);
       c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kGlow));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kGlow));
       c.PushTransform();
       c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
       c.Scale(highlight_width_, highlight_height_);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage4x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage4x1));
       c.PopTransform();
       c.Submit();
     }
@@ -202,11 +202,11 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kUIAtlas));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kUIAtlas));
       c.PushTransform();
       c.Translate(outline_center_x_, outline_center_y_, 0.1f);
       c.Scale(outline_width_, outline_height_);
-      c.DrawModel(g_media->GetModel(SystemModelID::kTextBoxTransparent));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kTextBoxTransparent));
       c.PopTransform();
       c.Submit();
     }
@@ -221,7 +221,7 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
       } else {
         c.SetColor(0.5f, 0.5f, 0.5f, 1);
       }
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kTextClearButton));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kTextClearButton));
       c.PushTransform();
       c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
       if (g_ui->scale() == UIScale::kSmall) {
@@ -229,7 +229,7 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
       } else {
         c.Scale(25, 25);
       }
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
       c.PopTransform();
       c.Submit();
     }
@@ -401,10 +401,10 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
         c.Scale(max_width_height_scale, max_width_height_scale);
         c.Translate(h + 4, v + 17.0f);
         c.Scale(6, 27);
-        c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+        c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
         c.SetColor(1, 1, 1, 0);
         c.Scale(0.3f, 0.8f);
-        c.DrawModel(g_media->GetModel(SystemModelID::kImage1x1));
+        c.DrawModel(g_assets->GetModel(SystemModelID::kImage1x1));
         c.PopTransform();
         c.Submit();
       }
@@ -461,13 +461,15 @@ void TextWidget::SetText(const std::string& text_in_raw) {
 
   if (do_format_check) {
     bool valid;
-    g_game->CompileResourceString(text_in_raw,
-                                  "TextWidget::SetText format check", &valid);
+    g_logic->CompileResourceString(text_in_raw,
+                                   "TextWidget::SetText format check", &valid);
     if (!valid) {
-      BA_LOG_ONCE("Invalid resource string: '" + text_in_raw + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Invalid resource string: '" + text_in_raw + "'");
       Python::PrintStackTrace();
     } else if (explicit_bool(print_false_positives)) {
-      BA_LOG_ONCE("Got false positive for json check on '" + text_in_raw + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Got false positive for json check on '" + text_in_raw + "'");
       Python::PrintStackTrace();
     }
   }
@@ -557,12 +559,12 @@ void TextWidget::BringUpEditDialog() {
 }
 
 void TextWidget::Activate() {
-  last_activate_time_ = g_game->master_time();
+  last_activate_time_ = g_logic->master_time();
 
   if (on_activate_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from within
     // a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
   }
 
@@ -603,7 +605,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
   }
   // If we're doing inline editing, handle some key events.
   if (m.has_keysym && !ShouldUseStringEditDialog()) {
-    last_carat_change_time_ = g_game->master_time();
+    last_carat_change_time_ = g_logic->master_time();
 
     text_group_dirty_ = true;
     bool claimed = false;
@@ -617,7 +619,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       case SDLK_KP_ENTER:
         if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
           // On mobile, return currently just deselects us.
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kSwish));
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {
@@ -626,7 +628,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
             if (on_return_press_call_.exists()) {
               // Call this in the next cycle (don't wanna risk mucking with UI
               // from within a UI loop)
-              g_game->PushPythonWeakCall(
+              g_logic->PushPythonWeakCall(
                   Object::WeakRef<PythonContextCall>(on_return_press_call_));
             }
           }
@@ -838,7 +840,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
           pressed_activate_ =
               (click_count == 2 || click_activate_) && !editable_;
           if (click_count == 1) {
-            g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+            g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
           }
         }
         return true;
@@ -861,7 +863,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
         carat_position_ = 0;
         text_group_dirty_ = true;
         clear_pressed_ = false;
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+        g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         return true;
       }
       clear_pressed_ = false;
@@ -933,7 +935,7 @@ void TextWidget::UpdateTranslation() {
     if (editable()) {
       text_translated_ = text_raw_;
     } else {
-      text_translated_ = g_game->CompileResourceString(
+      text_translated_ = g_logic->CompileResourceString(
           text_raw_, "TextWidget::UpdateTranslation");
     }
     text_translation_dirty_ = false;

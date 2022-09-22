@@ -2,10 +2,10 @@
 
 #include "ballistica/audio/audio_source.h"
 
+#include "ballistica/assets/data/sound_data.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/data/sound_data.h"
 
 namespace ballistica {
 
@@ -41,7 +41,7 @@ void AudioSource::SetPosition(float x, float y, float z) {
   assert(client_queue_size_ > 0);
 #if BA_DEBUG_BUILD
   if (std::isnan(x) || std::isnan(y) || std::isnan(z)) {
-    Log("Error: Got nan value in AudioSource::SetPosition.");
+    Log(LogLevel::kError, "Got nan value in AudioSource::SetPosition.");
   }
 #endif
   g_audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));

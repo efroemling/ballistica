@@ -15,8 +15,8 @@
 #include "ballistica/dynamics/material/roll_sound_material_action.h"
 #include "ballistica/dynamics/material/skid_sound_material_action.h"
 #include "ballistica/dynamics/material/sound_material_action.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -92,7 +92,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     PyObject* name_obj = Py_None;
@@ -144,11 +144,11 @@ void PythonClassMaterial::Delete(Object::Ref<Material>* m) {
 void PythonClassMaterial::tp_dealloc(PythonClassMaterial* self) {
   BA_PYTHON_TRY;
 
-  // These have to be deleted in the game thread - push a call if
+  // These have to be deleted in the logic thread - push a call if
   // need be.. otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Material>* ptr = self->material_;
-    g_game->thread()->PushCall([ptr] { Delete(ptr); });
+    g_logic->thread()->PushCall([ptr] { Delete(ptr); });
   } else {
     Delete(self->material_);
   }

@@ -64,9 +64,11 @@
       <w>aiomain</w>
       <w>alarmsound</w>
       <w>alibaba</w>
+      <w>allerrors</w>
       <w>allpaths</w>
       <w>allsettings</w>
       <w>allteams</w>
+      <w>allwarnings</w>
       <w>aman</w>
       <w>amazonaws</w>
       <w>aname</w>
@@ -111,6 +113,7 @@
       <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
+      <w>apptime</w>
       <w>apputils</w>
       <w>archivepath</w>
       <w>archivepathbase</w>
@@ -234,6 +237,7 @@
       <w>benning</w>
       <w>bfiledir</w>
       <w>bfiles</w>
+      <w>bgdynamics</w>
       <w>bgmodel</w>
       <w>bgrn</w>
       <w>bgterrain</w>
@@ -415,6 +419,7 @@
       <w>cleanlist</w>
       <w>cleanupcheck</w>
       <w>cleanupchecks</w>
+      <w>clearsign</w>
       <w>clientid</w>
       <w>clientlist</w>
       <w>clienttobasn</w>
@@ -433,6 +438,7 @@
       <w>clrhdr</w>
       <w>clrnames</w>
       <w>clrred</w>
+      <w>cmakelist</w>
       <w>cmakelists</w>
       <w>cmakeserver</w>
       <w>cmath</w>
@@ -1341,6 +1347,7 @@
       <w>levelgametype</w>
       <w>levelmodule</w>
       <w>levelname</w>
+      <w>levelno</w>
       <w>lfull</w>
       <w>lfval</w>
       <w>libballisticacore</w>
@@ -1647,6 +1654,7 @@
       <w>nettest</w>
       <w>nettesting</w>
       <w>netutils</w>
+      <w>networkwrite</w>
       <w>nevermind</w>
       <w>newactivity</w>
       <w>newdamage</w>
@@ -2380,6 +2388,7 @@
       <w>startscan</w>
       <w>startsplits</w>
       <w>starttime</w>
+      <w>startupmsg</w>
       <w>statestr</w>
       <w>statictest</w>
       <w>statictestfiles</w>
@@ -2408,6 +2417,7 @@
       <w>stot</w>
       <w>strftime</w>
       <w>stringified</w>
+      <w>stringifying</w>
       <w>stringprep</w>
       <w>stringptr</w>
       <w>strippable</w>

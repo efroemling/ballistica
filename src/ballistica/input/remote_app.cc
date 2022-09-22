@@ -10,11 +10,11 @@
 #endif
 
 #include "ballistica/app/app.h"
-#include "ballistica/game/game.h"
+#include "ballistica/assets/assets.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/media.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/platform/min_sdl.h"
 #include "ballistica/platform/platform.h"
@@ -75,9 +75,9 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
     }
     case BA_PACKET_REMOTE_ID_REQUEST: {
       if (amt < 5 || amt > 127) {
-        BA_LOG_ONCE(
-            "Error: received invalid BA_PACKET_REMOTE_ID_REQUEST of length "
-            + std::to_string(amt));
+        BA_LOG_ONCE(LogLevel::kError,
+                    "Received invalid BA_PACKET_REMOTE_ID_REQUEST of length "
+                        + std::to_string(amt));
         break;
       }
 
@@ -165,10 +165,10 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
 
           // Replace ${CONTROLLER} with it in our message.
           std::string s =
-              g_game->GetResourceString("controllerDisconnectedText");
+              g_logic->GetResourceString("controllerDisconnectedText");
           Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
-          g_game->PushScreenMessage(s, Vector3f(1, 1, 1));
-          g_game->PushPlaySoundCall(SystemSoundID::kCorkPop);
+          g_logic->PushScreenMessage(s, Vector3f(1, 1, 1));
+          g_logic->PushPlaySoundCall(SystemSoundID::kCorkPop);
           g_input->PushRemoveInputDeviceCall(client->joystick_, false);
           client->joystick_ = nullptr;
           client->in_use = false;
@@ -212,7 +212,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
 
       // Each state is 2 bytes. So make sure our length adds up.
       if (amt != 4 + state_count * 3) {
-        BA_LOG_ONCE("Error: Invalid state packet");
+        BA_LOG_ONCE(LogLevel::kError, "Invalid state packet");
         return;
       }
       RemoteAppClient* client = clients_ + joystick_id;
@@ -367,10 +367,10 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
         snprintf(m, sizeof(m), "%s", clients_[i].display_name);
 
         // Replace ${CONTROLLER} with it in our message.
-        std::string s = g_game->GetResourceString("controllerReconnectedText");
+        std::string s = g_logic->GetResourceString("controllerReconnectedText");
         Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
-        g_game->PushScreenMessage(s, Vector3f(1, 1, 1));
-        g_game->PushPlaySoundCall(SystemSoundID::kGunCock);
+        g_logic->PushScreenMessage(s, Vector3f(1, 1, 1));
+        g_logic->PushPlaySoundCall(SystemSoundID::kGunCock);
       }
       clients_[i].in_use = true;
       return i;
@@ -407,10 +407,10 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
       snprintf(m, sizeof(m), "%s", clients_[i].display_name);
 
       // Replace ${CONTROLLER} with it in our message.
-      std::string s = g_game->GetResourceString("controllerConnectedText");
+      std::string s = g_logic->GetResourceString("controllerConnectedText");
       Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
-      g_game->PushScreenMessage(s, Vector3f(1, 1, 1));
-      g_game->PushPlaySoundCall(SystemSoundID::kGunCock);
+      g_logic->PushScreenMessage(s, Vector3f(1, 1, 1));
+      g_logic->PushPlaySoundCall(SystemSoundID::kGunCock);
       std::string utf8 = Utils::GetValidUTF8(clients_[i].display_name, "rsgc1");
       clients_[i].joystick_ = Object::NewDeferred<Joystick>(
           -1,  // not an sdl joystick
@@ -425,7 +425,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
       if (Utils::UTF8StringLength(utf8.c_str()) <= 10) {
         clients_[i].joystick_->set_custom_default_player_name(utf8);
       }
-      assert(g_game);
+      assert(g_logic);
       g_input->PushAddInputDeviceCall(clients_[i].joystick_, false);
       return i;
     }
@@ -512,7 +512,7 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
       break;
   }
   if (send) {
-    assert(g_game);
+    assert(g_logic);
     g_input->PushJoystickEvent(e, client->joystick_);
   }
 #pragma clang diagnostic pop
@@ -542,7 +542,7 @@ void RemoteAppServer::HandleRemoteFloatEvent(RemoteAppClient* client,
       break;
   }
   if (send) {
-    assert(g_game);
+    assert(g_logic);
     g_input->PushJoystickEvent(e, client->joystick_);
   }
 #pragma clang diagnostic pop

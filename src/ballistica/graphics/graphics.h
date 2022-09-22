@@ -43,7 +43,7 @@ const float kBackingDepth1 = 0.0f;
 
 const float kShadowNeutral = 0.5f;
 
-// Client class for graphics operations (used from the game thread).
+// Client class for graphics operations (used from the logic thread).
 class Graphics {
  public:
   Graphics();

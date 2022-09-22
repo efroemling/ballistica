@@ -41,7 +41,9 @@
       <w>airborn</w>
       <w>alext</w>
       <w>alibaba</w>
+      <w>allerrors</w>
       <w>allocs</w>
+      <w>allwarnings</w>
       <w>alot</w>
       <w>alphaimg</w>
       <w>alphapixels</w>
@@ -67,6 +69,7 @@
       <w>appnameupper</w>
       <w>appspot</w>
       <w>appstate</w>
+      <w>apptime</w>
       <w>argsjoined</w>
       <w>argstr</w>
       <w>armcap</w>
@@ -119,6 +122,7 @@
       <w>bdea</w>
       <w>benning</w>
       <w>bezanson</w>
+      <w>bgdynamics</w>
       <w>bgra</w>
       <w>bigendian</w>
       <w>bilinear</w>
@@ -226,10 +230,12 @@
       <w>classdict</w>
       <w>classline</w>
       <w>cleanupcheck</w>
+      <w>clearsign</w>
       <w>clientid</w>
       <w>clientinfo</w>
       <w>clienttobasn</w>
       <w>clipcount</w>
+      <w>cmakelist</w>
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdvals</w>
@@ -697,6 +703,7 @@
       <w>leaderboard</w>
       <w>leaderboards</w>
       <w>lenval</w>
+      <w>levelno</w>
       <w>lgui</w>
       <w>lhalf</w>
       <w>libbz</w>
@@ -848,6 +855,7 @@
       <w>netcode</w>
       <w>netplay</w>
       <w>nettest</w>
+      <w>networkwrite</w>
       <w>newactivity</w>
       <w>newchild</w>
       <w>newimg</w>
@@ -1239,6 +1247,7 @@
       <w>startpos</w>
       <w>startsplits</w>
       <w>starttime</w>
+      <w>startupmsg</w>
       <w>startx</w>
       <w>starty</w>
       <w>statestr</w>
@@ -1258,6 +1267,7 @@
       <w>strdup</w>
       <w>stringi</w>
       <w>stringified</w>
+      <w>stringifying</w>
       <w>strlen</w>
       <w>strs</w>
       <w>strtof</w>

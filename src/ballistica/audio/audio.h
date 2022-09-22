@@ -15,14 +15,15 @@ namespace ballistica {
 /// used by the game and/or other threads.
 class Audio {
  public:
-  static void Init();
-  void Reset();
+  Audio();
+  auto Reset() -> void;
 
-  void SetVolumes(float music_volume, float sound_volume);
+  auto SetVolumes(float music_volume, float sound_volume) -> void;
 
-  void SetListenerPosition(const Vector3f& p);
-  void SetListenerOrientation(const Vector3f& forward, const Vector3f& up);
-  void SetSoundPitch(float pitch);
+  auto SetListenerPosition(const Vector3f& p) -> void;
+  auto SetListenerOrientation(const Vector3f& forward, const Vector3f& up)
+      -> void;
+  auto SetSoundPitch(float pitch) -> void;
 
   // Return a pointer to a locked sound source, or nullptr if they're all busy.
   // The sound source will be reset to standard settings (no loop, fade 1, pos
@@ -41,9 +42,9 @@ class Audio {
   auto IsSoundPlaying(uint32_t play_id) -> bool;
 
   // Simple one-shot play functions.
-  void PlaySound(SoundData* s, float volume = 1.0f);
-  void PlaySoundAtPosition(SoundData* sound, float volume, float x, float y,
-                           float z);
+  auto PlaySound(SoundData* s, float volume = 1.0f) -> void;
+  auto PlaySoundAtPosition(SoundData* sound, float volume, float x, float y,
+                           float z) -> void;
 
   // Call this if you want to prevent repeated plays of the same sound. It'll
   // tell you if the sound has been played recently.  The one-shot sound-play
@@ -51,19 +52,17 @@ class Audio {
   auto ShouldPlay(SoundData* s) -> bool;
 
   // Hmm; shouldn't these be accessed through the Source class?
-  void PushSourceFadeOutCall(uint32_t play_id, uint32_t time);
-  void PushSourceStopSoundCall(uint32_t play_id);
+  auto PushSourceFadeOutCall(uint32_t play_id, uint32_t time) -> void;
+  auto PushSourceStopSoundCall(uint32_t play_id) -> void;
 
-  void AddClientSource(AudioSource* source);
+  auto AddClientSource(AudioSource* source) -> void;
 
-  void MakeSourceAvailable(AudioSource* source);
+  auto MakeSourceAvailable(AudioSource* source) -> void;
   auto available_sources_mutex() -> std::mutex& {
     return available_sources_mutex_;
   }
 
  private:
-  Audio();
-
   // Flat list of client sources indexed by id.
   std::vector<AudioSource*> client_sources_;
 

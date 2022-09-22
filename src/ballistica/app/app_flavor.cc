@@ -4,11 +4,11 @@
 
 #include "ballistica/app/stress_test.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/network_reader.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/networking/telnet_server.h"
@@ -18,20 +18,30 @@ namespace ballistica {
 
 AppFlavor::AppFlavor(Thread* thread)
     : thread_(thread), stress_test_(std::make_unique<StressTest>()) {
-  // assert(g_app_flavor == nullptr);
-  // g_app_flavor = this;
-
   // We modify some app behavior when run under the server manager.
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
 }
 
 void AppFlavor::PostInit() {
-  // If we've got a nice themed hardware cursor, show it.
-  // Otherwise, hide the hardware cursor; we'll draw it in software.
-  // (need to run this in postinit because SDL/etc. may not be inited yet
-  // as of AppFlavor::AppFlavor()).
-  g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
+  // Sanity check: make sure asserts are stripped out of release builds
+  // (NDEBUG should do this).
+#if !BA_DEBUG_BUILD
+#ifndef NDEBUG
+#error Expected NDEBUG to be defined for release builds.
+#endif  // NDEBUG
+  assert(true);
+#endif  // !BA_DEBUG_BUILD
+
+  g_app->user_agent_string = g_platform->GetUserAgentString();
+
+  // Figure out where our data is and chdir there.
+  g_platform->SetupDataDirectory();
+
+  // Run these just to make sure these dirs exist.
+  // (otherwise they might not get made if nothing writes to them).
+  g_platform->GetConfigDirectory();
+  g_platform->GetUserPythonDirectory();
 }
 
 auto AppFlavor::ManagesEventLoop() const -> bool {
@@ -186,7 +196,7 @@ void AppFlavor::OnResume() {
   // Also let the Python layer do what it needs to
   // (starting/stopping music, etc.).
   g_python->PushObjCall(Python::ObjID::kHandleAppResumeCall);
-  g_game->PushOnAppResumeCall();
+  g_logic->PushOnAppResumeCall();
 
   g_graphics->SetGyroEnabled(true);
 
@@ -201,7 +211,7 @@ void AppFlavor::OnResume() {
     // If we've been completely backgrounded,
     // send a menu-press command to the game; this will
     // bring up a pause menu if we're in the game/etc.
-    g_game->PushMainMenuPressCall(nullptr);
+    g_logic->PushMainMenuPressCall(nullptr);
   }
 }
 
@@ -268,11 +278,7 @@ void AppFlavor::PushNetworkSetupCall(int port, int telnet_port,
                                      const std::string& telnet_password) {
   thread()->PushCall([port, telnet_port, enable_telnet, telnet_password] {
     assert(InMainThread());
-    // Kick these off if they don't exist.
-    // (do we want to support changing ports on existing ones?)
-    if (g_network_reader == nullptr) {
-      new NetworkReader(port);
-    }
+    g_network_reader->SetPort(port);
     if (g_app->telnet_server == nullptr && enable_telnet) {
       new TelnetServer(telnet_port);
       assert(g_app->telnet_server);
@@ -289,15 +295,6 @@ void AppFlavor::PushPurchaseAckCall(const std::string& purchase,
                                     const std::string& order_id) {
   thread()->PushCall(
       [purchase, order_id] { g_platform->PurchaseAck(purchase, order_id); });
-}
-
-void AppFlavor::PushGetScoresToBeatCall(const std::string& level,
-                                        const std::string& config,
-                                        void* py_callback) {
-  thread()->PushCall([level, config, py_callback] {
-    assert(InMainThread());
-    g_platform->GetScoresToBeat(level, config, py_callback);
-  });
 }
 
 void AppFlavor::PushPurchaseCall(const std::string& item) {
@@ -366,9 +363,30 @@ void AppFlavor::PushResetAchievementsCall() {
   thread()->PushCall([] { g_platform->ResetAchievements(); });
 }
 
-void AppFlavor::OnBootstrapComplete() {
+void AppFlavor::OnAppStart() {
   assert(InMainThread());
   assert(g_input);
+
+  // If we're running in a terminal, print some info.
+  // if (g_platform->is_stdin_a_terminal()) {
+  {
+    char buffer[256];
+    if (g_buildconfig.headless_build()) {
+      snprintf(buffer, sizeof(buffer), "BallisticaCore Headless %s build %d.",
+               kAppVersion, kAppBuildNumber);
+    } else {
+      snprintf(buffer, sizeof(buffer), "BallisticaCore %s build %d.",
+               kAppVersion, kAppBuildNumber);
+    }
+    Log(LogLevel::kInfo, buffer);
+  }
+  // }
+
+  // If we've got a nice themed hardware cursor, show it.
+  // Otherwise, hide the hardware cursor; we'll draw it in software.
+  // (need to run this in postinit because SDL/etc. may not be inited yet
+  // as of AppFlavor::AppFlavor()).
+  g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
 
   if (!HeadlessMode()) {
     // On desktop systems we just assume keyboard input exists and add it

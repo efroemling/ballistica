@@ -6,12 +6,12 @@
 #include "ballistica/app/app_config.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/player.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/test_input.h"
 #include "ballistica/input/device/touch_input.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/console.h"
 #include "ballistica/ui/root_ui.h"
@@ -20,7 +20,7 @@
 
 namespace ballistica {
 
-// Though it seems strange, input is actually owned by the game thread, not the
+// Though it seems strange, input is actually owned by the logic thread, not the
 // app thread. This keeps things simple for game logic interacting with input
 // stuff (controller names, counts, etc) but means we need to be prudent about
 // properly passing stuff between the game and app thread as needed.
@@ -318,26 +318,17 @@ static const char* const scancode_names[SDL_NUM_SCANCODES] = {
 };
 #endif  // BA_SDL2_BUILD || BA_MINSDL_BUILD
 
-Input::Input() {
-  // We're a singleton.
-  // assert(g_input == nullptr);
-  // g_input = this;
-
-  assert(InLogicThread());
-
-  // Config should have always been read by this point; right?
-  // assert(g_python);
-  // UpdateEnabledControllerSubsystems();
-}
+Input::Input() {}
 
 void Input::PushCreateKeyboardInputDevices() {
-  g_game->thread()->PushCall([this] { CreateKeyboardInputDevices(); });
+  g_logic->thread()->PushCall([this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
   assert(InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    Log("Error: CreateKeyboardInputDevices called with existing kbs.");
+    Log(LogLevel::kError,
+        "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
   keyboard_input_ = Object::NewDeferred<KeyboardInput>(nullptr);
@@ -347,13 +338,14 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  g_game->thread()->PushCall([this] { DestroyKeyboardInputDevices(); });
+  g_logic->thread()->PushCall([this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
   assert(InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    Log("Error: DestroyKeyboardInputDevices called with null kb(s).");
+    Log(LogLevel::kError,
+        "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
   RemoveInputDevice(keyboard_input_, false);
@@ -361,8 +353,6 @@ void Input::DestroyKeyboardInputDevices() {
   RemoveInputDevice(keyboard_input_2_, false);
   keyboard_input_2_ = nullptr;
 }
-
-Input::~Input() = default;
 
 auto Input::GetInputDevice(int id) -> InputDevice* {
   if (id < 0 || id >= static_cast<int>(input_devices_.size())) {
@@ -472,30 +462,30 @@ void Input::AnnounceConnects() {
     // If there's been several connected, just give a number.
     if (explicit_bool(do_print)) {
       if (newly_connected_controllers_.size() > 1) {
-        std::string s = g_game->GetResourceString("controllersDetectedText");
+        std::string s = g_logic->GetResourceString("controllersDetectedText");
         Utils::StringReplaceOne(
             &s, "${COUNT}",
             std::to_string(newly_connected_controllers_.size()));
         ScreenMessage(s);
       } else {
-        ScreenMessage(g_game->GetResourceString("controllerDetectedText"));
+        ScreenMessage(g_logic->GetResourceString("controllerDetectedText"));
       }
     }
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      std::string s = g_game->GetResourceString("controllersConnectedText");
+      std::string s = g_logic->GetResourceString("controllersConnectedText");
       Utils::StringReplaceOne(
           &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
       ScreenMessage(s);
     } else {
       // If its just one, name it.
-      std::string s = g_game->GetResourceString("controllerConnectedText");
+      std::string s = g_logic->GetResourceString("controllerConnectedText");
       Utils::StringReplaceOne(&s, "${CONTROLLER}",
                               newly_connected_controllers_.front());
       ScreenMessage(s);
     }
-    g_audio->PlaySound(g_media->GetSound(SystemSoundID::kGunCock));
+    g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kGunCock));
   }
 
   newly_connected_controllers_.clear();
@@ -504,18 +494,18 @@ void Input::AnnounceConnects() {
 void Input::AnnounceDisconnects() {
   // If there's been several connected, just give a number.
   if (newly_disconnected_controllers_.size() > 1) {
-    std::string s = g_game->GetResourceString("controllersDisconnectedText");
+    std::string s = g_logic->GetResourceString("controllersDisconnectedText");
     Utils::StringReplaceOne(
         &s, "${COUNT}", std::to_string(newly_disconnected_controllers_.size()));
     ScreenMessage(s);
   } else {
     // If its just one, name it.
-    std::string s = g_game->GetResourceString("controllerDisconnectedText");
+    std::string s = g_logic->GetResourceString("controllerDisconnectedText");
     Utils::StringReplaceOne(&s, "${CONTROLLER}",
                             newly_disconnected_controllers_.front());
     ScreenMessage(s);
   }
-  g_audio->PlaySound(g_media->GetSound(SystemSoundID::kCorkPop));
+  g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kCorkPop));
 
   newly_disconnected_controllers_.clear();
 }
@@ -532,9 +522,9 @@ void Input::ShowStandardInputDeviceConnectedMessage(InputDevice* j) {
 
   // Set a timer to go off and announce the accumulated additions.
   if (connect_print_timer_id_ != 0) {
-    g_game->DeleteRealTimer(connect_print_timer_id_);
+    g_logic->DeleteRealTimer(connect_print_timer_id_);
   }
-  connect_print_timer_id_ = g_game->NewRealTimer(
+  connect_print_timer_id_ = g_logic->NewRealTimer(
       250, false, NewLambdaRunnable([this] { AnnounceConnects(); }));
 }
 
@@ -547,15 +537,15 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
   // Set a timer to go off and announce the accumulated additions.
   if (disconnect_print_timer_id_ != 0) {
-    g_game->DeleteRealTimer(disconnect_print_timer_id_);
+    g_logic->DeleteRealTimer(disconnect_print_timer_id_);
   }
-  disconnect_print_timer_id_ = g_game->NewRealTimer(
+  disconnect_print_timer_id_ = g_logic->NewRealTimer(
       250, false, NewLambdaRunnable([this] { AnnounceDisconnects(); }));
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  g_game->thread()->PushCall([this, input_device, standard_message] {
+  g_logic->thread()->PushCall([this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -617,7 +607,7 @@ void Input::AddInputDevice(InputDevice* input, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  g_game->thread()->PushCall([this, input_device, standard_message] {
+  g_logic->thread()->PushCall([this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -648,8 +638,8 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
           // a call to do it; otherwise its possible that someone tries
           // to access the player's inputdevice before the call goes
           // through which would lead to an exception.
-          g_game->RemovePlayer(input->GetPlayer());
-          // g_game->PushRemovePlayerCall(input->GetPlayer());
+          g_logic->RemovePlayer(input->GetPlayer());
+          // g_logic->PushRemovePlayerCall(input->GetPlayer());
         }
         if (input->GetRemotePlayer() != nullptr) {
           input->RemoveRemotePlayerFromGame();
@@ -684,7 +674,7 @@ void Input::UpdateInputDeviceCounts() {
     if (input_device.exists()
         && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
             || ((*input_device).last_input_time() != 0
-                && g_game->master_time() - (*input_device).last_input_time()
+                && g_logic->master_time() - (*input_device).last_input_time()
                        < 60000))) {
       total++;
       if (!(*input_device).IsTouchScreen()) {
@@ -715,7 +705,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
   assert(InLogicThread());
 
   // This can get called alot so lets cache the value.
-  millisecs_t current_time = g_game->master_time();
+  millisecs_t current_time = g_logic->master_time();
   if (current_time != last_get_local_active_input_device_count_check_time_) {
     last_get_local_active_input_device_count_check_time_ = current_time;
 
@@ -727,7 +717,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
           && !input_device->IsTouchScreen() && !input_device->IsUIOnly()
           && input_device->IsLocal()
           && (input_device->last_input_time() != 0
-              && g_game->master_time() - input_device->last_input_time()
+              && g_logic->master_time() - input_device->last_input_time()
                      < 60000)) {
         count++;
       }
@@ -824,7 +814,8 @@ void Input::UpdateEnabledControllerSubsystems() {
       ignore_mfi_controllers_ = false;
       ignore_sdl_controllers_ = false;
     } else {
-      BA_LOG_ONCE("Invalid mac-controller-subsystem value: '" + sys + "'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Invalid mac-controller-subsystem value: '" + sys + "'");
     }
   }
 }
@@ -854,7 +845,8 @@ void Input::Update() {
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      Log("Error: Input has been temp-locked for 10 seconds; unlocking.");
+      Log(LogLevel::kError,
+          "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels();
       input_lock_temp_labels_.clear();
@@ -950,8 +942,9 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      Log("WARNING: temp input unlock at time " + std::to_string(GetRealTime())
-          + " with no active lock: '" + label + "'");
+      Log(LogLevel::kWarning, "temp input unlock at time "
+                                  + std::to_string(GetRealTime())
+                                  + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
     }
@@ -1003,7 +996,7 @@ void Input::PrintLockLabels() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  Log(s);
+  Log(LogLevel::kError, s);
 }
 
 void Input::ProcessStressTesting(int player_count) {
@@ -1065,7 +1058,7 @@ void Input::HandleBackPress(bool from_toolbar) {
   if (g_ui == nullptr || g_ui->screen_root_widget() == nullptr
       || g_ui->overlay_root_widget() == nullptr
       || g_ui->root_widget() == nullptr) {
-    // Log("HandleBackPress() called without main UI");
+    // Log(LogLevel::kError, "HandleBackPress() called without main UI");
     return;
   }
 
@@ -1073,7 +1066,7 @@ void Input::HandleBackPress(bool from_toolbar) {
   // if available).
   if (g_ui->screen_root_widget()->GetChildCount() == 0
       && g_ui->overlay_root_widget()->GetChildCount() == 0) {
-    g_game->PushMainMenuPressCall(touch_input_);
+    g_logic->PushMainMenuPressCall(touch_input_);
   } else {
     if (from_toolbar) {
       // NOTE - this means the toolbar back button can never apply to overlay
@@ -1088,7 +1081,7 @@ void Input::HandleBackPress(bool from_toolbar) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  g_game->thread()->PushCall([this, text] {
+  g_logic->thread()->PushCall([this, text] {
     mark_input_active();
 
     // Ignore  if input is locked.
@@ -1105,7 +1098,7 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 auto Input::PushJoystickEvent(const SDL_Event& event, InputDevice* input_device)
     -> void {
-  g_game->thread()->PushCall([this, event, input_device] {
+  g_logic->thread()->PushCall([this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -1137,11 +1130,11 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  g_game->thread()->PushCall([this, keysym] { HandleKeyPress(&keysym); });
+  g_logic->thread()->PushCall([this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  g_game->thread()->PushCall([this, keysym] { HandleKeyRelease(&keysym); });
+  g_logic->thread()->PushCall([this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::HandleKeyPress(const SDL_Keysym* keysym) {
@@ -1206,7 +1199,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
     // Command-Q or Control-Q quits.
     if (!repeat_press && keysym->sym == SDLK_q
         && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
-      g_game->PushConfirmQuitCall();
+      g_logic->PushConfirmQuitCall();
       return;
     }
   }
@@ -1235,7 +1228,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           // If there's no dialogs/windows up, ask for a menu (owned by the
           // touch-screen if available).
           if (g_ui->screen_root_widget()->GetChildCount() == 0) {
-            g_game->PushMainMenuPressCall(touch_input_);
+            g_logic->PushMainMenuPressCall(touch_input_);
           }
         }
         handled = true;
@@ -1249,12 +1242,12 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
       case SDLK_EQUALS:
       case SDLK_PLUS:
-        g_game->ChangeGameSpeed(1);
+        g_logic->ChangeGameSpeed(1);
         handled = true;
         break;
 
       case SDLK_MINUS:
-        g_game->ChangeGameSpeed(-1);
+        g_logic->ChangeGameSpeed(-1);
         handled = true;
         break;
 
@@ -1265,12 +1258,12 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       }
 
       case SDLK_F7:
-        g_game->PushToggleManualCameraCall();
+        g_logic->PushToggleManualCameraCall();
         handled = true;
         break;
 
       case SDLK_F8:
-        g_game->PushToggleDebugInfoDisplayCall();
+        g_logic->PushToggleDebugInfoDisplayCall();
         handled = true;
         break;
 
@@ -1280,7 +1273,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F10:
-        g_game->PushToggleCollisionGeometryDisplayCall();
+        g_logic->PushToggleCollisionGeometryDisplayCall();
         handled = true;
         break;
 
@@ -1293,7 +1286,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           if (g_ui->screen_root_widget()->GetChildCount() == 0
               && g_ui->overlay_root_widget()->GetChildCount() == 0) {
             if (keyboard_input_) {
-              g_game->PushMainMenuPressCall(keyboard_input_);
+              g_logic->PushMainMenuPressCall(keyboard_input_);
             }
           } else {
             // Ok there's a UI up.. send along a cancel message.
@@ -1390,7 +1383,7 @@ auto Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) -> void {
 }
 
 auto Input::PushMouseScrollEvent(const Vector2f& amount) -> void {
-  g_game->thread()->PushCall([this, amount] { HandleMouseScroll(amount); });
+  g_logic->thread()->PushCall([this, amount] { HandleMouseScroll(amount); });
 }
 
 auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
@@ -1423,7 +1416,7 @@ auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
 
 auto Input::PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum)
     -> void {
-  g_game->thread()->PushCall([this, velocity, momentum] {
+  g_logic->thread()->PushCall([this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
@@ -1458,7 +1451,8 @@ auto Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum)
 }
 
 auto Input::PushMouseMotionEvent(const Vector2f& position) -> void {
-  g_game->thread()->PushCall([this, position] { HandleMouseMotion(position); });
+  g_logic->thread()->PushCall(
+      [this, position] { HandleMouseMotion(position); });
 }
 
 auto Input::HandleMouseMotion(const Vector2f& position) -> void {
@@ -1509,7 +1503,7 @@ auto Input::HandleMouseMotion(const Vector2f& position) -> void {
 }
 
 auto Input::PushMouseDownEvent(int button, const Vector2f& position) -> void {
-  g_game->thread()->PushCall(
+  g_logic->thread()->PushCall(
       [this, button, position] { HandleMouseDown(button, position); });
 }
 
@@ -1586,7 +1580,7 @@ auto Input::HandleMouseDown(int button, const Vector2f& position) -> void {
 }
 
 auto Input::PushMouseUpEvent(int button, const Vector2f& position) -> void {
-  g_game->thread()->PushCall(
+  g_logic->thread()->PushCall(
       [this, button, position] { HandleMouseUp(button, position); });
 }
 
@@ -1635,7 +1629,7 @@ auto Input::HandleMouseUp(int button, const Vector2f& position) -> void {
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  g_game->thread()->PushCall([e, this] { HandleTouchEvent(e); });
+  g_logic->thread()->PushCall([e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {
@@ -1664,7 +1658,8 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     // overall multitouch gesture, it should always be winding up as our
     // single_touch_.
     if (e.type == TouchEvent::Type::kDown && single_touch_ != nullptr) {
-      BA_LOG_ONCE("Got touch labeled first but will not be our single.");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Got touch labeled first but will not be our single.");
     }
 
     // Also: if the OS tells us that this is the end of an overall multi-touch
@@ -1672,7 +1667,8 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     if ((e.type == TouchEvent::Type::kUp
          || e.type == TouchEvent::Type::kCanceled)
         && single_touch_ != nullptr && single_touch_ != e.touch) {
-      BA_LOG_ONCE("Last touch coming up is not single touch!");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "Last touch coming up is not single touch!");
     }
   }
 
@@ -1803,8 +1799,9 @@ const char* GetScancodeName(SDL_Scancode scancode) {
   const char* name;
   if (static_cast<int>(scancode) < SDL_SCANCODE_UNKNOWN
       || scancode >= SDL_NUM_SCANCODES) {
-    BA_LOG_ONCE("GetScancodeName passed invalid scancode "
-                + std::to_string(static_cast<int>(scancode)));
+    BA_LOG_ONCE(LogLevel::kError,
+                "GetScancodeName passed invalid scancode "
+                    + std::to_string(static_cast<int>(scancode)));
     return "";
   }
 

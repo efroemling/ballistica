@@ -18,7 +18,7 @@ namespace ballistica {
 // Graphics
 class GraphicsServer {
  public:
-  explicit GraphicsServer(Thread* thread);
+  GraphicsServer();
   auto PushSetScreenGammaCall(float gamma) -> void;
   auto PushSetScreenPixelScaleCall(float pixel_scale) -> void;
   auto PushSetVSyncCall(bool sync, bool auto_sync) -> void;
@@ -29,10 +29,10 @@ class GraphicsServer {
   auto PushReloadMediaCall() -> void;
   auto PushRemoveRenderHoldCall() -> void;
   auto PushComponentUnloadCall(
-      const std::vector<Object::Ref<MediaComponentData>*>& components) -> void;
+      const std::vector<Object::Ref<AssetComponentData>*>& components) -> void;
   auto SetRenderHold() -> void;
 
-  // Used by the game thread to pass frame-defs to the graphics server
+  // Used by the logic thread to pass frame-defs to the graphics server
   // for rendering.
   auto SetFrameDef(FrameDef* framedef) -> void;
 
@@ -61,18 +61,22 @@ class GraphicsServer {
   // init the modelview matrix to look here
   auto SetCamera(const Vector3f& eye, const Vector3f& target,
                  const Vector3f& up) -> void;
+
   auto SetOrthoProjection(float left, float right, float bottom, float top,
                           float near, float far) -> void;
+
   auto ModelViewReset() -> void {
     model_view_matrix_ = kMatrix44fIdentity;
     model_view_projection_matrix_dirty_ = model_world_matrix_dirty_ = true;
     model_view_stack_.clear();
   }
+
   auto SetProjectionMatrix(const Matrix44f& p) -> void {
     projection_matrix_ = p;
     model_view_projection_matrix_dirty_ = true;
     projection_matrix_state_++;
   }
+
   auto projection_matrix_state() -> uint32_t {
     return projection_matrix_state_;
   }
@@ -85,9 +89,11 @@ class GraphicsServer {
       light_shadow_projection_matrix_state_++;
     }
   }
+
   auto light_shadow_projection_matrix_state() const -> uint32_t {
     return light_shadow_projection_matrix_state_;
   }
+
   auto light_shadow_projection_matrix() const -> const Matrix44f& {
     return light_shadow_projection_matrix_;
   }
@@ -270,6 +276,13 @@ class GraphicsServer {
       model_world_matrix_dirty_ = false;
     }
   }
+  auto SetScreen(bool fullscreen, int width, int height,
+                 TextureQuality texture_quality,
+                 GraphicsQuality graphics_quality,
+                 const std::string& android_res) -> void;
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  void FullscreenCheck();
+#endif
 #if BA_ENABLE_OPENGL
   std::unique_ptr<GLContext> gl_context_;
 #endif
@@ -291,7 +304,6 @@ class GraphicsServer {
   bool fullscreen_enabled_{};
   float target_res_x_{800.0f};
   float target_res_y_{600.0f};
-
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};
@@ -314,18 +326,11 @@ class GraphicsServer {
   std::list<MeshData*> mesh_datas_;
   bool v_sync_{};
   bool auto_vsync_{};
-  auto SetScreen(bool fullscreen, int width, int height,
-                 TextureQuality texture_quality,
-                 GraphicsQuality graphics_quality,
-                 const std::string& android_res) -> void;
   Timer* render_timer_{};
   Renderer* renderer_{};
   FrameDef* frame_def_{};
   bool initial_screen_created_{};
   int render_hold_{};
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  void FullscreenCheck();
-#endif
 };
 
 }  // namespace ballistica

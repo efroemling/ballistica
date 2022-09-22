@@ -8,14 +8,13 @@
 #include <vector>
 
 #include "ballistica/core/object.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/scene/node/node.h"
 
 namespace ballistica {
 
 class Scene : public Object {
  public:
-  static auto Init() -> void;
   explicit Scene(millisecs_t starttime);
   ~Scene() override;
   auto Step() -> void;
@@ -53,7 +52,7 @@ class Scene : public Object {
   auto DeleteNode(Node* node) -> void;
   auto shutting_down() const -> bool { return shutting_down_; }
   auto set_shutting_down(bool val) -> void { shutting_down_ = val; }
-  auto GetGameStream() const -> GameStream*;
+  auto GetSceneStream() const -> SceneStream*;
   auto SetPlayerNode(int id, PlayerNode* n) -> void;
   auto GetPlayerNode(int id) -> PlayerNode*;
   auto use_fixed_vr_overlay() const -> bool { return use_fixed_vr_overlay_; }
@@ -63,11 +62,11 @@ class Scene : public Object {
   auto increment_bg_cover_count() -> void { bg_cover_count_++; }
   auto decrement_bg_cover_count() -> void { bg_cover_count_--; }
   auto has_bg_cover() const -> bool { return (bg_cover_count_ > 0); }
-  auto Dump(GameStream* out) -> void;
-  auto DumpNodes(GameStream* out) -> void;
+  auto Dump(SceneStream* out) -> void;
+  auto DumpNodes(SceneStream* out) -> void;
   auto GetCorrectionMessage(bool blended) -> std::vector<uint8_t>;
 
-  auto SetOutputStream(GameStream* val) -> void;
+  auto SetOutputStream(SceneStream* val) -> void;
   auto stream_id() const -> int64_t { return stream_id_; }
   auto set_stream_id(int64_t val) -> void {
     assert(stream_id_ == -1);
@@ -85,13 +84,10 @@ class Scene : public Object {
   auto set_globals_node(GlobalsNode* node) -> void { globals_node_ = node; }
 
  private:
-  static auto SetupNodeMessageType(const std::string& name, NodeMessageType val,
-                                   const std::string& format) -> void;
-
   GlobalsNode* globals_node_{};  // Current globals node (if any).
   std::unordered_map<int, Object::WeakRef<PlayerNode> > player_nodes_;
   int64_t stream_id_{-1};
-  Object::WeakRef<GameStream> output_stream_;
+  Object::WeakRef<SceneStream> output_stream_;
   bool use_fixed_vr_overlay_{};
   Context context_;  // Context we were made in.
   millisecs_t time_{};

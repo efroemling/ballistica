@@ -13,7 +13,7 @@ auto PartModMaterialAction::GetType() const -> MaterialAction::Type {
 
 auto PartModMaterialAction::GetFlattenedSize() -> size_t { return 1 + 4; }
 
-void PartModMaterialAction::Flatten(char** buffer, GameStream* output_stream) {
+void PartModMaterialAction::Flatten(char** buffer, SceneStream* output_stream) {
   Utils::EmbedInt8(buffer, static_cast<int8_t>(attr));
   Utils::EmbedFloat32(buffer, attr_val);
 }

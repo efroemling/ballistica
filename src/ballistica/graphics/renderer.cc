@@ -650,7 +650,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
 void Renderer::LoadMedia(FrameDef* frame_def) {
   millisecs_t t = GetRealTime();
   for (auto&& i : frame_def->media_components()) {
-    MediaComponentData* mc = i.get();
+    AssetComponentData* mc = i.get();
     assert(mc);
     mc->Load();
 

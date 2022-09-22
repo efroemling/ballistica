@@ -18,8 +18,8 @@ void MacroFunctionTimerEnd(millisecs_t starttime, millisecs_t time,
   }
   millisecs_t endtime = g_platform->GetTicks();
   if (endtime - starttime > time) {
-    Log("Warning: " + std::to_string(endtime - starttime)
-        + " milliseconds spent in " + funcname);
+    Log(LogLevel::kWarning, std::to_string(endtime - starttime)
+                                + " milliseconds spent in " + funcname);
   }
 }
 
@@ -32,9 +32,9 @@ void MacroFunctionTimerEndThread(millisecs_t starttime, millisecs_t time,
   }
   millisecs_t endtime = g_platform->GetTicks();
   if (endtime - starttime > time) {
-    Log("Warning: " + std::to_string(endtime - starttime)
-        + " milliseconds spent by " + ballistica::GetCurrentThreadName()
-        + " thread in " + funcname);
+    Log(LogLevel::kWarning,
+        std::to_string(endtime - starttime) + " milliseconds spent by "
+            + ballistica::GetCurrentThreadName() + " thread in " + funcname);
   }
 }
 
@@ -47,8 +47,9 @@ void MacroFunctionTimerEndEx(millisecs_t starttime, millisecs_t time,
   }
   millisecs_t endtime = g_platform->GetTicks();
   if (endtime - starttime > time) {
-    Log("Warning: " + std::to_string(endtime - starttime)
-        + " milliseconds spent in " + funcname + " for " + what);
+    Log(LogLevel::kWarning, std::to_string(endtime - starttime)
+                                + " milliseconds spent in " + funcname + " for "
+                                + what);
   }
 }
 
@@ -62,9 +63,10 @@ void MacroFunctionTimerEndThreadEx(millisecs_t starttime, millisecs_t time,
   }
   millisecs_t endtime = g_platform->GetTicks();
   if (endtime - starttime > time) {
-    Log("Warning: " + std::to_string(endtime - starttime)
-        + " milliseconds spent by " + ballistica::GetCurrentThreadName()
-        + " thread in " + funcname + " for " + what);
+    Log(LogLevel::kWarning, std::to_string(endtime - starttime)
+                                + " milliseconds spent by "
+                                + ballistica::GetCurrentThreadName()
+                                + " thread in " + funcname + " for " + what);
   }
 }
 
@@ -77,9 +79,9 @@ void MacroTimeCheckEnd(millisecs_t starttime, millisecs_t time,
   }
   millisecs_t e = g_platform->GetTicks();
   if (e - starttime > time) {
-    Log(std::string("Warning: ") + name + " took "
-        + std::to_string(e - starttime) + " milliseconds; " + file + " line "
-        + std::to_string(line));
+    Log(LogLevel::kWarning,
+        std::string(name) + " took " + std::to_string(e - starttime)
+            + " milliseconds; " + file + " line " + std::to_string(line));
   }
 }
 
@@ -88,19 +90,19 @@ void MacroLogErrorTrace(const std::string& msg, const char* fname, int line) {
   snprintf(buffer, sizeof(buffer), "%s:%d:", fname, line);
   buffer[sizeof(buffer) - 1] = 0;
   Python::PrintStackTrace();
-  Log(std::string(buffer) + " error: " + msg);
+  Log(LogLevel::kError, std::string(buffer) + " error: " + msg);
 }
 
 void MacroLogError(const std::string& msg, const char* fname, int line) {
   char e_buffer[2048];
   snprintf(e_buffer, sizeof(e_buffer), "%s:%d:", fname, line);
   e_buffer[sizeof(e_buffer) - 1] = 0;
-  ballistica::Log(std::string(e_buffer) + " error: " + msg);
+  Log(LogLevel::kError, std::string(e_buffer) + " error: " + msg);
 }
 
 void MacroLogPythonTrace(const std::string& msg) {
   Python::PrintStackTrace();
-  Log(msg);
+  Log(LogLevel::kError, msg);
 }
 
 }  // namespace ballistica

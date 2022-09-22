@@ -559,7 +559,7 @@ class RPCEndpoint:
             # If that doesn't happen, make a fuss so we know to fix it.
             # The other end will simply never get a response to this
             # message.
-            logging.exception('Error handling message')
+            logging.exception('Error handling raw rpc message')
             return
 
         assert self._peer_info is not None

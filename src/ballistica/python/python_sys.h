@@ -3,11 +3,11 @@
 #ifndef BALLISTICA_PYTHON_PYTHON_SYS_H_
 #define BALLISTICA_PYTHON_PYTHON_SYS_H_
 
-// Any code that actually runs any python logic should include this.
-// This header pulls in the actual python includes and also defines some handy
-// macros and functions for working with python objects.
+// Any code that actually runs any Python logic should include this.
+// This header pulls in the actual Python includes and also defines some handy
+// macros and functions for working with Python objects.
 
-// This is the ONE place we actually include python.
+// This is the ONE place we actually include Python.
 #include <Python.h>
 #include <frameobject.h>
 #include <weakrefobject.h>
@@ -60,12 +60,12 @@
   ((void)0)
 
 // For use in tp_dealloc; simply prints the error.
-#define BA_PYTHON_DEALLOC_CATCH                      \
-  }                                                  \
-  catch (const std::exception& e) {                  \
-    Log(std::string("Error: tp_dealloc exception: ") \
-        + GetShortExceptionDescription(e));          \
-  }                                                  \
+#define BA_PYTHON_DEALLOC_CATCH                                   \
+  }                                                               \
+  catch (const std::exception& e) {                               \
+    Log(LogLevel::kError, std::string("tp_dealloc exception: ")   \
+                              + GetShortExceptionDescription(e)); \
+  }                                                               \
   ((void)0)
 
 // Sets Python error and returns -1.

@@ -7,10 +7,10 @@
 
 namespace ballistica {
 
-// Buffers used by the game thread to pass indices/vertices/etc. to meshes in
+// Buffers used by the logic thread to pass indices/vertices/etc. to meshes in
 // the graphics thread.  Note that it is safe to create these in other threads;
 // you just need to turn off thread-checks until you pass ownership to the game
-// thread. (or just avoid creating references outside of the game thread)
+// thread. (or just avoid creating references outside of the logic thread)
 class MeshBufferBase : public Object {
  public:
   uint32_t state;  // which dynamicState value on the mesh this corresponds to

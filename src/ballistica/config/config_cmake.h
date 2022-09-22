@@ -62,7 +62,7 @@
 #define BA_ENABLE_EXECINFO_BACKTRACES 1
 
 // Allow stdin commands too.
-#define BA_USE_STDIN_THREAD 1
+#define BA_ENABLE_STDIO_CONSOLE 1
 
 #define BA_DEFINE_MAIN 1
 

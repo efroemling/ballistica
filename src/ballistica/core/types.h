@@ -34,12 +34,12 @@ typedef int64_t millisecs_t;
 // avoid pulling in their full headers as much as possible
 // to keep compile times down.
 
-class Account;
 class AppFlavor;
 class AppConfig;
 class App;
 class AppInternal;
 class AreaOfInterest;
+class Assets;
 class Audio;
 class AudioServer;
 class AudioStreamer;
@@ -81,7 +81,6 @@ class DataData;
 class Dynamics;
 class FrameDef;
 struct FriendScoreSet;
-class Game;
 class GLContext;
 class GlobalsNode;
 class Graphics;
@@ -97,15 +96,15 @@ struct JointFixedEF;
 class Joystick;
 class JsonDict;
 class KeyboardInput;
+class Logic;
 class Material;
 class MaterialAction;
 class MaterialComponent;
 class MaterialConditionNode;
 class MaterialContext;
 class Matrix44f;
-class Media;
-class MediaComponentData;
-class MediaServer;
+class AssetComponentData;
+class AssetsServer;
 class MeshBufferBase;
 class MeshBufferVertexSprite;
 class MeshBufferVertexSimpleFull;
@@ -124,7 +123,7 @@ class NetClientThread;
 class NetGraph;
 class Networking;
 class NetworkReader;
-class NetworkWriteModule;
+class NetworkWriter;
 class Node;
 class NodeType;
 class NodeAttribute;
@@ -132,7 +131,6 @@ class NodeAttributeConnection;
 class NodeAttributeUnbound;
 class Object;
 class ObjectComponent;
-class GameStream;
 class Part;
 class Python;
 class Platform;
@@ -164,6 +162,8 @@ class RootUI;
 class RootWidget;
 class Runnable;
 class Scene;
+class SceneV1;
+class SceneStream;
 class ScoreToBeat;
 class SDLApp;
 class SDLContext;
@@ -174,7 +174,7 @@ class SoundData;
 class SpriteMesh;
 class StackWidget;
 class StressTest;
-class StdInputModule;
+class StdioConsole;
 class Module;
 class TelnetServer;
 class TestInput;
@@ -197,6 +197,7 @@ class Vector2f;
 class Vector3f;
 class Vector4f;
 class AppFlavorVR;
+class V1Account;
 class VRGraphics;
 class Widget;
 
@@ -403,7 +404,7 @@ enum class SpecialChar {
   kLast  // Sentinel
 };
 
-enum class MediaType { kTexture, kCollideModel, kModel, kSound, kData, kLast };
+enum class AssetType { kTexture, kCollideModel, kModel, kSound, kData, kLast };
 
 /// Python exception types we can raise from our own exceptions.
 enum class PyExcType {
@@ -422,6 +423,8 @@ enum class PyExcType {
   kDelegateNotFound,
   kWidgetNotFound
 };
+
+enum class LogLevel { kDebug, kInfo, kWarning, kError, kCritical };
 
 enum class SystemTextureID {
   kUIAtlas,
@@ -986,20 +989,20 @@ enum class NodeAttributeType {
   kCollideModelArray
 };
 
-enum class ThreadType {
+enum class ThreadSource {
   /// A normal thread spun up by us.
-  kStandard,
+  kCreate,
   /// For wrapping a ballistica thread around the existing main thread.
-  kMain
+  kWrapMain
 };
 
 /// Used for module-thread identification.
 /// Mostly just for debugging, through a few things are affected by this
 /// (the Logic thread manages the python GIL, etc).
-enum class ThreadIdentifier {
+enum class ThreadTag {
   kInvalid,
   kLogic,
-  kMedia,
+  kAssets,
   kFileOut,
   kMain,
   kAudio,

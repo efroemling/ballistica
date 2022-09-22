@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "ballistica/dynamics/part.h"
-#include "ballistica/game/player.h"
 #include "ballistica/graphics/renderer.h"
+#include "ballistica/logic/player.h"
 #include "ballistica/scene/node/node.h"
 
 namespace ballistica {

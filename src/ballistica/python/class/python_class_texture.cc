@@ -2,9 +2,9 @@
 
 #include "ballistica/python/class/python_class_texture.h"
 
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
-#include "ballistica/media/component/texture.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {
@@ -63,7 +63,7 @@ auto PythonClassTexture::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     if (!s_create_empty_) {
@@ -91,11 +91,11 @@ void PythonClassTexture::Delete(Object::Ref<Texture>* ref) {
 
 void PythonClassTexture::tp_dealloc(PythonClassTexture* self) {
   BA_PYTHON_TRY;
-  // These have to be deleted in the game thread - send the ptr along if need
+  // These have to be deleted in the logic thread - send the ptr along if need
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::Ref<Texture>* t = self->texture_;
-    g_game->thread()->PushCall([t] { Delete(t); });
+    g_logic->thread()->PushCall([t] { Delete(t); });
   } else {
     Delete(self->texture_);
   }

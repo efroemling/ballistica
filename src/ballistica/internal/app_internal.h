@@ -10,13 +10,13 @@
 
 namespace ballistica {
 
-auto GetAppInternal() -> AppInternal*;
+auto CreateAppInternal() -> AppInternal*;
 
 class AppInternal {
  public:
   virtual ~AppInternal() {}
 
-  virtual auto PyInitialize(void* pyconfig) -> void = 0;
+  virtual auto DefineInternalModule() -> void = 0;
   virtual auto PythonPostInit() -> void = 0;
   virtual auto HasBlessingHash() -> bool = 0;
   virtual auto PutLog(bool fatal) -> bool = 0;
@@ -41,9 +41,9 @@ class AppInternal {
                                            bool user_initiated) -> void = 0;
   virtual auto GetPublicV1AccountID() -> std::string = 0;
   virtual auto OnLogicThreadPause() -> void = 0;
-  virtual auto DirectSendLogs(const std::string& prefix,
-                              const std::string& suffix, bool instant,
-                              int* result = nullptr) -> void = 0;
+  virtual auto DirectSendV1CloudLogs(const std::string& prefix,
+                                     const std::string& suffix, bool instant,
+                                     int* result = nullptr) -> void = 0;
   virtual auto ClientInfoQuery(const std::string& val1, const std::string& val2,
                                const std::string& val3, int build_number)
       -> void = 0;

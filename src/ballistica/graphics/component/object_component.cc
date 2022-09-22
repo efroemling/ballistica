@@ -9,7 +9,7 @@ void ObjectComponent::WriteConfig() {
   // This is not a common case and easier than forking all our shaders to
   // create non-textured versions.
   if (!texture_.exists()) {
-    texture_ = g_media->GetTexture(SystemTextureID::kWhite);
+    texture_ = g_assets->GetTexture(SystemTextureID::kWhite);
   }
   if (reflection_ == ReflectionType::kNone) {
     assert(!double_sided_);               // Unsupported combo.
@@ -58,7 +58,7 @@ void ObjectComponent::WriteConfig() {
           cmd_buffer_->PutTexture(texture_);
           SystemCubeMapTextureID r =
               Graphics::CubeMapFromReflectionType(reflection_);
-          cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+          cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
         } else {
           ConfigForShading(ShadingType::kObjectReflectTransparent);
           cmd_buffer_->PutInt(premultiplied_);
@@ -68,7 +68,7 @@ void ObjectComponent::WriteConfig() {
           cmd_buffer_->PutTexture(texture_);
           SystemCubeMapTextureID r =
               Graphics::CubeMapFromReflectionType(reflection_);
-          cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+          cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
         }
       } else {
         ConfigForShading(ShadingType::kObjectReflect);
@@ -79,7 +79,7 @@ void ObjectComponent::WriteConfig() {
         cmd_buffer_->PutTexture(texture_);
         SystemCubeMapTextureID r =
             Graphics::CubeMapFromReflectionType(reflection_);
-        cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+        cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
       }
     } else {
       // With add.
@@ -100,7 +100,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(colorize_texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           } else {
             ConfigForShading(ShadingType::kObjectReflectLightShadowColorized);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
@@ -112,7 +112,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(colorize_texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           }
         } else {
           if (double_sided_) {
@@ -125,7 +125,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           } else {
             ConfigForShading(ShadingType::kObjectReflectLightShadow);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
@@ -136,7 +136,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           }
         }
       } else {
@@ -157,7 +157,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(colorize_texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           } else {
             ConfigForShading(
                 ShadingType::kObjectReflectLightShadowAddColorized);
@@ -171,7 +171,7 @@ void ObjectComponent::WriteConfig() {
             cmd_buffer_->PutTexture(colorize_texture_);
             SystemCubeMapTextureID r =
                 Graphics::CubeMapFromReflectionType(reflection_);
-            cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+            cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
           }
         } else {
           ConfigForShading(ShadingType::kObjectReflectLightShadowAdd);
@@ -183,7 +183,7 @@ void ObjectComponent::WriteConfig() {
           cmd_buffer_->PutTexture(texture_);
           SystemCubeMapTextureID r =
               Graphics::CubeMapFromReflectionType(reflection_);
-          cmd_buffer_->PutCubeMapTexture(g_media->GetCubeMapTexture(r));
+          cmd_buffer_->PutCubeMapTexture(g_assets->GetCubeMapTexture(r));
         }
       }
     }

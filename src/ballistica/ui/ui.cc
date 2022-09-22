@@ -3,13 +3,13 @@
 #include "ballistica/ui/ui.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/component/data.h"
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/input.h"
-#include "ballistica/media/component/data.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
 #include "ballistica/ui/root_ui.h"
@@ -27,25 +27,19 @@ UI::UI() {
 
   // Allow overriding via an environment variable.
   auto* ui_override = getenv("BA_UI_SCALE");
-  bool force_test_small{};
-  bool force_test_medium{};
-  bool force_test_large{};
   if (ui_override) {
     if (ui_override == std::string("small")) {
-      force_test_small = true;
+      scale_ = UIScale::kSmall;
+      force_scale_ = true;
     } else if (ui_override == std::string("medium")) {
-      force_test_medium = true;
+      scale_ = UIScale::kMedium;
+      force_scale_ = true;
     } else if (ui_override == std::string("large")) {
-      force_test_large = true;
+      scale_ = UIScale::kLarge;
+      force_scale_ = true;
     }
   }
-  if (force_test_small) {
-    scale_ = UIScale::kSmall;
-  } else if (force_test_medium) {
-    scale_ = UIScale::kMedium;
-  } else if (force_test_large) {
-    scale_ = UIScale::kLarge;
-  } else {
+  if (!force_scale_) {
     // Use automatic val.
     if (g_buildconfig.iircade_build()) {  // NOLINT(bugprone-branch-clone)
       scale_ = UIScale::kMedium;
@@ -56,17 +50,26 @@ UI::UI() {
       scale_ = g_platform->GetUIScale();
     }
   }
+}
 
+auto UI::OnAppStart() -> void {
+  assert(InLogicThread());
+
+  root_ui_ = new RootUI();
   // Make sure we know when forced-ui-scale is enabled.
-  if (force_test_small) {
-    ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING SMALL UI FOR TESTING");
-  } else if (force_test_medium) {
-    ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING MEDIUM UI FOR TESTING");
-  } else if (force_test_large) {
-    ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-    Log("FORCING LARGE UI FOR TESTING");
+  if (force_scale_) {
+    if (scale_ == UIScale::kSmall) {
+      ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
+      Log(LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
+    } else if (scale_ == UIScale::kMedium) {
+      ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
+      Log(LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
+    } else if (scale_ == UIScale::kLarge) {
+      ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
+      Log(LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
+    } else {
+      FatalError("Unhandled scale.");
+    }
   }
 
   step_scene_timer_ =
@@ -74,8 +77,6 @@ UI::UI() {
                             NewLambdaRunnable([this] { StepScene(); }));
   scene_ = Object::New<Scene>(0);
 }
-
-auto UI::PostInit() -> void { root_ui_ = new RootUI(); }
 
 // Currently the UI never dies so we don't bother doing a clean tear-down..
 // (verifying scene cleanup, etc)
@@ -150,7 +151,7 @@ void UI::Update(millisecs_t time_advance) {
       if (node_warning_count_ > 3) {
         static bool complained = false;
         if (!complained) {
-          Log(">10 nodes in UI context!");
+          Log(LogLevel::kError, ">10 nodes in UI context!");
           complained = true;
         }
       }
@@ -220,7 +221,7 @@ void UI::AddWidget(Widget* w, ContainerWidget* parent) {
   // will not get stuck running or whatnot.
   if (screen_root_widget_.exists() && !screen_root_widget_->HasChildren()
       && parent == &(*screen_root_widget_)) {
-    g_game->ResetInput();
+    g_logic->ResetInput();
   }
 
   parent->AddWidget(w);
@@ -292,7 +293,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kErrorBeep));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kErrorBeep));
       print_menu_owner = true;
     }
     ret_val = nullptr;  // Rejected!
@@ -306,18 +307,18 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
           kUIOwnerTimeoutSeconds - (time - last_input_device_use_time_) / 1000;
       std::string time_out_str;
       if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 10)) {
-        time_out_str = " " + g_game->GetResourceString("timeOutText");
+        time_out_str = " " + g_logic->GetResourceString("timeOutText");
         Utils::StringReplaceOne(&time_out_str, "${TIME}",
                                 std::to_string(timeout));
       } else {
-        time_out_str = " " + g_game->GetResourceString("willTimeOutText");
+        time_out_str = " " + g_logic->GetResourceString("willTimeOutText");
       }
 
       std::string name;
       if (input->GetDeviceName() == "Keyboard") {
-        name = g_game->GetResourceString("keyboardText");
+        name = g_logic->GetResourceString("keyboardText");
       } else if (input->GetDeviceName() == "TouchScreen") {
-        name = g_game->GetResourceString("touchScreenText");
+        name = g_logic->GetResourceString("touchScreenText");
       } else {
         // We used to use player names here, but that's kinda sloppy and random;
         // lets just go with device names/numbers.
@@ -332,7 +333,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
         }
       }
 
-      std::string b = g_game->GetResourceString("hasMenuControlText");
+      std::string b = g_logic->GetResourceString("hasMenuControlText");
       Utils::StringReplaceOne(&b, "${NAME}", name);
       ScreenMessage(b + time_out_str, {0.45f, 0.4f, 0.5f});
     }
@@ -341,19 +342,19 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> Widget* {
 }
 
 auto UI::GetModel(const std::string& name) -> Object::Ref<Model> {
-  return Media::GetMedia(&models_, name, scene());
+  return Assets::GetAsset(&models_, name, scene());
 }
 
 auto UI::GetTexture(const std::string& name) -> Object::Ref<Texture> {
-  return Media::GetMedia(&textures_, name, scene());
+  return Assets::GetAsset(&textures_, name, scene());
 }
 
 auto UI::GetSound(const std::string& name) -> Object::Ref<Sound> {
-  return Media::GetMedia(&sounds_, name, scene());
+  return Assets::GetAsset(&sounds_, name, scene());
 }
 
 auto UI::GetData(const std::string& name) -> Object::Ref<Data> {
-  return Media::GetMedia(&datas_, name, scene());
+  return Assets::GetAsset(&datas_, name, scene());
 }
 
 auto UI::GetAsUIContext() -> UI* { return this; }
@@ -372,7 +373,7 @@ auto UI::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
     case TimeType::kSim:
     case TimeType::kBase:
     case TimeType::kReal:
-      return g_game->NewRealTimer(length, repeat, runnable);
+      return g_logic->NewRealTimer(length, repeat, runnable);
     default:
       // Fall back to default for descriptive error otherwise.
       return ContextTarget::NewTimer(timetype, length, repeat, runnable);
@@ -384,7 +385,7 @@ void UI::DeleteTimer(TimeType timetype, int timer_id) {
     case TimeType::kSim:
     case TimeType::kBase:
     case TimeType::kReal:
-      g_game->DeleteRealTimer(timer_id);
+      g_logic->DeleteRealTimer(timer_id);
       break;
     default:
       // Fall back to default for descriptive error otherwise.

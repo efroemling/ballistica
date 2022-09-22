@@ -3,17 +3,17 @@
 #include "ballistica/audio/audio_server.h"
 
 #include "ballistica/app/app.h"
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/data/sound_data.h"
 #include "ballistica/audio/al_sys.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/audio/audio_streamer.h"
 #include "ballistica/audio/ogg_stream.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/data/sound_data.h"
-#include "ballistica/media/media.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -30,10 +30,10 @@ extern "C" void opensl_resume_playback();
 extern std::string g_rift_audio_device_name;
 #endif
 
-const int kAudioProcessIntervalNormal = 500;
-const int kAudioProcessIntervalFade = 50;
-const int kAudioProcessIntervalPendingLoad = 1;
-const bool kShowInUseSounds = false;
+const int kAudioProcessIntervalNormal{500};
+const int kAudioProcessIntervalFade{50};
+const int kAudioProcessIntervalPendingLoad{1};
+const bool kShowInUseSounds{};
 
 int AudioServer::al_source_count_ = 0;
 
@@ -55,7 +55,7 @@ class AudioServer::ThreadSource : public Object {
   // not be used.
   ThreadSource(AudioServer* audio_thread, int id, bool* valid);
   ~ThreadSource() override;
-  void Reset() {
+  auto Reset() -> void {
     SetIsMusic(false);
     SetPositional(true);
     SetPosition(0, 0, 0);
@@ -66,18 +66,18 @@ class AudioServer::ThreadSource : public Object {
 
   /// Set whether a sound is "music".
   /// This influences which volume controls affect it.
-  void SetIsMusic(bool m);
+  auto SetIsMusic(bool m) -> void;
 
   /// Set whether a source is positional.
   /// A non-positional source's position coords are always relative to the
   /// listener - ie: 0, 0, 0 will always be centered.
-  void SetPositional(bool p);
-  void SetPosition(float x, float y, float z);
-  void SetGain(float g);
-  void SetFade(float f);
-  void SetLooping(bool loop);
+  auto SetPositional(bool p) -> void;
+  auto SetPosition(float x, float y, float z) -> void;
+  auto SetGain(float g) -> void;
+  auto SetFade(float f) -> void;
+  auto SetLooping(bool loop) -> void;
   auto Play(const Object::Ref<SoundData>* s) -> uint32_t;
-  void Stop();
+  auto Stop() -> void;
   auto play_count() -> uint32_t { return play_count_; }
   auto is_streamed() const -> bool { return is_streamed_; }
   auto current_is_music() const -> bool { return current_is_music_; }
@@ -86,41 +86,41 @@ class AudioServer::ThreadSource : public Object {
   auto play_id() const -> uint32_t {
     return (play_count_ << 16u) | (static_cast<uint32_t>(id_) & 0xFFFFu);
   }
-  void UpdateAvailability();
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override;
+  auto UpdateAvailability() -> void;
+  auto GetDefaultOwnerThread() const -> ThreadTag override;
   auto client_source() const -> AudioSource* { return client_source_.get(); }
   auto source_sound() const -> SoundData* {
     return source_sound_ ? source_sound_->get() : nullptr;
   }
 
-  void UpdatePitch();
-  void UpdateVolume();
-  void ExecStop();
-  void ExecPlay();
-  void Update();
+  auto UpdatePitch() -> void;
+  auto UpdateVolume() -> void;
+  auto ExecStop() -> void;
+  auto ExecPlay() -> void;
+  auto Update() -> void;
 
  private:
-  bool looping_ = false;
+  bool looping_{};
   std::unique_ptr<AudioSource> client_source_;
-  float fade_ = 1.0f;
-  float gain_ = 1.0f;
-  AudioServer* audio_thread_;
-  bool valid_ = false;
-  const Object::Ref<SoundData>* source_sound_ = nullptr;
-  int id_;
-  uint32_t play_count_ = 0;
-  bool is_actually_playing_ = false;
-  bool want_to_play_ = false;
+  float fade_{1.0f};
+  float gain_{1.0f};
+  AudioServer* audio_thread_{};
+  bool valid_{};
+  const Object::Ref<SoundData>* source_sound_{};
+  int id_{};
+  uint32_t play_count_{};
+  bool is_actually_playing_{};
+  bool want_to_play_{};
 #if BA_ENABLE_AUDIO
-  ALuint source_ = 0;
+  ALuint source_{};
 #endif
-  bool is_streamed_ = false;
+  bool is_streamed_{};
 
   /// Whether we should be designated as "music" next time we play.
-  bool is_music_ = false;
+  bool is_music_{};
 
   /// Whether currently playing as music.
-  bool current_is_music_ = false;
+  bool current_is_music_{};
 
 #if BA_ENABLE_AUDIO
   Object::Ref<AudioStreamer> streamer_;
@@ -144,7 +144,7 @@ struct AudioServer::SoundFadeNode {
 void AudioServer::SetPaused(bool pause) {
   if (!paused_) {
     if (!pause) {
-      Log("Error: got audio unpause request when already unpaused.");
+      Log(LogLevel::kError, "Got audio unpause request when already unpaused.");
     } else {
 #if BA_OSTYPE_IOS_TVOS
       // apple recommends this during audio-interruptions..
@@ -163,7 +163,7 @@ void AudioServer::SetPaused(bool pause) {
   } else {
     // unpause if requested..
     if (pause) {
-      Log("Error: Got audio pause request when already paused.");
+      Log(LogLevel::kError, "Got audio pause request when already paused.");
     } else {
 #if BA_OSTYPE_IOS_TVOS
       // apple recommends this during audio-interruptions..
@@ -321,24 +321,34 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
   });
 }
 
-AudioServer::AudioServer(Thread* thread)
-    : thread_(thread), impl_{new AudioServer::Impl()} {
-  // we're a singleton...
+AudioServer::AudioServer() : impl_{new AudioServer::Impl()} {
+  // We're a singleton; make sure we don't already exist.
   assert(g_audio_server == nullptr);
-  g_audio_server = this;
 
-  thread->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
-  thread->AddResumeCallback(NewLambdaRunnableRaw([this] { OnThreadResume(); }));
+  // Spin up our thread.
+  thread_ = new Thread(ThreadTag::kAudio);
+  g_app->pausable_threads.push_back(thread_);
+}
+
+auto AudioServer::OnAppStart() -> void {
+  thread_->PushCallSynchronous([this] { OnAppStartInThread(); });
+}
+
+auto AudioServer::OnAppStartInThread() -> void {
+  assert(InAudioThread());
+  thread()->AddPauseCallback(NewLambdaRunnableRaw([this] { OnThreadPause(); }));
+  thread()->AddResumeCallback(
+      NewLambdaRunnableRaw([this] { OnThreadResume(); }));
 
   // Get our thread to give us periodic processing time.
-  process_timer_ = thread->NewTimer(kAudioProcessIntervalNormal, true,
-                                    NewLambdaRunnable([this] { Process(); }));
+  process_timer_ = thread()->NewTimer(kAudioProcessIntervalNormal, true,
+                                      NewLambdaRunnable([this] { Process(); }));
 
 #if BA_ENABLE_AUDIO
 
   // Bring up OpenAL stuff.
   {
-    const char* alDeviceName = nullptr;
+    const char* al_device_name = nullptr;
 
 // On the rift build in vr mode we need to make sure we open the rift audio
 // device.
@@ -347,7 +357,7 @@ AudioServer::AudioServer(Thread* thread)
       ALboolean enumeration =
           alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
       if (enumeration == AL_FALSE) {
-        Log("OpenAL enumeration extensions missing.");
+        Log(LogLevel::kError, "OpenAL enumeration extensions missing.");
       } else {
         const ALCchar* devices =
             alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
@@ -357,26 +367,26 @@ AudioServer::AudioServer(Thread* thread)
         // If the string is blank, we weren't able to find the oculus
         // audio device.  In that case we'll just go with default.
         if (g_rift_audio_device_name != "") {
-          // Log("AL Devices list:");
-          // Log("----------");
+          // Log(LogLevel::kInfo, "AL Devices list:");
+          // Log(LogLevel::kInfo, "----------");
           while (device && *device != '\0' && next && *next != '\0') {
             // These names seem to be things like "OpenAL Soft on FOO"
             // ..we should be able to search for FOO.
             if (strstr(device, g_rift_audio_device_name.c_str())) {
-              alDeviceName = device;
+              al_device_name = device;
             }
             len = strlen(device);
             device += (len + 1);
             next += (len + 2);
           }
-          // Log("----------");
+          // Log(LogLevel::kInfo, "----------");
         }
       }
     }
 #endif  // BA_RIFT_BUILD
 
     ALCdevice* device;
-    device = alcOpenDevice(alDeviceName);
+    device = alcOpenDevice(al_device_name);
     BA_PRECONDITION(device);
     impl_->alc_context_ = alcCreateContext(device, nullptr);
     BA_PRECONDITION(impl_->alc_context_);
@@ -404,8 +414,8 @@ AudioServer::AudioServer(Thread* thread)
       sound_source_refs_.push_back(s);
       sources_.push_back(&(*s));
     } else {
-      Log("Error: Made " + std::to_string(i) + " sources; (wanted "
-          + std::to_string(target_source_count) + ").");
+      Log(LogLevel::kError, "Made " + std::to_string(i) + " sources; (wanted "
+                                + std::to_string(target_source_count) + ").");
       break;
     }
   }
@@ -463,9 +473,10 @@ void AudioServer::UpdateAvailableSources() {
         // that probably means somebody's grabbing a source but never
         // resubmitting it.
         if (t - i->client_source()->last_lock_time() > 10000) {
-          Log("Error: Client audio source has been locked for too long; "
+          Log(LogLevel::kError,
+              "Client audio source has been locked for too long; "
               "probably leaked. (debug id "
-              + std::to_string(i->client_source()->lock_debug_id()) + ")");
+                  + std::to_string(i->client_source()->lock_debug_id()) + ")");
         }
         continue;
       }
@@ -601,7 +612,7 @@ void AudioServer::Process() {
   // If we're paused we don't do nothin'.
   if (!paused_) {
     // Do some loading...
-    have_pending_loads_ = g_media->RunPendingAudioLoads();
+    have_pending_loads_ = g_assets->RunPendingAudioLoads();
 
     // Keep that available-sources list filled.
     UpdateAvailableSources();
@@ -666,7 +677,7 @@ void AudioServer::FadeSoundOut(uint32_t play_id, uint32_t time) {
       std::make_pair(play_id, SoundFadeNode(play_id, time, true)));
 }
 
-void AudioServer::DeleteMediaComponent(MediaComponentData* c) {
+void AudioServer::DeleteAssetComponent(AssetComponentData* c) {
   assert(InAudioThread());
   c->Unload();
   delete c;
@@ -684,8 +695,8 @@ AudioServer::ThreadSource::ThreadSource(AudioServer* audio_thread_in, int id_in,
   ALenum err = alGetError();
   valid_ = (err == AL_NO_ERROR);
   if (!valid_) {
-    Log(std::string("Error: AL Error ") + GetALErrorString(err)
-        + " on source creation.");
+    Log(LogLevel::kError, std::string("AL Error ") + GetALErrorString(err)
+                              + " on source creation.");
   } else {
     // In vr mode we keep the microphone a bit closer to the camera
     // for realism purposes, so we need stuff louder in general.
@@ -702,7 +713,9 @@ AudioServer::ThreadSource::ThreadSource(AudioServer* audio_thread_in, int id_in,
     CHECK_AL_ERROR;
   }
   *valid_out = valid_;
-  if (valid_) al_source_count_++;
+  if (valid_) {
+    al_source_count_++;
+  }
 
 #endif  // BA_ENABLE_AUDIO
 }
@@ -734,9 +747,8 @@ AudioServer::ThreadSource::~ThreadSource() {
 #endif  // BA_ENABLE_AUDIO
 }
 
-auto AudioServer::ThreadSource::GetDefaultOwnerThread() const
-    -> ThreadIdentifier {
-  return ThreadIdentifier::kAudio;
+auto AudioServer::ThreadSource::GetDefaultOwnerThread() const -> ThreadTag {
+  return ThreadTag::kAudio;
 }
 
 void AudioServer::ThreadSource::UpdateAvailability() {
@@ -867,9 +879,9 @@ void AudioServer::ThreadSource::SetPosition(float x, float y, float z) {
       z = 500;
     }
     if (oob) {
-      BA_LOG_ONCE(
-          "Error: AudioServer::ThreadSource::SetPosition"
-          " got out-of-bounds value.");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "AudioServer::ThreadSource::SetPosition"
+                  " got out-of-bounds value.");
     }
     ALfloat source_pos[] = {x, y, z};
     alSourcefv(source_, AL_POSITION, source_pos);
@@ -1033,7 +1045,7 @@ void AudioServer::ThreadSource::Stop() {
     // to free up...
     // (we can't kill media-refs outside the main thread)
     if (source_sound_) {
-      assert(g_media);
+      assert(g_assets);
       g_audio_server->AddSoundRefDelete(source_sound_);
       source_sound_ = nullptr;
     }
@@ -1087,22 +1099,22 @@ void AudioServer::PushSetSoundPitchCall(float val) {
 void AudioServer::PushSetPausedCall(bool pause) {
   thread()->PushCall([this, pause] {
     if (g_buildconfig.ostype_android()) {
-      Log("Error: Shouldn't be getting SetPausedCall on android.");
+      Log(LogLevel::kError, "Shouldn't be getting SetPausedCall on android.");
     }
     SetPaused(pause);
   });
 }
 
 void AudioServer::PushComponentUnloadCall(
-    const std::vector<Object::Ref<MediaComponentData>*>& components) {
+    const std::vector<Object::Ref<AssetComponentData>*>& components) {
   thread()->PushCall([this, components] {
     // Unload all components we were passed...
     for (auto&& i : components) {
       (**i).Unload();
     }
-    // ...and then ship these pointers back to the game thread, so it can free
+    // ...and then ship these pointers back to the logic thread, so it can free
     // the references.
-    g_game->PushFreeMediaComponentRefsCall(components);
+    g_logic->PushFreeAssetComponentRefsCall(components);
   });
 }
 
@@ -1118,8 +1130,9 @@ void AudioServer::AddSoundRefDelete(const Object::Ref<SoundData>* c) {
     std::scoped_lock lock(sound_ref_delete_list_mutex_);
     sound_ref_delete_list_.push_back(c);
   }
-  // Now push a call to the game thread to do the deletes.
-  g_game->thread()->PushCall([] { g_audio_server->ClearSoundRefDeleteList(); });
+  // Now push a call to the logic thread to do the deletes.
+  g_logic->thread()->PushCall(
+      [] { g_audio_server->ClearSoundRefDeleteList(); });
 }
 
 void AudioServer::ClearSoundRefDeleteList() {
@@ -1142,7 +1155,7 @@ void AudioServer::BeginInterruption() {
       break;
     }
     if (GetRealTime() - t > 1000) {
-      Log("Error: Timed out waiting for audio pause.");
+      Log(LogLevel::kError, "Timed out waiting for audio pause.");
       break;
     }
     Platform::SleepMS(2);
@@ -1164,7 +1177,7 @@ void AudioServer::EndInterruption() {
       break;
     }
     if (GetRealTime() - t > 1000) {
-      Log("Error: Timed out waiting for audio unpause.");
+      Log(LogLevel::kError, "Timed out waiting for audio unpause.");
       break;
     }
     Platform::SleepMS(2);

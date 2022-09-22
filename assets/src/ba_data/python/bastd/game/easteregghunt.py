@@ -44,7 +44,10 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Easter Egg Hunt'
     description = 'Gather eggs!'
-    available_settings = [ba.BoolSetting('Pro Mode', default=False)]
+    available_settings = [
+        ba.BoolSetting('Pro Mode', default=False),
+        ba.BoolSetting('Epic Mode', default=False),
+    ]
     scoreconfig = ba.ScoreConfig(label='Score', scoretype=ba.ScoreType.POINTS)
 
     # We're currently hard-coded for one map.
@@ -70,6 +73,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self.egg_tex_3 = ba.gettexture('eggTex3')
         self._collect_sound = ba.getsound('powerup01')
         self._pro_mode = settings.get('Pro Mode', False)
+        self._epic_mode = settings.get('Epic Mode', False)
         self._max_eggs = 1.0
         self.egg_material = ba.Material()
         self.egg_material.add_actions(
@@ -81,7 +85,9 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._bots: SpazBotSet | None = None
 
         # Base class overrides
-        self.default_music = ba.MusicType.FORWARD_MARCH
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.FORWARD_MARCH)
 
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():

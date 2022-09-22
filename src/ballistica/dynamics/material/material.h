@@ -30,7 +30,7 @@ class Material : public Object {
   auto BorrowPyRef() -> PyObject* { return GetPyRef(false); }
   void MarkDead();
   auto scene() const -> Scene* { return scene_.get(); }
-  void DumpComponents(GameStream* out);
+  void DumpComponents(SceneStream* out);
   auto stream_id() const -> int64_t { return stream_id_; }
   void set_stream_id(int64_t val) {
     assert(stream_id_ == -1);

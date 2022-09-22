@@ -3,7 +3,7 @@
 #include "ballistica/python/class/python_class_context_call.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 
@@ -102,8 +102,8 @@ auto PythonClassContextCall::tp_new(PyTypeObject* type, PyObject* args,
     if (!PyArg_ParseTuple(args, "O", &source_obj)) return nullptr;
     if (!InLogicThread()) {
       throw Exception(
-          "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          std::string(type_obj.tp_name)
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     self->context_call_ = new Object::Ref<PythonContextCall>(
@@ -115,11 +115,11 @@ auto PythonClassContextCall::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassContextCall::tp_dealloc(PythonClassContextCall* self) {
   BA_PYTHON_TRY;
-  // these have to be deleted in the game thread - send the ptr along if need
+  // these have to be deleted in the logic thread - send the ptr along if need
   // be; otherwise do it immediately
   if (!InLogicThread()) {
     Object::Ref<PythonContextCall>* c = self->context_call_;
-    g_game->thread()->PushCall([c] { delete c; });
+    g_logic->thread()->PushCall([c] { delete c; });
   } else {
     delete self->context_call_;
   }

@@ -11,13 +11,14 @@ import inspect
 import logging
 from typing import TYPE_CHECKING
 
-from efro.message._message import (Message, Response, EmptyResponse,
-                                   ErrorResponse, UnregisteredMessageIDError)
+from efro.message._message import (Message, Response, EmptySysResponse,
+                                   UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
 
     from efro.message._protocol import MessageProtocol
+    from efro.message._message import SysResponse
 
 
 class MessageReceiver:
@@ -53,7 +54,8 @@ class MessageReceiver:
         self._decode_filter_call: Callable[[Any, dict, Message],
                                            None] | None = None
         self._encode_filter_call: Callable[
-            [Any, Message | None, Response, dict], None] | None = None
+            [Any, Message | None, Response | SysResponse, dict],
+            None] | None = None
 
         # TODO: don't currently have async encode equivalent
         # or either for sender; can add as needed.
@@ -106,26 +108,27 @@ class MessageReceiver:
         assert issubclass(msgtype, Message)
 
         ret = anns.get('return')
-        responsetypes: tuple[type[Any] | type[None], ...]
+        responsetypes: tuple[type[Any] | None, ...]
 
         # Return types can be a single type or a union of types.
         if isinstance(ret, (_GenericAlias, types.UnionType)):
             targs = get_args(ret)
-            if not all(isinstance(a, type) for a in targs):
+            if not all(isinstance(a, (type, type(None))) for a in targs):
                 raise TypeError(f'expected only types for "return" annotation;'
                                 f' got {targs}.')
             responsetypes = targs
         else:
-            if not isinstance(ret, type):
+            if not isinstance(ret, (type, type(None))):
                 raise TypeError(f'expected one or more types for'
                                 f' "return" annotation; got a {type(ret)}.')
             # This seems like maybe a mypy bug. Appeared after adding
             # types.UnionType above.
-            responsetypes = (ret, )  # type: ignore
+            responsetypes = (ret, )
 
-        # Return type of None translates to EmptyResponse.
-        responsetypes = tuple(EmptyResponse if r is type(None) else r
-                              for r in responsetypes)  # noqa
+        # This will contain NoneType for empty return cases, but
+        # we expect it to be None.
+        responsetypes = tuple(None if r is type(None) else r
+                              for r in responsetypes)
 
         # Make sure our protocol has this message type registered and our
         # return types exactly match. (Technically we could return a subset
@@ -178,7 +181,9 @@ class MessageReceiver:
         return call
 
     def encode_filter_method(
-        self, call: Callable[[Any, Message | None, Response, dict], None]
+        self,
+        call: Callable[[Any, Message | None, Response | SysResponse, dict],
+                       None]
     ) -> Callable[[Any, Message | None, Response, dict], None]:
         """Function decorator for defining an encode filter.
 
@@ -236,17 +241,21 @@ class MessageReceiver:
                              response: Response | None) -> str:
         """Encode a response provided by the user for sending."""
 
-        # A return value of None equals EmptyResponse.
-        if response is None:
-            response = EmptyResponse()
-
-        assert isinstance(response, Response)
+        assert isinstance(response, Response | None)
         # (user should never explicitly return error-responses)
-        assert not isinstance(response, ErrorResponse)
-        assert type(response) in message.get_response_types()
-        response_dict = self.protocol.response_to_dict(response)
+        assert (response is None
+                or type(response) in message.get_response_types())
+
+        # A return value of None equals EmptySysResponse.
+        out_response: Response | SysResponse
+        if response is None:
+            out_response = EmptySysResponse()
+        else:
+            out_response = response
+
+        response_dict = self.protocol.response_to_dict(out_response)
         if self._encode_filter_call is not None:
-            self._encode_filter_call(bound_obj, message, response,
+            self._encode_filter_call(bound_obj, message, out_response,
                                      response_dict)
         return self.protocol.encode_dict(response_dict)
 
@@ -280,7 +289,7 @@ class MessageReceiver:
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
             response = handler(bound_obj, msg_decoded)
-            assert isinstance(response, (Response, type(None)))
+            assert isinstance(response, Response | None)
             return self.encode_user_response(bound_obj, msg_decoded, response)
 
         except Exception as exc:
@@ -308,7 +317,7 @@ class MessageReceiver:
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
             response = await handler(bound_obj, msg_decoded)
-            assert isinstance(response, (Response, type(None)))
+            assert isinstance(response, Response | None)
             return self.encode_user_response(bound_obj, msg_decoded, response)
 
         except Exception as exc:

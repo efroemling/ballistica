@@ -28,7 +28,7 @@ def finish_bootstrapping() -> None:
     assert _ba.in_logic_thread()
 
     # Kick off our asyncio event handling, allowing us to use coroutines
-    # in our game thread alongside our internal event handling.
+    # in our logic thread alongside our internal event handling.
     # setup_asyncio()
 
     # Ok, bootstrapping is done; time to get the show started.

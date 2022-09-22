@@ -9,8 +9,8 @@ namespace ballistica {
 
 class Framebuffer : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> ThreadIdentifier override {
-    return ThreadIdentifier::kMain;
+  auto GetDefaultOwnerThread() const -> ThreadTag override {
+    return ThreadTag::kMain;
   }
 };
 

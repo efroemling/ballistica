@@ -2,8 +2,8 @@
 
 #include "ballistica/scene/node/bomb_node.h"
 
+#include "ballistica/assets/component/collide_model.h"
 #include "ballistica/graphics/graphics.h"
-#include "ballistica/media/component/collide_model.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {

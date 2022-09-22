@@ -27,7 +27,7 @@ auto FatalError::ReportFatalError(const std::string& message,
   // error to the user and exiting the app cleanly (so we don't pollute our
   // crash records with results of user tinkering).
 
-  // Give the platform the opportunity to completely override our handling.
+  // Give the platform the opportunity to augment or override our handling.
   if (g_platform) {
     auto handled =
         g_platform->ReportFatalError(message, in_top_level_exception_handler);
@@ -38,7 +38,8 @@ auto FatalError::ReportFatalError(const std::string& message,
 
   std::string dialog_msg = message;
   if (!dialog_msg.empty()) {
-    dialog_msg += "\n";
+    // Why was this here?
+    // dialog_msg += "\n";
   }
 
   auto starttime = time(nullptr);
@@ -69,11 +70,16 @@ auto FatalError::ReportFatalError(const std::string& message,
     }
   }
 
-  // Prevent the early-log insta-send mechanism from firing since we do
-  // basically the same thing ourself here (avoid sending the same logs twice).
-  g_early_log_writes = 0;
+  // Prevent the early-v1-cloud-log insta-send mechanism from firing since
+  // we do basically the same thing ourself here (avoid sending the same
+  // logs twice).
+  g_early_v1_cloud_log_writes = 0;
 
-  Logging::Log(logmsg);
+  // Add this to our V1CloudLog which we'll be attempting to send momentarily,
+  // and also go to platform-specific logging and good ol' stderr.
+  Logging::V1CloudLog(logmsg);
+  Logging::DisplayLog("root", LogLevel::kCritical, logmsg);
+  fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
   std::string suffix;
@@ -83,7 +89,7 @@ auto FatalError::ReportFatalError(const std::string& message,
   if (g_app == nullptr) {
     suffix = logmsg;
   }
-  g_app_internal->DirectSendLogs(prefix, suffix, true, &result);
+  g_app_internal->DirectSendV1CloudLogs(prefix, suffix, true, &result);
 
   // If we're able to show a fatal-error dialog synchronously, do so.
   if (g_platform && g_platform->CanShowBlockingFatalErrorDialog()) {
@@ -148,10 +154,10 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   // bring the app down ourself.
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
-      Log("Calling exit(1)...");
+      Logging::DisplayLog("root", LogLevel::kCritical, "Calling exit(1)...");
       exit(1);
     } else {
-      Log("Calling abort()...");
+      Logging::DisplayLog("root", LogLevel::kCritical, "Calling abort()...");
       abort();
     }
   }

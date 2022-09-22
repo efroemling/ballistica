@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/component/texture.h"
+#include "ballistica/assets/data/model_data.h"
 #include "ballistica/core/object.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/framebuffer.h"
@@ -38,9 +41,6 @@
 #include "ballistica/graphics/text/text_group.h"
 #include "ballistica/math/matrix44f.h"
 #include "ballistica/math/vector3f.h"
-#include "ballistica/media/component/texture.h"
-#include "ballistica/media/data/model_data.h"
-#include "ballistica/media/media.h"
 
 namespace ballistica {
 

@@ -4,73 +4,69 @@
 
 #include <map>
 
+#include "ballistica/app/app_config.h"
 #include "ballistica/app/app_flavor.h"
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/assets_server.h"
+#include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/game/account.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/graphics/text/text_graphics.h"
+#include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/media/media_server.h"
-#include "ballistica/networking/network_write_module.h"
+#include "ballistica/logic/v1_account.h"
+#include "ballistica/networking/network_reader.h"
+#include "ballistica/networking/network_writer.h"
+#include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
+#include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/v1/scene_v1.h"
+#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20798;
-const char* kAppVersion = "1.7.7";
+const int kAppBuildNumber = 20877;
+const char* kAppVersion = "1.7.9";
 
 // Our standalone globals.
 // These are separated out for easy access.
 // Everything else should go into App (or more ideally into a class).
-int g_early_log_writes{10};
+int g_early_v1_cloud_log_writes{10};
 
-Account* g_account{};
-AppConfig* g_app_config{};
 App* g_app{};
+AppConfig* g_app_config{};
 AppInternal* g_app_internal{};
 AppFlavor* g_app_flavor{};
+Assets* g_assets{};
+AssetsServer* g_assets_server{};
 Audio* g_audio{};
 AudioServer* g_audio_server{};
 BGDynamics* g_bg_dynamics{};
 BGDynamicsServer* g_bg_dynamics_server{};
-Game* g_game{};
+Context* g_context{};
 Graphics* g_graphics{};
 GraphicsServer* g_graphics_server{};
 Input* g_input{};
+Logic* g_logic{};
 Thread* g_main_thread{};
-Media* g_media{};
-MediaServer* g_media_server{};
-NetworkReader* g_network_reader{};
 Networking* g_networking{};
-NetworkWriteModule* g_network_write_module{};
+NetworkReader* g_network_reader{};
+NetworkWriter* g_network_writer{};
 Platform* g_platform{};
 Python* g_python{};
-StdInputModule* g_std_input_module{};
+SceneV1* g_scene_v1{};
+StdioConsole* g_stdio_console{};
 TextGraphics* g_text_graphics{};
 UI* g_ui{};
 Utils* g_utils{};
-
-// Basic overview of our bootstrapping process:
-// 1: All threads and globals are created and provisioned. Everything above
-//    should exist at the end of this step (if it is going to exist).
-//    Threads should not be talking to each other yet at this point.
-// 2: The system is set in motion. Game thread is told to load/apply the config.
-//    This event kicks off an initial-screen-creation message sent to the
-//    graphics-server thread. Other systems are informed that bootstrapping
-//    is complete and that they are free to talk to each other. Initial
-//    input-devices are added, media loads can begin (at least ones not
-//    dependent on the screen/renderer), etc.
-// 3: The initial screen is created on the graphics-server thread in response
-//    to the message sent from the game thread. A completion notice is sent
-//    back to the game thread when done.
-// 4: Back on the game thread, any renderer-dependent media-loads/etc. can begin
-//    and lastly the initial game session is kicked off.
+V1Account* g_v1_account{};
 
 auto BallisticaMain(int argc, char** argv) -> int {
   try {
@@ -83,76 +79,106 @@ auto BallisticaMain(int argc, char** argv) -> int {
     }
 
     // -------------------------------------------------------------------------
-    // Phase 1: Create and provision all globals.
+    // Phase 1: "The board is set."
     // -------------------------------------------------------------------------
 
-    // Absolute bare-bones basics.
-    g_app = new App(argc, argv);
+    // Here we instantiate all of our globals. Code here should
+    // avoid any logic that accesses other globals since they may
+    // not yet exist.
+
+    // Minimal globals we must assign immediately as they ARE needed
+    // for construction of the others (would be great to eliminate this need).
     g_platform = Platform::Create();
+    g_app = new App(argc, argv);
+    g_app_internal = CreateAppInternal();
+    g_main_thread = new Thread(ThreadTag::kMain, ThreadSource::kWrapMain);
 
-    // If we're not running under a Python executable, we need to set up
-    // our own Python environment.
-    assert(g_python == nullptr);
-    g_python = new Python();
+    // For everything else, we hold off until the end to actually assign
+    // them to their globals. This keeps us honest and catches any stray
+    // inter-global access that we might accidentally include in a
+    // constructor.
+    auto* app_flavor = g_platform->CreateAppFlavor();
+    auto* python = Python::Create();
+    auto* graphics = g_platform->CreateGraphics();
+    auto* graphics_server = new GraphicsServer();
+    auto* audio = new Audio();
+    auto* audio_server = new AudioServer();
+    auto* context = new Context(nullptr);
+    auto* text_graphics = new TextGraphics();
+    auto* app_config = new AppConfig();
+    auto* v1_account = new V1Account();
+    auto* utils = new Utils();
+    auto* assets = new Assets();
+    auto* assets_server = new AssetsServer();
+    auto* ui = Object::NewUnmanaged<UI>();
+    auto* networking = new Networking();
+    auto* network_reader = new NetworkReader();
+    auto* network_writer = new NetworkWriter();
+    auto* input = new Input();
+    auto* logic = new Logic();
+    auto* scene_v1 = new SceneV1();
+    auto* bg_dynamics = HeadlessMode() ? nullptr : new BGDynamics;
+    auto* bg_dynamics_server = HeadlessMode() ? nullptr : new BGDynamicsServer;
+    auto* stdio_console =
+        g_buildconfig.enable_stdio_console() ? new StdioConsole() : nullptr;
 
-    // Create a Thread wrapper around the current (main) thread.
-    g_main_thread = new Thread(ThreadIdentifier::kMain, ThreadType::kMain);
-    Thread::UpdateMainThreadID();
+    g_app_flavor = app_flavor;
+    g_python = python;
+    g_graphics = graphics;
+    g_graphics_server = graphics_server;
+    g_audio = audio;
+    g_audio_server = audio_server;
+    g_context = context;
+    g_text_graphics = text_graphics;
+    g_app_config = app_config;
+    g_v1_account = v1_account;
+    g_utils = utils;
+    g_assets = assets;
+    g_assets_server = assets_server;
+    g_ui = ui;
+    g_networking = networking;
+    g_network_reader = network_reader;
+    g_network_writer = network_writer;
+    g_input = input;
+    g_logic = logic;
+    g_scene_v1 = scene_v1;
+    g_bg_dynamics = bg_dynamics;
+    g_bg_dynamics_server = bg_dynamics_server;
+    g_stdio_console = stdio_console;
 
-    // Spin up our specific app variation (VR, headless, regular, etc.)
-    g_app_flavor = g_platform->CreateAppFlavor();
-    g_app_flavor->PostInit();
-
-    g_account = new Account();
-    g_utils = new Utils();
-    Scene::Init();
-
-    // Spin up our other standard threads.
-    auto* media_thread{new Thread(ThreadIdentifier::kMedia)};
-    g_app->pausable_threads.push_back(media_thread);
-    auto* audio_thread{new Thread(ThreadIdentifier::kAudio)};
-    g_app->pausable_threads.push_back(audio_thread);
-    auto* logic_thread{new Thread(ThreadIdentifier::kLogic)};
-    g_app->pausable_threads.push_back(logic_thread);
-    auto* network_write_thread{new Thread(ThreadIdentifier::kNetworkWrite)};
-    g_app->pausable_threads.push_back(network_write_thread);
-
-    // Spin up our subsystems in those threads.
-    logic_thread->PushCallSynchronous(
-        [logic_thread] { new Game(logic_thread); });
-    network_write_thread->PushCallSynchronous([network_write_thread] {
-      new NetworkWriteModule(network_write_thread);
-    });
-    media_thread->PushCallSynchronous(
-        [media_thread] { new MediaServer(media_thread); });
-    new GraphicsServer(g_main_thread);
-    audio_thread->PushCallSynchronous(
-        [audio_thread] { new AudioServer(audio_thread); });
-
-    // Now let the platform spin up any other threads/modules it uses.
-    // (bg-dynamics in non-headless builds, stdin/stdout where applicable,
-    // etc.)
-    g_platform->CreateAuxiliaryModules();
-
-    // Ok at this point we can be considered up-and-running.
     g_app->is_bootstrapped = true;
 
     // -------------------------------------------------------------------------
-    // Phase 2: Set things in motion.
+    // Phase 2: "The pieces are moving."
     // -------------------------------------------------------------------------
 
-    // Let the app and platform do whatever else it wants here such as adding
-    // initial input devices/etc.
-    g_app_flavor->OnBootstrapComplete();
-    g_platform->OnBootstrapComplete();
+    // Allow our subsystems to start doing work in their own threads
+    // and communicating with other subsystems. Note that we may still
+    // want to run some things serially here and ordering may be important
+    // (for instance we want to give our main thread a chance to register
+    // all initial input devices with the logic thread before the logic
+    // thread applies the current config to them).
 
-    // Ok; now that we're bootstrapped, tell the game thread to read and apply
-    // the config which should kick off the real action.
-    g_game->PushApplyConfigCall();
+    g_logic->OnAppStart();
+    g_audio_server->OnAppStart();
+    g_assets_server->OnAppStart();
+    g_platform->OnAppStart();
+    g_app_flavor->OnAppStart();
+    if (g_stdio_console) {
+      g_stdio_console->OnAppStart();
+    }
+
+    // As the last step of this phase, tell the logic thread to apply
+    // the app config which will kick off screen creation and otherwise
+    // get the ball rolling.
+    g_logic->PushApplyConfigCall();
 
     // -------------------------------------------------------------------------
-    // Phase 3/4: Create a screen and/or kick off game (in other threads).
+    // Phase 3: "We come to it at last; the great battle of our time."
     // -------------------------------------------------------------------------
+
+    // At this point all threads are off and running and we simply
+    // feed events until things end (or return and let the OS do that).
 
     if (g_app_flavor->ManagesEventLoop()) {
       // On our event-loop-managing platforms we now simply sit in our event
@@ -223,77 +249,87 @@ auto FatalError(const std::string& message) -> void {
   FatalError::ReportFatalError(message, false);
   bool exit_cleanly = !IsUnmodifiedBlessedBuild();
   bool handled = FatalError::HandleFatalError(exit_cleanly, false);
-  assert(handled);
+  BA_PRECONDITION(handled);
 }
 
+// FIXME: move this to g_app or whatnot.
 auto GetAppInstanceUUID() -> const std::string& {
-  static std::string session_id;
-  static bool have_session_id = false;
+  static std::string app_instance_uuid;
+  static bool have_app_instance_uuid = false;
 
-  if (!have_session_id) {
+  if (!have_app_instance_uuid) {
     if (g_python) {
       Python::ScopedInterpreterLock gil;
       auto uuid = g_python->obj(Python::ObjID::kUUIDStrCall).Call();
       if (uuid.exists()) {
-        session_id = uuid.ValueAsString().c_str();
-        have_session_id = true;
+        app_instance_uuid = uuid.ValueAsString().c_str();
+        have_app_instance_uuid = true;
       }
     }
-    if (!have_session_id) {
+    if (!have_app_instance_uuid) {
       // As an emergency fallback simply use a single random number.
-      Log("WARNING: GetSessionUUID() using rand fallback.");
+      // We should probably simply disallow this before Python is up.
+      Log(LogLevel::kWarning, "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
-          Platform::GetCurrentMilliseconds()));                    // NOLINT
-      session_id = std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
-      have_session_id = true;
+          Platform::GetCurrentMilliseconds()));  // NOLINT
+      app_instance_uuid =
+          std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
+      have_app_instance_uuid = true;
     }
-    if (session_id.size() >= 100) {
-      Log("WARNING: session id longer than it should be.");
+    if (app_instance_uuid.size() >= 100) {
+      Log(LogLevel::kWarning, "session id longer than it should be.");
     }
   }
-  return session_id;
-}
-
-auto InLogicThread() -> bool {
-  return (g_game && g_game->thread()->IsCurrent());
+  return app_instance_uuid;
 }
 
 auto InMainThread() -> bool {
-  return (g_app && std::this_thread::get_id() == g_app->main_thread_id);
+  assert(g_main_thread);  // Root out early use of this.
+  return (g_main_thread->IsCurrent());
+}
+
+auto InLogicThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
+  return (g_logic && g_logic->thread()->IsCurrent());
 }
 
 auto InGraphicsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_graphics_server && g_graphics_server->thread()->IsCurrent());
 }
 
 auto InAudioThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_audio_server && g_audio_server->thread()->IsCurrent());
 }
 
 auto InBGDynamicsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
   return (g_bg_dynamics_server && g_bg_dynamics_server->thread()->IsCurrent());
 }
 
-auto InMediaThread() -> bool {
-  return (g_media_server && g_media_server->thread()->IsCurrent());
+auto InAssetsThread() -> bool {
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
+  return (g_assets_server && g_assets_server->thread()->IsCurrent());
 }
 
 auto InNetworkWriteThread() -> bool {
-  return (g_network_write_module
-          && g_network_write_module->thread()->IsCurrent());
+  assert(g_app && g_app->is_bootstrapped);  // Root out early use of this.
+  return (g_network_writer && g_network_writer->thread()->IsCurrent());
 }
 
-auto Log(const std::string& msg, bool to_stdout, bool to_server) -> void {
-  Logging::Log(msg, to_stdout, to_server);
+auto Log(LogLevel level, const std::string& msg) -> void {
+  Logging::Log(level, msg);
 }
 
 auto IsVRMode() -> bool { return g_app->vr_mode; }
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
-  if (g_game) {
-    g_game->PushScreenMessage(s, color);
+  if (g_logic) {
+    g_logic->PushScreenMessage(s, color);
   } else {
-    Log("ScreenMessage before g_game init (will be lost): '" + s + "'");
+    Log(LogLevel::kError,
+        "ScreenMessage before g_logic init (will be lost): '" + s + "'");
   }
 }
 

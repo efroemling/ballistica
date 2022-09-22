@@ -4,10 +4,10 @@
 
 #include "ballistica/audio/audio.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
@@ -32,7 +32,7 @@ namespace ballistica {
 ContainerWidget::ContainerWidget(float width_in, float height_in)
     : width_(width_in),
       height_(height_in),
-      dynamics_update_time_(g_game->master_time()) {}
+      dynamics_update_time_(g_logic->master_time()) {}
 
 ContainerWidget::~ContainerWidget() {
   BA_DEBUG_UI_READ_LOCK;
@@ -343,7 +343,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
 
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          g_game->PushPythonWeakCall(
+          g_logic->PushPythonWeakCall(
               Object::WeakRef<PythonContextCall>(on_cancel_call_));
         } else {
           OnCancelCustom();
@@ -596,7 +596,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+                g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -619,7 +619,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
         if (!claimed && on_outside_click_call_.exists()) {
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          g_game->PushPythonWeakCall(
+          g_logic->PushPythonWeakCall(
               Object::WeakRef<PythonContextCall>(on_outside_click_call_));
         }
 
@@ -809,7 +809,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
             // Probably not safe to delete ourself here since we're in
             // the draw loop, but we can push a call to do it.
             Object::WeakRef<Widget> weakref(this);
-            g_game->thread()->PushCall([weakref] {
+            g_logic->thread()->PushCall([weakref] {
               Widget* w = weakref.get();
               if (w) g_ui->DeleteWidget(w);
             });
@@ -864,7 +864,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
                   // Probably not safe to delete ourself here since we're in the
                   // draw loop, but we can set up an event to do it.
                   Object::WeakRef<Widget> weakref(this);
-                  g_game->thread()->PushCall([weakref] {
+                  g_logic->thread()->PushCall([weakref] {
                     Widget* w = weakref.get();
                     if (w) g_ui->DeleteWidget(w);
                   });
@@ -948,7 +948,7 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
     bg_center_x_ = l - l_border + bg_width_ * 0.5f;
     bg_center_y_ = b - b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_media->GetTexture(tex_id);
+      tex_ = g_assets->GetTexture(tex_id);
     }
     bg_dirty_ = false;
   }
@@ -974,8 +974,8 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
       c.PushTransform();
       c.Translate(bg_center_x_, bg_center_y_);
       c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-      c.DrawModel(g_media->GetModel(draw_transparent ? bg_model_transparent_i_d_
-                                                     : bg_model_opaque_i_d_));
+      c.DrawModel(g_assets->GetModel(
+          draw_transparent ? bg_model_transparent_i_d_ : bg_model_opaque_i_d_));
       c.PopTransform();
       c.Submit();
     }
@@ -1005,12 +1005,12 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(g_media->GetTexture(SystemTextureID::kGlow));
+      c.SetTexture(g_assets->GetTexture(SystemTextureID::kGlow));
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       c.PushTransform();
       c.Translate(glow_center_x_, glow_center_y_);
       c.Scale(glow_width_, glow_height_);
-      c.DrawModel(g_media->GetModel(SystemModelID::kImage4x1));
+      c.DrawModel(g_assets->GetModel(SystemModelID::kImage4x1));
       c.PopTransform();
       c.Submit();
     }
@@ -1046,11 +1046,11 @@ void ContainerWidget::TransformPointFromChild(float* x, float* y,
 }
 
 void ContainerWidget::Activate() {
-  last_activate_time_ = g_game->master_time();
+  last_activate_time_ = g_logic->master_time();
   if (on_activate_call_.exists()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from within
     // a UI loop).
-    g_game->PushPythonWeakCall(
+    g_logic->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
   }
 }
@@ -1143,7 +1143,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
     return;
   }
   parent->CheckLayout();
-  millisecs_t net_time = g_game->master_time();
+  millisecs_t net_time = g_logic->master_time();
   transition_type_ = t;
 
   // Scale transitions are simpler.
@@ -1346,7 +1346,8 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
   } else {
     if (root_selectable_) {
-      Log("Error: SelectWidget() called on a ContainerWidget which is itself "
+      Log(LogLevel::kError,
+          "SelectWidget() called on a ContainerWidget which is itself "
           "selectable. Ignoring.");
       return;
     }
@@ -1372,8 +1373,9 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
         } else {
           static bool printed = false;
           if (!printed) {
-            Log("Warning: SelectWidget called on unselectable widget: "
-                + w->GetWidgetTypeName());
+            Log(LogLevel::kWarning,
+                "SelectWidget called on unselectable widget: "
+                    + w->GetWidgetTypeName());
             Python::PrintStackTrace();
             printed = true;
           }
@@ -1543,7 +1545,7 @@ void ContainerWidget::SelectDownWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectDownWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectDownWidget called before UI init.");
     return;
   }
 
@@ -1576,13 +1578,13 @@ void ContainerWidget::SelectDownWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: Down_widget is not selectable.");
+        Log(LogLevel::kError, "Down_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1607,7 +1609,7 @@ void ContainerWidget::SelectUpWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectUpWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectUpWidget called before UI init.");
     return;
   }
 
@@ -1640,13 +1642,13 @@ void ContainerWidget::SelectUpWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: up_widget is not selectable.");
+        Log(LogLevel::kError, "up_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1671,7 +1673,7 @@ void ContainerWidget::SelectLeftWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectLeftWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectLeftWidget called before UI init.");
     return;
   }
 
@@ -1691,13 +1693,13 @@ void ContainerWidget::SelectLeftWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: left_widget is not selectable.");
+        Log(LogLevel::kError, "left_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1721,7 +1723,7 @@ void ContainerWidget::SelectRightWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectRightWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectRightWidget called before UI init.");
     return;
   }
 
@@ -1742,13 +1744,13 @@ void ContainerWidget::SelectRightWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log("Error: right_widget is not selectable.");
+        Log(LogLevel::kError, "right_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+          g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
         }
       }
     } else {
@@ -1773,13 +1775,13 @@ void ContainerWidget::SelectNextWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui || !g_ui->root_widget() || !g_ui->screen_root_widget()) {
-    BA_LOG_ONCE("SelectNextWidget called before UI init.");
+    BA_LOG_ONCE(LogLevel::kError, "SelectNextWidget called before UI init.");
     return;
   }
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_;
   if (should_print_list_exit_instructions_) {
-    last_prev_next_time_ = g_game->master_time();
+    last_prev_next_time_ = g_logic->master_time();
   }
 
   // Grab the iterator for our selected widget if possible.
@@ -1828,7 +1830,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::NEXT_SELECTED);
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
       return;
     }
     i++;
@@ -1839,21 +1841,21 @@ void ContainerWidget::SelectNextWidget() {
 void ContainerWidget::PrintExitListInstructions(
     millisecs_t old_last_prev_next_time) {
   if (should_print_list_exit_instructions_) {
-    millisecs_t t = g_game->master_time();
+    millisecs_t t = g_logic->master_time();
     if ((t - old_last_prev_next_time > 250)
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kErrorBeep));
-      std::string s = g_game->GetResourceString("arrowsToExitListText");
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kErrorBeep));
+      std::string s = g_logic->GetResourceString("arrowsToExitListText");
       {
         // Left arrow.
         Utils::StringReplaceOne(&s, "${LEFT}",
-                                g_game->CharStr(SpecialChar::kLeftArrow));
+                                g_logic->CharStr(SpecialChar::kLeftArrow));
       }
       {
         // Right arrow.
         Utils::StringReplaceOne(&s, "${RIGHT}",
-                                g_game->CharStr(SpecialChar::kRightArrow));
+                                g_logic->CharStr(SpecialChar::kRightArrow));
       }
       ScreenMessage(s);
     }
@@ -1865,7 +1867,7 @@ void ContainerWidget::SelectPrevWidget() {
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_;
   if (should_print_list_exit_instructions_) {
-    last_prev_next_time_ = g_game->master_time();
+    last_prev_next_time_ = g_logic->master_time();
   }
 
   // Grab the iterator for our selected widget if possible.
@@ -1915,7 +1917,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::PREV_SELECTED);
-      g_audio->PlaySound(g_media->GetSound(SystemSoundID::kTap));
+      g_audio->PlaySound(g_assets->GetSound(SystemSoundID::kTap));
       return;
     }
     i++;

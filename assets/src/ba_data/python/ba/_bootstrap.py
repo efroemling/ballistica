@@ -5,14 +5,14 @@ from __future__ import annotations
 
 import os
 import sys
-import signal
-import threading
 from typing import TYPE_CHECKING
 
+from efro.log import setup_logging, LogLevel
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, TextIO, Callable
+    from typing import Any
+    from efro.log import LogEntry
 
 _g_did_bootstrap = False  # pylint: disable=invalid-name
 
@@ -20,25 +20,32 @@ _g_did_bootstrap = False  # pylint: disable=invalid-name
 def bootstrap() -> None:
     """Run bootstrapping logic.
 
-    This is the very first userland code that runs.
+    This is the very first ballistica code that runs (aside from imports).
     It sets up low level environment bits and creates the app instance.
     """
+
     global _g_did_bootstrap  # pylint: disable=global-statement, invalid-name
     if _g_did_bootstrap:
         raise RuntimeError('Bootstrap has already been called.')
     _g_did_bootstrap = True
 
-    # The first thing we set up is capturing/redirecting Python
-    # stdout/stderr so we can at least debug problems on systems where
-    # native stdout/stderr is not easily accessible (looking at you, Android).
-    sys.stdout = _Redirect(sys.stdout, _ba.print_stdout)  # type: ignore
-    sys.stderr = _Redirect(sys.stderr, _ba.print_stderr)  # type: ignore
+    # The first thing we do is set up our logging system and feed
+    # Python's stdout/stderr into it. Then we can at least debug problems
+    # on systems where native stdout/stderr is not easily accessible
+    # such as Android.
+    log_handler = setup_logging(log_path=None,
+                                level=LogLevel.DEBUG,
+                                suppress_non_root_debug=True,
+                                log_stdout_stderr=True,
+                                cache_size_limit=1024 * 1024)
+
+    log_handler.add_callback(_on_log)
 
     env = _ba.env()
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20798
+    expected_build = 20877
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -48,16 +55,11 @@ def bootstrap() -> None:
             f' This might cause the app to error or misbehave.',
             file=sys.stderr)
 
-    # Tell Python to not handle SIGINT itself (it normally generates
-    # KeyboardInterrupts which make a mess; we want to intercept them
-    # for simple clean exit). We capture interrupts per-platform in
-    # the C++ layer.
-    # Note: I tried creating a handler in Python but it seemed to often have
-    # a delay of up to a second before getting called. (not a huge deal
-    # but I'm picky).
-    signal.signal(signal.SIGINT, signal.SIG_DFL)  # Do default handling.
+    # In bootstrap_monolithic.py we told Python not to handle SIGINT itself
+    # (because that must be done in the main thread). Now we finish the
+    # job by adding our own handler to replace it.
 
-    # ..though it turns out we need to set up our C signal handling AFTER
+    # Note: I've found we need to set up our C signal handling AFTER
     # we've told Python to disable its own; otherwise (on Mac at least) it
     # wipes out our existing C handler.
     _ba.setup_sigint()
@@ -91,101 +93,83 @@ def bootstrap() -> None:
         os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
             certifi.where())
 
-    # FIXME: I think we should init Python in the main thread, which should
-    #  also avoid these issues. (and also might help us play better with
-    #  Python debuggers?)
+    # On Windows I'm seeing the following error creating asyncio loops in
+    # background threads with the default proactor setup:
+    # ValueError: set_wakeup_fd only works in main thread of the main
+    #   interpreter
+    # So let's explicitly request selector loops.
+    # Interestingly this error only started showing up once I moved
+    # Python init to the main thread; previously the various asyncio
+    # bg thread loops were working fine (maybe something caused them
+    # to default to selector in that case?..
+    if sys.platform == 'win32':
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    # Gloriously hacky workaround here:
-    # Our 'main' Python thread is the game thread (not the app's main
-    # thread) which means it has a small stack compared to the main
-    # thread (at least on apple). Sadly it turns out this causes the
-    # debug build of Python to blow its stack immediately when doing
-    # some big imports.
-    # Normally we'd just give the game thread the same stack size as
-    # the main thread and that'd be the end of it. However
-    # we're using std::threads which it turns out have no way to set
-    # the stack size (as of fall '19). Grumble.
-    #
-    # However python threads *can* take custom stack sizes.
-    # (and it appears they might use the main thread's by default?..)
-    # ...so as a workaround in the debug version, we can run problematic
-    # heavy imports here in another thread and all is well.
-    # If we ever see stack overflows in our release build we'll have
-    # to take more drastic measures like switching from std::threads
-    # to pthreads.
-
-    if debug_build:
-
-        # noinspection PyUnresolvedReferences
-        def _thread_func() -> None:
-            # pylint: disable=unused-import
-            import json
-            import urllib.request
-
-        testthread = threading.Thread(target=_thread_func)
-        testthread.start()
-        testthread.join()
-        del testthread
-
-    # Clear out the standard quit/exit messages since they don't work for us.
     # pylint: disable=c-extension-no-member
     if not TYPE_CHECKING:
         import __main__
+
+        # Clear out the standard quit/exit messages since they don't
+        # work for us.
         del __main__.__builtins__.quit
         del __main__.__builtins__.exit
+
+        # Also replace standard interactive help with our simplified
+        # one which is more friendly to cloud/in-game console situations.
+        __main__.__builtins__.help = _CustomHelper()
 
     # Now spin up our App instance and store it on both _ba and ba.
     from ba._app import App
     import ba
     _ba.app = ba.app = App()
+    _ba.app.log_handler = log_handler
 
 
-class _Redirect:
+class _CustomHelper:
+    """Replacement 'help' that behaves better for our setup."""
 
-    def __init__(self, original: TextIO, call: Callable[[str], None]) -> None:
-        self._lock = threading.Lock()
-        self._linebits: list[str] = []
-        self._original = original
-        self._call = call
-        self._pending_ship = False
+    def __repr__(self) -> str:
+        return 'Type help(object) for help about object.'
 
-    def write(self, sval: Any) -> None:
-        """Override standard write call."""
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        # We get an ugly error importing pydoc on our embedded
+        # platforms due to _sysconfigdata_xxx.py not being present
+        # (but then things mostly work). Let's get the ugly error out
+        # of the way explicitly.
+        import sysconfig
+        try:
+            # This errors once but seems to run cleanly after, so let's
+            # get the error out of the way.
+            sysconfig.get_path('stdlib')
+        except ModuleNotFoundError:
+            pass
 
-        self._call(sval)
+        import pydoc
+        # Disable pager and interactive help since neither works well
+        # with our funky multi-threaded setup or in-game/cloud consoles.
+        # Let's just do simple text dumps.
+        pydoc.pager = pydoc.plainpager
+        if not args and not kwds:
+            print('Interactive help is not available in this environment.\n'
+                  'Type help(object) for help about object.')
+            return None
+        return pydoc.help(*args, **kwds)
 
-        # Now do logging:
-        # Add it to our accumulated line.
-        # If the message ends in a newline, we can ship it
-        # immediately as a log entry. Otherwise, schedule a ship
-        # next cycle (if it hasn't yet at that point) so that we
-        # can accumulate subsequent prints.
-        # (so stuff like print('foo', 123, 'bar') will ship as one entry)
-        with self._lock:
-            self._linebits.append(sval)
-        if sval.endswith('\n'):
-            self._shiplog()
-        else:
-            _ba.pushcall(self._shiplog,
-                         from_other_thread=True,
-                         suppress_other_thread_warning=True)
 
-    def _shiplog(self) -> None:
-        with self._lock:
-            line = ''.join(self._linebits)
-            if not line:
-                return
-            self._linebits = []
+def _on_log(entry: LogEntry) -> None:
 
-        # Log messages aren't expected to have trailing newlines.
-        if line.endswith('\n'):
-            line = line[:-1]
-        _ba.log(line, to_stdout=False)
+    # Just forward this along to the engine to display in the in-game console,
+    # in the Android log, etc.
+    _ba.display_log(
+        name=entry.name,
+        level=entry.level.name,
+        message=entry.message,
+    )
 
-    def flush(self) -> None:
-        """Flush the file."""
-        self._original.flush()
-
-    def isatty(self) -> bool:
-        """Are we a terminal?"""
-        return self._original.isatty()
+    # We also want to feed some logs to the old V1-cloud-log system.
+    # Let's go with anything warning or higher as well as the stdout/stderr
+    # log messages that ba.app.log_handler creates for us.
+    if entry.level.value >= LogLevel.WARNING.value or entry.name in ('stdout',
+                                                                     'stderr'):
+        _ba.v1_cloud_log(entry.message)

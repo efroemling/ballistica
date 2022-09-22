@@ -4,11 +4,11 @@
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_flavor.h"
-#include "ballistica/game/account.h"
-#include "ballistica/game/connection/connection_set.h"
-#include "ballistica/game/game.h"
 #include "ballistica/input/input.h"
 #include "ballistica/internal/app_internal.h"
+#include "ballistica/logic/connection/connection_set.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/v1_account.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
 #include "ballistica/ui/root_ui.h"
@@ -130,12 +130,12 @@ auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &text_res_scale_obj, &enabled_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs)",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<ButtonWidget> b;
@@ -381,12 +381,12 @@ auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<CheckBoxWidget> widget;
@@ -525,12 +525,12 @@ auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<ImageWidget> b;
@@ -681,15 +681,15 @@ auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &margin_obj, &claims_left_right_obj, &claims_tab_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context "
         "docs).",
         PyExcType::kContext);
   }
-  // if (!g_game->IsInUIContext()) { BA_LOG_PYTHON_TRACE("ERROR: This should be
+  // if (!g_logic->IsInUIContext()) { BA_LOG_PYTHON_TRACE("ERROR: This should be
   // called within the UI context (see ba.Context docs)");}
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<ColumnWidget> widget;
@@ -859,11 +859,11 @@ auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  if (!g_game->IsInUIContext())
+  if (!g_logic->IsInUIContext())
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<ContainerWidget> widget;
@@ -1080,13 +1080,13 @@ auto PyRowWidget(PyObject* /* self */, PyObject* args, PyObject* keywds)
           &claims_tab_obj, &selection_loops_to_parent_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext())
+  if (!g_logic->IsInUIContext())
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
 
   // Called within the UI context (see ba.Context docs)");}
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // Grab the edited widget or create a new one.
   Object::Ref<RowWidget> widget;
@@ -1202,12 +1202,12 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // Grab the edited widget or create a new one. ---------------------
   Object::Ref<ScrollWidget> widget;
@@ -1348,12 +1348,12 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<HScrollWidget> widget;
@@ -1528,13 +1528,13 @@ auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &extra_touch_border_scale_obj, &res_scale_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext())
+  if (!g_logic->IsInUIContext())
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
-  // if (!g_game->IsInUIContext()) { BA_LOG_PYTHON_TRACE("ERROR: This should be
+  // if (!g_logic->IsInUIContext()) { BA_LOG_PYTHON_TRACE("ERROR: This should be
   // called within the UI context (see ba.Context docs)");}
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   // grab the edited widget or create a new one ---------------------
   Object::Ref<TextWidget> widget;
@@ -1578,7 +1578,7 @@ auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     // FIXME - compiling Lstr values to flat strings before passing them in;
     // we should probably extend TextWidget to handle this internally, but
     // punting on that for now..
-    widget->set_description(g_game->CompileResourceString(
+    widget->set_description(g_logic->CompileResourceString(
         Python::GetPyString(description_obj), "textwidget set desc"));
   }
   if (autoselect_obj != Py_None) {
@@ -1753,12 +1753,12 @@ auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
           &show_buffer_right_obj, &autoselect_obj))
     return nullptr;
 
-  if (!g_game->IsInUIContext()) {
+  if (!g_logic->IsInUIContext()) {
     throw Exception(
         "This must be called within the UI context (see ba.Context docs).",
         PyExcType::kContext);
   }
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
 
   Widget* widget = nullptr;
   if (edit_obj != Py_None) {
@@ -2032,7 +2032,8 @@ auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
     clients = Python::GetPyInts(clients_obj);
     clients_p = &clients;
   }
-  g_game->connections()->SendChatMessage(message, clients_p, sender_override_p);
+  g_logic->connections()->SendChatMessage(message, clients_p,
+                                          sender_override_p);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2048,7 +2049,7 @@ auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   PyObject* py_list = PyList_New(0);
-  for (auto&& i : g_game->chat_messages()) {
+  for (auto&& i : g_logic->chat_messages()) {
     PyList_Append(py_list, PyUnicode_FromString(i.c_str()));
   }
   return py_list;
@@ -2121,8 +2122,8 @@ auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
   // them or whatnot) also disallow ads if remote apps are connected; at least
   // on android ads pause our activity which disconnects the remote app.. (could
   // potentially still allow on other platforms; should verify..)
-  if (g_game->connections()->connection_to_host()
-      || g_game->connections()->has_connection_to_clients()
+  if (g_logic->connections()->connection_to_host()
+      || g_logic->connections()->has_connection_to_clients()
       || g_input->HaveRemoteAppController()) {
     Py_RETURN_FALSE;
   }
@@ -2212,7 +2213,7 @@ auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
       throw Exception();
     }
     const char* c = PyUnicode_AsUTF8(str_obj);
-    g_game->PushConsolePrintCall(c);
+    g_logic->PushConsolePrintCall(c);
     Py_DECREF(str_obj);
   }
 #endif  // !BA_HEADLESS_BUILD
@@ -2224,8 +2225,8 @@ auto PyIsPartyIconVisible(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   bool party_button_active =
-      (g_game->connections()->GetConnectedClientCount() > 0
-       || g_game->connections()->connection_to_host()
+      (g_logic->connections()->GetConnectedClientCount() > 0
+       || g_logic->connections()->connection_to_host()
        || g_ui->root_ui()->always_draw_party_icon());
   if (party_button_active) {
     Py_RETURN_TRUE;

@@ -2,19 +2,11 @@
 
 #include "ballistica/core/context.h"
 
-#include "ballistica/game/host_activity.h"
 #include "ballistica/generic/runnable.h"
+#include "ballistica/logic/host_activity.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {
-
-// Dynamically allocate this; don't want it torn down on quit.
-Context* g_context = nullptr;
-
-void Context::Init() {
-  assert(!g_context);
-  g_context = new Context(nullptr);
-}
 
 ContextTarget::ContextTarget() = default;
 ContextTarget::~ContextTarget() = default;
@@ -108,7 +100,7 @@ auto ContextTarget::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
 void ContextTarget::DeleteTimer(TimeType timetype, int timer_id) {
   // We throw on NewTimer; lets just ignore anything that comes
   // through here to avoid messing up destructors.
-  Log("ContextTarget::DeleteTimer() called; unexpected.");
+  Log(LogLevel::kError, "ContextTarget::DeleteTimer() called; unexpected.");
 }
 
 auto ContextTarget::GetTime(TimeType timetype) -> millisecs_t {

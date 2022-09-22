@@ -2,12 +2,12 @@
 
 #include "ballistica/ui/widget/image_widget.h"
 
-#include "ballistica/game/game.h"
 #include "ballistica/graphics/component/simple_component.h"
+#include "ballistica/logic/logic.h"
 
 namespace ballistica {
 
-ImageWidget::ImageWidget() : birth_time_{g_game->master_time()} {}
+ImageWidget::ImageWidget() : birth_time_{g_logic->master_time()} {}
 
 ImageWidget::~ImageWidget() = default;
 
@@ -70,13 +70,13 @@ void ImageWidget::Draw(RenderPass* pass, bool draw_transparent) {
             draw_radial_transparent = true;
           } else {
             model_transparent_used =
-                g_media->GetModel(SystemModelID::kImage1x1);
+                g_assets->GetModel(SystemModelID::kImage1x1);
           }
         } else {
           if (radial_amount_ < 1.0f) {
             draw_radial_opaque = true;
           } else {
-            model_opaque_used = g_media->GetModel(SystemModelID::kImage1x1);
+            model_opaque_used = g_assets->GetModel(SystemModelID::kImage1x1);
           }
         }
       }

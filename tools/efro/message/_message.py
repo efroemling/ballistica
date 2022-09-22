@@ -24,19 +24,24 @@ class Message:
     """Base class for messages."""
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
-        """Return all message types this Message can result in when sent.
+    def get_response_types(cls) -> list[type[Response] | None]:
+        """Return all Response types this Message can return when sent.
 
-        The default implementation specifies EmptyResponse, so messages with
-        no particular response needs can leave this untouched.
-        Note that ErrorMessage is handled as a special case and does not
-        need to be specified here.
+        The default implementation specifies a None return type.
         """
-        return [EmptyResponse]
+        return [None]
 
 
 class Response:
     """Base class for responses to messages."""
+
+
+class SysResponse:
+    """Base class for system-responses to messages.
+
+    These are only sent/handled by the messaging system itself;
+    users of the api never see them.
+    """
 
 
 # Some standard response types:
@@ -44,11 +49,10 @@ class Response:
 
 @ioprepped
 @dataclass
-class ErrorResponse(Response):
-    """Response saying some error has occurred for the send.
+class ErrorSysResponse(SysResponse):
+    """SysResponse saying some error has occurred for the send.
 
-    This type is unique in that it is not returned to the user; it
-    instead results in a local exception being raised.
+    This generally results in an Exception being raised for the caller.
     """
 
     class ErrorType(Enum):
@@ -64,12 +68,12 @@ class ErrorResponse(Response):
 
 @ioprepped
 @dataclass
-class EmptyResponse(Response):
+class EmptySysResponse(SysResponse):
     """The response equivalent of None."""
 
 
 # TODO: could allow handlers to deal in raw values for these
-# types similar to how we allow None in place of EmptyResponse.
+# types similar to how we allow None in place of EmptySysResponse.
 # Though not sure if they are widely used enough to warrant the
 # extra code complexity.
 @ioprepped

@@ -27,7 +27,7 @@ class CollisionCache {
 
   // Call this periodically (once per cycle or so) to slowly fill in
   // the cache so there's less to do during spurts of activity;
-  void Precalc();
+  auto Precalc() -> void;
 
  private:
   auto TestCell(size_t cell_index, int x, int z) -> void;

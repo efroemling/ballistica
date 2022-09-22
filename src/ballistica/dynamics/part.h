@@ -71,7 +71,7 @@ class Part : public Object {
   // node/part combo.
   auto IsCollidingWith(int64_t node, int part) const -> bool;
 
-  // Used by g_game to inform us we're now colliding with another part
+  // Used by g_logic to inform us we're now colliding with another part
   // if colliding is false, we've stopped colliding with this part.
   void SetCollidingWith(int64_t node_id, int part, bool colliding,
                         bool physical);

@@ -5,9 +5,9 @@
 #include <list>
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game_stream.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
@@ -87,7 +87,7 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
     if (!InLogicThread()) {
       throw Exception(
           "ERROR: " + std::string(type_obj.tp_name)
-          + " objects must only be created in the game thread (current is ("
+          + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
     // Clion incorrectly things s_create_empty will always be false.
@@ -110,11 +110,11 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassNode::tp_dealloc(PythonClassNode* self) {
   BA_PYTHON_TRY;
-  // These have to be deleted in the game thread; send the ptr along if need
+  // These have to be deleted in the logic thread; send the ptr along if need
   // be; otherwise do it immediately.
   if (!InLogicThread()) {
     Object::WeakRef<Node>* n = self->node_;
-    g_game->thread()->PushCall([n] { delete n; });
+    g_logic->thread()->PushCall([n] { delete n; });
   } else {
     delete self->node_;
   }
@@ -277,7 +277,7 @@ auto PythonClassNode::HandleMessage(PythonClassNode* self, PyObject* args)
     if (user_message_obj) {
       node->DispatchUserMessage(user_message_obj, "Node User-Message dispatch");
     } else {
-      if (GameStream* output_stream = node->scene()->GetGameStream()) {
+      if (SceneStream* output_stream = node->scene()->GetSceneStream()) {
         output_stream->NodeMessage(node, b.data(), b.size());
       }
       node->DispatchNodeMessage(b.data());
@@ -335,7 +335,7 @@ auto PythonClassNode::ConnectAttr(PythonClassNode* self, PyObject* args)
       dst_node->type()->GetAttribute(std::string(dst_attr_name));
 
   // Push to output_stream first to catch scene mismatch errors.
-  if (GameStream* output_stream = node->scene()->GetGameStream()) {
+  if (SceneStream* output_stream = node->scene()->GetSceneStream()) {
     output_stream->ConnectNodeAttribute(node, src_attr, dst_node, dst_attr);
   }
 

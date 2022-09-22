@@ -4,17 +4,17 @@
 
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_context.h"
-#include "ballistica/game/game_stream.h"
-#include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
+#include "ballistica/logic/session/client_session.h"
+#include "ballistica/scene/scene_stream.h"
 
 namespace ballistica {
 
 auto SkidSoundMaterialAction::GetFlattenedSize() -> size_t { return 4 + 2 + 2; }
 
 void SkidSoundMaterialAction::Flatten(char** buffer,
-                                      GameStream* output_stream) {
+                                      SceneStream* output_stream) {
   Utils::EmbedInt32NBO(buffer, static_cast_check_fit<int32_t>(
                                    output_stream->GetSoundID(sound.get())));
   Utils::EmbedFloat16NBO(buffer, target_impulse);

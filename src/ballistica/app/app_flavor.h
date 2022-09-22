@@ -93,7 +93,7 @@ class AppFlavor {
     return server_wrapper_managed_;
   }
 
-  virtual auto OnBootstrapComplete() -> void;
+  virtual auto OnAppStart() -> void;
 
   // Deferred calls that can be made from other threads.
 
@@ -108,9 +108,6 @@ class AppFlavor {
                            const std::string& game_version, int64_t score)
       -> void;
   auto PushAchievementReportCall(const std::string& achievement) -> void;
-  auto PushGetScoresToBeatCall(const std::string& level,
-                               const std::string& config, void* py_callback)
-      -> void;
   auto PushOpenURLCall(const std::string& url) -> void;
   auto PushStringEditCall(const std::string& name, const std::string& value,
                           int max_chars) -> void;

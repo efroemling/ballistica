@@ -13,7 +13,6 @@ namespace ballistica {
 #pragma ide diagnostic ignored "RedundantCast"
 
 PythonRef::PythonRef(PyObject* obj_in, ReferenceBehavior b) {
-  assert(g_python);
   assert(Python::HaveGIL());
   switch (b) {
     case kSteal:
@@ -54,7 +53,6 @@ void PythonRef::Acquire(PyObject* obj_in) {
 
 void PythonRef::Steal(PyObject* obj_in) {
   BA_PRECONDITION(obj_in);
-  assert(g_python);
   assert(Python::HaveGIL());
 
   // Assign before decrementing the old
@@ -67,7 +65,6 @@ void PythonRef::Steal(PyObject* obj_in) {
 }
 
 void PythonRef::Release() {
-  assert(g_python);
   assert(Python::HaveGIL());
 
   // Py_CLEAR uses a temp variable and assigns o to nullptr first
@@ -113,7 +110,6 @@ auto PythonRef::ValueAsInt() const -> int64_t {
 }
 
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {
-  assert(g_python);
   assert(Python::HaveGIL());
   BA_PRECONDITION(obj_);
   PyObject* val = PyObject_GetAttrString(get(), name);
@@ -149,7 +145,6 @@ auto PythonRef::UnicodeCheck() const -> bool {
 auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
     -> PythonRef {
   assert(obj_);
-  assert(g_python);
   assert(Python::HaveGIL());
   assert(CallableCheck());
   assert(args);
@@ -160,8 +155,8 @@ auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
       BA_PYTHON_ERROR_SAVE;
-      Log("ERROR: exception in Python call:");
-      Python::LogContextAuto();
+      PySys_WriteStderr("Exception in Python call:\n");
+      Python::PrintContextAuto();
       BA_PYTHON_ERROR_RESTORE;
 
       // We pass zero here to avoid grabbing references to this exception

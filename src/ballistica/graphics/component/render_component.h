@@ -15,7 +15,8 @@ class RenderComponent {
       : state_(State::kConfiguring), pass_(pass), cmd_buffer_(nullptr) {}
   ~RenderComponent() {
     if (state_ != State::kSubmitted) {
-      Log("Error: RenderComponent dying without submit() having been called.");
+      Log(LogLevel::kError,
+          "RenderComponent dying without submit() having been called.");
     }
   }
   void DrawModel(ModelData* model, uint32_t flags = 0) {

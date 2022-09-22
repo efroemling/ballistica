@@ -19,11 +19,9 @@ namespace ballistica {
 const int kTextMaxUnicodeVal = 999999;
 const float kTextRowHeight = 32.0f;
 
-// Encapsulates text-display functionality used by the game thread.
+// Encapsulates text-display functionality used by the logic thread.
 class TextGraphics {
  public:
-  static void Init();
-
   TextGraphics();
 
   enum class FontPage {

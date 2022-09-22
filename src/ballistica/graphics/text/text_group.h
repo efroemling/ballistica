@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/assets/assets.h"
+#include "ballistica/assets/data/texture_data.h"
 #include "ballistica/core/object.h"
 #include "ballistica/graphics/mesh/text_mesh.h"
-#include "ballistica/media/data/texture_data.h"
-#include "ballistica/media/media.h"
 
 namespace ballistica {
 
@@ -50,10 +50,10 @@ class TextGroup : public Object {
   }
   auto GetElementMaskUV2Texture(int index) const -> TextureData* {
     assert(index < static_cast<int>(entries_.size()));
-    return g_media->GetTexture(entries_[index]->type
-                                       == TextMeshEntryType::kOSRendered
-                                   ? SystemTextureID::kSoftRect2
-                                   : SystemTextureID::kSoftRect);
+    return g_assets->GetTexture(entries_[index]->type
+                                        == TextMeshEntryType::kOSRendered
+                                    ? SystemTextureID::kSoftRect2
+                                    : SystemTextureID::kSoftRect);
   }
   void SetText(const std::string& text,
                TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,

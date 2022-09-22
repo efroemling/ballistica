@@ -5,12 +5,12 @@
 
 #include <vector>
 
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/ballistica.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/mesh/mesh.h"
 #include "ballistica/math/matrix44f.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/texture.h"
 
 namespace ballistica {
 
@@ -258,14 +258,14 @@ class RenderCommandBuffer {
   void PutModel(ModelData* model) {
     assert(frame_def_);
     assert(!finalized_);
-    frame_def_->AddComponent(Object::Ref<MediaComponentData>(model));
+    frame_def_->AddComponent(Object::Ref<AssetComponentData>(model));
     models_.push_back(model);
   }
 
   void PutTexture(TextureData* texture) {
     assert(frame_def_);
     assert(!finalized_);
-    frame_def_->AddComponent(Object::Ref<MediaComponentData>(texture));
+    frame_def_->AddComponent(Object::Ref<AssetComponentData>(texture));
     textures_.push_back(texture);
   }
 
@@ -277,7 +277,7 @@ class RenderCommandBuffer {
   void PutCubeMapTexture(TextureData* texture) {
     assert(frame_def_);
     assert(!finalized_);
-    frame_def_->AddComponent(Object::Ref<MediaComponentData>(texture));
+    frame_def_->AddComponent(Object::Ref<AssetComponentData>(texture));
     textures_.push_back(texture);
   }
 

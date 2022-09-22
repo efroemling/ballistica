@@ -335,6 +335,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     scoreconfig = ba.ScoreConfig(scoretype=ba.ScoreType.MILLISECONDS,
                                  version='B')
 
+    default_music = ba.MusicType.FOOTBALL
+
     # FIXME: Need to update co-op games to use getscoreconfig.
     def get_score_type(self) -> str:
         return 'time'

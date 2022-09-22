@@ -5,6 +5,7 @@
 
 #include <list>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -42,7 +43,7 @@ class Python {
 
   /// Use this to protect Python code that may be run in cases where we don't
   /// hold the Global Interpreter Lock (GIL) (basically anything outside of the
-  /// game thread).
+  /// logic thread).
   class ScopedInterpreterLock {
    public:
     ScopedInterpreterLock();
@@ -75,14 +76,23 @@ class Python {
   auto ValidatedPackageAssetName(PyObject* package, const char* name)
       -> std::string;
 
-  static auto LogContextForCallableLabel(const char* label) -> void;
-  static auto LogContextEmpty() -> void;
-  static auto LogContextAuto() -> void;
-  static auto LogContextNonLogicThread() -> void;
-  Python();
-  ~Python();
+  /// Calls Python logging function (logging.error, logging.warning, etc.)
+  /// Can be called from any thread at any time. If called before Python
+  /// logging is available, logs locally using Logging::DisplayLog()
+  /// (with an added warning).
+  auto LoggingCall(LogLevel loglevel, const std::string& msg) -> void;
 
-  auto Reset(bool init = true) -> void;
+  // Print various context debugging bits to Python's sys.stderr.
+  static auto PrintContextForCallableLabel(const char* label) -> void;
+  static auto PrintContextEmpty() -> void;
+  static auto PrintContextAuto() -> void;
+  static auto PrintContextNonLogicThread() -> void;
+  Python();
+  static auto Create() -> Python*;
+
+  auto InitCorePython() -> void;
+  auto InitBallisticaPython() -> void;
+  auto Reset() -> void;
 
   /// Add classes to the newly created ba module.
   static auto InitModuleClasses(PyObject* module) -> void;
@@ -111,7 +121,7 @@ class Python {
   /// results.
   static auto generic_dir(PyObject* self) -> PyObject*;
 
-  /// For use by g_game in passing events along to the python layer (for
+  /// For use by g_logic in passing events along to the python layer (for
   /// captured input, etc).
   auto HandleJoystickEvent(const SDL_Event& event,
                            InputDevice* input_device = nullptr) -> bool;
@@ -126,10 +136,6 @@ class Python {
 
   /// Pass a chat message along to the python UI layer for handling..
   auto HandleLocalChatMessage(const std::string& message) -> void;
-
-  auto DispatchScoresToBeatResponse(
-      bool success, const std::list<ScoreToBeat>& scores_to_beat,
-      void* PyCallback) -> void;
 
   /// Pop up an in-game window to show a url (NOT in a browser).
   auto ShowURL(const std::string& url) -> void;
@@ -297,7 +303,7 @@ class Python {
     kVROrientationResetCBMessageCall,
     kVROrientationResetMessageCall,
     kHandleAppResumeCall,
-    kHandleLogCall,
+    kHandleV1CloudLogCall,
     kLaunchMainMenuSessionCall,
     kLanguageTestToggleCall,
     kAwardInControlAchievementCall,
@@ -354,6 +360,11 @@ class Python {
     kUUIDStrCall,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
+    kLoggingDebugCall,
+    kLoggingInfoCall,
+    kLoggingWarningCall,
+    kLoggingErrorCall,
+    kLoggingCriticalCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -381,7 +392,7 @@ class Python {
   /// Create a Python single-member tuple.
   auto SingleMemberTuple(const PythonRef& member) -> PythonRef;
 
-  /// Push a call to a preset obj to the game thread
+  /// Push a call to a preset obj to the logic thread
   /// (will be run in the UI context).
   auto PushObjCall(ObjID obj) -> void;
 
@@ -422,13 +433,15 @@ class Python {
   std::set<std::string> do_once_locations_;
   PythonRef objs_[static_cast<int>(ObjID::kLast)];
   bool inited_{};
-  std::list<Object::Ref<PythonContextCall> > clean_frame_commands_;
+  std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
+  std::mutex early_log_lock_;
+  std::list<std::pair<LogLevel, std::string>> early_logs_;
   PythonRef game_pad_call_;
   PythonRef keyboard_call_;
   PyObject* empty_dict_object_{};
   PyObject* main_dict_{};
   PyObject* env_{};
-  PyThreadState* thread_state_{};
+  PyThreadState* logic_thread_state_{};
 };
 
 }  // namespace ballistica

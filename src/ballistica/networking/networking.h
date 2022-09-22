@@ -112,7 +112,7 @@ namespace ballistica {
 #define HUFFMAN_TRAINING_MODE 0
 #endif
 
-// Bits used by the game thread for network communication.
+// Bits used by the logic thread for network communication.
 class Networking {
  public:
   // Send a message to an address.  This may block for a brief moment, so it can
@@ -120,7 +120,6 @@ class Networking {
   // will do this there.
   static void SendTo(const std::vector<uint8_t>& buffer, const SockAddr& addr);
   Networking();
-  ~Networking();
 
   // Run a cycle of host scanning (basically sending out a broadcast packet to
   // see who's out there).
@@ -147,7 +146,7 @@ class Networking {
   std::mutex scan_results_mutex_;
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
-  bool running_{};
+  bool running_{true};
 };
 
 }  // namespace ballistica

@@ -3,9 +3,9 @@
 #include "ballistica/python/class/python_class_context.h"
 
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
+#include "ballistica/logic/host_activity.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
 
@@ -136,7 +136,7 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
   if (!InLogicThread()) {
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
-        + " objects must only be created in the game thread (current is ("
+        + " objects must only be created in the logic thread (current is ("
         + GetCurrentThreadName() + ").");
   }
 
@@ -145,11 +145,12 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
   if (Python::IsPyString(source_obj)) {
     std::string source = Python::GetPyString(source_obj);
     if (source == "ui") {
-      cs = Context(g_game->GetUIContextTarget());
+      cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "UI") {
-      BA_LOG_ONCE("'UI' context-target option is deprecated; please use 'ui'");
+      BA_LOG_ONCE(LogLevel::kError,
+                  "'UI' context-target option is deprecated; please use 'ui'");
       Python::PrintStackTrace();
-      cs = Context(g_game->GetUIContextTarget());
+      cs = Context(g_logic->GetUIContextTarget());
     } else if (source == "current") {
       cs = Context::current();
     } else if (source == "empty") {
@@ -183,12 +184,12 @@ auto PythonClassContext::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassContext::tp_dealloc(PythonClassContext* self) {
   BA_PYTHON_TRY;
-  // Contexts have to be deleted in the game thread;
+  // Contexts have to be deleted in the logic thread;
   // ship them to it for deletion if need be; otherwise do it immediately.
   if (!InLogicThread()) {
     Context* c = self->context_;
     Context* c2 = self->context_prev_;
-    g_game->thread()->PushCall([c, c2] {
+    g_logic->thread()->PushCall([c, c2] {
       delete c;
       delete c2;
     });

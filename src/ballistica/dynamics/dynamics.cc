@@ -2,6 +2,7 @@
 
 #include "ballistica/dynamics/dynamics.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/dynamics/collision.h"
@@ -9,7 +10,6 @@
 #include "ballistica/dynamics/material/material_action.h"
 #include "ballistica/dynamics/part.h"
 #include "ballistica/graphics/renderer.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/scene/scene.h"
 #include "ode/ode_collision_kernel.h"
 #include "ode/ode_collision_util.h"
@@ -141,7 +141,8 @@ Dynamics::Dynamics(Scene* scene_in)
 
 Dynamics::~Dynamics() {
   if (in_process_) {
-    Log("Error: Dynamics going down within Process() call;"
+    Log(LogLevel::kError,
+        "Dynamics going down within Process() call;"
         " should not happen.");
   }
   ShutdownODE();
@@ -157,7 +158,7 @@ void Dynamics::Draw(FrameDef* frame_def) {
     c.PushTransform();
     c.Translate(i.x(), i.y(), i.z());
     c.scaleUniform(0.05f);
-    c.DrawModel(g_media->GetModel(Media::BOX_MODEL));
+    c.DrawModel(g_assets->GetModel(Assets::BOX_MODEL));
     c.PopTransform();
   }
   c.Submit();

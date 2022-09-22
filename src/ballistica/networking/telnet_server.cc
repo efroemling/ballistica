@@ -5,7 +5,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/core/context.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/game/game.h"
+#include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/platform.h"
@@ -69,7 +69,8 @@ auto TelnetServer::RunThread() -> int {
 
     sd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sd_ < 0) {
-      Log("Error: Unable to open host socket; errno " + std::to_string(errno));
+      Log(LogLevel::kError,
+          "Unable to open host socket; errno " + std::to_string(errno));
       return 1;
     }
 
@@ -78,7 +79,7 @@ auto TelnetServer::RunThread() -> int {
     int status =
         setsockopt(sd_, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on));
     if (-1 == status) {
-      Log("Error setting SO_REUSEADDR on telnet server");
+      Log(LogLevel::kError, "Error setting SO_REUSEADDR on telnet server");
     }
 
     // Bind to local server port.
@@ -106,16 +107,16 @@ auto TelnetServer::RunThread() -> int {
         }
 
         // If we dont have access and havnt asked the user for it yet, ask them.
-        if (!user_has_granted_access_ && g_game
+        if (!user_has_granted_access_ && g_logic
             && !have_asked_user_for_access_) {
-          g_game->PushAskUserForTelnetAccessCall();
+          g_logic->PushAskUserForTelnetAccessCall();
           have_asked_user_for_access_ = true;
         }
 
         // Require password for each connection if we have one
         reading_password_ = require_password_;
 
-        if (g_game) {
+        if (g_logic) {
           if (reading_password_) {
             PushPrint(password_prompt);
           } else {
@@ -144,7 +145,7 @@ auto TelnetServer::RunThread() -> int {
               if (result > 1 && (buffer[result - 2] == '\r'))
                 buffer[result - 2] = 0;
             }
-            if (g_game) {
+            if (g_logic) {
               if (user_has_granted_access_) {
                 if (reading_password_) {
                   if (GetRealTime() - last_try_time_ < 2000) {
@@ -163,7 +164,7 @@ auto TelnetServer::RunThread() -> int {
                   PushTelnetScriptCommand(buffer);
                 }
               } else {
-                PushPrint(g_game->GetResourceString("telnetAccessDeniedText"));
+                PushPrint(g_logic->GetResourceString("telnetAccessDeniedText"));
               }
             }
           }
@@ -185,13 +186,13 @@ auto TelnetServer::RunThread() -> int {
 #pragma clang diagnostic pop
 
 void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
-  assert(g_game);
-  if (g_game == nullptr) {
+  assert(g_logic);
+  if (g_logic == nullptr) {
     return;
   }
-  g_game->thread()->PushCall([this, command] {
+  g_logic->thread()->PushCall([this, command] {
     // These are always run in whichever context is 'visible'.
-    ScopedSetContext cp(g_game->GetForegroundContext());
+    ScopedSetContext cp(g_logic->GetForegroundContext());
     if (!g_app->user_ran_commands) {
       g_app->user_ran_commands = true;
     }
@@ -216,12 +217,12 @@ void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
 }
 
 void TelnetServer::PushPrint(const std::string& s) {
-  assert(g_game);
-  g_game->thread()->PushCall([this, s] { Print(s); });
+  assert(g_logic);
+  g_logic->thread()->PushCall([this, s] { Print(s); });
 }
 
 void TelnetServer::Print(const std::string& s) {
-  // Currently we make the assumption that *only* the game thread writes to our
+  // Currently we make the assumption that *only* the logic thread writes to our
   // socket.
   assert(InLogicThread());
   if (client_sd_ != -1) {

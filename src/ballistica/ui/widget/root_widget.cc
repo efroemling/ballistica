@@ -2,10 +2,10 @@
 
 #include "ballistica/ui/widget/root_widget.h"
 
-#include "ballistica/game/game.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/input/input.h"
+#include "ballistica/logic/logic.h"
+#include "ballistica/logic/session/host_session.h"
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/button_widget.h"
@@ -346,7 +346,7 @@ void RootWidget::Setup() {
       td.x = 5.0f;
       td.y = 3.0f;
       td.width = bd.width * 0.9f;
-      td.text = g_game->CharStr(SpecialChar::kBack);
+      td.text = g_logic->CharStr(SpecialChar::kBack);
       td.color_a = 1.0f;
       td.scale = 2.0f;
       td.flatness = 0.0f;
@@ -812,7 +812,7 @@ void RootWidget::Draw(RenderPass* pass, bool transparent) {
 }
 
 auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   buttons_.emplace_back();
   Button& b(buttons_.back());
   b.x = b.x_smoothed = b.x_target = def.x;
@@ -862,7 +862,7 @@ auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
 }
 
 auto RootWidget::AddText(const TextDef& def) -> RootWidget::Text* {
-  ScopedSetContext cp(g_game->GetUIContextTarget());
+  ScopedSetContext cp(g_logic->GetUIContextTarget());
   texts_.emplace_back();
   Text& t(texts_.back());
   t.button = def.button;
@@ -896,7 +896,7 @@ void RootWidget::UpdateForFocusedWindow() {
 void RootWidget::UpdateForFocusedWindow(Widget* widget) {
   // Take note if the current session is the main menu; we do a few things
   // differently there.
-  HostSession* s = g_game->GetForegroundContext().GetHostSession();
+  HostSession* s = g_logic->GetForegroundContext().GetHostSession();
   in_main_menu_ = (s ? s->is_main_menu() : false);
 
   if (widget == nullptr) {

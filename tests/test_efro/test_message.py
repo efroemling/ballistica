@@ -18,10 +18,12 @@ from efro.dataclassio import ioprepped
 from efro.message import (Message, Response, MessageProtocol, MessageSender,
                           BoundMessageSender, MessageReceiver,
                           BoundMessageReceiver, UnregisteredMessageIDError,
-                          EmptyResponse)
+                          EmptySysResponse)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
+
+    from efro.message import SysResponse
 
 
 @ioprepped
@@ -31,7 +33,7 @@ class _TMsg1(Message):
     ival: int
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1]
 
 
@@ -42,7 +44,7 @@ class _TMsg2(Message):
     sval: str
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1, _TResp2]
 
 
@@ -424,8 +426,8 @@ TEST_PROTOCOL = MessageProtocol(
         0: _TResp1,
         1: _TResp2,
     },
-    receiver_returns_stack_traces=True,
-    receiver_logs_exceptions=False,
+    forward_clean_errors=True,
+    remote_errors_include_stack_traces=True,
 )
 
 # Represents an 'evolved' TEST_PROTOCOL (one extra message type added).
@@ -441,8 +443,8 @@ TEST_PROTOCOL_B = MessageProtocol(
         0: _TResp1,
         1: _TResp2,
     },
-    receiver_returns_stack_traces=True,
-    receiver_logs_exceptions=False,
+    forward_clean_errors=True,
+    remote_errors_include_stack_traces=True,
 )
 
 TEST_PROTOCOL_SINGLE = MessageProtocol(
@@ -452,8 +454,7 @@ TEST_PROTOCOL_SINGLE = MessageProtocol(
     response_types={
         0: _TResp1,
     },
-    receiver_returns_stack_traces=True,
-    receiver_logs_exceptions=False,
+    remote_errors_include_stack_traces=True,
 )
 
 
@@ -463,12 +464,16 @@ def test_protocol_creation() -> None:
     # This should fail because _TMsg1 can return _TResp1 which
     # is not given an id here.
     with pytest.raises(ValueError):
-        _protocol = MessageProtocol(message_types={0: _TMsg1},
-                                    response_types={0: _TResp2})
+        _protocol = MessageProtocol(
+            message_types={0: _TMsg1},
+            response_types={0: _TResp2},
+        )
 
     # Now it should work.
-    _protocol = MessageProtocol(message_types={0: _TMsg1},
-                                response_types={0: _TResp1})
+    _protocol = MessageProtocol(
+        message_types={0: _TMsg1},
+        response_types={0: _TResp1},
+    )
 
 
 def test_sender_module_single_emb() -> None:
@@ -777,7 +782,7 @@ def test_full_pipeline() -> None:
                     # Emulate forwarding unregistered messages on to some
                     # other handler...
                     response_dict = self.msg.protocol.response_to_dict(
-                        EmptyResponse())
+                        EmptySysResponse())
                     return self.msg.protocol.encode_dict(response_dict)
                 raise
 
@@ -805,7 +810,7 @@ def test_full_pipeline() -> None:
 
         @msg.decode_filter_method
         def _decode_filter(self, message: Message, indata: dict,
-                           response: Response) -> None:
+                           response: Response | SysResponse) -> None:
             """Filter our incoming responses."""
             del message  # Unused.
             if self.test_sidecar:
@@ -849,7 +854,8 @@ def test_full_pipeline() -> None:
                 setattr(message, '_sidecar_data', indata['_sidecar_data'])
 
         @receiver.encode_filter_method
-        def _encode_filter(self, message: Message | None, response: Response,
+        def _encode_filter(self, message: Message | None,
+                           response: Response | SysResponse,
                            outdict: dict) -> None:
             """Filter our outgoing responses."""
             del message  # Unused.
@@ -909,7 +915,8 @@ def test_full_pipeline() -> None:
     assert response3 is None
     assert isinstance(response4, _TResp1)
 
-    # Remote CleanErrors should come across locally as the same.
+    # Remote CleanErrors should come across locally as the same
+    # (provided our protocol has enabled support for them).
     try:
         _response5 = obj.msg.send(_TMsg1(ival=1))
     except Exception as exc:

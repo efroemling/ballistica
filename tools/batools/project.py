@@ -202,7 +202,9 @@ class Updater:
         if auto_changes:
             if not self._fix:
                 for i, change in enumerate(auto_changes):
-                    print(f'{Clr.RED}#{i}: {change[0]}:{Clr.RST}')
+                    print(f'{Clr.RED}#{i}:'
+                          f' {change[0]}:{change[1].line_number+1}:'
+                          f'{Clr.RST}')
                     print(
                         f'{Clr.RED}  Expected "{change[1].expected}"{Clr.RST}')
                     with open(change[0], encoding='utf-8') as infile:
@@ -262,6 +264,9 @@ class Updater:
 
     def _add_line_correction(self, filename: str, line_number: int,
                              expected: str, can_auto_update: bool) -> None:
+        # No longer allowing negatives here since they don't show up nicely
+        # in correction list.
+        assert line_number >= 0
         self._line_corrections.setdefault(filename, []).append(
             LineChange(line_number=line_number,
                        expected=expected,
@@ -301,7 +306,7 @@ class Updater:
         if self._license_line_checks:
             self._check_c_license(fname, lines)
 
-        # Check for header guard at top
+        # Check for header guard lines at top
         line = '#ifndef ' + guard
         lnum = 2
         if lines[lnum] != line:
@@ -312,10 +317,20 @@ class Updater:
                                       line_number=lnum,
                                       expected=line,
                                       can_auto_update=allow_auto)
+        line = '#define ' + guard
+        lnum = 3
+        if lines[lnum] != line:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = lines[lnum].startswith('#define BALLISTICA_')
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=line,
+                                      can_auto_update=allow_auto)
 
         # Check for header guard at bottom
         line = '#endif  // ' + guard
-        lnum = -1
+        lnum = len(lines) - 1
         if lines[lnum] != line:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)

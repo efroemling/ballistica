@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/dynamics/part.h"
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/scene/node/node.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"

@@ -5,7 +5,7 @@
 
 // note: define overrides BEFORE common makefile
 
-#define BA_USE_STDIN_THREAD 1
+#define BA_ENABLE_STDIO_CONSOLE 1
 
 #define BA_SDL_BUILD 1
 #define BA_SDL2_BUILD 1

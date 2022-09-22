@@ -2,10 +2,10 @@
 
 #include "ballistica/dynamics/material/material_context.h"
 
+#include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_action.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {

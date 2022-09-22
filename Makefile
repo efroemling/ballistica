@@ -20,6 +20,10 @@ help:
 # Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a
 # cmake compile-commands database for use with irony for emacs (and possibly
 # other tools).
+# FIXME - this can break if we move/rename files and then run 'make update'
+# because it tries to use the previous cmakelist with the no-longer-valid
+# filename *before* it updates the cmakelist. Need to rethink order of
+# operations there.
 ifeq ($(BA_ENABLE_IRONY_BUILD_DB),1)
  PREREQ_IRONY = .cache/irony/compile_commands.json
 endif

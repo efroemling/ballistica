@@ -14,18 +14,17 @@
 namespace ballistica {
 
 /// Class for managing input.
-/// Should only be used in the game thread unless otherwise specified.
+/// Should only be used in the logic thread unless otherwise specified.
 class Input {
  public:
   Input();
-  virtual ~Input();
 
-  // Add an input device. Must be called from the game thread; otherwise use
+  // Add an input device. Must be called from the logic thread; otherwise use
   // PushAddInputDeviceCall.
   auto AddInputDevice(InputDevice* input, bool standard_message) -> void;
 
   // Removes a previously-added input-device. Must be called from the
-  // game thread; otherwise use PushRemoveInputDeviceCall.
+  // logic thread; otherwise use PushRemoveInputDeviceCall.
   auto RemoveInputDevice(InputDevice* input, bool standard_message) -> void;
 
   // Given a device name and persistent identifier for it, returns a device or

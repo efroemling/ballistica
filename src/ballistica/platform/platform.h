@@ -54,12 +54,11 @@ class Platform {
   /// Create the appropriate Graphics subclass for the app.
   auto CreateGraphics() -> Graphics*;
 
-  virtual auto CreateAuxiliaryModules() -> void;
   virtual auto WillExitMain(bool errored) -> void;
 
   /// Inform the platform that all subsystems are up and running and it can
   /// start talking to them.
-  virtual auto OnBootstrapComplete() -> void;
+  virtual auto OnAppStart() -> void;
 
   // Get/set values before standard game settings are available
   // (for values needed before SDL init/etc).
@@ -127,10 +126,10 @@ class Platform {
 
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
-  // Send a message to the default platform handler.
-  // IMPORTANT: No Object::Refs should be created or destroyed within this call,
-  // or deadlock can occur.
-  virtual auto HandleLog(const std::string& msg) -> void;
+  /// Display a message to any default log for the platform (android log, etc.)
+  /// Note that this can be called from any thread.
+  virtual auto DisplayLog(const std::string& name, LogLevel level,
+                          const std::string& msg) -> void;
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
@@ -428,11 +427,10 @@ class Platform {
       -> void;
 
   /// Print a log message to be included in crash logs or other debug
-  /// mechanisms. Standard log messages (at least with to_server=true) get
-  /// send here as well. It can be useful to call this directly to report
-  /// extra details that may help in debugging, as these calls are not
-  /// considered 'noteworthy' or presented to the user as standard Log()
-  /// calls are.
+  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
+  /// to here as well. It can be useful to call this directly to report extra
+  /// details that may help in debugging, as these calls are not considered
+  /// 'noteworthy' or presented to the user as standard Log() calls are.
   virtual auto HandleDebugLog(const std::string& msg) -> void;
 
   static auto DebugLog(const std::string& msg) -> void {
@@ -490,11 +488,6 @@ class Platform {
 
   /// Quit the app (can be immediate or via posting some high level event).
   virtual auto QuitApp() -> void;
-
-  // Note to self: do we want to deprecate this?...
-  virtual auto GetScoresToBeat(const std::string& level,
-                               const std::string& config, void* py_callback)
-      -> void;
 
   /// Open a file using the system default method (in another app, etc.)
   virtual auto OpenFileExternally(const std::string& path) -> void;

@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/media/component/model.h"
-#include "ballistica/media/component/texture.h"
+#include "ballistica/assets/component/model.h"
+#include "ballistica/assets/component/texture.h"
 #include "ballistica/scene/node/node.h"
 
 namespace ballistica {
