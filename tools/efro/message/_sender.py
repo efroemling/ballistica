@@ -10,12 +10,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError, RemoteError, CommunicationError
-from efro.message._message import EmptySysResponse, ErrorSysResponse
+from efro.message._message import EmptySysResponse, ErrorSysResponse, Response
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
 
-    from efro.message._message import Message, Response
+    from efro.message._message import Message, SysResponse
     from efro.message._protocol import MessageProtocol
 
 
@@ -46,8 +46,8 @@ class MessageSender:
             [Any, str], Awaitable[str]] | None = None
         self._encode_filter_call: Callable[[Any, Message, dict],
                                            None] | None = None
-        self._decode_filter_call: Callable[[Any, Message, dict, Response],
-                                           None] | None = None
+        self._decode_filter_call: Callable[
+            [Any, Message, dict, Response | SysResponse], None] | None = None
 
     def send_method(
             self, call: Callable[[Any, str],
@@ -90,7 +90,8 @@ class MessageSender:
         return call
 
     def decode_filter_method(
-        self, call: Callable[[Any, Message, dict, Response], None]
+        self, call: Callable[[Any, Message, dict, Response | SysResponse],
+                             None]
     ) -> Callable[[Any, Message, dict, Response], None]:
         """Function decorator for defining a decode filter.
 
@@ -122,7 +123,8 @@ class MessageSender:
             ),
         )
 
-    def send_split_part_1(self, bound_obj: Any, message: Message) -> Response:
+    def send_split_part_1(self, bound_obj: Any,
+                          message: Message) -> Response | SysResponse:
         """Send a message synchronously.
 
         Generally you can just call send(); these split versions are
@@ -147,8 +149,8 @@ class MessageSender:
                             ErrorSysResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
-    async def send_split_part_1_async(self, bound_obj: Any,
-                                      message: Message) -> Response:
+    async def send_split_part_1_async(
+            self, bound_obj: Any, message: Message) -> Response | SysResponse:
         """Send a message asynchronously.
 
         Generally you can just call send(); these split versions are
@@ -175,8 +177,9 @@ class MessageSender:
                             ErrorSysResponse.ErrorType.LOCAL))
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
-    def send_split_part_2(self, message: Message,
-                          raw_response: Response) -> Response | None:
+    def send_split_part_2(
+            self, message: Message,
+            raw_response: Response | SysResponse) -> Response | None:
         """Complete message sending (both sync and async).
 
         Generally you can just call send(); these split versions are
@@ -196,7 +199,7 @@ class MessageSender:
         return self.protocol.encode_dict(msg_dict)
 
     def _decode_raw_response(self, bound_obj: Any, message: Message,
-                             response_encoded: str) -> Response:
+                             response_encoded: str) -> Response | SysResponse:
         """Create a Response from returned data.
 
         These Responses may encapsulate things like remote errors and
@@ -204,6 +207,7 @@ class MessageSender:
         should be used to translate to special values like None or raise
         Exceptions. This function itself should never raise Exceptions.
         """
+        response: Response | SysResponse
         try:
             response_dict = self.protocol.decode_dict(response_encoded)
             response = self.protocol.response_from_dict(response_dict)
@@ -223,7 +227,8 @@ class MessageSender:
                 error_type=ErrorSysResponse.ErrorType.LOCAL)
         return response
 
-    def _unpack_raw_response(self, raw_response: Response) -> Response | None:
+    def _unpack_raw_response(
+            self, raw_response: Response | SysResponse) -> Response | None:
         """Given a raw Response, unpacks to special values or Exceptions.
 
         The result of this call is what should be passed to users.
@@ -256,6 +261,7 @@ class MessageSender:
             # Everything else gets lumped in as a remote error.
             raise RemoteError(raw_response.error_message)
 
+        assert isinstance(raw_response, Response)
         return raw_response
 
 
@@ -292,15 +298,16 @@ class BoundMessageSender:
         return await self._sender.send_async(bound_obj=self._obj,
                                              message=message)
 
-    async def send_split_part_1_async_untyped(self,
-                                              message: Message) -> Response:
+    async def send_split_part_1_async_untyped(
+            self, message: Message) -> Response | SysResponse:
         """Split send (part 1 of 2)."""
         assert self._obj is not None
         return await self._sender.send_split_part_1_async(bound_obj=self._obj,
                                                           message=message)
 
-    def send_split_part_2_untyped(self, message: Message,
-                                  raw_response: Response) -> Response | None:
+    def send_split_part_2_untyped(
+            self, message: Message,
+            raw_response: Response | SysResponse) -> Response | None:
         """Split send (part 2 of 2)."""
         return self._sender.send_split_part_2(message=message,
                                               raw_response=raw_response)

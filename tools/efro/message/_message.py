@@ -24,7 +24,7 @@ class Message:
     """Base class for messages."""
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         """Return all message types this Message can result in when sent.
 
         The default implementation specifies EmptySysResponse, so messages with
@@ -32,11 +32,19 @@ class Message:
         Note that ErrorMessage is handled as a special case and does not
         need to be specified here.
         """
-        return [EmptySysResponse]
+        return [None]
 
 
 class Response:
     """Base class for responses to messages."""
+
+
+class SysResponse:
+    """Base class for system-responses to messages.
+
+    These are only sent/handled by the messaging system itself;
+    users of the api never see them.
+    """
 
 
 # Some standard response types:
@@ -44,7 +52,7 @@ class Response:
 
 @ioprepped
 @dataclass
-class ErrorSysResponse(Response):
+class ErrorSysResponse(SysResponse):
     """Response saying some error has occurred for the send.
 
     This type is unique in that it is not returned to the user; it
@@ -64,7 +72,7 @@ class ErrorSysResponse(Response):
 
 @ioprepped
 @dataclass
-class EmptySysResponse(Response):
+class EmptySysResponse(SysResponse):
     """The response equivalent of None."""
 
 

@@ -1,4 +1,4 @@
-### 1.7.9 (build 20873, api 7, 2022-09-21)
+### 1.7.9 (build 20875, api 7, 2022-09-21)
 
 ### 1.7.8 (build 20871, api 7, 2022-09-21)
 - Fixed tournament scores submits which were broken in 1.7.7 (oops).
@@ -45,13 +45,13 @@
 - If you want to grab recent logs, you can now use `ba.app.log_handler.get_cached()`. This will give you everything that has gone through Python logging, Python stdout/stderr, and the C++ Log() call (up to the max cache size that is).
 - LogHandler output now ALWAYS goes to stderr. Previously it only would if an interactive terminal was detected. This should make the binary easier to debug if run from scripts/etc. We can add a `--quiet` option if needed or whatnot.
 - (build 20859) Fixed an error setting up asyncio loops under Windows related to the fact that Python is now inited in the main thread.
-- (build 20864) Fatal-error message/traceback now properly prints to stderr again (I think the reject logging rejiggering caused it to stop).
+- (build 20864) Fatal-error message/traceback now properly prints to stderr again (I think the recent logging rejiggering caused it to stop).
 - (build 20864) Fixed an issue where the app could crash when connected to the cloud console while in a network game.
 - Added a simplified help() command which behaves reasonably under the in-game console or cloud-console.
 
 
 ### 1.7.6 (build 20687, api 7, 2022-08-11)
-- Cleaned up da MetaSubsystem code.
+- Cleaned up the MetaSubsystem code.
 - It is now possible to tell the meta system about arbitrary classes (ba_meta export foo.bar.Class) instead of just the preset types 'plugin', 'game', etc.
 - Newly discovered plugins are now activated immediately instead of requiring a restart.
 

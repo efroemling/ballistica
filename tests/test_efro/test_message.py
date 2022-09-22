@@ -23,6 +23,8 @@ from efro.message import (Message, Response, MessageProtocol, MessageSender,
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
 
+    from efro.message import SysResponse
+
 
 @ioprepped
 @dataclass
@@ -31,7 +33,7 @@ class _TMsg1(Message):
     ival: int
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1]
 
 
@@ -42,7 +44,7 @@ class _TMsg2(Message):
     sval: str
 
     @classmethod
-    def get_response_types(cls) -> list[type[Response]]:
+    def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1, _TResp2]
 
 
@@ -808,7 +810,7 @@ def test_full_pipeline() -> None:
 
         @msg.decode_filter_method
         def _decode_filter(self, message: Message, indata: dict,
-                           response: Response) -> None:
+                           response: Response | SysResponse) -> None:
             """Filter our incoming responses."""
             del message  # Unused.
             if self.test_sidecar:
@@ -852,7 +854,8 @@ def test_full_pipeline() -> None:
                 setattr(message, '_sidecar_data', indata['_sidecar_data'])
 
         @receiver.encode_filter_method
-        def _encode_filter(self, message: Message | None, response: Response,
+        def _encode_filter(self, message: Message | None,
+                           response: Response | SysResponse,
                            outdict: dict) -> None:
             """Filter our outgoing responses."""
             del message  # Unused.

@@ -14,8 +14,8 @@ import json
 from efro.error import CleanError
 from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
                               dataclass_from_dict)
-from efro.message._message import (Message, Response, ErrorSysResponse,
-                                   EmptySysResponse,
+from efro.message._message import (Message, Response, SysResponse,
+                                   ErrorSysResponse, EmptySysResponse,
                                    UnregisteredMessageIDError)
 
 if TYPE_CHECKING:
@@ -54,8 +54,10 @@ class MessageProtocol:
         """
         self.message_types_by_id: dict[int, type[Message]] = {}
         self.message_ids_by_type: dict[type[Message], int] = {}
-        self.response_types_by_id: dict[int, type[Response]] = {}
-        self.response_ids_by_type: dict[type[Response], int] = {}
+        self.response_types_by_id: dict[int, type[Response]
+                                        | type[SysResponse]] = {}
+        self.response_ids_by_type: dict[type[Response] | type[SysResponse],
+                                        int] = {}
         for m_id, m_type in message_types.items():
 
             # Make sure only valid message types were passed and each
@@ -80,7 +82,7 @@ class MessageProtocol:
         # Go ahead and auto-register a few common response types
         # if the user has not done so explicitly. Use unique negative
         # IDs which will never change or overlap with user ids.
-        def _reg_sys(reg_tp: type[Response], reg_id: int) -> None:
+        def _reg_sys(reg_tp: type[SysResponse], reg_id: int) -> None:
             assert self.response_types_by_id.get(reg_id) is None
             self.response_types_by_id[reg_id] = reg_tp
             self.response_ids_by_type[reg_tp] = reg_id
@@ -92,15 +94,19 @@ class MessageProtocol:
         if __debug__:
             # Make sure all Message types' return types are valid
             # and have been assigned an ID as well.
-            all_response_types: set[type[Response]] = set()
+            all_response_types: set[type[Response] | None] = set()
             for m_id, m_type in message_types.items():
                 m_rtypes = m_type.get_response_types()
+
                 assert isinstance(m_rtypes, list)
                 assert m_rtypes, (
                     f'Message type {m_type} specifies no return types.')
                 assert len(set(m_rtypes)) == len(m_rtypes)  # check dups
-                all_response_types.update(m_rtypes)
+                for m_rtype in m_rtypes:
+                    all_response_types.add(m_rtype)
             for cls in all_response_types:
+                if cls is None:
+                    continue
                 assert is_ioprepped_dataclass(cls)
                 assert issubclass(cls, Response)
                 if cls not in self.response_ids_by_type:
@@ -130,11 +136,11 @@ class MessageProtocol:
         """Encode a message to a json ready dict."""
         return self._to_dict(message, self.message_ids_by_type, 'message')
 
-    def response_to_dict(self, response: Response) -> dict:
+    def response_to_dict(self, response: Response | SysResponse) -> dict:
         """Encode a response to a json ready dict."""
         return self._to_dict(response, self.response_ids_by_type, 'response')
 
-    def error_to_response(self, exc: Exception) -> Response:
+    def error_to_response(self, exc: Exception) -> SysResponse:
         """Translate an error to a response."""
 
         # Log any errors we got during handling.
@@ -176,10 +182,10 @@ class MessageProtocol:
         assert isinstance(out, Message)
         return out
 
-    def response_from_dict(self, data: dict) -> Response:
+    def response_from_dict(self, data: dict) -> Response | SysResponse:
         """Decode a response from a json string."""
         out = self._from_dict(data, self.response_types_by_id, 'response')
-        assert isinstance(out, Response)
+        assert isinstance(out, Response | SysResponse)
         return out
 
     # Weeeird; we get mypy errors returning dict[int, type] but
@@ -332,10 +338,10 @@ class MessageProtocol:
                 f'class {ppre}Bound{basename}(BoundMessageSender):\n'
                 f'    """Protocol-specific bound sender."""\n')
 
-        def _filt_tp_name(rtype: type[Response]) -> str:
+        def _filt_tp_name(rtype: type[Response] | None) -> str:
             # We accept None to equal EmptySysResponse so reflect that
             # in the type annotation.
-            return 'None' if rtype is EmptySysResponse else rtype.__name__
+            return 'None' if rtype is None else rtype.__name__
 
         # Define handler() overloads for all registered message types.
         if msgtypes:
@@ -372,6 +378,7 @@ class MessageProtocol:
 
                     for msgtype in msgtypes:
                         msgtypevar = msgtype.__name__
+                        # rtypes = msgtype.get_response_types()
                         rtypes = msgtype.get_response_types()
                         if len(rtypes) > 1:
                             rtypevar = ' | '.join(
@@ -429,10 +436,10 @@ class MessageProtocol:
 
         # Define handler() overloads for all registered message types.
 
-        def _filt_tp_name(rtype: type[Response]) -> str:
+        def _filt_tp_name(rtype: type[Response] | None) -> str:
             # We accept None to equal EmptySysResponse so reflect that
             # in the type annotation.
-            return 'None' if rtype is EmptySysResponse else rtype.__name__
+            return 'None' if rtype is None else rtype.__name__
 
         if msgtypes:
             cbgn = 'Awaitable[' if is_async else ''
