@@ -47,6 +47,23 @@ auto StdioConsole::OnAppStart() -> void {
       char buffer[4096];
       char* val = fgets(buffer, sizeof(buffer), stdin);
       if (val) {
+        if (val == std::string("@clear\n")) {
+          int retval{-1};
+#if BA_OSTYPE_MACOS || BA_OSTYPE_LINUX
+          // Attempt to run actual clear command on unix-y systems to
+          // plop our prompt back at the top of the screen.
+          retval = system("clear");
+#endif
+          // As a fallback, just spit out a bunch of newlines.
+          if (retval != 0) {
+            std::string space;
+            for (int i = 0; i < 100; ++i) {
+              space += "\n";
+            }
+            printf("%s", space.c_str());
+          }
+          continue;
+        }
         pending_input_ += val;
 
         if (!pending_input_.empty()

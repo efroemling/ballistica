@@ -81,13 +81,6 @@ class MessageProtocol:
         # if the user has not done so explicitly. Use unique negative
         # IDs which will never change or overlap with user ids.
         def _reg_sys(reg_tp: type[Response], reg_id: int) -> None:
-
-            # If we have a positive id registered already, we still point
-            # negative sys id at this type but not the opposite.
-            if reg_tp in self.response_ids_by_type:
-                self.response_types_by_id[reg_id] = reg_tp
-                return
-
             assert self.response_types_by_id.get(reg_id) is None
             self.response_types_by_id[reg_id] = reg_tp
             self.response_ids_by_type[reg_tp] = reg_id
