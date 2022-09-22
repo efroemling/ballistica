@@ -1,3 +1,5 @@
+### 1.7.9 (build 20873, api 7, 2022-09-21)
+
 ### 1.7.8 (build 20871, api 7, 2022-09-21)
 - Fixed tournament scores submits which were broken in 1.7.7 (oops).
 - Added @clear command to stdin command reader.
