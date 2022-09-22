@@ -252,8 +252,13 @@ class AccountSettingsWindow(ba.Window):
         show_reset_progress_button = False
         reset_progress_button_space = 70.0
 
+        show_manage_v2_account_button = (self._signed_in
+                                         and account_type == 'V2')
+        manage_v2_account_button_space = 100.0
+
         show_player_profiles_button = self._signed_in
-        player_profiles_button_space = 100.0
+        player_profiles_button_space = (70.0 if show_manage_v2_account_button
+                                        else 100.0)
 
         show_link_accounts_button = (self._signed_in and
                                      ba.internal.get_v1_account_misc_read_val(
@@ -307,6 +312,8 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += sign_in_benefits_space
         if show_reset_progress_button:
             self._sub_height += reset_progress_button_space
+        if show_manage_v2_account_button:
+            self._sub_height += manage_v2_account_button_space
         if show_player_profiles_button:
             self._sub_height += player_profiles_button_space
         if show_link_accounts_button:
@@ -570,6 +577,28 @@ class AccountSettingsWindow(ba.Window):
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
+
+        if show_manage_v2_account_button:
+            button_width = 300
+            v -= manage_v2_account_button_space
+            self._manage_v2_button = btn = ba.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v + 30),
+                autoselect=True,
+                size=(button_width, 60),
+                label=ba.Lstr(resource=self._r + '.manageAccount'),
+                color=(0.55, 0.5, 0.6),
+                icon=ba.gettexture('settingsIcon'),
+                textcolor=(0.75, 0.7, 0.8),
+                on_activate_call=lambda: ba.open_url(
+                    'https://ballistica.net/accountsettings'))
+            if first_selectable is None:
+                first_selectable = btn
+            if ba.app.ui.use_toolbars:
+                ba.widget(edit=btn,
+                          right_widget=ba.internal.get_special_widget(
+                              'party_button'))
+            ba.widget(edit=btn, left_widget=bbtn)
 
         if show_player_profiles_button:
             button_width = 300
