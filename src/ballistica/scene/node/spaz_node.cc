@@ -6431,9 +6431,6 @@ void SpazNode::SetStyle(const std::string& val) {
     eye_lid_color_green_ = 0.35f;
     eye_lid_color_blue_ = 0.31f;
     default_eye_lid_angle_ = 15.0f;  // sorta angry eyes
-    eye_color_red_ = 1.1f;
-    eye_color_green_ = 0.6f;
-    eye_color_blue_ = 1.4f;
     eye_ball_color_red_ = 0.54f;
     eye_ball_color_green_ = 0.51f;
     eye_ball_color_blue_ = 0.55f;
