@@ -1,8 +1,9 @@
 ### 1.7.9 (build 20878, api 7, 2022-09-22)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).
-- Fixed bug with 'Disable Camera Shake' option. (GitHub #511)
+- Fixed bug with 'Disable Camera Shake' option. (GitHub #511) (thanks Dliwk!)
 - Fixed an issue where Co-op football would play no music.
-- Accept "fairydust" as an emit type in `ba.emitfx()`.
+- Accept "fairydust" as an emit type in `ba.emitfx()` (thanks ritiek!).
+- Added epic mode option to Easter Egg Hunt (thanks itsre3!).
 
 ### 1.7.8 (build 20871, api 7, 2022-09-21)
 - Fixed tournament scores submits which were broken in 1.7.7 (oops).
