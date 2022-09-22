@@ -25,12 +25,9 @@ class Message:
 
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
-        """Return all message types this Message can result in when sent.
+        """Return all Response types this Message can return when sent.
 
-        The default implementation specifies EmptySysResponse, so messages with
-        no particular response needs can leave this untouched.
-        Note that ErrorMessage is handled as a special case and does not
-        need to be specified here.
+        The default implementation specifies a None return type.
         """
         return [None]
 
@@ -53,10 +50,9 @@ class SysResponse:
 @ioprepped
 @dataclass
 class ErrorSysResponse(SysResponse):
-    """Response saying some error has occurred for the send.
+    """SysResponse saying some error has occurred for the send.
 
-    This type is unique in that it is not returned to the user; it
-    instead results in a local exception being raised.
+    This generally results in an Exception being raised for the caller.
     """
 
     class ErrorType(Enum):

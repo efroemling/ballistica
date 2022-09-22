@@ -79,9 +79,8 @@ class MessageProtocol:
             self.response_types_by_id[r_id] = r_type
             self.response_ids_by_type[r_type] = r_id
 
-        # Go ahead and auto-register a few common response types
-        # if the user has not done so explicitly. Use unique negative
-        # IDs which will never change or overlap with user ids.
+        # Register our SysResponse types. These use negative
+        # IDs so as to never overlap with user Response types.
         def _reg_sys(reg_tp: type[SysResponse], reg_id: int) -> None:
             assert self.response_types_by_id.get(reg_id) is None
             self.response_types_by_id[reg_id] = reg_tp
@@ -339,8 +338,6 @@ class MessageProtocol:
                 f'    """Protocol-specific bound sender."""\n')
 
         def _filt_tp_name(rtype: type[Response] | None) -> str:
-            # We accept None to equal EmptySysResponse so reflect that
-            # in the type annotation.
             return 'None' if rtype is None else rtype.__name__
 
         # Define handler() overloads for all registered message types.
@@ -437,8 +434,6 @@ class MessageProtocol:
         # Define handler() overloads for all registered message types.
 
         def _filt_tp_name(rtype: type[Response] | None) -> str:
-            # We accept None to equal EmptySysResponse so reflect that
-            # in the type annotation.
             return 'None' if rtype is None else rtype.__name__
 
         if msgtypes:

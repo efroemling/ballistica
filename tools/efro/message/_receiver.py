@@ -130,10 +130,6 @@ class MessageReceiver:
         responsetypes = tuple(None if r is type(None) else r
                               for r in responsetypes)
 
-        # Return type of None translates to EmptySysResponse.
-        # responsetypes = tuple(EmptySysResponse if r is type(None) else r
-        #                       for r in responsetypes)  # noqa
-
         # Make sure our protocol has this message type registered and our
         # return types exactly match. (Technically we could return a subset
         # of the supported types; can allow this in the future if it makes
