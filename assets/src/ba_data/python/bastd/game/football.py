@@ -427,6 +427,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                                'materials': [self._score_region_material]
                            })))
         ba.playsound(self._chant_sound)
+        ba.setmusic(ba.MusicType.FOOTBALL)
 
     def on_begin(self) -> None:
         # FIXME: Split this up a bit.
