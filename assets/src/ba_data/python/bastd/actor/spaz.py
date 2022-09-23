@@ -383,7 +383,7 @@ class Spaz(ba.Actor):
         Called to 'press pick-up' on this spaz;
         used by player or AI connections.
         """
-        if not self.node or self.frozen:
+        if not self.node:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
