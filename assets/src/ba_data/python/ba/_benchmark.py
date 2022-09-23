@@ -60,7 +60,7 @@ def run_stress_test(playlist_type: str = 'Random',
     from ba._generated.enums import TimeType
     _ba.screenmessage(
         'Beginning stress test.. use '
-        "'End Game' to stop testing.",
+        "'End Test' to stop testing.",
         color=(1, 1, 0))
     with _ba.Context('ui'):
         start_stress_test({
@@ -138,7 +138,8 @@ def _reset_stress_test(args: dict[str, Any]) -> None:
 
 def run_gpu_benchmark() -> None:
     """Kick off a benchmark to test gpu speeds."""
-    _ba.screenmessage('FIXME: Not wired up yet.', color=(1, 0, 0))
+    # FIXME: Not wired up yet.
+    _ba.screenmessage('Not wired up yet.', color=(1, 0, 0))
 
 
 def run_media_reload_benchmark() -> None:

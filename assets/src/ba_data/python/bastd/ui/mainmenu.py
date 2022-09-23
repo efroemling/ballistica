@@ -244,14 +244,26 @@ class MainMenuWindow(ba.Window):
                                 label=ba.Lstr(resource='replayEndText'),
                                 on_activate_call=self._confirm_end_replay)
             elif ba.internal.get_foreground_host_session() is not None:
-                ba.buttonwidget(
-                    parent=self._root_widget,
-                    position=(h - self._button_width * 0.5 * scale, v),
-                    scale=scale,
-                    size=(self._button_width, self._button_height),
-                    autoselect=self._use_autoselect,
-                    label=ba.Lstr(resource=self._r + '.endGameText'),
-                    on_activate_call=self._confirm_end_game)
+                session = ba.internal.get_foreground_host_session()
+                if (getattr(session, 'benchmark_type', None) == 'cpu'
+                    or ba.app.stress_test_reset_timer is not None):
+                    ba.buttonwidget(
+                        parent=self._root_widget,
+                        position=(h - self._button_width * 0.5 * scale, v),
+                        scale=scale,
+                        size=(self._button_width, self._button_height),
+                        autoselect=self._use_autoselect,
+                        label=ba.Lstr(resource=self._r + '.endTestText'),
+                        on_activate_call=self._confirm_end_game)
+                else:
+                    ba.buttonwidget(
+                        parent=self._root_widget,
+                        position=(h - self._button_width * 0.5 * scale, v),
+                        scale=scale,
+                        size=(self._button_width, self._button_height),
+                        autoselect=self._use_autoselect,
+                        label=ba.Lstr(resource=self._r + '.endGameText'),
+                        on_activate_call=self._confirm_end_game)
             # Assume we're in a client-session.
             else:
                 ba.buttonwidget(
