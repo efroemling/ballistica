@@ -522,6 +522,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         if ticket_count is not None and ticket_count < ticket_cost:
             getcurrency.show_get_tickets_prompt()
             ba.playsound(ba.getsound('error'))
+            self._transition_out()
             return
 
         cur_time = ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
