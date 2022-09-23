@@ -1225,7 +1225,7 @@ class Spaz(ba.Actor):
         pos = self.node.position_forward
         vel = self.node.velocity
 
-        if self.land_mine_count >= 0:
+        if self.land_mine_count > 0:
             dropping_bomb = False
             self.set_land_mine_count(self.land_mine_count - 1)
             bomb_type = 'land_mine'
