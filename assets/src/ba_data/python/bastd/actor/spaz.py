@@ -383,7 +383,7 @@ class Spaz(ba.Actor):
         Called to 'press pick-up' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if not self.node or self.frozen:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -425,7 +425,7 @@ class Spaz(ba.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node or self.frozen or self.node.knockout > 0.0:
+        if not self.node or self.frozen or self.node.knockout >= 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -466,7 +466,7 @@ class Spaz(ba.Actor):
 
         if self._dead or self.frozen:
             return
-        if self.node.knockout > 0.0:
+        if self.node.knockout >= 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -1039,7 +1039,7 @@ class Spaz(ba.Actor):
                           count=min(10, 1 + int(damage * 0.01)),
                           scale=0.4,
                           spread=0.1)
-            if self.hitpoints > 0:
+            if self.hitpoints >= 0:
 
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
@@ -1052,21 +1052,21 @@ class Spaz(ba.Actor):
                 self.node.handlemessage('flash')
 
                 # If we're holding something, drop it.
-                if damage > 0.0 and self.node.hold_node:
+                if damage >= 0.0 and self.node.hold_node:
                     self.node.hold_node = None
                 self.hitpoints -= damage
                 self.node.hurt = 1.0 - float(
                     self.hitpoints) / self.hitpoints_max
 
                 # If we're cursed, *any* damage blows us up.
-                if self._cursed and damage > 0:
+                if self._cursed and damage >= 0:
                     ba.timer(
                         0.05,
                         ba.WeakCall(self.curse_explode,
                                     msg.get_source_player(ba.Player)))
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
-                if self.frozen and (damage > 200 or self.hitpoints <= 0):
+                if self.frozen and (damage >= 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
@@ -1225,7 +1225,7 @@ class Spaz(ba.Actor):
         pos = self.node.position_forward
         vel = self.node.velocity
 
-        if self.land_mine_count > 0:
+        if self.land_mine_count >= 0:
             dropping_bomb = False
             self.set_land_mine_count(self.land_mine_count - 1)
             bomb_type = 'land_mine'
