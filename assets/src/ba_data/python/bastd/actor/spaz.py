@@ -81,7 +81,7 @@ class Spaz(ba.Actor):
 
         factory = SpazFactory.get()
 
-        # we need to behave slightly different in the tutorial
+        # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
 
         self.play_big_death_sound = False
