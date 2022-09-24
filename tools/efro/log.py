@@ -248,9 +248,12 @@ class LogHandler(logging.Handler):
             # Here we try to be somewhat smart about breaking arbitrary
             # print output into discrete log entries.
 
+            self._file_chunks[name].append(output)
+
             # Individual parts of a print come across as separate writes,
             # and the end of a print will be a standalone '\n' by default.
-            # So let's ship whatever we've got when one of those comes in.
+            # Let's use that as a hint that we're likely at the end of
+            # a full print statement and ship what we've got.
             if output == '\n':
                 self._ship_file_chunks(name, cancel_ship_task=True)
             else:
@@ -258,8 +261,6 @@ class LogHandler(logging.Handler):
                 # However we keep a timer running anytime we've got
                 # unshipped chunks so that we can ship what we've got
                 # after a short bit if we never get a newline.
-                self._file_chunks[name].append(output)
-
                 ship_task = self._file_chunk_ship_task[name]
                 if ship_task is None:
                     self._file_chunk_ship_task[name] = (
@@ -270,14 +271,37 @@ class LogHandler(logging.Handler):
             import traceback
             traceback.print_exc(file=self._echofile)
 
+    def file_flush(self, name: str) -> None:
+        """Send raw stdout/stderr flush to the logger to be collated."""
+
+        self._event_loop.call_soon_threadsafe(
+            tpartial(self._file_flush_in_thread, name))
+
+    def _file_flush_in_thread(self, name: str) -> None:
+        try:
+            assert name in ('stdout', 'stderr')
+
+            # Immediately ship whatever chunks we've got.
+            if self._file_chunks[name]:
+                self._ship_file_chunks(name, cancel_ship_task=True)
+
+        except Exception:
+            import traceback
+            traceback.print_exc(file=self._echofile)
+
     async def _ship_chunks_task(self, name: str) -> None:
         await asyncio.sleep(0.1)
         self._ship_file_chunks(name, cancel_ship_task=False)
 
     def _ship_file_chunks(self, name: str, cancel_ship_task: bool) -> None:
+        # Note: Raw print input generally ends in a newline, but that is
+        # redundant when we break things into log entries and results
+        # in extra empty lines. So strip off a single trailing newline.
+        text = ''.join(self._file_chunks[name]).removesuffix('\n')
+
         self._emit_entry(
             LogEntry(name=name,
-                     message=''.join(self._file_chunks[name]),
+                     message=text,
                      level=LogLevel.INFO,
                      time=utc_now()))
         self._file_chunks[name] = []
@@ -344,6 +368,11 @@ class FileLogEcho:
     def flush(self) -> None:
         """Flush the file."""
         self._original.flush()
+
+        # We also use this as a hint to ship whatever file chunks
+        # we've accumulated (we have to try and be smart about breaking
+        # our arbitrary file output into discrete entries).
+        self._handler.file_flush(self._name)
 
     def isatty(self) -> bool:
         """Are we a terminal?"""
