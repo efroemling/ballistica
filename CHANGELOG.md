@@ -1,3 +1,5 @@
+### 1.7.10 (build 20882, api 7, 2022-09-24)
+
 ### 1.7.9 (build 20880, api 7, 2022-09-24)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).
 - Fixed bug with 'Disable Camera Shake' option. (GitHub #511) (thanks Dliwk!)
