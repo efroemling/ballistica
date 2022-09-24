@@ -40,7 +40,7 @@ from batools.pcommand import (
     efro_gradle, stage_assets, update_assets_makefile, update_project,
     update_cmake_prefab_lib, cmake_prep_dir, gen_binding_code,
     gen_flat_data_code, wsl_path_to_win, wsl_build_check_win_drive,
-    win_ci_binary_build, genchangelog, android_sdk_utils,
+    win_ci_binary_build, genchangelog, android_sdk_utils, logcat,
     update_resources_makefile, update_meta_makefile, gen_python_enums_module,
     gen_python_init_module, update_dummy_modules, win_ci_install_prereqs,
     version)

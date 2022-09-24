@@ -39,7 +39,7 @@ class App {
   int master_server_source{0};
   int session_count{};
   bool shutting_down{};
-  bool have_incentivized_ad{true};
+  bool have_incentivized_ad{false};
   bool should_pause{};
   TelnetServer* telnet_server{};
   Console* console{};

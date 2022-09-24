@@ -690,6 +690,29 @@ def lazybuild() -> None:
         raise CleanError(exc) from exc
 
 
+def logcat() -> None:
+    """Get logcat command for filtering."""
+    import subprocess
+    from efro.terminal import Clr
+    from efro.error import CleanError
+    if len(sys.argv) != 4:
+        raise CleanError('Expected 2 args')
+    adb = sys.argv[2]
+    plat = sys.argv[3]
+    print('plat is', plat)
+
+    # My amazon tablet chokes on the color format.
+    if plat == 'amazon':
+        format_args = ''
+    else:
+        format_args = '-v color '
+    cmd = (f'{adb} logcat {format_args}SDL:V BallisticaCore:V VrLib:V'
+           ' VrApi:V VrApp:V TimeWarp:V EyeBuf:V GlUtils:V DirectRender:V'
+           ' HmdInfo:V IabHelper:V CrashAnrDetector:V DEBUG:V \'*:S\'')
+    print(f'{Clr.BLU}Running logcat command: {Clr.BLD}{cmd}{Clr.RST}')
+    subprocess.run(cmd, shell=True, check=True)
+
+
 def android_archive_unstripped_libs() -> None:
     """Copy libs to a build archive."""
     import subprocess
