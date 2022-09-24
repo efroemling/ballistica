@@ -638,7 +638,7 @@ class Spaz(ba.Actor):
         self.shield.hurt = 0
         ba.playsound(factory.shield_up_sound, 1.0, position=self.node.position)
 
-        if self.shield_decay_rate > 0:
+        if self.shield_decay_rate >= 0:
             self.shield_decay_timer = ba.Timer(0.5,
                                                ba.WeakCall(self.shield_decay),
                                                repeat=True)
@@ -778,7 +778,7 @@ class Spaz(ba.Actor):
                 factory = SpazFactory.get()
 
                 # Let's allow powerup-equipped shields to lose hp over time.
-                self.equip_shields(decay=factory.shield_decay_rate > 0)
+                self.equip_shields(decay=factory.shield_decay_rate >= 0)
             elif msg.poweruptype == 'curse':
                 self.curse()
             elif msg.poweruptype == 'ice_bombs':
@@ -903,6 +903,7 @@ class Spaz(ba.Actor):
                     # FIXME: Transition out perhaps?
                     self.shield.delete()
                     self.shield = None
+                    self.shield_decay_timer = None
                     ba.playsound(SpazFactory.get().shield_down_sound,
                                  1.0,
                                  position=self.node.position)
