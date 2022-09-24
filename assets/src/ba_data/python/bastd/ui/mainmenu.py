@@ -250,8 +250,12 @@ class MainMenuWindow(ba.Window):
                     scale=scale,
                     size=(self._button_width, self._button_height),
                     autoselect=self._use_autoselect,
-                    label=ba.Lstr(resource=self._r + '.endGameText'),
-                    on_activate_call=self._confirm_end_game)
+                    label=ba.Lstr(resource=self._r +
+                                  ('.endTestText' if self._is_benchmark()
+                                   else '.endGameText')),
+                    on_activate_call=(self._confirm_end_test
+                                      if self._is_benchmark()
+                                      else self._confirm_end_game))
             # Assume we're in a client-session.
             else:
                 ba.buttonwidget(
@@ -863,10 +867,25 @@ class MainMenuWindow(ba.Window):
             StoreBrowserWindow(
                 origin_widget=self._store_button).get_root_widget())
 
+    def _is_benchmark(self) -> bool:
+        session = ba.internal.get_foreground_host_session()
+        return (getattr(session, 'benchmark_type', None) == 'cpu'
+            or ba.app.stress_test_reset_timer is not None)
+
     def _confirm_end_game(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.confirm import ConfirmWindow
         # FIXME: Currently we crash calling this on client-sessions.
+
+        # Select cancel by default; this occasionally gets called by accident
+        # in a fit of button mashing and this will help reduce damage.
+        ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
+                      self._end_game,
+                      cancel_is_selected=True)
+
+    def _confirm_end_test(self) -> None:
+        # pylint: disable=cyclic-import
+        from bastd.ui.confirm import ConfirmWindow
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.

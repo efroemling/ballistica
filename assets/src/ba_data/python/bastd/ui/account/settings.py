@@ -552,7 +552,7 @@ class AccountSettingsWindow(ba.Window):
                 position=((self._sub_width - button_width) * 0.5, v + 30),
                 autoselect=True,
                 size=(button_width, 60),
-                label=ba.Lstr(resource=self._r + '.manageAccount'),
+                label=ba.Lstr(resource=self._r + '.manageAccountText'),
                 color=(0.55, 0.5, 0.6),
                 icon=ba.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
