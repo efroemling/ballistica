@@ -1,9 +1,11 @@
-### 1.7.9 (build 20878, api 7, 2022-09-22)
+### 1.7.9 (build 20880, api 7, 2022-09-24)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).
 - Fixed bug with 'Disable Camera Shake' option. (GitHub #511) (thanks Dliwk!)
 - Fixed an issue where Co-op football would play no music.
 - Accept "fairydust" as an emit type in `ba.emitfx()` (thanks ritiek!).
 - Added epic mode option to Easter Egg Hunt (thanks itsre3!).
+- The game no longer auto-signs-in to a device account when first run since we want to start encouraging people to use V2 accounts.
+- Removed support for GameCircle in Amazon builds (which has been discontinued for years at this point).
 
 ### 1.7.8 (build 20871, api 7, 2022-09-21)
 - Fixed tournament scores submits which were broken in 1.7.7 (oops).

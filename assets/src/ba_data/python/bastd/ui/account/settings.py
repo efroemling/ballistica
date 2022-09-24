@@ -25,7 +25,6 @@ class AccountSettingsWindow(ba.Window):
                  close_once_signed_in: bool = False):
         # pylint: disable=too-many-statements
 
-        self._sign_in_game_circle_button: ba.Widget | None = None
         self._sign_in_v2_button: ba.Widget | None = None
         self._sign_in_device_button: ba.Widget | None = None
 
@@ -83,9 +82,6 @@ class AccountSettingsWindow(ba.Window):
 
         if app.platform == 'android' and app.subplatform == 'google':
             self._show_sign_in_buttons.append('Google Play')
-
-        elif app.platform == 'android' and app.subplatform == 'amazon':
-            self._show_sign_in_buttons.append('Game Circle')
 
         # Local accounts are generally always available with a few key
         # exceptions.
@@ -213,17 +209,14 @@ class AccountSettingsWindow(ba.Window):
         show_google_play_sign_in_button = (account_state == 'signed_out'
                                            and 'Google Play'
                                            in self._show_sign_in_buttons)
-        show_game_circle_sign_in_button = (account_state == 'signed_out'
-                                           and 'Game Circle'
-                                           in self._show_sign_in_buttons)
         show_device_sign_in_button = (account_state == 'signed_out' and 'Local'
                                       in self._show_sign_in_buttons)
         show_v2_sign_in_button = (account_state == 'signed_out'
                                   and 'V2' in self._show_sign_in_buttons)
         sign_in_button_space = 70.0
 
-        show_game_service_button = (self._signed_in and account_type
-                                    in ['Game Center', 'Game Circle'])
+        show_game_service_button = (self._signed_in
+                                    and account_type in ['Game Center'])
         game_service_button_space = 60.0
 
         show_linked_accounts_text = (self._signed_in and
@@ -288,8 +281,6 @@ class AccountSettingsWindow(ba.Window):
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
-            self._sub_height += sign_in_button_space
-        if show_game_circle_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_device_sign_in_button:
             self._sub_height += sign_in_button_space
@@ -460,32 +451,6 @@ class AccountSettingsWindow(ba.Window):
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
 
-        if show_game_circle_sign_in_button:
-            button_width = 350
-            v -= sign_in_button_space
-            self._sign_in_game_circle_button = btn = ba.buttonwidget(
-                parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v - 20),
-                autoselect=True,
-                size=(button_width, 60),
-                label=ba.Lstr(value='${A}${B}',
-                              subs=[('${A}',
-                                     ba.charstr(
-                                         ba.SpecialChar.GAME_CIRCLE_LOGO)),
-                                    ('${B}',
-                                     ba.Lstr(resource=self._r +
-                                             '.signInWithGameCircleText'))]),
-                on_activate_call=lambda: self._sign_in_press('Game Circle'))
-            if first_selectable is None:
-                first_selectable = btn
-            if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
-            ba.widget(edit=btn, left_widget=bbtn)
-            ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
-            self._sign_in_text = None
-
         if show_v2_sign_in_button:
             button_width = 350
             v -= sign_in_button_space
@@ -629,8 +594,6 @@ class AccountSettingsWindow(ba.Window):
             account_type = ba.internal.get_v1_account_type()
             if account_type == 'Game Center':
                 account_type_name = ba.Lstr(resource='gameCenterText')
-            elif account_type == 'Game Circle':
-                account_type_name = ba.Lstr(resource='gameCircleText')
             else:
                 raise ValueError("unknown account type: '" +
                                  str(account_type) + "'")
