@@ -123,10 +123,10 @@ def cloud_console_exec(code: str) -> None:
         if evalcode is not None:
             # pylint: disable=eval-used
             value = eval(evalcode, vars(__main__), vars(__main__))
-            # For eval-able statements, print the resulting value
-            # if it is not None.
+            # For eval-able statements, print the resulting value if
+            # it is not None (just like standard Python interpreter).
             if value is not None:
-                print(value, file=sys.stderr)
+                print(repr(value), file=sys.stderr)
 
         # Fall back to exec if we couldn't compile it as eval.
         else:
