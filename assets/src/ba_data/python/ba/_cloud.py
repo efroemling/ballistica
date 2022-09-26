@@ -99,3 +99,46 @@ class CloudSubsystem:
         Must be called from a background thread.
         """
         raise RuntimeError('Cloud functionality is not available.')
+
+
+def cloud_console_exec(code: str) -> None:
+    """Called by the cloud console to run code in the logic thread."""
+    import sys
+    import logging
+    import __main__
+    from ba._generated.enums import TimeType
+    try:
+
+        # First try it as eval.
+        try:
+            evalcode = compile(code, '<console>', 'eval')
+        except SyntaxError:
+            evalcode = None
+        except Exception:
+            # hmm; when we can't compile it as eval will we always get
+            # syntax error?
+            logging.exception(
+                'unexpected error compiling code for cloud-console eval.')
+            evalcode = None
+        if evalcode is not None:
+            # pylint: disable=eval-used
+            value = eval(evalcode, vars(__main__), vars(__main__))
+            # For eval-able statements, print the resulting value if
+            # it is not None (just like standard Python interpreter).
+            if value is not None:
+                print(repr(value), file=sys.stderr)
+
+        # Fall back to exec if we couldn't compile it as eval.
+        else:
+            execcode = compile(code, '<console>', 'exec')
+            # pylint: disable=exec-used
+            exec(execcode, vars(__main__), vars(__main__))
+    except Exception:
+        import traceback
+        apptime = _ba.time(TimeType.REAL)
+        print(f'Exec error at time {apptime:.2f}.', file=sys.stderr)
+        traceback.print_exc()
+
+        # This helps the logging system ship stderr back to the
+        # cloud promptly.
+        sys.stderr.flush()
