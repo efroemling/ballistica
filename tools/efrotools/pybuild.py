@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER = '3.10'
-PY_VER_EXACT_ANDROID = '3.10.5'
-PY_VER_EXACT_APPLE = '3.10.4'
+PY_VER_EXACT_ANDROID = '3.10.7'
+PY_VER_EXACT_APPLE = '3.10.7'
 
 ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
 
@@ -80,18 +80,18 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Customize our minimum version requirements
     txt = replace_exact(
         txt,
-        'CFLAGS-macOS=-mmacosx-version-min=10.15\n',
-        'CFLAGS-macOS=-mmacosx-version-min=10.15\n',
+        'VERSION_MIN-macOS=10.15\n',
+        'VERSION_MIN-macOS=10.15\n',
     )
     txt = replace_exact(
         txt,
-        'CFLAGS-iOS=-mios-version-min=12.0 ',
-        'CFLAGS-iOS=-mios-version-min=12.0 ',
+        'VERSION_MIN-iOS=12.0\n',
+        'VERSION_MIN-iOS=12.0\n',
     )
     txt = replace_exact(
         txt,
-        'CFLAGS-tvOS=-mtvos-version-min=9.0 ',
-        'CFLAGS-tvOS=-mtvos-version-min=9.0 ',
+        'VERSION_MIN-tvOS=9.0\n',
+        'VERSION_MIN-tvOS=9.0\n',
     )
 
     assert '--with-pydebug' not in txt
@@ -119,23 +119,30 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Inject our custom modifications to fire right after their normal
     # Setup.local filtering and right before building (and pass the same
     # 'slice' value they use so we can use it too).
-    txt = replace_exact(
-        txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
-        '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n',
-        '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
-        '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n'
-        '\tcd $$(PYTHON_DIR-$(target)) && '
-        f'../../../../../tools/pcommand python_apple_patch {arch} '
-        '"$$(SLICE-$$(SDK-$(target)))"\n')
-    txt = replace_exact(
-        txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
-        '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n',
-        '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
-        '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n'
-        '\tcd $$(PYTHON_DIR-$(os)) && '
-        f'../../../../../tools/pcommand python_apple_patch {arch} '
-        '"$$(SLICE-macosx)"\n')
-
+    # txt = replace_exact(
+    #     txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
+    #     '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n',
+    #     '\t\t\tsed -e "s/{{slice}}/$$(SLICE-$$(SDK-$(target)))/g" \\\n'
+    #     '\t\t\t> $$(PYTHON_DIR-$(target))/Modules/Setup.local\n'
+    #     '\tcd $$(PYTHON_DIR-$(target)) && '
+    #     f'../../../../../tools/pcommand python_apple_patch {arch} '
+    #     '"$$(SLICE-$$(SDK-$(target)))"\n')
+    # txt = replace_exact(
+    #     txt, '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
+    #     '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n',
+    #     '\t\t\tsed -e "s/{{slice}}/$$(SLICE-macosx)/g" \\\n'
+    #     '\t\t\t> $$(PYTHON_DIR-$(os))/Modules/Setup.local\n'
+    #     '\tcd $$(PYTHON_DIR-$(os)) && '
+    #     f'../../../../../tools/pcommand python_apple_patch {arch} '
+    #     '"$$(SLICE-macosx)"\n')
+    # txt = replace_exact(
+    #     txt,
+    #     '	# Configure target Python\n',
+    #     '	# Configure target Python\n'
+    #     f'\t../../../../../tools/pcommand python_apple_patch'
+    #     f'{arch} wtfslice\n',
+    #     count=2,
+    # )
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.
@@ -228,8 +235,8 @@ def apple_patch(arch: str, slc: str) -> None:
     # blow away all the tweaks that this setup does to Setup.local and
     # instead apply our very similar ones directly to Setup, just as we
     # do for android.
-    with open('Modules/Setup.local', 'w', encoding='utf-8') as outfile:
-        outfile.write('# cleared by efrotools build\n')
+    # with open('Modules/Setup.local', 'w', encoding='utf-8') as outfile:
+    #     outfile.write('# cleared by efrotools build\n')
 
     _patch_setup_file('apple', arch, slc)
     _patch_py_ssl()
@@ -291,6 +298,10 @@ def android_patch_ssl() -> None:
 
 
 def _patch_py_ssl() -> None:
+
+    # UPDATE: this is now included in Python as of 3.10.6; woohoo!
+    if bool(True):
+        return
 
     # I've tracked down an issue where Python's SSL module
     # can spend lots of time in SSL_CTX_set_default_verify_paths()

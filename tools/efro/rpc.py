@@ -61,6 +61,21 @@ class _PeerInfo:
 OUR_PROTOCOL = 2
 
 
+def ssl_stream_writer_underlying_transport_info(
+        writer: asyncio.StreamWriter) -> str:
+    """For debugging SSL Stream connections; returns raw transport info."""
+    # Note: accessing internals here so just returning info and not
+    # actual objs to reduce potential for breakage.
+    transport = getattr(writer, '_transport', None)
+    if transport is not None:
+        sslproto = getattr(transport, '_ssl_protocol', None)
+        if sslproto is not None:
+            raw_transport = getattr(sslproto, '_transport', None)
+            if raw_transport is not None:
+                return str(raw_transport)
+    return '(not found)'
+
+
 class _InFlightMessage:
     """Represents a message that is out on the wire."""
 
@@ -138,6 +153,8 @@ class RPCEndpoint:
         self._peer_info: _PeerInfo | None = None
         self._keepalive_interval = keepalive_interval
         self._keepalive_timeout = keepalive_timeout
+        self._did_close_writer = False
+        self._did_wait_closed_writer = False
 
         # Need to hold weak-refs to these otherwise it creates dep-loops
         # which keeps us alive.
@@ -155,6 +172,19 @@ class RPCEndpoint:
             peername = self._writer.get_extra_info('peername')
             self._debug_print_call(
                 f'{self._label}: connected to {peername} at {self._tm()}.')
+
+    def __del__(self) -> None:
+        if self._run_called:
+            if not self._did_close_writer:
+                logging.warning(
+                    'RPCEndpoint %d dying with run'
+                    ' called but writer not closed (transport=%s).', id(self),
+                    ssl_stream_writer_underlying_transport_info(self._writer))
+            elif not self._did_wait_closed_writer:
+                logging.warning(
+                    'RPCEndpoint %d dying with run called'
+                    ' but writer not wait-closed (transport=%s).', id(self),
+                    ssl_stream_writer_underlying_transport_info(self._writer))
 
     async def run(self) -> None:
         """Run the endpoint until the connection is lost or closed.
@@ -261,6 +291,9 @@ class RPCEndpoint:
         try:
             return await asyncio.wait_for(msgobj.wait_task, timeout=timeout)
         except asyncio.CancelledError as exc:
+            # Question: we assume this means the above wait_for() was
+            # cancelled; what happens if a task running *us* is cancelled
+            # though?
             if self._debug_print:
                 self._debug_print_call(
                     f'{self._label}: message {message_id} was cancelled.')
@@ -297,9 +330,12 @@ class RPCEndpoint:
         for task in self._get_live_tasks():
             task.cancel()
 
+        # Close our writer.
+        assert not self._did_close_writer
         if self._debug_print:
             self._debug_print_call(f'{self._label}: closing writer...')
         self._writer.close()
+        self._did_close_writer = True
 
         # We don't need this anymore and it is likely to be creating a
         # dependency loop.
@@ -311,6 +347,7 @@ class RPCEndpoint:
 
     async def wait_closed(self) -> None:
         """I said seagulls; mmmm; stop it now."""
+        # pylint: disable=too-many-branches
         self._check_env()
 
         # Make sure we only *enter* this call once.
@@ -320,6 +357,10 @@ class RPCEndpoint:
 
         if not self._closing:
             raise RuntimeError('Must be called after close()')
+
+        if not self._did_close_writer:
+            logging.warning('RPCEndpoint wait_closed() called but never'
+                            ' explicitly closed writer.')
 
         live_tasks = self._get_live_tasks()
         if self._debug_print:
@@ -333,10 +374,8 @@ class RPCEndpoint:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                if self._debug_print:
-                    logging.error(
-                        'Got unexpected error cleaning up %s task: %s',
-                        self._label, result)
+                logging.warning('Got unexpected error cleaning up %s task: %s',
+                                self._label, result)
 
         if self._debug_print:
             self._debug_print_call(
@@ -354,10 +393,14 @@ class RPCEndpoint:
             # indefinitely. See https://github.com/python/cpython/issues/83939
             # It sounds like this should be fixed in 3.11 but for now just
             # forcing the issue with a timeout here.
+            assert not self._did_wait_closed_writer
+            self._did_wait_closed_writer = True
             await asyncio.wait_for(self._writer.wait_closed(), timeout=10.0)
         except asyncio.TimeoutError:
-            logging.info('Timeout on _writer.wait_closed() for %s.',
-                         self._label)
+            logging.info(
+                'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
+                self._label,
+                ssl_stream_writer_underlying_transport_info(self._writer))
             if self._debug_print:
                 self._debug_print_call(
                     f'{self._label}: got timeout in _writer.wait_closed();'
@@ -370,6 +413,10 @@ class RPCEndpoint:
                     self._debug_print_call(
                         f'{self._label}: silently ignoring error in'
                         f' _writer.wait_closed(): {exc}.')
+        except asyncio.CancelledError:
+            logging.warning('RPCEndpoint.wait_closed()'
+                            ' got asyncio.CancelledError; not expected.')
+            raise
 
     def _tm(self) -> str:
         """Simple readable time value for debugging."""

@@ -603,6 +603,7 @@
       <w>depsval</w>
       <w>dereferencing</w>
       <w>descpos</w>
+      <w>desctype</w>
       <w>dest</w>
       <w>destdir</w>
       <w>devel</w>
@@ -1046,9 +1047,12 @@
       <w>getname</w>
       <w>getnodes</w>
       <w>getnodetype</w>
+      <w>getobj</w>
+      <w>getobjs</w>
       <w>getopt</w>
       <w>getplayer</w>
       <w>getpt</w>
+      <w>getrefs</w>
       <w>getremote</w>
       <w>getres</w>
       <w>getscanresults</w>
@@ -1719,6 +1723,7 @@
       <w>nvidia</w>
       <w>nyko</w>
       <w>obj's</w>
+      <w>objid</w>
       <w>objname</w>
       <w>objs</w>
       <w>objt</w>
@@ -1794,6 +1799,8 @@
       <w>packagepathstr</w>
       <w>packageversion</w>
       <w>painttxtattr</w>
+      <w>pairsj</w>
+      <w>pairss</w>
       <w>palmos</w>
       <w>pandoc</w>
       <w>pandroid</w>
@@ -1947,6 +1954,7 @@
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printpaths</w>
+      <w>printrefs</w>
       <w>priv</w>
       <w>privatetab</w>
       <w>proactor</w>
@@ -2630,6 +2638,8 @@
       <w>tplayer</w>
       <w>tpos</w>
       <w>tproxy</w>
+      <w>tpsj</w>
+      <w>tpss</w>
       <w>tracebacks</w>
       <w>tracemalloc</w>
       <w>tradeoff</w>
@@ -2644,6 +2654,7 @@
       <w>trynum</w>
       <w>tscale</w>
       <w>tscl</w>
+      <w>tsed</w>
       <w>tself</w>
       <w>tspc</w>
       <w>tsrcpath</w>
@@ -2843,6 +2854,7 @@
       <w>wsroot</w>
       <w>wtcolor</w>
       <w>wtflib</w>
+      <w>wtfslice</w>
       <w>wttxt</w>
       <w>wvmpth</w>
       <w>xach</w>

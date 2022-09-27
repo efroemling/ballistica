@@ -328,6 +328,7 @@
       <w>demangling</w>
       <w>denom</w>
       <w>dernit</w>
+      <w>desctype</w>
       <w>destdir</w>
       <w>dets</w>
       <w>dfba</w>
@@ -545,6 +546,8 @@
       <w>getname</w>
       <w>getnodes</w>
       <w>getnodetype</w>
+      <w>getobj</w>
+      <w>getobjs</w>
       <w>getpackagecollidemodel</w>
       <w>getpackagedata</w>
       <w>getpackagemodel</w>
@@ -553,6 +556,7 @@
       <w>getpublicpartyenabled</w>
       <w>getpublicpartymaxsize</w>
       <w>getqrcodetexture</w>
+      <w>getrefs</w>
       <w>getres</w>
       <w>getsession</w>
       <w>getsound</w>
@@ -955,6 +959,8 @@
       <w>outvalue</w>
       <w>ouya</w>
       <w>ovld</w>
+      <w>pairsj</w>
+      <w>pairss</w>
       <w>parameteriv</w>
       <w>passcode</w>
       <w>pathcapture</w>
@@ -1011,6 +1017,7 @@
       <w>printf</w>
       <w>printnodes</w>
       <w>printobjects</w>
+      <w>printrefs</w>
       <w>priv</w>
       <w>privatetab</w>
       <w>processinfoplistfile</w>
@@ -1347,6 +1354,8 @@
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
+      <w>tpsj</w>
+      <w>tpss</w>
       <w>tracebacks</w>
       <w>tracestr</w>
       <w>trackpad</w>
@@ -1361,6 +1370,7 @@
       <w>trimesh</w>
       <w>trimeshes</w>
       <w>trynum</w>
+      <w>tsed</w>
       <w>tself</w>
       <w>tsrcpath</w>
       <w>tunmd</w>
@@ -1469,6 +1479,7 @@
       <w>writeauxiliaryfile</w>
       <w>wspath</w>
       <w>wsroot</w>
+      <w>wtfslice</w>
       <w>wunused</w>
       <w>wvmpth</w>
       <w>xcframework</w>
