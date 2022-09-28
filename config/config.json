@@ -35,7 +35,8 @@
     "filelock",
     "Cocoa",
     "pdoc",
-    "certifi"
+    "certifi",
+    "psutil"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

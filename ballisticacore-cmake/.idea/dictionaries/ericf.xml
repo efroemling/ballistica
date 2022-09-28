@@ -913,6 +913,7 @@
       <w>oenval</w>
       <w>offsx</w>
       <w>offsy</w>
+      <w>ofile</w>
       <w>oiffsss</w>
       <w>okbtn</w>
       <w>oldbook</w>
@@ -1015,6 +1016,7 @@
       <w>prerun</w>
       <w>prettypath</w>
       <w>printf</w>
+      <w>printfiles</w>
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printrefs</w>

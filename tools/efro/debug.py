@@ -9,7 +9,7 @@ import types
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, TextIO
 
 ABS_MAX_LEVEL = 10
 
@@ -22,12 +22,12 @@ ABS_MAX_LEVEL = 10
 # returning these temporary references wherever possible.
 
 # A good test is running printrefs() repeatedly on some object that is
-# known to be static. If the list of references changes or the id or any
-# of the references, we're probably letting a temporary object sneak into
-# the results and should fix it.
+# known to be static. If the list of references or the ids or any
+# the listed references changes with each run, it's a good sign that
+# we're showing some temporary objects that we should be ignoring.
 
 
-def getobjs(cls: type, contains: str | None = None) -> list[Any]:
+def getobjs(cls: type | str, contains: str | None = None) -> list[Any]:
     """Return all garbage-collected objects matching criteria.
 
     'type' can be an actual type or a string in which case objects
@@ -73,8 +73,94 @@ def getobj(objid: int) -> Any:
 
 def getrefs(obj: Any) -> list[Any]:
     """Given an object, return things referencing it."""
-    v = vars()  # Ignore ref in locals.
+    v = vars()  # Ignore ref coming from locals.
     return [o for o in gc.get_referrers(obj) if o is not v]
+
+
+def printfiles(file: TextIO | None = None) -> None:
+    """Print info about open files in the current app."""
+    import io
+    file = sys.stderr if file is None else file
+    try:
+        import psutil
+    except ImportError:
+        print(
+            "Error: printfiles requires the 'psutil' module to be installed.",
+            file=file)
+        return
+
+    proc = psutil.Process()
+
+    # Let's grab all Python file handles so we can associate raw files
+    # with their Python objects when possible.
+    fileio_ids = {obj.fileno(): obj for obj in getobjs(io.FileIO)}
+    textio_ids = {obj.fileno(): obj for obj in getobjs(io.TextIOWrapper)}
+
+    # FIXME: we could do a more limited version of this when psutil is
+    # not present that simply includes Python's files.
+    print('Files open by this app (not limited to Python\'s):', file=file)
+    for i, ofile in enumerate(proc.open_files()):
+        # Mypy doesn't know about mode apparently.
+        mode = ofile.mode  # type: ignore
+        textio = textio_ids.get(ofile.fd)
+        textio_s = id(textio) if textio is not None else '<not found>'
+        fileio = fileio_ids.get(ofile.fd)
+        fileio_s = id(fileio) if fileio is not None else '<not found>'
+        print(f'#{i+1}: path={ofile.path!r},'
+              f' fd={ofile.fd}, mode={mode!r}, TextIOWrapper={textio_s},'
+              f' FileIO={fileio_s}')
+
+
+def printrefs(obj: Any,
+              max_level: int = 2,
+              exclude_objs: list[Any] | None = None,
+              expand_ids: list[int] | None = None,
+              file: TextIO | None = None) -> None:
+    """Print human readable list of objects referring to an object.
+
+    'max_level' specifies how many levels of recursion are printed.
+    'exclude_objs' can be a list of exact objects to skip if found in the
+      referrers list. This can be useful to avoid printing the local context
+      where the object was passed in from (locals(), etc).
+    'expand_ids' can be a list of object ids; if that particular object is
+      found, it will always be expanded even if max_level has been reached.
+    """
+    _printrefs(obj,
+               level=0,
+               max_level=max_level,
+               exclude_objs=[] if exclude_objs is None else exclude_objs,
+               expand_ids=[] if expand_ids is None else expand_ids,
+               file=sys.stderr if file is None else file)
+
+
+def printtypes(limit: int = 50, file: TextIO | None = None) -> None:
+    """Print a human readable list of which types have the most instances."""
+    assert limit > 0
+    objtypes: dict[str, int] = {}
+    gc.collect()  # Recommended before get_objects().
+    allobjs = gc.get_objects()
+    allobjc = len(allobjs)
+    for obj in allobjs:
+        modname = type(obj).__module__
+        tpname = type(obj).__qualname__
+        if modname != 'builtins':
+            tpname = f'{modname}.{tpname}'
+        objtypes[tpname] = objtypes.get(tpname, 0) + 1
+
+    # Presumably allobjs contains stack-frame/dict type stuff
+    # from this function call which in turn contain refs to allobjs.
+    # Let's try to prevent these huge lists from accumulating until
+    # the cyclical collector (hopefully) gets to them.
+    allobjs.clear()
+    del allobjs
+
+    print(f'Types most allocated ({allobjc} total objects):', file=file)
+    for i, tpitem in enumerate(
+            sorted(objtypes.items(), key=lambda x: x[1],
+                   reverse=True)[:limit]):
+        tpname, tpval = tpitem
+        percent = tpval / allobjc * 100.0
+        print(f'{i+1}: {tpname}: {tpval} ({percent:.2f}%)', file=file)
 
 
 def _desctype(obj: Any) -> str:
@@ -118,9 +204,9 @@ def _desc(obj: Any) -> str:
 
 
 def _printrefs(obj: Any, level: int, max_level: int, exclude_objs: list,
-               expand_ids: list[int]) -> None:
+               expand_ids: list[int], file: TextIO) -> None:
     ind = '  ' * level
-    print(ind + _desc(obj), file=sys.stderr)
+    print(ind + _desc(obj), file=file)
     v = vars()
     if level < max_level or (id(obj) in expand_ids and level < ABS_MAX_LEVEL):
         refs = getrefs(obj)
@@ -147,24 +233,5 @@ def _printrefs(obj: Any, level: int, max_level: int, exclude_objs: list,
                        level=level + 1,
                        max_level=max_level,
                        exclude_objs=exclude_objs + [refs],
-                       expand_ids=expand_ids)
-
-
-def printrefs(obj: Any,
-              max_level: int = 2,
-              exclude_objs: list[Any] | None = None,
-              expand_ids: list[int] | None = None) -> None:
-    """Print human readable list of objects referring to an object.
-
-    'max_level' specifies how many levels of recursion are printed.
-    'exclude_objs' can be a list of exact objects to skip if found in the
-      referrers list. This can be useful to avoid printing the local context
-      where the object was passed in from (locals(), etc).
-    'expand_ids' can be a list of object ids; if that particular object is
-      found, it will always be expanded even if max_level has been reached.
-    """
-    _printrefs(obj,
-               level=0,
-               max_level=max_level,
-               exclude_objs=[] if exclude_objs is None else exclude_objs,
-               expand_ids=[] if expand_ids is None else expand_ids)
+                       expand_ids=expand_ids,
+                       file=file)

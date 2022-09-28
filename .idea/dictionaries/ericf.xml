@@ -1736,6 +1736,7 @@
       <w>offsanchor</w>
       <w>offsx</w>
       <w>offsy</w>
+      <w>ofile</w>
       <w>ofval</w>
       <w>oggenc</w>
       <w>oghash</w>
@@ -1951,6 +1952,7 @@
       <w>priceraw</w>
       <w>printcolors</w>
       <w>printf</w>
+      <w>printfiles</w>
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printpaths</w>

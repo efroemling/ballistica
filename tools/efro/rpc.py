@@ -76,6 +76,44 @@ def ssl_stream_writer_underlying_transport_info(
     return '(not found)'
 
 
+def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
+    """Ensure a writer is closed; hacky workaround for odd hang."""
+    from efro.call import tpartial
+    from threading import Thread
+    # Hopefully can remove this in Python 3.11?...
+    # see issue with is_closing() below for more details.
+    transport = getattr(writer, '_transport', None)
+    if transport is not None:
+        sslproto = getattr(transport, '_ssl_protocol', None)
+        if sslproto is not None:
+            raw_transport = getattr(sslproto, '_transport', None)
+            if raw_transport is not None:
+                Thread(
+                    target=tpartial(
+                        _do_writer_force_close_check,
+                        weakref.ref(raw_transport),
+                    ),
+                    daemon=True,
+                ).start()
+
+
+def _do_writer_force_close_check(transport_weak: weakref.ref) -> None:
+    try:
+        # Attempt to bail as soon as the obj dies.
+        # If it hasn't done so by our timeout, force-kill it.
+        starttime = time.monotonic()
+        while time.monotonic() - starttime < 10.0:
+            time.sleep(0.1)
+            if transport_weak() is None:
+                return
+        transport = transport_weak()
+        if transport is not None:
+            logging.info('Forcing abort on stuck transport %s.', transport)
+            transport.abort()
+    except Exception:
+        logging.warning('Error in writer-force-close-check', exc_info=True)
+
+
 class _InFlightMessage:
     """Represents a message that is out on the wire."""
 
@@ -155,6 +193,7 @@ class RPCEndpoint:
         self._keepalive_timeout = keepalive_timeout
         self._did_close_writer = False
         self._did_wait_closed_writer = False
+        self._did_out_packets_buildup_warning = False
 
         # Need to hold weak-refs to these otherwise it creates dep-loops
         # which keeps us alive.
@@ -186,11 +225,26 @@ class RPCEndpoint:
                     ' but writer not wait-closed (transport=%s).', id(self),
                     ssl_stream_writer_underlying_transport_info(self._writer))
 
+        # Currently seeing rare issue where sockets don't go down;
+        # let's add a timer to force the issue until we can figure it out.
+        ssl_stream_writer_force_close_check(self._writer)
+
     async def run(self) -> None:
         """Run the endpoint until the connection is lost or closed.
 
         Handles closing the provided reader/writer on close.
         """
+        try:
+            await self._do_run()
+        except asyncio.CancelledError:
+            # We aren't really designed to be cancelled so let's warn
+            # if it happens.
+            logging.warning('RPCEndpoint.run got CancelledError;'
+                            ' want to try and avoid this.')
+            raise
+
+    async def _do_run(self) -> None:
+
         self._check_env()
 
         if self._run_called:
@@ -216,9 +270,13 @@ class RPCEndpoint:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                if self._debug_print:
-                    logging.error('Got unexpected error from %s core task: %s',
-                                  self._label, result)
+                logging.warning('Got unexpected error from %s core task: %s',
+                                self._label, result)
+
+        if not all(task.done() for task in core_tasks):
+            logging.warning(
+                'RPCEndpoint %d: not all core tasks marked done after gather.',
+                id(self))
 
         # Shut ourself down.
         try:
@@ -257,6 +315,9 @@ class RPCEndpoint:
         # message_id is a 16 bit looping value.
         message_id = self._next_message_id
         self._next_message_id = (self._next_message_id + 1) % 65536
+
+        # FIXME - should handle backpressure (waiting here if there are
+        # enough packets already enqueued).
 
         if len(message) > 65535:
             # Payload consists of type (1b), message_id (2b),
@@ -377,6 +438,11 @@ class RPCEndpoint:
                 logging.warning('Got unexpected error cleaning up %s task: %s',
                                 self._label, result)
 
+        if not all(task.done() for task in live_tasks):
+            logging.warning(
+                'RPCEndpoint %d: not all live tasks marked done after gather.',
+                id(self))
+
         if self._debug_print:
             self._debug_print_call(
                 f'{self._label}: tasks finished; waiting for writer close...')
@@ -393,9 +459,7 @@ class RPCEndpoint:
             # indefinitely. See https://github.com/python/cpython/issues/83939
             # It sounds like this should be fixed in 3.11 but for now just
             # forcing the issue with a timeout here.
-            assert not self._did_wait_closed_writer
-            self._did_wait_closed_writer = True
-            await asyncio.wait_for(self._writer.wait_closed(), timeout=10.0)
+            await asyncio.wait_for(self._writer.wait_closed(), timeout=30.0)
         except asyncio.TimeoutError:
             logging.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
@@ -417,6 +481,8 @@ class RPCEndpoint:
             logging.warning('RPCEndpoint.wait_closed()'
                             ' got asyncio.CancelledError; not expected.')
             raise
+        assert not self._did_wait_closed_writer
+        self._did_wait_closed_writer = True
 
     def _tm(self) -> str:
         """Simple readable time value for debugging."""
@@ -541,7 +607,21 @@ class RPCEndpoint:
                 self._have_out_packets.clear()
 
             self._writer.write(data)
-            # await self._writer.drain()
+
+            # This should keep our writer from buffering huge amounts
+            # of outgoing data. We must remember though that we also
+            # need to prevent _out_packets from growing too large and
+            # that part's on us.
+            await self._writer.drain()
+
+            # For now we're not applying backpressure, but let's make
+            # noise if this gets out of hand.
+            if len(self._out_packets) > 200:
+                if not self._did_out_packets_buildup_warning:
+                    logging.warning(
+                        '_out_packets building up too'
+                        ' much on RPCEndpoint %s.', id(self))
+                    self._did_out_packets_buildup_warning = True
 
     async def _run_keepalive_task(self) -> None:
         """Send periodic keepalive packets."""
