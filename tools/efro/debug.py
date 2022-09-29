@@ -101,7 +101,11 @@ def printfiles(file: TextIO | None = None) -> None:
     print('Files open by this app (not limited to Python\'s):', file=file)
     for i, ofile in enumerate(proc.open_files()):
         # Mypy doesn't know about mode apparently.
-        mode = ofile.mode  # type: ignore
+        # (and can't use type: ignore because we don't require psutil
+        # and then mypy complains about unused ignore comment when its
+        # not present)
+        mode = getattr(ofile, 'mode')
+        assert isinstance(mode, str)
         textio = textio_ids.get(ofile.fd)
         textio_s = id(textio) if textio is not None else '<not found>'
         fileio = fileio_ids.get(ofile.fd)
