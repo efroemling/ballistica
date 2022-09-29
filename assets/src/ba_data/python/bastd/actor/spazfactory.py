@@ -50,6 +50,9 @@ class SpazFactory:
     punch_sound_stronger: ba.Sound
     """A really really strong sounding punch ba.Sound."""
 
+    pop_sound: ba.Sound
+    """A pop ba.Sound."""
+
     swish_sound: ba.Sound
     """A punch swish ba.Sound."""
 
@@ -106,6 +109,7 @@ class SpazFactory:
         self.punch_sound_strong = (ba.getsound('punchStrong01'),
                                    ba.getsound('punchStrong02'))
         self.punch_sound_stronger = ba.getsound('superPunch')
+        self.pop_sound = ba.getsound('pop01')
         self.swish_sound = ba.getsound('punchSwish')
         self.block_sound = ba.getsound('block')
         self.shatter_sound = ba.getsound('shatter')
