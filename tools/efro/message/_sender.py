@@ -48,6 +48,7 @@ class MessageSender:
                                            None] | None = None
         self._decode_filter_call: Callable[
             [Any, Message, dict, Response | SysResponse], None] | None = None
+        self._peer_desc_call: Callable[[Any], str] | None = None
 
     def send_method(
             self, call: Callable[[Any, str],
@@ -102,9 +103,20 @@ class MessageSender:
         self._decode_filter_call = call
         return call
 
+    def peer_desc_method(self, call: Callable[[Any],
+                                              str]) -> Callable[[Any], str]:
+        """Function decorator for defining peer descriptions.
+
+        These are included in error messages or other diagnostics.
+        """
+        assert self._peer_desc_call is None
+        self._peer_desc_call = call
+        return call
+
     def send(self, bound_obj: Any, message: Message) -> Response | None:
         """Send a message synchronously."""
         return self.send_split_part_2(
+            bound_obj=bound_obj,
             message=message,
             raw_response=self.send_split_part_1(
                 bound_obj=bound_obj,
@@ -116,6 +128,7 @@ class MessageSender:
                          message: Message) -> Response | None:
         """Send a message asynchronously."""
         return self.send_split_part_2(
+            bound_obj=bound_obj,
             message=message,
             raw_response=await self.send_split_part_1_async(
                 bound_obj=bound_obj,
@@ -178,7 +191,7 @@ class MessageSender:
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     def send_split_part_2(
-            self, message: Message,
+            self, bound_obj: Any, message: Message,
             raw_response: Response | SysResponse) -> Response | None:
         """Complete message sending (both sync and async).
 
@@ -186,7 +199,7 @@ class MessageSender:
         for when message sending and response handling need to happen
         in different contexts/threads.
         """
-        response = self._unpack_raw_response(raw_response)
+        response = self._unpack_raw_response(bound_obj, raw_response)
         assert (response is None
                 or type(response) in type(message).get_response_types())
         return response
@@ -228,7 +241,8 @@ class MessageSender:
         return response
 
     def _unpack_raw_response(
-            self, raw_response: Response | SysResponse) -> Response | None:
+            self, bound_obj: Any,
+            raw_response: Response | SysResponse) -> Response | None:
         """Given a raw Response, unpacks to special values or Exceptions.
 
         The result of this call is what should be passed to users.
@@ -259,7 +273,9 @@ class MessageSender:
                 raise CleanError(raw_response.error_message)
 
             # Everything else gets lumped in as a remote error.
-            raise RemoteError(raw_response.error_message)
+            raise RemoteError(raw_response.error_message,
+                              peer_desc=('peer' if self._peer_desc_call is None
+                                         else self._peer_desc_call(bound_obj)))
 
         assert isinstance(raw_response, Response)
         return raw_response
@@ -309,5 +325,6 @@ class BoundMessageSender:
             self, message: Message,
             raw_response: Response | SysResponse) -> Response | None:
         """Split send (part 2 of 2)."""
-        return self._sender.send_split_part_2(message=message,
+        return self._sender.send_split_part_2(bound_obj=self._obj,
+                                              message=message,
                                               raw_response=raw_response)
