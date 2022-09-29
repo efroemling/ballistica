@@ -42,6 +42,8 @@
       <w>alext</w>
       <w>alibaba</w>
       <w>allerrors</w>
+      <w>allobjc</w>
+      <w>allobjs</w>
       <w>allocs</w>
       <w>allwarnings</w>
       <w>alot</w>
@@ -907,6 +909,7 @@
       <w>objexists</w>
       <w>objid</w>
       <w>objtoyaml</w>
+      <w>objtypes</w>
       <w>obstack</w>
       <w>obvs</w>
       <w>oculus</w>
@@ -1020,6 +1023,7 @@
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printrefs</w>
+      <w>printtypes</w>
       <w>priv</w>
       <w>privatetab</w>
       <w>processinfoplistfile</w>
@@ -1356,8 +1360,11 @@
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
+      <w>tpitem</w>
+      <w>tpname</w>
       <w>tpsj</w>
       <w>tpss</w>
+      <w>tpval</w>
       <w>tracebacks</w>
       <w>tracestr</w>
       <w>trackpad</w>

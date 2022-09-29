@@ -62,9 +62,17 @@ class RemoteError(Exception):
     as a catch-all.
     """
 
+    def __init__(self, msg: str, peer_desc: str):
+        super().__init__(msg)
+        self._peer_desc = peer_desc
+
     def __str__(self) -> str:
         s = ''.join(str(arg) for arg in self.args)
-        return f'Remote Exception Follows:\n{s}'
+        # Indent so we can more easily tell what is the remote part when
+        # this is in the middle of a long exception chain.
+        padding = '  '
+        s = ''.join(padding + line for line in s.splitlines(keepends=True))
+        return f'The following occurred on {self._peer_desc}:\n{s}'
 
 
 class IntegrityError(ValueError):

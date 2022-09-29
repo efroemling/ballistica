@@ -65,6 +65,8 @@
       <w>alarmsound</w>
       <w>alibaba</w>
       <w>allerrors</w>
+      <w>allobjc</w>
+      <w>allobjs</w>
       <w>allpaths</w>
       <w>allsettings</w>
       <w>allteams</w>
@@ -1729,6 +1731,7 @@
       <w>objt</w>
       <w>objtoyaml</w>
       <w>objtype</w>
+      <w>objtypes</w>
       <w>obval</w>
       <w>occurrances</w>
       <w>oculus</w>
@@ -1957,6 +1960,7 @@
       <w>printobjects</w>
       <w>printpaths</w>
       <w>printrefs</w>
+      <w>printtypes</w>
       <w>priv</w>
       <w>privatetab</w>
       <w>proactor</w>
@@ -2637,11 +2641,14 @@
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
+      <w>tpitem</w>
       <w>tplayer</w>
+      <w>tpname</w>
       <w>tpos</w>
       <w>tproxy</w>
       <w>tpsj</w>
       <w>tpss</w>
+      <w>tpval</w>
       <w>tracebacks</w>
       <w>tracemalloc</w>
       <w>tradeoff</w>
