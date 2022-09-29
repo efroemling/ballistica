@@ -1011,6 +1011,7 @@ class Spaz(ba.Actor):
                             msg.pos[1] + msg.force_direction[1] * 0.02,
                             msg.pos[2] + msg.force_direction[2] * 0.02)
                 flash_color = (1.0, 0.8, 0.4)
+
                 light = ba.newnode(
                     'light',
                     attrs={
@@ -1039,8 +1040,8 @@ class Spaz(ba.Actor):
                           count=min(10, 1 + int(damage * 0.01)),
                           scale=0.4,
                           spread=0.1)
-            if self.hitpoints > 0:
 
+            if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
@@ -1221,6 +1222,9 @@ class Spaz(ba.Actor):
 
         if (self.land_mine_count <= 0 and self.bomb_count <= 0) or self.frozen:
             return None
+        ba.playsound(SpazFactory.get().pop_sound,
+                     0.2,
+                     position=self.node.position)
         assert self.node
         pos = self.node.position_forward
         vel = self.node.velocity
