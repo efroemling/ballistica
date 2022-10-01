@@ -65,6 +65,8 @@
       <w>alarmsound</w>
       <w>alibaba</w>
       <w>allerrors</w>
+      <w>allobjc</w>
+      <w>allobjs</w>
       <w>allpaths</w>
       <w>allsettings</w>
       <w>allteams</w>
@@ -603,6 +605,7 @@
       <w>depsval</w>
       <w>dereferencing</w>
       <w>descpos</w>
+      <w>desctype</w>
       <w>dest</w>
       <w>destdir</w>
       <w>devel</w>
@@ -1046,9 +1049,12 @@
       <w>getname</w>
       <w>getnodes</w>
       <w>getnodetype</w>
+      <w>getobj</w>
+      <w>getobjs</w>
       <w>getopt</w>
       <w>getplayer</w>
       <w>getpt</w>
+      <w>getrefs</w>
       <w>getremote</w>
       <w>getres</w>
       <w>getscanresults</w>
@@ -1719,11 +1725,13 @@
       <w>nvidia</w>
       <w>nyko</w>
       <w>obj's</w>
+      <w>objid</w>
       <w>objname</w>
       <w>objs</w>
       <w>objt</w>
       <w>objtoyaml</w>
       <w>objtype</w>
+      <w>objtypes</w>
       <w>obval</w>
       <w>occurrances</w>
       <w>oculus</w>
@@ -1731,6 +1739,7 @@
       <w>offsanchor</w>
       <w>offsx</w>
       <w>offsy</w>
+      <w>ofile</w>
       <w>ofval</w>
       <w>oggenc</w>
       <w>oghash</w>
@@ -1794,6 +1803,8 @@
       <w>packagepathstr</w>
       <w>packageversion</w>
       <w>painttxtattr</w>
+      <w>pairsj</w>
+      <w>pairss</w>
       <w>palmos</w>
       <w>pandoc</w>
       <w>pandroid</w>
@@ -1944,9 +1955,12 @@
       <w>priceraw</w>
       <w>printcolors</w>
       <w>printf</w>
+      <w>printfiles</w>
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printpaths</w>
+      <w>printrefs</w>
+      <w>printtypes</w>
       <w>priv</w>
       <w>privatetab</w>
       <w>proactor</w>
@@ -2627,9 +2641,14 @@
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
+      <w>tpitem</w>
       <w>tplayer</w>
+      <w>tpname</w>
       <w>tpos</w>
       <w>tproxy</w>
+      <w>tpsj</w>
+      <w>tpss</w>
+      <w>tpval</w>
       <w>tracebacks</w>
       <w>tracemalloc</w>
       <w>tradeoff</w>
@@ -2644,6 +2663,7 @@
       <w>trynum</w>
       <w>tscale</w>
       <w>tscl</w>
+      <w>tsed</w>
       <w>tself</w>
       <w>tspc</w>
       <w>tsrcpath</w>
@@ -2843,6 +2863,7 @@
       <w>wsroot</w>
       <w>wtcolor</w>
       <w>wtflib</w>
+      <w>wtfslice</w>
       <w>wttxt</w>
       <w>wvmpth</w>
       <w>xach</w>

@@ -199,7 +199,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_ui.py \
   build/ba_data/python/ba/_workspace.py \
-  build/ba_data/python/ba/deprecated.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/macmusicapp.py \
   build/ba_data/python/ba/modutils.py \
@@ -451,7 +450,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_ui.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_workspace.cpython-310.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/deprecated.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/macmusicapp.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/modutils.cpython-310.opt-1.pyc \
@@ -669,6 +667,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/_pathcapture.py \
   build/ba_data/python/efro/dataclassio/_prep.py \
   build/ba_data/python/efro/dataclassio/extras.py \
+  build/ba_data/python/efro/debug.py \
   build/ba_data/python/efro/error.py \
   build/ba_data/python/efro/log.py \
   build/ba_data/python/efro/message/__init__.py \
@@ -700,6 +699,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-310.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/debug.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/log.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/message/__pycache__/__init__.cpython-310.opt-1.pyc \

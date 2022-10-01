@@ -10,7 +10,7 @@
 namespace ballistica {
 
 // FIXME - should be static member var
-PythonContextCall* PythonContextCall::current_call_ = nullptr;
+PythonContextCall* PythonContextCall::current_call_{};
 
 PythonContextCall::PythonContextCall(PyObject* obj_in) {
   assert(InLogicThread());
