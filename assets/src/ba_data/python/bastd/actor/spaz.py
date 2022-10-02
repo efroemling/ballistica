@@ -1041,7 +1041,7 @@ class Spaz(ba.Actor):
                           scale=0.4,
                           spread=0.1)
 
-            if self.hitpoints > 0:
+            if self.hitpoints >= 0:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
@@ -1067,7 +1067,7 @@ class Spaz(ba.Actor):
                                     msg.get_source_player(ba.Player)))
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
-                if self.frozen and (damage > 200 or self.hitpoints <= 0):
+                if self.frozen and (damage >= 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
