@@ -52,7 +52,8 @@ class MessageProtocol:
 
         When an exception is not covered by the optional forwarding
         mechanisms above, it will come across as efro.error.RemoteError
-        and the exception will be logged on the receiver end.
+        and the exception will be logged on the receiver
+        end - at least by default (see details below).
 
         If 'remote_errors_include_stack_traces' is True, stringified
         stack traces will be returned with efro.error.RemoteError
@@ -64,16 +65,16 @@ class MessageProtocol:
         efro.error.RemoteError being returned to the sender, the
         exception will be logged on the receiver. This is because the
         goal is usually to avoid returning opaque RemoteErrors and to
-        instead return something meaningful as part of an expected
+        instead return something meaningful as part of the expected
         response type (even if that value itself represents a logical
         error state). If 'log_remote_errors' is False, however, such
         exceptions will not be logged on the receiver. This can be
         useful in combination with 'remote_errors_include_stack_traces'
         and 'forward_clean_errors' in situations where all error
         logging/management will be happening on the sender end. Be
-        aware, however, that in that case
-        efro.error.CommunicationErrors can possibly prevent such error
-        messages from ever being seen.
+        aware, however, that in that case it may be possible for
+        communication errors to prevent such error messages from
+        ever being seen.
         """
         # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}

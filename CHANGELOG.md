@@ -1,4 +1,4 @@
-### 1.7.10 (build 20889, api 7, 2022-10-07)
+### 1.7.10 (build 20890, api 7, 2022-10-07)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.
 - Exceptions in the cloud-console now print to stderr instead of logging.exception(). This means they aren't a pretty red color anymore, but this will keep cloud-console behaving well with things like servers where logging.exception() might trigger alarms or otherwise. This is also consistent with standard interactive Python behavior.
 - Cloud console now shows the device name at the top instead of simply 'Console' while connected.
@@ -10,7 +10,9 @@
 - The v2-transport system will now properly reestablish account connectivity when asked to refresh its connection (the cloud does this periodically so regional cloud servers can be restarted as needed). Practically this means your app won't stop showing up under the ballistica.net devices section after its been running for a while; a problem previous builds had.
 - The v2-transport system can now establish more than one connection at a time, which allows the app to gracefully transition to a new connection when the old is about to expire without any period of no connectivity. To test this functionality, set env var `BA_DEBUG_PRINT_V2_TRANSPORT=1` to see transport debug messages and `BA_DEBUG_V2_TRANSPORT_SHORT_DURATION=1` to cause the cloud to request a connection-refresh every 30 seconds or so.
 - V2 accounts now consider themselves instantly signed in if they were signed in when the app last ran. They still need to contact the master-server before anything important can happen, but this should help keep things feel faster in general.
-- Due to v2-transport improvements, pressing the 'End Session Now' button in ballistica.net account settings should now instantly log you out of all apps using that session.
+- Due to v2-transport improvements, pressing the 'End Session Now' button in ballistica.net account settings should now instantly log you out of all apps using that session (ones that are online at least). Previously this would often not take effect until something like an app relaunch.
+- Fixes an issue where the tournament entry window could remain stuck on top when following a 'get more tickets' link. (Thanks itsre3!)
+- The main menu now says 'End Test' when in a stress test instead of 'End Game' (Thanks vishal332008!)
 
 ### 1.7.9 (build 20880, api 7, 2022-09-24)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).
