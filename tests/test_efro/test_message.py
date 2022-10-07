@@ -990,8 +990,9 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
     response4 = asyncio.run(obj.msg.send_async(_TMsg1(ival=0)))
     assert isinstance(response4, _TResp1)
 
-    # Nothing up to this point should have logged any warnings/errors/etc.
-    assert not any(r.levelno >= logging.WARNING for r in caplog.records)
+    # Nothing up to this point should have logged any errors.
+    # (note that warnings may happen since asyncio can complain about timing)
+    assert not any(r.levelno >= logging.ERROR for r in caplog.records)
 
     # Remote CleanErrors should come across locally as the same and
     # no errors should be logged.
