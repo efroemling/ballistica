@@ -61,6 +61,7 @@ class ErrorSysResponse(SysResponse):
         REMOTE_CLEAN = 1
         LOCAL = 2
         COMMUNICATION = 3
+        REMOTE_COMMUNICATION = 4
 
     error_message: Annotated[str, IOAttrs('m')]
     error_type: Annotated[ErrorType, IOAttrs('e')] = ErrorType.REMOTE

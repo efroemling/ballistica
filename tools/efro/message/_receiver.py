@@ -260,14 +260,14 @@ class MessageReceiver:
         return self.protocol.encode_dict(response_dict)
 
     def encode_error_response(self, bound_obj: Any, message: Message | None,
-                              exc: Exception) -> str:
-        """Given an error, return a response ready for sending."""
-        response = self.protocol.error_to_response(exc)
+                              exc: Exception) -> tuple[str, bool]:
+        """Given an error, return sysresponse str and whether to log."""
+        response, dolog = self.protocol.error_to_response(exc)
         response_dict = self.protocol.response_to_dict(response)
         if self._encode_filter_call is not None:
             self._encode_filter_call(bound_obj, message, response,
                                      response_dict)
-        return self.protocol.encode_dict(response_dict)
+        return self.protocol.encode_dict(response_dict), dolog
 
     def handle_raw_message(self,
                            bound_obj: Any,
@@ -296,7 +296,11 @@ class MessageReceiver:
             if (raise_unregistered
                     and isinstance(exc, UnregisteredMessageIDError)):
                 raise
-            return self.encode_error_response(bound_obj, msg_decoded, exc)
+            rstr, dolog = self.encode_error_response(bound_obj, msg_decoded,
+                                                     exc)
+            if dolog:
+                logging.exception('Error in efro.message handling.')
+            return rstr
 
     async def handle_raw_message_async(
             self,
@@ -324,7 +328,11 @@ class MessageReceiver:
             if (raise_unregistered
                     and isinstance(exc, UnregisteredMessageIDError)):
                 raise
-            return self.encode_error_response(bound_obj, msg_decoded, exc)
+            rstr, dolog = self.encode_error_response(bound_obj, msg_decoded,
+                                                     exc)
+            if dolog:
+                logging.exception('Error in efro.message handling.')
+            return rstr
 
 
 class BoundMessageReceiver:
@@ -348,9 +356,9 @@ class BoundMessageReceiver:
         """Given an error, return a response ready to send.
 
         This should be used for any errors that happen outside of
-        of standard handle_raw_message calls. Any errors within those
-        calls should be automatically returned as encoded strings.
+        standard handle_raw_message calls. Any errors within those
+        calls will be automatically returned as encoded strings.
         """
         # Passing None for Message here; we would only have that available
         # for things going wrong in the handler (which this is not for).
-        return self._receiver.encode_error_response(self._obj, None, exc)
+        return self._receiver.encode_error_response(self._obj, None, exc)[0]

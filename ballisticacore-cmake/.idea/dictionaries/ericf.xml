@@ -79,6 +79,7 @@
       <w>asci</w>
       <w>assetsmakefile</w>
       <w>assigninput</w>
+      <w>astr</w>
       <w>atest</w>
       <w>athome</w>
       <w>attrobj</w>
@@ -144,6 +145,8 @@
       <w>blockwidth</w>
       <w>bluetooth</w>
       <w>blurscale</w>
+      <w>bmas</w>
+      <w>bmasl</w>
       <w>bname</w>
       <w>bodyid</w>
       <w>bodypart</w>
@@ -197,6 +200,7 @@
       <w>camerashake</w>
       <w>cancelbtn</w>
       <w>capitan</w>
+      <w>caplog</w>
       <w>cargs</w>
       <w>cbegin</w>
       <w>cbgn</w>
@@ -329,6 +333,8 @@
       <w>demangled</w>
       <w>demangling</w>
       <w>denom</w>
+      <w>deregistering</w>
+      <w>deregistration</w>
       <w>dernit</w>
       <w>desctype</w>
       <w>destdir</w>
@@ -364,6 +370,7 @@
       <w>drpt</w>
       <w>dsize</w>
       <w>dsound</w>
+      <w>dstabs</w>
       <w>dstattr</w>
       <w>dstnode</w>
       <w>dstpath</w>
@@ -906,6 +913,7 @@
       <w>nval</w>
       <w>nvidia</w>
       <w>nyffenegger</w>
+      <w>objb</w>
       <w>objexists</w>
       <w>objid</w>
       <w>objtoyaml</w>
@@ -1234,6 +1242,7 @@
       <w>sphrand</w>
       <w>spinup</w>
       <w>spivak</w>
+      <w>srcabs</w>
       <w>srcattr</w>
       <w>srcfolder</w>
       <w>srcid</w>
@@ -1303,6 +1312,7 @@
       <w>swiftc</w>
       <w>symbolification</w>
       <w>syscalls</w>
+      <w>sysresponse</w>
       <w>tabdefs</w>
       <w>tabtype</w>
       <w>tabtypes</w>
@@ -1335,6 +1345,7 @@
       <w>theres</w>
       <w>thislinelen</w>
       <w>thismodule</w>
+      <w>threadlocals</w>
       <w>threadname</w>
       <w>threadpool</w>
       <w>threadtype</w>
@@ -1522,6 +1533,7 @@
       <w>zoffset</w>
       <w>zomg</w>
       <w>zoneid</w>
+      <w>zoneids</w>
       <w>zoneinfo</w>
       <w>zoomable</w>
       <w>zpings</w>

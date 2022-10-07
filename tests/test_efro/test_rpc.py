@@ -71,11 +71,14 @@ class _ServerClientCommon:
 
     async def send_message(self,
                            message: _Message,
-                           timeout: float | None = None) -> _Message:
+                           timeout: float | None = None,
+                           close_on_error: bool = True) -> _Message:
         """Send high level messages."""
         assert self._endpoint is not None
         response = await self._endpoint.send_message(
-            dataclass_to_json(message).encode(), timeout=timeout)
+            dataclass_to_json(message).encode(),
+            timeout=timeout,
+            close_on_error=close_on_error)
         return dataclass_from_json(_Message, response.decode())
 
     async def handle_message(self, msg: _Message) -> _Message:
@@ -364,12 +367,23 @@ def test_message_timeout() -> None:
             _Message(_MessageType.TEST_SLOW))
         assert resp.messagetype is _MessageType.RESPONSE_SLOW
 
-        # This message should time out.
+        # This message should time out but not close the connection.
         with pytest.raises(CommunicationError):
             resp = await tester.server.send_message(
                 _Message(_MessageType.TEST_SLOW),
                 timeout=0.5,
+                close_on_error=False,
             )
+        assert not tester.server.endpoint.is_closing()
+
+        # This message should time out and close the connection as a result.
+        with pytest.raises(CommunicationError):
+            resp = await tester.server.send_message(
+                _Message(_MessageType.TEST_SLOW),
+                timeout=0.5,
+                close_on_error=True,
+            )
+        assert tester.server.endpoint.is_closing()
 
     tester.run(_do_it())
 

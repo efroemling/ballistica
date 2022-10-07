@@ -272,6 +272,11 @@ class MessageSender:
                     is ErrorSysResponse.ErrorType.REMOTE_CLEAN):
                 raise CleanError(raw_response.error_message)
 
+            if (self.protocol.forward_communication_errors
+                    and raw_response.error_type is
+                    ErrorSysResponse.ErrorType.REMOTE_COMMUNICATION):
+                raise CommunicationError(raw_response.error_message)
+
             # Everything else gets lumped in as a remote error.
             raise RemoteError(raw_response.error_message,
                               peer_desc=('peer' if self._peer_desc_call is None

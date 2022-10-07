@@ -153,6 +153,7 @@
       <w>assigninput</w>
       <w>astc</w>
       <w>astcenc</w>
+      <w>astr</w>
       <w>astroid</w>
       <w>asus</w>
       <w>asynchat</w>
@@ -261,6 +262,8 @@
       <w>blocksize</w>
       <w>bluetooth</w>
       <w>bmag</w>
+      <w>bmas</w>
+      <w>bmasl</w>
       <w>bname</w>
       <w>bndl</w>
       <w>boffs</w>
@@ -343,6 +346,7 @@
       <w>campaignname</w>
       <w>cancelbtn</w>
       <w>capb</w>
+      <w>caplog</w>
       <w>capturetheflag</w>
       <w>carentity</w>
       <w>cashregistersound</w>
@@ -604,6 +608,8 @@
       <w>depsets</w>
       <w>depsval</w>
       <w>dereferencing</w>
+      <w>deregistering</w>
+      <w>deregistration</w>
       <w>descpos</w>
       <w>desctype</w>
       <w>dest</w>
@@ -679,6 +685,7 @@
       <w>dropdir</w>
       <w>drumroll</w>
       <w>dsqlite</w>
+      <w>dstabs</w>
       <w>dstattr</w>
       <w>dstbase</w>
       <w>dstdata</w>
@@ -1725,6 +1732,7 @@
       <w>nvidia</w>
       <w>nyko</w>
       <w>obj's</w>
+      <w>objb</w>
       <w>objid</w>
       <w>objname</w>
       <w>objs</w>
@@ -2375,6 +2383,7 @@
       <w>splitlen</w>
       <w>splitnumstr</w>
       <w>squadcore</w>
+      <w>srcabs</w>
       <w>srcattr</w>
       <w>srcdata</w>
       <w>srcdir</w>
@@ -2498,6 +2507,7 @@
       <w>sysconfigdata</w>
       <w>sysctl</w>
       <w>syslogmodule</w>
+      <w>sysresponse</w>
       <w>tabdefs</w>
       <w>tabtype</w>
       <w>tabtypes</w>
@@ -2594,6 +2604,7 @@
       <w>this'll</w>
       <w>thislinelen</w>
       <w>thismodule</w>
+      <w>threadlocals</w>
       <w>threadpool</w>
       <w>threadtype</w>
       <w>throwiness</w>
@@ -2925,6 +2936,7 @@
       <w>zlib</w>
       <w>zlibmodule</w>
       <w>zoneid</w>
+      <w>zoneids</w>
       <w>zoneinfo</w>
       <w>zoomtext</w>
       <w>zpings</w>

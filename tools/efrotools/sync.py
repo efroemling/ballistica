@@ -205,8 +205,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                 continue
             # Src/dst hashes don't match and marker doesn't match either.
             # We give up.
+            srcabs = os.path.abspath(srcfile)
+            dstabs = os.path.abspath(dstfile)
             raise RuntimeError(
-                f'both src and dst sync files changed: {srcfile} {dstfile}'
+                f'both src and dst sync files changed: {srcabs} {dstabs}'
                 '; this must be resolved manually.')
 
         # (if we got here this file should be healthy..)

@@ -1,10 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Testing message functionality."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
 import os
+import logging
 import asyncio
 from typing import TYPE_CHECKING, overload
 from dataclasses import dataclass
@@ -198,7 +200,7 @@ class _TestMessageSenderBBoth(MessageSender):
     """Protocol-specific sender."""
 
     def __init__(self) -> None:
-        protocol = TEST_PROTOCOL_B
+        protocol = TEST_PROTOCOL_EVOLVED
         super().__init__(protocol)
 
     def __get__(self,
@@ -427,12 +429,14 @@ TEST_PROTOCOL = MessageProtocol(
         1: _TResp2,
     },
     forward_clean_errors=True,
+    forward_communication_errors=True,
     remote_errors_include_stack_traces=True,
 )
 
-# Represents an 'evolved' TEST_PROTOCOL (one extra message type added).
-# (so we can test communication failures talking to older protocols)
-TEST_PROTOCOL_B = MessageProtocol(
+# Represents an 'evolved' TEST_PROTOCOL (the same as TEST_PROTOCOL; just
+# one extra message type added).
+# This way we can test communication failures talking to older protocols.
+TEST_PROTOCOL_EVOLVED = MessageProtocol(
     message_types={
         0: _TMsg1,
         1: _TMsg2,
@@ -444,6 +448,7 @@ TEST_PROTOCOL_B = MessageProtocol(
         1: _TResp2,
     },
     forward_clean_errors=True,
+    forward_communication_errors=True,
     remote_errors_include_stack_traces=True,
 )
 
@@ -581,9 +586,9 @@ def test_sender_module_both_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL_B.do_create_sender_module(
+    smod = TEST_PROTOCOL_EVOLVED.do_create_sender_module(
         'TestMessageSenderBBoth',
-        protocol_create_code='protocol = TEST_PROTOCOL_B',
+        protocol_create_code='protocol = TEST_PROTOCOL_EVOLVED',
         enable_sync_sends=True,
         enable_async_sends=True,
         private=True,
@@ -741,7 +746,7 @@ def test_receiver_creation() -> None:
             receiver.validate()
 
 
-def test_full_pipeline() -> None:
+def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
     """Test the full pipeline."""
 
     # pylint: disable=too-many-locals
@@ -816,6 +821,45 @@ def test_full_pipeline() -> None:
             if self.test_sidecar:
                 setattr(response, '_sidecar_data', indata['_sidecar_data'])
 
+    # Alternate sender for testing other protocol options.
+    class TestClassSAlt:
+        """Test class incorporating send functionality."""
+
+        msg = _TestMessageSenderSingle()
+
+        test_handling_unregistered = False
+        test_send_method_exceptions = False
+        test_send_method_exceptions_comm = False
+
+        def __init__(self, target: TestClassRAlt) -> None:
+            self.test_sidecar = False
+            self._target = target
+
+        @msg.send_method
+        def _send_raw_message(self, data: str) -> str:
+            """Handle synchronous sending of raw json message data."""
+
+            # Test throwing exceptions in send methods.
+            if self.test_send_method_exceptions:
+                raise (CommunicationError()
+                       if self.test_send_method_exceptions_comm else
+                       RuntimeError())
+
+            # Just talk directly to the receiver for this example.
+            # (currently only support synchronous receivers)
+            assert isinstance(self._target, TestClassRAlt)
+            try:
+                return self._target.receiver.handle_raw_message(
+                    data, raise_unregistered=self.test_handling_unregistered)
+            except UnregisteredMessageIDError:
+                if self.test_handling_unregistered:
+                    # Emulate forwarding unregistered messages on to some
+                    # other handler...
+                    response_dict = self.msg.protocol.response_to_dict(
+                        EmptySysResponse())
+                    return self.msg.protocol.encode_dict(response_dict)
+                raise
+
     class TestClassRSync:
         """Test class incorporating synchronous receive functionality."""
 
@@ -831,6 +875,8 @@ def test_full_pipeline() -> None:
                 raise CleanError('Testing Clean Error')
             if msg.ival == 2:
                 raise RuntimeError('Testing Runtime Error')
+            if msg.ival == 3:
+                raise CommunicationError('Testing Communication Error')
             out = _TResp1(bval=True)
             if self.test_sidecar:
                 setattr(out, '_sidecar_data', getattr(msg, '_sidecar_data'))
@@ -864,6 +910,30 @@ def test_full_pipeline() -> None:
 
         receiver.validate()
 
+    class TestClassRAlt:
+        """Test class incorporating synchronous receive functionality."""
+
+        receiver = _TestSingleMessageReceiver()
+
+        def __init__(self) -> None:
+            self.test_sidecar = False
+
+        @receiver.handler
+        def handle_test_message_1(self, msg: _TMsg1) -> _TResp1:
+            """Test."""
+            if msg.ival == 1:
+                raise CleanError('Testing Clean Error')
+            if msg.ival == 2:
+                raise RuntimeError('Testing Runtime Error')
+            if msg.ival == 3:
+                raise CommunicationError('Testing Communication Error')
+            out = _TResp1(bval=True)
+            if self.test_sidecar:
+                setattr(out, '_sidecar_data', getattr(msg, '_sidecar_data'))
+            return out
+
+        receiver.validate()
+
     class TestClassRAsync:
         """Test class incorporating asynchronous receive functionality."""
 
@@ -876,6 +946,8 @@ def test_full_pipeline() -> None:
                 raise CleanError('Testing Clean Error')
             if msg.ival == 2:
                 raise RuntimeError('Testing Runtime Error')
+            if msg.ival == 3:
+                raise CommunicationError('Testing Communication Error')
             return _TResp1(bval=True)
 
         @receiver.handler
@@ -897,35 +969,76 @@ def test_full_pipeline() -> None:
     obj = TestClassS(target=obj_r_sync)
     obj2 = TestClassS(target=obj_r_async)
 
+    obj_rb = TestClassRAlt()
+    objb = TestClassSAlt(target=obj_rb)
+
     # Test sends (of sync and async varieties).
     response1 = obj.msg.send(_TMsg1(ival=0))
-    response2 = obj.msg.send(_TMsg2(sval='rah'))
-    response3 = obj.msg.send(_TMsg3(sval='rah'))
-    response4 = asyncio.run(obj.msg.send_async(_TMsg1(ival=0)))
-
-    # Make sure static typing lines up with what we expect.
-    if os.environ.get('EFRO_TEST_MESSAGE_FAST') != '1':
-        # assert static_type_equals(response1, _TResp1)
-        assert_type(response1, _TResp1)
-        # assert static_type_equals(response3, None)
-        assert_type(response3, None)
-
+    assert_type(response1, _TResp1)
     assert isinstance(response1, _TResp1)
+
+    response1b = objb.msg.send(_TMsg1(ival=0))
+    assert_type(response1b, _TResp1)
+
+    response2 = obj.msg.send(_TMsg2(sval='rah'))
     assert isinstance(response2, (_TResp1, _TResp2))
+
+    response3 = obj.msg.send(_TMsg3(sval='rah'))
+    assert_type(response3, None)
     assert response3 is None
+
+    response4 = asyncio.run(obj.msg.send_async(_TMsg1(ival=0)))
     assert isinstance(response4, _TResp1)
 
-    # Remote CleanErrors should come across locally as the same
-    # (provided our protocol has enabled support for them).
+    # Nothing up to this point should have logged any warnings/errors/etc.
+    assert not any(r.levelno >= logging.WARNING for r in caplog.records)
+
+    # Remote CleanErrors should come across locally as the same and
+    # no errors should be logged.
+    # (since our protocol has forward_clean_errors enabled).
+    caplog.clear()
     try:
         _response5 = obj.msg.send(_TMsg1(ival=1))
     except Exception as exc:
         assert isinstance(exc, CleanError)
         assert str(exc) == 'Testing Clean Error'
+    assert not caplog.records
 
-    # Other remote errors should result in RemoteError.
+    # Same using a protocol *without* forward_clean_errors should
+    # give us a generic RemoteError and log the error.
+    caplog.clear()
+    with pytest.raises(RemoteError):
+        _response5 = objb.msg.send(_TMsg1(ival=1))
+    assert (len(caplog.records) == 1
+            and caplog.records[0].levelno == logging.ERROR)
+
+    # Same with CommunicationErrors occurring on the peer; they should
+    # come back to us intact if forward_communication_errors is enabled
+    # and no errors should have been logged.
+    caplog.clear()
+    try:
+        _response5 = obj.msg.send(_TMsg1(ival=3))
+    except Exception as exc:
+        assert isinstance(exc, CommunicationError)
+        assert str(exc) == 'Testing Communication Error'
+    assert not caplog.records
+
+    # Same using a protocol *without* forward_clean_errors should
+    # give us a generic RemoteError and log an error.
+    caplog.clear()
+    with pytest.raises(RemoteError):
+        _response5 = objb.msg.send(_TMsg1(ival=3))
+    assert (len(caplog.records) == 1
+            and caplog.records[0].levelno == logging.ERROR)
+
+    # Misc other error types happening on peer should result in
+    # RemoteError and log message.
+    caplog.clear()
     with pytest.raises(RemoteError):
         _response5 = obj.msg.send(_TMsg1(ival=2))
+    # This should have logged a single error message.
+    assert (len(caplog.records) == 1
+            and caplog.records[0].levelno == logging.ERROR)
 
     # Now test sends to async handlers.
     response6 = asyncio.run(obj2.msg.send_async(_TMsg1(ival=0)))

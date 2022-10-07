@@ -56,10 +56,11 @@ class MainMenuWindow(ba.Window):
         self._gather_button: ba.Widget | None = None
         self._start_button: ba.Widget | None = None
         self._watch_button: ba.Widget | None = None
-        self._gc_button: ba.Widget | None = None
+        self._account_button: ba.Widget | None = None
         self._how_to_play_button: ba.Widget | None = None
         self._credits_button: ba.Widget | None = None
         self._settings_button: ba.Widget | None = None
+        self._next_refresh_allow_time = 0.0
 
         self._store_char_tex = self._get_store_char_tex()
 
@@ -71,7 +72,7 @@ class MainMenuWindow(ba.Window):
         self._account_state_num = ba.internal.get_v1_account_state_num()
         self._account_type = (ba.internal.get_v1_account_type()
                               if self._account_state == 'signed_in' else None)
-        self._refresh_timer = ba.Timer(1.0,
+        self._refresh_timer = ba.Timer(0.27,
                                        ba.WeakCall(self._check_refresh),
                                        repeat=True,
                                        timetype=ba.TimeType.REAL)
@@ -132,11 +133,15 @@ class MainMenuWindow(ba.Window):
         if not self._root_widget:
             return
 
+        now = ba.time(ba.TimeType.REAL)
+        if now < self._next_refresh_allow_time:
+            return
+
         # Don't refresh for the first few seconds the game is up so we don't
         # interrupt the transition in.
-        ba.app.main_menu_window_refresh_check_count += 1
-        if ba.app.main_menu_window_refresh_check_count < 4:
-            return
+        # ba.app.main_menu_window_refresh_check_count += 1
+        # if ba.app.main_menu_window_refresh_check_count < 4:
+        #     return
 
         store_char_tex = self._get_store_char_tex()
         account_state_num = ba.internal.get_v1_account_state_num()
@@ -251,11 +256,11 @@ class MainMenuWindow(ba.Window):
                     size=(self._button_width, self._button_height),
                     autoselect=self._use_autoselect,
                     label=ba.Lstr(resource=self._r +
-                                  ('.endTestText' if self._is_benchmark()
-                                   else '.endGameText')),
+                                  ('.endTestText' if self._is_benchmark(
+                                  ) else '.endGameText')),
                     on_activate_call=(self._confirm_end_test
-                                      if self._is_benchmark()
-                                      else self._confirm_end_game))
+                                      if self._is_benchmark() else
+                                      self._confirm_end_game))
             # Assume we're in a client-session.
             else:
                 ba.buttonwidget(
@@ -428,6 +433,7 @@ class MainMenuWindow(ba.Window):
             self._tdelay = 2.0
             self._t_delay_inc = 0.02
             self._t_delay_play = 1.7
+            self._next_refresh_allow_time = ba.time(ba.TimeType.REAL) + 2.01
             ba.app.did_menu_intro = True
         self._width = 400.0
         self._height = 200.0
@@ -609,7 +615,7 @@ class MainMenuWindow(ba.Window):
             this_b_width = self._button_width
             h, v, scale = positions[self._p_index]
             self._p_index += 1
-            self._gc_button = ba.buttonwidget(
+            self._account_button = ba.buttonwidget(
                 parent=self._root_widget,
                 position=(h - this_b_width * 0.5 * scale, v),
                 size=(this_b_width, self._button_height),
@@ -637,7 +643,7 @@ class MainMenuWindow(ba.Window):
                                tilt_scale=0.0)
             self._tdelay += self._t_delay_inc
         else:
-            self._gc_button = None
+            self._account_button = None
 
         # How-to-play button.
         h, v, scale = positions[self._p_index]
@@ -852,7 +858,7 @@ class MainMenuWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             AccountSettingsWindow(
-                origin_widget=self._gc_button).get_root_widget())
+                origin_widget=self._account_button).get_root_widget())
 
     def _on_store_pressed(self) -> None:
         # pylint: disable=cyclic-import
@@ -870,7 +876,7 @@ class MainMenuWindow(ba.Window):
     def _is_benchmark(self) -> bool:
         session = ba.internal.get_foreground_host_session()
         return (getattr(session, 'benchmark_type', None) == 'cpu'
-            or ba.app.stress_test_reset_timer is not None)
+                or ba.app.stress_test_reset_timer is not None)
 
     def _confirm_end_game(self) -> None:
         # pylint: disable=cyclic-import
@@ -984,8 +990,8 @@ class MainMenuWindow(ba.Window):
             ba.app.ui.main_menu_selection = 'Credits'
         elif sel == self._settings_button:
             ba.app.ui.main_menu_selection = 'Settings'
-        elif sel == self._gc_button:
-            ba.app.ui.main_menu_selection = 'GameService'
+        elif sel == self._account_button:
+            ba.app.ui.main_menu_selection = 'Account'
         elif sel == self._store_button:
             ba.app.ui.main_menu_selection = 'Store'
         elif sel == self._quit_button:
@@ -1016,8 +1022,8 @@ class MainMenuWindow(ba.Window):
             sel = self._credits_button
         elif sel_name == 'Settings':
             sel = self._settings_button
-        elif sel_name == 'GameService':
-            sel = self._gc_button
+        elif sel_name == 'Account':
+            sel = self._account_button
         elif sel_name == 'Store':
             sel = self._store_button
         elif sel_name == 'Quit':

@@ -290,17 +290,24 @@ class RPCEndpoint:
 
     async def send_message(self,
                            message: bytes,
-                           timeout: float | None = None) -> bytes:
+                           timeout: float | None = None,
+                           close_on_error: bool = True) -> bytes:
         """Send a message to the peer and return a response.
 
         If timeout is not provided, the default will be used.
         Raises a CommunicationError if the round trip is not completed
         for any reason.
+
+        By default, the entire endpoint will go down in the case of
+        errors. This allows messages to be treated as 'reliable' with
+        respect to a given endpoint. Pass close_on_error=False to
+        override this for a particular message.
         """
+        # pylint: disable=too-many-branches
         self._check_env()
 
         if self._closing:
-            raise CommunicationError('Endpoint is closed')
+            raise CommunicationError('Endpoint is closed.')
 
         # We need to know their protocol, so if we haven't gotten a handshake
         # from them yet, just wait.
@@ -358,6 +365,8 @@ class RPCEndpoint:
             if self._debug_print:
                 self._debug_print_call(
                     f'{self._label}: message {message_id} was cancelled.')
+            if close_on_error:
+                self.close()
             raise CommunicationError() from exc
         except asyncio.TimeoutError as exc:
             if self._debug_print:
@@ -369,6 +378,9 @@ class RPCEndpoint:
 
             # Remove the record of this message.
             del self._in_flight_messages[message_id]
+
+            if close_on_error:
+                self.close()
 
             # Let the user know something went wrong.
             raise CommunicationError() from exc
@@ -407,7 +419,11 @@ class RPCEndpoint:
         return self._closing
 
     async def wait_closed(self) -> None:
-        """I said seagulls; mmmm; stop it now."""
+        """I said seagulls; mmmm; stop it now.
+
+        Wait for the endpoint to finish closing. This is called by run()
+        so generally does not need to be explicitly called.
+        """
         # pylint: disable=too-many-branches
         self._check_env()
 
@@ -729,8 +745,9 @@ class RPCEndpoint:
 
     def _check_env(self) -> None:
         # I was seeing that asyncio stuff wasn't working as expected if
-        # created in one thread and used in another, so let's enforce
-        # a single thread for all use of an instance.
+        # created in one thread and used in another (and have verified
+        # that this is part of the design), so let's enforce a single
+        # thread for all use of an instance.
         if current_thread() is not self._thread:
             raise RuntimeError('This must be called from the same thread'
                                ' that the endpoint was created in.')

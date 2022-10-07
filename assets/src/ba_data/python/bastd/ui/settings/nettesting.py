@@ -146,13 +146,14 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
 
         ba.pushcall(_print_in_logic_thread, from_other_thread=True)
 
-    def _print_test_results(call: Callable[[], Any]) -> None:
-        """Run the provided call; return success/fail text & color."""
+    def _print_test_results(call: Callable[[], Any]) -> bool:
+        """Run the provided call, print result, & return success."""
         starttime = time.monotonic()
         try:
             call()
             duration = time.monotonic() - starttime
             _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
+            return True
         except Exception as exc:
             import traceback
             duration = time.monotonic() - starttime
@@ -161,6 +162,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print(msg, color=(1.0, 1.0, 0.3))
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
+            return False
 
     try:
         _print(f'Running network diagnostics...\n'
@@ -177,14 +179,23 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         # V1 ping
         baseaddr = ba.internal.get_master_server_address(source=0, version=1)
         _print(f'\nContacting V1 master-server src0 ({baseaddr})...')
-        _print_test_results(lambda: _test_fetch(baseaddr))
+        v1worked = _print_test_results(lambda: _test_fetch(baseaddr))
 
-        # V1 alternate ping
-        baseaddr = ba.internal.get_master_server_address(source=1, version=1)
-        _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
-        _print_test_results(lambda: _test_fetch(baseaddr))
+        # V1 alternate ping (only if primary fails since this often fails).
+        if v1worked:
+            _print('\nSkipping V1 master-server src1 test since src0 worked.')
+        else:
+            baseaddr = ba.internal.get_master_server_address(source=1,
+                                                             version=1)
+            _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
+            _print_test_results(lambda: _test_fetch(baseaddr))
 
-        _print(f'\nV1-test-log: {ba.app.net.v1_test_log}')
+        if 'none succeeded' in ba.app.net.v1_test_log:
+            _print(f'\nV1-test-log failed: {ba.app.net.v1_test_log}',
+                   color=(1, 0, 0))
+            have_error[0] = True
+        else:
+            _print(f'\nV1-test-log ok: {ba.app.net.v1_test_log}')
 
         for srcid, result in sorted(ba.app.net.v1_ctest_results.items()):
             _print(f'\nV1 src{srcid} result: {result}')

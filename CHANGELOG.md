@@ -1,9 +1,16 @@
-### 1.7.10 (build 20887, api 7, 2022-09-29)
+### 1.7.10 (build 20889, api 7, 2022-10-07)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.
 - Exceptions in the cloud-console now print to stderr instead of logging.exception(). This means they aren't a pretty red color anymore, but this will keep cloud-console behaving well with things like servers where logging.exception() might trigger alarms or otherwise. This is also consistent with standard interactive Python behavior.
 - Cloud console now shows the device name at the top instead of simply 'Console' while connected.
 - Moved the function that actually runs cloud console code to `ba._cloud.cloud_console_exec()`.
 - Added efro.debug which contains useful functionality for debugging object reference issues and memory leaks on live app instances (via cloud shell or whatever).
+- Lots of reworking/polishing in general on communication between the game and v2 regional/master servers in preparation of upgrading Google Play accounts to V2. Please holler if anything is not working smoothly with a V2 account.
+- When establishing V2 master-server communication, if the closest regional server is down or too busy, will now fall back to farther ones instead of giving up. You can follow this process by setting env var `BA_DEBUG_PRINT_V2_TRANSPORT` to 1 when running the app.
+- Network testing now skips the alternate v1 master server addr if the primary succeeded. The alternate often fails which makes things look broken even though the game is ok as long as primary works.
+- The v2-transport system will now properly reestablish account connectivity when asked to refresh its connection (the cloud does this periodically so regional cloud servers can be restarted as needed). Practically this means your app won't stop showing up under the ballistica.net devices section after its been running for a while; a problem previous builds had.
+- The v2-transport system can now establish more than one connection at a time, which allows the app to gracefully transition to a new connection when the old is about to expire without any period of no connectivity. To test this functionality, set env var `BA_DEBUG_PRINT_V2_TRANSPORT=1` to see transport debug messages and `BA_DEBUG_V2_TRANSPORT_SHORT_DURATION=1` to cause the cloud to request a connection-refresh every 30 seconds or so.
+- V2 accounts now consider themselves instantly signed in if they were signed in when the app last ran. They still need to contact the master-server before anything important can happen, but this should help keep things feel faster in general.
+- Due to v2-transport improvements, pressing the 'End Session Now' button in ballistica.net account settings should now instantly log you out of all apps using that session.
 
 ### 1.7.9 (build 20880, api 7, 2022-09-24)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).

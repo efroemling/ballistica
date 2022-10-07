@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
 
 
 class AccountV2Subsystem:
@@ -111,10 +111,21 @@ class AccountV2Subsystem:
 
 
 class AccountV2Handle:
-    """Handle for interacting with a v2 account."""
+    """Handle for interacting with a V2 account.
+
+    This class supports the 'with' statement, which is how it is
+    used with some operations such as cloud messaging.
+    """
 
     def __init__(self) -> None:
         self.tag = '?'
 
         self.workspacename: str | None = None
         self.workspaceid: str | None = None
+
+    def __enter__(self) -> None:
+        """Support for "with" statement.
+        """
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
+        """Support for "with" statement."""

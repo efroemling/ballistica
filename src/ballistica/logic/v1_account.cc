@@ -152,6 +152,8 @@ void V1Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
 
     // We call out to Python so need to be in logic thread.
     assert(InLogicThread());
+
+    // We want redundant sets to be no-ops.
     if (login_state_ != login_state || g_app->account_type != account_type
         || login_id_ != login_id || login_name_ != login_name) {
       // Special case: if they sent a sign-out for an account type that is
