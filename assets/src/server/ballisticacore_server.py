@@ -573,6 +573,11 @@ class ServerManagerApp:
         # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
+        # Set an environment var to change the device name.
+        # Device name is used while making connection with master server,
+        # cloud-console recognize us with this name.
+        os.environ['BA_HOST_NAME'] = self._config.party_name
+
         print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}', flush=True)
         binary_name = ('BallisticaCoreHeadless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
