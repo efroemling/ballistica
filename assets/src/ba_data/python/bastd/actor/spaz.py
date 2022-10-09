@@ -86,12 +86,12 @@ class Spaz(ba.Actor):
 
         self.play_big_death_sound = False
 
-        # scales how much impacts affect us (most damage calcs)
+        # Scales how much impacts affect us (most damage calcs).
         self.impact_scale = 1.0
 
         self.source_player = source_player
         self._dead = False
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.2
         else:
             self._punch_power_scale = factory.punch_power_scale
@@ -259,7 +259,7 @@ class Spaz(ba.Actor):
     def _turbo_filter_add_press(self, source: str) -> None:
         """
         Can pass all button presses through here; if we see an obscene number
-        of them in a short time let's shame/pushish this guy for using turbo
+        of them in a short time let's shame/pushish this guy for using turbo.
         """
         t_ms = ba.time(timetype=ba.TimeType.BASE,
                        timeformat=ba.TimeFormat.MILLISECONDS)
@@ -506,9 +506,9 @@ class Spaz(ba.Actor):
         self.last_run_time_ms = t_ms
         self.node.run = value
 
-        # filtering these events would be tough since its an analog
+        # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing
+        # the turbo filter to punish players if it looks like they're turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
