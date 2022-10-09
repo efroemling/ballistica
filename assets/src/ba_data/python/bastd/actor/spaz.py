@@ -362,6 +362,9 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
+
+        if self.frozen or self.node.knockout > 0.0:
+            return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
@@ -384,6 +387,9 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
+            return
+
+        if self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -425,7 +431,10 @@ class Spaz(ba.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node or self.frozen or self.node.knockout > 0.0:
+        if not self.node:
+            return
+
+        if self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -464,9 +473,7 @@ class Spaz(ba.Actor):
         if not self.node:
             return
 
-        if self._dead or self.frozen:
-            return
-        if self.node.knockout > 0.0:
+        if self._dead or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -1011,6 +1018,7 @@ class Spaz(ba.Actor):
                             msg.pos[1] + msg.force_direction[1] * 0.02,
                             msg.pos[2] + msg.force_direction[2] * 0.02)
                 flash_color = (1.0, 0.8, 0.4)
+
                 light = ba.newnode(
                     'light',
                     attrs={
@@ -1039,8 +1047,8 @@ class Spaz(ba.Actor):
                           count=min(10, 1 + int(damage * 0.01)),
                           scale=0.4,
                           spread=0.1)
-            if self.hitpoints > 0:
 
+            if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
