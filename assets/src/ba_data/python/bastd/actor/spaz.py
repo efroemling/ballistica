@@ -508,7 +508,8 @@ class Spaz(ba.Actor):
 
         # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing.
+        # the turbo filter to punish players if it looks like they're
+        # turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
@@ -847,8 +848,8 @@ class Spaz(ba.Actor):
                 self.node.frozen = True
                 ba.timer(5.0, ba.WeakCall(self.handlemessage,
                                           ba.ThawMessage()))
-                # Instantly shatter if we're already dead.
-                # (otherwise its hard to tell we're dead)
+                # Instantly shatter if we're already dead
+                # (otherwise its hard to tell we're dead).
                 if self.hitpoints <= 0:
                     self.shatter()
 
@@ -867,7 +868,7 @@ class Spaz(ba.Actor):
                 return True
 
             # If we were recently hit, don't count this as another.
-            # (so punch flurries and bomb pileups essentially count as 1 hit)
+            # (so punch flurries and bomb pileups essentially count as 1 hit).
             local_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
             assert isinstance(local_time, int)
             if (self._last_hit_time is None
