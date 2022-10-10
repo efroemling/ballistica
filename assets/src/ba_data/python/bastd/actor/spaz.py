@@ -1170,8 +1170,6 @@ class Spaz(ba.Actor):
                     scale=0.4,
                     spread=0.1,
                 )
-            if self.hitpoints > 0:
-
 
             if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
