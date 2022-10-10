@@ -1,3 +1,5 @@
+### 1.7.11 (build 20897, api 7, 2022-10-09)
+
 ### 1.7.10 (build 20895, api 7, 2022-10-09)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.
 - Exceptions in the cloud-console now print to stderr instead of logging.exception(). This means they aren't a pretty red color anymore, but this will keep cloud-console behaving well with things like servers where logging.exception() might trigger alarms or otherwise. This is also consistent with standard interactive Python behavior.
