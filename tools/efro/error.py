@@ -128,6 +128,15 @@ def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
     return False
 
 
+def is_requests_communication_error(exc: BaseException) -> bool:
+    """Is the provided exception a communication-related error from requests?
+    """
+    import requests
+
+    # Looks like this maps pretty well onto requests' ConnectionError
+    return isinstance(exc, requests.ConnectionError)
+
+
 def is_udp_communication_error(exc: BaseException) -> bool:
     """Should this udp-related exception be considered a communication error?
 

@@ -1834,6 +1834,7 @@
       <w>pathsrc</w>
       <w>pathstonames</w>
       <w>pathtmp</w>
+      <w>pathwonky</w>
       <w>patsubst</w>
       <w>pausable</w>
       <w>pbrowser</w>
@@ -2856,6 +2857,8 @@
       <w>wintdir</w>
       <w>wintype</w>
       <w>wmsbe</w>
+      <w>wonkypaths</w>
+      <w>wonkysuffix</w>
       <w>woohoo</w>
       <w>woooo</w>
       <w>workdir</w>

@@ -980,6 +980,7 @@
       <w>pathlist</w>
       <w>pathparts</w>
       <w>pathsrc</w>
+      <w>pathwonky</w>
       <w>pausable</w>
       <w>pcommands</w>
       <w>pdataclass</w>
@@ -1490,6 +1491,8 @@
       <w>wintdir</w>
       <w>wofocj</w>
       <w>wonkiness</w>
+      <w>wonkypaths</w>
+      <w>wonkysuffix</w>
       <w>woohoo</w>
       <w>workspaceid</w>
       <w>workspacename</w>

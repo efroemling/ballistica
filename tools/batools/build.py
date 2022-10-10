@@ -20,41 +20,43 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
 
-# Python pip packages we require for this project.
 @dataclass
-class PipRequirement:
-    """A pip package required by our project."""
+class PyRequirement:
+    """A Python package/module required by our project."""
     modulename: str | None = None
     minversion: list[int] | None = None  # None implies no min version.
     pipname: str | None = None  # None implies same as modulename.
 
 
 # Note: we look directly for modules when possible instead of just pip
-# entries; this accounts for manual installations or other nonstandard setups.
+# entries; this accounts for manual installations or other nonstandard
+# setups.
 
-# Note 2: We can probably just replace this with a simple requirements.txt
-# file, can't we? Feels like we're mostly reinventing the wheel here.
-# We just need a clean way to check/list missing stuff without necessarily
-# installing it. And as far as manually-installed bits, pip itself must
-# have some way to allow for that, right?...
-PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 14, 5]),
-    PipRequirement(modulename='mypy', minversion=[0, 971]),
-    PipRequirement(modulename='yapf', minversion=[0, 32, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 6, 1]),
-    PipRequirement(modulename='pytest', minversion=[7, 1, 2]),
-    PipRequirement(modulename='pytz'),
-    PipRequirement(modulename='ansiwrap'),
-    PipRequirement(modulename='yaml', pipname='PyYAML'),
-    PipRequirement(modulename='requests'),
-    PipRequirement(modulename='pdoc'),
-    PipRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
-    PipRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PipRequirement(pipname='types-requests', minversion=[2, 28, 9]),
-    PipRequirement(pipname='types-pytz', minversion=[2022, 2, 1, 0]),
-    PipRequirement(pipname='types-PyYAML', minversion=[6, 0, 11]),
-    PipRequirement(pipname='certifi', minversion=[2022, 6, 15]),
-    PipRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
+# Note 2: That is probably overkill. We can probably just replace
+# this with a simple requirements.txt file, can't we? Feels like we're
+# mostly reinventing the wheel here. We just need a clean way to
+# check/list missing stuff without necessarily installing it. And as far
+# as manually-installed bits, pip itself must have some way to allow for
+# that, right?...
+PY_REQUIREMENTS = [
+    PyRequirement(modulename='pylint', minversion=[2, 14, 5]),
+    PyRequirement(modulename='mypy', minversion=[0, 971]),
+    PyRequirement(modulename='yapf', minversion=[0, 32, 0]),
+    PyRequirement(modulename='cpplint', minversion=[1, 6, 1]),
+    PyRequirement(modulename='pytest', minversion=[7, 1, 2]),
+    PyRequirement(modulename='pytz'),
+    PyRequirement(modulename='ansiwrap'),
+    PyRequirement(modulename='yaml', pipname='PyYAML'),
+    PyRequirement(modulename='requests'),
+    PyRequirement(modulename='pdoc'),
+    PyRequirement(pipname='black', minversion=[22, 10, 0]),
+    PyRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
+    PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
+    PyRequirement(pipname='types-requests', minversion=[2, 28, 9]),
+    PyRequirement(pipname='types-pytz', minversion=[2022, 2, 1, 0]),
+    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 11]),
+    PyRequirement(pipname='certifi', minversion=[2022, 6, 15]),
+    PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -555,7 +557,7 @@ def checkenv() -> None:
     # Check for some required python modules.
     # FIXME: since all of these come from pip now, we should just use
     # pip --list to check versions on everything instead of doing it ad-hoc.
-    for req in PIP_REQUIREMENTS:
+    for req in PY_REQUIREMENTS:
         try:
             modname = req.modulename
             minver = req.minversion
@@ -650,7 +652,7 @@ def checkenv() -> None:
 def get_pip_reqs() -> list[str]:
     """Return the pip requirements needed to build/run stuff."""
     out: list[str] = []
-    for req in PIP_REQUIREMENTS:
+    for req in PY_REQUIREMENTS:
         name = req.modulename if req.pipname is None else req.pipname
         assert isinstance(name, str)
         out.append(name)

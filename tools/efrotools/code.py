@@ -167,6 +167,19 @@ def get_code_filenames(projroot: Path) -> list[str]:
     return codefilenames
 
 
+def black_base_args() -> list[str]:
+    """Build base args for running black Python formatting."""
+    from efrotools import PYVER
+    pyver = PYVER.replace('.', '')
+    if len(pyver) != 3:
+        raise RuntimeError('Py version filtering err.')
+
+    return [
+        f'python{PYVER}', '-m', 'black', '--target-version', pyver,
+        '--line-length', '80', '--skip-string-normalization'
+    ]
+
+
 def format_project_python_files(projroot: Path, full: bool) -> None:
     """Runs yapf on all of our Python code."""
     import time
