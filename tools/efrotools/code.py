@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from efrotools.filecache import FileCache
 
+
 if TYPE_CHECKING:
     from typing import Any
 
