@@ -59,7 +59,7 @@ ACH_LEVEL_NAMES = {
     'Uber Football Shutout': 'Uber Football',
     'Uber Football Victory': 'Uber Football',
     'Uber Onslaught Victory': 'Uber Onslaught',
-    'Uber Runaround Victory': 'Uber Runaround'
+    'Uber Runaround Victory': 'Uber Runaround',
 }
 
 
@@ -86,230 +86,425 @@ class AchievementSubsystem:
 
         # 5
         achs.append(
-            Achievement('In Control', 'achievementInControl', (1, 1, 1), '',
-                        5))
+            Achievement('In Control', 'achievementInControl', (1, 1, 1), '', 5)
+        )
         # 15
         achs.append(
-            Achievement('Sharing is Caring', 'achievementSharingIsCaring',
-                        (1, 1, 1), '', 15))
+            Achievement(
+                'Sharing is Caring',
+                'achievementSharingIsCaring',
+                (1, 1, 1),
+                '',
+                15,
+            )
+        )
         # 10
         achs.append(
-            Achievement('Dual Wielding', 'achievementDualWielding', (1, 1, 1),
-                        '', 10))
+            Achievement(
+                'Dual Wielding', 'achievementDualWielding', (1, 1, 1), '', 10
+            )
+        )
 
         # 10
         achs.append(
-            Achievement('Free Loader', 'achievementFreeLoader', (1, 1, 1), '',
-                        10))
+            Achievement(
+                'Free Loader', 'achievementFreeLoader', (1, 1, 1), '', 10
+            )
+        )
         # 20
         achs.append(
-            Achievement('Team Player', 'achievementTeamPlayer', (1, 1, 1), '',
-                        20))
+            Achievement(
+                'Team Player', 'achievementTeamPlayer', (1, 1, 1), '', 20
+            )
+        )
 
         # 5
         achs.append(
-            Achievement('Onslaught Training Victory', 'achievementOnslaught',
-                        (1, 1, 1), 'Default:Onslaught Training', 5))
+            Achievement(
+                'Onslaught Training Victory',
+                'achievementOnslaught',
+                (1, 1, 1),
+                'Default:Onslaught Training',
+                5,
+            )
+        )
         # 5
         achs.append(
-            Achievement('Off You Go Then', 'achievementOffYouGo',
-                        (1, 1.1, 1.3), 'Default:Onslaught Training', 5))
+            Achievement(
+                'Off You Go Then',
+                'achievementOffYouGo',
+                (1, 1.1, 1.3),
+                'Default:Onslaught Training',
+                5,
+            )
+        )
         # 10
         achs.append(
-            Achievement('Boxer',
-                        'achievementBoxer', (1, 0.6, 0.6),
-                        'Default:Onslaught Training',
-                        10,
-                        hard_mode_only=True))
+            Achievement(
+                'Boxer',
+                'achievementBoxer',
+                (1, 0.6, 0.6),
+                'Default:Onslaught Training',
+                10,
+                hard_mode_only=True,
+            )
+        )
 
         # 10
         achs.append(
-            Achievement('Rookie Onslaught Victory', 'achievementOnslaught',
-                        (0.5, 1.4, 0.6), 'Default:Rookie Onslaught', 10))
+            Achievement(
+                'Rookie Onslaught Victory',
+                'achievementOnslaught',
+                (0.5, 1.4, 0.6),
+                'Default:Rookie Onslaught',
+                10,
+            )
+        )
         # 10
         achs.append(
-            Achievement('Mine Games', 'achievementMine', (1, 1, 1.4),
-                        'Default:Rookie Onslaught', 10))
+            Achievement(
+                'Mine Games',
+                'achievementMine',
+                (1, 1, 1.4),
+                'Default:Rookie Onslaught',
+                10,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Flawless Victory',
-                        'achievementFlawlessVictory', (1, 1, 1),
-                        'Default:Rookie Onslaught',
-                        15,
-                        hard_mode_only=True))
+            Achievement(
+                'Flawless Victory',
+                'achievementFlawlessVictory',
+                (1, 1, 1),
+                'Default:Rookie Onslaught',
+                15,
+                hard_mode_only=True,
+            )
+        )
 
         # 10
         achs.append(
-            Achievement('Rookie Football Victory',
-                        'achievementFootballVictory', (1.0, 1, 0.6),
-                        'Default:Rookie Football', 10))
+            Achievement(
+                'Rookie Football Victory',
+                'achievementFootballVictory',
+                (1.0, 1, 0.6),
+                'Default:Rookie Football',
+                10,
+            )
+        )
         # 10
         achs.append(
-            Achievement('Super Punch', 'achievementSuperPunch', (1, 1, 1.8),
-                        'Default:Rookie Football', 10))
+            Achievement(
+                'Super Punch',
+                'achievementSuperPunch',
+                (1, 1, 1.8),
+                'Default:Rookie Football',
+                10,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Rookie Football Shutout',
-                        'achievementFootballShutout', (1, 1, 1),
-                        'Default:Rookie Football',
-                        15,
-                        hard_mode_only=True))
+            Achievement(
+                'Rookie Football Shutout',
+                'achievementFootballShutout',
+                (1, 1, 1),
+                'Default:Rookie Football',
+                15,
+                hard_mode_only=True,
+            )
+        )
 
         # 15
         achs.append(
-            Achievement('Pro Onslaught Victory', 'achievementOnslaught',
-                        (0.3, 1, 2.0), 'Default:Pro Onslaught', 15))
+            Achievement(
+                'Pro Onslaught Victory',
+                'achievementOnslaught',
+                (0.3, 1, 2.0),
+                'Default:Pro Onslaught',
+                15,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Boom Goes the Dynamite', 'achievementTNT',
-                        (1.4, 1.2, 0.8), 'Default:Pro Onslaught', 15))
+            Achievement(
+                'Boom Goes the Dynamite',
+                'achievementTNT',
+                (1.4, 1.2, 0.8),
+                'Default:Pro Onslaught',
+                15,
+            )
+        )
         # 20
         achs.append(
-            Achievement('Pro Boxer',
-                        'achievementBoxer', (2, 2, 0),
-                        'Default:Pro Onslaught',
-                        20,
-                        hard_mode_only=True))
+            Achievement(
+                'Pro Boxer',
+                'achievementBoxer',
+                (2, 2, 0),
+                'Default:Pro Onslaught',
+                20,
+                hard_mode_only=True,
+            )
+        )
 
         # 15
         achs.append(
-            Achievement('Pro Football Victory', 'achievementFootballVictory',
-                        (1.3, 1.3, 2.0), 'Default:Pro Football', 15))
+            Achievement(
+                'Pro Football Victory',
+                'achievementFootballVictory',
+                (1.3, 1.3, 2.0),
+                'Default:Pro Football',
+                15,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Super Mega Punch', 'achievementSuperPunch',
-                        (2, 1, 0.6), 'Default:Pro Football', 15))
+            Achievement(
+                'Super Mega Punch',
+                'achievementSuperPunch',
+                (2, 1, 0.6),
+                'Default:Pro Football',
+                15,
+            )
+        )
         # 20
         achs.append(
-            Achievement('Pro Football Shutout',
-                        'achievementFootballShutout', (0.7, 0.7, 2.0),
-                        'Default:Pro Football',
-                        20,
-                        hard_mode_only=True))
+            Achievement(
+                'Pro Football Shutout',
+                'achievementFootballShutout',
+                (0.7, 0.7, 2.0),
+                'Default:Pro Football',
+                20,
+                hard_mode_only=True,
+            )
+        )
 
         # 15
         achs.append(
-            Achievement('Pro Runaround Victory', 'achievementRunaround',
-                        (1, 1, 1), 'Default:Pro Runaround', 15))
+            Achievement(
+                'Pro Runaround Victory',
+                'achievementRunaround',
+                (1, 1, 1),
+                'Default:Pro Runaround',
+                15,
+            )
+        )
         # 20
         achs.append(
-            Achievement('Precision Bombing',
-                        'achievementCrossHair', (1, 1, 1.3),
-                        'Default:Pro Runaround',
-                        20,
-                        hard_mode_only=True))
+            Achievement(
+                'Precision Bombing',
+                'achievementCrossHair',
+                (1, 1, 1.3),
+                'Default:Pro Runaround',
+                20,
+                hard_mode_only=True,
+            )
+        )
         # 25
         achs.append(
-            Achievement('The Wall',
-                        'achievementWall', (1, 0.7, 0.7),
-                        'Default:Pro Runaround',
-                        25,
-                        hard_mode_only=True))
+            Achievement(
+                'The Wall',
+                'achievementWall',
+                (1, 0.7, 0.7),
+                'Default:Pro Runaround',
+                25,
+                hard_mode_only=True,
+            )
+        )
 
         # 30
         achs.append(
-            Achievement('Uber Onslaught Victory', 'achievementOnslaught',
-                        (2, 2, 1), 'Default:Uber Onslaught', 30))
+            Achievement(
+                'Uber Onslaught Victory',
+                'achievementOnslaught',
+                (2, 2, 1),
+                'Default:Uber Onslaught',
+                30,
+            )
+        )
         # 30
         achs.append(
-            Achievement('Gold Miner',
-                        'achievementMine', (2, 1.6, 0.2),
-                        'Default:Uber Onslaught',
-                        30,
-                        hard_mode_only=True))
+            Achievement(
+                'Gold Miner',
+                'achievementMine',
+                (2, 1.6, 0.2),
+                'Default:Uber Onslaught',
+                30,
+                hard_mode_only=True,
+            )
+        )
         # 30
         achs.append(
-            Achievement('TNT Terror',
-                        'achievementTNT', (2, 1.8, 0.3),
-                        'Default:Uber Onslaught',
-                        30,
-                        hard_mode_only=True))
+            Achievement(
+                'TNT Terror',
+                'achievementTNT',
+                (2, 1.8, 0.3),
+                'Default:Uber Onslaught',
+                30,
+                hard_mode_only=True,
+            )
+        )
 
         # 30
         achs.append(
-            Achievement('Uber Football Victory', 'achievementFootballVictory',
-                        (1.8, 1.4, 0.3), 'Default:Uber Football', 30))
+            Achievement(
+                'Uber Football Victory',
+                'achievementFootballVictory',
+                (1.8, 1.4, 0.3),
+                'Default:Uber Football',
+                30,
+            )
+        )
         # 30
         achs.append(
-            Achievement('Got the Moves',
-                        'achievementGotTheMoves', (2, 1, 0),
-                        'Default:Uber Football',
-                        30,
-                        hard_mode_only=True))
+            Achievement(
+                'Got the Moves',
+                'achievementGotTheMoves',
+                (2, 1, 0),
+                'Default:Uber Football',
+                30,
+                hard_mode_only=True,
+            )
+        )
         # 40
         achs.append(
-            Achievement('Uber Football Shutout',
-                        'achievementFootballShutout', (2, 2, 0),
-                        'Default:Uber Football',
-                        40,
-                        hard_mode_only=True))
+            Achievement(
+                'Uber Football Shutout',
+                'achievementFootballShutout',
+                (2, 2, 0),
+                'Default:Uber Football',
+                40,
+                hard_mode_only=True,
+            )
+        )
 
         # 30
         achs.append(
-            Achievement('Uber Runaround Victory', 'achievementRunaround',
-                        (1.5, 1.2, 0.2), 'Default:Uber Runaround', 30))
+            Achievement(
+                'Uber Runaround Victory',
+                'achievementRunaround',
+                (1.5, 1.2, 0.2),
+                'Default:Uber Runaround',
+                30,
+            )
+        )
         # 40
         achs.append(
-            Achievement('The Great Wall',
-                        'achievementWall', (2, 1.7, 0.4),
-                        'Default:Uber Runaround',
-                        40,
-                        hard_mode_only=True))
+            Achievement(
+                'The Great Wall',
+                'achievementWall',
+                (2, 1.7, 0.4),
+                'Default:Uber Runaround',
+                40,
+                hard_mode_only=True,
+            )
+        )
         # 40
         achs.append(
-            Achievement('Stayin\' Alive',
-                        'achievementStayinAlive', (2, 2, 1),
-                        'Default:Uber Runaround',
-                        40,
-                        hard_mode_only=True))
+            Achievement(
+                'Stayin\' Alive',
+                'achievementStayinAlive',
+                (2, 2, 1),
+                'Default:Uber Runaround',
+                40,
+                hard_mode_only=True,
+            )
+        )
 
         # 20
         achs.append(
-            Achievement('Last Stand Master',
-                        'achievementMedalSmall', (2, 1.5, 0.3),
-                        'Default:The Last Stand',
-                        20,
-                        hard_mode_only=True))
+            Achievement(
+                'Last Stand Master',
+                'achievementMedalSmall',
+                (2, 1.5, 0.3),
+                'Default:The Last Stand',
+                20,
+                hard_mode_only=True,
+            )
+        )
         # 40
         achs.append(
-            Achievement('Last Stand Wizard',
-                        'achievementMedalMedium', (2, 1.5, 0.3),
-                        'Default:The Last Stand',
-                        40,
-                        hard_mode_only=True))
+            Achievement(
+                'Last Stand Wizard',
+                'achievementMedalMedium',
+                (2, 1.5, 0.3),
+                'Default:The Last Stand',
+                40,
+                hard_mode_only=True,
+            )
+        )
         # 60
         achs.append(
-            Achievement('Last Stand God',
-                        'achievementMedalLarge', (2, 1.5, 0.3),
-                        'Default:The Last Stand',
-                        60,
-                        hard_mode_only=True))
+            Achievement(
+                'Last Stand God',
+                'achievementMedalLarge',
+                (2, 1.5, 0.3),
+                'Default:The Last Stand',
+                60,
+                hard_mode_only=True,
+            )
+        )
 
         # 5
         achs.append(
-            Achievement('Onslaught Master', 'achievementMedalSmall',
-                        (0.7, 1, 0.7), 'Challenges:Infinite Onslaught', 5))
+            Achievement(
+                'Onslaught Master',
+                'achievementMedalSmall',
+                (0.7, 1, 0.7),
+                'Challenges:Infinite Onslaught',
+                5,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Onslaught Wizard', 'achievementMedalMedium',
-                        (0.7, 1.0, 0.7), 'Challenges:Infinite Onslaught', 15))
+            Achievement(
+                'Onslaught Wizard',
+                'achievementMedalMedium',
+                (0.7, 1.0, 0.7),
+                'Challenges:Infinite Onslaught',
+                15,
+            )
+        )
         # 30
         achs.append(
-            Achievement('Onslaught God', 'achievementMedalLarge',
-                        (0.7, 1.0, 0.7), 'Challenges:Infinite Onslaught', 30))
+            Achievement(
+                'Onslaught God',
+                'achievementMedalLarge',
+                (0.7, 1.0, 0.7),
+                'Challenges:Infinite Onslaught',
+                30,
+            )
+        )
 
         # 5
         achs.append(
-            Achievement('Runaround Master', 'achievementMedalSmall',
-                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 5))
+            Achievement(
+                'Runaround Master',
+                'achievementMedalSmall',
+                (1.0, 1.0, 1.2),
+                'Challenges:Infinite Runaround',
+                5,
+            )
+        )
         # 15
         achs.append(
-            Achievement('Runaround Wizard', 'achievementMedalMedium',
-                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 15))
+            Achievement(
+                'Runaround Wizard',
+                'achievementMedalMedium',
+                (1.0, 1.0, 1.2),
+                'Challenges:Infinite Runaround',
+                15,
+            )
+        )
         # 30
         achs.append(
-            Achievement('Runaround God', 'achievementMedalLarge',
-                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 30))
+            Achievement(
+                'Runaround God',
+                'achievementMedalLarge',
+                (1.0, 1.0, 1.2),
+                'Challenges:Infinite Runaround',
+                30,
+            )
+        )
 
     def award_local_achievement(self, achname: str) -> None:
         """For non-game-based achievements such as controller-connection."""
@@ -321,10 +516,9 @@ class AchievementSubsystem:
                 _internal.report_achievement(achname)
 
                 # And to our account.
-                _internal.add_transaction({
-                    'type': 'ACHIEVEMENT',
-                    'name': achname
-                })
+                _internal.add_transaction(
+                    {'type': 'ACHIEVEMENT', 'name': achname}
+                )
 
                 # Now attempt to show a banner.
                 self.display_achievement_banner(achname)
@@ -377,17 +571,17 @@ class AchievementSubsystem:
             raise ValueError("Invalid achievement name: '" + name + "'")
         return achs[0]
 
-    def achievements_for_coop_level(self,
-                                    level_name: str) -> list[Achievement]:
+    def achievements_for_coop_level(self, level_name: str) -> list[Achievement]:
         """Given a level name, return achievements available for it."""
 
         # For the Easy campaign we return achievements for the Default
         # campaign too. (want the user to see what achievements are part of the
         # level even if they can't unlock them all on easy mode).
         return [
-            a for a in self.achievements
-            if a.level_name in (level_name,
-                                level_name.replace('Easy', 'Default'))
+            a
+            for a in self.achievements
+            if a.level_name
+            in (level_name, level_name.replace('Easy', 'Default'))
         ]
 
     def _test(self) -> None:
@@ -443,13 +637,15 @@ class Achievement:
     Category: **App Classes**
     """
 
-    def __init__(self,
-                 name: str,
-                 icon_name: str,
-                 icon_color: Sequence[float],
-                 level_name: str,
-                 award: int,
-                 hard_mode_only: bool = False):
+    def __init__(
+        self,
+        name: str,
+        icon_name: str,
+        icon_color: Sequence[float],
+        level_name: str,
+        award: int,
+        hard_mode_only: bool = False,
+    ):
         self._name = name
         self._icon_name = icon_name
         self._icon_color: Sequence[float] = list(icon_color) + [1]
@@ -471,7 +667,8 @@ class Achievement:
     def get_icon_texture(self, complete: bool) -> ba.Texture:
         """Return the icon texture to display for this achievement"""
         return _ba.gettexture(
-            self._icon_name if complete else 'achievementEmpty')
+            self._icon_name if complete else 'achievementEmpty'
+        )
 
     def get_icon_color(self, complete: bool) -> Sequence[float]:
         """Return the color tint for this Achievement's icon."""
@@ -494,6 +691,7 @@ class Achievement:
     def announce_completion(self, sound: bool = True) -> None:
         """Kick off an announcement for this achievement's completion."""
         from ba._generated.enums import TimeType
+
         app = _ba.app
 
         # Even though there are technically achievements when we're not
@@ -512,14 +710,17 @@ class Achievement:
 
         # Need to check last time too; its possible our timer wasn't able to
         # clear itself if an activity died and took it down with it.
-        if ((app.ach.achievement_display_timer is None
-             or _ba.time(TimeType.REAL) - app.ach.last_achievement_display_time
-             > 2.0) and _ba.getactivity(doraise=False) is not None):
+        if (
+            app.ach.achievement_display_timer is None
+            or _ba.time(TimeType.REAL) - app.ach.last_achievement_display_time
+            > 2.0
+        ) and _ba.getactivity(doraise=False) is not None:
             app.ach.achievement_display_timer = _ba.Timer(
                 1.0,
                 _display_next_achievement,
                 repeat=True,
-                timetype=TimeType.BASE)
+                timetype=TimeType.BASE,
+            )
 
             # Show the first immediately.
             _display_next_achievement()
@@ -538,27 +739,37 @@ class Achievement:
     def display_name(self) -> ba.Lstr:
         """Return a ba.Lstr for this Achievement's name."""
         from ba._language import Lstr
+
         name: ba.Lstr | str
         try:
             if self._level_name != '':
                 from ba._campaign import getcampaign
+
                 campaignname, campaign_level = self._level_name.split(':')
-                name = getcampaign(campaignname).getlevel(
-                    campaign_level).displayname
+                name = (
+                    getcampaign(campaignname)
+                    .getlevel(campaign_level)
+                    .displayname
+                )
             else:
                 name = ''
         except Exception:
             name = ''
             print_exception()
-        return Lstr(resource='achievements.' + self._name + '.name',
-                    subs=[('${LEVEL}', name)])
+        return Lstr(
+            resource='achievements.' + self._name + '.name',
+            subs=[('${LEVEL}', name)],
+        )
 
     @property
     def description(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's brief description."""
         from ba._language import Lstr
-        if 'description' in _ba.app.lang.get_resource('achievements')[
-                self._name]:
+
+        if (
+            'description'
+            in _ba.app.lang.get_resource('achievements')[self._name]
+        ):
             return Lstr(resource='achievements.' + self._name + '.description')
         return Lstr(resource='achievements.' + self._name + '.descriptionFull')
 
@@ -566,12 +777,17 @@ class Achievement:
     def description_complete(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's description when completed."""
         from ba._language import Lstr
-        if 'descriptionComplete' in _ba.app.lang.get_resource('achievements')[
-                self._name]:
-            return Lstr(resource='achievements.' + self._name +
-                        '.descriptionComplete')
-        return Lstr(resource='achievements.' + self._name +
-                    '.descriptionFullComplete')
+
+        if (
+            'descriptionComplete'
+            in _ba.app.lang.get_resource('achievements')[self._name]
+        ):
+            return Lstr(
+                resource='achievements.' + self._name + '.descriptionComplete'
+            )
+        return Lstr(
+            resource='achievements.' + self._name + '.descriptionFullComplete'
+        )
 
     @property
     def description_full(self) -> ba.Lstr:
@@ -580,25 +796,44 @@ class Achievement:
 
         return Lstr(
             resource='achievements.' + self._name + '.descriptionFull',
-            subs=[('${LEVEL}',
-                   Lstr(translate=('coopLevelNames',
-                                   ACH_LEVEL_NAMES.get(self._name, '?'))))])
+            subs=[
+                (
+                    '${LEVEL}',
+                    Lstr(
+                        translate=(
+                            'coopLevelNames',
+                            ACH_LEVEL_NAMES.get(self._name, '?'),
+                        )
+                    ),
+                )
+            ],
+        )
 
     @property
     def description_full_complete(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's full desc. when completed."""
         from ba._language import Lstr
+
         return Lstr(
             resource='achievements.' + self._name + '.descriptionFullComplete',
-            subs=[('${LEVEL}',
-                   Lstr(translate=('coopLevelNames',
-                                   ACH_LEVEL_NAMES.get(self._name, '?'))))])
+            subs=[
+                (
+                    '${LEVEL}',
+                    Lstr(
+                        translate=(
+                            'coopLevelNames',
+                            ACH_LEVEL_NAMES.get(self._name, '?'),
+                        )
+                    ),
+                )
+            ],
+        )
 
     def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
         """Get the ticket award value for this achievement."""
-        val: int = (_internal.get_v1_account_misc_read_val(
-            'achAward.' + self._name, self._award) *
-                    _get_ach_mult(include_pro_bonus))
+        val: int = _internal.get_v1_account_misc_read_val(
+            'achAward.' + self._name, self._award
+        ) * _get_ach_mult(include_pro_bonus)
         assert isinstance(val, int)
         return val
 
@@ -606,17 +841,20 @@ class Achievement:
     def power_ranking_value(self) -> int:
         """Get the power-ranking award value for this achievement."""
         val: int = _internal.get_v1_account_misc_read_val(
-            'achLeaguePoints.' + self._name, self._award)
+            'achLeaguePoints.' + self._name, self._award
+        )
         assert isinstance(val, int)
         return val
 
-    def create_display(self,
-                       x: float,
-                       y: float,
-                       delay: float,
-                       outdelay: float | None = None,
-                       color: Sequence[float] | None = None,
-                       style: str = 'post_game') -> list[ba.Actor]:
+    def create_display(
+        self,
+        x: float,
+        y: float,
+        delay: float,
+        outdelay: float | None = None,
+        color: Sequence[float] | None = None,
+        style: str = 'post_game',
+    ) -> list[ba.Actor]:
         """Create a display for the Achievement.
 
         Shows the Achievement icon, name, and description.
@@ -660,7 +898,7 @@ class Achievement:
                 if isinstance(session, CoopSession):
                     campaign = session.campaign
                     assert campaign is not None
-                    hmo = (self._hard_mode_only and campaign.name == 'Easy')
+                    hmo = self._hard_mode_only and campaign.name == 'Easy'
                 else:
                     hmo = False
             except Exception:
@@ -671,11 +909,9 @@ class Achievement:
 
         if in_game_colors:
             objs = []
-            out_delay_fin = (delay +
-                             outdelay) if outdelay is not None else None
+            out_delay_fin = (delay + outdelay) if outdelay is not None else None
             if color is not None:
-                cl1 = (2.0 * color[0], 2.0 * color[1], 2.0 * color[2],
-                       color[3])
+                cl1 = (2.0 * color[0], 2.0 * color[1], 2.0 * color[2], color[3])
                 cl2 = color
             else:
                 cl1 = (1.5, 1.5, 2, 1.0)
@@ -686,51 +922,59 @@ class Achievement:
                 cl2 = (cl2[0], cl2[1], cl2[2], cl2[3] * 0.2)
 
             objs.append(
-                Image(self.get_icon_texture(False),
-                      host_only=True,
-                      color=cl1,
-                      position=(x - 25, y + 5),
-                      attach=attach,
-                      transition=Image.Transition.FADE_IN,
-                      transition_delay=delay,
-                      vr_depth=4,
-                      transition_out_delay=out_delay_fin,
-                      scale=(40, 40)).autoretain())
+                Image(
+                    self.get_icon_texture(False),
+                    host_only=True,
+                    color=cl1,
+                    position=(x - 25, y + 5),
+                    attach=attach,
+                    transition=Image.Transition.FADE_IN,
+                    transition_delay=delay,
+                    vr_depth=4,
+                    transition_out_delay=out_delay_fin,
+                    scale=(40, 40),
+                ).autoretain()
+            )
             txt = self.display_name
             txt_s = 0.85
             txt_max_w = 300
             objs.append(
-                Text(txt,
-                     host_only=True,
-                     maxwidth=txt_max_w,
-                     position=(x, y + 2),
-                     transition=Text.Transition.FADE_IN,
-                     scale=txt_s,
-                     flatness=0.6,
-                     shadow=0.5,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     color=cl2,
-                     transition_delay=delay + 0.05,
-                     transition_out_delay=out_delay_fin).autoretain())
+                Text(
+                    txt,
+                    host_only=True,
+                    maxwidth=txt_max_w,
+                    position=(x, y + 2),
+                    transition=Text.Transition.FADE_IN,
+                    scale=txt_s,
+                    flatness=0.6,
+                    shadow=0.5,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    color=cl2,
+                    transition_delay=delay + 0.05,
+                    transition_out_delay=out_delay_fin,
+                ).autoretain()
+            )
             txt2_s = 0.62
             txt2_max_w = 400
             objs.append(
-                Text(self.description_full
-                     if in_main_menu else self.description,
-                     host_only=True,
-                     maxwidth=txt2_max_w,
-                     position=(x, y - 14),
-                     transition=Text.Transition.FADE_IN,
-                     vr_depth=-5,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     scale=txt2_s,
-                     flatness=1.0,
-                     shadow=0.5,
-                     color=cl2,
-                     transition_delay=delay + 0.1,
-                     transition_out_delay=out_delay_fin).autoretain())
+                Text(
+                    self.description_full if in_main_menu else self.description,
+                    host_only=True,
+                    maxwidth=txt2_max_w,
+                    position=(x, y - 14),
+                    transition=Text.Transition.FADE_IN,
+                    vr_depth=-5,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    scale=txt2_s,
+                    flatness=1.0,
+                    shadow=0.5,
+                    color=cl2,
+                    transition_delay=delay + 0.1,
+                    transition_out_delay=out_delay_fin,
+                ).autoretain()
+            )
 
             if hmo:
                 txtactor = Text(
@@ -749,39 +993,46 @@ class Achievement:
                     shadow=0.5,
                     color=(1, 1, 0.6, 1),
                     transition_delay=delay + 0.1,
-                    transition_out_delay=out_delay_fin).autoretain()
+                    transition_out_delay=out_delay_fin,
+                ).autoretain()
                 txtactor.node.rotate = 10
                 objs.append(txtactor)
 
             # Ticket-award.
             award_x = -100
             objs.append(
-                Text(_ba.charstr(SpecialChar.TICKET),
-                     host_only=True,
-                     position=(x + award_x + 33, y + 7),
-                     transition=Text.Transition.FADE_IN,
-                     scale=1.5,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     h_align=Text.HAlign.CENTER,
-                     v_align=Text.VAlign.CENTER,
-                     color=(1, 1, 1, 0.2 if hmo else 0.4),
-                     transition_delay=delay + 0.05,
-                     transition_out_delay=out_delay_fin).autoretain())
+                Text(
+                    _ba.charstr(SpecialChar.TICKET),
+                    host_only=True,
+                    position=(x + award_x + 33, y + 7),
+                    transition=Text.Transition.FADE_IN,
+                    scale=1.5,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    color=(1, 1, 1, 0.2 if hmo else 0.4),
+                    transition_delay=delay + 0.05,
+                    transition_out_delay=out_delay_fin,
+                ).autoretain()
+            )
             objs.append(
-                Text('+' + str(self.get_award_ticket_value()),
-                     host_only=True,
-                     position=(x + award_x + 28, y + 16),
-                     transition=Text.Transition.FADE_IN,
-                     scale=0.7,
-                     flatness=1,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     h_align=Text.HAlign.CENTER,
-                     v_align=Text.VAlign.CENTER,
-                     color=cl2,
-                     transition_delay=delay + 0.05,
-                     transition_out_delay=out_delay_fin).autoretain())
+                Text(
+                    '+' + str(self.get_award_ticket_value()),
+                    host_only=True,
+                    position=(x + award_x + 28, y + 16),
+                    transition=Text.Transition.FADE_IN,
+                    scale=0.7,
+                    flatness=1,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    color=cl2,
+                    transition_delay=delay + 0.05,
+                    transition_out_delay=out_delay_fin,
+                ).autoretain()
+            )
 
         else:
             complete = self.complete
@@ -790,61 +1041,77 @@ class Achievement:
             if hmo and not complete:
                 c_icon = (c_icon[0], c_icon[1], c_icon[2], c_icon[3] * 0.3)
             objs.append(
-                Image(self.get_icon_texture(complete),
-                      host_only=True,
-                      color=c_icon,
-                      position=(x - 25, y + 5),
-                      attach=attach,
-                      vr_depth=4,
-                      transition=Image.Transition.IN_RIGHT,
-                      transition_delay=delay,
-                      transition_out_delay=None,
-                      scale=(40, 40)).autoretain())
+                Image(
+                    self.get_icon_texture(complete),
+                    host_only=True,
+                    color=c_icon,
+                    position=(x - 25, y + 5),
+                    attach=attach,
+                    vr_depth=4,
+                    transition=Image.Transition.IN_RIGHT,
+                    transition_delay=delay,
+                    transition_out_delay=None,
+                    scale=(40, 40),
+                ).autoretain()
+            )
             if complete:
                 objs.append(
-                    Image(_ba.gettexture('achievementOutline'),
-                          host_only=True,
-                          model_transparent=_ba.getmodel('achievementOutline'),
-                          color=(2, 1.4, 0.4, 1),
-                          vr_depth=8,
-                          position=(x - 25, y + 5),
-                          attach=attach,
-                          transition=Image.Transition.IN_RIGHT,
-                          transition_delay=delay,
-                          transition_out_delay=None,
-                          scale=(40, 40)).autoretain())
+                    Image(
+                        _ba.gettexture('achievementOutline'),
+                        host_only=True,
+                        model_transparent=_ba.getmodel('achievementOutline'),
+                        color=(2, 1.4, 0.4, 1),
+                        vr_depth=8,
+                        position=(x - 25, y + 5),
+                        attach=attach,
+                        transition=Image.Transition.IN_RIGHT,
+                        transition_delay=delay,
+                        transition_out_delay=None,
+                        scale=(40, 40),
+                    ).autoretain()
+                )
             else:
                 if not complete:
                     award_x = -100
                     objs.append(
-                        Text(_ba.charstr(SpecialChar.TICKET),
-                             host_only=True,
-                             position=(x + award_x + 33, y + 7),
-                             transition=Text.Transition.IN_RIGHT,
-                             scale=1.5,
-                             h_attach=h_attach,
-                             v_attach=v_attach,
-                             h_align=Text.HAlign.CENTER,
-                             v_align=Text.VAlign.CENTER,
-                             color=(1, 1, 1, 0.4) if complete else
-                             (1, 1, 1, (0.1 if hmo else 0.2)),
-                             transition_delay=delay + 0.05,
-                             transition_out_delay=None).autoretain())
+                        Text(
+                            _ba.charstr(SpecialChar.TICKET),
+                            host_only=True,
+                            position=(x + award_x + 33, y + 7),
+                            transition=Text.Transition.IN_RIGHT,
+                            scale=1.5,
+                            h_attach=h_attach,
+                            v_attach=v_attach,
+                            h_align=Text.HAlign.CENTER,
+                            v_align=Text.VAlign.CENTER,
+                            color=(1, 1, 1, 0.4)
+                            if complete
+                            else (1, 1, 1, (0.1 if hmo else 0.2)),
+                            transition_delay=delay + 0.05,
+                            transition_out_delay=None,
+                        ).autoretain()
+                    )
                     objs.append(
-                        Text('+' + str(self.get_award_ticket_value()),
-                             host_only=True,
-                             position=(x + award_x + 28, y + 16),
-                             transition=Text.Transition.IN_RIGHT,
-                             scale=0.7,
-                             flatness=1,
-                             h_attach=h_attach,
-                             v_attach=v_attach,
-                             h_align=Text.HAlign.CENTER,
-                             v_align=Text.VAlign.CENTER,
-                             color=((0.8, 0.93, 0.8, 1.0) if complete else
-                                    (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))),
-                             transition_delay=delay + 0.05,
-                             transition_out_delay=None).autoretain())
+                        Text(
+                            '+' + str(self.get_award_ticket_value()),
+                            host_only=True,
+                            position=(x + award_x + 28, y + 16),
+                            transition=Text.Transition.IN_RIGHT,
+                            scale=0.7,
+                            flatness=1,
+                            h_attach=h_attach,
+                            v_attach=v_attach,
+                            h_align=Text.HAlign.CENTER,
+                            v_align=Text.VAlign.CENTER,
+                            color=(
+                                (0.8, 0.93, 0.8, 1.0)
+                                if complete
+                                else (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))
+                            ),
+                            transition_delay=delay + 0.05,
+                            transition_out_delay=None,
+                        ).autoretain()
+                    )
 
                     # Show 'hard-mode-only' only over incomplete achievements
                     # when that's the case.
@@ -865,41 +1132,53 @@ class Achievement:
                             shadow=0.5,
                             color=(1, 1, 0.6, 1),
                             transition_delay=delay + 0.05,
-                            transition_out_delay=None).autoretain()
+                            transition_out_delay=None,
+                        ).autoretain()
                         assert txtactor.node
                         txtactor.node.rotate = 10
                         objs.append(txtactor)
 
             objs.append(
-                Text(self.display_name,
-                     host_only=True,
-                     maxwidth=300,
-                     position=(x, y + 2),
-                     transition=Text.Transition.IN_RIGHT,
-                     scale=0.85,
-                     flatness=0.6,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     color=((0.8, 0.93, 0.8, 1.0) if complete else
-                            (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))),
-                     transition_delay=delay + 0.05,
-                     transition_out_delay=None).autoretain())
+                Text(
+                    self.display_name,
+                    host_only=True,
+                    maxwidth=300,
+                    position=(x, y + 2),
+                    transition=Text.Transition.IN_RIGHT,
+                    scale=0.85,
+                    flatness=0.6,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    color=(
+                        (0.8, 0.93, 0.8, 1.0)
+                        if complete
+                        else (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))
+                    ),
+                    transition_delay=delay + 0.05,
+                    transition_out_delay=None,
+                ).autoretain()
+            )
             objs.append(
-                Text(self.description_complete
-                     if complete else self.description,
-                     host_only=True,
-                     maxwidth=400,
-                     position=(x, y - 14),
-                     transition=Text.Transition.IN_RIGHT,
-                     vr_depth=-5,
-                     h_attach=h_attach,
-                     v_attach=v_attach,
-                     scale=0.62,
-                     flatness=1.0,
-                     color=((0.6, 0.6, 0.6, 1.0) if complete else
-                            (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))),
-                     transition_delay=delay + 0.1,
-                     transition_out_delay=None).autoretain())
+                Text(
+                    self.description_complete if complete else self.description,
+                    host_only=True,
+                    maxwidth=400,
+                    position=(x, y - 14),
+                    transition=Text.Transition.IN_RIGHT,
+                    vr_depth=-5,
+                    h_attach=h_attach,
+                    v_attach=v_attach,
+                    scale=0.62,
+                    flatness=1.0,
+                    color=(
+                        (0.6, 0.6, 0.6, 1.0)
+                        if complete
+                        else (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))
+                    ),
+                    transition_delay=delay + 0.1,
+                    transition_out_delay=None,
+                ).autoretain()
+            )
         return objs
 
     def _getconfig(self) -> dict[str, Any]:
@@ -907,15 +1186,17 @@ class Achievement:
         Return the sub-dict in settings where this achievement's
         state is stored, creating it if need be.
         """
-        val: dict[str, Any] = (_ba.app.config.setdefault(
-            'Achievements', {}).setdefault(self._name, {'Complete': False}))
+        val: dict[str, Any] = _ba.app.config.setdefault(
+            'Achievements', {}
+        ).setdefault(self._name, {'Complete': False})
         assert isinstance(val, dict)
         return val
 
     def _remove_banner_slot(self) -> None:
         assert self._completion_banner_slot is not None
         _ba.app.ach.achievement_completion_banner_slots.remove(
-            self._completion_banner_slot)
+            self._completion_banner_slot
+        )
         self._completion_banner_slot = None
 
     def show_completion_banner(self, sound: bool = True) -> None:
@@ -927,6 +1208,7 @@ class Achievement:
         from ba._language import Lstr
         from ba._messages import DieMessage
         from ba._generated.enums import TimeType, SpecialChar
+
         app = _ba.app
         app.ach.last_achievement_display_time = _ba.time(TimeType.REAL)
 
@@ -948,8 +1230,8 @@ class Achievement:
             _ba.playsound(_ba.getsound('achievement'), host_only=True)
         else:
             _ba.timer(
-                0.5,
-                lambda: _ba.playsound(_ba.getsound('ding'), host_only=True))
+                0.5, lambda: _ba.playsound(_ba.getsound('ding'), host_only=True)
+            )
 
         in_time = 0.300
         out_time = 3.5
@@ -967,74 +1249,83 @@ class Achievement:
                 # Use a real-timer in the UI context so the removal runs even
                 # if our activity/session dies.
                 with _ba.Context('ui'):
-                    _ba.timer(in_time + out_time,
-                              self._remove_banner_slot,
-                              timetype=TimeType.REAL)
+                    _ba.timer(
+                        in_time + out_time,
+                        self._remove_banner_slot,
+                        timetype=TimeType.REAL,
+                    )
                 break
             i += 1
         assert self._completion_banner_slot is not None
         y_offs = 110 * self._completion_banner_slot
         objs: list[ba.Actor] = []
-        obj = Image(_ba.gettexture('shadow'),
-                    position=(-30, 30 + y_offs),
-                    front=True,
-                    attach=Image.Attach.BOTTOM_CENTER,
-                    transition=Image.Transition.IN_BOTTOM,
-                    vr_depth=base_vr_depth - 100,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    color=(0.0, 0.1, 0, 1),
-                    scale=(1000, 300)).autoretain()
+        obj = Image(
+            _ba.gettexture('shadow'),
+            position=(-30, 30 + y_offs),
+            front=True,
+            attach=Image.Attach.BOTTOM_CENTER,
+            transition=Image.Transition.IN_BOTTOM,
+            vr_depth=base_vr_depth - 100,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            color=(0.0, 0.1, 0, 1),
+            scale=(1000, 300),
+        ).autoretain()
         objs.append(obj)
         assert obj.node
         obj.node.host_only = True
-        obj = Image(_ba.gettexture('light'),
-                    position=(-180, 60 + y_offs),
-                    front=True,
-                    attach=Image.Attach.BOTTOM_CENTER,
-                    vr_depth=base_vr_depth,
-                    transition=Image.Transition.IN_BOTTOM,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    color=(1.8, 1.8, 1.0, 0.0),
-                    scale=(40, 300)).autoretain()
+        obj = Image(
+            _ba.gettexture('light'),
+            position=(-180, 60 + y_offs),
+            front=True,
+            attach=Image.Attach.BOTTOM_CENTER,
+            vr_depth=base_vr_depth,
+            transition=Image.Transition.IN_BOTTOM,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            color=(1.8, 1.8, 1.0, 0.0),
+            scale=(40, 300),
+        ).autoretain()
         objs.append(obj)
         assert obj.node
         obj.node.host_only = True
         obj.node.premultiplied = True
         combine = _ba.newnode('combine', owner=obj.node, attrs={'size': 2})
         _gameutils.animate(
-            combine, 'input0', {
+            combine,
+            'input0',
+            {
                 in_time: 0,
                 in_time + 0.4: 30,
                 in_time + 0.5: 40,
                 in_time + 0.6: 30,
-                in_time + 2.0: 0
-            })
+                in_time + 2.0: 0,
+            },
+        )
         _gameutils.animate(
-            combine, 'input1', {
+            combine,
+            'input1',
+            {
                 in_time: 0,
                 in_time + 0.4: 200,
                 in_time + 0.5: 500,
                 in_time + 0.6: 200,
-                in_time + 2.0: 0
-            })
+                in_time + 2.0: 0,
+            },
+        )
         combine.connectattr('output', obj.node, 'scale')
-        _gameutils.animate(obj.node,
-                           'rotate', {
-                               0: 0.0,
-                               0.35: 360.0
-                           },
-                           loop=True)
-        obj = Image(self.get_icon_texture(True),
-                    position=(-180, 60 + y_offs),
-                    attach=Image.Attach.BOTTOM_CENTER,
-                    front=True,
-                    vr_depth=base_vr_depth - 10,
-                    transition=Image.Transition.IN_BOTTOM,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    scale=(100, 100)).autoretain()
+        _gameutils.animate(obj.node, 'rotate', {0: 0.0, 0.35: 360.0}, loop=True)
+        obj = Image(
+            self.get_icon_texture(True),
+            position=(-180, 60 + y_offs),
+            attach=Image.Attach.BOTTOM_CENTER,
+            front=True,
+            vr_depth=base_vr_depth - 10,
+            transition=Image.Transition.IN_BOTTOM,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            scale=(100, 100),
+        ).autoretain()
         objs.append(obj)
         assert obj.node
         obj.node.host_only = True
@@ -1047,7 +1338,7 @@ class Achievement:
             in_time + 0.4: 1.5 * color[0],
             in_time + 0.5: 6.0 * color[0],
             in_time + 0.6: 1.5 * color[0],
-            in_time + 2.0: 1.0 * color[0]
+            in_time + 2.0: 1.0 * color[0],
         }
         _gameutils.animate(combine, 'input0', keys)
         keys = {
@@ -1055,7 +1346,7 @@ class Achievement:
             in_time + 0.4: 1.5 * color[1],
             in_time + 0.5: 6.0 * color[1],
             in_time + 0.6: 1.5 * color[1],
-            in_time + 2.0: 1.0 * color[1]
+            in_time + 2.0: 1.0 * color[1],
         }
         _gameutils.animate(combine, 'input1', keys)
         keys = {
@@ -1063,21 +1354,23 @@ class Achievement:
             in_time + 0.4: 1.5 * color[2],
             in_time + 0.5: 6.0 * color[2],
             in_time + 0.6: 1.5 * color[2],
-            in_time + 2.0: 1.0 * color[2]
+            in_time + 2.0: 1.0 * color[2],
         }
         _gameutils.animate(combine, 'input2', keys)
         combine.connectattr('output', obj.node, 'color')
 
-        obj = Image(_ba.gettexture('achievementOutline'),
-                    model_transparent=_ba.getmodel('achievementOutline'),
-                    position=(-180, 60 + y_offs),
-                    front=True,
-                    attach=Image.Attach.BOTTOM_CENTER,
-                    vr_depth=base_vr_depth,
-                    transition=Image.Transition.IN_BOTTOM,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    scale=(100, 100)).autoretain()
+        obj = Image(
+            _ba.gettexture('achievementOutline'),
+            model_transparent=_ba.getmodel('achievementOutline'),
+            position=(-180, 60 + y_offs),
+            front=True,
+            attach=Image.Attach.BOTTOM_CENTER,
+            vr_depth=base_vr_depth,
+            transition=Image.Transition.IN_BOTTOM,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            scale=(100, 100),
+        ).autoretain()
         assert obj.node
         obj.node.host_only = True
 
@@ -1089,7 +1382,7 @@ class Achievement:
             in_time + 0.4: 1.5 * color[0],
             in_time + 0.5: 6.0 * color[0],
             in_time + 0.6: 1.5 * color[0],
-            in_time + 2.0: 1.0 * color[0]
+            in_time + 2.0: 1.0 * color[0],
         }
         _gameutils.animate(combine, 'input0', keys)
         keys = {
@@ -1097,7 +1390,7 @@ class Achievement:
             in_time + 0.4: 1.5 * color[1],
             in_time + 0.5: 6.0 * color[1],
             in_time + 0.6: 1.5 * color[1],
-            in_time + 2.0: 1.0 * color[1]
+            in_time + 2.0: 1.0 * color[1],
         }
         _gameutils.animate(combine, 'input1', keys)
         keys = {
@@ -1105,116 +1398,130 @@ class Achievement:
             in_time + 0.4: 1.5 * color[2],
             in_time + 0.5: 6.0 * color[2],
             in_time + 0.6: 1.5 * color[2],
-            in_time + 2.0: 1.0 * color[2]
+            in_time + 2.0: 1.0 * color[2],
         }
         _gameutils.animate(combine, 'input2', keys)
         combine.connectattr('output', obj.node, 'color')
         objs.append(obj)
 
-        objt = Text(Lstr(value='${A}:',
-                         subs=[('${A}', Lstr(resource='achievementText'))]),
-                    position=(-120, 91 + y_offs),
-                    front=True,
-                    v_attach=Text.VAttach.BOTTOM,
-                    vr_depth=base_vr_depth - 10,
-                    transition=Text.Transition.IN_BOTTOM,
-                    flatness=0.5,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    color=(1, 1, 1, 0.8),
-                    scale=0.65).autoretain()
+        objt = Text(
+            Lstr(
+                value='${A}:', subs=[('${A}', Lstr(resource='achievementText'))]
+            ),
+            position=(-120, 91 + y_offs),
+            front=True,
+            v_attach=Text.VAttach.BOTTOM,
+            vr_depth=base_vr_depth - 10,
+            transition=Text.Transition.IN_BOTTOM,
+            flatness=0.5,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            color=(1, 1, 1, 0.8),
+            scale=0.65,
+        ).autoretain()
         objs.append(objt)
         assert objt.node
         objt.node.host_only = True
 
-        objt = Text(self.display_name,
-                    position=(-120, 50 + y_offs),
-                    front=True,
-                    v_attach=Text.VAttach.BOTTOM,
-                    transition=Text.Transition.IN_BOTTOM,
-                    vr_depth=base_vr_depth,
-                    flatness=0.5,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    flash=True,
-                    color=(1, 0.8, 0, 1.0),
-                    scale=1.5).autoretain()
+        objt = Text(
+            self.display_name,
+            position=(-120, 50 + y_offs),
+            front=True,
+            v_attach=Text.VAttach.BOTTOM,
+            transition=Text.Transition.IN_BOTTOM,
+            vr_depth=base_vr_depth,
+            flatness=0.5,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            flash=True,
+            color=(1, 0.8, 0, 1.0),
+            scale=1.5,
+        ).autoretain()
         objs.append(objt)
         assert objt.node
         objt.node.host_only = True
 
-        objt = Text(_ba.charstr(SpecialChar.TICKET),
-                    position=(-120 - 170 + 5, 75 + y_offs - 20),
-                    front=True,
-                    v_attach=Text.VAttach.BOTTOM,
-                    h_align=Text.HAlign.CENTER,
-                    v_align=Text.VAlign.CENTER,
-                    transition=Text.Transition.IN_BOTTOM,
-                    vr_depth=base_vr_depth,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    flash=True,
-                    color=(0.5, 0.5, 0.5, 1),
-                    scale=3.0).autoretain()
+        objt = Text(
+            _ba.charstr(SpecialChar.TICKET),
+            position=(-120 - 170 + 5, 75 + y_offs - 20),
+            front=True,
+            v_attach=Text.VAttach.BOTTOM,
+            h_align=Text.HAlign.CENTER,
+            v_align=Text.VAlign.CENTER,
+            transition=Text.Transition.IN_BOTTOM,
+            vr_depth=base_vr_depth,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            flash=True,
+            color=(0.5, 0.5, 0.5, 1),
+            scale=3.0,
+        ).autoretain()
         objs.append(objt)
         assert objt.node
         objt.node.host_only = True
 
-        objt = Text('+' + str(self.get_award_ticket_value()),
-                    position=(-120 - 180 + 5, 80 + y_offs - 20),
-                    v_attach=Text.VAttach.BOTTOM,
-                    front=True,
-                    h_align=Text.HAlign.CENTER,
-                    v_align=Text.VAlign.CENTER,
-                    transition=Text.Transition.IN_BOTTOM,
-                    vr_depth=base_vr_depth,
-                    flatness=0.5,
-                    shadow=1.0,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    flash=True,
-                    color=(0, 1, 0, 1),
-                    scale=1.5).autoretain()
+        objt = Text(
+            '+' + str(self.get_award_ticket_value()),
+            position=(-120 - 180 + 5, 80 + y_offs - 20),
+            v_attach=Text.VAttach.BOTTOM,
+            front=True,
+            h_align=Text.HAlign.CENTER,
+            v_align=Text.VAlign.CENTER,
+            transition=Text.Transition.IN_BOTTOM,
+            vr_depth=base_vr_depth,
+            flatness=0.5,
+            shadow=1.0,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            flash=True,
+            color=(0, 1, 0, 1),
+            scale=1.5,
+        ).autoretain()
         objs.append(objt)
         assert objt.node
         objt.node.host_only = True
 
         # Add the 'x 2' if we've got pro.
         if app.accounts_v1.have_pro():
-            objt = Text('x 2',
-                        position=(-120 - 180 + 45, 80 + y_offs - 50),
-                        v_attach=Text.VAttach.BOTTOM,
-                        front=True,
-                        h_align=Text.HAlign.CENTER,
-                        v_align=Text.VAlign.CENTER,
-                        transition=Text.Transition.IN_BOTTOM,
-                        vr_depth=base_vr_depth,
-                        flatness=0.5,
-                        shadow=1.0,
-                        transition_delay=in_time,
-                        transition_out_delay=out_time,
-                        flash=True,
-                        color=(0.4, 0, 1, 1),
-                        scale=0.9).autoretain()
+            objt = Text(
+                'x 2',
+                position=(-120 - 180 + 45, 80 + y_offs - 50),
+                v_attach=Text.VAttach.BOTTOM,
+                front=True,
+                h_align=Text.HAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                transition=Text.Transition.IN_BOTTOM,
+                vr_depth=base_vr_depth,
+                flatness=0.5,
+                shadow=1.0,
+                transition_delay=in_time,
+                transition_out_delay=out_time,
+                flash=True,
+                color=(0.4, 0, 1, 1),
+                scale=0.9,
+            ).autoretain()
             objs.append(objt)
             assert objt.node
             objt.node.host_only = True
 
-        objt = Text(self.description_complete,
-                    position=(-120, 30 + y_offs),
-                    front=True,
-                    v_attach=Text.VAttach.BOTTOM,
-                    transition=Text.Transition.IN_BOTTOM,
-                    vr_depth=base_vr_depth - 10,
-                    flatness=0.5,
-                    transition_delay=in_time,
-                    transition_out_delay=out_time,
-                    color=(1.0, 0.7, 0.5, 1.0),
-                    scale=0.8).autoretain()
+        objt = Text(
+            self.description_complete,
+            position=(-120, 30 + y_offs),
+            front=True,
+            v_attach=Text.VAttach.BOTTOM,
+            transition=Text.Transition.IN_BOTTOM,
+            vr_depth=base_vr_depth - 10,
+            flatness=0.5,
+            transition_delay=in_time,
+            transition_out_delay=out_time,
+            color=(1.0, 0.7, 0.5, 1.0),
+            scale=0.8,
+        ).autoretain()
         objs.append(objt)
         assert objt.node
         objt.node.host_only = True
 
         for actor in objs:
-            _ba.timer(out_time + 1.000,
-                      WeakCall(actor.handlemessage, DieMessage()))
+            _ba.timer(
+                out_time + 1.000, WeakCall(actor.handlemessage, DieMessage())
+            )

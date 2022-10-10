@@ -12,8 +12,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
-from bacommon.net import (PrivateHostingState, PrivateHostingConfig,
-                          PrivatePartyConnectResult)
+from bacommon.net import (
+    PrivateHostingState,
+    PrivateHostingConfig,
+    PrivatePartyConnectResult,
+)
 import ba
 import ba.internal
 from bastd.ui.gather import GatherTab
@@ -29,6 +32,7 @@ DEBUG_SERVER_COMMUNICATION = os.environ.get('BA_DEBUG_PPTABCOM') == '1'
 
 class SubTabType(Enum):
     """Available sub-tabs."""
+
     JOIN = 'join'
     HOST = 'host'
 
@@ -36,6 +40,7 @@ class SubTabType(Enum):
 @dataclass
 class State:
     """Our core state that persists while the app is running."""
+
     sub_tab: SubTabType = SubTabType.JOIN
 
 
@@ -85,11 +90,14 @@ class PrivateGatherTab(GatherTab):
         self._c_height = region_height - 20
         self._container = ba.containerwidget(
             parent=parent_widget,
-            position=(region_left,
-                      region_bottom + (region_height - self._c_height) * 0.5),
+            position=(
+                region_left,
+                region_bottom + (region_height - self._c_height) * 0.5,
+            ),
             size=(self._c_width, self._c_height),
             background=False,
-            selection_loops_to_parent=True)
+            selection_loops_to_parent=True,
+        )
         v = self._c_height - 30.0
         self._join_sub_tab_text = ba.textwidget(
             parent=self._container,
@@ -107,7 +115,8 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.JOIN,
                 playsound=True,
             ),
-            text=ba.Lstr(resource='gatherWindow.privatePartyJoinText'))
+            text=ba.Lstr(resource='gatherWindow.privatePartyJoinText'),
+        )
         self._host_sub_tab_text = ba.textwidget(
             parent=self._container,
             position=(self._c_width * 0.5 + 45, v - 13),
@@ -124,18 +133,24 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.HOST,
                 playsound=True,
             ),
-            text=ba.Lstr(resource='gatherWindow.privatePartyHostText'))
+            text=ba.Lstr(resource='gatherWindow.privatePartyHostText'),
+        )
         ba.widget(edit=self._join_sub_tab_text, up_widget=tab_button)
-        ba.widget(edit=self._host_sub_tab_text,
-                  left_widget=self._join_sub_tab_text,
-                  up_widget=tab_button)
-        ba.widget(edit=self._join_sub_tab_text,
-                  right_widget=self._host_sub_tab_text)
+        ba.widget(
+            edit=self._host_sub_tab_text,
+            left_widget=self._join_sub_tab_text,
+            up_widget=tab_button,
+        )
+        ba.widget(
+            edit=self._join_sub_tab_text, right_widget=self._host_sub_tab_text
+        )
 
-        self._update_timer = ba.Timer(1.0,
-                                      ba.WeakCall(self._update),
-                                      repeat=True,
-                                      timetype=ba.TimeType.REAL)
+        self._update_timer = ba.Timer(
+            1.0,
+            ba.WeakCall(self._update),
+            repeat=True,
+            timetype=ba.TimeType.REAL,
+        )
 
         # Prevent taking any action until we've updated our state.
         self._waiting_for_initial_state = True
@@ -153,6 +168,7 @@ class PrivateGatherTab(GatherTab):
         # pylint: disable=too-many-branches
         from bastd.ui.playlist import PlaylistTypeVars
         from ba.internal import filter_playlist
+
         hcfg = PrivateHostingConfig()
         cfg = ba.app.config
         sessiontypestr = cfg.get('Private Party Host Session Type', 'ffa')
@@ -170,23 +186,27 @@ class PrivateGatherTab(GatherTab):
         pvars = PlaylistTypeVars(sessiontype)
 
         playlist_name = ba.app.config.get(
-            f'{pvars.config_name} Playlist Selection')
+            f'{pvars.config_name} Playlist Selection'
+        )
         if not isinstance(playlist_name, str):
             playlist_name = '__default__'
-        hcfg.playlist_name = (pvars.default_list_name.evaluate()
-                              if playlist_name == '__default__' else
-                              playlist_name)
+        hcfg.playlist_name = (
+            pvars.default_list_name.evaluate()
+            if playlist_name == '__default__'
+            else playlist_name
+        )
 
         playlist: list[dict[str, Any]] | None = None
         if playlist_name != '__default__':
-            playlist = (cfg.get(f'{pvars.config_name} Playlists',
-                                {}).get(playlist_name))
+            playlist = cfg.get(f'{pvars.config_name} Playlists', {}).get(
+                playlist_name
+            )
         if playlist is None:
             playlist = pvars.get_default_list_call()
 
-        hcfg.playlist = filter_playlist(playlist,
-                                        sessiontype,
-                                        name=playlist_name)
+        hcfg.playlist = filter_playlist(
+            playlist, sessiontype, name=playlist_name
+        )
 
         randomize = cfg.get(f'{pvars.config_name} Playlist Randomize')
         if not isinstance(randomize, bool):
@@ -201,21 +221,27 @@ class PrivateGatherTab(GatherTab):
         if hcfg.session_type == 'teams':
             ctn: list[str] | None = cfg.get('Custom Team Names')
             if ctn is not None:
-                if (isinstance(ctn, (list, tuple)) and len(ctn) == 2
-                        and all(isinstance(x, str) for x in ctn)):
+                if (
+                    isinstance(ctn, (list, tuple))
+                    and len(ctn) == 2
+                    and all(isinstance(x, str) for x in ctn)
+                ):
                     hcfg.custom_team_names = (ctn[0], ctn[1])
                 else:
                     print(f'Found invalid custom-team-names data: {ctn}')
 
             ctc: list[list[float]] | None = cfg.get('Custom Team Colors')
             if ctc is not None:
-                if (isinstance(ctc, (list, tuple)) and len(ctc) == 2
-                        and all(isinstance(x, (list, tuple)) for x in ctc)
-                        and all(len(x) == 3 for x in ctc)):
-                    hcfg.custom_team_colors = ((ctc[0][0], ctc[0][1],
-                                                ctc[0][2]),
-                                               (ctc[1][0], ctc[1][1],
-                                                ctc[1][2]))
+                if (
+                    isinstance(ctc, (list, tuple))
+                    and len(ctc) == 2
+                    and all(isinstance(x, (list, tuple)) for x in ctc)
+                    and all(len(x) == 3 for x in ctc)
+                ):
+                    hcfg.custom_team_colors = (
+                        (ctc[0][0], ctc[0][1], ctc[0][2]),
+                        (ctc[1][0], ctc[1][1], ctc[1][2]),
+                    )
                 else:
                     print(f'Found invalid custom-team-colors data: {ctc}')
 
@@ -231,11 +257,15 @@ class PrivateGatherTab(GatherTab):
         except Exception:
             t_str = '?'
         if self._get_tickets_button:
-            ba.buttonwidget(edit=self._get_tickets_button,
-                            label=ba.charstr(ba.SpecialChar.TICKET) + t_str)
+            ba.buttonwidget(
+                edit=self._get_tickets_button,
+                label=ba.charstr(ba.SpecialChar.TICKET) + t_str,
+            )
         if self._ticket_count_text:
-            ba.textwidget(edit=self._ticket_count_text,
-                          text=ba.charstr(ba.SpecialChar.TICKET) + t_str)
+            ba.textwidget(
+                edit=self._ticket_count_text,
+                text=ba.charstr(ba.SpecialChar.TICKET) + t_str,
+            )
 
     def _update(self) -> None:
         """Periodic updating."""
@@ -247,14 +277,18 @@ class PrivateGatherTab(GatherTab):
         if self._state.sub_tab is SubTabType.HOST:
 
             # If we're not signed in, just refresh to show that.
-            if (ba.internal.get_v1_account_state() != 'signed_in'
-                    and self._showing_not_signed_in_screen):
+            if (
+                ba.internal.get_v1_account_state() != 'signed_in'
+                and self._showing_not_signed_in_screen
+            ):
                 self._refresh_sub_tab()
             else:
 
                 # Query an updated state periodically.
-                if (self._last_hosting_state_query_time is None
-                        or now - self._last_hosting_state_query_time > 15.0):
+                if (
+                    self._last_hosting_state_query_time is None
+                    or now - self._last_hosting_state_query_time > 15.0
+                ):
                     self._debug_server_comm('querying private party state')
                     if ba.internal.get_v1_account_state() == 'signed_in':
                         ba.internal.add_transaction(
@@ -263,15 +297,17 @@ class PrivateGatherTab(GatherTab):
                                 'expire_time': time.time() + 20,
                             },
                             callback=ba.WeakCall(
-                                self._hosting_state_idle_response),
+                                self._hosting_state_idle_response
+                            ),
                         )
                         ba.internal.run_transactions()
                     else:
                         self._hosting_state_idle_response(None)
                     self._last_hosting_state_query_time = now
 
-    def _hosting_state_idle_response(self,
-                                     result: dict[str, Any] | None) -> None:
+    def _hosting_state_idle_response(
+        self, result: dict[str, Any] | None
+    ) -> None:
 
         # This simply passes through to our standard response handler.
         # The one exception is if we've recently sent an action to the
@@ -279,10 +315,13 @@ class PrivateGatherTab(GatherTab):
         # idle background updates and wait for the response to our action.
         # (this keeps the button showing 'one moment...' until the change
         # takes effect, etc.)
-        if (self._last_action_send_time is not None
-                and time.time() - self._last_action_send_time < 5.0):
-            self._debug_server_comm('ignoring private party state response'
-                                    ' due to recent action')
+        if (
+            self._last_action_send_time is not None
+            and time.time() - self._last_action_send_time < 5.0
+        ):
+            self._debug_server_comm(
+                'ignoring private party state response due to recent action'
+            )
             return
         self._hosting_state_response(result)
 
@@ -297,9 +336,9 @@ class PrivateGatherTab(GatherTab):
         if result is not None:
             self._debug_server_comm('got private party state response')
             try:
-                state = dataclass_from_dict(PrivateHostingState,
-                                            result,
-                                            discard_unknown_attrs=True)
+                state = dataclass_from_dict(
+                    PrivateHostingState, result, discard_unknown_attrs=True
+                )
             except Exception:
                 ba.print_exception('Got invalid PrivateHostingState data')
         else:
@@ -335,10 +374,12 @@ class PrivateGatherTab(GatherTab):
         inactive_color = (0.5, 0.4, 0.5)
         ba.textwidget(
             edit=self._join_sub_tab_text,
-            color=active_color if value is SubTabType.JOIN else inactive_color)
+            color=active_color if value is SubTabType.JOIN else inactive_color,
+        )
         ba.textwidget(
             edit=self._host_sub_tab_text,
-            color=active_color if value is SubTabType.HOST else inactive_color)
+            color=active_color if value is SubTabType.HOST else inactive_color,
+        )
 
         self._refresh_sub_tab()
 
@@ -348,9 +389,11 @@ class PrivateGatherTab(GatherTab):
     def _selwidgets(self) -> list[ba.Widget | None]:
         """An indexed list of widgets we can use for saving/restoring sel."""
         return [
-            self._host_playlist_button, self._host_copy_button,
-            self._host_connect_button, self._host_start_stop_button,
-            self._get_tickets_button
+            self._host_playlist_button,
+            self._host_copy_button,
+            self._host_connect_button,
+            self._host_start_stop_button,
+            self._get_tickets_button,
         ]
 
     def _refresh_sub_tab(self) -> None:
@@ -369,8 +412,8 @@ class PrivateGatherTab(GatherTab):
         # Clear anything existing in the old sub-tab.
         for widget in self._container.get_children():
             if widget and widget not in {
-                    self._host_sub_tab_text,
-                    self._join_sub_tab_text,
+                self._host_sub_tab_text,
+                self._join_sub_tab_text,
             }:
                 widget.delete()
 
@@ -385,20 +428,23 @@ class PrivateGatherTab(GatherTab):
         if selindex is not None:
             selwidget = self._selwidgets()[selindex]
             if selwidget:
-                ba.containerwidget(edit=self._container,
-                                   selected_child=selwidget)
+                ba.containerwidget(
+                    edit=self._container, selected_child=selwidget
+                )
 
     def _build_join_tab(self) -> None:
 
-        ba.textwidget(parent=self._container,
-                      position=(self._c_width * 0.5, self._c_height - 140),
-                      color=(0.5, 0.46, 0.5),
-                      scale=1.5,
-                      size=(0, 0),
-                      maxwidth=250,
-                      h_align='center',
-                      v_align='center',
-                      text=ba.Lstr(resource='gatherWindow.partyCodeText'))
+        ba.textwidget(
+            parent=self._container,
+            position=(self._c_width * 0.5, self._c_height - 140),
+            color=(0.5, 0.46, 0.5),
+            scale=1.5,
+            size=(0, 0),
+            maxwidth=250,
+            h_align='center',
+            v_align='center',
+            text=ba.Lstr(resource='gatherWindow.partyCodeText'),
+        )
 
         self._join_party_code_text = ba.textwidget(
             parent=self._container,
@@ -412,17 +458,19 @@ class PrivateGatherTab(GatherTab):
             maxwidth=250,
             h_align='left',
             v_align='center',
-            text='')
-        btn = ba.buttonwidget(parent=self._container,
-                              size=(300, 70),
-                              label=ba.Lstr(resource='gatherWindow.'
-                                            'manualConnectText'),
-                              position=(self._c_width * 0.5 - 150,
-                                        self._c_height - 350),
-                              on_activate_call=self._join_connect_press,
-                              autoselect=True)
-        ba.textwidget(edit=self._join_party_code_text,
-                      on_return_press_call=btn.activate)
+            text='',
+        )
+        btn = ba.buttonwidget(
+            parent=self._container,
+            size=(300, 70),
+            label=ba.Lstr(resource='gatherWindow.' 'manualConnectText'),
+            position=(self._c_width * 0.5 - 150, self._c_height - 350),
+            on_activate_call=self._join_connect_press,
+            autoselect=True,
+        )
+        ba.textwidget(
+            edit=self._join_party_code_text, on_return_press_call=btn.activate
+        )
 
     def _on_get_tickets_press(self) -> None:
 
@@ -431,23 +479,27 @@ class PrivateGatherTab(GatherTab):
 
         # Bring up get-tickets window and then kill ourself (we're on the
         # overlay layer so we'd show up above it).
-        getcurrency.GetCurrencyWindow(modal=True,
-                                      origin_widget=self._get_tickets_button)
+        getcurrency.GetCurrencyWindow(
+            modal=True, origin_widget=self._get_tickets_button
+        )
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
+        hostingstate = self._hostingstate
         if ba.internal.get_v1_account_state() != 'signed_in':
-            ba.textwidget(parent=self._container,
-                          size=(0, 0),
-                          h_align='center',
-                          v_align='center',
-                          maxwidth=200,
-                          scale=0.8,
-                          color=(0.6, 0.56, 0.6),
-                          position=(self._c_width * 0.5, self._c_height * 0.5),
-                          text=ba.Lstr(resource='notSignedInErrorText'))
+            ba.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                maxwidth=200,
+                scale=0.8,
+                color=(0.6, 0.56, 0.6),
+                position=(self._c_width * 0.5, self._c_height * 0.5),
+                text=ba.Lstr(resource='notSignedInErrorText'),
+            )
             self._showing_not_signed_in_screen = True
             return
         self._showing_not_signed_in_screen = False
@@ -477,36 +529,44 @@ class PrivateGatherTab(GatherTab):
 
         # If we're not currently hosting and hosting requires tickets,
         # Show our count (possibly with a link to purchase more).
-        if (not self._waiting_for_initial_state
-                and self._hostingstate.party_code is None
-                and self._hostingstate.tickets_to_host_now != 0):
+        if (
+            not self._waiting_for_initial_state
+            and hostingstate.party_code is None
+            and hostingstate.tickets_to_host_now != 0
+        ):
             if not ba.app.ui.use_toolbars:
                 if ba.app.allow_ticket_purchases:
                     self._get_tickets_button = ba.buttonwidget(
                         parent=self._container,
-                        position=(self._c_width - 210 + 125,
-                                  self._c_height - 44),
+                        position=(
+                            self._c_width - 210 + 125,
+                            self._c_height - 44,
+                        ),
                         autoselect=True,
                         scale=0.6,
                         size=(120, 60),
                         textcolor=(0.2, 1, 0.2),
                         label=ba.charstr(ba.SpecialChar.TICKET),
                         color=(0.65, 0.5, 0.8),
-                        on_activate_call=self._on_get_tickets_press)
+                        on_activate_call=self._on_get_tickets_press,
+                    )
                 else:
                     self._ticket_count_text = ba.textwidget(
                         parent=self._container,
                         scale=0.6,
-                        position=(self._c_width - 210 + 125,
-                                  self._c_height - 44),
+                        position=(
+                            self._c_width - 210 + 125,
+                            self._c_height - 44,
+                        ),
                         color=(0.2, 1, 0.2),
                         h_align='center',
-                        v_align='center')
+                        v_align='center',
+                    )
                 # Set initial ticket count.
                 self._update_currency_ui()
 
         v = self._c_height - 90
-        if self._hostingstate.party_code is None:
+        if hostingstate.party_code is None:
             ba.textwidget(
                 parent=self._container,
                 size=(0, 0),
@@ -518,20 +578,24 @@ class PrivateGatherTab(GatherTab):
                 color=(0.5, 0.46, 0.5),
                 position=(self._c_width * 0.5, v),
                 text=ba.Lstr(
-                    resource='gatherWindow.privatePartyCloudDescriptionText'))
+                    resource='gatherWindow.privatePartyCloudDescriptionText'
+                ),
+            )
 
         v -= 100
-        if self._hostingstate.party_code is None:
+        if hostingstate.party_code is None:
             # We've got no current party running; show options to set one up.
-            ba.textwidget(parent=self._container,
-                          size=(0, 0),
-                          h_align='right',
-                          v_align='center',
-                          maxwidth=200,
-                          scale=0.8,
-                          color=(0.6, 0.56, 0.6),
-                          position=(self._c_width * 0.5 - 210, v),
-                          text=ba.Lstr(resource='playlistText'))
+            ba.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='right',
+                v_align='center',
+                maxwidth=200,
+                scale=0.8,
+                color=(0.6, 0.56, 0.6),
+                position=(self._c_width * 0.5 - 210, v),
+                text=ba.Lstr(resource='playlistText'),
+            )
             self._host_playlist_button = ba.buttonwidget(
                 parent=self._container,
                 size=(400, 70),
@@ -541,13 +605,16 @@ class PrivateGatherTab(GatherTab):
                 on_activate_call=self._playlist_press,
                 position=(self._c_width * 0.5 - 200, v - 35),
                 up_widget=self._host_sub_tab_text,
-                autoselect=True)
+                autoselect=True,
+            )
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
             if ba.app.ui.selecting_private_party_playlist:
-                ba.containerwidget(edit=self._container,
-                                   selected_child=self._host_playlist_button)
+                ba.containerwidget(
+                    edit=self._container,
+                    selected_child=self._host_playlist_button,
+                )
                 ba.app.ui.selecting_private_party_playlist = False
         else:
             # We've got a current party; show its info.
@@ -560,24 +627,29 @@ class PrivateGatherTab(GatherTab):
                 scale=0.9,
                 color=(0.7, 0.64, 0.7),
                 position=(self._c_width * 0.5, v + 90),
-                text=ba.Lstr(resource='gatherWindow.partyServerRunningText'))
-            ba.textwidget(parent=self._container,
-                          size=(0, 0),
-                          h_align='center',
-                          v_align='center',
-                          maxwidth=600,
-                          scale=0.7,
-                          color=(0.7, 0.64, 0.7),
-                          position=(self._c_width * 0.5, v + 50),
-                          text=ba.Lstr(resource='gatherWindow.partyCodeText'))
-            ba.textwidget(parent=self._container,
-                          size=(0, 0),
-                          h_align='center',
-                          v_align='center',
-                          scale=2.0,
-                          color=(0.0, 1.0, 0.0),
-                          position=(self._c_width * 0.5, v + 10),
-                          text=self._hostingstate.party_code)
+                text=ba.Lstr(resource='gatherWindow.partyServerRunningText'),
+            )
+            ba.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                maxwidth=600,
+                scale=0.7,
+                color=(0.7, 0.64, 0.7),
+                position=(self._c_width * 0.5, v + 50),
+                text=ba.Lstr(resource='gatherWindow.partyCodeText'),
+            )
+            ba.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                scale=2.0,
+                color=(0.0, 1.0, 0.0),
+                position=(self._c_width * 0.5, v + 10),
+                text=hostingstate.party_code,
+            )
 
             # Also action buttons to copy it and connect to it.
             if ba.clipboard_is_supported():
@@ -590,7 +662,8 @@ class PrivateGatherTab(GatherTab):
                     label=ba.Lstr(resource='gatherWindow.copyCodeText'),
                     on_activate_call=self._host_copy_press,
                     position=(self._c_width * 0.5 - 150, v - 70),
-                    autoselect=True)
+                    autoselect=True,
+                )
             else:
                 cbtnoffs = -70
             self._host_connect_button = ba.buttonwidget(
@@ -601,7 +674,8 @@ class PrivateGatherTab(GatherTab):
                 label=ba.Lstr(resource='gatherWindow.manualConnectText'),
                 on_activate_call=self._host_connect_press,
                 position=(self._c_width * 0.5 + cbtnoffs, v - 70),
-                autoselect=True)
+                autoselect=True,
+            )
 
         v -= 120
 
@@ -610,7 +684,7 @@ class PrivateGatherTab(GatherTab):
         # If we don't want to show anything until we get a state:
         if self._waiting_for_initial_state:
             pass
-        elif self._hostingstate.unavailable_error is not None:
+        elif hostingstate.unavailable_error is not None:
             # If hosting is unavailable, show the associated reason.
             ba.textwidget(
                 parent=self._container,
@@ -622,9 +696,14 @@ class PrivateGatherTab(GatherTab):
                 flatness=1.0,
                 color=(1.0, 0.0, 0.0),
                 position=(self._c_width * 0.5, v),
-                text=ba.Lstr(translate=('serverResponses',
-                                        self._hostingstate.unavailable_error)))
-        elif self._hostingstate.free_host_minutes_remaining is not None:
+                text=ba.Lstr(
+                    translate=(
+                        'serverResponses',
+                        hostingstate.unavailable_error,
+                    )
+                ),
+            )
+        elif hostingstate.free_host_minutes_remaining is not None:
             # If we've been pre-approved to start/stop for free, show that.
             ba.textwidget(
                 parent=self._container,
@@ -634,20 +713,27 @@ class PrivateGatherTab(GatherTab):
                 maxwidth=self._c_width * 0.9,
                 scale=0.7,
                 flatness=1.0,
-                color=((0.7, 0.64, 0.7) if self._hostingstate.party_code else
-                       (0.0, 1.0, 0.0)),
+                color=(
+                    (0.7, 0.64, 0.7)
+                    if hostingstate.party_code
+                    else (0.0, 1.0, 0.0)
+                ),
                 position=(self._c_width * 0.5, v),
                 text=ba.Lstr(
                     resource='gatherWindow.startStopHostingMinutesText',
-                    subs=[(
-                        '${MINUTES}',
-                        f'{self._hostingstate.free_host_minutes_remaining:.0f}'
-                    )]))
+                    subs=[
+                        (
+                            '${MINUTES}',
+                            f'{hostingstate.free_host_minutes_remaining:.0f}',
+                        )
+                    ],
+                ),
+            )
         else:
             # Otherwise tell whether the free cloud server is available
             # or will be at some point.
-            if self._hostingstate.party_code is None:
-                if self._hostingstate.tickets_to_host_now == 0:
+            if hostingstate.party_code is None:
+                if hostingstate.tickets_to_host_now == 0:
                     ba.textwidget(
                         parent=self._container,
                         size=(0, 0),
@@ -659,10 +745,13 @@ class PrivateGatherTab(GatherTab):
                         color=(0.0, 1.0, 0.0),
                         position=(self._c_width * 0.5, v),
                         text=ba.Lstr(
-                            resource=
-                            'gatherWindow.freeCloudServerAvailableNowText'))
+                            resource=(
+                                'gatherWindow.freeCloudServerAvailableNowText'
+                            )
+                        ),
+                    )
                 else:
-                    if self._hostingstate.minutes_until_free_host is None:
+                    if hostingstate.minutes_until_free_host is None:
                         ba.textwidget(
                             parent=self._container,
                             size=(0, 0),
@@ -674,11 +763,14 @@ class PrivateGatherTab(GatherTab):
                             color=(1.0, 0.6, 0.0),
                             position=(self._c_width * 0.5, v),
                             text=ba.Lstr(
-                                resource=
-                                'gatherWindow.freeCloudServerNotAvailableText')
+                                resource=(
+                                    'gatherWindow'
+                                    '.freeCloudServerNotAvailableText'
+                                )
+                            ),
                         )
                     else:
-                        availmins = self._hostingstate.minutes_until_free_host
+                        availmins = hostingstate.minutes_until_free_host
                         ba.textwidget(
                             parent=self._container,
                             size=(0, 0),
@@ -689,47 +781,60 @@ class PrivateGatherTab(GatherTab):
                             flatness=1.0,
                             color=(1.0, 0.6, 0.0),
                             position=(self._c_width * 0.5, v),
-                            text=ba.Lstr(resource='gatherWindow.'
-                                         'freeCloudServerAvailableMinutesText',
-                                         subs=[('${MINUTES}',
-                                                f'{availmins:.0f}')]))
+                            text=ba.Lstr(
+                                resource='gatherWindow.'
+                                'freeCloudServerAvailableMinutesText',
+                                subs=[('${MINUTES}', f'{availmins:.0f}')],
+                            ),
+                        )
 
         v -= 100
 
-        if (self._waiting_for_start_stop_response
-                or self._waiting_for_initial_state):
+        if (
+            self._waiting_for_start_stop_response
+            or self._waiting_for_initial_state
+        ):
             btnlabel = ba.Lstr(resource='oneMomentText')
         else:
-            if self._hostingstate.unavailable_error is not None:
+            if hostingstate.unavailable_error is not None:
                 btnlabel = ba.Lstr(
-                    resource='gatherWindow.hostingUnavailableText')
-            elif self._hostingstate.party_code is None:
+                    resource='gatherWindow.hostingUnavailableText'
+                )
+            elif hostingstate.party_code is None:
                 ticon = ba.internal.charstr(ba.SpecialChar.TICKET)
-                nowtickets = self._hostingstate.tickets_to_host_now
+                nowtickets = hostingstate.tickets_to_host_now
                 if nowtickets > 0:
                     btnlabel = ba.Lstr(
                         resource='gatherWindow.startHostingPaidText',
-                        subs=[('${COST}', f'{ticon}{nowtickets}')])
+                        subs=[('${COST}', f'{ticon}{nowtickets}')],
+                    )
                 else:
-                    btnlabel = ba.Lstr(
-                        resource='gatherWindow.startHostingText')
+                    btnlabel = ba.Lstr(resource='gatherWindow.startHostingText')
             else:
                 btnlabel = ba.Lstr(resource='gatherWindow.stopHostingText')
 
-        disabled = (self._hostingstate.unavailable_error is not None
-                    or self._waiting_for_initial_state)
+        disabled = (
+            hostingstate.unavailable_error is not None
+            or self._waiting_for_initial_state
+        )
         waiting = self._waiting_for_start_stop_response
         self._host_start_stop_button = ba.buttonwidget(
             parent=self._container,
             size=(400, 80),
-            color=((0.6, 0.6, 0.6) if disabled else
-                   (0.5, 1.0, 0.5) if waiting else None),
+            color=(
+                (0.6, 0.6, 0.6)
+                if disabled
+                else (0.5, 1.0, 0.5)
+                if waiting
+                else None
+            ),
             enable_sound=False,
             label=btnlabel,
             textcolor=((0.7, 0.7, 0.7) if disabled else None),
             position=(self._c_width * 0.5 - 200, v),
             on_activate_call=self._start_stop_button_press,
-            autoselect=True)
+            autoselect=True,
+        )
 
     def _playlist_press(self) -> None:
         assert self._host_playlist_button is not None
@@ -746,18 +851,23 @@ class PrivateGatherTab(GatherTab):
 
     def _debug_server_comm(self, msg: str) -> None:
         if DEBUG_SERVER_COMMUNICATION:
-            print(f'PPTABCOM: {msg} at time '
-                  f'{time.time()-self._create_time:.2f}')
+            print(
+                f'PPTABCOM: {msg} at time '
+                f'{time.time()-self._create_time:.2f}'
+            )
 
     def _connect_to_party_code(self, code: str) -> None:
 
         # Ignore attempted followup sends for a few seconds.
         # (this will reset if we get a response)
         now = time.time()
-        if (self._connect_press_time is not None
-                and now - self._connect_press_time < 5.0):
+        if (
+            self._connect_press_time is not None
+            and now - self._connect_press_time < 5.0
+        ):
             self._debug_server_comm(
-                'not sending private party connect (too soon)')
+                'not sending private party connect (too soon)'
+            )
             return
         self._connect_press_time = now
 
@@ -766,15 +876,17 @@ class PrivateGatherTab(GatherTab):
             {
                 'type': 'PRIVATE_PARTY_CONNECT',
                 'expire_time': time.time() + 20,
-                'code': code
+                'code': code,
             },
             callback=ba.WeakCall(self._connect_response),
         )
         ba.internal.run_transactions()
 
     def _start_stop_button_press(self) -> None:
-        if (self._waiting_for_start_stop_response
-                or self._waiting_for_initial_state):
+        if (
+            self._waiting_for_start_stop_response
+            or self._waiting_for_initial_state
+        ):
             return
 
         if ba.internal.get_v1_account_state() != 'signed_in':
@@ -813,7 +925,8 @@ class PrivateGatherTab(GatherTab):
                     'region_pings': ba.app.net.zone_pings,
                     'expire_time': time.time() + 20,
                 },
-                callback=ba.WeakCall(self._hosting_state_response))
+                callback=ba.WeakCall(self._hosting_state_response),
+            )
             ba.internal.run_transactions()
 
         else:
@@ -823,7 +936,8 @@ class PrivateGatherTab(GatherTab):
                     'type': 'PRIVATE_PARTY_STOP',
                     'expire_time': time.time() + 20,
                 },
-                callback=ba.WeakCall(self._hosting_state_response))
+                callback=ba.WeakCall(self._hosting_state_response),
+            )
             ba.internal.run_transactions()
         ba.playsound(ba.getsound('click01'))
 
@@ -839,7 +953,8 @@ class PrivateGatherTab(GatherTab):
         if not code:
             ba.screenmessage(
                 ba.Lstr(resource='internal.invalidAddressErrorText'),
-                color=(1, 0, 0))
+                color=(1, 0, 0),
+            )
             ba.playsound(ba.getsound('error'))
             return
 
@@ -850,14 +965,15 @@ class PrivateGatherTab(GatherTab):
             self._connect_press_time = None
             if result is None:
                 raise RuntimeError()
-            cresult = dataclass_from_dict(PrivatePartyConnectResult,
-                                          result,
-                                          discard_unknown_attrs=True)
+            cresult = dataclass_from_dict(
+                PrivatePartyConnectResult, result, discard_unknown_attrs=True
+            )
             if cresult.error is not None:
                 self._debug_server_comm('got error connect response')
                 ba.screenmessage(
                     ba.Lstr(translate=('serverResponses', cresult.error)),
-                    (1, 0, 0))
+                    (1, 0, 0),
+                )
                 ba.playsound(ba.getsound('error'))
                 return
             self._debug_server_comm('got valid connect response')

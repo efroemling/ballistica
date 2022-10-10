@@ -20,6 +20,7 @@ def game_begin_analytics() -> None:
     from ba._freeforallsession import FreeForAllSession
     from ba._coopsession import CoopSession
     from ba._gameactivity import GameActivity
+
     activity = _ba.getactivity(False)
     session = _ba.getsession(False)
 
@@ -31,8 +32,11 @@ def game_begin_analytics() -> None:
         campaign = session.campaign
         assert campaign is not None
         _ba.set_analytics_screen(
-            'Coop Game: ' + campaign.name + ' ' +
-            campaign.getlevel(_ba.app.coop_session_args['level']).name)
+            'Coop Game: '
+            + campaign.name
+            + ' '
+            + campaign.getlevel(_ba.app.coop_session_args['level']).name
+        )
         _ba.increment_analytics_count('Co-op round start')
         if len(activity.players) == 1:
             _ba.increment_analytics_count('Co-op round start 1 human player')
@@ -49,9 +53,11 @@ def game_begin_analytics() -> None:
         if len(activity.players) == 1:
             _ba.increment_analytics_count('Teams round start 1 human player')
         elif 1 < len(activity.players) < 8:
-            _ba.increment_analytics_count('Teams round start ' +
-                                          str(len(activity.players)) +
-                                          ' human players')
+            _ba.increment_analytics_count(
+                'Teams round start '
+                + str(len(activity.players))
+                + ' human players'
+            )
         elif len(activity.players) >= 8:
             _ba.increment_analytics_count('Teams round start 8+ human players')
 
@@ -60,14 +66,18 @@ def game_begin_analytics() -> None:
         _ba.increment_analytics_count('Free-for-all round start')
         if len(activity.players) == 1:
             _ba.increment_analytics_count(
-                'Free-for-all round start 1 human player')
+                'Free-for-all round start 1 human player'
+            )
         elif 1 < len(activity.players) < 8:
-            _ba.increment_analytics_count('Free-for-all round start ' +
-                                          str(len(activity.players)) +
-                                          ' human players')
+            _ba.increment_analytics_count(
+                'Free-for-all round start '
+                + str(len(activity.players))
+                + ' human players'
+            )
         elif len(activity.players) >= 8:
             _ba.increment_analytics_count(
-                'Free-for-all round start 8+ human players')
+                'Free-for-all round start 8+ human players'
+            )
 
     # For some analytics tracking on the c layer.
     _ba.reset_game_activity_tracking()

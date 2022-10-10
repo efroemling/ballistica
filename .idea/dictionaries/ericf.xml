@@ -57,6 +57,7 @@
       <w>addr</w>
       <w>addrstr</w>
       <w>adisp</w>
+      <w>advb</w>
       <w>advertizing</w>
       <w>aidl</w>
       <w>aint</w>
@@ -1935,6 +1936,7 @@
       <w>ppre</w>
       <w>pproxy</w>
       <w>pptabcom</w>
+      <w>prab</w>
       <w>pragmas</w>
       <w>prch</w>
       <w>prec</w>
@@ -1994,6 +1996,7 @@
       <w>projs</w>
       <w>promocode</w>
       <w>proxykey</w>
+      <w>prtb</w>
       <w>prunedir</w>
       <w>prval</w>
       <w>pstats</w>
@@ -2041,6 +2044,7 @@
       <w>pvrtcbest</w>
       <w>pvrtcfast</w>
       <w>pvval</w>
+      <w>pwin</w>
       <w>pybee</w>
       <w>pybuild</w>
       <w>pybuildapple</w>
@@ -2932,6 +2936,7 @@
       <w>yscl</w>
       <w>ytweak</w>
       <w>yval</w>
+      <w>zabcdefghijklmnopqrstuvwxyz</w>
       <w>zaggy</w>
       <w>zimbot</w>
       <w>zipapp</w>

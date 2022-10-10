@@ -30,6 +30,7 @@ class LogLevel(Enum):
     Note that these values are not currently interchangeable with the
     logging.ERROR, logging.DEBUG, etc. values.
     """
+
     DEBUG = 0
     INFO = 1
     WARNING = 2
@@ -42,7 +43,7 @@ LEVELNO_LOG_LEVELS = {
     logging.INFO: LogLevel.INFO,
     logging.WARNING: LogLevel.WARNING,
     logging.ERROR: LogLevel.ERROR,
-    logging.CRITICAL: LogLevel.CRITICAL
+    logging.CRITICAL: LogLevel.CRITICAL,
 }
 
 LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
@@ -50,9 +51,12 @@ LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
     logging.INFO: ('', ''),
     logging.WARNING: (TerminalColor.YELLOW.value, TerminalColor.RESET.value),
     logging.ERROR: (TerminalColor.RED.value, TerminalColor.RESET.value),
-    logging.CRITICAL:
-        (TerminalColor.STRONG_MAGENTA.value + TerminalColor.BOLD.value +
-         TerminalColor.BG_BLACK.value, TerminalColor.RESET.value),
+    logging.CRITICAL: (
+        TerminalColor.STRONG_MAGENTA.value
+        + TerminalColor.BOLD.value
+        + TerminalColor.BG_BLACK.value,
+        TerminalColor.RESET.value,
+    ),
 }
 
 
@@ -60,8 +64,8 @@ LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
 @dataclass
 class LogEntry:
     """Single logged message."""
-    name: Annotated[str,
-                    IOAttrs('n', soft_default='root', store_default=False)]
+
+    name: Annotated[str, IOAttrs('n', soft_default='root', store_default=False)]
     message: Annotated[str, IOAttrs('m')]
     level: Annotated[LogLevel, IOAttrs('l')]
     time: Annotated[datetime.datetime, IOAttrs('t')]
@@ -95,15 +99,16 @@ class LogHandler(logging.Handler):
     # Otherwise we can get infinite loops as those prints come back to us
     # as new log entries.
 
-    def __init__(self,
-                 path: str | Path | None,
-                 echofile: TextIO | None,
-                 suppress_non_root_debug: bool = False,
-                 cache_size_limit: int = 0):
+    def __init__(
+        self,
+        path: str | Path | None,
+        echofile: TextIO | None,
+        suppress_non_root_debug: bool = False,
+        cache_size_limit: int = 0,
+    ):
         super().__init__()
         # pylint: disable=consider-using-with
-        self._file = (None
-                      if path is None else open(path, 'w', encoding='utf-8'))
+        self._file = None if path is None else open(path, 'w', encoding='utf-8')
         self._echofile = echofile
         self._callbacks_lock = Lock()
         self._callbacks: list[Callable[[LogEntry], None]] = []
@@ -111,7 +116,7 @@ class LogHandler(logging.Handler):
         self._file_chunks: dict[str, list[str]] = {'stdout': [], 'stderr': []}
         self._file_chunk_ship_task: dict[str, asyncio.Task | None] = {
             'stdout': None,
-            'stderr': None
+            'stderr': None,
         }
         self._cache_size = 0
         assert cache_size_limit >= 0
@@ -152,12 +157,13 @@ class LogHandler(logging.Handler):
             # Try to make some noise however we can.
             print('LogHandler died!!!', file=sys.stderr)
             import traceback
+
             traceback.print_exc()
             raise
 
-    def get_cached(self,
-                   start_index: int = 0,
-                   max_entries: int | None = None) -> LogArchive:
+    def get_cached(
+        self, start_index: int = 0, max_entries: int | None = None
+    ) -> LogArchive:
         """Build and return an archive of cached log entries.
 
         This will only include entries that have been processed by the
@@ -174,8 +180,11 @@ class LogHandler(logging.Handler):
             # Transform start_index to our present cache space.
             start_index -= self._cache_index_offset
             # Calc end-index in our present cache space.
-            end_index = (len(self._cache)
-                         if max_entries is None else start_index + max_entries)
+            end_index = (
+                len(self._cache)
+                if max_entries is None
+                else start_index + max_entries
+            )
 
             # Clamp both indexes to both ends of our present space.
             start_index = max(0, min(start_index, len(self._cache)))
@@ -184,7 +193,8 @@ class LogHandler(logging.Handler):
             return LogArchive(
                 log_size=self._cache_index_offset + len(self._cache),
                 start_index=start_index + self._cache_index_offset,
-                entries=[e[1] for e in self._cache[start_index:end_index]])
+                entries=[e[1] for e in self._cache[start_index:end_index]],
+            )
 
     def emit(self, record: logging.LogRecord) -> None:
         # Called by logging to send us records.
@@ -196,8 +206,11 @@ class LogHandler(logging.Handler):
 
         # Special case - filter out this common extra-chatty category.
         # TODO - should use a standard logging.Filter for this.
-        if (self._suppress_non_root_debug and record.name != 'root'
-                and record.levelname == 'DEBUG'):
+        if (
+            self._suppress_non_root_debug
+            and record.name != 'root'
+            and record.levelname == 'DEBUG'
+        ):
             return
 
         # We want to forward as much as we can along without processing it
@@ -219,27 +232,40 @@ class LogHandler(logging.Handler):
                 self._echofile.write(f'{msg}\n')
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._emit_in_thread, record.name, record.levelno,
-                     record.created, msg))
+            tpartial(
+                self._emit_in_thread,
+                record.name,
+                record.levelno,
+                record.created,
+                msg,
+            )
+        )
 
-    def _emit_in_thread(self, name: str, levelno: int, created: float,
-                        message: str) -> None:
+    def _emit_in_thread(
+        self, name: str, levelno: int, created: float, message: str
+    ) -> None:
         try:
             self._emit_entry(
-                LogEntry(name=name,
-                         message=message,
-                         level=LEVELNO_LOG_LEVELS.get(levelno, LogLevel.INFO),
-                         time=datetime.datetime.fromtimestamp(
-                             created, datetime.timezone.utc)))
+                LogEntry(
+                    name=name,
+                    message=message,
+                    level=LEVELNO_LOG_LEVELS.get(levelno, LogLevel.INFO),
+                    time=datetime.datetime.fromtimestamp(
+                        created, datetime.timezone.utc
+                    ),
+                )
+            )
         except Exception:
             import traceback
+
             traceback.print_exc(file=self._echofile)
 
     def file_write(self, name: str, output: str) -> None:
         """Send raw stdout/stderr output to the logger to be collated."""
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._file_write_in_thread, name, output))
+            tpartial(self._file_write_in_thread, name, output)
+        )
 
     def _file_write_in_thread(self, name: str, output: str) -> None:
         try:
@@ -263,19 +289,23 @@ class LogHandler(logging.Handler):
                 # after a short bit if we never get a newline.
                 ship_task = self._file_chunk_ship_task[name]
                 if ship_task is None:
-                    self._file_chunk_ship_task[name] = (
-                        self._event_loop.create_task(
-                            self._ship_chunks_task(name)))
+                    self._file_chunk_ship_task[
+                        name
+                    ] = self._event_loop.create_task(
+                        self._ship_chunks_task(name)
+                    )
 
         except Exception:
             import traceback
+
             traceback.print_exc(file=self._echofile)
 
     def file_flush(self, name: str) -> None:
         """Send raw stdout/stderr flush to the logger to be collated."""
 
         self._event_loop.call_soon_threadsafe(
-            tpartial(self._file_flush_in_thread, name))
+            tpartial(self._file_flush_in_thread, name)
+        )
 
     def _file_flush_in_thread(self, name: str) -> None:
         try:
@@ -287,6 +317,7 @@ class LogHandler(logging.Handler):
 
         except Exception:
             import traceback
+
             traceback.print_exc(file=self._echofile)
 
     async def _ship_chunks_task(self, name: str) -> None:
@@ -300,10 +331,10 @@ class LogHandler(logging.Handler):
         text = ''.join(self._file_chunks[name]).removesuffix('\n')
 
         self._emit_entry(
-            LogEntry(name=name,
-                     message=text,
-                     level=LogLevel.INFO,
-                     time=utc_now()))
+            LogEntry(
+                name=name, message=text, level=LogLevel.INFO, time=utc_now()
+            )
+        )
         self._file_chunks[name] = []
         ship_task = self._file_chunk_ship_task[name]
         if cancel_ship_task and ship_task is not None:
@@ -319,8 +350,14 @@ class LogHandler(logging.Handler):
                 # Do a rough calc of how many bytes this entry consumes.
                 entry_size = sum(
                     sys.getsizeof(x)
-                    for x in (entry, entry.name, entry.message, entry.level,
-                              entry.time))
+                    for x in (
+                        entry,
+                        entry.name,
+                        entry.message,
+                        entry.level,
+                        entry.time,
+                    )
+                )
                 self._cache.append((entry_size, entry))
                 self._cache_size += entry_size
 
@@ -339,6 +376,7 @@ class LogHandler(logging.Handler):
                     # Only print one callback error to avoid insanity.
                     if not self._printed_callback_error:
                         import traceback
+
                         traceback.print_exc(file=self._echofile)
                         self._printed_callback_error = True
 
@@ -353,8 +391,9 @@ class LogHandler(logging.Handler):
 class FileLogEcho:
     """A file-like object for forwarding stdout/stderr to a LogHandler."""
 
-    def __init__(self, original: TextIO, name: str,
-                 handler: LogHandler) -> None:
+    def __init__(
+        self, original: TextIO, name: str, handler: LogHandler
+    ) -> None:
         assert name in ('stdout', 'stderr')
         self._original = original
         self._name = name
@@ -379,11 +418,13 @@ class FileLogEcho:
         return self._original.isatty()
 
 
-def setup_logging(log_path: str | Path | None,
-                  level: LogLevel,
-                  suppress_non_root_debug: bool = False,
-                  log_stdout_stderr: bool = False,
-                  cache_size_limit: int = 0) -> LogHandler:
+def setup_logging(
+    log_path: str | Path | None,
+    level: LogLevel,
+    suppress_non_root_debug: bool = False,
+    log_stdout_stderr: bool = False,
+    cache_size_limit: int = 0,
+) -> LogHandler:
     """Set up our logging environment.
 
     Returns the custom handler which can be used to fetch information
@@ -414,16 +455,19 @@ def setup_logging(log_path: str | Path | None,
         # echofile=sys.stderr if sys.stderr.isatty() else None,
         echofile=sys.stderr,
         suppress_non_root_debug=suppress_non_root_debug,
-        cache_size_limit=cache_size_limit)
+        cache_size_limit=cache_size_limit,
+    )
 
     # Note: going ahead with force=True here so that we replace any
     # existing logger. Though we warn if it looks like we are doing
     # that so we can try to avoid creating the first one.
     had_previous_handlers = bool(logging.root.handlers)
-    logging.basicConfig(level=lmap[level],
-                        format='%(message)s',
-                        handlers=[loghandler],
-                        force=True)
+    logging.basicConfig(
+        level=lmap[level],
+        format='%(message)s',
+        handlers=[loghandler],
+        force=True,
+    )
     if had_previous_handlers:
         logging.warning('setup_logging: force-replacing previous handlers.')
 
@@ -431,8 +475,10 @@ def setup_logging(log_path: str | Path | None,
     # log entries from it.
     if log_stdout_stderr:
         sys.stdout = FileLogEcho(  # type: ignore
-            sys.stdout, 'stdout', loghandler)
+            sys.stdout, 'stdout', loghandler
+        )
         sys.stderr = FileLogEcho(  # type: ignore
-            sys.stderr, 'stderr', loghandler)
+            sys.stderr, 'stderr', loghandler
+        )
 
     return loghandler

@@ -20,12 +20,14 @@ class Level:
     Category: **Gameplay Classes**
     """
 
-    def __init__(self,
-                 name: str,
-                 gametype: type[ba.GameActivity],
-                 settings: dict,
-                 preview_texture_name: str,
-                 displayname: str | None = None):
+    def __init__(
+        self,
+        name: str,
+        gametype: type[ba.GameActivity],
+        settings: dict,
+        preview_texture_name: str,
+        displayname: str | None = None,
+    ):
         self._name = name
         self._gametype = gametype
         self._settings = settings
@@ -66,11 +68,18 @@ class Level:
     def displayname(self) -> ba.Lstr:
         """The localized name for this Level."""
         from ba import _language
+
         return _language.Lstr(
-            translate=('coopLevelNames', self._displayname
-                       if self._displayname is not None else self._name),
-            subs=[('${GAME}',
-                   self._gametype.get_display_string(self._settings))])
+            translate=(
+                'coopLevelNames',
+                self._displayname
+                if self._displayname is not None
+                else self._name,
+            ),
+            subs=[
+                ('${GAME}', self._gametype.get_display_string(self._settings))
+            ],
+        )
 
     @property
     def gametype(self) -> type[ba.GameActivity]:
@@ -156,10 +165,9 @@ class Level:
         if campaign is None:
             raise RuntimeError('Level is not in a campaign.')
         configdict = campaign.configdict
-        val: dict[str, Any] = configdict.setdefault(self._name, {
-            'Rating': 0.0,
-            'Complete': False
-        })
+        val: dict[str, Any] = configdict.setdefault(
+            self._name, {'Rating': 0.0, 'Complete': False}
+        )
         assert isinstance(val, dict)
         return val
 

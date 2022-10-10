@@ -20,44 +20,47 @@ class TipsText(ba.Actor):
         self._tip_scale = 0.8
         self._tip_title_scale = 1.1
         self._offs_y = offs_y
-        self.node = ba.newnode('text',
-                               delegate=self,
-                               attrs={
-                                   'text': '',
-                                   'scale': self._tip_scale,
-                                   'h_align': 'left',
-                                   'maxwidth': 800,
-                                   'vr_depth': -20,
-                                   'v_align': 'center',
-                                   'v_attach': 'bottom'
-                               })
-        tval = ba.Lstr(value='${A}:',
-                       subs=[('${A}', ba.Lstr(resource='tipText'))])
-        self.title_node = ba.newnode('text',
-                                     delegate=self,
-                                     attrs={
-                                         'text': tval,
-                                         'scale': self._tip_title_scale,
-                                         'maxwidth': 122,
-                                         'h_align': 'right',
-                                         'vr_depth': -20,
-                                         'v_align': 'center',
-                                         'v_attach': 'bottom'
-                                     })
+        self.node = ba.newnode(
+            'text',
+            delegate=self,
+            attrs={
+                'text': '',
+                'scale': self._tip_scale,
+                'h_align': 'left',
+                'maxwidth': 800,
+                'vr_depth': -20,
+                'v_align': 'center',
+                'v_attach': 'bottom',
+            },
+        )
+        tval = ba.Lstr(
+            value='${A}:', subs=[('${A}', ba.Lstr(resource='tipText'))]
+        )
+        self.title_node = ba.newnode(
+            'text',
+            delegate=self,
+            attrs={
+                'text': tval,
+                'scale': self._tip_title_scale,
+                'maxwidth': 122,
+                'h_align': 'right',
+                'vr_depth': -20,
+                'v_align': 'center',
+                'v_attach': 'bottom',
+            },
+        )
         self._message_duration = 10000
         self._message_spacing = 3000
         self._change_timer = ba.Timer(
             0.001 * (self._message_duration + self._message_spacing),
             ba.WeakCall(self.change_phrase),
-            repeat=True)
-        self._combine = ba.newnode('combine',
-                                   owner=self.node,
-                                   attrs={
-                                       'input0': 1.0,
-                                       'input1': 0.8,
-                                       'input2': 1.0,
-                                       'size': 4
-                                   })
+            repeat=True,
+        )
+        self._combine = ba.newnode(
+            'combine',
+            owner=self.node,
+            attrs={'input0': 1.0, 'input1': 0.8, 'input2': 1.0, 'size': 4},
+        )
         self._combine.connectattr('output', self.node, 'color')
         self._combine.connectattr('output', self.title_node, 'color')
         self.change_phrase()
@@ -65,9 +68,11 @@ class TipsText(ba.Actor):
     def change_phrase(self) -> None:
         """Switch the visible tip phrase."""
         from ba.internal import get_remote_app_name, get_next_tip
-        next_tip = ba.Lstr(translate=('tips', get_next_tip()),
-                           subs=[('${REMOTE_APP_NAME}', get_remote_app_name())
-                                 ])
+
+        next_tip = ba.Lstr(
+            translate=('tips', get_next_tip()),
+            subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],
+        )
         spc = self._message_spacing
         assert self.node
         self.node.position = (-200, self._offs_y)
@@ -76,12 +81,14 @@ class TipsText(ba.Actor):
             spc: 0,
             spc + 1000: 1.0,
             spc + self._message_duration - 1000: 1.0,
-            spc + self._message_duration: 0.0
+            spc + self._message_duration: 0.0,
         }
-        ba.animate(self._combine,
-                   'input3', {k: v * 0.5
-                              for k, v in list(keys.items())},
-                   timeformat=ba.TimeFormat.MILLISECONDS)
+        ba.animate(
+            self._combine,
+            'input3',
+            {k: v * 0.5 for k, v in list(keys.items())},
+            timeformat=ba.TimeFormat.MILLISECONDS,
+        )
         self.node.text = next_tip
 
     def handlemessage(self, msg: Any) -> Any:

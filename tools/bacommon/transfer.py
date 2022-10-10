@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 @dataclass
 class DirectoryManifestFile:
     """Describes metadata and hashes for a file in a manifest."""
+
     filehash: Annotated[str, IOAttrs('h')]
     filesize: Annotated[int, IOAttrs('s')]
 
@@ -27,6 +28,7 @@ class DirectoryManifestFile:
 @dataclass
 class DirectoryManifest:
     """Contains a summary of files in a directory."""
+
     files: Annotated[dict[str, DirectoryManifestFile], IOAttrs('f')]
 
     _empty_hash: str | None = None
@@ -48,7 +50,7 @@ class DirectoryManifest:
                     assert fullname.startswith(pathstr)
                     # Make sure we end up with forward slashes no matter
                     # what the os.* stuff above here was using.
-                    paths.append(Path(fullname[len(pathstr) + 1:]).as_posix())
+                    paths.append(Path(fullname[len(pathstr) + 1 :]).as_posix())
         elif path.exists():
             # Just return a single file entry if path is not a dir.
             paths.append(path.as_posix())
@@ -62,9 +64,12 @@ class DirectoryManifest:
                 filebytes = infile.read()
                 filesize = len(filebytes)
                 sha.update(filebytes)
-            return (filepath,
-                    DirectoryManifestFile(filehash=sha.hexdigest(),
-                                          filesize=filesize))
+            return (
+                filepath,
+                DirectoryManifestFile(
+                    filehash=sha.hexdigest(), filesize=filesize
+                ),
+            )
 
         # Now use all procs to hash the files efficiently.
         cpus = os.cpu_count()
@@ -76,13 +81,15 @@ class DirectoryManifest:
     def validate(self) -> None:
         """Log any odd data in the manifest; for debugging."""
         import logging
+
         for fpath, _fentry in self.files.items():
             # We want to be dealing in only forward slashes; make sure
             # that's the case (wondering if we'll ever see backslashes
             # for escape purposes).
             if '\\' in fpath:
-                logging.exception("Found unusual path in manifest: '%s'.",
-                                  fpath)
+                logging.exception(
+                    "Found unusual path in manifest: '%s'.", fpath
+                )
                 break  # 1 error is enough for now.
 
     @classmethod
@@ -90,6 +97,7 @@ class DirectoryManifest:
         """Return the hash for an empty file."""
         if cls._empty_hash is None:
             import hashlib
+
             sha = hashlib.sha256()
             cls._empty_hash = sha.hexdigest()
         return cls._empty_hash

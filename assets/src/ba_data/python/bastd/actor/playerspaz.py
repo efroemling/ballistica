@@ -45,24 +45,28 @@ class PlayerSpaz(Spaz):
     to the current ba.Activity.
     """
 
-    def __init__(self,
-                 player: ba.Player,
-                 color: Sequence[float] = (1.0, 1.0, 1.0),
-                 highlight: Sequence[float] = (0.5, 0.5, 0.5),
-                 character: str = 'Spaz',
-                 powerups_expire: bool = True):
+    def __init__(
+        self,
+        player: ba.Player,
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+        highlight: Sequence[float] = (0.5, 0.5, 0.5),
+        character: str = 'Spaz',
+        powerups_expire: bool = True,
+    ):
         """Create a spaz for the provided ba.Player.
 
         Note: this does not wire up any controls;
         you must call connect_controls_to_player() to do so.
         """
 
-        super().__init__(color=color,
-                         highlight=highlight,
-                         character=character,
-                         source_player=player,
-                         start_invincible=True,
-                         powerups_expire=powerups_expire)
+        super().__init__(
+            color=color,
+            highlight=highlight,
+            character=character,
+            source_player=player,
+            start_invincible=True,
+            powerups_expire=powerups_expire,
+        )
         self.last_player_attacked_by: ba.Player | None = None
         self.last_attacked_time = 0.0
         self.last_attacked_type: tuple[str, str] | None = None
@@ -74,19 +78,20 @@ class PlayerSpaz(Spaz):
     # Overloads to tell the type system our return type based on doraise val.
 
     @overload
-    def getplayer(self,
-                  playertype: type[PlayerType],
-                  doraise: Literal[False] = False) -> PlayerType | None:
+    def getplayer(
+        self, playertype: type[PlayerType], doraise: Literal[False] = False
+    ) -> PlayerType | None:
         ...
 
     @overload
-    def getplayer(self, playertype: type[PlayerType],
-                  doraise: Literal[True]) -> PlayerType:
+    def getplayer(
+        self, playertype: type[PlayerType], doraise: Literal[True]
+    ) -> PlayerType:
         ...
 
-    def getplayer(self,
-                  playertype: type[PlayerType],
-                  doraise: bool = False) -> PlayerType | None:
+    def getplayer(
+        self, playertype: type[PlayerType], doraise: bool = False
+    ) -> PlayerType | None:
         """Get the ba.Player associated with this Spaz.
 
         By default this will return None if the Player no longer exists.
@@ -99,13 +104,15 @@ class PlayerSpaz(Spaz):
             raise ba.PlayerNotFoundError()
         return player if player.exists() else None
 
-    def connect_controls_to_player(self,
-                                   enable_jump: bool = True,
-                                   enable_punch: bool = True,
-                                   enable_pickup: bool = True,
-                                   enable_bomb: bool = True,
-                                   enable_run: bool = True,
-                                   enable_fly: bool = True) -> None:
+    def connect_controls_to_player(
+        self,
+        enable_jump: bool = True,
+        enable_punch: bool = True,
+        enable_pickup: bool = True,
+        enable_bomb: bool = True,
+        enable_run: bool = True,
+        enable_fly: bool = True,
+    ) -> None:
         """Wire this spaz up to the provided ba.Player.
 
         Full control of the character is given by default
@@ -126,10 +133,12 @@ class PlayerSpaz(Spaz):
 
         player.assigninput(ba.InputType.UP_DOWN, self.on_move_up_down)
         player.assigninput(ba.InputType.LEFT_RIGHT, self.on_move_left_right)
-        player.assigninput(ba.InputType.HOLD_POSITION_PRESS,
-                           self.on_hold_position_press)
-        player.assigninput(ba.InputType.HOLD_POSITION_RELEASE,
-                           self.on_hold_position_release)
+        player.assigninput(
+            ba.InputType.HOLD_POSITION_PRESS, self.on_hold_position_press
+        )
+        player.assigninput(
+            ba.InputType.HOLD_POSITION_RELEASE, self.on_hold_position_release
+        )
         intp = ba.InputType
         if enable_jump:
             player.assigninput(intp.JUMP_PRESS, self.on_jump_press)
@@ -171,8 +180,10 @@ class PlayerSpaz(Spaz):
             self.on_run(0.0)
             self.on_fly_release()
         else:
-            print('WARNING: disconnect_controls_from_player() called for'
-                  ' non-connected player')
+            print(
+                'WARNING: disconnect_controls_from_player() called for'
+                ' non-connected player'
+            )
 
     def handlemessage(self, msg: Any) -> Any:
         # FIXME: Tidy this up.
@@ -216,8 +227,9 @@ class PlayerSpaz(Spaz):
             if not self._dead:
 
                 # Immediate-mode or left-game deaths don't count as 'kills'.
-                killed = (not msg.immediate
-                          and msg.how is not ba.DeathType.LEFT_GAME)
+                killed = (
+                    not msg.immediate and msg.how is not ba.DeathType.LEFT_GAME
+                )
 
                 activity = self._activity()
 
@@ -237,13 +249,16 @@ class PlayerSpaz(Spaz):
                         #  all bot kills would register as suicides; need to
                         #  change this from last_player_attacked_by to
                         #  something like last_actor_attacked_by to fix that.
-                        if (self.last_player_attacked_by
-                                and ba.time() - self.last_attacked_time < 4.0):
+                        if (
+                            self.last_player_attacked_by
+                            and ba.time() - self.last_attacked_time < 4.0
+                        ):
                             killerplayer = self.last_player_attacked_by
                         else:
                             # ok, call it a suicide unless we're in co-op
-                            if (activity is not None and not isinstance(
-                                    activity.session, ba.CoopSession)):
+                            if activity is not None and not isinstance(
+                                activity.session, ba.CoopSession
+                            ):
                                 killerplayer = player
                             else:
                                 killerplayer = None
@@ -255,8 +270,10 @@ class PlayerSpaz(Spaz):
                 # Only report if both the player and the activity still exist.
                 if killed and activity is not None and player:
                     activity.handlemessage(
-                        ba.PlayerDiedMessage(player, killed, killerplayer,
-                                             msg.how))
+                        ba.PlayerDiedMessage(
+                            player, killed, killerplayer, msg.how
+                        )
+                    )
 
             super().handlemessage(msg)  # Augment standard behavior.
 

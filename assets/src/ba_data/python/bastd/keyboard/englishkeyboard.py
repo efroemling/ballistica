@@ -43,12 +43,41 @@ def generate_emojis(maxlen: int) -> list[list[str]]:
 # ba_meta export keyboard
 class EnglishKeyboard(ba.Keyboard):
     """Default English keyboard."""
+
     name = 'English'
-    chars = [('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
-             ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
-             ('z', 'x', 'c', 'v', 'b', 'n', 'm')]
-    nums = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':',
-            ';', '(', ')', '$', '&', '@', '"', '.', ',', '?', '!', '\'', '_')
+    chars = [
+        ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
+        ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
+        ('z', 'x', 'c', 'v', 'b', 'n', 'm'),
+    ]
+    nums = (
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '0',
+        '-',
+        '/',
+        ':',
+        ';',
+        '(',
+        ')',
+        '$',
+        '&',
+        '@',
+        '"',
+        '.',
+        ',',
+        '?',
+        '!',
+        '\'',
+        '_',
+    )
     pages: dict[str, tuple[str, ...]] = {
         f'emoji{i}': tuple(page)
         for i, page in enumerate(generate_emojis(len(nums)))

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 @dataclass
 class RaceMine:
     """Holds info about a mine on the track."""
+
     point: Sequence[float]
     mine: Bomb | None
 
@@ -45,8 +46,9 @@ class RaceRegion(ba.Actor):
                 'position': pt[:3],
                 'scale': (pt[3] * 2.0, pt[4] * 2.0, pt[5] * 2.0),
                 'type': 'box',
-                'materials': [activity.race_region_material]
-            })
+                'materials': [activity.race_region_material],
+            },
+        )
 
 
 class Player(ba.Player['Team']):
@@ -76,13 +78,14 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Race'
     description = 'Run real fast!'
-    scoreconfig = ba.ScoreConfig(label='Time',
-                                 lower_is_better=True,
-                                 scoretype=ba.ScoreType.MILLISECONDS)
+    scoreconfig = ba.ScoreConfig(
+        label='Time', lower_is_better=True, scoretype=ba.ScoreType.MILLISECONDS
+    )
 
     @classmethod
     def get_available_settings(
-            cls, sessiontype: type[ba.Session]) -> list[ba.Setting]:
+        cls, sessiontype: type[ba.Session]
+    ) -> list[ba.Setting]:
         settings = [
             ba.IntSetting('Laps', min_value=1, default=3, increment=1),
             ba.IntChoiceSetting(
@@ -124,7 +127,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # We have some specific settings in teams mode.
         if issubclass(sessiontype, ba.DualTeamSession):
             settings.append(
-                ba.BoolSetting('Entire Team Must Finish', default=False))
+                ba.BoolSetting('Entire Team Must Finish', default=False)
+            )
         return settings
 
     @classmethod
@@ -159,7 +163,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._bomb_spawn_timer: ba.Timer | None = None
         self._laps = int(settings['Laps'])
         self._entire_team_must_finish = bool(
-            settings.get('Entire Team Must Finish', False))
+            settings.get('Entire Team Must Finish', False)
+        )
         self._time_limit = float(settings['Time Limit'])
         self._mine_spawning = int(settings['Mine Spawning'])
         self._bomb_spawning = int(settings['Bomb Spawning'])
@@ -167,12 +172,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Base class overrides.
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC_RACE
-                              if self._epic_mode else ba.MusicType.RACE)
+        self.default_music = (
+            ba.MusicType.EPIC_RACE if self._epic_mode else ba.MusicType.RACE
+        )
 
     def get_instance_description(self) -> str | Sequence:
-        if (isinstance(self.session, ba.DualTeamSession)
-                and self._entire_team_must_finish):
+        if (
+            isinstance(self.session, ba.DualTeamSession)
+            and self._entire_team_must_finish
+        ):
             t_str = ' Your entire team has to finish.'
         else:
             t_str = ''
@@ -191,14 +199,14 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         shared = SharedObjects.get()
         pts = self.map.get_def_points('race_point')
         mat = self.race_region_material = ba.Material()
-        mat.add_actions(conditions=('they_have_material',
-                                    shared.player_material),
-                        actions=(
-                            ('modify_part_collision', 'collide', True),
-                            ('modify_part_collision', 'physical', False),
-                            ('call', 'at_connect',
-                             self._handle_race_point_collide),
-                        ))
+        mat.add_actions(
+            conditions=('they_have_material', shared.player_material),
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('call', 'at_connect', self._handle_race_point_collide),
+            ),
+        )
         for rpt in pts:
             self._regions.append(RaceRegion(rpt, len(self._regions)))
 
@@ -206,13 +214,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         assert isinstance(player.actor, PlayerSpaz)
         assert player.actor.node
         pos = player.actor.node.position
-        light = ba.newnode('light',
-                           attrs={
-                               'position': pos,
-                               'color': (1, 1, 0),
-                               'height_attenuated': False,
-                               'radius': 0.4
-                           })
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': pos,
+                'color': (1, 1, 0),
+                'height_attenuated': False,
+                'radius': 0.4,
+            },
+        )
         ba.timer(0.5, light.delete)
         ba.animate(light, 'intensity', {0: 0, 0.1: 1.0 * scale, 0.5: 0})
 
@@ -248,11 +258,17 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 if player.is_alive():
                     assert player.actor
                     player.actor.handlemessage(ba.DieMessage())
-                    ba.screenmessage(ba.Lstr(
-                        translate=('statements', 'Killing ${NAME} for'
-                                   ' skipping part of the track!'),
-                        subs=[('${NAME}', player.getname(full=True))]),
-                                     color=(1, 0, 0))
+                    ba.screenmessage(
+                        ba.Lstr(
+                            translate=(
+                                'statements',
+                                'Killing ${NAME} for'
+                                ' skipping part of the track!',
+                            ),
+                            subs=[('${NAME}', player.getname(full=True))],
+                        ),
+                        color=(1, 0, 0),
+                    )
             else:
                 # If this player is in first, note that this is the
                 # front-most race-point.
@@ -267,8 +283,10 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     # In teams mode with all-must-finish on, the team lap
                     # value is the min of all team players.
                     # Otherwise its the max.
-                    if isinstance(self.session, ba.DualTeamSession
-                                  ) and self._entire_team_must_finish:
+                    if (
+                        isinstance(self.session, ba.DualTeamSession)
+                        and self._entire_team_must_finish
+                    ):
                         team.lap = min(p.lap for p in team.players)
                     else:
                         team.lap = max(p.lap for p in team.players)
@@ -281,9 +299,11 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                         if isinstance(self.session, ba.DualTeamSession):
                             assert self._team_finish_pts is not None
                             if self._team_finish_pts > 0:
-                                self.stats.player_scored(player,
-                                                         self._team_finish_pts,
-                                                         screenmessage=False)
+                                self.stats.player_scored(
+                                    player,
+                                    self._team_finish_pts,
+                                    screenmessage=False,
+                                )
                             self._team_finish_pts -= 25
 
                         # Flash where the player is.
@@ -291,7 +311,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                         player.finished = True
                         assert player.actor
                         player.actor.handlemessage(
-                            ba.DieMessage(immediate=True))
+                            ba.DieMessage(immediate=True)
+                        )
 
                         # Makes sure noone behind them passes them in rank
                         # while finishing.
@@ -318,35 +339,41 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                         # Print their lap number over their head.
                         try:
                             assert isinstance(player.actor, PlayerSpaz)
-                            mathnode = ba.newnode('math',
-                                                  owner=player.actor.node,
-                                                  attrs={
-                                                      'input1': (0, 1.9, 0),
-                                                      'operation': 'add'
-                                                  })
+                            mathnode = ba.newnode(
+                                'math',
+                                owner=player.actor.node,
+                                attrs={
+                                    'input1': (0, 1.9, 0),
+                                    'operation': 'add',
+                                },
+                            )
                             player.actor.node.connectattr(
-                                'torso_position', mathnode, 'input2')
-                            tstr = ba.Lstr(resource='lapNumberText',
-                                           subs=[('${CURRENT}',
-                                                  str(player.lap + 1)),
-                                                 ('${TOTAL}', str(self._laps))
-                                                 ])
-                            txtnode = ba.newnode('text',
-                                                 owner=mathnode,
-                                                 attrs={
-                                                     'text': tstr,
-                                                     'in_world': True,
-                                                     'color': (1, 1, 0, 1),
-                                                     'scale': 0.015,
-                                                     'h_align': 'center'
-                                                 })
+                                'torso_position', mathnode, 'input2'
+                            )
+                            tstr = ba.Lstr(
+                                resource='lapNumberText',
+                                subs=[
+                                    ('${CURRENT}', str(player.lap + 1)),
+                                    ('${TOTAL}', str(self._laps)),
+                                ],
+                            )
+                            txtnode = ba.newnode(
+                                'text',
+                                owner=mathnode,
+                                attrs={
+                                    'text': tstr,
+                                    'in_world': True,
+                                    'color': (1, 1, 0, 1),
+                                    'scale': 0.015,
+                                    'h_align': 'center',
+                                },
+                            )
                             mathnode.connectattr('output', txtnode, 'position')
-                            ba.animate(txtnode, 'scale', {
-                                0.0: 0,
-                                0.2: 0.019,
-                                2.0: 0.019,
-                                2.2: 0
-                            })
+                            ba.animate(
+                                txtnode,
+                                'scale',
+                                {0.0: 0, 0.2: 0.019, 2.0: 0.019, 2.2: 0},
+                            )
                             ba.timer(2.3, mathnode.delete)
                         except Exception:
                             ba.print_exception('Error printing lap.')
@@ -360,14 +387,23 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # A player leaving disqualifies the team if 'Entire Team Must Finish'
         # is on (otherwise in teams mode everyone could just leave except the
         # leading player to win).
-        if (isinstance(self.session, ba.DualTeamSession)
-                and self._entire_team_must_finish):
-            ba.screenmessage(ba.Lstr(
-                translate=('statements',
-                           '${TEAM} is disqualified because ${PLAYER} left'),
-                subs=[('${TEAM}', player.team.name),
-                      ('${PLAYER}', player.getname(full=True))]),
-                             color=(1, 1, 0))
+        if (
+            isinstance(self.session, ba.DualTeamSession)
+            and self._entire_team_must_finish
+        ):
+            ba.screenmessage(
+                ba.Lstr(
+                    translate=(
+                        'statements',
+                        '${TEAM} is disqualified because ${PLAYER} left',
+                    ),
+                    subs=[
+                        ('${TEAM}', player.team.name),
+                        ('${PLAYER}', player.getname(full=True)),
+                    ],
+                ),
+                color=(1, 1, 0),
+            )
             player.team.finished = True
             player.team.time = None
             player.team.lap = 0
@@ -390,8 +426,10 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             if not distances:
                 teams_dist = 0.0
             else:
-                if (isinstance(self.session, ba.DualTeamSession)
-                        and self._entire_team_must_finish):
+                if (
+                    isinstance(self.session, ba.DualTeamSession)
+                    and self._entire_team_must_finish
+                ):
                     teams_dist = min(distances)
                 else:
                     teams_dist = max(distances)
@@ -400,10 +438,12 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 teams_dist,
                 self._laps,
                 flash=(teams_dist >= float(self._laps)),
-                show_value=False)
+                show_value=False,
+            )
 
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
+
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
@@ -411,18 +451,21 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Throw a timer up on-screen.
         self._time_text = ba.NodeActor(
-            ba.newnode('text',
-                       attrs={
-                           'v_attach': 'top',
-                           'h_attach': 'center',
-                           'h_align': 'center',
-                           'color': (1, 1, 0.5, 1),
-                           'flatness': 0.5,
-                           'shadow': 0.5,
-                           'position': (0, -50),
-                           'scale': 1.4,
-                           'text': ''
-                       }))
+            ba.newnode(
+                'text',
+                attrs={
+                    'v_attach': 'top',
+                    'h_attach': 'center',
+                    'h_align': 'center',
+                    'color': (1, 1, 0.5, 1),
+                    'flatness': 0.5,
+                    'shadow': 0.5,
+                    'position': (0, -50),
+                    'scale': 1.4,
+                    'text': '',
+                },
+            )
+        )
         self._timer = OnScreenTimer()
 
         if self._mine_spawning != 0:
@@ -431,16 +474,18 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 for p in self.map.get_def_points('race_mine')
             ]
             if self._race_mines:
-                self._race_mine_timer = ba.Timer(0.001 * self._mine_spawning,
-                                                 self._update_race_mine,
-                                                 repeat=True)
+                self._race_mine_timer = ba.Timer(
+                    0.001 * self._mine_spawning,
+                    self._update_race_mine,
+                    repeat=True,
+                )
 
-        self._scoreboard_timer = ba.Timer(0.25,
-                                          self._update_scoreboard,
-                                          repeat=True)
-        self._player_order_update_timer = ba.Timer(0.25,
-                                                   self._update_player_order,
-                                                   repeat=True)
+        self._scoreboard_timer = ba.Timer(
+            0.25, self._update_scoreboard, repeat=True
+        )
+        self._player_order_update_timer = ba.Timer(
+            0.25, self._update_player_order, repeat=True
+        )
 
         if self.slow_motion:
             t_scale = 0.4
@@ -458,22 +503,27 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         self._start_lights = []
         for i in range(4):
-            lnub = ba.newnode('image',
-                              attrs={
-                                  'texture': ba.gettexture('nub'),
-                                  'opacity': 1.0,
-                                  'absolute_scale': True,
-                                  'position': (-75 + i * 50, light_y),
-                                  'scale': (50, 50),
-                                  'attach': 'center'
-                              })
+            lnub = ba.newnode(
+                'image',
+                attrs={
+                    'texture': ba.gettexture('nub'),
+                    'opacity': 1.0,
+                    'absolute_scale': True,
+                    'position': (-75 + i * 50, light_y),
+                    'scale': (50, 50),
+                    'attach': 'center',
+                },
+            )
             ba.animate(
-                lnub, 'opacity', {
+                lnub,
+                'opacity',
+                {
                     4.0 * t_scale: 0,
                     5.0 * t_scale: 1.0,
                     12.0 * t_scale: 1.0,
-                    12.5 * t_scale: 0.0
-                })
+                    12.5 * t_scale: 0.0,
+                },
+            )
             ba.timer(13.0 * t_scale, lnub.delete)
             self._start_lights.append(lnub)
 
@@ -512,9 +562,9 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._timer.start()
 
         if self._bomb_spawning != 0:
-            self._bomb_spawn_timer = ba.Timer(0.001 * self._bomb_spawning,
-                                              self._spawn_bomb,
-                                              repeat=True)
+            self._bomb_spawn_timer = ba.Timer(
+                0.001 * self._bomb_spawning, self._spawn_bomb, repeat=True
+            )
 
         self._race_started = True
 
@@ -531,8 +581,11 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 r_index = player.last_region
                 rg1 = self._regions[r_index]
                 r1pt = ba.Vec3(rg1.pos[:3])
-                rg2 = self._regions[0] if r_index == len(
-                    self._regions) - 1 else self._regions[r_index + 1]
+                rg2 = (
+                    self._regions[0]
+                    if r_index == len(self._regions) - 1
+                    else self._regions[r_index + 1]
+                )
                 r2pt = ba.Vec3(rg2.pos[:3])
                 r2dist = (pos - r2pt).length()
                 amt = 1.0 - (r2dist / (r2pt - r1pt).length())
@@ -558,14 +611,24 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Don't use the full region so we're less likely to spawn off a cliff.
         region_scale = 0.8
-        x_range = ((-0.5, 0.5) if pos[3] == 0 else
-                   (-region_scale * pos[3], region_scale * pos[3]))
-        z_range = ((-0.5, 0.5) if pos[5] == 0 else
-                   (-region_scale * pos[5], region_scale * pos[5]))
-        pos = (pos[0] + random.uniform(*x_range), pos[1] + 1.0,
-               pos[2] + random.uniform(*z_range))
-        ba.timer(random.uniform(0.0, 2.0),
-                 ba.WeakCall(self._spawn_bomb_at_pos, pos))
+        x_range = (
+            (-0.5, 0.5)
+            if pos[3] == 0
+            else (-region_scale * pos[3], region_scale * pos[3])
+        )
+        z_range = (
+            (-0.5, 0.5)
+            if pos[5] == 0
+            else (-region_scale * pos[5], region_scale * pos[5])
+        )
+        pos = (
+            pos[0] + random.uniform(*x_range),
+            pos[1] + 1.0,
+            pos[2] + random.uniform(*z_range),
+        )
+        ba.timer(
+            random.uniform(0.0, 2.0), ba.WeakCall(self._spawn_bomb_at_pos, pos)
+        )
 
     def _spawn_bomb_at_pos(self, pos: Sequence[float]) -> None:
         if self.has_ended():
@@ -581,13 +644,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
     def _flash_mine(self, i: int) -> None:
         assert self._race_mines is not None
         rmine = self._race_mines[i]
-        light = ba.newnode('light',
-                           attrs={
-                               'position': rmine.point[:3],
-                               'color': (1, 0.2, 0.2),
-                               'radius': 0.1,
-                               'height_attenuated': False
-                           })
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': rmine.point[:3],
+                'color': (1, 0.2, 0.2),
+                'radius': 0.1,
+                'height_attenuated': False,
+            },
+        )
         ba.animate(light, 'intensity', {0.0: 0, 0.1: 1.0, 0.2: 0}, loop=True)
         ba.timer(1.0, light.delete)
 
@@ -616,37 +681,48 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Don't use the full region so we're less likely to spawn off a cliff.
         region_scale = 0.8
-        x_range = ((-0.5, 0.5) if pos[3] == 0 else
-                   (-region_scale * pos[3], region_scale * pos[3]))
-        z_range = ((-0.5, 0.5) if pos[5] == 0 else
-                   (-region_scale * pos[5], region_scale * pos[5]))
-        pos = (pos[0] + random.uniform(*x_range), pos[1],
-               pos[2] + random.uniform(*z_range))
+        x_range = (
+            (-0.5, 0.5)
+            if pos[3] == 0
+            else (-region_scale * pos[3], region_scale * pos[3])
+        )
+        z_range = (
+            (-0.5, 0.5)
+            if pos[5] == 0
+            else (-region_scale * pos[5], region_scale * pos[5])
+        )
+        pos = (
+            pos[0] + random.uniform(*x_range),
+            pos[1],
+            pos[2] + random.uniform(*z_range),
+        )
         spaz = self.spawn_player_spaz(
-            player, position=pos, angle=90 if not self._race_started else None)
+            player, position=pos, angle=90 if not self._race_started else None
+        )
         assert spaz.node
 
         # Prevent controlling of characters before the start of the race.
         if not self._race_started:
             spaz.disconnect_controls_from_player()
 
-        mathnode = ba.newnode('math',
-                              owner=spaz.node,
-                              attrs={
-                                  'input1': (0, 1.4, 0),
-                                  'operation': 'add'
-                              })
+        mathnode = ba.newnode(
+            'math',
+            owner=spaz.node,
+            attrs={'input1': (0, 1.4, 0), 'operation': 'add'},
+        )
         spaz.node.connectattr('torso_position', mathnode, 'input2')
 
-        distance_txt = ba.newnode('text',
-                                  owner=spaz.node,
-                                  attrs={
-                                      'text': '',
-                                      'in_world': True,
-                                      'color': (1, 1, 0.4),
-                                      'scale': 0.02,
-                                      'h_align': 'center'
-                                  })
+        distance_txt = ba.newnode(
+            'text',
+            owner=spaz.node,
+            attrs={
+                'text': '',
+                'in_world': True,
+                'color': (1, 1, 0.4),
+                'scale': 0.02,
+                'h_align': 'center',
+            },
+        )
         player.distance_txt = distance_txt
         mathnode.connectattr('output', distance_txt, 'position')
         return spaz
@@ -661,7 +737,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Count the number of teams that have completed the race.
         teams_completed = len(
-            [t for t in self.teams if t.finished and t.time is not None])
+            [t for t in self.teams if t.finished and t.time is not None]
+        )
 
         if teams_completed > 0:
             session = self.session
@@ -690,8 +767,10 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         assert self._timer is not None
         if self._timer.has_started():
             self._timer.stop(
-                endtime=None if self._last_team_time is None else (
-                    self._timer.getstarttime() + self._last_team_time))
+                endtime=None
+                if self._last_team_time is None
+                else (self._timer.getstarttime() + self._last_team_time)
+            )
 
         results = ba.GameResults()
 
@@ -705,9 +784,10 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # We don't announce a winner in ffa mode since its probably been a
         # while since the first place guy crossed the finish line so it seems
         # odd to be announcing that now.
-        self.end(results=results,
-                 announce_winning_team=isinstance(self.session,
-                                                  ba.DualTeamSession))
+        self.end(
+            results=results,
+            announce_winning_team=isinstance(self.session, ba.DualTeamSession),
+        )
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):

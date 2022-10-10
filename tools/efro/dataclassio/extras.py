@@ -40,8 +40,10 @@ def _diff(obj1: Any, obj2: Any, indent: int) -> str:
     assert dataclasses.is_dataclass(obj1)
     assert dataclasses.is_dataclass(obj2)
     if type(obj1) is not type(obj2):
-        raise TypeError(f'Passed objects are not of the same'
-                        f' type ({type(obj1)} and {type(obj2)}).')
+        raise TypeError(
+            f'Passed objects are not of the same'
+            f' type ({type(obj1)} and {type(obj2)}).'
+        )
     bits: list[str] = []
     indentstr = ' ' * indent
     fields = dataclasses.fields(obj1)
@@ -51,8 +53,11 @@ def _diff(obj1: Any, obj2: Any, indent: int) -> str:
         val2 = getattr(obj2, fieldname)
 
         # For nested dataclasses, dive in and do nice piecewise compares.
-        if (dataclasses.is_dataclass(val1) and dataclasses.is_dataclass(val2)
-                and type(val1) is type(val2)):
+        if (
+            dataclasses.is_dataclass(val1)
+            and dataclasses.is_dataclass(val2)
+            and type(val1) is type(val2)
+        ):
             diff = _diff(val1, val2, indent + 2)
             if diff != '':
                 bits.append(f'{indentstr}{fieldname}:')

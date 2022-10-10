@@ -18,6 +18,7 @@ class HockeyStadium(ba.Map):
     """Stadium map used for ice hockey games."""
 
     from bastd.mapdata import hockey_stadium as defs
+
     name = 'Hockey Stadium'
 
     @classmethod
@@ -32,13 +33,15 @@ class HockeyStadium(ba.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'models': (ba.getmodel('hockeyStadiumOuter'),
-                       ba.getmodel('hockeyStadiumInner'),
-                       ba.getmodel('hockeyStadiumStands')),
+            'models': (
+                ba.getmodel('hockeyStadiumOuter'),
+                ba.getmodel('hockeyStadiumInner'),
+                ba.getmodel('hockeyStadiumStands'),
+            ),
             'vr_fill_model': ba.getmodel('footballStadiumVRFill'),
             'collide_model': ba.getcollidemodel('hockeyStadiumCollide'),
             'tex': ba.gettexture('hockeyStadium'),
-            'stands_tex': ba.gettexture('footballStadium')
+            'stands_tex': ba.gettexture('footballStadium'),
         }
         mat = ba.Material()
         mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
@@ -48,44 +51,48 @@ class HockeyStadium(ba.Map):
     def __init__(self) -> None:
         super().__init__()
         shared = SharedObjects.get()
-        self.node = ba.newnode('terrain',
-                               delegate=self,
-                               attrs={
-                                   'model':
-                                       self.preloaddata['models'][0],
-                                   'collide_model':
-                                       self.preloaddata['collide_model'],
-                                   'color_texture':
-                                       self.preloaddata['tex'],
-                                   'materials': [
-                                       shared.footing_material,
-                                       self.preloaddata['ice_material']
-                                   ]
-                               })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_model'],
-                       'vr_only': True,
-                       'lighting': False,
-                       'background': True,
-                       'color_texture': self.preloaddata['stands_tex']
-                   })
+        self.node = ba.newnode(
+            'terrain',
+            delegate=self,
+            attrs={
+                'model': self.preloaddata['models'][0],
+                'collide_model': self.preloaddata['collide_model'],
+                'color_texture': self.preloaddata['tex'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['ice_material'],
+                ],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_model'],
+                'vr_only': True,
+                'lighting': False,
+                'background': True,
+                'color_texture': self.preloaddata['stands_tex'],
+            },
+        )
         mats = [shared.footing_material, self.preloaddata['ice_material']]
-        self.floor = ba.newnode('terrain',
-                                attrs={
-                                    'model': self.preloaddata['models'][1],
-                                    'color_texture': self.preloaddata['tex'],
-                                    'opacity': 0.92,
-                                    'opacity_in_low_or_medium_quality': 1.0,
-                                    'materials': mats
-                                })
+        self.floor = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['models'][1],
+                'color_texture': self.preloaddata['tex'],
+                'opacity': 0.92,
+                'opacity_in_low_or_medium_quality': 1.0,
+                'materials': mats,
+            },
+        )
         self.stands = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['models'][2],
                 'visible_in_reflections': False,
-                'color_texture': self.preloaddata['stands_tex']
-            })
+                'color_texture': self.preloaddata['stands_tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.floor_reflection = True
         gnode.debris_friction = 0.3
@@ -101,6 +108,7 @@ class HockeyStadium(ba.Map):
 
 class FootballStadium(ba.Map):
     """Stadium map for football games."""
+
     from bastd.mapdata import football_stadium as defs
 
     name = 'Football Stadium'
@@ -120,7 +128,7 @@ class FootballStadium(ba.Map):
             'model': ba.getmodel('footballStadium'),
             'vr_fill_model': ba.getmodel('footballStadiumVRFill'),
             'collide_model': ba.getcollidemodel('footballStadiumCollide'),
-            'tex': ba.gettexture('footballStadium')
+            'tex': ba.gettexture('footballStadium'),
         }
         return data
 
@@ -134,16 +142,19 @@ class FootballStadium(ba.Map):
                 'model': self.preloaddata['model'],
                 'collide_model': self.preloaddata['collide_model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['tex']
-                   })
+                'materials': [shared.footing_material],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.3, 1.2, 1.0)
         gnode.ambient_color = (1.3, 1.2, 1.0)
@@ -152,9 +163,7 @@ class FootballStadium(ba.Map):
         gnode.vr_camera_offset = (0, -0.8, -1.1)
         gnode.vr_near_clip = 0.5
 
-    def is_point_near_edge(self,
-                           point: ba.Vec3,
-                           running: bool = False) -> bool:
+    def is_point_near_edge(self, point: ba.Vec3, running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]
         xpos = (point.x - box_position[0]) / box_scale[0]
@@ -164,6 +173,7 @@ class FootballStadium(ba.Map):
 
 class Bridgit(ba.Map):
     """Map with a narrow bridge in the middle."""
+
     from bastd.mapdata import bridgit as defs
 
     name = 'Bridgit'
@@ -190,12 +200,14 @@ class Bridgit(ba.Map):
             'tex': ba.gettexture('bridgitLevelColor'),
             'model_bg_tex': ba.gettexture('natureBackgroundColor'),
             'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
-            'railing_collide_model':
-                (ba.getcollidemodel('bridgitLevelRailingCollide')),
-            'bg_material': ba.Material()
+            'railing_collide_model': (
+                ba.getcollidemodel('bridgitLevelRailingCollide')
+            ),
+            'bg_material': ba.Material(),
         }
-        data['bg_material'].add_actions(actions=('modify_part_collision',
-                                                 'friction', 10.0))
+        data['bg_material'].add_actions(
+            actions=('modify_part_collision', 'friction', 10.0)
+        )
         return data
 
     def __init__(self) -> None:
@@ -208,47 +220,55 @@ class Bridgit(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model_top'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['model_bottom'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_bottom'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['model_bg'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['model_bg_tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['bg_vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['model_bg_tex']
-                   })
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bg_vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             shared.footing_material,
-                                             self.preloaddata['bg_material'],
-                                             shared.death_material
-                                         ]
-                                     })
+                'bumper': True,
+            },
+        )
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['bg_material'],
+                    shared.death_material,
+                ],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.3)
         gnode.ambient_color = (1.1, 1.2, 1.3)
@@ -267,8 +287,12 @@ class BigG(ba.Map):
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
-            'race', 'melee', 'keep_away', 'team_flag', 'king_of_the_hill',
-            'conquest'
+            'race',
+            'melee',
+            'keep_away',
+            'team_flag',
+            'king_of_the_hill',
+            'conquest',
         ]
 
     @classmethod
@@ -287,10 +311,11 @@ class BigG(ba.Map):
             'model_bg_tex': ba.gettexture('natureBackgroundColor'),
             'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
             'bumper_collide_model': ba.getcollidemodel('bigGBumper'),
-            'bg_material': ba.Material()
+            'bg_material': ba.Material(),
         }
-        data['bg_material'].add_actions(actions=('modify_part_collision',
-                                                 'friction', 10.0))
+        data['bg_material'].add_actions(
+            actions=('modify_part_collision', 'friction', 10.0)
+        )
         return data
 
     def __init__(self) -> None:
@@ -304,48 +329,56 @@ class BigG(ba.Map):
                 'color': (0.7, 0.7, 0.7),
                 'model': self.preloaddata['model_top'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['model_bottom'],
-                                     'color': (0.7, 0.7, 0.7),
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_bottom'],
+                'color': (0.7, 0.7, 0.7),
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['model_bg'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['model_bg_tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['bg_vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['model_bg_tex']
-                   })
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bg_vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['bumper_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             shared.footing_material,
-                                             self.preloaddata['bg_material'],
-                                             shared.death_material
-                                         ]
-                                     })
+                'bumper': True,
+            },
+        )
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['bg_material'],
+                    shared.death_material,
+                ],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.3)
         gnode.ambient_color = (1.1, 1.2, 1.3)
@@ -380,12 +413,14 @@ class Roundabout(ba.Map):
             'tex': ba.gettexture('roundaboutLevelColor'),
             'model_bg_tex': ba.gettexture('natureBackgroundColor'),
             'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
-            'railing_collide_model':
-                (ba.getcollidemodel('roundaboutLevelBumper')),
-            'bg_material': ba.Material()
+            'railing_collide_model': (
+                ba.getcollidemodel('roundaboutLevelBumper')
+            ),
+            'bg_material': ba.Material(),
         }
-        data['bg_material'].add_actions(actions=('modify_part_collision',
-                                                 'friction', 10.0))
+        data['bg_material'].add_actions(
+            actions=('modify_part_collision', 'friction', 10.0)
+        )
         return data
 
     def __init__(self) -> None:
@@ -398,47 +433,55 @@ class Roundabout(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['model_bottom'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_bottom'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['model_bg'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['model_bg_tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['bg_vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['model_bg_tex']
-                   })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             shared.footing_material,
-                                             self.preloaddata['bg_material'],
-                                             shared.death_material
-                                         ]
-                                     })
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bg_vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['bg_material'],
+                    shared.death_material,
+                ],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
+                'bumper': True,
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.0, 1.05, 1.1)
         gnode.ambient_color = (1.0, 1.05, 1.1)
@@ -474,12 +517,14 @@ class MonkeyFace(ba.Map):
             'tex': ba.gettexture('monkeyFaceLevelColor'),
             'model_bg_tex': ba.gettexture('natureBackgroundColor'),
             'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
-            'railing_collide_model':
-                (ba.getcollidemodel('monkeyFaceLevelBumper')),
-            'bg_material': ba.Material()
+            'railing_collide_model': (
+                ba.getcollidemodel('monkeyFaceLevelBumper')
+            ),
+            'bg_material': ba.Material(),
         }
-        data['bg_material'].add_actions(actions=('modify_part_collision',
-                                                 'friction', 10.0))
+        data['bg_material'].add_actions(
+            actions=('modify_part_collision', 'friction', 10.0)
+        )
         return data
 
     def __init__(self) -> None:
@@ -492,47 +537,55 @@ class MonkeyFace(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['model_bg'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['model_bg_tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['bg_vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['model_bg_tex']
-                   })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             shared.footing_material,
-                                             self.preloaddata['bg_material'],
-                                             shared.death_material
-                                         ]
-                                     })
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bg_vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['bg_material'],
+                    shared.death_material,
+                ],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
+                'bumper': True,
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.2)
         gnode.ambient_color = (1.2, 1.3, 1.3)
@@ -552,7 +605,11 @@ class ZigZag(ba.Map):
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
-            'melee', 'keep_away', 'team_flag', 'conquest', 'king_of_the_hill'
+            'melee',
+            'keep_away',
+            'team_flag',
+            'conquest',
+            'king_of_the_hill',
         ]
 
     @classmethod
@@ -571,10 +628,11 @@ class ZigZag(ba.Map):
             'model_bg_tex': ba.gettexture('natureBackgroundColor'),
             'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
             'railing_collide_model': ba.getcollidemodel('zigZagLevelBumper'),
-            'bg_material': ba.Material()
+            'bg_material': ba.Material(),
         }
-        data['bg_material'].add_actions(actions=('modify_part_collision',
-                                                 'friction', 10.0))
+        data['bg_material'].add_actions(
+            actions=('modify_part_collision', 'friction', 10.0)
+        )
         return data
 
     def __init__(self) -> None:
@@ -587,46 +645,54 @@ class ZigZag(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['model_bg'],
                 'lighting': False,
-                'color_texture': self.preloaddata['model_bg_tex']
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['model_bottom'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['bg_vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['model_bg_tex']
-                   })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             shared.footing_material,
-                                             self.preloaddata['bg_material'],
-                                             shared.death_material
-                                         ]
-                                     })
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_bottom'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bg_vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['model_bg_tex'],
+            },
+        )
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['bg_material'],
+                    shared.death_material,
+                ],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
+                'bumper': True,
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.0, 1.15, 1.15)
         gnode.ambient_color = (1.0, 1.15, 1.15)
@@ -662,7 +728,7 @@ class ThePad(ba.Map):
             'bgmodel': ba.getmodel('thePadBG'),
             'railing_collide_model': ba.getcollidemodel('thePadLevelBumper'),
             'vr_fill_mound_model': ba.getmodel('thePadVRFillMound'),
-            'vr_fill_mound_tex': ba.gettexture('vrFillMound')
+            'vr_fill_mound_tex': ba.gettexture('vrFillMound'),
         }
         # fixme should chop this into vr/non-vr sections for efficiency
         return data
@@ -677,38 +743,45 @@ class ThePad(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.56, 0.55, 0.47),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'bumper': True,
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.56, 0.55, 0.47),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.1, 1.0)
         gnode.ambient_color = (1.1, 1.1, 1.0)
@@ -742,7 +815,7 @@ class DoomShroom(ba.Map):
             'bgmodel': ba.getmodel('doomShroomBG'),
             'vr_fill_model': ba.getmodel('doomShroomVRFill'),
             'stem_model': ba.getmodel('doomShroomStem'),
-            'collide_bg': ba.getcollidemodel('doomShroomStemCollide')
+            'collide_bg': ba.getcollidemodel('doomShroomStemCollide'),
         }
         return data
 
@@ -756,36 +829,43 @@ class DoomShroom(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['bgtex']
-                   })
-        self.stem = ba.newnode('terrain',
-                               attrs={
-                                   'model': self.preloaddata['stem_model'],
-                                   'lighting': False,
-                                   'color_texture': self.preloaddata['tex']
-                               })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
+        self.stem = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['stem_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.bg_collide = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['collide_bg'],
-                'materials': [shared.footing_material, shared.death_material]
-            })
+                'materials': [shared.footing_material, shared.death_material],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (0.82, 1.10, 1.15)
         gnode.ambient_color = (0.9, 1.3, 1.1)
@@ -793,9 +873,7 @@ class DoomShroom(ba.Map):
         gnode.vignette_outer = (0.76, 0.76, 0.76)
         gnode.vignette_inner = (0.95, 0.95, 0.99)
 
-    def is_point_near_edge(self,
-                           point: ba.Vec3,
-                           running: bool = False) -> bool:
+    def is_point_near_edge(self, point: ba.Vec3, running: bool = False) -> bool:
         xpos = point.x
         zpos = point.z
         x_adj = xpos * 0.125
@@ -831,7 +909,7 @@ class LakeFrigid(ba.Map):
             'collide_model': ba.getcollidemodel('lakeFrigidCollide'),
             'tex': ba.gettexture('lakeFrigid'),
             'tex_reflections': ba.gettexture('lakeFrigidReflections'),
-            'vr_fill_model': ba.getmodel('lakeFrigidVRFill')
+            'vr_fill_model': ba.getmodel('lakeFrigidVRFill'),
         }
         mat = ba.Material()
         mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
@@ -841,42 +919,47 @@ class LakeFrigid(ba.Map):
     def __init__(self) -> None:
         super().__init__()
         shared = SharedObjects.get()
-        self.node = ba.newnode('terrain',
-                               delegate=self,
-                               attrs={
-                                   'collide_model':
-                                       self.preloaddata['collide_model'],
-                                   'model':
-                                       self.preloaddata['model'],
-                                   'color_texture':
-                                       self.preloaddata['tex'],
-                                   'materials': [
-                                       shared.footing_material,
-                                       self.preloaddata['ice_material']
-                                   ]
-                               })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['model_top'],
-                       'lighting': False,
-                       'color_texture': self.preloaddata['tex']
-                   })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['model_reflections'],
-                       'lighting': False,
-                       'overlay': True,
-                       'opacity': 0.15,
-                       'color_texture': self.preloaddata['tex_reflections']
-                   })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['tex']
-                   })
+        self.node = ba.newnode(
+            'terrain',
+            delegate=self,
+            attrs={
+                'collide_model': self.preloaddata['collide_model'],
+                'model': self.preloaddata['model'],
+                'color_texture': self.preloaddata['tex'],
+                'materials': [
+                    shared.footing_material,
+                    self.preloaddata['ice_material'],
+                ],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_top'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_reflections'],
+                'lighting': False,
+                'overlay': True,
+                'opacity': 0.15,
+                'color_texture': self.preloaddata['tex_reflections'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1, 1, 1)
         gnode.ambient_color = (1, 1, 1)
@@ -912,7 +995,7 @@ class TipTop(ba.Map):
             'tex': ba.gettexture('tipTopLevelColor'),
             'bgtex': ba.gettexture('tipTopBGColor'),
             'bgmodel': ba.getmodel('tipTopBG'),
-            'railing_collide_model': ba.getcollidemodel('tipTopLevelBumper')
+            'railing_collide_model': ba.getcollidemodel('tipTopLevelBumper'),
         }
         return data
 
@@ -927,15 +1010,18 @@ class TipTop(ba.Map):
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
                 'color': (0.7, 0.7, 0.7),
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color': (0.7, 0.7, 0.7),
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color': (0.7, 0.7, 0.7),
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
@@ -943,15 +1029,17 @@ class TipTop(ba.Map):
                 'lighting': False,
                 'color': (0.4, 0.4, 0.4),
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
+                'bumper': True,
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (0.8, 0.9, 1.3)
         gnode.ambient_color = (0.8, 0.9, 1.3)
@@ -984,10 +1072,11 @@ class CragCastle(ba.Map):
             'tex': ba.gettexture('cragCastleLevelColor'),
             'bgtex': ba.gettexture('menuBG'),
             'bgmodel': ba.getmodel('thePadBG'),
-            'railing_collide_model':
-                (ba.getcollidemodel('cragCastleLevelBumper')),
+            'railing_collide_model': (
+                ba.getcollidemodel('cragCastleLevelBumper')
+            ),
             'vr_fill_mound_model': ba.getmodel('cragCastleVRFillMound'),
-            'vr_fill_mound_tex': ba.gettexture('vrFillMound')
+            'vr_fill_mound_tex': ba.gettexture('vrFillMound'),
         }
         # fixme should chop this into vr/non-vr sections
         return data
@@ -1002,38 +1091,45 @@ class CragCastle(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.2, 0.25, 0.2),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'bumper': True,
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.2, 0.25, 0.2),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.shadow_ortho = True
         gnode.shadow_offset = (0, 0, -5.0)
@@ -1063,32 +1159,28 @@ class TowerD(ba.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'model':
-                ba.getmodel('towerDLevel'),
-            'model_bottom':
-                ba.getmodel('towerDLevelBottom'),
-            'collide_model':
-                ba.getcollidemodel('towerDLevelCollide'),
-            'tex':
-                ba.gettexture('towerDLevelColor'),
-            'bgtex':
-                ba.gettexture('menuBG'),
-            'bgmodel':
-                ba.getmodel('thePadBG'),
-            'player_wall_collide_model':
-                ba.getcollidemodel('towerDPlayerWall'),
-            'player_wall_material':
-                ba.Material()
+            'model': ba.getmodel('towerDLevel'),
+            'model_bottom': ba.getmodel('towerDLevelBottom'),
+            'collide_model': ba.getcollidemodel('towerDLevelCollide'),
+            'tex': ba.gettexture('towerDLevelColor'),
+            'bgtex': ba.gettexture('menuBG'),
+            'bgmodel': ba.getmodel('thePadBG'),
+            'player_wall_collide_model': ba.getcollidemodel('towerDPlayerWall'),
+            'player_wall_material': ba.Material(),
         }
         # fixme should chop this into vr/non-vr sections
         data['player_wall_material'].add_actions(
-            actions=('modify_part_collision', 'friction', 0.0))
+            actions=('modify_part_collision', 'friction', 0.0)
+        )
         # anything that needs to hit the wall can apply this material
         data['collide_with_wall_material'] = ba.Material()
         data['player_wall_material'].add_actions(
-            conditions=('they_dont_have_material',
-                        data['collide_with_wall_material']),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=(
+                'they_dont_have_material',
+                data['collide_with_wall_material'],
+            ),
+            actions=('modify_part_collision', 'collide', False),
+        )
         data['vr_fill_mound_model'] = ba.getmodel('stepRightUpVRFillMound')
         data['vr_fill_mound_tex'] = ba.gettexture('vrFillMound')
         return data
@@ -1103,49 +1195,53 @@ class TowerD(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.node_bottom = ba.newnode(
             'terrain',
             delegate=self,
             attrs={
                 'model': self.preloaddata['model_bottom'],
                 'lighting': False,
-                'color_texture': self.preloaddata['tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.53, 0.57, 0.5),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.53, 0.57, 0.5),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
         self.player_wall = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['player_wall_collide_model'],
                 'affect_bg_dynamics': False,
-                'materials': [self.preloaddata['player_wall_material']]
-            })
+                'materials': [self.preloaddata['player_wall_material']],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.15, 1.11, 1.03)
         gnode.ambient_color = (1.2, 1.1, 1.0)
         gnode.vignette_outer = (0.7, 0.73, 0.7)
         gnode.vignette_inner = (0.95, 0.95, 0.95)
 
-    def is_point_near_edge(self,
-                           point: ba.Vec3,
-                           running: bool = False) -> bool:
+    def is_point_near_edge(self, point: ba.Vec3, running: bool = False) -> bool:
         # see if we're within edge_box
         boxes = self.defs.boxes
         box_position = boxes['edge_box'][0:3]
@@ -1157,8 +1253,9 @@ class TowerD(ba.Map):
         xpos2 = (point.x - box_position2[0]) / box_scale2[0]
         zpos2 = (point.z - box_position2[2]) / box_scale2[2]
         # if we're outside of *both* boxes we're near the edge
-        return ((xpos < -0.5 or xpos > 0.5 or zpos < -0.5 or zpos > 0.5) and
-                (xpos2 < -0.5 or xpos2 > 0.5 or zpos2 < -0.5 or zpos2 > 0.5))
+        return (xpos < -0.5 or xpos > 0.5 or zpos < -0.5 or zpos > 0.5) and (
+            xpos2 < -0.5 or xpos2 > 0.5 or zpos2 < -0.5 or zpos2 > 0.5
+        )
 
 
 class HappyThoughts(ba.Map):
@@ -1172,7 +1269,11 @@ class HappyThoughts(ba.Map):
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return [
-            'melee', 'keep_away', 'team_flag', 'conquest', 'king_of_the_hill'
+            'melee',
+            'keep_away',
+            'team_flag',
+            'conquest',
+            'king_of_the_hill',
         ]
 
     @classmethod
@@ -1189,7 +1290,7 @@ class HappyThoughts(ba.Map):
             'tex': ba.gettexture('alwaysLandLevelColor'),
             'bgtex': ba.gettexture('alwaysLandBGColor'),
             'vr_fill_mound_model': ba.getmodel('alwaysLandVRFillMound'),
-            'vr_fill_mound_tex': ba.gettexture('vrFillMound')
+            'vr_fill_mound_tex': ba.gettexture('vrFillMound'),
         }
         return data
 
@@ -1207,31 +1308,37 @@ class HappyThoughts(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
+                'materials': [shared.footing_material],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.2, 0.25, 0.2),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.2, 0.25, 0.2),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.happy_thoughts_mode = True
         gnode.shadow_offset = (0.0, 8.0, 5.0)
@@ -1243,25 +1350,24 @@ class HappyThoughts(ba.Map):
         self.is_flying = True
 
         # throw out some tips on flying
-        txt = ba.newnode('text',
-                         attrs={
-                             'text': ba.Lstr(resource='pressJumpToFlyText'),
-                             'scale': 1.2,
-                             'maxwidth': 800,
-                             'position': (0, 200),
-                             'shadow': 0.5,
-                             'flatness': 0.5,
-                             'h_align': 'center',
-                             'v_attach': 'bottom'
-                         })
-        cmb = ba.newnode('combine',
-                         owner=txt,
-                         attrs={
-                             'size': 4,
-                             'input0': 0.3,
-                             'input1': 0.9,
-                             'input2': 0.0
-                         })
+        txt = ba.newnode(
+            'text',
+            attrs={
+                'text': ba.Lstr(resource='pressJumpToFlyText'),
+                'scale': 1.2,
+                'maxwidth': 800,
+                'position': (0, 200),
+                'shadow': 0.5,
+                'flatness': 0.5,
+                'h_align': 'center',
+                'v_attach': 'bottom',
+            },
+        )
+        cmb = ba.newnode(
+            'combine',
+            owner=txt,
+            attrs={'size': 4, 'input0': 0.3, 'input1': 0.9, 'input2': 0.0},
+        )
         ba.animate(cmb, 'input3', {3.0: 0, 4.0: 1, 9.0: 1, 10.0: 0})
         cmb.connectattr('output', txt, 'color')
         ba.timer(10.0, txt.delete)
@@ -1293,7 +1399,7 @@ class StepRightUp(ba.Map):
             'bgtex': ba.gettexture('menuBG'),
             'bgmodel': ba.getmodel('thePadBG'),
             'vr_fill_mound_model': ba.getmodel('stepRightUpVRFillMound'),
-            'vr_fill_mound_tex': ba.gettexture('vrFillMound')
+            'vr_fill_mound_tex': ba.gettexture('vrFillMound'),
         }
         # fixme should chop this into vr/non-vr chunks
         return data
@@ -1308,33 +1414,38 @@ class StepRightUp(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.node_bottom = ba.newnode(
             'terrain',
             delegate=self,
             attrs={
                 'model': self.preloaddata['model_bottom'],
                 'lighting': False,
-                'color_texture': self.preloaddata['tex']
-            })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.53, 0.57, 0.5),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.53, 0.57, 0.5),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.1, 1.0)
         gnode.ambient_color = (1.2, 1.1, 1.0)
@@ -1367,19 +1478,24 @@ class Courtyard(ba.Map):
             'tex': ba.gettexture('courtyardLevelColor'),
             'bgtex': ba.gettexture('menuBG'),
             'bgmodel': ba.getmodel('thePadBG'),
-            'player_wall_collide_model':
-                (ba.getcollidemodel('courtyardPlayerWall')),
-            'player_wall_material': ba.Material()
+            'player_wall_collide_model': (
+                ba.getcollidemodel('courtyardPlayerWall')
+            ),
+            'player_wall_material': ba.Material(),
         }
         # FIXME: Chop this into vr and non-vr chunks.
         data['player_wall_material'].add_actions(
-            actions=('modify_part_collision', 'friction', 0.0))
+            actions=('modify_part_collision', 'friction', 0.0)
+        )
         # anything that needs to hit the wall should apply this.
         data['collide_with_wall_material'] = ba.Material()
         data['player_wall_material'].add_actions(
-            conditions=('they_dont_have_material',
-                        data['collide_with_wall_material']),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=(
+                'they_dont_have_material',
+                data['collide_with_wall_material'],
+            ),
+            actions=('modify_part_collision', 'collide', False),
+        )
         data['vr_fill_mound_model'] = ba.getmodel('stepRightUpVRFillMound')
         data['vr_fill_mound_tex'] = ba.gettexture('vrFillMound')
         return data
@@ -1394,31 +1510,37 @@ class Courtyard(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['model_bottom'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_mound_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'color': (0.53, 0.57, 0.5),
-                       'background': True,
-                       'color_texture': self.preloaddata['vr_fill_mound_tex']
-                   })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['model_bottom'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_mound_model'],
+                'lighting': False,
+                'vr_only': True,
+                'color': (0.53, 0.57, 0.5),
+                'background': True,
+                'color_texture': self.preloaddata['vr_fill_mound_tex'],
+            },
+        )
         # in co-op mode games, put up a wall to prevent players
         # from getting in the turrets (that would foil our brilliant AI)
         if isinstance(ba.getsession(), ba.CoopSession):
@@ -1428,17 +1550,16 @@ class Courtyard(ba.Map):
                 attrs={
                     'collide_model': cmodel,
                     'affect_bg_dynamics': False,
-                    'materials': [self.preloaddata['player_wall_material']]
-                })
+                    'materials': [self.preloaddata['player_wall_material']],
+                },
+            )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.17, 1.1)
         gnode.ambient_color = (1.2, 1.17, 1.1)
         gnode.vignette_outer = (0.6, 0.6, 0.64)
         gnode.vignette_inner = (0.95, 0.95, 0.93)
 
-    def is_point_near_edge(self,
-                           point: ba.Vec3,
-                           running: bool = False) -> bool:
+    def is_point_near_edge(self, point: ba.Vec3, running: bool = False) -> bool:
         # count anything off our ground level as safe (for our platforms)
         # see if we're within edge_box
         box_position = self.defs.boxes['edge_box'][0:3]
@@ -1476,7 +1597,7 @@ class Rampage(ba.Map):
             'bgmodel': ba.getmodel('rampageBG'),
             'bgmodel2': ba.getmodel('rampageBG2'),
             'vr_fill_model': ba.getmodel('rampageVRFill'),
-            'railing_collide_model': ba.getcollidemodel('rampageBumper')
+            'railing_collide_model': ba.getcollidemodel('rampageBumper'),
         }
         return data
 
@@ -1490,53 +1611,60 @@ class Rampage(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material]
-            })
+                'materials': [shared.footing_material],
+            },
+        )
         self.background = ba.newnode(
             'terrain',
             attrs={
                 'model': self.preloaddata['bgmodel'],
                 'lighting': False,
                 'background': True,
-                'color_texture': self.preloaddata['bgtex']
-            })
-        self.bottom = ba.newnode('terrain',
-                                 attrs={
-                                     'model': self.preloaddata['bottom_model'],
-                                     'lighting': False,
-                                     'color_texture': self.preloaddata['tex']
-                                 })
-        self.bg2 = ba.newnode('terrain',
-                              attrs={
-                                  'model': self.preloaddata['bgmodel2'],
-                                  'lighting': False,
-                                  'background': True,
-                                  'color_texture': self.preloaddata['bgtex2']
-                              })
-        ba.newnode('terrain',
-                   attrs={
-                       'model': self.preloaddata['vr_fill_model'],
-                       'lighting': False,
-                       'vr_only': True,
-                       'background': True,
-                       'color_texture': self.preloaddata['bgtex2']
-                   })
+                'color_texture': self.preloaddata['bgtex'],
+            },
+        )
+        self.bottom = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bottom_model'],
+                'lighting': False,
+                'color_texture': self.preloaddata['tex'],
+            },
+        )
+        self.bg2 = ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['bgmodel2'],
+                'lighting': False,
+                'background': True,
+                'color_texture': self.preloaddata['bgtex2'],
+            },
+        )
+        ba.newnode(
+            'terrain',
+            attrs={
+                'model': self.preloaddata['vr_fill_model'],
+                'lighting': False,
+                'vr_only': True,
+                'background': True,
+                'color_texture': self.preloaddata['bgtex2'],
+            },
+        )
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
                 'materials': [shared.railing_material],
-                'bumper': True
-            })
+                'bumper': True,
+            },
+        )
         gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.1, 0.97)
         gnode.ambient_color = (1.3, 1.2, 1.03)
         gnode.vignette_outer = (0.62, 0.64, 0.69)
         gnode.vignette_inner = (0.97, 0.95, 0.93)
 
-    def is_point_near_edge(self,
-                           point: ba.Vec3,
-                           running: bool = False) -> bool:
+    def is_point_near_edge(self, point: ba.Vec3, running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]
         xpos = (point.x - box_position[0]) / box_scale[0]

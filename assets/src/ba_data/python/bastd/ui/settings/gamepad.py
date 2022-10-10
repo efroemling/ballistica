@@ -16,12 +16,14 @@ if TYPE_CHECKING:
 class GamepadSettingsWindow(ba.Window):
     """Window for configuring a gamepad."""
 
-    def __init__(self,
-                 gamepad: ba.InputDevice,
-                 is_main_menu: bool = True,
-                 transition: str = 'in_right',
-                 transition_out: str = 'out_right',
-                 settings: dict | None = None):
+    def __init__(
+        self,
+        gamepad: ba.InputDevice,
+        is_main_menu: bool = True,
+        transition: str = 'in_right',
+        transition_out: str = 'out_right',
+        settings: dict | None = None,
+    ):
         self._input = gamepad
 
         # If our input-device went away, just return an empty zombie.
@@ -35,7 +37,7 @@ class GamepadSettingsWindow(ba.Window):
         self._transition_out = transition_out
 
         # We're a secondary gamepad if supplied with settings.
-        self._is_secondary = (settings is not None)
+        self._is_secondary = settings is not None
         self._ext = '_B' if self._is_secondary else ''
         self._is_main_menu = is_main_menu
         self._displayname = self._name
@@ -43,12 +45,22 @@ class GamepadSettingsWindow(ba.Window):
         self._height = 440 if self._is_secondary else 450
         self._spacing = 40
         uiscale = ba.app.ui.uiscale
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height),
-            scale=(1.63 if uiscale is ba.UIScale.SMALL else
-                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(-20, -16) if uiscale is ba.UIScale.SMALL else (0, 0),
-            transition=transition))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height),
+                scale=(
+                    1.63
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.35
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(-20, -16)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+                transition=transition,
+            )
+        )
 
         # Don't ask to config joysticks while we're in here.
         self._rebuild_ui()
@@ -72,63 +84,63 @@ class GamepadSettingsWindow(ba.Window):
             # secondary controls).
             self._settings = {}
             for skey in [
-                    'buttonJump',
-                    'buttonJump_B',
-                    'buttonPunch',
-                    'buttonPunch_B',
-                    'buttonBomb',
-                    'buttonBomb_B',
-                    'buttonPickUp',
-                    'buttonPickUp_B',
-                    'buttonStart',
-                    'buttonStart_B',
-                    'buttonStart2',
-                    'buttonStart2_B',
-                    'buttonUp',
-                    'buttonUp_B',
-                    'buttonDown',
-                    'buttonDown_B',
-                    'buttonLeft',
-                    'buttonLeft_B',
-                    'buttonRight',
-                    'buttonRight_B',
-                    'buttonRun1',
-                    'buttonRun1_B',
-                    'buttonRun2',
-                    'buttonRun2_B',
-                    'triggerRun1',
-                    'triggerRun1_B',
-                    'triggerRun2',
-                    'triggerRun2_B',
-                    'buttonIgnored',
-                    'buttonIgnored_B',
-                    'buttonIgnored2',
-                    'buttonIgnored2_B',
-                    'buttonIgnored3',
-                    'buttonIgnored3_B',
-                    'buttonIgnored4',
-                    'buttonIgnored4_B',
-                    'buttonVRReorient',
-                    'buttonVRReorient_B',
-                    'analogStickDeadZone',
-                    'analogStickDeadZone_B',
-                    'dpad',
-                    'dpad_B',
-                    'unassignedButtonsRun',
-                    'unassignedButtonsRun_B',
-                    'startButtonActivatesDefaultWidget',
-                    'startButtonActivatesDefaultWidget_B',
-                    'uiOnly',
-                    'uiOnly_B',
-                    'ignoreCompletely',
-                    'ignoreCompletely_B',
-                    'autoRecalibrateAnalogStick',
-                    'autoRecalibrateAnalogStick_B',
-                    'analogStickLR',
-                    'analogStickLR_B',
-                    'analogStickUD',
-                    'analogStickUD_B',
-                    'enableSecondary',
+                'buttonJump',
+                'buttonJump_B',
+                'buttonPunch',
+                'buttonPunch_B',
+                'buttonBomb',
+                'buttonBomb_B',
+                'buttonPickUp',
+                'buttonPickUp_B',
+                'buttonStart',
+                'buttonStart_B',
+                'buttonStart2',
+                'buttonStart2_B',
+                'buttonUp',
+                'buttonUp_B',
+                'buttonDown',
+                'buttonDown_B',
+                'buttonLeft',
+                'buttonLeft_B',
+                'buttonRight',
+                'buttonRight_B',
+                'buttonRun1',
+                'buttonRun1_B',
+                'buttonRun2',
+                'buttonRun2_B',
+                'triggerRun1',
+                'triggerRun1_B',
+                'triggerRun2',
+                'triggerRun2_B',
+                'buttonIgnored',
+                'buttonIgnored_B',
+                'buttonIgnored2',
+                'buttonIgnored2_B',
+                'buttonIgnored3',
+                'buttonIgnored3_B',
+                'buttonIgnored4',
+                'buttonIgnored4_B',
+                'buttonVRReorient',
+                'buttonVRReorient_B',
+                'analogStickDeadZone',
+                'analogStickDeadZone_B',
+                'dpad',
+                'dpad_B',
+                'unassignedButtonsRun',
+                'unassignedButtonsRun_B',
+                'startButtonActivatesDefaultWidget',
+                'startButtonActivatesDefaultWidget_B',
+                'uiOnly',
+                'uiOnly_B',
+                'ignoreCompletely',
+                'ignoreCompletely_B',
+                'autoRecalibrateAnalogStick',
+                'autoRecalibrateAnalogStick_B',
+                'analogStickLR',
+                'analogStickLR_B',
+                'analogStickUD',
+                'analogStickUD_B',
+                'enableSecondary',
             ]:
                 val = get_device_value(self._input, skey)
                 if val != -1:
@@ -137,17 +149,20 @@ class GamepadSettingsWindow(ba.Window):
         back_button: ba.Widget | None
 
         if self._is_secondary:
-            back_button = ba.buttonwidget(parent=self._root_widget,
-                                          position=(self._width - 180,
-                                                    self._height - 65),
-                                          autoselect=True,
-                                          size=(160, 60),
-                                          label=ba.Lstr(resource='doneText'),
-                                          scale=0.9,
-                                          on_activate_call=self._save)
-            ba.containerwidget(edit=self._root_widget,
-                               start_button=back_button,
-                               on_cancel_call=back_button.activate)
+            back_button = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(self._width - 180, self._height - 65),
+                autoselect=True,
+                size=(160, 60),
+                label=ba.Lstr(resource='doneText'),
+                scale=0.9,
+                on_activate_call=self._save,
+            )
+            ba.containerwidget(
+                edit=self._root_widget,
+                start_button=back_button,
+                on_cancel_call=back_button.activate,
+            )
             cancel_button = None
         else:
             cancel_button = ba.buttonwidget(
@@ -157,80 +172,95 @@ class GamepadSettingsWindow(ba.Window):
                 size=(160, 60),
                 label=ba.Lstr(resource='cancelText'),
                 scale=0.9,
-                on_activate_call=self._cancel)
-            ba.containerwidget(edit=self._root_widget,
-                               cancel_button=cancel_button)
+                on_activate_call=self._cancel,
+            )
+            ba.containerwidget(
+                edit=self._root_widget, cancel_button=cancel_button
+            )
 
         save_button: ba.Widget | None
         if not self._is_secondary:
             save_button = ba.buttonwidget(
                 parent=self._root_widget,
-                position=(self._width - (165 if self._is_secondary else 195),
-                          self._height - 65),
+                position=(
+                    self._width - (165 if self._is_secondary else 195),
+                    self._height - 65,
+                ),
                 size=((160 if self._is_secondary else 180), 60),
                 autoselect=True,
                 label=ba.Lstr(resource='doneText')
-                if self._is_secondary else ba.Lstr(resource='saveText'),
+                if self._is_secondary
+                else ba.Lstr(resource='saveText'),
                 scale=0.9,
-                on_activate_call=self._save)
-            ba.containerwidget(edit=self._root_widget,
-                               start_button=save_button)
+                on_activate_call=self._save,
+            )
+            ba.containerwidget(edit=self._root_widget, start_button=save_button)
         else:
             save_button = None
 
         if not self._is_secondary:
             v = self._height - 59
-            ba.textwidget(parent=self._root_widget,
-                          position=(0, v + 5),
-                          size=(self._width, 25),
-                          text=ba.Lstr(resource=self._r + '.titleText'),
-                          color=ba.app.ui.title_color,
-                          maxwidth=310,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(0, v + 5),
+                size=(self._width, 25),
+                text=ba.Lstr(resource=self._r + '.titleText'),
+                color=ba.app.ui.title_color,
+                maxwidth=310,
+                h_align='center',
+                v_align='center',
+            )
             v -= 48
 
-            ba.textwidget(parent=self._root_widget,
-                          position=(0, v + 3),
-                          size=(self._width, 25),
-                          text=self._name,
-                          color=ba.app.ui.infotextcolor,
-                          maxwidth=self._width * 0.9,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(0, v + 3),
+                size=(self._width, 25),
+                text=self._name,
+                color=ba.app.ui.infotextcolor,
+                maxwidth=self._width * 0.9,
+                h_align='center',
+                v_align='center',
+            )
             v -= self._spacing * 1
 
-            ba.textwidget(parent=self._root_widget,
-                          position=(50, v + 10),
-                          size=(self._width - 100, 30),
-                          text=ba.Lstr(resource=self._r + '.appliesToAllText'),
-                          maxwidth=330,
-                          scale=0.65,
-                          color=(0.5, 0.6, 0.5, 1.0),
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(50, v + 10),
+                size=(self._width - 100, 30),
+                text=ba.Lstr(resource=self._r + '.appliesToAllText'),
+                maxwidth=330,
+                scale=0.65,
+                color=(0.5, 0.6, 0.5, 1.0),
+                h_align='center',
+                v_align='center',
+            )
             v -= 70
             self._enable_check_box = None
         else:
             v = self._height - 49
-            ba.textwidget(parent=self._root_widget,
-                          position=(0, v + 5),
-                          size=(self._width, 25),
-                          text=ba.Lstr(resource=self._r + '.secondaryText'),
-                          color=ba.app.ui.title_color,
-                          maxwidth=300,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(0, v + 5),
+                size=(self._width, 25),
+                text=ba.Lstr(resource=self._r + '.secondaryText'),
+                color=ba.app.ui.title_color,
+                maxwidth=300,
+                h_align='center',
+                v_align='center',
+            )
             v -= self._spacing * 1
 
-            ba.textwidget(parent=self._root_widget,
-                          position=(50, v + 10),
-                          size=(self._width - 100, 30),
-                          text=ba.Lstr(resource=self._r + '.secondHalfText'),
-                          maxwidth=300,
-                          scale=0.65,
-                          color=(0.6, 0.8, 0.6, 1.0),
-                          h_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(50, v + 10),
+                size=(self._width - 100, 30),
+                text=ba.Lstr(resource=self._r + '.secondHalfText'),
+                maxwidth=300,
+                scale=0.65,
+                color=(0.6, 0.8, 0.6, 1.0),
+                h_align='center',
+            )
             self._enable_check_box = ba.checkboxwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.5 - 80, v - 73),
@@ -239,7 +269,8 @@ class GamepadSettingsWindow(ba.Window):
                 on_value_change_call=self._enable_check_box_changed,
                 size=(200, 30),
                 text=ba.Lstr(resource=self._r + '.secondaryEnableText'),
-                scale=1.2)
+                scale=1.2,
+            )
             v = self._height - 205
 
         h_offs = 160
@@ -249,74 +280,93 @@ class GamepadSettingsWindow(ba.Window):
         scly = 0.98
         dpm = ba.Lstr(resource=self._r + '.pressAnyButtonOrDpadText')
         dpm2 = ba.Lstr(resource=self._r + '.ifNothingHappensTryAnalogText')
-        self._capture_button(pos=(h_offs, v + scly * dist),
-                             color=d_color,
-                             button='buttonUp' + self._ext,
-                             texture=ba.gettexture('upButton'),
-                             scale=1.0,
-                             message=dpm,
-                             message2=dpm2)
-        self._capture_button(pos=(h_offs - sclx * dist, v),
-                             color=d_color,
-                             button='buttonLeft' + self._ext,
-                             texture=ba.gettexture('leftButton'),
-                             scale=1.0,
-                             message=dpm,
-                             message2=dpm2)
-        self._capture_button(pos=(h_offs + sclx * dist, v),
-                             color=d_color,
-                             button='buttonRight' + self._ext,
-                             texture=ba.gettexture('rightButton'),
-                             scale=1.0,
-                             message=dpm,
-                             message2=dpm2)
-        self._capture_button(pos=(h_offs, v - scly * dist),
-                             color=d_color,
-                             button='buttonDown' + self._ext,
-                             texture=ba.gettexture('downButton'),
-                             scale=1.0,
-                             message=dpm,
-                             message2=dpm2)
+        self._capture_button(
+            pos=(h_offs, v + scly * dist),
+            color=d_color,
+            button='buttonUp' + self._ext,
+            texture=ba.gettexture('upButton'),
+            scale=1.0,
+            message=dpm,
+            message2=dpm2,
+        )
+        self._capture_button(
+            pos=(h_offs - sclx * dist, v),
+            color=d_color,
+            button='buttonLeft' + self._ext,
+            texture=ba.gettexture('leftButton'),
+            scale=1.0,
+            message=dpm,
+            message2=dpm2,
+        )
+        self._capture_button(
+            pos=(h_offs + sclx * dist, v),
+            color=d_color,
+            button='buttonRight' + self._ext,
+            texture=ba.gettexture('rightButton'),
+            scale=1.0,
+            message=dpm,
+            message2=dpm2,
+        )
+        self._capture_button(
+            pos=(h_offs, v - scly * dist),
+            color=d_color,
+            button='buttonDown' + self._ext,
+            texture=ba.gettexture('downButton'),
+            scale=1.0,
+            message=dpm,
+            message2=dpm2,
+        )
 
         dpm3 = ba.Lstr(resource=self._r + '.ifNothingHappensTryDpadText')
-        self._capture_button(pos=(h_offs + 130, v - 125),
-                             color=(0.4, 0.4, 0.6),
-                             button='analogStickLR' + self._ext,
-                             maxwidth=140,
-                             texture=ba.gettexture('analogStick'),
-                             scale=1.2,
-                             message=ba.Lstr(resource=self._r +
-                                             '.pressLeftRightText'),
-                             message2=dpm3)
+        self._capture_button(
+            pos=(h_offs + 130, v - 125),
+            color=(0.4, 0.4, 0.6),
+            button='analogStickLR' + self._ext,
+            maxwidth=140,
+            texture=ba.gettexture('analogStick'),
+            scale=1.2,
+            message=ba.Lstr(resource=self._r + '.pressLeftRightText'),
+            message2=dpm3,
+        )
 
-        self._capture_button(pos=(self._width * 0.5, v),
-                             color=(0.4, 0.4, 0.6),
-                             button='buttonStart' + self._ext,
-                             texture=ba.gettexture('startButton'),
-                             scale=0.7)
+        self._capture_button(
+            pos=(self._width * 0.5, v),
+            color=(0.4, 0.4, 0.6),
+            button='buttonStart' + self._ext,
+            texture=ba.gettexture('startButton'),
+            scale=0.7,
+        )
 
         h_offs = self._width - 160
 
-        self._capture_button(pos=(h_offs, v + scly * dist),
-                             color=(0.6, 0.4, 0.8),
-                             button='buttonPickUp' + self._ext,
-                             texture=ba.gettexture('buttonPickUp'),
-                             scale=1.0)
-        self._capture_button(pos=(h_offs - sclx * dist, v),
-                             color=(0.7, 0.5, 0.1),
-                             button='buttonPunch' + self._ext,
-                             texture=ba.gettexture('buttonPunch'),
-                             scale=1.0)
-        self._capture_button(pos=(h_offs + sclx * dist, v),
-                             color=(0.5, 0.2, 0.1),
-                             button='buttonBomb' + self._ext,
-                             texture=ba.gettexture('buttonBomb'),
-                             scale=1.0)
-        self._capture_button(pos=(h_offs, v - scly * dist),
-                             color=(0.2, 0.5, 0.2),
-                             button='buttonJump' + self._ext,
-                             texture=ba.gettexture('buttonJump'),
-                             scale=1.0)
+        self._capture_button(
+            pos=(h_offs, v + scly * dist),
+            color=(0.6, 0.4, 0.8),
+            button='buttonPickUp' + self._ext,
+            texture=ba.gettexture('buttonPickUp'),
+            scale=1.0,
+        )
+        self._capture_button(
+            pos=(h_offs - sclx * dist, v),
+            color=(0.7, 0.5, 0.1),
+            button='buttonPunch' + self._ext,
+            texture=ba.gettexture('buttonPunch'),
+            scale=1.0,
+        )
+        self._capture_button(
+            pos=(h_offs + sclx * dist, v),
+            color=(0.5, 0.2, 0.1),
+            button='buttonBomb' + self._ext,
+            texture=ba.gettexture('buttonBomb'),
+            scale=1.0,
+        )
+        self._capture_button(
+            pos=(h_offs, v - scly * dist),
+            color=(0.2, 0.5, 0.2),
+            button='buttonJump' + self._ext,
+            texture=ba.gettexture('buttonJump'),
+            scale=1.0,
+        )
 
         self._advanced_button = ba.buttonwidget(
             parent=self._root_widget,
@@ -327,7 +377,8 @@ class GamepadSettingsWindow(ba.Window):
             textcolor=(0.65, 0.6, 0.7),
             position=(self._width - 300, 30),
             size=(130, 40),
-            on_activate_call=self._do_advanced)
+            on_activate_call=self._do_advanced,
+        )
 
         try:
             if cancel_button is not None and save_button is not None:
@@ -364,6 +415,7 @@ class GamepadSettingsWindow(ba.Window):
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings import gamepadadvanced
+
         gamepadadvanced.GamepadAdvancedSettingsWindow(self)
 
     def _enable_check_box_changed(self, value: bool) -> None:
@@ -396,8 +448,9 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         return self._settings.get('startButtonActivatesDefaultWidget', True)
 
-    def set_start_button_activates_default_widget_value(self,
-                                                        value: bool) -> None:
+    def set_start_button_activates_default_widget_value(
+        self, value: bool
+    ) -> None:
         """(internal)"""
         assert self._settings is not None
         if value:
@@ -465,11 +518,13 @@ class GamepadSettingsWindow(ba.Window):
 
     def show_secondary_editor(self) -> None:
         """(internal)"""
-        GamepadSettingsWindow(self._input,
-                              is_main_menu=False,
-                              settings=self._settings,
-                              transition='in_scale',
-                              transition_out='out_scale')
+        GamepadSettingsWindow(
+            self._input,
+            is_main_menu=False,
+            settings=self._settings,
+            transition='in_scale',
+            transition_out='out_scale',
+        )
 
     def get_control_value_name(self, control: str) -> str | ba.Lstr:
         """(internal)"""
@@ -478,14 +533,25 @@ class GamepadSettingsWindow(ba.Window):
         if control == 'analogStickLR' + self._ext:
 
             # This actually shows both LR and UD.
-            sval1 = (self._settings['analogStickLR' +
-                                    self._ext] if 'analogStickLR' + self._ext
-                     in self._settings else 5 if self._is_secondary else 1)
-            sval2 = (self._settings['analogStickUD' +
-                                    self._ext] if 'analogStickUD' + self._ext
-                     in self._settings else 6 if self._is_secondary else 2)
-            return self._input.get_axis_name(
-                sval1) + ' / ' + self._input.get_axis_name(sval2)
+            sval1 = (
+                self._settings['analogStickLR' + self._ext]
+                if 'analogStickLR' + self._ext in self._settings
+                else 5
+                if self._is_secondary
+                else 1
+            )
+            sval2 = (
+                self._settings['analogStickUD' + self._ext]
+                if 'analogStickUD' + self._ext in self._settings
+                else 6
+                if self._is_secondary
+                else 2
+            )
+            return (
+                self._input.get_axis_name(sval1)
+                + ' / '
+                + self._input.get_axis_name(sval2)
+            )
 
         # If they're looking for triggers.
         if control in ['triggerRun1' + self._ext, 'triggerRun2' + self._ext]:
@@ -502,8 +568,10 @@ class GamepadSettingsWindow(ba.Window):
         # For dpad buttons: show individual buttons if any are set.
         # Otherwise show whichever dpad is set (defaulting to 1).
         dpad_buttons = [
-            'buttonLeft' + self._ext, 'buttonRight' + self._ext,
-            'buttonUp' + self._ext, 'buttonDown' + self._ext
+            'buttonLeft' + self._ext,
+            'buttonRight' + self._ext,
+            'buttonUp' + self._ext,
+            'buttonDown' + self._ext,
         ]
         if control in dpad_buttons:
 
@@ -516,20 +584,32 @@ class GamepadSettingsWindow(ba.Window):
             # No dpad buttons - show the dpad number for all 4.
             return ba.Lstr(
                 value='${A} ${B}',
-                subs=[('${A}', ba.Lstr(resource=self._r + '.dpadText')),
-                      ('${B}',
-                       str(self._settings['dpad' +
-                                          self._ext] if 'dpad' + self._ext in
-                           self._settings else 2 if self._is_secondary else 1))
-                      ])
+                subs=[
+                    ('${A}', ba.Lstr(resource=self._r + '.dpadText')),
+                    (
+                        '${B}',
+                        str(
+                            self._settings['dpad' + self._ext]
+                            if 'dpad' + self._ext in self._settings
+                            else 2
+                            if self._is_secondary
+                            else 1
+                        ),
+                    ),
+                ],
+            )
 
         # other buttons..
         if control in self._settings:
             return self._input.get_button_name(self._settings[control])
         return ba.Lstr(resource=self._r + '.unsetText')
 
-    def _gamepad_event(self, control: str, event: dict[str, Any],
-                       dialog: AwaitGamepadInputWindow) -> None:
+    def _gamepad_event(
+        self,
+        control: str,
+        event: dict[str, Any],
+        dialog: AwaitGamepadInputWindow,
+    ) -> None:
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -539,8 +619,10 @@ class GamepadSettingsWindow(ba.Window):
         # For our dpad-buttons we're looking for either a button-press or a
         # hat-switch press.
         if control in [
-                'buttonUp' + ext, 'buttonLeft' + ext, 'buttonDown' + ext,
-                'buttonRight' + ext
+            'buttonUp' + ext,
+            'buttonLeft' + ext,
+            'buttonDown' + ext,
+            'buttonRight' + ext,
         ]:
             if event['type'] in ['BUTTONDOWN', 'HATMOTION']:
 
@@ -553,8 +635,10 @@ class GamepadSettingsWindow(ba.Window):
                 elif event['type'] == 'HATMOTION':
                     # clear out any set dir-buttons
                     for btn in [
-                            'buttonUp' + ext, 'buttonLeft' + ext,
-                            'buttonRight' + ext, 'buttonDown' + ext
+                        'buttonUp' + ext,
+                        'buttonLeft' + ext,
+                        'buttonRight' + ext,
+                        'buttonDown' + ext,
                     ]:
                         if btn in self._settings:
                             del self._settings[btn]
@@ -567,18 +651,22 @@ class GamepadSettingsWindow(ba.Window):
                         self._settings['dpad' + ext] = event['hat']
 
                 # Update the 4 dpad button txt widgets.
-                ba.textwidget(edit=self._textwidgets['buttonUp' + ext],
-                              text=self.get_control_value_name('buttonUp' +
-                                                               ext))
-                ba.textwidget(edit=self._textwidgets['buttonLeft' + ext],
-                              text=self.get_control_value_name('buttonLeft' +
-                                                               ext))
-                ba.textwidget(edit=self._textwidgets['buttonRight' + ext],
-                              text=self.get_control_value_name('buttonRight' +
-                                                               ext))
-                ba.textwidget(edit=self._textwidgets['buttonDown' + ext],
-                              text=self.get_control_value_name('buttonDown' +
-                                                               ext))
+                ba.textwidget(
+                    edit=self._textwidgets['buttonUp' + ext],
+                    text=self.get_control_value_name('buttonUp' + ext),
+                )
+                ba.textwidget(
+                    edit=self._textwidgets['buttonLeft' + ext],
+                    text=self.get_control_value_name('buttonLeft' + ext),
+                )
+                ba.textwidget(
+                    edit=self._textwidgets['buttonRight' + ext],
+                    text=self.get_control_value_name('buttonRight' + ext),
+                )
+                ba.textwidget(
+                    edit=self._textwidgets['buttonDown' + ext],
+                    text=self.get_control_value_name('buttonDown' + ext),
+                )
                 ba.playsound(ba.getsound('gunCocking'))
                 dialog.die()
 
@@ -597,16 +685,18 @@ class GamepadSettingsWindow(ba.Window):
                         self._settings['analogStickLR' + ext] = axis
                     ba.textwidget(
                         edit=self._textwidgets['analogStickLR' + ext],
-                        text=self.get_control_value_name('analogStickLR' +
-                                                         ext))
+                        text=self.get_control_value_name('analogStickLR' + ext),
+                    )
                     ba.playsound(ba.getsound('gunCocking'))
                     dialog.die()
 
                     # Now launch the up/down listener.
                     AwaitGamepadInputWindow(
-                        self._input, 'analogStickUD' + ext,
+                        self._input,
+                        'analogStickUD' + ext,
                         self._gamepad_event,
-                        ba.Lstr(resource=self._r + '.pressUpDownText'))
+                        ba.Lstr(resource=self._r + '.pressUpDownText'),
+                    )
 
         elif control == 'analogStickUD' + ext:
             if event['type'] == 'AXISMOTION':
@@ -619,7 +709,7 @@ class GamepadSettingsWindow(ba.Window):
                     if 'analogStickLR' + ext in self._settings:
                         lr_axis = self._settings['analogStickLR' + ext]
                     else:
-                        lr_axis = (5 if self._is_secondary else 1)
+                        lr_axis = 5 if self._is_secondary else 1
                     if axis != lr_axis:
                         if axis == (6 if self._is_secondary else 2):
 
@@ -630,8 +720,10 @@ class GamepadSettingsWindow(ba.Window):
                             self._settings['analogStickUD' + ext] = axis
                         ba.textwidget(
                             edit=self._textwidgets['analogStickLR' + ext],
-                            text=self.get_control_value_name('analogStickLR' +
-                                                             ext))
+                            text=self.get_control_value_name(
+                                'analogStickLR' + ext
+                            ),
+                        )
                         ba.playsound(ba.getsound('gunCocking'))
                         dialog.die()
         else:
@@ -641,69 +733,93 @@ class GamepadSettingsWindow(ba.Window):
                 self._settings[control] = value
 
                 # Update the button's text widget.
-                ba.textwidget(edit=self._textwidgets[control],
-                              text=self.get_control_value_name(control))
+                ba.textwidget(
+                    edit=self._textwidgets[control],
+                    text=self.get_control_value_name(control),
+                )
                 ba.playsound(ba.getsound('gunCocking'))
                 dialog.die()
 
-    def _capture_button(self,
-                        pos: tuple[float, float],
-                        color: tuple[float, float, float],
-                        texture: ba.Texture,
-                        button: str,
-                        scale: float = 1.0,
-                        message: ba.Lstr | None = None,
-                        message2: ba.Lstr | None = None,
-                        maxwidth: float = 80.0) -> ba.Widget:
+    def _capture_button(
+        self,
+        pos: tuple[float, float],
+        color: tuple[float, float, float],
+        texture: ba.Texture,
+        button: str,
+        scale: float = 1.0,
+        message: ba.Lstr | None = None,
+        message2: ba.Lstr | None = None,
+        maxwidth: float = 80.0,
+    ) -> ba.Widget:
         if message is None:
             message = ba.Lstr(resource=self._r + '.pressAnyButtonText')
         base_size = 79
-        btn = ba.buttonwidget(parent=self._root_widget,
-                              position=(pos[0] - base_size * 0.5 * scale,
-                                        pos[1] - base_size * 0.5 * scale),
-                              autoselect=True,
-                              size=(base_size * scale, base_size * scale),
-                              texture=texture,
-                              label='',
-                              color=color)
+        btn = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(
+                pos[0] - base_size * 0.5 * scale,
+                pos[1] - base_size * 0.5 * scale,
+            ),
+            autoselect=True,
+            size=(base_size * scale, base_size * scale),
+            texture=texture,
+            label='',
+            color=color,
+        )
 
         # Make this in a timer so that it shows up on top of all other buttons.
 
         def doit() -> None:
             uiscale = 0.9 * scale
-            txt = ba.textwidget(parent=self._root_widget,
-                                position=(pos[0] + 0.0 * scale,
-                                          pos[1] - 58.0 * scale),
-                                color=(1, 1, 1, 0.3),
-                                size=(0, 0),
-                                h_align='center',
-                                v_align='center',
-                                scale=uiscale,
-                                text=self.get_control_value_name(button),
-                                maxwidth=maxwidth)
+            txt = ba.textwidget(
+                parent=self._root_widget,
+                position=(pos[0] + 0.0 * scale, pos[1] - 58.0 * scale),
+                color=(1, 1, 1, 0.3),
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                scale=uiscale,
+                text=self.get_control_value_name(button),
+                maxwidth=maxwidth,
+            )
             self._textwidgets[button] = txt
-            ba.buttonwidget(edit=btn,
-                            on_activate_call=ba.Call(AwaitGamepadInputWindow,
-                                                     self._input, button,
-                                                     self._gamepad_event,
-                                                     message, message2))
+            ba.buttonwidget(
+                edit=btn,
+                on_activate_call=ba.Call(
+                    AwaitGamepadInputWindow,
+                    self._input,
+                    button,
+                    self._gamepad_event,
+                    message,
+                    message2,
+                ),
+            )
 
         ba.timer(0, doit, timetype=ba.TimeType.REAL)
         return btn
 
     def _cancel(self) -> None:
         from bastd.ui.settings.controls import ControlsSettingsWindow
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         if self._is_main_menu:
             ba.app.ui.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget())
+                ControlsSettingsWindow(transition='in_left').get_root_widget()
+            )
 
     def _save(self) -> None:
-        from ba.internal import (master_server_post, get_input_device_config,
-                                 get_input_map_hash, should_submit_debug_info)
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        from ba.internal import (
+            master_server_post,
+            get_input_device_config,
+            get_input_map_hash,
+            should_submit_debug_info,
+        )
+
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
 
         # If we're a secondary editor we just go away (we were editing our
         # parent's settings dict).
@@ -726,14 +842,16 @@ class GamepadSettingsWindow(ba.Window):
             inputhash = get_input_map_hash(self._input)
             if should_submit_debug_info():
                 master_server_post(
-                    'controllerConfig', {
+                    'controllerConfig',
+                    {
                         'ua': ba.app.user_agent_string,
                         'b': ba.app.build_number,
                         'name': self._name,
                         'inputMapHash': inputhash,
                         'config': dst2,
-                        'v': 2
-                    })
+                        'v': 2,
+                    },
+                )
             ba.app.config.apply_and_commit()
             ba.playsound(ba.getsound('gunCocking'))
         else:
@@ -741,21 +859,23 @@ class GamepadSettingsWindow(ba.Window):
 
         if self._is_main_menu:
             from bastd.ui.settings.controls import ControlsSettingsWindow
+
             ba.app.ui.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget())
+                ControlsSettingsWindow(transition='in_left').get_root_widget()
+            )
 
 
 class AwaitGamepadInputWindow(ba.Window):
     """Window for capturing a gamepad button press."""
 
     def __init__(
-            self,
-            gamepad: ba.InputDevice,
-            button: str,
-            callback: Callable[[str, dict[str, Any], AwaitGamepadInputWindow],
-                               Any],
-            message: ba.Lstr | None = None,
-            message2: ba.Lstr | None = None):
+        self,
+        gamepad: ba.InputDevice,
+        button: str,
+        callback: Callable[[str, dict[str, Any], AwaitGamepadInputWindow], Any],
+        message: ba.Lstr | None = None,
+        message2: ba.Lstr | None = None,
+    ):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             # Shouldn't get here.
@@ -766,41 +886,55 @@ class AwaitGamepadInputWindow(ba.Window):
         width = 400
         height = 150
         uiscale = ba.app.ui.uiscale
-        super().__init__(root_widget=ba.containerwidget(
-            scale=(2.0 if uiscale is ba.UIScale.SMALL else
-                   1.9 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            size=(width, height),
-            transition='in_scale'), )
-        ba.textwidget(parent=self._root_widget,
-                      position=(0, (height - 60) if message2 is None else
-                                (height - 50)),
-                      size=(width, 25),
-                      text=message,
-                      maxwidth=width * 0.9,
-                      h_align='center',
-                      v_align='center')
+        super().__init__(
+            root_widget=ba.containerwidget(
+                scale=(
+                    2.0
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.9
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                size=(width, height),
+                transition='in_scale',
+            ),
+        )
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(0, (height - 60) if message2 is None else (height - 50)),
+            size=(width, 25),
+            text=message,
+            maxwidth=width * 0.9,
+            h_align='center',
+            v_align='center',
+        )
         if message2 is not None:
-            ba.textwidget(parent=self._root_widget,
-                          position=(width * 0.5, height - 60),
-                          size=(0, 0),
-                          text=message2,
-                          maxwidth=width * 0.9,
-                          scale=0.47,
-                          color=(0.7, 1.0, 0.7, 0.6),
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(width * 0.5, height - 60),
+                size=(0, 0),
+                text=message2,
+                maxwidth=width * 0.9,
+                scale=0.47,
+                color=(0.7, 1.0, 0.7, 0.6),
+                h_align='center',
+                v_align='center',
+            )
         self._counter = 5
-        self._count_down_text = ba.textwidget(parent=self._root_widget,
-                                              h_align='center',
-                                              position=(0, height - 110),
-                                              size=(width, 25),
-                                              color=(1, 1, 1, 0.3),
-                                              text=str(self._counter))
+        self._count_down_text = ba.textwidget(
+            parent=self._root_widget,
+            h_align='center',
+            position=(0, height - 110),
+            size=(width, 25),
+            color=(1, 1, 1, 0.3),
+            text=str(self._counter),
+        )
         self._decrement_timer: ba.Timer | None = ba.Timer(
             1.0,
             ba.Call(self._decrement),
             repeat=True,
-            timetype=ba.TimeType.REAL)
+            timetype=ba.TimeType.REAL,
+        )
         ba.internal.capture_gamepad_input(ba.WeakCall(self._event_callback))
 
     def __del__(self) -> None:
@@ -820,16 +954,20 @@ class AwaitGamepadInputWindow(ba.Window):
         assert isinstance(input_device, ba.InputDevice)
 
         # Update - we now allow *any* input device of this type.
-        if (self._input and input_device
-                and input_device.name == self._input.name):
+        if (
+            self._input
+            and input_device
+            and input_device.name == self._input.name
+        ):
             self._callback(self._capture_button, event, self)
 
     def _decrement(self) -> None:
         self._counter -= 1
         if self._counter >= 1:
             if self._count_down_text:
-                ba.textwidget(edit=self._count_down_text,
-                              text=str(self._counter))
+                ba.textwidget(
+                    edit=self._count_down_text, text=str(self._counter)
+                )
         else:
             ba.playsound(ba.getsound('error'))
             self.die()

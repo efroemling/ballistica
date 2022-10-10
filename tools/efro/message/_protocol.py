@@ -11,11 +11,19 @@ import traceback
 import json
 
 from efro.error import CleanError, CommunicationError
-from efro.dataclassio import (is_ioprepped_dataclass, dataclass_to_dict,
-                              dataclass_from_dict)
-from efro.message._message import (Message, Response, SysResponse,
-                                   ErrorSysResponse, EmptySysResponse,
-                                   UnregisteredMessageIDError)
+from efro.dataclassio import (
+    is_ioprepped_dataclass,
+    dataclass_to_dict,
+    dataclass_from_dict,
+)
+from efro.message._message import (
+    Message,
+    Response,
+    SysResponse,
+    ErrorSysResponse,
+    EmptySysResponse,
+    UnregisteredMessageIDError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Literal
@@ -30,13 +38,15 @@ class MessageProtocol:
     etc.
     """
 
-    def __init__(self,
-                 message_types: dict[int, type[Message]],
-                 response_types: dict[int, type[Response]],
-                 forward_communication_errors: bool = False,
-                 forward_clean_errors: bool = False,
-                 remote_errors_include_stack_traces: bool = False,
-                 log_remote_errors: bool = True) -> None:
+    def __init__(
+        self,
+        message_types: dict[int, type[Message]],
+        response_types: dict[int, type[Response]],
+        forward_communication_errors: bool = False,
+        forward_clean_errors: bool = False,
+        remote_errors_include_stack_traces: bool = False,
+        log_remote_errors: bool = True,
+    ) -> None:
         """Create a protocol with a given configuration.
 
         If 'forward_communication_errors' is True,
@@ -79,18 +89,21 @@ class MessageProtocol:
         # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}
         self.message_ids_by_type: dict[type[Message], int] = {}
-        self.response_types_by_id: dict[int, type[Response]
-                                        | type[SysResponse]] = {}
-        self.response_ids_by_type: dict[type[Response] | type[SysResponse],
-                                        int] = {}
+        self.response_types_by_id: dict[
+            int, type[Response] | type[SysResponse]
+        ] = {}
+        self.response_ids_by_type: dict[
+            type[Response] | type[SysResponse], int
+        ] = {}
         for m_id, m_type in message_types.items():
 
             # Make sure only valid message types were passed and each
             # id was assigned only once.
             assert isinstance(m_id, int)
             assert m_id >= 0
-            assert (is_ioprepped_dataclass(m_type)
-                    and issubclass(m_type, Message))
+            assert is_ioprepped_dataclass(m_type) and issubclass(
+                m_type, Message
+            )
             assert self.message_types_by_id.get(m_id) is None
             self.message_types_by_id[m_id] = m_type
             self.message_ids_by_type[m_type] = m_id
@@ -98,8 +111,9 @@ class MessageProtocol:
         for r_id, r_type in response_types.items():
             assert isinstance(r_id, int)
             assert r_id >= 0
-            assert (is_ioprepped_dataclass(r_type)
-                    and issubclass(r_type, Response))
+            assert is_ioprepped_dataclass(r_type) and issubclass(
+                r_type, Response
+            )
             assert self.response_types_by_id.get(r_id) is None
             self.response_types_by_id[r_id] = r_type
             self.response_ids_by_type[r_type] = r_id
@@ -123,8 +137,9 @@ class MessageProtocol:
                 m_rtypes = m_type.get_response_types()
 
                 assert isinstance(m_rtypes, list)
-                assert m_rtypes, (
-                    f'Message type {m_type} specifies no return types.')
+                assert (
+                    m_rtypes
+                ), f'Message type {m_type} specifies no return types.'
                 assert len(set(m_rtypes)) == len(m_rtypes)  # check dups
                 for m_rtype in m_rtypes:
                     all_response_types.add(m_rtype)
@@ -136,7 +151,8 @@ class MessageProtocol:
                 if cls not in self.response_ids_by_type:
                     raise ValueError(
                         f'Possible response type {cls} needs to be included'
-                        f' in response_types for this protocol.')
+                        f' in response_types for this protocol.'
+                    )
 
             # Make sure all registered types have unique base names.
             # We can take advantage of this to generate cleaner looking
@@ -145,12 +161,14 @@ class MessageProtocol:
             if len(mtypenames) != len(message_types):
                 raise ValueError(
                     'message_types contains duplicate __name__s;'
-                    ' all types are required to have unique names.')
+                    ' all types are required to have unique names.'
+                )
 
         self.forward_clean_errors = forward_clean_errors
         self.forward_communication_errors = forward_communication_errors
         self.remote_errors_include_stack_traces = (
-            remote_errors_include_stack_traces)
+            remote_errors_include_stack_traces
+        )
         self.log_remote_errors = log_remote_errors
 
     @staticmethod
@@ -176,30 +194,46 @@ class MessageProtocol:
         # If anything goes wrong, return a ErrorSysResponse instead.
         # (either CLEAN or generic REMOTE)
         if self.forward_clean_errors and isinstance(exc, CleanError):
-            return (ErrorSysResponse(
-                error_message=str(exc),
-                error_type=ErrorSysResponse.ErrorType.REMOTE_CLEAN), False)
+            return (
+                ErrorSysResponse(
+                    error_message=str(exc),
+                    error_type=ErrorSysResponse.ErrorType.REMOTE_CLEAN,
+                ),
+                False,
+            )
         if self.forward_communication_errors and isinstance(
-                exc, CommunicationError):
-            return (ErrorSysResponse(
-                error_message=str(exc),
-                error_type=ErrorSysResponse.ErrorType.REMOTE_COMMUNICATION),
-                    False)
-        return (ErrorSysResponse(
-            error_message=(traceback.format_exc()
-                           if self.remote_errors_include_stack_traces else
-                           'An internal error has occurred.'),
-            error_type=ErrorSysResponse.ErrorType.REMOTE),
-                self.log_remote_errors)
+            exc, CommunicationError
+        ):
+            return (
+                ErrorSysResponse(
+                    error_message=str(exc),
+                    error_type=ErrorSysResponse.ErrorType.REMOTE_COMMUNICATION,
+                ),
+                False,
+            )
+        return (
+            ErrorSysResponse(
+                error_message=(
+                    traceback.format_exc()
+                    if self.remote_errors_include_stack_traces
+                    else 'An internal error has occurred.'
+                ),
+                error_type=ErrorSysResponse.ErrorType.REMOTE,
+            ),
+            self.log_remote_errors,
+        )
 
-    def _to_dict(self, message: Any, ids_by_type: dict[type, int],
-                 opname: str) -> dict:
+    def _to_dict(
+        self, message: Any, ids_by_type: dict[type, int], opname: str
+    ) -> dict:
         """Encode a message to a json string for transport."""
 
         m_id: int | None = ids_by_type.get(type(message))
         if m_id is None:
-            raise TypeError(f'{opname} type is not registered in protocol:'
-                            f' {type(message)}')
+            raise TypeError(
+                f'{opname} type is not registered in protocol:'
+                f' {type(message)}'
+            )
         out = {'t': m_id, 'm': dataclass_to_dict(message)}
         return out
 
@@ -224,8 +258,9 @@ class MessageProtocol:
 
     # Weeeird; we get mypy errors returning dict[int, type] but
     # dict[int, typing.Type] or dict[int, type[Any]] works..
-    def _from_dict(self, data: dict, types_by_id: dict[int, type[Any]],
-                   opname: str) -> Any:
+    def _from_dict(
+        self, data: dict, types_by_id: dict[int, type[Any]], opname: str
+    ) -> Any:
         """Decode a message from a json string."""
         msgdict: dict | None
 
@@ -240,15 +275,19 @@ class MessageProtocol:
         msgtype = types_by_id.get(m_id)
         if msgtype is None:
             raise UnregisteredMessageIDError(
-                f'Got unregistered {opname} id of {m_id}.')
+                f'Got unregistered {opname} id of {m_id}.'
+            )
         return dataclass_from_dict(msgtype, msgdict)
 
-    def _get_module_header(self,
-                           part: Literal['sender', 'receiver'],
-                           extra_import_code: str | None = None) -> str:
+    def _get_module_header(
+        self,
+        part: Literal['sender', 'receiver'],
+        extra_import_code: str | None = None,
+    ) -> str:
         """Return common parts of generated modules."""
         # pylint: disable=too-many-locals, too-many-branches
         import textwrap
+
         tpimports: dict[str, list[str]] = {}
         imports: dict[str, list[str]] = {}
 
@@ -258,8 +297,9 @@ class MessageProtocol:
         if part == 'sender':
             msgtypes.append(Message)
         for msgtype in msgtypes:
-            tpimports.setdefault(msgtype.__module__,
-                                 []).append(msgtype.__name__)
+            tpimports.setdefault(msgtype.__module__, []).append(
+                msgtype.__name__
+            )
         rsptypes = list(self.response_ids_by_type)
         if part == 'sender':
             rsptypes.append(Response)
@@ -267,15 +307,20 @@ class MessageProtocol:
             # Skip these as they don't actually show up in code.
             if rsp_tp is EmptySysResponse or rsp_tp is ErrorSysResponse:
                 continue
-            if (single_message_type and part == 'sender'
-                    and rsp_tp is not Response):
+            if (
+                single_message_type
+                and part == 'sender'
+                and rsp_tp is not Response
+            ):
                 # We need to cast to the single supported response type
                 # in this case so need response types at runtime.
-                imports.setdefault(rsp_tp.__module__,
-                                   []).append(rsp_tp.__name__)
+                imports.setdefault(rsp_tp.__module__, []).append(
+                    rsp_tp.__name__
+                )
             else:
-                tpimports.setdefault(rsp_tp.__module__,
-                                     []).append(rsp_tp.__name__)
+                tpimports.setdefault(rsp_tp.__module__, []).append(
+                    rsp_tp.__name__
+                )
 
         import_lines = ''
         tpimport_lines = ''
@@ -296,16 +341,21 @@ class MessageProtocol:
             tpimport_lines += f'{line}\n'
 
         if part == 'sender':
-            import_lines += ('from efro.message import MessageSender,'
-                             ' BoundMessageSender')
+            import_lines += (
+                'from efro.message import MessageSender,' ' BoundMessageSender'
+            )
             tpimport_typing_extras = ''
         else:
             if single_message_type:
-                import_lines += ('from efro.message import (MessageReceiver,'
-                                 ' BoundMessageReceiver, Message, Response)')
+                import_lines += (
+                    'from efro.message import (MessageReceiver,'
+                    ' BoundMessageReceiver, Message, Response)'
+                )
             else:
-                import_lines += ('from efro.message import MessageReceiver,'
-                                 ' BoundMessageReceiver')
+                import_lines += (
+                    'from efro.message import MessageReceiver,'
+                    ' BoundMessageReceiver'
+                )
             tpimport_typing_extras = ', Awaitable'
 
         if extra_import_code is not None:
@@ -318,32 +368,35 @@ class MessageProtocol:
         if part == 'receiver':
             baseimps.append('Callable')
         baseimps_s = ', '.join(baseimps)
-        out = ('# Released under the MIT License. See LICENSE for details.\n'
-               f'#\n'
-               f'"""Auto-generated {part} module. Do not edit by hand."""\n'
-               f'\n'
-               f'from __future__ import annotations\n'
-               f'\n'
-               f'from typing import TYPE_CHECKING{ovld}\n'
-               f'\n'
-               f'{import_lines}\n'
-               f'\n'
-               f'if TYPE_CHECKING:\n'
-               f'    from typing import {baseimps_s}'
-               f'{tpimport_typing_extras}\n'
-               f'{tpimport_lines}'
-               f'\n'
-               f'\n')
+        out = (
+            '# Released under the MIT License. See LICENSE for details.\n'
+            f'#\n'
+            f'"""Auto-generated {part} module. Do not edit by hand."""\n'
+            f'\n'
+            f'from __future__ import annotations\n'
+            f'\n'
+            f'from typing import TYPE_CHECKING{ovld}\n'
+            f'\n'
+            f'{import_lines}\n'
+            f'\n'
+            f'if TYPE_CHECKING:\n'
+            f'    from typing import {baseimps_s}'
+            f'{tpimport_typing_extras}\n'
+            f'{tpimport_lines}'
+            f'\n'
+            f'\n'
+        )
         return out
 
     def do_create_sender_module(
-            self,
-            basename: str,
-            protocol_create_code: str,
-            enable_sync_sends: bool,
-            enable_async_sends: bool,
-            private: bool = False,
-            protocol_module_level_import_code: str | None = None) -> str:
+        self,
+        basename: str,
+        protocol_create_code: str,
+        enable_sync_sends: bool,
+        enable_async_sends: bool,
+        private: bool = False,
+        protocol_module_level_import_code: str | None = None,
+    ) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -352,25 +405,28 @@ class MessageProtocol:
 
         ppre = '_' if private else ''
         out = self._get_module_header(
-            'sender', extra_import_code=protocol_module_level_import_code)
+            'sender', extra_import_code=protocol_module_level_import_code
+        )
         ccind = textwrap.indent(protocol_create_code, '        ')
-        out += (f'class {ppre}{basename}(MessageSender):\n'
-                f'    """Protocol-specific sender."""\n'
-                f'\n'
-                f'    def __init__(self) -> None:\n'
-                f'{ccind}\n'
-                f'        super().__init__(protocol)\n'
-                f'\n'
-                f'    def __get__(self,\n'
-                f'                obj: Any,\n'
-                f'                type_in: Any = None)'
-                f' -> {ppre}Bound{basename}:\n'
-                f'        return {ppre}Bound{basename}'
-                f'(obj, self)\n'
-                f'\n'
-                f'\n'
-                f'class {ppre}Bound{basename}(BoundMessageSender):\n'
-                f'    """Protocol-specific bound sender."""\n')
+        out += (
+            f'class {ppre}{basename}(MessageSender):\n'
+            f'    """Protocol-specific sender."""\n'
+            f'\n'
+            f'    def __init__(self) -> None:\n'
+            f'{ccind}\n'
+            f'        super().__init__(protocol)\n'
+            f'\n'
+            f'    def __get__(self,\n'
+            f'                obj: Any,\n'
+            f'                type_in: Any = None)'
+            f' -> {ppre}Bound{basename}:\n'
+            f'        return {ppre}Bound{basename}'
+            f'(obj, self)\n'
+            f'\n'
+            f'\n'
+            f'class {ppre}Bound{basename}(BoundMessageSender):\n'
+            f'    """Protocol-specific bound sender."""\n'
+        )
 
         def _filt_tp_name(rtype: type[Response] | None) -> str:
             return 'None' if rtype is None else rtype.__name__
@@ -397,15 +453,17 @@ class MessageProtocol:
                         rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
-                    out += (f'\n'
-                            f'    {pfx}def send{sfx}(self,'
-                            f' message: {msgtypevar})'
-                            f' -> {rtypevar}:\n'
-                            f'        """Send a message {how}."""\n'
-                            f'        out = {awt}self._sender.'
-                            f'send{sfx}(self._obj, message)\n'
-                            f'        assert isinstance(out, {rtypevar})\n'
-                            f'        return out\n')
+                    out += (
+                        f'\n'
+                        f'    {pfx}def send{sfx}(self,'
+                        f' message: {msgtypevar})'
+                        f' -> {rtypevar}:\n'
+                        f'        """Send a message {how}."""\n'
+                        f'        out = {awt}self._sender.'
+                        f'send{sfx}(self._obj, message)\n'
+                        f'        assert isinstance(out, {rtypevar})\n'
+                        f'        return out\n'
+                    )
                 else:
 
                     for msgtype in msgtypes:
@@ -414,31 +472,37 @@ class MessageProtocol:
                         rtypes = msgtype.get_response_types()
                         if len(rtypes) > 1:
                             rtypevar = ' | '.join(
-                                _filt_tp_name(t) for t in rtypes)
+                                _filt_tp_name(t) for t in rtypes
+                            )
                         else:
                             rtypevar = _filt_tp_name(rtypes[0])
-                        out += (f'\n'
-                                f'    @overload\n'
-                                f'    {pfx}def send{sfx}(self,'
-                                f' message: {msgtypevar})'
-                                f' -> {rtypevar}:\n'
-                                f'        ...\n')
-                    out += (f'\n'
-                            f'    {pfx}def send{sfx}(self, message: Message)'
-                            f' -> Response | None:\n'
-                            f'        """Send a message {how}."""\n'
-                            f'        return {awt}self._sender.'
-                            f'send{sfx}(self._obj, message)\n')
+                        out += (
+                            f'\n'
+                            f'    @overload\n'
+                            f'    {pfx}def send{sfx}(self,'
+                            f' message: {msgtypevar})'
+                            f' -> {rtypevar}:\n'
+                            f'        ...\n'
+                        )
+                    out += (
+                        f'\n'
+                        f'    {pfx}def send{sfx}(self, message: Message)'
+                        f' -> Response | None:\n'
+                        f'        """Send a message {how}."""\n'
+                        f'        return {awt}self._sender.'
+                        f'send{sfx}(self._obj, message)\n'
+                    )
 
         return out
 
     def do_create_receiver_module(
-            self,
-            basename: str,
-            protocol_create_code: str,
-            is_async: bool,
-            private: bool = False,
-            protocol_module_level_import_code: str | None = None) -> str:
+        self,
+        basename: str,
+        protocol_create_code: str,
+        is_async: bool,
+        private: bool = False,
+        protocol_module_level_import_code: str | None = None,
+    ) -> str:
         """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
         import textwrap
@@ -447,24 +511,27 @@ class MessageProtocol:
         ppre = '_' if private else ''
         msgtypes = list(self.message_ids_by_type.keys())
         out = self._get_module_header(
-            'receiver', extra_import_code=protocol_module_level_import_code)
+            'receiver', extra_import_code=protocol_module_level_import_code
+        )
         ccind = textwrap.indent(protocol_create_code, '        ')
-        out += (f'class {ppre}{basename}(MessageReceiver):\n'
-                f'    """Protocol-specific {desc} receiver."""\n'
-                f'\n'
-                f'    is_async = {is_async}\n'
-                f'\n'
-                f'    def __init__(self) -> None:\n'
-                f'{ccind}\n'
-                f'        super().__init__(protocol)\n'
-                f'\n'
-                f'    def __get__(\n'
-                f'        self,\n'
-                f'        obj: Any,\n'
-                f'        type_in: Any = None,\n'
-                f'    ) -> {ppre}Bound{basename}:\n'
-                f'        return {ppre}Bound{basename}('
-                f'obj, self)\n')
+        out += (
+            f'class {ppre}{basename}(MessageReceiver):\n'
+            f'    """Protocol-specific {desc} receiver."""\n'
+            f'\n'
+            f'    is_async = {is_async}\n'
+            f'\n'
+            f'    def __init__(self) -> None:\n'
+            f'{ccind}\n'
+            f'        super().__init__(protocol)\n'
+            f'\n'
+            f'    def __get__(\n'
+            f'        self,\n'
+            f'        obj: Any,\n'
+            f'        type_in: Any = None,\n'
+            f'    ) -> {ppre}Bound{basename}:\n'
+            f'        return {ppre}Bound{basename}('
+            f'obj, self)\n'
+        )
 
         # Define handler() overloads for all registered message types.
 
@@ -497,7 +564,8 @@ class MessageProtocol:
                     f'        from typing import cast, Callable, Any\n'
                     f'        self.register_handler(cast(Callable'
                     f'[[Any, Message], Response], call))\n'
-                    f'        return call\n')
+                    f'        return call\n'
+                )
             else:
                 for msgtype in msgtypes:
                     msgtypevar = msgtype.__name__
@@ -507,26 +575,31 @@ class MessageProtocol:
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
                     rtypevar = f'{cbgn}{rtypevar}{cend}'
-                    out += (f'\n'
-                            f'    @overload\n'
-                            f'    def handler(\n'
-                            f'        self,\n'
-                            f'        call: Callable[[Any, {msgtypevar}], '
-                            f'{rtypevar}],\n'
-                            f'    )'
-                            f' -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
-                            f'        ...\n')
+                    out += (
+                        f'\n'
+                        f'    @overload\n'
+                        f'    def handler(\n'
+                        f'        self,\n'
+                        f'        call: Callable[[Any, {msgtypevar}], '
+                        f'{rtypevar}],\n'
+                        f'    )'
+                        f' -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
+                        f'        ...\n'
+                    )
                 out += (
                     '\n'
                     '    def handler(self, call: Callable) -> Callable:\n'
                     '        """Decorator to register message handlers."""\n'
                     '        self.register_handler(call)\n'
-                    '        return call\n')
+                    '        return call\n'
+                )
 
-        out += (f'\n'
-                f'\n'
-                f'class {ppre}Bound{basename}(BoundMessageReceiver):\n'
-                f'    """Protocol-specific bound receiver."""\n')
+        out += (
+            f'\n'
+            f'\n'
+            f'class {ppre}Bound{basename}(BoundMessageReceiver):\n'
+            f'    """Protocol-specific bound receiver."""\n'
+        )
         if is_async:
             out += (
                 '\n'
@@ -537,7 +610,8 @@ class MessageProtocol:
                 '        """Asynchronously handle a raw incoming message."""\n'
                 '        return await self._receiver.handle_raw_message_async('
                 '\n'
-                '            self._obj, message, raise_unregistered)\n')
+                '            self._obj, message, raise_unregistered)\n'
+            )
 
         else:
             out += (
@@ -550,6 +624,7 @@ class MessageProtocol:
                 '        return self._receiver.handle_raw_message('
                 'self._obj, message,\n'
                 '                                                 '
-                'raise_unregistered)\n')
+                'raise_unregistered)\n'
+            )
 
         return out

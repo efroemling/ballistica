@@ -38,6 +38,7 @@ def get_file_hash(path: str) -> str:
     This incorporates the file contents as well as its path.
     """
     import hashlib
+
     md5 = hashlib.md5()
     with open(path, 'rb') as infile:
         md5.update(infile.read())
@@ -55,8 +56,9 @@ def _project_centric_path(path: str) -> str:
     abspath = os.path.abspath(path).replace('\\', '/')
     if not abspath.startswith(projpath):
         raise RuntimeError(
-            f'Path "{abspath}" is not under project root "{projpath}"')
-    return abspath[len(projpath):]
+            f'Path "{abspath}" is not under project root "{projpath}"'
+        )
+    return abspath[len(projpath) :]
 
 
 def get_target(path: str) -> None:
@@ -98,21 +100,26 @@ def get_target(path: str) -> None:
         result = subprocess.run(
             f'curl --fail --silent {url} --output {local_cache_path_dl}',
             shell=True,
-            check=False)
+            check=False,
+        )
 
         # We prune old cache files on the server, so its possible for one to
         # be trying to build something the server can no longer provide.
         # try to explain the situation.
         if result.returncode == 22:
-            raise CleanError('Server gave an error.'
-                             ' Old build files may no longer be available;'
-                             ' make sure you are using a recent commit.')
+            raise CleanError(
+                'Server gave an error.'
+                ' Old build files may no longer be available;'
+                ' make sure you are using a recent commit.'
+            )
         if result.returncode != 0:
             raise CleanError('Download failed; is your internet working?')
 
-        subprocess.run(f'mv {local_cache_path_dl} {local_cache_path}',
-                       shell=True,
-                       check=True)
+        subprocess.run(
+            f'mv {local_cache_path_dl} {local_cache_path}',
+            shell=True,
+            check=True,
+        )
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
     # Just expand it and it get placed wherever it belongs.
@@ -177,6 +184,7 @@ def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
 
     import multiprocessing
+
     cpus = multiprocessing.cpu_count()
     fnames1: list[str] = []
     fnames2: list[str] = []
@@ -186,20 +194,28 @@ def update_cache(makefile_dirs: list[str]) -> None:
         # First, make sure all cache files are built.
         mfpath = os.path.join(path, 'Makefile')
         print(f'Building efrocache targets for {Clr.SBLU}{mfpath}{Clr.RST}...')
-        subprocess.run(f'{cdp}make -j{cpus} efrocache-build',
-                       shell=True,
-                       check=True)
+        subprocess.run(
+            f'{cdp}make -j{cpus} efrocache-build', shell=True, check=True
+        )
 
-        rawpaths = subprocess.run(f'{cdp}make efrocache-list',
-                                  shell=True,
-                                  check=True,
-                                  capture_output=True).stdout.decode().split()
+        rawpaths = (
+            subprocess.run(
+                f'{cdp}make efrocache-list',
+                shell=True,
+                check=True,
+                capture_output=True,
+            )
+            .stdout.decode()
+            .split()
+        )
 
         # Make sure the paths they gave were relative.
         for rawpath in rawpaths:
             if rawpath.startswith('/'):
-                raise RuntimeError(f'Invalid path returned for caching '
-                                   f'(absolute paths not allowed): {rawpath}')
+                raise RuntimeError(
+                    f'Invalid path returned for caching '
+                    f'(absolute paths not allowed): {rawpath}'
+                )
 
         # Break these into 2 lists, one of which will be included in the
         # starter-cache.
@@ -227,7 +243,8 @@ def update_cache(makefile_dirs: list[str]) -> None:
         print(
             f'{Clr.SBLU}Efrocache state unchanged;'
             f' skipping cache push.{Clr.RST}',
-            flush=True)
+            flush=True,
+        )
     else:
         _upload_cache(fnames1, fnames2, hashes, hashes_existing)
 
@@ -239,8 +256,12 @@ def update_cache(makefile_dirs: list[str]) -> None:
         outfile.write(hashes)
 
 
-def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
-                  hashes_existing_str: str) -> None:
+def _upload_cache(
+    fnames1: list[str],
+    fnames2: list[str],
+    hashes_str: str,
+    hashes_existing_str: str,
+) -> None:
 
     # First, if we've run before, print the files causing us to re-run:
     if hashes_existing_str != '':
@@ -255,8 +276,10 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
         for fname in hashes_existing:
             if fname not in hashes:
                 changed_files.add(fname)
-        print(f'{Clr.SBLU}Updating efrocache due to'
-              f' {len(changed_files)} changes:{Clr.RST}')
+        print(
+            f'{Clr.SBLU}Updating efrocache due to'
+            f' {len(changed_files)} changes:{Clr.RST}'
+        )
         for fname in sorted(changed_files):
             print(f'  {Clr.SBLU}{fname}{Clr.RST}')
 
@@ -268,8 +291,10 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
-    print(f'{Clr.SBLU}Starter cache includes {len(fnames1)} items;'
-          f' excludes {len(fnames2)}{Clr.RST}')
+    print(
+        f'{Clr.SBLU}Starter cache includes {len(fnames1)} items;'
+        f' excludes {len(fnames2)}{Clr.RST}'
+    )
 
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
@@ -277,7 +302,8 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
         'rsync --progress --recursive --human-readable build/efrocache/'
         ' ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
         shell=True,
-        check=True)
+        check=True,
+    )
 
     # Now generate the starter cache on the server..
     subprocess.run(
@@ -285,7 +311,8 @@ def _upload_cache(fnames1: list[str], fnames2: list[str], hashes_str: str,
         'ubuntu@staging.ballistica.net'
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"',
         shell=True,
-        check=True)
+        check=True,
+    )
 
 
 def _gen_hashes(fnames: list[str]) -> str:
@@ -304,9 +331,11 @@ def _gen_hashes(fnames: list[str]) -> str:
     return json.dumps(hashes, separators=(',', ':'))
 
 
-def _write_cache_files(fnames1: list[str], fnames2: list[str],
-                       staging_dir: str, mapping_file: str) -> None:
+def _write_cache_files(
+    fnames1: list[str], fnames2: list[str], staging_dir: str, mapping_file: str
+) -> None:
     import functools
+
     fhashes1: set[str] = set()
     fhashes2: set[str] = set()
     mapping: dict[str, str] = {}
@@ -357,10 +386,12 @@ def _write_cache_files(fnames1: list[str], fnames2: list[str],
         'subprocess.run(["mv", "tmp.tar.xz", "startercache.tar.xz"],'
         ' check=True)\n'
         'subprocess.run(["rm", "-rf", "efrocache", "genstartercache.py"])\n'
-        'print("Starter cache generation complete!", flush=True)\n')
+        'print("Starter cache generation complete!", flush=True)\n'
+    )
 
-    with open('build/efrocache/genstartercache.py', 'w',
-              encoding='utf-8') as outfile:
+    with open(
+        'build/efrocache/genstartercache.py', 'w', encoding='utf-8'
+    ) as outfile:
         outfile.write(script)
 
     with open(mapping_file, 'w', encoding='utf-8') as outfile:
@@ -369,6 +400,7 @@ def _write_cache_files(fnames1: list[str], fnames2: list[str],
 
 def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     import hashlib
+
     print(f'Caching {fname}')
     if ' ' in fname:
         raise RuntimeError('Spaces in paths not supported.')
@@ -388,14 +420,17 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     # with no embedded timestamps.
     # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
     # file attributes/resource-forks to the archive as as ._filename.
-    subprocess.run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}',
-                   shell=True,
-                   check=True)
+    subprocess.run(
+        f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}',
+        shell=True,
+        check=True,
+    )
     return fname, hashpath
 
 
 def _check_warm_start_entry(entry: tuple[str, str]) -> None:
     import hashlib
+
     fname, filehash = entry
     md5 = hashlib.md5()
     with open(fname, 'rb') as infile:
@@ -431,15 +466,16 @@ def warm_start_cache() -> None:
             f'curl --fail {BASE_URL}startercache.tar.xz'
             f' --output startercache.tar.xz',
             shell=True,
-            check=True)
+            check=True,
+        )
         print('Decompressing starter-cache...', flush=True)
         subprocess.run('tar -xf startercache.tar.xz', shell=True, check=True)
-        subprocess.run(f'mv efrocache {CACHE_DIR_NAME}',
-                       shell=True,
-                       check=True)
+        subprocess.run(f'mv efrocache {CACHE_DIR_NAME}', shell=True, check=True)
         subprocess.run('rm startercache.tar.xz', shell=True, check=True)
-        print('Starter-cache fetched successfully!'
-              ' (should speed up asset builds)')
+        print(
+            'Starter-cache fetched successfully!'
+            ' (should speed up asset builds)'
+        )
 
     # In the public build, let's scan through all files managed by
     # efrocache and update any with timestamps older than the latest

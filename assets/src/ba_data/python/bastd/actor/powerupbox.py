@@ -87,6 +87,7 @@ class PowerupBoxFactory:
         to get a shared instance.
         """
         from ba.internal import get_default_powerup_distribution
+
         shared = SharedObjects.get()
         self._lastpoweruptype: str | None = None
         self.model = ba.getmodel('powerup')
@@ -118,7 +119,8 @@ class PowerupBoxFactory:
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
                 ('message', 'our_node', 'at_connect', _TouchedMessage()),
-            ))
+            ),
+        )
 
         # We don't wanna be picked up.
         self.powerup_material.add_actions(
@@ -136,9 +138,11 @@ class PowerupBoxFactory:
             for _i in range(int(freq)):
                 self._powerupdist.append(powerup)
 
-    def get_random_powerup_type(self,
-                                forcetype: str | None = None,
-                                excludetypes: list[str] | None = None) -> str:
+    def get_random_powerup_type(
+        self,
+        forcetype: str | None = None,
+        excludetypes: list[str] | None = None,
+    ) -> str:
         """Returns a random powerup type (string).
 
         See ba.Powerup.poweruptype for available type values.
@@ -161,9 +165,9 @@ class PowerupBoxFactory:
                 ptype = 'health'
             else:
                 while True:
-                    ptype = self._powerupdist[random.randint(
-                        0,
-                        len(self._powerupdist) - 1)]
+                    ptype = self._powerupdist[
+                        random.randint(0, len(self._powerupdist) - 1)
+                    ]
                     if ptype not in excludetypes:
                         break
         self._lastpoweruptype = ptype
@@ -199,10 +203,12 @@ class PowerupBox(ba.Actor):
     node: ba.Node
     """The 'prop' ba.Node representing this box."""
 
-    def __init__(self,
-                 position: Sequence[float] = (0.0, 1.0, 0.0),
-                 poweruptype: str = 'triple_bombs',
-                 expire: bool = True):
+    def __init__(
+        self,
+        position: Sequence[float] = (0.0, 1.0, 0.0),
+        poweruptype: str = 'triple_bombs',
+        expire: bool = True,
+    ):
         """Create a powerup-box of the requested type at the given position.
 
         see ba.Powerup.poweruptype for valid type strings.
@@ -250,19 +256,23 @@ class PowerupBox(ba.Actor):
                 'color_texture': tex,
                 'reflection': 'powerup',
                 'reflection_scale': [1.0],
-                'materials': (factory.powerup_material,
-                              shared.object_material)
-            })  # yapf: disable
+                'materials': (factory.powerup_material, shared.object_material),
+            },
+        )  # yapf: disable
 
         # Animate in.
         curve = ba.animate(self.node, 'model_scale', {0: 0, 0.14: 1.6, 0.2: 1})
         ba.timer(0.2, curve.delete)
 
         if expire:
-            ba.timer(DEFAULT_POWERUP_INTERVAL - 2.5,
-                     ba.WeakCall(self._start_flashing))
-            ba.timer(DEFAULT_POWERUP_INTERVAL - 1.0,
-                     ba.WeakCall(self.handlemessage, ba.DieMessage()))
+            ba.timer(
+                DEFAULT_POWERUP_INTERVAL - 2.5,
+                ba.WeakCall(self._start_flashing),
+            )
+            ba.timer(
+                DEFAULT_POWERUP_INTERVAL - 1.0,
+                ba.WeakCall(self.handlemessage, ba.DieMessage()),
+            )
 
     def _start_flashing(self) -> None:
         if self.node:
@@ -275,9 +285,9 @@ class PowerupBox(ba.Actor):
             factory = PowerupBoxFactory.get()
             assert self.node
             if self.poweruptype == 'health':
-                ba.playsound(factory.health_powerup_sound,
-                             3,
-                             position=self.node.position)
+                ba.playsound(
+                    factory.health_powerup_sound, 3, position=self.node.position
+                )
             ba.playsound(factory.powerup_sound, 3, position=self.node.position)
             self._powersgiven = True
             self.handlemessage(ba.DieMessage())
@@ -286,7 +296,8 @@ class PowerupBox(ba.Actor):
             if not self._powersgiven:
                 node = ba.getcollision().opposingnode
                 node.handlemessage(
-                    ba.PowerupMessage(self.poweruptype, sourcenode=self.node))
+                    ba.PowerupMessage(self.poweruptype, sourcenode=self.node)
+                )
 
         elif isinstance(msg, ba.DieMessage):
             if self.node:

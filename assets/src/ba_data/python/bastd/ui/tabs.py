@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 @dataclass
 class Tab:
     """Info for an individual tab in a TabRow"""
+
     button: ba.Widget
     position: tuple[float, float]
     size: tuple[float, float]
@@ -30,12 +31,14 @@ class TabRow(Generic[T]):
     Tabs are indexed by id which is an arbitrary user-provided type.
     """
 
-    def __init__(self,
-                 parent: ba.Widget,
-                 tabdefs: list[tuple[T, ba.Lstr]],
-                 pos: tuple[float, float],
-                 size: tuple[float, float],
-                 on_select_call: Callable[[T], None] | None = None) -> None:
+    def __init__(
+        self,
+        parent: ba.Widget,
+        tabdefs: list[tuple[T, ba.Lstr]],
+        pos: tuple[float, float],
+        size: tuple[float, float],
+        on_select_call: Callable[[T], None] | None = None,
+    ) -> None:
         if not tabdefs:
             raise ValueError('At least one tab def is required')
         self.tabs: dict[T, Tab] = {}
@@ -46,16 +49,18 @@ class TabRow(Generic[T]):
         for tab_id, tab_label in tabdefs:
             pos = (h + tab_spacing * 0.5, tab_pos_v)
             size = (tab_button_width - tab_spacing, 50.0)
-            btn = ba.buttonwidget(parent=parent,
-                                  position=pos,
-                                  autoselect=True,
-                                  button_type='tab',
-                                  size=size,
-                                  label=tab_label,
-                                  enable_sound=False,
-                                  on_activate_call=ba.Call(
-                                      self._tick_and_call, on_select_call,
-                                      tab_id))
+            btn = ba.buttonwidget(
+                parent=parent,
+                position=pos,
+                autoselect=True,
+                button_type='tab',
+                size=size,
+                label=tab_label,
+                enable_sound=False,
+                on_activate_call=ba.Call(
+                    self._tick_and_call, on_select_call, tab_id
+                ),
+            )
             h += tab_button_width
             self.tabs[tab_id] = Tab(button=btn, position=pos, size=size)
 
@@ -63,16 +68,21 @@ class TabRow(Generic[T]):
         """Update appearances to make the provided tab appear selected."""
         for tab_id, tab in self.tabs.items():
             if tab_id == selected_tab_id:
-                ba.buttonwidget(edit=tab.button,
-                                color=(0.5, 0.4, 0.93),
-                                textcolor=(0.85, 0.75, 0.95))  # lit
+                ba.buttonwidget(
+                    edit=tab.button,
+                    color=(0.5, 0.4, 0.93),
+                    textcolor=(0.85, 0.75, 0.95),
+                )  # lit
             else:
-                ba.buttonwidget(edit=tab.button,
-                                color=(0.52, 0.48, 0.63),
-                                textcolor=(0.65, 0.6, 0.7))  # unlit
+                ba.buttonwidget(
+                    edit=tab.button,
+                    color=(0.52, 0.48, 0.63),
+                    textcolor=(0.65, 0.6, 0.7),
+                )  # unlit
 
-    def _tick_and_call(self, call: Callable[[Any], None] | None,
-                       arg: Any) -> None:
+    def _tick_and_call(
+        self, call: Callable[[Any], None] | None, arg: Any
+    ) -> None:
         ba.playsound(ba.getsound('click01'))
         if call is not None:
             call(arg)

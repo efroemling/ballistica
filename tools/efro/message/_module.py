@@ -38,20 +38,23 @@ def create_sender_module(
 
     If 'private' is True, class-names will be prefixed with an '_'.
 
-    Note that generated line lengths are not clipped, so output may need
-    to be run through a formatter to prevent lint warnings about excessive
-    line lengths.
+    Note: output code may have long lines and should generally be run
+    through a formatter. We should perhaps move this functionality to
+    efrotools so we can include that functionality inline.
     """
     protocol = _protocol_from_code(
-        build_time_protocol_create_code if build_time_protocol_create_code
-        is not None else protocol_create_code)
+        build_time_protocol_create_code
+        if build_time_protocol_create_code is not None
+        else protocol_create_code
+    )
     return protocol.do_create_sender_module(
         basename=basename,
         protocol_create_code=protocol_create_code,
         enable_sync_sends=enable_sync_sends,
         enable_async_sends=enable_async_sends,
         private=private,
-        protocol_module_level_import_code=protocol_module_level_import_code)
+        protocol_module_level_import_code=protocol_module_level_import_code,
+    )
 
 
 def create_receiver_module(
@@ -62,7 +65,7 @@ def create_receiver_module(
     protocol_module_level_import_code: str | None = None,
     build_time_protocol_create_code: str | None = None,
 ) -> str:
-    """"Create a Python module defining a MessageReceiver subclass.
+    """ "Create a Python module defining a MessageReceiver subclass.
 
     This class is primarily for type checking and will contain overrides
     for the register method for message/response types defined in
@@ -81,14 +84,17 @@ def create_receiver_module(
     line lengths.
     """
     protocol = _protocol_from_code(
-        build_time_protocol_create_code if build_time_protocol_create_code
-        is not None else protocol_create_code)
+        build_time_protocol_create_code
+        if build_time_protocol_create_code is not None
+        else protocol_create_code
+    )
     return protocol.do_create_receiver_module(
         basename=basename,
         protocol_create_code=protocol_create_code,
         is_async=is_async,
         private=private,
-        protocol_module_level_import_code=protocol_module_level_import_code)
+        protocol_module_level_import_code=protocol_module_level_import_code,
+    )
 
 
 def _protocol_from_code(protocol_create_code: str) -> MessageProtocol:
@@ -98,5 +104,6 @@ def _protocol_from_code(protocol_create_code: str) -> MessageProtocol:
     if not isinstance(protocol, MessageProtocol):
         raise RuntimeError(
             f'protocol_create_code yielded'
-            f' a {type(protocol)}; expected a MessageProtocol instance.')
+            f' a {type(protocol)}; expected a MessageProtocol instance.'
+        )
     return protocol

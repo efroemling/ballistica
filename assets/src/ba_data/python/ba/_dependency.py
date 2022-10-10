@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import (Generic, TypeVar, TYPE_CHECKING)
+from typing import Generic, TypeVar, TYPE_CHECKING
 
 import _ba
 
@@ -44,6 +44,7 @@ class Dependency(Generic[T]):
     def get_hash(self) -> int:
         """Return the dependency's hash, calculating it if necessary."""
         from efro.util import make_hash
+
         if self._hash is None:
             self._hash = make_hash((self.cls, self.config))
         return self._hash
@@ -52,10 +53,12 @@ class Dependency(Generic[T]):
         if not isinstance(obj, DependencyComponent):
             if obj is None:
                 raise TypeError(
-                    'Dependency must be accessed through an instance.')
+                    'Dependency must be accessed through an instance.'
+                )
             raise TypeError(
                 f'Dependency cannot be added to class of type {type(obj)}'
-                ' (class must inherit from ba.DependencyComponent).')
+                ' (class must inherit from ba.DependencyComponent).'
+            )
 
         # We expect to be instantiated from an already living
         # DependencyComponent with valid dep-data in place..
@@ -73,7 +76,8 @@ class Dependency(Generic[T]):
 
         if not depset.resolved:
             raise RuntimeError(
-                "Can't access data on an unresolved DependencySet.")
+                "Can't access data on an unresolved DependencySet."
+            )
 
         # Look up the data in the set based on the hash for this Dependency.
         assert self._hash in depset.entries
@@ -157,8 +161,10 @@ class DependencyEntry:
         component = self.component
         assert isinstance(component, self.cls)
         if component is None:
-            raise RuntimeError(f'Accessing DependencyComponent {self.cls} '
-                               'in an invalid state.')
+            raise RuntimeError(
+                f'Accessing DependencyComponent {self.cls} '
+                'in an invalid state.'
+            )
         return component
 
 
@@ -209,6 +215,7 @@ class DependencySet(Generic[T]):
         ]
         if missing:
             from ba._error import DependencyError
+
             raise DependencyError(missing)
 
         self._resolved = True
@@ -278,7 +285,8 @@ class DependencySet(Generic[T]):
 
         # Grab all Dependency instances we find in the class.
         subdeps = [
-            cls for cls in dep.cls.__dict__.values()
+            cls
+            for cls in dep.cls.__dict__.values()
             if isinstance(cls, Dependency)
         ]
 
@@ -395,6 +403,7 @@ def test_depset() -> None:
 
         def doit() -> None:
             from ba._error import DependencyError
+
             depset = DependencySet(Dependency(TestClass))
             try:
                 depset.resolve()
@@ -404,7 +413,8 @@ def test_depset() -> None:
                         print('MISSING ASSET PACKAGE', dep.config)
                     else:
                         raise RuntimeError(
-                            f'Unknown dependency error for {dep.cls}') from exc
+                            f'Unknown dependency error for {dep.cls}'
+                        ) from exc
             except Exception as exc:
                 print('DependencySet resolve failed with exc type:', type(exc))
             if depset.resolved:

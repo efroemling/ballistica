@@ -44,6 +44,7 @@ class Window:
 @dataclass
 class UICleanupCheck:
     """Holds info about a uicleanupcheck target."""
+
     obj: weakref.ref
     widget: ba.Widget
     widget_death_time: float | None
@@ -112,6 +113,7 @@ class UIEntry:
         # TEMP HARD CODED - WILL REPLACE THIS WITH BA_META LOOKUPS.
         if self._name == 'mainmenu':
             from bastd.ui import mainmenu
+
             return cast(Type[UILocation], mainmenu.MainMenuWindow)
         raise ValueError('unknown ui class ' + str(self._name))
 
@@ -139,8 +141,9 @@ class UIController:
         """Show the main menu, clearing other UIs from location stacks."""
         self._main_stack = []
         self._dialog_stack = []
-        self._main_stack = (self._main_stack_game
-                            if in_game else self._main_stack_menu)
+        self._main_stack = (
+            self._main_stack_game if in_game else self._main_stack_menu
+        )
         self._main_stack.append(UIEntry('mainmenu', self))
         self._update_ui()
 
@@ -154,8 +157,13 @@ class UIController:
                 entry.destroy()
 
         # Now create the topmost one if there is one.
-        entrynew = (self._dialog_stack[-1] if self._dialog_stack else
-                    self._main_stack[-1] if self._main_stack else None)
+        entrynew = (
+            self._dialog_stack[-1]
+            if self._dialog_stack
+            else self._main_stack[-1]
+            if self._main_stack
+            else None
+        )
         if entrynew is not None:
             entrynew.create()
 
@@ -190,9 +198,10 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
         widget.add_delete_callback(foobar)
 
     _ba.app.ui.cleanupchecks.append(
-        UICleanupCheck(obj=weakref.ref(obj),
-                       widget=widget,
-                       widget_death_time=None))
+        UICleanupCheck(
+            obj=weakref.ref(obj), widget=widget, widget_death_time=None
+        )
+    )
 
 
 def ui_upkeep() -> None:
@@ -218,9 +227,11 @@ def ui_upkeep() -> None:
             # Widget was already dead; complain if its been too long.
             if now - check.widget_death_time > 5.0:
                 print(
-                    'WARNING:', obj,
+                    'WARNING:',
+                    obj,
                     'is still alive 5 second after its widget died;'
-                    ' you might have a memory leak.')
+                    ' you might have a memory leak.',
+                )
                 print_active_refs(obj)
 
             else:

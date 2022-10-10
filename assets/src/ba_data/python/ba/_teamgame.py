@@ -39,8 +39,9 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         returns True for ba.DualTeamSessions and ba.FreeForAllSessions;
         False otherwise.
         """
-        return (issubclass(sessiontype, DualTeamSession)
-                or issubclass(sessiontype, FreeForAllSession))
+        return issubclass(sessiontype, DualTeamSession) or issubclass(
+            sessiontype, FreeForAllSession
+        )
 
     def __init__(self, settings: dict):
         super().__init__(settings)
@@ -55,6 +56,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         # pylint: disable=cyclic-import
         from ba._coopsession import CoopSession
         from bastd.actor.controlsguide import ControlsGuide
+
         super().on_transition_in()
 
         # On the first game, show the controls UI momentarily.
@@ -67,11 +69,13 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
                 lifespan = 10.0
                 if self.slow_motion:
                     lifespan *= 0.3
-                ControlsGuide(delay=delay,
-                              lifespan=lifespan,
-                              scale=0.8,
-                              position=(380, 200),
-                              bright=True).autoretain()
+                ControlsGuide(
+                    delay=delay,
+                    lifespan=lifespan,
+                    scale=0.8,
+                    position=(380, 200),
+                    bright=True,
+                ).autoretain()
                 setattr(self.session, attrname, True)
 
     def on_begin(self) -> None:
@@ -84,15 +88,19 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
             elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
                     from ba import _achievement
+
                     _ba.app.ach.award_local_achievement('Team Player')
         except Exception:
             from ba import _error
+
             _error.print_exception()
 
-    def spawn_player_spaz(self,
-                          player: PlayerType,
-                          position: Sequence[float] | None = None,
-                          angle: float | None = None) -> PlayerSpaz:
+    def spawn_player_spaz(
+        self,
+        player: PlayerType,
+        position: Sequence[float] | None = None,
+        angle: float | None = None,
+    ) -> PlayerSpaz:
         """
         Method override; spawns and wires up a standard ba.PlayerSpaz for
         a ba.Player.
@@ -103,7 +111,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         if position is None:
             # In teams-mode get our team-start-location.
             if isinstance(self.session, DualTeamSession):
-                position = (self.map.get_start_position(player.team.id))
+                position = self.map.get_start_position(player.team.id)
             else:
                 # Otherwise do free-for-all spawn locations.
                 position = self.map.get_ffa_start_position(self.players)
@@ -112,11 +120,12 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
 
     # FIXME: need to unify these arguments with GameActivity.end()
     def end(  # type: ignore
-            self,
-            results: Any = None,
-            announce_winning_team: bool = True,
-            announce_delay: float = 0.1,
-            force: bool = False) -> None:
+        self,
+        results: Any = None,
+        announce_winning_team: bool = True,
+        announce_delay: float = 0.1,
+        force: bool = False,
+    ) -> None:
         """
         End the game and announce the single winning team
         unless 'announce_winning_team' is False.
@@ -141,15 +150,19 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
                     self,
                     results,
                     delay=announce_delay,
-                    announce_winning_team=announce_winning_team)
+                    announce_winning_team=announce_winning_team,
+                )
 
         # For co-op we just pass this up the chain with a delay added
         # (in most cases). Team games expect a delay for the announce
         # portion in teams/ffa mode so this keeps it consistent.
         else:
             # don't want delay on restarts..
-            if (isinstance(results, dict) and 'outcome' in results
-                    and results['outcome'] == 'restart'):
+            if (
+                isinstance(results, dict)
+                and 'outcome' in results
+                and results['outcome'] == 'restart'
+            ):
                 delay = 0.0
             else:
                 delay = 2.0

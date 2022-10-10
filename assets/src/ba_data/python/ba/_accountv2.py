@@ -55,8 +55,9 @@ class AccountV2Subsystem:
         """Internal - should be overridden by subclass."""
         return None
 
-    def on_primary_account_changed(self,
-                                   account: AccountV2Handle | None) -> None:
+    def on_primary_account_changed(
+        self, account: AccountV2Handle | None
+    ) -> None:
         """Callback run after the primary account changes.
 
         Will be called with None on log-outs or when new credentials
@@ -70,13 +71,16 @@ class AccountV2Subsystem:
         # informed when that process completes.
         if account.workspaceid is not None:
             assert account.workspacename is not None
-            if (not self._initial_login_completed
-                    and not self._kicked_off_workspace_load):
+            if (
+                not self._initial_login_completed
+                and not self._kicked_off_workspace_load
+            ):
                 self._kicked_off_workspace_load = True
                 _ba.app.workspaces.set_active_workspace(
                     workspaceid=account.workspaceid,
                     workspacename=account.workspacename,
-                    on_completed=self._on_set_active_workspace_completed)
+                    on_completed=self._on_set_active_workspace_completed,
+                )
             else:
                 # Don't activate workspaces if we've already told the game
                 # that initial-log-in is done or if we've already kicked
@@ -84,7 +88,8 @@ class AccountV2Subsystem:
                 _ba.screenmessage(
                     f'\'{account.workspacename}\''
                     f' will be activated at next app launch.',
-                    color=(1, 1, 0))
+                    color=(1, 1, 0),
+                )
                 _ba.playsound(_ba.getsound('error'))
             return
 
@@ -124,8 +129,7 @@ class AccountV2Handle:
         self.workspaceid: str | None = None
 
     def __enter__(self) -> None:
-        """Support for "with" statement.
-        """
+        """Support for "with" statement."""
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         """Support for "with" statement."""

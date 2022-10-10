@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 class FlagState(Enum):
     """States our single flag can be in."""
+
     NEW = 0
     UNCONTESTED = 1
     CONTESTED = 2
@@ -107,7 +108,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             4: ba.getsound('announceFour'),
             3: ba.getsound('announceThree'),
             2: ba.getsound('announceTwo'),
-            1: ba.getsound('announceOne')
+            1: ba.getsound('announceOne'),
         }
         self._flag_pos: Sequence[float] | None = None
         self._flag_state: FlagState | None = None
@@ -123,16 +124,24 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
-                ('call', 'at_connect',
-                 ba.Call(self._handle_player_flag_region_collide, True)),
-                ('call', 'at_disconnect',
-                 ba.Call(self._handle_player_flag_region_collide, False)),
-            ))
+                (
+                    'call',
+                    'at_connect',
+                    ba.Call(self._handle_player_flag_region_collide, True),
+                ),
+                (
+                    'call',
+                    'at_disconnect',
+                    ba.Call(self._handle_player_flag_region_collide, False),
+                ),
+            ),
+        )
 
         # Base class overrides.
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC
-                              if self._epic_mode else ba.MusicType.SCARY)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.SCARY
+        )
 
     def get_instance_description(self) -> str | Sequence:
         return 'Secure the flag for ${ARG1} seconds.', self._hold_time
@@ -152,26 +161,30 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(1.0, self._tick, repeat=True)
         self._flag_state = FlagState.NEW
         Flag.project_stand(self._flag_pos)
-        self._flag = Flag(position=self._flag_pos,
-                          touchable=False,
-                          color=(1, 1, 1))
-        self._flag_light = ba.newnode('light',
-                                      attrs={
-                                          'position': self._flag_pos,
-                                          'intensity': 0.2,
-                                          'height_attenuated': False,
-                                          'radius': 0.4,
-                                          'color': (0.2, 0.2, 0.2)
-                                      })
+        self._flag = Flag(
+            position=self._flag_pos, touchable=False, color=(1, 1, 1)
+        )
+        self._flag_light = ba.newnode(
+            'light',
+            attrs={
+                'position': self._flag_pos,
+                'intensity': 0.2,
+                'height_attenuated': False,
+                'radius': 0.4,
+                'color': (0.2, 0.2, 0.2),
+            },
+        )
         # Flag region.
         flagmats = [self._flag_region_material, shared.region_material]
-        ba.newnode('region',
-                   attrs={
-                       'position': self._flag_pos,
-                       'scale': (1.8, 1.8, 1.8),
-                       'type': 'sphere',
-                       'materials': flagmats
-                   })
+        ba.newnode(
+            'region',
+            attrs={
+                'position': self._flag_pos,
+                'scale': (1.8, 1.8, 1.8),
+                'type': 'sphere',
+                'materials': flagmats,
+            },
+        )
         self._update_flag_state()
 
     def _tick(self) -> None:
@@ -180,10 +193,9 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         # Give holding players points.
         for player in self.players:
             if player.time_at_flag > 0:
-                self.stats.player_scored(player,
-                                         3,
-                                         screenmessage=False,
-                                         display=False)
+                self.stats.player_scored(
+                    player, 3, screenmessage=False, display=False
+                )
         if self._scoring_team is None:
             scoring_team = None
         else:
@@ -193,8 +205,9 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             if scoring_team.time_remaining > 0:
                 ba.playsound(self._tick_sound)
 
-            scoring_team.time_remaining = max(0,
-                                              scoring_team.time_remaining - 1)
+            scoring_team.time_remaining = max(
+                0, scoring_team.time_remaining - 1
+            )
             self._update_scoreboard()
             if scoring_team.time_remaining > 0:
                 assert self._flag is not None
@@ -216,8 +229,9 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         self.end(results=results, announce_delay=0)
 
     def _update_flag_state(self) -> None:
-        holding_teams = set(player.team for player in self.players
-                            if player.time_at_flag)
+        holding_teams = set(
+            player.team for player in self.players if player.time_at_flag
+        )
         prev_state = self._flag_state
         assert self._flag_light
         assert self._flag is not None
@@ -264,10 +278,9 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team,
-                                            team.time_remaining,
-                                            self._hold_time,
-                                            countdown=True)
+            self._scoreboard.set_team_value(
+                team, team.time_remaining, self._hold_time, countdown=True
+            )
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):

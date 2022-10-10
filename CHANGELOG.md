@@ -1,4 +1,5 @@
 ### 1.7.11 (build 20897, api 7, 2022-10-09)
+- Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.
 
 ### 1.7.10 (build 20895, api 7, 2022-10-09)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.

@@ -69,13 +69,14 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
             if duration > warn_time:
                 logging.warning(
                     'Asyncio loop step took %.4fs; ideal max is %.4f',
-                    duration, warn_time)
+                    duration,
+                    warn_time,
+                )
 
     global _asyncio_timer  # pylint: disable=invalid-name
-    _asyncio_timer = _ba.Timer(1.0 / 30.0,
-                               run_cycle,
-                               timetype=TimeType.REAL,
-                               repeat=True)
+    _asyncio_timer = _ba.Timer(
+        1.0 / 30.0, run_cycle, timetype=TimeType.REAL, repeat=True
+    )
 
     if bool(False):
 

@@ -50,9 +50,12 @@ class _Message:
 
 
 class _ServerClientCommon:
-
-    def __init__(self, keepalive_interval: float, keepalive_timeout: float,
-                 debug_print: bool) -> None:
+    def __init__(
+        self,
+        keepalive_interval: float,
+        keepalive_timeout: float,
+        debug_print: bool,
+    ) -> None:
         self._endpoint: RPCEndpoint | None = None
         self._keepalive_interval = keepalive_interval
         self._keepalive_timeout = keepalive_timeout
@@ -69,16 +72,19 @@ class _ServerClientCommon:
             raise RuntimeError('Expected endpoint to exist.')
         return self._endpoint
 
-    async def send_message(self,
-                           message: _Message,
-                           timeout: float | None = None,
-                           close_on_error: bool = True) -> _Message:
+    async def send_message(
+        self,
+        message: _Message,
+        timeout: float | None = None,
+        close_on_error: bool = True,
+    ) -> _Message:
         """Send high level messages."""
         assert self._endpoint is not None
         response = await self._endpoint.send_message(
             dataclass_to_json(message).encode(),
             timeout=timeout,
-            close_on_error=close_on_error)
+            close_on_error=close_on_error,
+        )
         return dataclass_from_json(_Message, response.decode())
 
     async def handle_message(self, msg: _Message) -> _Message:
@@ -96,8 +102,10 @@ class _ServerClientCommon:
 
         if msg.messagetype is _MessageType.TEST_BIG:
             # 5 Mb Response
-            return _Message(_MessageType.RESPONSE_BIG,
-                            extradata=bytes(bytearray(1024 * 1024 * 5)))
+            return _Message(
+                _MessageType.RESPONSE_BIG,
+                extradata=bytes(bytearray(1024 * 1024 * 5)),
+            )
 
         raise RuntimeError(f'Got unexpected message type: {msg.messagetype}')
 
@@ -108,19 +116,25 @@ class _ServerClientCommon:
 
 
 class _Server(_ServerClientCommon):
-
-    def __init__(self, keepalive_interval: float, keepalive_timeout: float,
-                 debug_print: bool) -> None:
-        super().__init__(keepalive_interval=keepalive_interval,
-                         keepalive_timeout=keepalive_timeout,
-                         debug_print=debug_print)
+    def __init__(
+        self,
+        keepalive_interval: float,
+        keepalive_timeout: float,
+        debug_print: bool,
+    ) -> None:
+        super().__init__(
+            keepalive_interval=keepalive_interval,
+            keepalive_timeout=keepalive_timeout,
+            debug_print=debug_print,
+        )
         self.listener: asyncio.base_events.Server | None = None
 
     async def start(self) -> None:
         """Start serving. Call this before run()."""
         assert self.listener is None
-        self.listener = await asyncio.start_server(self._handle_client, ADDR,
-                                                   PORT)
+        self.listener = await asyncio.start_server(
+            self._handle_client, ADDR, PORT
+        )
 
     async def run(self) -> None:
         """Do the thing."""
@@ -132,8 +146,9 @@ class _Server(_ServerClientCommon):
             except asyncio.CancelledError:
                 pass
 
-    async def _handle_client(self, reader: asyncio.StreamReader,
-                             writer: asyncio.StreamWriter) -> None:
+    async def _handle_client(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         assert self._endpoint is None
 
         # Note to self: passing ourself as a handler creates a dependency
@@ -146,18 +161,24 @@ class _Server(_ServerClientCommon):
             keepalive_interval=self._keepalive_interval,
             keepalive_timeout=self._keepalive_timeout,
             debug_print=self._debug_print,
-            label='test_rpc_server')
+            label='test_rpc_server',
+        )
 
         await self._endpoint.run()
 
 
 class _Client(_ServerClientCommon):
-
-    def __init__(self, keepalive_interval: float, keepalive_timeout: float,
-                 debug_print: bool) -> None:
-        super().__init__(keepalive_interval=keepalive_interval,
-                         keepalive_timeout=keepalive_timeout,
-                         debug_print=debug_print)
+    def __init__(
+        self,
+        keepalive_interval: float,
+        keepalive_timeout: float,
+        debug_print: bool,
+    ) -> None:
+        super().__init__(
+            keepalive_interval=keepalive_interval,
+            keepalive_timeout=keepalive_timeout,
+            debug_print=debug_print,
+        )
 
     async def run(self) -> None:
         """Do the thing."""
@@ -172,24 +193,29 @@ class _Client(_ServerClientCommon):
             keepalive_interval=self._keepalive_interval,
             keepalive_timeout=self._keepalive_timeout,
             debug_print=self._debug_print,
-            label='test_rpc_client')
+            label='test_rpc_client',
+        )
         await self._endpoint.run()
 
 
 class _Tester:
-
     def __init__(
-            self,
-            keepalive_interval: float = RPCEndpoint.DEFAULT_KEEPALIVE_INTERVAL,
-            keepalive_timeout: float = RPCEndpoint.DEFAULT_KEEPALIVE_TIMEOUT,
-            server_debug_print: bool = True,
-            client_debug_print: bool = True) -> None:
-        self.client = _Client(keepalive_interval=keepalive_interval,
-                              keepalive_timeout=keepalive_timeout,
-                              debug_print=client_debug_print)
-        self.server = _Server(keepalive_interval=keepalive_interval,
-                              keepalive_timeout=keepalive_timeout,
-                              debug_print=server_debug_print)
+        self,
+        keepalive_interval: float = RPCEndpoint.DEFAULT_KEEPALIVE_INTERVAL,
+        keepalive_timeout: float = RPCEndpoint.DEFAULT_KEEPALIVE_TIMEOUT,
+        server_debug_print: bool = True,
+        client_debug_print: bool = True,
+    ) -> None:
+        self.client = _Client(
+            keepalive_interval=keepalive_interval,
+            keepalive_timeout=keepalive_timeout,
+            debug_print=client_debug_print,
+        )
+        self.server = _Server(
+            keepalive_interval=keepalive_interval,
+            keepalive_timeout=keepalive_timeout,
+            debug_print=server_debug_print,
+        )
 
     # noinspection PyProtectedMember
     def run(self, testcall: Awaitable[None]) -> None:
@@ -213,6 +239,7 @@ class _Tester:
             ]:
                 if endpoint is not None:
                     import gc
+
                     print('referrers:', gc.get_referrers(endpoint))
                     raise RuntimeError(f'{name} did not go down cleanly')
 
@@ -267,8 +294,10 @@ def test_keepalive_fail() -> None:
         # keepalive timeout.
         await asyncio.sleep(ktimeout)
         starttime = time.monotonic()
-        while (not tester.server.endpoint.is_closing()
-               and time.monotonic() - starttime < 5.0):
+        while (
+            not tester.server.endpoint.is_closing()
+            and time.monotonic() - starttime < 5.0
+        ):
             await asyncio.sleep(0.01)
         assert tester.server.endpoint.is_closing()
 
@@ -313,13 +342,19 @@ def test_simple_messages() -> None:
         assert resp.messagetype is _MessageType.RESPONSE2
 
         resp = await tester.server.send_message(
-            _Message(_MessageType.TEST_BIG,
-                     extradata=bytes(bytearray(1024 * 1024 * 5))))
+            _Message(
+                _MessageType.TEST_BIG,
+                extradata=bytes(bytearray(1024 * 1024 * 5)),
+            )
+        )
         assert resp.messagetype is _MessageType.RESPONSE_BIG
 
         resp = await tester.client.send_message(
-            _Message(_MessageType.TEST_BIG,
-                     extradata=bytes(bytearray(1024 * 1024 * 5))))
+            _Message(
+                _MessageType.TEST_BIG,
+                extradata=bytes(bytearray(1024 * 1024 * 5)),
+            )
+        )
         assert resp.messagetype is _MessageType.RESPONSE_BIG
 
     tester.run(_do_it())
@@ -347,8 +382,7 @@ def test_simultaneous_messages() -> None:
         assert (time.monotonic() - starttime) < 1.25 * SLOW_WAIT
 
         # Make sure we got all correct responses.
-        assert all(r.messagetype is _MessageType.RESPONSE_SLOW
-                   for r in results)
+        assert all(r.messagetype is _MessageType.RESPONSE_SLOW for r in results)
 
         # They should all be uniquely created message objects.
         assert len(set(id(r) for r in results)) == len(results)
@@ -364,7 +398,8 @@ def test_message_timeout() -> None:
 
         # This message should return after a short wait.
         resp = await tester.server.send_message(
-            _Message(_MessageType.TEST_SLOW))
+            _Message(_MessageType.TEST_SLOW)
+        )
         assert resp.messagetype is _MessageType.RESPONSE_SLOW
 
         # This message should time out but not close the connection.
@@ -393,7 +428,6 @@ def test_server_interrupt() -> None:
     tester = _Tester()
 
     async def _do_it() -> None:
-
         async def _kill_connection() -> None:
             await asyncio.sleep(0.2)
             tester.server.endpoint.close()
@@ -410,7 +444,6 @@ def test_client_interrupt() -> None:
     tester = _Tester()
 
     async def _do_it() -> None:
-
         async def _kill_connection() -> None:
             await asyncio.sleep(0.2)
             tester.client.endpoint.close()

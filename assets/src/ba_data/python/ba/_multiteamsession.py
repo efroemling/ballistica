@@ -38,6 +38,7 @@ class MultiTeamSession(Session):
         # pylint: disable=cyclic-import
         from ba import _playlist
         from bastd.activity.multiteamjoin import MultiTeamJoinActivity
+
         app = _ba.app
         cfg = app.config
 
@@ -51,11 +52,13 @@ class MultiTeamSession(Session):
         # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
 
-        super().__init__(depsets,
-                         team_names=team_names,
-                         team_colors=team_colors,
-                         min_players=1,
-                         max_players=self.get_max_players())
+        super().__init__(
+            depsets,
+            team_names=team_names,
+            team_colors=team_colors,
+            min_players=1,
+            max_players=self.get_max_players(),
+        )
 
         self._series_length = app.teams_series_length
         self._ffa_series_length = app.ffa_series_length
@@ -67,13 +70,13 @@ class MultiTeamSession(Session):
             from bastd.tutorial import TutorialActivity
 
             # Get this loading.
-            self._tutorial_activity_instance = _ba.newactivity(
-                TutorialActivity)
+            self._tutorial_activity_instance = _ba.newactivity(TutorialActivity)
         else:
             self._tutorial_activity_instance = None
 
-        self._playlist_name = cfg.get(self._playlist_selection_var,
-                                      '__default__')
+        self._playlist_name = cfg.get(
+            self._playlist_selection_var, '__default__'
+        )
         self._playlist_randomize = cfg.get(self._playlist_randomize_var, False)
 
         # Which game activity we're on.
@@ -81,8 +84,10 @@ class MultiTeamSession(Session):
 
         playlists = cfg.get(self._playlists_var, {})
 
-        if (self._playlist_name != '__default__'
-                and self._playlist_name in playlists):
+        if (
+            self._playlist_name != '__default__'
+            and self._playlist_name in playlists
+        ):
 
             # Make sure to copy this, as we muck with it in place once we've
             # got it and we don't want that to affect our config.
@@ -98,19 +103,22 @@ class MultiTeamSession(Session):
             playlist,
             sessiontype=type(self),
             add_resolved_type=True,
-            name='default teams' if self.use_teams else 'default ffa')
+            name='default teams' if self.use_teams else 'default ffa',
+        )
 
         if not playlist_resolved:
             raise RuntimeError('Playlist contains no valid games.')
 
-        self._playlist = ShuffleList(playlist_resolved,
-                                     shuffle=self._playlist_randomize)
+        self._playlist = ShuffleList(
+            playlist_resolved, shuffle=self._playlist_randomize
+        )
 
         # Get a game on deck ready to go.
         self._current_game_spec: dict[str, Any] | None = None
         self._next_game_spec: dict[str, Any] = self._playlist.pull_next()
-        self._next_game: type[ba.GameActivity] = (
-            self._next_game_spec['resolved_type'])
+        self._next_game: type[ba.GameActivity] = self._next_game_spec[
+            'resolved_type'
+        ]
 
         # Go ahead and instantiate the next game we'll
         # use so it has lots of time to load.
@@ -131,6 +139,7 @@ class MultiTeamSession(Session):
         """Returns a description of the next game on deck."""
         # pylint: disable=cyclic-import
         from ba._gameactivity import GameActivity
+
         gametype: type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
         return gametype.get_settings_display_string(self._next_game_spec)
@@ -151,15 +160,20 @@ class MultiTeamSession(Session):
     def _instantiate_next_game(self) -> None:
         self._next_game_instance = _ba.newactivity(
             self._next_game_spec['resolved_type'],
-            self._next_game_spec['settings'])
+            self._next_game_spec['settings'],
+        )
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         # pylint: disable=cyclic-import
         from bastd.tutorial import TutorialActivity
         from bastd.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity)
-        from ba._activitytypes import (TransitionActivity, JoinActivity,
-                                       ScoreScreenActivity)
+            TeamSeriesVictoryScoreScreenActivity,
+        )
+        from ba._activitytypes import (
+            TransitionActivity,
+            JoinActivity,
+            ScoreScreenActivity,
+        )
 
         # If we have a tutorial to show, that's the first thing we do no
         # matter what.
@@ -176,8 +190,8 @@ class MultiTeamSession(Session):
         # If we're in a between-round activity or a restart-activity, hop
         # into a round.
         elif isinstance(
-                activity,
-            (JoinActivity, TransitionActivity, ScoreScreenActivity)):
+            activity, (JoinActivity, TransitionActivity, ScoreScreenActivity)
+        ):
 
             # If we're coming from a series-end activity, reset scores.
             if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
@@ -204,7 +218,7 @@ class MultiTeamSession(Session):
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
                 try:
-                    has_team = (player.sessionteam is not None)
+                    has_team = player.sessionteam is not None
                 except NotFoundError:
                     has_team = False
                 if has_team:
@@ -223,11 +237,13 @@ class MultiTeamSession(Session):
         del results  # Unused arg.
         print_error('this should be overridden')
 
-    def announce_game_results(self,
-                              activity: ba.GameActivity,
-                              results: ba.GameResults,
-                              delay: float,
-                              announce_winning_team: bool = True) -> None:
+    def announce_game_results(
+        self,
+        activity: ba.GameActivity,
+        results: ba.GameResults,
+        delay: float,
+        announce_winning_team: bool = True,
+    ) -> None:
         """Show basic game result at the end of a game.
 
         (before transitioning to a score screen).
@@ -243,6 +259,7 @@ class MultiTeamSession(Session):
         from ba._language import Lstr
         from ba._freeforallsession import FreeForAllSession
         from ba._messages import CelebrateMessage
+
         _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))
 
         if announce_winning_team:
@@ -261,8 +278,10 @@ class MultiTeamSession(Session):
                     wins_resource = 'winsPlayerText'
                 else:
                     wins_resource = 'winsTeamText'
-                wins_text = Lstr(resource=wins_resource,
-                                 subs=[('${NAME}', winning_sessionteam.name)])
+                wins_text = Lstr(
+                    resource=wins_resource,
+                    subs=[('${NAME}', winning_sessionteam.name)],
+                )
                 activity.show_zoom_message(
                     wins_text,
                     scale=0.85,
@@ -300,8 +319,10 @@ class ShuffleList:
                 # If the new one is the same map or game-type as the previous,
                 # lets try to keep looking.
                 if len(self.shuffle_list) > 1 and self.last_gotten is not None:
-                    if (test_obj['settings']['map'] ==
-                            self.last_gotten['settings']['map']):
+                    if (
+                        test_obj['settings']['map']
+                        == self.last_gotten['settings']['map']
+                    ):
                         continue
                     if test_obj['type'] == self.last_gotten['type']:
                         continue

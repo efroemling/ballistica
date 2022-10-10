@@ -64,6 +64,7 @@ def getclass(name: str, subclassof: type[T]) -> type[T]:
     'subclassof' class, and a TypeError will be raised if not.
     """
     import importlib
+
     splits = name.split('.')
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
@@ -84,8 +85,10 @@ def json_prep(data: Any) -> Any:
     """
 
     if isinstance(data, dict):
-        return dict((json_prep(key), json_prep(value))
-                    for key, value in list(data.items()))
+        return dict(
+            (json_prep(key), json_prep(value))
+            for key, value in list(data.items())
+        )
     if isinstance(data, list):
         return [json_prep(element) for element in data]
     if isinstance(data, tuple):
@@ -96,19 +99,23 @@ def json_prep(data: Any) -> Any:
             return data.decode(errors='ignore')
         except Exception:
             from ba import _error
+
             print_error('json_prep encountered utf-8 decode error', once=True)
             return data.decode(errors='ignore')
     if not isinstance(data, (str, float, bool, type(None), int)):
-        print_error('got unsupported type in json_prep:' + str(type(data)),
-                    once=True)
+        print_error(
+            'got unsupported type in json_prep:' + str(type(data)), once=True
+        )
     return data
 
 
 def utf8_all(data: Any) -> Any:
     """Convert any unicode data in provided sequence(s) to utf8 bytes."""
     if isinstance(data, dict):
-        return dict((utf8_all(key), utf8_all(value))
-                    for key, value in list(data.items()))
+        return dict(
+            (utf8_all(key), utf8_all(value))
+            for key, value in list(data.items())
+        )
     if isinstance(data, list):
         return [utf8_all(element) for element in data]
     if isinstance(data, tuple):
@@ -190,11 +197,17 @@ class _WeakCall:
         else:
             app = _ba.app
             if not app.did_weak_call_warning:
-                print(('Warning: callable passed to ba.WeakCall() is not'
-                       ' weak-referencable (' + str(args[0]) +
-                       '); use ba.Call() instead to avoid this '
-                       'warning. Stack-trace:'))
+                print(
+                    (
+                        'Warning: callable passed to ba.WeakCall() is not'
+                        ' weak-referencable ('
+                        + str(args[0])
+                        + '); use ba.Call() instead to avoid this '
+                        'warning. Stack-trace:'
+                    )
+                )
                 import traceback
+
                 traceback.print_stack()
                 app.did_weak_call_warning = True
             self._call = args[0]
@@ -205,8 +218,15 @@ class _WeakCall:
         return self._call(*self._args + args_extra, **self._keywds)
 
     def __str__(self) -> str:
-        return ('<ba.WeakCall object; _call=' + str(self._call) + ' _args=' +
-                str(self._args) + ' _keywds=' + str(self._keywds) + '>')
+        return (
+            '<ba.WeakCall object; _call='
+            + str(self._call)
+            + ' _args='
+            + str(self._args)
+            + ' _keywds='
+            + str(self._keywds)
+            + '>'
+        )
 
 
 class _Call:
@@ -244,8 +264,15 @@ class _Call:
         return self._call(*self._args + args_extra, **self._keywds)
 
     def __str__(self) -> str:
-        return ('<ba.Call object; _call=' + str(self._call) + ' _args=' +
-                str(self._args) + ' _keywds=' + str(self._keywds) + '>')
+        return (
+            '<ba.Call object; _call='
+            + str(self._call)
+            + ' _args='
+            + str(self._args)
+            + ' _keywds='
+            + str(self._keywds)
+            + '>'
+        )
 
 
 if TYPE_CHECKING:
@@ -278,7 +305,7 @@ class WeakMethod:
         obj = self._obj()
         if obj is None:
             return None
-        return self._func(*((obj, ) + args), **keywds)
+        return self._func(*((obj,) + args), **keywds)
 
     def __str__(self) -> str:
         return '<ba.WeakMethod object; call=' + str(self._func) + '>'
@@ -300,9 +327,9 @@ def verify_object_death(obj: object) -> None:
     # if we queue a lot of them.
     delay = random.uniform(2.0, 5.5)
     with _ba.Context('ui'):
-        _ba.timer(delay,
-                  lambda: _verify_object_death(ref),
-                  timetype=TimeType.REAL)
+        _ba.timer(
+            delay, lambda: _verify_object_death(ref), timetype=TimeType.REAL
+        )
 
 
 def print_active_refs(obj: Any) -> None:
@@ -314,6 +341,7 @@ def print_active_refs(obj: Any) -> None:
     """
     # pylint: disable=too-many-nested-blocks
     from types import FrameType, TracebackType
+
     refs = list(gc.get_referrers(obj))
     print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
     for i, ref in enumerate(refs):
@@ -330,20 +358,28 @@ def print_active_refs(obj: Any) -> None:
                 # Can go further down the rabbit-hole if needed...
                 if bool(False):
                     if isinstance(ref2, TracebackType):
-                        print(f'{Clr.YLW}    '
-                              f'Active referrers to #a{j+1}:{Clr.RST}')
+                        print(
+                            f'{Clr.YLW}    '
+                            f'Active referrers to #a{j+1}:{Clr.RST}'
+                        )
                         refs3 = list(gc.get_referrers(ref2))
                         for k, ref3 in enumerate(refs3):
-                            print(f'{Clr.YLW}    '
-                                  f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}')
+                            print(
+                                f'{Clr.YLW}    '
+                                f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}'
+                            )
 
                             if isinstance(ref3, BaseException):
-                                print(f'{Clr.YLW}      Active referrers to'
-                                      f' #b{k+1}:{Clr.RST}')
+                                print(
+                                    f'{Clr.YLW}      Active referrers to'
+                                    f' #b{k+1}:{Clr.RST}'
+                                )
                                 refs4 = list(gc.get_referrers(ref3))
                                 for x, ref4 in enumerate(refs4):
-                                    print(f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
-                                          f' {ref4}{Clr.RST}')
+                                    print(
+                                        f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
+                                        f' {ref4}{Clr.RST}'
+                                    )
 
 
 def _verify_object_death(wref: weakref.ref) -> None:
@@ -357,8 +393,10 @@ def _verify_object_death(wref: weakref.ref) -> None:
         print(f'Note: unable to get type name for {obj}')
         name = 'object'
 
-    print(f'{Clr.RED}Error: {name} not dying when expected to:'
-          f' {Clr.BLD}{obj}{Clr.RST}')
+    print(
+        f'{Clr.RED}Error: {name} not dying when expected to:'
+        f' {Clr.BLD}{obj}{Clr.RST}'
+    )
     print_active_refs(obj)
 
 

@@ -39,9 +39,9 @@ class JsonStyle(Enum):
     PRETTY = 'pretty'
 
 
-def dataclass_to_dict(obj: Any,
-                      codec: Codec = Codec.JSON,
-                      coerce_to_float: bool = True) -> dict:
+def dataclass_to_dict(
+    obj: Any, codec: Codec = Codec.JSON, coerce_to_float: bool = True
+) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
     All values will be checked to ensure they match the types specified
@@ -58,18 +58,19 @@ def dataclass_to_dict(obj: Any,
     will be triggered.
     """
 
-    out = _Outputter(obj,
-                     create=True,
-                     codec=codec,
-                     coerce_to_float=coerce_to_float).run()
+    out = _Outputter(
+        obj, create=True, codec=codec, coerce_to_float=coerce_to_float
+    ).run()
     assert isinstance(out, dict)
     return out
 
 
-def dataclass_to_json(obj: Any,
-                      coerce_to_float: bool = True,
-                      pretty: bool = False,
-                      sort_keys: bool | None = None) -> str:
+def dataclass_to_json(
+    obj: Any,
+    coerce_to_float: bool = True,
+    pretty: bool = False,
+    sort_keys: bool | None = None,
+) -> str:
     """Utility function; return a json string from a dataclass instance.
 
     Basically json.dumps(dataclass_to_dict(...)).
@@ -77,9 +78,10 @@ def dataclass_to_json(obj: Any,
     this can be overridden by supplying a value for the 'sort_keys' arg.
     """
     import json
-    jdict = dataclass_to_dict(obj=obj,
-                              coerce_to_float=coerce_to_float,
-                              codec=Codec.JSON)
+
+    jdict = dataclass_to_dict(
+        obj=obj, coerce_to_float=coerce_to_float, codec=Codec.JSON
+    )
     if sort_keys is None:
         sort_keys = pretty
     if pretty:
@@ -87,12 +89,14 @@ def dataclass_to_json(obj: Any,
     return json.dumps(jdict, separators=(',', ':'), sort_keys=sort_keys)
 
 
-def dataclass_from_dict(cls: type[T],
-                        values: dict,
-                        codec: Codec = Codec.JSON,
-                        coerce_to_float: bool = True,
-                        allow_unknown_attrs: bool = True,
-                        discard_unknown_attrs: bool = False) -> T:
+def dataclass_from_dict(
+    cls: type[T],
+    values: dict,
+    codec: Codec = Codec.JSON,
+    coerce_to_float: bool = True,
+    allow_unknown_attrs: bool = True,
+    discard_unknown_attrs: bool = False,
+) -> T:
     """Given a dict, return a dataclass of a given type.
 
     The dict must be formatted to match the specified codec (generally
@@ -116,36 +120,44 @@ def dataclass_from_dict(cls: type[T],
     exported back to a dict, unless discard_unknown_attrs is True, in which
     case they will simply be discarded.
     """
-    return _Inputter(cls,
-                     codec=codec,
-                     coerce_to_float=coerce_to_float,
-                     allow_unknown_attrs=allow_unknown_attrs,
-                     discard_unknown_attrs=discard_unknown_attrs).run(values)
+    return _Inputter(
+        cls,
+        codec=codec,
+        coerce_to_float=coerce_to_float,
+        allow_unknown_attrs=allow_unknown_attrs,
+        discard_unknown_attrs=discard_unknown_attrs,
+    ).run(values)
 
 
-def dataclass_from_json(cls: type[T],
-                        json_str: str,
-                        coerce_to_float: bool = True,
-                        allow_unknown_attrs: bool = True,
-                        discard_unknown_attrs: bool = False) -> T:
+def dataclass_from_json(
+    cls: type[T],
+    json_str: str,
+    coerce_to_float: bool = True,
+    allow_unknown_attrs: bool = True,
+    discard_unknown_attrs: bool = False,
+) -> T:
     """Utility function; return a dataclass instance given a json string.
 
     Basically dataclass_from_dict(json.loads(...))
     """
     import json
-    return dataclass_from_dict(cls=cls,
-                               values=json.loads(json_str),
-                               coerce_to_float=coerce_to_float,
-                               allow_unknown_attrs=allow_unknown_attrs,
-                               discard_unknown_attrs=discard_unknown_attrs)
+
+    return dataclass_from_dict(
+        cls=cls,
+        values=json.loads(json_str),
+        coerce_to_float=coerce_to_float,
+        allow_unknown_attrs=allow_unknown_attrs,
+        discard_unknown_attrs=discard_unknown_attrs,
+    )
 
 
-def dataclass_validate(obj: Any,
-                       coerce_to_float: bool = True,
-                       codec: Codec = Codec.JSON) -> None:
+def dataclass_validate(
+    obj: Any, coerce_to_float: bool = True, codec: Codec = Codec.JSON
+) -> None:
     """Ensure that values in a dataclass instance are the correct types."""
 
     # Simply run an output pass but tell it not to generate data;
     # only run validation.
-    _Outputter(obj, create=False, codec=codec,
-               coerce_to_float=coerce_to_float).run()
+    _Outputter(
+        obj, create=False, codec=codec, coerce_to_float=coerce_to_float
+    ).run()

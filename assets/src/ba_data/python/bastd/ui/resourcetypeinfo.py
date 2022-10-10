@@ -13,8 +13,13 @@ class ResourceTypeInfoWindow(popup.PopupWindow):
 
     def __init__(self, origin_widget: ba.Widget):
         uiscale = ba.app.ui.uiscale
-        scale = (2.3 if uiscale is ba.UIScale.SMALL else
-                 1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
+        scale = (
+            2.3
+            if uiscale is ba.UIScale.SMALL
+            else 1.65
+            if uiscale is ba.UIScale.MEDIUM
+            else 1.23
+        )
         self._transitioning_out = False
         self._width = 570
         self._height = 350
@@ -25,7 +30,8 @@ class ResourceTypeInfoWindow(popup.PopupWindow):
             toolbar_visibility='inherit',
             scale=scale,
             bg_color=bg_color,
-            position=origin_widget.get_screen_space_center())
+            position=origin_widget.get_screen_space_center(),
+        )
         self._cancel_button = ba.buttonwidget(
             parent=self.root_widget,
             position=(50, self._height - 30),
@@ -36,7 +42,8 @@ class ResourceTypeInfoWindow(popup.PopupWindow):
             on_activate_call=self._on_cancel_press,
             autoselect=True,
             icon=ba.gettexture('crossOut'),
-            iconscale=1.2)
+            iconscale=1.2,
+        )
 
     def _on_cancel_press(self) -> None:
         self._transition_out()

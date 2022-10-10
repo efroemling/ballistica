@@ -134,8 +134,9 @@ class ServerConfig:
     team_names: tuple[str, str] | None = None
 
     # Team colors (teams mode only).
-    team_colors: tuple[tuple[float, float, float], tuple[float, float,
-                                                         float]] | None = None
+    team_colors: tuple[
+        tuple[float, float, float], tuple[float, float, float]
+    ] | None = None
 
     # (internal) stress-testing mode.
     stress_test_players: int | None = None
@@ -151,11 +152,13 @@ class ServerCommand:
 @dataclass
 class StartServerModeCommand(ServerCommand):
     """Tells the app to switch into 'server' mode."""
+
     config: ServerConfig
 
 
 class ShutdownReason(Enum):
     """Reason a server is shutting down."""
+
     NONE = 'none'
     RESTARTING = 'restarting'
 
@@ -163,6 +166,7 @@ class ShutdownReason(Enum):
 @dataclass
 class ShutdownCommand(ServerCommand):
     """Tells the server to shut down."""
+
     reason: ShutdownReason
     immediate: bool
 
@@ -170,6 +174,7 @@ class ShutdownCommand(ServerCommand):
 @dataclass
 class ChatMessageCommand(ServerCommand):
     """Chat message from the server."""
+
     message: str
     clients: list[int] | None
 
@@ -177,6 +182,7 @@ class ChatMessageCommand(ServerCommand):
 @dataclass
 class ScreenMessageCommand(ServerCommand):
     """Screen-message from the server."""
+
     message: str
     color: tuple[float, float, float] | None
     clients: list[int] | None
@@ -190,5 +196,6 @@ class ClientListCommand(ServerCommand):
 @dataclass
 class KickCommand(ServerCommand):
     """Kick a client."""
+
     client_id: int
     ban_time: int | None

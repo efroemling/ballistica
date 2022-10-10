@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 try:
     # noinspection PyUnresolvedReferences
     import _bainternal
+
     HAVE_INTERNAL = True
 except ImportError:
     HAVE_INTERNAL = False
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 # to account for its absence should call this to draw attention to itself.
 def _no_bainternal_warning() -> None:
     import logging
+
     logging.warning('INTERNAL CALL RUN WITHOUT INTERNAL PRESENT.')
 
 
@@ -47,8 +49,9 @@ def get_master_server_address(source: int = -1, version: int = 1) -> str:
     Return the address of the master server.
     """
     if HAVE_INTERNAL:
-        return _bainternal.get_master_server_address(source=source,
-                                                     version=version)
+        return _bainternal.get_master_server_address(
+            source=source, version=version
+        )
     raise _no_bainternal_error()
 
 
@@ -75,8 +78,9 @@ def game_service_has_leaderboard(game: str, config: str) -> bool:
     for it on the game service.
     """
     if HAVE_INTERNAL:
-        return _bainternal.game_service_has_leaderboard(game=game,
-                                                        config=config)
+        return _bainternal.game_service_has_leaderboard(
+            game=game, config=config
+        )
     # Harmless to always just say no here.
     return False
 
@@ -84,8 +88,9 @@ def game_service_has_leaderboard(game: str, config: str) -> bool:
 def report_achievement(achievement: str, pass_to_account: bool = True) -> None:
     """(internal)"""
     if HAVE_INTERNAL:
-        _bainternal.report_achievement(achievement=achievement,
-                                       pass_to_account=pass_to_account)
+        _bainternal.report_achievement(
+            achievement=achievement, pass_to_account=pass_to_account
+        )
         return
 
     # Need to see if this actually still works as expected.. warning for now.
@@ -93,17 +98,19 @@ def report_achievement(achievement: str, pass_to_account: bool = True) -> None:
 
 
 # noinspection PyUnresolvedReferences
-def submit_score(game: str,
-                 config: str,
-                 name: Any,
-                 score: int | None,
-                 callback: Callable,
-                 friend_callback: Callable | None,
-                 order: str = 'increasing',
-                 tournament_id: str | None = None,
-                 score_type: str = 'points',
-                 campaign: str | None = None,
-                 level: str | None = None) -> None:
+def submit_score(
+    game: str,
+    config: str,
+    name: Any,
+    score: int | None,
+    callback: Callable,
+    friend_callback: Callable | None,
+    order: str = 'increasing',
+    tournament_id: str | None = None,
+    score_type: str = 'points',
+    campaign: str | None = None,
+    level: str | None = None,
+) -> None:
     """(internal)
 
     Submit a score to the server; callback will be called with the results.
@@ -112,24 +119,27 @@ def submit_score(game: str,
     score server more mischief-proof.
     """
     if HAVE_INTERNAL:
-        _bainternal.submit_score(game=game,
-                                 config=config,
-                                 name=name,
-                                 score=score,
-                                 callback=callback,
-                                 friend_callback=friend_callback,
-                                 order=order,
-                                 tournament_id=tournament_id,
-                                 score_type=score_type,
-                                 campaign=campaign,
-                                 level=level)
+        _bainternal.submit_score(
+            game=game,
+            config=config,
+            name=name,
+            score=score,
+            callback=callback,
+            friend_callback=friend_callback,
+            order=order,
+            tournament_id=tournament_id,
+            score_type=score_type,
+            campaign=campaign,
+            level=level,
+        )
         return
     # This technically breaks since callback will never be called/etc.
     raise _no_bainternal_error()
 
 
-def tournament_query(callback: Callable[[dict | None], None],
-                     args: dict) -> None:
+def tournament_query(
+    callback: Callable[[dict | None], None], args: dict
+) -> None:
     """(internal)"""
     if HAVE_INTERNAL:
         _bainternal.tournament_query(callback=callback, args=args)
@@ -212,8 +222,9 @@ def in_game_purchase(item: str, price: int) -> None:
 
 
 # noinspection PyUnresolvedReferences
-def add_transaction(transaction: dict,
-                    callback: Callable | None = None) -> None:
+def add_transaction(
+    transaction: dict, callback: Callable | None = None
+) -> None:
     """(internal)"""
     if HAVE_INTERNAL:
         _bainternal.add_transaction(transaction=transaction, callback=callback)
@@ -265,7 +276,8 @@ def get_v1_account_misc_read_val(name: str, default_value: Any) -> Any:
     """(internal)"""
     if HAVE_INTERNAL:
         return _bainternal.get_v1_account_misc_read_val(
-            name=name, default_value=default_value)
+            name=name, default_value=default_value
+        )
     raise _no_bainternal_error()
 
 
@@ -273,15 +285,17 @@ def get_v1_account_misc_read_val_2(name: str, default_value: Any) -> Any:
     """(internal)"""
     if HAVE_INTERNAL:
         return _bainternal.get_v1_account_misc_read_val_2(
-            name=name, default_value=default_value)
+            name=name, default_value=default_value
+        )
     raise _no_bainternal_error()
 
 
 def get_v1_account_misc_val(name: str, default_value: Any) -> Any:
     """(internal)"""
     if HAVE_INTERNAL:
-        return _bainternal.get_v1_account_misc_val(name=name,
-                                                   default_value=default_value)
+        return _bainternal.get_v1_account_misc_val(
+            name=name, default_value=default_value
+        )
     raise _no_bainternal_error()
 
 

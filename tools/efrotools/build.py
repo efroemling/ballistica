@@ -33,25 +33,30 @@ class Lazybuild:
     source regardless of whether the build itself was triggered.
     """
 
-    def __init__(self,
-                 target: str,
-                 srcpaths: list[str],
-                 command: str,
-                 dirfilter: Callable[[str, str], bool] | None = None,
-                 filefilter: Callable[[str, str], bool] | None = None,
-                 srcpaths_fullclean: list[str] | None = None,
-                 command_fullclean: str | None = None) -> None:
+    def __init__(
+        self,
+        target: str,
+        srcpaths: list[str],
+        command: str,
+        dirfilter: Callable[[str, str], bool] | None = None,
+        filefilter: Callable[[str, str], bool] | None = None,
+        srcpaths_fullclean: list[str] | None = None,
+        command_fullclean: str | None = None,
+    ) -> None:
         self.target = target
         self.srcpaths = srcpaths
         self.command = command
         self.dirfilter = dirfilter
         self.filefilter = filefilter
-        self.mtime = None if not os.path.exists(
-            self.target) else os.path.getmtime(self.target)
+        self.mtime = (
+            None
+            if not os.path.exists(self.target)
+            else os.path.getmtime(self.target)
+        )
 
         # Show prettier names for lazybuild cache dir targets.
         if target.startswith('.cache/lazybuild/'):
-            self.target_name_pretty = target[len('.cache/lazybuild/'):]
+            self.target_name_pretty = target[len('.cache/lazybuild/') :]
         else:
             self.target_name_pretty = target
 
@@ -67,10 +72,13 @@ class Lazybuild:
         # as sources in a Makefile.
         self.srcpaths_fullclean = srcpaths_fullclean
         self.command_fullclean = command_fullclean
-        if ((self.srcpaths_fullclean is None) !=
-            (self.command_fullclean is None)):
-            raise RuntimeError('Must provide both srcpaths_fullclean and'
-                               ' command_fullclean together')
+        if (self.srcpaths_fullclean is None) != (
+            self.command_fullclean is None
+        ):
+            raise RuntimeError(
+                'Must provide both srcpaths_fullclean and'
+                ' command_fullclean together'
+            )
 
     def run(self) -> None:
         """Do the thing."""
@@ -79,8 +87,10 @@ class Lazybuild:
 
         if self.have_fullclean_changes:
             assert self.command_fullclean is not None
-            print(f'{Clr.MAG}Lazybuild: full-clean input changed;'
-                  f' running {Clr.BLD}{self.command_fullclean}.{Clr.RST}')
+            print(
+                f'{Clr.MAG}Lazybuild: full-clean input changed;'
+                f' running {Clr.BLD}{self.command_fullclean}.{Clr.RST}'
+            )
             subprocess.run(self.command_fullclean, shell=True, check=True)
 
         if self.have_changes:
@@ -92,12 +102,14 @@ class Lazybuild:
             # We make a special exception for files under .cache/lazybuild
             # since those are not actually meaningful files; only used for
             # dep tracking.
-            if (not self.target.startswith('.cache/lazybuild')
-                    and not os.path.isfile(self.target)):
+            if not self.target.startswith(
+                '.cache/lazybuild'
+            ) and not os.path.isfile(self.target):
                 raise RuntimeError(
                     f'Expected output file \'{self.target}\' not found'
                     f' after running lazybuild command:'
-                    f' \'{self.command}\'.')
+                    f' \'{self.command}\'.'
+                )
 
             # We also explicitly update the mod-time of the target;
             # the command we (such as a VM build) may not have actually
@@ -108,7 +120,8 @@ class Lazybuild:
         else:
             print(
                 f'{Clr.BLU}Lazybuild: skipping "{self.target_name_pretty}"'
-                f' ({self.total_unchanged_count} inputs unchanged).{Clr.RST}')
+                f' ({self.total_unchanged_count} inputs unchanged).{Clr.RST}'
+            )
 
     def _check_paths(self) -> None:
 
@@ -146,15 +159,17 @@ class Lazybuild:
             # In top-down mode we can modify dirnames in-place to
             # prevent recursing into them at all.
             for dirname in list(dirnames):  # (make a copy)
-                if (not self._default_dir_filter(root, dirname)
-                        or (self.dirfilter is not None
-                            and not self.dirfilter(root, dirname))):
+                if not self._default_dir_filter(root, dirname) or (
+                    self.dirfilter is not None
+                    and not self.dirfilter(root, dirname)
+                ):
                     dirnames.remove(dirname)
 
             for fname in fnames:
-                if (not self._default_file_filter(root, fname)
-                        or (self.filefilter is not None
-                            and not self.filefilter(root, fname))):
+                if not self._default_file_filter(root, fname) or (
+                    self.filefilter is not None
+                    and not self.filefilter(root, fname)
+                ):
                     continue
                 fpath = os.path.join(root, fname)
 
@@ -192,10 +207,12 @@ class Lazybuild:
     def _test_path(self, path: str) -> bool:
         # Now see this path is newer than our target..
         if self.mtime is None or os.path.getmtime(path) >= self.mtime:
-            print(f'{Clr.MAG}Lazybuild: '
-                  f'{Clr.BLD}{self.target_name_pretty}{Clr.RST}{Clr.MAG}'
-                  f' build'
-                  f' triggered by change in {Clr.BLD}{path}{Clr.RST}{Clr.MAG}'
-                  f'.{Clr.RST}')
+            print(
+                f'{Clr.MAG}Lazybuild: '
+                f'{Clr.BLD}{self.target_name_pretty}{Clr.RST}{Clr.MAG}'
+                f' build'
+                f' triggered by change in {Clr.BLD}{path}{Clr.RST}{Clr.MAG}'
+                f'.{Clr.RST}'
+            )
             return True
         return False

@@ -70,12 +70,14 @@ class Session:
     """All the ba.SessionTeams in the Session. Most things should use the
        list of ba.Team-s in ba.Activity; not this."""
 
-    def __init__(self,
-                 depsets: Sequence[ba.DependencySet],
-                 team_names: Sequence[str] | None = None,
-                 team_colors: Sequence[Sequence[float]] | None = None,
-                 min_players: int = 1,
-                 max_players: int = 8):
+    def __init__(
+        self,
+        depsets: Sequence[ba.DependencySet],
+        team_names: Sequence[str] | None = None,
+        team_colors: Sequence[Sequence[float]] | None = None,
+        min_players: int = 1,
+        max_players: int = 8,
+    ):
         """Instantiate a session.
 
         depsets should be a sequence of successfully resolved ba.DependencySet
@@ -116,10 +118,12 @@ class Session:
 
         # Throw a combined exception if we found anything missing.
         if missing_asset_packages:
-            raise DependencyError([
-                Dependency(AssetPackage, set_id)
-                for set_id in missing_asset_packages
-            ])
+            raise DependencyError(
+                [
+                    Dependency(AssetPackage, set_id)
+                    for set_id in missing_asset_packages
+                ]
+            )
 
         # Ok; looks like our dependencies check out.
         # Now give the engine a list of asset-set-ids to pass along to clients.
@@ -152,27 +156,33 @@ class Session:
         self._wants_to_end = False
         self._ending = False
         self._activity_should_end_immediately = False
-        self._activity_should_end_immediately_results: (ba.GameResults
-                                                        | None) = None
+        self._activity_should_end_immediately_results: (
+            ba.GameResults | None
+        ) = None
         self._activity_should_end_immediately_delay = 0.0
 
         # Create static teams if we're using them.
         if self.use_teams:
             if team_names is None:
                 raise RuntimeError(
-                    'use_teams is True but team_names not provided.')
+                    'use_teams is True but team_names not provided.'
+                )
             if team_colors is None:
                 raise RuntimeError(
-                    'use_teams is True but team_colors not provided.')
+                    'use_teams is True but team_colors not provided.'
+                )
             if len(team_colors) != len(team_names):
-                raise RuntimeError(f'Got {len(team_names)} team_names'
-                                   f' and {len(team_colors)} team_colors;'
-                                   f' these numbers must match.')
+                raise RuntimeError(
+                    f'Got {len(team_names)} team_names'
+                    f' and {len(team_colors)} team_colors;'
+                    f' these numbers must match.'
+                )
             for i, color in enumerate(team_colors):
-                team = SessionTeam(team_id=self._next_team_id,
-                                   name=GameActivity.get_team_display_string(
-                                       team_names[i]),
-                                   color=color)
+                team = SessionTeam(
+                    team_id=self._next_team_id,
+                    name=GameActivity.get_team_display_string(team_names[i]),
+                    color=color,
+                )
                 self.sessionteams.append(team)
                 self._next_team_id += 1
                 try:
@@ -218,12 +228,15 @@ class Session:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _ba.playsound(_ba.getsound('error'))
-                _ba.screenmessage(Lstr(resource='playerLimitReachedText',
-                                       subs=[('${COUNT}',
-                                              str(self.max_players))]),
-                                  color=(0.8, 0.0, 0.0),
-                                  clients=[player.inputdevice.client_id],
-                                  transient=True)
+                _ba.screenmessage(
+                    Lstr(
+                        resource='playerLimitReachedText',
+                        subs=[('${COUNT}', str(self.max_players))],
+                    ),
+                    color=(0.8, 0.0, 0.0),
+                    clients=[player.inputdevice.client_id],
+                    transient=True,
+                )
                 return False
 
         _ba.playsound(_ba.getsound('dripity'))
@@ -233,8 +246,10 @@ class Session:
         """Called when a previously-accepted ba.SessionPlayer leaves."""
 
         if sessionplayer not in self.sessionplayers:
-            print('ERROR: Session.on_player_leave called'
-                  ' for player not in our list.')
+            print(
+                'ERROR: Session.on_player_leave called'
+                ' for player not in our list.'
+            )
             return
 
         _ba.playsound(_ba.getsound('playerLeft'))
@@ -256,15 +271,20 @@ class Session:
             assert sessionteam is not None
 
             _ba.screenmessage(
-                Lstr(resource='playerLeftText',
-                     subs=[('${PLAYER}', sessionplayer.getname(full=True))]))
+                Lstr(
+                    resource='playerLeftText',
+                    subs=[('${PLAYER}', sessionplayer.getname(full=True))],
+                )
+            )
 
             # Remove them from their SessionTeam.
             if sessionplayer in sessionteam.players:
                 sessionteam.players.remove(sessionplayer)
             else:
-                print('SessionPlayer not found in SessionTeam'
-                      ' in on_player_leave.')
+                print(
+                    'SessionPlayer not found in SessionTeam'
+                    ' in on_player_leave.'
+                )
 
             # Grab their activity-specific player instance.
             player = sessionplayer.activityplayer
@@ -284,8 +304,9 @@ class Session:
         # Now remove them from the session list.
         self.sessionplayers.remove(sessionplayer)
 
-    def _remove_player_team(self, sessionteam: ba.SessionTeam,
-                            activity: ba.Activity | None) -> None:
+    def _remove_player_team(
+        self, sessionteam: ba.SessionTeam, activity: ba.Activity | None
+    ) -> None:
         """Remove the player-specific team in non-teams mode."""
 
         # They should have been the only one on their team.
@@ -306,14 +327,17 @@ class Session:
                     self.on_team_leave(sessionteam)
                 except Exception:
                     print_exception(
-                        f'Error in on_team_leave for Session {self}.')
+                        f'Error in on_team_leave for Session {self}.'
+                    )
             else:
                 print('Team no in Session teams in on_player_leave.')
             try:
                 sessionteam.leave()
             except Exception:
-                print_exception(f'Error clearing sessiondata'
-                                f' for team {sessionteam} in session {self}.')
+                print_exception(
+                    f'Error clearing sessiondata'
+                    f' for team {sessionteam} in session {self}.'
+                )
 
     def end(self) -> None:
         """Initiates an end to the session and a return to the main menu.
@@ -329,17 +353,20 @@ class Session:
         """(internal)"""
         from ba._activitytypes import EndSessionActivity
         from ba._generated.enums import TimeType
+
         with _ba.Context(self):
             curtime = _ba.time(TimeType.REAL)
             if self._ending:
                 # Ignore repeats unless its been a while.
                 assert self._launch_end_session_activity_time is not None
-                since_last = (curtime - self._launch_end_session_activity_time)
+                since_last = curtime - self._launch_end_session_activity_time
                 if since_last < 30.0:
                     return
                 print_error(
-                    '_launch_end_session_activity called twice (since_last=' +
-                    str(since_last) + ')')
+                    '_launch_end_session_activity called twice (since_last='
+                    + str(since_last)
+                    + ')'
+                )
             self._launch_end_session_activity_time = curtime
             self.setactivity(_ba.newactivity(EndSessionActivity))
             self._wants_to_end = False
@@ -351,8 +378,9 @@ class Session:
     def on_team_leave(self, team: ba.SessionTeam) -> None:
         """Called when a ba.Team is leaving the session."""
 
-    def end_activity(self, activity: ba.Activity, results: Any, delay: float,
-                     force: bool) -> None:
+    def end_activity(
+        self, activity: ba.Activity, results: Any, delay: float, force: bool
+    ) -> None:
         """Commence shutdown of a ba.Activity (if not already occurring).
 
         'delay' is the time delay before the Activity actually ends
@@ -385,7 +413,8 @@ class Session:
                 self._activity_end_timer = _ba.Timer(
                     delay,
                     Call(self._complete_end_activity, activity, results),
-                    timetype=TimeType.BASE)
+                    timetype=TimeType.BASE,
+                )
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
@@ -407,7 +436,6 @@ class Session:
         return None
 
     class _SetActivityScopedLock:
-
         def __init__(self, session: ba.Session) -> None:
             self._session = session
             if session._in_set_activity:
@@ -442,12 +470,16 @@ class Session:
             return
 
         if self._next_activity is not None:
-            raise RuntimeError('Activity switch already in progress (to ' +
-                               str(self._next_activity) + ')')
+            raise RuntimeError(
+                'Activity switch already in progress (to '
+                + str(self._next_activity)
+                + ')'
+            )
 
         prev_activity = self._activity_retained
-        prev_globals = (prev_activity.globalsnode
-                        if prev_activity is not None else None)
+        prev_globals = (
+            prev_activity.globalsnode if prev_activity is not None else None
+        )
 
         # Let the activity do its thing.
         activity.transition_in(prev_globals)
@@ -476,9 +508,11 @@ class Session:
         # will trigger the next activity to run).
         if prev_activity is not None:
             with _ba.Context('ui'):
-                _ba.timer(max(0.0, activity.transition_time),
-                          prev_activity.expire,
-                          timetype=TimeType.REAL)
+                _ba.timer(
+                    max(0.0, activity.transition_time),
+                    prev_activity.expire,
+                    timetype=TimeType.REAL,
+                )
         self._in_set_activity = False
 
     def getactivity(self) -> ba.Activity | None:
@@ -495,15 +529,18 @@ class Session:
         """
         return []
 
-    def _complete_end_activity(self, activity: ba.Activity,
-                               results: Any) -> None:
+    def _complete_end_activity(
+        self, activity: ba.Activity, results: Any
+    ) -> None:
         # Run the subclass callback in the session context.
         try:
             with _ba.Context(self):
                 self.on_activity_end(activity, results)
         except Exception:
-            print_exception(f'Error in on_activity_end() for session {self}'
-                            f' activity {activity} with results {results}')
+            print_exception(
+                f'Error in on_activity_end() for session {self}'
+                f' activity {activity} with results {results}'
+            )
 
     def _request_player(self, sessionplayer: ba.SessionPlayer) -> bool:
         """Called by the native layer when a player wants to join."""
@@ -571,7 +608,8 @@ class Session:
             if self._activity_should_end_immediately:
                 self._activity_retained.end(
                     self._activity_should_end_immediately_results,
-                    self._activity_should_end_immediately_delay)
+                    self._activity_should_end_immediately_delay,
+                )
 
     def _on_player_ready(self, chooser: ba.Chooser) -> None:
         """Called when a ba.Player has checked themself ready."""
@@ -601,8 +639,10 @@ class Session:
                 self._complete_end_activity(activity, {})
             else:
                 _ba.screenmessage(
-                    Lstr(resource='notEnoughPlayersText',
-                         subs=[('${COUNT}', str(min_players))]),
+                    Lstr(
+                        resource='notEnoughPlayersText',
+                        subs=[('${COUNT}', str(min_players))],
+                    ),
                     color=(1, 1, 0),
                 )
                 _ba.playsound(_ba.getsound('error'))
@@ -613,7 +653,8 @@ class Session:
             lobby.remove_chooser(chooser.getplayer())
 
     def transitioning_out_activity_was_freed(
-            self, can_show_ad_on_death: bool) -> None:
+        self, can_show_ad_on_death: bool
+    ) -> None:
         """(internal)"""
         # pylint: disable=cyclic-import
         from ba._apputils import garbage_collect
@@ -632,10 +673,12 @@ class Session:
 
     def _add_chosen_player(self, chooser: ba.Chooser) -> ba.SessionPlayer:
         from ba._team import SessionTeam
+
         sessionplayer = chooser.getplayer()
         assert sessionplayer in self.sessionplayers, (
             'SessionPlayer not found in session '
-            'player-list after chooser selection.')
+            'player-list after chooser selection.'
+        )
 
         activity = self._activity_weak()
         assert activity is not None
@@ -646,20 +689,26 @@ class Session:
 
         # We can pass it to the current activity if it has already begun
         # (otherwise it'll get passed once begin is called).
-        pass_to_activity = (activity.has_begun()
-                            and not activity.is_joining_activity)
+        pass_to_activity = (
+            activity.has_begun() and not activity.is_joining_activity
+        )
 
         # However, if we're not allowing mid-game joins, don't actually pass;
         # just announce the arrival and say they'll partake next round.
         if pass_to_activity:
-            if not (activity.allow_mid_activity_joins
-                    and self.should_allow_mid_activity_joins(activity)):
+            if not (
+                activity.allow_mid_activity_joins
+                and self.should_allow_mid_activity_joins(activity)
+            ):
                 pass_to_activity = False
                 with _ba.Context(self):
                     _ba.screenmessage(
-                        Lstr(resource='playerDelayedJoinText',
-                             subs=[('${PLAYER}',
-                                    sessionplayer.getname(full=True))]),
+                        Lstr(
+                            resource='playerDelayedJoinText',
+                            subs=[
+                                ('${PLAYER}', sessionplayer.getname(full=True))
+                            ],
+                        ),
                         color=(0, 1, 0),
                     )
 
@@ -691,10 +740,12 @@ class Session:
 
         assert sessionplayer not in sessionteam.players
         sessionteam.players.append(sessionplayer)
-        sessionplayer.setdata(team=sessionteam,
-                              character=chooser.get_character_name(),
-                              color=chooser.get_color(),
-                              highlight=chooser.get_highlight())
+        sessionplayer.setdata(
+            team=sessionteam,
+            character=chooser.get_character_name(),
+            color=chooser.get_color(),
+            highlight=chooser.get_highlight(),
+        )
 
         self.stats.register_sessionplayer(sessionplayer)
         if pass_to_activity:

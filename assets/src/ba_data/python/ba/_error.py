@@ -141,6 +141,7 @@ def print_exception(*args: Any, **keywds: Any) -> None:
     one time from an exact calling location.
     """
     import traceback
+
     if keywds:
         allowed_keywds = ['once']
         if any(keywd not in allowed_keywds for keywd in keywds):
@@ -181,6 +182,7 @@ def print_error(err_str: str, once: bool = False) -> None:
     one time from an exact calling location.
     """
     import traceback
+
     try:
         # If we're only printing once and already have, bail.
         if once:

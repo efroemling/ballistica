@@ -13,9 +13,17 @@ from typing import TYPE_CHECKING, Any, Sequence, Annotated
 import pytest
 
 from efro.util import utc_now
-from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, ioprepped, ioprep, IOAttrs,
-                              Codec, DataclassFieldLookup, IOExtendedData)
+from efro.dataclassio import (
+    dataclass_validate,
+    dataclass_from_dict,
+    dataclass_to_dict,
+    ioprepped,
+    ioprep,
+    IOAttrs,
+    Codec,
+    DataclassFieldLookup,
+    IOExtendedData,
+)
 
 if TYPE_CHECKING:
     pass
@@ -102,57 +110,40 @@ def test_assign() -> None:
     # get when creating a dataclass and then converting back
     # to a dict.
     dict1 = {
-        'ival':
-            1,
-        'sval':
-            'foo',
-        'bval':
-            True,
-        'fval':
-            2.0,
+        'ival': 1,
+        'sval': 'foo',
+        'bval': True,
+        'fval': 2.0,
         'nval': {
             'ival': 1,
             'sval': 'bar',
-            'dval': {
-                '1': 'foof'
-            },
+            'dval': {'1': 'foof'},
         },
-        'enval':
-            'test1',
-        'oival':
-            1,
-        'oival2':
-            1,
-        'osval':
-            'foo',
-        'obval':
-            True,
-        'ofval':
-            1.0,
-        'oenval':
-            'test2',
+        'enval': 'test1',
+        'oival': 1,
+        'oival2': 1,
+        'osval': 'foo',
+        'obval': True,
+        'ofval': 1.0,
+        'oenval': 'test2',
         'lsval': ['foo'],
         'lival': [10],
         'lbval': [False],
         'lfval': [1.0],
         'lenval': ['test1', 'test2'],
         'ssval': ['foo'],
-        'dval': {
-            'k': 123
-        },
-        'anyval': {
-            'foo': [1, 2, {
-                'bar': 'eep',
-                'rah': 1
-            }]
-        },
-        'dictval': {
-            '1': 'foo'
-        },
+        'dval': {'k': 123},
+        'anyval': {'foo': [1, 2, {'bar': 'eep', 'rah': 1}]},
+        'dictval': {'1': 'foo'},
         'tupleval': [2, 'foof', True],
         'datetimeval': [
-            now.year, now.month, now.day, now.hour, now.minute, now.second,
-            now.microsecond
+            now.year,
+            now.month,
+            now.day,
+            now.hour,
+            now.minute,
+            now.second,
+            now.microsecond,
         ],
     }
     dc1 = dataclass_from_dict(_TestClass, dict1)
@@ -161,7 +152,8 @@ def test_assign() -> None:
     # A few other assignment checks.
     assert isinstance(
         dataclass_from_dict(
-            _TestClass, {
+            _TestClass,
+            {
                 'oival': None,
                 'oival2': None,
                 'osval': None,
@@ -171,11 +163,15 @@ def test_assign() -> None:
                 'lival': [],
                 'lbval': [],
                 'lfval': [],
-                'ssval': []
-            }), _TestClass)
+                'ssval': [],
+            },
+        ),
+        _TestClass,
+    )
     assert isinstance(
         dataclass_from_dict(
-            _TestClass, {
+            _TestClass,
+            {
                 'oival': 1,
                 'oival2': 1,
                 'osval': 'foo',
@@ -184,8 +180,11 @@ def test_assign() -> None:
                 'lsval': ['foo', 'bar', 'eep'],
                 'lival': [10, 11, 12],
                 'lbval': [False, True],
-                'lfval': [1.0, 2.0, 3.0]
-            }), _TestClass)
+                'lfval': [1.0, 2.0, 3.0],
+            },
+        ),
+        _TestClass,
+    )
 
     # Attr assigns mismatched with their value types should fail.
     with pytest.raises(TypeError):
@@ -215,7 +214,7 @@ def test_assign() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'lsval': [1]})
     with pytest.raises(TypeError):
-        dataclass_from_dict(_TestClass, {'lsval': (1, )})
+        dataclass_from_dict(_TestClass, {'lsval': (1,)})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'lbval': [None]})
     with pytest.raises(TypeError):
@@ -453,8 +452,9 @@ def test_extra_data() -> None:
 
     # Passing an attr not in the dataclass should fail if we ask it to.
     with pytest.raises(AttributeError):
-        dataclass_from_dict(_TestClass, {'nonexistent': 'foo'},
-                            allow_unknown_attrs=False)
+        dataclass_from_dict(
+            _TestClass, {'nonexistent': 'foo'}, allow_unknown_attrs=False
+        )
 
     # But normally it should be preserved and present in re-export.
     obj = dataclass_from_dict(_TestClass, {'nonexistent': 'foo'})
@@ -463,8 +463,9 @@ def test_extra_data() -> None:
     assert out.get('nonexistent') == 'foo'
 
     # But not if we ask it to discard unknowns.
-    obj = dataclass_from_dict(_TestClass, {'nonexistent': 'foo'},
-                              discard_unknown_attrs=True)
+    obj = dataclass_from_dict(
+        _TestClass, {'nonexistent': 'foo'}, discard_unknown_attrs=True
+    )
     assert isinstance(obj, _TestClass)
     out = dataclass_to_dict(obj)
     assert 'nonexistent' not in out
@@ -496,7 +497,8 @@ def test_ioattrs() -> None:
     @dataclass
     class _TestClass3:
         dval: Annotated[dict, IOAttrs('d', store_default=False)] = field(
-            default_factory=dict)
+            default_factory=dict
+        )
         ival: Annotated[int, IOAttrs('i', store_default=False)] = 123
 
     # Both attrs are default; should get stripped out.
@@ -510,12 +512,7 @@ def test_ioattrs() -> None:
     # Test going the other way.
     obj3 = dataclass_from_dict(
         _TestClass3,
-        {
-            'd': {
-                'foo': 'barf'
-            },
-            'i': 125
-        },
+        {'d': {'foo': 'barf'}, 'i': 125},
         allow_unknown_attrs=False,
     )
     assert obj3.dval == {'foo': 'barf'}
@@ -554,8 +551,11 @@ def test_codecs() -> None:
     # datetime to/from JSON (turns into a list of values)
     obj2 = _TestClass2(dval=now)
     out = dataclass_to_dict(obj2, codec=Codec.JSON)
-    assert (isinstance(out['dval'], list) and len(out['dval']) == 7
-            and all(isinstance(val, int) for val in out['dval']))
+    assert (
+        isinstance(out['dval'], list)
+        and len(out['dval']) == 7
+        and all(isinstance(val, int) for val in out['dval'])
+    )
     obj2 = dataclass_from_dict(_TestClass2, out, codec=Codec.JSON)
     assert obj2.dval == now
 
@@ -680,13 +680,7 @@ def test_recursive() -> None:
     rtest.child.child = _RecursiveTest(val=3)
     expected_output = {
         'val': 1,
-        'child': {
-            'val': 2,
-            'child': {
-                'val': 3,
-                'child': None
-            }
-        }
+        'child': {'val': 2, 'child': {'val': 3, 'child': None}},
     }
     assert dataclass_to_dict(rtest) == expected_output
     assert dataclass_from_dict(_RecursiveTest, expected_output) == rtest
@@ -731,8 +725,9 @@ class _SPTestClass1:
 class _SPTestClass2:
     rah: bool = False
     subc: _SPTestClass1 = field(default_factory=_SPTestClass1)
-    subc2: Annotated[_SPTestClass1,
-                     IOAttrs('s')] = field(default_factory=_SPTestClass1)
+    subc2: Annotated[_SPTestClass1, IOAttrs('s')] = field(
+        default_factory=_SPTestClass1
+    )
 
 
 def test_datetime_limits() -> None:
@@ -784,15 +779,15 @@ def test_field_paths() -> None:
     @ioprepped
     @dataclass
     class _TestClass:
-
         @dataclass
         class _TestSubClass:
             val1: int = 0
             val2: Annotated[int, IOAttrs('v2')] = 0
 
         sub1: _TestSubClass = field(default_factory=_TestSubClass)
-        sub2: Annotated[_TestSubClass,
-                        IOAttrs('s2')] = field(default_factory=_TestSubClass)
+        sub2: Annotated[_TestSubClass, IOAttrs('s2')] = field(
+            default_factory=_TestSubClass
+        )
 
     # Now let's lookup various storage paths.
     lookup = DataclassFieldLookup(_TestClass)
@@ -824,7 +819,6 @@ def test_nested() -> None:
     @ioprepped
     @dataclass
     class _TestClass:
-
         class _TestEnum(Enum):
             VAL1 = 'val1'
             VAL2 = 'val2'
@@ -962,8 +956,8 @@ def test_soft_default() -> None:
     @dataclass
     class _TestClassC3b:
         ival: Annotated[
-            int,
-            IOAttrs(store_default=False, soft_default_factory=lambda: 0)]
+            int, IOAttrs(store_default=False, soft_default_factory=lambda: 0)
+        ]
 
     assert dataclass_to_dict(_TestClassC3b(0)) == {}
 

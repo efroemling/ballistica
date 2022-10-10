@@ -18,19 +18,26 @@ if TYPE_CHECKING:
 class PlaylistEditGameWindow(ba.Window):
     """Window for editing a game config."""
 
-    def __init__(self,
-                 gametype: type[ba.GameActivity],
-                 sessiontype: type[ba.Session],
-                 config: dict[str, Any] | None,
-                 completion_call: Callable[[dict[str, Any] | None], Any],
-                 default_selection: str | None = None,
-                 transition: str = 'in_right',
-                 edit_info: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        gametype: type[ba.GameActivity],
+        sessiontype: type[ba.Session],
+        config: dict[str, Any] | None,
+        completion_call: Callable[[dict[str, Any] | None], Any],
+        default_selection: str | None = None,
+        transition: str = 'in_right',
+        edit_info: dict[str, Any] | None = None,
+    ):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (get_unowned_maps, get_filtered_map_name,
-                                 get_map_class, get_map_display_string)
+        from ba.internal import (
+            get_unowned_maps,
+            get_filtered_map_name,
+            get_map_class,
+            get_map_display_string,
+        )
+
         self._gametype = gametype
         self._sessiontype = sessiontype
 
@@ -68,14 +75,18 @@ class PlaylistEditGameWindow(ba.Window):
         else:
             self._map = valid_maps[random.randrange(len(valid_maps))]
 
-        is_add = (self._edit_info['editType'] == 'add')
+        is_add = self._edit_info['editType'] == 'add'
 
         # If there's a valid map name in the existing config, use that.
         try:
-            if (config is not None and 'settings' in config
-                    and 'map' in config['settings']):
+            if (
+                config is not None
+                and 'settings' in config
+                and 'map' in config['settings']
+            ):
                 filtered_map_name = get_filtered_map_name(
-                    config['settings']['map'])
+                    config['settings']['map']
+                )
                 if filtered_map_name in valid_maps:
                     self._map = filtered_map_name
         except Exception:
@@ -91,36 +102,53 @@ class PlaylistEditGameWindow(ba.Window):
         uiscale = ba.app.ui.uiscale
         width = 720 if uiscale is ba.UIScale.SMALL else 620
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
-        height = (365 if uiscale is ba.UIScale.SMALL else
-                  460 if uiscale is ba.UIScale.MEDIUM else 550)
+        height = (
+            365
+            if uiscale is ba.UIScale.SMALL
+            else 460
+            if uiscale is ba.UIScale.MEDIUM
+            else 550
+        )
         spacing = 52
         y_extra = 15
         y_extra2 = 21
 
-        map_tex_name = (get_map_class(self._map).get_preview_texture_name())
+        map_tex_name = get_map_class(self._map).get_preview_texture_name()
         if map_tex_name is None:
             raise Exception('no map preview tex found for' + self._map)
         map_tex = ba.gettexture(map_tex_name)
 
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
-        super().__init__(root_widget=ba.containerwidget(
-            size=(width, height + top_extra),
-            transition=transition,
-            scale=(2.19 if uiscale is ba.UIScale.SMALL else
-                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -17) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(width, height + top_extra),
+                transition=transition,
+                scale=(
+                    2.19
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.35
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(0, -17)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(45 + x_inset, height - 82 + y_extra2),
             size=(180, 70) if is_add else (180, 65),
-            label=ba.Lstr(resource='backText') if is_add else ba.Lstr(
-                resource='cancelText'),
+            label=ba.Lstr(resource='backText')
+            if is_add
+            else ba.Lstr(resource='cancelText'),
             button_type='back' if is_add else None,
             autoselect=True,
             scale=0.75,
             text_scale=1.3,
-            on_activate_call=ba.Call(self._cancel))
+            on_activate_call=ba.Call(self._cancel),
+        )
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         add_button = ba.buttonwidget(
@@ -129,23 +157,26 @@ class PlaylistEditGameWindow(ba.Window):
             size=(200, 65),
             scale=0.75,
             text_scale=1.3,
-            label=ba.Lstr(resource=self._r +
-                          '.addGameText') if is_add else ba.Lstr(
-                              resource='doneText'))
+            label=ba.Lstr(resource=self._r + '.addGameText')
+            if is_add
+            else ba.Lstr(resource='doneText'),
+        )
 
         if ba.app.ui.use_toolbars:
             pbtn = ba.internal.get_special_widget('party_button')
             ba.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
-        ba.textwidget(parent=self._root_widget,
-                      position=(-8, height - 70 + y_extra2),
-                      size=(width, 25),
-                      text=gametype.get_display_string(),
-                      color=ba.app.ui.title_color,
-                      maxwidth=235,
-                      scale=1.1,
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(-8, height - 70 + y_extra2),
+            size=(width, 25),
+            text=gametype.get_display_string(),
+            color=ba.app.ui.title_color,
+            maxwidth=235,
+            scale=1.1,
+            h_align='center',
+            v_align='center',
+        )
 
         map_height = 100
 
@@ -155,21 +186,23 @@ class PlaylistEditGameWindow(ba.Window):
         scroll_height += spacing * len(self._settings_defs)
 
         scroll_width = width - (86 + 2 * x_inset)
-        self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
-                                             position=(44 + x_inset,
-                                                       35 + y_extra),
-                                             size=(scroll_width, height - 116),
-                                             highlight=False,
-                                             claims_left_right=True,
-                                             claims_tab=True,
-                                             selection_loops_to_parent=True)
-        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
-                                                size=(scroll_width,
-                                                      scroll_height),
-                                                background=False,
-                                                claims_left_right=True,
-                                                claims_tab=True,
-                                                selection_loops_to_parent=True)
+        self._scrollwidget = ba.scrollwidget(
+            parent=self._root_widget,
+            position=(44 + x_inset, 35 + y_extra),
+            size=(scroll_width, height - 116),
+            highlight=False,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True,
+        )
+        self._subcontainer = ba.containerwidget(
+            parent=self._scrollwidget,
+            size=(scroll_width, scroll_height),
+            background=False,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True,
+        )
 
         v = scroll_height - 5
         h = -40
@@ -179,14 +212,16 @@ class PlaylistEditGameWindow(ba.Window):
         widget_column: list[list[ba.Widget]] = []
 
         # Map select button.
-        ba.textwidget(parent=self._subcontainer,
-                      position=(h + 49, v - 63),
-                      size=(100, 30),
-                      maxwidth=110,
-                      text=ba.Lstr(resource='mapText'),
-                      h_align='left',
-                      color=(0.8, 0.8, 0.8, 1.0),
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            position=(h + 49, v - 63),
+            size=(100, 30),
+            maxwidth=110,
+            text=ba.Lstr(resource='mapText'),
+            h_align='left',
+            color=(0.8, 0.8, 0.8, 1.0),
+            v_align='center',
+        )
 
         ba.imagewidget(
             parent=self._subcontainer,
@@ -195,27 +230,31 @@ class PlaylistEditGameWindow(ba.Window):
             texture=map_tex,
             model_opaque=ba.getmodel('level_select_button_opaque'),
             model_transparent=ba.getmodel('level_select_button_transparent'),
-            mask_texture=ba.gettexture('mapPreviewMask'))
+            mask_texture=ba.gettexture('mapPreviewMask'),
+        )
         map_button = btn = ba.buttonwidget(
             parent=self._subcontainer,
             size=(140, 60),
             position=(h + 448, v - 72),
             on_activate_call=ba.Call(self._select_map),
             scale=0.7,
-            label=ba.Lstr(resource='mapSelectText'))
+            label=ba.Lstr(resource='mapSelectText'),
+        )
         widget_column.append([btn])
 
-        ba.textwidget(parent=self._subcontainer,
-                      position=(h + 363 - 123, v - 114),
-                      size=(100, 30),
-                      flatness=1.0,
-                      shadow=1.0,
-                      scale=0.55,
-                      maxwidth=256 * 0.7 * 0.8,
-                      text=get_map_display_string(self._map),
-                      h_align='center',
-                      color=(0.6, 1.0, 0.6, 1.0),
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            position=(h + 363 - 123, v - 114),
+            size=(100, 30),
+            flatness=1.0,
+            shadow=1.0,
+            scale=0.55,
+            maxwidth=256 * 0.7 * 0.8,
+            text=get_map_display_string(self._map),
+            h_align='center',
+            color=(0.6, 1.0, 0.6, 1.0),
+            v_align='center',
+        )
         v -= map_height
 
         for setting in self._settings_defs:
@@ -225,8 +264,11 @@ class PlaylistEditGameWindow(ba.Window):
             # Now, if there's an existing value for it in the config,
             # override with that.
             try:
-                if (config is not None and 'settings' in config
-                        and setting.name in config['settings']):
+                if (
+                    config is not None
+                    and 'settings' in config
+                    and setting.name in config['settings']
+                ):
                     value = value_type(config['settings'][setting.name])
             except Exception:
                 ba.print_exception()
@@ -244,20 +286,26 @@ class PlaylistEditGameWindow(ba.Window):
                 for choice in setting.choices:
                     if len(choice) != 2:
                         raise ValueError(
-                            "Expected 2-member tuples for 'choices'; got: " +
-                            repr(choice))
+                            "Expected 2-member tuples for 'choices'; got: "
+                            + repr(choice)
+                        )
                     if not isinstance(choice[0], str):
                         raise TypeError(
                             'First value for choice tuple must be a str; got: '
-                            + repr(choice))
+                            + repr(choice)
+                        )
                     if not isinstance(choice[1], value_type):
                         raise TypeError(
                             'Choice type does not match default value; choice:'
-                            + repr(choice) + '; setting:' + repr(setting))
+                            + repr(choice)
+                            + '; setting:'
+                            + repr(setting)
+                        )
                 if value_type not in (int, float):
                     raise TypeError(
                         'Choice type setting must have int or float default; '
-                        'got: ' + repr(setting))
+                        'got: ' + repr(setting)
+                    )
 
                 # Start at the choice corresponding to the default if possible.
                 self._choice_selections[setting.name] = 0
@@ -267,44 +315,54 @@ class PlaylistEditGameWindow(ba.Window):
                         break
 
                 v -= spacing
-                ba.textwidget(parent=self._subcontainer,
-                              position=(h + 50, v),
-                              size=(100, 30),
-                              maxwidth=mw1,
-                              text=name_translated,
-                              h_align='left',
-                              color=(0.8, 0.8, 0.8, 1.0),
-                              v_align='center')
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    position=(h + 50, v),
+                    size=(100, 30),
+                    maxwidth=mw1,
+                    text=name_translated,
+                    h_align='left',
+                    color=(0.8, 0.8, 0.8, 1.0),
+                    v_align='center',
+                )
                 txt = ba.textwidget(
                     parent=self._subcontainer,
                     position=(h + 509 - 95, v),
                     size=(0, 28),
-                    text=self._get_localized_setting_name(setting.choices[
-                        self._choice_selections[setting.name]][0]),
+                    text=self._get_localized_setting_name(
+                        setting.choices[self._choice_selections[setting.name]][
+                            0
+                        ]
+                    ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
                     maxwidth=mw2,
                     h_align='right',
                     v_align='center',
-                    padding=2)
-                btn1 = ba.buttonwidget(parent=self._subcontainer,
-                                       position=(h + 509 - 50 - 1, v),
-                                       size=(28, 28),
-                                       label='<',
-                                       autoselect=True,
-                                       on_activate_call=ba.Call(
-                                           self._choice_inc, setting.name, txt,
-                                           setting, -1),
-                                       repeat=True)
-                btn2 = ba.buttonwidget(parent=self._subcontainer,
-                                       position=(h + 509 + 5, v),
-                                       size=(28, 28),
-                                       label='>',
-                                       autoselect=True,
-                                       on_activate_call=ba.Call(
-                                           self._choice_inc, setting.name, txt,
-                                           setting, 1),
-                                       repeat=True)
+                    padding=2,
+                )
+                btn1 = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    position=(h + 509 - 50 - 1, v),
+                    size=(28, 28),
+                    label='<',
+                    autoselect=True,
+                    on_activate_call=ba.Call(
+                        self._choice_inc, setting.name, txt, setting, -1
+                    ),
+                    repeat=True,
+                )
+                btn2 = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    position=(h + 509 + 5, v),
+                    size=(28, 28),
+                    label='>',
+                    autoselect=True,
+                    on_activate_call=ba.Call(
+                        self._choice_inc, setting.name, txt, setting, 1
+                    ),
+                    repeat=True,
+                )
                 widget_column.append([btn1, btn2])
 
             elif isinstance(setting, (ba.IntSetting, ba.FloatSetting)):
@@ -312,78 +370,102 @@ class PlaylistEditGameWindow(ba.Window):
                 min_value = setting.min_value
                 max_value = setting.max_value
                 increment = setting.increment
-                ba.textwidget(parent=self._subcontainer,
-                              position=(h + 50, v),
-                              size=(100, 30),
-                              text=name_translated,
-                              h_align='left',
-                              color=(0.8, 0.8, 0.8, 1.0),
-                              v_align='center',
-                              maxwidth=mw1)
-                txt = ba.textwidget(parent=self._subcontainer,
-                                    position=(h + 509 - 95, v),
-                                    size=(0, 28),
-                                    text=str(value),
-                                    editable=False,
-                                    color=(0.6, 1.0, 0.6, 1.0),
-                                    maxwidth=mw2,
-                                    h_align='right',
-                                    v_align='center',
-                                    padding=2)
-                btn1 = ba.buttonwidget(parent=self._subcontainer,
-                                       position=(h + 509 - 50 - 1, v),
-                                       size=(28, 28),
-                                       label='-',
-                                       autoselect=True,
-                                       on_activate_call=ba.Call(
-                                           self._inc, txt, min_value,
-                                           max_value, -increment, value_type,
-                                           setting.name),
-                                       repeat=True)
-                btn2 = ba.buttonwidget(parent=self._subcontainer,
-                                       position=(h + 509 + 5, v),
-                                       size=(28, 28),
-                                       label='+',
-                                       autoselect=True,
-                                       on_activate_call=ba.Call(
-                                           self._inc, txt, min_value,
-                                           max_value, increment, value_type,
-                                           setting.name),
-                                       repeat=True)
-                widget_column.append([btn1, btn2])
-
-            elif value_type == bool:
-                v -= spacing
-                ba.textwidget(parent=self._subcontainer,
-                              position=(h + 50, v),
-                              size=(100, 30),
-                              text=name_translated,
-                              h_align='left',
-                              color=(0.8, 0.8, 0.8, 1.0),
-                              v_align='center',
-                              maxwidth=mw1)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    position=(h + 50, v),
+                    size=(100, 30),
+                    text=name_translated,
+                    h_align='left',
+                    color=(0.8, 0.8, 0.8, 1.0),
+                    v_align='center',
+                    maxwidth=mw1,
+                )
                 txt = ba.textwidget(
                     parent=self._subcontainer,
                     position=(h + 509 - 95, v),
                     size=(0, 28),
-                    text=ba.Lstr(resource='onText') if value else ba.Lstr(
-                        resource='offText'),
+                    text=str(value),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
                     maxwidth=mw2,
                     h_align='right',
                     v_align='center',
-                    padding=2)
-                cbw = ba.checkboxwidget(parent=self._subcontainer,
-                                        text='',
-                                        position=(h + 505 - 50 - 5, v - 2),
-                                        size=(200, 30),
-                                        autoselect=True,
-                                        textcolor=(0.8, 0.8, 0.8),
-                                        value=value,
-                                        on_value_change_call=ba.Call(
-                                            self._check_value_change,
-                                            setting.name, txt))
+                    padding=2,
+                )
+                btn1 = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    position=(h + 509 - 50 - 1, v),
+                    size=(28, 28),
+                    label='-',
+                    autoselect=True,
+                    on_activate_call=ba.Call(
+                        self._inc,
+                        txt,
+                        min_value,
+                        max_value,
+                        -increment,
+                        value_type,
+                        setting.name,
+                    ),
+                    repeat=True,
+                )
+                btn2 = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    position=(h + 509 + 5, v),
+                    size=(28, 28),
+                    label='+',
+                    autoselect=True,
+                    on_activate_call=ba.Call(
+                        self._inc,
+                        txt,
+                        min_value,
+                        max_value,
+                        increment,
+                        value_type,
+                        setting.name,
+                    ),
+                    repeat=True,
+                )
+                widget_column.append([btn1, btn2])
+
+            elif value_type == bool:
+                v -= spacing
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    position=(h + 50, v),
+                    size=(100, 30),
+                    text=name_translated,
+                    h_align='left',
+                    color=(0.8, 0.8, 0.8, 1.0),
+                    v_align='center',
+                    maxwidth=mw1,
+                )
+                txt = ba.textwidget(
+                    parent=self._subcontainer,
+                    position=(h + 509 - 95, v),
+                    size=(0, 28),
+                    text=ba.Lstr(resource='onText')
+                    if value
+                    else ba.Lstr(resource='offText'),
+                    editable=False,
+                    color=(0.6, 1.0, 0.6, 1.0),
+                    maxwidth=mw2,
+                    h_align='right',
+                    v_align='center',
+                    padding=2,
+                )
+                cbw = ba.checkboxwidget(
+                    parent=self._subcontainer,
+                    text='',
+                    position=(h + 505 - 50 - 5, v - 2),
+                    size=(200, 30),
+                    autoselect=True,
+                    textcolor=(0.8, 0.8, 0.8),
+                    value=value,
+                    on_value_change_call=ba.Call(
+                        self._check_value_change, setting.name, txt
+                    ),
+                )
                 widget_column.append([cbw])
 
             else:
@@ -405,18 +487,23 @@ class PlaylistEditGameWindow(ba.Window):
                 prev_widgets = cwdg
         except Exception:
             ba.print_exception(
-                'Error wiring up game-settings-select widget column.')
+                'Error wiring up game-settings-select widget column.'
+            )
 
         ba.buttonwidget(edit=add_button, on_activate_call=ba.Call(self._add))
-        ba.containerwidget(edit=self._root_widget,
-                           selected_child=add_button,
-                           start_button=add_button)
+        ba.containerwidget(
+            edit=self._root_widget,
+            selected_child=add_button,
+            start_button=add_button,
+        )
 
         if default_selection == 'map':
-            ba.containerwidget(edit=self._root_widget,
-                               selected_child=self._scrollwidget)
-            ba.containerwidget(edit=self._subcontainer,
-                               selected_child=map_button)
+            ba.containerwidget(
+                edit=self._root_widget, selected_child=self._scrollwidget
+            )
+            ba.containerwidget(
+                edit=self._subcontainer, selected_child=map_button
+            )
 
     def _get_localized_setting_name(self, name: str) -> ba.Lstr:
         return ba.Lstr(translate=('settingNames', name))
@@ -428,34 +515,53 @@ class PlaylistEditGameWindow(ba.Window):
         # Replace ourself with the map-select UI.
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            PlaylistMapSelectWindow(self._gametype, self._sessiontype,
-                                    copy.deepcopy(self._getconfig()),
-                                    self._edit_info,
-                                    self._completion_call).get_root_widget())
+            PlaylistMapSelectWindow(
+                self._gametype,
+                self._sessiontype,
+                copy.deepcopy(self._getconfig()),
+                self._edit_info,
+                self._completion_call,
+            ).get_root_widget()
+        )
 
-    def _choice_inc(self, setting_name: str, widget: ba.Widget,
-                    setting: ba.ChoiceSetting, increment: int) -> None:
+    def _choice_inc(
+        self,
+        setting_name: str,
+        widget: ba.Widget,
+        setting: ba.ChoiceSetting,
+        increment: int,
+    ) -> None:
         choices = setting.choices
         if increment > 0:
             self._choice_selections[setting_name] = min(
-                len(choices) - 1, self._choice_selections[setting_name] + 1)
+                len(choices) - 1, self._choice_selections[setting_name] + 1
+            )
         else:
             self._choice_selections[setting_name] = max(
-                0, self._choice_selections[setting_name] - 1)
-        ba.textwidget(edit=widget,
-                      text=self._get_localized_setting_name(
-                          choices[self._choice_selections[setting_name]][0]))
+                0, self._choice_selections[setting_name] - 1
+            )
+        ba.textwidget(
+            edit=widget,
+            text=self._get_localized_setting_name(
+                choices[self._choice_selections[setting_name]][0]
+            ),
+        )
         self._settings[setting_name] = choices[
-            self._choice_selections[setting_name]][1]
+            self._choice_selections[setting_name]
+        ][1]
 
     def _cancel(self) -> None:
         self._completion_call(None)
 
-    def _check_value_change(self, setting_name: str, widget: ba.Widget,
-                            value: int) -> None:
-        ba.textwidget(edit=widget,
-                      text=ba.Lstr(resource='onText') if value else ba.Lstr(
-                          resource='offText'))
+    def _check_value_change(
+        self, setting_name: str, widget: ba.Widget, value: int
+    ) -> None:
+        ba.textwidget(
+            edit=widget,
+            text=ba.Lstr(resource='onText')
+            if value
+            else ba.Lstr(resource='offText'),
+        )
         self._settings[setting_name] = value
 
     def _getconfig(self) -> dict[str, Any]:
@@ -466,9 +572,15 @@ class PlaylistEditGameWindow(ba.Window):
     def _add(self) -> None:
         self._completion_call(copy.deepcopy(self._getconfig()))
 
-    def _inc(self, ctrl: ba.Widget, min_val: int | float, max_val: int | float,
-             increment: int | float, setting_type: type,
-             setting_name: str) -> None:
+    def _inc(
+        self,
+        ctrl: ba.Widget,
+        min_val: int | float,
+        max_val: int | float,
+        increment: int | float,
+        setting_type: type,
+        setting_name: str,
+    ) -> None:
         if setting_type == float:
             val = float(cast(str, ba.textwidget(query=ctrl)))
         else:

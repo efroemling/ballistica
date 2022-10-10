@@ -12,22 +12,30 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
 
-def make_radio_group(check_boxes: Sequence[ba.Widget],
-                     value_names: Sequence[str], value: str,
-                     value_change_call: Callable[[str], Any]) -> None:
+def make_radio_group(
+    check_boxes: Sequence[ba.Widget],
+    value_names: Sequence[str],
+    value: str,
+    value_change_call: Callable[[str], Any],
+) -> None:
     """Link the provided check_boxes together into a radio group."""
 
-    def _radio_press(check_string: str, other_check_boxes: list[ba.Widget],
-                     val: int) -> None:
+    def _radio_press(
+        check_string: str, other_check_boxes: list[ba.Widget], val: int
+    ) -> None:
         if val == 1:
             value_change_call(check_string)
             for cbx in other_check_boxes:
                 ba.checkboxwidget(edit=cbx, value=False)
 
     for i, check_box in enumerate(check_boxes):
-        ba.checkboxwidget(edit=check_box,
-                          value=(value == value_names[i]),
-                          is_radio_button=True,
-                          on_value_change_call=ba.Call(
-                              _radio_press, value_names[i],
-                              [c for c in check_boxes if c != check_box]))
+        ba.checkboxwidget(
+            edit=check_box,
+            value=(value == value_names[i]),
+            is_radio_button=True,
+            on_value_change_call=ba.Call(
+                _radio_press,
+                value_names[i],
+                [c for c in check_boxes if c != check_box],
+            ),
+        )

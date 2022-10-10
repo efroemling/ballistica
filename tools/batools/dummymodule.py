@@ -28,39 +28,48 @@ if TYPE_CHECKING:
 def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
     """Return overloaded signatures and return statements for varying funcs."""
     returns = 'return None'
-    if sig_in == ('getdelegate(self, type: type,'
-                  ' doraise: bool = False) -> <varies>'):
-        sig = ('# Show that ur return type varies based on "doraise" value:\n'
-               '@overload\n'
-               'def getdelegate(self, type: type[_T],'
-               ' doraise: Literal[False] = False) -> _T | None:\n'
-               '    ...\n'
-               '\n'
-               '@overload\n'
-               'def getdelegate(self, type: type[_T],'
-               ' doraise: Literal[True]) -> _T:\n'
-               '    ...\n'
-               '\n'
-               'def getdelegate(self, type: Any,'
-               ' doraise: bool = False) -> Any:\n')
-    elif sig_in == ('getinputdevice(name: str, unique_id:'
-                    ' str, doraise: bool = True)   -> <varies>'):
-        sig = ('# Show that our return type varies based on "doraise" value:\n'
-               '@overload\n'
-               'def getinputdevice(name: str, unique_id: str,'
-               ' doraise: Literal[True] = True) -> ba.InputDevice:\n'
-               '    ...\n'
-               '\n'
-               '@overload\n'
-               'def getinputdevice(name: str, unique_id: str,'
-               ' doraise: Literal[False]) -> ba.InputDevice | None:\n'
-               '    ...\n'
-               '\n'
-               'def getinputdevice(name: str, unique_id: str,'
-               ' doraise: bool=True) -> Any:')
-    elif sig_in == ('time(timetype: ba.TimeType = TimeType.SIM,'
-                    '   timeformat: ba.TimeFormat = TimeFormat.SECONDS)'
-                    '   -> <varies>'):
+    if sig_in == (
+        'getdelegate(self, type: type,' ' doraise: bool = False) -> <varies>'
+    ):
+        sig = (
+            '# Show that ur return type varies based on "doraise" value:\n'
+            '@overload\n'
+            'def getdelegate(self, type: type[_T],'
+            ' doraise: Literal[False] = False) -> _T | None:\n'
+            '    ...\n'
+            '\n'
+            '@overload\n'
+            'def getdelegate(self, type: type[_T],'
+            ' doraise: Literal[True]) -> _T:\n'
+            '    ...\n'
+            '\n'
+            'def getdelegate(self, type: Any,'
+            ' doraise: bool = False) -> Any:\n'
+        )
+    elif sig_in == (
+        'getinputdevice(name: str, unique_id:'
+        ' str, doraise: bool = True)   -> <varies>'
+    ):
+        sig = (
+            '# Show that our return type varies based on "doraise" value:\n'
+            '@overload\n'
+            'def getinputdevice(name: str, unique_id: str,'
+            ' doraise: Literal[True] = True) -> ba.InputDevice:\n'
+            '    ...\n'
+            '\n'
+            '@overload\n'
+            'def getinputdevice(name: str, unique_id: str,'
+            ' doraise: Literal[False]) -> ba.InputDevice | None:\n'
+            '    ...\n'
+            '\n'
+            'def getinputdevice(name: str, unique_id: str,'
+            ' doraise: bool=True) -> Any:'
+        )
+    elif sig_in == (
+        'time(timetype: ba.TimeType = TimeType.SIM,'
+        '   timeformat: ba.TimeFormat = TimeFormat.SECONDS)'
+        '   -> <varies>'
+    ):
         sig = (
             '# Overloads to return a type based on requested format.\n'
             '\n'
@@ -86,7 +95,8 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             '\n'
             'def time(timetype: ba.TimeType = TimeType.SIM,\n'
             '         timeformat: ba.TimeFormat = TimeFormat.SECONDS)'
-            ' -> Any:\n')
+            ' -> Any:\n'
+        )
     elif sig_in == 'getactivity(doraise: bool = True) -> <varies>':
         sig = (
             '# Show that our return type varies based on "doraise" value:\n'
@@ -101,30 +111,39 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             '    ...\n'
             '\n'
             '\n'
-            'def getactivity(doraise: bool = True) -> ba.Activity | None:')
+            'def getactivity(doraise: bool = True) -> ba.Activity | None:'
+        )
     elif sig_in == 'getsession(doraise: bool = True) -> <varies>':
-        sig = ('# Show that our return type varies based on "doraise" value:\n'
-               '@overload\n'
-               'def getsession(doraise: Literal[True] = True) -> ba.Session:\n'
-               '    ...\n'
-               '\n'
-               '\n'
-               '@overload\n'
-               'def getsession(doraise: Literal[False])'
-               ' -> ba.Session | None:\n'
-               '    ...\n'
-               '\n'
-               '\n'
-               'def getsession(doraise: bool = True) -> ba.Session | None:')
+        sig = (
+            '# Show that our return type varies based on "doraise" value:\n'
+            '@overload\n'
+            'def getsession(doraise: Literal[True] = True) -> ba.Session:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            '@overload\n'
+            'def getsession(doraise: Literal[False])'
+            ' -> ba.Session | None:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            'def getsession(doraise: bool = True) -> ba.Session | None:'
+        )
 
     else:
         raise RuntimeError(
-            f'Unimplemented varying func: {Clr.RED}{sig_in}{Clr.RST}')
+            f'Unimplemented varying func: {Clr.RED}{sig_in}{Clr.RST}'
+        )
     return sig, returns
 
 
-def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
-                spacing: int, as_method: bool) -> str:
+def _writefuncs(
+    parent: Any,
+    funcnames: Sequence[str],
+    indent: int,
+    spacing: int,
+    as_method: bool,
+) -> str:
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-locals
@@ -171,35 +190,46 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
             defsline = f'{indstr}def {sig}:\n'
 
             # Types can be strings for forward-declaration cases.
-            if ((returns[0] == "'" and returns[-1] == "'")
-                    or (returns[0] == '"' and returns[-1] == '"')):
+            if (returns[0] == "'" and returns[-1] == "'") or (
+                returns[0] == '"' and returns[-1] == '"'
+            ):
                 returns = returns[1:-1]
             if returns == 'None':
                 returnstr = 'return None'
             elif returns == 'ba.Lstr':
-                returnstr = ('import ba  # pylint: disable=cyclic-import\n'
-                             "return ba.Lstr(value='')")
+                returnstr = (
+                    'import ba  # pylint: disable=cyclic-import\n'
+                    "return ba.Lstr(value='')"
+                )
             elif returns in {'ba.Activity', 'ba.Activity | None'}:
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn ' +
-                    'ba.Activity(settings={})')
+                    'import ba  # pylint: disable=cyclic-import\nreturn '
+                    + 'ba.Activity(settings={})'
+                )
             elif returns in {'ba.Session', 'ba.Session | None'}:
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn ' +
-                    'ba.Session([])')
+                    'import ba  # pylint: disable=cyclic-import\nreturn '
+                    + 'ba.Session([])'
+                )
             elif returns == 'ba.SessionPlayer | None':
-                returnstr = ('import ba  # pylint: disable=cyclic-import\n'
-                             'return ba.SessionPlayer()')
+                returnstr = (
+                    'import ba  # pylint: disable=cyclic-import\n'
+                    'return ba.SessionPlayer()'
+                )
             elif returns == 'ba.Player | None':
-                returnstr = ('import ba  # pylint: disable=cyclic-import\n'
-                             'return ba.Player()')
+                returnstr = (
+                    'import ba  # pylint: disable=cyclic-import\n'
+                    'return ba.Player()'
+                )
             elif returns.startswith('ba.') and ' | None' not in returns:
 
                 # We cant import ba at module level so let's
                 # do it within funcs as needed.
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn ' +
-                    returns + '()')
+                    'import ba  # pylint: disable=cyclic-import\nreturn '
+                    + returns
+                    + '()'
+                )
 
             elif returns in {'object', 'Any'}:
 
@@ -231,25 +261,50 @@ def _writefuncs(parent: Any, funcnames: Sequence[str], indent: int,
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns in {
-                    'session.Session', 'team.Team', '_app.App',
-                    'appconfig.AppConfig'
+                'session.Session',
+                'team.Team',
+                '_app.App',
+                'appconfig.AppConfig',
             }:
-                returnstr = ('from ba import ' + returns.split('.')[0] +
-                             '; return ' + returns + '()')
+                returnstr = (
+                    'from ba import '
+                    + returns.split('.')[0]
+                    + '; return '
+                    + returns
+                    + '()'
+                )
             elif returns in [
-                    'bool', 'str', 'int', 'list', 'dict', 'tuple', 'float',
-                    'SessionData', 'ActivityData', 'Player', 'SessionPlayer',
-                    'InputDevice', 'Sound', 'Texture', 'Model', 'CollideModel',
-                    'team.Team', 'Vec3', 'Widget', 'Node'
+                'bool',
+                'str',
+                'int',
+                'list',
+                'dict',
+                'tuple',
+                'float',
+                'SessionData',
+                'ActivityData',
+                'Player',
+                'SessionPlayer',
+                'InputDevice',
+                'Sound',
+                'Texture',
+                'Model',
+                'CollideModel',
+                'team.Team',
+                'Vec3',
+                'Widget',
+                'Node',
             ]:
                 returnstr = 'return ' + returns + '()'
             else:
                 raise Exception(
-                    f'unknown returns value: {returns} for {funcname}')
+                    f'unknown returns value: {returns} for {funcname}'
+                )
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
-        docstr_out = _formatdoc(_filterdoc(docstr, funcname=funcname),
-                                indent + 4)
+        docstr_out = _formatdoc(
+            _filterdoc(docstr, funcname=funcname), indent + 4
+        )
         out += spcstr + defsline + docstr_out + f'{returnspc}{returnstr}\n'
     return out
 
@@ -260,75 +315,77 @@ def _special_class_cases(classname: str) -> str:
     # Special case: define a fallback attr getter with a random
     # return type in cases where our class handles attrs itself.
     if classname in ['Vec3']:
-        out += ('\n'
-                '    # pylint: disable=function-redefined\n'
-                '\n'
-                '    @overload\n'
-                '    def __init__(self) -> None:\n'
-                '        pass\n'
-                '\n'
-                '    @overload\n'
-                '    def __init__(self, value: float):\n'
-                '        pass\n'
-                '\n'
-                '    @overload\n'
-                '    def __init__(self, values: Sequence[float]):\n'
-                '        pass\n'
-                '\n'
-                '    @overload\n'
-                '    def __init__(self, x: float, y: float, z: float):\n'
-                '        pass\n'
-                '\n'
-                '    def __init__(self, *args: Any, **kwds: Any):\n'
-                '        pass\n'
-                '\n'
-                '    def __add__(self, other: Vec3) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    def __sub__(self, other: Vec3) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    @overload\n'
-                '    def __mul__(self, other: float) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    @overload\n'
-                '    def __mul__(self, other: Sequence[float]) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    def __mul__(self, other: Any) -> Any:\n'
-                '        return self\n'
-                '\n'
-                '    @overload\n'
-                '    def __rmul__(self, other: float) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    @overload\n'
-                '    def __rmul__(self, other: Sequence[float]) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    def __rmul__(self, other: Any) -> Any:\n'
-                '        return self\n'
-                '\n'
-                '    # (for index access)\n'
-                '    def __getitem__(self, typeargs: Any) -> Any:\n'
-                '        return 0.0\n'
-                '\n'
-                '    def __len__(self) -> int:\n'
-                '        return 3\n'
-                '\n'
-                '    # (for iterator access)\n'
-                '    def __iter__(self) -> Any:\n'
-                '        return self\n'
-                '\n'
-                '    def __next__(self) -> float:\n'
-                '        return 0.0\n'
-                '\n'
-                '    def __neg__(self) -> Vec3:\n'
-                '        return self\n'
-                '\n'
-                '    def __setitem__(self, index: int, val: float) -> None:\n'
-                '        pass\n')
+        out += (
+            '\n'
+            '    # pylint: disable=function-redefined\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self) -> None:\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, value: float):\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, values: Sequence[float]):\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, x: float, y: float, z: float):\n'
+            '        pass\n'
+            '\n'
+            '    def __init__(self, *args: Any, **kwds: Any):\n'
+            '        pass\n'
+            '\n'
+            '    def __add__(self, other: Vec3) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    def __sub__(self, other: Vec3) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    @overload\n'
+            '    def __mul__(self, other: float) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    @overload\n'
+            '    def __mul__(self, other: Sequence[float]) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    def __mul__(self, other: Any) -> Any:\n'
+            '        return self\n'
+            '\n'
+            '    @overload\n'
+            '    def __rmul__(self, other: float) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    @overload\n'
+            '    def __rmul__(self, other: Sequence[float]) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    def __rmul__(self, other: Any) -> Any:\n'
+            '        return self\n'
+            '\n'
+            '    # (for index access)\n'
+            '    def __getitem__(self, typeargs: Any) -> Any:\n'
+            '        return 0.0\n'
+            '\n'
+            '    def __len__(self) -> int:\n'
+            '        return 3\n'
+            '\n'
+            '    # (for iterator access)\n'
+            '    def __iter__(self) -> Any:\n'
+            '        return self\n'
+            '\n'
+            '    def __next__(self) -> float:\n'
+            '        return 0.0\n'
+            '\n'
+            '    def __neg__(self) -> Vec3:\n'
+            '        return self\n'
+            '\n'
+            '    def __setitem__(self, index: int, val: float) -> None:\n'
+            '        pass\n'
+        )
     if classname in ['Node']:
         out += (
             '\n'
@@ -451,28 +508,35 @@ def _special_class_cases(classname: str) -> str:
             '    vr_overlay_center_enabled: bool = False\n'
             '    vignette_outer: Sequence[float] = (0.0, 0.0)\n'
             '    vignette_inner: Sequence[float] = (0.0, 0.0)\n'
-            '    tint: Sequence[float] = (1.0, 1.0, 1.0)\n')
+            '    tint: Sequence[float] = (1.0, 1.0, 1.0)\n'
+        )
 
     # Special case: need to be able to use the 'with' statement
     # on some classes.
     if classname in ['Context']:
-        out += ('\n'
-                '    def __enter__(self) -> None:\n'
-                '        """Support for "with" statement."""\n'
-                '        pass\n'
-                '\n'
-                '    def __exit__(self, exc_type: Any, exc_value: Any, '
-                'traceback: Any) -> Any:\n'
-                '        """Support for "with" statement."""\n'
-                '        pass\n')
+        out += (
+            '\n'
+            '    def __enter__(self) -> None:\n'
+            '        """Support for "with" statement."""\n'
+            '        pass\n'
+            '\n'
+            '    def __exit__(self, exc_type: Any, exc_value: Any, '
+            'traceback: Any) -> Any:\n'
+            '        """Support for "with" statement."""\n'
+            '        pass\n'
+        )
     return out
 
 
 def _filterdoc(docstr: str, funcname: str | None = None) -> str:
     docslines = docstr.splitlines()
 
-    if (funcname and docslines and docslines[0]
-            and docslines[0].startswith(funcname)):
+    if (
+        funcname
+        and docslines
+        and docslines[0]
+        and docslines[0].startswith(funcname)
+    ):
         # Remove this signature from python docstring
         # as not to repeat ourselves.
         _, docstr = docstr.split('\n\n', maxsplit=1)
@@ -499,14 +563,18 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
     if attrs_definitions_last_line is None:
         attrs_definitions_last_line = len(docslines) - 1
 
-    return '\n'.join(docslines[:attributes_line] +
-                     docslines[attrs_definitions_last_line + 1:])
+    return '\n'.join(
+        docslines[:attributes_line]
+        + docslines[attrs_definitions_last_line + 1 :]
+    )
 
 
-def _formatdoc(docstr: str,
-               indent: int,
-               no_end_newline: bool = False,
-               inner_indent: int = 0) -> str:
+def _formatdoc(
+    docstr: str,
+    indent: int,
+    no_end_newline: bool = False,
+    inner_indent: int = 0,
+) -> str:
     out = ''
     indentstr = indent * ' '
     inner_indent_str = inner_indent * ' '
@@ -518,8 +586,14 @@ def _formatdoc(docstr: str,
         for i, line in enumerate(docslines):
             if i != 0 and line != '':
                 docslines[i] = indentstr + inner_indent_str + line
-        out += ('\n' + indentstr + '"""' + '\n'.join(docslines) +
-                ('' if no_end_newline else '\n' + indentstr) + '"""\n')
+        out += (
+            '\n'
+            + indentstr
+            + '"""'
+            + '\n'.join(docslines)
+            + ('' if no_end_newline else '\n' + indentstr)
+            + '"""\n'
+        )
     return out
 
 
@@ -527,6 +601,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
     import types
     from batools.docs import parse_docs_attrs
+
     out = ''
     for classname in classnames:
         cls = getattr(module, classname)
@@ -549,21 +624,25 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         # and not category or a usage statement ending with a period,
         # assume it has a public constructor.
         has_constructor = False
-        if ('category:' not in docstr.splitlines()[0].lower()
-                and not docstr.splitlines()[0].endswith('.')
-                and docstr != '(internal)'):
+        if (
+            'category:' not in docstr.splitlines()[0].lower()
+            and not docstr.splitlines()[0].endswith('.')
+            and docstr != '(internal)'
+        ):
 
             # Ok.. looks like the first line is a signature.
             # Make sure we've got a signature followed by a blank line.
             if '\n\n' not in docstr:
                 raise Exception(
-                    f'Constructor docstr missing empty line for {cls}.')
+                    f'Constructor docstr missing empty line for {cls}.'
+                )
             sig = docstr.split('\n\n')[0].replace('\n', ' ').strip()
 
             # Sanity check - make sure name is in the sig.
             if classname + '(' not in sig:
                 raise Exception(
-                    f'Class name not found in constructor sig for {cls}.')
+                    f'Class name not found in constructor sig for {cls}.'
+                )
             sig = sig.replace(classname + '(', '__init__(self, ')
             out += '    def ' + sig + ':\n        pass\n'
             has_constructor = True
@@ -577,14 +656,18 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
                 if attr.attr_type is not None:
                     out += f'    {attr.name}: {attr.attr_type}\n'
                     if attr.docs:
-                        out += _formatdoc(_filterdoc(attr.docs),
-                                          indent=4,
-                                          inner_indent=3,
-                                          no_end_newline=True)
+                        out += _formatdoc(
+                            _filterdoc(attr.docs),
+                            indent=4,
+                            inner_indent=3,
+                            no_end_newline=True,
+                        )
                         out += '\n'
                 else:
-                    raise Exception(f'Found untyped attr in'
-                                    f' {classname} docs: {attr.name}')
+                    raise Exception(
+                        f'Found untyped attr in'
+                        f' {classname} docs: {attr.name}'
+                    )
 
         # Special cases such as attributes we add.
         out += _special_class_cases(classname)
@@ -597,11 +680,9 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             else:
                 raise Exception(f'Unhandled obj {entry} in {cls}')
         funcnames.sort()
-        functxt = _writefuncs(cls,
-                              funcnames,
-                              indent=4,
-                              spacing=1,
-                              as_method=True)
+        functxt = _writefuncs(
+            cls, funcnames, indent=4, spacing=1, as_method=True
+        )
         if functxt == '' and not has_constructor:
             out += '    pass\n'
         else:
@@ -613,9 +694,13 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 def generate(mname: str, sources_hash: str, outfilename: str) -> None:
     """Run the actual generation from within the game."""
     # pylint: disable=too-many-locals
-    module = __import__(mname)
-    from efrotools import get_public_license, PYVER
     import types
+
+    from efrotools import get_public_license
+    from efrotools.code import format_python_str
+
+    module = __import__(mname)
+
     funcnames = []
     classnames = []
     for entry in (e for e in dir(module) if not e.startswith('__')):
@@ -628,95 +713,104 @@ def generate(mname: str, sources_hash: str, outfilename: str) -> None:
             continue
         else:
             raise Exception(
-                f'found unknown obj {entry}, {getattr(module, entry)}')
+                f'found unknown obj {entry}, {getattr(module, entry)}'
+            )
     funcnames.sort()
     classnames.sort()
-    typing_imports = ('TYPE_CHECKING, overload, Sequence, TypeVar'
-                      if mname == '_ba' else 'TYPE_CHECKING, TypeVar')
-    typing_imports_tc = ('Any, Callable, Literal'
-                         if mname == '_ba' else 'Any, Callable')
-    tc_import_lines_extra = ('    from ba._app import App\n'
-                             '    import ba\n' if mname == '_ba' else '')
-    app_declare_lines = ('app: App\n'
-                         '\n' if mname == '_ba' else '')
+    typing_imports = (
+        'TYPE_CHECKING, overload, Sequence, TypeVar'
+        if mname == '_ba'
+        else 'TYPE_CHECKING, TypeVar'
+    )
+    typing_imports_tc = (
+        'Any, Callable, Literal' if mname == '_ba' else 'Any, Callable'
+    )
+    tc_import_lines_extra = (
+        '    from ba._app import App\n' '    import ba\n'
+        if mname == '_ba'
+        else ''
+    )
+    app_declare_lines = 'app: App\n' '\n' if mname == '_ba' else ''
     enum_import_lines = (
-        'from ba._generated.enums import TimeFormat, TimeType\n'
-        '\n' if mname == '_ba' else '')
-    out = (get_public_license('python')
-           + '\n'
-           '#\n'
-           f'"""A dummy stub module for the real {mname}.\n'
-           '\n'
-           f'The real {mname} is a compiled extension module'
-           ' and only available\n'
-           'in the live engine. This dummy-module allows Pylint/Mypy/etc. to\n'
-           'function reasonably well outside of that environment.\n'
-           '\n'
-           'Make sure this file is never included'
-           ' in dirs seen by the engine!\n'
-           '\n'
-           'In the future perhaps this can be a stub (.pyi) file, but'
-           ' we will need\n'
-           'to make sure that it works with all our tools'
-           ' (mypy, pylint, pycharm).\n'
-           '\n'
-           'NOTE: This file was autogenerated by ' + __name__ + '; '
-           'do not edit by hand.\n'
-           '"""\n'
-           '\n'
-           # '# (hash we can use to see if this file is out of date)\n'
-           # '# SOURCES_HASH='+sources_hash+'\n'
-           # '\n'
-           '# I\'m sorry Pylint. I know this file saddens you. Be strong.\n'
-           '# pylint: disable=useless-suppression\n'
-           '# pylint: disable=unnecessary-pass\n'
-           '# pylint: disable=use-dict-literal\n'
-           '# pylint: disable=use-list-literal\n'
-           '# pylint: disable=unused-argument\n'
-           '# pylint: disable=missing-docstring\n'
-           '# pylint: disable=too-many-locals\n'
-           '# pylint: disable=redefined-builtin\n'
-           '# pylint: disable=too-many-lines\n'
-           '# pylint: disable=redefined-outer-name\n'
-           '# pylint: disable=invalid-name\n'
-           '# pylint: disable=no-value-for-parameter\n'
-           '\n'
-           'from __future__ import annotations\n'
-           '\n'
-           f'from typing import {typing_imports}\n'
-           '\n'
-           f'{enum_import_lines}'
-           'if TYPE_CHECKING:\n'
-           f'    from typing import {typing_imports_tc}\n'
-           f'{tc_import_lines_extra}'
-           '\n'
-           '\n'
-           "_T = TypeVar('_T')\n"
-           '\n'
-           f'{app_declare_lines}'
-           'def _uninferrable() -> Any:\n'
-           '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
-           '    # pylint: disable=undefined-variable\n'
-           '    return _not_a_real_variable  # type: ignore'
-           '\n'
-           '\n'
-           )  # yapf: disable
+        'from ba._generated.enums import TimeFormat, TimeType\n' '\n'
+        if mname == '_ba'
+        else ''
+    )
+    out = (
+        get_public_license('python') + '\n'
+        '#\n'
+        f'"""A dummy stub module for the real {mname}.\n'
+        '\n'
+        f'The real {mname} is a compiled extension module'
+        ' and only available\n'
+        'in the live engine. This dummy-module allows Pylint/Mypy/etc. to\n'
+        'function reasonably well outside of that environment.\n'
+        '\n'
+        'Make sure this file is never included'
+        ' in dirs seen by the engine!\n'
+        '\n'
+        'In the future perhaps this can be a stub (.pyi) file, but'
+        ' we will need\n'
+        'to make sure that it works with all our tools'
+        ' (mypy, pylint, pycharm).\n'
+        '\n'
+        'NOTE: This file was autogenerated by ' + __name__ + '; '
+        'do not edit by hand.\n'
+        '"""\n'
+        '\n'
+        # '# (hash we can use to see if this file is out of date)\n'
+        # '# SOURCES_HASH='+sources_hash+'\n'
+        # '\n'
+        '# I\'m sorry Pylint. I know this file saddens you. Be strong.\n'
+        '# pylint: disable=useless-suppression\n'
+        '# pylint: disable=unnecessary-pass\n'
+        '# pylint: disable=use-dict-literal\n'
+        '# pylint: disable=use-list-literal\n'
+        '# pylint: disable=unused-argument\n'
+        '# pylint: disable=missing-docstring\n'
+        '# pylint: disable=too-many-locals\n'
+        '# pylint: disable=redefined-builtin\n'
+        '# pylint: disable=too-many-lines\n'
+        '# pylint: disable=redefined-outer-name\n'
+        '# pylint: disable=invalid-name\n'
+        '# pylint: disable=no-value-for-parameter\n'
+        '\n'
+        'from __future__ import annotations\n'
+        '\n'
+        f'from typing import {typing_imports}\n'
+        '\n'
+        f'{enum_import_lines}'
+        'if TYPE_CHECKING:\n'
+        f'    from typing import {typing_imports_tc}\n'
+        f'{tc_import_lines_extra}'
+        '\n'
+        '\n'
+        "_T = TypeVar('_T')\n"
+        '\n'
+        f'{app_declare_lines}'
+        'def _uninferrable() -> Any:\n'
+        '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
+        '    # pylint: disable=undefined-variable\n'
+        '    return _not_a_real_variable  # type: ignore'
+        '\n'
+        '\n'
+    )
 
     out += _writeclasses(module, classnames)
     out += _writefuncs(module, funcnames, indent=0, spacing=2, as_method=False)
 
-    outhashpath = os.path.join(os.path.dirname(outfilename),
-                               f'.{mname}_sources_hash')
+    # Lastly format it.
+    out = format_python_str(out)
+
+    outhashpath = os.path.join(
+        os.path.dirname(outfilename), f'.{mname}_sources_hash'
+    )
 
     with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(out)
 
     with open(outhashpath, 'w', encoding='utf-8') as outfile:
         outfile.write(sources_hash)
-
-    # Lastly, format it.
-    subprocess.run([f'python{PYVER}', '-m', 'yapf', '--in-place', outfilename],
-                   check=True)
 
 
 def _dummy_module_dirty(mname: str) -> tuple[bool, str]:
@@ -774,22 +868,27 @@ def update(projroot: str, check: bool, force: bool) -> None:
             continue
 
         outfilename = os.path.abspath(
-            os.path.join(projroot, f'assets/src/ba_data/python/{mname}.py'))
+            os.path.join(projroot, f'assets/src/ba_data/python/{mname}.py')
+        )
 
         dirty, sources_hash = _dummy_module_dirty(mname)
 
         if dirty:
             if check:
-                print(f'{Clr.RED}ERROR: dummy {mname} module'
-                      f' is out of date.{Clr.RST}')
+                print(
+                    f'{Clr.RED}ERROR: dummy {mname} module'
+                    f' is out of date.{Clr.RST}'
+                )
                 sys.exit(255)
         elif not force:
             # Dummy-module is clean and force is off; we're done here.
             print(f'Dummy-module {Clr.BLD}{mname}.py{Clr.RST} is up to date.')
             continue
 
-        print(f'{Clr.MAG}Updating {Clr.BLD}{mname}.py{Clr.RST}{Clr.MAG}'
-              f' dummy-module...{Clr.RST}')
+        print(
+            f'{Clr.MAG}Updating {Clr.BLD}{mname}.py{Clr.RST}{Clr.MAG}'
+            f' dummy-module...{Clr.RST}'
+        )
 
         # Let's build the cmake version; no sandboxing issues to contend with
         # there. Also going with the headless build; will need to revisit if
@@ -797,8 +896,10 @@ def update(projroot: str, check: bool, force: bool) -> None:
         subprocess.run(['make', 'cmake-server-build'], check=True)
 
         # Launch ballisticacore and exec ourself from within it.
-        print(f'Launching ballisticacore to generate'
-              f' {Clr.BLD}{mname}.py{Clr.RST} dummy-module...')
+        print(
+            f'Launching ballisticacore to generate'
+            f' {Clr.BLD}{mname}.py{Clr.RST} dummy-module...'
+        )
         try:
             subprocess.run(
                 [
@@ -823,10 +924,12 @@ def update(projroot: str, check: bool, force: bool) -> None:
                 check=True,
             )
             print(
-                f'{Clr.BLU}{mname} dummy-module generation complete.{Clr.RST}')
+                f'{Clr.BLU}{mname} dummy-module generation complete.{Clr.RST}'
+            )
 
         except Exception as exc2:
             # Keep our error simple here; we want focus to be on what went
             # wrong withing BallisticaCore.
             raise CleanError(
-                'BallisticaCore dummy-module generation failed.') from exc2
+                'BallisticaCore dummy-module generation failed.'
+            ) from exc2

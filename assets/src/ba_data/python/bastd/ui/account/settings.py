@@ -18,11 +18,13 @@ if TYPE_CHECKING:
 class AccountSettingsWindow(ba.Window):
     """Window for account related functionality."""
 
-    def __init__(self,
-                 transition: str = 'in_right',
-                 modal: bool = False,
-                 origin_widget: ba.Widget | None = None,
-                 close_once_signed_in: bool = False):
+    def __init__(
+        self,
+        transition: str = 'in_right',
+        modal: bool = False,
+        origin_widget: ba.Widget | None = None,
+        close_once_signed_in: bool = False,
+    ):
         # pylint: disable=too-many-statements
 
         self._sign_in_v2_button: ba.Widget | None = None
@@ -44,15 +46,20 @@ class AccountSettingsWindow(ba.Window):
         self._r = 'accountSettingsWindow'
         self._modal = modal
         self._needs_refresh = False
-        self._signed_in = (ba.internal.get_v1_account_state() == 'signed_in')
+        self._signed_in = ba.internal.get_v1_account_state() == 'signed_in'
         self._account_state_num = ba.internal.get_v1_account_state_num()
-        self._show_linked = (self._signed_in
-                             and ba.internal.get_v1_account_misc_read_val(
-                                 'allowAccountLinking2', False))
-        self._check_sign_in_timer = ba.Timer(1.0,
-                                             ba.WeakCall(self._update),
-                                             timetype=ba.TimeType.REAL,
-                                             repeat=True)
+        self._show_linked = (
+            self._signed_in
+            and ba.internal.get_v1_account_misc_read_val(
+                'allowAccountLinking2', False
+            )
+        )
+        self._check_sign_in_timer = ba.Timer(
+            1.0,
+            ba.WeakCall(self._update),
+            timetype=ba.TimeType.REAL,
+            repeat=True,
+        )
 
         # Currently we can only reset achievements on game-center.
         account_type: str | None
@@ -60,15 +67,20 @@ class AccountSettingsWindow(ba.Window):
             account_type = ba.internal.get_v1_account_type()
         else:
             account_type = None
-        self._can_reset_achievements = (account_type == 'Game Center')
+        self._can_reset_achievements = account_type == 'Game Center'
 
         app = ba.app
         uiscale = app.ui.uiscale
 
         self._width = 760 if uiscale is ba.UIScale.SMALL else 660
         x_offs = 50 if uiscale is ba.UIScale.SMALL else 0
-        self._height = (390 if uiscale is ba.UIScale.SMALL else
-                        430 if uiscale is ba.UIScale.MEDIUM else 490)
+        self._height = (
+            390
+            if uiscale is ba.UIScale.SMALL
+            else 430
+            if uiscale is ba.UIScale.MEDIUM
+            else 490
+        )
 
         self._sign_in_button = None
         self._sign_in_text = None
@@ -92,18 +104,29 @@ class AccountSettingsWindow(ba.Window):
             self._show_sign_in_buttons.append('V2')
 
         top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            toolbar_visibility='menu_minimal',
-            scale_origin_stack_offset=scale_origin,
-            scale=(2.09 if uiscale is ba.UIScale.SMALL else
-                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -19) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height + top_extra),
+                transition=transition,
+                toolbar_visibility='menu_minimal',
+                scale_origin_stack_offset=scale_origin,
+                scale=(
+                    2.09
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.4
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(0, -19)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
         if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             self._back_button = None
-            ba.containerwidget(edit=self._root_widget,
-                               on_cancel_call=self._back)
+            ba.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._back
+            )
         else:
             self._back_button = btn = ba.buttonwidget(
                 parent=self._root_widget,
@@ -113,34 +136,43 @@ class AccountSettingsWindow(ba.Window):
                 text_scale=1.2,
                 autoselect=True,
                 label=ba.Lstr(
-                    resource='doneText' if self._modal else 'backText'),
+                    resource='doneText' if self._modal else 'backText'
+                ),
                 button_type='regular' if self._modal else 'back',
-                on_activate_call=self._back)
+                on_activate_call=self._back,
+            )
             ba.containerwidget(edit=self._root_widget, cancel_button=btn)
             if not self._modal:
-                ba.buttonwidget(edit=btn,
-                                button_type='backSmall',
-                                size=(60, 56),
-                                label=ba.charstr(ba.SpecialChar.BACK))
+                ba.buttonwidget(
+                    edit=btn,
+                    button_type='backSmall',
+                    size=(60, 56),
+                    label=ba.charstr(ba.SpecialChar.BACK),
+                )
 
-        ba.textwidget(parent=self._root_widget,
-                      position=(self._width * 0.5, self._height - 41),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.ui.title_color,
-                      maxwidth=self._width - 340,
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 41),
+            size=(0, 0),
+            text=ba.Lstr(resource=self._r + '.titleText'),
+            color=ba.app.ui.title_color,
+            maxwidth=self._width - 340,
+            h_align='center',
+            v_align='center',
+        )
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=((self._width - self._scroll_width) * 0.5,
-                      self._height - 65 - self._scroll_height),
+            position=(
+                (self._width - self._scroll_width) * 0.5,
+                self._height - 65 - self._scroll_height,
+            ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
             claims_tab=True,
-            selection_loops_to_parent=True)
+            selection_loops_to_parent=True,
+        )
         self._subcontainer: ba.Widget | None = None
         self._refresh()
         self._restore_state()
@@ -158,15 +190,21 @@ class AccountSettingsWindow(ba.Window):
         account_state_num = ba.internal.get_v1_account_state_num()
         account_state = ba.internal.get_v1_account_state()
 
-        show_linked = (self._signed_in
-                       and ba.internal.get_v1_account_misc_read_val(
-                           'allowAccountLinking2', False))
+        show_linked = (
+            self._signed_in
+            and ba.internal.get_v1_account_misc_read_val(
+                'allowAccountLinking2', False
+            )
+        )
 
-        if (account_state_num != self._account_state_num
-                or self._show_linked != show_linked or self._needs_refresh):
+        if (
+            account_state_num != self._account_state_num
+            or self._show_linked != show_linked
+            or self._needs_refresh
+        ):
             self._show_linked = show_linked
             self._account_state_num = account_state_num
-            self._signed_in = (account_state == 'signed_in')
+            self._signed_in = account_state == 'signed_in'
             self._refresh()
 
         # Go ahead and refresh some individual things
@@ -189,8 +227,11 @@ class AccountSettingsWindow(ba.Window):
         from bastd.ui import confirm
 
         account_state = ba.internal.get_v1_account_state()
-        account_type = (ba.internal.get_v1_account_type()
-                        if account_state == 'signed_in' else 'unknown')
+        account_type = (
+            ba.internal.get_v1_account_type()
+            if account_state == 'signed_in'
+            else 'unknown'
+        )
 
         is_google = account_type == 'Google Play'
 
@@ -206,34 +247,47 @@ class AccountSettingsWindow(ba.Window):
         show_signing_in_text = account_state == 'signing_in'
         signing_in_text_space = 80.0
 
-        show_google_play_sign_in_button = (account_state == 'signed_out'
-                                           and 'Google Play'
-                                           in self._show_sign_in_buttons)
-        show_device_sign_in_button = (account_state == 'signed_out' and 'Local'
-                                      in self._show_sign_in_buttons)
-        show_v2_sign_in_button = (account_state == 'signed_out'
-                                  and 'V2' in self._show_sign_in_buttons)
+        show_google_play_sign_in_button = (
+            account_state == 'signed_out'
+            and 'Google Play' in self._show_sign_in_buttons
+        )
+        show_device_sign_in_button = (
+            account_state == 'signed_out'
+            and 'Local' in self._show_sign_in_buttons
+        )
+        show_v2_sign_in_button = (
+            account_state == 'signed_out' and 'V2' in self._show_sign_in_buttons
+        )
         sign_in_button_space = 70.0
 
-        show_game_service_button = (self._signed_in
-                                    and account_type in ['Game Center'])
+        show_game_service_button = self._signed_in and account_type in [
+            'Game Center'
+        ]
         game_service_button_space = 60.0
 
-        show_linked_accounts_text = (self._signed_in and
-                                     ba.internal.get_v1_account_misc_read_val(
-                                         'allowAccountLinking2', False))
+        show_linked_accounts_text = (
+            self._signed_in
+            and ba.internal.get_v1_account_misc_read_val(
+                'allowAccountLinking2', False
+            )
+        )
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = (self._signed_in and account_type
-                                    in ('Google Play', 'Alibaba', 'Local',
-                                        'OUYA', 'V2'))
+        show_achievements_button = self._signed_in and account_type in (
+            'Google Play',
+            'Alibaba',
+            'Local',
+            'OUYA',
+            'V2',
+        )
         achievements_button_space = 60.0
 
-        show_achievements_text = (self._signed_in
-                                  and not show_achievements_button)
+        show_achievements_text = (
+            self._signed_in and not show_achievements_button
+        )
         achievements_text_space = 27.0
 
-        show_leaderboards_button = (self._signed_in and is_google)
+        show_leaderboards_button = self._signed_in and is_google
         leaderboards_button_space = 60.0
 
         show_campaign_progress = self._signed_in
@@ -245,30 +299,38 @@ class AccountSettingsWindow(ba.Window):
         show_reset_progress_button = False
         reset_progress_button_space = 70.0
 
-        show_manage_v2_account_button = (self._signed_in
-                                         and account_type == 'V2'
-                                         and bool(False))  # Disabled for now.
+        show_manage_v2_account_button = (
+            self._signed_in and account_type == 'V2' and bool(False)
+        )  # Disabled for now.
         manage_v2_account_button_space = 100.0
 
         show_player_profiles_button = self._signed_in
-        player_profiles_button_space = (70.0 if show_manage_v2_account_button
-                                        else 100.0)
+        player_profiles_button_space = (
+            70.0 if show_manage_v2_account_button else 100.0
+        )
 
-        show_link_accounts_button = (self._signed_in and
-                                     ba.internal.get_v1_account_misc_read_val(
-                                         'allowAccountLinking2', False))
+        show_link_accounts_button = (
+            self._signed_in
+            and ba.internal.get_v1_account_misc_read_val(
+                'allowAccountLinking2', False
+            )
+        )
         link_accounts_button_space = 70.0
 
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_sign_out_button = (self._signed_in and account_type
-                                in ['Local', 'Google Play', 'V2'])
+        show_sign_out_button = self._signed_in and account_type in [
+            'Local',
+            'Google Play',
+            'V2',
+        ]
         sign_out_button_space = 70.0
 
         show_cancel_v2_sign_in_button = (
             account_state == 'signing_in'
-            and ba.app.accounts_v2.have_primary_credentials())
+            and ba.app.accounts_v2.have_primary_credentials()
+        )
         cancel_v2_sign_in_button_space = 70.0
 
         if self._subcontainer is not None:
@@ -316,13 +378,14 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += sign_out_button_space
         if show_cancel_v2_sign_in_button:
             self._sub_height += cancel_v2_sign_in_button_space
-        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
-                                                size=(self._sub_width,
-                                                      self._sub_height),
-                                                background=False,
-                                                claims_left_right=True,
-                                                claims_tab=True,
-                                                selection_loops_to_parent=True)
+        self._subcontainer = ba.containerwidget(
+            parent=self._scrollwidget,
+            size=(self._sub_width, self._sub_height),
+            background=False,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True,
+        )
 
         first_selectable = None
         v = self._sub_height - 10.0
@@ -335,14 +398,17 @@ class AccountSettingsWindow(ba.Window):
                 size=(0, 0),
                 text=ba.Lstr(
                     resource='accountSettingsWindow.deviceSpecificAccountText',
-                    subs=[('${NAME}',
-                           ba.internal.get_v1_account_display_string())]),
+                    subs=[
+                        ('${NAME}', ba.internal.get_v1_account_display_string())
+                    ],
+                ),
                 scale=0.7,
                 color=(0.5, 0.5, 0.6),
                 maxwidth=self._sub_width * 0.9,
                 flatness=1.0,
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
             v -= local_signed_in_as_space * 0.4
 
         self._account_name_text: ba.Widget | None
@@ -350,16 +416,19 @@ class AccountSettingsWindow(ba.Window):
             v -= signed_in_as_space * 0.2
             txt = ba.Lstr(
                 resource='accountSettingsWindow.youAreSignedInAsText',
-                fallback_resource='accountSettingsWindow.youAreLoggedInAsText')
-            ba.textwidget(parent=self._subcontainer,
-                          position=(self._sub_width * 0.5, v),
-                          size=(0, 0),
-                          text=txt,
-                          scale=0.9,
-                          color=ba.app.ui.title_color,
-                          maxwidth=self._sub_width * 0.9,
-                          h_align='center',
-                          v_align='center')
+                fallback_resource='accountSettingsWindow.youAreLoggedInAsText',
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                position=(self._sub_width * 0.5, v),
+                size=(0, 0),
+                text=txt,
+                scale=0.9,
+                color=ba.app.ui.title_color,
+                maxwidth=self._sub_width * 0.9,
+                h_align='center',
+                v_align='center',
+            )
             v -= signed_in_as_space * 0.4
             self._account_name_text = ba.textwidget(
                 parent=self._subcontainer,
@@ -370,7 +439,8 @@ class AccountSettingsWindow(ba.Window):
                 res_scale=1.5,
                 color=(1, 1, 1, 1),
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
             self._refresh_account_name_text()
             v -= signed_in_as_space * 0.4
         else:
@@ -385,45 +455,55 @@ class AccountSettingsWindow(ba.Window):
             v -= sign_in_benefits_space
             app = ba.app
             extra: str | ba.Lstr | None
-            if (app.platform in ['mac', 'ios']
-                    and app.subplatform == 'appstore'):
+            if app.platform in ['mac', 'ios'] and app.subplatform == 'appstore':
                 extra = ba.Lstr(
                     value='\n${S}',
-                    subs=[('${S}',
-                           ba.Lstr(resource='signInWithGameCenterText'))])
+                    subs=[
+                        ('${S}', ba.Lstr(resource='signInWithGameCenterText'))
+                    ],
+                )
             else:
                 extra = ''
 
-            ba.textwidget(parent=self._subcontainer,
-                          position=(self._sub_width * 0.5,
-                                    v + sign_in_benefits_space * 0.4),
-                          size=(0, 0),
-                          text=ba.Lstr(value='${A}${B}',
-                                       subs=[('${A}',
-                                              ba.Lstr(resource=self._r +
-                                                      '.signInInfoText')),
-                                             ('${B}', extra)]),
-                          max_height=sign_in_benefits_space * 0.9,
-                          scale=0.9,
-                          color=(0.75, 0.7, 0.8),
-                          maxwidth=self._sub_width * 0.8,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._subcontainer,
+                position=(
+                    self._sub_width * 0.5,
+                    v + sign_in_benefits_space * 0.4,
+                ),
+                size=(0, 0),
+                text=ba.Lstr(
+                    value='${A}${B}',
+                    subs=[
+                        ('${A}', ba.Lstr(resource=self._r + '.signInInfoText')),
+                        ('${B}', extra),
+                    ],
+                ),
+                max_height=sign_in_benefits_space * 0.9,
+                scale=0.9,
+                color=(0.75, 0.7, 0.8),
+                maxwidth=self._sub_width * 0.8,
+                h_align='center',
+                v_align='center',
+            )
 
         if show_signing_in_text:
             v -= signing_in_text_space
 
             ba.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5,
-                          v + signing_in_text_space * 0.5),
+                position=(
+                    self._sub_width * 0.5,
+                    v + signing_in_text_space * 0.5,
+                ),
                 size=(0, 0),
                 text=ba.Lstr(resource='accountSettingsWindow.signingInText'),
                 scale=0.9,
                 color=(0, 1, 0),
                 maxwidth=self._sub_width * 0.8,
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
 
         if show_google_play_sign_in_button:
             button_width = 350
@@ -435,18 +515,28 @@ class AccountSettingsWindow(ba.Window):
                 size=(button_width, 60),
                 label=ba.Lstr(
                     value='${A}${B}',
-                    subs=[('${A}',
-                           ba.charstr(ba.SpecialChar.GOOGLE_PLAY_GAMES_LOGO)),
-                          ('${B}',
-                           ba.Lstr(resource=self._r +
-                                   '.signInWithGooglePlayText'))]),
-                on_activate_call=lambda: self._sign_in_press('Google Play'))
+                    subs=[
+                        (
+                            '${A}',
+                            ba.charstr(ba.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                        ),
+                        (
+                            '${B}',
+                            ba.Lstr(
+                                resource=self._r + '.signInWithGooglePlayText'
+                            ),
+                        ),
+                    ],
+                ),
+                on_activate_call=lambda: self._sign_in_press('Google Play'),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -460,7 +550,8 @@ class AccountSettingsWindow(ba.Window):
                 autoselect=True,
                 size=(button_width, 60),
                 label='',
-                on_activate_call=self._v2_sign_in_press)
+                on_activate_call=self._v2_sign_in_press,
+            )
             ba.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
@@ -470,29 +561,37 @@ class AccountSettingsWindow(ba.Window):
                 position=(self._sub_width * 0.5, v + 17),
                 text=ba.Lstr(
                     value='${A}${B}',
-                    subs=[('${A}', ba.charstr(ba.SpecialChar.V2_LOGO)),
-                          ('${B}',
-                           ba.Lstr(resource=self._r + '.signInWithV2Text'))]),
+                    subs=[
+                        ('${A}', ba.charstr(ba.SpecialChar.V2_LOGO)),
+                        (
+                            '${B}',
+                            ba.Lstr(resource=self._r + '.signInWithV2Text'),
+                        ),
+                    ],
+                ),
                 maxwidth=button_width * 0.8,
-                color=(0.75, 1.0, 0.7))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v - 4),
-                          text=ba.Lstr(resource=self._r +
-                                       '.signInWithV2InfoText'),
-                          flatness=1.0,
-                          scale=0.57,
-                          maxwidth=button_width * 0.9,
-                          color=(0.55, 0.8, 0.5))
+                color=(0.75, 1.0, 0.7),
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v - 4),
+                text=ba.Lstr(resource=self._r + '.signInWithV2InfoText'),
+                flatness=1.0,
+                scale=0.57,
+                maxwidth=button_width * 0.9,
+                color=(0.55, 0.8, 0.5),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -506,40 +605,48 @@ class AccountSettingsWindow(ba.Window):
                 autoselect=True,
                 size=(button_width, 60),
                 label='',
-                on_activate_call=lambda: self._sign_in_press('Local'))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v + 17),
-                          text=ba.Lstr(
-                              value='${A}${B}',
-                              subs=[('${A}',
-                                     ba.charstr(ba.SpecialChar.LOCAL_ACCOUNT)),
-                                    ('${B}',
-                                     ba.Lstr(resource=self._r +
-                                             '.signInWithDeviceText'))]),
-                          maxwidth=button_width * 0.8,
-                          color=(0.75, 1.0, 0.7))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v - 4),
-                          text=ba.Lstr(resource=self._r +
-                                       '.signInWithDeviceInfoText'),
-                          flatness=1.0,
-                          scale=0.57,
-                          maxwidth=button_width * 0.9,
-                          color=(0.55, 0.8, 0.5))
+                on_activate_call=lambda: self._sign_in_press('Local'),
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 17),
+                text=ba.Lstr(
+                    value='${A}${B}',
+                    subs=[
+                        ('${A}', ba.charstr(ba.SpecialChar.LOCAL_ACCOUNT)),
+                        (
+                            '${B}',
+                            ba.Lstr(resource=self._r + '.signInWithDeviceText'),
+                        ),
+                    ],
+                ),
+                maxwidth=button_width * 0.8,
+                color=(0.75, 1.0, 0.7),
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v - 4),
+                text=ba.Lstr(resource=self._r + '.signInWithDeviceInfoText'),
+                flatness=1.0,
+                scale=0.57,
+                maxwidth=button_width * 0.9,
+                color=(0.55, 0.8, 0.5),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -557,13 +664,16 @@ class AccountSettingsWindow(ba.Window):
                 icon=ba.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=lambda: ba.open_url(
-                    'https://ballistica.net/accountsettings'))
+                    'https://ballistica.net/accountsettings'
+                ),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
 
         if show_player_profiles_button:
@@ -578,13 +688,15 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 icon=ba.gettexture('cuteSpaz'),
                 textcolor=(0.75, 0.7, 0.8),
-                on_activate_call=self._player_profiles_press)
+                on_activate_call=self._player_profiles_press,
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=0)
 
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
@@ -595,8 +707,9 @@ class AccountSettingsWindow(ba.Window):
             if account_type == 'Game Center':
                 account_type_name = ba.Lstr(resource='gameCenterText')
             else:
-                raise ValueError("unknown account type: '" +
-                                 str(account_type) + "'")
+                raise ValueError(
+                    "unknown account type: '" + str(account_type) + "'"
+                )
             self._game_service_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
@@ -605,13 +718,15 @@ class AccountSettingsWindow(ba.Window):
                 autoselect=True,
                 on_activate_call=ba.internal.show_online_score_ui,
                 size=(button_width, 50),
-                label=account_type_name)
+                label=account_type_name,
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             v -= game_service_button_space * 0.15
         else:
@@ -628,7 +743,8 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.8,
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
             v -= achievements_text_space * 0.5
         else:
             self._achievements_text = None
@@ -643,18 +759,23 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                icon=ba.gettexture('googlePlayAchievementsIcon'
-                                   if is_google else 'achievementsIcon'),
+                icon=ba.gettexture(
+                    'googlePlayAchievementsIcon'
+                    if is_google
+                    else 'achievementsIcon'
+                ),
                 icon_color=(0.8, 0.95, 0.7) if is_google else (0.85, 0.8, 0.9),
                 on_activate_call=self._on_achievements_press,
                 size=(button_width, 50),
-                label='')
+                label='',
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             v -= achievements_button_space * 0.15
         else:
@@ -677,13 +798,15 @@ class AccountSettingsWindow(ba.Window):
                 icon_color=(0.8, 0.95, 0.7),
                 on_activate_call=self._on_leaderboards_press,
                 size=(button_width, 50),
-                label=ba.Lstr(resource='leaderboardsText'))
+                label=ba.Lstr(resource='leaderboardsText'),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
             v -= leaderboards_button_space * 0.15
         else:
@@ -700,7 +823,8 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.8,
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
             v -= campaign_progress_space * 0.5
             self._refresh_campaign_progress_text()
         else:
@@ -709,16 +833,17 @@ class AccountSettingsWindow(ba.Window):
         self._tickets_text: ba.Widget | None
         if show_tickets:
             v -= tickets_space * 0.5
-            self._tickets_text = ba.textwidget(parent=self._subcontainer,
-                                               position=(self._sub_width * 0.5,
-                                                         v),
-                                               size=(0, 0),
-                                               scale=0.9,
-                                               color=(0.75, 0.7, 0.8),
-                                               maxwidth=self._sub_width * 0.8,
-                                               flatness=1.0,
-                                               h_align='center',
-                                               v_align='center')
+            self._tickets_text = ba.textwidget(
+                parent=self._subcontainer,
+                position=(self._sub_width * 0.5, v),
+                size=(0, 0),
+                scale=0.9,
+                color=(0.75, 0.7, 0.8),
+                maxwidth=self._sub_width * 0.8,
+                flatness=1.0,
+                h_align='center',
+                v_align='center',
+            )
             v -= tickets_space * 0.5
             self._refresh_tickets_text()
 
@@ -730,11 +855,13 @@ class AccountSettingsWindow(ba.Window):
 
         button_width = 250
         if show_reset_progress_button:
-            confirm_text = (ba.Lstr(resource=self._r +
-                                    '.resetProgressConfirmText')
-                            if self._can_reset_achievements else ba.Lstr(
-                                resource=self._r +
-                                '.resetProgressConfirmNoAchievementsText'))
+            confirm_text = (
+                ba.Lstr(resource=self._r + '.resetProgressConfirmText')
+                if self._can_reset_achievements
+                else ba.Lstr(
+                    resource=self._r + '.resetProgressConfirmNoAchievementsText'
+                )
+            )
             v -= reset_progress_button_space
             self._reset_progress_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
@@ -748,13 +875,16 @@ class AccountSettingsWindow(ba.Window):
                     text=confirm_text,
                     width=500,
                     height=200,
-                    action=self._reset_progress))
+                    action=self._reset_progress,
+                ),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn)
 
         self._linked_accounts_text: ba.Widget | None
@@ -768,7 +898,8 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.95,
                 h_align='center',
-                v_align='center')
+                v_align='center',
+            )
             v -= linked_accounts_text_space * 0.2
             self._update_linked_accounts_text()
         else:
@@ -783,34 +914,39 @@ class AccountSettingsWindow(ba.Window):
                 size=(button_width, 60),
                 label='',
                 color=(0.55, 0.5, 0.6),
-                on_activate_call=self._link_accounts_press)
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v + 17 + 20),
-                          text=ba.Lstr(resource=self._r + '.linkAccountsText'),
-                          maxwidth=button_width * 0.8,
-                          color=(0.75, 0.7, 0.8))
-            ba.textwidget(parent=self._subcontainer,
-                          draw_controller=btn,
-                          h_align='center',
-                          v_align='center',
-                          size=(0, 0),
-                          position=(self._sub_width * 0.5, v - 4 + 20),
-                          text=ba.Lstr(resource=self._r +
-                                       '.linkAccountsInfoText'),
-                          flatness=1.0,
-                          scale=0.5,
-                          maxwidth=button_width * 0.8,
-                          color=(0.75, 0.7, 0.8))
+                on_activate_call=self._link_accounts_press,
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 17 + 20),
+                text=ba.Lstr(resource=self._r + '.linkAccountsText'),
+                maxwidth=button_width * 0.8,
+                color=(0.75, 0.7, 0.8),
+            )
+            ba.textwidget(
+                parent=self._subcontainer,
+                draw_controller=btn,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v - 4 + 20),
+                text=ba.Lstr(resource=self._r + '.linkAccountsInfoText'),
+                flatness=1.0,
+                scale=0.5,
+                maxwidth=button_width * 0.8,
+                color=(0.75, 0.7, 0.8),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
 
         self._unlink_accounts_button: ba.Widget | None
@@ -823,7 +959,8 @@ class AccountSettingsWindow(ba.Window):
                 size=(button_width, 60),
                 label='',
                 color=(0.55, 0.5, 0.6),
-                on_activate_call=self._unlink_accounts_press)
+                on_activate_call=self._unlink_accounts_press,
+            )
             self._unlink_accounts_button_label = ba.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
@@ -833,13 +970,15 @@ class AccountSettingsWindow(ba.Window):
                 position=(self._sub_width * 0.5, v + 55),
                 text=ba.Lstr(resource=self._r + '.unlinkAccountsText'),
                 maxwidth=button_width * 0.8,
-                color=(0.75, 0.7, 0.8))
+                color=(0.75, 0.7, 0.8),
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
             self._update_unlink_accounts_button()
         else:
@@ -855,13 +994,15 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                on_activate_call=self._sign_out_press)
+                on_activate_call=self._sign_out_press,
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         if show_cancel_v2_sign_in_button:
@@ -874,49 +1015,63 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                on_activate_call=self._cancel_v2_sign_in_press)
+                on_activate_call=self._cancel_v2_sign_in_press,
+            )
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.ui.use_toolbars:
-                ba.widget(edit=btn,
-                          right_widget=ba.internal.get_special_widget(
-                              'party_button'))
+                ba.widget(
+                    edit=btn,
+                    right_widget=ba.internal.get_special_widget('party_button'),
+                )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         # Whatever the topmost selectable thing is, we want it to scroll all
         # the way up when we select it.
         if first_selectable is not None:
-            ba.widget(edit=first_selectable,
-                      up_widget=bbtn,
-                      show_buffer_top=400)
+            ba.widget(
+                edit=first_selectable, up_widget=bbtn, show_buffer_top=400
+            )
             # (this should re-scroll us to the top..)
-            ba.containerwidget(edit=self._subcontainer,
-                               visible_child=first_selectable)
+            ba.containerwidget(
+                edit=self._subcontainer, visible_child=first_selectable
+            )
         self._needs_refresh = False
 
     def _on_achievements_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui import achievements
+
         account_state = ba.internal.get_v1_account_state()
-        account_type = (ba.internal.get_v1_account_type()
-                        if account_state == 'signed_in' else 'unknown')
+        account_type = (
+            ba.internal.get_v1_account_type()
+            if account_state == 'signed_in'
+            else 'unknown'
+        )
         # for google play we use the built-in UI; otherwise pop up our own
         if account_type == 'Google Play':
-            ba.timer(0.15,
-                     ba.Call(ba.internal.show_online_score_ui, 'achievements'),
-                     timetype=ba.TimeType.REAL)
+            ba.timer(
+                0.15,
+                ba.Call(ba.internal.show_online_score_ui, 'achievements'),
+                timetype=ba.TimeType.REAL,
+            )
         elif account_type != 'unknown':
             assert self._achievements_button is not None
             achievements.AchievementsWindow(
-                position=self._achievements_button.get_screen_space_center())
+                position=self._achievements_button.get_screen_space_center()
+            )
         else:
-            print('ERROR: unknown account type in on_achievements_press:',
-                  account_type)
+            print(
+                'ERROR: unknown account type in on_achievements_press:',
+                account_type,
+            )
 
     def _on_leaderboards_press(self) -> None:
-        ba.timer(0.15,
-                 ba.Call(ba.internal.show_online_score_ui, 'leaderboards'),
-                 timetype=ba.TimeType.REAL)
+        ba.timer(
+            0.15,
+            ba.Call(ba.internal.show_online_score_ui, 'leaderboards'),
+            timetype=ba.TimeType.REAL,
+        )
 
     def _have_unlinkable_accounts(self) -> bool:
         # if this is not present, we haven't had contact from the server so
@@ -924,7 +1079,8 @@ class AccountSettingsWindow(ba.Window):
         if ba.internal.get_public_login_id() is None:
             return False
         accounts = ba.internal.get_v1_account_misc_read_val_2(
-            'linkedAccounts', [])
+            'linkedAccounts', []
+        )
         return len(accounts) > 1
 
     def _update_unlink_accounts_button(self) -> None:
@@ -947,7 +1103,8 @@ class AccountSettingsWindow(ba.Window):
             accounts_str = num * '.' + (4 - num) * ' '
         else:
             accounts = ba.internal.get_v1_account_misc_read_val_2(
-                'linkedAccounts', [])
+                'linkedAccounts', []
+            )
             # our_account = _bs.get_v1_account_display_string()
             # accounts = [a for a in accounts if a != our_account]
             # accounts_str = u', '.join(accounts) if accounts else
@@ -956,15 +1113,20 @@ class AccountSettingsWindow(ba.Window):
             # accounts
             # (they can see that in the unlink section if they're curious)
             accounts_str = str(max(0, len(accounts) - 1))
-        ba.textwidget(edit=self._linked_accounts_text,
-                      text=ba.Lstr(value='${L} ${A}',
-                                   subs=[('${L}',
-                                          ba.Lstr(resource=self._r +
-                                                  '.linkedAccountsText')),
-                                         ('${A}', accounts_str)]))
+        ba.textwidget(
+            edit=self._linked_accounts_text,
+            text=ba.Lstr(
+                value='${L} ${A}',
+                subs=[
+                    ('${L}', ba.Lstr(resource=self._r + '.linkedAccountsText')),
+                    ('${A}', accounts_str),
+                ],
+            ),
+        )
 
     def _refresh_campaign_progress_text(self) -> None:
         from ba.internal import getcampaign
+
         if self._campaign_progress_text is None:
             return
         p_str: str | ba.Lstr
@@ -975,9 +1137,10 @@ class AccountSettingsWindow(ba.Window):
 
             # Last level cant be completed; hence the -1;
             progress = min(1.0, float(levels_complete) / (len(levels) - 1))
-            p_str = ba.Lstr(resource=self._r + '.campaignProgressText',
-                            subs=[('${PROGRESS}',
-                                   str(int(progress * 100.0)) + '%')])
+            p_str = ba.Lstr(
+                resource=self._r + '.campaignProgressText',
+                subs=[('${PROGRESS}', str(int(progress * 100.0)) + '%')],
+            )
         except Exception:
             p_str = '?'
             ba.print_exception('Error calculating co-op campaign progress.')
@@ -991,9 +1154,12 @@ class AccountSettingsWindow(ba.Window):
         except Exception:
             ba.print_exception()
             tc_str = '-'
-        ba.textwidget(edit=self._tickets_text,
-                      text=ba.Lstr(resource=self._r + '.ticketsText',
-                                   subs=[('${COUNT}', tc_str)]))
+        ba.textwidget(
+            edit=self._tickets_text,
+            text=ba.Lstr(
+                resource=self._r + '.ticketsText', subs=[('${COUNT}', tc_str)]
+            ),
+        )
 
     def _refresh_account_name_text(self) -> None:
         if self._account_name_text is None:
@@ -1006,14 +1172,17 @@ class AccountSettingsWindow(ba.Window):
         ba.textwidget(edit=self._account_name_text, text=name_str)
 
     def _refresh_achievements(self) -> None:
-        if (self._achievements_text is None
-                and self._achievements_button is None):
+        if (
+            self._achievements_text is None
+            and self._achievements_button is None
+        ):
             return
         complete = sum(1 if a.complete else 0 for a in ba.app.ach.achievements)
         total = len(ba.app.ach.achievements)
-        txt_final = ba.Lstr(resource=self._r + '.achievementProgressText',
-                            subs=[('${COUNT}', str(complete)),
-                                  ('${TOTAL}', str(total))])
+        txt_final = ba.Lstr(
+            resource=self._r + '.achievementProgressText',
+            subs=[('${COUNT}', str(complete)), ('${TOTAL}', str(total))],
+        )
 
         if self._achievements_text is not None:
             ba.textwidget(edit=self._achievements_text, text=txt_final)
@@ -1023,11 +1192,13 @@ class AccountSettingsWindow(ba.Window):
     def _link_accounts_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account import link
+
         link.AccountLinkWindow(origin_widget=self._link_accounts_button)
 
     def _unlink_accounts_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account import unlink
+
         if not self._have_unlinkable_accounts():
             ba.playsound(ba.getsound('error'))
             return
@@ -1036,10 +1207,12 @@ class AccountSettingsWindow(ba.Window):
     def _player_profiles_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.profile import browser as pbrowser
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         pbrowser.ProfileBrowserWindow(
-            origin_widget=self._player_profiles_button)
+            origin_widget=self._player_profiles_button
+        )
 
     def _cancel_v2_sign_in_press(self) -> None:
         # Just say we don't wanna be signed in anymore.
@@ -1061,15 +1234,17 @@ class AccountSettingsWindow(ba.Window):
         # signed in at this point (affects v1 accounts).
         cfg['Auto Account State'] = 'signed_out'
         cfg.commit()
-        ba.buttonwidget(edit=self._sign_out_button,
-                        label=ba.Lstr(resource=self._r + '.signingOutText'))
+        ba.buttonwidget(
+            edit=self._sign_out_button,
+            label=ba.Lstr(resource=self._r + '.signingOutText'),
+        )
 
         # Speed UI updates along.
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
 
-    def _sign_in_press(self,
-                       account_type: str,
-                       show_test_warning: bool = True) -> None:
+    def _sign_in_press(
+        self, account_type: str, show_test_warning: bool = True
+    ) -> None:
         del show_test_warning  # unused
         ba.internal.sign_in_v1(account_type)
 
@@ -1083,12 +1258,14 @@ class AccountSettingsWindow(ba.Window):
     def _v2_sign_in_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account.v2 import V2SignInWindow
+
         assert self._sign_in_v2_button is not None
         V2SignInWindow(origin_widget=self._sign_in_v2_button)
 
     def _reset_progress(self) -> None:
         try:
             from ba.internal import getcampaign
+
             # FIXME: This would need to happen server-side these days.
             if self._can_reset_achievements:
                 ba.app.config['Achievements'] = {}
@@ -1106,13 +1283,16 @@ class AccountSettingsWindow(ba.Window):
     def _back(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.mainmenu import MainMenuWindow
+
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
 
         if not self._modal:
             ba.app.ui.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget())
+                MainMenuWindow(transition='in_left').get_root_widget()
+            )
 
     def _save_state(self) -> None:
         try:

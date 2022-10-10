@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 # before we import them.
 sys.path += [
     str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python')),
-    str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python-site-packages'))
+    str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python-site-packages')),
 ]
 
 from bacommon.servermanager import ServerConfig, StartServerModeCommand
@@ -127,7 +127,8 @@ class ServerManagerApp:
         print(
             f'{Clr.CYN}{Clr.BLD}BallisticaCore server manager {VERSION_STR}'
             f' starting up ({dbgstr} mode)...{Clr.RST}',
-            flush=True)
+            flush=True,
+        )
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
         # need to register a SIGTERM handler so we have a chance to clean
@@ -150,8 +151,9 @@ class ServerManagerApp:
 
         assert self._subprocess_thread is not None
         if self._subprocess_thread.is_alive():
-            print(f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}',
-                  flush=True)
+            print(
+                f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}', flush=True
+            )
 
         # Mark ourselves as shutting down and wait for the process to wrap up.
         self._done = True
@@ -188,6 +190,7 @@ class ServerManagerApp:
     def _run_interactive(self) -> None:
         """Run the app loop to completion interactively."""
         import code
+
         self._prerun()
 
         # Print basic usage info for interactive mode.
@@ -195,7 +198,8 @@ class ServerManagerApp:
             f"{Clr.CYN}Interactive mode enabled; use the 'mgr' object"
             f' to interact with the server.\n'
             f"Type 'help(mgr)' for more information.{Clr.RST}",
-            flush=True)
+            flush=True,
+        )
 
         context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
 
@@ -216,7 +220,8 @@ class ServerManagerApp:
             print(
                 f'{Clr.SRED}Unexpected interpreter exception:'
                 f' {exc} ({type(exc)}){Clr.RST}',
-                flush=True)
+                flush=True,
+            )
 
         self._postrun()
 
@@ -248,35 +253,41 @@ class ServerManagerApp:
         # we'll hopefully still give it enough time to process/print.
         time.sleep(0.1)
 
-    def screenmessage(self,
-                      message: str,
-                      color: tuple[float, float, float] | None = None,
-                      clients: list[int] | None = None) -> None:
+    def screenmessage(
+        self,
+        message: str,
+        color: tuple[float, float, float] | None = None,
+        clients: list[int] | None = None,
+    ) -> None:
         """Display a screen-message.
 
         This will have no name attached and not show up in chat history.
         They will show up in replays, however (unless clients is passed).
         """
         from bacommon.servermanager import ScreenMessageCommand
-        self._enqueue_server_command(
-            ScreenMessageCommand(message=message, color=color,
-                                 clients=clients))
 
-    def chatmessage(self,
-                    message: str,
-                    clients: list[int] | None = None) -> None:
+        self._enqueue_server_command(
+            ScreenMessageCommand(message=message, color=color, clients=clients)
+        )
+
+    def chatmessage(
+        self, message: str, clients: list[int] | None = None
+    ) -> None:
         """Send a chat message from the server.
 
         This will have the server's name attached and will be logged
         in client chat windows, just like other chat messages.
         """
         from bacommon.servermanager import ChatMessageCommand
+
         self._enqueue_server_command(
-            ChatMessageCommand(message=message, clients=clients))
+            ChatMessageCommand(message=message, clients=clients)
+        )
 
     def clientlist(self) -> None:
         """Print a list of connected clients."""
         from bacommon.servermanager import ClientListCommand
+
         self._enqueue_server_command(ClientListCommand())
         self._block_for_command_completion()
 
@@ -289,8 +300,10 @@ class ServerManagerApp:
         ban time.
         """
         from bacommon.servermanager import KickCommand
+
         self._enqueue_server_command(
-            KickCommand(client_id=client_id, ban_time=ban_time))
+            KickCommand(client_id=client_id, ban_time=ban_time)
+        )
 
     def restart(self, immediate: bool = True) -> None:
         """Restart the server subprocess.
@@ -300,15 +313,19 @@ class ServerManagerApp:
         the next clean transition point (the end of a series, etc).
         """
         from bacommon.servermanager import ShutdownCommand, ShutdownReason
+
         self._enqueue_server_command(
-            ShutdownCommand(reason=ShutdownReason.RESTARTING,
-                            immediate=immediate))
+            ShutdownCommand(
+                reason=ShutdownReason.RESTARTING, immediate=immediate
+            )
+        )
 
         # If we're asking for an immediate restart but don't get one within
         # the grace period, bring down the hammer.
         if immediate:
             self._subprocess_force_kill_time = (
-                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT
+            )
 
     def shutdown(self, immediate: bool = True) -> None:
         """Shut down the server subprocess and exit the wrapper.
@@ -318,8 +335,10 @@ class ServerManagerApp:
         the next clean transition point (the end of a series, etc).
         """
         from bacommon.servermanager import ShutdownCommand, ShutdownReason
+
         self._enqueue_server_command(
-            ShutdownCommand(reason=ShutdownReason.NONE, immediate=immediate))
+            ShutdownCommand(reason=ShutdownReason.NONE, immediate=immediate)
+        )
 
         # An explicit shutdown means we know to bail completely once this
         # subprocess completes.
@@ -329,7 +348,8 @@ class ServerManagerApp:
         # the grace period, bring down the hammer.
         if immediate:
             self._subprocess_force_kill_time = (
-                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT
+            )
 
     def _parse_command_line_args(self) -> None:
         """Parse command line args."""
@@ -348,8 +368,7 @@ class ServerManagerApp:
                     raise CleanError('Expected a config path as next arg.')
                 path = sys.argv[i + 1]
                 if not os.path.exists(path):
-                    raise CleanError(
-                        f"Supplied path does not exist: '{path}'.")
+                    raise CleanError(f"Supplied path does not exist: '{path}'.")
                 # We need an abs path because we may be in a different
                 # cwd currently than we will be during the run.
                 self._config_path = os.path.abspath(path)
@@ -366,15 +385,19 @@ class ServerManagerApp:
                 i += 2
             elif arg == '--interactive':
                 if did_set_interactive:
-                    raise CleanError('interactive/noninteractive can only'
-                                     ' be specified once.')
+                    raise CleanError(
+                        'interactive/noninteractive can only'
+                        ' be specified once.'
+                    )
                 self._interactive = True
                 did_set_interactive = True
                 i += 1
             elif arg == '--noninteractive':
                 if did_set_interactive:
-                    raise CleanError('interactive/noninteractive can only'
-                                     ' be specified once.')
+                    raise CleanError(
+                        'interactive/noninteractive can only'
+                        ' be specified once.'
+                    )
                 self._interactive = False
                 did_set_interactive = True
                 i += 1
@@ -391,6 +414,7 @@ class ServerManagerApp:
     def _par(cls, txt: str) -> str:
         """Spit out a pretty paragraph for our help text."""
         import textwrap
+
         ind = ' ' * 2
         out = textwrap.fill(txt, 80, initial_indent=ind, subsequent_indent=ind)
         return f'{out}\n'
@@ -400,30 +424,40 @@ class ServerManagerApp:
         """Print app help."""
         filename = os.path.basename(__file__)
         out = (
-            f'{Clr.BLD}{filename} usage:{Clr.RST}\n' + cls._par(
+            f'{Clr.BLD}{filename} usage:{Clr.RST}\n'
+            + cls._par(
                 'This script handles configuring, launching, re-launching,'
                 ' and otherwise managing BallisticaCore operating'
                 ' in server mode. It can be run with no arguments, but'
-                ' accepts the following optional ones:') + f'\n'
+                ' accepts the following optional ones:'
+            )
+            + f'\n'
             f'{Clr.BLD}--help:{Clr.RST}\n'
             f'  Show this help.\n'
             f'\n'
-            f'{Clr.BLD}--config [path]{Clr.RST}\n' + cls._par(
+            f'{Clr.BLD}--config [path]{Clr.RST}\n'
+            + cls._par(
                 'Set the config file read by the server script. The config'
                 ' file contains most options for what kind of game to host.'
                 ' It should be in yaml format. Note that yaml is backwards'
                 ' compatible with json so you can just write json if you'
                 ' want to. If not specified, the script will look for a'
                 ' file named \'config.yaml\' in the same directory as the'
-                ' script.') + '\n'
-            f'{Clr.BLD}--root [path]{Clr.RST}\n' + cls._par(
+                ' script.'
+            )
+            + '\n'
+            f'{Clr.BLD}--root [path]{Clr.RST}\n'
+            + cls._par(
                 'Set the ballistica root directory. This is where the server'
                 ' binary will read and write its caches, state files,'
                 ' downloaded assets to, etc. It needs to be a writable'
                 ' directory. If not specified, the script will use the'
-                ' \'dist/ba_root\' directory relative to itself.') + '\n'
+                ' \'dist/ba_root\' directory relative to itself.'
+            )
+            + '\n'
             f'{Clr.BLD}--interactive{Clr.RST}\n'
-            f'{Clr.BLD}--noninteractive{Clr.RST}\n' + cls._par(
+            f'{Clr.BLD}--noninteractive{Clr.RST}\n'
+            + cls._par(
                 'Specify whether the script should run interactively.'
                 ' In interactive mode, the script creates a Python interpreter'
                 ' and reads commands from stdin, allowing for live interaction'
@@ -431,19 +465,26 @@ class ServerManagerApp:
                 'end-of-file is reached in stdin. Noninteractive mode creates'
                 ' no interpreter and is more suited to being run in automated'
                 ' scenarios. By default, interactive mode will be used if'
-                ' a terminal is detected and noninteractive mode otherwise.') +
-            '\n'
-            f'{Clr.BLD}--no-auto-restart{Clr.RST}\n' +
-            cls._par('Auto-restart is enabled by default, which means the'
-                     ' server manager will restart the server binary whenever'
-                     ' it exits (even when uncleanly). Disabling auto-restart'
-                     ' will cause the server manager to instead exit after a'
-                     ' single run and also to return error codes if the'
-                     ' server binary did so.') + '\n'
-            f'{Clr.BLD}--no-config-auto-restart{Clr.RST}\n' + cls._par(
+                ' a terminal is detected and noninteractive mode otherwise.'
+            )
+            + '\n'
+            f'{Clr.BLD}--no-auto-restart{Clr.RST}\n'
+            + cls._par(
+                'Auto-restart is enabled by default, which means the'
+                ' server manager will restart the server binary whenever'
+                ' it exits (even when uncleanly). Disabling auto-restart'
+                ' will cause the server manager to instead exit after a'
+                ' single run and also to return error codes if the'
+                ' server binary did so.'
+            )
+            + '\n'
+            f'{Clr.BLD}--no-config-auto-restart{Clr.RST}\n'
+            + cls._par(
                 'By default, when auto-restart is enabled, the server binary'
                 ' will be automatically restarted if changes to the server'
-                ' config file are detected. This disables that behavior.'))
+                ' config file are detected. This disables that behavior.'
+            )
+        )
         print(out)
 
     def load_config(self, strict: bool, print_confirmation: bool) -> None:
@@ -459,26 +500,32 @@ class ServerManagerApp:
         for trynum in range(maxtries):
             try:
                 self._config = self._load_config_from_file(
-                    print_confirmation=print_confirmation)
+                    print_confirmation=print_confirmation
+                )
                 return
             except Exception as exc:
                 if strict:
                     raise CleanError(
-                        f'Error loading config file:\n{exc}') from exc
-                print(f'{Clr.RED}Error loading config file:\n{exc}.{Clr.RST}',
-                      flush=True)
+                        f'Error loading config file:\n{exc}'
+                    ) from exc
+                print(
+                    f'{Clr.RED}Error loading config file:\n{exc}.{Clr.RST}',
+                    flush=True,
+                )
                 if trynum == maxtries - 1:
                     print(
                         f'{Clr.RED}Max-tries reached; giving up.'
                         f' Existing config values will be used.{Clr.RST}',
-                        flush=True)
+                        flush=True,
+                    )
                     break
                 print(
                     f'{Clr.CYN}Please correct the error.'
                     f' Will re-attempt load in {retry_seconds}'
                     f' seconds. (attempt {trynum+1} of'
                     f' {maxtries-1}).{Clr.RST}',
-                    flush=True)
+                    flush=True,
+                )
 
                 for _j in range(retry_seconds):
                     # If the app is trying to die, drop what we're doing.
@@ -502,16 +549,17 @@ class ServerManagerApp:
                         f'{Clr.YLW}Default config file not found'
                         f' (\'{self._config_path}\'); using default'
                         f' settings.{Clr.RST}',
-                        flush=True)
+                        flush=True,
+                    )
                 self._config_mtime = None
                 self._last_config_mtime_check_time = time.time()
                 return ServerConfig()
 
             # Don't be so lenient if the user pointed us at one though.
-            raise RuntimeError(
-                f"Config file not found: '{self._config_path}'.")
+            raise RuntimeError(f"Config file not found: '{self._config_path}'.")
 
         import yaml
+
         with open(self._config_path, encoding='utf-8') as infile:
             user_config_raw = yaml.safe_load(infile.read())
 
@@ -528,8 +576,10 @@ class ServerManagerApp:
             out = ServerConfig()
 
         if print_confirmation:
-            print(f'{Clr.CYN}Valid server config file loaded.{Clr.RST}',
-                  flush=True)
+            print(
+                f'{Clr.CYN}Valid server config file loaded.{Clr.RST}',
+                flush=True,
+            )
         return out
 
     def _enable_tab_completion(self, locs: dict) -> None:
@@ -537,6 +587,7 @@ class ServerManagerApp:
         try:
             import readline
             import rlcompleter
+
             readline.set_completer(rlcompleter.Completer(locs).complete)
             readline.parse_and_bind('tab:complete')
         except ImportError:
@@ -574,8 +625,11 @@ class ServerManagerApp:
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
         print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}', flush=True)
-        binary_name = ('BallisticaCoreHeadless.exe'
-                       if os.name == 'nt' else './ballisticacore_headless')
+        binary_name = (
+            'BallisticaCoreHeadless.exe'
+            if os.name == 'nt'
+            else './ballisticacore_headless'
+        )
         assert self._ba_root_path is not None
         self._subprocess = None
 
@@ -584,19 +638,23 @@ class ServerManagerApp:
             self._subprocess = subprocess.Popen(
                 [binary_name, '-cfgdir', self._ba_root_path],
                 stdin=subprocess.PIPE,
-                cwd='dist')
+                cwd='dist',
+            )
         except Exception as exc:
             self._subprocess_exited_cleanly = False
             print(
                 f'{Clr.RED}Error launching server subprocess: {exc}{Clr.RST}',
-                flush=True)
+                flush=True,
+            )
 
         # Do the thing.
         try:
             self._run_subprocess_until_exit()
         except Exception as exc:
-            print(f'{Clr.RED}Error running server subprocess: {exc}{Clr.RST}',
-                  flush=True)
+            print(
+                f'{Clr.RED}Error running server subprocess: {exc}{Clr.RST}',
+                flush=True,
+            )
 
         self._kill_subprocess()
 
@@ -606,13 +664,18 @@ class ServerManagerApp:
         # up the interpreter, its possible that it will not break out of its
         # loop via the usual SystemExit that gets sent when we die.
         if self._interactive:
-            while (self._interpreter_start_time is None
-                   or time.time() - self._interpreter_start_time < 0.5):
+            while (
+                self._interpreter_start_time is None
+                or time.time() - self._interpreter_start_time < 0.5
+            ):
                 time.sleep(0.1)
 
         # Avoid super fast death loops.
-        if (not self._subprocess_exited_cleanly and self._auto_restart
-                and not self._done):
+        if (
+            not self._subprocess_exited_cleanly
+            and self._auto_restart
+            and not self._done
+        ):
             time.sleep(5.0)
 
         # If they don't want auto-restart, we'll exit the whole wrapper.
@@ -684,13 +747,15 @@ class ServerManagerApp:
         Must be called from the server process thread.
         """
         import pickle
+
         assert current_thread() is self._subprocess_thread
         assert self._subprocess is not None
         assert self._subprocess.stdin is not None
         val = repr(pickle.dumps(command))
         assert '\n' not in val
-        execcode = (f'import ba._servermode;'
-                    f' ba._servermode._cmd({val})\n').encode()
+        execcode = (
+            f'import ba._servermode;' f' ba._servermode._cmd({val})\n'
+        ).encode()
         self._subprocess.stdin.write(execcode)
         self._subprocess.stdin.flush()
 
@@ -730,13 +795,16 @@ class ServerManagerApp:
             # If they want to force-kill our subprocess, simply exit this
             # loop; the cleanup code will kill the process if its still
             # alive.
-            if (self._subprocess_force_kill_time is not None
-                    and time.time() > self._subprocess_force_kill_time):
+            if (
+                self._subprocess_force_kill_time is not None
+                and time.time() > self._subprocess_force_kill_time
+            ):
                 print(
                     f'{Clr.CYN}Immediate shutdown time limit'
                     f' ({self.IMMEDIATE_SHUTDOWN_TIME_LIMIT:.1f} seconds)'
                     f' expired; force-killing subprocess...{Clr.RST}',
-                    flush=True)
+                    flush=True,
+                )
                 break
 
             # Watch for the server process exiting..
@@ -747,8 +815,9 @@ class ServerManagerApp:
                 print(
                     f'{clr}Server subprocess exited'
                     f' with code {code}.{Clr.RST}',
-                    flush=True)
-                self._subprocess_exited_cleanly = (code == 0)
+                    flush=True,
+                )
+                self._subprocess_exited_cleanly = code == 0
                 break
 
             time.sleep(0.25)
@@ -761,10 +830,15 @@ class ServerManagerApp:
         minutes_since_launch = (now - self._subprocess_launch_time) / 60.0
 
         # If we're doing auto-restart with config changes, handle that.
-        if (self._auto_restart and self._config_auto_restart
-                and not self._subprocess_sent_config_auto_restart):
-            if (self._last_config_mtime_check_time is None
-                    or (now - self._last_config_mtime_check_time) > 3.123):
+        if (
+            self._auto_restart
+            and self._config_auto_restart
+            and not self._subprocess_sent_config_auto_restart
+        ):
+            if (
+                self._last_config_mtime_check_time is None
+                or (now - self._last_config_mtime_check_time) > 3.123
+            ):
                 self._last_config_mtime_check_time = now
                 mtime: float | None
                 if os.path.isfile(self._config_path):
@@ -775,7 +849,8 @@ class ServerManagerApp:
                     print(
                         f'{Clr.CYN}Config-file change detected;'
                         f' requesting immediate restart.{Clr.RST}',
-                        flush=True)
+                        flush=True,
+                    )
                     self.restart(immediate=True)
                     self._subprocess_sent_config_auto_restart = True
 
@@ -783,18 +858,22 @@ class ServerManagerApp:
         # (and enforce a 6 hour max if not provided)
         clean_exit_minutes = 360.0
         if self._config.clean_exit_minutes is not None:
-            clean_exit_minutes = min(clean_exit_minutes,
-                                     self._config.clean_exit_minutes)
+            clean_exit_minutes = min(
+                clean_exit_minutes, self._config.clean_exit_minutes
+            )
         if clean_exit_minutes is not None:
-            if (minutes_since_launch > clean_exit_minutes
-                    and not self._subprocess_sent_clean_exit):
+            if (
+                minutes_since_launch > clean_exit_minutes
+                and not self._subprocess_sent_clean_exit
+            ):
                 opname = 'restart' if self._auto_restart else 'shutdown'
                 print(
                     f'{Clr.CYN}clean_exit_minutes'
                     f' ({clean_exit_minutes})'
                     f' elapsed; requesting soft'
                     f' {opname}.{Clr.RST}',
-                    flush=True)
+                    flush=True,
+                )
                 if self._auto_restart:
                     self.restart(immediate=False)
                 else:
@@ -805,18 +884,22 @@ class ServerManagerApp:
         # (and enforce a 7 hour max if not provided)
         unclean_exit_minutes = 420.0
         if self._config.unclean_exit_minutes is not None:
-            unclean_exit_minutes = min(unclean_exit_minutes,
-                                       self._config.unclean_exit_minutes)
+            unclean_exit_minutes = min(
+                unclean_exit_minutes, self._config.unclean_exit_minutes
+            )
         if unclean_exit_minutes is not None:
-            if (minutes_since_launch > unclean_exit_minutes
-                    and not self._subprocess_sent_unclean_exit):
+            if (
+                minutes_since_launch > unclean_exit_minutes
+                and not self._subprocess_sent_unclean_exit
+            ):
                 opname = 'restart' if self._auto_restart else 'shutdown'
                 print(
                     f'{Clr.CYN}unclean_exit_minutes'
                     f' ({unclean_exit_minutes})'
                     f' elapsed; requesting immediate'
                     f' {opname}.{Clr.RST}',
-                    flush=True)
+                    flush=True,
+                )
                 if self._auto_restart:
                     self.restart(immediate=True)
                 else:
@@ -845,8 +928,7 @@ class ServerManagerApp:
         self._subprocess.terminate()
         try:
             self._subprocess.wait(timeout=10)
-            self._subprocess_exited_cleanly = (
-                self._subprocess.returncode == 0)
+            self._subprocess_exited_cleanly = self._subprocess.returncode == 0
         except subprocess.TimeoutExpired:
             self._subprocess_exited_cleanly = False
             self._subprocess.kill()

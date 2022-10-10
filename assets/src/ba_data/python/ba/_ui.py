@@ -89,19 +89,21 @@ class UISubsystem:
         if bool(False):  # force-test ui scale
             self._uiscale = UIScale.SMALL
             with _ba.Context('ui'):
-                _ba.pushcall(lambda: _ba.screenmessage(
-                    f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
-                    color=(1, 0, 1),
-                    log=True))
+                _ba.pushcall(
+                    lambda: _ba.screenmessage(
+                        f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
+                        color=(1, 0, 1),
+                        log=True,
+                    )
+                )
 
         self.controller = UIController()
 
         # Kick off our periodic UI upkeep.
         # FIXME: Can probably kill this if we do immediate UI death checks.
-        self.upkeeptimer = _ba.Timer(2.6543,
-                                     ui_upkeep,
-                                     timetype=TimeType.REAL,
-                                     repeat=True)
+        self.upkeeptimer = _ba.Timer(
+            2.6543, ui_upkeep, timetype=TimeType.REAL, repeat=True
+        )
 
     def set_main_menu_window(self, window: ba.Widget) -> None:
         """Set the current 'main' window, replacing any existing."""
@@ -122,6 +124,7 @@ class UISubsystem:
                 frameline = f'{frameinfo.filename} {frameinfo.lineno}'
         except Exception:
             from ba._error import print_exception
+
             print_exception('Error calcing line for set_main_menu_window')
 
         # With our legacy main-menu system, the caller is responsible for
@@ -136,9 +139,12 @@ class UISubsystem:
         # things.
         def _delay_kill() -> None:
             import time
+
             if existing:
-                print(f'Killing old main_menu_window'
-                      f' when called at: {frameline} t={time.time():.3f}')
+                print(
+                    f'Killing old main_menu_window'
+                    f' when called at: {frameline} t={time.time():.3f}'
+                )
                 existing.delete()
 
         _ba.timer(1.0, _delay_kill, timetype=TimeType.REAL)
@@ -148,8 +154,9 @@ class UISubsystem:
         """Clear any existing 'main' window with the provided transition."""
         if self._main_menu_window:
             if transition is not None:
-                _ba.containerwidget(edit=self._main_menu_window,
-                                    transition=transition)
+                _ba.containerwidget(
+                    edit=self._main_menu_window, transition=transition
+                )
             else:
                 self._main_menu_window.delete()
 

@@ -63,15 +63,17 @@ class Spaz(ba.Actor):
     default_boxing_gloves = False
     default_shields = False
 
-    def __init__(self,
-                 color: Sequence[float] = (1.0, 1.0, 1.0),
-                 highlight: Sequence[float] = (0.5, 0.5, 0.5),
-                 character: str = 'Spaz',
-                 source_player: ba.Player | None = None,
-                 start_invincible: bool = True,
-                 can_accept_powerups: bool = True,
-                 powerups_expire: bool = False,
-                 demo_mode: bool = False):
+    def __init__(
+        self,
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+        highlight: Sequence[float] = (0.5, 0.5, 0.5),
+        character: str = 'Spaz',
+        source_player: ba.Player | None = None,
+        start_invincible: bool = True,
+        can_accept_powerups: bool = True,
+        powerups_expire: bool = False,
+        demo_mode: bool = False,
+    ):
         """Create a spaz with the requested color, character, etc."""
         # pylint: disable=too-many-statements
 
@@ -104,8 +106,9 @@ class Spaz(ba.Actor):
         self._cursed = False
         self._connected_to_player: ba.Player | None = None
         materials = [
-            factory.spaz_material, shared.object_material,
-            shared.player_material
+            factory.spaz_material,
+            shared.object_material,
+            shared.player_material,
         ]
         roller_materials = [factory.roller_material, shared.player_material]
         extras_material = []
@@ -153,19 +156,18 @@ class Spaz(ba.Actor):
                 'punch_materials': punchmats,
                 'pickup_materials': pickupmats,
                 'invincible': start_invincible,
-                'source_player': source_player
-            })
+                'source_player': source_player,
+            },
+        )
         self.shield: ba.Node | None = None
 
         if start_invincible:
 
-            def _safesetattr(node: ba.Node | None, attr: str,
-                             val: Any) -> None:
+            def _safesetattr(node: ba.Node | None, attr: str, val: Any) -> None:
                 if node:
                     setattr(node, attr, val)
 
-            ba.timer(1.0, ba.Call(_safesetattr, self.node, 'invincible',
-                                  False))
+            ba.timer(1.0, ba.Call(_safesetattr, self.node, 'invincible', False))
         self.hitpoints = 1000
         self.hitpoints_max = 1000
         self.shield_hitpoints: int | None = None
@@ -211,8 +213,7 @@ class Spaz(ba.Actor):
         self._bomb_held = False
         if self.default_shields:
             self.equip_shields()
-        self._dropped_bomb_callbacks: list[Callable[[Spaz, ba.Actor],
-                                                    Any]] = []
+        self._dropped_bomb_callbacks: list[Callable[[Spaz, ba.Actor], Any]] = []
 
         self._score_text: ba.Node | None = None
         self._score_text_hide_timer: ba.Timer | None = None
@@ -234,7 +235,8 @@ class Spaz(ba.Actor):
         self.pick_up_powerup_callback = None
 
     def add_dropped_bomb_callback(
-            self, call: Callable[[Spaz, ba.Actor], Any]) -> None:
+        self, call: Callable[[Spaz, ba.Actor], Any]
+    ) -> None:
         """
         Add a call to be run whenever this Spaz drops a bomb.
         The spaz and the newly-dropped bomb are passed as arguments.
@@ -251,18 +253,20 @@ class Spaz(ba.Actor):
     def _hide_score_text(self) -> None:
         if self._score_text:
             assert isinstance(self._score_text.scale, float)
-            ba.animate(self._score_text, 'scale', {
-                0.0: self._score_text.scale,
-                0.2: 0.0
-            })
+            ba.animate(
+                self._score_text,
+                'scale',
+                {0.0: self._score_text.scale, 0.2: 0.0},
+            )
 
     def _turbo_filter_add_press(self, source: str) -> None:
         """
         Can pass all button presses through here; if we see an obscene number
         of them in a short time let's shame/pushish this guy for using turbo
         """
-        t_ms = ba.time(timetype=ba.TimeType.BASE,
-                       timeformat=ba.TimeFormat.MILLISECONDS)
+        t_ms = ba.time(
+            timetype=ba.TimeType.BASE, timeformat=ba.TimeFormat.MILLISECONDS
+        )
         assert isinstance(t_ms, int)
         t_bucket = int(t_ms / 1000)
         if t_bucket == self._turbo_filter_time_bucket:
@@ -270,7 +274,8 @@ class Spaz(ba.Actor):
             # multiple actions).
             if t_ms != self._turbo_filter_times.get(source, 0):
                 self._turbo_filter_counts[source] = (
-                    self._turbo_filter_counts.get(source, 0) + 1)
+                    self._turbo_filter_counts.get(source, 0) + 1
+                )
                 self._turbo_filter_times[source] = t_ms
                 # (uncomment to debug; prints what this count is at)
                 # ba.screenmessage( str(source) + " "
@@ -284,23 +289,32 @@ class Spaz(ba.Actor):
                     now = ba.time(ba.TimeType.REAL)
                     if now > ba.app.last_spaz_turbo_warn_time + 30.0:
                         ba.app.last_spaz_turbo_warn_time = now
-                        ba.screenmessage(ba.Lstr(
-                            translate=('statements',
-                                       ('Warning to ${NAME}:  '
+                        ba.screenmessage(
+                            ba.Lstr(
+                                translate=(
+                                    'statements',
+                                    (
+                                        'Warning to ${NAME}:  '
                                         'turbo / button-spamming knocks'
-                                        ' you out.')),
-                            subs=[('${NAME}', self.node.name)]),
-                                         color=(1, 0.5, 0))
+                                        ' you out.'
+                                    ),
+                                ),
+                                subs=[('${NAME}', self.node.name)],
+                            ),
+                            color=(1, 0.5, 0),
+                        )
                         ba.playsound(ba.getsound('error'))
         else:
             self._turbo_filter_times = {}
             self._turbo_filter_time_bucket = t_bucket
             self._turbo_filter_counts = {source: 1}
 
-    def set_score_text(self,
-                       text: str | ba.Lstr,
-                       color: Sequence[float] = (1.0, 1.0, 0.4),
-                       flash: bool = False) -> None:
+    def set_score_text(
+        self,
+        text: str | ba.Lstr,
+        color: Sequence[float] = (1.0, 1.0, 0.4),
+        flash: bool = False,
+    ) -> None:
         """
         Utility func to show a message momentarily over our spaz that follows
         him around; Handy for score updates and things.
@@ -310,24 +324,25 @@ class Spaz(ba.Actor):
             return
         if not self._score_text:
             start_scale = 0.0
-            mnode = ba.newnode('math',
-                               owner=self.node,
-                               attrs={
-                                   'input1': (0, 1.4, 0),
-                                   'operation': 'add'
-                               })
+            mnode = ba.newnode(
+                'math',
+                owner=self.node,
+                attrs={'input1': (0, 1.4, 0), 'operation': 'add'},
+            )
             self.node.connectattr('torso_position', mnode, 'input2')
-            self._score_text = ba.newnode('text',
-                                          owner=self.node,
-                                          attrs={
-                                              'text': text,
-                                              'in_world': True,
-                                              'shadow': 1.0,
-                                              'flatness': 1.0,
-                                              'color': color_fin,
-                                              'scale': 0.02,
-                                              'h_align': 'center'
-                                          })
+            self._score_text = ba.newnode(
+                'text',
+                owner=self.node,
+                attrs={
+                    'text': text,
+                    'in_world': True,
+                    'shadow': 1.0,
+                    'flatness': 1.0,
+                    'color': color_fin,
+                    'scale': 0.02,
+                    'h_align': 'center',
+                },
+            )
             mnode.connectattr('output', self._score_text, 'position')
         else:
             self._score_text.color = color_fin
@@ -335,25 +350,26 @@ class Spaz(ba.Actor):
             start_scale = self._score_text.scale
             self._score_text.text = text
         if flash:
-            combine = ba.newnode('combine',
-                                 owner=self._score_text,
-                                 attrs={'size': 3})
+            combine = ba.newnode(
+                'combine', owner=self._score_text, attrs={'size': 3}
+            )
             scl = 1.8
             offs = 0.5
             tval = 0.300
             for i in range(3):
                 cl1 = offs + scl * color_fin[i]
                 cl2 = color_fin[i]
-                ba.animate(combine, 'input' + str(i), {
-                    0.5 * tval: cl2,
-                    0.75 * tval: cl1,
-                    1.0 * tval: cl2
-                })
+                ba.animate(
+                    combine,
+                    'input' + str(i),
+                    {0.5 * tval: cl2, 0.75 * tval: cl1, 1.0 * tval: cl2},
+                )
             combine.connectattr('output', self._score_text, 'color')
 
         ba.animate(self._score_text, 'scale', {0.0: start_scale, 0.2: 0.02})
         self._score_text_hide_timer = ba.Timer(
-            1.0, ba.WeakCall(self._hide_score_text))
+            1.0, ba.WeakCall(self._hide_score_text)
+        )
 
     def on_jump_press(self) -> None:
         """
@@ -438,8 +454,12 @@ class Spaz(ba.Actor):
             if not self.node.hold_node:
                 ba.timer(
                     0.1,
-                    ba.WeakCall(self._safe_play_sound,
-                                SpazFactory.get().swish_sound, 0.8))
+                    ba.WeakCall(
+                        self._safe_play_sound,
+                        SpazFactory.get().swish_sound,
+                        0.8,
+                    ),
+                )
         self._turbo_filter_add_press('punch')
 
     def _safe_play_sound(self, sound: ba.Sound, volume: float) -> None:
@@ -585,8 +605,9 @@ class Spaz(ba.Actor):
             for attr in ['materials', 'roller_materials']:
                 materials = getattr(self.node, attr)
                 if factory.curse_material not in materials:
-                    setattr(self.node, attr,
-                            materials + (factory.curse_material, ))
+                    setattr(
+                        self.node, attr, materials + (factory.curse_material,)
+                    )
 
             # None specifies no time limit
             assert self.node
@@ -596,8 +617,9 @@ class Spaz(ba.Actor):
                 # Note: curse-death-time takes milliseconds.
                 tval = ba.time()
                 assert isinstance(tval, (float, int))
-                self.node.curse_death_time = int(1000.0 *
-                                                 (tval + self.curse_time))
+                self.node.curse_death_time = int(
+                    1000.0 * (tval + self.curse_time)
+                )
                 ba.timer(5.0, ba.WeakCall(self.curse_explode))
 
     def equip_boxing_gloves(self) -> None:
@@ -626,12 +648,11 @@ class Spaz(ba.Actor):
 
         factory = SpazFactory.get()
         if self.shield is None:
-            self.shield = ba.newnode('shield',
-                                     owner=self.node,
-                                     attrs={
-                                         'color': (0.3, 0.2, 2.0),
-                                         'radius': 1.3
-                                     })
+            self.shield = ba.newnode(
+                'shield',
+                owner=self.node,
+                attrs={'color': (0.3, 0.2, 2.0), 'radius': 1.3},
+            )
             self.node.connectattr('position_center', self.shield, 'position')
         self.shield_hitpoints = self.shield_hitpoints_max = 650
         self.shield_decay_rate = factory.shield_decay_rate if decay else 0
@@ -639,9 +660,9 @@ class Spaz(ba.Actor):
         ba.playsound(factory.shield_up_sound, 1.0, position=self.node.position)
 
         if self.shield_decay_rate > 0:
-            self.shield_decay_timer = ba.Timer(0.5,
-                                               ba.WeakCall(self.shield_decay),
-                                               repeat=True)
+            self.shield_decay_timer = ba.Timer(
+                0.5, ba.WeakCall(self.shield_decay), repeat=True
+            )
             # So user can see the decay.
             self.shield.always_show_health_bar = True
 
@@ -649,19 +670,23 @@ class Spaz(ba.Actor):
         """Called repeatedly to decay shield HP over time."""
         if self.shield:
             assert self.shield_hitpoints is not None
-            self.shield_hitpoints = (max(
-                0, self.shield_hitpoints - self.shield_decay_rate))
+            self.shield_hitpoints = max(
+                0, self.shield_hitpoints - self.shield_decay_rate
+            )
             assert self.shield_hitpoints is not None
             self.shield.hurt = (
-                1.0 - float(self.shield_hitpoints) / self.shield_hitpoints_max)
+                1.0 - float(self.shield_hitpoints) / self.shield_hitpoints_max
+            )
             if self.shield_hitpoints <= 0:
                 self.shield.delete()
                 self.shield = None
                 self.shield_decay_timer = None
                 assert self.node
-                ba.playsound(SpazFactory.get().shield_down_sound,
-                             1.0,
-                             position=self.node.position)
+                ba.playsound(
+                    SpazFactory.get().shield_down_sound,
+                    1.0,
+                    position=self.node.position,
+                )
         else:
             self.shield_decay_timer = None
 
@@ -705,15 +730,18 @@ class Spaz(ba.Actor):
                     assert isinstance(t_ms, int)
                     self.node.mini_billboard_1_start_time = t_ms
                     self.node.mini_billboard_1_end_time = (
-                        t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._multi_bomb_wear_off_flash_timer = (ba.Timer(
+                        t_ms + POWERUP_WEAR_OFF_TIME
+                    )
+                    self._multi_bomb_wear_off_flash_timer = ba.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000),
                         ba.WeakCall(self._multi_bomb_wear_off_flash),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
-                    self._multi_bomb_wear_off_timer = (ba.Timer(
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
+                    self._multi_bomb_wear_off_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME,
                         ba.WeakCall(self._multi_bomb_wear_off),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
             elif msg.poweruptype == 'land_mines':
                 self.set_land_mine_count(min(self.land_mine_count + 3, 3))
             elif msg.poweruptype == 'impact_bombs':
@@ -726,15 +754,18 @@ class Spaz(ba.Actor):
                     assert isinstance(t_ms, int)
                     self.node.mini_billboard_2_start_time = t_ms
                     self.node.mini_billboard_2_end_time = (
-                        t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._bomb_wear_off_flash_timer = (ba.Timer(
+                        t_ms + POWERUP_WEAR_OFF_TIME
+                    )
+                    self._bomb_wear_off_flash_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME - 2000,
                         ba.WeakCall(self._bomb_wear_off_flash),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
-                    self._bomb_wear_off_timer = (ba.Timer(
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
+                    self._bomb_wear_off_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME,
                         ba.WeakCall(self._bomb_wear_off),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
             elif msg.poweruptype == 'sticky_bombs':
                 self.bomb_type = 'sticky'
                 tex = self._get_bomb_type_tex()
@@ -745,15 +776,18 @@ class Spaz(ba.Actor):
                     assert isinstance(t_ms, int)
                     self.node.mini_billboard_2_start_time = t_ms
                     self.node.mini_billboard_2_end_time = (
-                        t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._bomb_wear_off_flash_timer = (ba.Timer(
+                        t_ms + POWERUP_WEAR_OFF_TIME
+                    )
+                    self._bomb_wear_off_flash_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME - 2000,
                         ba.WeakCall(self._bomb_wear_off_flash),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
-                    self._bomb_wear_off_timer = (ba.Timer(
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
+                    self._bomb_wear_off_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME,
                         ba.WeakCall(self._bomb_wear_off),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
             elif msg.poweruptype == 'punch':
                 tex = PowerupBoxFactory.get().tex_punch
                 self._flash_billboard(tex)
@@ -765,15 +799,18 @@ class Spaz(ba.Actor):
                     assert isinstance(t_ms, int)
                     self.node.mini_billboard_3_start_time = t_ms
                     self.node.mini_billboard_3_end_time = (
-                        t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._boxing_gloves_wear_off_flash_timer = (ba.Timer(
+                        t_ms + POWERUP_WEAR_OFF_TIME
+                    )
+                    self._boxing_gloves_wear_off_flash_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME - 2000,
                         ba.WeakCall(self._gloves_wear_off_flash),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
-                    self._boxing_gloves_wear_off_timer = (ba.Timer(
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
+                    self._boxing_gloves_wear_off_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME,
                         ba.WeakCall(self._gloves_wear_off),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
             elif msg.poweruptype == 'shield':
                 factory = SpazFactory.get()
 
@@ -791,15 +828,18 @@ class Spaz(ba.Actor):
                     assert isinstance(t_ms, int)
                     self.node.mini_billboard_2_start_time = t_ms
                     self.node.mini_billboard_2_end_time = (
-                        t_ms + POWERUP_WEAR_OFF_TIME)
-                    self._bomb_wear_off_flash_timer = (ba.Timer(
+                        t_ms + POWERUP_WEAR_OFF_TIME
+                    )
+                    self._bomb_wear_off_flash_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME - 2000,
                         ba.WeakCall(self._bomb_wear_off_flash),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
-                    self._bomb_wear_off_timer = (ba.Timer(
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
+                    self._bomb_wear_off_timer = ba.Timer(
                         POWERUP_WEAR_OFF_TIME,
                         ba.WeakCall(self._bomb_wear_off),
-                        timeformat=ba.TimeFormat.MILLISECONDS))
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                    )
             elif msg.poweruptype == 'health':
                 if self._cursed:
                     self._cursed = False
@@ -810,9 +850,14 @@ class Spaz(ba.Actor):
                         materials = getattr(self.node, attr)
                         if factory.curse_material in materials:
                             setattr(
-                                self.node, attr,
-                                tuple(m for m in materials
-                                      if m != factory.curse_material))
+                                self.node,
+                                attr,
+                                tuple(
+                                    m
+                                    for m in materials
+                                    if m != factory.curse_material
+                                ),
+                            )
                     self.node.curse_death_time = 0
                 self.hitpoints = self.hitpoints_max
                 self._flash_billboard(PowerupBoxFactory.get().tex_health)
@@ -829,17 +874,18 @@ class Spaz(ba.Actor):
             if not self.node:
                 return None
             if self.node.invincible:
-                ba.playsound(SpazFactory.get().block_sound,
-                             1.0,
-                             position=self.node.position)
+                ba.playsound(
+                    SpazFactory.get().block_sound,
+                    1.0,
+                    position=self.node.position,
+                )
                 return None
             if self.shield:
                 return None
             if not self.frozen:
                 self.frozen = True
                 self.node.frozen = True
-                ba.timer(5.0, ba.WeakCall(self.handlemessage,
-                                          ba.ThawMessage()))
+                ba.timer(5.0, ba.WeakCall(self.handlemessage, ba.ThawMessage()))
                 # Instantly shatter if we're already dead.
                 # (otherwise its hard to tell we're dead)
                 if self.hitpoints <= 0:
@@ -854,17 +900,21 @@ class Spaz(ba.Actor):
             if not self.node:
                 return None
             if self.node.invincible:
-                ba.playsound(SpazFactory.get().block_sound,
-                             1.0,
-                             position=self.node.position)
+                ba.playsound(
+                    SpazFactory.get().block_sound,
+                    1.0,
+                    position=self.node.position,
+                )
                 return True
 
             # If we were recently hit, don't count this as another.
             # (so punch flurries and bomb pileups essentially count as 1 hit)
             local_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
             assert isinstance(local_time, int)
-            if (self._last_hit_time is None
-                    or local_time - self._last_hit_time > 1000):
+            if (
+                self._last_hit_time is None
+                or local_time - self._last_hit_time > 1000
+            ):
                 self._num_times_hit += 1
                 self._last_hit_time = local_time
 
@@ -881,17 +931,29 @@ class Spaz(ba.Actor):
                     # theoretical damage; not apply the impulse.
                     assert msg.force_direction is not None
                     self.node.handlemessage(
-                        'impulse', msg.pos[0], msg.pos[1], msg.pos[2],
-                        msg.velocity[0], msg.velocity[1], msg.velocity[2], mag,
-                        velocity_mag, msg.radius, 1, msg.force_direction[0],
-                        msg.force_direction[1], msg.force_direction[2])
+                        'impulse',
+                        msg.pos[0],
+                        msg.pos[1],
+                        msg.pos[2],
+                        msg.velocity[0],
+                        msg.velocity[1],
+                        msg.velocity[2],
+                        mag,
+                        velocity_mag,
+                        msg.radius,
+                        1,
+                        msg.force_direction[0],
+                        msg.force_direction[1],
+                        msg.force_direction[2],
+                    )
                     damage = damage_scale * self.node.damage
 
                 assert self.shield_hitpoints is not None
                 self.shield_hitpoints -= int(damage)
                 self.shield.hurt = (
-                    1.0 -
-                    float(self.shield_hitpoints) / self.shield_hitpoints_max)
+                    1.0
+                    - float(self.shield_hitpoints) / self.shield_hitpoints_max
+                )
 
                 # Its a cleaner event if a hit just kills the shield
                 # without damaging the player.
@@ -903,34 +965,44 @@ class Spaz(ba.Actor):
                     # FIXME: Transition out perhaps?
                     self.shield.delete()
                     self.shield = None
-                    ba.playsound(SpazFactory.get().shield_down_sound,
-                                 1.0,
-                                 position=self.node.position)
+                    ba.playsound(
+                        SpazFactory.get().shield_down_sound,
+                        1.0,
+                        position=self.node.position,
+                    )
 
                     # Emit some cool looking sparks when the shield dies.
                     npos = self.node.position
-                    ba.emitfx(position=(npos[0], npos[1] + 0.9, npos[2]),
-                              velocity=self.node.velocity,
-                              count=random.randrange(20, 30),
-                              scale=1.0,
-                              spread=0.6,
-                              chunk_type='spark')
+                    ba.emitfx(
+                        position=(npos[0], npos[1] + 0.9, npos[2]),
+                        velocity=self.node.velocity,
+                        count=random.randrange(20, 30),
+                        scale=1.0,
+                        spread=0.6,
+                        chunk_type='spark',
+                    )
 
                 else:
-                    ba.playsound(SpazFactory.get().shield_hit_sound,
-                                 0.5,
-                                 position=self.node.position)
+                    ba.playsound(
+                        SpazFactory.get().shield_hit_sound,
+                        0.5,
+                        position=self.node.position,
+                    )
 
                 # Emit some cool looking sparks on shield hit.
                 assert msg.force_direction is not None
-                ba.emitfx(position=msg.pos,
-                          velocity=(msg.force_direction[0] * 1.0,
-                                    msg.force_direction[1] * 1.0,
-                                    msg.force_direction[2] * 1.0),
-                          count=min(30, 5 + int(damage * 0.005)),
-                          scale=0.5,
-                          spread=0.3,
-                          chunk_type='spark')
+                ba.emitfx(
+                    position=msg.pos,
+                    velocity=(
+                        msg.force_direction[0] * 1.0,
+                        msg.force_direction[1] * 1.0,
+                        msg.force_direction[2] * 1.0,
+                    ),
+                    count=min(30, 5 + int(damage * 0.005)),
+                    scale=0.5,
+                    spread=0.3,
+                    chunk_type='spark',
+                )
 
                 # If they passed our spillover threshold,
                 # pass damage along to spaz.
@@ -947,16 +1019,28 @@ class Spaz(ba.Actor):
                 shield_leftover_ratio = 1.0
 
             if msg.flat_damage:
-                damage = int(msg.flat_damage * self.impact_scale *
-                             shield_leftover_ratio)
+                damage = int(
+                    msg.flat_damage * self.impact_scale * shield_leftover_ratio
+                )
             else:
                 # Hit it with an impulse and get the resulting damage.
                 assert msg.force_direction is not None
                 self.node.handlemessage(
-                    'impulse', msg.pos[0], msg.pos[1], msg.pos[2],
-                    msg.velocity[0], msg.velocity[1], msg.velocity[2], mag,
-                    velocity_mag, msg.radius, 0, msg.force_direction[0],
-                    msg.force_direction[1], msg.force_direction[2])
+                    'impulse',
+                    msg.pos[0],
+                    msg.pos[1],
+                    msg.pos[2],
+                    msg.velocity[0],
+                    msg.velocity[1],
+                    msg.velocity[2],
+                    mag,
+                    velocity_mag,
+                    msg.radius,
+                    0,
+                    msg.force_direction[0],
+                    msg.force_direction[1],
+                    msg.force_direction[2],
+                )
 
                 damage = int(damage_scale * self.node.damage)
             self.node.handlemessage('hurt_sound')
@@ -968,15 +1052,20 @@ class Spaz(ba.Actor):
                 # If damage was significant, lets show it.
                 if damage >= 350:
                     assert msg.force_direction is not None
-                    ba.show_damage_count('-' + str(int(damage / 10)) + '%',
-                                         msg.pos, msg.force_direction)
+                    ba.show_damage_count(
+                        '-' + str(int(damage / 10)) + '%',
+                        msg.pos,
+                        msg.force_direction,
+                    )
 
                 # Let's always add in a super-punch sound with boxing
                 # gloves just to differentiate them.
                 if msg.hit_subtype == 'super_punch':
-                    ba.playsound(SpazFactory.get().punch_sound_stronger,
-                                 1.0,
-                                 position=self.node.position)
+                    ba.playsound(
+                        SpazFactory.get().punch_sound_stronger,
+                        1.0,
+                        position=self.node.position,
+                    )
                 if damage >= 500:
                     sounds = SpazFactory.get().punch_sound_strong
                     sound = sounds[random.randrange(len(sounds))]
@@ -988,28 +1077,38 @@ class Spaz(ba.Actor):
 
                 # Throw up some chunks.
                 assert msg.force_direction is not None
-                ba.emitfx(position=msg.pos,
-                          velocity=(msg.force_direction[0] * 0.5,
-                                    msg.force_direction[1] * 0.5,
-                                    msg.force_direction[2] * 0.5),
-                          count=min(10, 1 + int(damage * 0.0025)),
-                          scale=0.3,
-                          spread=0.03)
+                ba.emitfx(
+                    position=msg.pos,
+                    velocity=(
+                        msg.force_direction[0] * 0.5,
+                        msg.force_direction[1] * 0.5,
+                        msg.force_direction[2] * 0.5,
+                    ),
+                    count=min(10, 1 + int(damage * 0.0025)),
+                    scale=0.3,
+                    spread=0.03,
+                )
 
-                ba.emitfx(position=msg.pos,
-                          chunk_type='sweat',
-                          velocity=(msg.force_direction[0] * 1.3,
-                                    msg.force_direction[1] * 1.3 + 5.0,
-                                    msg.force_direction[2] * 1.3),
-                          count=min(30, 1 + int(damage * 0.04)),
-                          scale=0.9,
-                          spread=0.28)
+                ba.emitfx(
+                    position=msg.pos,
+                    chunk_type='sweat',
+                    velocity=(
+                        msg.force_direction[0] * 1.3,
+                        msg.force_direction[1] * 1.3 + 5.0,
+                        msg.force_direction[2] * 1.3,
+                    ),
+                    count=min(30, 1 + int(damage * 0.04)),
+                    scale=0.9,
+                    spread=0.28,
+                )
 
                 # Momentary flash.
                 hurtiness = damage * 0.003
-                punchpos = (msg.pos[0] + msg.force_direction[0] * 0.02,
-                            msg.pos[1] + msg.force_direction[1] * 0.02,
-                            msg.pos[2] + msg.force_direction[2] * 0.02)
+                punchpos = (
+                    msg.pos[0] + msg.force_direction[0] * 0.02,
+                    msg.pos[1] + msg.force_direction[1] * 0.02,
+                    msg.pos[2] + msg.force_direction[2] * 0.02,
+                )
                 flash_color = (1.0, 0.8, 0.4)
                 light = ba.newnode(
                     'light',
@@ -1018,27 +1117,34 @@ class Spaz(ba.Actor):
                         'radius': 0.12 + hurtiness * 0.12,
                         'intensity': 0.3 * (1.0 + 1.0 * hurtiness),
                         'height_attenuated': False,
-                        'color': flash_color
-                    })
+                        'color': flash_color,
+                    },
+                )
                 ba.timer(0.06, light.delete)
 
-                flash = ba.newnode('flash',
-                                   attrs={
-                                       'position': punchpos,
-                                       'size': 0.17 + 0.17 * hurtiness,
-                                       'color': flash_color
-                                   })
+                flash = ba.newnode(
+                    'flash',
+                    attrs={
+                        'position': punchpos,
+                        'size': 0.17 + 0.17 * hurtiness,
+                        'color': flash_color,
+                    },
+                )
                 ba.timer(0.06, flash.delete)
 
             if msg.hit_type == 'impact':
                 assert msg.force_direction is not None
-                ba.emitfx(position=msg.pos,
-                          velocity=(msg.force_direction[0] * 2.0,
-                                    msg.force_direction[1] * 2.0,
-                                    msg.force_direction[2] * 2.0),
-                          count=min(10, 1 + int(damage * 0.01)),
-                          scale=0.4,
-                          spread=0.1)
+                ba.emitfx(
+                    position=msg.pos,
+                    velocity=(
+                        msg.force_direction[0] * 2.0,
+                        msg.force_direction[1] * 2.0,
+                        msg.force_direction[2] * 2.0,
+                    ),
+                    count=min(10, 1 + int(damage * 0.01)),
+                    scale=0.4,
+                    spread=0.1,
+                )
             if self.hitpoints > 0:
 
                 # It's kinda crappy to die from impacts, so lets reduce
@@ -1055,22 +1161,26 @@ class Spaz(ba.Actor):
                 if damage > 0.0 and self.node.hold_node:
                     self.node.hold_node = None
                 self.hitpoints -= damage
-                self.node.hurt = 1.0 - float(
-                    self.hitpoints) / self.hitpoints_max
+                self.node.hurt = (
+                    1.0 - float(self.hitpoints) / self.hitpoints_max
+                )
 
                 # If we're cursed, *any* damage blows us up.
                 if self._cursed and damage > 0:
                     ba.timer(
                         0.05,
-                        ba.WeakCall(self.curse_explode,
-                                    msg.get_source_player(ba.Player)))
+                        ba.WeakCall(
+                            self.curse_explode, msg.get_source_player(ba.Player)
+                        ),
+                    )
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
-                        ba.DieMessage(how=ba.DeathType.IMPACT))
+                        ba.DieMessage(how=ba.DeathType.IMPACT)
+                    )
 
             # If we're dead, take a look at the smoothed damage value
             # (which gives us a smoothed average of recent damage) and shatter
@@ -1102,12 +1212,19 @@ class Spaz(ba.Actor):
             self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
 
         elif isinstance(msg, ba.StandMessage):
-            self._last_stand_pos = (msg.position[0], msg.position[1],
-                                    msg.position[2])
+            self._last_stand_pos = (
+                msg.position[0],
+                msg.position[1],
+                msg.position[2],
+            )
             if self.node:
-                self.node.handlemessage('stand', msg.position[0],
-                                        msg.position[1], msg.position[2],
-                                        msg.angle)
+                self.node.handlemessage(
+                    'stand',
+                    msg.position[0],
+                    msg.position[1],
+                    msg.position[2],
+                    msg.angle,
+                )
 
         elif isinstance(msg, CurseExplodeMessage):
             self.curse_explode()
@@ -1120,8 +1237,9 @@ class Spaz(ba.Actor):
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
 
-                punch_momentum_angular = (self.node.punch_momentum_angular *
-                                          self._punch_power_scale)
+                punch_momentum_angular = (
+                    self.node.punch_momentum_angular * self._punch_power_scale
+                )
                 punch_power = self.node.punch_power * self._punch_power_scale
 
                 # Ok here's the deal:  we pass along our base velocity for use
@@ -1155,8 +1273,13 @@ class Spaz(ba.Actor):
                         source_player=self.source_player,
                         force_direction=punchdir,
                         hit_type='punch',
-                        hit_subtype=('super_punch' if self._has_boxing_gloves
-                                     else 'default')))
+                        hit_subtype=(
+                            'super_punch'
+                            if self._has_boxing_gloves
+                            else 'default'
+                        ),
+                    )
+                )
 
                 # Also apply opposite to ourself for the first punch only.
                 # This is given as a constant force so that it is more
@@ -1167,9 +1290,16 @@ class Spaz(ba.Actor):
                 if self._hockey:
                     mag *= 0.5
                 if len(self._punched_nodes) == 1:
-                    self.node.handlemessage('kick_back', ppos[0], ppos[1],
-                                            ppos[2], punchdir[0], punchdir[1],
-                                            punchdir[2], mag)
+                    self.node.handlemessage(
+                        'kick_back',
+                        ppos[0],
+                        ppos[1],
+                        ppos[2],
+                        punchdir[0],
+                        punchdir[1],
+                        punchdir[2],
+                        mag,
+                    )
         elif isinstance(msg, PickupMessage):
             if not self.node:
                 return None
@@ -1190,8 +1320,11 @@ class Spaz(ba.Actor):
 
             # If we're grabbing the pelvis of a non-shattered spaz, we wanna
             # grab the torso instead.
-            if (opposingnode.getnodetype() == 'spaz'
-                    and not opposingnode.shattered and opposingbody == 4):
+            if (
+                opposingnode.getnodetype() == 'spaz'
+                and not opposingnode.shattered
+                and opposingbody == 4
+            ):
                 opposingbody = 1
 
             # Special case - if we're holding a flag, don't replace it
@@ -1233,18 +1366,21 @@ class Spaz(ba.Actor):
             dropping_bomb = True
             bomb_type = self.bomb_type
 
-        bomb = stdbomb.Bomb(position=(pos[0], pos[1] - 0.0, pos[2]),
-                            velocity=(vel[0], vel[1], vel[2]),
-                            bomb_type=bomb_type,
-                            blast_radius=self.blast_radius,
-                            source_player=self.source_player,
-                            owner=self.node).autoretain()
+        bomb = stdbomb.Bomb(
+            position=(pos[0], pos[1] - 0.0, pos[2]),
+            velocity=(vel[0], vel[1], vel[2]),
+            bomb_type=bomb_type,
+            blast_radius=self.blast_radius,
+            source_player=self.source_player,
+            owner=self.node,
+        ).autoretain()
 
         assert bomb.node
         if dropping_bomb:
             self.bomb_count -= 1
             bomb.node.add_death_action(
-                ba.WeakCall(self.handlemessage, BombDiedMessage()))
+                ba.WeakCall(self.handlemessage, BombDiedMessage())
+            )
         self._pick_up(bomb.node)
 
         for clb in self._dropped_bomb_callbacks:
@@ -1265,7 +1401,8 @@ class Spaz(ba.Actor):
             if self.land_mine_count != 0:
                 self.node.counter_text = 'x' + str(self.land_mine_count)
                 self.node.counter_texture = (
-                    PowerupBoxFactory.get().tex_land_mines)
+                    PowerupBoxFactory.get().tex_land_mines
+                )
             else:
                 self.node.counter_text = ''
 
@@ -1281,8 +1418,10 @@ class Spaz(ba.Actor):
                     velocity=self.node.velocity,
                     blast_radius=3.0,
                     blast_type='normal',
-                    source_player=(source_player if source_player else
-                                   self.source_player)).autoretain()
+                    source_player=(
+                        source_player if source_player else self.source_player
+                    ),
+                ).autoretain()
             self._cursed = False
 
     def shatter(self, extreme: bool = False) -> None:
@@ -1293,42 +1432,49 @@ class Spaz(ba.Actor):
         assert self.node
         if self.frozen:
             # Momentary flash of light.
-            light = ba.newnode('light',
-                               attrs={
-                                   'position': self.node.position,
-                                   'radius': 0.5,
-                                   'height_attenuated': False,
-                                   'color': (0.8, 0.8, 1.0)
-                               })
+            light = ba.newnode(
+                'light',
+                attrs={
+                    'position': self.node.position,
+                    'radius': 0.5,
+                    'height_attenuated': False,
+                    'color': (0.8, 0.8, 1.0),
+                },
+            )
 
-            ba.animate(light, 'intensity', {
-                0.0: 3.0,
-                0.04: 0.5,
-                0.08: 0.07,
-                0.3: 0
-            })
+            ba.animate(
+                light, 'intensity', {0.0: 3.0, 0.04: 0.5, 0.08: 0.07, 0.3: 0}
+            )
             ba.timer(0.3, light.delete)
 
             # Emit ice chunks.
-            ba.emitfx(position=self.node.position,
-                      velocity=self.node.velocity,
-                      count=int(random.random() * 10.0 + 10.0),
-                      scale=0.6,
-                      spread=0.2,
-                      chunk_type='ice')
-            ba.emitfx(position=self.node.position,
-                      velocity=self.node.velocity,
-                      count=int(random.random() * 10.0 + 10.0),
-                      scale=0.3,
-                      spread=0.2,
-                      chunk_type='ice')
-            ba.playsound(SpazFactory.get().shatter_sound,
-                         1.0,
-                         position=self.node.position)
+            ba.emitfx(
+                position=self.node.position,
+                velocity=self.node.velocity,
+                count=int(random.random() * 10.0 + 10.0),
+                scale=0.6,
+                spread=0.2,
+                chunk_type='ice',
+            )
+            ba.emitfx(
+                position=self.node.position,
+                velocity=self.node.velocity,
+                count=int(random.random() * 10.0 + 10.0),
+                scale=0.3,
+                spread=0.2,
+                chunk_type='ice',
+            )
+            ba.playsound(
+                SpazFactory.get().shatter_sound,
+                1.0,
+                position=self.node.position,
+            )
         else:
-            ba.playsound(SpazFactory.get().splatter_sound,
-                         1.0,
-                         position=self.node.position)
+            ba.playsound(
+                SpazFactory.get().splatter_sound,
+                1.0,
+                position=self.node.position,
+            )
         self.handlemessage(ba.DieMessage())
         self.node.shattered = 2 if extreme else 1
 
@@ -1337,10 +1483,13 @@ class Spaz(ba.Actor):
             return
         pos = self.node.position
         self.handlemessage(
-            ba.HitMessage(flat_damage=50.0 * intensity,
-                          pos=pos,
-                          force_direction=self.node.velocity,
-                          hit_type='impact'))
+            ba.HitMessage(
+                flat_damage=50.0 * intensity,
+                pos=pos,
+                force_direction=self.node.velocity,
+                hit_type='impact',
+            )
+        )
         self.node.handlemessage('knockout', max(0.0, 50.0 * intensity))
         sounds: Sequence[ba.Sound]
         if intensity >= 5.0:
@@ -1366,12 +1515,11 @@ class Spaz(ba.Actor):
         assert self.node
         self.node.billboard_texture = tex
         self.node.billboard_cross_out = False
-        ba.animate(self.node, 'billboard_opacity', {
-            0.0: 0.0,
-            0.1: 1.0,
-            0.4: 1.0,
-            0.5: 0.0
-        })
+        ba.animate(
+            self.node,
+            'billboard_opacity',
+            {0.0: 0.0, 0.1: 1.0, 0.4: 1.0, 0.5: 0.0},
+        )
 
     def set_bomb_count(self, count: int) -> None:
         """Sets the number of bombs this Spaz has."""
@@ -1398,8 +1546,10 @@ class Spaz(ba.Actor):
             self._punch_cooldown = factory.punch_cooldown
         self._has_boxing_gloves = False
         if self.node:
-            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
-                         position=self.node.position)
+            ba.playsound(
+                PowerupBoxFactory.get().powerdown_sound,
+                position=self.node.position,
+            )
             self.node.boxing_gloves = False
             self.node.billboard_opacity = 0.0
 
@@ -1412,8 +1562,10 @@ class Spaz(ba.Actor):
     def _multi_bomb_wear_off(self) -> None:
         self.set_bomb_count(self.default_bomb_count)
         if self.node:
-            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
-                         position=self.node.position)
+            ba.playsound(
+                PowerupBoxFactory.get().powerdown_sound,
+                position=self.node.position,
+            )
             self.node.billboard_opacity = 0.0
 
     def _bomb_wear_off_flash(self) -> None:
@@ -1425,6 +1577,8 @@ class Spaz(ba.Actor):
     def _bomb_wear_off(self) -> None:
         self.bomb_type = self.bomb_type_default
         if self.node:
-            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
-                         position=self.node.position)
+            ba.playsound(
+                PowerupBoxFactory.get().powerdown_sound,
+                position=self.node.position,
+            )
             self.node.billboard_opacity = 0.0

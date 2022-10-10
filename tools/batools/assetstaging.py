@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 # Note: this means anyone wanting to modify .py files in a build
 # will need to wipe out the existing .pyc files first or the changes
 # will be ignored.
-OPT_PYC_SUFFIX = ('cpython-' + PYVER.replace('.', '') + '.opt-1.pyc')
+OPT_PYC_SUFFIX = 'cpython-' + PYVER.replace('.', '') + '.opt-1.pyc'
 
 
 class Config:
@@ -159,18 +159,25 @@ class Config:
                 self.debug = False
             else:
                 raise RuntimeError(
-                    "Expected either '-debug' or '-release' in args.")
+                    "Expected either '-debug' or '-release' in args."
+                )
         elif '-xcode-mac' in args:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
-            self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
-                        os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])
+            self.dst = (
+                os.environ['TARGET_BUILD_DIR']
+                + '/'
+                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
+            )
             self.include_pylib = True
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.dds'
         elif '-xcode-ios' in args:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
-            self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
-                        os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])
+            self.dst = (
+                os.environ['TARGET_BUILD_DIR']
+                + '/'
+                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
+            )
             self.include_pylib = True
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.pvr'
@@ -213,7 +220,8 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
             fpathshort = fpath.replace(assets_root, '')
             if ' ' in fpathshort:
                 raise RuntimeError(
-                    f"Invalid filename (contains spaces): '{fpathshort}'")
+                    f"Invalid filename (contains spaces): '{fpathshort}'"
+                )
             payload_str += fpathshort + ' ' + md5sum(fpath) + '\n'
             file_list.append(fpathshort)
 
@@ -221,8 +229,13 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
     if file_list:
         # Write the file count, whether this is a 'full' payload, and finally
         # the file list.
-        payload_str = (str(len(file_list)) + '\n' + ('1' if full else '0') +
-                       '\n' + payload_str)
+        payload_str = (
+            str(len(file_list))
+            + '\n'
+            + ('1' if full else '0')
+            + '\n'
+            + payload_str
+        )
         with open(payload_path, 'w', encoding='utf-8') as outfile:
             outfile.write(payload_str)
     else:
@@ -259,14 +272,17 @@ def _sync_windows_extras(cfg: Config) -> None:
         # it up when running under WSL. Let's install it as lib for now.
         dstdirname = 'lib' if dirname == 'Lib' else dirname
         _run(f'mkdir -p "{cfg.dst}/{dstdirname}"')
-        cmd = ('rsync --recursive --update --delete --delete-excluded '
-               ' --prune-empty-dirs'
-               " --include '*.ico' --include '*.cat'"
-               f" --include '*.dll' {pyd_rules}"
-               " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
-               " --include '*/' --exclude '*' \"" +
-               os.path.join(cfg.win_extras_src, dirname) + '/" '
-               '"' + cfg.dst + '/' + dstdirname + '/"')
+        cmd = (
+            'rsync --recursive --update --delete --delete-excluded '
+            ' --prune-empty-dirs'
+            " --include '*.ico' --include '*.cat'"
+            f" --include '*.dll' {pyd_rules}"
+            " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
+            " --include '*/' --exclude '*' \""
+            + os.path.join(cfg.win_extras_src, dirname)
+            + '/" '
+            '"' + cfg.dst + '/' + dstdirname + '/"'
+        )
         _run(cmd)
 
     # Now sync the top level individual files that we want.
@@ -278,8 +294,11 @@ def _sync_windows_extras(cfg: Config) -> None:
 
     if cfg.win_type == 'win':
         toplevelfiles += [
-            'libvorbis.dll', 'libvorbisfile.dll', 'ogg.dll', 'OpenAL32.dll',
-            'SDL2.dll'
+            'libvorbis.dll',
+            'libvorbisfile.dll',
+            'ogg.dll',
+            'OpenAL32.dll',
+            'SDL2.dll',
         ]
     elif cfg.win_type == 'winserver':
         toplevelfiles += [f'python{dbgsfx}.exe']
@@ -288,12 +307,16 @@ def _sync_windows_extras(cfg: Config) -> None:
     if cfg.debug:
         if cfg.win_platform == 'x64':
             toplevelfiles += [
-                'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll',
-                'ucrtbased.dll'
+                'msvcp140d.dll',
+                'vcruntime140d.dll',
+                'vcruntime140_1d.dll',
+                'ucrtbased.dll',
             ]
         else:
             toplevelfiles += [
-                'msvcp140d.dll', 'vcruntime140d.dll', 'ucrtbased.dll'
+                'msvcp140d.dll',
+                'vcruntime140d.dll',
+                'ucrtbased.dll',
             ]
 
     # Include the runtime redistributables in release builds.
@@ -305,9 +328,11 @@ def _sync_windows_extras(cfg: Config) -> None:
         else:
             raise RuntimeError(f'Invalid win_platform {cfg.win_platform}')
 
-    cmd2 = (['rsync', '--update'] +
-            [os.path.join(cfg.win_extras_src, f)
-             for f in toplevelfiles] + [cfg.dst + '/'])
+    cmd2 = (
+        ['rsync', '--update']
+        + [os.path.join(cfg.win_extras_src, f) for f in toplevelfiles]
+        + [cfg.dst + '/']
+    )
     subprocess.run(cmd2, check=True)
 
     # If we're running under WSL we won't be able to launch these .exe files
@@ -320,24 +345,30 @@ def _sync_pylib(cfg: Config) -> None:
     assert cfg.pylib_src_name is not None
     assert cfg.dst is not None
     _run(f'mkdir -p "{cfg.dst}/pylib"')
-    cmd = (f'rsync --recursive --update --delete --delete-excluded '
-           f' --prune-empty-dirs'
-           f" --include '*.py' --include '*.{OPT_PYC_SUFFIX}'"
-           f" --include '*/' --exclude '*'"
-           f' "{cfg.src}/{cfg.pylib_src_name}/" '
-           f'"{cfg.dst}/pylib/"')
+    cmd = (
+        f'rsync --recursive --update --delete --delete-excluded '
+        f' --prune-empty-dirs'
+        f" --include '*.py' --include '*.{OPT_PYC_SUFFIX}'"
+        f" --include '*/' --exclude '*'"
+        f' "{cfg.src}/{cfg.pylib_src_name}/" '
+        f'"{cfg.dst}/pylib/"'
+    )
     _run(cmd)
 
 
 def _sync_standard_game_data(cfg: Config) -> None:
     assert cfg.dst is not None
     _run('mkdir -p "' + cfg.dst + '/ba_data"')
-    cmd = ('rsync --recursive --update --delete --delete-excluded'
-           ' --prune-empty-dirs')
+    cmd = (
+        'rsync --recursive --update --delete --delete-excluded'
+        ' --prune-empty-dirs'
+    )
 
     if cfg.include_scripts:
-        cmd += (f" --include '*.py' --include '*.pem'"
-                f" --include '*.{OPT_PYC_SUFFIX}'")
+        cmd += (
+            f" --include '*.py' --include '*.pem'"
+            f" --include '*.{OPT_PYC_SUFFIX}'"
+        )
 
     if cfg.include_textures:
         assert cfg.tex_suffix is not None
@@ -358,8 +389,13 @@ def _sync_standard_game_data(cfg: Config) -> None:
     if cfg.include_collide_models:
         cmd += " --include '*.cob'"
 
-    cmd += (" --include='*/' --exclude='*' \"" + cfg.src + '/ba_data/" "' +
-            cfg.dst + '/ba_data/"')
+    cmd += (
+        " --include='*/' --exclude='*' \""
+        + cfg.src
+        + '/ba_data/" "'
+        + cfg.dst
+        + '/ba_data/"'
+    )
     _run(cmd)
 
 
@@ -374,35 +410,45 @@ def _sync_server_files(cfg: Config) -> None:
         mode=modeval,
         infilename=f'{cfg.src}/../src/server/ballisticacore_server.py',
         outfilename=os.path.join(
-            cfg.serverdst, 'ballisticacore_server.py'
-            if cfg.win_type is not None else 'ballisticacore_server'))
-    stage_server_file(projroot=cfg.projroot,
-                      mode=modeval,
-                      infilename=f'{cfg.src}/../src/server/README.txt',
-                      outfilename=os.path.join(cfg.serverdst, 'README.txt'))
+            cfg.serverdst,
+            'ballisticacore_server.py'
+            if cfg.win_type is not None
+            else 'ballisticacore_server',
+        ),
+    )
+    stage_server_file(
+        projroot=cfg.projroot,
+        mode=modeval,
+        infilename=f'{cfg.src}/../src/server/README.txt',
+        outfilename=os.path.join(cfg.serverdst, 'README.txt'),
+    )
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
         infilename=f'{cfg.src}/../src/server/config_template.yaml',
-        outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'))
+        outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'),
+    )
     if cfg.win_type is not None:
         stage_server_file(
             projroot=cfg.projroot,
             mode=modeval,
-            infilename=
-            f'{cfg.src}/../src/server/launch_ballisticacore_server.bat',
-            outfilename=os.path.join(cfg.serverdst,
-                                     'launch_ballisticacore_server.bat'))
+            infilename=(
+                f'{cfg.src}/../src/server/launch_ballisticacore_server.bat'
+            ),
+            outfilename=os.path.join(
+                cfg.serverdst, 'launch_ballisticacore_server.bat'
+            ),
+        )
 
 
-def _write_if_changed(path: str,
-                      contents: str,
-                      make_executable: bool = False) -> None:
+def _write_if_changed(
+    path: str, contents: str, make_executable: bool = False
+) -> None:
     changed: bool
     try:
         with open(path, encoding='utf-8') as infile:
             existing = infile.read()
-        changed = (contents != existing)
+        changed = contents != existing
     except FileNotFoundError:
         changed = True
     if changed:
@@ -412,14 +458,18 @@ def _write_if_changed(path: str,
             subprocess.run(['chmod', '+x', path], check=True)
 
 
-def stage_server_file(projroot: str, mode: str, infilename: str,
-                      outfilename: str) -> None:
+def stage_server_file(
+    projroot: str, mode: str, infilename: str, outfilename: str
+) -> None:
     """Stage files for the server environment with some filtering."""
     import batools.build
     from efrotools import replace_exact
+
     if mode not in ('debug', 'release'):
-        raise RuntimeError(f"Invalid server-file-staging mode '{mode}';"
-                           f" expected 'debug' or 'release'.")
+        raise RuntimeError(
+            f"Invalid server-file-staging mode '{mode}';"
+            f" expected 'debug' or 'release'."
+        )
 
     print(f'Building server file: {os.path.basename(outfilename)}')
 
@@ -430,7 +480,8 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
         # Inject all available config values into the config file.
         _write_if_changed(
             outfilename,
-            batools.build.filter_server_config(str(projroot), infilename))
+            batools.build.filter_server_config(str(projroot), infilename),
+        )
 
     elif basename == 'ballisticacore_server.py':
         # Run Python in opt mode for release builds.
@@ -438,11 +489,13 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
             lines = infile.read().splitlines()
             if mode == 'release':
                 lines[0] = replace_exact(
-                    lines[0], f'#!/usr/bin/env python{PYVER}',
-                    f'#!/usr/bin/env -S python{PYVER} -O')
-        _write_if_changed(outfilename,
-                          '\n'.join(lines) + '\n',
-                          make_executable=True)
+                    lines[0],
+                    f'#!/usr/bin/env python{PYVER}',
+                    f'#!/usr/bin/env -S python{PYVER} -O',
+                )
+        _write_if_changed(
+            outfilename, '\n'.join(lines) + '\n', make_executable=True
+        )
     elif basename == 'README.txt':
         with open(infilename, encoding='utf-8') as infile:
             readme = infile.read()
@@ -453,16 +506,23 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
             lines = infile.read().splitlines()
         if mode == 'release':
             lines[1] = replace_exact(
-                lines[1], ':: Python interpreter.', ':: Python interpreter.'
-                ' (in opt mode so we use bundled .opt-1.pyc files)')
+                lines[1],
+                ':: Python interpreter.',
+                ':: Python interpreter.'
+                ' (in opt mode so we use bundled .opt-1.pyc files)',
+            )
             lines[2] = replace_exact(
-                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python.exe -O ballisticacore_server.py')
+                lines[2],
+                'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python.exe -O ballisticacore_server.py',
+            )
         else:
             # In debug mode we use the bundled debug interpreter.
             lines[2] = replace_exact(
-                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python_d.exe ballisticacore_server.py')
+                lines[2],
+                'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python_d.exe ballisticacore_server.py',
+            )
 
         _write_if_changed(outfilename, '\n'.join(lines) + '\n')
     else:

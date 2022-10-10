@@ -14,18 +14,19 @@ if TYPE_CHECKING:
 
 def _get_map_data(name: str) -> dict[str, Any]:
     import json
+
     print('Would get map data', name)
-    with open('ba_data/data/maps/' + name + '.json',
-              encoding='utf-8') as infile:
+    with open(
+        'ba_data/data/maps/' + name + '.json', encoding='utf-8'
+    ) as infile:
         mapdata = json.loads(infile.read())
     assert isinstance(mapdata, dict)
     return mapdata
 
 
 class StdMap(ba.Map):
-    """A map completely defined by asset data.
+    """A map completely defined by asset data."""
 
-    """
     _data: dict[str, Any] | None = None
 
     @classmethod

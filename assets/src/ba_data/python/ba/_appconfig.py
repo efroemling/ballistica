@@ -115,16 +115,29 @@ def read_config() -> tuple[AppConfig, bool]:
         config_file_healthy = True
 
     except Exception as exc:
-        print(('error reading config file at time ' +
-               str(_ba.time(TimeType.REAL)) + ': \'' + config_file_path +
-               '\':\n'), exc)
+        print(
+            (
+                'error reading config file at time '
+                + str(_ba.time(TimeType.REAL))
+                + ': \''
+                + config_file_path
+                + '\':\n'
+            ),
+            exc,
+        )
 
         # Whenever this happens lets back up the broken one just in case it
         # gets overwritten accidentally.
-        print(('backing up current config file to \'' + config_file_path +
-               ".broken\'"))
+        print(
+            (
+                'backing up current config file to \''
+                + config_file_path
+                + ".broken\'"
+            )
+        )
         try:
             import shutil
+
             shutil.copyfile(config_file_path, config_file_path + '.broken')
         except Exception as exc2:
             print('EXC copying broken config:', exc2)
@@ -154,8 +167,11 @@ def commit_app_config(force: bool = False) -> None:
     (internal)
     """
     from ba._internal import mark_config_dirty
+
     if not _ba.app.config_file_healthy and not force:
-        print('Current config file is broken; '
-              'skipping write to avoid losing settings.')
+        print(
+            'Current config file is broken; '
+            'skipping write to avoid losing settings.'
+        )
         return
     mark_config_dirty()

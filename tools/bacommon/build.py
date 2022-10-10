@@ -22,6 +22,7 @@ class BuildInfoSet:
     @dataclass
     class Entry:
         """Info about a particular build."""
+
         filename: Annotated[str, IOAttrs('fname')]
         size: Annotated[int, IOAttrs('size')]
         version: Annotated[str, IOAttrs('version')]
@@ -29,5 +30,6 @@ class BuildInfoSet:
         checksum: Annotated[str, IOAttrs('checksum')]
         createtime: Annotated[datetime.datetime, IOAttrs('createtime')]
 
-    builds: Annotated[list[Entry],
-                      IOAttrs('builds')] = field(default_factory=list)
+    builds: Annotated[list[Entry], IOAttrs('builds')] = field(
+        default_factory=list
+    )

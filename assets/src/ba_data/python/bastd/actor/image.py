@@ -18,6 +18,7 @@ class Image(ba.Actor):
 
     class Transition(Enum):
         """Transition types we support."""
+
         FADE_IN = 'fade_in'
         IN_RIGHT = 'in_right'
         IN_LEFT = 'in_left'
@@ -27,25 +28,28 @@ class Image(ba.Actor):
 
     class Attach(Enum):
         """Attach types we support."""
+
         CENTER = 'center'
         TOP_CENTER = 'topCenter'
         TOP_LEFT = 'topLeft'
         BOTTOM_CENTER = 'bottomCenter'
 
-    def __init__(self,
-                 texture: ba.Texture | dict[str, Any],
-                 position: tuple[float, float] = (0, 0),
-                 transition: Transition | None = None,
-                 transition_delay: float = 0.0,
-                 attach: Attach = Attach.CENTER,
-                 color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
-                 scale: tuple[float, float] = (100.0, 100.0),
-                 transition_out_delay: float | None = None,
-                 model_opaque: ba.Model | None = None,
-                 model_transparent: ba.Model | None = None,
-                 vr_depth: float = 0.0,
-                 host_only: bool = False,
-                 front: bool = False):
+    def __init__(
+        self,
+        texture: ba.Texture | dict[str, Any],
+        position: tuple[float, float] = (0, 0),
+        transition: Transition | None = None,
+        transition_delay: float = 0.0,
+        attach: Attach = Attach.CENTER,
+        color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
+        scale: tuple[float, float] = (100.0, 100.0),
+        transition_out_delay: float | None = None,
+        model_opaque: ba.Model | None = None,
+        model_transparent: ba.Model | None = None,
+        vr_depth: float = 0.0,
+        host_only: bool = False,
+        front: bool = False,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -66,22 +70,24 @@ class Image(ba.Actor):
             tint_texture = None
             mask_texture = None
 
-        self.node = ba.newnode('image',
-                               attrs={
-                                   'texture': texture,
-                                   'tint_color': tint_color,
-                                   'tint_texture': tint_texture,
-                                   'position': position,
-                                   'vr_depth': vr_depth,
-                                   'scale': scale,
-                                   'mask_texture': mask_texture,
-                                   'color': color,
-                                   'absolute_scale': True,
-                                   'host_only': host_only,
-                                   'front': front,
-                                   'attach': attach.value
-                               },
-                               delegate=self)
+        self.node = ba.newnode(
+            'image',
+            attrs={
+                'texture': texture,
+                'tint_color': tint_color,
+                'tint_texture': tint_texture,
+                'position': position,
+                'vr_depth': vr_depth,
+                'scale': scale,
+                'mask_texture': mask_texture,
+                'color': color,
+                'absolute_scale': True,
+                'host_only': host_only,
+                'front': front,
+                'attach': attach.value,
+            },
+            delegate=self,
+        )
 
         if model_opaque is not None:
             self.node.model_opaque = model_opaque
@@ -95,13 +101,13 @@ class Image(ba.Actor):
                 keys[transition_delay + transition_out_delay] = color[3]
                 keys[transition_delay + transition_out_delay + 0.5] = 0
             ba.animate(self.node, 'opacity', keys)
-        cmb = self.position_combine = ba.newnode('combine',
-                                                 owner=self.node,
-                                                 attrs={'size': 2})
+        cmb = self.position_combine = ba.newnode(
+            'combine', owner=self.node, attrs={'size': 2}
+        )
         if transition is self.Transition.IN_RIGHT:
             keys = {
                 transition_delay: position[0] + 1200,
-                transition_delay + 0.2: position[0]
+                transition_delay + 0.2: position[0],
             }
             o_keys = {transition_delay: 0.0, transition_delay + 0.05: 1.0}
             ba.animate(cmb, 'input0', keys)
@@ -110,32 +116,27 @@ class Image(ba.Actor):
         elif transition is self.Transition.IN_LEFT:
             keys = {
                 transition_delay: position[0] - 1200,
-                transition_delay + 0.2: position[0]
+                transition_delay + 0.2: position[0],
             }
             o_keys = {transition_delay: 0.0, transition_delay + 0.05: 1.0}
             if transition_out_delay is not None:
                 keys[transition_delay + transition_out_delay] = position[0]
-                keys[transition_delay + transition_out_delay +
-                     200] = -position[0] - 1200
+                keys[transition_delay + transition_out_delay + 200] = (
+                    -position[0] - 1200
+                )
                 o_keys[transition_delay + transition_out_delay + 0.15] = 1.0
                 o_keys[transition_delay + transition_out_delay + 0.2] = 0.0
             ba.animate(cmb, 'input0', keys)
             cmb.input1 = position[1]
             ba.animate(self.node, 'opacity', o_keys)
         elif transition is self.Transition.IN_BOTTOM_SLOW:
-            keys = {
-                transition_delay: -400,
-                transition_delay + 3.5: position[1]
-            }
+            keys = {transition_delay: -400, transition_delay + 3.5: position[1]}
             o_keys = {transition_delay: 0.0, transition_delay + 2.0: 1.0}
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
         elif transition is self.Transition.IN_BOTTOM:
-            keys = {
-                transition_delay: -400,
-                transition_delay + 0.2: position[1]
-            }
+            keys = {transition_delay: -400, transition_delay + 0.2: position[1]}
             o_keys = {transition_delay: 0.0, transition_delay + 0.05: 1.0}
             if transition_out_delay is not None:
                 keys[transition_delay + transition_out_delay] = position[1]
@@ -159,8 +160,10 @@ class Image(ba.Actor):
 
         # If we're transitioning out, die at the end of it.
         if transition_out_delay is not None:
-            ba.timer(transition_delay + transition_out_delay + 1.0,
-                     ba.WeakCall(self.handlemessage, ba.DieMessage()))
+            ba.timer(
+                transition_delay + transition_out_delay + 1.0,
+                ba.WeakCall(self.handlemessage, ba.DieMessage()),
+            )
 
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired

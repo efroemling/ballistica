@@ -9,6 +9,7 @@ import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
 from ba._generated.enums import InputType, UIScale
+
 # False-positive from pylint due to our class-generics-filter.
 from ba._player import EmptyPlayer  # pylint: disable=W0611
 from ba._team import EmptyTeam  # pylint: disable=W0611
@@ -40,6 +41,7 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
         # pylint: disable=cyclic-import
         from bastd.mainmenu import MainMenuSession
         from ba._general import Call
+
         super().on_begin()
         _ba.unlock_all_input()
         _ba.app.ads.call_after_ad(Call(_ba.new_host_session, MainMenuSession))
@@ -72,10 +74,11 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
         # pylint: disable=cyclic-import
         from bastd.actor.tipstext import TipsText
         from bastd.actor.background import Background
+
         super().on_transition_in()
-        self._background = Background(fade_time=0.5,
-                                      start_faded=True,
-                                      show_logo=True)
+        self._background = Background(
+            fade_time=0.5, start_faded=True, show_logo=True
+        )
         self._tips_text = TipsText()
         setmusic(MusicType.CHAR_SELECT)
         self._join_info = self.session.lobby.create_join_info()
@@ -103,10 +106,11 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.actor import background  # FIXME: Don't use bastd from ba.
+
         super().on_transition_in()
-        self._background = background.Background(fade_time=0.5,
-                                                 start_faded=False,
-                                                 show_logo=False)
+        self._background = background.Background(
+            fade_time=0.5, start_faded=False, show_logo=False
+        )
 
     def on_begin(self) -> None:
         super().on_begin()
@@ -143,9 +147,11 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_player_join(self, player: EmptyPlayer) -> None:
         from ba._general import WeakCall
+
         super().on_player_join(player)
         time_till_assign = max(
-            0, self._birth_time + self._min_view_time - _ba.time())
+            0, self._birth_time + self._min_view_time - _ba.time()
+        )
 
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
@@ -154,10 +160,11 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_transition_in(self) -> None:
         from bastd.actor.tipstext import TipsText
         from bastd.actor.background import Background
+
         super().on_transition_in()
-        self._background = Background(fade_time=0.5,
-                                      start_faded=False,
-                                      show_logo=True)
+        self._background = Background(
+            fade_time=0.5, start_faded=False, show_logo=True
+        )
         if self._default_show_tips:
             self._tips_text = TipsText()
         setmusic(self.default_music)
@@ -166,6 +173,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # pylint: disable=cyclic-import
         from bastd.actor.text import Text
         from ba import _language
+
         super().on_begin()
 
         # Pop up a 'press any button to continue' statement after our
@@ -178,24 +186,30 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         else:
             sval = _language.Lstr(resource='pressAnyButtonText')
 
-        Text(self._custom_continue_message
-             if self._custom_continue_message is not None else sval,
-             v_attach=Text.VAttach.BOTTOM,
-             h_align=Text.HAlign.CENTER,
-             flash=True,
-             vr_depth=50,
-             position=(0, 10),
-             scale=0.8,
-             color=(0.5, 0.7, 0.5, 0.5),
-             transition=Text.Transition.IN_BOTTOM_SLOW,
-             transition_delay=self._min_view_time).autoretain()
+        Text(
+            self._custom_continue_message
+            if self._custom_continue_message is not None
+            else sval,
+            v_attach=Text.VAttach.BOTTOM,
+            h_align=Text.HAlign.CENTER,
+            flash=True,
+            vr_depth=50,
+            position=(0, 10),
+            scale=0.8,
+            color=(0.5, 0.7, 0.5, 0.5),
+            transition=Text.Transition.IN_BOTTOM_SLOW,
+            transition_delay=self._min_view_time,
+        ).autoretain()
 
     def _player_press(self) -> None:
 
         # If this activity is a good 'end point', ask server-mode just once if
         # it wants to do anything special like switch sessions or kill the app.
-        if (self._allow_server_transition and _ba.app.server is not None
-                and self._server_transitioning is None):
+        if (
+            self._allow_server_transition
+            and _ba.app.server is not None
+            and self._server_transitioning is None
+        ):
             self._server_transitioning = _ba.app.server.handle_transition()
             assert isinstance(self._server_transitioning, bool)
 
@@ -211,6 +225,12 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:
-            player.assigninput((InputType.JUMP_PRESS, InputType.PUNCH_PRESS,
-                                InputType.BOMB_PRESS, InputType.PICK_UP_PRESS),
-                               self._player_press)
+            player.assigninput(
+                (
+                    InputType.JUMP_PRESS,
+                    InputType.PUNCH_PRESS,
+                    InputType.BOMB_PRESS,
+                    InputType.PICK_UP_PRESS,
+                ),
+                self._player_press,
+            )

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 @dataclass
 class Section:
     """Represents a section of a Makefile."""
+
     name: str | None
     paragraphs: list[Paragraph]
 
@@ -22,6 +23,7 @@ class Section:
 @dataclass
 class Paragraph:
     """Represents a continuous set of non-blank lines in a Makefile."""
+
     contents: str
 
     def get_logical_lines(self) -> list[str]:
@@ -70,12 +72,16 @@ class Makefile:
             # a new section whenever we come across one.
             plines = paragraph.contents.splitlines()
             # pylint: disable=too-many-boolean-expressions
-            if (len(plines) == 5 and plines[0] == self.header_line_full
-                    and plines[1] == self.header_line_empty
-                    and len(plines[2]) == 80 and plines[2][0] == '#'
-                    and plines[2][-1] == '#'
-                    and plines[3] == self.header_line_empty
-                    and plines[4] == self.header_line_full):
+            if (
+                len(plines) == 5
+                and plines[0] == self.header_line_full
+                and plines[1] == self.header_line_empty
+                and len(plines[2]) == 80
+                and plines[2][0] == '#'
+                and plines[2][-1] == '#'
+                and plines[3] == self.header_line_empty
+                and plines[4] == self.header_line_full
+            ):
                 section = Section(name=plines[2][1:-1].strip(), paragraphs=[])
                 self.sections.append(section)
             else:
@@ -90,8 +96,9 @@ class Makefile:
         for section in self.sections:
             for i, paragraph in enumerate(section.paragraphs):
                 if any(
-                        line.split('=')[0].strip() == name
-                        for line in paragraph.get_logical_lines()):
+                    line.split('=')[0].strip() == name
+                    for line in paragraph.get_logical_lines()
+                ):
                     found.append((section, i))
         return found
 
@@ -103,8 +110,10 @@ class Makefile:
         found: list[tuple[Section, int]] = []
         for section in self.sections:
             for i, paragraph in enumerate(section.paragraphs):
-                if any(line.split()[0] == name + ':'
-                       for line in paragraph.get_logical_lines()):
+                if any(
+                    line.split()[0] == name + ':'
+                    for line in paragraph.get_logical_lines()
+                ):
                     found.append((section, i))
         return found
 

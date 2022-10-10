@@ -31,13 +31,20 @@ class OSMusicPlayer(MusicPlayer):
         # FIXME: should ask the C++ layer for these; just hard-coding for now.
         return ['mp3', 'ogg', 'm4a', 'wav', 'flac', 'mid']
 
-    def on_select_entry(self, callback: Callable[[Any], None],
-                        current_entry: Any, selection_target_name: str) -> Any:
+    def on_select_entry(
+        self,
+        callback: Callable[[Any], None],
+        current_entry: Any,
+        selection_target_name: str,
+    ) -> Any:
         # pylint: disable=cyclic-import
         from bastd.ui.soundtrack.entrytypeselect import (
-            SoundtrackEntryTypeSelectWindow)
-        return SoundtrackEntryTypeSelectWindow(callback, current_entry,
-                                               selection_target_name)
+            SoundtrackEntryTypeSelectWindow,
+        )
+
+        return SoundtrackEntryTypeSelectWindow(
+            callback, current_entry, selection_target_name
+        )
 
     def on_set_volume(self, volume: float) -> None:
         _ba.music_player_set_volume(volume)
@@ -56,22 +63,31 @@ class OSMusicPlayer(MusicPlayer):
             # valid file within it.
             self._want_to_play = True
             self._actually_playing = False
-            _PickFolderSongThread(name, self.get_valid_music_file_extensions(),
-                                  self._on_play_folder_cb).start()
+            _PickFolderSongThread(
+                name,
+                self.get_valid_music_file_extensions(),
+                self._on_play_folder_cb,
+            ).start()
 
-    def _on_play_folder_cb(self,
-                           result: str | list[str],
-                           error: str | None = None) -> None:
+    def _on_play_folder_cb(
+        self, result: str | list[str], error: str | None = None
+    ) -> None:
         from ba import _language
+
         if error is not None:
-            rstr = (_language.Lstr(
-                resource='internal.errorPlayingMusicText').evaluate())
+            rstr = _language.Lstr(
+                resource='internal.errorPlayingMusicText'
+            ).evaluate()
             if isinstance(result, str):
-                err_str = (rstr.replace('${MUSIC}', os.path.basename(result)) +
-                           '; ' + str(error))
+                err_str = (
+                    rstr.replace('${MUSIC}', os.path.basename(result))
+                    + '; '
+                    + str(error)
+                )
             else:
-                err_str = (rstr.replace('${MUSIC}', '<multiple>') + '; ' +
-                           str(error))
+                err_str = (
+                    rstr.replace('${MUSIC}', '<multiple>') + '; ' + str(error)
+                )
             _ba.screenmessage(err_str, color=(1, 0, 0))
             return
 
@@ -93,9 +109,12 @@ class OSMusicPlayer(MusicPlayer):
 
 
 class _PickFolderSongThread(threading.Thread):
-
-    def __init__(self, path: str, valid_extensions: list[str],
-                 callback: Callable[[str | list[str], str | None], None]):
+    def __init__(
+        self,
+        path: str,
+        valid_extensions: list[str],
+        callback: Callable[[str | list[str], str | None], None],
+    ):
         super().__init__()
         self._valid_extensions = valid_extensions
         self._callback = callback
@@ -104,6 +123,7 @@ class _PickFolderSongThread(threading.Thread):
     def run(self) -> None:
         from ba import _language
         from ba._general import Call
+
         do_print_error = True
         try:
             _ba.set_thread_name('BA_PickFolderSongThread')
@@ -111,24 +131,33 @@ class _PickFolderSongThread(threading.Thread):
             valid_extensions = ['.' + x for x in self._valid_extensions]
             for root, _subdirs, filenames in os.walk(self._path):
                 for fname in filenames:
-                    if any(fname.lower().endswith(ext)
-                           for ext in valid_extensions):
-                        all_files.insert(random.randrange(len(all_files) + 1),
-                                         root + '/' + fname)
+                    if any(
+                        fname.lower().endswith(ext) for ext in valid_extensions
+                    ):
+                        all_files.insert(
+                            random.randrange(len(all_files) + 1),
+                            root + '/' + fname,
+                        )
             if not all_files:
                 do_print_error = False
                 raise RuntimeError(
-                    _language.Lstr(resource='internal.noMusicFilesInFolderText'
-                                   ).evaluate())
-            _ba.pushcall(Call(self._callback, all_files, None),
-                         from_other_thread=True)
+                    _language.Lstr(
+                        resource='internal.noMusicFilesInFolderText'
+                    ).evaluate()
+                )
+            _ba.pushcall(
+                Call(self._callback, all_files, None), from_other_thread=True
+            )
         except Exception as exc:
             from ba import _error
+
             if do_print_error:
                 _error.print_exception()
             try:
                 err_str = str(exc)
             except Exception:
                 err_str = '<ENCERR4523>'
-            _ba.pushcall(Call(self._callback, self._path, err_str),
-                         from_other_thread=True)
+            _ba.pushcall(
+                Call(self._callback, self._path, err_str),
+                from_other_thread=True,
+            )

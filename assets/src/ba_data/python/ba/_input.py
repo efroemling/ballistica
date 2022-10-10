@@ -48,7 +48,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
             'buttonRight': 23,
             'buttonUp': 20,
             'buttonDown': 21,
-            'buttonVRReorient': 110
+            'buttonVRReorient': 110,
         }.get(name, -1)
 
     # If there's an entry in our config for this controller, use it.
@@ -79,7 +79,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRun2': 5,
                 'buttonRun1': 6,
                 'buttonJump': 1,
-                'buttonIgnored': 11
+                'buttonIgnored': 11,
             }.get(name, -1)
 
         # Ps4 controller.
@@ -94,7 +94,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonRun2': 5,
                 'buttonRun1': 6,
-                'triggerRun1': 5
+                'triggerRun1': 5,
             }.get(name, -1)
 
     # Look for some exact types.
@@ -112,7 +112,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 100,
                 'buttonRun2': 103,
                 'buttonRun1': 104,
-                'triggerRun1': 24
+                'triggerRun1': 24,
             }.get(name, -1)
         if devicename == 'NYKO PLAYPAD PRO':
             return {
@@ -126,7 +126,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRight': 23,
                 'buttonStart': 83,
                 'buttonPunch': 100,
-                'buttonDown': 21
+                'buttonDown': 21,
             }.get(name, -1)
         if devicename == 'Logitech Dual Action':
             return {
@@ -136,7 +136,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonBomb': 101,
                 'buttonJump': 100,
                 'buttonStart': 109,
-                'buttonPunch': 97
+                'buttonPunch': 97,
             }.get(name, -1)
         if devicename == 'Xbox 360 Wireless Receiver':
             return {
@@ -150,7 +150,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRight': 23,
                 'buttonStart': 83,
                 'buttonPunch': 100,
-                'buttonDown': 21
+                'buttonDown': 21,
             }.get(name, -1)
         if devicename == 'Microsoft X-Box 360 pad':
             return {
@@ -160,11 +160,12 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonBomb': 98,
                 'buttonJump': 97,
                 'buttonStart': 83,
-                'buttonPunch': 100
+                'buttonPunch': 100,
             }.get(name, -1)
         if devicename in [
-                'Amazon Remote', 'Amazon Bluetooth Dev',
-                'Amazon Fire TV Remote'
+            'Amazon Remote',
+            'Amazon Bluetooth Dev',
+            'Amazon Fire TV Remote',
         ]:
             return {
                 'triggerRun2': 23,
@@ -178,7 +179,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRight': 23,
                 'buttonStart': 83,
                 'buttonPunch': 90,
-                'buttonDown': 21
+                'buttonDown': 21,
             }.get(name, -1)
 
     elif 'NVIDIA SHIELD;' in useragentstring:
@@ -193,7 +194,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonStart': 109,
                 'buttonPunch': 100,
                 'buttonIgnored': 184,
-                'buttonIgnored2': 86
+                'buttonIgnored2': 86,
             }.get(name, -1)
     elif platform == 'mac':
         if devicename == 'PLAYSTATION(R)3 Controller':
@@ -207,7 +208,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonBomb': 14,
                 'buttonPickUp': 13,
                 'buttonStart': 4,
-                'buttonIgnored': 17
+                'buttonIgnored': 17,
             }.get(name, -1)
         if devicename in ['Wireless 360 Controller', 'Controller']:
 
@@ -225,16 +226,18 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonUp': 1,
                 'triggerRun1': 5,
                 'triggerRun2': 6,
-                'buttonIgnored': 11
+                'buttonIgnored': 11,
             }.get(name, -1)
-        if (devicename
-                in ['Logitech Dual Action', 'Logitech Cordless RumblePad 2']):
+        if devicename in [
+            'Logitech Dual Action',
+            'Logitech Cordless RumblePad 2',
+        ]:
             return {
                 'buttonJump': 2,
                 'buttonPunch': 1,
                 'buttonBomb': 3,
                 'buttonPickUp': 4,
-                'buttonStart': 10
+                'buttonStart': 10,
             }.get(name, -1)
 
         # Old gravis gamepad.
@@ -244,7 +247,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonBomb': 3,
                 'buttonPickUp': 4,
-                'buttonStart': 10
+                'buttonStart': 10,
             }.get(name, -1)
 
         if devicename == 'Microsoft SideWinder Plug & Play Game Pad':
@@ -253,7 +256,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 3,
                 'buttonBomb': 2,
                 'buttonPickUp': 4,
-                'buttonStart': 6
+                'buttonStart': 6,
             }.get(name, -1)
 
         # Saitek P2500 Rumble Force Pad.. (hopefully works for others too?..)
@@ -263,7 +266,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonBomb': 4,
                 'buttonPickUp': 2,
-                'buttonStart': 11
+                'buttonStart': 11,
             }.get(name, -1)
 
         # Some crazy 'Senze' dual gamepad.
@@ -288,7 +291,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonStart': 10,
                 'buttonStart_B': 22,
                 'enableSecondary': 1,
-                'unassignedButtonsRun': False
+                'unassignedButtonsRun': False,
             }.get(name, -1)
         if devicename == 'USB Gamepad ':  # some weird 'JITE' gamepad
             return {
@@ -298,7 +301,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 4,
                 'buttonBomb': 2,
                 'buttonPickUp': 1,
-                'buttonStart': 10
+                'buttonStart': 10,
             }.get(name, -1)
 
     default_android_mapping = {
@@ -317,7 +320,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
         'buttonRight': 23,
         'buttonUp': 20,
         'buttonDown': 21,
-        'buttonVRReorient': 110
+        'buttonVRReorient': 110,
     }
 
     # Generic android...
@@ -341,7 +344,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRight': 23,
                 'buttonUp': 20,
                 'buttonDown': 21,
-                'buttonVRReorient': 108
+                'buttonVRReorient': 108,
             }.get(name, -1)
 
         # Adt-1 gamepad (use funky 'mode' button for start).
@@ -357,7 +360,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'startButtonActivatesDefaultWidget': False,
                 'buttonRun2': 104,
                 'buttonRun1': 103,
-                'triggerRun1': 18
+                'triggerRun1': 18,
             }.get(name, -1)
         # Nexus player remote.
         if devicename == 'Nexus Remote':
@@ -376,7 +379,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 24,
                 'buttonRun2': 104,
                 'buttonRun1': 103,
-                'triggerRun1': 18
+                'triggerRun1': 18,
             }.get(name, -1)
 
         if devicename == 'virtual-remote':
@@ -397,13 +400,15 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonRun1': 103,
                 'buttonDown': 21,
                 'startButtonActivatesDefaultWidget': False,
-                'uiOnly': True
+                'uiOnly': True,
             }.get(name, -1)
 
         # flag particular gamepads to use exact android defaults..
         # (so they don't even ask to configure themselves)
-        if devicename in ['Samsung Game Pad EI-GP20', 'ASUS Gamepad'
-                          ] or devicename.startswith('Freefly VR Glide'):
+        if devicename in [
+            'Samsung Game Pad EI-GP20',
+            'ASUS Gamepad',
+        ] or devicename.startswith('Freefly VR Glide'):
             return default_android_mapping.get(name, -1)
 
         # Nvidia controller is default, but gets some strange
@@ -423,7 +428,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 100,
                 'buttonRun2': 104,
                 'buttonRun1': 103,
-                'triggerRun1': 18
+                'triggerRun1': 18,
             }.get(name, -1)
 
     # Default keyboard vals across platforms..
@@ -438,7 +443,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonDown': 274,
                 'buttonLeft': 276,
                 'buttonRight': 275,
-                'buttonStart': 263
+                'buttonStart': 263,
             }.get(name, -1)
         return {
             'buttonPickUp': 1073741917,
@@ -449,7 +454,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
             'buttonRight': 1073741903,
             'buttonStart': 1073741919,
             'buttonPunch': 1073741913,
-            'buttonDown': 1073741905
+            'buttonDown': 1073741905,
         }.get(name, -1)
     if devicename == 'Keyboard' and unique_id == '#1':
         return {
@@ -460,7 +465,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
             'buttonUp': 119,
             'buttonDown': 115,
             'buttonLeft': 97,
-            'buttonRight': 100
+            'buttonRight': 100,
         }.get(name, -1)
 
     # Ok, this gamepad's not in our specific preset list;
@@ -479,7 +484,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 16,
                 'buttonBomb': 14,
                 'buttonPickUp': 13,
-                'buttonStart': 4
+                'buttonStart': 4,
             }.get(name, -1)
 
         # Dual Action Config - hopefully applies to more...
@@ -489,7 +494,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonBomb': 3,
                 'buttonPickUp': 4,
-                'buttonStart': 10
+                'buttonStart': 10,
             }.get(name, -1)
 
         # Saitek P2500 Rumble Force Pad.. (hopefully works for others too?..)
@@ -499,7 +504,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonBomb': 4,
                 'buttonPickUp': 2,
-                'buttonStart': 11
+                'buttonStart': 11,
             }.get(name, -1)
 
         # Gravis stuff?...
@@ -509,7 +514,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonPunch': 1,
                 'buttonBomb': 3,
                 'buttonPickUp': 4,
-                'buttonStart': 10
+                'buttonStart': 10,
             }.get(name, -1)
 
     # Reasonable defaults.
@@ -542,21 +547,23 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
         'buttonPunch': 2,
         'buttonBomb': 3,
         'buttonPickUp': 4,
-        'buttonStart': 5
+        'buttonStart': 5,
     }.get(name, -1)
 
 
 def _gen_android_input_hash() -> str:
     import os
     import hashlib
+
     md5 = hashlib.md5()
 
     # Currently we just do a single hash of *all* inputs on android
     # and that's it.. good enough.
     # (grabbing mappings for a specific device looks to be non-trivial)
     for dirname in [
-            '/system/usr/keylayout', '/data/usr/keylayout',
-            '/data/system/devices/keylayout'
+        '/system/usr/keylayout',
+        '/data/usr/keylayout',
+        '/data/system/devices/keylayout',
     ]:
         try:
             if os.path.isdir(dirname):
@@ -573,8 +580,10 @@ def _gen_android_input_hash() -> str:
                         pass
         except Exception:
             from ba import _error
+
             _error.print_exception(
-                'error in _gen_android_input_hash inner loop')
+                'error in _gen_android_input_hash inner loop'
+            )
     return md5.hexdigest()
 
 
@@ -597,12 +606,14 @@ def get_input_map_hash(inputdevice: ba.InputDevice) -> str:
         return app.input_map_hash
     except Exception:
         from ba import _error
+
         _error.print_exception('Exception in get_input_map_hash')
         return ''
 
 
-def get_input_device_config(device: ba.InputDevice,
-                            default: bool) -> tuple[dict, str]:
+def get_input_device_config(
+    device: ba.InputDevice, default: bool
+) -> tuple[dict, str]:
     """Given an input device, return its config dict in the app config.
 
     The dict will be created if it does not exist.
@@ -634,8 +645,10 @@ def get_last_player_name_from_input_device(device: ba.InputDevice) -> str:
     # otherwise default to their current random name.
     profilename = '_random'
     key_name = device.name + ' ' + device.unique_identifier
-    if ('Default Player Profiles' in appconfig
-            and key_name in appconfig['Default Player Profiles']):
+    if (
+        'Default Player Profiles' in appconfig
+        and key_name in appconfig['Default Player Profiles']
+    ):
         profilename = appconfig['Default Player Profiles'][key_name]
     if profilename == '_random':
         profilename = device.get_default_player_name()

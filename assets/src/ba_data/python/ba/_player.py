@@ -8,8 +8,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic, cast
 
 import _ba
-from ba._error import (SessionPlayerNotFoundError, print_exception,
-                       ActorNotFoundError)
+from ba._error import (
+    SessionPlayerNotFoundError,
+    print_exception,
+    ActorNotFoundError,
+)
 from ba._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
@@ -28,6 +31,7 @@ class PlayerInfo:
 
     Category: Gameplay Classes
     """
+
     name: str
     character: str
 
@@ -38,6 +42,7 @@ class StandLocation:
 
     Category: Gameplay Classes
     """
+
     position: ba.Vec3
     angle: float | None = None
 
@@ -90,7 +95,8 @@ class Player(Generic[TeamType]):
                 f' operator (__eq__) which will break internal'
                 f' logic. Please remove it.\n'
                 f'For dataclasses you can do "dataclass(eq=False)"'
-                f' in the class decorator.')
+                f' in the class decorator.'
+            )
 
         self.actor = None
         self.character = ''
@@ -249,8 +255,9 @@ class Player(Generic[TeamType]):
         assert not self._expired
         return self._sessionplayer.get_icon()
 
-    def assigninput(self, inputtype: ba.InputType | tuple[ba.InputType, ...],
-                    call: Callable) -> None:
+    def assigninput(
+        self, inputtype: ba.InputType | tuple[ba.InputType, ...], call: Callable
+    ) -> None:
         """
         Set the python callable to be run for one or more types of input.
         """
@@ -311,8 +318,9 @@ def playercast(totype: type[PlayerType], player: ba.Player) -> PlayerType:
 # NOTE: ideally we should have a single playercast() call and use overloads
 # for the optional variety, but that currently seems to not be working.
 # See: https://github.com/python/mypy/issues/8800
-def playercast_o(totype: type[PlayerType],
-                 player: ba.Player | None) -> PlayerType | None:
+def playercast_o(
+    totype: type[PlayerType], player: ba.Player | None
+) -> PlayerType | None:
     """A variant of ba.playercast() for use with optional ba.Player values.
 
     Category: Gameplay Functions

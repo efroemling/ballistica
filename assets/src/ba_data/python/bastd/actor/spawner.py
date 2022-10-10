@@ -38,10 +38,10 @@ class Spawner:
         """The spawn position."""
 
         def __init__(
-                self,
-                spawner: Spawner,
-                data: Any,
-                pt: Sequence[float],  # pylint: disable=invalid-name
+            self,
+            spawner: Spawner,
+            data: Any,
+            pt: Sequence[float],  # pylint: disable=invalid-name
         ):
             """Instantiate with the given values."""
             self.spawner = spawner
@@ -49,12 +49,13 @@ class Spawner:
             self.pt = pt  # pylint: disable=invalid-name
 
     def __init__(
-            self,
-            data: Any = None,
-            pt: Sequence[float] = (0, 0, 0),  # pylint: disable=invalid-name
-            spawn_time: float = 1.0,
-            send_spawn_message: bool = True,
-            spawn_callback: Callable[[], Any] | None = None):
+        self,
+        data: Any = None,
+        pt: Sequence[float] = (0, 0, 0),  # pylint: disable=invalid-name
+        spawn_time: float = 1.0,
+        send_spawn_message: bool = True,
+        spawn_callback: Callable[[], Any] | None = None,
+    ):
         """Instantiate a Spawner.
 
         Requires some custom data, a position,
@@ -66,19 +67,23 @@ class Spawner:
         self._data = data
         self._pt = pt
         # create a light where the spawn will happen
-        self._light = ba.newnode('light',
-                                 attrs={
-                                     'position': tuple(pt),
-                                     'radius': 0.1,
-                                     'color': (1.0, 0.1, 0.1),
-                                     'lights_volumes': False
-                                 })
+        self._light = ba.newnode(
+            'light',
+            attrs={
+                'position': tuple(pt),
+                'radius': 0.1,
+                'color': (1.0, 0.1, 0.1),
+                'lights_volumes': False,
+            },
+        )
         scl = float(spawn_time) / 3.75
         min_val = 0.4
         max_val = 0.7
         ba.playsound(self._spawner_sound, position=self._light.position)
         ba.animate(
-            self._light, 'intensity', {
+            self._light,
+            'intensity',
+            {
                 0.0: 0.0,
                 0.25 * scl: max_val,
                 0.500 * scl: min_val,
@@ -95,8 +100,9 @@ class Spawner:
                 3.250 * scl: 1.5 * max_val,
                 3.500 * scl: min_val,
                 3.750 * scl: 2.0,
-                4.000 * scl: 0.0
-            })
+                4.000 * scl: 0.0,
+            },
+        )
         ba.timer(spawn_time, self._spawn)
 
     def _spawn(self) -> None:
@@ -108,4 +114,5 @@ class Spawner:
             activity = ba.getactivity()
             if activity is not None:
                 activity.handlemessage(
-                    self.SpawnMessage(self, self._data, self._pt))
+                    self.SpawnMessage(self, self._data, self._pt)
+                )

@@ -17,9 +17,11 @@ if TYPE_CHECKING:
 class AdvancedSettingsWindow(ba.Window):
     """Window for editing advanced game settings."""
 
-    def __init__(self,
-                 transition: str = 'in_right',
-                 origin_widget: ba.Widget | None = None):
+    def __init__(
+        self,
+        transition: str = 'in_right',
+        origin_widget: ba.Widget | None = None,
+    ):
         # pylint: disable=too-many-statements
         from ba.internal import master_server_get
         import threading
@@ -43,19 +45,34 @@ class AdvancedSettingsWindow(ba.Window):
         uiscale = ba.app.ui.uiscale
         self._width = 870.0 if uiscale is ba.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
-        self._height = (390.0 if uiscale is ba.UIScale.SMALL else
-                        450.0 if uiscale is ba.UIScale.MEDIUM else 520.0)
+        self._height = (
+            390.0
+            if uiscale is ba.UIScale.SMALL
+            else 450.0
+            if uiscale is ba.UIScale.MEDIUM
+            else 520.0
+        )
         self._spacing = 32
         self._menu_open = False
         top_extra = 10 if uiscale is ba.UIScale.SMALL else 0
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            toolbar_visibility='menu_minimal',
-            scale_origin_stack_offset=scale_origin,
-            scale=(2.06 if uiscale is ba.UIScale.SMALL else
-                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height + top_extra),
+                transition=transition,
+                toolbar_visibility='menu_minimal',
+                scale_origin_stack_offset=scale_origin,
+                scale=(
+                    2.06
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.4
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(0, -25)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         self._prev_lang = ''
         self._prev_lang_list: list[str] = []
@@ -65,8 +82,9 @@ class AdvancedSettingsWindow(ba.Window):
 
         # In vr-mode, the internal keyboard is currently the *only* option,
         # so no need to show this.
-        self._show_always_use_internal_keyboard = (not app.vr_mode
-                                                   and not app.iircade_mode)
+        self._show_always_use_internal_keyboard = (
+            not app.vr_mode and not app.iircade_mode
+        )
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
@@ -93,8 +111,9 @@ class AdvancedSettingsWindow(ba.Window):
         self._r = 'settingsWindowAdvanced'
 
         if app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
-            ba.containerwidget(edit=self._root_widget,
-                               on_cancel_call=self._do_back)
+            ba.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._do_back
+            )
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
@@ -105,50 +124,62 @@ class AdvancedSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back)
-            ba.containerwidget(edit=self._root_widget,
-                               cancel_button=self._back_button)
+                on_activate_call=self._do_back,
+            )
+            ba.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
-        self._title_text = ba.textwidget(parent=self._root_widget,
-                                         position=(0, self._height - 52),
-                                         size=(self._width, 25),
-                                         text=ba.Lstr(resource=self._r +
-                                                      '.titleText'),
-                                         color=app.ui.title_color,
-                                         h_align='center',
-                                         v_align='top')
+        self._title_text = ba.textwidget(
+            parent=self._root_widget,
+            position=(0, self._height - 52),
+            size=(self._width, 25),
+            text=ba.Lstr(resource=self._r + '.titleText'),
+            color=app.ui.title_color,
+            h_align='center',
+            v_align='top',
+        )
 
         if self._back_button is not None:
-            ba.buttonwidget(edit=self._back_button,
-                            button_type='backSmall',
-                            size=(60, 60),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=self._back_button,
+                button_type='backSmall',
+                size=(60, 60),
+                label=ba.charstr(ba.SpecialChar.BACK),
+            )
 
-        self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
-                                             position=(50 + x_inset, 50),
-                                             simple_culling_v=20.0,
-                                             highlight=False,
-                                             size=(self._scroll_width,
-                                                   self._scroll_height),
-                                             selection_loops_to_parent=True)
+        self._scrollwidget = ba.scrollwidget(
+            parent=self._root_widget,
+            position=(50 + x_inset, 50),
+            simple_culling_v=20.0,
+            highlight=False,
+            size=(self._scroll_width, self._scroll_height),
+            selection_loops_to_parent=True,
+        )
         ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
-        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
-                                                size=(self._sub_width,
-                                                      self._sub_height),
-                                                background=False,
-                                                selection_loops_to_parent=True)
+        self._subcontainer = ba.containerwidget(
+            parent=self._scrollwidget,
+            size=(self._sub_width, self._sub_height),
+            background=False,
+            selection_loops_to_parent=True,
+        )
 
         self._rebuild()
 
         # Rebuild periodically to pick up language changes/additions/etc.
-        self._rebuild_timer = ba.Timer(1.0,
-                                       ba.WeakCall(self._rebuild),
-                                       repeat=True,
-                                       timetype=ba.TimeType.REAL)
+        self._rebuild_timer = ba.Timer(
+            1.0,
+            ba.WeakCall(self._rebuild),
+            repeat=True,
+            timetype=ba.TimeType.REAL,
+        )
 
         # Fetch the list of completed languages.
-        master_server_get('bsLangGetCompleted', {'b': app.build_number},
-                          callback=ba.WeakCall(self._completed_langs_cb))
+        master_server_get(
+            'bsLangGetCompleted',
+            {'b': app.build_number},
+            callback=ba.WeakCall(self._completed_langs_cb),
+        )
 
     # noinspection PyUnresolvedReferences
     @staticmethod
@@ -166,23 +197,32 @@ class AdvancedSettingsWindow(ba.Window):
 
     def _update_lang_status(self) -> None:
         if self._complete_langs_list is not None:
-            up_to_date = (ba.app.lang.language in self._complete_langs_list)
+            up_to_date = ba.app.lang.language in self._complete_langs_list
             ba.textwidget(
                 edit=self._lang_status_text,
-                text='' if ba.app.lang.language == 'Test' else ba.Lstr(
-                    resource=self._r + '.translationNoUpdateNeededText')
-                if up_to_date else ba.Lstr(resource=self._r +
-                                           '.translationUpdateNeededText'),
-                color=(0.2, 1.0, 0.2, 0.8) if up_to_date else
-                (1.0, 0.2, 0.2, 0.8))
+                text=''
+                if ba.app.lang.language == 'Test'
+                else ba.Lstr(
+                    resource=self._r + '.translationNoUpdateNeededText'
+                )
+                if up_to_date
+                else ba.Lstr(resource=self._r + '.translationUpdateNeededText'),
+                color=(0.2, 1.0, 0.2, 0.8)
+                if up_to_date
+                else (1.0, 0.2, 0.2, 0.8),
+            )
         else:
             ba.textwidget(
                 edit=self._lang_status_text,
                 text=ba.Lstr(resource=self._r + '.translationFetchErrorText')
-                if self._complete_langs_error else ba.Lstr(
-                    resource=self._r + '.translationFetchingStatusText'),
-                color=(1.0, 0.5, 0.2) if self._complete_langs_error else
-                (0.7, 0.7, 0.7))
+                if self._complete_langs_error
+                else ba.Lstr(
+                    resource=self._r + '.translationFetchingStatusText'
+                ),
+                color=(1.0, 0.5, 0.2)
+                if self._complete_langs_error
+                else (0.7, 0.7, 0.7),
+            )
 
     def _rebuild(self) -> None:
         # pylint: disable=too-many-statements
@@ -200,8 +240,10 @@ class AdvancedSettingsWindow(ba.Window):
         # menu based on the language so still need this. ...however we could
         # make this more limited to it only rebuilds that one menu instead
         # of everything.
-        if self._menu_open or (self._prev_lang == ba.app.config.get(
-                'Lang', None) and self._prev_lang_list == available_languages):
+        if self._menu_open or (
+            self._prev_lang == ba.app.config.get('Lang', None)
+            and self._prev_lang_list == available_languages
+        ):
             return
         self._prev_lang = ba.app.config.get('Lang', None)
         self._prev_lang_list = available_languages
@@ -217,13 +259,16 @@ class AdvancedSettingsWindow(ba.Window):
 
         # Update our existing back button and title.
         if self._back_button is not None:
-            ba.buttonwidget(edit=self._back_button,
-                            label=ba.Lstr(resource='backText'))
-            ba.buttonwidget(edit=self._back_button,
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=self._back_button, label=ba.Lstr(resource='backText')
+            )
+            ba.buttonwidget(
+                edit=self._back_button, label=ba.charstr(ba.SpecialChar.BACK)
+            )
 
-        ba.textwidget(edit=self._title_text,
-                      text=ba.Lstr(resource=self._r + '.titleText'))
+        ba.textwidget(
+            edit=self._title_text, text=ba.Lstr(resource=self._r + '.titleText')
+        )
 
         this_button_width = 410
 
@@ -234,22 +279,27 @@ class AdvancedSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource=self._r + '.enterPromoCodeText'),
             text_scale=1.0,
-            on_activate_call=self._on_promo_code_press)
+            on_activate_call=self._on_promo_code_press,
+        )
         if self._back_button is not None:
-            ba.widget(edit=self._promo_code_button,
-                      up_widget=self._back_button,
-                      left_widget=self._back_button)
+            ba.widget(
+                edit=self._promo_code_button,
+                up_widget=self._back_button,
+                left_widget=self._back_button,
+            )
         v -= self._extra_button_spacing * 0.8
 
-        ba.textwidget(parent=self._subcontainer,
-                      position=(200, v + 10),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.languageText'),
-                      maxwidth=150,
-                      scale=0.95,
-                      color=ba.app.ui.title_color,
-                      h_align='right',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            position=(200, v + 10),
+            size=(0, 0),
+            text=ba.Lstr(resource=self._r + '.languageText'),
+            maxwidth=150,
+            scale=0.95,
+            color=ba.app.ui.title_color,
+            h_align='right',
+            v_align='center',
+        )
 
         languages = ba.app.lang.available_languages
         cur_lang = ba.app.config.get('Lang', None)
@@ -260,10 +310,11 @@ class AdvancedSettingsWindow(ba.Window):
         # so we don't have to go digging through each full language.
         try:
             import json
-            with open('ba_data/data/langdata.json',
-                      encoding='utf-8') as infile:
-                lang_names_translated = (json.loads(
-                    infile.read())['lang_names_translated'])
+
+            with open('ba_data/data/langdata.json', encoding='utf-8') as infile:
+                lang_names_translated = json.loads(infile.read())[
+                    'lang_names_translated'
+                ]
         except Exception:
             ba.print_exception('Error reading lang data.')
             lang_names_translated = {}
@@ -278,8 +329,9 @@ class AdvancedSettingsWindow(ba.Window):
             if langs_translated[lang] == lang_translated:
                 langs_full[lang] = lang_translated
             else:
-                langs_full[lang] = (langs_translated[lang] + ' (' +
-                                    lang_translated + ')')
+                langs_full[lang] = (
+                    langs_translated[lang] + ' (' + lang_translated + ')'
+                )
 
         self._language_popup = popup_ui.PopupMenu(
             parent=self._subcontainer,
@@ -291,52 +343,72 @@ class AdvancedSettingsWindow(ba.Window):
             on_value_change_call=ba.WeakCall(self._on_menu_choice),
             choices=['Auto'] + languages,
             button_size=(250, 60),
-            choices_display=([
-                ba.Lstr(value=(ba.Lstr(resource='autoText').evaluate() + ' (' +
-                               ba.Lstr(translate=('languages',
-                                                  ba.app.lang.default_language
-                                                  )).evaluate() + ')'))
-            ] + [ba.Lstr(value=langs_full[l]) for l in languages]),
-            current_choice=cur_lang)
+            choices_display=(
+                [
+                    ba.Lstr(
+                        value=(
+                            ba.Lstr(resource='autoText').evaluate()
+                            + ' ('
+                            + ba.Lstr(
+                                translate=(
+                                    'languages',
+                                    ba.app.lang.default_language,
+                                )
+                            ).evaluate()
+                            + ')'
+                        )
+                    )
+                ]
+                + [ba.Lstr(value=langs_full[l]) for l in languages]
+            ),
+            current_choice=cur_lang,
+        )
 
         v -= self._spacing * 1.8
 
-        ba.textwidget(parent=self._subcontainer,
-                      position=(self._sub_width * 0.5, v + 10),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.helpTranslateText',
-                                   subs=[('${APP_NAME}',
-                                          ba.Lstr(resource='titleText'))]),
-                      maxwidth=self._sub_width * 0.9,
-                      max_height=55,
-                      flatness=1.0,
-                      scale=0.65,
-                      color=(0.4, 0.9, 0.4, 0.8),
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width * 0.5, v + 10),
+            size=(0, 0),
+            text=ba.Lstr(
+                resource=self._r + '.helpTranslateText',
+                subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
+            ),
+            maxwidth=self._sub_width * 0.9,
+            max_height=55,
+            flatness=1.0,
+            scale=0.65,
+            color=(0.4, 0.9, 0.4, 0.8),
+            h_align='center',
+            v_align='center',
+        )
         v -= self._spacing * 1.9
         this_button_width = 410
         self._translation_editor_button = ba.buttonwidget(
             parent=self._subcontainer,
             position=(self._sub_width / 2 - this_button_width / 2, v - 24),
             size=(this_button_width, 60),
-            label=ba.Lstr(resource=self._r + '.translationEditorButtonText',
-                          subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
-                                ]),
+            label=ba.Lstr(
+                resource=self._r + '.translationEditorButtonText',
+                subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
+            ),
             autoselect=True,
             on_activate_call=ba.Call(
-                ba.open_url, 'https://legacy.ballistica.net/translate'))
+                ba.open_url, 'https://legacy.ballistica.net/translate'
+            ),
+        )
 
-        self._lang_status_text = ba.textwidget(parent=self._subcontainer,
-                                               position=(self._sub_width * 0.5,
-                                                         v - 40),
-                                               size=(0, 0),
-                                               text='',
-                                               flatness=1.0,
-                                               scale=0.63,
-                                               h_align='center',
-                                               v_align='center',
-                                               maxwidth=400.0)
+        self._lang_status_text = ba.textwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width * 0.5, v - 40),
+            size=(0, 0),
+            text='',
+            flatness=1.0,
+            scale=0.63,
+            h_align='center',
+            v_align='center',
+            maxwidth=400.0,
+        )
         self._update_lang_status()
         v -= 40
 
@@ -351,12 +423,14 @@ class AdvancedSettingsWindow(ba.Window):
             textcolor=(0.8, 0.8, 0.8),
             value=lang_inform,
             text=ba.Lstr(resource=self._r + '.translationInformMe'),
-            on_value_change_call=ba.WeakCall(
-                self._on_lang_inform_value_change))
+            on_value_change_call=ba.WeakCall(self._on_lang_inform_value_change),
+        )
 
-        ba.widget(edit=self._translation_editor_button,
-                  down_widget=cbw,
-                  up_widget=self._language_popup.get_button())
+        ba.widget(
+            edit=self._translation_editor_button,
+            down_widget=cbw,
+            up_widget=self._language_popup.get_button(),
+        )
 
         v -= self._spacing * 3.0
 
@@ -367,7 +441,8 @@ class AdvancedSettingsWindow(ba.Window):
             configkey='Kick Idle Players',
             displayname=ba.Lstr(resource=self._r + '.kickIdlePlayersText'),
             scale=1.0,
-            maxwidth=430)
+            maxwidth=430,
+        )
 
         v -= 42
         self._disable_camera_shake_check_box = ConfigCheckBox(
@@ -377,7 +452,8 @@ class AdvancedSettingsWindow(ba.Window):
             configkey='Disable Camera Shake',
             displayname=ba.Lstr(resource=self._r + '.disableCameraShakeText'),
             scale=1.0,
-            maxwidth=430)
+            maxwidth=430,
+        )
 
         self._disable_gyro_check_box: ConfigCheckBox | None = None
         if self._show_disable_gyro:
@@ -387,10 +463,12 @@ class AdvancedSettingsWindow(ba.Window):
                 position=(50, v),
                 size=(self._sub_width - 100, 30),
                 configkey='Disable Camera Gyro',
-                displayname=ba.Lstr(resource=self._r +
-                                    '.disableCameraGyroscopeMotionText'),
+                displayname=ba.Lstr(
+                    resource=self._r + '.disableCameraGyroscopeMotionText'
+                ),
                 scale=1.0,
-                maxwidth=430)
+                maxwidth=430,
+            )
 
         self._always_use_internal_keyboard_check_box: ConfigCheckBox | None
         if self._show_always_use_internal_keyboard:
@@ -401,22 +479,27 @@ class AdvancedSettingsWindow(ba.Window):
                 size=(self._sub_width - 100, 30),
                 configkey='Always Use Internal Keyboard',
                 autoselect=True,
-                displayname=ba.Lstr(resource=self._r +
-                                    '.alwaysUseInternalKeyboardText'),
+                displayname=ba.Lstr(
+                    resource=self._r + '.alwaysUseInternalKeyboardText'
+                ),
                 scale=1.0,
-                maxwidth=430)
+                maxwidth=430,
+            )
             ba.textwidget(
                 parent=self._subcontainer,
                 position=(90, v - 10),
                 size=(0, 0),
-                text=ba.Lstr(resource=self._r +
-                             '.alwaysUseInternalKeyboardDescriptionText'),
+                text=ba.Lstr(
+                    resource=self._r
+                    + '.alwaysUseInternalKeyboardDescriptionText'
+                ),
                 maxwidth=400,
                 flatness=1.0,
                 scale=0.65,
                 color=(0.4, 0.9, 0.4, 0.8),
                 h_align='left',
-                v_align='center')
+                v_align='center',
+            )
             v -= 20
         else:
             self._always_use_internal_keyboard_check_box = None
@@ -432,19 +515,28 @@ class AdvancedSettingsWindow(ba.Window):
             label=ba.Lstr(resource=self._r + '.moddingGuideText'),
             text_scale=1.0,
             on_activate_call=ba.Call(
-                ba.open_url, 'https://ballistica.net/wiki/modding-guide'))
+                ba.open_url, 'https://ballistica.net/wiki/modding-guide'
+            ),
+        )
         if self._show_always_use_internal_keyboard:
             assert self._always_use_internal_keyboard_check_box is not None
-            ba.widget(edit=self._always_use_internal_keyboard_check_box.widget,
-                      down_widget=self._modding_guide_button)
+            ba.widget(
+                edit=self._always_use_internal_keyboard_check_box.widget,
+                down_widget=self._modding_guide_button,
+            )
             ba.widget(
                 edit=self._modding_guide_button,
-                up_widget=self._always_use_internal_keyboard_check_box.widget)
+                up_widget=self._always_use_internal_keyboard_check_box.widget,
+            )
         else:
-            ba.widget(edit=self._modding_guide_button,
-                      up_widget=self._kick_idle_players_check_box.widget)
-            ba.widget(edit=self._kick_idle_players_check_box.widget,
-                      down_widget=self._modding_guide_button)
+            ba.widget(
+                edit=self._modding_guide_button,
+                up_widget=self._kick_idle_players_check_box.widget,
+            )
+            ba.widget(
+                edit=self._kick_idle_players_check_box.widget,
+                down_widget=self._modding_guide_button,
+            )
 
         v -= self._spacing * 2.0
 
@@ -455,7 +547,8 @@ class AdvancedSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource=self._r + '.showUserModsText'),
             text_scale=1.0,
-            on_activate_call=show_user_scripts)
+            on_activate_call=show_user_scripts,
+        )
 
         v -= self._spacing * 2.0
 
@@ -466,7 +559,8 @@ class AdvancedSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource='pluginsText'),
             text_scale=1.0,
-            on_activate_call=self._on_plugins_button_press)
+            on_activate_call=self._on_plugins_button_press,
+        )
 
         v -= self._spacing * 0.6
 
@@ -480,7 +574,8 @@ class AdvancedSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.vrTestingText'),
                 text_scale=1.0,
-                on_activate_call=self._on_vr_test_press)
+                on_activate_call=self._on_vr_test_press,
+            )
         else:
             self._vr_test_button = None
 
@@ -494,7 +589,8 @@ class AdvancedSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.netTestingText'),
                 text_scale=1.0,
-                on_activate_call=self._on_net_test_press)
+                on_activate_call=self._on_net_test_press,
+            )
         else:
             self._net_test_button = None
 
@@ -506,7 +602,8 @@ class AdvancedSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource=self._r + '.benchmarksText'),
             text_scale=1.0,
-            on_activate_call=self._on_benchmark_press)
+            on_activate_call=self._on_benchmark_press,
+        )
 
         for child in self._subcontainer.get_children():
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
@@ -517,48 +614,53 @@ class AdvancedSettingsWindow(ba.Window):
             if self._back_button is None:
                 ba.widget(
                     edit=self._scrollwidget,
-                    left_widget=ba.internal.get_special_widget('back_button'))
+                    left_widget=ba.internal.get_special_widget('back_button'),
+                )
 
         self._restore_state()
 
     def _show_restart_needed(self, value: Any) -> None:
         del value  # Unused.
-        ba.screenmessage(ba.Lstr(resource=self._r + '.mustRestartText'),
-                         color=(1, 1, 0))
+        ba.screenmessage(
+            ba.Lstr(resource=self._r + '.mustRestartText'), color=(1, 1, 0)
+        )
 
     def _on_lang_inform_value_change(self, val: bool) -> None:
-        ba.internal.add_transaction({
-            'type': 'SET_MISC_VAL',
-            'name': 'langInform',
-            'value': val
-        })
+        ba.internal.add_transaction(
+            {'type': 'SET_MISC_VAL', 'name': 'langInform', 'value': val}
+        )
         ba.internal.run_transactions()
 
     def _on_vr_test_press(self) -> None:
         from bastd.ui.settings.vrtesting import VRTestingWindow
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            VRTestingWindow(transition='in_right').get_root_widget())
+            VRTestingWindow(transition='in_right').get_root_widget()
+        )
 
     def _on_net_test_press(self) -> None:
         from bastd.ui.settings.nettesting import NetTestingWindow
 
         # Net-testing requires a signed in v1 account.
         if ba.internal.get_v1_account_state() != 'signed_in':
-            ba.screenmessage(ba.Lstr(resource='notSignedInErrorText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+            )
             ba.playsound(ba.getsound('error'))
             return
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            NetTestingWindow(transition='in_right').get_root_widget())
+            NetTestingWindow(transition='in_right').get_root_widget()
+        )
 
     def _on_friend_promo_code_press(self) -> None:
         from bastd.ui import appinvite
         from bastd.ui import account
+
         if ba.internal.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
@@ -566,11 +668,14 @@ class AdvancedSettingsWindow(ba.Window):
 
     def _on_plugins_button_press(self) -> None:
         from bastd.ui.settings.plugins import PluginSettingsWindow
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             PluginSettingsWindow(
-                origin_widget=self._plugins_button).get_root_widget())
+                origin_widget=self._plugins_button
+            ).get_root_widget()
+        )
 
     def _on_promo_code_press(self) -> None:
         from bastd.ui.promocode import PromoCodeWindow
@@ -584,14 +689,18 @@ class AdvancedSettingsWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             PromoCodeWindow(
-                origin_widget=self._promo_code_button).get_root_widget())
+                origin_widget=self._promo_code_button
+            ).get_root_widget()
+        )
 
     def _on_benchmark_press(self) -> None:
         from bastd.ui.debug import DebugWindow
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            DebugWindow(transition='in_right').get_root_widget())
+            DebugWindow(transition='in_right').get_root_widget()
+        )
 
     def _save_state(self) -> None:
         # pylint: disable=too-many-branches
@@ -611,15 +720,21 @@ class AdvancedSettingsWindow(ba.Window):
                     sel_name = 'KickIdlePlayers'
                 elif sel == self._disable_camera_shake_check_box.widget:
                     sel_name = 'DisableCameraShake'
-                elif (self._always_use_internal_keyboard_check_box is not None
-                      and sel
-                      == self._always_use_internal_keyboard_check_box.widget):
+                elif (
+                    self._always_use_internal_keyboard_check_box is not None
+                    and sel
+                    == self._always_use_internal_keyboard_check_box.widget
+                ):
                     sel_name = 'AlwaysUseInternalKeyboard'
-                elif (self._disable_gyro_check_box is not None
-                      and sel == self._disable_gyro_check_box.widget):
+                elif (
+                    self._disable_gyro_check_box is not None
+                    and sel == self._disable_gyro_check_box.widget
+                ):
                     sel_name = 'DisableGyro'
-                elif (self._language_popup is not None
-                      and sel == self._language_popup.get_button()):
+                elif (
+                    self._language_popup is not None
+                    and sel == self._language_popup.get_button()
+                ):
                     sel_name = 'Languages'
                 elif sel == self._translation_editor_button:
                     sel_name = 'TranslationEditor'
@@ -644,13 +759,15 @@ class AdvancedSettingsWindow(ba.Window):
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
         try:
-            sel_name = ba.app.ui.window_states.get(type(self),
-                                                   {}).get('sel_name')
+            sel_name = ba.app.ui.window_states.get(type(self), {}).get(
+                'sel_name'
+            )
             if sel_name == 'Back':
                 sel = self._back_button
             else:
-                ba.containerwidget(edit=self._root_widget,
-                                   selected_child=self._scrollwidget)
+                ba.containerwidget(
+                    edit=self._root_widget, selected_child=self._scrollwidget
+                )
                 if sel_name == 'VRTest':
                     sel = self._vr_test_button
                 elif sel_name == 'NetTest':
@@ -663,15 +780,19 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._kick_idle_players_check_box.widget
                 elif sel_name == 'DisableCameraShake':
                     sel = self._disable_camera_shake_check_box.widget
-                elif (sel_name == 'AlwaysUseInternalKeyboard'
-                      and self._always_use_internal_keyboard_check_box
-                      is not None):
+                elif (
+                    sel_name == 'AlwaysUseInternalKeyboard'
+                    and self._always_use_internal_keyboard_check_box is not None
+                ):
                     sel = self._always_use_internal_keyboard_check_box.widget
-                elif (sel_name == 'DisableGyro'
-                      and self._disable_gyro_check_box is not None):
+                elif (
+                    sel_name == 'DisableGyro'
+                    and self._disable_gyro_check_box is not None
+                ):
                     sel = self._disable_gyro_check_box.widget
-                elif (sel_name == 'Languages'
-                      and self._language_popup is not None):
+                elif (
+                    sel_name == 'Languages' and self._language_popup is not None
+                ):
                     sel = self._language_popup.get_button()
                 elif sel_name == 'TranslationEditor':
                     sel = self._translation_editor_button
@@ -686,9 +807,11 @@ class AdvancedSettingsWindow(ba.Window):
                 else:
                     sel = None
                 if sel is not None:
-                    ba.containerwidget(edit=self._subcontainer,
-                                       selected_child=sel,
-                                       visible_child=sel)
+                    ba.containerwidget(
+                        edit=self._subcontainer,
+                        selected_child=sel,
+                        visible_child=sel,
+                    )
         except Exception:
             ba.print_exception(f'Error restoring state for {self.__class__}')
 
@@ -710,14 +833,19 @@ class AdvancedSettingsWindow(ba.Window):
         else:
             self._complete_langs_list = None
             self._complete_langs_error = True
-        ba.timer(0.001,
-                 ba.WeakCall(self._update_lang_status),
-                 timetype=ba.TimeType.REAL)
+        ba.timer(
+            0.001,
+            ba.WeakCall(self._update_lang_status),
+            timetype=ba.TimeType.REAL,
+        )
 
     def _do_back(self) -> None:
         from bastd.ui.settings.allsettings import AllSettingsWindow
+
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         ba.app.ui.set_main_menu_window(
-            AllSettingsWindow(transition='in_left').get_root_widget())
+            AllSettingsWindow(transition='in_left').get_root_widget()
+        )

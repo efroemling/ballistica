@@ -31,28 +31,39 @@ class NetTestingWindow(ba.Window):
         self._height = 500
         self._printed_lines: list[str] = []
         uiscale = ba.app.ui.uiscale
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height),
-            scale=(1.56 if uiscale is ba.UIScale.SMALL else
-                   1.2 if uiscale is ba.UIScale.MEDIUM else 0.8),
-            stack_offset=(0.0, -7 if uiscale is ba.UIScale.SMALL else 0.0),
-            transition=transition))
-        self._done_button = ba.buttonwidget(parent=self._root_widget,
-                                            position=(40, self._height - 77),
-                                            size=(120, 60),
-                                            scale=0.8,
-                                            autoselect=True,
-                                            label=ba.Lstr(resource='doneText'),
-                                            on_activate_call=self._done)
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height),
+                scale=(
+                    1.56
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.2
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 0.8
+                ),
+                stack_offset=(0.0, -7 if uiscale is ba.UIScale.SMALL else 0.0),
+                transition=transition,
+            )
+        )
+        self._done_button = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(40, self._height - 77),
+            size=(120, 60),
+            scale=0.8,
+            autoselect=True,
+            label=ba.Lstr(resource='doneText'),
+            on_activate_call=self._done,
+        )
 
-        self._copy_button = ba.buttonwidget(parent=self._root_widget,
-                                            position=(self._width - 200,
-                                                      self._height - 77),
-                                            size=(100, 60),
-                                            scale=0.8,
-                                            autoselect=True,
-                                            label=ba.Lstr(resource='copyText'),
-                                            on_activate_call=self._copy)
+        self._copy_button = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(self._width - 200, self._height - 77),
+            size=(100, 60),
+            scale=0.8,
+            autoselect=True,
+            label=ba.Lstr(resource='copyText'),
+            on_activate_call=self._copy,
+        )
 
         self._settings_button = ba.buttonwidget(
             parent=self._root_widget,
@@ -61,7 +72,8 @@ class NetTestingWindow(ba.Window):
             scale=0.8,
             autoselect=True,
             label=ba.Lstr(value='...'),
-            on_activate_call=self._show_val_testing)
+            on_activate_call=self._show_val_testing,
+        )
 
         twidth = self._width - 450
         ba.textwidget(
@@ -72,18 +84,21 @@ class NetTestingWindow(ba.Window):
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
-            maxwidth=twidth)
+            maxwidth=twidth,
+        )
 
-        self._scroll = ba.scrollwidget(parent=self._root_widget,
-                                       position=(50, 50),
-                                       size=(self._width - 100,
-                                             self._height - 140),
-                                       capture_arrows=True,
-                                       autoselect=True)
+        self._scroll = ba.scrollwidget(
+            parent=self._root_widget,
+            position=(50, 50),
+            size=(self._width - 100, self._height - 140),
+            capture_arrows=True,
+            autoselect=True,
+        )
         self._rows = ba.columnwidget(parent=self._scroll)
 
-        ba.containerwidget(edit=self._root_widget,
-                           cancel_button=self._done_button)
+        ba.containerwidget(
+            edit=self._root_widget, cancel_button=self._done_button
+        )
 
         # Now kick off the tests.
         # Pass a weak-ref to this window so we don't keep it alive
@@ -97,20 +112,23 @@ class NetTestingWindow(ba.Window):
     def print(self, text: str, color: tuple[float, float, float]) -> None:
         """Print text to our console thingie."""
         for line in text.splitlines():
-            txt = ba.textwidget(parent=self._rows,
-                                color=color,
-                                text=line,
-                                scale=0.75,
-                                flatness=1.0,
-                                shadow=0.0,
-                                size=(0, 20))
+            txt = ba.textwidget(
+                parent=self._rows,
+                color=color,
+                text=line,
+                scale=0.75,
+                flatness=1.0,
+                shadow=0.0,
+                size=(0, 20),
+            )
             ba.containerwidget(edit=self._rows, visible_child=txt)
             self._printed_lines.append(line)
 
     def _copy(self) -> None:
         if not ba.clipboard_is_supported():
-            ba.screenmessage('Clipboard not supported on this platform.',
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                'Clipboard not supported on this platform.', color=(1, 0, 0)
+            )
             return
         ba.clipboard_set_text('\n'.join(self._printed_lines))
         ba.screenmessage(f'{len(self._printed_lines)} lines copied.')
@@ -122,8 +140,10 @@ class NetTestingWindow(ba.Window):
     def _done(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.advanced import AdvancedSettingsWindow
+
         ba.app.ui.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget())
+            AdvancedSettingsWindow(transition='in_left').get_root_widget()
+        )
         ba.containerwidget(edit=self._root_widget, transition='out_right')
 
 
@@ -136,9 +156,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
 
     # We're running in a background thread but UI stuff needs to run
     # in the logic thread; give ourself a way to pass stuff to it.
-    def _print(text: str,
-               color: tuple[float, float, float] | None = None) -> None:
-
+    def _print(
+        text: str, color: tuple[float, float, float] | None = None
+    ) -> None:
         def _print_in_logic_thread() -> None:
             win = weakwin()
             if win is not None:
@@ -156,18 +176,24 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             return True
         except Exception as exc:
             import traceback
+
             duration = time.monotonic() - starttime
-            msg = (str(exc)
-                   if isinstance(exc, CleanError) else traceback.format_exc())
+            msg = (
+                str(exc)
+                if isinstance(exc, CleanError)
+                else traceback.format_exc()
+            )
             _print(msg, color=(1.0, 1.0, 0.3))
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
             return False
 
     try:
-        _print(f'Running network diagnostics...\n'
-               f'ua: {ba.app.user_agent_string}\n'
-               f'time: {utc_now()}.')
+        _print(
+            f'Running network diagnostics...\n'
+            f'ua: {ba.app.user_agent_string}\n'
+            f'time: {utc_now()}.'
+        )
 
         if bool(False):
             _print('\nRunning dummy success test...')
@@ -185,14 +211,17 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         if v1worked:
             _print('\nSkipping V1 master-server src1 test since src0 worked.')
         else:
-            baseaddr = ba.internal.get_master_server_address(source=1,
-                                                             version=1)
+            baseaddr = ba.internal.get_master_server_address(
+                source=1, version=1
+            )
             _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
             _print_test_results(lambda: _test_fetch(baseaddr))
 
         if 'none succeeded' in ba.app.net.v1_test_log:
-            _print(f'\nV1-test-log failed: {ba.app.net.v1_test_log}',
-                   color=(1, 0, 0))
+            _print(
+                f'\nV1-test-log failed: {ba.app.net.v1_test_log}',
+                color=(1, 0, 0),
+            )
             have_error[0] = True
         else:
             _print(f'\nV1-test-log ok: {ba.app.net.v1_test_log}')
@@ -217,8 +246,11 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         # Get V2 nearby zone
         with ba.app.net.zone_pings_lock:
             zone_pings = copy.deepcopy(ba.app.net.zone_pings)
-        nearest_zone = (None if not zone_pings else sorted(
-            zone_pings.items(), key=lambda i: i[1])[0])
+        nearest_zone = (
+            None
+            if not zone_pings
+            else sorted(zone_pings.items(), key=lambda i: i[1])[0]
+        )
 
         if nearest_zone is not None:
             nearstr = f'{nearest_zone[0]}: {nearest_zone[1]:.0f}ms'
@@ -231,18 +263,24 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         _print_test_results(_test_v2_cloud_message)
 
         if have_error[0]:
-            _print('\nDiagnostics complete. Some diagnostics failed.',
-                   color=(10, 0, 0))
+            _print(
+                '\nDiagnostics complete. Some diagnostics failed.',
+                color=(10, 0, 0),
+            )
         else:
-            _print('\nDiagnostics complete. Everything looks good!',
-                   color=(0, 1, 0))
+            _print(
+                '\nDiagnostics complete. Everything looks good!',
+                color=(0, 1, 0),
+            )
     except Exception:
         import traceback
+
         _print(
             f'An unexpected error occurred during testing;'
             f' please report this.\n'
             f'{traceback.format_exc()}',
-            color=(1, 0, 0))
+            color=(1, 0, 0),
+        )
 
 
 def _dummy_success() -> None:
@@ -289,7 +327,8 @@ def _test_v1_transaction() -> None:
         time.sleep(0.01)
         if time.monotonic() - starttime > MAX_TEST_SECONDS:
             raise RuntimeError(
-                f'test timed out after {MAX_TEST_SECONDS} seconds')
+                f'test timed out after {MAX_TEST_SECONDS} seconds'
+            )
 
     # If we got left a string, its an error.
     if isinstance(results[0], str):
@@ -330,8 +369,10 @@ def _test_v2_cloud_message() -> None:
             break
         time.sleep(0.01)
         if time.monotonic() - wait_start_time > MAX_TEST_SECONDS:
-            raise RuntimeError(f'Timeout ({MAX_TEST_SECONDS} seconds)'
-                               f' waiting for cloud message response')
+            raise RuntimeError(
+                f'Timeout ({MAX_TEST_SECONDS} seconds)'
+                f' waiting for cloud message response'
+            )
     if results.errstr is not None:
         raise RuntimeError(results.errstr)
 
@@ -339,28 +380,34 @@ def _test_v2_cloud_message() -> None:
 def _test_v2_time() -> None:
     offset = ba.app.net.server_time_offset_hours
     if offset is None:
-        raise RuntimeError('no time offset found;'
-                           ' perhaps unable to communicate with v2 server?')
+        raise RuntimeError(
+            'no time offset found;'
+            ' perhaps unable to communicate with v2 server?'
+        )
     if abs(offset) >= 2.0:
         raise CleanError(
             f'Your device time is off from world time by {offset:.1f} hours.\n'
             'This may cause network operations to fail due to your device\n'
             ' incorrectly treating SSL certificates as not-yet-valid, etc.\n'
-            'Check your device time and time-zone settings to fix this.\n')
+            'Check your device time and time-zone settings to fix this.\n'
+        )
 
 
 def _test_fetch(baseaddr: str) -> None:
     # pylint: disable=consider-using-with
     import urllib.request
+
     response = urllib.request.urlopen(
-        urllib.request.Request(f'{baseaddr}/ping', None,
-                               {'User-Agent': ba.app.user_agent_string}),
+        urllib.request.Request(
+            f'{baseaddr}/ping', None, {'User-Agent': ba.app.user_agent_string}
+        ),
         context=ba.app.net.sslcontext,
         timeout=MAX_TEST_SECONDS,
     )
     if response.getcode() != 200:
         raise RuntimeError(
-            f'Got unexpected response code {response.getcode()}.')
+            f'Got unexpected response code {response.getcode()}.'
+        )
     data = response.read()
     if data != b'pong':
         raise RuntimeError('Got unexpected response data.')
@@ -380,29 +427,22 @@ class NetValTestingWindow(TestingWindow):
     def __init__(self, transition: str = 'in_right'):
 
         entries = [
-            {
-                'name': 'bufferTime',
-                'label': 'Buffer Time',
-                'increment': 1.0
-            },
+            {'name': 'bufferTime', 'label': 'Buffer Time', 'increment': 1.0},
             {
                 'name': 'delaySampling',
                 'label': 'Delay Sampling',
-                'increment': 1.0
+                'increment': 1.0,
             },
             {
                 'name': 'dynamicsSyncTime',
                 'label': 'Dynamics Sync Time',
-                'increment': 10
+                'increment': 10,
             },
-            {
-                'name': 'showNetInfo',
-                'label': 'Show Net Info',
-                'increment': 1
-            },
+            {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
         ]
         super().__init__(
             title=ba.Lstr(resource='settingsWindowAdvanced.netTestingText'),
             entries=entries,
             transition=transition,
-            back_call=lambda: NetTestingWindow(transition='in_left'))
+            back_call=lambda: NetTestingWindow(transition='in_left'),
+        )

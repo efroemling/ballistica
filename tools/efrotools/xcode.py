@@ -73,17 +73,29 @@ class XCodeBuild:
 
             # Getting this error sometimes after xcode updates.
             if 'error: PCH file built from a different branch' in '\n'.join(
-                    self._output):
-                print(f'{Clr.MAG}WILL CLEAN AND'
-                      f' RE-ATTEMPT XCODE BUILD{Clr.RST}')
-                self._run_cmd([
-                    'xcodebuild', '-project', self._project, '-scheme',
-                    self._scheme, '-configuration', self._configuration,
-                    'clean'
-                ])
+                self._output
+            ):
+                print(
+                    f'{Clr.MAG}WILL CLEAN AND'
+                    f' RE-ATTEMPT XCODE BUILD{Clr.RST}'
+                )
+                self._run_cmd(
+                    [
+                        'xcodebuild',
+                        '-project',
+                        self._project,
+                        '-scheme',
+                        self._scheme,
+                        '-configuration',
+                        self._configuration,
+                        'clean',
+                    ]
+                )
                 # Now re-run the original build.
-                print(f'{Clr.MAG}RE-ATTEMPTING XCODE BUILD'
-                      f' AFTER CLEAN{Clr.RST}')
+                print(
+                    f'{Clr.MAG}RE-ATTEMPTING XCODE BUILD'
+                    f' AFTER CLEAN{Clr.RST}'
+                )
                 self._run_cmd(self._build_cmd_args())
 
         if self._returncode != 0:
@@ -105,9 +117,9 @@ class XCodeBuild:
         self._section = None
         self._returncode = 0
         print(f'{Clr.BLU}Running build: {Clr.BLD}{cmd}{Clr.RST}')
-        with subprocess.Popen(cmd,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT) as proc:
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        ) as proc:
             if proc.stdout is None:
                 raise RuntimeError('Error running command')
             while True:
@@ -136,12 +148,14 @@ class XCodeBuild:
         # Look for a few special cases regardless of the section we're in:
         if line == '** BUILD SUCCEEDED **\n':
             sys.stdout.write(
-                f'{Clr.GRN}{Clr.BLD}XCODE BUILD SUCCEEDED{Clr.RST}\n')
+                f'{Clr.GRN}{Clr.BLD}XCODE BUILD SUCCEEDED{Clr.RST}\n'
+            )
             return
 
         if line == '** CLEAN SUCCEEDED **\n':
             sys.stdout.write(
-                f'{Clr.GRN}{Clr.BLD}XCODE CLEAN SUCCEEDED{Clr.RST}\n')
+                f'{Clr.GRN}{Clr.BLD}XCODE CLEAN SUCCEEDED{Clr.RST}\n'
+            )
             return
 
         if 'warning: OpenGL is deprecated.' in line:
@@ -181,58 +195,70 @@ class XCodeBuild:
             self._print_compile_storyboard_line(line)
         elif self._section is _Section.LINKSTORYBOARDS:
             self._print_simple_section_line(
-                line, ignore_line_start_tails=['/ibtool'])
+                line, ignore_line_start_tails=['/ibtool']
+            )
         elif self._section is _Section.PROCESSINFOPLISTFILE:
             self._print_process_info_plist_file_line(line)
         elif self._section is _Section.COPYSWIFTLIBS:
             self._print_simple_section_line(
-                line, ignore_line_starts=['builtin-swiftStdLibTool'])
+                line, ignore_line_starts=['builtin-swiftStdLibTool']
+            )
         elif self._section is _Section.REGISTEREXECUTIONPOLICYEXCEPTION:
             self._print_simple_section_line(
                 line,
-                ignore_line_starts=[
-                    'builtin-RegisterExecutionPolicyException'
-                ])
+                ignore_line_starts=['builtin-RegisterExecutionPolicyException'],
+            )
         elif self._section is _Section.VALIDATE:
             self._print_simple_section_line(
-                line, ignore_line_starts=['builtin-validationUtility'])
+                line, ignore_line_starts=['builtin-validationUtility']
+            )
         elif self._section is _Section.TOUCH:
             self._print_simple_section_line(
-                line, ignore_line_starts=['/usr/bin/touch'])
+                line, ignore_line_starts=['/usr/bin/touch']
+            )
         elif self._section is _Section.REGISTERWITHLAUNCHSERVICES:
             self._print_simple_section_line(
-                line, ignore_line_start_tails=['lsregister'])
+                line, ignore_line_start_tails=['lsregister']
+            )
         elif self._section is _Section.METALLINK:
-            self._print_simple_section_line(line,
-                                            prefix='Linking',
-                                            ignore_line_start_tails=['/metal'])
+            self._print_simple_section_line(
+                line, prefix='Linking', ignore_line_start_tails=['/metal']
+            )
         elif self._section is _Section.COMPILESWIFT:
             self._print_simple_section_line(
                 line,
                 prefix='Compiling',
                 prefix_index=3,
-                ignore_line_start_tails=['/swift-frontend', 'EmitSwiftModule'])
+                ignore_line_start_tails=['/swift-frontend', 'EmitSwiftModule'],
+            )
         elif self._section is _Section.CREATEBUILDDIRECTORY:
             self._print_simple_section_line(
-                line, ignore_line_starts=['builtin-create-build-directory'])
+                line, ignore_line_starts=['builtin-create-build-directory']
+            )
         elif self._section is _Section.COMPILEMETALFILE:
-            self._print_simple_section_line(line,
-                                            prefix='Metal-Compiling',
-                                            ignore_line_start_tails=['/metal'])
+            self._print_simple_section_line(
+                line,
+                prefix='Metal-Compiling',
+                ignore_line_start_tails=['/metal'],
+            )
         elif self._section is _Section.COPY:
             self._print_simple_section_line(
-                line, ignore_line_starts=['builtin-copy'])
+                line, ignore_line_starts=['builtin-copy']
+            )
         elif self._section is _Section.COPYSTRINGSFILE:
-            self._print_simple_section_line(line,
-                                            ignore_line_starts=[
-                                                'builtin-copyStrings',
-                                                'CopyPNGFile',
-                                                'ConvertIconsetFile'
-                                            ],
-                                            ignore_line_start_tails=[
-                                                '/InfoPlist.strings:1:1:',
-                                                '/copypng', '/iconutil'
-                                            ])
+            self._print_simple_section_line(
+                line,
+                ignore_line_starts=[
+                    'builtin-copyStrings',
+                    'CopyPNGFile',
+                    'ConvertIconsetFile',
+                ],
+                ignore_line_start_tails=[
+                    '/InfoPlist.strings:1:1:',
+                    '/copypng',
+                    '/iconutil',
+                ],
+            )
         elif self._section is _Section.WRITEAUXILIARYFILE:
             # EW: this spits out our full list of entitlements line by line.
             # We should make this smart enough to ignore that whole section
@@ -264,28 +290,32 @@ class XCodeBuild:
                     '"com.apple.security.network.server"',
                     '"com.apple.security.scripting-targets"',
                     '"com.apple.Music.library.read",',
-                ])
+                ],
+            )
         elif self._section is _Section.COMPILESWIFTSOURCES:
             self._print_simple_section_line(
                 line,
                 prefix='Compiling Swift Sources',
                 prefix_index=None,
                 ignore_line_starts=['PrecompileSwiftBridgingHeader'],
-                ignore_line_start_tails=['/swiftc', '/swift-frontend'])
+                ignore_line_start_tails=['/swiftc', '/swift-frontend'],
+            )
         elif self._section is _Section.PROCESSPCH:
             self._print_simple_section_line(
                 line,
                 ignore_line_starts=['Precompile of'],
-                ignore_line_start_tails=['/clang'])
+                ignore_line_start_tails=['/clang'],
+            )
         elif self._section is _Section.PROCESSPCHPLUSPLUS:
             self._print_simple_section_line(
                 line,
                 ignore_line_starts=['Precompile of'],
-                ignore_line_start_tails=['/clang'])
+                ignore_line_start_tails=['/clang'],
+            )
         elif self._section is _Section.PHASESCRIPTEXECUTION:
-            self._print_simple_section_line(line,
-                                            prefix='Running Script',
-                                            ignore_line_starts=['/bin/sh'])
+            self._print_simple_section_line(
+                line, prefix='Running Script', ignore_line_starts=['/bin/sh']
+            )
         else:
             assert_never(self._section)
 
@@ -352,7 +382,8 @@ class XCodeBuild:
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
             sys.stdout.write(
-                f'{Clr.BLU}Compiling Asset Catalog {Clr.BLD}{name}{Clr.RST}\n')
+                f'{Clr.BLU}Compiling Asset Catalog {Clr.BLD}{name}{Clr.RST}\n'
+            )
             return
 
         # Ignore empty lines or things we expect to be there.
@@ -366,8 +397,10 @@ class XCodeBuild:
             return
         if line_s == '/* com.apple.actool.compilation-results */':
             return
-        if (' ibtoold[' in line_s
-                and 'NSFileCoordinator is doing nothing' in line_s):
+        if (
+            ' ibtoold[' in line_s
+            and 'NSFileCoordinator is doing nothing' in line_s
+        ):
             return
         if any(line_s.endswith(x) for x in ('.plist', '.icns', '.car')):
             return
@@ -381,7 +414,8 @@ class XCodeBuild:
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
             sys.stdout.write(
-                f'{Clr.BLU}Compiling Storyboard {Clr.BLD}{name}{Clr.RST}\n')
+                f'{Clr.BLU}Compiling Storyboard {Clr.BLD}{name}{Clr.RST}\n'
+            )
             return
 
         # Ignore empty lines or things we expect to be there.
@@ -401,8 +435,7 @@ class XCodeBuild:
         # First line of the section.
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
-            sys.stdout.write(f'{Clr.BLU}Signing'
-                             f' {Clr.BLD}{name}{Clr.RST}\n')
+            sys.stdout.write(f'{Clr.BLU}Signing' f' {Clr.BLD}{name}{Clr.RST}\n')
             return
 
         # Ignore empty lines or things we expect to be there.
@@ -438,12 +471,13 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_simple_section_line(
-            self,
-            line: str,
-            prefix: str | None = None,
-            prefix_index: int | None = 1,
-            ignore_line_starts: list[str] | None = None,
-            ignore_line_start_tails: list[str] | None = None) -> None:
+        self,
+        line: str,
+        prefix: str | None = None,
+        prefix_index: int | None = 1,
+        ignore_line_starts: list[str] | None = None,
+        ignore_line_start_tails: list[str] | None = None,
+    ) -> None:
 
         if ignore_line_starts is None:
             ignore_line_starts = []
@@ -457,8 +491,9 @@ class XCodeBuild:
                     sys.stdout.write(f'{Clr.BLU}{prefix}{Clr.RST}\n')
                 else:
                     name = os.path.basename(shlex.split(line)[prefix_index])
-                    sys.stdout.write(f'{Clr.BLU}{prefix}'
-                                     f' {Clr.BLD}{name}{Clr.RST}\n')
+                    sys.stdout.write(
+                        f'{Clr.BLU}{prefix}' f' {Clr.BLD}{name}{Clr.RST}\n'
+                    )
             return
 
         # Ignore empty lines or things we expect to be there.
@@ -469,7 +504,7 @@ class XCodeBuild:
             # The start strings they pass may themselves be splittable so
             # we may need to compare more than one string.
             startsplits = start.split()
-            if splits[:len(startsplits)] == startsplits:
+            if splits[: len(startsplits)] == startsplits:
                 return
         if any(splits[0].endswith(tail) for tail in ignore_line_start_tails):
             return
@@ -480,17 +515,21 @@ class XCodeBuild:
             # have no way to know what this output relates to. Tack a bit
             # on to clarify in that case.
             assert self._section is not None
-            sys.stdout.write(f'{Clr.YLW}Unexpected {self._section.value}'
-                             f' Output:{Clr.RST} {line}')
+            sys.stdout.write(
+                f'{Clr.YLW}Unexpected {self._section.value}'
+                f' Output:{Clr.RST} {line}'
+            )
         else:
             sys.stdout.write(line)
 
 
-def project_build_path(projroot: str,
-                       project_path: str,
-                       scheme: str,
-                       configuration: str,
-                       executable: bool = True) -> str:
+def project_build_path(
+    projroot: str,
+    project_path: str,
+    scheme: str,
+    configuration: str,
+    executable: bool = True,
+) -> str:
     """Get build paths for an xcode project (cached for efficiency)."""
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -504,8 +543,11 @@ def project_build_path(projroot: str,
     if os.path.exists(config_path):
         with open(config_path, encoding='utf-8') as infile:
             config = json.loads(infile.read())
-        if (project_path in config and configuration in config[project_path]
-                and scheme in config[project_path][configuration]):
+        if (
+            project_path in config
+            and configuration in config[project_path]
+            and scheme in config[project_path][configuration]
+        ):
 
             # Ok we've found a build-dir entry for this project; now if it
             # exists on disk and all timestamps within it are decently
@@ -514,17 +556,22 @@ def project_build_path(projroot: str,
             # stuff there so mod times should be pretty recent; if not
             # then its worth re-caching to be sure.)
             cached_build_dir = config[project_path][configuration][scheme][
-                'build_dir']
+                'build_dir'
+            ]
             cached_timestamp = config[project_path][configuration][scheme][
-                'timestamp']
+                'timestamp'
+            ]
             cached_executable_path = config[project_path][configuration][
-                scheme]['executable_path']
+                scheme
+            ]['executable_path']
             assert isinstance(cached_build_dir, str)
             assert isinstance(cached_timestamp, float)
             assert isinstance(cached_executable_path, str)
             now = time.time()
-            if (os.path.isdir(cached_build_dir)
-                    and abs(now - cached_timestamp) < 60 * 60 * 24):
+            if (
+                os.path.isdir(cached_build_dir)
+                and abs(now - cached_timestamp) < 60 * 60 * 24
+            ):
                 build_dir = cached_build_dir
                 executable_path = cached_executable_path
 
@@ -532,28 +579,33 @@ def project_build_path(projroot: str,
     if build_dir is None:
         print('Caching xcode build path...', file=sys.stderr)
         cmd = [
-            'xcodebuild', '-project', project_path, '-showBuildSettings',
-            '-configuration', configuration, '-scheme', scheme
+            'xcodebuild',
+            '-project',
+            project_path,
+            '-showBuildSettings',
+            '-configuration',
+            configuration,
+            '-scheme',
+            scheme,
         ]
-        output = subprocess.run(cmd, check=True,
-                                capture_output=True).stdout.decode()
+        output = subprocess.run(
+            cmd, check=True, capture_output=True
+        ).stdout.decode()
 
         prefix = 'TARGET_BUILD_DIR = '
-        lines = [
-            l for l in output.splitlines() if l.strip().startswith(prefix)
-        ]
+        lines = [l for l in output.splitlines() if l.strip().startswith(prefix)]
         if len(lines) != 1:
             raise Exception(
-                'TARGET_BUILD_DIR not found in xcodebuild settings output')
+                'TARGET_BUILD_DIR not found in xcodebuild settings output'
+            )
         build_dir = lines[0].replace(prefix, '').strip()
 
         prefix = 'EXECUTABLE_PATH = '
-        lines = [
-            l for l in output.splitlines() if l.strip().startswith(prefix)
-        ]
+        lines = [l for l in output.splitlines() if l.strip().startswith(prefix)]
         if len(lines) != 1:
             raise Exception(
-                'EXECUTABLE_PATH not found in xcodebuild settings output')
+                'EXECUTABLE_PATH not found in xcodebuild settings output'
+            )
         executable_path = lines[0].replace(prefix, '').strip()
 
         if project_path not in config:
@@ -563,7 +615,7 @@ def project_build_path(projroot: str,
         config[project_path][configuration][scheme] = {
             'build_dir': build_dir,
             'executable_path': executable_path,
-            'timestamp': time.time()
+            'timestamp': time.time(),
         }
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
         with open(config_path, 'w', encoding='utf-8') as outfile:

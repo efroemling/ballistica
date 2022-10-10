@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 class Mode(Enum):
     """Modes for sync operations."""
+
     PULL = 'pull'  # Pull updates from theirs to ours; errors if ours changed.
     FULL = 'full'  # Like pull but also push changes back to src if possible.
     LIST = 'list'  # Simply list all sync operations that would occur.
@@ -35,25 +36,36 @@ def _valid_filename(fname: str) -> bool:
     if os.path.basename(fname) != fname:
         raise ValueError(f'{fname} is not a simple filename.')
     if fname in [
-            'requirements.txt', 'pylintrc', 'clang-format', 'pycheckers',
-            'style.yapf', 'test_task_bin', '.editorconfig', 'cloudshell',
-            'vmshell', 'editorconfig'
+        'requirements.txt',
+        'pylintrc',
+        'clang-format',
+        'pycheckers',
+        'style.yapf',
+        'test_task_bin',
+        '.editorconfig',
+        'cloudshell',
+        'vmshell',
+        'editorconfig',
     ]:
         return True
-    return (any(fname.endswith(ext) for ext in ('.py', '.pyi'))
-            and 'flycheck_' not in fname)
+    return (
+        any(fname.endswith(ext) for ext in ('.py', '.pyi'))
+        and 'flycheck_' not in fname
+    )
 
 
 @dataclass
 class SyncItem:
     """Defines a file or directory to be synced from another project."""
+
     src_project_id: str
     src_path: str
     dst_path: str | None = None
 
 
-def run_standard_syncs(projectroot: Path, mode: Mode,
-                       syncitems: Sequence[SyncItem]) -> None:
+def run_standard_syncs(
+    projectroot: Path, mode: Mode, syncitems: Sequence[SyncItem]
+) -> None:
     """Run a standard set of syncs.
 
     Syncitems should be a list of tuples consisting of a src project name,
@@ -61,6 +73,7 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
     """
     # pylint: disable=too-many-locals
     from efrotools import getlocalconfig
+
     localconfig = getlocalconfig(projectroot)
     total_count = 0
     verbose = False
@@ -68,8 +81,11 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
         assert isinstance(syncitem, SyncItem)
         src_project = syncitem.src_project_id
         src_subpath = syncitem.src_path
-        dst_subpath = (syncitem.dst_path
-                       if syncitem.dst_path is not None else syncitem.src_path)
+        dst_subpath = (
+            syncitem.dst_path
+            if syncitem.dst_path is not None
+            else syncitem.src_path
+        )
         dstname = os.path.basename(dst_subpath)
         if mode == Mode.CHECK:
             if verbose:
@@ -140,8 +156,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
         if not dstfile.is_file() or mode == Mode.FORCE:
             if mode == Mode.LIST:
-                print(f'Would pull from {src_proj}:'
-                      f' {Clr.SGRN}{dstfile}{Clr.RST}')
+                print(
+                    f'Would pull from {src_proj}:'
+                    f' {Clr.SGRN}{dstfile}{Clr.RST}'
+                )
             else:
                 print(f'Pulling from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
 
@@ -157,8 +175,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
         # do a directional sync. If they both differ then we're out of luck.
         if src_hash != marker_hash and dst_hash == marker_hash:
             if mode == Mode.LIST:
-                print(f'Would pull from {src_proj}:'
-                      f' {Clr.SGRN}{dstfile}{Clr.RST}')
+                print(
+                    f'Would pull from {src_proj}:'
+                    f' {Clr.SGRN}{dstfile}{Clr.RST}'
+                )
             else:
                 print(f'Pulling from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
 
@@ -171,8 +191,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             # Dst has changed; we only copy backwards to src
             # if we're in full mode.
             if mode == Mode.LIST:
-                print(f'Would push to {src_proj}:'
-                      f' {Clr.SBLU}{dstfile}{Clr.RST}')
+                print(
+                    f'Would push to {src_proj}:'
+                    f' {Clr.SBLU}{dstfile}{Clr.RST}'
+                )
             elif mode == Mode.FULL:
                 print(f'Pushing to {src_proj}: {Clr.SBLU}{dstfile}{Clr.RST}')
                 with srcfile.open('w') as outfile:
@@ -194,12 +216,16 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             # but the stored hash in dst won't.
             if src_hash == dst_hash:
                 if mode == Mode.LIST:
-                    print(f'Would update dst hash (both files changed'
-                          f' identically) from {src_proj}:'
-                          f' {Clr.SGRN}{dstfile}{Clr.RST}')
+                    print(
+                        f'Would update dst hash (both files changed'
+                        f' identically) from {src_proj}:'
+                        f' {Clr.SGRN}{dstfile}{Clr.RST}'
+                    )
                 else:
-                    print(f'Updating hash (both files changed)'
-                          f' from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
+                    print(
+                        f'Updating hash (both files changed)'
+                        f' from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}'
+                    )
                     with dstfile.open('w') as outfile:
                         outfile.write(add_marker(src_proj, srcdata))
                 continue
@@ -209,7 +235,8 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             dstabs = os.path.abspath(dstfile)
             raise RuntimeError(
                 f'both src and dst sync files changed: {srcabs} {dstabs}'
-                '; this must be resolved manually.')
+                '; this must be resolved manually.'
+            )
 
         # (if we got here this file should be healthy..)
         assert src_hash == marker_hash and dst_hash == marker_hash
@@ -219,8 +246,11 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
         killpaths: list[Path] = []
         for root, dirnames, fnames in os.walk(dst):
             for name in dirnames + fnames:
-                if (name.startswith('.') or '__pycache__' in root
-                        or '__pycache__' in name):
+                if (
+                    name.startswith('.')
+                    or '__pycache__' in root
+                    or '__pycache__' in name
+                ):
                     continue
                 dstpathfull = Path(root, name)
                 relpath = dstpathfull.relative_to(dst)
@@ -233,19 +263,25 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
         for killpath in killpaths:
             if os.path.exists(killpath):
                 if mode == Mode.LIST:
-                    print(f'Would remove orphaned sync path:'
-                          f' {Clr.SRED}{killpath}{Clr.RST}')
+                    print(
+                        f'Would remove orphaned sync path:'
+                        f' {Clr.SRED}{killpath}{Clr.RST}'
+                    )
                 else:
-                    print(f'Removing orphaned sync path:'
-                          f' {Clr.SRED}{killpath}{Clr.RST}')
+                    print(
+                        f'Removing orphaned sync path:'
+                        f' {Clr.SRED}{killpath}{Clr.RST}'
+                    )
                     os.system('rm -rf "' + str(killpath) + '"')
 
     # Lastly throw an error if we found any changed dst files and aren't
     # allowed to reverse-sync them back.
     if changed_error_dst_files:
-        raise RuntimeError(f'sync dst file(s) changed since last sync:'
-                           f' {changed_error_dst_files}; run a FULL mode'
-                           ' sync to push changes back to src')
+        raise RuntimeError(
+            f'sync dst file(s) changed since last sync:'
+            f' {changed_error_dst_files}; run a FULL mode'
+            ' sync to push changes back to src'
+        )
 
     return len(allpaths)
 
@@ -264,7 +300,8 @@ def check_path(dst: Path) -> int:
         # changed since the last sync.
         if marker_hash != dst_hash:
             raise RuntimeError(
-                f'sync dst file changed since last sync: {dstfile}')
+                f'sync dst file changed since last sync: {dstfile}'
+            )
     return len(allpaths)
 
 
@@ -281,19 +318,22 @@ def add_marker(src_proj: str, srcdata: str) -> str:
 
     # Make sure we're not operating on an already-synced file; that's just
     # asking for trouble.
-    if (len(lines) > (firstline + 1)
-            and ('EFRO_SYNC_HASH=' in lines[firstline + 1])):
+    if len(lines) > (firstline + 1) and (
+        'EFRO_SYNC_HASH=' in lines[firstline + 1]
+    ):
         raise RuntimeError('Attempting to sync a file that is itself synced.')
 
     hashstr = string_hash(srcdata)
-    lines.insert(firstline,
-                 f'# Synced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#')
+    lines.insert(
+        firstline, f'# Synced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#'
+    )
     return '\n'.join(lines) + '\n'
 
 
 def string_hash(data: str) -> str:
     """Given a string, return a hash."""
     import hashlib
+
     md5 = hashlib.md5()
     md5.update(data.encode())
 

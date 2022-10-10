@@ -37,9 +37,9 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
     name = 'Meteor Shower'
     description = 'Dodge the falling bombs.'
     available_settings = [ba.BoolSetting('Epic Mode', default=False)]
-    scoreconfig = ba.ScoreConfig(label='Survived',
-                                 scoretype=ba.ScoreType.MILLISECONDS,
-                                 version='B')
+    scoreconfig = ba.ScoreConfig(
+        label='Survived', scoretype=ba.ScoreType.MILLISECONDS, version='B'
+    )
 
     # Print messages when players die (since its meaningful in this game).
     announce_player_deaths = True
@@ -56,9 +56,11 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
     # We support teams, free-for-all, and co-op sessions.
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.DualTeamSession)
-                or issubclass(sessiontype, ba.FreeForAllSession)
-                or issubclass(sessiontype, ba.CoopSession))
+        return (
+            issubclass(sessiontype, ba.DualTeamSession)
+            or issubclass(sessiontype, ba.FreeForAllSession)
+            or issubclass(sessiontype, ba.CoopSession)
+        )
 
     def __init__(self, settings: dict):
         super().__init__(settings)
@@ -69,8 +71,9 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         self._timer: OnScreenTimer | None = None
 
         # Some base class overrides:
-        self.default_music = (ba.MusicType.EPIC
-                              if self._epic_mode else ba.MusicType.SURVIVAL)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.SURVIVAL
+        )
         if self._epic_mode:
             self.slow_motion = True
 
@@ -110,9 +113,9 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
         # Let's reconnect this player's controls to this
         # spaz but *without* the ability to attack or pick stuff up.
-        spaz.connect_controls_to_player(enable_punch=False,
-                                        enable_bomb=False,
-                                        enable_pickup=False)
+        spaz.connect_controls_to_player(
+            enable_punch=False, enable_bomb=False, enable_pickup=False
+        )
 
         # Also lets have them make some noise when they die.
         spaz.play_big_death_sound = True
@@ -168,8 +171,10 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
                 self.end_game()
 
     def _set_meteor_timer(self) -> None:
-        ba.timer((1.0 + 0.2 * random.random()) * self._meteor_time,
-                 self._drop_bomb_cluster)
+        ba.timer(
+            (1.0 + 0.2 * random.random()) * self._meteor_time,
+            self._drop_bomb_cluster,
+        )
 
     def _drop_bomb_cluster(self) -> None:
 
@@ -187,17 +192,24 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         for _i in range(random.randrange(1, 3)):
             # Drop them somewhere within our bounds with velocity pointing
             # toward the opposite side.
-            pos = (-7.3 + 15.3 * random.random(), 11,
-                   -5.57 + 2.1 * random.random())
-            dropdir = (-1.0 if pos[0] > 0 else 1.0)
-            vel = ((-5.0 + random.random() * 30.0) * dropdir,
-                   random.uniform(-3.066, -4.12), 0)
+            pos = (
+                -7.3 + 15.3 * random.random(),
+                11,
+                -5.57 + 2.1 * random.random(),
+            )
+            dropdir = -1.0 if pos[0] > 0 else 1.0
+            vel = (
+                (-5.0 + random.random() * 30.0) * dropdir,
+                random.uniform(-3.066, -4.12),
+                0,
+            )
             ba.timer(delay, ba.Call(self._drop_bomb, pos, vel))
             delay += 0.1
         self._set_meteor_timer()
 
-    def _drop_bomb(self, position: Sequence[float],
-                   velocity: Sequence[float]) -> None:
+    def _drop_bomb(
+        self, position: Sequence[float], velocity: Sequence[float]
+    ) -> None:
         Bomb(position=position, velocity=velocity).autoretain()
 
     def _decrement_meteor_time(self) -> None:
@@ -247,8 +259,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
             longest_life = 0.0
             for player in team.players:
                 assert player.death_time is not None
-                longest_life = max(longest_life,
-                                   player.death_time - start_time)
+                longest_life = max(longest_life, player.death_time - start_time)
 
             # Submit the score value in milliseconds.
             results.set_team_score(team, int(1000.0 * longest_life))

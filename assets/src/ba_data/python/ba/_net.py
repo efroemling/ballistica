@@ -15,6 +15,7 @@ import _ba
 if TYPE_CHECKING:
     from typing import Any, Callable
     import socket
+
     MasterServerCallback = Callable[[None | dict[str, Any]], None]
 
 # Timeout for standard functions talking to the master-server/etc.
@@ -61,6 +62,7 @@ class NetworkSubsystem:
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
     """Return socket.AF_INET6 or socket.AF_INET4 for the provided address."""
     import socket
+
     socket_type = None
 
     # First try it as an ipv4 address.
@@ -84,16 +86,21 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
 
 class MasterServerResponseType(Enum):
     """How to interpret responses from the master-server."""
+
     JSON = 0
 
 
 class MasterServerCallThread(threading.Thread):
     """Thread to communicate with the master-server."""
 
-    def __init__(self, request: str, request_type: str,
-                 data: dict[str, Any] | None,
-                 callback: MasterServerCallback | None,
-                 response_type: MasterServerResponseType):
+    def __init__(
+        self,
+        request: str,
+        request_type: str,
+        data: dict[str, Any] | None,
+        callback: MasterServerCallback | None,
+        response_type: MasterServerResponseType,
+    ):
         super().__init__()
         self._request = request
         self._request_type = request_type
@@ -106,8 +113,7 @@ class MasterServerCallThread(threading.Thread):
 
         # Save and restore the context we were created from.
         activity = _ba.getactivity(doraise=False)
-        self._activity = weakref.ref(
-            activity) if activity is not None else None
+        self._activity = weakref.ref(activity) if activity is not None else None
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
         # If we were created in an activity context and that activity has
@@ -143,22 +149,31 @@ class MasterServerCallThread(threading.Thread):
             self._data = utf8_all(self._data)
             _ba.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
-                url = (get_master_server_address() + '/' + self._request +
-                       '?' + urllib.parse.urlencode(self._data))
+                url = (
+                    get_master_server_address()
+                    + '/'
+                    + self._request
+                    + '?'
+                    + urllib.parse.urlencode(self._data)
+                )
                 response = urllib.request.urlopen(
                     urllib.request.Request(
-                        url, None, {'User-Agent': _ba.app.user_agent_string}),
+                        url, None, {'User-Agent': _ba.app.user_agent_string}
+                    ),
                     context=_ba.app.net.sslcontext,
-                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
+                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                )
             elif self._request_type == 'post':
                 url = get_master_server_address() + '/' + self._request
                 response = urllib.request.urlopen(
                     urllib.request.Request(
                         url,
                         urllib.parse.urlencode(self._data).encode(),
-                        {'User-Agent': _ba.app.user_agent_string}),
+                        {'User-Agent': _ba.app.user_agent_string},
+                    ),
                     context=_ba.app.net.sslcontext,
-                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
+                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                )
             else:
                 raise TypeError('Invalid request_type: ' + self._request_type)
 
@@ -180,37 +195,43 @@ class MasterServerCallThread(threading.Thread):
 
             # Ignore common network errors; note unexpected ones.
             if not is_urllib_communication_error(exc, url=url):
-                print(f'Error in MasterServerCallThread'
-                      f' (url={url},'
-                      f' response-type={self._response_type},'
-                      f' response-data={response_data}):')
+                print(
+                    f'Error in MasterServerCallThread'
+                    f' (url={url},'
+                    f' response-type={self._response_type},'
+                    f' response-data={response_data}):'
+                )
                 import traceback
+
                 traceback.print_exc()
 
             response_data = None
 
         if self._callback is not None:
-            _ba.pushcall(Call(self._run_callback, response_data),
-                         from_other_thread=True)
+            _ba.pushcall(
+                Call(self._run_callback, response_data), from_other_thread=True
+            )
 
 
 def master_server_get(
     request: str,
     data: dict[str, Any],
     callback: MasterServerCallback | None = None,
-    response_type: MasterServerResponseType = MasterServerResponseType.JSON
+    response_type: MasterServerResponseType = MasterServerResponseType.JSON,
 ) -> None:
     """Make a call to the master server via a http GET."""
-    MasterServerCallThread(request, 'get', data, callback,
-                           response_type).start()
+    MasterServerCallThread(
+        request, 'get', data, callback, response_type
+    ).start()
 
 
 def master_server_post(
     request: str,
     data: dict[str, Any],
     callback: MasterServerCallback | None = None,
-    response_type: MasterServerResponseType = MasterServerResponseType.JSON
+    response_type: MasterServerResponseType = MasterServerResponseType.JSON,
 ) -> None:
     """Make a call to the master server via a http POST."""
-    MasterServerCallThread(request, 'post', data, callback,
-                           response_type).start()
+    MasterServerCallThread(
+        request, 'post', data, callback, response_type
+    ).start()

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 class Mode(Enum):
     """Mode we can run this command in."""
+
     INFO = 'info'
     BUILD = 'build'
     VERSION = 'version'
@@ -65,8 +66,9 @@ def get_current_version() -> tuple[str, int]:
 
 def get_current_api_version() -> int:
     """Pull current api version from the project."""
-    with open('assets/src/ba_data/python/ba/_meta.py',
-              encoding='utf-8') as infile:
+    with open(
+        'assets/src/ba_data/python/ba/_meta.py', encoding='utf-8'
+    ) as infile:
         lines = infile.readlines()
     linestart = 'CURRENT_API_VERSION = '
     for line in lines:

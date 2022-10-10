@@ -99,8 +99,10 @@ class FlagFactory:
                 'or',
                 ('they_dont_have_material', shared.footing_material),
             ),
-            actions=(('modify_part_collision', 'collide', False),
-                     ('modify_part_collision', 'physical', False)),
+            actions=(
+                ('modify_part_collision', 'collide', False),
+                ('modify_part_collision', 'physical', False),
+            ),
         )
 
         self.flag_texture = ba.gettexture('flagColor')
@@ -164,12 +166,14 @@ class Flag(ba.Actor):
     Can be stationary or carry-able by players.
     """
 
-    def __init__(self,
-                 position: Sequence[float] = (0.0, 1.0, 0.0),
-                 color: Sequence[float] = (1.0, 1.0, 1.0),
-                 materials: Sequence[ba.Material] | None = None,
-                 touchable: bool = True,
-                 dropped_timeout: int | None = None):
+    def __init__(
+        self,
+        position: Sequence[float] = (0.0, 1.0, 0.0),
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+        materials: Sequence[ba.Material] | None = None,
+        touchable: bool = True,
+        dropped_timeout: int | None = None,
+    ):
         """Instantiate a flag.
 
         If 'touchable' is False, the flag will only touch terrain;
@@ -198,18 +202,20 @@ class Flag(ba.Actor):
         if not touchable:
             materials = [factory.no_hit_material] + materials
 
-        finalmaterials = ([shared.object_material, factory.flagmaterial] +
-                          materials)
-        self.node = ba.newnode('flag',
-                               attrs={
-                                   'position':
-                                       (position[0], position[1] + 0.75,
-                                        position[2]),
-                                   'color_texture': factory.flag_texture,
-                                   'color': color,
-                                   'materials': finalmaterials
-                               },
-                               delegate=self)
+        finalmaterials = [
+            shared.object_material,
+            factory.flagmaterial,
+        ] + materials
+        self.node = ba.newnode(
+            'flag',
+            attrs={
+                'position': (position[0], position[1] + 0.75, position[2]),
+                'color_texture': factory.flag_texture,
+                'color': color,
+                'materials': finalmaterials,
+            },
+            delegate=self,
+        )
 
         if dropped_timeout is not None:
             dropped_timeout = int(dropped_timeout)
@@ -217,19 +223,21 @@ class Flag(ba.Actor):
         self._counter: ba.Node | None
         if self._dropped_timeout is not None:
             self._count = self._dropped_timeout
-            self._tick_timer = ba.Timer(1.0,
-                                        call=ba.WeakCall(self._tick),
-                                        repeat=True)
-            self._counter = ba.newnode('text',
-                                       owner=self.node,
-                                       attrs={
-                                           'in_world': True,
-                                           'color': (1, 1, 1, 0.7),
-                                           'scale': 0.015,
-                                           'shadow': 0.5,
-                                           'flatness': 1.0,
-                                           'h_align': 'center'
-                                       })
+            self._tick_timer = ba.Timer(
+                1.0, call=ba.WeakCall(self._tick), repeat=True
+            )
+            self._counter = ba.newnode(
+                'text',
+                owner=self.node,
+                attrs={
+                    'in_world': True,
+                    'color': (1, 1, 1, 0.7),
+                    'scale': 0.015,
+                    'shadow': 0.5,
+                    'flatness': 1.0,
+                    'h_align': 'center',
+                },
+            )
         else:
             self._counter = None
 
@@ -248,9 +256,13 @@ class Flag(ba.Actor):
                 # until then.
             if not self._has_moved:
                 nodepos = self.node.position
-                if (max(
+                if (
+                    max(
                         abs(nodepos[i] - self._initial_position[i])
-                        for i in list(range(3))) > 1.0):
+                        for i in list(range(3))
+                    )
+                    > 1.0
+                ):
                     self._has_moved = True
 
             if self._held_count > 0 or not self._has_moved:
@@ -263,8 +275,11 @@ class Flag(ba.Actor):
                 if self._count <= 10:
                     nodepos = self.node.position
                     assert self._counter
-                    self._counter.position = (nodepos[0], nodepos[1] + 1.3,
-                                              nodepos[2])
+                    self._counter.position = (
+                        nodepos[0],
+                        nodepos[1] + 1.3,
+                        nodepos[2],
+                    )
                     self._counter.text = str(self._count)
                     if self._count < 1:
                         self.handlemessage(ba.DieMessage())
@@ -275,10 +290,9 @@ class Flag(ba.Actor):
     def _hide_score_text(self) -> None:
         assert self._score_text is not None
         assert isinstance(self._score_text.scale, float)
-        ba.animate(self._score_text, 'scale', {
-            0: self._score_text.scale,
-            0.2: 0
-        })
+        ba.animate(
+            self._score_text, 'scale', {0: self._score_text.scale, 0.2: 0}
+        )
 
     def set_score_text(self, text: str) -> None:
         """Show a message over the flag; handy for scores."""
@@ -286,23 +300,24 @@ class Flag(ba.Actor):
             return
         if not self._score_text:
             start_scale = 0.0
-            math = ba.newnode('math',
-                              owner=self.node,
-                              attrs={
-                                  'input1': (0, 1.4, 0),
-                                  'operation': 'add'
-                              })
+            math = ba.newnode(
+                'math',
+                owner=self.node,
+                attrs={'input1': (0, 1.4, 0), 'operation': 'add'},
+            )
             self.node.connectattr('position', math, 'input2')
-            self._score_text = ba.newnode('text',
-                                          owner=self.node,
-                                          attrs={
-                                              'text': text,
-                                              'in_world': True,
-                                              'scale': 0.02,
-                                              'shadow': 0.5,
-                                              'flatness': 1.0,
-                                              'h_align': 'center'
-                                          })
+            self._score_text = ba.newnode(
+                'text',
+                owner=self.node,
+                attrs={
+                    'text': text,
+                    'in_world': True,
+                    'scale': 0.02,
+                    'shadow': 0.5,
+                    'flatness': 1.0,
+                    'h_align': 'center',
+                },
+            )
             math.connectattr('output', self._score_text, 'position')
         else:
             assert isinstance(self._score_text.scale, float)
@@ -311,7 +326,8 @@ class Flag(ba.Actor):
         self._score_text.color = ba.safecolor(self.node.color)
         ba.animate(self._score_text, 'scale', {0: start_scale, 0.2: 0.02})
         self._score_text_hide_timer = ba.Timer(
-            1.0, ba.WeakCall(self._hide_score_text))
+            1.0, ba.WeakCall(self._hide_score_text)
+        )
 
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
@@ -324,10 +340,21 @@ class Flag(ba.Actor):
             assert self.node
             assert msg.force_direction is not None
             self.node.handlemessage(
-                'impulse', msg.pos[0], msg.pos[1], msg.pos[2], msg.velocity[0],
-                msg.velocity[1], msg.velocity[2], msg.magnitude,
-                msg.velocity_magnitude, msg.radius, 0, msg.force_direction[0],
-                msg.force_direction[1], msg.force_direction[2])
+                'impulse',
+                msg.pos[0],
+                msg.pos[1],
+                msg.pos[2],
+                msg.velocity[0],
+                msg.velocity[1],
+                msg.velocity[2],
+                msg.magnitude,
+                msg.velocity_magnitude,
+                msg.radius,
+                0,
+                msg.force_direction[0],
+                msg.force_direction[1],
+                msg.force_direction[2],
+            )
         elif isinstance(msg, ba.PickedUpMessage):
             self._held_count += 1
             if self._held_count == 1 and self._counter is not None:

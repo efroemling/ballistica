@@ -17,12 +17,14 @@ if TYPE_CHECKING:
 class AccountViewerWindow(popup.PopupWindow):
     """Popup window that displays info for an account."""
 
-    def __init__(self,
-                 account_id: str,
-                 profile_id: str | None = None,
-                 position: tuple[float, float] = (0.0, 0.0),
-                 scale: float | None = None,
-                 offset: tuple[float, float] = (0.0, 0.0)):
+    def __init__(
+        self,
+        account_id: str,
+        profile_id: str | None = None,
+        position: tuple[float, float] = (0.0, 0.0),
+        scale: float | None = None,
+        offset: tuple[float, float] = (0.0, 0.0),
+    ):
         from ba.internal import is_browser_likely_available, master_server_get
 
         self._account_id = account_id
@@ -30,24 +32,36 @@ class AccountViewerWindow(popup.PopupWindow):
 
         uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.6 if uiscale is ba.UIScale.SMALL else
-                     1.8 if uiscale is ba.UIScale.MEDIUM else 1.4)
+            scale = (
+                2.6
+                if uiscale is ba.UIScale.SMALL
+                else 1.8
+                if uiscale is ba.UIScale.MEDIUM
+                else 1.4
+            )
         self._transitioning_out = False
 
         self._width = 400
-        self._height = (300 if uiscale is ba.UIScale.SMALL else
-                        400 if uiscale is ba.UIScale.MEDIUM else 450)
+        self._height = (
+            300
+            if uiscale is ba.UIScale.SMALL
+            else 400
+            if uiscale is ba.UIScale.MEDIUM
+            else 450
+        )
         self._subcontainer: ba.Widget | None = None
 
         bg_color = (0.5, 0.4, 0.6)
 
         # Creates our _root_widget.
-        popup.PopupWindow.__init__(self,
-                                   position=position,
-                                   size=(self._width, self._height),
-                                   scale=scale,
-                                   bg_color=bg_color,
-                                   offset=offset)
+        popup.PopupWindow.__init__(
+            self,
+            position=position,
+            size=(self._width, self._height),
+            scale=scale,
+            bg_color=bg_color,
+            offset=offset,
+        )
 
         self._cancel_button = ba.buttonwidget(
             parent=self.root_widget,
@@ -59,7 +73,8 @@ class AccountViewerWindow(popup.PopupWindow):
             on_activate_call=self._on_cancel_press,
             autoselect=True,
             icon=ba.gettexture('crossOut'),
-            iconscale=1.2)
+            iconscale=1.2,
+        )
 
         self._title_text = ba.textwidget(
             parent=self.root_widget,
@@ -70,30 +85,38 @@ class AccountViewerWindow(popup.PopupWindow):
             scale=0.6,
             text=ba.Lstr(resource='playerInfoText'),
             maxwidth=200,
-            color=(0.7, 0.7, 0.7, 0.7))
+            color=(0.7, 0.7, 0.7, 0.7),
+        )
 
-        self._scrollwidget = ba.scrollwidget(parent=self.root_widget,
-                                             size=(self._width - 60,
-                                                   self._height - 70),
-                                             position=(30, 30),
-                                             capture_arrows=True,
-                                             simple_culling_v=10)
+        self._scrollwidget = ba.scrollwidget(
+            parent=self.root_widget,
+            size=(self._width - 60, self._height - 70),
+            position=(30, 30),
+            capture_arrows=True,
+            simple_culling_v=10,
+        )
         ba.widget(edit=self._scrollwidget, autoselect=True)
 
         self._loading_text = ba.textwidget(
             parent=self._scrollwidget,
             scale=0.5,
-            text=ba.Lstr(value='${A}...',
-                         subs=[('${A}', ba.Lstr(resource='loadingText'))]),
+            text=ba.Lstr(
+                value='${A}...',
+                subs=[('${A}', ba.Lstr(resource='loadingText'))],
+            ),
             size=(self._width - 60, 100),
             h_align='center',
-            v_align='center')
+            v_align='center',
+        )
 
         # In cases where the user most likely has a browser/email, lets
         # offer a 'report this user' button.
-        if (is_browser_likely_available()
-                and ba.internal.get_v1_account_misc_read_val(
-                    'showAccountExtrasMenu', False)):
+        if (
+            is_browser_likely_available()
+            and ba.internal.get_v1_account_misc_read_val(
+                'showAccountExtrasMenu', False
+            )
+        ):
 
             self._extras_menu_button = ba.buttonwidget(
                 parent=self.root_widget,
@@ -104,20 +127,26 @@ class AccountViewerWindow(popup.PopupWindow):
                 button_type='square',
                 color=(0.64, 0.52, 0.69),
                 textcolor=(0.57, 0.47, 0.57),
-                on_activate_call=self._on_extras_menu_press)
+                on_activate_call=self._on_extras_menu_press,
+            )
 
-        ba.containerwidget(edit=self.root_widget,
-                           cancel_button=self._cancel_button)
+        ba.containerwidget(
+            edit=self.root_widget, cancel_button=self._cancel_button
+        )
 
-        master_server_get('bsAccountInfo', {
-            'buildNumber': ba.app.build_number,
-            'accountID': self._account_id,
-            'profileID': self._profile_id
-        },
-                          callback=ba.WeakCall(self._on_query_response))
+        master_server_get(
+            'bsAccountInfo',
+            {
+                'buildNumber': ba.app.build_number,
+                'accountID': self._account_id,
+                'profileID': self._profile_id,
+            },
+            callback=ba.WeakCall(self._on_query_response),
+        )
 
-    def popup_menu_selected_choice(self, window: popup.PopupMenu,
-                                   choice: str) -> None:
+    def popup_menu_selected_choice(
+        self, window: popup.PopupMenu, choice: str
+    ) -> None:
         """Called when a menu entry is selected."""
         del window  # Unused arg.
         if choice == 'more':
@@ -136,7 +165,7 @@ class AccountViewerWindow(popup.PopupWindow):
         choices = ['more', 'report']
         choices_display = [
             ba.Lstr(resource='coopSelectWindow.seeMoreText'),
-            ba.Lstr(resource='reportThisPlayerText')
+            ba.Lstr(resource='reportThisPlayerText'),
         ]
         is_admin = False
         if is_admin:
@@ -147,28 +176,38 @@ class AccountViewerWindow(popup.PopupWindow):
         uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=self._extras_menu_button.get_screen_space_center(),
-            scale=(2.3 if uiscale is ba.UIScale.SMALL else
-                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
+            scale=(
+                2.3
+                if uiscale is ba.UIScale.SMALL
+                else 1.65
+                if uiscale is ba.UIScale.MEDIUM
+                else 1.23
+            ),
             choices=choices,
             choices_display=choices_display,
             current_choice='more',
-            delegate=self)
+            delegate=self,
+        )
 
     def _on_ban_press(self) -> None:
-        ba.internal.add_transaction({
-            'type': 'BAN_ACCOUNT',
-            'account': self._account_id
-        })
+        ba.internal.add_transaction(
+            {'type': 'BAN_ACCOUNT', 'account': self._account_id}
+        )
         ba.internal.run_transactions()
 
     def _on_report_press(self) -> None:
         from bastd.ui import report
-        report.ReportPlayerWindow(self._account_id,
-                                  origin_widget=self._extras_menu_button)
+
+        report.ReportPlayerWindow(
+            self._account_id, origin_widget=self._extras_menu_button
+        )
 
     def _on_more_press(self) -> None:
-        ba.open_url(ba.internal.get_master_server_address() +
-                    '/highscores?profile=' + self._account_id)
+        ba.open_url(
+            ba.internal.get_master_server_address()
+            + '/highscores?profile='
+            + self._account_id
+        )
 
     def _on_query_response(self, data: dict[str, Any] | None) -> None:
         # FIXME: Tidy this up.
@@ -179,7 +218,8 @@ class AccountViewerWindow(popup.PopupWindow):
         if data is None:
             ba.textwidget(
                 edit=self._loading_text,
-                text=ba.Lstr(resource='internal.unavailableNoConnectionText'))
+                text=ba.Lstr(resource='internal.unavailableNoConnectionText'),
+            )
         else:
             try:
                 self._loading_text.delete()
@@ -188,10 +228,10 @@ class AccountViewerWindow(popup.PopupWindow):
                     trophystr = data['trophies']
                     num = 10
                     chunks = [
-                        trophystr[i:i + num]
+                        trophystr[i : i + num]
                         for i in range(0, len(trophystr), num)
                     ]
-                    trophystr = ('\n\n'.join(chunks))
+                    trophystr = '\n\n'.join(chunks)
                     if trophystr == '':
                         trophystr = '-'
                 except Exception:
@@ -199,14 +239,19 @@ class AccountViewerWindow(popup.PopupWindow):
                 account_name_spacing = 15
                 tscale = 0.65
                 ts_height = ba.internal.get_string_height(
-                    trophystr, suppress_warning=True)
+                    trophystr, suppress_warning=True
+                )
                 sub_width = self._width - 80
-                sub_height = 200 + ts_height * tscale + \
-                    account_name_spacing * len(data['accountDisplayStrings'])
+                sub_height = (
+                    200
+                    + ts_height * tscale
+                    + account_name_spacing * len(data['accountDisplayStrings'])
+                )
                 self._subcontainer = ba.containerwidget(
                     parent=self._scrollwidget,
                     size=(sub_width, sub_height),
-                    background=False)
+                    background=False,
+                )
                 v = sub_height - 20
 
                 title_scale = 0.37
@@ -219,17 +264,24 @@ class AccountViewerWindow(popup.PopupWindow):
                         if data['profile'] is not None:
                             profile = data['profile']
                             character = ba.app.spaz_appearances.get(
-                                profile['character'], None)
+                                profile['character'], None
+                            )
                             if character is not None:
-                                tint_color = (profile['color'] if 'color'
-                                              in profile else (1, 1, 1))
-                                tint2_color = (profile['highlight']
-                                               if 'highlight' in profile else
-                                               (1, 1, 1))
+                                tint_color = (
+                                    profile['color']
+                                    if 'color' in profile
+                                    else (1, 1, 1)
+                                )
+                                tint2_color = (
+                                    profile['highlight']
+                                    if 'highlight' in profile
+                                    else (1, 1, 1)
+                                )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
                                 mask_texture = ba.gettexture(
-                                    'characterIconMask')
+                                    'characterIconMask'
+                                )
                                 ba.imagewidget(
                                     parent=self._subcontainer,
                                     position=(sub_width * center - 40, v - 80),
@@ -239,7 +291,8 @@ class AccountViewerWindow(popup.PopupWindow):
                                     texture=ba.gettexture(icon_tex),
                                     tint_texture=ba.gettexture(tint_tex),
                                     tint_color=tint_color,
-                                    tint2_color=tint2_color)
+                                    tint2_color=tint2_color,
+                                )
                                 v -= 95
                     except Exception:
                         ba.print_exception('Error displaying character.')
@@ -253,7 +306,8 @@ class AccountViewerWindow(popup.PopupWindow):
                         color=ba.safecolor(tint_color, 0.7),
                         shadow=1.0,
                         text=ba.Lstr(value=data['profileDisplayString']),
-                        maxwidth=sub_width * maxwidth_scale * 0.75)
+                        maxwidth=sub_width * maxwidth_scale * 0.75,
+                    )
                     showing_character = True
                     v -= 33
 
@@ -263,172 +317,228 @@ class AccountViewerWindow(popup.PopupWindow):
                 v = sub_height - 20
                 if len(data['accountDisplayStrings']) <= 1:
                     account_title = ba.Lstr(
-                        resource='settingsWindow.accountText')
+                        resource='settingsWindow.accountText'
+                    )
                 else:
                     account_title = ba.Lstr(
                         resource='accountSettingsWindow.accountsText',
-                        fallback_resource='settingsWindow.accountText')
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              flatness=1.0,
-                              h_align='center',
-                              v_align='center',
-                              scale=title_scale,
-                              color=ba.app.ui.infotextcolor,
-                              text=account_title,
-                              maxwidth=sub_width * maxwidth_scale)
-                draw_small = (showing_character
-                              or len(data['accountDisplayStrings']) > 1)
+                        fallback_resource='settingsWindow.accountText',
+                    )
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    flatness=1.0,
+                    h_align='center',
+                    v_align='center',
+                    scale=title_scale,
+                    color=ba.app.ui.infotextcolor,
+                    text=account_title,
+                    maxwidth=sub_width * maxwidth_scale,
+                )
+                draw_small = (
+                    showing_character or len(data['accountDisplayStrings']) > 1
+                )
                 v -= 14 if draw_small else 20
                 for account_string in data['accountDisplayStrings']:
-                    ba.textwidget(parent=self._subcontainer,
-                                  size=(0, 0),
-                                  position=(sub_width * center, v),
-                                  h_align='center',
-                                  v_align='center',
-                                  scale=0.55 if draw_small else 0.8,
-                                  text=account_string,
-                                  maxwidth=sub_width * maxwidth_scale)
+                    ba.textwidget(
+                        parent=self._subcontainer,
+                        size=(0, 0),
+                        position=(sub_width * center, v),
+                        h_align='center',
+                        v_align='center',
+                        scale=0.55 if draw_small else 0.8,
+                        text=account_string,
+                        maxwidth=sub_width * maxwidth_scale,
+                    )
                     v -= account_name_spacing
 
                 v += account_name_spacing
                 v -= 25 if showing_character else 29
 
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              flatness=1.0,
-                              h_align='center',
-                              v_align='center',
-                              scale=title_scale,
-                              color=ba.app.ui.infotextcolor,
-                              text=ba.Lstr(resource='rankText'),
-                              maxwidth=sub_width * maxwidth_scale)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    flatness=1.0,
+                    h_align='center',
+                    v_align='center',
+                    scale=title_scale,
+                    color=ba.app.ui.infotextcolor,
+                    text=ba.Lstr(resource='rankText'),
+                    maxwidth=sub_width * maxwidth_scale,
+                )
                 v -= 14
                 if data['rank'] is None:
                     rank_str = '-'
                     suffix_offset = None
                 else:
                     str_raw = ba.Lstr(
-                        resource='league.rankInLeagueText').evaluate()
+                        resource='league.rankInLeagueText'
+                    ).evaluate()
                     # FIXME: Would be nice to not have to eval this.
                     rank_str = ba.Lstr(
                         resource='league.rankInLeagueText',
-                        subs=[('${RANK}', str(data['rank'][2])),
-                              ('${NAME}',
-                               ba.Lstr(translate=('leagueNames',
-                                                  data['rank'][0]))),
-                              ('${SUFFIX}', '')]).evaluate()
+                        subs=[
+                            ('${RANK}', str(data['rank'][2])),
+                            (
+                                '${NAME}',
+                                ba.Lstr(
+                                    translate=('leagueNames', data['rank'][0])
+                                ),
+                            ),
+                            ('${SUFFIX}', ''),
+                        ],
+                    ).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
                         ba.internal.get_string_width(
-                            rank_str, suppress_warning=True) * 0.55)
+                            rank_str, suppress_warning=True
+                        )
+                        * 0.55,
+                    )
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (str_raw.endswith('${SUFFIX}')
-                            and data['rank'][0] != 'Diamond'):
+                    if (
+                        str_raw.endswith('${SUFFIX}')
+                        and data['rank'][0] != 'Diamond'
+                    ):
                         suffix_offset = rank_str_width * 0.5 + 2
                     else:
                         suffix_offset = None
 
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              h_align='center',
-                              v_align='center',
-                              scale=0.55,
-                              text=rank_str,
-                              maxwidth=sub_width * maxwidth_scale)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    h_align='center',
+                    v_align='center',
+                    scale=0.55,
+                    text=rank_str,
+                    maxwidth=sub_width * maxwidth_scale,
+                )
                 if suffix_offset is not None:
                     assert data['rank'] is not None
-                    ba.textwidget(parent=self._subcontainer,
-                                  size=(0, 0),
-                                  position=(sub_width * center + suffix_offset,
-                                            v + 3),
-                                  h_align='left',
-                                  v_align='center',
-                                  scale=0.29,
-                                  flatness=1.0,
-                                  text='[' + str(data['rank'][1]) + ']')
+                    ba.textwidget(
+                        parent=self._subcontainer,
+                        size=(0, 0),
+                        position=(sub_width * center + suffix_offset, v + 3),
+                        h_align='left',
+                        v_align='center',
+                        scale=0.29,
+                        flatness=1.0,
+                        text='[' + str(data['rank'][1]) + ']',
+                    )
                 v -= 14
 
-                str_raw = ba.Lstr(
-                    resource='league.rankInLeagueText').evaluate()
+                str_raw = ba.Lstr(resource='league.rankInLeagueText').evaluate()
                 old_offs = -50
                 prev_ranks_shown = 0
                 for prev_rank in data['prevRanks']:
                     rank_str = ba.Lstr(
                         value='${S}:    ${I}',
                         subs=[
-                            ('${S}',
-                             ba.Lstr(resource='league.seasonText',
-                                     subs=[('${NUMBER}', str(prev_rank[0]))])),
-                            ('${I}',
-                             ba.Lstr(resource='league.rankInLeagueText',
-                                     subs=[('${RANK}', str(prev_rank[3])),
-                                           ('${NAME}',
-                                            ba.Lstr(translate=('leagueNames',
-                                                               prev_rank[1]))),
-                                           ('${SUFFIX}', '')]))
-                        ]).evaluate()
+                            (
+                                '${S}',
+                                ba.Lstr(
+                                    resource='league.seasonText',
+                                    subs=[('${NUMBER}', str(prev_rank[0]))],
+                                ),
+                            ),
+                            (
+                                '${I}',
+                                ba.Lstr(
+                                    resource='league.rankInLeagueText',
+                                    subs=[
+                                        ('${RANK}', str(prev_rank[3])),
+                                        (
+                                            '${NAME}',
+                                            ba.Lstr(
+                                                translate=(
+                                                    'leagueNames',
+                                                    prev_rank[1],
+                                                )
+                                            ),
+                                        ),
+                                        ('${SUFFIX}', ''),
+                                    ],
+                                ),
+                            ),
+                        ],
+                    ).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
                         ba.internal.get_string_width(
-                            rank_str, suppress_warning=True) * 0.3)
+                            rank_str, suppress_warning=True
+                        )
+                        * 0.3,
+                    )
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (str_raw.endswith('${SUFFIX}')
-                            and prev_rank[1] != 'Diamond'):
+                    if (
+                        str_raw.endswith('${SUFFIX}')
+                        and prev_rank[1] != 'Diamond'
+                    ):
                         suffix_offset = rank_str_width + 2
                     else:
                         suffix_offset = None
-                    ba.textwidget(parent=self._subcontainer,
-                                  size=(0, 0),
-                                  position=(sub_width * center + old_offs, v),
-                                  h_align='left',
-                                  v_align='center',
-                                  scale=0.3,
-                                  text=rank_str,
-                                  flatness=1.0,
-                                  maxwidth=sub_width * maxwidth_scale)
+                    ba.textwidget(
+                        parent=self._subcontainer,
+                        size=(0, 0),
+                        position=(sub_width * center + old_offs, v),
+                        h_align='left',
+                        v_align='center',
+                        scale=0.3,
+                        text=rank_str,
+                        flatness=1.0,
+                        maxwidth=sub_width * maxwidth_scale,
+                    )
                     if suffix_offset is not None:
-                        ba.textwidget(parent=self._subcontainer,
-                                      size=(0, 0),
-                                      position=(sub_width * center + old_offs +
-                                                suffix_offset, v + 1),
-                                      h_align='left',
-                                      v_align='center',
-                                      scale=0.20,
-                                      flatness=1.0,
-                                      text='[' + str(prev_rank[2]) + ']')
+                        ba.textwidget(
+                            parent=self._subcontainer,
+                            size=(0, 0),
+                            position=(
+                                sub_width * center + old_offs + suffix_offset,
+                                v + 1,
+                            ),
+                            h_align='left',
+                            v_align='center',
+                            scale=0.20,
+                            flatness=1.0,
+                            text='[' + str(prev_rank[2]) + ']',
+                        )
                     prev_ranks_shown += 1
                     v -= 10
 
                 v -= 13
 
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              flatness=1.0,
-                              h_align='center',
-                              v_align='center',
-                              scale=title_scale,
-                              color=ba.app.ui.infotextcolor,
-                              text=ba.Lstr(resource='achievementsText'),
-                              maxwidth=sub_width * maxwidth_scale)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    flatness=1.0,
+                    h_align='center',
+                    v_align='center',
+                    scale=title_scale,
+                    color=ba.app.ui.infotextcolor,
+                    text=ba.Lstr(resource='achievementsText'),
+                    maxwidth=sub_width * maxwidth_scale,
+                )
                 v -= 14
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              h_align='center',
-                              v_align='center',
-                              scale=0.55,
-                              text=str(data['achievementsCompleted']) + ' / ' +
-                              str(len(ba.app.ach.achievements)),
-                              maxwidth=sub_width * maxwidth_scale)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    h_align='center',
+                    v_align='center',
+                    scale=0.55,
+                    text=str(data['achievementsCompleted'])
+                    + ' / '
+                    + str(len(ba.app.ach.achievements)),
+                    maxwidth=sub_width * maxwidth_scale,
+                )
                 v -= 25
 
                 if prev_ranks_shown == 0 and showing_character:
@@ -439,26 +549,31 @@ class AccountViewerWindow(popup.PopupWindow):
                 center = 0.5
                 maxwidth_scale = 0.9
 
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, 0),
-                              position=(sub_width * center, v),
-                              h_align='center',
-                              v_align='center',
-                              scale=title_scale,
-                              color=ba.app.ui.infotextcolor,
-                              flatness=1.0,
-                              text=ba.Lstr(resource='trophiesThisSeasonText',
-                                           fallback_resource='trophiesText'),
-                              maxwidth=sub_width * maxwidth_scale)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, 0),
+                    position=(sub_width * center, v),
+                    h_align='center',
+                    v_align='center',
+                    scale=title_scale,
+                    color=ba.app.ui.infotextcolor,
+                    flatness=1.0,
+                    text=ba.Lstr(
+                        resource='trophiesThisSeasonText',
+                        fallback_resource='trophiesText',
+                    ),
+                    maxwidth=sub_width * maxwidth_scale,
+                )
                 v -= 19
-                ba.textwidget(parent=self._subcontainer,
-                              size=(0, ts_height),
-                              position=(sub_width * 0.5,
-                                        v - ts_height * tscale),
-                              h_align='center',
-                              v_align='top',
-                              corner_scale=tscale,
-                              text=trophystr)
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    size=(0, ts_height),
+                    position=(sub_width * 0.5, v - ts_height * tscale),
+                    h_align='center',
+                    v_align='top',
+                    corner_scale=tscale,
+                    text=trophystr,
+                )
 
             except Exception:
                 ba.print_exception('Error displaying account info.')

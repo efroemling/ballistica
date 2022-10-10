@@ -9,6 +9,7 @@ import typing
 import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, get_args
+
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
 
@@ -23,8 +24,9 @@ SIMPLE_TYPES = {int, bool, str, float, type(None)}
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
 
-def _raise_type_error(fieldpath: str, valuetype: type,
-                      expected: tuple[type, ...]) -> None:
+def _raise_type_error(
+    fieldpath: str, valuetype: type, expected: tuple[type, ...]
+) -> None:
     """Raise an error when a field value's type does not match expected."""
     assert isinstance(expected, tuple)
     assert all(isinstance(e, type) for e in expected)
@@ -32,9 +34,11 @@ def _raise_type_error(fieldpath: str, valuetype: type,
         expected_str = expected[0].__name__
     else:
         expected_str = ' | '.join(t.__name__ for t in expected)
-    raise TypeError(f'Invalid value type for "{fieldpath}";'
-                    f' expected "{expected_str}", got'
-                    f' "{valuetype.__name__}".')
+    raise TypeError(
+        f'Invalid value type for "{fieldpath}";'
+        f' expected "{expected_str}", got'
+        f' "{valuetype.__name__}".'
+    )
 
 
 class Codec(Enum):
@@ -83,7 +87,8 @@ def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
         # JSON 'objects' supports only string dict keys, but all value types.
         return all(
             isinstance(k, str) and _is_valid_for_codec(v, codec)
-            for k, v in obj.items())
+            for k, v in obj.items()
+        )
     if objtype is list:
         return all(_is_valid_for_codec(elem, codec) for elem in obj)
 
@@ -162,13 +167,15 @@ class IOAttrs:
             if isinstance(soft_default, (list, dict, set)):
                 raise ValueError(
                     f'mutable {type(soft_default)} is not allowed'
-                    f' for soft_default; use soft_default_factory.')
+                    f' for soft_default; use soft_default_factory.'
+                )
             self.soft_default = soft_default
         if soft_default_factory is not cls.soft_default_factory:
             self.soft_default_factory = soft_default_factory
             if self.soft_default is not cls.soft_default:
-                raise ValueError('Cannot set both soft_default'
-                                 ' and soft_default_factory')
+                raise ValueError(
+                    'Cannot set both soft_default and soft_default_factory'
+                )
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
@@ -178,29 +185,44 @@ class IOAttrs:
 
         if not self.store_default:
             field_default_factory: Any = field.default_factory
-            if (field_default_factory is dataclasses.MISSING
-                    and field.default is dataclasses.MISSING
-                    and self.soft_default is self.MISSING
-                    and self.soft_default_factory is self.MISSING):
-                raise TypeError(f'Field {field.name} of {cls} has'
-                                f' neither a default nor a default_factory'
-                                f' and IOAttrs contains neither a soft_default'
-                                f' nor a soft_default_factory;'
-                                f' store_default=False cannot be set for it.')
+            if (
+                field_default_factory is dataclasses.MISSING
+                and field.default is dataclasses.MISSING
+                and self.soft_default is self.MISSING
+                and self.soft_default_factory is self.MISSING
+            ):
+                raise TypeError(
+                    f'Field {field.name} of {cls} has'
+                    f' neither a default nor a default_factory'
+                    f' and IOAttrs contains neither a soft_default'
+                    f' nor a soft_default_factory;'
+                    f' store_default=False cannot be set for it.'
+                )
 
-    def validate_datetime(self, value: datetime.datetime,
-                          fieldpath: str) -> None:
+    def validate_datetime(
+        self, value: datetime.datetime, fieldpath: str
+    ) -> None:
         """Ensure a datetime value meets our value requirements."""
         if self.whole_days:
-            if any(x != 0 for x in (value.hour, value.minute, value.second,
-                                    value.microsecond)):
+            if any(
+                x != 0
+                for x in (
+                    value.hour,
+                    value.minute,
+                    value.second,
+                    value.microsecond,
+                )
+            ):
                 raise ValueError(
-                    f'Value {value} at {fieldpath} is not a whole day.')
+                    f'Value {value} at {fieldpath} is not a whole day.'
+                )
         if self.whole_hours:
-            if any(x != 0
-                   for x in (value.minute, value.second, value.microsecond)):
-                raise ValueError(f'Value {value} at {fieldpath}'
-                                 f' is not a whole hour.')
+            if any(
+                x != 0 for x in (value.minute, value.second, value.microsecond)
+            ):
+                raise ValueError(
+                    f'Value {value} at {fieldpath}' f' is not a whole hour.'
+                )
 
 
 def _get_origin(anntype: Any) -> Any:
@@ -228,7 +250,8 @@ def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
                 if ioattrs is not None:
                     raise RuntimeError(
                         'Multiple IOAttrs instances found for a'
-                        ' single annotation; this is not supported.')
+                        ' single annotation; this is not supported.'
+                    )
                 ioattrs = annarg
 
             # I occasionally just throw a 'x' down when I mean IOAttrs('x');
@@ -236,6 +259,7 @@ def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
             elif isinstance(annarg, (str, int, float, bool)):
                 raise RuntimeError(
                     f'Raw {type(annarg)} found in Annotated[] entry:'
-                    f' {anntype}; this is probably not what you intended.')
+                    f' {anntype}; this is probably not what you intended.'
+                )
         anntype = annargs[0]
     return anntype, ioattrs

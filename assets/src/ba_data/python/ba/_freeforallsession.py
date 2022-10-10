@@ -18,6 +18,7 @@ class FreeForAllSession(MultiTeamSession):
 
     Category: **Gameplay Classes**
     """
+
     use_teams = False
     use_team_colors = False
     _playlist_selection_var = 'Free-for-All Playlist Selection'
@@ -55,42 +56,54 @@ class FreeForAllSession(MultiTeamSession):
         from efro.util import asserttype
         from bastd.activity.drawscore import DrawScoreScreenActivity
         from bastd.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity)
+            TeamSeriesVictoryScoreScreenActivity,
+        )
         from bastd.activity.freeforallvictory import (
-            FreeForAllVictoryScoreScreenActivity)
+            FreeForAllVictoryScoreScreenActivity,
+        )
+
         winners = results.winnergroups
 
         # If there's multiple players and everyone has the same score,
         # call it a draw.
         if len(self.sessionplayers) > 1 and len(winners) < 2:
             self.setactivity(
-                _ba.newactivity(DrawScoreScreenActivity, {'results': results}))
+                _ba.newactivity(DrawScoreScreenActivity, {'results': results})
+            )
         else:
             # Award different point amounts based on number of players.
             point_awards = self.get_ffa_point_awards()
 
             for i, winner in enumerate(winners):
                 for team in winner.teams:
-                    points = (point_awards[i] if i in point_awards else 0)
-                    team.customdata['previous_score'] = (
-                        team.customdata['score'])
+                    points = point_awards[i] if i in point_awards else 0
+                    team.customdata['previous_score'] = team.customdata['score']
                     team.customdata['score'] += points
 
             series_winners = [
-                team for team in self.sessionteams
+                team
+                for team in self.sessionteams
                 if team.customdata['score'] >= self._ffa_series_length
             ]
             series_winners.sort(
                 reverse=True,
-                key=lambda t: asserttype(t.customdata['score'], int))
-            if (len(series_winners) == 1
-                    or (len(series_winners) > 1
-                        and series_winners[0].customdata['score'] !=
-                        series_winners[1].customdata['score'])):
+                key=lambda t: asserttype(t.customdata['score'], int),
+            )
+            if len(series_winners) == 1 or (
+                len(series_winners) > 1
+                and series_winners[0].customdata['score']
+                != series_winners[1].customdata['score']
+            ):
                 self.setactivity(
-                    _ba.newactivity(TeamSeriesVictoryScoreScreenActivity,
-                                    {'winner': series_winners[0]}))
+                    _ba.newactivity(
+                        TeamSeriesVictoryScoreScreenActivity,
+                        {'winner': series_winners[0]},
+                    )
+                )
             else:
                 self.setactivity(
-                    _ba.newactivity(FreeForAllVictoryScoreScreenActivity,
-                                    {'results': results}))
+                    _ba.newactivity(
+                        FreeForAllVictoryScoreScreenActivity,
+                        {'results': results},
+                    )
+                )

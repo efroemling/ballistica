@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 @dataclass
 class WinnerGroup:
     """Entry for a winning team or teams calculated by game-results."""
+
     score: int | None
     teams: Sequence[ba.SessionTeam]
 
@@ -35,8 +36,9 @@ class GameResults:
 
     def __init__(self) -> None:
         self._game_set = False
-        self._scores: dict[int, tuple[weakref.ref[ba.SessionTeam],
-                                      int | None]] = {}
+        self._scores: dict[
+            int, tuple[weakref.ref[ba.SessionTeam], int | None]
+        ] = {}
         self._sessionteams: list[weakref.ref[ba.SessionTeam]] | None = None
         self._playerinfos: list[ba.PlayerInfo] | None = None
         self._lower_is_better: bool | None = None
@@ -96,8 +98,7 @@ class GameResults:
         """Return whether there is a score for a given session-team."""
         return any(s[0]() is sessionteam for s in self._scores.values())
 
-    def get_sessionteam_score_str(self,
-                                  sessionteam: ba.SessionTeam) -> ba.Lstr:
+    def get_sessionteam_score_str(self, sessionteam: ba.SessionTeam) -> ba.Lstr:
         """Return the score for the given session-team as an Lstr.
 
         (properly formatted for the score type.)
@@ -106,6 +107,7 @@ class GameResults:
         from ba._language import Lstr
         from ba._generated.enums import TimeFormat
         from ba._score import ScoreType
+
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
         for score in list(self._scores.values()):
@@ -113,13 +115,15 @@ class GameResults:
                 if score[1] is None:
                     return Lstr(value='-')
                 if self._scoretype is ScoreType.SECONDS:
-                    return timestring(score[1] * 1000,
-                                      centi=False,
-                                      timeformat=TimeFormat.MILLISECONDS)
+                    return timestring(
+                        score[1] * 1000,
+                        centi=False,
+                        timeformat=TimeFormat.MILLISECONDS,
+                    )
                 if self._scoretype is ScoreType.MILLISECONDS:
-                    return timestring(score[1],
-                                      centi=True,
-                                      timeformat=TimeFormat.MILLISECONDS)
+                    return timestring(
+                        score[1], centi=True, timeformat=TimeFormat.MILLISECONDS
+                    )
                 return Lstr(value=str(score[1]))
         return Lstr(value='-')
 
@@ -174,7 +178,8 @@ class GameResults:
         # Group by best scoring teams.
         winners: dict[int, list[ba.SessionTeam]] = {}
         scores = [
-            score for score in self._scores.values()
+            score
+            for score in self._scores.values()
             if score[0]() is not None and score[1] is not None
         ]
         for score in scores:
@@ -183,10 +188,13 @@ class GameResults:
             team = score[0]()
             assert team is not None
             sval.append(team)
-        results: list[tuple[int | None,
-                            list[ba.SessionTeam]]] = list(winners.items())
-        results.sort(reverse=not self._lower_is_better,
-                     key=lambda x: asserttype(x[0], int))
+        results: list[tuple[int | None, list[ba.SessionTeam]]] = list(
+            winners.items()
+        )
+        results.sort(
+            reverse=not self._lower_is_better,
+            key=lambda x: asserttype(x[0], int),
+        )
 
         # Also group the 'None' scores.
         none_sessionteams: list[ba.SessionTeam] = []

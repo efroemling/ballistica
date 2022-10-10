@@ -24,6 +24,7 @@ class MusicType(Enum):
     'situations'. The actual music played for each type can be overridden
     by the game or by the user.
     """
+
     MENU = 'Menu'
     VICTORY = 'Victory'
     CHAR_SELECT = 'CharSelect'
@@ -53,6 +54,7 @@ class MusicPlayMode(Enum):
 
     Category: **Enums**
     """
+
     REGULAR = 'regular'
     TEST = 'test'
 
@@ -63,6 +65,7 @@ class AssetSoundtrackEntry:
 
     Category: **App Classes**
     """
+
     assetname: str
     volume: float = 1.0
     loop: bool = True
@@ -70,50 +73,38 @@ class AssetSoundtrackEntry:
 
 # What gets played by default for our different music types:
 ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
-    MusicType.MENU:
-        AssetSoundtrackEntry('menuMusic'),
-    MusicType.VICTORY:
-        AssetSoundtrackEntry('victoryMusic', volume=1.2, loop=False),
-    MusicType.CHAR_SELECT:
-        AssetSoundtrackEntry('charSelectMusic', volume=0.4),
-    MusicType.RUN_AWAY:
-        AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.ONSLAUGHT:
-        AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.KEEP_AWAY:
-        AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.RACE:
-        AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.EPIC_RACE:
-        AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
-    MusicType.SCORES:
-        AssetSoundtrackEntry('scoresEpicMusic', volume=0.6, loop=False),
-    MusicType.GRAND_ROMP:
-        AssetSoundtrackEntry('grandRompMusic', volume=1.2),
-    MusicType.TO_THE_DEATH:
-        AssetSoundtrackEntry('toTheDeathMusic', volume=1.2),
-    MusicType.CHOSEN_ONE:
-        AssetSoundtrackEntry('survivalMusic', volume=0.8),
-    MusicType.FORWARD_MARCH:
-        AssetSoundtrackEntry('forwardMarchMusic', volume=0.8),
-    MusicType.FLAG_CATCHER:
-        AssetSoundtrackEntry('flagCatcherMusic', volume=1.2),
-    MusicType.SURVIVAL:
-        AssetSoundtrackEntry('survivalMusic', volume=0.8),
-    MusicType.EPIC:
-        AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
-    MusicType.SPORTS:
-        AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.HOCKEY:
-        AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FOOTBALL:
-        AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FLYING:
-        AssetSoundtrackEntry('flyingMusic', volume=0.8),
-    MusicType.SCARY:
-        AssetSoundtrackEntry('scaryMusic', volume=0.8),
-    MusicType.MARCHING:
-        AssetSoundtrackEntry('whenJohnnyComesMarchingHomeMusic', volume=0.8),
+    MusicType.MENU: AssetSoundtrackEntry('menuMusic'),
+    MusicType.VICTORY: AssetSoundtrackEntry(
+        'victoryMusic', volume=1.2, loop=False
+    ),
+    MusicType.CHAR_SELECT: AssetSoundtrackEntry('charSelectMusic', volume=0.4),
+    MusicType.RUN_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
+    MusicType.ONSLAUGHT: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
+    MusicType.KEEP_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
+    MusicType.RACE: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
+    MusicType.EPIC_RACE: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
+    MusicType.SCORES: AssetSoundtrackEntry(
+        'scoresEpicMusic', volume=0.6, loop=False
+    ),
+    MusicType.GRAND_ROMP: AssetSoundtrackEntry('grandRompMusic', volume=1.2),
+    MusicType.TO_THE_DEATH: AssetSoundtrackEntry('toTheDeathMusic', volume=1.2),
+    MusicType.CHOSEN_ONE: AssetSoundtrackEntry('survivalMusic', volume=0.8),
+    MusicType.FORWARD_MARCH: AssetSoundtrackEntry(
+        'forwardMarchMusic', volume=0.8
+    ),
+    MusicType.FLAG_CATCHER: AssetSoundtrackEntry(
+        'flagCatcherMusic', volume=1.2
+    ),
+    MusicType.SURVIVAL: AssetSoundtrackEntry('survivalMusic', volume=0.8),
+    MusicType.EPIC: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
+    MusicType.SPORTS: AssetSoundtrackEntry('sportsMusic', volume=0.8),
+    MusicType.HOCKEY: AssetSoundtrackEntry('sportsMusic', volume=0.8),
+    MusicType.FOOTBALL: AssetSoundtrackEntry('sportsMusic', volume=0.8),
+    MusicType.FLYING: AssetSoundtrackEntry('flyingMusic', volume=0.8),
+    MusicType.SCARY: AssetSoundtrackEntry('scaryMusic', volume=0.8),
+    MusicType.MARCHING: AssetSoundtrackEntry(
+        'whenJohnnyComesMarchingHomeMusic', volume=0.8
+    ),
 }
 
 
@@ -133,7 +124,7 @@ class MusicSubsystem:
         self._music_player_type: type[MusicPlayer] | None = None
         self.music_types: dict[MusicPlayMode, MusicType | None] = {
             MusicPlayMode.REGULAR: None,
-            MusicPlayMode.TEST: None
+            MusicPlayMode.TEST: None,
         }
 
         # Set up custom music players for platforms that support them.
@@ -143,9 +134,11 @@ class MusicSubsystem:
         # instead of a special case.
         if self.supports_soundtrack_entry_type('musicFile'):
             from ba.osmusic import OSMusicPlayer
+
             self._music_player_type = OSMusicPlayer
         elif self.supports_soundtrack_entry_type('iTunesPlaylist'):
             from ba.macmusicapp import MacMusicAppMusicPlayer
+
             self._music_player_type = MacMusicAppMusicPlayer
 
     def on_app_launch(self) -> None:
@@ -156,11 +149,14 @@ class MusicSubsystem:
         # out than later).
         try:
             cfg = _ba.app.config
-            if ('Soundtrack' in cfg and cfg['Soundtrack']
-                    not in ['__default__', 'Default Soundtrack']):
+            if 'Soundtrack' in cfg and cfg['Soundtrack'] not in [
+                '__default__',
+                'Default Soundtrack',
+            ]:
                 self.get_music_player()
         except Exception:
             from ba import _error
+
             _error.print_exception('error prepping music-player')
 
     def on_app_shutdown(self) -> None:
@@ -185,9 +181,9 @@ class MusicSubsystem:
         if self._music_player is not None:
             self._music_player.set_volume(val)
 
-    def set_music_play_mode(self,
-                            mode: MusicPlayMode,
-                            force_restart: bool = False) -> None:
+    def set_music_play_mode(
+        self, mode: MusicPlayMode, force_restart: bool = False
+    ) -> None:
         """Sets music play mode; used for soundtrack testing/etc."""
         old_mode = self._music_mode
         self._music_mode = mode
@@ -210,8 +206,10 @@ class MusicSubsystem:
         if entry_type == 'iTunesPlaylist':
             return 'Mac' in uas
         if entry_type in ('musicFile', 'musicFolder'):
-            return ('android' in uas
-                    and _ba.android_get_external_files_dir() is not None)
+            return (
+                'android' in uas
+                and _ba.android_get_external_files_dir() is not None
+            )
         if entry_type == 'default':
             return True
         return False
@@ -228,18 +226,28 @@ class MusicSubsystem:
                 entry_type = 'iTunesPlaylist'
 
             # For other entries we expect type and name strings in a dict.
-            elif (isinstance(entry, dict) and 'type' in entry
-                  and isinstance(entry['type'], str) and 'name' in entry
-                  and isinstance(entry['name'], str)):
+            elif (
+                isinstance(entry, dict)
+                and 'type' in entry
+                and isinstance(entry['type'], str)
+                and 'name' in entry
+                and isinstance(entry['name'], str)
+            ):
                 entry_type = entry['type']
             else:
-                raise TypeError('invalid soundtrack entry: ' + str(entry) +
-                                ' (type ' + str(type(entry)) + ')')
+                raise TypeError(
+                    'invalid soundtrack entry: '
+                    + str(entry)
+                    + ' (type '
+                    + str(type(entry))
+                    + ')'
+                )
             if self.supports_soundtrack_entry_type(entry_type):
                 return entry_type
             raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
             from ba import _error
+
             _error.print_exception()
             return 'default'
 
@@ -254,13 +262,18 @@ class MusicSubsystem:
                 return entry
 
             # For other entries we expect type and name strings in a dict.
-            if (isinstance(entry, dict) and 'type' in entry
-                    and isinstance(entry['type'], str) and 'name' in entry
-                    and isinstance(entry['name'], str)):
+            if (
+                isinstance(entry, dict)
+                and 'type' in entry
+                and isinstance(entry['type'], str)
+                and 'name' in entry
+                and isinstance(entry['name'], str)
+            ):
                 return entry['name']
             raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
             from ba import _error
+
             _error.print_exception()
             return 'default'
 
@@ -269,11 +282,13 @@ class MusicSubsystem:
         if _ba.is_os_playing_music():
             self.do_play_music(None)
 
-    def do_play_music(self,
-                      musictype: MusicType | str | None,
-                      continuous: bool = False,
-                      mode: MusicPlayMode = MusicPlayMode.REGULAR,
-                      testsoundtrack: dict[str, Any] | None = None) -> None:
+    def do_play_music(
+        self,
+        musictype: MusicType | str | None,
+        continuous: bool = False,
+        mode: MusicPlayMode = MusicPlayMode.REGULAR,
+        testsoundtrack: dict[str, Any] | None = None,
+    ) -> None:
         """Plays the requested music type/mode.
 
         For most cases, setmusic() is the proper call to use, which itself
@@ -378,8 +393,9 @@ class MusicSubsystem:
                     'positional': False,
                     'music': True,
                     'volume': entry.volume * 5.0,
-                    'loop': entry.loop
-                })
+                    'loop': entry.loop,
+                },
+            )
 
 
 class MusicPlayer:
@@ -397,11 +413,16 @@ class MusicPlayer:
         self._volume = 1.0
         self._actually_playing = False
 
-    def select_entry(self, callback: Callable[[Any], None], current_entry: Any,
-                     selection_target_name: str) -> Any:
+    def select_entry(
+        self,
+        callback: Callable[[Any], None],
+        current_entry: Any,
+        selection_target_name: str,
+    ) -> Any:
         """Summons a UI to select a new soundtrack entry."""
-        return self.on_select_entry(callback, current_entry,
-                                    selection_target_name)
+        return self.on_select_entry(
+            callback, current_entry, selection_target_name
+        )
 
     def set_volume(self, volume: float) -> None:
         """Set player volume (value should be between 0 and 1)."""
@@ -435,8 +456,12 @@ class MusicPlayer:
         """Shutdown music playback completely."""
         self.on_app_shutdown()
 
-    def on_select_entry(self, callback: Callable[[Any], None],
-                        current_entry: Any, selection_target_name: str) -> Any:
+    def on_select_entry(
+        self,
+        callback: Callable[[Any], None],
+        current_entry: Any,
+        selection_target_name: str,
+    ) -> Any:
         """Present a GUI to select an entry.
 
         The callback should be called with a valid entry or None to
@@ -464,8 +489,9 @@ class MusicPlayer:
                 self.on_play(self._entry_to_play)
                 self._actually_playing = True
         else:
-            if self._actually_playing and (self._entry_to_play is None
-                                           or self._volume <= 0.0):
+            if self._actually_playing and (
+                self._entry_to_play is None or self._volume <= 0.0
+            ):
                 self.on_stop()
                 self._actually_playing = False
 

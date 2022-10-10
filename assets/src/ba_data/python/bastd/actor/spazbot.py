@@ -57,8 +57,12 @@ class SpazBotDiedMessage:
     how: ba.DeathType
     """The particular type of death."""
 
-    def __init__(self, spazbot: SpazBot, killerplayer: ba.Player | None,
-                 how: ba.DeathType):
+    def __init__(
+        self,
+        spazbot: SpazBot,
+        killerplayer: ba.Player | None,
+        how: ba.DeathType,
+    ):
         """Instantiate with given values."""
         self.spazbot = spazbot
         self.killerplayer = killerplayer
@@ -105,12 +109,14 @@ class SpazBot(Spaz):
 
     def __init__(self) -> None:
         """Instantiate a spaz-bot."""
-        super().__init__(color=self.color,
-                         highlight=self.highlight,
-                         character=self.character,
-                         source_player=None,
-                         start_invincible=False,
-                         can_accept_powerups=False)
+        super().__init__(
+            color=self.color,
+            highlight=self.highlight,
+            character=self.character,
+            source_player=None,
+            start_invincible=False,
+            can_accept_powerups=False,
+        )
 
         # If you need to add custom behavior to a bot, set this to a callable
         # which takes one arg (the bot) and returns False if the bot's normal
@@ -126,8 +132,9 @@ class SpazBot(Spaz):
         self.held_count = 0
         self.last_player_held_by: ba.Player | None = None
         self.target_flag: Flag | None = None
-        self._charge_speed = 0.5 * (self.charge_speed_min +
-                                    self.charge_speed_max)
+        self._charge_speed = 0.5 * (
+            self.charge_speed_min + self.charge_speed_max
+        )
         self._lead_amount = 0.5
         self._mode = 'wait'
         self._charge_closing_in = False
@@ -172,16 +179,19 @@ class SpazBot(Spaz):
 
             # Ignore player-points that are significantly below the bot
             # (keeps bots from following players off cliffs).
-            if (closest_dist is None
-                    or dist < closest_dist) and (plpt[1] > botpt[1] - 5.0):
+            if (closest_dist is None or dist < closest_dist) and (
+                plpt[1] > botpt[1] - 5.0
+            ):
                 closest_dist = dist
                 closest_vel = plvel
                 closest = plpt
         if closest_dist is not None:
             assert closest_vel is not None
             assert closest is not None
-            return (ba.Vec3(closest[0], closest[1], closest[2]),
-                    ba.Vec3(closest_vel[0], closest_vel[1], closest_vel[2]))
+            return (
+                ba.Vec3(closest[0], closest[1], closest[2]),
+                ba.Vec3(closest_vel[0], closest_vel[1], closest_vel[2]),
+            )
         return None, None
 
     def set_player_points(self, pts: list[tuple[ba.Vec3, ba.Vec3]]) -> None:
@@ -212,7 +222,7 @@ class SpazBot(Spaz):
         # towards the flag and try to pick it up.
         if self.target_flag:
             if self.node.hold_node:
-                holding_flag = (self.node.hold_node.getnodetype() == 'flag')
+                holding_flag = self.node.hold_node.getnodetype() == 'flag'
             else:
                 holding_flag = False
 
@@ -225,7 +235,7 @@ class SpazBot(Spaz):
             # Otherwise try to go pick it up.
             elif self.target_flag.node:
                 target_pt_raw = ba.Vec3(*self.target_flag.node.position)
-                diff = (target_pt_raw - our_pos)
+                diff = target_pt_raw - our_pos
                 diff = ba.Vec3(diff[0], 0, diff[2])  # Don't care about y.
                 dist = diff.length()
                 to_target = diff.normalized()
@@ -253,8 +263,7 @@ class SpazBot(Spaz):
 
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
-            holding_bomb = (self.node.hold_node.getnodetype()
-                            in ['bomb', 'prop'])
+            holding_bomb = self.node.hold_node.getnodetype() in ['bomb', 'prop']
             if not holding_bomb:
                 self.node.pickup_pressed = True
                 self.node.pickup_pressed = False
@@ -287,10 +296,11 @@ class SpazBot(Spaz):
 
         # Use a point out in front of them as real target.
         # (more out in front the farther from us they are)
-        target_pt = (target_pt_raw +
-                     target_vel * dist_raw * 0.3 * self._lead_amount)
+        target_pt = (
+            target_pt_raw + target_vel * dist_raw * 0.3 * self._lead_amount
+        )
 
-        diff = (target_pt - our_pos)
+        diff = target_pt - our_pos
         dist = diff.length()
         to_target = diff.normalized()
 
@@ -349,8 +359,9 @@ class SpazBot(Spaz):
 
         elif self._mode == 'charge':
             if random.random() < 0.3:
-                self._charge_speed = random.uniform(self.charge_speed_min,
-                                                    self.charge_speed_max)
+                self._charge_speed = random.uniform(
+                    self.charge_speed_min, self.charge_speed_max
+                )
 
                 # If we're a runner we run during charges *except when near
                 # an edge (otherwise we tend to fly off easily).
@@ -396,22 +407,29 @@ class SpazBot(Spaz):
             # from our target. When this value increases it means our charge
             # is over (ran by them or something).
             if self._mode == 'charge':
-                if (self._charge_closing_in
-                        and self._last_charge_dist < dist < 3.0):
+                if (
+                    self._charge_closing_in
+                    and self._last_charge_dist < dist < 3.0
+                ):
                     self._charge_closing_in = False
                 self._last_charge_dist = dist
 
             # If we have a clean shot, throw!
-            if (self.throw_dist_min <= dist < self.throw_dist_max
-                    and random.random() < self.throwiness and can_attack):
+            if (
+                self.throw_dist_min <= dist < self.throw_dist_max
+                and random.random() < self.throwiness
+                and can_attack
+            ):
                 self._mode = 'throw'
-                self._lead_amount = ((0.4 + random.random() * 0.6)
-                                     if dist_raw > 4.0 else
-                                     (0.1 + random.random() * 0.4))
+                self._lead_amount = (
+                    (0.4 + random.random() * 0.6)
+                    if dist_raw > 4.0
+                    else (0.1 + random.random() * 0.4)
+                )
                 self._have_dropped_throw_bomb = False
-                self._throw_release_time = (ba.time() +
-                                            (1.0 / self.throw_rate) *
-                                            (0.8 + 1.3 * random.random()))
+                self._throw_release_time = ba.time() + (
+                    1.0 / self.throw_rate
+                ) * (0.8 + 1.3 * random.random())
 
             # If we're static, always charge (which for us means barely move).
             elif self.static:
@@ -433,8 +451,11 @@ class SpazBot(Spaz):
 
             # We're within charging distance, backed against an edge,
             # or farther than our max throw distance.. chaaarge!
-            elif (dist < self.charge_dist_max or dist > self.throw_dist_max
-                  or self.map.is_point_near_edge(our_pos, self._running)):
+            elif (
+                dist < self.charge_dist_max
+                or dist > self.throw_dist_max
+                or self.map.is_point_near_edge(our_pos, self._running)
+            ):
                 if self._mode != 'charge':
                     self._mode = 'charge'
                     self._lead_amount = 0.01
@@ -450,10 +471,15 @@ class SpazBot(Spaz):
 
             # Do some awesome jumps if we're running.
             # FIXME: pylint: disable=too-many-boolean-expressions
-            if ((self._running and 1.2 < dist < 2.2
-                 and ba.time() - self._last_jump_time > 1.0)
-                    or (self.bouncy and ba.time() - self._last_jump_time > 0.4
-                        and random.random() < 0.5)):
+            if (
+                self._running
+                and 1.2 < dist < 2.2
+                and ba.time() - self._last_jump_time > 1.0
+            ) or (
+                self.bouncy
+                and ba.time() - self._last_jump_time > 0.4
+                and random.random() < 0.5
+            ):
                 self._last_jump_time = ba.time()
                 self.node.jump_pressed = True
                 self.node.jump_pressed = False
@@ -526,8 +552,10 @@ class SpazBot(Spaz):
                     # If they were attacked by someone in the last few
                     # seconds that person's the killer.
                     # Otherwise it was a suicide.
-                    if (self.last_player_attacked_by
-                            and ba.time() - self.last_attacked_time < 4.0):
+                    if (
+                        self.last_player_attacked_by
+                        and ba.time() - self.last_attacked_time < 4.0
+                    ):
                         killerplayer = self.last_player_attacked_by
                     else:
                         killerplayer = None
@@ -538,7 +566,8 @@ class SpazBot(Spaz):
                     killerplayer = None
                 if activity is not None:
                     activity.handlemessage(
-                        SpazBotDiedMessage(self, killerplayer, msg.how))
+                        SpazBotDiedMessage(self, killerplayer, msg.how)
+                    )
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
@@ -558,6 +587,7 @@ class BomberBot(SpazBot):
 
     category: Bot Classes
     """
+
     character = 'Spaz'
     punchiness = 0.3
 
@@ -567,6 +597,7 @@ class BomberBotLite(BomberBot):
 
     category: Bot Classes
     """
+
     color = LITE_BOT_COLOR
     highlight = LITE_BOT_HIGHLIGHT
     punchiness = 0.2
@@ -581,6 +612,7 @@ class BomberBotStaticLite(BomberBotLite):
 
     category: Bot Classes
     """
+
     static = True
     throw_dist_min = 0.0
 
@@ -590,6 +622,7 @@ class BomberBotStatic(BomberBot):
 
     category: Bot Classes
     """
+
     static = True
     throw_dist_min = 0.0
 
@@ -599,6 +632,7 @@ class BomberBotPro(BomberBot):
 
     category: Bot Classes
     """
+
     points_mult = 2
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
@@ -615,6 +649,7 @@ class BomberBotProShielded(BomberBotPro):
 
     category: Bot Classes
     """
+
     points_mult = 3
     default_shields = True
 
@@ -624,6 +659,7 @@ class BomberBotProStatic(BomberBotPro):
 
     category: Bot Classes
     """
+
     static = True
     throw_dist_min = 0.0
 
@@ -633,6 +669,7 @@ class BomberBotProStaticShielded(BomberBotProShielded):
 
     category: Bot Classes
     """
+
     static = True
     throw_dist_min = 0.0
 
@@ -642,6 +679,7 @@ class BrawlerBot(SpazBot):
 
     category: Bot Classes
     """
+
     character = 'Kronk'
     punchiness = 0.9
     charge_dist_max = 9999.0
@@ -656,6 +694,7 @@ class BrawlerBotLite(BrawlerBot):
 
     category: Bot Classes
     """
+
     color = LITE_BOT_COLOR
     highlight = LITE_BOT_HIGHLIGHT
     punchiness = 0.3
@@ -668,6 +707,7 @@ class BrawlerBotPro(BrawlerBot):
 
     category: Bot Classes
     """
+
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
     run = True
@@ -682,6 +722,7 @@ class BrawlerBotProShielded(BrawlerBotPro):
 
     category: Bot Classes
     """
+
     default_shields = True
     points_mult = 3
 
@@ -731,6 +772,7 @@ class ChargerBotPro(ChargerBot):
 
     category: Bot Classes
     """
+
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
     default_shields = True
@@ -743,6 +785,7 @@ class ChargerBotProShielded(ChargerBotPro):
 
     category: Bot Classes
     """
+
     default_shields = True
     points_mult = 4
 
@@ -752,6 +795,7 @@ class TriggerBot(SpazBot):
 
     category: Bot Classes
     """
+
     character = 'Zoe'
     punchiness = 0.75
     throwiness = 0.7
@@ -769,6 +813,7 @@ class TriggerBotStatic(TriggerBot):
 
     category: Bot Classes
     """
+
     static = True
     throw_dist_min = 0.0
 
@@ -778,6 +823,7 @@ class TriggerBotPro(TriggerBot):
 
     category: Bot Classes
     """
+
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
     default_bomb_count = 3
@@ -796,6 +842,7 @@ class TriggerBotProShielded(TriggerBotPro):
 
     category: Bot Classes
     """
+
     default_shields = True
     points_mult = 4
 
@@ -805,6 +852,7 @@ class StickyBot(SpazBot):
 
     category: Bot Classes
     """
+
     character = 'Mel'
     punchiness = 0.9
     throwiness = 1.0
@@ -826,6 +874,7 @@ class StickyBotStatic(StickyBot):
 
     category: Bot Classes
     """
+
     static = True
 
 
@@ -834,6 +883,7 @@ class ExplodeyBot(SpazBot):
 
     category: Bot Classes
     """
+
     character = 'Jack Morgan'
     run = True
     charge_dist_min = 0.0
@@ -851,6 +901,7 @@ class ExplodeyBotNoTimeLimit(ExplodeyBot):
 
     category: Bot Classes
     """
+
     curse_time = None
 
 
@@ -859,6 +910,7 @@ class ExplodeyBotShielded(ExplodeyBot):
 
     category: Bot Classes
     """
+
     default_shields = True
     points_mult = 5
 
@@ -889,22 +941,31 @@ class SpazBotSet:
         self.clear()
 
     def spawn_bot(
-            self,
-            bot_type: type[SpazBot],
-            pos: Sequence[float],
-            spawn_time: float = 3.0,
-            on_spawn_call: Callable[[SpazBot], Any] | None = None) -> None:
+        self,
+        bot_type: type[SpazBot],
+        pos: Sequence[float],
+        spawn_time: float = 3.0,
+        on_spawn_call: Callable[[SpazBot], Any] | None = None,
+    ) -> None:
         """Spawn a bot from this set."""
         from bastd.actor import spawner
-        spawner.Spawner(pt=pos,
-                        spawn_time=spawn_time,
-                        send_spawn_message=False,
-                        spawn_callback=ba.Call(self._spawn_bot, bot_type, pos,
-                                               on_spawn_call))
+
+        spawner.Spawner(
+            pt=pos,
+            spawn_time=spawn_time,
+            send_spawn_message=False,
+            spawn_callback=ba.Call(
+                self._spawn_bot, bot_type, pos, on_spawn_call
+            ),
+        )
         self._spawning_count += 1
 
-    def _spawn_bot(self, bot_type: type[SpazBot], pos: Sequence[float],
-                   on_spawn_call: Callable[[SpazBot], Any] | None) -> None:
+    def _spawn_bot(
+        self,
+        bot_type: type[SpazBot],
+        pos: Sequence[float],
+        on_spawn_call: Callable[[SpazBot], Any] | None,
+    ) -> None:
         spaz = bot_type()
         ba.playsound(self._spawn_sound, position=pos)
         assert spaz.node
@@ -918,8 +979,9 @@ class SpazBotSet:
 
     def have_living_bots(self) -> bool:
         """Return whether any bots in the set are alive or spawning."""
-        return (self._spawning_count > 0
-                or any(any(b.is_alive() for b in l) for l in self._bot_lists))
+        return self._spawning_count > 0 or any(
+            any(b.is_alive() for b in l) for l in self._bot_lists
+        )
 
     def get_living_bots(self) -> list[SpazBot]:
         """Get the living bots in the set."""
@@ -935,15 +997,18 @@ class SpazBotSet:
         # Update one of our bot lists each time through.
         # First off, remove no-longer-existing bots from the list.
         try:
-            bot_list = self._bot_lists[self._bot_update_list] = ([
+            bot_list = self._bot_lists[self._bot_update_list] = [
                 b for b in self._bot_lists[self._bot_update_list] if b
-            ])
+            ]
         except Exception:
             bot_list = []
-            ba.print_exception('Error updating bot list: ' +
-                               str(self._bot_lists[self._bot_update_list]))
-        self._bot_update_list = (self._bot_update_list +
-                                 1) % self._bot_list_count
+            ba.print_exception(
+                'Error updating bot list: '
+                + str(self._bot_lists[self._bot_update_list])
+            )
+        self._bot_update_list = (
+            self._bot_update_list + 1
+        ) % self._bot_list_count
 
         # Update our list of player points for the bots to use.
         player_pts = []
@@ -956,8 +1021,12 @@ class SpazBotSet:
                 if player.is_alive():
                     assert isinstance(player.actor, Spaz)
                     assert player.actor.node
-                    player_pts.append((ba.Vec3(player.actor.node.position),
-                                       ba.Vec3(player.actor.node.velocity)))
+                    player_pts.append(
+                        (
+                            ba.Vec3(player.actor.node.position),
+                            ba.Vec3(player.actor.node.velocity),
+                        )
+                    )
             except Exception:
                 ba.print_exception('Error on bot-set _update.')
 
@@ -980,9 +1049,9 @@ class SpazBotSet:
 
     def start_moving(self) -> None:
         """Start processing bot AI updates so they start doing their thing."""
-        self._bot_update_timer = ba.Timer(0.05,
-                                          ba.WeakCall(self._update),
-                                          repeat=True)
+        self._bot_update_timer = ba.Timer(
+            0.05, ba.WeakCall(self._update), repeat=True
+        )
 
     def stop_moving(self) -> None:
         """Tell all bots to stop moving and stops updating their AI.
@@ -1022,20 +1091,28 @@ class SpazBotSet:
                     assert bot.node  # (should exist if 'if bot' was True)
                     bot.node.move_left_right = 0
                     bot.node.move_up_down = 0
-                    ba.timer(0.5 * random.random(),
-                             ba.Call(bot.handlemessage, ba.CelebrateMessage()))
+                    ba.timer(
+                        0.5 * random.random(),
+                        ba.Call(bot.handlemessage, ba.CelebrateMessage()),
+                    )
                     jump_duration = random.randrange(400, 500)
                     j = random.randrange(0, 200)
                     for _i in range(10):
                         bot.node.jump_pressed = True
                         bot.node.jump_pressed = False
                         j += jump_duration
-                    ba.timer(random.uniform(0.0, 1.0),
-                             ba.Call(bot.node.handlemessage, 'attack_sound'))
-                    ba.timer(random.uniform(1.0, 2.0),
-                             ba.Call(bot.node.handlemessage, 'attack_sound'))
-                    ba.timer(random.uniform(2.0, 3.0),
-                             ba.Call(bot.node.handlemessage, 'attack_sound'))
+                    ba.timer(
+                        random.uniform(0.0, 1.0),
+                        ba.Call(bot.node.handlemessage, 'attack_sound'),
+                    )
+                    ba.timer(
+                        random.uniform(1.0, 2.0),
+                        ba.Call(bot.node.handlemessage, 'attack_sound'),
+                    )
+                    ba.timer(
+                        random.uniform(2.0, 3.0),
+                        ba.Call(bot.node.handlemessage, 'attack_sound'),
+                    )
 
     def add_bot(self, bot: SpazBot) -> None:
         """Add a ba.SpazBot instance to the set."""

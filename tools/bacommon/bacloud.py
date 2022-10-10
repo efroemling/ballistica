@@ -21,6 +21,7 @@ BACLOUD_VERSION = 8
 @dataclass
 class RequestData:
     """Request sent to bacloud server."""
+
     command: Annotated[str, IOAttrs('c')]
     token: Annotated[str | None, IOAttrs('t')]
     payload: Annotated[dict, IOAttrs('p')]
@@ -74,23 +75,32 @@ class ResponseData:
     delay_seconds: Annotated[float, IOAttrs('d', store_default=False)] = 0.0
     login: Annotated[str | None, IOAttrs('l', store_default=False)] = None
     logout: Annotated[bool, IOAttrs('lo', store_default=False)] = False
-    dir_manifest: Annotated[str | None,
-                            IOAttrs('man', store_default=False)] = None
-    uploads: Annotated[tuple[list[str], str, dict] | None,
-                       IOAttrs('u', store_default=False)] = None
-    uploads_inline: Annotated[list[str] | None,
-                              IOAttrs('uinl', store_default=False)] = None
-    deletes: Annotated[list[str] | None,
-                       IOAttrs('dlt', store_default=False)] = None
-    downloads_inline: Annotated[dict[str, str] | None,
-                                IOAttrs('dinl', store_default=False)] = None
-    dir_prune_empty: Annotated[str | None,
-                               IOAttrs('dpe', store_default=False)] = None
+    dir_manifest: Annotated[
+        str | None, IOAttrs('man', store_default=False)
+    ] = None
+    uploads: Annotated[
+        tuple[list[str], str, dict] | None, IOAttrs('u', store_default=False)
+    ] = None
+    uploads_inline: Annotated[
+        list[str] | None, IOAttrs('uinl', store_default=False)
+    ] = None
+    deletes: Annotated[
+        list[str] | None, IOAttrs('dlt', store_default=False)
+    ] = None
+    downloads_inline: Annotated[
+        dict[str, str] | None, IOAttrs('dinl', store_default=False)
+    ] = None
+    dir_prune_empty: Annotated[
+        str | None, IOAttrs('dpe', store_default=False)
+    ] = None
     open_url: Annotated[str | None, IOAttrs('url', store_default=False)] = None
-    input_prompt: Annotated[tuple[str, bool] | None,
-                            IOAttrs('inp', store_default=False)] = None
-    end_message: Annotated[str | None,
-                           IOAttrs('em', store_default=False)] = None
+    input_prompt: Annotated[
+        tuple[str, bool] | None, IOAttrs('inp', store_default=False)
+    ] = None
+    end_message: Annotated[
+        str | None, IOAttrs('em', store_default=False)
+    ] = None
     end_message_end: Annotated[str, IOAttrs('eme', store_default=False)] = '\n'
-    end_command: Annotated[tuple[str, dict] | None,
-                           IOAttrs('ec', store_default=False)] = None
+    end_command: Annotated[
+        tuple[str, dict] | None, IOAttrs('ec', store_default=False)
+    ] = None

@@ -49,12 +49,16 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._campaign: ba.Campaign = settings['campaign']
 
         self._have_achievements = bool(
-            ba.app.ach.achievements_for_coop_level(self._campaign.name + ':' +
-                                                   settings['level']))
+            ba.app.ach.achievements_for_coop_level(
+                self._campaign.name + ':' + settings['level']
+            )
+        )
 
-        self._account_type = (ba.internal.get_v1_account_type()
-                              if ba.internal.get_v1_account_state()
-                              == 'signed_in' else None)
+        self._account_type = (
+            ba.internal.get_v1_account_type()
+            if ba.internal.get_v1_account_state() == 'signed_in'
+            else None
+        )
 
         self._game_service_icon_color: Sequence[float] | None
         self._game_service_achievements_texture: ba.Texture | None
@@ -75,10 +79,12 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 self._account_has_achievements = True
             elif self._account_type == 'Google Play':
                 self._game_service_icon_color = (0.8, 1.0, 0.6)
-                self._game_service_achievements_texture = (
-                    ba.gettexture('googlePlayAchievementsIcon'))
-                self._game_service_leaderboards_texture = (
-                    ba.gettexture('googlePlayLeaderboardsIcon'))
+                self._game_service_achievements_texture = ba.gettexture(
+                    'googlePlayAchievementsIcon'
+                )
+                self._game_service_leaderboards_texture = ba.gettexture(
+                    'googlePlayLeaderboardsIcon'
+                )
                 self._account_has_achievements = True
             else:
                 self._game_service_icon_color = None
@@ -140,8 +146,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._score_order: str
         if 'score_order' in settings:
             if not settings['score_order'] in ['increasing', 'decreasing']:
-                raise ValueError('Invalid score order: ' +
-                                 settings['score_order'])
+                raise ValueError(
+                    'Invalid score order: ' + settings['score_order']
+                )
             self._score_order = settings['score_order']
         else:
             self._score_order = 'increasing'
@@ -150,8 +157,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._score_type: str
         if 'score_type' in settings:
             if not settings['score_type'] in ['points', 'time']:
-                raise ValueError('Invalid score type: ' +
-                                 settings['score_type'])
+                raise ValueError(
+                    'Invalid score type: ' + settings['score_type']
+                )
             self._score_type = settings['score_type']
         else:
             self._score_type = 'points'
@@ -161,18 +169,24 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         assert isinstance(self._level_name, str)
 
         self._game_name_str = self._campaign.name + ':' + self._level_name
-        self._game_config_str = str(len(
-            self._playerinfos)) + 'p' + self._campaign.getlevel(
-                self._level_name).get_score_version_string().replace(' ', '_')
+        self._game_config_str = (
+            str(len(self._playerinfos))
+            + 'p'
+            + self._campaign.getlevel(self._level_name)
+            .get_score_version_string()
+            .replace(' ', '_')
+        )
 
         # If game-center/etc scores are available we show our friends'
         # scores. Otherwise we show our local high scores.
         self._show_friend_scores = ba.internal.game_service_has_leaderboard(
-            self._game_name_str, self._game_config_str)
+            self._game_name_str, self._game_config_str
+        )
 
         try:
             self._old_best_rank = self._campaign.getlevel(
-                self._level_name).rating
+                self._level_name
+            ).rating
         except Exception:
             self._old_best_rank = 0.0
 
@@ -188,14 +202,16 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
     def on_transition_in(self) -> None:
         from bastd.actor import background  # FIXME NO BSSTD
+
         ba.set_analytics_screen('Coop Score Screen')
         super().on_transition_in()
-        self._background = background.Background(fade_time=0.45,
-                                                 start_faded=False,
-                                                 show_logo=True)
+        self._background = background.Background(
+            fade_time=0.45, start_faded=False, show_logo=True
+        )
 
     def _ui_menu(self) -> None:
         from bastd.ui import specialoffer
+
         if specialoffer.show_offer():
             return
         ba.containerwidget(edit=self._root_ui, transition='out_left')
@@ -205,6 +221,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     def _ui_restart(self) -> None:
         from bastd.ui.tournamententry import TournamentEntryWindow
         from bastd.ui import specialoffer
+
         if specialoffer.show_offer():
             return
 
@@ -214,20 +231,24 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             if self._tournament_time_remaining is None:
                 ba.screenmessage(
                     ba.Lstr(resource='tournamentCheckingStateText'),
-                    color=(1, 0, 0))
+                    color=(1, 0, 0),
+                )
                 ba.playsound(ba.getsound('error'))
                 return
             if self._tournament_time_remaining <= 0:
-                ba.screenmessage(ba.Lstr(resource='tournamentEndedText'),
-                                 color=(1, 0, 0))
+                ba.screenmessage(
+                    ba.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                )
                 ba.playsound(ba.getsound('error'))
                 return
 
         # If there are currently fewer players than our session min,
         # don't allow.
         if len(self.players) < self.session.min_players:
-            ba.screenmessage(ba.Lstr(resource='notEnoughPlayersRemainingText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource='notEnoughPlayersRemainingText'),
+                color=(1, 0, 0),
+            )
             ba.playsound(ba.getsound('error'))
             return
 
@@ -241,7 +262,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             TournamentEntryWindow(
                 tournament_id=tournament_id,
                 tournament_activity=self,
-                position=self._restart_button.get_screen_space_center())
+                position=self._restart_button.get_screen_space_center(),
+            )
         else:
             ba.containerwidget(edit=self._root_ui, transition='out_left')
             self.can_show_ad_on_death = True
@@ -250,13 +272,17 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
     def _ui_next(self) -> None:
         from bastd.ui.specialoffer import show_offer
+
         if show_offer():
             return
 
         # If we didn't just complete this level but are choosing to play the
         # next one, set it as current (this won't happen otherwise).
-        if (self._is_complete and self._is_more_levels
-                and not self._newly_complete):
+        if (
+            self._is_complete
+            and self._is_more_levels
+            and not self._newly_complete
+        ):
             assert self._next_level_name is not None
             self._campaign.set_selected_level(self._next_level_name)
         ba.containerwidget(edit=self._root_ui, transition='out_left')
@@ -264,9 +290,11 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             self.end({'outcome': 'next_level'})
 
     def _ui_gc(self) -> None:
-        ba.internal.show_online_score_ui('leaderboard',
-                                         game=self._game_name_str,
-                                         game_version=self._game_config_str)
+        ba.internal.show_online_score_ui(
+            'leaderboard',
+            game=self._game_name_str,
+            game_version=self._game_config_str,
+        )
 
     def _ui_show_achievements(self) -> None:
         ba.internal.show_online_score_ui('achievements')
@@ -274,8 +302,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     def _ui_worlds_best(self) -> None:
         if self._score_link is None:
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource='scoreListUnavailableText'),
-                             color=(1, 0.5, 0))
+            ba.screenmessage(
+                ba.Lstr(resource='scoreListUnavailableText'), color=(1, 0.5, 0)
+            )
         else:
             ba.open_url(self._score_link)
 
@@ -288,12 +317,15 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 scale=0.54,
                 h_align=Text.HAlign.CENTER,
                 color=(0.5, 0.7, 0.5, 1),
-                position=(300, -235))
+                position=(300, -235),
+            )
             ba.playsound(ba.getsound('error'))
             ba.timer(
                 2.0,
-                ba.WeakCall(self._next_level_error.handlemessage,
-                            ba.DieMessage()))
+                ba.WeakCall(
+                    self._next_level_error.handlemessage, ba.DieMessage()
+                ),
+            )
 
     def _should_show_worlds_best_button(self) -> bool:
         # Link is too complicated to display with no browser.
@@ -320,8 +352,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if not self.players:
             return
 
-        rootc = self._root_ui = ba.containerwidget(size=(0, 0),
-                                                   transition='in_right')
+        rootc = self._root_ui = ba.containerwidget(
+            size=(0, 0), transition='in_right'
+        )
 
         h_offs = 7.0
         v_offs = -280.0
@@ -334,31 +367,34 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ba.internal.set_ui_input_device(None)  # Menu is up for grabs.
 
         if self._show_friend_scores:
-            ba.buttonwidget(parent=rootc,
-                            color=(0.45, 0.4, 0.5),
-                            position=(h_offs - 520, v_offs + 480),
-                            size=(300, 60),
-                            label=ba.Lstr(resource='topFriendsText'),
-                            on_activate_call=ba.WeakCall(self._ui_gc),
-                            transition_delay=delay + 0.5,
-                            icon=self._game_service_leaderboards_texture,
-                            icon_color=self._game_service_icon_color,
-                            autoselect=True,
-                            selectable=can_select_extra_buttons)
+            ba.buttonwidget(
+                parent=rootc,
+                color=(0.45, 0.4, 0.5),
+                position=(h_offs - 520, v_offs + 480),
+                size=(300, 60),
+                label=ba.Lstr(resource='topFriendsText'),
+                on_activate_call=ba.WeakCall(self._ui_gc),
+                transition_delay=delay + 0.5,
+                icon=self._game_service_leaderboards_texture,
+                icon_color=self._game_service_icon_color,
+                autoselect=True,
+                selectable=can_select_extra_buttons,
+            )
 
         if self._have_achievements and self._account_has_achievements:
-            ba.buttonwidget(parent=rootc,
-                            color=(0.45, 0.4, 0.5),
-                            position=(h_offs - 520, v_offs + 450 - 235 + 40),
-                            size=(300, 60),
-                            label=ba.Lstr(resource='achievementsText'),
-                            on_activate_call=ba.WeakCall(
-                                self._ui_show_achievements),
-                            transition_delay=delay + 1.5,
-                            icon=self._game_service_achievements_texture,
-                            icon_color=self._game_service_icon_color,
-                            autoselect=True,
-                            selectable=can_select_extra_buttons)
+            ba.buttonwidget(
+                parent=rootc,
+                color=(0.45, 0.4, 0.5),
+                position=(h_offs - 520, v_offs + 450 - 235 + 40),
+                size=(300, 60),
+                label=ba.Lstr(resource='achievementsText'),
+                on_activate_call=ba.WeakCall(self._ui_show_achievements),
+                transition_delay=delay + 1.5,
+                icon=self._game_service_achievements_texture,
+                icon_color=self._game_service_icon_color,
+                autoselect=True,
+                selectable=can_select_extra_buttons,
+            )
 
         if self._should_show_worlds_best_button():
             ba.buttonwidget(
@@ -367,48 +403,57 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 position=(160, v_offs + 480),
                 size=(350, 62),
                 label=ba.Lstr(resource='tournamentStandingsText')
-                if self.session.tournament_id is not None else ba.Lstr(
-                    resource='worldsBestScoresText') if self._score_type
-                == 'points' else ba.Lstr(resource='worldsBestTimesText'),
+                if self.session.tournament_id is not None
+                else ba.Lstr(resource='worldsBestScoresText')
+                if self._score_type == 'points'
+                else ba.Lstr(resource='worldsBestTimesText'),
                 autoselect=True,
                 on_activate_call=ba.WeakCall(self._ui_worlds_best),
                 transition_delay=delay + 1.9,
-                selectable=can_select_extra_buttons)
+                selectable=can_select_extra_buttons,
+            )
         else:
             pass
 
-        show_next_button = self._is_more_levels and not (ba.app.demo_mode
-                                                         or ba.app.arcade_mode)
+        show_next_button = self._is_more_levels and not (
+            ba.app.demo_mode or ba.app.arcade_mode
+        )
 
         if not show_next_button:
             h_offs += 70
 
-        menu_button = ba.buttonwidget(parent=rootc,
-                                      autoselect=True,
-                                      position=(h_offs - 130 - 60, v_offs),
-                                      size=(110, 85),
-                                      label='',
-                                      on_activate_call=ba.WeakCall(
-                                          self._ui_menu))
-        ba.imagewidget(parent=rootc,
-                       draw_controller=menu_button,
-                       position=(h_offs - 130 - 60 + 22, v_offs + 14),
-                       size=(60, 60),
-                       texture=self._menu_icon_texture,
-                       opacity=0.8)
+        menu_button = ba.buttonwidget(
+            parent=rootc,
+            autoselect=True,
+            position=(h_offs - 130 - 60, v_offs),
+            size=(110, 85),
+            label='',
+            on_activate_call=ba.WeakCall(self._ui_menu),
+        )
+        ba.imagewidget(
+            parent=rootc,
+            draw_controller=menu_button,
+            position=(h_offs - 130 - 60 + 22, v_offs + 14),
+            size=(60, 60),
+            texture=self._menu_icon_texture,
+            opacity=0.8,
+        )
         self._restart_button = restart_button = ba.buttonwidget(
             parent=rootc,
             autoselect=True,
             position=(h_offs - 60, v_offs),
             size=(110, 85),
             label='',
-            on_activate_call=ba.WeakCall(self._ui_restart))
-        ba.imagewidget(parent=rootc,
-                       draw_controller=restart_button,
-                       position=(h_offs - 60 + 19, v_offs + 7),
-                       size=(70, 70),
-                       texture=self._replay_icon_texture,
-                       opacity=0.8)
+            on_activate_call=ba.WeakCall(self._ui_restart),
+        )
+        ba.imagewidget(
+            parent=rootc,
+            draw_controller=restart_button,
+            position=(h_offs - 60 + 19, v_offs + 7),
+            size=(70, 70),
+            texture=self._replay_icon_texture,
+            opacity=0.8,
+        )
 
         next_button: ba.Widget | None = None
 
@@ -425,24 +470,30 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 button_sound = False
                 image_opacity = 0.2
                 color = (0.3, 0.3, 0.3)
-            next_button = ba.buttonwidget(parent=rootc,
-                                          autoselect=True,
-                                          position=(h_offs + 130 - 60, v_offs),
-                                          size=(110, 85),
-                                          label='',
-                                          on_activate_call=call,
-                                          color=color,
-                                          enable_sound=button_sound)
-            ba.imagewidget(parent=rootc,
-                           draw_controller=next_button,
-                           position=(h_offs + 130 - 60 + 12, v_offs + 5),
-                           size=(80, 80),
-                           texture=self._next_level_icon_texture,
-                           opacity=image_opacity)
+            next_button = ba.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs + 130 - 60, v_offs),
+                size=(110, 85),
+                label='',
+                on_activate_call=call,
+                color=color,
+                enable_sound=button_sound,
+            )
+            ba.imagewidget(
+                parent=rootc,
+                draw_controller=next_button,
+                position=(h_offs + 130 - 60 + 12, v_offs + 5),
+                size=(80, 80),
+                texture=self._next_level_icon_texture,
+                opacity=image_opacity,
+            )
 
         x_offs_extra = 0 if show_next_button else -100
-        self._corner_button_offs = (h_offs + 300.0 + 100.0 + x_offs_extra,
-                                    v_offs + 560.0)
+        self._corner_button_offs = (
+            h_offs + 300.0 + 100.0 + x_offs_extra,
+            v_offs + 560.0,
+        )
 
         if ba.app.demo_mode or ba.app.arcade_mode:
             self._league_rank_button = None
@@ -456,7 +507,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 color=(0.4, 0.4, 0.9),
                 textcolor=(0.9, 0.9, 2.0),
                 transition_delay=0.0,
-                smooth_update_delay=5.0)
+                smooth_update_delay=5.0,
+            )
             self._store_button_instance = StoreButton(
                 parent=rootc,
                 position=(h_offs + 400 + 100 + x_offs_extra, v_offs + 560),
@@ -467,20 +519,24 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 button_type='square',
                 color=(0.35, 0.25, 0.45),
                 textcolor=(0.9, 0.7, 1.0),
-                transition_delay=0.0)
+                transition_delay=0.0,
+            )
 
-        ba.containerwidget(edit=rootc,
-                           selected_child=next_button if
-                           (self._newly_complete and self._victory
-                            and show_next_button) else restart_button,
-                           on_cancel_call=menu_button.activate)
+        ba.containerwidget(
+            edit=rootc,
+            selected_child=next_button
+            if (self._newly_complete and self._victory and show_next_button)
+            else restart_button,
+            on_cancel_call=menu_button.activate,
+        )
 
         self._update_corner_button_positions()
         self._update_corner_button_positions_timer = ba.Timer(
             1.0,
             ba.WeakCall(self._update_corner_button_positions),
             repeat=True,
-            timetype=ba.TimeType.REAL)
+            timetype=ba.TimeType.REAL,
+        )
 
     def _update_corner_button_positions(self) -> None:
         offs = -55 if ba.internal.is_party_icon_visible() else 0
@@ -497,8 +553,11 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         # If this activity is a good 'end point', ask server-mode just once if
         # it wants to do anything special like switch sessions or kill the app.
-        if (self._allow_server_transition and ba.app.server is not None
-                and self._server_transitioning is None):
+        if (
+            self._allow_server_transition
+            and ba.app.server is not None
+            and self._server_transitioning is None
+        ):
             self._server_transitioning = ba.app.server.handle_transition()
             assert isinstance(self._server_transitioning, bool)
 
@@ -518,9 +577,14 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:
             player.assigninput(
-                (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
-                 ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
-                self._player_press)
+                (
+                    ba.InputType.JUMP_PRESS,
+                    ba.InputType.PUNCH_PRESS,
+                    ba.InputType.BOMB_PRESS,
+                    ba.InputType.PICK_UP_PRESS,
+                ),
+                self._player_press,
+            )
 
     def on_player_join(self, player: ba.Player) -> None:
         super().on_player_join(player)
@@ -528,7 +592,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if ba.app.server is not None:
             # Host can't press retry button, so anyone can do it instead.
             time_till_assign = max(
-                0, self._birth_time + self._min_view_time - ba.time())
+                0, self._birth_time + self._min_view_time - ba.time()
+            )
 
             ba.timer(time_till_assign, ba.WeakCall(self._safe_assign, player))
 
@@ -545,123 +610,156 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         levels = self._campaign.levels
         level = self._campaign.getlevel(self._level_name)
         self._was_complete = level.complete
-        self._is_complete = (self._was_complete or self._victory)
-        self._newly_complete = (self._is_complete and not self._was_complete)
-        self._is_more_levels = ((level.index < len(levels) - 1)
-                                and self._campaign.sequential)
+        self._is_complete = self._was_complete or self._victory
+        self._newly_complete = self._is_complete and not self._was_complete
+        self._is_more_levels = (
+            level.index < len(levels) - 1
+        ) and self._campaign.sequential
 
         # Any time we complete a level, set the next one as unlocked.
         if self._is_complete and self._is_more_levels:
-            ba.internal.add_transaction({
-                'type': 'COMPLETE_LEVEL',
-                'campaign': self._campaign.name,
-                'level': self._level_name
-            })
+            ba.internal.add_transaction(
+                {
+                    'type': 'COMPLETE_LEVEL',
+                    'campaign': self._campaign.name,
+                    'level': self._level_name,
+                }
+            )
             self._next_level_name = levels[level.index + 1].name
 
             # If this is the first time we completed it, set the next one
             # as current.
             if self._newly_complete:
                 cfg = ba.app.config
-                cfg['Selected Coop Game'] = (self._campaign.name + ':' +
-                                             self._next_level_name)
+                cfg['Selected Coop Game'] = (
+                    self._campaign.name + ':' + self._next_level_name
+                )
                 cfg.commit()
                 self._campaign.set_selected_level(self._next_level_name)
 
         ba.timer(1.0, ba.WeakCall(self.request_ui))
 
-        if (self._is_complete and self._victory and self._is_more_levels
-                and not (ba.app.demo_mode or ba.app.arcade_mode)):
-            Text(ba.Lstr(value='${A}:\n',
-                         subs=[('${A}', ba.Lstr(resource='levelUnlockedText'))
-                               ]) if self._newly_complete else
-                 ba.Lstr(value='${A}:\n',
-                         subs=[('${A}', ba.Lstr(resource='nextLevelText'))]),
-                 transition=Text.Transition.IN_RIGHT,
-                 transition_delay=5.2,
-                 flash=self._newly_complete,
-                 scale=0.54,
-                 h_align=Text.HAlign.CENTER,
-                 maxwidth=270,
-                 color=(0.5, 0.7, 0.5, 1),
-                 position=(270, -235)).autoretain()
+        if (
+            self._is_complete
+            and self._victory
+            and self._is_more_levels
+            and not (ba.app.demo_mode or ba.app.arcade_mode)
+        ):
+            Text(
+                ba.Lstr(
+                    value='${A}:\n',
+                    subs=[('${A}', ba.Lstr(resource='levelUnlockedText'))],
+                )
+                if self._newly_complete
+                else ba.Lstr(
+                    value='${A}:\n',
+                    subs=[('${A}', ba.Lstr(resource='nextLevelText'))],
+                ),
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=5.2,
+                flash=self._newly_complete,
+                scale=0.54,
+                h_align=Text.HAlign.CENTER,
+                maxwidth=270,
+                color=(0.5, 0.7, 0.5, 1),
+                position=(270, -235),
+            ).autoretain()
             assert self._next_level_name is not None
-            Text(ba.Lstr(translate=('coopLevelNames', self._next_level_name)),
-                 transition=Text.Transition.IN_RIGHT,
-                 transition_delay=5.2,
-                 flash=self._newly_complete,
-                 scale=0.7,
-                 h_align=Text.HAlign.CENTER,
-                 maxwidth=205,
-                 color=(0.5, 0.7, 0.5, 1),
-                 position=(270, -255)).autoretain()
+            Text(
+                ba.Lstr(translate=('coopLevelNames', self._next_level_name)),
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=5.2,
+                flash=self._newly_complete,
+                scale=0.7,
+                h_align=Text.HAlign.CENTER,
+                maxwidth=205,
+                color=(0.5, 0.7, 0.5, 1),
+                position=(270, -255),
+            ).autoretain()
             if self._newly_complete:
                 ba.timer(5.2, ba.Call(ba.playsound, self._cashregistersound))
                 ba.timer(5.2, ba.Call(ba.playsound, self._dingsound))
 
         offs_x = -195
         if len(self._playerinfos) > 1:
-            pstr = ba.Lstr(value='- ${A} -',
-                           subs=[('${A}',
-                                  ba.Lstr(resource='multiPlayerCountText',
-                                          subs=[('${COUNT}',
-                                                 str(len(self._playerinfos)))
-                                                ]))])
+            pstr = ba.Lstr(
+                value='- ${A} -',
+                subs=[
+                    (
+                        '${A}',
+                        ba.Lstr(
+                            resource='multiPlayerCountText',
+                            subs=[('${COUNT}', str(len(self._playerinfos)))],
+                        ),
+                    )
+                ],
+            )
         else:
-            pstr = ba.Lstr(value='- ${A} -',
-                           subs=[('${A}',
-                                  ba.Lstr(resource='singlePlayerCountText'))])
-        ZoomText(self._campaign.getlevel(self._level_name).displayname,
-                 maxwidth=800,
-                 flash=False,
-                 trail=False,
-                 color=(0.5, 1, 0.5, 1),
-                 h_align='center',
-                 scale=0.4,
-                 position=(0, 292),
-                 jitter=1.0).autoretain()
-        Text(pstr,
-             maxwidth=300,
-             transition=Text.Transition.FADE_IN,
-             scale=0.7,
-             h_align=Text.HAlign.CENTER,
-             v_align=Text.VAlign.CENTER,
-             color=(0.5, 0.7, 0.5, 1),
-             position=(0, 230)).autoretain()
+            pstr = ba.Lstr(
+                value='- ${A} -',
+                subs=[('${A}', ba.Lstr(resource='singlePlayerCountText'))],
+            )
+        ZoomText(
+            self._campaign.getlevel(self._level_name).displayname,
+            maxwidth=800,
+            flash=False,
+            trail=False,
+            color=(0.5, 1, 0.5, 1),
+            h_align='center',
+            scale=0.4,
+            position=(0, 292),
+            jitter=1.0,
+        ).autoretain()
+        Text(
+            pstr,
+            maxwidth=300,
+            transition=Text.Transition.FADE_IN,
+            scale=0.7,
+            h_align=Text.HAlign.CENTER,
+            v_align=Text.VAlign.CENTER,
+            color=(0.5, 0.7, 0.5, 1),
+            position=(0, 230),
+        ).autoretain()
 
         if ba.app.server is None:
             # If we're running in normal non-headless build, show this text
             # because only host can continue the game.
             adisp = ba.internal.get_v1_account_display_string()
-            txt = Text(ba.Lstr(resource='waitingForHostText',
-                               subs=[('${HOST}', adisp)]),
-                       maxwidth=300,
-                       transition=Text.Transition.FADE_IN,
-                       transition_delay=8.0,
-                       scale=0.85,
-                       h_align=Text.HAlign.CENTER,
-                       v_align=Text.VAlign.CENTER,
-                       color=(1, 1, 0, 1),
-                       position=(0, -230)).autoretain()
+            txt = Text(
+                ba.Lstr(
+                    resource='waitingForHostText', subs=[('${HOST}', adisp)]
+                ),
+                maxwidth=300,
+                transition=Text.Transition.FADE_IN,
+                transition_delay=8.0,
+                scale=0.85,
+                h_align=Text.HAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                color=(1, 1, 0, 1),
+                position=(0, -230),
+            ).autoretain()
             assert txt.node
             txt.node.client_only = True
         else:
             # In headless build, anyone can continue the game.
             sval = ba.Lstr(resource='pressAnyButtonPlayAgainText')
-            Text(sval,
-                 v_attach=Text.VAttach.BOTTOM,
-                 h_align=Text.HAlign.CENTER,
-                 flash=True,
-                 vr_depth=50,
-                 position=(0, 60),
-                 scale=0.8,
-                 color=(0.5, 0.7, 0.5, 0.5),
-                 transition=Text.Transition.IN_BOTTOM_SLOW,
-                 transition_delay=self._min_view_time).autoretain()
+            Text(
+                sval,
+                v_attach=Text.VAttach.BOTTOM,
+                h_align=Text.HAlign.CENTER,
+                flash=True,
+                vr_depth=50,
+                position=(0, 60),
+                scale=0.8,
+                color=(0.5, 0.7, 0.5, 0.5),
+                transition=Text.Transition.IN_BOTTOM_SLOW,
+                transition_delay=self._min_view_time,
+            ).autoretain()
 
         if self._score is not None:
-            ba.timer(0.35,
-                     ba.Call(ba.playsound, self._score_display_sound_small))
+            ba.timer(
+                0.35, ba.Call(ba.playsound, self._score_display_sound_small)
+            )
 
         # Vestigial remain; this stuff should just be instance vars.
         self._show_info = {}
@@ -672,51 +770,63 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ba.pushcall(ba.WeakCall(self._show_fail))
 
         self._name_str = name_str = ', '.join(
-            [p.name for p in self._playerinfos])
+            [p.name for p in self._playerinfos]
+        )
 
         if self._show_friend_scores:
             self._friends_loading_status = Text(
-                ba.Lstr(value='${A}...',
-                        subs=[('${A}', ba.Lstr(resource='loadingText'))]),
+                ba.Lstr(
+                    value='${A}...',
+                    subs=[('${A}', ba.Lstr(resource='loadingText'))],
+                ),
                 position=(-405, 150 + 30),
                 color=(1, 1, 1, 0.4),
                 transition=Text.Transition.FADE_IN,
                 scale=0.7,
-                transition_delay=2.0)
-        self._score_loading_status = Text(ba.Lstr(
-            value='${A}...', subs=[('${A}', ba.Lstr(resource='loadingText'))]),
-                                          position=(280, 150 + 30),
-                                          color=(1, 1, 1, 0.4),
-                                          transition=Text.Transition.FADE_IN,
-                                          scale=0.7,
-                                          transition_delay=2.0)
+                transition_delay=2.0,
+            )
+        self._score_loading_status = Text(
+            ba.Lstr(
+                value='${A}...',
+                subs=[('${A}', ba.Lstr(resource='loadingText'))],
+            ),
+            position=(280, 150 + 30),
+            color=(1, 1, 1, 0.4),
+            transition=Text.Transition.FADE_IN,
+            scale=0.7,
+            transition_delay=2.0,
+        )
 
         if self._score is not None:
             ba.timer(0.4, ba.WeakCall(self._play_drumroll))
 
         # Add us to high scores, filter, and store.
         our_high_scores_all = self._campaign.getlevel(
-            self._level_name).get_high_scores()
+            self._level_name
+        ).get_high_scores()
 
         our_high_scores = our_high_scores_all.setdefault(
-            str(len(self._playerinfos)) + ' Player', [])
+            str(len(self._playerinfos)) + ' Player', []
+        )
 
         if self._score is not None:
             our_score: list | None = [
-                self._score, {
-                    'players': [{
-                        'name': p.name,
-                        'character': p.character
-                    } for p in self._playerinfos]
-                }
+                self._score,
+                {
+                    'players': [
+                        {'name': p.name, 'character': p.character}
+                        for p in self._playerinfos
+                    ]
+                },
             ]
             our_high_scores.append(our_score)
         else:
             our_score = None
 
         try:
-            our_high_scores.sort(reverse=self._score_order == 'increasing',
-                                 key=lambda x: x[0])
+            our_high_scores.sort(
+                reverse=self._score_order == 'increasing', key=lambda x: x[0]
+            )
         except Exception:
             ba.print_exception('Error sorting scores.')
             print(f'our_high_scores: {our_high_scores}')
@@ -724,15 +834,18 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         del our_high_scores[10:]
 
         if self._score is not None:
-            sver = (self._campaign.getlevel(
-                self._level_name).get_score_version_string())
-            ba.internal.add_transaction({
-                'type': 'SET_LEVEL_LOCAL_HIGH_SCORES',
-                'campaign': self._campaign.name,
-                'level': self._level_name,
-                'scoreVersion': sver,
-                'scores': our_high_scores_all
-            })
+            sver = self._campaign.getlevel(
+                self._level_name
+            ).get_score_version_string()
+            ba.internal.add_transaction(
+                {
+                    'type': 'SET_LEVEL_LOCAL_HIGH_SCORES',
+                    'campaign': self._campaign.name,
+                    'level': self._level_name,
+                    'scoreVersion': sver,
+                    'scores': our_high_scores_all,
+                }
+            )
         if ba.internal.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
             if not (ba.app.demo_mode or ba.app.arcade_mode):
@@ -750,12 +863,14 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 self._score,
                 ba.WeakCall(self._got_score_results),
                 ba.WeakCall(self._got_friend_score_results)
-                if self._show_friend_scores else None,
+                if self._show_friend_scores
+                else None,
                 order=self._score_order,
                 tournament_id=self.session.tournament_id,
                 score_type=self._score_type,
                 campaign=self._campaign.name,
-                level=self._level_name)
+                level=self._level_name,
+            )
 
         # Apply the transactions we've been adding locally.
         ba.internal.run_transactions()
@@ -765,16 +880,19 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ts_height = 300
         ts_h_offs = 210
         v_offs = 40
-        txt = Text(ba.Lstr(resource='tournamentStandingsText')
-                   if self.session.tournament_id is not None else ba.Lstr(
-                       resource='worldsBestScoresText') if self._score_type
-                   == 'points' else ba.Lstr(resource='worldsBestTimesText'),
-                   maxwidth=210,
-                   position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                   transition=Text.Transition.IN_LEFT,
-                   v_align=Text.VAlign.CENTER,
-                   scale=1.2,
-                   transition_delay=2.2).autoretain()
+        txt = Text(
+            ba.Lstr(resource='tournamentStandingsText')
+            if self.session.tournament_id is not None
+            else ba.Lstr(resource='worldsBestScoresText')
+            if self._score_type == 'points'
+            else ba.Lstr(resource='worldsBestTimesText'),
+            maxwidth=210,
+            position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
+            transition=Text.Transition.IN_LEFT,
+            v_align=Text.VAlign.CENTER,
+            scale=1.2,
+            transition_delay=2.2,
+        ).autoretain()
 
         # If we've got a button on the server, only show this on clients.
         if self._should_show_worlds_best_button():
@@ -788,14 +906,15 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ts_height = 300
             ts_h_offs = -480
             v_offs = 40
-            txt = Text(ba.Lstr(resource='topFriendsText'),
-                       maxwidth=210,
-                       position=(ts_h_offs - 10,
-                                 ts_height / 2 + 25 + v_offs + 20),
-                       transition=Text.Transition.IN_RIGHT,
-                       v_align=Text.VAlign.CENTER,
-                       scale=1.2,
-                       transition_delay=1.8).autoretain()
+            txt = Text(
+                ba.Lstr(resource='topFriendsText'),
+                maxwidth=210,
+                position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
+                transition=Text.Transition.IN_RIGHT,
+                v_align=Text.VAlign.CENTER,
+                scale=1.2,
+                transition_delay=1.8,
+            ).autoretain()
             assert txt.node
             txt.node.client_only = True
         else:
@@ -803,14 +922,17 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ts_height = 300
             ts_h_offs = -480
             v_offs = 40
-            Text(ba.Lstr(resource='yourBestScoresText') if self._score_type
-                 == 'points' else ba.Lstr(resource='yourBestTimesText'),
-                 maxwidth=210,
-                 position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                 transition=Text.Transition.IN_RIGHT,
-                 v_align=Text.VAlign.CENTER,
-                 scale=1.2,
-                 transition_delay=1.8).autoretain()
+            Text(
+                ba.Lstr(resource='yourBestScoresText')
+                if self._score_type == 'points'
+                else ba.Lstr(resource='yourBestTimesText'),
+                maxwidth=210,
+                position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
+                transition=Text.Transition.IN_RIGHT,
+                v_align=Text.VAlign.CENTER,
+                scale=1.2,
+                transition_delay=1.8,
+            ).autoretain()
 
             display_scores = list(our_high_scores)
             display_count = 5
@@ -835,21 +957,23 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 scale = 0.5
             times: list[tuple[float, float]] = []
             for i in range(display_count):
-                times.insert(random.randrange(0,
-                                              len(times) + 1),
-                             (1.9 + i * 0.05, 2.3 + i * 0.05))
+                times.insert(
+                    random.randrange(0, len(times) + 1),
+                    (1.9 + i * 0.05, 2.3 + i * 0.05),
+                )
             for i in range(display_count):
                 try:
                     if display_scores[i][1] is None:
                         name_str = '-'
                     else:
                         # noinspection PyUnresolvedReferences
-                        name_str = ', '.join([
-                            p['name'] for p in display_scores[i][1]['players']
-                        ])
+                        name_str = ', '.join(
+                            [p['name'] for p in display_scores[i][1]['players']]
+                        )
                 except Exception:
                     ba.print_exception(
-                        f'Error calcing name_str for {display_scores}')
+                        f'Error calcing name_str for {display_scores}'
+                    )
                     name_str = '-'
                 if display_scores[i] == our_score and not showed_ours:
                     flash = True
@@ -864,31 +988,49 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     color1 = (0.6, 0.6, 0.6, 1.0)
                     tdelay1 = times[i][0]
                     tdelay2 = times[i][1]
-                Text(str(display_scores[i][0]) if self._score_type == 'points'
-                     else ba.timestring(display_scores[i][0] * 10,
-                                        timeformat=ba.TimeFormat.MILLISECONDS,
-                                        suppress_format_warning=True),
-                     position=(ts_h_offs + 20 + h_offs_extra,
-                               v_offs_extra + ts_height / 2 + -ts_height *
-                               (i + 1) / 10 + v_offs + 11.0),
-                     h_align=Text.HAlign.RIGHT,
-                     v_align=Text.VAlign.CENTER,
-                     color=color0,
-                     flash=flash,
-                     transition=Text.Transition.IN_RIGHT,
-                     transition_delay=tdelay1).autoretain()
+                Text(
+                    str(display_scores[i][0])
+                    if self._score_type == 'points'
+                    else ba.timestring(
+                        display_scores[i][0] * 10,
+                        timeformat=ba.TimeFormat.MILLISECONDS,
+                        suppress_format_warning=True,
+                    ),
+                    position=(
+                        ts_h_offs + 20 + h_offs_extra,
+                        v_offs_extra
+                        + ts_height / 2
+                        + -ts_height * (i + 1) / 10
+                        + v_offs
+                        + 11.0,
+                    ),
+                    h_align=Text.HAlign.RIGHT,
+                    v_align=Text.VAlign.CENTER,
+                    color=color0,
+                    flash=flash,
+                    transition=Text.Transition.IN_RIGHT,
+                    transition_delay=tdelay1,
+                ).autoretain()
 
-                Text(ba.Lstr(value=name_str),
-                     position=(ts_h_offs + 35 + h_offs_extra,
-                               v_offs_extra + ts_height / 2 + -ts_height *
-                               (i + 1) / 10 + v_offs_names + v_offs + 11.0),
-                     maxwidth=80.0 + 100.0 * len(self._playerinfos),
-                     v_align=Text.VAlign.CENTER,
-                     color=color1,
-                     flash=flash,
-                     scale=scale,
-                     transition=Text.Transition.IN_RIGHT,
-                     transition_delay=tdelay2).autoretain()
+                Text(
+                    ba.Lstr(value=name_str),
+                    position=(
+                        ts_h_offs + 35 + h_offs_extra,
+                        v_offs_extra
+                        + ts_height / 2
+                        + -ts_height * (i + 1) / 10
+                        + v_offs_names
+                        + v_offs
+                        + 11.0,
+                    ),
+                    maxwidth=80.0 + 100.0 * len(self._playerinfos),
+                    v_align=Text.VAlign.CENTER,
+                    color=color1,
+                    flash=flash,
+                    scale=scale,
+                    transition=Text.Transition.IN_RIGHT,
+                    transition_delay=tdelay2,
+                ).autoretain()
 
         # Show achievements for this level.
         ts_height = -150
@@ -900,19 +1042,21 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # version, etc).
         if self._have_achievements:
             if not self._account_has_achievements:
-                Text(ba.Lstr(resource='achievementsText'),
-                     position=(ts_h_offs - 10,
-                               ts_height / 2 + 25 + v_offs + 3),
-                     maxwidth=210,
-                     host_only=True,
-                     transition=Text.Transition.IN_RIGHT,
-                     v_align=Text.VAlign.CENTER,
-                     scale=1.2,
-                     transition_delay=2.8).autoretain()
+                Text(
+                    ba.Lstr(resource='achievementsText'),
+                    position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 3),
+                    maxwidth=210,
+                    host_only=True,
+                    transition=Text.Transition.IN_RIGHT,
+                    v_align=Text.VAlign.CENTER,
+                    scale=1.2,
+                    transition_delay=2.8,
+                ).autoretain()
 
             assert self._game_name_str is not None
             achievements = ba.app.ach.achievements_for_coop_level(
-                self._game_name_str)
+                self._game_name_str
+            )
             hval = -455
             vval = -100
             tdelay = 0.0
@@ -925,12 +1069,15 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
     def _play_drumroll(self) -> None:
         ba.NodeActor(
-            ba.newnode('sound',
-                       attrs={
-                           'sound': self.drum_roll_sound,
-                           'positional': False,
-                           'loop': False
-                       })).autoretain()
+            ba.newnode(
+                'sound',
+                attrs={
+                    'sound': self.drum_roll_sound,
+                    'positional': False,
+                    'loop': False,
+                },
+            )
+        ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
 
@@ -939,6 +1086,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from efro.util import asserttype
+
         # delay a bit if results come in too fast
         assert self._begin_time is not None
         base_delay = max(0, 1.9 - (ba.time() - self._begin_time))
@@ -955,7 +1103,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 color=(1, 1, 1, 0.4),
                 transition=Text.Transition.FADE_IN,
                 transition_delay=base_delay + 0.8,
-                scale=0.7)
+                scale=0.7,
+            )
             return
 
         self._friends_loading_status = None
@@ -974,8 +1123,10 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     results.remove(score)
                     break
             results.append(our_score_entry)
-            results.sort(reverse=self._score_order == 'increasing',
-                         key=lambda x: asserttype(x[0], int))
+            results.sort(
+                reverse=self._score_order == 'increasing',
+                key=lambda x: asserttype(x[0], int),
+            )
 
         # If we're not submitting our own score, we still want to change the
         # name of our own score to 'Me'.
@@ -995,9 +1146,10 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         results = results[:5]
         times: list[tuple[float, float]] = []
         for i in range(len(results)):
-            times.insert(random.randrange(0,
-                                          len(times) + 1),
-                         (base_delay + i * 0.05, base_delay + 0.3 + i * 0.05))
+            times.insert(
+                random.randrange(0, len(times) + 1),
+                (base_delay + i * 0.05, base_delay + 0.3 + i * 0.05),
+            )
         for i, tval in enumerate(results):
             score = int(tval[0])
             name_str = tval[1]
@@ -1019,33 +1171,50 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 tdelay1 = times[i][0]
                 tdelay2 = times[i][1]
             if name_str != '-':
-                Text(str(score) if self._score_type == 'points' else
-                     ba.timestring(score * 10,
-                                   timeformat=ba.TimeFormat.MILLISECONDS),
-                     position=(ts_h_offs + 20 + h_offs_extra,
-                               v_offs_extra + ts_height / 2 + -ts_height *
-                               (i + 1) / 10 + v_offs + 11.0),
-                     h_align=Text.HAlign.RIGHT,
-                     v_align=Text.VAlign.CENTER,
-                     color=color0,
-                     flash=flash,
-                     transition=Text.Transition.IN_RIGHT,
-                     transition_delay=tdelay1).autoretain()
+                Text(
+                    str(score)
+                    if self._score_type == 'points'
+                    else ba.timestring(
+                        score * 10, timeformat=ba.TimeFormat.MILLISECONDS
+                    ),
+                    position=(
+                        ts_h_offs + 20 + h_offs_extra,
+                        v_offs_extra
+                        + ts_height / 2
+                        + -ts_height * (i + 1) / 10
+                        + v_offs
+                        + 11.0,
+                    ),
+                    h_align=Text.HAlign.RIGHT,
+                    v_align=Text.VAlign.CENTER,
+                    color=color0,
+                    flash=flash,
+                    transition=Text.Transition.IN_RIGHT,
+                    transition_delay=tdelay1,
+                ).autoretain()
             else:
                 if is_me:
                     print('Error: got empty name_str on score result:', tval)
 
-            Text(ba.Lstr(value=name_str),
-                 position=(ts_h_offs + 35 + h_offs_extra,
-                           v_offs_extra + ts_height / 2 + -ts_height *
-                           (i + 1) / 10 + v_offs_names + v_offs + 11.0),
-                 color=color1,
-                 maxwidth=160.0,
-                 v_align=Text.VAlign.CENTER,
-                 flash=flash,
-                 scale=scale,
-                 transition=Text.Transition.IN_RIGHT,
-                 transition_delay=tdelay2).autoretain()
+            Text(
+                ba.Lstr(value=name_str),
+                position=(
+                    ts_h_offs + 35 + h_offs_extra,
+                    v_offs_extra
+                    + ts_height / 2
+                    + -ts_height * (i + 1) / 10
+                    + v_offs_names
+                    + v_offs
+                    + 11.0,
+                ),
+                color=color1,
+                maxwidth=160.0,
+                v_align=Text.VAlign.CENTER,
+                flash=flash,
+                scale=scale,
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=tdelay2,
+            ).autoretain()
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
 
@@ -1071,16 +1240,20 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     color=(1, 1, 1, 0.4),
                     transition=Text.Transition.FADE_IN,
                     transition_delay=base_delay + 0.3,
-                    scale=0.7)
+                    scale=0.7,
+                )
             else:
                 self._score_link = results['link']
                 assert self._score_link is not None
                 # Prepend our master-server addr if its a relative addr.
-                if (not self._score_link.startswith('http://')
-                        and not self._score_link.startswith('https://')):
+                if not self._score_link.startswith(
+                    'http://'
+                ) and not self._score_link.startswith('https://'):
                     self._score_link = (
-                        ba.internal.get_master_server_address() + '/' +
-                        self._score_link)
+                        ba.internal.get_master_server_address()
+                        + '/'
+                        + self._score_link
+                    )
                 self._score_loading_status = None
                 if 'tournamentSecondsRemaining' in results:
                     secs_remaining = results['tournamentSecondsRemaining']
@@ -1089,9 +1262,11 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     self._tournament_time_remaining_text_timer = ba.Timer(
                         1.0,
                         ba.WeakCall(
-                            self._update_tournament_time_remaining_text),
+                            self._update_tournament_time_remaining_text
+                        ),
                         repeat=True,
-                        timetype=ba.TimeType.BASE)
+                        timetype=ba.TimeType.BASE,
+                    )
 
             assert self._show_info is not None
             self._show_info['results'] = results
@@ -1101,11 +1276,13 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 else:
                     self._show_info['tops'] = []
             offs_x = -195
-            available = (self._show_info['results'] is not None)
+            available = self._show_info['results'] is not None
             if self._score is not None:
-                ba.timer((1.5 + base_delay),
-                         ba.WeakCall(self._show_world_rank, offs_x),
-                         timetype=ba.TimeType.BASE)
+                ba.timer(
+                    (1.5 + base_delay),
+                    ba.WeakCall(self._show_world_rank, offs_x),
+                    timetype=ba.TimeType.BASE,
+                )
             ts_h_offs = 200
             ts_height = 300
 
@@ -1115,17 +1292,25 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 # Show the number of games represented by this
                 # list (except for in tournaments).
                 if self.session.tournament_id is None:
-                    Text(ba.Lstr(resource='lastGamesText',
-                                 subs=[
-                                     ('${COUNT}',
-                                      str(self._show_info['results']['total']))
-                                 ]),
-                         position=(ts_h_offs - 35 + 95,
-                                   ts_height / 2 + 6 + v_offs),
-                         color=(0.4, 0.4, 0.4, 1.0),
-                         scale=0.7,
-                         transition=Text.Transition.IN_RIGHT,
-                         transition_delay=base_delay + 0.3).autoretain()
+                    Text(
+                        ba.Lstr(
+                            resource='lastGamesText',
+                            subs=[
+                                (
+                                    '${COUNT}',
+                                    str(self._show_info['results']['total']),
+                                )
+                            ],
+                        ),
+                        position=(
+                            ts_h_offs - 35 + 95,
+                            ts_height / 2 + 6 + v_offs,
+                        ),
+                        color=(0.4, 0.4, 0.4, 1.0),
+                        scale=0.7,
+                        transition=Text.Transition.IN_RIGHT,
+                        transition_delay=base_delay + 0.3,
+                    ).autoretain()
                 else:
                     v_offs += 20
 
@@ -1151,9 +1336,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 times: list[tuple[float, float]] = []
                 for i in range(len(self._show_info['tops'])):
                     times.insert(
-                        random.randrange(0,
-                                         len(times) + 1),
-                        (base_delay + i * 0.05, base_delay + 0.4 + i * 0.05))
+                        random.randrange(0, len(times) + 1),
+                        (base_delay + i * 0.05, base_delay + 0.4 + i * 0.05),
+                    )
                 for i, tval in enumerate(self._show_info['tops']):
                     score = int(tval[0])
                     name_str = tval[1]
@@ -1175,44 +1360,63 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                         tdelay2 = times[i][1]
 
                     if name_str != '-':
-                        Text(str(score) if self._score_type == 'points' else
-                             ba.timestring(
-                                 score * 10,
-                                 timeformat=ba.TimeFormat.MILLISECONDS),
-                             position=(ts_h_offs + 20 + h_offs_extra,
-                                       ts_height / 2 + -ts_height *
-                                       (i + 1) / 10 + v_offs + 11.0),
-                             h_align=Text.HAlign.RIGHT,
-                             v_align=Text.VAlign.CENTER,
-                             color=color0,
-                             flash=flash,
-                             transition=Text.Transition.IN_LEFT,
-                             transition_delay=tdelay1).autoretain()
-                    Text(ba.Lstr(value=name_str),
-                         position=(ts_h_offs + 35 + h_offs_extra,
-                                   ts_height / 2 + -ts_height * (i + 1) / 10 +
-                                   v_offs_names + v_offs + 11.0),
-                         maxwidth=80.0 + 100.0 * len(self._playerinfos),
-                         v_align=Text.VAlign.CENTER,
-                         color=color1,
-                         flash=flash,
-                         scale=scale,
-                         transition=Text.Transition.IN_LEFT,
-                         transition_delay=tdelay2).autoretain()
+                        Text(
+                            str(score)
+                            if self._score_type == 'points'
+                            else ba.timestring(
+                                score * 10,
+                                timeformat=ba.TimeFormat.MILLISECONDS,
+                            ),
+                            position=(
+                                ts_h_offs + 20 + h_offs_extra,
+                                ts_height / 2
+                                + -ts_height * (i + 1) / 10
+                                + v_offs
+                                + 11.0,
+                            ),
+                            h_align=Text.HAlign.RIGHT,
+                            v_align=Text.VAlign.CENTER,
+                            color=color0,
+                            flash=flash,
+                            transition=Text.Transition.IN_LEFT,
+                            transition_delay=tdelay1,
+                        ).autoretain()
+                    Text(
+                        ba.Lstr(value=name_str),
+                        position=(
+                            ts_h_offs + 35 + h_offs_extra,
+                            ts_height / 2
+                            + -ts_height * (i + 1) / 10
+                            + v_offs_names
+                            + v_offs
+                            + 11.0,
+                        ),
+                        maxwidth=80.0 + 100.0 * len(self._playerinfos),
+                        v_align=Text.VAlign.CENTER,
+                        color=color1,
+                        flash=flash,
+                        scale=scale,
+                        transition=Text.Transition.IN_LEFT,
+                        transition_delay=tdelay2,
+                    ).autoretain()
 
     def _show_tips(self) -> None:
         from bastd.actor.tipstext import TipsText
+
         TipsText(offs_y=30).autoretain()
 
     def _update_tournament_time_remaining_text(self) -> None:
         if self._tournament_time_remaining is None:
             return
         self._tournament_time_remaining = max(
-            0, self._tournament_time_remaining - 1)
+            0, self._tournament_time_remaining - 1
+        )
         if self._tournament_time_remaining_text is not None:
-            val = ba.timestring(self._tournament_time_remaining,
-                                suppress_format_warning=True,
-                                centi=False)
+            val = ba.timestring(
+                self._tournament_time_remaining,
+                suppress_format_warning=True,
+                centi=False,
+            )
             self._tournament_time_remaining_text.node.text = val
 
     def _show_world_rank(self, offs_x: float) -> None:
@@ -1221,16 +1425,23 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from ba.internal import get_tournament_prize_strings
+
         assert self._show_info is not None
-        available = (self._show_info['results'] is not None)
+        available = self._show_info['results'] is not None
 
         if available:
-            error = (self._show_info['results']['error']
-                     if 'error' in self._show_info['results'] else None)
+            error = (
+                self._show_info['results']['error']
+                if 'error' in self._show_info['results']
+                else None
+            )
             rank = self._show_info['results']['rank']
             total = self._show_info['results']['total']
-            rating = (10.0 if total == 1 else 10.0 * (1.0 - (float(rank - 1) /
-                                                             (total - 1))))
+            rating = (
+                10.0
+                if total == 1
+                else 10.0 * (1.0 - (float(rank - 1) / (total - 1)))
+            )
             player_rank = self._show_info['results']['playerRank']
             best_player_rank = self._show_info['results']['bestPlayerRank']
         else:
@@ -1241,15 +1452,17 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         # If we've got tournament-seconds-remaining, show it.
         if self._tournament_time_remaining is not None:
-            Text(ba.Lstr(resource='coopSelectWindow.timeRemainingText'),
-                 position=(-360, -70 - 100),
-                 color=(1, 1, 1, 0.7),
-                 h_align=Text.HAlign.CENTER,
-                 v_align=Text.VAlign.CENTER,
-                 transition=Text.Transition.FADE_IN,
-                 scale=0.8,
-                 maxwidth=300,
-                 transition_delay=2.0).autoretain()
+            Text(
+                ba.Lstr(resource='coopSelectWindow.timeRemainingText'),
+                position=(-360, -70 - 100),
+                color=(1, 1, 1, 0.7),
+                h_align=Text.HAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                transition=Text.Transition.FADE_IN,
+                scale=0.8,
+                maxwidth=300,
+                transition_delay=2.0,
+            ).autoretain()
             self._tournament_time_remaining_text = Text(
                 '',
                 position=(-360, -110 - 100),
@@ -1259,7 +1472,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 transition=Text.Transition.FADE_IN,
                 scale=1.6,
                 maxwidth=150,
-                transition_delay=2.0)
+                transition_delay=2.0,
+            )
 
         # If we're a tournament, show prizes.
         try:
@@ -1267,105 +1481,135 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             if tournament_id is not None:
                 if tournament_id in ba.app.accounts_v1.tournament_info:
                     tourney_info = ba.app.accounts_v1.tournament_info[
-                        tournament_id]
+                        tournament_id
+                    ]
                     # pylint: disable=unbalanced-tuple-unpacking
-                    pr1, pv1, pr2, pv2, pr3, pv3 = (
-                        get_tournament_prize_strings(tourney_info))
+                    pr1, pv1, pr2, pv2, pr3, pv3 = get_tournament_prize_strings(
+                        tourney_info
+                    )
                     # pylint: enable=unbalanced-tuple-unpacking
-                    Text(ba.Lstr(resource='coopSelectWindow.prizesText'),
-                         position=(-360, -70 + 77),
-                         color=(1, 1, 1, 0.7),
-                         h_align=Text.HAlign.CENTER,
-                         v_align=Text.VAlign.CENTER,
-                         transition=Text.Transition.FADE_IN,
-                         scale=1.0,
-                         maxwidth=300,
-                         transition_delay=2.0).autoretain()
+                    Text(
+                        ba.Lstr(resource='coopSelectWindow.prizesText'),
+                        position=(-360, -70 + 77),
+                        color=(1, 1, 1, 0.7),
+                        h_align=Text.HAlign.CENTER,
+                        v_align=Text.VAlign.CENTER,
+                        transition=Text.Transition.FADE_IN,
+                        scale=1.0,
+                        maxwidth=300,
+                        transition_delay=2.0,
+                    ).autoretain()
                     vval = -107 + 70
                     for rng, val in ((pr1, pv1), (pr2, pv2), (pr3, pv3)):
-                        Text(rng,
-                             position=(-410 + 10, vval),
-                             color=(1, 1, 1, 0.7),
-                             h_align=Text.HAlign.RIGHT,
-                             v_align=Text.VAlign.CENTER,
-                             transition=Text.Transition.FADE_IN,
-                             scale=0.6,
-                             maxwidth=300,
-                             transition_delay=2.0).autoretain()
-                        Text(val,
-                             position=(-390 + 10, vval),
-                             color=(0.7, 0.7, 0.7, 1.0),
-                             h_align=Text.HAlign.LEFT,
-                             v_align=Text.VAlign.CENTER,
-                             transition=Text.Transition.FADE_IN,
-                             scale=0.8,
-                             maxwidth=300,
-                             transition_delay=2.0).autoretain()
+                        Text(
+                            rng,
+                            position=(-410 + 10, vval),
+                            color=(1, 1, 1, 0.7),
+                            h_align=Text.HAlign.RIGHT,
+                            v_align=Text.VAlign.CENTER,
+                            transition=Text.Transition.FADE_IN,
+                            scale=0.6,
+                            maxwidth=300,
+                            transition_delay=2.0,
+                        ).autoretain()
+                        Text(
+                            val,
+                            position=(-390 + 10, vval),
+                            color=(0.7, 0.7, 0.7, 1.0),
+                            h_align=Text.HAlign.LEFT,
+                            v_align=Text.VAlign.CENTER,
+                            transition=Text.Transition.FADE_IN,
+                            scale=0.8,
+                            maxwidth=300,
+                            transition_delay=2.0,
+                        ).autoretain()
                         vval -= 35
         except Exception:
             ba.print_exception('Error showing prize ranges.')
 
         if self._do_new_rating:
             if error:
-                ZoomText(ba.Lstr(resource='failText'),
-                         flash=True,
-                         trail=True,
-                         scale=1.0 if available else 0.333,
-                         tilt_translate=0.11,
-                         h_align='center',
-                         position=(190 + offs_x, -60),
-                         maxwidth=200,
-                         jitter=1.0).autoretain()
-                Text(ba.Lstr(translate=('serverResponses', error)),
-                     position=(0, -140),
-                     color=(1, 1, 1, 0.7),
-                     h_align=Text.HAlign.CENTER,
-                     v_align=Text.VAlign.CENTER,
-                     transition=Text.Transition.FADE_IN,
-                     scale=0.9,
-                     maxwidth=400,
-                     transition_delay=1.0).autoretain()
+                ZoomText(
+                    ba.Lstr(resource='failText'),
+                    flash=True,
+                    trail=True,
+                    scale=1.0 if available else 0.333,
+                    tilt_translate=0.11,
+                    h_align='center',
+                    position=(190 + offs_x, -60),
+                    maxwidth=200,
+                    jitter=1.0,
+                ).autoretain()
+                Text(
+                    ba.Lstr(translate=('serverResponses', error)),
+                    position=(0, -140),
+                    color=(1, 1, 1, 0.7),
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    transition=Text.Transition.FADE_IN,
+                    scale=0.9,
+                    maxwidth=400,
+                    transition_delay=1.0,
+                ).autoretain()
             else:
-                ZoomText((('#' + str(player_rank)) if player_rank is not None
-                          else ba.Lstr(resource='unavailableText')),
-                         flash=True,
-                         trail=True,
-                         scale=1.0 if available else 0.333,
-                         tilt_translate=0.11,
-                         h_align='center',
-                         position=(190 + offs_x, -60),
-                         maxwidth=200,
-                         jitter=1.0).autoretain()
+                ZoomText(
+                    (
+                        ('#' + str(player_rank))
+                        if player_rank is not None
+                        else ba.Lstr(resource='unavailableText')
+                    ),
+                    flash=True,
+                    trail=True,
+                    scale=1.0 if available else 0.333,
+                    tilt_translate=0.11,
+                    h_align='center',
+                    position=(190 + offs_x, -60),
+                    maxwidth=200,
+                    jitter=1.0,
+                ).autoretain()
 
-                Text(ba.Lstr(value='${A}:',
-                             subs=[('${A}', ba.Lstr(resource='rankText'))]),
-                     position=(0, 36),
-                     maxwidth=300,
-                     transition=Text.Transition.FADE_IN,
-                     h_align=Text.HAlign.CENTER,
-                     v_align=Text.VAlign.CENTER,
-                     transition_delay=0).autoretain()
+                Text(
+                    ba.Lstr(
+                        value='${A}:',
+                        subs=[('${A}', ba.Lstr(resource='rankText'))],
+                    ),
+                    position=(0, 36),
+                    maxwidth=300,
+                    transition=Text.Transition.FADE_IN,
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    transition_delay=0,
+                ).autoretain()
                 if best_player_rank is not None:
-                    Text(ba.Lstr(resource='currentStandingText',
-                                 fallback_resource='bestRankText',
-                                 subs=[('${RANK}', str(best_player_rank))]),
-                         position=(0, -155),
-                         color=(1, 1, 1, 0.7),
-                         h_align=Text.HAlign.CENTER,
-                         transition=Text.Transition.FADE_IN,
-                         scale=0.7,
-                         transition_delay=1.0).autoretain()
+                    Text(
+                        ba.Lstr(
+                            resource='currentStandingText',
+                            fallback_resource='bestRankText',
+                            subs=[('${RANK}', str(best_player_rank))],
+                        ),
+                        position=(0, -155),
+                        color=(1, 1, 1, 0.7),
+                        h_align=Text.HAlign.CENTER,
+                        transition=Text.Transition.FADE_IN,
+                        scale=0.7,
+                        transition_delay=1.0,
+                    ).autoretain()
         else:
-            ZoomText((f'{rating:.1f}' if available else ba.Lstr(
-                resource='unavailableText')),
-                     flash=True,
-                     trail=True,
-                     scale=0.6 if available else 0.333,
-                     tilt_translate=0.11,
-                     h_align='center',
-                     position=(190 + offs_x, -94),
-                     maxwidth=200,
-                     jitter=1.0).autoretain()
+            ZoomText(
+                (
+                    f'{rating:.1f}'
+                    if available
+                    else ba.Lstr(resource='unavailableText')
+                ),
+                flash=True,
+                trail=True,
+                scale=0.6 if available else 0.333,
+                tilt_translate=0.11,
+                h_align='center',
+                position=(190 + offs_x, -94),
+                maxwidth=200,
+                jitter=1.0,
+            ).autoretain()
 
             if available:
                 if rating >= 9.5:
@@ -1380,56 +1624,68 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 star_x = 135 + offs_x
                 for _i in range(stars):
                     img = ba.NodeActor(
-                        ba.newnode('image',
-                                   attrs={
-                                       'texture': star_tex,
-                                       'position': (star_x, -16),
-                                       'scale': (62, 62),
-                                       'opacity': 1.0,
-                                       'color': (2.2, 1.2, 0.3),
-                                       'absolute_scale': True
-                                   })).autoretain()
+                        ba.newnode(
+                            'image',
+                            attrs={
+                                'texture': star_tex,
+                                'position': (star_x, -16),
+                                'scale': (62, 62),
+                                'opacity': 1.0,
+                                'color': (2.2, 1.2, 0.3),
+                                'absolute_scale': True,
+                            },
+                        )
+                    ).autoretain()
 
                     assert img.node
                     ba.animate(img.node, 'opacity', {0.15: 0, 0.4: 1})
                     star_x += 60
                 for _i in range(3 - stars):
                     img = ba.NodeActor(
-                        ba.newnode('image',
-                                   attrs={
-                                       'texture': star_tex,
-                                       'position': (star_x, -16),
-                                       'scale': (62, 62),
-                                       'opacity': 1.0,
-                                       'color': (0.3, 0.3, 0.3),
-                                       'absolute_scale': True
-                                   })).autoretain()
+                        ba.newnode(
+                            'image',
+                            attrs={
+                                'texture': star_tex,
+                                'position': (star_x, -16),
+                                'scale': (62, 62),
+                                'opacity': 1.0,
+                                'color': (0.3, 0.3, 0.3),
+                                'absolute_scale': True,
+                            },
+                        )
+                    ).autoretain()
                     assert img.node
                     ba.animate(img.node, 'opacity', {0.15: 0, 0.4: 1})
                     star_x += 60
 
-                def dostar(count: int, xval: float, offs_y: float,
-                           score: str) -> None:
-                    Text(score + ' =',
-                         position=(xval, -64 + offs_y),
-                         color=(0.6, 0.6, 0.6, 0.6),
-                         h_align=Text.HAlign.CENTER,
-                         v_align=Text.VAlign.CENTER,
-                         transition=Text.Transition.FADE_IN,
-                         scale=0.4,
-                         transition_delay=1.0).autoretain()
+                def dostar(
+                    count: int, xval: float, offs_y: float, score: str
+                ) -> None:
+                    Text(
+                        score + ' =',
+                        position=(xval, -64 + offs_y),
+                        color=(0.6, 0.6, 0.6, 0.6),
+                        h_align=Text.HAlign.CENTER,
+                        v_align=Text.VAlign.CENTER,
+                        transition=Text.Transition.FADE_IN,
+                        scale=0.4,
+                        transition_delay=1.0,
+                    ).autoretain()
                     stx = xval + 20
                     for _i2 in range(count):
                         img2 = ba.NodeActor(
-                            ba.newnode('image',
-                                       attrs={
-                                           'texture': star_tex,
-                                           'position': (stx, -64 + offs_y),
-                                           'scale': (12, 12),
-                                           'opacity': 0.7,
-                                           'color': (2.2, 1.2, 0.3),
-                                           'absolute_scale': True
-                                       })).autoretain()
+                            ba.newnode(
+                                'image',
+                                attrs={
+                                    'texture': star_tex,
+                                    'position': (stx, -64 + offs_y),
+                                    'scale': (12, 12),
+                                    'opacity': 0.7,
+                                    'color': (2.2, 1.2, 0.3),
+                                    'absolute_scale': True,
+                                },
+                            )
+                        ).autoretain()
                         assert img2.node
                         ba.animate(img2.node, 'opacity', {1.0: 0.0, 1.5: 0.5})
                         stx += 13.0
@@ -1443,95 +1699,138 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 best_rank = 0.0
 
             if available:
-                Text(ba.Lstr(
-                    resource='outOfText',
-                    subs=[('${RANK}',
-                           str(int(self._show_info['results']['rank']))),
-                          ('${ALL}', str(self._show_info['results']['total']))
-                          ]),
-                     position=(0, -155 if self._newly_complete else -145),
-                     color=(1, 1, 1, 0.7),
-                     h_align=Text.HAlign.CENTER,
-                     transition=Text.Transition.FADE_IN,
-                     scale=0.55,
-                     transition_delay=1.0).autoretain()
+                Text(
+                    ba.Lstr(
+                        resource='outOfText',
+                        subs=[
+                            (
+                                '${RANK}',
+                                str(int(self._show_info['results']['rank'])),
+                            ),
+                            (
+                                '${ALL}',
+                                str(self._show_info['results']['total']),
+                            ),
+                        ],
+                    ),
+                    position=(0, -155 if self._newly_complete else -145),
+                    color=(1, 1, 1, 0.7),
+                    h_align=Text.HAlign.CENTER,
+                    transition=Text.Transition.FADE_IN,
+                    scale=0.55,
+                    transition_delay=1.0,
+                ).autoretain()
 
-            new_best = (best_rank > self._old_best_rank and best_rank > 0.0)
-            was_string = ba.Lstr(value=' ${A}',
-                                 subs=[('${A}',
-                                        ba.Lstr(resource='scoreWasText')),
-                                       ('${COUNT}', str(self._old_best_rank))])
+            new_best = best_rank > self._old_best_rank and best_rank > 0.0
+            was_string = ba.Lstr(
+                value=' ${A}',
+                subs=[
+                    ('${A}', ba.Lstr(resource='scoreWasText')),
+                    ('${COUNT}', str(self._old_best_rank)),
+                ],
+            )
             if not self._newly_complete:
-                Text(ba.Lstr(value='${A}${B}',
-                             subs=[('${A}',
-                                    ba.Lstr(resource='newPersonalBestText')),
-                                   ('${B}', was_string)]) if new_best else
-                     ba.Lstr(resource='bestRatingText',
-                             subs=[('${RATING}', str(best_rank))]),
-                     position=(0, -165),
-                     color=(1, 1, 1, 0.7),
-                     flash=new_best,
-                     h_align=Text.HAlign.CENTER,
-                     transition=(Text.Transition.IN_RIGHT
-                                 if new_best else Text.Transition.FADE_IN),
-                     scale=0.5,
-                     transition_delay=1.0).autoretain()
+                Text(
+                    ba.Lstr(
+                        value='${A}${B}',
+                        subs=[
+                            ('${A}', ba.Lstr(resource='newPersonalBestText')),
+                            ('${B}', was_string),
+                        ],
+                    )
+                    if new_best
+                    else ba.Lstr(
+                        resource='bestRatingText',
+                        subs=[('${RATING}', str(best_rank))],
+                    ),
+                    position=(0, -165),
+                    color=(1, 1, 1, 0.7),
+                    flash=new_best,
+                    h_align=Text.HAlign.CENTER,
+                    transition=(
+                        Text.Transition.IN_RIGHT
+                        if new_best
+                        else Text.Transition.FADE_IN
+                    ),
+                    scale=0.5,
+                    transition_delay=1.0,
+                ).autoretain()
 
-            Text(ba.Lstr(value='${A}:',
-                         subs=[('${A}', ba.Lstr(resource='ratingText'))]),
-                 position=(0, 36),
-                 maxwidth=300,
-                 transition=Text.Transition.FADE_IN,
-                 h_align=Text.HAlign.CENTER,
-                 v_align=Text.VAlign.CENTER,
-                 transition_delay=0).autoretain()
+            Text(
+                ba.Lstr(
+                    value='${A}:',
+                    subs=[('${A}', ba.Lstr(resource='ratingText'))],
+                ),
+                position=(0, 36),
+                maxwidth=300,
+                transition=Text.Transition.FADE_IN,
+                h_align=Text.HAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                transition_delay=0,
+            ).autoretain()
 
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
         if not error:
             ba.timer(0.35, ba.Call(ba.playsound, self.cymbal_sound))
 
     def _show_fail(self) -> None:
-        ZoomText(ba.Lstr(resource='failText'),
-                 maxwidth=300,
-                 flash=False,
-                 trail=True,
-                 h_align='center',
-                 tilt_translate=0.11,
-                 position=(0, 40),
-                 jitter=1.0).autoretain()
+        ZoomText(
+            ba.Lstr(resource='failText'),
+            maxwidth=300,
+            flash=False,
+            trail=True,
+            h_align='center',
+            tilt_translate=0.11,
+            position=(0, 40),
+            jitter=1.0,
+        ).autoretain()
         if self._fail_message is not None:
-            Text(self._fail_message,
-                 h_align=Text.HAlign.CENTER,
-                 position=(0, -130),
-                 maxwidth=300,
-                 color=(1, 1, 1, 0.5),
-                 transition=Text.Transition.FADE_IN,
-                 transition_delay=1.0).autoretain()
+            Text(
+                self._fail_message,
+                h_align=Text.HAlign.CENTER,
+                position=(0, -130),
+                maxwidth=300,
+                color=(1, 1, 1, 0.5),
+                transition=Text.Transition.FADE_IN,
+                transition_delay=1.0,
+            ).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
 
     def _show_score_val(self, offs_x: float) -> None:
         assert self._score_type is not None
         assert self._score is not None
-        ZoomText((str(self._score) if self._score_type == 'points' else
-                  ba.timestring(self._score * 10,
-                                timeformat=ba.TimeFormat.MILLISECONDS)),
-                 maxwidth=300,
-                 flash=True,
-                 trail=True,
-                 scale=1.0 if self._score_type == 'points' else 0.6,
-                 h_align='center',
-                 tilt_translate=0.11,
-                 position=(190 + offs_x, 115),
-                 jitter=1.0).autoretain()
-        Text(ba.Lstr(
-            value='${A}:', subs=[('${A}', ba.Lstr(
-                resource='finalScoreText'))]) if self._score_type == 'points'
-             else ba.Lstr(value='${A}:',
-                          subs=[('${A}', ba.Lstr(resource='finalTimeText'))]),
-             maxwidth=300,
-             position=(0, 200),
-             transition=Text.Transition.FADE_IN,
-             h_align=Text.HAlign.CENTER,
-             v_align=Text.VAlign.CENTER,
-             transition_delay=0).autoretain()
+        ZoomText(
+            (
+                str(self._score)
+                if self._score_type == 'points'
+                else ba.timestring(
+                    self._score * 10, timeformat=ba.TimeFormat.MILLISECONDS
+                )
+            ),
+            maxwidth=300,
+            flash=True,
+            trail=True,
+            scale=1.0 if self._score_type == 'points' else 0.6,
+            h_align='center',
+            tilt_translate=0.11,
+            position=(190 + offs_x, 115),
+            jitter=1.0,
+        ).autoretain()
+        Text(
+            ba.Lstr(
+                value='${A}:',
+                subs=[('${A}', ba.Lstr(resource='finalScoreText'))],
+            )
+            if self._score_type == 'points'
+            else ba.Lstr(
+                value='${A}:',
+                subs=[('${A}', ba.Lstr(resource='finalTimeText'))],
+            ),
+            maxwidth=300,
+            position=(0, 200),
+            transition=Text.Transition.FADE_IN,
+            h_align=Text.HAlign.CENTER,
+            v_align=Text.VAlign.CENTER,
+            transition_delay=0,
+        ).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
