@@ -42,6 +42,7 @@ def is_browser_likely_available() -> bool:
 def get_remote_app_name() -> ba.Lstr:
     """(internal)"""
     from ba import _language
+
     return _language.Lstr(resource='remote_app.app_name')
 
 
@@ -59,6 +60,7 @@ def handle_v1_cloud_log() -> None:
     from ba._net import master_server_post
     from ba._generated.enums import TimeType
     from ba._internal import get_news_show
+
     app = _ba.app
     app.log_have_new = True
     if not app.log_upload_timer_started:
@@ -112,10 +114,12 @@ def handle_v1_cloud_log() -> None:
 
         if not _ba.is_log_full():
             with _ba.Context('ui'):
-                _ba.timer(600.0,
-                          _reset,
-                          timetype=TimeType.REAL,
-                          suppress_format_warning=True)
+                _ba.timer(
+                    600.0,
+                    _reset,
+                    timetype=TimeType.REAL,
+                    suppress_format_warning=True,
+                )
 
 
 def handle_leftover_v1_cloud_log_file() -> None:
@@ -125,8 +129,9 @@ def handle_leftover_v1_cloud_log_file() -> None:
         from ba._net import master_server_post
 
         if os.path.exists(_ba.get_v1_cloud_log_file_path()):
-            with open(_ba.get_v1_cloud_log_file_path(),
-                      encoding='utf-8') as infile:
+            with open(
+                _ba.get_v1_cloud_log_file_path(), encoding='utf-8'
+            ) as infile:
                 info = json.loads(infile.read())
             infile.close()
             do_send = should_submit_debug_info()
@@ -150,6 +155,7 @@ def handle_leftover_v1_cloud_log_file() -> None:
                 os.remove(_ba.get_v1_cloud_log_file_path())
     except Exception:
         from ba import _error
+
         _error.print_exception('Error handling leftover log file.')
 
 
@@ -180,9 +186,10 @@ def garbage_collect() -> None:
 
 
 def print_live_object_warnings(
-        when: Any,
-        ignore_session: ba.Session | None = None,
-        ignore_activity: ba.Activity | None = None) -> None:
+    when: Any,
+    ignore_session: ba.Session | None = None,
+    ignore_activity: ba.Activity | None = None,
+) -> None:
     """Print warnings for remaining objects in the current context."""
     # pylint: disable=cyclic-import
     from ba._session import Session
@@ -229,13 +236,17 @@ def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
     from ba._general import Call
     from ba._generated.enums import TimeType
-    _ba.timer(2.0,
-              lambda: _ba.screenmessage(
-                  _ba.app.lang.get_resource('internal.corruptFileText').
-                  replace('${EMAIL}', 'support@froemling.net'),
-                  color=(1, 0, 0),
-              ),
-              timetype=TimeType.REAL)
-    _ba.timer(2.0,
-              Call(_ba.playsound, _ba.getsound('error')),
-              timetype=TimeType.REAL)
+
+    _ba.timer(
+        2.0,
+        lambda: _ba.screenmessage(
+            _ba.app.lang.get_resource('internal.corruptFileText').replace(
+                '${EMAIL}', 'support@froemling.net'
+            ),
+            color=(1, 0, 0),
+        ),
+        timetype=TimeType.REAL,
+    )
+    _ba.timer(
+        2.0, Call(_ba.playsound, _ba.getsound('error')), timetype=TimeType.REAL
+    )

@@ -23,12 +23,14 @@ class ControlsGuide(ba.Actor):
     be newbies watching.
     """
 
-    def __init__(self,
-                 position: tuple[float, float] = (390.0, 120.0),
-                 scale: float = 1.0,
-                 delay: float = 0.0,
-                 lifespan: float | None = None,
-                 bright: bool = False):
+    def __init__(
+        self,
+        position: tuple[float, float] = (390.0, 120.0),
+        scale: float = 1.0,
+        delay: float = 0.0,
+        lifespan: float | None = None,
+        bright: bool = False,
+    ):
         """Instantiate an overlay.
 
         delay: is the time in seconds before the overlay fades in.
@@ -62,19 +64,31 @@ class ControlsGuide(ba.Actor):
         if ba.app.iircade_mode:
             xtweak = 0.2
             ytweak = 0.2
-            jump_pos = (position[0] + offs * (-1.2 + xtweak),
-                        position[1] + offs * (0.1 + ytweak))
-            bomb_pos = (position[0] + offs * (0.0 + xtweak),
-                        position[1] + offs * (0.5 + ytweak))
-            punch_pos = (position[0] + offs * (1.2 + xtweak),
-                         position[1] + offs * (0.5 + ytweak))
+            jump_pos = (
+                position[0] + offs * (-1.2 + xtweak),
+                position[1] + offs * (0.1 + ytweak),
+            )
+            bomb_pos = (
+                position[0] + offs * (0.0 + xtweak),
+                position[1] + offs * (0.5 + ytweak),
+            )
+            punch_pos = (
+                position[0] + offs * (1.2 + xtweak),
+                position[1] + offs * (0.5 + ytweak),
+            )
 
-            pickup_pos = (position[0] + offs * (-1.4 + xtweak),
-                          position[1] + offs * (-1.2 + ytweak))
-            extra_pos_1 = (position[0] + offs * (-0.2 + xtweak),
-                           position[1] + offs * (-0.8 + ytweak))
-            extra_pos_2 = (position[0] + offs * (1.0 + xtweak),
-                           position[1] + offs * (-0.8 + ytweak))
+            pickup_pos = (
+                position[0] + offs * (-1.4 + xtweak),
+                position[1] + offs * (-1.2 + ytweak),
+            )
+            extra_pos_1 = (
+                position[0] + offs * (-0.2 + xtweak),
+                position[1] + offs * (-0.8 + ytweak),
+            )
+            extra_pos_2 = (
+                position[0] + offs * (1.0 + xtweak),
+                position[1] + offs * (-0.8 + ytweak),
+            )
             self._force_hide_button_names = True
         else:
             punch_pos = (position[0] - offs * 1.1, position[1])
@@ -86,25 +100,32 @@ class ControlsGuide(ba.Actor):
             self._force_hide_button_names = False
 
         if show_title:
-            self._title_text_pos_top = (position[0],
-                                        position[1] + 139.0 * scale)
-            self._title_text_pos_bottom = (position[0],
-                                           position[1] + 139.0 * scale)
+            self._title_text_pos_top = (
+                position[0],
+                position[1] + 139.0 * scale,
+            )
+            self._title_text_pos_bottom = (
+                position[0],
+                position[1] + 139.0 * scale,
+            )
             clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
-            tval = ba.Lstr(value='${A}:',
-                           subs=[('${A}', ba.Lstr(resource='controlsText'))])
-            self._title_text = ba.newnode('text',
-                                          attrs={
-                                              'text': tval,
-                                              'host_only': True,
-                                              'scale': 1.1 * scale,
-                                              'shadow': 0.5,
-                                              'flatness': 1.0,
-                                              'maxwidth': 480,
-                                              'v_align': 'center',
-                                              'h_align': 'center',
-                                              'color': clr
-                                          })
+            tval = ba.Lstr(
+                value='${A}:', subs=[('${A}', ba.Lstr(resource='controlsText'))]
+            )
+            self._title_text = ba.newnode(
+                'text',
+                attrs={
+                    'text': tval,
+                    'host_only': True,
+                    'scale': 1.1 * scale,
+                    'shadow': 0.5,
+                    'flatness': 1.0,
+                    'maxwidth': 480,
+                    'v_align': 'center',
+                    'h_align': 'center',
+                    'color': clr,
+                },
+            )
         else:
             self._title_text = None
         pos = jump_pos
@@ -118,20 +139,23 @@ class ControlsGuide(ba.Actor):
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
-                'color': clr
-            })
-        self._jump_text = ba.newnode('text',
-                                     attrs={
-                                         'v_align': 'top',
-                                         'h_align': 'center',
-                                         'scale': 1.5 * scale,
-                                         'flatness': 1.0,
-                                         'host_only': True,
-                                         'shadow': 1.0,
-                                         'maxwidth': maxw,
-                                         'position': (pos[0], pos[1] - offs5),
-                                         'color': clr
-                                     })
+                'color': clr,
+            },
+        )
+        self._jump_text = ba.newnode(
+            'text',
+            attrs={
+                'v_align': 'top',
+                'h_align': 'center',
+                'scale': 1.5 * scale,
+                'flatness': 1.0,
+                'host_only': True,
+                'shadow': 1.0,
+                'maxwidth': maxw,
+                'position': (pos[0], pos[1] - offs5),
+                'color': clr,
+            },
+        )
         clr = (0.2, 0.6, 1) if ouya else (1, 0.7, 0.3)
         pos = punch_pos
         self._punch_image = ba.newnode(
@@ -143,20 +167,23 @@ class ControlsGuide(ba.Actor):
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
-                'color': clr
-            })
-        self._punch_text = ba.newnode('text',
-                                      attrs={
-                                          'v_align': 'top',
-                                          'h_align': 'center',
-                                          'scale': 1.5 * scale,
-                                          'flatness': 1.0,
-                                          'host_only': True,
-                                          'shadow': 1.0,
-                                          'maxwidth': maxw,
-                                          'position': (pos[0], pos[1] - offs5),
-                                          'color': clr
-                                      })
+                'color': clr,
+            },
+        )
+        self._punch_text = ba.newnode(
+            'text',
+            attrs={
+                'v_align': 'top',
+                'h_align': 'center',
+                'scale': 1.5 * scale,
+                'flatness': 1.0,
+                'host_only': True,
+                'shadow': 1.0,
+                'maxwidth': maxw,
+                'position': (pos[0], pos[1] - offs5),
+                'color': clr,
+            },
+        )
         pos = bomb_pos
         clr = (1, 0.3, 0.3)
         self._bomb_image = ba.newnode(
@@ -168,20 +195,23 @@ class ControlsGuide(ba.Actor):
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
-                'color': clr
-            })
-        self._bomb_text = ba.newnode('text',
-                                     attrs={
-                                         'h_align': 'center',
-                                         'v_align': 'top',
-                                         'scale': 1.5 * scale,
-                                         'flatness': 1.0,
-                                         'host_only': True,
-                                         'shadow': 1.0,
-                                         'maxwidth': maxw,
-                                         'position': (pos[0], pos[1] - offs5),
-                                         'color': clr
-                                     })
+                'color': clr,
+            },
+        )
+        self._bomb_text = ba.newnode(
+            'text',
+            attrs={
+                'h_align': 'center',
+                'v_align': 'top',
+                'scale': 1.5 * scale,
+                'flatness': 1.0,
+                'host_only': True,
+                'shadow': 1.0,
+                'maxwidth': maxw,
+                'position': (pos[0], pos[1] - offs5),
+                'color': clr,
+            },
+        )
         pos = pickup_pos
         clr = (1, 0.8, 0.3) if ouya else (0.8, 0.5, 1)
         self._pickup_image = ba.newnode(
@@ -193,25 +223,27 @@ class ControlsGuide(ba.Actor):
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
-                'color': clr
-            })
-        self._pick_up_text = ba.newnode('text',
-                                        attrs={
-                                            'v_align': 'top',
-                                            'h_align': 'center',
-                                            'scale': 1.5 * scale,
-                                            'flatness': 1.0,
-                                            'host_only': True,
-                                            'shadow': 1.0,
-                                            'maxwidth': maxw,
-                                            'position':
-                                                (pos[0], pos[1] - offs5),
-                                            'color': clr
-                                        })
+                'color': clr,
+            },
+        )
+        self._pick_up_text = ba.newnode(
+            'text',
+            attrs={
+                'v_align': 'top',
+                'h_align': 'center',
+                'scale': 1.5 * scale,
+                'flatness': 1.0,
+                'host_only': True,
+                'shadow': 1.0,
+                'maxwidth': maxw,
+                'position': (pos[0], pos[1] - offs5),
+                'color': clr,
+            },
+        )
         clr = (0.9, 0.9, 2.0, 1.0) if bright else (0.8, 0.8, 2.0, 1.0)
         self._run_text_pos_top = (position[0], position[1] - 135.0 * scale)
         self._run_text_pos_bottom = (position[0], position[1] - 172.0 * scale)
-        sval = (1.0 * scale if ba.app.vr_mode else 0.8 * scale)
+        sval = 1.0 * scale if ba.app.vr_mode else 0.8 * scale
         self._run_text = ba.newnode(
             'text',
             attrs={
@@ -222,20 +254,23 @@ class ControlsGuide(ba.Actor):
                 'maxwidth': 380,
                 'v_align': 'top',
                 'h_align': 'center',
-                'color': clr
-            })
+                'color': clr,
+            },
+        )
         clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
-        self._extra_text = ba.newnode('text',
-                                      attrs={
-                                          'scale': 0.8 * scale,
-                                          'host_only': True,
-                                          'shadow': 0.5,
-                                          'flatness': 1.0,
-                                          'maxwidth': 380,
-                                          'v_align': 'top',
-                                          'h_align': 'center',
-                                          'color': clr
-                                      })
+        self._extra_text = ba.newnode(
+            'text',
+            attrs={
+                'scale': 0.8 * scale,
+                'host_only': True,
+                'shadow': 0.5,
+                'flatness': 1.0,
+                'maxwidth': 380,
+                'v_align': 'top',
+                'h_align': 'center',
+                'color': clr,
+            },
+        )
 
         if extra_pos_1 is not None:
             self._extra_image_1: ba.Node | None = ba.newnode(
@@ -247,8 +282,9 @@ class ControlsGuide(ba.Actor):
                     'vr_depth': 10,
                     'position': extra_pos_1,
                     'scale': (image_size, image_size),
-                    'color': (0.5, 0.5, 0.5)
-                })
+                    'color': (0.5, 0.5, 0.5),
+                },
+            )
         else:
             self._extra_image_1 = None
         if extra_pos_2 is not None:
@@ -261,16 +297,23 @@ class ControlsGuide(ba.Actor):
                     'vr_depth': 10,
                     'position': extra_pos_2,
                     'scale': (image_size, image_size),
-                    'color': (0.5, 0.5, 0.5)
-                })
+                    'color': (0.5, 0.5, 0.5),
+                },
+            )
         else:
             self._extra_image_2 = None
 
         self._nodes = [
-            self._bomb_image, self._bomb_text, self._punch_image,
-            self._punch_text, self._jump_image, self._jump_text,
-            self._pickup_image, self._pick_up_text, self._run_text,
-            self._extra_text
+            self._bomb_image,
+            self._bomb_text,
+            self._punch_image,
+            self._punch_text,
+            self._jump_image,
+            self._jump_text,
+            self._pickup_image,
+            self._pick_up_text,
+            self._run_text,
+            self._extra_text,
         ]
         if show_title:
             assert self._title_text
@@ -304,10 +347,11 @@ class ControlsGuide(ba.Actor):
         if self._lifespan is not None:
             self._cancel_timer = ba.Timer(
                 self._lifespan,
-                ba.WeakCall(self.handlemessage, ba.DieMessage(immediate=True)))
-        self._fade_in_timer = ba.Timer(1.0,
-                                       ba.WeakCall(self._check_fade_in),
-                                       repeat=True)
+                ba.WeakCall(self.handlemessage, ba.DieMessage(immediate=True)),
+            )
+        self._fade_in_timer = ba.Timer(
+            1.0, ba.WeakCall(self._check_fade_in), repeat=True
+        )
         self._check_fade_in()  # Do one check immediately.
 
     def _check_fade_in(self) -> None:
@@ -318,7 +362,8 @@ class ControlsGuide(ba.Actor):
         # (otherwise it is confusing to see the touchscreen buttons right
         # next to our display buttons)
         touchscreen: ba.InputDevice | None = ba.internal.getinputdevice(
-            'TouchScreen', '#1', doraise=False)
+            'TouchScreen', '#1', doraise=False
+        )
 
         if touchscreen is not None:
             # We look at the session's players; not the activity's.
@@ -335,10 +380,18 @@ class ControlsGuide(ba.Actor):
                 # Only count this one if it has non-empty button names
                 # (filters out wiimotes, the remote-app, etc).
                 for device in input_devices:
-                    for name in ('buttonPunch', 'buttonJump', 'buttonBomb',
-                                 'buttonPickUp'):
-                        if self._meaningful_button_name(
-                                device, get_device_value(device, name)) != '':
+                    for name in (
+                        'buttonPunch',
+                        'buttonJump',
+                        'buttonBomb',
+                        'buttonPickUp',
+                    ):
+                        if (
+                            self._meaningful_button_name(
+                                device, get_device_value(device, name)
+                            )
+                            != ''
+                        ):
                             fade_in = True
                             break
                     if fade_in:
@@ -357,18 +410,20 @@ class ControlsGuide(ba.Actor):
 
         # If we were given a lifespan, transition out after it.
         if self._lifespan is not None:
-            ba.timer(self._lifespan,
-                     ba.WeakCall(self.handlemessage, ba.DieMessage()))
+            ba.timer(
+                self._lifespan, ba.WeakCall(self.handlemessage, ba.DieMessage())
+            )
         self._update()
-        self._update_timer = ba.Timer(1.0,
-                                      ba.WeakCall(self._update),
-                                      repeat=True)
+        self._update_timer = ba.Timer(
+            1.0, ba.WeakCall(self._update), repeat=True
+        )
 
     def _update(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from ba.internal import get_device_value, get_remote_app_name
+
         if self._dead:
             return
         punch_button_names = set()
@@ -389,11 +444,12 @@ class ControlsGuide(ba.Actor):
                 input_devices.append(kbd)
 
         # We word things specially if we have nothing but keyboards.
-        all_keyboards = (input_devices
-                         and all(i.name == 'Keyboard' for i in input_devices))
-        only_remote = (len(input_devices) == 1
-                       and all(i.name == 'Amazon Fire TV Remote'
-                               for i in input_devices))
+        all_keyboards = input_devices and all(
+            i.name == 'Keyboard' for i in input_devices
+        )
+        only_remote = len(input_devices) == 1 and all(
+            i.name == 'Amazon Fire TV Remote' for i in input_devices
+        )
 
         right_button_names = set()
         left_button_names = set()
@@ -408,40 +464,57 @@ class ControlsGuide(ba.Actor):
             if all_keyboards:
                 right_button_names.add(
                     device.get_button_name(
-                        get_device_value(device, 'buttonRight')))
+                        get_device_value(device, 'buttonRight')
+                    )
+                )
                 left_button_names.add(
                     device.get_button_name(
-                        get_device_value(device, 'buttonLeft')))
+                        get_device_value(device, 'buttonLeft')
+                    )
+                )
                 down_button_names.add(
                     device.get_button_name(
-                        get_device_value(device, 'buttonDown')))
+                        get_device_value(device, 'buttonDown')
+                    )
+                )
                 up_button_names.add(
-                    device.get_button_name(get_device_value(
-                        device, 'buttonUp')))
+                    device.get_button_name(get_device_value(device, 'buttonUp'))
+                )
 
             # Ignore empty values; things like the remote app or
             # wiimotes can return these.
             bname = self._meaningful_button_name(
-                device, get_device_value(device, 'buttonPunch'))
+                device, get_device_value(device, 'buttonPunch')
+            )
             if bname != '':
                 punch_button_names.add(bname)
             bname = self._meaningful_button_name(
-                device, get_device_value(device, 'buttonJump'))
+                device, get_device_value(device, 'buttonJump')
+            )
             if bname != '':
                 jump_button_names.add(bname)
             bname = self._meaningful_button_name(
-                device, get_device_value(device, 'buttonBomb'))
+                device, get_device_value(device, 'buttonBomb')
+            )
             if bname != '':
                 bomb_button_names.add(bname)
             bname = self._meaningful_button_name(
-                device, get_device_value(device, 'buttonPickUp'))
+                device, get_device_value(device, 'buttonPickUp')
+            )
             if bname != '':
                 pickup_button_names.add(bname)
 
         # If we have no values yet, we may want to throw out some sane
         # defaults.
-        if all(not lst for lst in (punch_button_names, jump_button_names,
-                                   bomb_button_names, pickup_button_names)):
+        if all(
+            not lst
+            for lst in (
+                punch_button_names,
+                jump_button_names,
+                bomb_button_names,
+                pickup_button_names,
+            )
+        ):
             # Otherwise on android show standard buttons.
             if ba.app.platform == 'android':
                 punch_button_names.add('X')
@@ -451,24 +524,42 @@ class ControlsGuide(ba.Actor):
 
         run_text = ba.Lstr(
             value='${R}: ${B}',
-            subs=[('${R}', ba.Lstr(resource='runText')),
-                  ('${B}',
-                   ba.Lstr(resource='holdAnyKeyText'
-                           if all_keyboards else 'holdAnyButtonText'))])
+            subs=[
+                ('${R}', ba.Lstr(resource='runText')),
+                (
+                    '${B}',
+                    ba.Lstr(
+                        resource='holdAnyKeyText'
+                        if all_keyboards
+                        else 'holdAnyButtonText'
+                    ),
+                ),
+            ],
+        )
 
         # If we're all keyboards, lets show move keys too.
-        if (all_keyboards and len(up_button_names) == 1
-                and len(down_button_names) == 1 and len(left_button_names) == 1
-                and len(right_button_names) == 1):
+        if (
+            all_keyboards
+            and len(up_button_names) == 1
+            and len(down_button_names) == 1
+            and len(left_button_names) == 1
+            and len(right_button_names) == 1
+        ):
             up_text = list(up_button_names)[0]
             down_text = list(down_button_names)[0]
             left_text = list(left_button_names)[0]
             right_text = list(right_button_names)[0]
-            run_text = ba.Lstr(value='${M}: ${U}, ${L}, ${D}, ${R}\n${RUN}',
-                               subs=[('${M}', ba.Lstr(resource='moveText')),
-                                     ('${U}', up_text), ('${L}', left_text),
-                                     ('${D}', down_text), ('${R}', right_text),
-                                     ('${RUN}', run_text)])
+            run_text = ba.Lstr(
+                value='${M}: ${U}, ${L}, ${D}, ${R}\n${RUN}',
+                subs=[
+                    ('${M}', ba.Lstr(resource='moveText')),
+                    ('${U}', up_text),
+                    ('${L}', left_text),
+                    ('${D}', down_text),
+                    ('${R}', right_text),
+                    ('${RUN}', run_text),
+                ],
+            )
 
         if self._force_hide_button_names:
             jump_button_names.clear()
@@ -479,9 +570,10 @@ class ControlsGuide(ba.Actor):
         self._run_text.text = run_text
         w_text: ba.Lstr | str
         if only_remote and self._lifespan is None:
-            w_text = ba.Lstr(resource='fireTVRemoteWarningText',
-                             subs=[('${REMOTE_APP_NAME}',
-                                    get_remote_app_name())])
+            w_text = ba.Lstr(
+                resource='fireTVRemoteWarningText',
+                subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],
+            )
         else:
             w_text = ''
         self._extra_text.text = w_text
@@ -497,12 +589,16 @@ class ControlsGuide(ba.Actor):
         self._jump_text.text = tval
         if tval == '':
             self._run_text.position = self._run_text_pos_top
-            self._extra_text.position = (self._run_text_pos_top[0],
-                                         self._run_text_pos_top[1] - 50)
+            self._extra_text.position = (
+                self._run_text_pos_top[0],
+                self._run_text_pos_top[1] - 50,
+            )
         else:
             self._run_text.position = self._run_text_pos_bottom
-            self._extra_text.position = (self._run_text_pos_bottom[0],
-                                         self._run_text_pos_bottom[1] - 50)
+            self._extra_text.position = (
+                self._run_text_pos_bottom[0],
+                self._run_text_pos_bottom[1] - 50,
+            )
         if len(bomb_button_names) == 1:
             self._bomb_text.text = list(bomb_button_names)[0]
         else:

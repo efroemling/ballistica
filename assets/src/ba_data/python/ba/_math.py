@@ -24,6 +24,7 @@ def vec3validate(value: Sequence[float]) -> Sequence[float]:
     to keep runtime overhead minimal.
     """
     from numbers import Number
+
     if not isinstance(value, abc.Sequence):
         raise TypeError(f"Expected a sequence; got {type(value)}")
     if len(value) != 3:
@@ -40,9 +41,11 @@ def is_point_in_box(pnt: Sequence[float], box: Sequence[float]) -> bool:
 
     For use with standard def boxes (position|rotate|scale).
     """
-    return ((abs(pnt[0] - box[0]) <= box[6] * 0.5)
-            and (abs(pnt[1] - box[1]) <= box[7] * 0.5)
-            and (abs(pnt[2] - box[2]) <= box[8] * 0.5))
+    return (
+        (abs(pnt[0] - box[0]) <= box[6] * 0.5)
+        and (abs(pnt[1] - box[1]) <= box[7] * 0.5)
+        and (abs(pnt[2] - box[2]) <= box[8] * 0.5)
+    )
 
 
 def normalized_color(color: Sequence[float]) -> tuple[float, ...]:

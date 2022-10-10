@@ -30,9 +30,16 @@ def pcommand_main(globs: dict[str, Any]) -> None:
     import types
     from efro.error import CleanError
     from efro.terminal import Clr
-    funcs = dict(((name, obj) for name, obj in globs.items()
-                  if not name.startswith('_') and name != 'pcommand_main'
-                  and isinstance(obj, types.FunctionType)))
+
+    funcs = dict(
+        (
+            (name, obj)
+            for name, obj in globs.items()
+            if not name.startswith('_')
+            and name != 'pcommand_main'
+            and isinstance(obj, types.FunctionType)
+        )
+    )
     show_help = False
     retval = 0
     if len(sys.argv) < 2:
@@ -48,9 +55,12 @@ def pcommand_main(globs: dict[str, Any]) -> None:
                 retval = 255
             else:
                 docs = _trim_docstring(
-                    getattr(funcs[sys.argv[2]], '__doc__', '<no docs>'))
-                print(f'\n{Clr.MAG}{Clr.BLD}pcommand {sys.argv[2]}:{Clr.RST}\n'
-                      f'{Clr.MAG}{docs}{Clr.RST}\n')
+                    getattr(funcs[sys.argv[2]], '__doc__', '<no docs>')
+                )
+                print(
+                    f'\n{Clr.MAG}{Clr.BLD}pcommand {sys.argv[2]}:{Clr.RST}\n'
+                    f'{Clr.MAG}{docs}{Clr.RST}\n'
+                )
         elif sys.argv[1] in funcs:
             try:
                 funcs[sys.argv[1]]()
@@ -61,17 +71,25 @@ def pcommand_main(globs: dict[str, Any]) -> None:
                 exc.pretty_print()
                 sys.exit(1)
         else:
-            print(f'{Clr.RED}Unknown pcommand: "{sys.argv[1]}"{Clr.RST}',
-                  file=sys.stderr)
+            print(
+                f'{Clr.RED}Unknown pcommand: "{sys.argv[1]}"{Clr.RST}',
+                file=sys.stderr,
+            )
             retval = 255
 
     if show_help:
-        print(f'The {Clr.MAG}{Clr.BLD}pcommand{Clr.RST} script encapsulates'
-              f' a collection of project-related commands.')
-        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand [COMMAND] ...'"
-              f'{Clr.RST} to run a command.')
-        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand help [COMMAND]'"
-              f'{Clr.RST} for full documentation for a command.')
+        print(
+            f'The {Clr.MAG}{Clr.BLD}pcommand{Clr.RST} script encapsulates'
+            f' a collection of project-related commands.'
+        )
+        print(
+            f"Run {Clr.MAG}{Clr.BLD}'pcommand [COMMAND] ...'"
+            f'{Clr.RST} to run a command.'
+        )
+        print(
+            f"Run {Clr.MAG}{Clr.BLD}'pcommand help [COMMAND]'"
+            f'{Clr.RST} for full documentation for a command.'
+        )
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
@@ -117,10 +135,11 @@ def _trim_docstring(docstring: str) -> str:
 def _spelling(words: list[str]) -> None:
     from efrotools.code import sort_jetbrains_dict
     import os
+
     num_modded_dictionaries = 0
     for fname in [
-            '.idea/dictionaries/ericf.xml',
-            'ballisticacore-cmake/.idea/dictionaries/ericf.xml'
+        '.idea/dictionaries/ericf.xml',
+        'ballisticacore-cmake/.idea/dictionaries/ericf.xml',
     ]:
         if not os.path.exists(fname):
             continue
@@ -149,9 +168,12 @@ def spelling_all() -> None:
 
     print('Running "make pycharm-full"...')
     lines = [
-        line for line in subprocess.run(
-            ['make', 'pycharm-full'], check=False,
-            capture_output=True).stdout.decode().splitlines()
+        line
+        for line in subprocess.run(
+            ['make', 'pycharm-full'], check=False, capture_output=True
+        )
+        .stdout.decode()
+        .splitlines()
         if 'Typo: In word' in line
     ]
     words = [line.split('Typo: In word')[1].strip() for line in lines]
@@ -173,6 +195,7 @@ def spelling() -> None:
 def xcodebuild() -> None:
     """Run xcodebuild with added smarts."""
     from efrotools.xcode import XCodeBuild
+
     XCodeBuild(projroot=str(PROJROOT), args=sys.argv[2:]).run()
 
 
@@ -182,22 +205,27 @@ def xcoderun() -> None:
     import subprocess
     from efro.error import CleanError
     from efrotools.xcode import project_build_path
+
     if len(sys.argv) != 5:
         raise CleanError(
-            'Expected 3 args: <xcode project path> <configuration name>')
+            'Expected 3 args: <xcode project path> <configuration name>'
+        )
     project_path = os.path.abspath(sys.argv[2])
     scheme = sys.argv[3]
     configuration = sys.argv[4]
-    path = project_build_path(projroot=str(PROJROOT),
-                              project_path=project_path,
-                              scheme=scheme,
-                              configuration=configuration)
+    path = project_build_path(
+        projroot=str(PROJROOT),
+        project_path=project_path,
+        scheme=scheme,
+        configuration=configuration,
+    )
     subprocess.run(path, check=True)
 
 
 def pyver() -> None:
     """Prints the Python version used by this project."""
     from efrotools import PYVER
+
     print(PYVER, end='')
 
 
@@ -208,10 +236,12 @@ def try_repeat() -> None:
     """
     import subprocess
     from efro.error import CleanError
+
     # We require one number arg and at least one command arg.
     if len(sys.argv) < 4:
         raise CleanError(
-            'Expected a retry-count arg and at least one command arg')
+            'Expected a retry-count arg and at least one command arg'
+        )
     try:
         repeats = int(sys.argv[2])
     except Exception:
@@ -223,9 +253,11 @@ def try_repeat() -> None:
         result = subprocess.run(cmd, check=False)
         if result.returncode == 0:
             return
-        print(f'try_repeat attempt {i + 1} of {repeats + 1} failed for {cmd}.',
-              file=sys.stderr,
-              flush=True)
+        print(
+            f'try_repeat attempt {i + 1} of {repeats + 1} failed for {cmd}.',
+            file=sys.stderr,
+            flush=True,
+        )
     raise CleanError(f'Command failed {repeats + 1} time(s): {cmd}')
 
 
@@ -237,19 +269,24 @@ def check_clean_safety() -> None:
     """
     import os
     import subprocess
+
     if len(sys.argv) != 2:
         raise Exception('invalid arguments')
 
     # Make sure we wouldn't be deleting anything not tracked by git
     # or ignored.
-    output = subprocess.check_output(['git', 'status',
-                                      '--porcelain=v2']).decode()
+    output = subprocess.check_output(
+        ['git', 'status', '--porcelain=v2']
+    ).decode()
     if any(line.startswith('?') for line in output.splitlines()):
-        print('ERROR: untracked file(s) found; aborting.'
-              ' (see "git status" from "' + os.getcwd() +
-              '")  Either \'git add\' them, add them to .gitignore,'
-              ' or remove them and try again.',
-              file=sys.stderr)
+        print(
+            'ERROR: untracked file(s) found; aborting.'
+            ' (see "git status" from "'
+            + os.getcwd()
+            + '")  Either \'git add\' them, add them to .gitignore,'
+            ' or remove them and try again.',
+            file=sys.stderr,
+        )
         sys.exit(255)
 
 
@@ -260,6 +297,7 @@ def gen_empty_py_init() -> None:
     """
     from efro.terminal import Clr
     from efro.error import CleanError
+
     if len(sys.argv) != 3:
         raise CleanError('Expected a single path arg.')
     outpath = Path(sys.argv[2])
@@ -272,6 +310,7 @@ def gen_empty_py_init() -> None:
 def formatcode() -> None:
     """Format all of our C/C++/etc. code."""
     import efrotools.code
+
     full = '-full' in sys.argv
     efrotools.code.format_project_cpp_files(PROJROOT, full)
 
@@ -279,6 +318,7 @@ def formatcode() -> None:
 def formatscripts() -> None:
     """Format all of our Python/etc. code."""
     import efrotools.code
+
     full = '-full' in sys.argv
     efrotools.code.format_project_python_files(PROJROOT, full)
 
@@ -286,6 +326,7 @@ def formatscripts() -> None:
 def formatmakefile() -> None:
     """Format the main makefile."""
     from efrotools.makefile import Makefile
+
     with open('Makefile', encoding='utf-8') as infile:
         original = infile.read()
 
@@ -300,6 +341,7 @@ def formatmakefile() -> None:
 def cpplint() -> None:
     """Run lint-checking on all code deemed lint-able."""
     import efrotools.code
+
     full = '-full' in sys.argv
     efrotools.code.check_cpplint(PROJROOT, full)
 
@@ -310,6 +352,7 @@ def scriptfiles() -> None:
     Pass -lines to use newlines as separators. The default is spaces.
     """
     import efrotools.code
+
     paths = efrotools.code.get_script_filenames(projroot=PROJROOT)
     assert not any(' ' in path for path in paths)
     if '-lines' in sys.argv:
@@ -321,8 +364,9 @@ def scriptfiles() -> None:
 def pylint() -> None:
     """Run pylint checks on our scripts."""
     import efrotools.code
-    full = ('-full' in sys.argv)
-    fast = ('-fast' in sys.argv)
+
+    full = '-full' in sys.argv
+    fast = '-fast' in sys.argv
     efrotools.code.pylint(PROJROOT, full, fast)
 
 
@@ -331,6 +375,7 @@ def pylint_files() -> None:
     from efro.terminal import Clr
     from efro.error import CleanError
     import efrotools.code
+
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
     filenames = sys.argv[2:]
@@ -341,7 +386,8 @@ def pylint_files() -> None:
 def mypy() -> None:
     """Run mypy checks on our scripts."""
     import efrotools.code
-    full = ('-full' in sys.argv)
+
+    full = '-full' in sys.argv
     efrotools.code.mypy(PROJROOT, full)
 
 
@@ -350,6 +396,7 @@ def runmypy() -> None:
     from efro.terminal import Clr
     from efro.error import CleanError
     import efrotools.code
+
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
     filenames = sys.argv[2:]
@@ -363,12 +410,14 @@ def runmypy() -> None:
 def dmypy() -> None:
     """Run mypy checks on our scripts using the mypy daemon."""
     import efrotools.code
+
     efrotools.code.dmypy(PROJROOT)
 
 
 def pycharm() -> None:
     """Run PyCharm checks on our scripts."""
     import efrotools.code
+
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
     efrotools.code.check_pycharm(PROJROOT, full, verbose)
@@ -377,6 +426,7 @@ def pycharm() -> None:
 def clioncode() -> None:
     """Run CLion checks on our code."""
     import efrotools.code
+
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
     efrotools.code.check_clioncode(PROJROOT, full, verbose)
@@ -385,6 +435,7 @@ def clioncode() -> None:
 def androidstudiocode() -> None:
     """Run Android Studio checks on our code."""
     import efrotools.code
+
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
     efrotools.code.check_android_studio(PROJROOT, full, verbose)
@@ -394,6 +445,7 @@ def tool_config_install() -> None:
     """Install a tool config file (with some filtering)."""
     from efro.terminal import Clr
     from efro.error import CleanError
+
     if len(sys.argv) != 4:
         raise CleanError('expected 2 args')
     src = Path(sys.argv[2])
@@ -412,13 +464,19 @@ def tool_config_install() -> None:
     if dst.name in ['.dir-locals.el']:
         comment = ';;'
     elif dst.name in [
-            '.mypy.ini', '.pycheckers', '.pylintrc', '.style.yapf',
-            '.clang-format', '.editorconfig'
+        '.mypy.ini',
+        '.pycheckers',
+        '.pylintrc',
+        '.style.yapf',
+        '.clang-format',
+        '.editorconfig',
     ]:
         comment = '#'
     if comment is not None:
-        cfg = (f'{comment} THIS FILE WAS AUTOGENERATED; DO NOT EDIT.\n'
-               f'{comment} Source: {src}.\n\n' + cfg)
+        cfg = (
+            f'{comment} THIS FILE WAS AUTOGENERATED; DO NOT EDIT.\n'
+            f'{comment} Source: {src}.\n\n' + cfg
+        )
 
     with dst.open('w', encoding='utf-8') as outfile:
         outfile.write(cfg)
@@ -442,7 +500,8 @@ def _filter_tool_config(cfg: str) -> str:
     shortname = short_names.get(PROJROOT.name, PROJROOT.name)
     cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
 
-    mypy_standard_settings = textwrap.dedent("""
+    mypy_standard_settings = textwrap.dedent(
+        """
     # We don't want all of our plain scripts complaining
     # about __main__ being redefined.
     scripts_are_modules = True
@@ -464,10 +523,10 @@ def _filter_tool_config(cfg: str) -> str:
     strict_equality = True
     local_partial_types = True
     no_implicit_reexport = True
-    """).strip()
+    """
+    ).strip()
 
-    cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__',
-                      mypy_standard_settings)
+    cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings)
 
     # Gen a pylint init to set up our python paths:
     pylint_init_tag = '__EFRO_PYLINT_INIT__'
@@ -494,6 +553,7 @@ def sync_all() -> None:
     import concurrent.futures
     from efro.error import CleanError
     from efro.terminal import Clr
+
     print(f'{Clr.BLD}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
@@ -510,7 +570,8 @@ def sync_all() -> None:
     # a preflight we'll often wind up getting out-of-sync errors due to
     # formatting changing after the sync.
     with concurrent.futures.ThreadPoolExecutor(
-            max_workers=len(projects)) as executor:
+        max_workers=len(projects)
+    ) as executor:
         # Converting this to a list will propagate any errors.
         list(executor.map(_format_project, projects))
 
@@ -525,12 +586,16 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(f'{Clr.BLD}Running sync pass 1'
-                      f' (ensures all changes at dsts are pushed to src):'
-                      f'{Clr.RST}')
+                print(
+                    f'{Clr.BLD}Running sync pass 1'
+                    f' (ensures all changes at dsts are pushed to src):'
+                    f'{Clr.RST}'
+                )
             else:
-                print(f'{Clr.BLD}Running sync pass 2'
-                      f' (ensures latest src is pulled to all dsts):{Clr.RST}')
+                print(
+                    f'{Clr.BLD}Running sync pass 2'
+                    f' (ensures latest src is pulled to all dsts):{Clr.RST}'
+                )
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
                 subprocess.run(cmd, shell=True, check=True)
@@ -541,6 +606,7 @@ def sync() -> None:
     """Runs standard syncs between this project and others."""
     from efrotools import getconfig
     from efrotools.sync import Mode, SyncItem, run_standard_syncs
+
     mode = Mode(sys.argv[2]) if len(sys.argv) > 2 else Mode.PULL
 
     # Load sync-items from project config and run them
@@ -563,13 +629,16 @@ def compile_python_files() -> None:
     """
     import os
     import py_compile
+
     for arg in sys.argv[2:]:
         mode = py_compile.PycInvalidationMode.UNCHECKED_HASH
-        py_compile.compile(arg,
-                           dfile=os.path.basename(arg),
-                           doraise=True,
-                           optimize=1,
-                           invalidation_mode=mode)
+        py_compile.compile(
+            arg,
+            dfile=os.path.basename(arg),
+            doraise=True,
+            optimize=1,
+            invalidation_mode=mode,
+        )
 
 
 def pytest() -> None:
@@ -597,8 +666,9 @@ def pytest() -> None:
     os.environ['PYTHONDEVMODE'] = '1'
 
     # Do the thing.
-    results = subprocess.run([PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:],
-                             check=False)
+    results = subprocess.run(
+        [PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:], check=False
+    )
     if results.returncode != 0:
         sys.exit(results.returncode)
 
@@ -634,24 +704,34 @@ def makefile_target_list() -> None:
             return ' - ' + doc
         return doc
 
-    print('----------------------\n'
-          'Available Make Targets\n'
-          '----------------------')
+    print(
+        '----------------------\n'
+        'Available Make Targets\n'
+        '----------------------'
+    )
 
     entries: list[_Entry] = []
     for i, line in enumerate(lines):
 
         # Targets.
-        if ':' in line and line.split(':')[0].replace('-', '').replace(
-                '_', '').isalnum() and not line.startswith('_'):
+        if (
+            ':' in line
+            and line.split(':')[0].replace('-', '').replace('_', '').isalnum()
+            and not line.startswith('_')
+        ):
             entries.append(
-                _Entry(kind='target', line=i, title=line.split(':')[0]))
+                _Entry(kind='target', line=i, title=line.split(':')[0])
+            )
 
         # Section titles.
-        if (line.startswith('#  ') and line.endswith('  #\n')
-                and len(line.split()) > 2):
+        if (
+            line.startswith('#  ')
+            and line.endswith('  #\n')
+            and len(line.split()) > 2
+        ):
             entries.append(
-                _Entry(kind='section', line=i, title=line[1:-2].strip()))
+                _Entry(kind='section', line=i, title=line[1:-2].strip())
+            )
 
     for i, entry in enumerate(entries):
         if entry.kind == 'section':
@@ -660,8 +740,13 @@ def makefile_target_list() -> None:
                 continue
             print('\n' + entry.title + '\n' + '-' * len(entry.title))
         elif entry.kind == 'target':
-            print(Clr.MAG + entry.title + Clr.BLU +
-                  _docstr(lines, entry.line) + Clr.RST)
+            print(
+                Clr.MAG
+                + entry.title
+                + Clr.BLU
+                + _docstr(lines, entry.line)
+                + Clr.RST
+            )
 
 
 def echo() -> None:
@@ -670,6 +755,7 @@ def echo() -> None:
     Prints a Clr.RST at the end so that can be omitted.
     """
     from efro.terminal import Clr
+
     clrnames = {n for n in dir(Clr) if n.isupper() and not n.startswith('_')}
     first = True
     out: list[str] = []
@@ -694,7 +780,8 @@ def urandom_pretty() -> None:
 
     if len(sys.argv) not in (3, 4):
         raise CleanError(
-            'Expected one arg (count) and possibly two (line len).')
+            'Expected one arg (count) and possibly two (line len).'
+        )
     size = int(sys.argv[2])
     linemax = 72 if len(sys.argv) < 4 else int(sys.argv[3])
 
@@ -703,7 +790,7 @@ def urandom_pretty() -> None:
     line = b''
 
     for i in range(len(val)):
-        char = val[i:i + 1]
+        char = val[i : i + 1]
         thislinelen = len(repr(line + char))
         if thislinelen > linemax:
             lines.append(repr(line))

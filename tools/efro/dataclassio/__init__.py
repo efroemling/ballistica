@@ -11,19 +11,38 @@ data formats in a nondestructive manner.
 from __future__ import annotations
 
 from efro.util import set_canonical_module
-from efro.dataclassio._base import (Codec, IOAttrs, IOExtendedData)
-from efro.dataclassio._prep import (ioprep, ioprepped, will_ioprep,
-                                    is_ioprepped_dataclass)
+from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData
+from efro.dataclassio._prep import (
+    ioprep,
+    ioprepped,
+    will_ioprep,
+    is_ioprepped_dataclass,
+)
 from efro.dataclassio._pathcapture import DataclassFieldLookup
-from efro.dataclassio._api import (JsonStyle, dataclass_to_dict,
-                                   dataclass_to_json, dataclass_from_dict,
-                                   dataclass_from_json, dataclass_validate)
+from efro.dataclassio._api import (
+    JsonStyle,
+    dataclass_to_dict,
+    dataclass_to_json,
+    dataclass_from_dict,
+    dataclass_from_json,
+    dataclass_validate,
+)
 
 __all__ = [
-    'JsonStyle', 'Codec', 'IOAttrs', 'IOExtendedData', 'ioprep', 'ioprepped',
-    'will_ioprep', 'is_ioprepped_dataclass', 'DataclassFieldLookup',
-    'dataclass_to_dict', 'dataclass_to_json', 'dataclass_from_dict',
-    'dataclass_from_json', 'dataclass_validate'
+    'JsonStyle',
+    'Codec',
+    'IOAttrs',
+    'IOExtendedData',
+    'ioprep',
+    'ioprepped',
+    'will_ioprep',
+    'is_ioprepped_dataclass',
+    'DataclassFieldLookup',
+    'dataclass_to_dict',
+    'dataclass_to_json',
+    'dataclass_from_dict',
+    'dataclass_from_json',
+    'dataclass_validate',
 ]
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'

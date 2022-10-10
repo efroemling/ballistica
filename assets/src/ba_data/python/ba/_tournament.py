@@ -17,6 +17,7 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
     # pylint: disable=too-many-locals
     from ba._generated.enums import SpecialChar
     from ba._gameutils import get_trophy_string
+
     range1 = entry.get('prizeRange1')
     range2 = entry.get('prizeRange2')
     range3 = entry.get('prizeRange3')
@@ -27,12 +28,18 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
     trophy_type_2 = entry.get('prizeTrophy2')
     trophy_type_3 = entry.get('prizeTrophy3')
     out_vals = []
-    for rng, prize, trophy_type in ((range1, prize1, trophy_type_1),
-                                    (range2, prize2, trophy_type_2),
-                                    (range3, prize3, trophy_type_3)):
-        prval = ('' if rng is None else ('#' + str(rng[0])) if
-                 (rng[0] == rng[1]) else
-                 ('#' + str(rng[0]) + '-' + str(rng[1])))
+    for rng, prize, trophy_type in (
+        (range1, prize1, trophy_type_1),
+        (range2, prize2, trophy_type_2),
+        (range3, prize3, trophy_type_3),
+    ):
+        prval = (
+            ''
+            if rng is None
+            else ('#' + str(rng[0]))
+            if (rng[0] == rng[1])
+            else ('#' + str(rng[0]) + '-' + str(rng[1]))
+        )
         pvval = ''
         if trophy_type is not None:
             pvval += get_trophy_string(trophy_type)
@@ -40,8 +47,7 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
         # If we've got trophies but not for this entry, throw some space
         # in to compensate so the ticket counts line up.
         if prize is not None:
-            pvval = _ba.charstr(
-                SpecialChar.TICKET_BACKING) + str(prize) + pvval
+            pvval = _ba.charstr(SpecialChar.TICKET_BACKING) + str(prize) + pvval
         out_vals.append(prval)
         out_vals.append(pvval)
     return out_vals

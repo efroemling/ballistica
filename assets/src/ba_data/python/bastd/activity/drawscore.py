@@ -22,13 +22,15 @@ class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
     def on_begin(self) -> None:
         ba.set_analytics_screen('Draw Score Screen')
         super().on_begin()
-        ZoomText(ba.Lstr(resource='drawText'),
-                 position=(0, 0),
-                 maxwidth=400,
-                 shiftposition=(-220, 0),
-                 shiftdelay=2.0,
-                 flash=False,
-                 trail=False,
-                 jitter=1.0).autoretain()
+        ZoomText(
+            ba.Lstr(resource='drawText'),
+            position=(0, 0),
+            maxwidth=400,
+            shiftposition=(-220, 0),
+            shiftdelay=2.0,
+            flash=False,
+            trail=False,
+            jitter=1.0,
+        ).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
         self.show_player_scores(results=self.settings_raw.get('results', None))

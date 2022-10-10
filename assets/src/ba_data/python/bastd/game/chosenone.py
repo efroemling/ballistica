@@ -42,8 +42,10 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     """
 
     name = 'Chosen One'
-    description = ('Be the chosen one for a length of time to win.\n'
-                   'Kill the chosen one to become it.')
+    description = (
+        'Be the chosen one for a length of time to win.\n'
+        'Kill the chosen one to become it.'
+    )
     available_settings = [
         ba.IntSetting(
             'Chosen One Time',
@@ -99,7 +101,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             4: ba.getsound('announceFour'),
             3: ba.getsound('announceThree'),
             2: ba.getsound('announceTwo'),
-            1: ba.getsound('announceOne')
+            1: ba.getsound('announceOne'),
         }
         self._flag_spawn_pos: Sequence[float] | None = None
         self._reset_region_material: ba.Material | None = None
@@ -113,8 +115,9 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
 
         # Base class overrides
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC
-                              if self._epic_mode else ba.MusicType.CHOSEN_ONE)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.CHOSEN_ONE
+        )
 
     def get_instance_description(self) -> str | Sequence:
         return 'There can be only one.'
@@ -148,8 +151,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
-                ('call', 'at_connect',
-                 ba.WeakCall(self._handle_reset_collide)),
+                ('call', 'at_connect', ba.WeakCall(self._handle_reset_collide)),
             ),
         )
 
@@ -165,8 +167,9 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                 'position': (pos[0], pos[1] + 0.75, pos[2]),
                 'scale': (0.5, 0.5, 0.5),
                 'type': 'sphere',
-                'materials': [self._reset_region_material]
-            })
+                'materials': [self._reset_region_material],
+            },
+        )
 
     def _get_chosen_one_player(self) -> Player | None:
         # Should never return invalid references; return None in that case.
@@ -190,13 +193,15 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             self._set_chosen_one_player(player)
 
     def _flash_flag_spawn(self) -> None:
-        light = ba.newnode('light',
-                           attrs={
-                               'position': self._flag_spawn_pos,
-                               'color': (1, 1, 1),
-                               'radius': 0.3,
-                               'height_attenuated': False
-                           })
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': self._flag_spawn_pos,
+                'color': (1, 1, 1),
+                'radius': 0.3,
+                'height_attenuated': False,
+            },
+        )
         ba.animate(light, 'intensity', {0: 0, 0.25: 0.5, 0.5: 0}, loop=True)
         ba.timer(1.0, light.delete)
 
@@ -213,26 +218,28 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             else:
                 scoring_team = player.team
                 assert self.stats
-                self.stats.player_scored(player,
-                                         3,
-                                         screenmessage=False,
-                                         display=False)
+                self.stats.player_scored(
+                    player, 3, screenmessage=False, display=False
+                )
 
                 scoring_team.time_remaining = max(
-                    0, scoring_team.time_remaining - 1)
+                    0, scoring_team.time_remaining - 1
+                )
 
                 # Show the count over their head
                 if scoring_team.time_remaining > 0:
                     if isinstance(player.actor, PlayerSpaz) and player.actor:
                         player.actor.set_score_text(
-                            str(scoring_team.time_remaining))
+                            str(scoring_team.time_remaining)
+                        )
 
                 self._update_scoreboard()
 
                 # announce numbers we have sounds for
                 if scoring_team.time_remaining in self._countdownsounds:
                     ba.playsound(
-                        self._countdownsounds[scoring_team.time_remaining])
+                        self._countdownsounds[scoring_team.time_remaining]
+                    )
 
                 # Winner!
                 if scoring_team.time_remaining <= 0:
@@ -250,8 +257,9 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     def end_game(self) -> None:
         results = ba.GameResults()
         for team in self.teams:
-            results.set_team_score(team,
-                                   self._chosen_one_time - team.time_remaining)
+            results.set_team_score(
+                team, self._chosen_one_time - team.time_remaining
+            )
         self.end(results=results, announce_delay=0)
 
     def _set_chosen_one_player(self, player: Player | None) -> None:
@@ -261,23 +269,27 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         ba.playsound(self._swipsound)
         if not player:
             assert self._flag_spawn_pos is not None
-            self._flag = Flag(color=(1, 0.9, 0.2),
-                              position=self._flag_spawn_pos,
-                              touchable=False)
+            self._flag = Flag(
+                color=(1, 0.9, 0.2),
+                position=self._flag_spawn_pos,
+                touchable=False,
+            )
             self._chosen_one_player = None
 
             # Create a light to highlight the flag;
             # this will go away when the flag dies.
-            ba.newnode('light',
-                       owner=self._flag.node,
-                       attrs={
-                           'position': self._flag_spawn_pos,
-                           'intensity': 0.6,
-                           'height_attenuated': False,
-                           'volume_intensity_scale': 0.1,
-                           'radius': 0.1,
-                           'color': (1.2, 1.2, 0.4)
-                       })
+            ba.newnode(
+                'light',
+                owner=self._flag.node,
+                attrs={
+                    'position': self._flag_spawn_pos,
+                    'intensity': 0.6,
+                    'height_attenuated': False,
+                    'volume_intensity_scale': 0.1,
+                    'radius': 0.1,
+                    'color': (1.2, 1.2, 0.4),
+                },
+            )
 
             # Also an extra momentary flash.
             self._flash_flag_spawn()
@@ -302,26 +314,29 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                     for c in ba.normalized_color(player.team.color)
                 ]
                 light = player.chosen_light = ba.NodeActor(
-                    ba.newnode('light',
-                               attrs={
-                                   'intensity': 0.6,
-                                   'height_attenuated': False,
-                                   'volume_intensity_scale': 0.1,
-                                   'radius': 0.13,
-                                   'color': color
-                               }))
+                    ba.newnode(
+                        'light',
+                        attrs={
+                            'intensity': 0.6,
+                            'height_attenuated': False,
+                            'volume_intensity_scale': 0.1,
+                            'radius': 0.13,
+                            'color': color,
+                        },
+                    )
+                )
 
                 assert light.node
-                ba.animate(light.node,
-                           'intensity', {
-                               0: 1.0,
-                               0.2: 0.4,
-                               0.4: 1.0
-                           },
-                           loop=True)
+                ba.animate(
+                    light.node,
+                    'intensity',
+                    {0: 1.0, 0.2: 0.4, 0.4: 1.0},
+                    loop=True,
+                )
                 assert isinstance(player.actor, PlayerSpaz)
-                player.actor.node.connectattr('position', light.node,
-                                              'position')
+                player.actor.node.connectattr(
+                    'position', light.node, 'position'
+                )
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):
@@ -330,16 +345,21 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             player = msg.getplayer(Player)
             if player is self._get_chosen_one_player():
                 killerplayer = msg.getkillerplayer(Player)
-                self._set_chosen_one_player(None if (
-                    killerplayer is None or killerplayer is player
-                    or not killerplayer.is_alive()) else killerplayer)
+                self._set_chosen_one_player(
+                    None
+                    if (
+                        killerplayer is None
+                        or killerplayer is player
+                        or not killerplayer.is_alive()
+                    )
+                    else killerplayer
+                )
             self.respawn_player(player)
         else:
             super().handlemessage(msg)
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team,
-                                            team.time_remaining,
-                                            self._chosen_one_time,
-                                            countdown=True)
+            self._scoreboard.set_team_value(
+                team, team.time_remaining, self._chosen_one_time, countdown=True
+            )

@@ -16,11 +16,20 @@ if TYPE_CHECKING:
 class GameButton:
     """Button for entering co-op games."""
 
-    def __init__(self, window: CoopBrowserWindow, parent: ba.Widget, game: str,
-                 x: float, y: float, select: bool, row: str):
+    def __init__(
+        self,
+        window: CoopBrowserWindow,
+        parent: ba.Widget,
+        game: str,
+        x: float,
+        y: float,
+        select: bool,
+        row: str,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from ba.internal import getcampaign
+
         self._game = game
         sclx = 195.0
         scly = 195.0
@@ -57,16 +66,19 @@ class GameButton:
             on_activate_call=ba.Call(window.run_game, game),
             button_type='square',
             autoselect=True,
-            on_select_call=ba.Call(window.sel_change, row, game))
-        ba.widget(edit=btn,
-                  show_buffer_bottom=50,
-                  show_buffer_top=50,
-                  show_buffer_left=400,
-                  show_buffer_right=200)
+            on_select_call=ba.Call(window.sel_change, row, game),
+        )
+        ba.widget(
+            edit=btn,
+            show_buffer_bottom=50,
+            show_buffer_top=50,
+            show_buffer_left=400,
+            show_buffer_right=200,
+        )
         if select:
-            ba.containerwidget(edit=parent,
-                               selected_child=btn,
-                               visible_child=btn)
+            ba.containerwidget(
+                edit=parent, selected_child=btn, visible_child=btn
+            )
         image_width = sclx * 0.85 * 0.75
         self._preview_widget = ba.imagewidget(
             parent=parent,
@@ -76,21 +88,23 @@ class GameButton:
             model_transparent=window.lsbt,
             model_opaque=window.lsbo,
             texture=campaign.getlevel(levelname).get_preview_texture(),
-            mask_texture=ba.gettexture('mapPreviewMask'))
+            mask_texture=ba.gettexture('mapPreviewMask'),
+        )
 
         translated = campaign.getlevel(levelname).displayname
         self._achievements = ba.app.ach.achievements_for_coop_level(game)
 
-        self._name_widget = ba.textwidget(parent=parent,
-                                          draw_controller=btn,
-                                          position=(x + 20 + sclx * 0.5,
-                                                    y + scly - 27),
-                                          size=(0, 0),
-                                          h_align='center',
-                                          text=translated,
-                                          v_align='center',
-                                          maxwidth=sclx * 0.76,
-                                          scale=0.85)
+        self._name_widget = ba.textwidget(
+            parent=parent,
+            draw_controller=btn,
+            position=(x + 20 + sclx * 0.5, y + scly - 27),
+            size=(0, 0),
+            h_align='center',
+            text=translated,
+            v_align='center',
+            maxwidth=sclx * 0.76,
+            scale=0.85,
+        )
         xscl = x + (67 if self._achievements else 50)
         yscl = y + scly - (137 if self._achievements else 157)
 
@@ -98,21 +112,25 @@ class GameButton:
 
         self._star_widgets: list[ba.Widget] = []
         for _i in range(stars):
-            imw = ba.imagewidget(parent=parent,
-                                 draw_controller=btn,
-                                 position=(xscl, yscl),
-                                 size=(starscale, starscale),
-                                 texture=window.star_tex)
+            imw = ba.imagewidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(xscl, yscl),
+                size=(starscale, starscale),
+                texture=window.star_tex,
+            )
             self._star_widgets.append(imw)
             xscl += starscale
         for _i in range(3 - stars):
-            ba.imagewidget(parent=parent,
-                           draw_controller=btn,
-                           position=(xscl, yscl),
-                           size=(starscale, starscale),
-                           color=(0, 0, 0),
-                           texture=window.star_tex,
-                           opacity=0.3)
+            ba.imagewidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(xscl, yscl),
+                size=(starscale, starscale),
+                color=(0, 0, 0),
+                texture=window.star_tex,
+                opacity=0.3,
+            )
             xscl += starscale
 
         xach = x + 69
@@ -127,33 +145,40 @@ class GameButton:
                 position=(xach, yach),
                 size=(a_scale, a_scale),
                 color=tuple(ach.get_icon_color(a_complete)[:3])
-                if a_complete else (1.2, 1.2, 1.2),
-                texture=ach.get_icon_texture(a_complete))
-            imw2 = ba.imagewidget(parent=parent,
-                                  draw_controller=btn,
-                                  position=(xach, yach),
-                                  size=(a_scale, a_scale),
-                                  color=(2, 1.4, 0.4),
-                                  texture=window.a_outline_tex,
-                                  model_transparent=window.a_outline_model)
+                if a_complete
+                else (1.2, 1.2, 1.2),
+                texture=ach.get_icon_texture(a_complete),
+            )
+            imw2 = ba.imagewidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(xach, yach),
+                size=(a_scale, a_scale),
+                color=(2, 1.4, 0.4),
+                texture=window.a_outline_tex,
+                model_transparent=window.a_outline_model,
+            )
             self._achievement_widgets.append((imw, imw2))
             # if a_complete:
             xach += a_scale * 1.2
 
         # if not unlocked:
-        self._lock_widget = ba.imagewidget(parent=parent,
-                                           draw_controller=btn,
-                                           position=(x - 8 + sclx * 0.5,
-                                                     y + scly * 0.5 - 20),
-                                           size=(60, 60),
-                                           opacity=0.0,
-                                           texture=ba.gettexture('lock'))
+        self._lock_widget = ba.imagewidget(
+            parent=parent,
+            draw_controller=btn,
+            position=(x - 8 + sclx * 0.5, y + scly * 0.5 - 20),
+            size=(60, 60),
+            opacity=0.0,
+            texture=ba.gettexture('lock'),
+        )
 
         # give a quasi-random update increment to spread the load..
-        self._update_timer = ba.Timer(0.001 * (900 + random.randrange(200)),
-                                      ba.WeakCall(self._update),
-                                      repeat=True,
-                                      timetype=ba.TimeType.REAL)
+        self._update_timer = ba.Timer(
+            0.001 * (900 + random.randrange(200)),
+            ba.WeakCall(self._update),
+            repeat=True,
+            timetype=ba.TimeType.REAL,
+        )
         self._update()
 
     def get_button(self) -> ba.Widget:
@@ -195,46 +220,84 @@ class GameButton:
             unlocked = False
 
         # Hard-code games we haven't unlocked.
-        if ((game in ('Challenges:Infinite Runaround',
-                      'Challenges:Infinite Onslaught')
-             and not ba.app.accounts_v1.have_pro())
-                or (game in ('Challenges:Meteor Shower', )
-                    and not ba.internal.get_purchased('games.meteor_shower'))
-                or (game in ('Challenges:Target Practice',
-                             'Challenges:Target Practice B')
-                    and not ba.internal.get_purchased('games.target_practice'))
-                or (game in ('Challenges:Ninja Fight', )
-                    and not ba.internal.get_purchased('games.ninja_fight'))
-                or (game in ('Challenges:Pro Ninja Fight', )
-                    and not ba.internal.get_purchased('games.ninja_fight')) or
-            (game in ('Challenges:Easter Egg Hunt',
-                      'Challenges:Pro Easter Egg Hunt')
-             and not ba.internal.get_purchased('games.easter_egg_hunt'))):
+        if (
+            (
+                game
+                in (
+                    'Challenges:Infinite Runaround',
+                    'Challenges:Infinite Onslaught',
+                )
+                and not ba.app.accounts_v1.have_pro()
+            )
+            or (
+                game in ('Challenges:Meteor Shower',)
+                and not ba.internal.get_purchased('games.meteor_shower')
+            )
+            or (
+                game
+                in (
+                    'Challenges:Target Practice',
+                    'Challenges:Target Practice B',
+                )
+                and not ba.internal.get_purchased('games.target_practice')
+            )
+            or (
+                game in ('Challenges:Ninja Fight',)
+                and not ba.internal.get_purchased('games.ninja_fight')
+            )
+            or (
+                game in ('Challenges:Pro Ninja Fight',)
+                and not ba.internal.get_purchased('games.ninja_fight')
+            )
+            or (
+                game
+                in (
+                    'Challenges:Easter Egg Hunt',
+                    'Challenges:Pro Easter Egg Hunt',
+                )
+                and not ba.internal.get_purchased('games.easter_egg_hunt')
+            )
+        ):
             unlocked = False
 
         # Let's tint levels a slightly different color when easy mode
         # is selected.
-        unlocked_color = (0.85, 0.95,
-                          0.5) if game.startswith('Easy:') else (0.5, 0.7, 0.2)
+        unlocked_color = (
+            (0.85, 0.95, 0.5) if game.startswith('Easy:') else (0.5, 0.7, 0.2)
+        )
 
-        ba.buttonwidget(edit=self._button,
-                        color=unlocked_color if unlocked else (0.5, 0.5, 0.5))
+        ba.buttonwidget(
+            edit=self._button,
+            color=unlocked_color if unlocked else (0.5, 0.5, 0.5),
+        )
 
-        ba.imagewidget(edit=self._lock_widget,
-                       opacity=0.0 if unlocked else 1.0)
-        ba.imagewidget(edit=self._preview_widget,
-                       opacity=1.0 if unlocked else 0.3)
-        ba.textwidget(edit=self._name_widget,
-                      color=(0.8, 1.0, 0.8, 1.0) if unlocked else
-                      (0.7, 0.7, 0.7, 0.7))
+        ba.imagewidget(edit=self._lock_widget, opacity=0.0 if unlocked else 1.0)
+        ba.imagewidget(
+            edit=self._preview_widget, opacity=1.0 if unlocked else 0.3
+        )
+        ba.textwidget(
+            edit=self._name_widget,
+            color=(0.8, 1.0, 0.8, 1.0) if unlocked else (0.7, 0.7, 0.7, 0.7),
+        )
         for widget in self._star_widgets:
-            ba.imagewidget(edit=widget,
-                           opacity=1.0 if unlocked else 0.3,
-                           color=(2.2, 1.2, 0.3) if unlocked else (1, 1, 1))
+            ba.imagewidget(
+                edit=widget,
+                opacity=1.0 if unlocked else 0.3,
+                color=(2.2, 1.2, 0.3) if unlocked else (1, 1, 1),
+            )
         for i, ach in enumerate(self._achievements):
             a_complete = ach.complete
-            ba.imagewidget(edit=self._achievement_widgets[i][0],
-                           opacity=1.0 if (a_complete and unlocked) else 0.3)
-            ba.imagewidget(edit=self._achievement_widgets[i][1],
-                           opacity=(1.0 if (a_complete and unlocked) else
-                                    0.2 if a_complete else 0.0))
+            ba.imagewidget(
+                edit=self._achievement_widgets[i][0],
+                opacity=1.0 if (a_complete and unlocked) else 0.3,
+            )
+            ba.imagewidget(
+                edit=self._achievement_widgets[i][1],
+                opacity=(
+                    1.0
+                    if (a_complete and unlocked)
+                    else 0.2
+                    if a_complete
+                    else 0.0
+                ),
+            )

@@ -13,8 +13,12 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
-from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDiedMessage,
-                              FlagPickedUpMessage)
+from bastd.actor.flag import (
+    Flag,
+    FlagDroppedMessage,
+    FlagDiedMessage,
+    FlagPickedUpMessage,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -22,6 +26,7 @@ if TYPE_CHECKING:
 
 class FlagState(Enum):
     """States our single flag can be in."""
+
     NEW = 0
     UNCONTESTED = 1
     CONTESTED = 2
@@ -82,8 +87,9 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
 
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.DualTeamSession)
-                or issubclass(sessiontype, ba.FreeForAllSession))
+        return issubclass(sessiontype, ba.DualTeamSession) or issubclass(
+            sessiontype, ba.FreeForAllSession
+        )
 
     @classmethod
     def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
@@ -104,7 +110,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
             4: ba.getsound('announceFour'),
             3: ba.getsound('announceThree'),
             2: ba.getsound('announceTwo'),
-            1: ba.getsound('announceOne')
+            1: ba.getsound('announceOne'),
         }
         self._flag_spawn_pos: Sequence[float] | None = None
         self._update_timer: ba.Timer | None = None
@@ -117,8 +123,9 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._time_limit = float(settings['Time Limit'])
         self._epic_mode = bool(settings['Epic Mode'])
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC
-                              if self._epic_mode else ba.MusicType.KEEP_AWAY)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.KEEP_AWAY
+        )
 
     def get_instance_description(self) -> str | Sequence:
         return 'Carry the flag for ${ARG1} seconds.', self._hold_time
@@ -149,10 +156,9 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         for player in self._holding_players:
             if player:
                 assert self.stats
-                self.stats.player_scored(player,
-                                         3,
-                                         screenmessage=False,
-                                         display=False)
+                self.stats.player_scored(
+                    player, 3, screenmessage=False, display=False
+                )
 
         scoreteam = self._scoring_team
 
@@ -189,10 +195,14 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
             holdingflag = False
             try:
                 assert isinstance(player.actor, (PlayerSpaz, type(None)))
-                if (player.actor and player.actor.node
-                        and player.actor.node.hold_node):
+                if (
+                    player.actor
+                    and player.actor.node
+                    and player.actor.node.hold_node
+                ):
                     holdingflag = (
-                        player.actor.node.hold_node.getnodetype() == 'flag')
+                        player.actor.node.hold_node.getnodetype() == 'flag'
+                    )
             except Exception:
                 ba.print_exception('Error checking hold flag.')
             if holdingflag:
@@ -230,34 +240,33 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         assert self._flag_spawn_pos is not None
         self._flag = Flag(dropped_timeout=20, position=self._flag_spawn_pos)
         self._flag_state = FlagState.NEW
-        self._flag_light = ba.newnode('light',
-                                      owner=self._flag.node,
-                                      attrs={
-                                          'intensity': 0.2,
-                                          'radius': 0.3,
-                                          'color': (0.2, 0.2, 0.2)
-                                      })
+        self._flag_light = ba.newnode(
+            'light',
+            owner=self._flag.node,
+            attrs={'intensity': 0.2, 'radius': 0.3, 'color': (0.2, 0.2, 0.2)},
+        )
         assert self._flag.node
         self._flag.node.connectattr('position', self._flag_light, 'position')
         self._update_flag_state()
 
     def _flash_flag_spawn(self) -> None:
-        light = ba.newnode('light',
-                           attrs={
-                               'position': self._flag_spawn_pos,
-                               'color': (1, 1, 1),
-                               'radius': 0.3,
-                               'height_attenuated': False
-                           })
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': self._flag_spawn_pos,
+                'color': (1, 1, 1),
+                'radius': 0.3,
+                'height_attenuated': False,
+            },
+        )
         ba.animate(light, 'intensity', {0.0: 0, 0.25: 0.5, 0.5: 0}, loop=True)
         ba.timer(1.0, light.delete)
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team,
-                                            team.timeremaining,
-                                            self._hold_time,
-                                            countdown=True)
+            self._scoreboard.set_team_value(
+                team, team.timeremaining, self._hold_time, countdown=True
+            )
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):

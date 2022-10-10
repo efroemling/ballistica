@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 # pylint: disable=wrong-import-order
 from efro.terminal import Clr
 from efrotools import get_files_hash
+
 # pylint: enable=wrong-import-order
 # pylint: enable=useless-suppression
 
@@ -46,13 +47,13 @@ class FileCache:
         # First, completely prune entries for nonexistent files.
         self.entries = {
             path: val
-            for path, val in self.entries.items() if os.path.isfile(path)
+            for path, val in self.entries.items()
+            if os.path.isfile(path)
         }
 
         # Also remove any not in our passed list.
         self.entries = {
-            path: val
-            for path, val in self.entries.items() if path in filenames
+            path: val for path, val in self.entries.items() if path in filenames
         }
 
         # Add empty entries for files that lack them.
@@ -61,8 +62,9 @@ class FileCache:
         for filename in filenames:
             if filename not in self.entries:
                 self.entries[filename] = {}
-            self.curhashes[filename] = curhash = (get_files_hash([filename],
-                                                                 extrahash))
+            self.curhashes[filename] = curhash = get_files_hash(
+                [filename], extrahash
+            )
             # Also store modtimes; we'll abort cache writes if
             # anything changed.
             self.mtimes[filename] = os.path.getmtime(filename)
@@ -92,8 +94,10 @@ class FileCache:
         # if anything has been modified, don't write.
         for fname, mtime in self.mtimes.items():
             if os.path.getmtime(fname) != mtime:
-                print(f'{Clr.MAG}File changed during run:'
-                      f' "{fname}"; cache not updated.{Clr.RST}')
+                print(
+                    f'{Clr.MAG}File changed during run:'
+                    f' "{fname}"; cache not updated.{Clr.RST}'
+                )
                 return
         out = json.dumps(self.entries)
         self._path.parent.mkdir(parents=True, exist_ok=True)

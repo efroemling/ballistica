@@ -18,10 +18,12 @@ if TYPE_CHECKING:
 class PlaylistBrowserWindow(ba.Window):
     """Window for starting teams games."""
 
-    def __init__(self,
-                 sessiontype: type[ba.Session],
-                 transition: str | None = 'in_right',
-                 origin_widget: ba.Widget | None = None):
+    def __init__(
+        self,
+        sessiontype: type[ba.Session],
+        transition: str | None = 'in_right',
+        origin_widget: ba.Widget | None = None,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bastd.ui.playlist import PlaylistTypeVars
@@ -56,25 +58,41 @@ class PlaylistBrowserWindow(ba.Window):
         self._ensure_standard_playlists_exist()
 
         # Get the current selection (if any).
-        self._selected_playlist = ba.app.config.get(self._pvars.config_name +
-                                                    ' Playlist Selection')
+        self._selected_playlist = ba.app.config.get(
+            self._pvars.config_name + ' Playlist Selection'
+        )
 
         uiscale = ba.app.ui.uiscale
         self._width = 900 if uiscale is ba.UIScale.SMALL else 800
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
-        self._height = (480 if uiscale is ba.UIScale.SMALL else
-                        510 if uiscale is ba.UIScale.MEDIUM else 580)
+        self._height = (
+            480
+            if uiscale is ba.UIScale.SMALL
+            else 510
+            if uiscale is ba.UIScale.MEDIUM
+            else 580
+        )
 
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            toolbar_visibility='menu_full',
-            scale_origin_stack_offset=scale_origin,
-            scale=(1.69 if uiscale is ba.UIScale.SMALL else
-                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9),
-            stack_offset=(0, -26) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height + top_extra),
+                transition=transition,
+                toolbar_visibility='menu_full',
+                scale_origin_stack_offset=scale_origin,
+                scale=(
+                    1.69
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.05
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 0.9
+                ),
+                stack_offset=(0, -26)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         self._back_button: ba.Widget | None = ba.buttonwidget(
             parent=self._root_widget,
@@ -84,9 +102,11 @@ class PlaylistBrowserWindow(ba.Window):
             on_activate_call=self._on_back_press,
             autoselect=True,
             label=ba.Lstr(resource='backText'),
-            button_type='back')
-        ba.containerwidget(edit=self._root_widget,
-                           cancel_button=self._back_button)
+            button_type='back',
+        )
+        ba.containerwidget(
+            edit=self._root_widget, cancel_button=self._back_button
+        )
         txt = self._title_text = ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 41),
@@ -96,34 +116,43 @@ class PlaylistBrowserWindow(ba.Window):
             res_scale=1.5,
             color=ba.app.ui.heading_color,
             h_align='center',
-            v_align='center')
+            v_align='center',
+        )
         if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.textwidget(edit=txt, text='')
 
-        ba.buttonwidget(edit=self._back_button,
-                        button_type='backSmall',
-                        size=(60, 54),
-                        position=(59 + x_inset, self._height - 67),
-                        label=ba.charstr(ba.SpecialChar.BACK))
+        ba.buttonwidget(
+            edit=self._back_button,
+            button_type='backSmall',
+            size=(60, 54),
+            position=(59 + x_inset, self._height - 67),
+            label=ba.charstr(ba.SpecialChar.BACK),
+        )
 
         if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             self._back_button.delete()
             self._back_button = None
-            ba.containerwidget(edit=self._root_widget,
-                               on_cancel_call=self._on_back_press)
+            ba.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._on_back_press
+            )
             scroll_offs = 33
         else:
             scroll_offs = 0
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = (self._height -
-                               (146 if uiscale is ba.UIScale.SMALL
-                                and ba.app.ui.use_toolbars else 136))
+        self._scroll_height = self._height - (
+            146
+            if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars
+            else 136
+        )
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
-            position=((self._width - self._scroll_width) * 0.5,
-                      65 + scroll_offs))
+            position=(
+                (self._width - self._scroll_width) * 0.5,
+                65 + scroll_offs,
+            ),
+        )
         ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._subcontainer: ba.Widget | None = None
         self._config_name_full = self._pvars.config_name + ' Playlists'
@@ -132,154 +161,168 @@ class PlaylistBrowserWindow(ba.Window):
         # Update now and once per second.
         # (this should do our initial refresh)
         self._update()
-        self._update_timer = ba.Timer(1.0,
-                                      ba.WeakCall(self._update),
-                                      timetype=ba.TimeType.REAL,
-                                      repeat=True)
+        self._update_timer = ba.Timer(
+            1.0,
+            ba.WeakCall(self._update),
+            timetype=ba.TimeType.REAL,
+            repeat=True,
+        )
 
     def _ensure_standard_playlists_exist(self) -> None:
         # On new installations, go ahead and create a few playlists
         # besides the hard-coded default one:
-        if not ba.internal.get_v1_account_misc_val('madeStandardPlaylists',
-                                                   False):
-            ba.internal.add_transaction({
-                'type':
-                    'ADD_PLAYLIST',
-                'playlistType':
-                    'Free-for-All',
-                'playlistName':
-                    ba.Lstr(resource='singleGamePlaylistNameText'
-                            ).evaluate().replace(
-                                '${GAME}',
-                                ba.Lstr(translate=('gameNames',
-                                                   'Death Match')).evaluate()),
-                'playlist': [
-                    {
-                        'type': 'bs_death_match.DeathMatchGame',
-                        'settings': {
-                            'Epic Mode': False,
-                            'Kills to Win Per Player': 10,
-                            'Respawn Times': 1.0,
-                            'Time Limit': 300,
-                            'map': 'Doom Shroom'
-                        }
-                    },
-                    {
-                        'type': 'bs_death_match.DeathMatchGame',
-                        'settings': {
-                            'Epic Mode': False,
-                            'Kills to Win Per Player': 10,
-                            'Respawn Times': 1.0,
-                            'Time Limit': 300,
-                            'map': 'Crag Castle'
-                        }
-                    },
-                ]
-            })
-            ba.internal.add_transaction({
-                'type':
-                    'ADD_PLAYLIST',
-                'playlistType':
-                    'Team Tournament',
-                'playlistName':
-                    ba.Lstr(
+        if not ba.internal.get_v1_account_misc_val(
+            'madeStandardPlaylists', False
+        ):
+            ba.internal.add_transaction(
+                {
+                    'type': 'ADD_PLAYLIST',
+                    'playlistType': 'Free-for-All',
+                    'playlistName': ba.Lstr(
                         resource='singleGamePlaylistNameText'
-                    ).evaluate().replace(
+                    )
+                    .evaluate()
+                    .replace(
                         '${GAME}',
-                        ba.Lstr(translate=('gameNames',
-                                           'Capture the Flag')).evaluate()),
-                'playlist': [
-                    {
-                        'type': 'bs_capture_the_flag.CTFGame',
-                        'settings': {
-                            'map': 'Bridgit',
-                            'Score to Win': 3,
-                            'Flag Idle Return Time': 30,
-                            'Flag Touch Return Time': 0,
-                            'Respawn Times': 1.0,
-                            'Time Limit': 600,
-                            'Epic Mode': False
+                        ba.Lstr(
+                            translate=('gameNames', 'Death Match')
+                        ).evaluate(),
+                    ),
+                    'playlist': [
+                        {
+                            'type': 'bs_death_match.DeathMatchGame',
+                            'settings': {
+                                'Epic Mode': False,
+                                'Kills to Win Per Player': 10,
+                                'Respawn Times': 1.0,
+                                'Time Limit': 300,
+                                'map': 'Doom Shroom',
+                            },
+                        },
+                        {
+                            'type': 'bs_death_match.DeathMatchGame',
+                            'settings': {
+                                'Epic Mode': False,
+                                'Kills to Win Per Player': 10,
+                                'Respawn Times': 1.0,
+                                'Time Limit': 300,
+                                'map': 'Crag Castle',
+                            },
+                        },
+                    ],
+                }
+            )
+            ba.internal.add_transaction(
+                {
+                    'type': 'ADD_PLAYLIST',
+                    'playlistType': 'Team Tournament',
+                    'playlistName': ba.Lstr(
+                        resource='singleGamePlaylistNameText'
+                    )
+                    .evaluate()
+                    .replace(
+                        '${GAME}',
+                        ba.Lstr(
+                            translate=('gameNames', 'Capture the Flag')
+                        ).evaluate(),
+                    ),
+                    'playlist': [
+                        {
+                            'type': 'bs_capture_the_flag.CTFGame',
+                            'settings': {
+                                'map': 'Bridgit',
+                                'Score to Win': 3,
+                                'Flag Idle Return Time': 30,
+                                'Flag Touch Return Time': 0,
+                                'Respawn Times': 1.0,
+                                'Time Limit': 600,
+                                'Epic Mode': False,
+                            },
+                        },
+                        {
+                            'type': 'bs_capture_the_flag.CTFGame',
+                            'settings': {
+                                'map': 'Roundabout',
+                                'Score to Win': 2,
+                                'Flag Idle Return Time': 30,
+                                'Flag Touch Return Time': 0,
+                                'Respawn Times': 1.0,
+                                'Time Limit': 600,
+                                'Epic Mode': False,
+                            },
+                        },
+                        {
+                            'type': 'bs_capture_the_flag.CTFGame',
+                            'settings': {
+                                'map': 'Tip Top',
+                                'Score to Win': 2,
+                                'Flag Idle Return Time': 30,
+                                'Flag Touch Return Time': 3,
+                                'Respawn Times': 1.0,
+                                'Time Limit': 300,
+                                'Epic Mode': False,
+                            },
+                        },
+                    ],
+                }
+            )
+            ba.internal.add_transaction(
+                {
+                    'type': 'ADD_PLAYLIST',
+                    'playlistType': 'Team Tournament',
+                    'playlistName': ba.Lstr(
+                        translate=('playlistNames', 'Just Sports')
+                    ).evaluate(),
+                    'playlist': [
+                        {
+                            'type': 'bs_hockey.HockeyGame',
+                            'settings': {
+                                'Time Limit': 0,
+                                'map': 'Hockey Stadium',
+                                'Score to Win': 1,
+                                'Respawn Times': 1.0,
+                            },
+                        },
+                        {
+                            'type': 'bs_football.FootballTeamGame',
+                            'settings': {
+                                'Time Limit': 0,
+                                'map': 'Football Stadium',
+                                'Score to Win': 21,
+                                'Respawn Times': 1.0,
+                            },
+                        },
+                    ],
+                }
+            )
+            ba.internal.add_transaction(
+                {
+                    'type': 'ADD_PLAYLIST',
+                    'playlistType': 'Free-for-All',
+                    'playlistName': ba.Lstr(
+                        translate=('playlistNames', 'Just Epic')
+                    ).evaluate(),
+                    'playlist': [
+                        {
+                            'type': 'bs_elimination.EliminationGame',
+                            'settings': {
+                                'Time Limit': 120,
+                                'map': 'Tip Top',
+                                'Respawn Times': 1.0,
+                                'Lives Per Player': 1,
+                                'Epic Mode': 1,
+                            },
                         }
-                    },
-                    {
-                        'type': 'bs_capture_the_flag.CTFGame',
-                        'settings': {
-                            'map': 'Roundabout',
-                            'Score to Win': 2,
-                            'Flag Idle Return Time': 30,
-                            'Flag Touch Return Time': 0,
-                            'Respawn Times': 1.0,
-                            'Time Limit': 600,
-                            'Epic Mode': False
-                        }
-                    },
-                    {
-                        'type': 'bs_capture_the_flag.CTFGame',
-                        'settings': {
-                            'map': 'Tip Top',
-                            'Score to Win': 2,
-                            'Flag Idle Return Time': 30,
-                            'Flag Touch Return Time': 3,
-                            'Respawn Times': 1.0,
-                            'Time Limit': 300,
-                            'Epic Mode': False
-                        }
-                    },
-                ]
-            })
-            ba.internal.add_transaction({
-                'type':
-                    'ADD_PLAYLIST',
-                'playlistType':
-                    'Team Tournament',
-                'playlistName':
-                    ba.Lstr(translate=('playlistNames', 'Just Sports')
-                            ).evaluate(),
-                'playlist': [
-                    {
-                        'type': 'bs_hockey.HockeyGame',
-                        'settings': {
-                            'Time Limit': 0,
-                            'map': 'Hockey Stadium',
-                            'Score to Win': 1,
-                            'Respawn Times': 1.0
-                        }
-                    },
-                    {
-                        'type': 'bs_football.FootballTeamGame',
-                        'settings': {
-                            'Time Limit': 0,
-                            'map': 'Football Stadium',
-                            'Score to Win': 21,
-                            'Respawn Times': 1.0
-                        }
-                    },
-                ]
-            })
-            ba.internal.add_transaction({
-                'type':
-                    'ADD_PLAYLIST',
-                'playlistType':
-                    'Free-for-All',
-                'playlistName':
-                    ba.Lstr(translate=('playlistNames', 'Just Epic')
-                            ).evaluate(),
-                'playlist': [{
-                    'type': 'bs_elimination.EliminationGame',
-                    'settings': {
-                        'Time Limit': 120,
-                        'map': 'Tip Top',
-                        'Respawn Times': 1.0,
-                        'Lives Per Player': 1,
-                        'Epic Mode': 1
-                    }
-                }]
-            })
-            ba.internal.add_transaction({
-                'type': 'SET_MISC_VAL',
-                'name': 'madeStandardPlaylists',
-                'value': True
-            })
+                    ],
+                }
+            )
+            ba.internal.add_transaction(
+                {
+                    'type': 'SET_MISC_VAL',
+                    'name': 'madeStandardPlaylists',
+                    'value': True,
+                }
+            )
             ba.internal.run_transactions()
 
     def _refresh(self) -> None:
@@ -290,6 +333,7 @@ class PlaylistBrowserWindow(ba.Window):
         # pylint: disable=too-many-nested-blocks
         from efro.util import asserttype
         from ba.internal import get_map_class, filter_playlist
+
         if not self._root_widget:
             return
         if self._subcontainer is not None:
@@ -303,8 +347,10 @@ class PlaylistBrowserWindow(ba.Window):
         items = list(ba.app.config[self._config_name_full].items())
 
         # Make sure everything is unicode.
-        items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
-                 for i in items]
+        items = [
+            (i[0].decode(), i[1]) if not isinstance(i[0], str) else i
+            for i in items
+        ]
 
         items.sort(key=lambda x2: asserttype(x2[0], str).lower())
         items = [['__default__', None]] + items  # default is always first
@@ -318,28 +364,32 @@ class PlaylistBrowserWindow(ba.Window):
         button_buffer_v = 0
 
         self._sub_width = self._scroll_width
-        self._sub_height = 40 + rows * (button_height +
-                                        2 * button_buffer_v) + 90
+        self._sub_height = (
+            40 + rows * (button_height + 2 * button_buffer_v) + 90
+        )
         assert self._sub_width is not None
         assert self._sub_height is not None
-        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
-                                                size=(self._sub_width,
-                                                      self._sub_height),
-                                                background=False)
+        self._subcontainer = ba.containerwidget(
+            parent=self._scrollwidget,
+            size=(self._sub_width, self._sub_height),
+            background=False,
+        )
 
         children = self._subcontainer.get_children()
         for child in children:
             child.delete()
 
-        ba.textwidget(parent=self._subcontainer,
-                      text=ba.Lstr(resource='playlistsText'),
-                      position=(40, self._sub_height - 26),
-                      size=(0, 0),
-                      scale=1.0,
-                      maxwidth=400,
-                      color=ba.app.ui.title_color,
-                      h_align='left',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            text=ba.Lstr(resource='playlistsText'),
+            position=(40, self._sub_height - 26),
+            size=(0, 0),
+            scale=1.0,
+            maxwidth=400,
+            color=ba.app.ui.title_color,
+            h_align='left',
+            v_align='center',
+        )
 
         index = 0
         appconfig = ba.app.config
@@ -356,37 +406,61 @@ class PlaylistBrowserWindow(ba.Window):
             for x in range(columns):
                 name = items[index][0]
                 assert name is not None
-                pos = (x * (button_width + 2 * button_buffer_h) +
-                       button_buffer_h + 8 + h_offs, self._sub_height - 47 -
-                       (y + 1) * (button_height + 2 * button_buffer_v))
-                btn = ba.buttonwidget(parent=self._subcontainer,
-                                      button_type='square',
-                                      size=(button_width, button_height),
-                                      autoselect=True,
-                                      label='',
-                                      position=pos)
+                pos = (
+                    x * (button_width + 2 * button_buffer_h)
+                    + button_buffer_h
+                    + 8
+                    + h_offs,
+                    self._sub_height
+                    - 47
+                    - (y + 1) * (button_height + 2 * button_buffer_v),
+                )
+                btn = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    button_type='square',
+                    size=(button_width, button_height),
+                    autoselect=True,
+                    label='',
+                    position=pos,
+                )
 
-                if (x == 0 and ba.app.ui.use_toolbars
-                        and uiscale is ba.UIScale.SMALL):
-                    ba.widget(edit=btn,
-                              left_widget=ba.internal.get_special_widget(
-                                  'back_button'))
-                if (x == columns - 1 and ba.app.ui.use_toolbars
-                        and uiscale is ba.UIScale.SMALL):
-                    ba.widget(edit=btn,
-                              right_widget=ba.internal.get_special_widget(
-                                  'party_button'))
+                if (
+                    x == 0
+                    and ba.app.ui.use_toolbars
+                    and uiscale is ba.UIScale.SMALL
+                ):
+                    ba.widget(
+                        edit=btn,
+                        left_widget=ba.internal.get_special_widget(
+                            'back_button'
+                        ),
+                    )
+                if (
+                    x == columns - 1
+                    and ba.app.ui.use_toolbars
+                    and uiscale is ba.UIScale.SMALL
+                ):
+                    ba.widget(
+                        edit=btn,
+                        right_widget=ba.internal.get_special_widget(
+                            'party_button'
+                        ),
+                    )
                 ba.buttonwidget(
                     edit=btn,
-                    on_activate_call=ba.Call(self._on_playlist_press, btn,
-                                             name),
-                    on_select_call=ba.Call(self._on_playlist_select, name))
+                    on_activate_call=ba.Call(
+                        self._on_playlist_press, btn, name
+                    ),
+                    on_select_call=ba.Call(self._on_playlist_select, name),
+                )
                 ba.widget(edit=btn, show_buffer_top=50, show_buffer_bottom=50)
 
                 if self._selected_playlist == name:
-                    ba.containerwidget(edit=self._subcontainer,
-                                       selected_child=btn,
-                                       visible_child=btn)
+                    ba.containerwidget(
+                        edit=self._subcontainer,
+                        selected_child=btn,
+                        visible_child=btn,
+                    )
 
                 if self._back_button is not None:
                     if y == 0:
@@ -399,16 +473,20 @@ class PlaylistBrowserWindow(ba.Window):
                     print_name = self._pvars.default_list_name
                 else:
                     print_name = name
-                ba.textwidget(parent=self._subcontainer,
-                              text=print_name,
-                              position=(pos[0] + button_width * 0.5,
-                                        pos[1] + button_height * 0.79),
-                              size=(0, 0),
-                              scale=button_width * 0.003,
-                              maxwidth=button_width * 0.7,
-                              draw_controller=btn,
-                              h_align='center',
-                              v_align='center')
+                ba.textwidget(
+                    parent=self._subcontainer,
+                    text=print_name,
+                    position=(
+                        pos[0] + button_width * 0.5,
+                        pos[1] + button_height * 0.79,
+                    ),
+                    size=(0, 0),
+                    scale=button_width * 0.003,
+                    maxwidth=button_width * 0.7,
+                    draw_controller=btn,
+                    h_align='center',
+                    v_align='center',
+                )
 
                 # Poke into this playlist and see if we can display some of
                 # its maps.
@@ -419,19 +497,28 @@ class PlaylistBrowserWindow(ba.Window):
                     if name == '__default__':
                         playlist = self._pvars.get_default_list_call()
                     else:
-                        if name not in appconfig[self._pvars.config_name +
-                                                 ' Playlists']:
+                        if (
+                            name
+                            not in appconfig[
+                                self._pvars.config_name + ' Playlists'
+                            ]
+                        ):
                             print(
                                 'NOT FOUND ERR',
-                                appconfig[self._pvars.config_name +
-                                          ' Playlists'])
-                        playlist = appconfig[self._pvars.config_name +
-                                             ' Playlists'][name]
-                    playlist = filter_playlist(playlist,
-                                               self._sessiontype,
-                                               remove_unowned=False,
-                                               mark_unowned=True,
-                                               name=name)
+                                appconfig[
+                                    self._pvars.config_name + ' Playlists'
+                                ],
+                            )
+                        playlist = appconfig[
+                            self._pvars.config_name + ' Playlists'
+                        ][name]
+                    playlist = filter_playlist(
+                        playlist,
+                        self._sessiontype,
+                        remove_unowned=False,
+                        mark_unowned=True,
+                        name=name,
+                    )
                     for entry in playlist:
                         mapname = entry['settings']['map']
                         maptype: type[ba.Map] | None
@@ -479,10 +566,16 @@ class PlaylistBrowserWindow(ba.Window):
                             if tex_index < len(map_textures):
                                 entry = map_texture_entries[tex_index]
 
-                                owned = not (('is_unowned_map' in entry
-                                              and entry['is_unowned_map']) or
-                                             ('is_unowned_game' in entry
-                                              and entry['is_unowned_game']))
+                                owned = not (
+                                    (
+                                        'is_unowned_map' in entry
+                                        and entry['is_unowned_map']
+                                    )
+                                    or (
+                                        'is_unowned_game' in entry
+                                        and entry['is_unowned_game']
+                                    )
+                                )
 
                                 tex_name = map_textures[tex_index]
                                 h = pos[0] + h_offs_img + scl * 250 * col
@@ -497,14 +590,17 @@ class PlaylistBrowserWindow(ba.Window):
                                         draw_controller=btn,
                                         model_opaque=model_opaque,
                                         model_transparent=model_transparent,
-                                        mask_texture=mask_tex))
+                                        mask_texture=mask_tex,
+                                    )
+                                )
                                 if not owned:
                                     ba.imagewidget(
                                         parent=self._subcontainer,
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
                                         texture=ba.gettexture('lock'),
-                                        draw_controller=btn)
+                                        draw_controller=btn,
+                                    )
                         if v is not None:
                             v -= scl * 130.0
 
@@ -512,16 +608,20 @@ class PlaylistBrowserWindow(ba.Window):
                     ba.print_exception('Error listing playlist maps.')
 
                 if not map_images:
-                    ba.textwidget(parent=self._subcontainer,
-                                  text='???',
-                                  scale=1.5,
-                                  size=(0, 0),
-                                  color=(1, 1, 1, 0.5),
-                                  h_align='center',
-                                  v_align='center',
-                                  draw_controller=btn,
-                                  position=(pos[0] + button_width * 0.5,
-                                            pos[1] + button_height * 0.5))
+                    ba.textwidget(
+                        parent=self._subcontainer,
+                        text='???',
+                        scale=1.5,
+                        size=(0, 0),
+                        color=(1, 1, 1, 0.5),
+                        h_align='center',
+                        v_align='center',
+                        draw_controller=btn,
+                        position=(
+                            pos[0] + button_width * 0.5,
+                            pos[1] + button_height * 0.5,
+                        ),
+                    )
 
                 index += 1
 
@@ -538,7 +638,8 @@ class PlaylistBrowserWindow(ba.Window):
             on_activate_call=self._on_customize_press,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),
-            autoselect=True)
+            autoselect=True,
+        )
         ba.widget(edit=btn, show_buffer_top=22, show_buffer_bottom=28)
         self._restore_state()
 
@@ -562,34 +663,40 @@ class PlaylistBrowserWindow(ba.Window):
             self._last_config = copy.deepcopy(cfg)
             self._refresh()
 
-    def _on_playlist_press(self, button: ba.Widget,
-                           playlist_name: str) -> None:
+    def _on_playlist_press(self, button: ba.Widget, playlist_name: str) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.playoptions import PlayOptionsWindow
 
         # Make sure the target playlist still exists.
-        exists = (playlist_name == '__default__'
-                  or playlist_name in ba.app.config.get(
-                      self._config_name_full, {}))
+        exists = (
+            playlist_name == '__default__'
+            or playlist_name in ba.app.config.get(self._config_name_full, {})
+        )
         if not exists:
             return
 
         self._save_state()
-        PlayOptionsWindow(sessiontype=self._sessiontype,
-                          scale_origin=button.get_screen_space_center(),
-                          playlist=playlist_name,
-                          delegate=self)
+        PlayOptionsWindow(
+            sessiontype=self._sessiontype,
+            scale_origin=button.get_screen_space_center(),
+            playlist=playlist_name,
+            delegate=self,
+        )
 
     def _on_customize_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.playlist.customizebrowser import (
-            PlaylistCustomizeBrowserWindow)
+            PlaylistCustomizeBrowserWindow,
+        )
+
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
-                sessiontype=self._sessiontype).get_root_widget())
+                sessiontype=self._sessiontype,
+            ).get_root_widget()
+        )
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
@@ -597,19 +704,23 @@ class PlaylistBrowserWindow(ba.Window):
 
         # Store our selected playlist if that's changed.
         if self._selected_playlist is not None:
-            prev_sel = ba.app.config.get(self._pvars.config_name +
-                                         ' Playlist Selection')
+            prev_sel = ba.app.config.get(
+                self._pvars.config_name + ' Playlist Selection'
+            )
             if self._selected_playlist != prev_sel:
                 cfg = ba.app.config
-                cfg[self._pvars.config_name +
-                    ' Playlist Selection'] = self._selected_playlist
+                cfg[
+                    self._pvars.config_name + ' Playlist Selection'
+                ] = self._selected_playlist
                 cfg.commit()
 
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         ba.app.ui.set_main_menu_window(
-            PlayWindow(transition='in_left').get_root_widget())
+            PlayWindow(transition='in_left').get_root_widget()
+        )
 
     def _save_state(self) -> None:
         try:
@@ -638,9 +749,11 @@ class PlaylistBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             elif sel_name == 'Customize':
                 sel = self._scrollwidget
-                ba.containerwidget(edit=self._subcontainer,
-                                   selected_child=self._customize_button,
-                                   visible_child=self._customize_button)
+                ba.containerwidget(
+                    edit=self._subcontainer,
+                    selected_child=self._customize_button,
+                    visible_child=self._customize_button,
+                )
             else:
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)

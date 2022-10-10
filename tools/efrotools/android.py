@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 @dataclass
 class GradleFilterSection:
     """Filtered section of gradle file."""
+
     tag: str
     firstline: int
     lastline: int
@@ -32,9 +33,9 @@ def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
         if line.strip().startswith('// EFRO_IF'):
             if current_section is not None:
                 raise RuntimeError('Malformed gradle file')
-            current_section = GradleFilterSection(tag=line.split()[2],
-                                                  firstline=i,
-                                                  lastline=i)
+            current_section = GradleFilterSection(
+                tag=line.split()[2], firstline=i, lastline=i
+            )
         elif line.strip().startswith('// EFRO_ENDIF'):
             if current_section is None:
                 raise RuntimeError('Malformed gradle file')

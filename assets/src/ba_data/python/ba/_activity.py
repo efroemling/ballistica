@@ -9,8 +9,12 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 import _ba
 from ba._team import Team
 from ba._player import Player
-from ba._error import (print_exception, SessionTeamNotFoundError,
-                       SessionPlayerNotFoundError, NodeNotFoundError)
+from ba._error import (
+    print_exception,
+    SessionTeamNotFoundError,
+    SessionPlayerNotFoundError,
+    NodeNotFoundError,
+)
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
 from ba._messages import UNHANDLED
@@ -199,8 +203,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             session = self._session()
             if session is not None:
                 _ba.pushcall(
-                    Call(session.transitioning_out_activity_was_freed,
-                         self.can_show_ad_on_death))
+                    Call(
+                        session.transitioning_out_activity_was_freed,
+                        self.can_show_ad_on_death,
+                    )
+                )
 
     @property
     def globalsnode(self) -> ba.Node:
@@ -220,6 +227,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         if self._stats is None:
             from ba._error import NotFoundError
+
             raise NotFoundError()
         return self._stats
 
@@ -285,7 +293,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 5.0,
                 Call(self._check_activity_death, ref, [0]),
                 repeat=True,
-                timetype=TimeType.REAL)
+                timetype=TimeType.REAL,
+            )
 
         # Run _expire in an empty context; nothing should be happening in
         # there except deleting things which requires no context.
@@ -296,8 +305,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             with _ba.Context('empty'):
                 self._expire()
         else:
-            raise RuntimeError(f'destroy() called when'
-                               f' already expired for {self}')
+            raise RuntimeError(
+                f'destroy() called when' f' already expired for {self}'
+            )
 
     def retain_actor(self, actor: ba.Actor) -> None:
         """Add a strong-reference to a ba.Actor to this Activity.
@@ -308,6 +318,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         if __debug__:
             from ba._actor import Actor
+
             assert isinstance(actor, Actor)
         self._actor_refs.append(actor)
 
@@ -318,6 +329,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         if __debug__:
             from ba._actor import Actor
+
             assert isinstance(actor, Actor)
         self._actor_weak_refs.append(weakref.ref(actor))
 
@@ -330,6 +342,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         session = self._session()
         if session is None:
             from ba._error import SessionNotFoundError
+
             raise SessionNotFoundError()
         return session
 
@@ -381,7 +394,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
     def has_transitioned_in(self) -> bool:
         """Return whether ba.Activity.on_transition_in()
-         has been called."""
+        has been called."""
         return self._has_transitioned_in
 
     def has_begun(self) -> bool:
@@ -425,7 +438,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             if self.inherits_vr_overlay_center and prev_globals is not None:
                 glb.vr_overlay_center = prev_globals.vr_overlay_center
                 glb.vr_overlay_center_enabled = (
-                    prev_globals.vr_overlay_center_enabled)
+                    prev_globals.vr_overlay_center_enabled
+                )
 
             # If they want to inherit tint from the previous self.
             if self.inherits_tint and prev_globals is not None:
@@ -435,9 +449,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
             # Start pruning our various things periodically.
             self._prune_dead_actors()
-            self._prune_dead_actors_timer = _ba.Timer(5.17,
-                                                      self._prune_dead_actors,
-                                                      repeat=True)
+            self._prune_dead_actors_timer = _ba.Timer(
+                5.17, self._prune_dead_actors, repeat=True
+            )
 
             _ba.timer(13.3, self._prune_delay_deletes, repeat=True)
 
@@ -491,10 +505,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             # activity launch; just wanna be sure that is intentional.
             self.on_begin()
 
-    def end(self,
-            results: Any = None,
-            delay: float = 0.0,
-            force: bool = False) -> None:
+    def end(
+        self, results: Any = None, delay: float = 0.0, force: bool = False
+    ) -> None:
         """Commences Activity shutdown and delivers results to the ba.Session.
 
         'delay' is the time delay before the Activity actually ends
@@ -543,7 +556,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         sessionplayer.setactivity(self)
         with _ba.Context(self):
             sessionplayer.activityplayer = player = self.create_player(
-                sessionplayer)
+                sessionplayer
+            )
             player.postinit(sessionplayer)
 
             assert player not in team.players
@@ -654,7 +668,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._teams_that_left.append(weakref.ref(team))
 
     def _reset_session_player_for_no_activity(
-            self, sessionplayer: ba.SessionPlayer) -> None:
+        self, sessionplayer: ba.SessionPlayer
+    ) -> None:
 
         # Let's be extra-defensive here: killing a node/input-call/etc
         # could trigger user-code resulting in errors, but we would still
@@ -664,13 +679,15 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         except Exception:
             print_exception(
                 f'Error resetting SessionPlayer node on {sessionplayer}'
-                f' for {self}.')
+                f' for {self}.'
+            )
         try:
             sessionplayer.resetinput()
         except Exception:
             print_exception(
                 f'Error resetting SessionPlayer input on {sessionplayer}'
-                f' for {self}.')
+                f' for {self}.'
+            )
 
         # These should never fail I think...
         sessionplayer.setactivity(None)
@@ -691,21 +708,26 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             self._playertype = type(self).__orig_bases__[-1].__args__[0]
             if not isinstance(self._playertype, type):
                 self._playertype = Player
-                print(f'ERROR: {type(self)} was not passed a Player'
-                      f' type argument; please explicitly pass ba.Player'
-                      f' if you do not want to override it.')
+                print(
+                    f'ERROR: {type(self)} was not passed a Player'
+                    f' type argument; please explicitly pass ba.Player'
+                    f' if you do not want to override it.'
+                )
             self._teamtype = type(self).__orig_bases__[-1].__args__[1]
             if not isinstance(self._teamtype, type):
                 self._teamtype = Team
-                print(f'ERROR: {type(self)} was not passed a Team'
-                      f' type argument; please explicitly pass ba.Team'
-                      f' if you do not want to override it.')
+                print(
+                    f'ERROR: {type(self)} was not passed a Team'
+                    f' type argument; please explicitly pass ba.Team'
+                    f' if you do not want to override it.'
+                )
         assert issubclass(self._playertype, Player)
         assert issubclass(self._teamtype, Team)
 
     @classmethod
-    def _check_activity_death(cls, activity_ref: weakref.ref[Activity],
-                              counter: list[int]) -> None:
+    def _check_activity_death(
+        cls, activity_ref: weakref.ref[Activity], counter: list[int]
+    ) -> None:
         """Sanity check to make sure an Activity was destroyed properly.
 
         Receives a weakref to a ba.Activity which should have torn itself
@@ -715,9 +737,13 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         try:
             import gc
             import types
+
             activity = activity_ref()
-            print('ERROR: Activity is not dying when expected:', activity,
-                  '(warning ' + str(counter[0] + 1) + ')')
+            print(
+                'ERROR: Activity is not dying when expected:',
+                activity,
+                '(warning ' + str(counter[0] + 1) + ')',
+            )
             print('This means something is still strong-referencing it.')
             counter[0] += 1
 
@@ -784,8 +810,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 try:
                     actor.on_expire()
                 except Exception:
-                    print_exception(f'Error in Actor.on_expire()'
-                                    f' for {actor_ref()}.')
+                    print_exception(
+                        f'Error in Actor.on_expire()' f' for {actor_ref()}.'
+                    )
 
     def _expire_players(self) -> None:
 

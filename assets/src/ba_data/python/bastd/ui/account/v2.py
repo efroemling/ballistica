@@ -29,12 +29,22 @@ class V2SignInWindow(ba.Window):
         self._proxykey: str | None = None
 
         uiscale = ba.app.ui.uiscale
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height),
-            transition='in_scale',
-            scale_origin_stack_offset=origin_widget.get_screen_space_center(),
-            scale=(1.25 if uiscale is ba.UIScale.SMALL else
-                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height),
+                transition='in_scale',
+                scale_origin_stack_offset=(
+                    origin_widget.get_screen_space_center()
+                ),
+                scale=(
+                    1.25
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.05
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 0.9
+                ),
+            )
+        )
 
         self._loading_text = ba.textwidget(
             parent=self._root_widget,
@@ -43,8 +53,10 @@ class V2SignInWindow(ba.Window):
             v_align='center',
             size=(0, 0),
             maxwidth=0.9 * self._width,
-            text=ba.Lstr(value='${A}...',
-                         subs=[('${A}', ba.Lstr(resource='loadingText'))]),
+            text=ba.Lstr(
+                value='${A}...',
+                subs=[('${A}', ba.Lstr(resource='loadingText'))],
+            ),
         )
 
         self._cancel_button = ba.buttonwidget(
@@ -57,15 +69,17 @@ class V2SignInWindow(ba.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
         )
-        ba.containerwidget(edit=self._root_widget,
-                           cancel_button=self._cancel_button)
+        ba.containerwidget(
+            edit=self._root_widget, cancel_button=self._cancel_button
+        )
 
         self._update_timer: ba.Timer | None = None
 
         # Ask the cloud for a proxy login id.
-        ba.app.cloud.send_message_cb(bacommon.cloud.LoginProxyRequestMessage(),
-                                     on_response=ba.WeakCall(
-                                         self._on_proxy_request_response))
+        ba.app.cloud.send_message_cb(
+            bacommon.cloud.LoginProxyRequestMessage(),
+            on_response=ba.WeakCall(self._on_proxy_request_response),
+        )
 
     def _on_proxy_request_response(
         self, response: bacommon.cloud.LoginProxyRequestResponse | Exception
@@ -77,12 +91,14 @@ class V2SignInWindow(ba.Window):
             ba.textwidget(
                 edit=self._loading_text,
                 text=ba.Lstr(resource='internal.unavailableNoConnectionText'),
-                color=(1, 0, 0))
+                color=(1, 0, 0),
+            )
             return
 
         # Show link(s) the user can use to log in.
-        address = ba.internal.get_master_server_address(
-            version=2) + response.url
+        address = (
+            ba.internal.get_master_server_address(version=2) + response.url
+        )
         address_pretty = address.removeprefix('https://')
 
         ba.textwidget(
@@ -90,55 +106,70 @@ class V2SignInWindow(ba.Window):
             position=(self._width * 0.5, self._height - 95),
             size=(0, 0),
             text=ba.Lstr(
-                resource='accountSettingsWindow.v2LinkInstructionsText'),
+                resource='accountSettingsWindow.v2LinkInstructionsText'
+            ),
             color=ba.app.ui.title_color,
             maxwidth=self._width * 0.9,
             h_align='center',
-            v_align='center')
+            v_align='center',
+        )
         button_width = 450
         if is_browser_likely_available():
-            ba.buttonwidget(parent=self._root_widget,
-                            position=((self._width * 0.5 - button_width * 0.5),
-                                      self._height - 185),
-                            autoselect=True,
-                            size=(button_width, 60),
-                            label=ba.Lstr(value=address_pretty),
-                            color=(0.55, 0.5, 0.6),
-                            textcolor=(0.75, 0.7, 0.8),
-                            on_activate_call=lambda: ba.open_url(address))
+            ba.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    (self._width * 0.5 - button_width * 0.5),
+                    self._height - 185,
+                ),
+                autoselect=True,
+                size=(button_width, 60),
+                label=ba.Lstr(value=address_pretty),
+                color=(0.55, 0.5, 0.6),
+                textcolor=(0.75, 0.7, 0.8),
+                on_activate_call=lambda: ba.open_url(address),
+            )
             qroffs = 0.0
         else:
-            ba.textwidget(parent=self._root_widget,
-                          position=(self._width * 0.5, self._height - 145),
-                          size=(0, 0),
-                          text=ba.Lstr(value=address_pretty),
-                          flatness=1.0,
-                          maxwidth=self._width,
-                          scale=0.75,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5, self._height - 145),
+                size=(0, 0),
+                text=ba.Lstr(value=address_pretty),
+                flatness=1.0,
+                maxwidth=self._width,
+                scale=0.75,
+                h_align='center',
+                v_align='center',
+            )
             qroffs = 20.0
 
         qr_size = 270
-        ba.imagewidget(parent=self._root_widget,
-                       position=(self._width * 0.5 - qr_size * 0.5,
-                                 self._height * 0.36 + qroffs - qr_size * 0.5),
-                       size=(qr_size, qr_size),
-                       texture=ba.internal.get_qrcode_texture(address))
+        ba.imagewidget(
+            parent=self._root_widget,
+            position=(
+                self._width * 0.5 - qr_size * 0.5,
+                self._height * 0.36 + qroffs - qr_size * 0.5,
+            ),
+            size=(qr_size, qr_size),
+            texture=ba.internal.get_qrcode_texture(address),
+        )
 
         # Start querying for results.
         self._proxyid = response.proxyid
         self._proxykey = response.proxykey
-        ba.timer(STATUS_CHECK_INTERVAL_SECONDS,
-                 ba.WeakCall(self._ask_for_status))
+        ba.timer(
+            STATUS_CHECK_INTERVAL_SECONDS, ba.WeakCall(self._ask_for_status)
+        )
 
     def _ask_for_status(self) -> None:
         assert self._proxyid is not None
         assert self._proxykey is not None
         ba.app.cloud.send_message_cb(
             bacommon.cloud.LoginProxyStateQueryMessage(
-                proxyid=self._proxyid, proxykey=self._proxykey),
-            on_response=ba.WeakCall(self._got_status))
+                proxyid=self._proxyid, proxykey=self._proxykey
+            ),
+            on_response=ba.WeakCall(self._got_status),
+        )
 
     def _got_status(
         self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
@@ -146,16 +177,20 @@ class V2SignInWindow(ba.Window):
 
         # For now, if anything goes wrong on the server-side, just abort
         # with a vague error message. Can be more verbose later if need be.
-        if (isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
-                and response.state is response.State.FAIL):
+        if (
+            isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
+            and response.state is response.State.FAIL
+        ):
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
             self._done()
             return
 
         # If we got a token, set ourself as signed in. Hooray!
-        if (isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
-                and response.state is response.State.SUCCESS):
+        if (
+            isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
+            and response.state is response.State.SUCCESS
+        ):
             assert response.credentials is not None
             ba.app.accounts_v2.set_primary_credentials(response.credentials)
 
@@ -165,23 +200,29 @@ class V2SignInWindow(ba.Window):
             try:
                 ba.app.cloud.send_message_cb(
                     bacommon.cloud.LoginProxyCompleteMessage(
-                        proxyid=self._proxyid),
-                    on_response=ba.WeakCall(self._proxy_complete_response))
+                        proxyid=self._proxyid
+                    ),
+                    on_response=ba.WeakCall(self._proxy_complete_response),
+                )
             except CommunicationError:
                 pass
             except Exception:
                 logging.warning(
                     'Unexpected error sending login-proxy-complete message',
-                    exc_info=True)
+                    exc_info=True,
+                )
 
             self._done()
             return
 
         # If we're still waiting, ask again soon.
-        if (isinstance(response, Exception)
-                or response.state is response.State.WAITING):
-            ba.timer(STATUS_CHECK_INTERVAL_SECONDS,
-                     ba.WeakCall(self._ask_for_status))
+        if (
+            isinstance(response, Exception)
+            or response.state is response.State.WAITING
+        ):
+            ba.timer(
+                STATUS_CHECK_INTERVAL_SECONDS, ba.WeakCall(self._ask_for_status)
+            )
 
     def _proxy_complete_response(self, response: None | Exception) -> None:
         del response  # Not used.

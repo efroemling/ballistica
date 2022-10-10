@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 @dataclass
 class ServerNodeEntry:
     """Information about a specific server."""
+
     zone: Annotated[str, IOAttrs('r')]
     address: Annotated[str, IOAttrs('a')]
     port: Annotated[int, IOAttrs('p')]
@@ -35,15 +36,16 @@ class ServerNodeQueryResponse:
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
 
     # The set of servernodes.
-    servers: Annotated[list[ServerNodeEntry],
-                       IOAttrs('s', store_default=False)] = field(
-                           default_factory=list)
+    servers: Annotated[
+        list[ServerNodeEntry], IOAttrs('s', store_default=False)
+    ] = field(default_factory=list)
 
 
 @ioprepped
 @dataclass
 class PrivateHostingState:
     """Combined state of whether we're hosting, whether we can, etc."""
+
     unavailable_error: str | None = None
     party_code: str | None = None
     tickets_to_host_now: int = 0
@@ -55,13 +57,15 @@ class PrivateHostingState:
 @dataclass
 class PrivateHostingConfig:
     """Config provided when hosting a private party."""
+
     session_type: str = 'ffa'
     playlist_name: str = 'Unknown'
     randomize: bool = False
     tutorial: bool = False
     custom_team_names: tuple[str, str] | None = None
-    custom_team_colors: tuple[tuple[float, float, float],
-                              tuple[float, float, float]] | None = None
+    custom_team_colors: tuple[
+        tuple[float, float, float], tuple[float, float, float]
+    ] | None = None
     playlist: list[dict[str, Any]] | None = None
     exit_minutes: float = 120.0
     exit_minutes_unclean: float = 180.0
@@ -72,6 +76,7 @@ class PrivateHostingConfig:
 @dataclass
 class PrivatePartyConnectResult:
     """Info about a server we get back when connecting."""
+
     error: str | None = None
     addr: str | None = None
     port: int | None = None

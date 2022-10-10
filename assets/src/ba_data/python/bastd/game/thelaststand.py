@@ -13,12 +13,22 @@ from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.powerupbox import PowerupBoxFactory, PowerupBox
-from bastd.actor.spazbot import (SpazBotSet, SpazBotDiedMessage, BomberBot,
-                                 BomberBotPro, BomberBotProShielded,
-                                 BrawlerBot, BrawlerBotPro,
-                                 BrawlerBotProShielded, TriggerBot,
-                                 TriggerBotPro, TriggerBotProShielded,
-                                 ChargerBot, StickyBot, ExplodeyBot)
+from bastd.actor.spazbot import (
+    SpazBotSet,
+    SpazBotDiedMessage,
+    BomberBot,
+    BomberBotPro,
+    BomberBotProShielded,
+    BrawlerBot,
+    BrawlerBotPro,
+    BrawlerBotProShielded,
+    TriggerBot,
+    TriggerBotPro,
+    TriggerBotProShielded,
+    ChargerBot,
+    StickyBot,
+    ExplodeyBot,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -28,6 +38,7 @@ if TYPE_CHECKING:
 @dataclass
 class SpawnInfo:
     """Spawning info for a particular bot type."""
+
     spawnrate: float
     increase: float
     dincrease: float
@@ -83,25 +94,26 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # For each bot type: [spawnrate, increase, d_increase]
         self._bot_spawn_types = {
-            BomberBot:              SpawnInfo(1.00, 0.00, 0.000),
-            BomberBotPro:           SpawnInfo(0.00, 0.05, 0.001),
-            BomberBotProShielded:   SpawnInfo(0.00, 0.02, 0.002),
-            BrawlerBot:             SpawnInfo(1.00, 0.00, 0.000),
-            BrawlerBotPro:          SpawnInfo(0.00, 0.05, 0.001),
-            BrawlerBotProShielded:  SpawnInfo(0.00, 0.02, 0.002),
-            TriggerBot:             SpawnInfo(0.30, 0.00, 0.000),
-            TriggerBotPro:          SpawnInfo(0.00, 0.05, 0.001),
-            TriggerBotProShielded:  SpawnInfo(0.00, 0.02, 0.002),
-            ChargerBot:             SpawnInfo(0.30, 0.05, 0.000),
-            StickyBot:              SpawnInfo(0.10, 0.03, 0.001),
-            ExplodeyBot:            SpawnInfo(0.05, 0.02, 0.002)
+            BomberBot: SpawnInfo(1.00, 0.00, 0.000),
+            BomberBotPro: SpawnInfo(0.00, 0.05, 0.001),
+            BomberBotProShielded: SpawnInfo(0.00, 0.02, 0.002),
+            BrawlerBot: SpawnInfo(1.00, 0.00, 0.000),
+            BrawlerBotPro: SpawnInfo(0.00, 0.05, 0.001),
+            BrawlerBotProShielded: SpawnInfo(0.00, 0.02, 0.002),
+            TriggerBot: SpawnInfo(0.30, 0.00, 0.000),
+            TriggerBotPro: SpawnInfo(0.00, 0.05, 0.001),
+            TriggerBotProShielded: SpawnInfo(0.00, 0.02, 0.002),
+            ChargerBot: SpawnInfo(0.30, 0.05, 0.000),
+            StickyBot: SpawnInfo(0.10, 0.03, 0.001),
+            ExplodeyBot: SpawnInfo(0.05, 0.02, 0.002),
         }  # yapf: disable
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
         ba.timer(1.3, ba.Call(ba.playsound, self._new_wave_sound))
-        self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
-                                      score_split=0.5)
+        self._scoreboard = Scoreboard(
+            label=ba.Lstr(resource='scoreText'), score_split=0.5
+        )
 
     def on_begin(self) -> None:
         super().on_begin()
@@ -112,13 +124,16 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         ba.timer(0.001, ba.WeakCall(self._start_bot_updates))
         self.setup_low_life_warning_sound()
         self._update_scores()
-        self._tntspawner = TNTSpawner(position=self._tntspawnpos,
-                                      respawn_time=10.0)
+        self._tntspawner = TNTSpawner(
+            position=self._tntspawnpos, respawn_time=10.0
+        )
 
     def spawn_player(self, player: Player) -> ba.Actor:
-        pos = (self._spawn_center[0] + random.uniform(-1.5, 1.5),
-               self._spawn_center[1],
-               self._spawn_center[2] + random.uniform(-1.5, 1.5))
+        pos = (
+            self._spawn_center[0] + random.uniform(-1.5, 1.5),
+            self._spawn_center[1],
+            self._spawn_center[2] + random.uniform(-1.5, 1.5),
+        )
         return self.spawn_player_spaz(player, position=pos)
 
     def _start_bot_updates(self) -> None:
@@ -129,67 +144,86 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             self._update_bots()
         if len(self.players) > 3:
             self._update_bots()
-        self._bot_update_timer = ba.Timer(self._bot_update_interval,
-                                          ba.WeakCall(self._update_bots))
+        self._bot_update_timer = ba.Timer(
+            self._bot_update_interval, ba.WeakCall(self._update_bots)
+        )
 
-    def _drop_powerup(self,
-                      index: int,
-                      poweruptype: str | None = None) -> None:
+    def _drop_powerup(self, index: int, poweruptype: str | None = None) -> None:
         if poweruptype is None:
-            poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
-                excludetypes=self._excludepowerups))
-        PowerupBox(position=self.map.powerup_spawn_points[index],
-                   poweruptype=poweruptype).autoretain()
+            poweruptype = PowerupBoxFactory.get().get_random_powerup_type(
+                excludetypes=self._excludepowerups
+            )
+        PowerupBox(
+            position=self.map.powerup_spawn_points[index],
+            poweruptype=poweruptype,
+        ).autoretain()
 
     def _start_powerup_drops(self) -> None:
-        self._powerup_drop_timer = ba.Timer(3.0,
-                                            ba.WeakCall(self._drop_powerups),
-                                            repeat=True)
+        self._powerup_drop_timer = ba.Timer(
+            3.0, ba.WeakCall(self._drop_powerups), repeat=True
+        )
 
-    def _drop_powerups(self,
-                       standard_points: bool = False,
-                       force_first: str | None = None) -> None:
+    def _drop_powerups(
+        self, standard_points: bool = False, force_first: str | None = None
+    ) -> None:
         """Generic powerup drop."""
         from bastd.actor import powerupbox
+
         if standard_points:
             pts = self.map.powerup_spawn_points
             for i in range(len(pts)):
                 ba.timer(
                     1.0 + i * 0.5,
-                    ba.WeakCall(self._drop_powerup, i,
-                                force_first if i == 0 else None))
+                    ba.WeakCall(
+                        self._drop_powerup, i, force_first if i == 0 else None
+                    ),
+                )
         else:
-            drop_pt = (self._powerup_center[0] + random.uniform(
-                -1.0 * self._powerup_spread[0], 1.0 * self._powerup_spread[0]),
-                       self._powerup_center[1],
-                       self._powerup_center[2] + random.uniform(
-                           -self._powerup_spread[1], self._powerup_spread[1]))
+            drop_pt = (
+                self._powerup_center[0]
+                + random.uniform(
+                    -1.0 * self._powerup_spread[0],
+                    1.0 * self._powerup_spread[0],
+                ),
+                self._powerup_center[1],
+                self._powerup_center[2]
+                + random.uniform(
+                    -self._powerup_spread[1], self._powerup_spread[1]
+                ),
+            )
 
             # Drop one random one somewhere.
             powerupbox.PowerupBox(
                 position=drop_pt,
                 poweruptype=PowerupBoxFactory.get().get_random_powerup_type(
-                    excludetypes=self._excludepowerups)).autoretain()
+                    excludetypes=self._excludepowerups
+                ),
+            ).autoretain()
 
     def do_end(self, outcome: str) -> None:
         """End the game."""
         if outcome == 'defeat':
             self.fade_to_red()
-        self.end(delay=2.0,
-                 results={
-                     'outcome': outcome,
-                     'score': self._score,
-                     'playerinfos': self.initialplayerinfos
-                 })
+        self.end(
+            delay=2.0,
+            results={
+                'outcome': outcome,
+                'score': self._score,
+                'playerinfos': self.initialplayerinfos,
+            },
+        )
 
     def _update_bots(self) -> None:
         assert self._bot_update_interval is not None
         self._bot_update_interval = max(0.5, self._bot_update_interval * 0.98)
-        self._bot_update_timer = ba.Timer(self._bot_update_interval,
-                                          ba.WeakCall(self._update_bots))
-        botspawnpts: list[Sequence[float]] = [[-5.0, 5.5, -4.14],
-                                              [0.0, 5.5, -4.14],
-                                              [5.0, 5.5, -4.14]]
+        self._bot_update_timer = ba.Timer(
+            self._bot_update_interval, ba.WeakCall(self._update_bots)
+        )
+        botspawnpts: list[Sequence[float]] = [
+            [-5.0, 5.5, -4.14],
+            [0.0, 5.5, -4.14],
+            [5.0, 5.5, -4.14],
+        ]
         dists = [0.0, 0.0, 0.0]
         playerpts: list[Sequence[float]] = []
         for player in self.players:
@@ -211,8 +245,11 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         else:
             spawnpt = botspawnpts[2]
 
-        spawnpt = (spawnpt[0] + 3.0 * (random.random() - 0.5), spawnpt[1],
-                   2.0 * (random.random() - 0.5) + spawnpt[2])
+        spawnpt = (
+            spawnpt[0] + 3.0 * (random.random() - 0.5),
+            spawnpt[1],
+            2.0 * (random.random() - 0.5) + spawnpt[2],
+        )
 
         # Normalize our bot type total and find a random number within that.
         total = 0.0
@@ -268,15 +305,18 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             if msg.killerplayer:
                 assert msg.spazbot.node
                 target = msg.spazbot.node.position
-                self.stats.player_scored(msg.killerplayer,
-                                         pts,
-                                         target=target,
-                                         kill=True,
-                                         screenmessage=False,
-                                         importance=importance)
-                ba.playsound(self._dingsound
-                             if importance == 1 else self._dingsoundhigh,
-                             volume=0.6)
+                self.stats.player_scored(
+                    msg.killerplayer,
+                    pts,
+                    target=target,
+                    kill=True,
+                    screenmessage=False,
+                    importance=importance,
+                )
+                ba.playsound(
+                    self._dingsound if importance == 1 else self._dingsoundhigh,
+                    volume=0.6,
+                )
 
             # Normally we pull scores from the score-set, but if there's no
             # player lets be explicit.

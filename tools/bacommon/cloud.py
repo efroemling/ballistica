@@ -44,6 +44,7 @@ class LoginProxyRequestResponse(Response):
 @dataclass
 class LoginProxyStateQueryMessage(Message):
     """Soo.. how is that login proxy going?"""
+
     proxyid: Annotated[str, IOAttrs('p')]
     proxykey: Annotated[str, IOAttrs('k')]
 
@@ -59,6 +60,7 @@ class LoginProxyStateQueryResponse(Response):
 
     class State(Enum):
         """States a login-proxy can be in."""
+
         WAITING = 'waiting'
         SUCCESS = 'success'
         FAIL = 'fail'
@@ -73,6 +75,7 @@ class LoginProxyStateQueryResponse(Response):
 @dataclass
 class LoginProxyCompleteMessage(Message):
     """Just so you know, we're done with this proxy."""
+
     proxyid: Annotated[str, IOAttrs('p')]
 
 
@@ -96,6 +99,7 @@ class PingResponse(Response):
 @dataclass
 class TestMessage(Message):
     """Can I get some of that workspace action?"""
+
     testfoo: Annotated[int, IOAttrs('f')]
 
     @classmethod
@@ -115,6 +119,7 @@ class TestResponse(Response):
 @dataclass
 class WorkspaceFetchState:
     """Common state data for a workspace fetch."""
+
     manifest: Annotated[DirectoryManifest, IOAttrs('m')]
     iteration: Annotated[int, IOAttrs('i')] = 0
     total_deletes: Annotated[int, IOAttrs('tdels')] = 0
@@ -126,6 +131,7 @@ class WorkspaceFetchState:
 @dataclass
 class WorkspaceFetchMessage(Message):
     """Can I get some of that workspace action?"""
+
     workspaceid: Annotated[str, IOAttrs('w')]
     state: Annotated[WorkspaceFetchState, IOAttrs('s')]
 
@@ -140,11 +146,11 @@ class WorkspaceFetchResponse(Response):
     """Here's that workspace you asked for, boss."""
 
     state: Annotated[WorkspaceFetchState, IOAttrs('s')]
-    deletes: Annotated[list[str],
-                       IOAttrs('dlt', store_default=False)] = field(
-                           default_factory=list)
-    downloads_inline: Annotated[dict[str, bytes],
-                                IOAttrs('dinl', store_default=False)] = field(
-                                    default_factory=dict)
+    deletes: Annotated[list[str], IOAttrs('dlt', store_default=False)] = field(
+        default_factory=list
+    )
+    downloads_inline: Annotated[
+        dict[str, bytes], IOAttrs('dinl', store_default=False)
+    ] = field(default_factory=dict)
 
     done: Annotated[bool, IOAttrs('d')] = False

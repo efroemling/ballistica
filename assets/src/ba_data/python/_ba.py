@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from ba._app import App
     import ba
 
+
 _T = TypeVar('_T')
 
 app: App
@@ -51,38 +52,46 @@ def _uninferrable() -> Any:
 
 
 class ActivityData:
+
     """(internal)"""
 
     def exists(self) -> bool:
+
         """Returns whether the ActivityData still exists.
         Most functionality will fail on a nonexistent instance.
         """
         return bool()
 
     def expire(self) -> None:
+
         """Expires the internal data for the activity"""
         return None
 
     def make_foreground(self) -> None:
+
         """Sets this activity as the foreground one in its session."""
         return None
 
     def start(self) -> None:
+
         """Begins the activity running"""
         return None
 
 
 class CollideModel:
+
     """A reference to a collide-model.
 
     Category: **Asset Classes**
 
     Use ba.getcollidemodel() to instantiate one.
     """
+
     pass
 
 
 class Context:
+
     """A game context state.
 
     Category: **General Utility Classes**
@@ -148,6 +157,7 @@ class Context:
 
 
 class ContextCall:
+
     """A context-preserving callable.
 
     Category: **General Utility Classes**
@@ -193,6 +203,7 @@ class ContextCall:
 
 
 class Data:
+
     """A reference to a data object.
 
     Category: **Asset Classes**
@@ -201,6 +212,7 @@ class Data:
     """
 
     def getvalue(self) -> Any:
+
         """Return the data object's value.
 
         This can consist of anything representable by json (dicts, lists,
@@ -213,55 +225,69 @@ class Data:
 
 
 class InputDevice:
+
     """An input-device such as a gamepad, touchscreen, or keyboard.
 
     Category: **Gameplay Classes**
     """
+
     allows_configuring: bool
+
     """Whether the input-device can be configured."""
 
     has_meaningful_button_names: bool
+
     """Whether button names returned by this instance match labels
        on the actual device. (Can be used to determine whether to show
        them in controls-overlays, etc.)."""
 
     player: ba.SessionPlayer | None
+
     """The player associated with this input device."""
 
     client_id: int
+
     """The numeric client-id this device is associated with.
        This is only meaningful for remote client inputs; for
        all local devices this will be -1."""
 
     name: str
+
     """The name of the device."""
 
     unique_identifier: str
+
     """A string that can be used to persistently identify the device,
        even among other devices of the same type. Used for saving
        prefs, etc."""
 
     id: int
+
     """The unique numeric id of this device."""
 
     instance_number: int
+
     """The number of this device among devices of the same type."""
 
     is_controller_app: bool
+
     """Whether this input-device represents a locally-connected
        controller-app."""
 
     is_remote_client: bool
+
     """Whether this input-device represents a remotely-connected
        client."""
 
     def exists(self) -> bool:
+
         """Return whether the underlying device for this object is
         still present.
         """
         return bool()
 
     def get_axis_name(self, axis_id: int) -> str:
+
         """Given an axis ID, return the name of the axis on this device.
 
         Can return an empty string if the value is not meaningful to humans.
@@ -269,14 +295,17 @@ class InputDevice:
         return str()
 
     def get_button_name(self, button_id: int) -> ba.Lstr:
+
         """Given a button ID, return a human-readable name for that key/button.
 
         Can return an empty string if the value is not meaningful to humans.
         """
         import ba  # pylint: disable=cyclic-import
+
         return ba.Lstr(value='')
 
     def get_default_player_name(self) -> str:
+
         """(internal)
 
         Returns the default player name for this device. (used for the 'random'
@@ -285,10 +314,12 @@ class InputDevice:
         return str()
 
     def get_player_profiles(self) -> dict:
+
         """(internal)"""
         return dict()
 
     def get_v1_account_name(self, full: bool) -> str:
+
         """Returns the account name associated with this device.
 
         (can be used to get account names for remote players)
@@ -296,15 +327,18 @@ class InputDevice:
         return str()
 
     def is_connected_to_remote_player(self) -> bool:
+
         """(internal)"""
         return bool()
 
     def remove_remote_player_from_game(self) -> None:
+
         """(internal)"""
         return None
 
 
 class Material:
+
     """An entity applied to game objects to modify collision behavior.
 
     Category: **Gameplay Classes**
@@ -328,11 +362,13 @@ class Material:
         pass
 
     label: str
+
     """A label for the material; only used for debugging."""
 
-    def add_actions(self,
-                    actions: tuple,
-                    conditions: tuple | None = None) -> None:
+    def add_actions(
+        self, actions: tuple, conditions: tuple | None = None
+    ) -> None:
+
         """Add one or more actions to the material, optionally with conditions.
 
         ##### Conditions
@@ -483,6 +519,7 @@ class Material:
 
 
 class Model:
+
     """A reference to a model.
 
     Category: **Asset Classes**
@@ -490,10 +527,12 @@ class Model:
     Models are used for drawing.
     Use ba.getmodel() to instantiate one.
     """
+
     pass
 
 
 class Node:
+
     """Reference to a Node; the low level building block of the game.
 
     Category: **Gameplay Classes**
@@ -633,12 +672,14 @@ class Node:
     tint: Sequence[float] = (1.0, 1.0, 1.0)
 
     def add_death_action(self, action: Callable[[], None]) -> None:
+
         """Add a callable object to be called upon this node's death.
         Note that these actions are run just after the node dies, not before.
         """
         return None
 
     def connectattr(self, srcattr: str, dstnode: Node, dstattr: str) -> None:
+
         """Connect one of this node's attributes to an attribute on another
         node. This will immediately set the target attribute's value to that
         of the source attribute, and will continue to do so once per step
@@ -655,12 +696,14 @@ class Node:
         return None
 
     def delete(self, ignore_missing: bool = True) -> None:
+
         """Delete the node. Ignores already-deleted nodes if `ignore_missing`
         is True; otherwise a ba.NodeNotFoundError is thrown.
         """
         return None
 
     def exists(self) -> bool:
+
         """Returns whether the Node still exists.
         Most functionality will fail on a nonexistent Node, so it's never a bad
         idea to check this.
@@ -673,9 +716,9 @@ class Node:
 
     # Show that ur return type varies based on "doraise" value:
     @overload
-    def getdelegate(self,
-                    type: type[_T],
-                    doraise: Literal[False] = False) -> _T | None:
+    def getdelegate(
+        self, type: type[_T], doraise: Literal[False] = False
+    ) -> _T | None:
         ...
 
     @overload
@@ -683,6 +726,7 @@ class Node:
         ...
 
     def getdelegate(self, type: Any, doraise: bool = False) -> Any:
+
         """Return the node's current delegate object if it matches
         a certain type.
 
@@ -693,16 +737,19 @@ class Node:
         return None
 
     def getname(self) -> str:
+
         """Return the name assigned to a Node; used mainly for debugging"""
         return str()
 
     def getnodetype(self) -> str:
+
         """Return the type of Node referenced by this object as a string.
         (Note this is different from the Python type which is always ba.Node)
         """
         return str()
 
     def handlemessage(self, *args: Any) -> None:
+
         """General message handling; can be passed any message object.
 
         All standard message objects are forwarded along to the ba.Node's
@@ -720,9 +767,11 @@ class Node:
 
 
 class SessionData:
+
     """(internal)"""
 
     def exists(self) -> bool:
+
         """Returns whether the SessionData still exists.
         Most functionality will fail on a nonexistent instance.
         """
@@ -730,6 +779,7 @@ class SessionData:
 
 
 class SessionPlayer:
+
     """A reference to a player in the ba.Session.
 
     Category: **Gameplay Classes**
@@ -743,7 +793,9 @@ class SessionPlayer:
     that a SessionPlayer is still present if retaining references to one
     for any length of time.
     """
+
     id: int
+
     """The unique numeric ID of the Player.
 
        Note that you can also use the boolean operator for this same
@@ -751,53 +803,66 @@ class SessionPlayer:
        the right thing both for Player objects and values of None."""
 
     in_game: bool
+
     """This bool value will be True once the Player has completed
        any lobby character/team selection."""
 
     sessionteam: ba.SessionTeam
+
     """The ba.SessionTeam this Player is on. If the SessionPlayer
        is still in its lobby selecting a team/etc. then a
        ba.SessionTeamNotFoundError will be raised."""
 
     inputdevice: ba.InputDevice
+
     """The input device associated with the player."""
 
     color: Sequence[float]
+
     """The base color for this Player.
        In team games this will match the ba.SessionTeam's color."""
 
     highlight: Sequence[float]
+
     """A secondary color for this player.
        This is used for minor highlights and accents
        to allow a player to stand apart from his teammates
        who may all share the same team (primary) color."""
 
     character: str
+
     """The character this player has selected in their profile."""
 
     activityplayer: ba.Player | None
+
     """The current game-specific instance for this player."""
 
-    def assigninput(self, type: ba.InputType | tuple[ba.InputType, ...],
-                    call: Callable) -> None:
+    def assigninput(
+        self, type: ba.InputType | tuple[ba.InputType, ...], call: Callable
+    ) -> None:
+
         """Set the python callable to be run for one or more types of input."""
         return None
 
     def exists(self) -> bool:
+
         """Return whether the underlying player is still in the game."""
         return bool()
 
     def get_icon(self) -> dict[str, Any]:
+
         """Returns the character's icon (images, colors, etc contained
         in a dict.
         """
         return {'foo': 'bar'}
 
     def get_icon_info(self) -> dict[str, Any]:
+
         """(internal)"""
         return {'foo': 'bar'}
 
     def get_v1_account_id(self) -> str:
+
         """Return the V1 Account ID this player is signed in under, if
         there is one and it can be determined with relative certainty.
         Returns None otherwise. Note that this may require an active
@@ -808,38 +873,53 @@ class SessionPlayer:
         return str()
 
     def getname(self, full: bool = False, icon: bool = True) -> str:
+
         """Returns the player's name. If icon is True, the long version of the
         name may include an icon.
         """
         return str()
 
     def remove_from_game(self) -> None:
+
         """Removes the player from the game."""
         return None
 
     def resetinput(self) -> None:
+
         """Clears out the player's assigned input actions."""
         return None
 
-    def set_icon_info(self, texture: str, tint_texture: str,
-                      tint_color: Sequence[float],
-                      tint2_color: Sequence[float]) -> None:
+    def set_icon_info(
+        self,
+        texture: str,
+        tint_texture: str,
+        tint_color: Sequence[float],
+        tint2_color: Sequence[float],
+    ) -> None:
+
         """(internal)"""
         return None
 
     def setactivity(self, activity: ba.Activity | None) -> None:
+
         """(internal)"""
         return None
 
-    def setdata(self, team: ba.SessionTeam, character: str,
-                color: Sequence[float], highlight: Sequence[float]) -> None:
+    def setdata(
+        self,
+        team: ba.SessionTeam,
+        character: str,
+        color: Sequence[float],
+        highlight: Sequence[float],
+    ) -> None:
+
         """(internal)"""
         return None
 
-    def setname(self,
-                name: str,
-                full_name: str | None = None,
-                real: bool = True) -> None:
+    def setname(
+        self, name: str, full_name: str | None = None, real: bool = True
+    ) -> None:
+
         """Set the player's name to the provided string.
         A number will automatically be appended if the name is not unique from
         other players.
@@ -847,31 +927,37 @@ class SessionPlayer:
         return None
 
     def setnode(self, node: Node | None) -> None:
+
         """(internal)"""
         return None
 
 
 class Sound:
+
     """A reference to a sound.
 
     Category: **Asset Classes**
 
     Use ba.getsound() to instantiate one.
     """
+
     pass
 
 
 class Texture:
+
     """A reference to a texture.
 
     Category: **Asset Classes**
 
     Use ba.gettexture() to instantiate one.
     """
+
     pass
 
 
 class Timer:
+
     """Timers are used to run code at later points in time.
 
     Category: **General Utility Classes**
@@ -919,17 +1005,20 @@ class Timer:
     ... ba.timer(3.89, stop_saying_it)
     """
 
-    def __init__(self,
-                 time: float,
-                 call: Callable[[], Any],
-                 repeat: bool = False,
-                 timetype: ba.TimeType = TimeType.SIM,
-                 timeformat: ba.TimeFormat = TimeFormat.SECONDS,
-                 suppress_format_warning: bool = False):
+    def __init__(
+        self,
+        time: float,
+        call: Callable[[], Any],
+        repeat: bool = False,
+        timetype: ba.TimeType = TimeType.SIM,
+        timeformat: ba.TimeFormat = TimeFormat.SECONDS,
+        suppress_format_warning: bool = False,
+    ):
         pass
 
 
 class Vec3(Sequence[float]):
+
     """A vector of 3 floats.
 
     Category: **General Utility Classes**
@@ -940,13 +1029,17 @@ class Vec3(Sequence[float]):
     - with a single three-member sequence arg, sequence values are copied
     - otherwise assumes individual x/y/z args (positional or keywords)
     """
+
     x: float
+
     """The vector's X component."""
 
     y: float
+
     """The vector's Y component."""
 
     z: float
+
     """The vector's Z component."""
 
     # pylint: disable=function-redefined
@@ -1019,23 +1112,28 @@ class Vec3(Sequence[float]):
         pass
 
     def cross(self, other: Vec3) -> Vec3:
+
         """Returns the cross product of this vector and another."""
         return Vec3()
 
     def dot(self, other: Vec3) -> float:
+
         """Returns the dot product of this vector and another."""
         return float()
 
     def length(self) -> float:
+
         """Returns the length of the vector."""
         return float()
 
     def normalized(self) -> Vec3:
+
         """Returns a normalized version of the vector."""
         return Vec3()
 
 
 class Widget:
+
     """Internal type for low level UI elements; buttons, windows, etc.
 
     Category: **User Interface Classes**
@@ -1046,20 +1144,24 @@ class Widget:
     """
 
     def activate(self) -> None:
+
         """Activates a widget; the same as if it had been clicked."""
         return None
 
     def add_delete_callback(self, call: Callable) -> None:
+
         """Add a call to be run immediately after this widget is destroyed."""
         return None
 
     def delete(self, ignore_missing: bool = True) -> None:
+
         """Delete the Widget. Ignores already-deleted Widgets if ignore_missing
         is True; otherwise an Exception is thrown.
         """
         return None
 
     def exists(self) -> bool:
+
         """Returns whether the Widget still exists.
         Most functionality will fail on a nonexistent widget.
 
@@ -1070,10 +1172,12 @@ class Widget:
         return bool()
 
     def get_children(self) -> list[ba.Widget]:
+
         """Returns any child Widgets of this Widget."""
         return [Widget()]
 
     def get_screen_space_center(self) -> tuple[float, float]:
+
         """Returns the coords of the ba.Widget center relative to the center
         of the screen. This can be useful for placing pop-up windows and other
         special cases.
@@ -1081,10 +1185,12 @@ class Widget:
         return (0.0, 0.0)
 
     def get_selected_child(self) -> ba.Widget | None:
+
         """Returns the selected child Widget or None if nothing is selected."""
         return Widget()
 
     def get_widget_type(self) -> str:
+
         """Return the internal type of the Widget as a string. Note that this
         is different from the Python ba.Widget type, which is the same for
         all widgets.
@@ -1093,12 +1199,15 @@ class Widget:
 
 
 def _app() -> ba.App:
+
     """(internal)"""
     import ba  # pylint: disable=cyclic-import
+
     return ba.App()
 
 
 def add_clean_frame_callback(call: Callable) -> None:
+
     """(internal)
 
     Provide an object to be called once the next non-progress-bar-frame has
@@ -1109,6 +1218,7 @@ def add_clean_frame_callback(call: Callable) -> None:
 
 
 def android_get_external_files_dir() -> str:
+
     """(internal)
 
     Returns the android external storage path, or None if there is none on
@@ -1118,6 +1228,7 @@ def android_get_external_files_dir() -> str:
 
 
 def android_media_scan_file(file_name: str) -> None:
+
     """(internal)
 
     Refreshes Android MTP Index for a file; use this to get file
@@ -1127,26 +1238,31 @@ def android_media_scan_file(file_name: str) -> None:
 
 
 def android_show_wifi_settings() -> None:
+
     """(internal)"""
     return None
 
 
 def app_instance_uuid() -> str:
+
     """(internal)"""
     return str()
 
 
 def apply_config() -> None:
+
     """(internal)"""
     return None
 
 
 def appname() -> str:
+
     """(internal)"""
     return str()
 
 
 def appnameupper() -> str:
+
     """(internal)
 
     Return whether this build of the game can display full unicode such as
@@ -1156,52 +1272,57 @@ def appnameupper() -> str:
 
 
 def back_press() -> None:
+
     """(internal)"""
     return None
 
 
 def bless() -> None:
+
     """(internal)"""
     return None
 
 
-def buttonwidget(edit: ba.Widget | None = None,
-                 parent: ba.Widget | None = None,
-                 size: Sequence[float] | None = None,
-                 position: Sequence[float] | None = None,
-                 on_activate_call: Callable | None = None,
-                 label: str | ba.Lstr | None = None,
-                 color: Sequence[float] | None = None,
-                 down_widget: ba.Widget | None = None,
-                 up_widget: ba.Widget | None = None,
-                 left_widget: ba.Widget | None = None,
-                 right_widget: ba.Widget | None = None,
-                 texture: ba.Texture | None = None,
-                 text_scale: float | None = None,
-                 textcolor: Sequence[float] | None = None,
-                 enable_sound: bool | None = None,
-                 model_transparent: ba.Model | None = None,
-                 model_opaque: ba.Model | None = None,
-                 repeat: bool | None = None,
-                 scale: float | None = None,
-                 transition_delay: float | None = None,
-                 on_select_call: Callable | None = None,
-                 button_type: str | None = None,
-                 extra_touch_border_scale: float | None = None,
-                 selectable: bool | None = None,
-                 show_buffer_top: float | None = None,
-                 icon: ba.Texture | None = None,
-                 iconscale: float | None = None,
-                 icon_tint: float | None = None,
-                 icon_color: Sequence[float] | None = None,
-                 autoselect: bool | None = None,
-                 mask_texture: ba.Texture | None = None,
-                 tint_texture: ba.Texture | None = None,
-                 tint_color: Sequence[float] | None = None,
-                 tint2_color: Sequence[float] | None = None,
-                 text_flatness: float | None = None,
-                 text_res_scale: float | None = None,
-                 enabled: bool | None = None) -> ba.Widget:
+def buttonwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    on_activate_call: Callable | None = None,
+    label: str | ba.Lstr | None = None,
+    color: Sequence[float] | None = None,
+    down_widget: ba.Widget | None = None,
+    up_widget: ba.Widget | None = None,
+    left_widget: ba.Widget | None = None,
+    right_widget: ba.Widget | None = None,
+    texture: ba.Texture | None = None,
+    text_scale: float | None = None,
+    textcolor: Sequence[float] | None = None,
+    enable_sound: bool | None = None,
+    model_transparent: ba.Model | None = None,
+    model_opaque: ba.Model | None = None,
+    repeat: bool | None = None,
+    scale: float | None = None,
+    transition_delay: float | None = None,
+    on_select_call: Callable | None = None,
+    button_type: str | None = None,
+    extra_touch_border_scale: float | None = None,
+    selectable: bool | None = None,
+    show_buffer_top: float | None = None,
+    icon: ba.Texture | None = None,
+    iconscale: float | None = None,
+    icon_tint: float | None = None,
+    icon_color: Sequence[float] | None = None,
+    autoselect: bool | None = None,
+    mask_texture: ba.Texture | None = None,
+    tint_texture: ba.Texture | None = None,
+    tint_color: Sequence[float] | None = None,
+    tint2_color: Sequence[float] | None = None,
+    text_flatness: float | None = None,
+    text_res_scale: float | None = None,
+    enabled: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a button widget.
 
     Category: **User Interface Functions**
@@ -1211,10 +1332,12 @@ def buttonwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def camerashake(intensity: float = 1.0) -> None:
+
     """Shake the camera.
 
     Category: **Gameplay Functions**
@@ -1227,16 +1350,19 @@ def camerashake(intensity: float = 1.0) -> None:
 
 
 def can_display_full_unicode() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def can_show_ad() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def capture_gamepad_input(call: Callable[[dict], None]) -> None:
+
     """(internal)
 
     Add a callable to be called for subsequent gamepad events.
@@ -1246,6 +1372,7 @@ def capture_gamepad_input(call: Callable[[dict], None]) -> None:
 
 
 def capture_keyboard_input(call: Callable[[dict], None]) -> None:
+
     """(internal)
 
     Add a callable to be called for subsequent keyboard-game-pad events.
@@ -1255,6 +1382,7 @@ def capture_keyboard_input(call: Callable[[dict], None]) -> None:
 
 
 def charstr(char_id: ba.SpecialChar) -> str:
+
     """Get a unicode string representing a special character.
 
     Category: **General Utility Functions**
@@ -1268,28 +1396,34 @@ def charstr(char_id: ba.SpecialChar) -> str:
     return str()
 
 
-def chatmessage(message: str | ba.Lstr,
-                clients: Sequence[int] | None = None,
-                sender_override: str | None = None) -> None:
+def chatmessage(
+    message: str | ba.Lstr,
+    clients: Sequence[int] | None = None,
+    sender_override: str | None = None,
+) -> None:
+
     """(internal)"""
     return None
 
 
-def checkboxwidget(edit: ba.Widget | None = None,
-                   parent: ba.Widget | None = None,
-                   size: Sequence[float] | None = None,
-                   position: Sequence[float] | None = None,
-                   text: str | ba.Lstr | None = None,
-                   value: bool | None = None,
-                   on_value_change_call: Callable[[bool], None] | None = None,
-                   on_select_call: Callable[[], None] | None = None,
-                   text_scale: float | None = None,
-                   textcolor: Sequence[float] | None = None,
-                   scale: float | None = None,
-                   is_radio_button: bool | None = None,
-                   maxwidth: float | None = None,
-                   autoselect: bool | None = None,
-                   color: Sequence[float] | None = None) -> ba.Widget:
+def checkboxwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    text: str | ba.Lstr | None = None,
+    value: bool | None = None,
+    on_value_change_call: Callable[[bool], None] | None = None,
+    on_select_call: Callable[[], None] | None = None,
+    text_scale: float | None = None,
+    textcolor: Sequence[float] | None = None,
+    scale: float | None = None,
+    is_radio_button: bool | None = None,
+    maxwidth: float | None = None,
+    autoselect: bool | None = None,
+    color: Sequence[float] | None = None,
+) -> ba.Widget:
+
     """Create or edit a check-box widget.
 
     Category: **User Interface Functions**
@@ -1299,15 +1433,18 @@ def checkboxwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def client_info_query_response(token: str, response: Any) -> None:
+
     """(internal)"""
     return None
 
 
 def clipboard_get_text() -> str:
+
     """Return text currently on the system clipboard.
 
     Category: **General Utility Functions**
@@ -1319,6 +1456,7 @@ def clipboard_get_text() -> str:
 
 
 def clipboard_has_text() -> bool:
+
     """Return whether there is currently text on the clipboard.
 
     Category: **General Utility Functions**
@@ -1330,6 +1468,7 @@ def clipboard_has_text() -> bool:
 
 
 def clipboard_is_supported() -> bool:
+
     """Return whether this platform supports clipboard operations at all.
 
     Category: **General Utility Functions**
@@ -1341,6 +1480,7 @@ def clipboard_is_supported() -> bool:
 
 
 def clipboard_set_text(value: str) -> None:
+
     """Copy a string to the system clipboard.
 
     Category: **General Utility Functions**
@@ -1351,23 +1491,26 @@ def clipboard_set_text(value: str) -> None:
     return None
 
 
-def columnwidget(edit: ba.Widget | None = None,
-                 parent: ba.Widget | None = None,
-                 size: Sequence[float] | None = None,
-                 position: Sequence[float] | None = None,
-                 background: bool | None = None,
-                 selected_child: ba.Widget | None = None,
-                 visible_child: ba.Widget | None = None,
-                 single_depth: bool | None = None,
-                 print_list_exit_instructions: bool | None = None,
-                 left_border: float | None = None,
-                 top_border: float | None = None,
-                 bottom_border: float | None = None,
-                 selection_loops_to_parent: bool | None = None,
-                 border: float | None = None,
-                 margin: float | None = None,
-                 claims_left_right: bool | None = None,
-                 claims_tab: bool | None = None) -> ba.Widget:
+def columnwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    background: bool | None = None,
+    selected_child: ba.Widget | None = None,
+    visible_child: ba.Widget | None = None,
+    single_depth: bool | None = None,
+    print_list_exit_instructions: bool | None = None,
+    left_border: float | None = None,
+    top_border: float | None = None,
+    bottom_border: float | None = None,
+    selection_loops_to_parent: bool | None = None,
+    border: float | None = None,
+    margin: float | None = None,
+    claims_left_right: bool | None = None,
+    claims_tab: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a column widget.
 
     Category: **User Interface Functions**
@@ -1377,22 +1520,26 @@ def columnwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def commit_config(config: str) -> None:
+
     """(internal)"""
     return None
 
 
-def connect_to_party(address: str,
-                     port: int | None = None,
-                     print_progress: bool = True) -> None:
+def connect_to_party(
+    address: str, port: int | None = None, print_progress: bool = True
+) -> None:
+
     """(internal)"""
     return None
 
 
 def console_print(*args: Any) -> None:
+
     """(internal)
 
     Print the provided args to the game console (using str()).
@@ -1402,37 +1549,40 @@ def console_print(*args: Any) -> None:
     return None
 
 
-def containerwidget(edit: ba.Widget | None = None,
-                    parent: ba.Widget | None = None,
-                    size: Sequence[float] | None = None,
-                    position: Sequence[float] | None = None,
-                    background: bool | None = None,
-                    selected_child: ba.Widget | None = None,
-                    transition: str | None = None,
-                    cancel_button: ba.Widget | None = None,
-                    start_button: ba.Widget | None = None,
-                    root_selectable: bool | None = None,
-                    on_activate_call: Callable[[], None] | None = None,
-                    claims_left_right: bool | None = None,
-                    claims_tab: bool | None = None,
-                    selection_loops: bool | None = None,
-                    selection_loops_to_parent: bool | None = None,
-                    scale: float | None = None,
-                    on_outside_click_call: Callable[[], None] | None = None,
-                    single_depth: bool | None = None,
-                    visible_child: ba.Widget | None = None,
-                    stack_offset: Sequence[float] | None = None,
-                    color: Sequence[float] | None = None,
-                    on_cancel_call: Callable[[], None] | None = None,
-                    print_list_exit_instructions: bool | None = None,
-                    click_activate: bool | None = None,
-                    always_highlight: bool | None = None,
-                    selectable: bool | None = None,
-                    scale_origin_stack_offset: Sequence[float] | None = None,
-                    toolbar_visibility: str | None = None,
-                    on_select_call: Callable[[], None] | None = None,
-                    claim_outside_clicks: bool | None = None,
-                    claims_up_down: bool | None = None) -> ba.Widget:
+def containerwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    background: bool | None = None,
+    selected_child: ba.Widget | None = None,
+    transition: str | None = None,
+    cancel_button: ba.Widget | None = None,
+    start_button: ba.Widget | None = None,
+    root_selectable: bool | None = None,
+    on_activate_call: Callable[[], None] | None = None,
+    claims_left_right: bool | None = None,
+    claims_tab: bool | None = None,
+    selection_loops: bool | None = None,
+    selection_loops_to_parent: bool | None = None,
+    scale: float | None = None,
+    on_outside_click_call: Callable[[], None] | None = None,
+    single_depth: bool | None = None,
+    visible_child: ba.Widget | None = None,
+    stack_offset: Sequence[float] | None = None,
+    color: Sequence[float] | None = None,
+    on_cancel_call: Callable[[], None] | None = None,
+    print_list_exit_instructions: bool | None = None,
+    click_activate: bool | None = None,
+    always_highlight: bool | None = None,
+    selectable: bool | None = None,
+    scale_origin_stack_offset: Sequence[float] | None = None,
+    toolbar_visibility: str | None = None,
+    on_select_call: Callable[[], None] | None = None,
+    claim_outside_clicks: bool | None = None,
+    claims_up_down: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a container widget.
 
     Category: **User Interface Functions**
@@ -1442,15 +1592,18 @@ def containerwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def contains_python_dist() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def debug_print_py_err() -> None:
+
     """(internal)
 
     Debugging func for tracking leaked Python errors in the C++ layer..
@@ -1459,11 +1612,13 @@ def debug_print_py_err() -> None:
 
 
 def disconnect_client(client_id: int, ban_time: int = 300) -> bool:
+
     """(internal)"""
     return bool()
 
 
 def disconnect_from_host() -> None:
+
     """(internal)
 
     Category: General Utility Functions
@@ -1472,6 +1627,7 @@ def disconnect_from_host() -> None:
 
 
 def display_log(name: str, level: str, message: str) -> None:
+
     """(internal)
 
     Sends a log message to the in-game console and any per-platform
@@ -1482,6 +1638,7 @@ def display_log(name: str, level: str, message: str) -> None:
 
 
 def do_once() -> bool:
+
     """Return whether this is the first time running a line of code.
 
     Category: **General Utility Functions**
@@ -1501,18 +1658,22 @@ def do_once() -> bool:
 
 
 def ehv() -> None:
+
     """(internal)"""
     return None
 
 
-def emitfx(position: Sequence[float],
-           velocity: Sequence[float] | None = None,
-           count: int = 10,
-           scale: float = 1.0,
-           spread: float = 1.0,
-           chunk_type: str = 'rock',
-           emit_type: str = 'chunks',
-           tendril_type: str = 'smoke') -> None:
+def emitfx(
+    position: Sequence[float],
+    velocity: Sequence[float] | None = None,
+    count: int = 10,
+    scale: float = 1.0,
+    spread: float = 1.0,
+    chunk_type: str = 'rock',
+    emit_type: str = 'chunks',
+    tendril_type: str = 'smoke',
+) -> None:
+
     """Emit particles, smoke, etc. into the fx sim layer.
 
     Category: **Gameplay Functions**
@@ -1526,6 +1687,7 @@ def emitfx(position: Sequence[float],
 
 
 def end_host_scanning() -> None:
+
     """(internal)
 
     Category: General Utility Functions
@@ -1534,6 +1696,7 @@ def end_host_scanning() -> None:
 
 
 def env() -> dict:
+
     """(internal)
 
     Returns a dict containing general info about the operating environment
@@ -1545,13 +1708,15 @@ def env() -> dict:
 
 
 def evaluate_lstr(value: str) -> str:
+
     """(internal)"""
     return str()
 
 
-def fade_screen(to: int = 0,
-                time: float = 0.25,
-                endcall: Callable[[], None] | None = None) -> None:
+def fade_screen(
+    to: int = 0, time: float = 0.25, endcall: Callable[[], None] | None = None
+) -> None:
+
     """(internal)
 
     Fade the local game screen in our out from black over a duration of
@@ -1563,6 +1728,7 @@ def fade_screen(to: int = 0,
 
 
 def focus_window() -> None:
+
     """(internal)
 
     A workaround for some unintentional backgrounding that occurs on mac
@@ -1571,16 +1737,19 @@ def focus_window() -> None:
 
 
 def get_appconfig_builtin_keys() -> list[str]:
+
     """(internal)"""
     return ['blah', 'blah2']
 
 
 def get_appconfig_default_value(key: str) -> Any:
+
     """(internal)"""
     return _uninferrable()
 
 
 def get_camera_position() -> tuple[float, ...]:
+
     """(internal)
 
     WARNING: these camera controls will not apply to network clients
@@ -1591,6 +1760,7 @@ def get_camera_position() -> tuple[float, ...]:
 
 
 def get_camera_target() -> tuple[float, ...]:
+
     """(internal)
 
     WARNING: these camera controls will not apply to network clients
@@ -1601,11 +1771,13 @@ def get_camera_target() -> tuple[float, ...]:
 
 
 def get_chat_messages() -> list[str]:
+
     """(internal)"""
     return ['blah', 'blah2']
 
 
 def get_client_public_device_uuid(client_id: int) -> str | None:
+
     """(internal)
 
     Category: General Utility Functions
@@ -1620,6 +1792,7 @@ def get_client_public_device_uuid(client_id: int) -> str | None:
 
 
 def get_collision_info(*args: Any) -> Any:
+
     """Return collision related values
 
     Category: **Gameplay Functions**
@@ -1632,6 +1805,7 @@ def get_collision_info(*args: Any) -> Any:
 
 
 def get_configurable_game_pads() -> list:
+
     """(internal)
 
     Returns a list of the currently connected gamepads that can be
@@ -1641,11 +1815,13 @@ def get_configurable_game_pads() -> list:
 
 
 def get_connection_to_host_info() -> dict:
+
     """(internal)"""
     return dict()
 
 
 def get_display_resolution() -> tuple[int, int] | None:
+
     """(internal)
 
     Return the currently selected display resolution for fullscreen
@@ -1655,26 +1831,31 @@ def get_display_resolution() -> tuple[int, int] | None:
 
 
 def get_foreground_host_activity() -> ba.Activity | None:
+
     """(internal)
 
     Returns the ba.Activity currently in the foreground, or None if there
     is none.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Activity(settings={})
 
 
 def get_foreground_host_session() -> ba.Session | None:
+
     """(internal)
 
     Return the ba.Session currently being displayed, or None if there is
     none.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Session([])
 
 
 def get_game_port() -> int:
+
     """(internal)
 
     Return the port ballistica is hosting on.
@@ -1683,11 +1864,13 @@ def get_game_port() -> int:
 
 
 def get_game_roster() -> list[dict[str, Any]]:
+
     """(internal)"""
     return [{'foo': 'bar'}]
 
 
 def get_idle_time() -> int:
+
     """(internal)
 
     Returns the amount of time since any game input has been received.
@@ -1696,16 +1879,19 @@ def get_idle_time() -> int:
 
 
 def get_local_active_input_devices_count() -> int:
+
     """(internal)"""
     return int()
 
 
 def get_low_level_config_value(key: str, default_value: int) -> int:
+
     """(internal)"""
     return int()
 
 
 def get_max_graphics_quality() -> str:
+
     """(internal)
 
     Return the max graphics-quality supported on the current hardware.
@@ -1713,54 +1899,70 @@ def get_max_graphics_quality() -> str:
     return str()
 
 
-def get_package_collide_model(package: ba.AssetPackage,
-                              name: str) -> ba.CollideModel:
+def get_package_collide_model(
+    package: ba.AssetPackage, name: str
+) -> ba.CollideModel:
+
     """(internal)"""
     import ba  # pylint: disable=cyclic-import
+
     return ba.CollideModel()
 
 
 def get_package_data(package: ba.AssetPackage, name: str) -> ba.Data:
+
     """(internal)."""
     import ba  # pylint: disable=cyclic-import
+
     return ba.Data()
 
 
 def get_package_model(package: ba.AssetPackage, name: str) -> ba.Model:
+
     """(internal)"""
     import ba  # pylint: disable=cyclic-import
+
     return ba.Model()
 
 
 def get_package_sound(package: ba.AssetPackage, name: str) -> ba.Sound:
+
     """(internal)."""
     import ba  # pylint: disable=cyclic-import
+
     return ba.Sound()
 
 
 def get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture:
+
     """(internal)"""
     import ba  # pylint: disable=cyclic-import
+
     return ba.Texture()
 
 
 def get_public_party_enabled() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def get_public_party_max_size() -> int:
+
     """(internal)"""
     return int()
 
 
 def get_qrcode_texture(url: str) -> ba.Texture:
+
     """(internal)"""
     import ba  # pylint: disable=cyclic-import
+
     return ba.Texture()
 
 
 def get_random_names() -> list:
+
     """(internal)
 
     Returns the random names used by the game.
@@ -1769,6 +1971,7 @@ def get_random_names() -> list:
 
 
 def get_replay_speed_exponent() -> int:
+
     """(internal)
 
     Returns current replay speed value. Actual displayed speed is pow(2,speed).
@@ -1777,16 +1980,19 @@ def get_replay_speed_exponent() -> int:
 
 
 def get_replays_dir() -> str:
+
     """(internal)"""
     return str()
 
 
 def get_special_widget(name: str) -> Widget:
+
     """(internal)"""
     return Widget()
 
 
 def get_string_height(string: str, suppress_warning: bool = False) -> float:
+
     """(internal)
 
     Given a string, returns its height using the standard small app
@@ -1796,6 +2002,7 @@ def get_string_height(string: str, suppress_warning: bool = False) -> float:
 
 
 def get_string_width(string: str, suppress_warning: bool = False) -> float:
+
     """(internal)
 
     Given a string, returns its width using the standard small app
@@ -1805,6 +2012,7 @@ def get_string_width(string: str, suppress_warning: bool = False) -> float:
 
 
 def get_thread_name() -> str:
+
     """(internal)
 
     Returns the name of the current thread.
@@ -1815,21 +2023,25 @@ def get_thread_name() -> str:
 
 
 def get_ui_input_device() -> ba.InputDevice:
+
     """(internal)
 
     Returns the input-device that currently owns the user interface, or
     None if there is none.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.InputDevice()
 
 
 def get_v1_cloud_log() -> str:
+
     """(internal)"""
     return str()
 
 
 def get_v1_cloud_log_file_path() -> str:
+
     """(internal)
 
     Return the path to the app log file.
@@ -1838,6 +2050,7 @@ def get_v1_cloud_log_file_path() -> str:
 
 
 def get_volatile_data_directory() -> str:
+
     """(internal)
 
     Return the path to the app volatile data directory.
@@ -1873,6 +2086,7 @@ def getactivity(doraise: bool = True) -> ba.Activity | None:
 
 
 def getcollidemodel(name: str) -> ba.CollideModel:
+
     """Return a collide-model, loading it if necessary.
 
     Category: **Asset Functions**
@@ -1886,10 +2100,12 @@ def getcollidemodel(name: str) -> ba.CollideModel:
     in the background if necessary.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.CollideModel()
 
 
 def getdata(name: str) -> ba.Data:
+
     """Return a data, loading it if necessary.
 
     Category: **Asset Functions**
@@ -1900,20 +2116,22 @@ def getdata(name: str) -> ba.Data:
     in the background if necessary.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Data()
 
 
 # Show that our return type varies based on "doraise" value:
 @overload
-def getinputdevice(name: str,
-                   unique_id: str,
-                   doraise: Literal[True] = True) -> ba.InputDevice:
+def getinputdevice(
+    name: str, unique_id: str, doraise: Literal[True] = True
+) -> ba.InputDevice:
     ...
 
 
 @overload
-def getinputdevice(name: str, unique_id: str,
-                   doraise: Literal[False]) -> ba.InputDevice | None:
+def getinputdevice(
+    name: str, unique_id: str, doraise: Literal[False]
+) -> ba.InputDevice | None:
     ...
 
 
@@ -1928,6 +2146,7 @@ def getinputdevice(name: str, unique_id: str, doraise: bool = True) -> Any:
 
 
 def getmodel(name: str) -> ba.Model:
+
     """Return a model, loading it if necessary.
 
     Category: **Asset Functions**
@@ -1938,10 +2157,12 @@ def getmodel(name: str) -> ba.Model:
     in the background if necessary.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Model()
 
 
 def getnodes() -> list:
+
     """Return all nodes in the current ba.Context.
 
     Category: **Gameplay Functions**
@@ -1973,6 +2194,7 @@ def getsession(doraise: bool = True) -> ba.Session | None:
 
 
 def getsound(name: str) -> ba.Sound:
+
     """Return a sound, loading it if necessary.
 
     Category: **Asset Functions**
@@ -1983,10 +2205,12 @@ def getsound(name: str) -> ba.Sound:
     in the background if necessary.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Sound()
 
 
 def gettexture(name: str) -> ba.Texture:
+
     """Return a texture, loading it if necessary.
 
     Category: **Asset Functions**
@@ -1997,10 +2221,12 @@ def gettexture(name: str) -> ba.Texture:
     in the background if necessary.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Texture()
 
 
 def has_gamma_control() -> bool:
+
     """(internal)
 
     Returns whether the system can adjust overall screen gamma)
@@ -2009,21 +2235,25 @@ def has_gamma_control() -> bool:
 
 
 def has_user_run_commands() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def has_video_ads() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def have_chars(text: str) -> bool:
+
     """(internal)"""
     return bool()
 
 
 def have_connected_clients() -> bool:
+
     """(internal)
 
     Category: General Utility Functions
@@ -2032,16 +2262,19 @@ def have_connected_clients() -> bool:
 
 
 def have_incentivized_ad() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def have_permission(permission: ba.Permission) -> bool:
+
     """(internal)"""
     return bool()
 
 
 def have_touchscreen_input() -> bool:
+
     """(internal)
 
     Returns whether or not a touch-screen input is present
@@ -2050,26 +2283,30 @@ def have_touchscreen_input() -> bool:
 
 
 def host_scan_cycle() -> list:
+
     """(internal)"""
     return list()
 
 
-def hscrollwidget(edit: ba.Widget | None = None,
-                  parent: ba.Widget | None = None,
-                  size: Sequence[float] | None = None,
-                  position: Sequence[float] | None = None,
-                  background: bool | None = None,
-                  selected_child: ba.Widget | None = None,
-                  capture_arrows: bool | None = None,
-                  on_select_call: Callable[[], None] | None = None,
-                  center_small_content: bool | None = None,
-                  color: Sequence[float] | None = None,
-                  highlight: bool | None = None,
-                  border_opacity: float | None = None,
-                  simple_culling_h: float | None = None,
-                  claims_left_right: bool | None = None,
-                  claims_up_down: bool | None = None,
-                  claims_tab: bool | None = None) -> ba.Widget:
+def hscrollwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    background: bool | None = None,
+    selected_child: ba.Widget | None = None,
+    capture_arrows: bool | None = None,
+    on_select_call: Callable[[], None] | None = None,
+    center_small_content: bool | None = None,
+    color: Sequence[float] | None = None,
+    highlight: bool | None = None,
+    border_opacity: float | None = None,
+    simple_culling_h: float | None = None,
+    claims_left_right: bool | None = None,
+    claims_up_down: bool | None = None,
+    claims_tab: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a horizontal scroll widget.
 
     Category: **User Interface Functions**
@@ -2079,27 +2316,31 @@ def hscrollwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
-def imagewidget(edit: ba.Widget | None = None,
-                parent: ba.Widget | None = None,
-                size: Sequence[float] | None = None,
-                position: Sequence[float] | None = None,
-                color: Sequence[float] | None = None,
-                texture: ba.Texture | None = None,
-                opacity: float | None = None,
-                model_transparent: ba.Model | None = None,
-                model_opaque: ba.Model | None = None,
-                has_alpha_channel: bool = True,
-                tint_texture: ba.Texture | None = None,
-                tint_color: Sequence[float] | None = None,
-                transition_delay: float | None = None,
-                draw_controller: ba.Widget | None = None,
-                tint2_color: Sequence[float] | None = None,
-                tilt_scale: float | None = None,
-                mask_texture: ba.Texture | None = None,
-                radial_amount: float | None = None) -> ba.Widget:
+def imagewidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    color: Sequence[float] | None = None,
+    texture: ba.Texture | None = None,
+    opacity: float | None = None,
+    model_transparent: ba.Model | None = None,
+    model_opaque: ba.Model | None = None,
+    has_alpha_channel: bool = True,
+    tint_texture: ba.Texture | None = None,
+    tint_color: Sequence[float] | None = None,
+    transition_delay: float | None = None,
+    draw_controller: ba.Widget | None = None,
+    tint2_color: Sequence[float] | None = None,
+    tilt_scale: float | None = None,
+    mask_texture: ba.Texture | None = None,
+    radial_amount: float | None = None,
+) -> ba.Widget:
+
     """Create or edit an image widget.
 
     Category: **User Interface Functions**
@@ -2109,10 +2350,12 @@ def imagewidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def in_logic_thread() -> bool:
+
     """(internal)
 
     Returns whether or not the current thread is the logic thread.
@@ -2121,33 +2364,39 @@ def in_logic_thread() -> bool:
 
 
 def increment_analytics_count(name: str, increment: int = 1) -> None:
+
     """(internal)"""
     return None
 
 
-def increment_analytics_count_raw_2(name: str,
-                                    uses_increment: bool = True,
-                                    increment: int = 1) -> None:
+def increment_analytics_count_raw_2(
+    name: str, uses_increment: bool = True, increment: int = 1
+) -> None:
+
     """(internal)"""
     return None
 
 
 def increment_analytics_counts_raw(name: str, increment: int = 1) -> None:
+
     """(internal)"""
     return None
 
 
 def is_in_replay() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def is_log_full() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def is_os_playing_music() -> bool:
+
     """(internal)
 
     Tells whether the OS is currently playing music of some sort.
@@ -2158,6 +2407,7 @@ def is_os_playing_music() -> bool:
 
 
 def is_ouya_build() -> bool:
+
     """(internal)
 
     Returns whether we're running the ouya-specific version
@@ -2166,26 +2416,31 @@ def is_ouya_build() -> bool:
 
 
 def is_party_icon_visible() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def is_running_on_fire_tv() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def is_running_on_ouya() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def is_xcode_build() -> bool:
+
     """(internal)"""
     return bool()
 
 
 def lock_all_input() -> None:
+
     """(internal)
 
     Prevents all keyboard, mouse, and gamepad events from being processed.
@@ -2194,46 +2449,55 @@ def lock_all_input() -> None:
 
 
 def mac_music_app_get_library_source() -> None:
+
     """(internal)"""
     return None
 
 
 def mac_music_app_get_playlists() -> list[str]:
+
     """(internal)"""
     return ['blah', 'blah2']
 
 
 def mac_music_app_get_volume() -> int:
+
     """(internal)"""
     return int()
 
 
 def mac_music_app_init() -> None:
+
     """(internal)"""
     return None
 
 
 def mac_music_app_play_playlist(playlist: str) -> bool:
+
     """(internal)"""
     return bool()
 
 
 def mac_music_app_set_volume(volume: int) -> None:
+
     """(internal)"""
     return None
 
 
 def mac_music_app_stop() -> None:
+
     """(internal)"""
     return None
 
 
 def mark_log_sent() -> None:
+
     """(internal)"""
     return None
 
 
 def music_player_play(files: Any) -> None:
+
     """(internal)
 
     Starts internal music file playback (for internal use)
@@ -2242,6 +2506,7 @@ def music_player_play(files: Any) -> None:
 
 
 def music_player_set_volume(volume: float) -> None:
+
     """(internal)
 
     Sets internal music player volume (for internal use)
@@ -2250,6 +2515,7 @@ def music_player_set_volume(volume: float) -> None:
 
 
 def music_player_shutdown() -> None:
+
     """(internal)
 
     Finalizes internal music file playback (for internal use)
@@ -2258,6 +2524,7 @@ def music_player_shutdown() -> None:
 
 
 def music_player_stop() -> None:
+
     """(internal)
 
     Stops internal music file playback (for internal use)
@@ -2265,19 +2532,24 @@ def music_player_stop() -> None:
     return None
 
 
-def new_host_session(sessiontype: type[ba.Session],
-                     benchmark_type: str | None = None) -> None:
+def new_host_session(
+    sessiontype: type[ba.Session], benchmark_type: str | None = None
+) -> None:
+
     """(internal)"""
     return None
 
 
 def new_replay_session(file_name: str) -> None:
+
     """(internal)"""
     return None
 
 
-def newactivity(activity_type: type[ba.Activity],
-                settings: dict | None = None) -> ba.Activity:
+def newactivity(
+    activity_type: type[ba.Activity], settings: dict | None = None
+) -> ba.Activity:
+
     """Instantiates a ba.Activity given a type object.
 
     Category: **General Utility Functions**
@@ -2286,14 +2558,18 @@ def newactivity(activity_type: type[ba.Activity],
     instantiated; you must go through this function.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Activity(settings={})
 
 
-def newnode(type: str,
-            owner: ba.Node | None = None,
-            attrs: dict | None = None,
-            name: str | None = None,
-            delegate: Any = None) -> Node:
+def newnode(
+    type: str,
+    owner: ba.Node | None = None,
+    attrs: dict | None = None,
+    name: str | None = None,
+    delegate: Any = None,
+) -> Node:
+
     """Add a node of the given type to the game.
 
     Category: **Gameplay Functions**
@@ -2316,6 +2592,7 @@ def newnode(type: str,
 
 
 def open_dir_externally(path: str) -> None:
+
     """(internal)
 
     Open the provided dir in the default external app.
@@ -2324,6 +2601,7 @@ def open_dir_externally(path: str) -> None:
 
 
 def open_file_externally(path: str) -> None:
+
     """(internal)
 
     Open the provided file in the default external app.
@@ -2332,6 +2610,7 @@ def open_file_externally(path: str) -> None:
 
 
 def open_url(address: str) -> None:
+
     """Open a provided URL.
 
     Category: **General Utility Functions**
@@ -2342,10 +2621,13 @@ def open_url(address: str) -> None:
     return None
 
 
-def playsound(sound: Sound,
-              volume: float = 1.0,
-              position: Sequence[float] | None = None,
-              host_only: bool = False) -> None:
+def playsound(
+    sound: Sound,
+    volume: float = 1.0,
+    position: Sequence[float] | None = None,
+    host_only: bool = False,
+) -> None:
+
     """Play a ba.Sound a single time.
 
     Category: **Gameplay Functions**
@@ -2357,6 +2639,7 @@ def playsound(sound: Sound,
 
 
 def print_context() -> None:
+
     """(internal)
 
     Prints info about the current context state; for debugging.
@@ -2365,6 +2648,7 @@ def print_context() -> None:
 
 
 def print_load_info() -> None:
+
     """(internal)
 
     Category: **General Utility Functions**
@@ -2373,6 +2657,7 @@ def print_load_info() -> None:
 
 
 def printnodes() -> None:
+
     """Print various info about existing nodes; useful for debugging.
 
     Category: **Gameplay Functions**
@@ -2381,6 +2666,7 @@ def printnodes() -> None:
 
 
 def printobjects() -> None:
+
     """Print debugging info about game objects.
 
     Category: **General Utility Functions**
@@ -2391,10 +2677,13 @@ def printobjects() -> None:
     return None
 
 
-def pushcall(call: Callable,
-             from_other_thread: bool = False,
-             suppress_other_thread_warning: bool = False,
-             other_thread_use_fg_context: bool = False) -> None:
+def pushcall(
+    call: Callable,
+    from_other_thread: bool = False,
+    suppress_other_thread_warning: bool = False,
+    other_thread_use_fg_context: bool = False,
+) -> None:
+
     """Pushes a call onto the event loop to be run during the next cycle.
 
     Category: **General Utility Functions**
@@ -2415,6 +2704,7 @@ def pushcall(call: Callable,
 
 
 def quit(soft: bool = False, back: bool = False) -> None:
+
     """Quit the game.
 
     Category: **General Utility Functions**
@@ -2426,16 +2716,19 @@ def quit(soft: bool = False, back: bool = False) -> None:
 
 
 def register_activity(activity: ba.Activity) -> ActivityData:
+
     """(internal)"""
     return ActivityData()
 
 
 def register_session(session: ba.Session) -> SessionData:
+
     """(internal)"""
     return SessionData()
 
 
 def release_gamepad_input() -> None:
+
     """(internal)
 
     Resumes normal gamepad event processing.
@@ -2444,6 +2737,7 @@ def release_gamepad_input() -> None:
 
 
 def release_keyboard_input() -> None:
+
     """(internal)
 
     Resumes normal keyboard event processing.
@@ -2452,6 +2746,7 @@ def release_keyboard_input() -> None:
 
 
 def reload_media() -> None:
+
     """(internal)
 
     Reload all currently loaded game media; useful for
@@ -2461,35 +2756,42 @@ def reload_media() -> None:
 
 
 def request_permission(permission: ba.Permission) -> None:
+
     """(internal)"""
     return None
 
 
 def reset_game_activity_tracking() -> None:
+
     """(internal)"""
     return None
 
 
 def reset_random_player_names() -> None:
+
     """(internal)"""
     return None
 
 
 def resolve_appconfig_value(key: str) -> Any:
+
     """(internal)"""
     return _uninferrable()
 
 
-def rowwidget(edit: ba.Widget | None = None,
-              parent: ba.Widget | None = None,
-              size: Sequence[float] | None = None,
-              position: Sequence[float] | None = None,
-              background: bool | None = None,
-              selected_child: ba.Widget | None = None,
-              visible_child: ba.Widget | None = None,
-              claims_left_right: bool | None = None,
-              claims_tab: bool | None = None,
-              selection_loops_to_parent: bool | None = None) -> ba.Widget:
+def rowwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    background: bool | None = None,
+    selected_child: ba.Widget | None = None,
+    visible_child: ba.Widget | None = None,
+    claims_left_right: bool | None = None,
+    claims_tab: bool | None = None,
+    selection_loops_to_parent: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a row widget.
 
     Category: **User Interface Functions**
@@ -2499,11 +2801,14 @@ def rowwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
-def safecolor(color: Sequence[float],
-              target_intensity: float = 0.6) -> tuple[float, ...]:
+def safecolor(
+    color: Sequence[float], target_intensity: float = 0.6
+) -> tuple[float, ...]:
+
     """Given a color tuple, return a color safe to display as text.
 
     Category: **General Utility Functions**
@@ -2514,13 +2819,16 @@ def safecolor(color: Sequence[float],
     return (0.0, 0.0, 0.0)
 
 
-def screenmessage(message: str | ba.Lstr,
-                  color: Sequence[float] | None = None,
-                  top: bool = False,
-                  image: dict[str, Any] | None = None,
-                  log: bool = False,
-                  clients: Sequence[int] | None = None,
-                  transient: bool = False) -> None:
+def screenmessage(
+    message: str | ba.Lstr,
+    color: Sequence[float] | None = None,
+    top: bool = False,
+    image: dict[str, Any] | None = None,
+    log: bool = False,
+    clients: Sequence[int] | None = None,
+    transient: bool = False,
+) -> None:
+
     """Print a message to the local client's screen, in a given color.
 
     Category: **General Utility Functions**
@@ -2539,24 +2847,27 @@ def screenmessage(message: str | ba.Lstr,
     return None
 
 
-def scrollwidget(edit: ba.Widget | None = None,
-                 parent: ba.Widget | None = None,
-                 size: Sequence[float] | None = None,
-                 position: Sequence[float] | None = None,
-                 background: bool | None = None,
-                 selected_child: ba.Widget | None = None,
-                 capture_arrows: bool = False,
-                 on_select_call: Callable | None = None,
-                 center_small_content: bool | None = None,
-                 color: Sequence[float] | None = None,
-                 highlight: bool | None = None,
-                 border_opacity: float | None = None,
-                 simple_culling_v: float | None = None,
-                 selection_loops_to_parent: bool | None = None,
-                 claims_left_right: bool | None = None,
-                 claims_up_down: bool | None = None,
-                 claims_tab: bool | None = None,
-                 autoselect: bool | None = None) -> ba.Widget:
+def scrollwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    background: bool | None = None,
+    selected_child: ba.Widget | None = None,
+    capture_arrows: bool = False,
+    on_select_call: Callable | None = None,
+    center_small_content: bool | None = None,
+    color: Sequence[float] | None = None,
+    highlight: bool | None = None,
+    border_opacity: float | None = None,
+    simple_culling_v: float | None = None,
+    selection_loops_to_parent: bool | None = None,
+    claims_left_right: bool | None = None,
+    claims_up_down: bool | None = None,
+    claims_tab: bool | None = None,
+    autoselect: bool | None = None,
+) -> ba.Widget:
+
     """Create or edit a scroll widget.
 
     Category: **User Interface Functions**
@@ -2566,15 +2877,18 @@ def scrollwidget(edit: ba.Widget | None = None,
     are applied to the Widget.
     """
     import ba  # pylint: disable=cyclic-import
+
     return ba.Widget()
 
 
 def set_admins(admins: list[str]) -> None:
+
     """(internal)"""
     return None
 
 
 def set_analytics_screen(screen: str) -> None:
+
     """Used for analytics to see where in the app players spend their time.
 
     Category: **General Utility Functions**
@@ -2587,11 +2901,13 @@ def set_analytics_screen(screen: str) -> None:
 
 
 def set_authenticate_clients(enable: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_camera_manual(value: bool) -> None:
+
     """(internal)
 
     WARNING: these camera controls will not apply to network clients
@@ -2602,6 +2918,7 @@ def set_camera_manual(value: bool) -> None:
 
 
 def set_camera_position(x: float, y: float, z: float) -> None:
+
     """(internal)
 
     WARNING: these camera controls will not apply to network clients
@@ -2612,6 +2929,7 @@ def set_camera_position(x: float, y: float, z: float) -> None:
 
 
 def set_camera_target(x: float, y: float, z: float) -> None:
+
     """(internal)
 
     WARNING: these camera controls will not apply to network clients
@@ -2622,6 +2940,7 @@ def set_camera_target(x: float, y: float, z: float) -> None:
 
 
 def set_debug_speed_exponent(speed: int) -> None:
+
     """(internal)
 
     Sets the debug speed scale for the game. Actual speed is pow(2,speed).
@@ -2630,24 +2949,29 @@ def set_debug_speed_exponent(speed: int) -> None:
 
 
 def set_enable_default_kick_voting(enable: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_internal_language_keys(
-        listobj: list[tuple[str, str]],
-        random_names_list: list[tuple[str, str]]) -> None:
+    listobj: list[tuple[str, str]], random_names_list: list[tuple[str, str]]
+) -> None:
+
     """(internal)"""
     return None
 
 
 def set_low_level_config_value(key: str, value: int) -> None:
+
     """(internal)"""
     return None
 
 
 def set_map_bounds(
-        bounds: tuple[float, float, float, float, float, float]) -> None:
+    bounds: tuple[float, float, float, float, float, float]
+) -> None:
+
     """(internal)
 
     Set map bounds. Generally nodes that go outside of this box are killed.
@@ -2656,46 +2980,55 @@ def set_map_bounds(
 
 
 def set_master_server_source(source: int) -> None:
+
     """(internal)"""
     return None
 
 
 def set_party_icon_always_visible(value: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_party_window_open(value: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_platform_misc_read_vals(mode: str) -> None:
+
     """(internal)"""
     return None
 
 
 def set_public_party_enabled(enabled: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_public_party_max_size(max_size: int) -> None:
+
     """(internal)"""
     return None
 
 
 def set_public_party_name(name: str) -> None:
+
     """(internal)"""
     return None
 
 
 def set_public_party_stats_url(url: str | None) -> None:
+
     """(internal)"""
     return None
 
 
 def set_replay_speed_exponent(speed: int) -> None:
+
     """(internal)
 
     Set replay speed. Actual displayed speed is pow(2, speed).
@@ -2704,16 +3037,19 @@ def set_replay_speed_exponent(speed: int) -> None:
 
 
 def set_stress_testing(testing: bool, player_count: int) -> None:
+
     """(internal)"""
     return None
 
 
 def set_telnet_access_enabled(enable: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_thread_name(name: str) -> None:
+
     """(internal)
 
     Sets the name of the current thread (on platforms where this is
@@ -2724,11 +3060,13 @@ def set_thread_name(name: str) -> None:
 
 
 def set_touchscreen_editing(editing: bool) -> None:
+
     """(internal)"""
     return None
 
 
 def set_ui_input_device(input_device: ba.InputDevice | None) -> None:
+
     """(internal)
 
     Sets the input-device that currently owns the user interface.
@@ -2737,25 +3075,31 @@ def set_ui_input_device(input_device: ba.InputDevice | None) -> None:
 
 
 def setup_sigint() -> None:
+
     """(internal)"""
     return None
 
 
-def show_ad(purpose: str,
-            on_completion_call: Callable[[], None] | None = None) -> None:
+def show_ad(
+    purpose: str, on_completion_call: Callable[[], None] | None = None
+) -> None:
+
     """(internal)"""
     return None
 
 
 def show_ad_2(
-        purpose: str,
-        on_completion_call: Callable[[bool], None] | None = None) -> None:
+    purpose: str, on_completion_call: Callable[[bool], None] | None = None
+) -> None:
+
     """(internal)"""
     return None
 
 
-def show_app_invite(title: str | ba.Lstr, message: str | ba.Lstr,
-                    code: str) -> None:
+def show_app_invite(
+    title: str | ba.Lstr, message: str | ba.Lstr, code: str
+) -> None:
+
     """(internal)
 
     Category: **General Utility Functions**
@@ -2763,14 +3107,18 @@ def show_app_invite(title: str | ba.Lstr, message: str | ba.Lstr,
     return None
 
 
-def show_online_score_ui(show: str = 'general',
-                         game: str | None = None,
-                         game_version: str | None = None) -> None:
+def show_online_score_ui(
+    show: str = 'general',
+    game: str | None = None,
+    game_version: str | None = None,
+) -> None:
+
     """(internal)"""
     return None
 
 
 def show_progress_bar() -> None:
+
     """(internal)
 
     Category: **General Utility Functions**
@@ -2779,45 +3127,49 @@ def show_progress_bar() -> None:
 
 
 def submit_analytics_counts() -> None:
+
     """(internal)"""
     return None
 
 
-def textwidget(edit: ba.Widget | None = None,
-               parent: ba.Widget | None = None,
-               size: Sequence[float] | None = None,
-               position: Sequence[float] | None = None,
-               text: str | ba.Lstr | None = None,
-               v_align: str | None = None,
-               h_align: str | None = None,
-               editable: bool | None = None,
-               padding: float | None = None,
-               on_return_press_call: Callable[[], None] | None = None,
-               on_activate_call: Callable[[], None] | None = None,
-               selectable: bool | None = None,
-               query: ba.Widget | None = None,
-               max_chars: int | None = None,
-               color: Sequence[float] | None = None,
-               click_activate: bool | None = None,
-               on_select_call: Callable[[], None] | None = None,
-               always_highlight: bool | None = None,
-               draw_controller: ba.Widget | None = None,
-               scale: float | None = None,
-               corner_scale: float | None = None,
-               description: str | ba.Lstr | None = None,
-               transition_delay: float | None = None,
-               maxwidth: float | None = None,
-               max_height: float | None = None,
-               flatness: float | None = None,
-               shadow: float | None = None,
-               autoselect: bool | None = None,
-               rotate: float | None = None,
-               enabled: bool | None = None,
-               force_internal_editing: bool | None = None,
-               always_show_carat: bool | None = None,
-               big: bool | None = None,
-               extra_touch_border_scale: float | None = None,
-               res_scale: float | None = None) -> Widget:
+def textwidget(
+    edit: ba.Widget | None = None,
+    parent: ba.Widget | None = None,
+    size: Sequence[float] | None = None,
+    position: Sequence[float] | None = None,
+    text: str | ba.Lstr | None = None,
+    v_align: str | None = None,
+    h_align: str | None = None,
+    editable: bool | None = None,
+    padding: float | None = None,
+    on_return_press_call: Callable[[], None] | None = None,
+    on_activate_call: Callable[[], None] | None = None,
+    selectable: bool | None = None,
+    query: ba.Widget | None = None,
+    max_chars: int | None = None,
+    color: Sequence[float] | None = None,
+    click_activate: bool | None = None,
+    on_select_call: Callable[[], None] | None = None,
+    always_highlight: bool | None = None,
+    draw_controller: ba.Widget | None = None,
+    scale: float | None = None,
+    corner_scale: float | None = None,
+    description: str | ba.Lstr | None = None,
+    transition_delay: float | None = None,
+    maxwidth: float | None = None,
+    max_height: float | None = None,
+    flatness: float | None = None,
+    shadow: float | None = None,
+    autoselect: bool | None = None,
+    rotate: float | None = None,
+    enabled: bool | None = None,
+    force_internal_editing: bool | None = None,
+    always_show_carat: bool | None = None,
+    big: bool | None = None,
+    extra_touch_border_scale: float | None = None,
+    res_scale: float | None = None,
+) -> Widget:
+
     """Create or edit a text widget.
 
     Category: **User Interface Functions**
@@ -2834,27 +3186,34 @@ def textwidget(edit: ba.Widget | None = None,
 
 @overload
 def time(
-        timetype: ba.TimeType = TimeType.SIM,
-        timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS) -> float:
+    timetype: ba.TimeType = TimeType.SIM,
+    timeformat: Literal[TimeFormat.SECONDS] = TimeFormat.SECONDS,
+) -> float:
     ...
 
 
 # This "*" keyword-only hack lets us accept 1 arg (timeformat=MILLISECS) forms.
 @overload
-def time(timetype: ba.TimeType = TimeType.SIM,
-         *,
-         timeformat: Literal[TimeFormat.MILLISECONDS]) -> int:
+def time(
+    timetype: ba.TimeType = TimeType.SIM,
+    *,
+    timeformat: Literal[TimeFormat.MILLISECONDS],
+) -> int:
     ...
 
 
 @overload
-def time(timetype: ba.TimeType,
-         timeformat: Literal[TimeFormat.MILLISECONDS]) -> int:
+def time(
+    timetype: ba.TimeType, timeformat: Literal[TimeFormat.MILLISECONDS]
+) -> int:
     ...
 
 
-def time(timetype: ba.TimeType = TimeType.SIM,
-         timeformat: ba.TimeFormat = TimeFormat.SECONDS) -> Any:
+def time(
+    timetype: ba.TimeType = TimeType.SIM,
+    timeformat: ba.TimeFormat = TimeFormat.SECONDS,
+) -> Any:
+
     """Return the current time.
 
     Category: **General Utility Functions**
@@ -2889,6 +3248,7 @@ def time(timetype: ba.TimeType = TimeType.SIM,
 
 
 def time_format_check(time_format: ba.TimeFormat, length: float | int) -> None:
+
     """(internal)
 
     Logs suspicious time values for timers or animate calls.
@@ -2899,12 +3259,15 @@ def time_format_check(time_format: ba.TimeFormat, length: float | int) -> None:
     return None
 
 
-def timer(time: float,
-          call: Callable[[], Any],
-          repeat: bool = False,
-          timetype: ba.TimeType = TimeType.SIM,
-          timeformat: ba.TimeFormat = TimeFormat.SECONDS,
-          suppress_format_warning: bool = False) -> None:
+def timer(
+    time: float,
+    call: Callable[[], Any],
+    repeat: bool = False,
+    timetype: ba.TimeType = TimeType.SIM,
+    timeformat: ba.TimeFormat = TimeFormat.SECONDS,
+    suppress_format_warning: bool = False,
+) -> None:
+
     """Schedule a call to run at a later point in time.
 
     Category: **General Utility Functions**
@@ -2962,6 +3325,7 @@ def timer(time: float,
 
 
 def uibounds() -> tuple[float, float, float, float]:
+
     """(internal)
 
     Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) representing
@@ -2973,6 +3337,7 @@ def uibounds() -> tuple[float, float, float, float]:
 
 
 def unlock_all_input() -> None:
+
     """(internal)
 
     Resumes normal keyboard, mouse, and gamepad event processing.
@@ -2981,11 +3346,13 @@ def unlock_all_input() -> None:
 
 
 def user_ran_commands() -> None:
+
     """(internal)"""
     return None
 
 
 def v1_cloud_log(message: str) -> None:
+
     """(internal)
 
     Push messages to the old v1 cloud log.
@@ -2993,23 +3360,27 @@ def v1_cloud_log(message: str) -> None:
     return None
 
 
-def value_test(arg: str,
-               change: float | None = None,
-               absolute: float | None = None) -> float:
+def value_test(
+    arg: str, change: float | None = None, absolute: float | None = None
+) -> float:
+
     """(internal)"""
     return float()
 
 
-def widget(edit: ba.Widget | None = None,
-           up_widget: ba.Widget | None = None,
-           down_widget: ba.Widget | None = None,
-           left_widget: ba.Widget | None = None,
-           right_widget: ba.Widget | None = None,
-           show_buffer_top: float | None = None,
-           show_buffer_bottom: float | None = None,
-           show_buffer_left: float | None = None,
-           show_buffer_right: float | None = None,
-           autoselect: bool | None = None) -> None:
+def widget(
+    edit: ba.Widget | None = None,
+    up_widget: ba.Widget | None = None,
+    down_widget: ba.Widget | None = None,
+    left_widget: ba.Widget | None = None,
+    right_widget: ba.Widget | None = None,
+    show_buffer_top: float | None = None,
+    show_buffer_bottom: float | None = None,
+    show_buffer_left: float | None = None,
+    show_buffer_right: float | None = None,
+    autoselect: bool | None = None,
+) -> None:
+
     """Edit common attributes of any widget.
 
     Category: **User Interface Functions**
@@ -3020,6 +3391,7 @@ def widget(edit: ba.Widget | None = None,
 
 
 def workspaces_in_use() -> bool:
+
     """(internal)
 
     Returns whether workspaces functionality has been enabled at

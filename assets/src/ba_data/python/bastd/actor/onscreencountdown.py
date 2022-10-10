@@ -20,32 +20,34 @@ class OnScreenCountdown(ba.Actor):
     Useful for time-based games that count down to zero.
     """
 
-    def __init__(self,
-                 duration: int,
-                 endcall: Callable[[], Any] | None = None):
+    def __init__(self, duration: int, endcall: Callable[[], Any] | None = None):
         """Duration is provided in seconds."""
         super().__init__()
         self._timeremaining = duration
         self._ended = False
         self._endcall = endcall
-        self.node = ba.newnode('text',
-                               attrs={
-                                   'v_attach': 'top',
-                                   'h_attach': 'center',
-                                   'h_align': 'center',
-                                   'color': (1, 1, 0.5, 1),
-                                   'flatness': 0.5,
-                                   'shadow': 0.5,
-                                   'position': (0, -70),
-                                   'scale': 1.4,
-                                   'text': ''
-                               })
-        self.inputnode = ba.newnode('timedisplay',
-                                    attrs={
-                                        'time2': duration * 1000,
-                                        'timemax': duration * 1000,
-                                        'timemin': 0
-                                    })
+        self.node = ba.newnode(
+            'text',
+            attrs={
+                'v_attach': 'top',
+                'h_attach': 'center',
+                'h_align': 'center',
+                'color': (1, 1, 0.5, 1),
+                'flatness': 0.5,
+                'shadow': 0.5,
+                'position': (0, -70),
+                'scale': 1.4,
+                'text': '',
+            },
+        )
+        self.inputnode = ba.newnode(
+            'timedisplay',
+            attrs={
+                'time2': duration * 1000,
+                'timemax': duration * 1000,
+                'timemin': 0,
+            },
+        )
         self.inputnode.connectattr('output', self.node, 'text')
         self._countdownsounds = {
             10: ba.getsound('announceTen'),
@@ -57,7 +59,7 @@ class OnScreenCountdown(ba.Actor):
             4: ba.getsound('announceFour'),
             3: ba.getsound('announceThree'),
             2: ba.getsound('announceTwo'),
-            1: ba.getsound('announceOne')
+            1: ba.getsound('announceOne'),
         }
         self._timer: ba.Timer | None = None
 
@@ -65,8 +67,9 @@ class OnScreenCountdown(ba.Actor):
         """Start the timer."""
         globalsnode = ba.getactivity().globalsnode
         globalsnode.connectattr('time', self.inputnode, 'time1')
-        self.inputnode.time2 = (globalsnode.time +
-                                (self._timeremaining + 1) * 1000)
+        self.inputnode.time2 = (
+            globalsnode.time + (self._timeremaining + 1) * 1000
+        )
         self._timer = ba.Timer(1.0, self._update, repeat=True)
 
     def on_expire(self) -> None:

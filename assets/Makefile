@@ -5488,6 +5488,7 @@ TEX2D_DDS_TARGETS = \
   build/ba_data/textures/cyborgColorMask.dds \
   build/ba_data/textures/cyborgIcon.dds \
   build/ba_data/textures/cyborgIconColorMask.dds \
+  build/ba_data/textures/discordLogo.dds \
   build/ba_data/textures/doomShroomBGColor.dds \
   build/ba_data/textures/doomShroomLevelColor.dds \
   build/ba_data/textures/doomShroomPreview.dds \
@@ -5530,6 +5531,7 @@ TEX2D_DDS_TARGETS = \
   build/ba_data/textures/fuse.dds \
   build/ba_data/textures/gameCenterIcon.dds \
   build/ba_data/textures/gameCircleIcon.dds \
+  build/ba_data/textures/githubLogo.dds \
   build/ba_data/textures/gladiatorColor.dds \
   build/ba_data/textures/gladiatorColorMask.dds \
   build/ba_data/textures/gladiatorIcon.dds \
@@ -5891,6 +5893,7 @@ TEX2D_PVR_TARGETS = \
   build/ba_data/textures/cyborgColorMask.pvr \
   build/ba_data/textures/cyborgIcon.pvr \
   build/ba_data/textures/cyborgIconColorMask.pvr \
+  build/ba_data/textures/discordLogo.pvr \
   build/ba_data/textures/doomShroomBGColor.pvr \
   build/ba_data/textures/doomShroomLevelColor.pvr \
   build/ba_data/textures/doomShroomPreview.pvr \
@@ -5933,6 +5936,7 @@ TEX2D_PVR_TARGETS = \
   build/ba_data/textures/fuse.pvr \
   build/ba_data/textures/gameCenterIcon.pvr \
   build/ba_data/textures/gameCircleIcon.pvr \
+  build/ba_data/textures/githubLogo.pvr \
   build/ba_data/textures/gladiatorColor.pvr \
   build/ba_data/textures/gladiatorColorMask.pvr \
   build/ba_data/textures/gladiatorIcon.pvr \
@@ -6294,6 +6298,7 @@ TEX2D_KTX_TARGETS = \
   build/ba_data/textures/cyborgColorMask.ktx \
   build/ba_data/textures/cyborgIcon.ktx \
   build/ba_data/textures/cyborgIconColorMask.ktx \
+  build/ba_data/textures/discordLogo.ktx \
   build/ba_data/textures/doomShroomBGColor.ktx \
   build/ba_data/textures/doomShroomLevelColor.ktx \
   build/ba_data/textures/doomShroomPreview.ktx \
@@ -6336,6 +6341,7 @@ TEX2D_KTX_TARGETS = \
   build/ba_data/textures/fuse.ktx \
   build/ba_data/textures/gameCenterIcon.ktx \
   build/ba_data/textures/gameCircleIcon.ktx \
+  build/ba_data/textures/githubLogo.ktx \
   build/ba_data/textures/gladiatorColor.ktx \
   build/ba_data/textures/gladiatorColorMask.ktx \
   build/ba_data/textures/gladiatorIcon.ktx \
@@ -6697,6 +6703,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   build/ba_data/textures/cyborgColor_preview.png \
   build/ba_data/textures/cyborgIconColorMask_preview.png \
   build/ba_data/textures/cyborgIcon_preview.png \
+  build/ba_data/textures/discordLogo_preview.png \
   build/ba_data/textures/doomShroomBGColor_preview.png \
   build/ba_data/textures/doomShroomLevelColor_preview.png \
   build/ba_data/textures/doomShroomPreview_preview.png \
@@ -6739,6 +6746,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   build/ba_data/textures/fuse_preview.png \
   build/ba_data/textures/gameCenterIcon_preview.png \
   build/ba_data/textures/gameCircleIcon_preview.png \
+  build/ba_data/textures/githubLogo_preview.png \
   build/ba_data/textures/gladiatorColorMask_preview.png \
   build/ba_data/textures/gladiatorColor_preview.png \
   build/ba_data/textures/gladiatorIconColorMask_preview.png \

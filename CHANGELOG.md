@@ -1,4 +1,7 @@
-### 1.7.10 (build 20891, api 7, 2022-10-07)
+### 1.7.11 (build 20897, api 7, 2022-10-09)
+- Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.
+
+### 1.7.10 (build 20895, api 7, 2022-10-09)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.
 - Exceptions in the cloud-console now print to stderr instead of logging.exception(). This means they aren't a pretty red color anymore, but this will keep cloud-console behaving well with things like servers where logging.exception() might trigger alarms or otherwise. This is also consistent with standard interactive Python behavior.
 - Cloud console now shows the device name at the top instead of simply 'Console' while connected.
@@ -13,6 +16,7 @@
 - Due to v2-transport improvements, pressing the 'End Session Now' button in ballistica.net account settings should now instantly log you out of all apps using that session (ones that are online at least). Previously this would often not take effect until something like an app relaunch.
 - Fixes an issue where the tournament entry window could remain stuck on top when following a 'get more tickets' link. (Thanks itsre3!)
 - The main menu now says 'End Test' when in a stress test instead of 'End Game' (Thanks vishal332008!)
+- Added 'discordLogo' and 'githubLogo' textures for anyone who wants to use those for UIs.
 
 ### 1.7.9 (build 20880, api 7, 2022-09-24)
 - Cleaned up the efro.message system to isolate response types that are used purely internally (via a new SysResponse type).

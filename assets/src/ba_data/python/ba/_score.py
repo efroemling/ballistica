@@ -18,6 +18,7 @@ class ScoreType(Enum):
 
     Category: **Enums**
     """
+
     SECONDS = 's'
     MILLISECONDS = 'ms'
     POINTS = 'p'

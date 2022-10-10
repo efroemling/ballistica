@@ -172,11 +172,13 @@ class BombFactory:
         self.debris_fall_sound = ba.getsound('debrisFall')
         self.wood_debris_fall_sound = ba.getsound('woodDebrisFall')
 
-        self.explode_sounds = (ba.getsound('explosion01'),
-                               ba.getsound('explosion02'),
-                               ba.getsound('explosion03'),
-                               ba.getsound('explosion04'),
-                               ba.getsound('explosion05'))
+        self.explode_sounds = (
+            ba.getsound('explosion01'),
+            ba.getsound('explosion02'),
+            ba.getsound('explosion03'),
+            ba.getsound('explosion04'),
+            ba.getsound('explosion05'),
+        )
 
         self.freeze_sound = ba.getsound('freeze')
         self.fuse_sound = ba.getsound('fuse01')
@@ -209,8 +211,9 @@ class BombFactory:
             actions=('modify_part_collision', 'use_node_collide', False),
         )
 
-        self.bomb_material.add_actions(actions=('modify_part_collision',
-                                                'friction', 0.3))
+        self.bomb_material.add_actions(
+            actions=('modify_part_collision', 'friction', 0.3)
+        )
 
         self.land_mine_no_explode_material = ba.Material()
         self.land_mine_blast_material = ba.Material()
@@ -220,11 +223,13 @@ class BombFactory:
                 'and',
                 ('they_are_older_than', 200),
                 'and',
-                ('eval_colliding', ),
+                ('eval_colliding',),
                 'and',
                 (
-                    ('they_dont_have_material',
-                     self.land_mine_no_explode_material),
+                    (
+                        'they_dont_have_material',
+                        self.land_mine_no_explode_material,
+                    ),
                     'and',
                     (
                         ('they_have_material', shared.object_material),
@@ -243,7 +248,7 @@ class BombFactory:
                 'and',
                 ('they_are_older_than', 200),
                 'and',
-                ('eval_colliding', ),
+                ('eval_colliding',),
                 'and',
                 (
                     ('they_have_material', shared.footing_material),
@@ -264,8 +269,10 @@ class BombFactory:
             ),
         )
 
-        self.dink_sounds = (ba.getsound('bombDrop01'),
-                            ba.getsound('bombDrop02'))
+        self.dink_sounds = (
+            ba.getsound('bombDrop01'),
+            ba.getsound('bombDrop02'),
+        )
         self.sticky_impact_sound = ba.getsound('stickyImpact')
         self.roll_sound = ba.getsound('bombRoll01')
 
@@ -275,12 +282,15 @@ class BombFactory:
             actions=(
                 ('impact_sound', self.dink_sounds, 2, 0.8),
                 ('roll_sound', self.roll_sound, 3, 6),
-            ))
+            ),
+        )
 
-        self.sticky_material.add_actions(actions=(('modify_part_collision',
-                                                   'stiffness', 0.1),
-                                                  ('modify_part_collision',
-                                                   'damping', 1.0)))
+        self.sticky_material.add_actions(
+            actions=(
+                ('modify_part_collision', 'stiffness', 0.1),
+                ('modify_part_collision', 'damping', 1.0),
+            )
+        )
 
         self.sticky_material.add_actions(
             conditions=(
@@ -322,14 +332,16 @@ class Blast(ba.Actor):
     category: Gameplay Classes
     """
 
-    def __init__(self,
-                 position: Sequence[float] = (0.0, 1.0, 0.0),
-                 velocity: Sequence[float] = (0.0, 0.0, 0.0),
-                 blast_radius: float = 2.0,
-                 blast_type: str = 'normal',
-                 source_player: ba.Player | None = None,
-                 hit_type: str = 'explosion',
-                 hit_subtype: str = 'normal'):
+    def __init__(
+        self,
+        position: Sequence[float] = (0.0, 1.0, 0.0),
+        velocity: Sequence[float] = (0.0, 0.0, 0.0),
+        blast_radius: float = 2.0,
+        blast_type: str = 'normal',
+        source_player: ba.Player | None = None,
+        hit_type: str = 'explosion',
+        hit_subtype: str = 'normal',
+    ):
         """Instantiate with given values."""
 
         # bah; get off my lawn!
@@ -356,7 +368,7 @@ class Blast(ba.Actor):
                 'position': (position[0], position[1] - 0.1, position[2]),
                 'scale': (self.radius, self.radius, self.radius),
                 'type': 'sphere',
-                'materials': rmats
+                'materials': rmats,
             },
         )
 
@@ -364,44 +376,54 @@ class Blast(ba.Actor):
 
         # Throw in an explosion and flash.
         evel = (velocity[0], max(-1.0, velocity[1]), velocity[2])
-        explosion = ba.newnode('explosion',
-                               attrs={
-                                   'position': position,
-                                   'velocity': evel,
-                                   'radius': self.radius,
-                                   'big': (self.blast_type == 'tnt')
-                               })
+        explosion = ba.newnode(
+            'explosion',
+            attrs={
+                'position': position,
+                'velocity': evel,
+                'radius': self.radius,
+                'big': (self.blast_type == 'tnt'),
+            },
+        )
         if self.blast_type == 'ice':
             explosion.color = (0, 0.05, 0.4)
 
         ba.timer(1.0, explosion.delete)
 
         if self.blast_type != 'ice':
-            ba.emitfx(position=position,
-                      velocity=velocity,
-                      count=int(1.0 + random.random() * 4),
-                      emit_type='tendrils',
-                      tendril_type='thin_smoke')
-        ba.emitfx(position=position,
-                  velocity=velocity,
-                  count=int(4.0 + random.random() * 4),
-                  emit_type='tendrils',
-                  tendril_type='ice' if self.blast_type == 'ice' else 'smoke')
-        ba.emitfx(position=position,
-                  emit_type='distortion',
-                  spread=1.0 if self.blast_type == 'tnt' else 2.0)
+            ba.emitfx(
+                position=position,
+                velocity=velocity,
+                count=int(1.0 + random.random() * 4),
+                emit_type='tendrils',
+                tendril_type='thin_smoke',
+            )
+        ba.emitfx(
+            position=position,
+            velocity=velocity,
+            count=int(4.0 + random.random() * 4),
+            emit_type='tendrils',
+            tendril_type='ice' if self.blast_type == 'ice' else 'smoke',
+        )
+        ba.emitfx(
+            position=position,
+            emit_type='distortion',
+            spread=1.0 if self.blast_type == 'tnt' else 2.0,
+        )
 
         # And emit some shrapnel.
         if self.blast_type == 'ice':
 
             def emit() -> None:
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=30,
-                          spread=2.0,
-                          scale=0.4,
-                          chunk_type='ice',
-                          emit_type='stickers')
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=30,
+                    spread=2.0,
+                    scale=0.4,
+                    chunk_type='ice',
+                    emit_type='stickers',
+                )
 
             # It looks better if we delay a bit.
             ba.timer(0.05, emit)
@@ -409,35 +431,45 @@ class Blast(ba.Actor):
         elif self.blast_type == 'sticky':
 
             def emit() -> None:
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(4.0 + random.random() * 8),
-                          spread=0.7,
-                          chunk_type='slime')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(4.0 + random.random() * 8),
-                          scale=0.5,
-                          spread=0.7,
-                          chunk_type='slime')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=15,
-                          scale=0.6,
-                          chunk_type='slime',
-                          emit_type='stickers')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=20,
-                          scale=0.7,
-                          chunk_type='spark',
-                          emit_type='stickers')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(6.0 + random.random() * 12),
-                          scale=0.8,
-                          spread=1.5,
-                          chunk_type='spark')
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(4.0 + random.random() * 8),
+                    spread=0.7,
+                    chunk_type='slime',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(4.0 + random.random() * 8),
+                    scale=0.5,
+                    spread=0.7,
+                    chunk_type='slime',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=15,
+                    scale=0.6,
+                    chunk_type='slime',
+                    emit_type='stickers',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=20,
+                    scale=0.7,
+                    chunk_type='spark',
+                    emit_type='stickers',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(6.0 + random.random() * 12),
+                    scale=0.8,
+                    spread=1.5,
+                    chunk_type='spark',
+                )
 
             # It looks better if we delay a bit.
             ba.timer(0.05, emit)
@@ -445,28 +477,36 @@ class Blast(ba.Actor):
         elif self.blast_type == 'impact':
 
             def emit() -> None:
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(4.0 + random.random() * 8),
-                          scale=0.8,
-                          chunk_type='metal')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(4.0 + random.random() * 8),
-                          scale=0.4,
-                          chunk_type='metal')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=20,
-                          scale=0.7,
-                          chunk_type='spark',
-                          emit_type='stickers')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(8.0 + random.random() * 15),
-                          scale=0.8,
-                          spread=1.5,
-                          chunk_type='spark')
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(4.0 + random.random() * 8),
+                    scale=0.8,
+                    chunk_type='metal',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(4.0 + random.random() * 8),
+                    scale=0.4,
+                    chunk_type='metal',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=20,
+                    scale=0.7,
+                    chunk_type='spark',
+                    emit_type='stickers',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(8.0 + random.random() * 15),
+                    scale=0.8,
+                    spread=1.5,
+                    chunk_type='spark',
+                )
 
             # It looks better if we delay a bit.
             ba.timer(0.05, emit)
@@ -475,38 +515,48 @@ class Blast(ba.Actor):
 
             def emit() -> None:
                 if self.blast_type != 'tnt':
-                    ba.emitfx(position=position,
-                              velocity=velocity,
-                              count=int(4.0 + random.random() * 8),
-                              chunk_type='rock')
-                    ba.emitfx(position=position,
-                              velocity=velocity,
-                              count=int(4.0 + random.random() * 8),
-                              scale=0.5,
-                              chunk_type='rock')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=30,
-                          scale=1.0 if self.blast_type == 'tnt' else 0.7,
-                          chunk_type='spark',
-                          emit_type='stickers')
-                ba.emitfx(position=position,
-                          velocity=velocity,
-                          count=int(18.0 + random.random() * 20),
-                          scale=1.0 if self.blast_type == 'tnt' else 0.8,
-                          spread=1.5,
-                          chunk_type='spark')
+                    ba.emitfx(
+                        position=position,
+                        velocity=velocity,
+                        count=int(4.0 + random.random() * 8),
+                        chunk_type='rock',
+                    )
+                    ba.emitfx(
+                        position=position,
+                        velocity=velocity,
+                        count=int(4.0 + random.random() * 8),
+                        scale=0.5,
+                        chunk_type='rock',
+                    )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=30,
+                    scale=1.0 if self.blast_type == 'tnt' else 0.7,
+                    chunk_type='spark',
+                    emit_type='stickers',
+                )
+                ba.emitfx(
+                    position=position,
+                    velocity=velocity,
+                    count=int(18.0 + random.random() * 20),
+                    scale=1.0 if self.blast_type == 'tnt' else 0.8,
+                    spread=1.5,
+                    chunk_type='spark',
+                )
 
                 # TNT throws splintery chunks.
                 if self.blast_type == 'tnt':
 
                     def emit_splinters() -> None:
-                        ba.emitfx(position=position,
-                                  velocity=velocity,
-                                  count=int(20.0 + random.random() * 25),
-                                  scale=0.8,
-                                  spread=1.0,
-                                  chunk_type='splinter')
+                        ba.emitfx(
+                            position=position,
+                            velocity=velocity,
+                            count=int(20.0 + random.random() * 25),
+                            scale=0.8,
+                            spread=1.0,
+                            chunk_type='splinter',
+                        )
 
                     ba.timer(0.01, emit_splinters)
 
@@ -514,26 +564,29 @@ class Blast(ba.Actor):
                 if self.blast_type == 'tnt' or random.random() < 0.1:
 
                     def emit_extra_sparks() -> None:
-                        ba.emitfx(position=position,
-                                  velocity=velocity,
-                                  count=int(10.0 + random.random() * 20),
-                                  scale=0.8,
-                                  spread=1.5,
-                                  chunk_type='spark')
+                        ba.emitfx(
+                            position=position,
+                            velocity=velocity,
+                            count=int(10.0 + random.random() * 20),
+                            scale=0.8,
+                            spread=1.5,
+                            chunk_type='spark',
+                        )
 
                     ba.timer(0.02, emit_extra_sparks)
 
             # It looks better if we delay a bit.
             ba.timer(0.05, emit)
 
-        lcolor = ((0.6, 0.6, 1.0) if self.blast_type == 'ice' else
-                  (1, 0.3, 0.1))
-        light = ba.newnode('light',
-                           attrs={
-                               'position': position,
-                               'volume_intensity_scale': 10.0,
-                               'color': lcolor
-                           })
+        lcolor = (0.6, 0.6, 1.0) if self.blast_type == 'ice' else (1, 0.3, 0.1)
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': position,
+                'volume_intensity_scale': 10.0,
+                'color': lcolor,
+            },
+        )
 
         scl = random.uniform(0.6, 0.9)
         scorch_radius = light_radius = self.radius
@@ -544,7 +597,9 @@ class Blast(ba.Actor):
 
         iscale = 1.6
         ba.animate(
-            light, 'intensity', {
+            light,
+            'intensity',
+            {
                 0: 2.0 * iscale,
                 scl * 0.02: 0.1 * iscale,
                 scl * 0.025: 0.2 * iscale,
@@ -553,25 +608,31 @@ class Blast(ba.Actor):
                 scl * 0.08: 4.0 * iscale,
                 scl * 0.2: 0.6 * iscale,
                 scl * 2.0: 0.00 * iscale,
-                scl * 3.0: 0.0
-            })
+                scl * 3.0: 0.0,
+            },
+        )
         ba.animate(
-            light, 'radius', {
+            light,
+            'radius',
+            {
                 0: light_radius * 0.2,
                 scl * 0.05: light_radius * 0.55,
                 scl * 0.1: light_radius * 0.3,
                 scl * 0.3: light_radius * 0.15,
-                scl * 1.0: light_radius * 0.05
-            })
+                scl * 1.0: light_radius * 0.05,
+            },
+        )
         ba.timer(scl * 3.0, light.delete)
 
         # Make a scorch that fades over time.
-        scorch = ba.newnode('scorch',
-                            attrs={
-                                'position': position,
-                                'size': scorch_radius * 0.5,
-                                'big': (self.blast_type == 'tnt')
-                            })
+        scorch = ba.newnode(
+            'scorch',
+            attrs={
+                'position': position,
+                'size': scorch_radius * 0.5,
+                'big': (self.blast_type == 'tnt'),
+            },
+        )
         if self.blast_type == 'ice':
             scorch.color = (1, 1, 1.5)
 
@@ -622,17 +683,20 @@ class Blast(ba.Actor):
                 mag *= 2.0
 
             node.handlemessage(
-                ba.HitMessage(pos=nodepos,
-                              velocity=(0, 0, 0),
-                              magnitude=mag,
-                              hit_type=self.hit_type,
-                              hit_subtype=self.hit_subtype,
-                              radius=self.radius,
-                              source_player=ba.existing(self._source_player)))
+                ba.HitMessage(
+                    pos=nodepos,
+                    velocity=(0, 0, 0),
+                    magnitude=mag,
+                    hit_type=self.hit_type,
+                    hit_subtype=self.hit_subtype,
+                    radius=self.radius,
+                    source_player=ba.existing(self._source_player),
+                )
+            )
             if self.blast_type == 'ice':
-                ba.playsound(BombFactory.get().freeze_sound,
-                             10,
-                             position=nodepos)
+                ba.playsound(
+                    BombFactory.get().freeze_sound, 10, position=nodepos
+                )
                 node.handlemessage(ba.FreezeMessage())
 
         else:
@@ -651,14 +715,16 @@ class Bomb(ba.Actor):
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
 
-    def __init__(self,
-                 position: Sequence[float] = (0.0, 1.0, 0.0),
-                 velocity: Sequence[float] = (0.0, 0.0, 0.0),
-                 bomb_type: str = 'normal',
-                 blast_radius: float = 2.0,
-                 bomb_scale: float = 1.0,
-                 source_player: ba.Player | None = None,
-                 owner: ba.Node | None = None):
+    def __init__(
+        self,
+        position: Sequence[float] = (0.0, 1.0, 0.0),
+        velocity: Sequence[float] = (0.0, 0.0, 0.0),
+        bomb_type: str = 'normal',
+        blast_radius: float = 2.0,
+        bomb_scale: float = 1.0,
+        source_player: ba.Player | None = None,
+        owner: ba.Node | None = None,
+    ):
         """Create a new Bomb.
 
         bomb_type can be 'ice','impact','land_mine','normal','sticky', or
@@ -670,8 +736,14 @@ class Bomb(ba.Actor):
         shared = SharedObjects.get()
         factory = BombFactory.get()
 
-        if bomb_type not in ('ice', 'impact', 'land_mine', 'normal', 'sticky',
-                             'tnt'):
+        if bomb_type not in (
+            'ice',
+            'impact',
+            'land_mine',
+            'normal',
+            'sticky',
+            'tnt',
+        ):
             raise ValueError('invalid bomb type: ' + bomb_type)
         self.bomb_type = bomb_type
 
@@ -718,78 +790,88 @@ class Bomb(ba.Actor):
         # wanna add this even in the tnt case?
         materials: tuple[ba.Material, ...]
         if self.bomb_type == 'tnt':
-            materials = (factory.bomb_material, shared.footing_material,
-                         shared.object_material)
+            materials = (
+                factory.bomb_material,
+                shared.footing_material,
+                shared.object_material,
+            )
         else:
             materials = (factory.bomb_material, shared.object_material)
 
         if self.bomb_type == 'impact':
-            materials = materials + (factory.impact_blast_material, )
+            materials = materials + (factory.impact_blast_material,)
         elif self.bomb_type == 'land_mine':
-            materials = materials + (factory.land_mine_no_explode_material, )
+            materials = materials + (factory.land_mine_no_explode_material,)
 
         if self.bomb_type == 'sticky':
-            materials = materials + (factory.sticky_material, )
+            materials = materials + (factory.sticky_material,)
         else:
-            materials = materials + (factory.normal_sound_material, )
+            materials = materials + (factory.normal_sound_material,)
 
         if self.bomb_type == 'land_mine':
             fuse_time = None
-            self.node = ba.newnode('prop',
-                                   delegate=self,
-                                   attrs={
-                                       'position': position,
-                                       'velocity': velocity,
-                                       'model': factory.land_mine_model,
-                                       'light_model': factory.land_mine_model,
-                                       'body': 'landMine',
-                                       'body_scale': self.scale,
-                                       'shadow_size': 0.44,
-                                       'color_texture': factory.land_mine_tex,
-                                       'reflection': 'powerup',
-                                       'reflection_scale': [1.0],
-                                       'materials': materials
-                                   })
+            self.node = ba.newnode(
+                'prop',
+                delegate=self,
+                attrs={
+                    'position': position,
+                    'velocity': velocity,
+                    'model': factory.land_mine_model,
+                    'light_model': factory.land_mine_model,
+                    'body': 'landMine',
+                    'body_scale': self.scale,
+                    'shadow_size': 0.44,
+                    'color_texture': factory.land_mine_tex,
+                    'reflection': 'powerup',
+                    'reflection_scale': [1.0],
+                    'materials': materials,
+                },
+            )
 
         elif self.bomb_type == 'tnt':
             fuse_time = None
-            self.node = ba.newnode('prop',
-                                   delegate=self,
-                                   attrs={
-                                       'position': position,
-                                       'velocity': velocity,
-                                       'model': factory.tnt_model,
-                                       'light_model': factory.tnt_model,
-                                       'body': 'crate',
-                                       'body_scale': self.scale,
-                                       'shadow_size': 0.5,
-                                       'color_texture': factory.tnt_tex,
-                                       'reflection': 'soft',
-                                       'reflection_scale': [0.23],
-                                       'materials': materials
-                                   })
+            self.node = ba.newnode(
+                'prop',
+                delegate=self,
+                attrs={
+                    'position': position,
+                    'velocity': velocity,
+                    'model': factory.tnt_model,
+                    'light_model': factory.tnt_model,
+                    'body': 'crate',
+                    'body_scale': self.scale,
+                    'shadow_size': 0.5,
+                    'color_texture': factory.tnt_tex,
+                    'reflection': 'soft',
+                    'reflection_scale': [0.23],
+                    'materials': materials,
+                },
+            )
 
         elif self.bomb_type == 'impact':
             fuse_time = 20.0
-            self.node = ba.newnode('prop',
-                                   delegate=self,
-                                   attrs={
-                                       'position': position,
-                                       'velocity': velocity,
-                                       'body': 'sphere',
-                                       'body_scale': self.scale,
-                                       'model': factory.impact_bomb_model,
-                                       'shadow_size': 0.3,
-                                       'color_texture': factory.impact_tex,
-                                       'reflection': 'powerup',
-                                       'reflection_scale': [1.5],
-                                       'materials': materials
-                                   })
+            self.node = ba.newnode(
+                'prop',
+                delegate=self,
+                attrs={
+                    'position': position,
+                    'velocity': velocity,
+                    'body': 'sphere',
+                    'body_scale': self.scale,
+                    'model': factory.impact_bomb_model,
+                    'shadow_size': 0.3,
+                    'color_texture': factory.impact_tex,
+                    'reflection': 'powerup',
+                    'reflection_scale': [1.5],
+                    'materials': materials,
+                },
+            )
             self.arm_timer = ba.Timer(
-                0.2, ba.WeakCall(self.handlemessage, ArmMessage()))
+                0.2, ba.WeakCall(self.handlemessage, ArmMessage())
+            )
             self.warn_timer = ba.Timer(
-                fuse_time - 1.7, ba.WeakCall(self.handlemessage,
-                                             WarnMessage()))
+                fuse_time - 1.7, ba.WeakCall(self.handlemessage, WarnMessage())
+            )
 
         else:
             fuse_time = 3.0
@@ -809,49 +891,55 @@ class Bomb(ba.Actor):
                 tex = factory.sticky_tex
             else:
                 tex = factory.regular_tex
-            self.node = ba.newnode('bomb',
-                                   delegate=self,
-                                   attrs={
-                                       'position': position,
-                                       'velocity': velocity,
-                                       'model': model,
-                                       'body_scale': self.scale,
-                                       'shadow_size': 0.3,
-                                       'color_texture': tex,
-                                       'sticky': sticky,
-                                       'owner': owner,
-                                       'reflection': rtype,
-                                       'reflection_scale': [rscale],
-                                       'materials': materials
-                                   })
+            self.node = ba.newnode(
+                'bomb',
+                delegate=self,
+                attrs={
+                    'position': position,
+                    'velocity': velocity,
+                    'model': model,
+                    'body_scale': self.scale,
+                    'shadow_size': 0.3,
+                    'color_texture': tex,
+                    'sticky': sticky,
+                    'owner': owner,
+                    'reflection': rtype,
+                    'reflection_scale': [rscale],
+                    'materials': materials,
+                },
+            )
 
-            sound = ba.newnode('sound',
-                               owner=self.node,
-                               attrs={
-                                   'sound': factory.fuse_sound,
-                                   'volume': 0.25
-                               })
+            sound = ba.newnode(
+                'sound',
+                owner=self.node,
+                attrs={'sound': factory.fuse_sound, 'volume': 0.25},
+            )
             self.node.connectattr('position', sound, 'position')
             ba.animate(self.node, 'fuse_length', {0.0: 1.0, fuse_time: 0.0})
 
         # Light the fuse!!!
         if self.bomb_type not in ('land_mine', 'tnt'):
             assert fuse_time is not None
-            ba.timer(fuse_time,
-                     ba.WeakCall(self.handlemessage, ExplodeMessage()))
+            ba.timer(
+                fuse_time, ba.WeakCall(self.handlemessage, ExplodeMessage())
+            )
 
-        ba.animate(self.node, 'model_scale', {
-            0: 0,
-            0.2: 1.3 * self.scale,
-            0.26: self.scale
-        })
+        ba.animate(
+            self.node,
+            'model_scale',
+            {0: 0, 0.2: 1.3 * self.scale, 0.26: self.scale},
+        )
 
-    def get_source_player(self,
-                          playertype: type[PlayerType]) -> PlayerType | None:
+    def get_source_player(
+        self, playertype: type[PlayerType]
+    ) -> PlayerType | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
-        return (player if isinstance(player, playertype) and player.exists()
-                else None)
+        return (
+            player
+            if isinstance(player, playertype) and player.exists()
+            else None
+        )
 
     def on_expire(self) -> None:
         super().on_expire()
@@ -876,17 +964,22 @@ class Bomb(ba.Actor):
         # throwing/etc.)
         node_delegate = node.getdelegate(object)
         if node:
-            if (self.bomb_type == 'impact' and
-                (node is self.owner or
-                 (isinstance(node_delegate, Bomb) and node_delegate.bomb_type
-                  == 'impact' and node_delegate.owner is self.owner))):
+            if self.bomb_type == 'impact' and (
+                node is self.owner
+                or (
+                    isinstance(node_delegate, Bomb)
+                    and node_delegate.bomb_type == 'impact'
+                    and node_delegate.owner is self.owner
+                )
+            ):
                 return
             self.handlemessage(ExplodeMessage())
 
     def _handle_dropped(self) -> None:
         if self.bomb_type == 'land_mine':
             self.arm_timer = ba.Timer(
-                1.25, ba.WeakCall(self.handlemessage, ArmMessage()))
+                1.25, ba.WeakCall(self.handlemessage, ArmMessage())
+            )
 
         # Once we've thrown a sticky bomb we can stick to it.
         elif self.bomb_type == 'sticky':
@@ -899,13 +992,17 @@ class Bomb(ba.Actor):
 
     def _handle_splat(self) -> None:
         node = ba.getcollision().opposingnode
-        if (node is not self.owner
-                and ba.time() - self._last_sticky_sound_time > 1.0):
+        if (
+            node is not self.owner
+            and ba.time() - self._last_sticky_sound_time > 1.0
+        ):
             self._last_sticky_sound_time = ba.time()
             assert self.node
-            ba.playsound(BombFactory.get().sticky_impact_sound,
-                         2.0,
-                         position=self.node.position)
+            ba.playsound(
+                BombFactory.get().sticky_impact_sound,
+                2.0,
+                position=self.node.position,
+            )
 
     def add_explode_callback(self, call: Callable[[Bomb, Blast], Any]) -> None:
         """Add a call to be run when the bomb has exploded.
@@ -920,13 +1017,15 @@ class Bomb(ba.Actor):
             return
         self._exploded = True
         if self.node:
-            blast = Blast(position=self.node.position,
-                          velocity=self.node.velocity,
-                          blast_radius=self.blast_radius,
-                          blast_type=self.bomb_type,
-                          source_player=ba.existing(self._source_player),
-                          hit_type=self.hit_type,
-                          hit_subtype=self.hit_subtype).autoretain()
+            blast = Blast(
+                position=self.node.position,
+                velocity=self.node.velocity,
+                blast_radius=self.blast_radius,
+                blast_type=self.bomb_type,
+                source_player=ba.existing(self._source_player),
+                hit_type=self.hit_type,
+                hit_subtype=self.hit_subtype,
+            ).autoretain()
             for callback in self._explode_callbacks:
                 callback(self, blast)
 
@@ -937,9 +1036,9 @@ class Bomb(ba.Actor):
     def _handle_warn(self) -> None:
         if self.texture_sequence and self.node:
             self.texture_sequence.rate = 30
-            ba.playsound(BombFactory.get().warn_sound,
-                         0.5,
-                         position=self.node.position)
+            ba.playsound(
+                BombFactory.get().warn_sound, 0.5, position=self.node.position
+            )
 
     def _add_material(self, material: ba.Material) -> None:
         if not self.node:
@@ -947,7 +1046,7 @@ class Bomb(ba.Actor):
         materials = self.node.materials
         if material not in materials:
             assert isinstance(materials, tuple)
-            self.node.materials = materials + (material, )
+            self.node.materials = materials + (material,)
 
     def arm(self) -> None:
         """Arm the bomb (for land-mines and impact-bombs).
@@ -960,46 +1059,54 @@ class Bomb(ba.Actor):
         intex: Sequence[ba.Texture]
         if self.bomb_type == 'land_mine':
             intex = (factory.land_mine_lit_tex, factory.land_mine_tex)
-            self.texture_sequence = ba.newnode('texture_sequence',
-                                               owner=self.node,
-                                               attrs={
-                                                   'rate': 30,
-                                                   'input_textures': intex
-                                               })
+            self.texture_sequence = ba.newnode(
+                'texture_sequence',
+                owner=self.node,
+                attrs={'rate': 30, 'input_textures': intex},
+            )
             ba.timer(0.5, self.texture_sequence.delete)
 
             # We now make it explodable.
             ba.timer(
                 0.25,
-                ba.WeakCall(self._add_material,
-                            factory.land_mine_blast_material))
+                ba.WeakCall(
+                    self._add_material, factory.land_mine_blast_material
+                ),
+            )
         elif self.bomb_type == 'impact':
-            intex = (factory.impact_lit_tex, factory.impact_tex,
-                     factory.impact_tex)
-            self.texture_sequence = ba.newnode('texture_sequence',
-                                               owner=self.node,
-                                               attrs={
-                                                   'rate': 100,
-                                                   'input_textures': intex
-                                               })
+            intex = (
+                factory.impact_lit_tex,
+                factory.impact_tex,
+                factory.impact_tex,
+            )
+            self.texture_sequence = ba.newnode(
+                'texture_sequence',
+                owner=self.node,
+                attrs={'rate': 100, 'input_textures': intex},
+            )
             ba.timer(
                 0.25,
-                ba.WeakCall(self._add_material,
-                            factory.land_mine_blast_material))
+                ba.WeakCall(
+                    self._add_material, factory.land_mine_blast_material
+                ),
+            )
         else:
-            raise Exception('arm() should only be called '
-                            'on land-mines or impact bombs')
-        self.texture_sequence.connectattr('output_texture', self.node,
-                                          'color_texture')
+            raise RuntimeError(
+                'arm() should only be called on land-mines or impact bombs'
+            )
+        self.texture_sequence.connectattr(
+            'output_texture', self.node, 'color_texture'
+        )
         ba.playsound(factory.activate_sound, 0.5, position=self.node.position)
 
     def _handle_hit(self, msg: ba.HitMessage) -> None:
-        ispunched = (msg.srcnode and msg.srcnode.getnodetype() == 'spaz')
+        ispunched = msg.srcnode and msg.srcnode.getnodetype() == 'spaz'
 
         # Normal bombs are triggered by non-punch impacts;
         # impact-bombs by all impacts.
-        if (not self._exploded and
-            (not ispunched or self.bomb_type in ['impact', 'land_mine'])):
+        if not self._exploded and (
+            not ispunched or self.bomb_type in ['impact', 'land_mine']
+        ):
 
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
@@ -1018,15 +1125,27 @@ class Bomb(ba.Actor):
                 #     self.hit_type = msg.hit_type
                 #     self.hit_subtype = msg.hit_subtype
 
-            ba.timer(0.1 + random.random() * 0.1,
-                     ba.WeakCall(self.handlemessage, ExplodeMessage()))
+            ba.timer(
+                0.1 + random.random() * 0.1,
+                ba.WeakCall(self.handlemessage, ExplodeMessage()),
+            )
         assert self.node
-        self.node.handlemessage('impulse', msg.pos[0], msg.pos[1], msg.pos[2],
-                                msg.velocity[0], msg.velocity[1],
-                                msg.velocity[2], msg.magnitude,
-                                msg.velocity_magnitude, msg.radius, 0,
-                                msg.velocity[0], msg.velocity[1],
-                                msg.velocity[2])
+        self.node.handlemessage(
+            'impulse',
+            msg.pos[0],
+            msg.pos[1],
+            msg.pos[2],
+            msg.velocity[0],
+            msg.velocity[1],
+            msg.velocity[2],
+            msg.magnitude,
+            msg.velocity_magnitude,
+            msg.radius,
+            0,
+            msg.velocity[0],
+            msg.velocity[1],
+            msg.velocity[2],
+        )
 
         if msg.srcnode:
             pass
@@ -1077,9 +1196,9 @@ class TNTSpawner:
         self._update()
 
         # Go with slightly more than 1 second to avoid timer stacking.
-        self._update_timer = ba.Timer(1.1,
-                                      ba.WeakCall(self._update),
-                                      repeat=True)
+        self._update_timer = ba.Timer(
+            1.1, ba.WeakCall(self._update), repeat=True
+        )
 
     def _update(self) -> None:
         tnt_alive = self._tnt is not None and self._tnt.node

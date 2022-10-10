@@ -33,11 +33,13 @@ def bootstrap() -> None:
     # Python's stdout/stderr into it. Then we can at least debug problems
     # on systems where native stdout/stderr is not easily accessible
     # such as Android.
-    log_handler = setup_logging(log_path=None,
-                                level=LogLevel.DEBUG,
-                                suppress_non_root_debug=True,
-                                log_stdout_stderr=True,
-                                cache_size_limit=1024 * 1024)
+    log_handler = setup_logging(
+        log_path=None,
+        level=LogLevel.DEBUG,
+        suppress_non_root_debug=True,
+        log_stdout_stderr=True,
+        cache_size_limit=1024 * 1024,
+    )
 
     log_handler.add_callback(_on_log)
 
@@ -45,7 +47,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20891
+    expected_build = 20897
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -53,7 +55,8 @@ def bootstrap() -> None:
             f' Ballistica build {expected_build}.\n'
             f' You are running build {running_build}.'
             f' This might cause the app to error or misbehave.',
-            file=sys.stderr)
+            file=sys.stderr,
+        )
 
     # In bootstrap_monolithic.py we told Python not to handle SIGINT itself
     # (because that must be done in the main thread). Now we finish the
@@ -69,7 +72,8 @@ def bootstrap() -> None:
         print(
             'ERROR: Python\'s UTF-8 mode is not set.'
             ' This will likely result in errors.',
-            file=sys.stderr)
+            file=sys.stderr,
+        )
 
     debug_build = env['debug_build']
 
@@ -78,20 +82,24 @@ def bootstrap() -> None:
         print(
             f'WARNING: Mismatch in debug_build {debug_build}'
             f' and sys.flags.dev_mode {sys.flags.dev_mode}',
-            file=sys.stderr)
+            file=sys.stderr,
+        )
 
     # In embedded situations (when we're providing our own Python) let's
     # also provide our own root certs so ssl works. We can consider overriding
     # this in particular embedded cases if we can verify that system certs
     # are working.
     # (We also allow forcing this via an env var if the user desires)
-    if (_ba.contains_python_dist()
-            or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'):
+    if (
+        _ba.contains_python_dist()
+        or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'
+    ):
         import certifi
 
         # Let both OpenSSL and requests (if present) know to use this.
-        os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
-            certifi.where())
+        os.environ['SSL_CERT_FILE'] = os.environ[
+            'REQUESTS_CA_BUNDLE'
+        ] = certifi.where()
 
     # On Windows I'm seeing the following error creating asyncio loops in
     # background threads with the default proactor setup:
@@ -104,6 +112,7 @@ def bootstrap() -> None:
     # to default to selector in that case?..
     if sys.platform == 'win32':
         import asyncio
+
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # pylint: disable=c-extension-no-member
@@ -122,6 +131,7 @@ def bootstrap() -> None:
     # Now spin up our App instance and store it on both _ba and ba.
     from ba._app import App
     import ba
+
     _ba.app = ba.app = App()
     _ba.app.log_handler = log_handler
 
@@ -138,6 +148,7 @@ class _CustomHelper:
         # (but then things mostly work). Let's get the ugly error out
         # of the way explicitly.
         import sysconfig
+
         try:
             # This errors once but seems to run cleanly after, so let's
             # get the error out of the way.
@@ -146,13 +157,16 @@ class _CustomHelper:
             pass
 
         import pydoc
+
         # Disable pager and interactive help since neither works well
         # with our funky multi-threaded setup or in-game/cloud consoles.
         # Let's just do simple text dumps.
         pydoc.pager = pydoc.plainpager
         if not args and not kwds:
-            print('Interactive help is not available in this environment.\n'
-                  'Type help(object) for help about object.')
+            print(
+                'Interactive help is not available in this environment.\n'
+                'Type help(object) for help about object.'
+            )
             return None
         return pydoc.help(*args, **kwds)
 
@@ -170,6 +184,8 @@ def _on_log(entry: LogEntry) -> None:
     # We also want to feed some logs to the old V1-cloud-log system.
     # Let's go with anything warning or higher as well as the stdout/stderr
     # log messages that ba.app.log_handler creates for us.
-    if entry.level.value >= LogLevel.WARNING.value or entry.name in ('stdout',
-                                                                     'stderr'):
+    if entry.level.value >= LogLevel.WARNING.value or entry.name in (
+        'stdout',
+        'stderr',
+    ):
         _ba.v1_cloud_log(entry.message)

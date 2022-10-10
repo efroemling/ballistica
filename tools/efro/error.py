@@ -31,6 +31,7 @@ class CleanError(Exception):
         If the error has an empty message, prints nothing (not even a newline).
         """
         from efro.terminal import Clr
+
         errstr = str(self)
         if errstr:
             print(f'{Clr.SRED}{errstr}{Clr.RST}', flush=flush)
@@ -95,9 +96,18 @@ def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
     import urllib.error
     import http.client
     import socket
-    if isinstance(exc, (urllib.error.URLError, ConnectionError,
-                        http.client.IncompleteRead, http.client.BadStatusLine,
-                        http.client.RemoteDisconnected, socket.timeout)):
+
+    if isinstance(
+        exc,
+        (
+            urllib.error.URLError,
+            ConnectionError,
+            http.client.IncompleteRead,
+            http.client.BadStatusLine,
+            http.client.RemoteDisconnected,
+            socket.timeout,
+        ),
+    ):
 
         # Special case: although an HTTPError is a subclass of URLError,
         # we don't consider it a communication error. It generally means we
@@ -120,12 +130,20 @@ def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
         if exc.errno == 10051:  # Windows unreachable network error.
             return True
         if exc.errno in {
-                errno.ETIMEDOUT,
-                errno.EHOSTUNREACH,
-                errno.ENETUNREACH,
+            errno.ETIMEDOUT,
+            errno.EHOSTUNREACH,
+            errno.ENETUNREACH,
         }:
             return True
     return False
+
+
+def is_requests_communication_error(exc: BaseException) -> bool:
+    """Is the provided exception a communication-related error from requests?"""
+    import requests
+
+    # Looks like this maps pretty well onto requests' ConnectionError
+    return isinstance(exc, requests.ConnectionError)
 
 
 def is_udp_communication_error(exc: BaseException) -> bool:
@@ -144,18 +162,18 @@ def is_udp_communication_error(exc: BaseException) -> bool:
         if exc.errno == 10051:  # Windows unreachable network error.
             return True
         if exc.errno in {
-                errno.EADDRNOTAVAIL,
-                errno.ETIMEDOUT,
-                errno.EHOSTUNREACH,
-                errno.ENETUNREACH,
-                errno.EINVAL,
-                errno.EPERM,
-                errno.EACCES,
-                # Windows 'invalid argument' error.
-                10022,
-                # Windows 'a socket operation was attempted to'
-                #         'an unreachable network' error.
-                10051,
+            errno.EADDRNOTAVAIL,
+            errno.ETIMEDOUT,
+            errno.EHOSTUNREACH,
+            errno.ENETUNREACH,
+            errno.EINVAL,
+            errno.EPERM,
+            errno.EACCES,
+            # Windows 'invalid argument' error.
+            10022,
+            # Windows 'a socket operation was attempted to'
+            #         'an unreachable network' error.
+            10051,
         }:
             return True
     return False
@@ -172,11 +190,14 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
     """
     import ssl
 
-    if isinstance(exc, (
+    if isinstance(
+        exc,
+        (
             ConnectionError,
             TimeoutError,
             EOFError,
-    )):
+        ),
+    ):
         return True
 
     # Also some specific errno ones.
@@ -184,9 +205,9 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
         if exc.errno == 10051:  # Windows unreachable network error.
             return True
         if exc.errno in {
-                errno.ETIMEDOUT,
-                errno.EHOSTUNREACH,
-                errno.ENETUNREACH,
+            errno.ETIMEDOUT,
+            errno.EHOSTUNREACH,
+            errno.ENETUNREACH,
         }:
             return True
 

@@ -16,11 +16,13 @@ if TYPE_CHECKING:
 class ProfileBrowserWindow(ba.Window):
     """Window for browsing player profiles."""
 
-    def __init__(self,
-                 transition: str = 'in_right',
-                 in_main_menu: bool = True,
-                 selected_profile: str | None = None,
-                 origin_widget: ba.Widget | None = None):
+    def __init__(
+        self,
+        transition: str = 'in_right',
+        in_main_menu: bool = True,
+        selected_profile: str | None = None,
+        origin_widget: ba.Widget | None = None,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         self._in_main_menu = in_main_menu
@@ -31,8 +33,13 @@ class ProfileBrowserWindow(ba.Window):
         uiscale = ba.app.ui.uiscale
         self._width = 700.0 if uiscale is ba.UIScale.SMALL else 600.0
         x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
-        self._height = (360.0 if uiscale is ba.UIScale.SMALL else
-                        385.0 if uiscale is ba.UIScale.MEDIUM else 410.0)
+        self._height = (
+            360.0
+            if uiscale is ba.UIScale.SMALL
+            else 385.0
+            if uiscale is ba.UIScale.MEDIUM
+            else 410.0
+        )
 
         # If we're being called up standalone, handle pause/resume ourself.
         if not self._in_main_menu:
@@ -55,13 +62,23 @@ class ProfileBrowserWindow(ba.Window):
 
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            scale_origin_stack_offset=scale_origin,
-            scale=(2.2 if uiscale is ba.UIScale.SMALL else
-                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -14) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height + top_extra),
+                transition=transition,
+                scale_origin_stack_offset=scale_origin,
+                scale=(
+                    2.2
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.6
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(0, -14)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -71,24 +88,29 @@ class ProfileBrowserWindow(ba.Window):
             label=back_label,
             button_type='back' if self._in_main_menu else None,
             autoselect=True,
-            on_activate_call=self._back)
+            on_activate_call=self._back,
+        )
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        ba.textwidget(parent=self._root_widget,
-                      position=(self._width * 0.5, self._height - 36),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.titleText'),
-                      maxwidth=300,
-                      color=ba.app.ui.title_color,
-                      scale=0.9,
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 36),
+            size=(0, 0),
+            text=ba.Lstr(resource=self._r + '.titleText'),
+            maxwidth=300,
+            color=ba.app.ui.title_color,
+            scale=0.9,
+            h_align='center',
+            v_align='center',
+        )
 
         if self._in_main_menu:
-            ba.buttonwidget(edit=btn,
-                            button_type='backSmall',
-                            size=(60, 60),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                size=(60, 60),
+                label=ba.charstr(ba.SpecialChar.BACK),
+            )
 
         scroll_height = self._height - 140.0
         self._scroll_width = self._width - (188 + x_inset * 2)
@@ -96,20 +118,26 @@ class ProfileBrowserWindow(ba.Window):
         h = 50 + x_inset
         b_color = (0.6, 0.53, 0.63)
 
-        scl = (1.055 if uiscale is ba.UIScale.SMALL else
-               1.18 if uiscale is ba.UIScale.MEDIUM else 1.3)
+        scl = (
+            1.055
+            if uiscale is ba.UIScale.SMALL
+            else 1.18
+            if uiscale is ba.UIScale.MEDIUM
+            else 1.3
+        )
         v -= 70.0 * scl
-        self._new_button = ba.buttonwidget(parent=self._root_widget,
-                                           position=(h, v),
-                                           size=(80, 66.0 * scl),
-                                           on_activate_call=self._new_profile,
-                                           color=b_color,
-                                           button_type='square',
-                                           autoselect=True,
-                                           textcolor=(0.75, 0.7, 0.8),
-                                           text_scale=0.7,
-                                           label=ba.Lstr(resource=self._r +
-                                                         '.newButtonText'))
+        self._new_button = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(h, v),
+            size=(80, 66.0 * scl),
+            on_activate_call=self._new_profile,
+            color=b_color,
+            button_type='square',
+            autoselect=True,
+            textcolor=(0.75, 0.7, 0.8),
+            text_scale=0.7,
+            label=ba.Lstr(resource=self._r + '.newButtonText'),
+        )
         v -= 70.0 * scl
         self._edit_button = ba.buttonwidget(
             parent=self._root_widget,
@@ -121,7 +149,8 @@ class ProfileBrowserWindow(ba.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=ba.Lstr(resource=self._r + '.editButtonText'))
+            label=ba.Lstr(resource=self._r + '.editButtonText'),
+        )
         v -= 70.0 * scl
         self._delete_button = ba.buttonwidget(
             parent=self._root_widget,
@@ -133,34 +162,40 @@ class ProfileBrowserWindow(ba.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=ba.Lstr(resource=self._r + '.deleteButtonText'))
+            label=ba.Lstr(resource=self._r + '.deleteButtonText'),
+        )
 
         v = self._height - 87
 
-        ba.textwidget(parent=self._root_widget,
-                      position=(self._width * 0.5, self._height - 71),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.explanationText'),
-                      color=ba.app.ui.infotextcolor,
-                      maxwidth=self._width * 0.83,
-                      scale=0.6,
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 71),
+            size=(0, 0),
+            text=ba.Lstr(resource=self._r + '.explanationText'),
+            color=ba.app.ui.infotextcolor,
+            maxwidth=self._width * 0.83,
+            scale=0.6,
+            h_align='center',
+            v_align='center',
+        )
 
-        self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
-                                             highlight=False,
-                                             position=(140 + x_inset,
-                                                       v - scroll_height),
-                                             size=(self._scroll_width,
-                                                   scroll_height))
-        ba.widget(edit=self._scrollwidget,
-                  autoselect=True,
-                  left_widget=self._new_button)
-        ba.containerwidget(edit=self._root_widget,
-                           selected_child=self._scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
-                                             border=2,
-                                             margin=0)
+        self._scrollwidget = ba.scrollwidget(
+            parent=self._root_widget,
+            highlight=False,
+            position=(140 + x_inset, v - scroll_height),
+            size=(self._scroll_width, scroll_height),
+        )
+        ba.widget(
+            edit=self._scrollwidget,
+            autoselect=True,
+            left_widget=self._new_button,
+        )
+        ba.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
+        )
+        self._columnwidget = ba.columnwidget(
+            parent=self._scrollwidget, border=2, margin=0
+        )
         v -= 255
         self._profiles: dict[str, dict[str, Any]] | None = None
         self._selected_profile = selected_profile
@@ -175,23 +210,34 @@ class ProfileBrowserWindow(ba.Window):
 
         # Limit to a handful profiles if they don't have pro-options.
         max_non_pro_profiles = ba.internal.get_v1_account_misc_read_val(
-            'mnpp', 5)
+            'mnpp', 5
+        )
         assert self._profiles is not None
-        if (not ba.app.accounts_v1.have_pro_options()
-                and len(self._profiles) >= max_non_pro_profiles):
-            PurchaseWindow(items=['pro'],
-                           header_text=ba.Lstr(
-                               resource='unlockThisProfilesText',
-                               subs=[('${NUM}', str(max_non_pro_profiles))]))
+        if (
+            not ba.app.accounts_v1.have_pro_options()
+            and len(self._profiles) >= max_non_pro_profiles
+        ):
+            PurchaseWindow(
+                items=['pro'],
+                header_text=ba.Lstr(
+                    resource='unlockThisProfilesText',
+                    subs=[('${NUM}', str(max_non_pro_profiles))],
+                ),
+            )
             return
 
         # Clamp at 100 profiles (otherwise the server will and that's less
         # elegant looking).
         if len(self._profiles) > 100:
             ba.screenmessage(
-                ba.Lstr(translate=('serverResponses',
-                                   'Max number of profiles reached.')),
-                color=(1, 0, 0))
+                ba.Lstr(
+                    translate=(
+                        'serverResponses',
+                        'Max number of profiles reached.',
+                    )
+                ),
+                color=(1, 0, 0),
+            )
             ba.playsound(ba.getsound('error'))
             return
 
@@ -199,55 +245,66 @@ class ProfileBrowserWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             EditProfileWindow(
-                existing_profile=None,
-                in_main_menu=self._in_main_menu).get_root_widget())
+                existing_profile=None, in_main_menu=self._in_main_menu
+            ).get_root_widget()
+        )
 
     def _delete_profile(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui import confirm
+
         if self._selected_profile is None:
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource='nothingIsSelectedErrorText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
+            )
             return
         if self._selected_profile == '__account__':
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource=self._r +
-                                     '.cantDeleteAccountProfileText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource=self._r + '.cantDeleteAccountProfileText'),
+                color=(1, 0, 0),
+            )
             return
         confirm.ConfirmWindow(
-            ba.Lstr(resource=self._r + '.deleteConfirmText',
-                    subs=[('${PROFILE}', self._selected_profile)]),
-            self._do_delete_profile, 350)
+            ba.Lstr(
+                resource=self._r + '.deleteConfirmText',
+                subs=[('${PROFILE}', self._selected_profile)],
+            ),
+            self._do_delete_profile,
+            350,
+        )
 
     def _do_delete_profile(self) -> None:
-        ba.internal.add_transaction({
-            'type': 'REMOVE_PLAYER_PROFILE',
-            'name': self._selected_profile
-        })
+        ba.internal.add_transaction(
+            {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._selected_profile}
+        )
         ba.internal.run_transactions()
         ba.playsound(ba.getsound('shieldDown'))
         self._refresh()
 
         # Select profile list.
-        ba.containerwidget(edit=self._root_widget,
-                           selected_child=self._scrollwidget)
+        ba.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
+        )
 
     def _edit_profile(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.profile.edit import EditProfileWindow
+
         if self._selected_profile is None:
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource='nothingIsSelectedErrorText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
+            )
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             EditProfileWindow(
-                self._selected_profile,
-                in_main_menu=self._in_main_menu).get_root_widget())
+                self._selected_profile, in_main_menu=self._in_main_menu
+            ).get_root_widget()
+        )
 
     def _select(self, name: str, index: int) -> None:
         del index  # Unused.
@@ -256,12 +313,15 @@ class ProfileBrowserWindow(ba.Window):
     def _back(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account.settings import AccountSettingsWindow
+
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         if self._in_main_menu:
             ba.app.ui.set_main_menu_window(
-                AccountSettingsWindow(transition='in_left').get_root_widget())
+                AccountSettingsWindow(transition='in_left').get_root_widget()
+            )
 
         # If we're being called up standalone, handle pause/resume ourself.
         else:
@@ -270,9 +330,12 @@ class ProfileBrowserWindow(ba.Window):
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
         from efro.util import asserttype
-        from ba.internal import (PlayerProfilesChangedMessage,
-                                 get_player_profile_colors,
-                                 get_player_profile_icon)
+        from ba.internal import (
+            PlayerProfilesChangedMessage,
+            get_player_profile_colors,
+            get_player_profile_icon,
+        )
+
         old_selection = self._selected_profile
 
         # Delete old.
@@ -294,8 +357,11 @@ class ProfileBrowserWindow(ba.Window):
                 continue
             color, _highlight = get_player_profile_colors(p_name)
             scl = 1.1
-            tval = (account_name if p_name == '__account__' else
-                    get_player_profile_icon(p_name) + p_name)
+            tval = (
+                account_name
+                if p_name == '__account__'
+                else get_player_profile_icon(p_name) + p_name
+            )
             assert isinstance(tval, str)
             txtw = ba.textwidget(
                 parent=self._columnwidget,
@@ -310,7 +376,8 @@ class ProfileBrowserWindow(ba.Window):
                 color=ba.safecolor(color, 0.4),
                 always_highlight=True,
                 on_activate_call=ba.Call(self._edit_button.activate),
-                selectable=True)
+                selectable=True,
+            )
             if index == 0:
                 ba.widget(edit=txtw, up_widget=self._back_button)
             ba.widget(edit=txtw, show_buffer_top=40, show_buffer_bottom=40)
@@ -325,9 +392,11 @@ class ProfileBrowserWindow(ba.Window):
             index += 1
 
         if widget_to_select is not None:
-            ba.columnwidget(edit=self._columnwidget,
-                            selected_child=widget_to_select,
-                            visible_child=widget_to_select)
+            ba.columnwidget(
+                edit=self._columnwidget,
+                selected_child=widget_to_select,
+                visible_child=widget_to_select,
+            )
 
         # If there's a team-chooser in existence, tell it the profile-list
         # has probably changed.

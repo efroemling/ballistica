@@ -14,13 +14,20 @@ from dataclasses import dataclass
 from typing_extensions import assert_type
 import pytest
 
-# from efrotools.statictest import static_type_equals
+from efrotools.code import format_python_str
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
-from efro.message import (Message, Response, MessageProtocol, MessageSender,
-                          BoundMessageSender, MessageReceiver,
-                          BoundMessageReceiver, UnregisteredMessageIDError,
-                          EmptySysResponse)
+from efro.message import (
+    Message,
+    Response,
+    MessageProtocol,
+    MessageSender,
+    BoundMessageSender,
+    MessageReceiver,
+    BoundMessageReceiver,
+    UnregisteredMessageIDError,
+    EmptySysResponse,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Awaitable
@@ -32,6 +39,7 @@ if TYPE_CHECKING:
 @dataclass
 class _TMsg1(Message):
     """Just testing."""
+
     ival: int
 
     @classmethod
@@ -43,6 +51,7 @@ class _TMsg1(Message):
 @dataclass
 class _TMsg2(Message):
     """Just testing."""
+
     sval: str
 
     @classmethod
@@ -54,6 +63,7 @@ class _TMsg2(Message):
 @dataclass
 class _TMsg3(Message):
     """Just testing."""
+
     sval: str
 
 
@@ -61,6 +71,7 @@ class _TMsg3(Message):
 @dataclass
 class _TMsg4(Message):
     """Just testing."""
+
     sval2: str
 
 
@@ -68,6 +79,7 @@ class _TMsg4(Message):
 @dataclass
 class _TResp1(Response):
     """Just testing."""
+
     bval: bool
 
 
@@ -75,6 +87,7 @@ class _TResp1(Response):
 @dataclass
 class _TResp2(Response):
     """Just testing."""
+
     fval: float
 
 
@@ -82,6 +95,7 @@ class _TResp2(Response):
 @dataclass
 class _TResp3(Message):
     """Just testing."""
+
     fval: float
 
 
@@ -96,9 +110,9 @@ class _TestMessageSenderSingle(MessageSender):
         protocol = TEST_PROTOCOL_SINGLE
         super().__init__(protocol)
 
-    def __get__(self,
-                obj: Any,
-                type_in: Any = None) -> _BoundTestMessageSenderSingle:
+    def __get__(
+        self, obj: Any, type_in: Any = None
+    ) -> _BoundTestMessageSenderSingle:
         return _BoundTestMessageSenderSingle(obj, self)
 
 
@@ -125,9 +139,9 @@ class _TestMessageSenderSync(MessageSender):
         protocol = TEST_PROTOCOL
         super().__init__(protocol)
 
-    def __get__(self,
-                obj: Any,
-                type_in: Any = None) -> _BoundTestMessageSenderSync:
+    def __get__(
+        self, obj: Any, type_in: Any = None
+    ) -> _BoundTestMessageSenderSync:
         return _BoundTestMessageSenderSync(obj, self)
 
 
@@ -164,9 +178,9 @@ class _TestMessageSenderAsync(MessageSender):
         protocol = TEST_PROTOCOL
         super().__init__(protocol)
 
-    def __get__(self,
-                obj: Any,
-                type_in: Any = None) -> _BoundTestMessageSenderAsync:
+    def __get__(
+        self, obj: Any, type_in: Any = None
+    ) -> _BoundTestMessageSenderAsync:
         return _BoundTestMessageSenderAsync(obj, self)
 
 
@@ -203,9 +217,9 @@ class _TestMessageSenderBBoth(MessageSender):
         protocol = TEST_PROTOCOL_EVOLVED
         super().__init__(protocol)
 
-    def __get__(self,
-                obj: Any,
-                type_in: Any = None) -> _BoundTestMessageSenderBBoth:
+    def __get__(
+        self, obj: Any, type_in: Any = None
+    ) -> _BoundTestMessageSenderBBoth:
         return _BoundTestMessageSenderBBoth(obj, self)
 
 
@@ -281,6 +295,7 @@ class _TestSingleMessageReceiver(MessageReceiver):
     ) -> Callable[[Any, _TMsg1], _TResp1]:
         """Decorator to register message handlers."""
         from typing import cast, Callable, Any
+
         self.register_handler(cast(Callable[[Any, Message], Response], call))
         return call
 
@@ -288,12 +303,13 @@ class _TestSingleMessageReceiver(MessageReceiver):
 class _BoundTestSingleMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    def handle_raw_message(self,
-                           message: str,
-                           raise_unregistered: bool = False) -> str:
+    def handle_raw_message(
+        self, message: str, raise_unregistered: bool = False
+    ) -> str:
         """Synchronously handle a raw incoming message."""
-        return self._receiver.handle_raw_message(self._obj, message,
-                                                 raise_unregistered)
+        return self._receiver.handle_raw_message(
+            self._obj, message, raise_unregistered
+        )
 
 
 # RCV_SINGLE_CODE_TEST_END
@@ -348,12 +364,13 @@ class _TestSyncMessageReceiver(MessageReceiver):
 class _BoundTestSyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    def handle_raw_message(self,
-                           message: str,
-                           raise_unregistered: bool = False) -> str:
+    def handle_raw_message(
+        self, message: str, raise_unregistered: bool = False
+    ) -> str:
         """Synchronously handle a raw incoming message."""
-        return self._receiver.handle_raw_message(self._obj, message,
-                                                 raise_unregistered)
+        return self._receiver.handle_raw_message(
+            self._obj, message, raise_unregistered
+        )
 
 
 # RCV_SYNC_CODE_TEST_END
@@ -408,12 +425,13 @@ class _TestAsyncMessageReceiver(MessageReceiver):
 class _BoundTestAsyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    async def handle_raw_message(self,
-                                 message: str,
-                                 raise_unregistered: bool = False) -> str:
+    async def handle_raw_message(
+        self, message: str, raise_unregistered: bool = False
+    ) -> str:
         """Asynchronously handle a raw incoming message."""
         return await self._receiver.handle_raw_message_async(
-            self._obj, message, raise_unregistered)
+            self._obj, message, raise_unregistered
+        )
 
 
 # RCV_ASYNC_CODE_TEST_END
@@ -482,17 +500,20 @@ def test_protocol_creation() -> None:
 
 
 def test_sender_module_single_emb() -> None:
+
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL_SINGLE.do_create_sender_module(
-        'TestMessageSenderSingle',
-        protocol_create_code='protocol = TEST_PROTOCOL_SINGLE',
-        enable_sync_sends=True,
-        enable_async_sends=False,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL_SINGLE.do_create_sender_module(
+            'TestMessageSenderSingle',
+            protocol_create_code='protocol = TEST_PROTOCOL_SINGLE',
+            enable_sync_sends=True,
+            enable_async_sends=False,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
@@ -505,13 +526,17 @@ def test_sender_module_single_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# SEND_SINGLE_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# SEND_SINGLE_CODE_TEST_END\n')
+    emb = (
+        f'# SEND_SINGLE_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# SEND_SINGLE_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED EMBEDDED CODE:\n{emb}')
-        raise RuntimeError('Generated sender module does not match embedded;'
-                           ' test code needs to be updated.'
-                           ' See test stdout for new code.')
+        raise RuntimeError(
+            'Generated sender module does not match embedded;'
+            ' test code needs to be updated.'
+            ' See test stdout for new code.'
+        )
 
 
 def test_sender_module_sync_emb() -> None:
@@ -520,12 +545,14 @@ def test_sender_module_sync_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL.do_create_sender_module(
-        'TestMessageSenderSync',
-        protocol_create_code='protocol = TEST_PROTOCOL',
-        enable_sync_sends=True,
-        enable_async_sends=False,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL.do_create_sender_module(
+            'TestMessageSenderSync',
+            protocol_create_code='protocol = TEST_PROTOCOL',
+            enable_sync_sends=True,
+            enable_async_sends=False,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
@@ -538,13 +565,17 @@ def test_sender_module_sync_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# SEND_SYNC_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# SEND_SYNC_CODE_TEST_END\n')
+    emb = (
+        f'# SEND_SYNC_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# SEND_SYNC_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED EMBEDDED CODE:\n{emb}')
-        raise RuntimeError('Generated sender module does not match embedded;'
-                           ' test code needs to be updated.'
-                           ' See test stdout for new code.')
+        raise RuntimeError(
+            'Generated sender module does not match embedded;'
+            ' test code needs to be updated.'
+            ' See test stdout for new code.'
+        )
 
 
 def test_sender_module_async_emb() -> None:
@@ -553,12 +584,14 @@ def test_sender_module_async_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL.do_create_sender_module(
-        'TestMessageSenderAsync',
-        protocol_create_code='protocol = TEST_PROTOCOL',
-        enable_sync_sends=False,
-        enable_async_sends=True,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL.do_create_sender_module(
+            'TestMessageSenderAsync',
+            protocol_create_code='protocol = TEST_PROTOCOL',
+            enable_sync_sends=False,
+            enable_async_sends=True,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
@@ -571,13 +604,17 @@ def test_sender_module_async_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# SEND_ASYNC_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# SEND_ASYNC_CODE_TEST_END\n')
+    emb = (
+        f'# SEND_ASYNC_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# SEND_ASYNC_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED EMBEDDED CODE:\n{emb}')
-        raise RuntimeError('Generated sender module does not match embedded;'
-                           ' test code needs to be updated.'
-                           ' See test stdout for new code.')
+        raise RuntimeError(
+            'Generated sender module does not match embedded;'
+            ' test code needs to be updated.'
+            ' See test stdout for new code.'
+        )
 
 
 def test_sender_module_both_emb() -> None:
@@ -586,12 +623,14 @@ def test_sender_module_both_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL_EVOLVED.do_create_sender_module(
-        'TestMessageSenderBBoth',
-        protocol_create_code='protocol = TEST_PROTOCOL_EVOLVED',
-        enable_sync_sends=True,
-        enable_async_sends=True,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL_EVOLVED.do_create_sender_module(
+            'TestMessageSenderBBoth',
+            protocol_create_code='protocol = TEST_PROTOCOL_EVOLVED',
+            enable_sync_sends=True,
+            enable_async_sends=True,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
@@ -604,13 +643,17 @@ def test_sender_module_both_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# SEND_BOTH_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# SEND_BOTH_CODE_TEST_END\n')
+    emb = (
+        f'# SEND_BOTH_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# SEND_BOTH_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED EMBEDDED CODE:\n{emb}')
-        raise RuntimeError('Generated sender module does not match embedded;'
-                           ' test code needs to be updated.'
-                           ' See test stdout for new code.')
+        raise RuntimeError(
+            'Generated sender module does not match embedded;'
+            ' test code needs to be updated.'
+            ' See test stdout for new code.'
+        )
 
 
 def test_receiver_module_single_emb() -> None:
@@ -619,17 +662,20 @@ def test_receiver_module_single_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL_SINGLE.do_create_receiver_module(
-        'TestSingleMessageReceiver',
-        'protocol = TEST_PROTOCOL_SINGLE',
-        is_async=False,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL_SINGLE.do_create_receiver_module(
+            'TestSingleMessageReceiver',
+            'protocol = TEST_PROTOCOL_SINGLE',
+            is_async=False,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
     classline = lines.index(
-        'class _TestSingleMessageReceiver(MessageReceiver):')
+        'class _TestSingleMessageReceiver(MessageReceiver):'
+    )
     clipped = '\n'.join(lines[classline:])
 
     # This snippet should match what we've got embedded above;
@@ -637,14 +683,17 @@ def test_receiver_module_single_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# RCV_SINGLE_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# RCV_SINGLE_CODE_TEST_END\n')
+    emb = (
+        f'# RCV_SINGLE_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# RCV_SINGLE_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED SINGLE RECEIVER EMBEDDED CODE:\n{emb}')
         raise RuntimeError(
             'Generated single receiver module does not match embedded;'
             ' test code needs to be updated.'
-            ' See test stdout for new code.')
+            ' See test stdout for new code.'
+        )
 
 
 def test_receiver_module_sync_emb() -> None:
@@ -653,11 +702,13 @@ def test_receiver_module_sync_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL.do_create_receiver_module(
-        'TestSyncMessageReceiver',
-        'protocol = TEST_PROTOCOL',
-        is_async=False,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL.do_create_receiver_module(
+            'TestSyncMessageReceiver',
+            'protocol = TEST_PROTOCOL',
+            is_async=False,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
@@ -670,14 +721,17 @@ def test_receiver_module_sync_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# RCV_SYNC_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# RCV_SYNC_CODE_TEST_END\n')
+    emb = (
+        f'# RCV_SYNC_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# RCV_SYNC_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED SYNC RECEIVER EMBEDDED CODE:\n{emb}')
         raise RuntimeError(
             'Generated sync receiver module does not match embedded;'
             ' test code needs to be updated.'
-            ' See test stdout for new code.')
+            ' See test stdout for new code.'
+        )
 
 
 def test_receiver_module_async_emb() -> None:
@@ -686,17 +740,18 @@ def test_receiver_module_async_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = TEST_PROTOCOL.do_create_receiver_module(
-        'TestAsyncMessageReceiver',
-        'protocol = TEST_PROTOCOL',
-        is_async=True,
-        private=True,
+    smod = format_python_str(
+        TEST_PROTOCOL.do_create_receiver_module(
+            'TestAsyncMessageReceiver',
+            'protocol = TEST_PROTOCOL',
+            is_async=True,
+            private=True,
+        )
     )
 
     # Clip everything up to our first class declaration.
     lines = smod.splitlines()
-    classline = lines.index(
-        'class _TestAsyncMessageReceiver(MessageReceiver):')
+    classline = lines.index('class _TestAsyncMessageReceiver(MessageReceiver):')
     clipped = '\n'.join(lines[classline:])
 
     # This snippet should match what we've got embedded above;
@@ -704,14 +759,17 @@ def test_receiver_module_async_emb() -> None:
     with open(__file__, encoding='utf-8') as infile:
         ourcode = infile.read()
 
-    emb = (f'# RCV_ASYNC_CODE_TEST_BEGIN'
-           f'\n\n\n{clipped}\n\n\n# RCV_ASYNC_CODE_TEST_END\n')
+    emb = (
+        f'# RCV_ASYNC_CODE_TEST_BEGIN'
+        f'\n\n\n{clipped}\n\n\n# RCV_ASYNC_CODE_TEST_END\n'
+    )
     if emb not in ourcode:
         print(f'EXPECTED ASYNC RECEIVER EMBEDDED CODE:\n{emb}')
         raise RuntimeError(
             'Generated async receiver module does not match embedded;'
             ' test code needs to be updated.'
-            ' See test stdout for new code.')
+            ' See test stdout for new code.'
+        )
 
 
 def test_receiver_creation() -> None:
@@ -772,22 +830,26 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
 
             # Test throwing exceptions in send methods.
             if self.test_send_method_exceptions:
-                raise (CommunicationError()
-                       if self.test_send_method_exceptions_comm else
-                       RuntimeError())
+                raise (
+                    CommunicationError()
+                    if self.test_send_method_exceptions_comm
+                    else RuntimeError()
+                )
 
             # Just talk directly to the receiver for this example.
             # (currently only support synchronous receivers)
             assert isinstance(self._target, TestClassRSync)
             try:
                 return self._target.receiver.handle_raw_message(
-                    data, raise_unregistered=self.test_handling_unregistered)
+                    data, raise_unregistered=self.test_handling_unregistered
+                )
             except UnregisteredMessageIDError:
                 if self.test_handling_unregistered:
                     # Emulate forwarding unregistered messages on to some
                     # other handler...
                     response_dict = self.msg.protocol.response_to_dict(
-                        EmptySysResponse())
+                        EmptySysResponse()
+                    )
                     return self.msg.protocol.encode_dict(response_dict)
                 raise
 
@@ -797,9 +859,11 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
 
             # Test throwing exceptions in async send methods.
             if self.test_send_method_exceptions:
-                raise (CommunicationError()
-                       if self.test_send_method_exceptions_comm else
-                       RuntimeError())
+                raise (
+                    CommunicationError()
+                    if self.test_send_method_exceptions_comm
+                    else RuntimeError()
+                )
 
             # Just talk directly to the receiver for this example.
             # (we can do sync or async receivers)
@@ -814,8 +878,12 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
                 outdict['_sidecar_data'] = getattr(msg, '_sidecar_data')
 
         @msg.decode_filter_method
-        def _decode_filter(self, message: Message, indata: dict,
-                           response: Response | SysResponse) -> None:
+        def _decode_filter(
+            self,
+            message: Message,
+            indata: dict,
+            response: Response | SysResponse,
+        ) -> None:
             """Filter our incoming responses."""
             del message  # Unused.
             if self.test_sidecar:
@@ -841,22 +909,26 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
 
             # Test throwing exceptions in send methods.
             if self.test_send_method_exceptions:
-                raise (CommunicationError()
-                       if self.test_send_method_exceptions_comm else
-                       RuntimeError())
+                raise (
+                    CommunicationError()
+                    if self.test_send_method_exceptions_comm
+                    else RuntimeError()
+                )
 
             # Just talk directly to the receiver for this example.
             # (currently only support synchronous receivers)
             assert isinstance(self._target, TestClassRAlt)
             try:
                 return self._target.receiver.handle_raw_message(
-                    data, raise_unregistered=self.test_handling_unregistered)
+                    data, raise_unregistered=self.test_handling_unregistered
+                )
             except UnregisteredMessageIDError:
                 if self.test_handling_unregistered:
                     # Emulate forwarding unregistered messages on to some
                     # other handler...
                     response_dict = self.msg.protocol.response_to_dict(
-                        EmptySysResponse())
+                        EmptySysResponse()
+                    )
                     return self.msg.protocol.encode_dict(response_dict)
                 raise
 
@@ -900,9 +972,12 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
                 setattr(message, '_sidecar_data', indata['_sidecar_data'])
 
         @receiver.encode_filter_method
-        def _encode_filter(self, message: Message | None,
-                           response: Response | SysResponse,
-                           outdict: dict) -> None:
+        def _encode_filter(
+            self,
+            message: Message | None,
+            response: Response | SysResponse,
+            outdict: dict,
+        ) -> None:
             """Filter our outgoing responses."""
             del message  # Unused.
             if self.test_sidecar:
@@ -951,8 +1026,7 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
             return _TResp1(bval=True)
 
         @receiver.handler
-        async def handle_test_message_2(self,
-                                        msg: _TMsg2) -> _TResp1 | _TResp2:
+        async def handle_test_message_2(self, msg: _TMsg2) -> _TResp1 | _TResp2:
             """Test."""
             del msg  # Unused
             return _TResp2(fval=1.2)
@@ -1010,8 +1084,9 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
     caplog.clear()
     with pytest.raises(RemoteError):
         _response5 = objb.msg.send(_TMsg1(ival=1))
-    assert (len(caplog.records) == 1
-            and caplog.records[0].levelno == logging.ERROR)
+    assert (
+        len(caplog.records) == 1 and caplog.records[0].levelno == logging.ERROR
+    )
 
     # Same with CommunicationErrors occurring on the peer; they should
     # come back to us intact if forward_communication_errors is enabled
@@ -1029,8 +1104,9 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
     caplog.clear()
     with pytest.raises(RemoteError):
         _response5 = objb.msg.send(_TMsg1(ival=3))
-    assert (len(caplog.records) == 1
-            and caplog.records[0].levelno == logging.ERROR)
+    assert (
+        len(caplog.records) == 1 and caplog.records[0].levelno == logging.ERROR
+    )
 
     # Misc other error types happening on peer should result in
     # RemoteError and log message.
@@ -1038,8 +1114,9 @@ def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
     with pytest.raises(RemoteError):
         _response5 = obj.msg.send(_TMsg1(ival=2))
     # This should have logged a single error message.
-    assert (len(caplog.records) == 1
-            and caplog.records[0].levelno == logging.ERROR)
+    assert (
+        len(caplog.records) == 1 and caplog.records[0].levelno == logging.ERROR
+    )
 
     # Now test sends to async handlers.
     response6 = asyncio.run(obj2.msg.send_async(_TMsg1(ival=0)))

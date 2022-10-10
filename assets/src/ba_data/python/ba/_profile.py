@@ -13,11 +13,24 @@ if TYPE_CHECKING:
 
 # NOTE: player color options are enforced server-side for non-pro accounts
 # so don't change these or they won't stick...
-PLAYER_COLORS = [(1, 0.15, 0.15), (0.2, 1, 0.2), (0.1, 0.1, 1), (0.2, 1, 1),
-                 (0.5, 0.25, 1.0), (1, 1, 0), (1, 0.5, 0), (1, 0.3, 0.5),
-                 (0.1, 0.1, 0.5), (0.4, 0.2, 0.1), (0.1, 0.35, 0.1),
-                 (1, 0.8, 0.5), (0.4, 0.05, 0.05), (0.13, 0.13, 0.13),
-                 (0.5, 0.5, 0.5), (1, 1, 1)]
+PLAYER_COLORS = [
+    (1, 0.15, 0.15),
+    (0.2, 1, 0.2),
+    (0.1, 0.1, 1),
+    (0.2, 1, 1),
+    (0.5, 0.25, 1.0),
+    (1, 1, 0),
+    (1, 0.5, 0),
+    (1, 0.3, 0.5),
+    (0.1, 0.1, 0.5),
+    (0.4, 0.2, 0.1),
+    (0.1, 0.35, 0.1),
+    (1, 0.8, 0.5),
+    (0.4, 0.05, 0.05),
+    (0.13, 0.13, 0.13),
+    (0.5, 0.5, 0.5),
+    (1, 1, 1),
+]
 
 
 def get_player_colors() -> list[tuple[float, float, float]]:
@@ -49,8 +62,7 @@ def get_player_profile_icon(profilename: str) -> str:
 
 
 def get_player_profile_colors(
-    profilename: str | None,
-    profiles: dict[str, dict[str, Any]] | None = None
+    profilename: str | None, profiles: dict[str, dict[str, Any]] | None = None
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """Given a profile, return colors for them."""
     appconfig = _ba.app.config
@@ -83,11 +95,13 @@ def get_player_profile_colors(
             if profilename is None:
                 # Last 2 are grey and white; ignore those or we
                 # get lots of old-looking players.
-                highlight = PLAYER_COLORS[random.randrange(
-                    len(PLAYER_COLORS) - 2)]
+                highlight = PLAYER_COLORS[
+                    random.randrange(len(PLAYER_COLORS) - 2)
+                ]
             else:
-                highlight = PLAYER_COLORS[sum(ord(c) + 1
-                                              for c in profilename) %
-                                          (len(PLAYER_COLORS) - 2)]
+                highlight = PLAYER_COLORS[
+                    sum(ord(c) + 1 for c in profilename)
+                    % (len(PLAYER_COLORS) - 2)
+                ]
 
     return color, highlight

@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 class Background(ba.Actor):
     """Simple Fading Background Actor."""
 
-    def __init__(self,
-                 fade_time: float = 0.5,
-                 start_faded: bool = False,
-                 show_logo: bool = False):
+    def __init__(
+        self,
+        fade_time: float = 0.5,
+        start_faded: bool = False,
+        show_logo: bool = False,
+    ):
         super().__init__()
         self._dying = False
         self.fade_time = fade_time
@@ -31,22 +33,24 @@ class Background(ba.Actor):
         session = ba.getsession()
         self._session = weakref.ref(session)
         with ba.Context(session):
-            self.node = ba.newnode('image',
-                                   delegate=self,
-                                   attrs={
-                                       'fill_screen': True,
-                                       'texture': ba.gettexture('bg'),
-                                       'tilt_translate': -0.3,
-                                       'has_alpha_channel': False,
-                                       'color': (1, 1, 1)
-                                   })
+            self.node = ba.newnode(
+                'image',
+                delegate=self,
+                attrs={
+                    'fill_screen': True,
+                    'texture': ba.gettexture('bg'),
+                    'tilt_translate': -0.3,
+                    'has_alpha_channel': False,
+                    'color': (1, 1, 1),
+                },
+            )
             if not start_faded:
-                ba.animate(self.node,
-                           'opacity', {
-                               0.0: 0.0,
-                               self.fade_time: 1.0
-                           },
-                           loop=False)
+                ba.animate(
+                    self.node,
+                    'opacity',
+                    {0.0: 0.0, self.fade_time: 1.0},
+                    loop=False,
+                )
             if show_logo:
                 logo_texture = ba.gettexture('logo')
                 logo_model = ba.getmodel('logo')
@@ -63,27 +67,27 @@ class Background(ba.Actor):
                         'color': (0.15, 0.15, 0.15),
                         'position': (0, 0),
                         'tilt_translate': -0.05,
-                        'absolute_scale': False
-                    })
+                        'absolute_scale': False,
+                    },
+                )
                 self.node.connectattr('opacity', self.logo, 'opacity')
                 # add jitter/pulse for a stop-motion-y look unless we're in VR
                 # in which case stillness is better
                 if not ba.app.vr_mode:
-                    self.cmb = ba.newnode('combine',
-                                          owner=self.node,
-                                          attrs={'size': 2})
+                    self.cmb = ba.newnode(
+                        'combine', owner=self.node, attrs={'size': 2}
+                    )
                     for attr in ['input0', 'input1']:
-                        ba.animate(self.cmb,
-                                   attr, {
-                                       0.0: 0.693,
-                                       0.05: 0.7,
-                                       0.5: 0.693
-                                   },
-                                   loop=True)
+                        ba.animate(
+                            self.cmb,
+                            attr,
+                            {0.0: 0.693, 0.05: 0.7, 0.5: 0.693},
+                            loop=True,
+                        )
                     self.cmb.connectattr('output', self.logo, 'scale')
-                    cmb = ba.newnode('combine',
-                                     owner=self.node,
-                                     attrs={'size': 2})
+                    cmb = ba.newnode(
+                        'combine', owner=self.node, attrs={'size': 2}
+                    )
                     cmb.connectattr('output', self.logo, 'position')
                     # Gen some random keys for that stop-motion-y look.
                     keys = {}
@@ -114,8 +118,10 @@ class Background(ba.Actor):
             # since it was part of the session's scene.
             # Let's make sure that's the case.
             # (since otherwise we have no way to kill it)
-            ba.print_error('got None session on Background _die'
-                           ' (and node still exists!)')
+            ba.print_error(
+                'got None session on Background _die'
+                ' (and node still exists!)'
+            )
         elif session is not None:
             with ba.Context(session):
                 if not self._dying and self.node:
@@ -123,12 +129,12 @@ class Background(ba.Actor):
                     if immediate:
                         self.node.delete()
                     else:
-                        ba.animate(self.node,
-                                   'opacity', {
-                                       0.0: 1.0,
-                                       self.fade_time: 0.0
-                                   },
-                                   loop=False)
+                        ba.animate(
+                            self.node,
+                            'opacity',
+                            {0.0: 1.0, self.fade_time: 0.0},
+                            loop=False,
+                        )
                         ba.timer(self.fade_time + 0.1, self.node.delete)
 
     def handlemessage(self, msg: Any) -> Any:

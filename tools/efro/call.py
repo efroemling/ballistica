@@ -122,44 +122,67 @@ if TYPE_CHECKING:
         def __init__(self, _call: Callable[[In1T, In2T, In3T, In4T], OutT]):
             ...
 
-        def __call__(self, _arg1: In1T, _arg2: In2T, _arg3: In3T,
-                     _arg4: In4T) -> OutT:
+        def __call__(
+            self, _arg1: In1T, _arg2: In2T, _arg3: In3T, _arg4: In4T
+        ) -> OutT:
             ...
 
     class _Call5Args(Generic[In1T, In2T, In3T, In4T, In5T, OutT]):
         """Five argument variant of call wrapper"""
 
-        def __init__(self, _call: Callable[[In1T, In2T, In3T, In4T, In5T],
-                                           OutT]):
+        def __init__(
+            self, _call: Callable[[In1T, In2T, In3T, In4T, In5T], OutT]
+        ):
             ...
 
-        def __call__(self, _arg1: In1T, _arg2: In2T, _arg3: In3T, _arg4: In4T,
-                     _arg5: In5T) -> OutT:
+        def __call__(
+            self,
+            _arg1: In1T,
+            _arg2: In2T,
+            _arg3: In3T,
+            _arg4: In4T,
+            _arg5: In5T,
+        ) -> OutT:
             ...
 
     class _Call6Args(Generic[In1T, In2T, In3T, In4T, In5T, In6T, OutT]):
         """Six argument variant of call wrapper"""
 
-        def __init__(self,
-                     _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T],
-                                     OutT]):
+        def __init__(
+            self, _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T], OutT]
+        ):
             ...
 
-        def __call__(self, _arg1: In1T, _arg2: In2T, _arg3: In3T, _arg4: In4T,
-                     _arg5: In5T, _arg6: In6T) -> OutT:
+        def __call__(
+            self,
+            _arg1: In1T,
+            _arg2: In2T,
+            _arg3: In3T,
+            _arg4: In4T,
+            _arg5: In5T,
+            _arg6: In6T,
+        ) -> OutT:
             ...
 
     class _Call7Args(Generic[In1T, In2T, In3T, In4T, In5T, In6T, In7T, OutT]):
         """Seven argument variant of call wrapper"""
 
         def __init__(
-                self,
-                _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T],
-                                OutT]):
+            self,
+            _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T], OutT],
+        ):
             ...
 
-        def __call__(self, _arg1: In1T, _arg2: In2T, _arg3: In3T, _arg4: In4T,
-                     _arg5: In5T, _arg6: In6T, _arg7: In7T) -> OutT:
+        def __call__(
+            self,
+            _arg1: In1T,
+            _arg2: In2T,
+            _arg3: In3T,
+            _arg4: In4T,
+            _arg5: In5T,
+            _arg6: In6T,
+            _arg7: In7T,
+        ) -> OutT:
             ...
 
     # No arg call; no args bundled.
@@ -183,44 +206,52 @@ if TYPE_CHECKING:
     # 2 arg call; 2 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T], OutT], arg1: In1T,
-             arg2: In2T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T], OutT], arg1: In1T, arg2: In2T
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # 2 arg call; 1 arg bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T], OutT],
-             arg1: In1T) -> _Call1Arg[In2T, OutT]:
+    def Call(
+        call: Callable[[In1T, In2T], OutT], arg1: In1T
+    ) -> _Call1Arg[In2T, OutT]:
         ...
 
     # 2 arg call; no args bundled.
     # noinspection PyPep8Naming
     @overload
     def Call(
-            call: Callable[[In1T, In2T],
-                           OutT]) -> _Call2Args[In1T, In2T, OutT]:
+        call: Callable[[In1T, In2T], OutT]
+    ) -> _Call2Args[In1T, In2T, OutT]:
         ...
 
     # 3 arg call; 3 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T], OutT], arg1: In1T, arg2: In2T,
-             arg3: In3T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # 3 arg call; 2 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T], OutT], arg1: In1T,
-             arg2: In2T) -> _Call1Arg[In3T, OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T], OutT], arg1: In1T, arg2: In2T
+    ) -> _Call1Arg[In3T, OutT]:
         ...
 
     # 3 arg call; 1 arg bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T], OutT],
-             arg1: In1T) -> _Call2Args[In2T, In3T, OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T], OutT], arg1: In1T
+    ) -> _Call2Args[In2T, In3T, OutT]:
         ...
 
     # 3 arg call; no args bundled.
@@ -234,32 +265,55 @@ if TYPE_CHECKING:
     # 4 arg call; 4 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T, In4T], OutT], arg1: In1T,
-             arg2: In2T, arg3: In3T, arg4: In4T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+        arg4: In4T,
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # 5 arg call; 5 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T, In4T, In5T],
-                            OutT], arg1: In1T, arg2: In2T, arg3: In3T,
-             arg4: In4T, arg5: In5T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T, In5T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+        arg4: In4T,
+        arg5: In5T,
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # 6 arg call; 6 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T],
-                            OutT], arg1: In1T, arg2: In2T, arg3: In3T,
-             arg4: In4T, arg5: In5T, arg6: In6T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+        arg4: In4T,
+        arg5: In5T,
+        arg6: In6T,
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # 7 arg call; 7 args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T], OutT],
-             arg1: In1T, arg2: In2T, arg3: In3T, arg4: In4T, arg5: In5T,
-             arg6: In6T, arg7: In7T) -> _CallNoArgs[OutT]:
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+        arg4: In4T,
+        arg5: In5T,
+        arg6: In6T,
+        arg7: In7T,
+    ) -> _CallNoArgs[OutT]:
         ...
 
     # noinspection PyPep8Naming

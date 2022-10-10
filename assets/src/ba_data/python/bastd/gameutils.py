@@ -27,8 +27,10 @@ class SharedObjects:
     def __init__(self) -> None:
         activity = ba.getactivity()
         if self._STORENAME in activity.customdata:
-            raise RuntimeError('Use SharedObjects.get() to fetch the'
-                               ' shared instance for this activity.')
+            raise RuntimeError(
+                'Use SharedObjects.get() to fetch the'
+                ' shared instance for this activity.'
+            )
         self._object_material: ba.Material | None = None
         self._player_material: ba.Material | None = None
         self._pickup_material: ba.Material | None = None
@@ -111,7 +113,8 @@ class SharedObjects:
         if self._death_material is None:
             mat = self._death_material = ba.Material()
             mat.add_actions(
-                ('message', 'their_node', 'at_connect', ba.DieMessage()))
+                ('message', 'their_node', 'at_connect', ba.DieMessage())
+            )
         return self._death_material
 
     @property

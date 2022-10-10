@@ -38,6 +38,7 @@ class DeathType(Enum):
 
     Category: Enums
     """
+
     GENERIC = 'generic'
     OUT_OF_BOUNDS = 'out_of_bounds'
     IMPACT = 'impact'
@@ -83,8 +84,13 @@ class PlayerDiedMessage:
     how: ba.DeathType
     """The particular type of death."""
 
-    def __init__(self, player: ba.Player, was_killed: bool,
-                 killerplayer: ba.Player | None, how: ba.DeathType):
+    def __init__(
+        self,
+        player: ba.Player,
+        was_killed: bool,
+        killerplayer: ba.Player | None,
+        how: ba.DeathType,
+    ):
         """Instantiate a message with the given values."""
 
         # Invalid refs should never be passed as args.
@@ -97,8 +103,9 @@ class PlayerDiedMessage:
         self.killed = was_killed
         self.how = how
 
-    def getkillerplayer(self,
-                        playertype: type[PlayerType]) -> PlayerType | None:
+    def getkillerplayer(
+        self, playertype: type[PlayerType]
+    ) -> PlayerType | None:
         """Return the ba.Player responsible for the killing, if any.
 
         Pass the Player type being used by the current game.
@@ -235,19 +242,21 @@ class HitMessage:
     their effect to a target.
     """
 
-    def __init__(self,
-                 srcnode: ba.Node | None = None,
-                 pos: Sequence[float] | None = None,
-                 velocity: Sequence[float] | None = None,
-                 magnitude: float = 1.0,
-                 velocity_magnitude: float = 0.0,
-                 radius: float = 1.0,
-                 source_player: ba.Player | None = None,
-                 kick_back: float = 1.0,
-                 flat_damage: float | None = None,
-                 hit_type: str = 'generic',
-                 force_direction: Sequence[float] | None = None,
-                 hit_subtype: str = 'default'):
+    def __init__(
+        self,
+        srcnode: ba.Node | None = None,
+        pos: Sequence[float] | None = None,
+        velocity: Sequence[float] | None = None,
+        magnitude: float = 1.0,
+        velocity_magnitude: float = 0.0,
+        radius: float = 1.0,
+        source_player: ba.Player | None = None,
+        kick_back: float = 1.0,
+        flat_damage: float | None = None,
+        hit_type: str = 'generic',
+        force_direction: Sequence[float] | None = None,
+        hit_subtype: str = 'default',
+    ):
         """Instantiate a message with given values."""
 
         self.srcnode = srcnode
@@ -264,11 +273,13 @@ class HitMessage:
         self.flat_damage = flat_damage
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
-        self.force_direction = (force_direction
-                                if force_direction is not None else velocity)
+        self.force_direction = (
+            force_direction if force_direction is not None else velocity
+        )
 
-    def get_source_player(self,
-                          playertype: type[PlayerType]) -> PlayerType | None:
+    def get_source_player(
+        self, playertype: type[PlayerType]
+    ) -> PlayerType | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
 

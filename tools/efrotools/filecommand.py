@@ -14,12 +14,13 @@ if TYPE_CHECKING:
 
 
 class _FileBatchesRun:
-
-    def __init__(self,
-                 paths: list[str],
-                 batch_size: int,
-                 file_filter: Callable[[str], bool] | None,
-                 include_mac_packages: bool = False) -> None:
+    def __init__(
+        self,
+        paths: list[str],
+        batch_size: int,
+        file_filter: Callable[[str], bool] | None,
+        include_mac_packages: bool = False,
+    ) -> None:
         self.condition = Condition()
         self.paths = paths
         self.batches: list[list[str]] = []
@@ -36,6 +37,7 @@ class _FileBatchesRun:
             # pylint: disable=no-name-in-module, import-error
             # noinspection PyUnresolvedReferences
             from Cocoa import NSWorkspace
+
             self._shared_nsworkspace = NSWorkspace.sharedWorkspace()
             # pylint: enable=useless-suppression
         else:
@@ -48,8 +50,9 @@ class _FileBatchesRun:
         # stuff our new results in, and inform any listeners that it has
         # changed.
         with self.condition:
-            self.condition.wait_for(lambda: len(self.batches) < self.
-                                    batch_buffer_size or self.done)
+            self.condition.wait_for(
+                lambda: len(self.batches) < self.batch_buffer_size or self.done
+            )
             self.batches.append(self._pending_batch)
             self._pending_batch = []
             self.condition.notify()
@@ -85,8 +88,9 @@ class _FileBatchesRun:
                     if self._include_mac_packages:
                         for dirname in list(dirs):
                             fullpath = os.path.join(root, dirname)
-                            if (self._shared_nsworkspace.isFilePackageAtPath_(
-                                    fullpath)):
+                            if self._shared_nsworkspace.isFilePackageAtPath_(
+                                fullpath
+                            ):
                                 dirs.remove(dirname)
                                 self._possibly_add_to_pending_batch(fullpath)
 
@@ -116,10 +120,12 @@ def file_batches(
     synchronous operations on the returned batches will not slow the gather.
     """
 
-    run = _FileBatchesRun(paths=paths,
-                          batch_size=batch_size,
-                          file_filter=file_filter,
-                          include_mac_packages=include_mac_packages)
+    run = _FileBatchesRun(
+        paths=paths,
+        batch_size=batch_size,
+        file_filter=file_filter,
+        include_mac_packages=include_mac_packages,
+    )
 
     # Spin up a bg thread to feed us batches.
     thread = Thread(target=run.bg_thread)
@@ -128,8 +134,9 @@ def file_batches(
     # Now spin waiting for new batches to come in or completion/errors.
     while True:
         with run.condition:
-            run.condition.wait_for(lambda: run.done or run.errored or run.
-                                   batches)
+            run.condition.wait_for(
+                lambda: run.done or run.errored or run.batches
+            )
             try:
                 if run.errored:
                     raise RuntimeError('BG batch run errored.')

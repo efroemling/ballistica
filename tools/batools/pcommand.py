@@ -19,11 +19,13 @@ def stage_server_file() -> None:
     """Stage files for the server environment with some filtering."""
     from efro.error import CleanError
     import batools.assetstaging
+
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (mode, infile, outfile).')
     mode, infilename, outfilename = sys.argv[2], sys.argv[3], sys.argv[4]
-    batools.assetstaging.stage_server_file(str(PROJROOT), mode, infilename,
-                                           outfilename)
+    batools.assetstaging.stage_server_file(
+        str(PROJROOT), mode, infilename, outfilename
+    )
 
 
 def py_examine() -> None:
@@ -31,13 +33,14 @@ def py_examine() -> None:
     import os
     from pathlib import Path
     import efrotools
+
     if len(sys.argv) != 7:
         print('ERROR: expected 7 args')
         sys.exit(255)
     filename = Path(sys.argv[2])
     line = int(sys.argv[3])
     column = int(sys.argv[4])
-    selection: str | None = (None if sys.argv[5] == '' else sys.argv[5])
+    selection: str | None = None if sys.argv[5] == '' else sys.argv[5]
     operation = sys.argv[6]
 
     # This stuff assumes it is being run from project root.
@@ -45,16 +48,18 @@ def py_examine() -> None:
 
     # Set up pypaths so our main distro stuff works.
     scriptsdir = os.path.abspath(
-        os.path.join(os.path.dirname(sys.argv[0]),
-                     '../assets/src/ba_data/python'))
+        os.path.join(
+            os.path.dirname(sys.argv[0]), '../assets/src/ba_data/python'
+        )
+    )
     toolsdir = os.path.abspath(
-        os.path.join(os.path.dirname(sys.argv[0]), '../tools'))
+        os.path.join(os.path.dirname(sys.argv[0]), '../tools')
+    )
     if scriptsdir not in sys.path:
         sys.path.append(scriptsdir)
     if toolsdir not in sys.path:
         sys.path.append(toolsdir)
-    efrotools.py_examine(PROJROOT, filename, line, column, selection,
-                         operation)
+    efrotools.py_examine(PROJROOT, filename, line, column, selection, operation)
 
 
 def clean_orphaned_assets() -> None:
@@ -67,11 +72,11 @@ def clean_orphaned_assets() -> None:
     os.chdir(PROJROOT)
 
     # Our manifest is split into 2 files (public and private)
-    with open('assets/.asset_manifest_public.json',
-              encoding='utf-8') as infile:
+    with open('assets/.asset_manifest_public.json', encoding='utf-8') as infile:
         manifest = set(json.loads(infile.read()))
-    with open('assets/.asset_manifest_private.json',
-              encoding='utf-8') as infile:
+    with open(
+        'assets/.asset_manifest_private.json', encoding='utf-8'
+    ) as infile:
         manifest.update(set(json.loads(infile.read())))
     for root, _dirs, fnames in os.walk('assets/build'):
         for fname in fnames:
@@ -82,9 +87,11 @@ def clean_orphaned_assets() -> None:
                 os.unlink(fpath)
 
     # Lastly, clear empty dirs.
-    subprocess.run('find assets/build -depth -empty -type d -delete',
-                   shell=True,
-                   check=True)
+    subprocess.run(
+        'find assets/build -depth -empty -type d -delete',
+        shell=True,
+        check=True,
+    )
 
 
 def resize_image() -> None:
@@ -94,6 +101,7 @@ def resize_image() -> None:
     """
     import os
     import subprocess
+
     if len(sys.argv) != 6:
         raise Exception('expected 5 args')
     width = int(sys.argv[2])
@@ -105,9 +113,11 @@ def resize_image() -> None:
     if not src.endswith('.png'):
         raise RuntimeError(f'src must be a png; got "{src}"')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
-    subprocess.run(f'convert "{src}" -resize {width}x{height} "{dst}"',
-                   shell=True,
-                   check=True)
+    subprocess.run(
+        f'convert "{src}" -resize {width}x{height} "{dst}"',
+        shell=True,
+        check=True,
+    )
 
 
 def check_clean_safety() -> None:
@@ -137,6 +147,7 @@ def archive_old_builds() -> None:
     (called after we push newer ones)
     """
     import batools.build
+
     if len(sys.argv) < 3:
         raise Exception('invalid arguments')
     ssh_server = sys.argv[2]
@@ -159,6 +170,7 @@ def lazy_increment_build() -> None:
     from efro.error import CleanError
     from efrotools import get_files_hash
     from efrotools.code import get_code_filenames
+
     if sys.argv[2:] not in [[], ['--update-hash-only']]:
         raise CleanError('Invalid arguments')
     update_hash_only = '--update-hash-only' in sys.argv
@@ -176,8 +188,9 @@ def lazy_increment_build() -> None:
         if not update_hash_only:
             # Just go ahead and bless; this will increment the build as needed.
             # subprocess.run(['make', 'bless'], check=True)
-            subprocess.run(['tools/pcommand', 'version', 'incrementbuild'],
-                           check=True)
+            subprocess.run(
+                ['tools/pcommand', 'version', 'incrementbuild'], check=True
+            )
 
         # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)
@@ -201,15 +214,18 @@ def get_master_asset_src_dir() -> None:
         # path if we're on master in and not otherwise.  Should
         # probably make this configurable.
         output = subprocess.check_output(
-            ['git', 'status', '--branch', '--porcelain']).decode()
+            ['git', 'status', '--branch', '--porcelain']
+        ).decode()
 
         # Also compare repo name to split version of itself to
         # see if we're outside of core (filtering will cause mismatch if so).
         # pylint: disable=useless-suppression
         # pylint: disable=simplifiable-condition
         # pylint: disable=condition-evals-to-constant
-        if ('origin/master' in output.splitlines()[0]
-                and 'ballistica' + 'core' == 'ballisticacore'):
+        if (
+            'origin/master' in output.splitlines()[0]
+            and 'ballistica' + 'core' == 'ballisticacore'
+        ):
 
             # We seem to be in master in core repo; lets do it.
             print(master_assets_dir)
@@ -226,10 +242,13 @@ def androidaddr() -> None:
     """
     import batools.android
     from efro.error import CleanError
+
     if len(sys.argv) != 5:
-        raise CleanError(f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
-                         f'Usage: "tools/pcommand android_addr'
-                         f' <ARCHIVE-PATH> <ARCH> <ADDR>"')
+        raise CleanError(
+            f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
+            f'Usage: "tools/pcommand android_addr'
+            f' <ARCHIVE-PATH> <ARCH> <ADDR>"'
+        )
     archive_dir = sys.argv[2]
     arch = sys.argv[3]
     addr = sys.argv[4]
@@ -240,6 +259,7 @@ def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
     from pathlib import Path
     import efrotools.ios
+
     root = Path(sys.argv[0], '../..').resolve()
     if len(sys.argv) != 3:
         raise Exception('expected 1 arg (debug or release)')
@@ -265,9 +285,11 @@ def printcolors() -> None:
             continue
         shortname = f'Clr.{clrnames[value.value]}'
         longname = f'({value.name})'
-        print(f'{shortname:<12} {longname:<20} {value.value}'
-              f'The quick brown fox jumps over the lazy dog.'
-              f'{TerminalColor.RESET.value}')
+        print(
+            f'{shortname:<12} {longname:<20} {value.value}'
+            f'The quick brown fox jumps over the lazy dog.'
+            f'{TerminalColor.RESET.value}'
+        )
 
 
 def gen_fulltest_buildfile_android() -> None:
@@ -276,6 +298,7 @@ def gen_fulltest_buildfile_android() -> None:
     (so we see nice pretty split-up build trees)
     """
     import batools.build
+
     batools.build.gen_fulltest_buildfile_android()
 
 
@@ -285,6 +308,7 @@ def gen_fulltest_buildfile_windows() -> None:
     (so we see nice pretty split-up build trees)
     """
     import batools.build
+
     batools.build.gen_fulltest_buildfile_windows()
 
 
@@ -294,6 +318,7 @@ def gen_fulltest_buildfile_apple() -> None:
     (so we see nice pretty split-up build trees)
     """
     import batools.build
+
     batools.build.gen_fulltest_buildfile_apple()
 
 
@@ -303,24 +328,28 @@ def gen_fulltest_buildfile_linux() -> None:
     (so we see nice pretty split-up build trees)
     """
     import batools.build
+
     batools.build.gen_fulltest_buildfile_linux()
 
 
 def python_version_build_base() -> None:
     """Print built Python base version."""
     from efrotools.pybuild import PY_VER
+
     print(PY_VER, end='')
 
 
 def python_version_android() -> None:
     """Print Android embedded Python version."""
     from efrotools.pybuild import PY_VER_EXACT_ANDROID
+
     print(PY_VER_EXACT_ANDROID, end='')
 
 
 def python_version_apple() -> None:
     """Print Apple embedded Python version."""
     from efrotools.pybuild import PY_VER_EXACT_APPLE
+
     print(PY_VER_EXACT_APPLE, end='')
 
 
@@ -338,6 +367,7 @@ def _python_build_apple(debug: bool) -> None:
     """Build an embeddable python for macOS/iOS/tvOS."""
     import os
     from efrotools import pybuild
+
     os.chdir(PROJROOT)
     archs = ('mac', 'ios', 'tvos')
     if len(sys.argv) != 3:
@@ -363,6 +393,7 @@ def python_build_android_debug() -> None:
 def _python_build_android(debug: bool) -> None:
     import os
     from efrotools import pybuild
+
     os.chdir(PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
     if len(sys.argv) != 3:
@@ -379,6 +410,7 @@ def python_android_patch() -> None:
     """Patches Python to prep for building for Android."""
     import os
     from efrotools import pybuild
+
     os.chdir(sys.argv[2])
     pybuild.android_patch()
 
@@ -386,12 +418,14 @@ def python_android_patch() -> None:
 def python_android_patch_ssl() -> None:
     """Patches Python ssl to prep for building for Android."""
     from efrotools import pybuild
+
     pybuild.android_patch_ssl()
 
 
 def python_apple_patch() -> None:
     """Patches Python to prep for building for Apple platforms."""
     from efrotools import pybuild
+
     arch = sys.argv[2]
     slc = sys.argv[3]
     assert slc
@@ -406,6 +440,7 @@ def python_gather() -> None:
     """
     import os
     from efrotools import pybuild
+
     os.chdir(PROJROOT)
     pybuild.gather()
 
@@ -414,6 +449,7 @@ def python_winprune() -> None:
     """Prune unneeded files from windows python."""
     import os
     from efrotools import pybuild
+
     os.chdir(PROJROOT)
     pybuild.winprune()
 
@@ -431,6 +467,7 @@ def upper() -> None:
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
+
     makefile_dirs = ['', 'assets', 'resources', 'src/meta']
     update_cache(makefile_dirs)
 
@@ -438,6 +475,7 @@ def efrocache_update() -> None:
 def efrocache_get() -> None:
     """Get a file from efrocache."""
     from efrotools.efrocache import get_target
+
     if len(sys.argv) != 3:
         raise RuntimeError('Expected exactly 1 arg')
     get_target(sys.argv[2])
@@ -452,13 +490,18 @@ def get_modern_make() -> None:
     # so let's return 'gmake' there which will point to homebrew make which
     # should be up to date.
     if platform.system() == 'Darwin':
-        if subprocess.run(['which', 'gmake'], check=False,
-                          capture_output=True).returncode != 0:
+        if (
+            subprocess.run(
+                ['which', 'gmake'], check=False, capture_output=True
+            ).returncode
+            != 0
+        ):
             print(
                 'WARNING: this requires gmake (mac system make is too old).'
                 " Install it with 'brew install make'",
                 file=sys.stderr,
-                flush=True)
+                flush=True,
+            )
         print('gmake')
     else:
         print('make')
@@ -470,10 +513,12 @@ def warm_start_asset_build() -> None:
     import subprocess
     from pathlib import Path
     from efrotools import getconfig
+
     public: bool = getconfig(PROJROOT)['public']
 
     if public:
         from efrotools.efrocache import warm_start_cache
+
         os.chdir(PROJROOT)
         warm_start_cache()
     else:
@@ -481,8 +526,9 @@ def warm_start_asset_build() -> None:
         # internal build cache. Download an initial cache/etc. if need be.
         subprocess.run(
             [
-                str(Path(PROJROOT, 'tools/pcommand')), 'convert_util',
-                '--init-asset-cache'
+                str(Path(PROJROOT, 'tools/pcommand')),
+                'convert_util',
+                '--init-asset-cache',
             ],
             check=True,
         )
@@ -500,6 +546,7 @@ def gendocs() -> None:
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
     from batools.build import get_pip_reqs
+
     print(' '.join(get_pip_reqs()))
 
 
@@ -511,18 +558,21 @@ def install_pip_reqs() -> None:
     from batools.build import get_pip_reqs
 
     # Make sure pip itself is up to date first.
-    subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'],
-                   check=True)
+    subprocess.run(
+        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
+    )
 
-    subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
-                   get_pip_reqs(),
-                   check=True)
+    subprocess.run(
+        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] + get_pip_reqs(),
+        check=True,
+    )
     print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')
 
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
+
     batools.build.checkenv()
 
 
@@ -533,18 +583,29 @@ def wsl_build_check_win_drive() -> None:
     import textwrap
     from efro.error import CleanError
 
-    if subprocess.run(['which', 'wslpath'], check=False,
-                      capture_output=True).returncode != 0:
-        raise CleanError('wslpath not found; you must run'
-                         ' this from a WSL environment')
+    if (
+        subprocess.run(
+            ['which', 'wslpath'], check=False, capture_output=True
+        ).returncode
+        != 0
+    ):
+        raise CleanError(
+            'wslpath not found; you must run this from a WSL environment'
+        )
 
     if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
         return
 
     # Get a windows path to the current dir.
-    path = subprocess.run(
-        ['wslpath', '-w', '-a', os.getcwd()], capture_output=True,
-        check=True).stdout.decode().strip()
+    path = (
+        subprocess.run(
+            ['wslpath', '-w', '-a', os.getcwd()],
+            capture_output=True,
+            check=True,
+        )
+        .stdout.decode()
+        .strip()
+    )
 
     # If we're sitting under the linux filesystem, our path
     # will start with \\wsl$; fail in that case and explain why.
@@ -554,20 +615,36 @@ def wsl_build_check_win_drive() -> None:
     def _wrap(txt: str) -> str:
         return textwrap.fill(txt, 76)
 
-    raise CleanError('\n\n'.join([
-        _wrap('ERROR: This project appears to live on the Linux filesystem.'),
-        _wrap('Visual Studio compiles will error here for reasons related'
-              ' to Linux filesystem case-sensitivity, and thus are'
-              ' disallowed.'
-              ' Clone the repo to a location that maps to a native'
-              ' Windows drive such as \'/mnt/c/ballistica\' and try again.'),
-        _wrap('Note that WSL2 filesystem performance is poor when accessing'
-              ' native Windows drives, so if Visual Studio builds are not'
-              ' needed it may be best to keep things on the Linux filesystem.'
-              ' This behavior may differ under WSL1 (untested).'),
-        _wrap('Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
-              ' this check.')
-    ]))
+    raise CleanError(
+        '\n\n'.join(
+            [
+                _wrap(
+                    'ERROR: This project appears to live'
+                    ' on the Linux filesystem.'
+                ),
+                _wrap(
+                    'Visual Studio compiles will error here for reasons related'
+                    ' to Linux filesystem case-sensitivity, and thus are'
+                    ' disallowed.'
+                    ' Clone the repo to a location that maps to a native'
+                    ' Windows drive such as \'/mnt/c/ballistica\''
+                    ' and try again.'
+                ),
+                _wrap(
+                    'Note that WSL2 filesystem performance'
+                    ' is poor when accessing'
+                    ' native Windows drives, so if Visual Studio builds are not'
+                    ' needed it may be best to keep things'
+                    ' on the Linux filesystem.'
+                    ' This behavior may differ under WSL1 (untested).'
+                ),
+                _wrap(
+                    'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
+                    ' this check.'
+                ),
+            ]
+        )
+    )
 
 
 def wsl_path_to_win() -> None:
@@ -576,6 +653,7 @@ def wsl_path_to_win() -> None:
     import logging
     import os
     from efro.error import CleanError
+
     try:
         create = False
         escape = False
@@ -600,9 +678,9 @@ def wsl_path_to_win() -> None:
         if not os.path.exists(wsl_path):
             raise CleanError(f'Path \'{wsl_path}\' does not exist.')
 
-        results = subprocess.run(['wslpath', '-w', '-a', wsl_path],
-                                 capture_output=True,
-                                 check=True)
+        results = subprocess.run(
+            ['wslpath', '-w', '-a', wsl_path], capture_output=True, check=True
+        )
     except Exception:
         # This gets used in a makefile so our returncode is ignored;
         # let's try to make our failure known in other ways.
@@ -638,12 +716,14 @@ def ensure_prefab_platform() -> None:
     current = batools.build.get_current_prefab_platform()
     if current != needed:
         raise CleanError(
-            f'Incorrect platform: we are {current}, this requires {needed}.')
+            f'Incorrect platform: we are {current}, this requires {needed}.'
+        )
 
 
 def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
     import batools.build
+
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
     base = sys.argv[2].replace('-', '_').upper()
@@ -655,6 +735,7 @@ def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
     import batools.build
+
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
@@ -663,8 +744,9 @@ def make_prefab() -> None:
     # We use dashes instead of underscores in target names.
     platform = platform.replace('_', '-')
     try:
-        subprocess.run(['make', f'prefab-{platform}-{target.value}-build'],
-                       check=True)
+        subprocess.run(
+            ['make', f'prefab-{platform}-{target.value}-build'], check=True
+        )
     except (Exception, KeyboardInterrupt) as exc:
         if str(exc):
             print(f'make_prefab failed with error: {exc}')
@@ -676,6 +758,7 @@ def lazybuild() -> None:
     import subprocess
     import batools.build
     from efro.error import CleanError
+
     if len(sys.argv) < 5:
         raise CleanError('Expected at least 3 args')
     try:
@@ -695,6 +778,7 @@ def logcat() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
+
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args')
     adb = sys.argv[2]
@@ -706,9 +790,11 @@ def logcat() -> None:
         format_args = ''
     else:
         format_args = '-v color '
-    cmd = (f'{adb} logcat {format_args}SDL:V BallisticaCore:V VrLib:V'
-           ' VrApi:V VrApp:V TimeWarp:V EyeBuf:V GlUtils:V DirectRender:V'
-           ' HmdInfo:V IabHelper:V CrashAnrDetector:V DEBUG:V \'*:S\'')
+    cmd = (
+        f'{adb} logcat {format_args}SDL:V BallisticaCore:V VrLib:V'
+        ' VrApi:V VrApp:V TimeWarp:V EyeBuf:V GlUtils:V DirectRender:V'
+        ' HmdInfo:V IabHelper:V CrashAnrDetector:V DEBUG:V \'*:S\''
+    )
     print(f'{Clr.BLU}Running logcat command: {Clr.BLD}{cmd}{Clr.RST}')
     subprocess.run(cmd, shell=True, check=True)
 
@@ -719,6 +805,7 @@ def android_archive_unstripped_libs() -> None:
     from pathlib import Path
     from efro.error import CleanError
     from efro.terminal import Clr
+
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args; src-dir and dst-dir')
     src = Path(sys.argv[2])
@@ -742,9 +829,9 @@ def android_archive_unstripped_libs() -> None:
         if srcpath.exists():
             print(f'Archiving unstripped library: {Clr.BLD}{dstname}{Clr.RST}')
             subprocess.run(['cp', srcpath, dstpath], check=True)
-            subprocess.run(['tar', '-zcf', dstname + '.tgz', dstname],
-                           cwd=dst,
-                           check=True)
+            subprocess.run(
+                ['tar', '-zcf', dstname + '.tgz', dstname], cwd=dst, check=True
+            )
             subprocess.run(['rm', dstpath], check=True)
 
 
@@ -763,6 +850,7 @@ def efro_gradle() -> None:
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
+
     args = ['./gradlew'] + sys.argv[2:]
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
@@ -774,10 +862,12 @@ def efro_gradle() -> None:
     buildfilename = 'BallisticaCore/build.gradle'
 
     # Move the original file out of the way and operate on a copy of it.
-    subprocess.run(['mv', buildfilename, f'{buildfilename}.{prev_suffix}'],
-                   check=True)
-    subprocess.run(['cp', f'{buildfilename}.{prev_suffix}', buildfilename],
-                   check=True)
+    subprocess.run(
+        ['mv', buildfilename, f'{buildfilename}.{prev_suffix}'], check=True
+    )
+    subprocess.run(
+        ['cp', f'{buildfilename}.{prev_suffix}', buildfilename], check=True
+    )
 
     filter_gradle_file(buildfilename, enabled_tags)
 
@@ -788,8 +878,9 @@ def efro_gradle() -> None:
         errored = True
 
     # Restore the original.
-    subprocess.run(['mv', f'{buildfilename}.{prev_suffix}', buildfilename],
-                   check=True)
+    subprocess.run(
+        ['mv', f'{buildfilename}.{prev_suffix}', buildfilename], check=True
+    )
 
     if errored:
         sys.exit(1)
@@ -799,6 +890,7 @@ def stage_assets() -> None:
     """Stage assets for a build."""
     from batools.assetstaging import main
     from efro.error import CleanError
+
     try:
         main(projroot=str(PROJROOT), args=sys.argv[2:])
     except CleanError as exc:
@@ -809,7 +901,8 @@ def stage_assets() -> None:
 def update_assets_makefile() -> None:
     """Update the assets makefile."""
     from batools.assetsmakefile import update_assets_makefile as uam
-    check = ('--check' in sys.argv)
+
+    check = '--check' in sys.argv
     uam(projroot=str(PROJROOT), check=check)
 
 
@@ -830,6 +923,7 @@ def update_project() -> None:
     (used in CI builds to make sure things are kosher).
     """
     from batools.project import Updater
+
     check = '--check' in sys.argv
     fix = '--fix' in sys.argv
 
@@ -842,9 +936,11 @@ def update_cmake_prefab_lib() -> None:
     import os
     from efro.error import CleanError
     import batools.build
+
     if len(sys.argv) != 5:
-        raise CleanError('Expected 3 args (standard/server,'
-                         ' debug/release, build-dir)')
+        raise CleanError(
+            'Expected 3 args (standard/server, debug/release, build-dir)'
+        )
     buildtype = sys.argv[2]
     mode = sys.argv[3]
     builddir = sys.argv[4]
@@ -853,10 +949,13 @@ def update_cmake_prefab_lib() -> None:
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
     platform = batools.build.get_current_prefab_platform(
-        wsl_gives_windows=False)
+        wsl_gives_windows=False
+    )
     suffix = '_server' if buildtype == 'server' else '_gui'
-    target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
-              f'libballisticacore_internal.a')
+    target = (
+        f'build/prefab/lib/{platform}{suffix}/{mode}/'
+        f'libballisticacore_internal.a'
+    )
 
     # Build the target and then copy it to dst if it doesn't exist there yet
     # or the existing one is older than our target.
@@ -887,17 +986,20 @@ def cmake_prep_dir() -> None:
     import os
     from efro.error import CleanError
     import batools.build
+
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]
-    batools.build.cmake_prep_dir(dirname,
-                                 verbose=os.environ.get('VERBOSE') == '1')
+    batools.build.cmake_prep_dir(
+        dirname, verbose=os.environ.get('VERBOSE') == '1'
+    )
 
 
 def gen_binding_code() -> None:
     """Generate binding.inc file."""
     from efro.error import CleanError
     import batools.meta
+
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
@@ -909,6 +1011,7 @@ def gen_flat_data_code() -> None:
     """Generate a C++ include file from a Python file."""
     from efro.error import CleanError
     import batools.meta
+
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
     inpath = sys.argv[2]
@@ -931,20 +1034,23 @@ def win_ci_install_prereqs() -> None:
         'BallisticaCoreGenericInternal.lib',
         'build/prefab/lib/windows/Debug_Win32/'
         'BallisticaCoreGenericInternal.pdb',
-        'ballisticacore-windows/Generic/BallisticaCore.ico'
+        'ballisticacore-windows/Generic/BallisticaCore.ico',
     }
 
     # Look through everything that gets generated by our meta builds
     # and pick out anything we need for our basic builds/tests.
-    with open('src/meta/.meta_manifest_public.json',
-              encoding='utf-8') as infile:
+    with open(
+        'src/meta/.meta_manifest_public.json', encoding='utf-8'
+    ) as infile:
         meta_public: list[str] = json.loads(infile.read())
-    with open('src/meta/.meta_manifest_private.json',
-              encoding='utf-8') as infile:
+    with open(
+        'src/meta/.meta_manifest_private.json', encoding='utf-8'
+    ) as infile:
         meta_private: list[str] = json.loads(infile.read())
     for target in meta_public + meta_private:
-        if (target.startswith('src/ballistica/generated/') or
-                target.startswith('assets/src/ba_data/python/ba/_generated/')):
+        if target.startswith('src/ballistica/generated/') or target.startswith(
+            'assets/src/ba_data/python/ba/_generated/'
+        ):
             needed_targets.add(target)
 
     for target in needed_targets:
@@ -960,8 +1066,7 @@ def win_ci_binary_build() -> None:
         [
             'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\'
             'Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe',
-            'ballisticacore-windows\\Generic'
-            '\\BallisticaCoreGeneric.vcxproj',
+            'ballisticacore-windows\\Generic\\BallisticaCoreGeneric.vcxproj',
             '-target:Build',
             '-property:Configuration=Debug',
             '-property:Platform=Win32',
@@ -974,35 +1079,40 @@ def win_ci_binary_build() -> None:
 def genchangelog() -> None:
     """Gen a pretty html changelog."""
     from batools.changelog import generate
+
     generate(projroot=str(PROJROOT))
 
 
 def android_sdk_utils() -> None:
     """Wrangle android sdk stuff."""
     from batools.androidsdkutils import run
+
     run(projroot=str(PROJROOT), args=sys.argv[2:])
 
 
 def update_resources_makefile() -> None:
     """Update the resources Makefile if needed."""
     from batools.resourcesmakefile import update
+
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
 
 
 def update_meta_makefile() -> None:
     """Update the meta Makefile if needed."""
     from batools.metamakefile import update
+
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
 
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
     from batools.pythonenumsmodule import generate
+
     if len(sys.argv) != 4:
         raise Exception('Expected infile and outfile args.')
-    generate(projroot=str(PROJROOT),
-             infilename=sys.argv[2],
-             outfilename=sys.argv[3])
+    generate(
+        projroot=str(PROJROOT), infilename=sys.argv[2], outfilename=sys.argv[3]
+    )
 
 
 def gen_python_init_module() -> None:
@@ -1010,6 +1120,7 @@ def gen_python_init_module() -> None:
     import os
     from efro.terminal import Clr
     from batools.project import project_centric_path
+
     if len(sys.argv) != 3:
         raise Exception('Expected an outfile arg.')
     outfilename = sys.argv[2]
@@ -1017,20 +1128,26 @@ def gen_python_init_module() -> None:
     prettypath = project_centric_path(projroot=str(PROJROOT), path=outfilename)
     print(f'Meta-building {Clr.BLD}{prettypath}{Clr.RST}')
     with open(outfilename, 'w', encoding='utf-8') as outfile:
-        outfile.write('# Released under the MIT License.'
-                      ' See LICENSE for details.\n'
-                      '#\n')
+        outfile.write(
+            '# Released under the MIT License.'
+            ' See LICENSE for details.\n'
+            '#\n'
+        )
 
 
 def update_dummy_modules() -> None:
     """Update our _ba.py and _bainternal.py dummy modules."""
     from batools.dummymodule import update
-    update(projroot=str(PROJROOT),
-           check='--check' in sys.argv,
-           force='--force' in sys.argv)
+
+    update(
+        projroot=str(PROJROOT),
+        check='--check' in sys.argv,
+        force='--force' in sys.argv,
+    )
 
 
 def version() -> None:
     """Check app versions."""
     from batools.version import run
+
     run(projroot=str(PROJROOT), args=sys.argv[2:])

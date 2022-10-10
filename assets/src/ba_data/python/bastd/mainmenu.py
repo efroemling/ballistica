@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Session and Activity for displaying the main menu bg."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -44,42 +45,51 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         vr_mode = ba.app.vr_mode
 
         if not ba.app.toolbar_test:
-            color = ((1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6))
+            color = (1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6)
 
             # FIXME: Need a node attr for vr-specific-scale.
-            scale = (0.9 if
-                     (app.ui.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7)
+            scale = (
+                0.9 if (app.ui.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7
+            )
             self.my_name = ba.NodeActor(
-                ba.newnode('text',
-                           attrs={
-                               'v_attach': 'bottom',
-                               'h_align': 'center',
-                               'color': color,
-                               'flatness': 1.0,
-                               'shadow': 1.0 if vr_mode else 0.5,
-                               'scale': scale,
-                               'position': (0, 10),
-                               'vr_depth': -10,
-                               'text': '\xa9 2011-2022 Eric Froemling'
-                           }))
+                ba.newnode(
+                    'text',
+                    attrs={
+                        'v_attach': 'bottom',
+                        'h_align': 'center',
+                        'color': color,
+                        'flatness': 1.0,
+                        'shadow': 1.0 if vr_mode else 0.5,
+                        'scale': scale,
+                        'position': (0, 10),
+                        'vr_depth': -10,
+                        'text': '\xa9 2011-2022 Eric Froemling',
+                    },
+                )
+            )
 
         # Throw up some text that only clients can see so they know that the
         # host is navigating menus while they're just staring at an
         # empty-ish screen.
-        tval = ba.Lstr(resource='hostIsNavigatingMenusText',
-                       subs=[('${HOST}',
-                              ba.internal.get_v1_account_display_string())])
+        tval = ba.Lstr(
+            resource='hostIsNavigatingMenusText',
+            subs=[('${HOST}', ba.internal.get_v1_account_display_string())],
+        )
         self._host_is_navigating_text = ba.NodeActor(
-            ba.newnode('text',
-                       attrs={
-                           'text': tval,
-                           'client_only': True,
-                           'position': (0, -200),
-                           'flatness': 1.0,
-                           'h_align': 'center'
-                       }))
+            ba.newnode(
+                'text',
+                attrs={
+                    'text': tval,
+                    'client_only': True,
+                    'position': (0, -200),
+                    'flatness': 1.0,
+                    'h_align': 'center',
+                },
+            )
+        )
         if not ba.app.main_menu_did_initial_transition and hasattr(
-                self, 'my_name'):
+            self, 'my_name'
+        ):
             assert self.my_name.node
             ba.animate(self.my_name.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
@@ -97,18 +107,22 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         if not ba.app.toolbar_test:
             if app.debug_build or app.test_build or force_show_build_number:
                 if app.debug_build:
-                    text = ba.Lstr(value='${V} (${B}) (${D})',
-                                   subs=[
-                                       ('${V}', app.version),
-                                       ('${B}', str(app.build_number)),
-                                       ('${D}', ba.Lstr(resource='debugText')),
-                                   ])
+                    text = ba.Lstr(
+                        value='${V} (${B}) (${D})',
+                        subs=[
+                            ('${V}', app.version),
+                            ('${B}', str(app.build_number)),
+                            ('${D}', ba.Lstr(resource='debugText')),
+                        ],
+                    )
                 else:
-                    text = ba.Lstr(value='${V} (${B})',
-                                   subs=[
-                                       ('${V}', app.version),
-                                       ('${B}', str(app.build_number)),
-                                   ])
+                    text = ba.Lstr(
+                        value='${V} (${B})',
+                        subs=[
+                            ('${V}', app.version),
+                            ('${B}', str(app.build_number)),
+                        ],
+                    )
             else:
                 text = ba.Lstr(value='${V}', subs=[('${V}', app.version)])
             scale = 0.9 if (uiscale is ba.UIScale.SMALL or vr_mode) else 0.7
@@ -126,8 +140,10 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                         'color': color,
                         'scale': scale,
                         'position': (-260, 10) if vr_mode else (-10, 10),
-                        'text': text
-                    }))
+                        'text': text,
+                    },
+                )
+            )
             if not ba.app.main_menu_did_initial_transition:
                 assert self.version.node
                 ba.animate(self.version.node, 'opacity', {2.3: 0, 3.0: 1.0})
@@ -135,39 +151,45 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         # Show the iircade logo on our iircade build.
         if app.iircade_mode:
             img = ba.NodeActor(
-                ba.newnode('image',
-                           attrs={
-                               'texture': ba.gettexture('iircadeLogo'),
-                               'attach': 'center',
-                               'scale': (250, 250),
-                               'position': (0, 0),
-                               'tilt_translate': 0.21,
-                               'absolute_scale': True
-                           })).autoretain()
+                ba.newnode(
+                    'image',
+                    attrs={
+                        'texture': ba.gettexture('iircadeLogo'),
+                        'attach': 'center',
+                        'scale': (250, 250),
+                        'position': (0, 0),
+                        'tilt_translate': 0.21,
+                        'absolute_scale': True,
+                    },
+                )
+            ).autoretain()
             imgdelay = 0.0 if app.main_menu_did_initial_transition else 1.0
-            ba.animate(img.node, 'opacity', {
-                imgdelay + 1.5: 0.0,
-                imgdelay + 2.5: 1.0
-            })
+            ba.animate(
+                img.node, 'opacity', {imgdelay + 1.5: 0.0, imgdelay + 2.5: 1.0}
+            )
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
         if app.test_build and not (app.demo_mode or app.arcade_mode):
-            pos = ((230, 125) if (app.demo_mode or app.arcade_mode) else
-                   (230, 35))
+            pos = (
+                (230, 125) if (app.demo_mode or app.arcade_mode) else (230, 35)
+            )
             self.beta_info = ba.NodeActor(
-                ba.newnode('text',
-                           attrs={
-                               'v_attach': 'center',
-                               'h_align': 'center',
-                               'color': (1, 1, 1, 1),
-                               'shadow': 0.5,
-                               'flatness': 0.5,
-                               'scale': 1,
-                               'vr_depth': -60,
-                               'position': pos,
-                               'text': ba.Lstr(resource='testBuildText')
-                           }))
+                ba.newnode(
+                    'text',
+                    attrs={
+                        'v_attach': 'center',
+                        'h_align': 'center',
+                        'color': (1, 1, 1, 1),
+                        'shadow': 0.5,
+                        'flatness': 0.5,
+                        'scale': 1,
+                        'vr_depth': -60,
+                        'position': pos,
+                        'text': ba.Lstr(resource='testBuildText'),
+                    },
+                )
+            )
             if not ba.app.main_menu_did_initial_transition:
                 assert self.beta_info.node
                 ba.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
@@ -194,56 +216,74 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         gnode.vignette_inner = (0.99, 0.98, 0.98)
 
         self.bottom = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': bottom_model,
-                           'lighting': False,
-                           'reflection': 'soft',
-                           'reflection_scale': [0.45],
-                           'color_texture': color_texture
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': bottom_model,
+                    'lighting': False,
+                    'reflection': 'soft',
+                    'reflection_scale': [0.45],
+                    'color_texture': color_texture,
+                },
+            )
+        )
         self.vr_bottom_fill = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': vr_bottom_fill_model,
-                           'lighting': False,
-                           'vr_only': True,
-                           'color_texture': color_texture
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': vr_bottom_fill_model,
+                    'lighting': False,
+                    'vr_only': True,
+                    'color_texture': color_texture,
+                },
+            )
+        )
         self.vr_top_fill = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': vr_top_fill_model,
-                           'vr_only': True,
-                           'lighting': False,
-                           'color_texture': bgtex
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': vr_top_fill_model,
+                    'vr_only': True,
+                    'lighting': False,
+                    'color_texture': bgtex,
+                },
+            )
+        )
         self.terrain = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': model,
-                           'color_texture': color_texture,
-                           'reflection': 'soft',
-                           'reflection_scale': [0.3]
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': model,
+                    'color_texture': color_texture,
+                    'reflection': 'soft',
+                    'reflection_scale': [0.3],
+                },
+            )
+        )
         self.trees = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': trees_model,
-                           'lighting': False,
-                           'reflection': 'char',
-                           'reflection_scale': [0.1],
-                           'color_texture': trees_texture
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': trees_model,
+                    'lighting': False,
+                    'reflection': 'char',
+                    'reflection_scale': [0.1],
+                    'color_texture': trees_texture,
+                },
+            )
+        )
         self.bgterrain = ba.NodeActor(
-            ba.newnode('terrain',
-                       attrs={
-                           'model': bgmodel,
-                           'color': (0.92, 0.91, 0.9),
-                           'lighting': False,
-                           'background': True,
-                           'color_texture': bgtex
-                       }))
+            ba.newnode(
+                'terrain',
+                attrs={
+                    'model': bgmodel,
+                    'color': (0.92, 0.91, 0.9),
+                    'lighting': False,
+                    'background': True,
+                    'color_texture': bgtex,
+                },
+            )
+        )
 
         self._ts = 0.86
 
@@ -270,7 +310,8 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 # If we're signed in, fetch news immediately.
                 # Otherwise wait until we are signed in.
                 self._fetch_timer: ba.Timer | None = ba.Timer(
-                    1.0, ba.WeakCall(self._try_fetching_news), repeat=True)
+                    1.0, ba.WeakCall(self._try_fetching_news), repeat=True
+                )
                 self._try_fetching_news()
 
             # We now want to wait until we're signed in before fetching news.
@@ -304,51 +345,60 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                         val = self._phrases.pop()
                         if val == '__ACH__':
                             vrmode = app.vr_mode
-                            Text(ba.Lstr(resource='nextAchievementsText'),
-                                 color=((1, 1, 1, 1) if vrmode else
-                                        (0.95, 0.9, 1, 0.4)),
-                                 host_only=True,
-                                 maxwidth=200,
-                                 position=(-300, -35),
-                                 h_align=Text.HAlign.RIGHT,
-                                 transition=Text.Transition.FADE_IN,
-                                 scale=0.9 if vrmode else 0.7,
-                                 flatness=1.0 if vrmode else 0.6,
-                                 shadow=1.0 if vrmode else 0.5,
-                                 h_attach=Text.HAttach.CENTER,
-                                 v_attach=Text.VAttach.TOP,
-                                 transition_delay=1.0,
-                                 transition_out_delay=self._message_duration
-                                 ).autoretain()
+                            Text(
+                                ba.Lstr(resource='nextAchievementsText'),
+                                color=(
+                                    (1, 1, 1, 1)
+                                    if vrmode
+                                    else (0.95, 0.9, 1, 0.4)
+                                ),
+                                host_only=True,
+                                maxwidth=200,
+                                position=(-300, -35),
+                                h_align=Text.HAlign.RIGHT,
+                                transition=Text.Transition.FADE_IN,
+                                scale=0.9 if vrmode else 0.7,
+                                flatness=1.0 if vrmode else 0.6,
+                                shadow=1.0 if vrmode else 0.5,
+                                h_attach=Text.HAttach.CENTER,
+                                v_attach=Text.VAttach.TOP,
+                                transition_delay=1.0,
+                                transition_out_delay=self._message_duration,
+                            ).autoretain()
                             achs = [
-                                a for a in app.ach.achievements
+                                a
+                                for a in app.ach.achievements
                                 if not a.complete
                             ]
                             if achs:
                                 ach = achs.pop(
-                                    random.randrange(min(4, len(achs))))
+                                    random.randrange(min(4, len(achs)))
+                                )
                                 ach.create_display(
                                     -180,
                                     -35,
                                     1.0,
                                     outdelay=self._message_duration,
-                                    style='news')
+                                    style='news',
+                                )
                             if achs:
                                 ach = achs.pop(
-                                    random.randrange(min(8, len(achs))))
+                                    random.randrange(min(8, len(achs)))
+                                )
                                 ach.create_display(
                                     180,
                                     -35,
                                     1.25,
                                     outdelay=self._message_duration,
-                                    style='news')
+                                    style='news',
+                                )
                         else:
                             spc = self._message_spacing
                             keys = {
                                 spc: 0.0,
                                 spc + 1.0: 1.0,
                                 spc + self._message_duration - 1.0: 1.0,
-                                spc + self._message_duration: 0.0
+                                spc + self._message_duration: 0.0,
                             }
                             assert self._text.node
                             ba.animate(self._text.node, 'opacity', keys)
@@ -370,34 +420,47 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                     # Show upcoming achievements in non-vr versions
                     # (currently too hard to read in vr).
                     self._used_phrases = (
-                        ['__ACH__'] if not ba.app.vr_mode else
-                        []) + [s for s in news.split('<br>\n') if s != '']
+                        ['__ACH__'] if not ba.app.vr_mode else []
+                    ) + [s for s in news.split('<br>\n') if s != '']
                     self._phrase_change_timer = ba.Timer(
                         (self._message_duration + self._message_spacing),
                         ba.WeakCall(self._change_phrase),
-                        repeat=True)
+                        repeat=True,
+                    )
 
-                    scl = 1.2 if (ba.app.ui.uiscale is ba.UIScale.SMALL
-                                  or ba.app.vr_mode) else 0.8
+                    scl = (
+                        1.2
+                        if (
+                            ba.app.ui.uiscale is ba.UIScale.SMALL
+                            or ba.app.vr_mode
+                        )
+                        else 0.8
+                    )
 
-                    color2 = ((1, 1, 1, 1) if ba.app.vr_mode else
-                              (0.7, 0.65, 0.75, 1.0))
-                    shadow = (1.0 if ba.app.vr_mode else 0.4)
+                    color2 = (
+                        (1, 1, 1, 1)
+                        if ba.app.vr_mode
+                        else (0.7, 0.65, 0.75, 1.0)
+                    )
+                    shadow = 1.0 if ba.app.vr_mode else 0.4
                     self._text = ba.NodeActor(
-                        ba.newnode('text',
-                                   attrs={
-                                       'v_attach': 'top',
-                                       'h_attach': 'center',
-                                       'h_align': 'center',
-                                       'vr_depth': -20,
-                                       'shadow': shadow,
-                                       'flatness': 0.8,
-                                       'v_align': 'top',
-                                       'color': color2,
-                                       'scale': scl,
-                                       'maxwidth': 900.0 / scl,
-                                       'position': (0, -10)
-                                   }))
+                        ba.newnode(
+                            'text',
+                            attrs={
+                                'v_attach': 'top',
+                                'h_attach': 'center',
+                                'h_align': 'center',
+                                'vr_depth': -20,
+                                'shadow': shadow,
+                                'flatness': 0.8,
+                                'v_align': 'top',
+                                'color': color2,
+                                'scale': scl,
+                                'maxwidth': 900.0 / scl,
+                                'position': (0, -10),
+                            },
+                        )
+                    )
                     self._change_phrase()
 
         if not (app.demo_mode or app.arcade_mode) and not app.toolbar_test:
@@ -406,6 +469,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         # Bring up the last place we were, or start at the main menu otherwise.
         with ba.Context('ui'):
             from bastd.ui import specialoffer
+
             if bool(False):
                 uicontroller = ba.app.ui.controller
                 assert uicontroller is not None
@@ -418,52 +482,70 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 if ba.app.demo_mode or ba.app.arcade_mode:
                     # pylint: disable=cyclic-import
                     from bastd.ui.kiosk import KioskWindow
+
                     ba.app.ui.set_main_menu_window(
-                        KioskWindow().get_root_widget())
+                        KioskWindow().get_root_widget()
+                    )
                 # ..or in normal cases go back to the main menu
                 else:
                     if main_menu_location == 'Gather':
                         # pylint: disable=cyclic-import
                         from bastd.ui.gather import GatherWindow
+
                         ba.app.ui.set_main_menu_window(
-                            GatherWindow(transition=None).get_root_widget())
+                            GatherWindow(transition=None).get_root_widget()
+                        )
                     elif main_menu_location == 'Watch':
                         # pylint: disable=cyclic-import
                         from bastd.ui.watch import WatchWindow
+
                         ba.app.ui.set_main_menu_window(
-                            WatchWindow(transition=None).get_root_widget())
+                            WatchWindow(transition=None).get_root_widget()
+                        )
                     elif main_menu_location == 'Team Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
-                            PlaylistBrowserWindow)
+                            PlaylistBrowserWindow,
+                        )
+
                         ba.app.ui.set_main_menu_window(
                             PlaylistBrowserWindow(
-                                sessiontype=ba.DualTeamSession,
-                                transition=None).get_root_widget())
+                                sessiontype=ba.DualTeamSession, transition=None
+                            ).get_root_widget()
+                        )
                     elif main_menu_location == 'Free-for-All Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
-                            PlaylistBrowserWindow)
+                            PlaylistBrowserWindow,
+                        )
+
                         ba.app.ui.set_main_menu_window(
                             PlaylistBrowserWindow(
                                 sessiontype=ba.FreeForAllSession,
-                                transition=None).get_root_widget())
+                                transition=None,
+                            ).get_root_widget()
+                        )
                     elif main_menu_location == 'Coop Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.coop.browser import CoopBrowserWindow
+
                         ba.app.ui.set_main_menu_window(
-                            CoopBrowserWindow(
-                                transition=None).get_root_widget())
+                            CoopBrowserWindow(transition=None).get_root_widget()
+                        )
                     elif main_menu_location == 'Benchmarks & Stress Tests':
                         # pylint: disable=cyclic-import
                         from bastd.ui.debug import DebugWindow
+
                         ba.app.ui.set_main_menu_window(
-                            DebugWindow(transition=None).get_root_widget())
+                            DebugWindow(transition=None).get_root_widget()
+                        )
                     else:
                         # pylint: disable=cyclic-import
                         from bastd.ui.mainmenu import MainMenuWindow
+
                         ba.app.ui.set_main_menu_window(
-                            MainMenuWindow(transition=None).get_root_widget())
+                            MainMenuWindow(transition=None).get_root_widget()
+                        )
 
                 # attempt to show any pending offers immediately.
                 # If that doesn't work, try again in a few seconds
@@ -475,9 +557,11 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                     def try_again() -> None:
                         if not specialoffer.show_offer():
                             # Try one last time..
-                            ba.timer(2.0,
-                                     specialoffer.show_offer,
-                                     timetype=ba.TimeType.REAL)
+                            ba.timer(
+                                2.0,
+                                specialoffer.show_offer,
+                                timetype=ba.TimeType.REAL,
+                            )
 
                     ba.timer(2.0, try_again, timetype=ba.TimeType.REAL)
         ba.app.main_menu_did_initial_transition = True
@@ -491,13 +575,16 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             if custom_texture != self._custom_logo_tex_name:
                 self._custom_logo_tex_name = custom_texture
                 self._logo_node.texture = ba.gettexture(
-                    custom_texture if custom_texture is not None else 'logo')
-                self._logo_node.model_opaque = (None
-                                                if custom_texture is not None
-                                                else ba.getmodel('logo'))
+                    custom_texture if custom_texture is not None else 'logo'
+                )
+                self._logo_node.model_opaque = (
+                    None if custom_texture is not None else ba.getmodel('logo')
+                )
                 self._logo_node.model_transparent = (
-                    None if custom_texture is not None else
-                    ba.getmodel('logoTransparent'))
+                    None
+                    if custom_texture is not None
+                    else ba.getmodel('logoTransparent')
+                )
 
         # If language has changed, recreate our logo text/graphics.
         lang = app.lang.language
@@ -524,54 +611,66 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
                 y_extra = 0.0 if (app.demo_mode or app.arcade_mode) else 0.0
-                self._make_logo(x - 110 + 50,
-                                113 + y + 1.2 * y_extra,
-                                0.34 * base_scale,
-                                delay=base_delay + 0.1,
-                                custom_texture='chTitleChar1',
-                                jitter_scale=2.0,
-                                vr_depth_offset=-30)
+                self._make_logo(
+                    x - 110 + 50,
+                    113 + y + 1.2 * y_extra,
+                    0.34 * base_scale,
+                    delay=base_delay + 0.1,
+                    custom_texture='chTitleChar1',
+                    jitter_scale=2.0,
+                    vr_depth_offset=-30,
+                )
                 x += spacing
                 delay += delay_inc
-                self._make_logo(x - 10 + 50,
-                                110 + y + 1.2 * y_extra,
-                                0.31 * base_scale,
-                                delay=base_delay + 0.15,
-                                custom_texture='chTitleChar2',
-                                jitter_scale=2.0,
-                                vr_depth_offset=-30)
+                self._make_logo(
+                    x - 10 + 50,
+                    110 + y + 1.2 * y_extra,
+                    0.31 * base_scale,
+                    delay=base_delay + 0.15,
+                    custom_texture='chTitleChar2',
+                    jitter_scale=2.0,
+                    vr_depth_offset=-30,
+                )
                 x += 2.0 * spacing
                 delay += delay_inc
-                self._make_logo(x + 180 - 140,
-                                110 + y + 1.2 * y_extra,
-                                0.3 * base_scale,
-                                delay=base_delay + 0.25,
-                                custom_texture='chTitleChar3',
-                                jitter_scale=2.0,
-                                vr_depth_offset=-30)
+                self._make_logo(
+                    x + 180 - 140,
+                    110 + y + 1.2 * y_extra,
+                    0.3 * base_scale,
+                    delay=base_delay + 0.25,
+                    custom_texture='chTitleChar3',
+                    jitter_scale=2.0,
+                    vr_depth_offset=-30,
+                )
                 x += spacing
                 delay += delay_inc
-                self._make_logo(x + 241 - 120,
-                                110 + y + 1.2 * y_extra,
-                                0.31 * base_scale,
-                                delay=base_delay + 0.3,
-                                custom_texture='chTitleChar4',
-                                jitter_scale=2.0,
-                                vr_depth_offset=-30)
+                self._make_logo(
+                    x + 241 - 120,
+                    110 + y + 1.2 * y_extra,
+                    0.31 * base_scale,
+                    delay=base_delay + 0.3,
+                    custom_texture='chTitleChar4',
+                    jitter_scale=2.0,
+                    vr_depth_offset=-30,
+                )
                 x += spacing
                 delay += delay_inc
-                self._make_logo(x + 300 - 90,
-                                105 + y + 1.2 * y_extra,
-                                0.34 * base_scale,
-                                delay=base_delay + 0.35,
-                                custom_texture='chTitleChar5',
-                                jitter_scale=2.0,
-                                vr_depth_offset=-30)
-                self._make_logo(base_x + 155,
-                                146 + y + 1.2 * y_extra,
-                                0.28 * base_scale,
-                                delay=base_delay + 0.2,
-                                rotate=-7)
+                self._make_logo(
+                    x + 300 - 90,
+                    105 + y + 1.2 * y_extra,
+                    0.34 * base_scale,
+                    delay=base_delay + 0.35,
+                    custom_texture='chTitleChar5',
+                    jitter_scale=2.0,
+                    vr_depth_offset=-30,
+                )
+                self._make_logo(
+                    base_x + 155,
+                    146 + y + 1.2 * y_extra,
+                    0.28 * base_scale,
+                    delay=base_delay + 0.2,
+                    rotate=-7,
+                )
             else:
                 base_x = -170
                 x = base_x - 20
@@ -582,118 +681,144 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 for shadow in (True, False):
                     x = xv1
                     delay = delay1
-                    self._make_word('B',
-                                    x - 50,
-                                    y - 23 + 0.8 * y_extra,
-                                    scale=1.3 * base_scale,
-                                    delay=delay,
-                                    vr_depth_offset=3,
-                                    shadow=shadow)
+                    self._make_word(
+                        'B',
+                        x - 50,
+                        y - 23 + 0.8 * y_extra,
+                        scale=1.3 * base_scale,
+                        delay=delay,
+                        vr_depth_offset=3,
+                        shadow=shadow,
+                    )
                     x += spacing
                     delay += delay_inc
-                    self._make_word('m',
-                                    x,
-                                    y + y_extra,
-                                    delay=delay,
-                                    scale=base_scale,
-                                    shadow=shadow)
+                    self._make_word(
+                        'm',
+                        x,
+                        y + y_extra,
+                        delay=delay,
+                        scale=base_scale,
+                        shadow=shadow,
+                    )
                     x += spacing * 1.25
                     delay += delay_inc
-                    self._make_word('b',
-                                    x,
-                                    y + y_extra - 10,
-                                    delay=delay,
-                                    scale=1.1 * base_scale,
-                                    vr_depth_offset=5,
-                                    shadow=shadow)
+                    self._make_word(
+                        'b',
+                        x,
+                        y + y_extra - 10,
+                        delay=delay,
+                        scale=1.1 * base_scale,
+                        vr_depth_offset=5,
+                        shadow=shadow,
+                    )
                     x += spacing * 0.85
                     delay += delay_inc
-                    self._make_word('S',
-                                    x,
-                                    y - 25 + 0.8 * y_extra,
-                                    scale=1.35 * base_scale,
-                                    delay=delay,
-                                    vr_depth_offset=14,
-                                    shadow=shadow)
+                    self._make_word(
+                        'S',
+                        x,
+                        y - 25 + 0.8 * y_extra,
+                        scale=1.35 * base_scale,
+                        delay=delay,
+                        vr_depth_offset=14,
+                        shadow=shadow,
+                    )
                     x += spacing
                     delay += delay_inc
-                    self._make_word('q',
-                                    x,
-                                    y + y_extra,
-                                    delay=delay,
-                                    scale=base_scale,
-                                    shadow=shadow)
+                    self._make_word(
+                        'q',
+                        x,
+                        y + y_extra,
+                        delay=delay,
+                        scale=base_scale,
+                        shadow=shadow,
+                    )
                     x += spacing * 0.9
                     delay += delay_inc
-                    self._make_word('u',
-                                    x,
-                                    y + y_extra,
-                                    delay=delay,
-                                    scale=base_scale,
-                                    vr_depth_offset=7,
-                                    shadow=shadow)
+                    self._make_word(
+                        'u',
+                        x,
+                        y + y_extra,
+                        delay=delay,
+                        scale=base_scale,
+                        vr_depth_offset=7,
+                        shadow=shadow,
+                    )
                     x += spacing * 0.9
                     delay += delay_inc
-                    self._make_word('a',
-                                    x,
-                                    y + y_extra,
-                                    delay=delay,
-                                    scale=base_scale,
-                                    shadow=shadow)
+                    self._make_word(
+                        'a',
+                        x,
+                        y + y_extra,
+                        delay=delay,
+                        scale=base_scale,
+                        shadow=shadow,
+                    )
                     x += spacing * 0.64
                     delay += delay_inc
-                    self._make_word('d',
-                                    x,
-                                    y + y_extra - 10,
-                                    delay=delay,
-                                    scale=1.1 * base_scale,
-                                    vr_depth_offset=6,
-                                    shadow=shadow)
-                self._make_logo(base_x - 28,
-                                125 + y + 1.2 * y_extra,
-                                0.32 * base_scale,
-                                delay=base_delay)
+                    self._make_word(
+                        'd',
+                        x,
+                        y + y_extra - 10,
+                        delay=delay,
+                        scale=1.1 * base_scale,
+                        vr_depth_offset=6,
+                        shadow=shadow,
+                    )
+                self._make_logo(
+                    base_x - 28,
+                    125 + y + 1.2 * y_extra,
+                    0.32 * base_scale,
+                    delay=base_delay,
+                )
 
-    def _make_word(self,
-                   word: str,
-                   x: float,
-                   y: float,
-                   scale: float = 1.0,
-                   delay: float = 0.0,
-                   vr_depth_offset: float = 0.0,
-                   shadow: bool = False) -> None:
+    def _make_word(
+        self,
+        word: str,
+        x: float,
+        y: float,
+        scale: float = 1.0,
+        delay: float = 0.0,
+        vr_depth_offset: float = 0.0,
+        shadow: bool = False,
+    ) -> None:
         if shadow:
             word_obj = ba.NodeActor(
-                ba.newnode('text',
-                           attrs={
-                               'position': (x, y),
-                               'big': True,
-                               'color': (0.0, 0.0, 0.2, 0.08),
-                               'tilt_translate': 0.09,
-                               'opacity_scales_shadow': False,
-                               'shadow': 0.2,
-                               'vr_depth': -130,
-                               'v_align': 'center',
-                               'project_scale': 0.97 * scale,
-                               'scale': 1.0,
-                               'text': word
-                           }))
+                ba.newnode(
+                    'text',
+                    attrs={
+                        'position': (x, y),
+                        'big': True,
+                        'color': (0.0, 0.0, 0.2, 0.08),
+                        'tilt_translate': 0.09,
+                        'opacity_scales_shadow': False,
+                        'shadow': 0.2,
+                        'vr_depth': -130,
+                        'v_align': 'center',
+                        'project_scale': 0.97 * scale,
+                        'scale': 1.0,
+                        'text': word,
+                    },
+                )
+            )
             self._word_actors.append(word_obj)
         else:
             word_obj = ba.NodeActor(
-                ba.newnode('text',
-                           attrs={
-                               'position': (x, y),
-                               'big': True,
-                               'color': (1.2, 1.15, 1.15, 1.0),
-                               'tilt_translate': 0.11,
-                               'shadow': 0.2,
-                               'vr_depth': -40 + vr_depth_offset,
-                               'v_align': 'center',
-                               'project_scale': scale,
-                               'scale': 1.0,
-                               'text': word
-                           }))
+                ba.newnode(
+                    'text',
+                    attrs={
+                        'position': (x, y),
+                        'big': True,
+                        'color': (1.2, 1.15, 1.15, 1.0),
+                        'tilt_translate': 0.11,
+                        'shadow': 0.2,
+                        'vr_depth': -40 + vr_depth_offset,
+                        'v_align': 'center',
+                        'project_scale': scale,
+                        'scale': 1.0,
+                        'text': word,
+                    },
+                )
+            )
             self._word_actors.append(word_obj)
 
         # Add a bit of stop-motion-y jitter to the logo
@@ -703,15 +828,15 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             cmb: ba.Node | None
             cmb2: ba.Node | None
             if not shadow:
-                cmb = ba.newnode('combine',
-                                 owner=word_obj.node,
-                                 attrs={'size': 2})
+                cmb = ba.newnode(
+                    'combine', owner=word_obj.node, attrs={'size': 2}
+                )
             else:
                 cmb = None
             if shadow:
-                cmb2 = ba.newnode('combine',
-                                  owner=word_obj.node,
-                                  attrs={'size': 2})
+                cmb2 = ba.newnode(
+                    'combine', owner=word_obj.node, attrs={'size': 2}
+                )
             else:
                 cmb2 = None
             if not shadow:
@@ -749,18 +874,18 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
         if not shadow:
             assert word_obj.node
-            ba.animate(word_obj.node, 'project_scale', {
-                delay: 0.0,
-                delay + 0.1: scale * 1.1,
-                delay + 0.2: scale
-            })
+            ba.animate(
+                word_obj.node,
+                'project_scale',
+                {delay: 0.0, delay + 0.1: scale * 1.1, delay + 0.2: scale},
+            )
         else:
             assert word_obj.node
-            ba.animate(word_obj.node, 'project_scale', {
-                delay: 0.0,
-                delay + 0.1: scale * 1.1,
-                delay + 0.2: scale
-            })
+            ba.animate(
+                word_obj.node,
+                'project_scale',
+                {delay: 0.0, delay + 0.1: scale * 1.1, delay + 0.2: scale},
+            )
 
     def _get_custom_logo_tex_name(self) -> str | None:
         if ba.internal.get_v1_account_misc_read_val('easter', False):
@@ -768,37 +893,46 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         return None
 
     # Pop the logo and menu in.
-    def _make_logo(self,
-                   x: float,
-                   y: float,
-                   scale: float,
-                   delay: float,
-                   custom_texture: str | None = None,
-                   jitter_scale: float = 1.0,
-                   rotate: float = 0.0,
-                   vr_depth_offset: float = 0.0) -> None:
+    def _make_logo(
+        self,
+        x: float,
+        y: float,
+        scale: float,
+        delay: float,
+        custom_texture: str | None = None,
+        jitter_scale: float = 1.0,
+        rotate: float = 0.0,
+        vr_depth_offset: float = 0.0,
+    ) -> None:
 
         # Temp easter goodness.
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
         ltex = ba.gettexture(
-            custom_texture if custom_texture is not None else 'logo')
-        mopaque = (None if custom_texture is not None else ba.getmodel('logo'))
-        mtrans = (None if custom_texture is not None else
-                  ba.getmodel('logoTransparent'))
+            custom_texture if custom_texture is not None else 'logo'
+        )
+        mopaque = None if custom_texture is not None else ba.getmodel('logo')
+        mtrans = (
+            None
+            if custom_texture is not None
+            else ba.getmodel('logoTransparent')
+        )
         logo = ba.NodeActor(
-            ba.newnode('image',
-                       attrs={
-                           'texture': ltex,
-                           'model_opaque': mopaque,
-                           'model_transparent': mtrans,
-                           'vr_depth': -10 + vr_depth_offset,
-                           'rotate': rotate,
-                           'attach': 'center',
-                           'tilt_translate': 0.21,
-                           'absolute_scale': True
-                       }))
+            ba.newnode(
+                'image',
+                attrs={
+                    'texture': ltex,
+                    'model_opaque': mopaque,
+                    'model_transparent': mtrans,
+                    'vr_depth': -10 + vr_depth_offset,
+                    'rotate': rotate,
+                    'attach': 'center',
+                    'tilt_translate': 0.21,
+                    'absolute_scale': True,
+                },
+            )
+        )
         self._logo_node = logo.node
         self._word_actors.append(logo)
 
@@ -820,8 +954,9 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             keys = {}
             time_v = 0.0
             for _i in range(10):
-                keys[time_v * self._ts] = y + (random.random() -
-                                               0.5) * 0.7 * jitter_scale
+                keys[time_v * self._ts] = (
+                    y + (random.random() - 0.5) * 0.7 * jitter_scale
+                )
                 time_v += random.random() * 0.1
             ba.animate(cmb, 'input1', keys, loop=True)
         else:
@@ -832,7 +967,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         keys = {
             delay: 0.0,
             delay + 0.1: 700.0 * scale,
-            delay + 0.2: 600.0 * scale
+            delay + 0.2: 600.0 * scale,
         }
         ba.animate(cmb, 'input0', keys)
         ba.animate(cmb, 'input1', keys)
@@ -855,21 +990,31 @@ def _preload1() -> None:
     Helps avoid hitches later on.
     """
     for mname in [
-            'plasticEyesTransparent', 'playerLineup1Transparent',
-            'playerLineup2Transparent', 'playerLineup3Transparent',
-            'playerLineup4Transparent', 'angryComputerTransparent',
-            'scrollWidgetShort', 'windowBGBlotch'
+        'plasticEyesTransparent',
+        'playerLineup1Transparent',
+        'playerLineup2Transparent',
+        'playerLineup3Transparent',
+        'playerLineup4Transparent',
+        'angryComputerTransparent',
+        'scrollWidgetShort',
+        'windowBGBlotch',
     ]:
         ba.getmodel(mname)
     for tname in ['playerLineup', 'lock']:
         ba.gettexture(tname)
     for tex in [
-            'iconRunaround', 'iconOnslaught', 'medalComplete', 'medalBronze',
-            'medalSilver', 'medalGold', 'characterIconMask'
+        'iconRunaround',
+        'iconOnslaught',
+        'medalComplete',
+        'medalBronze',
+        'medalSilver',
+        'medalGold',
+        'characterIconMask',
     ]:
         ba.gettexture(tex)
     ba.gettexture('bg')
     from bastd.actor.powerupbox import PowerupBoxFactory
+
     PowerupBoxFactory.get()
     ba.timer(0.1, _preload2)
 
@@ -881,28 +1026,44 @@ def _preload2() -> None:
     for mname in ['powerup', 'powerupSimple']:
         ba.getmodel(mname)
     for tname in [
-            'powerupBomb', 'powerupSpeed', 'powerupPunch', 'powerupIceBombs',
-            'powerupStickyBombs', 'powerupShield', 'powerupImpactBombs',
-            'powerupHealth'
+        'powerupBomb',
+        'powerupSpeed',
+        'powerupPunch',
+        'powerupIceBombs',
+        'powerupStickyBombs',
+        'powerupShield',
+        'powerupImpactBombs',
+        'powerupHealth',
     ]:
         ba.gettexture(tname)
     for sname in [
-            'powerup01', 'boxDrop', 'boxingBell', 'scoreHit01', 'scoreHit02',
-            'dripity', 'spawn', 'gong'
+        'powerup01',
+        'boxDrop',
+        'boxingBell',
+        'scoreHit01',
+        'scoreHit02',
+        'dripity',
+        'spawn',
+        'gong',
     ]:
         ba.getsound(sname)
     from bastd.actor.bomb import BombFactory
+
     BombFactory.get()
     ba.timer(0.1, _preload3)
 
 
 def _preload3() -> None:
     from bastd.actor.spazfactory import SpazFactory
+
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         ba.getmodel(mname)
     for tname in [
-            'bombColor', 'bombColorIce', 'bombStickyColor', 'impactBombColor',
-            'impactBombColorLit'
+        'bombColor',
+        'bombColorIce',
+        'bombStickyColor',
+        'impactBombColor',
+        'impactBombColorLit',
     ]:
         ba.gettexture(tname)
     for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
@@ -919,6 +1080,7 @@ def _preload4() -> None:
     for sname in ['metalHit', 'metalSkid', 'refWhistle', 'achievement']:
         ba.getsound(sname)
     from bastd.actor.flag import FlagFactory
+
     FlagFactory.get()
 
 

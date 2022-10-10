@@ -26,6 +26,7 @@ class AssetPackageFlavor(Enum):
 
 class AssetType(Enum):
     """Types for individual assets within a package."""
+
     TEXTURE = 'texture'
     CUBE_TEXTURE = 'cube_texture'
     SOUND = 'sound'
@@ -38,8 +39,10 @@ class AssetType(Enum):
 @dataclass
 class AssetPackageFlavorManifest:
     """A manifest of asset info for a specific flavor of an asset package."""
-    cloudfiles: Annotated[dict[str, str],
-                          IOAttrs('cloudfiles')] = field(default_factory=dict)
+
+    cloudfiles: Annotated[dict[str, str], IOAttrs('cloudfiles')] = field(
+        default_factory=dict
+    )
 
 
 @ioprepped
@@ -48,8 +51,9 @@ class AssetPackageBuildState:
     """Contains info about an in-progress asset cloud build."""
 
     # Asset names still being built.
-    in_progress_builds: Annotated[list[str],
-                                  IOAttrs('b')] = field(default_factory=list)
+    in_progress_builds: Annotated[list[str], IOAttrs('b')] = field(
+        default_factory=list
+    )
 
     # The initial number of assets needing to be built.
     initial_build_count: Annotated[int, IOAttrs('c')] = 0

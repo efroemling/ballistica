@@ -29,6 +29,7 @@
       <w>adjoint</w>
       <w>adminset</w>
       <w>adreno</w>
+      <w>advb</w>
       <w>affx</w>
       <w>affy</w>
       <w>affz</w>
@@ -980,6 +981,7 @@
       <w>pathlist</w>
       <w>pathparts</w>
       <w>pathsrc</w>
+      <w>pathwonky</w>
       <w>pausable</w>
       <w>pcommands</w>
       <w>pdataclass</w>
@@ -1014,6 +1016,7 @@
       <w>powerup</w>
       <w>ppre</w>
       <w>pptabcom</w>
+      <w>prab</w>
       <w>precalc</w>
       <w>precompiling</w>
       <w>preconfig</w>
@@ -1046,6 +1049,7 @@
       <w>projprefix</w>
       <w>prolly</w>
       <w>proxykey</w>
+      <w>prtb</w>
       <w>psmx</w>
       <w>pspec</w>
       <w>psps</w>
@@ -1067,6 +1071,7 @@
       <w>pver</w>
       <w>pverraw</w>
       <w>pvrtc</w>
+      <w>pwin</w>
       <w>pybuildapple</w>
       <w>pycommand</w>
       <w>pyconfig</w>
@@ -1490,6 +1495,8 @@
       <w>wintdir</w>
       <w>wofocj</w>
       <w>wonkiness</w>
+      <w>wonkypaths</w>
+      <w>wonkysuffix</w>
       <w>woohoo</w>
       <w>workspaceid</w>
       <w>workspacename</w>
@@ -1527,6 +1534,7 @@
       <w>yoffs</w>
       <w>yooooooo</w>
       <w>ytweak</w>
+      <w>zabcdefghijklmnopqrstuvwxyz</w>
       <w>zipdata</w>
       <w>zmax</w>
       <w>zmin</w>

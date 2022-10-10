@@ -36,8 +36,9 @@ def getlocalconfig(projroot: Path) -> dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
     localconfig: dict[str, Any]
     try:
-        with open(Path(projroot, 'config/localconfig.json'),
-                  encoding='utf-8') as infile:
+        with open(
+            Path(projroot, 'config/localconfig.json'), encoding='utf-8'
+        ) as infile:
             localconfig = json.loads(infile.read())
     except FileNotFoundError:
         localconfig = {}
@@ -48,8 +49,9 @@ def getconfig(projroot: Path) -> dict[str, Any]:
     """Return a project's config contents (or default if missing)."""
     config: dict[str, Any]
     try:
-        with open(Path(projroot, 'config/config.json'),
-                  encoding='utf-8') as infile:
+        with open(
+            Path(projroot, 'config/config.json'), encoding='utf-8'
+        ) as infile:
             config = json.loads(infile.read())
     except FileNotFoundError:
         config = {}
@@ -59,8 +61,9 @@ def getconfig(projroot: Path) -> dict[str, Any]:
 def setconfig(projroot: Path, config: dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
-    with Path(projroot,
-              'config/config.json').open('w', encoding='utf-8') as outfile:
+    with Path(projroot, 'config/config.json').open(
+        'w', encoding='utf-8'
+    ) as outfile:
         outfile.write(json.dumps(config, indent=2))
 
 
@@ -104,17 +107,22 @@ def replace_exact(opstr: str, old: str, new: str, count: int = 1) -> str:
     """
     found = opstr.count(old)
     if found != count:
-        raise Exception(f'expected {count} string occurrence(s);'
-                        f' found {found}. String = {old}')
+        raise Exception(
+            f'expected {count} string occurrence(s);'
+            f' found {found}. String = {old}'
+        )
     return opstr.replace(old, new)
 
 
-def get_files_hash(filenames: Sequence[str | Path],
-                   extrahash: str = '',
-                   int_only: bool = False,
-                   hashtype: Literal['md5', 'sha256'] = 'md5') -> str:
-    """Return a md5 hash for the given files."""
+def get_files_hash(
+    filenames: Sequence[str | Path],
+    extrahash: str = '',
+    int_only: bool = False,
+    hashtype: Literal['md5', 'sha256'] = 'md5',
+) -> str:
+    """Return a hash for the given files."""
     import hashlib
+
     if not isinstance(filenames, list):
         raise Exception('expected a list')
     if TYPE_CHECKING:
@@ -137,6 +145,29 @@ def get_files_hash(filenames: Sequence[str | Path],
     return hashobj.hexdigest()
 
 
+def get_string_hash(
+    value: str,
+    int_only: bool = False,
+    hashtype: Literal['md5', 'sha256'] = 'md5',
+) -> str:
+    """Return a hash for the given files."""
+    import hashlib
+
+    if not isinstance(value, str):
+        raise TypeError('Expected a str.')
+    if TYPE_CHECKING:
+        # Help Mypy infer the right type for this.
+        hashobj = hashlib.md5()
+    else:
+        hashobj = getattr(hashlib, hashtype)()
+    hashobj.update(value.encode())
+
+    if int_only:
+        return str(int.from_bytes(hashobj.digest(), byteorder='big'))
+
+    return hashobj.hexdigest()
+
+
 def _py_symbol_at_column(line: str, col: int) -> str:
     start = col
     while start > 0 and line[start - 1] != ' ':
@@ -147,8 +178,14 @@ def _py_symbol_at_column(line: str, col: int) -> str:
     return line[start:end]
 
 
-def py_examine(projroot: Path, filename: Path, line: int, column: int,
-               selection: str | None, operation: str) -> None:
+def py_examine(
+    projroot: Path,
+    filename: Path,
+    line: int,
+    column: int,
+    selection: str | None,
+    operation: str,
+) -> None:
     """Given file position info, performs some code inspection."""
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
@@ -167,8 +204,11 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
     if operation == 'pylint_infer':
 
         # See what asteroid can infer about the target symbol.
-        symbol = (selection if selection is not None else _py_symbol_at_column(
-            flines[line - 1], column))
+        symbol = (
+            selection
+            if selection is not None
+            else _py_symbol_at_column(flines[line - 1], column)
+        )
 
         # Insert a line after the provided one which is just the symbol so
         # that we can ask for its value alone.
@@ -182,8 +222,11 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
     elif operation in ('mypy_infer', 'mypy_locals'):
 
         # Ask mypy for the type of the target symbol.
-        symbol = (selection if selection is not None else _py_symbol_at_column(
-            flines[line - 1], column))
+        symbol = (
+            selection
+            if selection is not None
+            else _py_symbol_at_column(flines[line - 1], column)
+        )
 
         # Insert a line after the provided one which is just the symbol so
         # that we can ask for its value alone.

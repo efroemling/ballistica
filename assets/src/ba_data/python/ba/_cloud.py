@@ -35,7 +35,8 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.LoginProxyRequestMessage,
         on_response: Callable[
-            [bacommon.cloud.LoginProxyRequestResponse | Exception], None],
+            [bacommon.cloud.LoginProxyRequestResponse | Exception], None
+        ],
     ) -> None:
         ...
 
@@ -44,7 +45,8 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.LoginProxyStateQueryMessage,
         on_response: Callable[
-            [bacommon.cloud.LoginProxyStateQueryResponse | Exception], None],
+            [bacommon.cloud.LoginProxyStateQueryResponse | Exception], None
+        ],
     ) -> None:
         ...
 
@@ -75,11 +77,15 @@ class CloudSubsystem:
         and passed either the response or the error that occurred.
         """
         from ba._general import Call
+
         del msg  # Unused.
 
         _ba.pushcall(
-            Call(on_response,
-                 RuntimeError('Cloud functionality is not available.')))
+            Call(
+                on_response,
+                RuntimeError('Cloud functionality is not available.'),
+            )
+        )
 
     @overload
     def send_message(
@@ -89,8 +95,8 @@ class CloudSubsystem:
 
     @overload
     def send_message(
-            self,
-            msg: bacommon.cloud.TestMessage) -> bacommon.cloud.TestResponse:
+        self, msg: bacommon.cloud.TestMessage
+    ) -> bacommon.cloud.TestResponse:
         ...
 
     def send_message(self, msg: Message) -> Response | None:
@@ -107,6 +113,7 @@ def cloud_console_exec(code: str) -> None:
     import logging
     import __main__
     from ba._generated.enums import TimeType
+
     try:
 
         # First try it as eval.
@@ -118,7 +125,8 @@ def cloud_console_exec(code: str) -> None:
             # hmm; when we can't compile it as eval will we always get
             # syntax error?
             logging.exception(
-                'unexpected error compiling code for cloud-console eval.')
+                'unexpected error compiling code for cloud-console eval.'
+            )
             evalcode = None
         if evalcode is not None:
             # pylint: disable=eval-used
@@ -135,6 +143,7 @@ def cloud_console_exec(code: str) -> None:
             exec(execcode, vars(__main__), vars(__main__))
     except Exception:
         import traceback
+
         apptime = _ba.time(TimeType.REAL)
         print(f'Exec error at time {apptime:.2f}.', file=sys.stderr)
         traceback.print_exc()

@@ -42,9 +42,12 @@ class PluginSubsystem:
         # Create a potential-plugin for each class we found in the scan.
         for class_path in results.exports_of_class(Plugin):
             plugs.potential_plugins.append(
-                PotentialPlugin(display_name=Lstr(value=class_path),
-                                class_path=class_path,
-                                available=True))
+                PotentialPlugin(
+                    display_name=Lstr(value=class_path),
+                    class_path=class_path,
+                    available=True,
+                )
+            )
             if class_path not in plugstates:
                 # Go ahead and enable new plugins by default, but we'll
                 # inform the user that they need to restart to pick them up.
@@ -59,8 +62,9 @@ class PluginSubsystem:
         # plugins, so we don't need the message about 'restart to activate'
         # anymore.
         if found_new and bool(False):
-            _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
-                              color=(0, 1, 0))
+            _ba.screenmessage(
+                Lstr(resource='pluginsDetectedText'), color=(0, 1, 0)
+            )
             _ba.playsound(_ba.getsound('ding'))
 
         if config_changed:
@@ -75,6 +79,7 @@ class PluginSubsystem:
                 plugin.on_app_running()
             except Exception:
                 from ba import _error
+
                 _error.print_exception('Error in plugin on_app_running()')
 
     def on_app_pause(self) -> None:
@@ -84,6 +89,7 @@ class PluginSubsystem:
                 plugin.on_app_pause()
             except Exception:
                 from ba import _error
+
                 _error.print_exception('Error in plugin on_app_pause()')
 
     def on_app_resume(self) -> None:
@@ -93,6 +99,7 @@ class PluginSubsystem:
                 plugin.on_app_resume()
             except Exception:
                 from ba import _error
+
                 _error.print_exception('Error in plugin on_app_resume()')
 
     def on_app_shutdown(self) -> None:
@@ -102,6 +109,7 @@ class PluginSubsystem:
                 plugin.on_app_shutdown()
             except Exception:
                 from ba import _error
+
                 _error.print_exception('Error in plugin on_app_shutdown()')
 
     def load_plugins(self) -> None:
@@ -113,8 +121,9 @@ class PluginSubsystem:
         # in the app config. Its not our job to look at meta stuff here.
         plugstates: dict[str, dict] = _ba.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
-        plugkeys: list[str] = sorted(key for key, val in plugstates.items()
-                                     if val.get('enabled', False))
+        plugkeys: list[str] = sorted(
+            key for key, val in plugstates.items() if val.get('enabled', False)
+        )
         disappeared_plugs: set[str] = set()
         for plugkey in plugkeys:
             try:
@@ -124,10 +133,13 @@ class PluginSubsystem:
                 continue
             except Exception as exc:
                 _ba.playsound(_ba.getsound('error'))
-                _ba.screenmessage(Lstr(resource='pluginClassLoadErrorText',
-                                       subs=[('${PLUGIN}', plugkey),
-                                             ('${ERROR}', str(exc))]),
-                                  color=(1, 0, 0))
+                _ba.screenmessage(
+                    Lstr(
+                        resource='pluginClassLoadErrorText',
+                        subs=[('${PLUGIN}', plugkey), ('${ERROR}', str(exc))],
+                    ),
+                    color=(1, 0, 0),
+                )
                 logging.exception("Error loading plugin class '%s'", plugkey)
                 continue
             try:
@@ -136,11 +148,15 @@ class PluginSubsystem:
                 self.active_plugins[plugkey] = plugin
             except Exception as exc:
                 from ba import _error
+
                 _ba.playsound(_ba.getsound('error'))
-                _ba.screenmessage(Lstr(resource='pluginInitErrorText',
-                                       subs=[('${PLUGIN}', plugkey),
-                                             ('${ERROR}', str(exc))]),
-                                  color=(1, 0, 0))
+                _ba.screenmessage(
+                    Lstr(
+                        resource='pluginInitErrorText',
+                        subs=[('${PLUGIN}', plugkey), ('${ERROR}', str(exc))],
+                    ),
+                    color=(1, 0, 0),
+                )
                 _error.print_exception(f"Error initing plugin: '{plugkey}'.")
 
         # If plugins disappeared, let the user know gently and remove them
@@ -150,13 +166,18 @@ class PluginSubsystem:
         if disappeared_plugs:
             _ba.playsound(_ba.getsound('shieldDown'))
             _ba.screenmessage(
-                Lstr(resource='pluginsRemovedText',
-                     subs=[('${NUM}', str(len(disappeared_plugs)))]),
+                Lstr(
+                    resource='pluginsRemovedText',
+                    subs=[('${NUM}', str(len(disappeared_plugs)))],
+                ),
                 color=(1, 1, 0),
             )
             plugnames = ', '.join(disappeared_plugs)
-            logging.warning('%d plugin(s) no longer found: %s.',
-                            len(disappeared_plugs), plugnames)
+            logging.warning(
+                '%d plugin(s) no longer found: %s.',
+                len(disappeared_plugs),
+                plugnames,
+            )
             for goneplug in disappeared_plugs:
                 del _ba.app.config['Plugins'][goneplug]
             _ba.app.config.commit()
@@ -173,6 +194,7 @@ class PotentialPlugin:
     were previously set to be loaded but which were unable to be
     for some reason. In that case, 'available' will be set to False.
     """
+
     display_name: ba.Lstr
     class_path: str
     available: bool

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 @dataclass
 class AttributeInfo:
     """Info about an attribute of a class."""
+
     name: str
     attr_type: str | None = None
     docs: str | None = None
@@ -46,8 +47,9 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
             # A line with a single alphanumeric word preceding a colon
             # is a new attr.
             splits = line.split(' ', maxsplit=1)
-            if (splits[0].replace('_', '').isalnum()
-                    and splits[-1].endswith(':')):
+            if splits[0].replace('_', '').isalnum() and splits[-1].endswith(
+                ':'
+            ):
                 if cur_attr is not None:
                     attrs.append(cur_attr)
                 cur_attr = AttributeInfo(name=splits[0])
@@ -86,10 +88,12 @@ def generate(projroot: str) -> None:
     # Make sure we're running from the dir above this script.
     os.chdir(projroot)
 
-    templatesdir = (Path(projroot) / 'assets' / 'src' / 'pdoc' /
-                    'templates').absolute()
-    pythondir = (Path(projroot) / 'assets' / 'src' / 'ba_data' /
-                 'python').absolute()
+    templatesdir = (
+        Path(projroot) / 'assets' / 'src' / 'pdoc' / 'templates'
+    ).absolute()
+    pythondir = (
+        Path(projroot) / 'assets' / 'src' / 'ba_data' / 'python'
+    ).absolute()
     outdirname = (Path(projroot) / 'build' / 'docs_html').absolute()
     sys.path.append(str(pythondir))
 
@@ -99,12 +103,13 @@ def generate(projroot: str) -> None:
         os.environ['BA_DOCS_GENERATION'] = '1'
         pdoc.render.env.globals['ba_version'] = version
         pdoc.render.env.globals['ba_build'] = build_number
-        pdoc.render.configure(search=True,
-                              show_source=True,
-                              template_directory=templatesdir)
+        pdoc.render.configure(
+            search=True, show_source=True, template_directory=templatesdir
+        )
         pdoc.pdoc('ba', 'bastd', output_directory=outdirname)
     except Exception as exc:
         import traceback
+
         traceback.print_exc()
         raise CleanError('Docs generation failed') from exc
 

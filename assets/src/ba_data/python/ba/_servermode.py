@@ -9,13 +9,18 @@ import logging
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
-                                    ShutdownCommand, ShutdownReason,
-                                    ChatMessageCommand, ScreenMessageCommand,
-                                    ClientListCommand, KickCommand)
+from bacommon.servermanager import (
+    ServerCommand,
+    StartServerModeCommand,
+    ShutdownCommand,
+    ShutdownReason,
+    ChatMessageCommand,
+    ScreenMessageCommand,
+    ClientListCommand,
+    KickCommand,
+)
 import _ba
-from ba._internal import (add_transaction, run_transactions,
-                          get_v1_account_state)
+from ba._internal import add_transaction, run_transactions, get_v1_account_state
 from ba._generated.enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
@@ -31,6 +36,7 @@ if TYPE_CHECKING:
 def _cmd(command_data: bytes) -> None:
     """Handle commands coming in from our server manager parent process."""
     import pickle
+
     command = pickle.loads(command_data)
     assert isinstance(command, ServerCommand)
 
@@ -41,8 +47,9 @@ def _cmd(command_data: bytes) -> None:
 
     if isinstance(command, ShutdownCommand):
         assert _ba.app.server is not None
-        _ba.app.server.shutdown(reason=command.reason,
-                                immediate=command.immediate)
+        _ba.app.server.shutdown(
+            reason=command.reason, immediate=command.immediate
+        )
         return
 
     if isinstance(command, ChatMessageCommand):
@@ -56,10 +63,12 @@ def _cmd(command_data: bytes) -> None:
         # Note: we have to do transient messages if
         # clients is specified, so they won't show up
         # in replays.
-        _ba.screenmessage(command.message,
-                          color=command.color,
-                          clients=command.clients,
-                          transient=command.clients is not None)
+        _ba.screenmessage(
+            command.message,
+            color=command.color,
+            clients=command.clients,
+            transient=command.clients is not None,
+        )
         return
 
     if isinstance(command, ClientListCommand):
@@ -69,12 +78,15 @@ def _cmd(command_data: bytes) -> None:
 
     if isinstance(command, KickCommand):
         assert _ba.app.server is not None
-        _ba.app.server.kick(client_id=command.client_id,
-                            ban_time=command.ban_time)
+        _ba.app.server.kick(
+            client_id=command.client_id, ban_time=command.ban_time
+        )
         return
 
-    print(f'{Clr.SRED}ERROR: server process'
-          f' got unknown command: {type(command)}{Clr.RST}')
+    print(
+        f'{Clr.SRED}ERROR: server process'
+        f' got unknown command: {type(command)}{Clr.RST}'
+    )
 
 
 class ServerController:
@@ -105,23 +117,28 @@ class ServerController:
         # account sign-in or fetching playlists; this will kick off the
         # session once done.
         with _ba.Context('ui'):
-            self._prep_timer = _ba.Timer(0.25,
-                                         self._prepare_to_serve,
-                                         timetype=TimeType.REAL,
-                                         repeat=True)
+            self._prep_timer = _ba.Timer(
+                0.25,
+                self._prepare_to_serve,
+                timetype=TimeType.REAL,
+                repeat=True,
+            )
 
     def print_client_list(self) -> None:
         """Print info about all connected clients."""
         import json
+
         roster = _ba.get_game_roster()
         title1 = 'Client ID'
         title2 = 'Account Name'
         title3 = 'Players'
         col1 = 10
         col2 = 16
-        out = (f'{Clr.BLD}'
-               f'{title1:<{col1}} {title2:<{col2}} {title3}'
-               f'{Clr.RST}')
+        out = (
+            f'{Clr.BLD}'
+            f'{title1:<{col1}} {title2:<{col2}} {title3}'
+            f'{Clr.RST}'
+        )
         for client in roster:
             if client['client_id'] == -1:
                 continue
@@ -153,9 +170,11 @@ class ServerController:
             print(f'{Clr.SBLU}Immediate shutdown initiated.{Clr.RST}')
             self._execute_shutdown()
         else:
-            print(f'{Clr.SBLU}Shutdown initiated;'
-                  f' server process will exit at the next clean opportunity.'
-                  f'{Clr.RST}')
+            print(
+                f'{Clr.SBLU}Shutdown initiated;'
+                f' server process will exit at the next clean opportunity.'
+                f'{Clr.RST}'
+            )
 
     def handle_transition(self) -> bool:
         """Handle transitioning to a new ba.Session or quitting the app.
@@ -172,37 +191,45 @@ class ServerController:
 
     def _execute_shutdown(self) -> None:
         from ba._language import Lstr
+
         if self._executing_shutdown:
             return
         self._executing_shutdown = True
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
-            _ba.screenmessage(Lstr(resource='internal.serverRestartingText'),
-                              color=(1, 0.5, 0.0))
-            print(f'{Clr.SBLU}Exiting for server-restart'
-                  f' at {timestrval}.{Clr.RST}')
+            _ba.screenmessage(
+                Lstr(resource='internal.serverRestartingText'),
+                color=(1, 0.5, 0.0),
+            )
+            print(
+                f'{Clr.SBLU}Exiting for server-restart'
+                f' at {timestrval}.{Clr.RST}'
+            )
         else:
-            _ba.screenmessage(Lstr(resource='internal.serverShuttingDownText'),
-                              color=(1, 0.5, 0.0))
-            print(f'{Clr.SBLU}Exiting for server-shutdown'
-                  f' at {timestrval}.{Clr.RST}')
+            _ba.screenmessage(
+                Lstr(resource='internal.serverShuttingDownText'),
+                color=(1, 0.5, 0.0),
+            )
+            print(
+                f'{Clr.SBLU}Exiting for server-shutdown'
+                f' at {timestrval}.{Clr.RST}'
+            )
         with _ba.Context('ui'):
             _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
 
     def _run_access_check(self) -> None:
         """Check with the master server to see if we're likely joinable."""
         from ba._net import master_server_get
+
         master_server_get(
             'bsAccessCheck',
-            {
-                'port': _ba.get_game_port(),
-                'b': _ba.app.build_number
-            },
+            {'port': _ba.get_game_port(), 'b': _ba.app.build_number},
             callback=self._access_check_response,
         )
 
     def _access_check_response(self, data: dict[str, Any] | None) -> None:
         import os
+
         if data is None:
             print('error on UDP port access check (internet down?)')
         else:
@@ -216,17 +243,22 @@ class ServerController:
                 addrstr = ''
                 poststr = (
                     '\nSet environment variable BA_ACCESS_CHECK_VERBOSE=1'
-                    ' for more info.')
+                    ' for more info.'
+                )
             if data['accessible']:
-                print(f'{Clr.SBLU}Master server access check of{addrstr}'
-                      f' udp port {port} succeeded.\n'
-                      f'Your server appears to be'
-                      f' joinable from the internet.{poststr}{Clr.RST}')
+                print(
+                    f'{Clr.SBLU}Master server access check of{addrstr}'
+                    f' udp port {port} succeeded.\n'
+                    f'Your server appears to be'
+                    f' joinable from the internet.{poststr}{Clr.RST}'
+                )
             else:
-                print(f'{Clr.SRED}Master server access check of{addrstr}'
-                      f' udp port {port} failed.\n'
-                      f'Your server does not appear to be'
-                      f' joinable from the internet.{poststr}{Clr.RST}')
+                print(
+                    f'{Clr.SRED}Master server access check of{addrstr}'
+                    f' udp port {port} failed.\n'
+                    f'Your server does not appear to be'
+                    f' joinable from the internet.{poststr}{Clr.RST}'
+                )
 
     def _prepare_to_serve(self) -> None:
         """Run in a timer to do prep before beginning to serve."""
@@ -248,15 +280,18 @@ class ServerController:
             can_launch = True
         else:
             if not self._playlist_fetch_sent_request:
-                print(f'{Clr.SBLU}Requesting shared-playlist'
-                      f' {self._config.playlist_code}...{Clr.RST}')
+                print(
+                    f'{Clr.SBLU}Requesting shared-playlist'
+                    f' {self._config.playlist_code}...{Clr.RST}'
+                )
                 add_transaction(
                     {
                         'type': 'IMPORT_PLAYLIST',
                         'code': str(self._config.playlist_code),
-                        'overwrite': True
+                        'overwrite': True,
                     },
-                    callback=self._on_playlist_fetch_response)
+                    callback=self._on_playlist_fetch_response,
+                )
                 run_transactions()
                 self._playlist_fetch_sent_request = True
 
@@ -278,13 +313,17 @@ class ServerController:
 
         # Once we get here, simply modify our config to use this playlist.
         typename = (
-            'teams' if result['playlistType'] == 'Team Tournament' else
-            'ffa' if result['playlistType'] == 'Free-for-All' else '??')
+            'teams'
+            if result['playlistType'] == 'Team Tournament'
+            else 'ffa'
+            if result['playlistType'] == 'Free-for-All'
+            else '??'
+        )
         plistname = result['playlistName']
         print(f'{Clr.SBLU}Got playlist: "{plistname}" ({typename}).{Clr.RST}')
         self._playlist_fetch_got_response = True
         self._config.session_type = typename
-        self._playlist_name = (result['playlistName'])
+        self._playlist_name = result['playlistName']
 
     def _get_session_type(self) -> type[ba.Session]:
         # Convert string session type to the class.
@@ -296,7 +335,8 @@ class ServerController:
         if self._config.session_type == 'coop':
             return CoopSession
         raise RuntimeError(
-            f'Invalid session_type: "{self._config.session_type}"')
+            f'Invalid session_type: "{self._config.session_type}"'
+        )
 
     def _launch_server_session(self) -> None:
         """Kick off a host-session based on the current server config."""
@@ -306,13 +346,17 @@ class ServerController:
         sessiontype = self._get_session_type()
 
         if get_v1_account_state() != 'signed_in':
-            print('WARNING: launch_server_session() expects to run '
-                  'with a signed in server account')
+            print(
+                'WARNING: launch_server_session() expects to run '
+                'with a signed in server account'
+            )
 
         # If we didn't fetch a playlist but there's an inline one in the
         # server-config, pull it in to the game config and use it.
-        if (self._config.playlist_code is None
-                and self._config.playlist_inline is not None):
+        if (
+            self._config.playlist_code is None
+            and self._config.playlist_inline is not None
+        ):
             self._playlist_name = 'ServerModePlaylist'
             if sessiontype is FreeForAllSession:
                 ptypename = 'Free-for-All'
@@ -325,12 +369,14 @@ class ServerController:
 
             # Need to add this in a transaction instead of just setting
             # it directly or it will get overwritten by the master-server.
-            add_transaction({
-                'type': 'ADD_PLAYLIST',
-                'playlistType': ptypename,
-                'playlistName': self._playlist_name,
-                'playlist': self._config.playlist_inline
-            })
+            add_transaction(
+                {
+                    'type': 'ADD_PLAYLIST',
+                    'playlistType': ptypename,
+                    'playlistName': self._playlist_name,
+                    'playlist': self._config.playlist_inline,
+                }
+            )
             run_transactions()
 
         if self._first_run:
@@ -338,17 +384,20 @@ class ServerController:
             startupmsg = (
                 f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
                 f' ({app.build_number})'
-                f' entering server-mode {curtimestr}{Clr.RST}')
+                f' entering server-mode {curtimestr}{Clr.RST}'
+            )
             logging.info(startupmsg)
 
         if sessiontype is FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
-            appcfg['Free-for-All Playlist Randomize'] = (
-                self._config.playlist_shuffle)
+            appcfg[
+                'Free-for-All Playlist Randomize'
+            ] = self._config.playlist_shuffle
         elif sessiontype is DualTeamSession:
             appcfg['Team Tournament Playlist Selection'] = self._playlist_name
-            appcfg['Team Tournament Playlist Randomize'] = (
-                self._config.playlist_shuffle)
+            appcfg[
+                'Team Tournament Playlist Randomize'
+            ] = self._config.playlist_shuffle
         elif sessiontype is CoopSession:
             app.coop_session_args = {
                 'campaign': self._config.coop_campaign,
@@ -363,7 +412,8 @@ class ServerController:
         _ba.set_authenticate_clients(self._config.authenticate_clients)
 
         _ba.set_enable_default_kick_voting(
-            self._config.enable_default_kick_voting)
+            self._config.enable_default_kick_voting
+        )
         _ba.set_admins(self._config.admins)
 
         # Call set-enabled last (will push state to the cloud).
@@ -376,10 +426,13 @@ class ServerController:
         if self._config.stress_test_players is not None:
             # Special case: run a stress test.
             from ba.internal import run_stress_test
-            run_stress_test(playlist_type='Random',
-                            playlist_name='__default__',
-                            player_count=self._config.stress_test_players,
-                            round_duration=30)
+
+            run_stress_test(
+                playlist_type='Random',
+                playlist_name='__default__',
+                player_count=self._config.stress_test_players,
+                round_duration=30,
+            )
         else:
             _ba.new_host_session(sessiontype)
 

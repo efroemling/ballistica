@@ -32,12 +32,13 @@ def _safesetattr(node: ba.Node | None, attr: str, value: Any) -> None:
 
 
 class ButtonPress:
-
-    def __init__(self,
-                 button: str,
-                 delay: int = 0,
-                 release: bool = True,
-                 release_delay: int = 0):
+    def __init__(
+        self,
+        button: str,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 0,
+    ):
         self._button = button
         self._delay = delay
         self._release = release
@@ -94,29 +95,37 @@ class ButtonPress:
         else:
             ba.timer(self._delay, call, timeformat=ba.TimeFormat.MILLISECONDS)
             if img is not None:
-                ba.timer(self._delay,
-                         ba.Call(_safesetattr, img, 'color', c_bright),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
-                ba.timer(self._delay,
-                         ba.Call(_safesetattr, img, 'vr_depth', -30),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
+                ba.timer(
+                    self._delay,
+                    ba.Call(_safesetattr, img, 'color', c_bright),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
+                ba.timer(
+                    self._delay,
+                    ba.Call(_safesetattr, img, 'vr_depth', -30),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
         if self._release:
             if self._delay == 0 and self._release_delay == 0:
                 release_call()
             else:
-                ba.timer(0.001 * (self._delay + self._release_delay),
-                         release_call)
+                ba.timer(
+                    0.001 * (self._delay + self._release_delay), release_call
+                )
             if img is not None:
-                ba.timer(self._delay + self._release_delay + 100,
-                         ba.Call(_safesetattr, img, 'color', color),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
-                ba.timer(self._delay + self._release_delay + 100,
-                         ba.Call(_safesetattr, img, 'vr_depth', -20),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
+                ba.timer(
+                    self._delay + self._release_delay + 100,
+                    ba.Call(_safesetattr, img, 'color', color),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
+                ba.timer(
+                    self._delay + self._release_delay + 100,
+                    ba.Call(_safesetattr, img, 'vr_depth', -20),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
 
 
 class ButtonRelease:
-
     def __init__(self, button: str, delay: int = 0):
         self._button = button
         self._delay = delay
@@ -154,12 +163,16 @@ class ButtonRelease:
         else:
             ba.timer(self._delay, call, timeformat=ba.TimeFormat.MILLISECONDS)
         if img is not None:
-            ba.timer(self._delay + 100,
-                     ba.Call(_safesetattr, img, 'color', color),
-                     timeformat=ba.TimeFormat.MILLISECONDS)
-            ba.timer(self._delay + 100,
-                     ba.Call(_safesetattr, img, 'vr_depth', -20),
-                     timeformat=ba.TimeFormat.MILLISECONDS)
+            ba.timer(
+                self._delay + 100,
+                ba.Call(_safesetattr, img, 'color', color),
+                timeformat=ba.TimeFormat.MILLISECONDS,
+            )
+            ba.timer(
+                self._delay + 100,
+                ba.Call(_safesetattr, img, 'vr_depth', -20),
+                timeformat=ba.TimeFormat.MILLISECONDS,
+            )
 
 
 class Player(ba.Player['Team']):
@@ -177,9 +190,9 @@ class Team(ba.Team[Player]):
 
 
 class TutorialActivity(ba.Activity[Player, Team]):
-
     def __init__(self, settings: dict | None = None):
         from bastd.maps import Rampage
+
         if settings is None:
             settings = {}
         super().__init__(settings)
@@ -247,46 +260,53 @@ class TutorialActivity(ba.Activity[Player, Team]):
             buttons_y = 160
 
         # Need different versions of this: taps/buttons/keys.
-        self.text = ba.newnode('text',
-                               attrs={
-                                   'text': '',
-                                   'scale': 1.9,
-                                   'position': (0, text_y),
-                                   'maxwidth': 500,
-                                   'flatness': 0.0,
-                                   'shadow': 0.5,
-                                   'h_align': 'center',
-                                   'v_align': 'center',
-                                   'v_attach': 'center'
-                               })
+        self.text = ba.newnode(
+            'text',
+            attrs={
+                'text': '',
+                'scale': 1.9,
+                'position': (0, text_y),
+                'maxwidth': 500,
+                'flatness': 0.0,
+                'shadow': 0.5,
+                'h_align': 'center',
+                'v_align': 'center',
+                'v_attach': 'center',
+            },
+        )
 
         # Need different versions of this: taps/buttons/keys.
-        txt = ba.Lstr(
-            resource=self._r +
-            '.cpuBenchmarkText') if self._benchmark_type == 'cpu' else ba.Lstr(
-                resource=self._r + '.toSkipPressAnythingText')
-        t = self._skip_text = ba.newnode('text',
-                                         attrs={
-                                             'text': txt,
-                                             'maxwidth': 900,
-                                             'scale': 1.1,
-                                             'vr_depth': 100,
-                                             'position': (0, 30),
-                                             'h_align': 'center',
-                                             'v_align': 'center',
-                                             'v_attach': 'bottom'
-                                         })
+        txt = (
+            ba.Lstr(resource=self._r + '.cpuBenchmarkText')
+            if self._benchmark_type == 'cpu'
+            else ba.Lstr(resource=self._r + '.toSkipPressAnythingText')
+        )
+        t = self._skip_text = ba.newnode(
+            'text',
+            attrs={
+                'text': txt,
+                'maxwidth': 900,
+                'scale': 1.1,
+                'vr_depth': 100,
+                'position': (0, 30),
+                'h_align': 'center',
+                'v_align': 'center',
+                'v_attach': 'bottom',
+            },
+        )
         ba.animate(t, 'opacity', {1.0: 0.0, 2.0: 0.7})
-        self._skip_count_text = ba.newnode('text',
-                                           attrs={
-                                               'text': '',
-                                               'scale': 1.4,
-                                               'vr_depth': 90,
-                                               'position': (0, 70),
-                                               'h_align': 'center',
-                                               'v_align': 'center',
-                                               'v_attach': 'bottom'
-                                           })
+        self._skip_count_text = ba.newnode(
+            'text',
+            attrs={
+                'text': '',
+                'scale': 1.4,
+                'vr_depth': 90,
+                'position': (0, 70),
+                'h_align': 'center',
+                'v_align': 'center',
+                'v_attach': 'bottom',
+            },
+        )
 
         ouya = False
 
@@ -303,18 +323,21 @@ class TutorialActivity(ba.Activity[Player, Team]):
             return 0.6 * r, 0.6 * g, 0.6 * b
 
         self.jump_image_color = c = _sc(0.4, 1, 0.4)
-        self.jump_image = ba.newnode('image',
-                                     attrs={
-                                         'texture': self._jump_button_tex,
-                                         'absolute_scale': True,
-                                         'vr_depth': -20,
-                                         'position': p,
-                                         'scale': (image_size, image_size),
-                                         'color': c
-                                     })
+        self.jump_image = ba.newnode(
+            'image',
+            attrs={
+                'texture': self._jump_button_tex,
+                'absolute_scale': True,
+                'vr_depth': -20,
+                'position': p,
+                'scale': (image_size, image_size),
+                'color': c,
+            },
+        )
         p = (position[0] + center_offs - offs, position[1])
-        self.punch_image_color = c = _sc(0.2, 0.6, 1) if ouya else _sc(
-            1, 0.7, 0.3)
+        self.punch_image_color = c = (
+            _sc(0.2, 0.6, 1) if ouya else _sc(1, 0.7, 0.3)
+        )
         self.punch_image = ba.newnode(
             'image',
             attrs={
@@ -323,8 +346,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 'vr_depth': -20,
                 'position': p,
                 'scale': (image_size, image_size),
-                'color': c
-            })
+                'color': c,
+            },
+        )
         p = (position[0] + center_offs + offs, position[1])
         self.bomb_image_color = c = _sc(1, 0.3, 0.3)
         self.bomb_image = ba.newnode(
@@ -335,11 +359,13 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 'vr_depth': -20,
                 'position': p,
                 'scale': (image_size, image_size),
-                'color': c
-            })
+                'color': c,
+            },
+        )
         p = (position[0] + center_offs, position[1] + offs)
-        self.pickup_image_color = c = _sc(1, 0.8, 0.3) if ouya else _sc(
-            0.5, 0.5, 1)
+        self.pickup_image_color = c = (
+            _sc(1, 0.8, 0.3) if ouya else _sc(0.5, 0.5, 1)
+        )
         self.pickup_image = ba.newnode(
             'image',
             attrs={
@@ -348,11 +374,11 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 'vr_depth': -20,
                 'position': p,
                 'scale': (image_size, image_size),
-                'color': c
-            })
+                'color': c,
+            },
+        )
 
-        self._stick_base_position = p = (position[0] - center_offs,
-                                         position[1])
+        self._stick_base_position = p = (position[0] - center_offs, position[1])
         self._stick_base_image_color = c2 = (0.25, 0.25, 0.25, 1.0)
         self._stick_base_image = ba.newnode(
             'image',
@@ -362,21 +388,28 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 'vr_depth': -40,
                 'position': p,
                 'scale': (image_size_2, image_size_2),
-                'color': c2
-            })
+                'color': c2,
+            },
+        )
         self._stick_nub_position = p = (position[0] - center_offs, position[1])
         self._stick_nub_image_color = c3 = (0.4, 0.4, 0.4, 1.0)
-        self._stick_nub_image = ba.newnode('image',
-                                           attrs={
-                                               'texture': ba.gettexture('nub'),
-                                               'absolute_scale': True,
-                                               'position': p,
-                                               'scale': (nub_size, nub_size),
-                                               'color': c3
-                                           })
+        self._stick_nub_image = ba.newnode(
+            'image',
+            attrs={
+                'texture': ba.gettexture('nub'),
+                'absolute_scale': True,
+                'position': p,
+                'scale': (nub_size, nub_size),
+                'color': c3,
+            },
+        )
         self.control_ui_nodes = [
-            self.jump_image, self.punch_image, self.bomb_image,
-            self.pickup_image, self._stick_base_image, self._stick_nub_image
+            self.jump_image,
+            self.punch_image,
+            self.bomb_image,
+            self.pickup_image,
+            self._stick_base_image,
+            self._stick_nub_image,
         ]
         for n in self.control_ui_nodes:
             n.opacity = 0.0
@@ -398,7 +431,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         assert self._scale is not None
         p = [
             self._stick_nub_position[0] + x * offs * self._scale,
-            self._stick_nub_position[1] + y * offs * self._scale
+            self._stick_nub_position[1] + y * offs * self._scale,
         ]
         c = list(self._stick_nub_image_color)
         if abs(x) > 0.1 or abs(y) > 0.1:
@@ -420,7 +453,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
         try:
 
             class Reset:
-
                 def __init__(self) -> None:
                     pass
 
@@ -429,17 +461,23 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     # if we're looping, print out how long each cycle took
                     # print out how long each cycle took..
                     if a.last_start_time is not None:
-                        tval = ba.time(
-                            ba.TimeType.REAL,
-                            ba.TimeFormat.MILLISECONDS) - a.last_start_time
+                        tval = (
+                            ba.time(
+                                ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS
+                            )
+                            - a.last_start_time
+                        )
                         assert isinstance(tval, int)
                         diff = tval
                         a.cycle_times.append(diff)
                         ba.screenmessage(
-                            'cycle time: ' + str(diff) + ' (average: ' +
-                            str(sum(a.cycle_times) / len(a.cycle_times)) + ')')
-                    tval = ba.time(ba.TimeType.REAL,
-                                   ba.TimeFormat.MILLISECONDS)
+                            'cycle time: '
+                            + str(diff)
+                            + ' (average: '
+                            + str(sum(a.cycle_times) / len(a.cycle_times))
+                            + ')'
+                        )
+                    tval = ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
                     assert isinstance(tval, int)
                     a.last_start_time = tval
 
@@ -455,7 +493,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
             # Can be used for debugging.
             class SetSpeed:
-
                 def __init__(self, speed: int):
                     self._speed = speed
 
@@ -464,7 +501,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     ba.internal.set_debug_speed_exponent(self._speed)
 
             class RemoveGloves:
-
                 def __init__(self) -> None:
                     pass
 
@@ -475,7 +511,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     a.current_spaz._gloves_wear_off()
 
             class KillSpaz:
-
                 def __init__(self, num: int, explode: bool = False):
                     self._num = num
                     self._explode = explode
@@ -486,16 +521,17 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     del a.spazzes[self._num]
 
             class SpawnSpaz:
-
-                def __init__(self,
-                             num: int,
-                             position: Sequence[float],
-                             color: Sequence[float] = (1.0, 1.0, 1.0),
-                             make_current: bool = False,
-                             relative_to: int | None = None,
-                             name: str | ba.Lstr = '',
-                             flash: bool = True,
-                             angle: float = 0.0):
+                def __init__(
+                    self,
+                    num: int,
+                    position: Sequence[float],
+                    color: Sequence[float] = (1.0, 1.0, 1.0),
+                    make_current: bool = False,
+                    relative_to: int | None = None,
+                    name: str | ba.Lstr = '',
+                    flash: bool = True,
+                    angle: float = 0.0,
+                ):
                     self._num = num
                     self._position = position
                     self._make_current = make_current
@@ -514,21 +550,25 @@ class TutorialActivity(ba.Activity[Player, Team]):
                         snode = a.spazzes[self._relative_to].node
                         assert snode
                         their_pos = snode.position
-                        pos = (their_pos[0] + self._position[0],
-                               their_pos[1] + self._position[1],
-                               their_pos[2] + self._position[2])
+                        pos = (
+                            their_pos[0] + self._position[0],
+                            their_pos[1] + self._position[1],
+                            their_pos[2] + self._position[2],
+                        )
                     else:
                         pos = self._position
 
                     # if there's already a spaz at this spot, insta-kill it
                     if self._num in a.spazzes:
                         a.spazzes[self._num].handlemessage(
-                            ba.DieMessage(immediate=True))
+                            ba.DieMessage(immediate=True)
+                        )
 
                     s = a.spazzes[self._num] = basespaz.Spaz(
                         color=self._color,
                         start_invincible=self._flash,
-                        demo_mode=True)
+                        demo_mode=True,
+                    )
 
                     # FIXME: Should extend spaz to support Lstr names.
                     assert s.node
@@ -544,13 +584,14 @@ class TutorialActivity(ba.Activity[Player, Team]):
                         ba.playsound(a.spawn_sound, position=pos)
 
             class Powerup:
-
-                def __init__(self,
-                             num: int,
-                             position: Sequence[float],
-                             color: Sequence[float] = (1.0, 1.0, 1.0),
-                             make_current: bool = False,
-                             relative_to: int | None = None):
+                def __init__(
+                    self,
+                    num: int,
+                    position: Sequence[float],
+                    color: Sequence[float] = (1.0, 1.0, 1.0),
+                    make_current: bool = False,
+                    relative_to: int | None = None,
+                ):
                     self._position = position
                     self._relative_to = relative_to
 
@@ -562,17 +603,20 @@ class TutorialActivity(ba.Activity[Player, Team]):
                         snode = a.spazzes[self._relative_to].node
                         assert snode
                         their_pos = snode.position
-                        pos = (their_pos[0] + self._position[0],
-                               their_pos[1] + self._position[1],
-                               their_pos[2] + self._position[2])
+                        pos = (
+                            their_pos[0] + self._position[0],
+                            their_pos[1] + self._position[1],
+                            their_pos[2] + self._position[2],
+                        )
                     else:
                         pos = self._position
                     from bastd.actor import powerupbox
-                    powerupbox.PowerupBox(position=pos,
-                                          poweruptype='punch').autoretain()
+
+                    powerupbox.PowerupBox(
+                        position=pos, poweruptype='punch'
+                    ).autoretain()
 
             class Delay:
-
                 def __init__(self, time: int) -> None:
                     self._time = time
 
@@ -580,7 +624,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     return self._time
 
             class AnalyticsScreen:
-
                 def __init__(self, screen: str) -> None:
                     self._screen = screen
 
@@ -588,7 +631,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     ba.set_analytics_screen(self._screen)
 
             class DelayOld:
-
                 def __init__(self, time: int) -> None:
                     self._time = time
 
@@ -596,7 +638,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     return int(0.9 * self._time)
 
             class DelayOld2:
-
                 def __init__(self, time: int) -> None:
                     self._time = time
 
@@ -604,7 +645,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     return int(0.8 * self._time)
 
             class End:
-
                 def __init__(self) -> None:
                     pass
 
@@ -613,7 +653,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     a.end()
 
             class Move:
-
                 def __init__(self, x: float, y: float):
                     self._x = float(x)
                     self._y = float(y)
@@ -629,7 +668,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     a.set_stick_image_position(self._x, self._y)
 
             class MoveLR:
-
                 def __init__(self, x: float):
                     self._x = float(x)
 
@@ -639,11 +677,11 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     # FIXME: Game should take floats for this.
                     x_clamped = self._x
                     s.on_move_left_right(x_clamped)
-                    a.set_stick_image_position(self._x,
-                                               a.stick_image_position_y)
+                    a.set_stick_image_position(
+                        self._x, a.stick_image_position_y
+                    )
 
             class MoveUD:
-
                 def __init__(self, y: float):
                     self._y = float(y)
 
@@ -653,96 +691,106 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     # FIXME: Game should take floats for this.
                     y_clamped = self._y
                     s.on_move_up_down(y_clamped)
-                    a.set_stick_image_position(a.stick_image_position_x,
-                                               self._y)
+                    a.set_stick_image_position(
+                        a.stick_image_position_x, self._y
+                    )
 
             class Bomb(ButtonPress):
-
-                def __init__(self,
-                             delay: int = 0,
-                             release: bool = True,
-                             release_delay: int = 500):
-                    ButtonPress.__init__(self,
-                                         'bomb',
-                                         delay=delay,
-                                         release=release,
-                                         release_delay=release_delay)
+                def __init__(
+                    self,
+                    delay: int = 0,
+                    release: bool = True,
+                    release_delay: int = 500,
+                ):
+                    ButtonPress.__init__(
+                        self,
+                        'bomb',
+                        delay=delay,
+                        release=release,
+                        release_delay=release_delay,
+                    )
 
             class Jump(ButtonPress):
-
-                def __init__(self,
-                             delay: int = 0,
-                             release: bool = True,
-                             release_delay: int = 500):
-                    ButtonPress.__init__(self,
-                                         'jump',
-                                         delay=delay,
-                                         release=release,
-                                         release_delay=release_delay)
+                def __init__(
+                    self,
+                    delay: int = 0,
+                    release: bool = True,
+                    release_delay: int = 500,
+                ):
+                    ButtonPress.__init__(
+                        self,
+                        'jump',
+                        delay=delay,
+                        release=release,
+                        release_delay=release_delay,
+                    )
 
             class Punch(ButtonPress):
-
-                def __init__(self,
-                             delay: int = 0,
-                             release: bool = True,
-                             release_delay: int = 500):
-                    ButtonPress.__init__(self,
-                                         'punch',
-                                         delay=delay,
-                                         release=release,
-                                         release_delay=release_delay)
+                def __init__(
+                    self,
+                    delay: int = 0,
+                    release: bool = True,
+                    release_delay: int = 500,
+                ):
+                    ButtonPress.__init__(
+                        self,
+                        'punch',
+                        delay=delay,
+                        release=release,
+                        release_delay=release_delay,
+                    )
 
             class PickUp(ButtonPress):
-
-                def __init__(self,
-                             delay: int = 0,
-                             release: bool = True,
-                             release_delay: int = 500):
-                    ButtonPress.__init__(self,
-                                         'pickUp',
-                                         delay=delay,
-                                         release=release,
-                                         release_delay=release_delay)
+                def __init__(
+                    self,
+                    delay: int = 0,
+                    release: bool = True,
+                    release_delay: int = 500,
+                ):
+                    ButtonPress.__init__(
+                        self,
+                        'pickUp',
+                        delay=delay,
+                        release=release,
+                        release_delay=release_delay,
+                    )
 
             class Run(ButtonPress):
-
-                def __init__(self,
-                             delay: int = 0,
-                             release: bool = True,
-                             release_delay: int = 500):
-                    ButtonPress.__init__(self,
-                                         'run',
-                                         delay=delay,
-                                         release=release,
-                                         release_delay=release_delay)
+                def __init__(
+                    self,
+                    delay: int = 0,
+                    release: bool = True,
+                    release_delay: int = 500,
+                ):
+                    ButtonPress.__init__(
+                        self,
+                        'run',
+                        delay=delay,
+                        release=release,
+                        release_delay=release_delay,
+                    )
 
             class BombRelease(ButtonRelease):
-
                 def __init__(self, delay: int = 0):
                     super().__init__('bomb', delay=delay)
 
             class JumpRelease(ButtonRelease):
-
                 def __init__(self, delay: int = 0):
                     super().__init__('jump', delay=delay)
 
             class PunchRelease(ButtonRelease):
-
                 def __init__(self, delay: int = 0):
                     super().__init__('punch', delay=delay)
 
             class PickUpRelease(ButtonRelease):
-
                 def __init__(self, delay: int = 0):
                     super().__init__('pickUp', delay=delay)
 
             class RunRelease(ButtonRelease):
-
                 def __init__(self, delay: int = 0):
                     super().__init__('run', delay=delay)
 
             class ShowControls:
-
                 def __init__(self) -> None:
                     pass
 
@@ -751,7 +799,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                         ba.animate(n, 'opacity', {0.0: 0.0, 1.0: 1.0})
 
             class Text:
-
                 def __init__(self, text: str | ba.Lstr):
                     self.text = text
 
@@ -760,7 +807,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     a.text.text = self.text
 
             class PrintPos:
-
                 def __init__(self, spaz_num: int | None = None):
                     self._spaz_num = spaz_num
 
@@ -774,7 +820,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     print('RestorePos(' + str((t[0], t[1] - 1.0, t[2])) + '),')
 
             class RestorePos:
-
                 def __init__(self, pos: Sequence[float]) -> None:
                     self._pos = pos
 
@@ -784,11 +829,12 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     s.handlemessage(ba.StandMessage(self._pos, 0))
 
             class Celebrate:
-
-                def __init__(self,
-                             celebrate_type: str = 'both',
-                             spaz_num: int | None = None,
-                             duration: int = 1000):
+                def __init__(
+                    self,
+                    celebrate_type: str = 'both',
+                    spaz_num: int | None = None,
+                    duration: int = 1000,
+                ):
                     self._spaz_num = spaz_num
                     self._celebrate_type = celebrate_type
                     self._duration = duration
@@ -806,8 +852,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     elif self._celebrate_type == 'both':
                         s.node.handlemessage('celebrate', self._duration)
                     else:
-                        raise Exception('invalid celebrate type ' +
-                                        self._celebrate_type)
+                        raise Exception(
+                            'invalid celebrate type ' + self._celebrate_type
+                        )
 
             self._entries = [
                 Reset(),
@@ -818,10 +865,11 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 Celebrate('left'),
                 DelayOld(2000),
                 Text(
-                    ba.Lstr(resource=self._r + '.phrase02Text',
-                            subs=[
-                                ('${APP_NAME}', ba.Lstr(resource='titleText'))
-                            ])),  # welcome to <appname>
+                    ba.Lstr(
+                        resource=self._r + '.phrase02Text',
+                        subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
+                    )
+                ),  # welcome to <appname>
                 DelayOld(80),
                 Run(release=False),
                 Jump(release=False),
@@ -845,8 +893,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(80),
                 MoveUD(0),
                 DelayOld(1500),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase03Text')),  # here's a few tips
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase03Text')
+                ),  # here's a few tips
                 DelayOld(1000),
                 ShowControls(),
                 DelayOld(1000),
@@ -856,10 +905,11 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(1000),
                 AnalyticsScreen('Tutorial Section 2'),
                 Text(
-                    ba.Lstr(resource=self._r + '.phrase04Text',
-                            subs=[
-                                ('${APP_NAME}', ba.Lstr(resource='titleText'))
-                            ])),  # many things are based on physics
+                    ba.Lstr(
+                        resource=self._r + '.phrase04Text',
+                        subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
+                    )
+                ),  # many things are based on physics
                 DelayOld(20),
                 MoveUD(0),
                 DelayOld(60),
@@ -1214,28 +1264,36 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(100),
                 Move(0, 0),
                 DelayOld(1000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase05Text')),  # for example when you punch..
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase05Text')
+                ),  # for example when you punch..
                 DelayOld(510),
                 Move(0, -0.01),
                 DelayOld(100),
                 Move(0, 0),
                 DelayOld(500),
-                SpawnSpaz(0, (-0.09249162673950195, 4.337906360626221, -2.3),
-                          make_current=True,
-                          flash=False),
-                SpawnSpaz(1, (-3.1, 4.3, -2.0),
-                          make_current=False,
-                          color=(1, 1, 0.4),
-                          name=ba.Lstr(resource=self._r + '.randomName1Text')),
+                SpawnSpaz(
+                    0,
+                    (-0.09249162673950195, 4.337906360626221, -2.3),
+                    make_current=True,
+                    flash=False,
+                ),
+                SpawnSpaz(
+                    1,
+                    (-3.1, 4.3, -2.0),
+                    make_current=False,
+                    color=(1, 1, 0.4),
+                    name=ba.Lstr(resource=self._r + '.randomName1Text'),
+                ),
                 Move(-1.0, 0),
                 DelayOld(1050),
                 Move(0, -0.01),
                 DelayOld(100),
                 Move(0, 0),
                 DelayOld(1000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase06Text')),  # your damage is based
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase06Text')
+                ),  # your damage is based
                 DelayOld(1200),
                 Move(-0.05, 0),
                 DelayOld(200),
@@ -1249,17 +1307,22 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(100),
                 Move(0, 0),
                 Text(
-                    ba.Lstr(resource=self._r + '.phrase07Text',
-                            subs=[('${NAME}',
-                                   ba.Lstr(resource=self._r +
-                                           '.randomName1Text'))
-                                  ])),  # see that didn't hurt fred
+                    ba.Lstr(
+                        resource=self._r + '.phrase07Text',
+                        subs=[
+                            (
+                                '${NAME}',
+                                ba.Lstr(resource=self._r + '.randomName1Text'),
+                            )
+                        ],
+                    )
+                ),  # see that didn't hurt fred
                 DelayOld(2000),
                 Celebrate('right', spaz_num=1),
                 DelayOld(1400),
-                Text(ba.Lstr(
-                    resource=self._r +
-                    '.phrase08Text')),  # lets jump and spin to get more speed
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase08Text')
+                ),  # lets jump and spin to get more speed
                 DelayOld(30),
                 MoveLR(0),
                 DelayOld(40),
@@ -1458,22 +1521,27 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 MoveLR(0.00390637),
                 Move(0, 0),
                 DelayOld(1000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase09Text')),  # ah that's better
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase09Text')
+                ),  # ah that's better
                 DelayOld(1900),
                 AnalyticsScreen('Tutorial Section 3'),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase10Text')),  # running also helps
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase10Text')
+                ),  # running also helps
                 DelayOld(100),
-                SpawnSpaz(0, (-3.2, 4.3, -4.4), make_current=True,
-                          flash=False),
-                SpawnSpaz(1, (3.3, 4.2, -5.8),
-                          make_current=False,
-                          color=(0.9, 0.5, 1.0),
-                          name=ba.Lstr(resource=self._r + '.randomName2Text')),
+                SpawnSpaz(0, (-3.2, 4.3, -4.4), make_current=True, flash=False),
+                SpawnSpaz(
+                    1,
+                    (3.3, 4.2, -5.8),
+                    make_current=False,
+                    color=(0.9, 0.5, 1.0),
+                    name=ba.Lstr(resource=self._r + '.randomName2Text'),
+                ),
                 DelayOld(1800),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase11Text')),  # hold ANY button to run
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase11Text')
+                ),  # hold ANY button to run
                 DelayOld(300),
                 MoveUD(0),
                 DelayOld(20),
@@ -1729,21 +1797,23 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 MoveUD(0),
                 AnalyticsScreen('Tutorial Section 4'),
                 Text(
-                    ba.Lstr(resource=self._r +
-                            '.phrase12Text')),  # for extra-awesome punches,...
+                    ba.Lstr(resource=self._r + '.phrase12Text')
+                ),  # for extra-awesome punches,...
                 DelayOld(200),
                 SpawnSpaz(
                     0,
                     (2.368781805038452, 4.337533950805664, -4.360159873962402),
                     make_current=True,
-                    flash=False),
+                    flash=False,
+                ),
                 SpawnSpaz(
                     1,
                     (-3.2, 4.3, -4.5),
                     make_current=False,
                     color=(1.0, 0.7, 0.3),
                     # name=R.randomName3Text),
-                    name=ba.Lstr(resource=self._r + '.randomName3Text')),
+                    name=ba.Lstr(resource=self._r + '.randomName3Text'),
+                ),
                 DelayOld(100),
                 Powerup(1, (2.5, 0.0, 0), relative_to=0),
                 Move(1, 0),
@@ -1940,29 +2010,45 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(750),
                 MoveLR(0),
                 Text(
-                    ba.Lstr(resource=self._r + '.phrase13Text',
-                            subs=[('${NAME}',
-                                   ba.Lstr(resource=self._r +
-                                           '.randomName3Text'))
-                                  ])),  # whoops sorry bill
+                    ba.Lstr(
+                        resource=self._r + '.phrase13Text',
+                        subs=[
+                            (
+                                '${NAME}',
+                                ba.Lstr(resource=self._r + '.randomName3Text'),
+                            )
+                        ],
+                    )
+                ),  # whoops sorry bill
                 RemoveGloves(),
                 DelayOld(2000),
                 AnalyticsScreen('Tutorial Section 5'),
                 Text(
-                    ba.Lstr(resource=self._r + '.phrase14Text',
-                            subs=[('${NAME}',
-                                   ba.Lstr(resource=self._r +
-                                           '.randomName4Text'))])
+                    ba.Lstr(
+                        resource=self._r + '.phrase14Text',
+                        subs=[
+                            (
+                                '${NAME}',
+                                ba.Lstr(resource=self._r + '.randomName4Text'),
+                            )
+                        ],
+                    )
                 ),  # you can pick up and throw things such as chuck here
-                SpawnSpaz(0, (-4.0, 4.3, -2.5),
-                          make_current=True,
-                          flash=False,
-                          angle=90),
-                SpawnSpaz(1, (5, 0, -1.0),
-                          relative_to=0,
-                          make_current=False,
-                          color=(0.4, 1.0, 0.7),
-                          name=ba.Lstr(resource=self._r + '.randomName4Text')),
+                SpawnSpaz(
+                    0,
+                    (-4.0, 4.3, -2.5),
+                    make_current=True,
+                    flash=False,
+                    angle=90,
+                ),
+                SpawnSpaz(
+                    1,
+                    (5, 0, -1.0),
+                    relative_to=0,
+                    make_current=False,
+                    color=(0.4, 1.0, 0.7),
+                    name=ba.Lstr(resource=self._r + '.randomName4Text'),
+                ),
                 DelayOld(1000),
                 Celebrate('left', 1, duration=1000),
                 Move(1, 0.2),
@@ -1980,17 +2066,17 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(800),
                 Move(0, 0),
                 DelayOld(800),
-                SpawnSpaz(0, (1.5, 4.3, -4.0),
-                          make_current=True,
-                          flash=False,
-                          angle=0),
+                SpawnSpaz(
+                    0, (1.5, 4.3, -4.0), make_current=True, flash=False, angle=0
+                ),
                 AnalyticsScreen('Tutorial Section 6'),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase15Text')),  # lastly there's bombs
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase15Text')
+                ),  # lastly there's bombs
                 DelayOld(1900),
                 Text(
-                    ba.Lstr(resource=self._r +
-                            '.phrase16Text')),  # throwing bombs takes practice
+                    ba.Lstr(resource=self._r + '.phrase16Text')
+                ),  # throwing bombs takes practice
                 DelayOld(2000),
                 Bomb(),
                 Move(-0.1, -0.1),
@@ -2000,12 +2086,13 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(1000),
                 Bomb(),
                 DelayOld(2000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase17Text')),  # not a very good throw
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase17Text')
+                ),  # not a very good throw
                 DelayOld(3000),
                 Text(
-                    ba.Lstr(resource=self._r +
-                            '.phrase18Text')),  # moving helps you get distance
+                    ba.Lstr(resource=self._r + '.phrase18Text')
+                ),  # moving helps you get distance
                 DelayOld(1000),
                 Bomb(),
                 DelayOld(500),
@@ -2021,8 +2108,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(100),
                 Move(0, 0),
                 DelayOld(2500),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase19Text')),  # jumping helps you get height
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase19Text')
+                ),  # jumping helps you get height
                 DelayOld(2000),
                 Bomb(),
                 DelayOld(500),
@@ -2040,8 +2128,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 DelayOld(100),
                 Move(0, 0),
                 DelayOld(2000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase20Text')),  # whiplash your bombs
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase20Text')
+                ),  # whiplash your bombs
                 DelayOld(1000),
                 Bomb(release=False),
                 DelayOld2(80),
@@ -2201,23 +2290,29 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 Move(0, 0),
                 DelayOld(2000),
                 AnalyticsScreen('Tutorial Section 7'),
-                Text(ba.Lstr(
-                    resource=self._r +
-                    '.phrase21Text')),  # timing your bombs can be tricky
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase21Text')
+                ),  # timing your bombs can be tricky
                 Move(-1, 0),
                 DelayOld(1000),
                 Move(0, -0.1),
                 DelayOld(100),
                 Move(0, 0),
-                SpawnSpaz(0, (-0.7, 4.3, -3.9),
-                          make_current=True,
-                          flash=False,
-                          angle=-30),
-                SpawnSpaz(1, (6.5, 0, -0.75),
-                          relative_to=0,
-                          make_current=False,
-                          color=(0.3, 0.8, 1.0),
-                          name=ba.Lstr(resource=self._r + '.randomName5Text')),
+                SpawnSpaz(
+                    0,
+                    (-0.7, 4.3, -3.9),
+                    make_current=True,
+                    flash=False,
+                    angle=-30,
+                ),
+                SpawnSpaz(
+                    1,
+                    (6.5, 0, -0.75),
+                    relative_to=0,
+                    make_current=False,
+                    color=(0.3, 0.8, 1.0),
+                    name=ba.Lstr(resource=self._r + '.randomName5Text'),
+                ),
                 DelayOld2(1000),
                 Move(-1, 0),
                 DelayOld2(1800),
@@ -2238,8 +2333,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 Delay(1500),
                 Text(''),
                 Delay(200),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase23Text')),  # try cooking off
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase23Text')
+                ),  # try cooking off
                 Delay(1500),
                 Bomb(),
                 Delay(800),
@@ -2253,8 +2349,9 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 Delay(100),
                 Move(0, 0),
                 Delay(2000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase24Text')),  # hooray nicely cooked
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase24Text')
+                ),  # hooray nicely cooked
                 Celebrate(),
                 DelayOld(2000),
                 KillSpaz(1),
@@ -2266,17 +2363,19 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 Move(0, 0),
                 DelayOld(1000),
                 AnalyticsScreen('Tutorial Section 8'),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase25Text')),  # well that's just about it
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase25Text')
+                ),  # well that's just about it
                 DelayOld(2000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase26Text')),  # go get em tiger
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase26Text')
+                ),  # go get em tiger
                 DelayOld(2000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase27Text')),  # remember you training
+                Text(
+                    ba.Lstr(resource=self._r + '.phrase27Text')
+                ),  # remember you training
                 DelayOld(3000),
-                Text(ba.Lstr(resource=self._r +
-                             '.phrase28Text')),  # well maybe
+                Text(ba.Lstr(resource=self._r + '.phrase28Text')),  # well maybe
                 DelayOld(1600),
                 Text(ba.Lstr(resource=self._r + '.phrase29Text')),  # good luck
                 Celebrate('right', duration=10000),
@@ -2294,7 +2393,8 @@ class TutorialActivity(ba.Activity[Player, Team]):
         # Otherwise try again in a few seconds.
         else:
             self._read_entries_timer = ba.Timer(
-                3.0, ba.WeakCall(self._read_entries))
+                3.0, ba.WeakCall(self._read_entries)
+            )
 
     def _run_next_entry(self) -> None:
 
@@ -2312,29 +2412,42 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 self._entry_timer = ba.Timer(
                     result,
                     ba.WeakCall(self._run_next_entry),
-                    timeformat=ba.TimeFormat.MILLISECONDS)
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
                 return
 
         # Done with these entries.. start over soon.
-        self._read_entries_timer = ba.Timer(1.0,
-                                            ba.WeakCall(self._read_entries))
+        self._read_entries_timer = ba.Timer(
+            1.0, ba.WeakCall(self._read_entries)
+        )
 
     def _update_skip_votes(self) -> None:
         count = sum(1 for player in self.players if player.pressed)
         assert self._skip_count_text
-        self._skip_count_text.text = ba.Lstr(
-            resource=self._r + '.skipVoteCountText',
-            subs=[('${COUNT}', str(count)),
-                  ('${TOTAL}', str(len(self.players)))]) if count > 0 else ''
-        if (count >= len(self.players) and self.players
-                and not self._have_skipped):
+        self._skip_count_text.text = (
+            ba.Lstr(
+                resource=self._r + '.skipVoteCountText',
+                subs=[
+                    ('${COUNT}', str(count)),
+                    ('${TOTAL}', str(len(self.players))),
+                ],
+            )
+            if count > 0
+            else ''
+        )
+        if (
+            count >= len(self.players)
+            and self.players
+            and not self._have_skipped
+        ):
             ba.internal.increment_analytics_count('Tutorial skip')
             ba.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
             ba.playsound(ba.getsound('swish'))
             # self._skip_count_text.text = self._r.skippingText
-            self._skip_count_text.text = ba.Lstr(resource=self._r +
-                                                 '.skippingText')
+            self._skip_count_text.text = ba.Lstr(
+                resource=self._r + '.skippingText'
+            )
             assert self._skip_text
             self._skip_text.text = ''
             self.end()
@@ -2347,21 +2460,25 @@ class TutorialActivity(ba.Activity[Player, Team]):
         if len(self.players) == 1 and not self._issued_warning:
             self._issued_warning = True
             assert self._skip_text
-            self._skip_text.text = ba.Lstr(resource=self._r +
-                                           '.skipConfirmText')
+            self._skip_text.text = ba.Lstr(
+                resource=self._r + '.skipConfirmText'
+            )
             self._skip_text.color = (1, 1, 1)
             self._skip_text.scale = 1.3
             incr = 50
             t = incr
             for _i in range(6):
-                ba.timer(t,
-                         ba.Call(setattr, self._skip_text, 'color',
-                                 (1, 0.5, 0.1)),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
+                ba.timer(
+                    t,
+                    ba.Call(setattr, self._skip_text, 'color', (1, 0.5, 0.1)),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
                 t += incr
-                ba.timer(t,
-                         ba.Call(setattr, self._skip_text, 'color', (1, 1, 0)),
-                         timeformat=ba.TimeFormat.MILLISECONDS)
+                ba.timer(
+                    t,
+                    ba.Call(setattr, self._skip_text, 'color', (1, 1, 0)),
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                )
                 t += incr
             ba.timer(6.0, ba.WeakCall(self._revert_confirm))
             return
@@ -2370,16 +2487,20 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
         # test...
         if not all(self.players):
-            ba.print_error('Nonexistent player in _player_pressed_button: ' +
-                           str([str(p) for p in self.players]) + ': we are ' +
-                           str(player))
+            ba.print_error(
+                'Nonexistent player in _player_pressed_button: '
+                + str([str(p) for p in self.players])
+                + ': we are '
+                + str(player)
+            )
 
         self._update_skip_votes()
 
     def _revert_confirm(self) -> None:
         assert self._skip_text
-        self._skip_text.text = ba.Lstr(resource=self._r +
-                                       '.toSkipPressAnythingText')
+        self._skip_text.text = ba.Lstr(
+            resource=self._r + '.toSkipPressAnythingText'
+        )
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False
 
@@ -2388,15 +2509,23 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
         # We just wanna know if this player presses anything.
         player.assigninput(
-            (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
-             ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
-            ba.Call(self._player_pressed_button, player))
+            (
+                ba.InputType.JUMP_PRESS,
+                ba.InputType.PUNCH_PRESS,
+                ba.InputType.BOMB_PRESS,
+                ba.InputType.PICK_UP_PRESS,
+            ),
+            ba.Call(self._player_pressed_button, player),
+        )
 
     def on_player_leave(self, player: Player) -> None:
         if not all(self.players):
-            ba.print_error('Nonexistent player in on_player_leave: ' +
-                           str([str(p) for p in self.players]) + ': we are ' +
-                           str(player))
+            ba.print_error(
+                'Nonexistent player in on_player_leave: '
+                + str([str(p) for p in self.players])
+                + ': we are '
+                + str(player)
+            )
         super().on_player_leave(player)
         # our leaving may influence the vote total needed/etc
         self._update_skip_votes()

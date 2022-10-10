@@ -38,31 +38,41 @@ class AdsSubsystem:
 
         # Print this message once every 10 minutes at most.
         tval = _ba.time(TimeType.REAL)
-        if (self.last_in_game_ad_remove_message_show_time is None or
-            (tval - self.last_in_game_ad_remove_message_show_time > 60 * 10)):
+        if self.last_in_game_ad_remove_message_show_time is None or (
+            tval - self.last_in_game_ad_remove_message_show_time > 60 * 10
+        ):
             self.last_in_game_ad_remove_message_show_time = tval
             with _ba.Context('ui'):
                 _ba.timer(
                     1.0,
-                    lambda: _ba.screenmessage(Lstr(
-                        resource='removeInGameAdsText',
-                        subs=[('${PRO}',
-                               Lstr(resource='store.bombSquadProNameText')),
-                              ('${APP_NAME}', Lstr(resource='titleText'))]),
-                                              color=(1, 1, 0)),
-                    timetype=TimeType.REAL)
+                    lambda: _ba.screenmessage(
+                        Lstr(
+                            resource='removeInGameAdsText',
+                            subs=[
+                                (
+                                    '${PRO}',
+                                    Lstr(resource='store.bombSquadProNameText'),
+                                ),
+                                ('${APP_NAME}', Lstr(resource='titleText')),
+                            ],
+                        ),
+                        color=(1, 1, 0),
+                    ),
+                    timetype=TimeType.REAL,
+                )
 
-    def show_ad(self,
-                purpose: str,
-                on_completion_call: Callable[[], Any] | None = None) -> None:
+    def show_ad(
+        self, purpose: str, on_completion_call: Callable[[], Any] | None = None
+    ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
         _ba.show_ad(purpose, on_completion_call)
 
     def show_ad_2(
-            self,
-            purpose: str,
-            on_completion_call: Callable[[bool], Any] | None = None) -> None:
+        self,
+        purpose: str,
+        on_completion_call: Callable[[bool], Any] | None = None,
+    ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
         _ba.show_ad_2(purpose, on_completion_call)
@@ -73,6 +83,7 @@ class AdsSubsystem:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from ba._generated.enums import TimeType
+
         app = _ba.app
         show = True
 
@@ -95,16 +106,22 @@ class AdsSubsystem:
             launch_count = app.config.get('launchCount', 0)
 
             # If we're seeing short ads we may want to space them differently.
-            interval_mult = (_internal.get_v1_account_misc_read_val(
-                'ads.shortIntervalMult', 1.0)
-                             if self.last_ad_was_short else 1.0)
+            interval_mult = (
+                _internal.get_v1_account_misc_read_val(
+                    'ads.shortIntervalMult', 1.0
+                )
+                if self.last_ad_was_short
+                else 1.0
+            )
             if self.ad_amt is None:
                 if launch_count <= 1:
                     self.ad_amt = _internal.get_v1_account_misc_read_val(
-                        'ads.startVal1', 0.99)
+                        'ads.startVal1', 0.99
+                    )
                 else:
                     self.ad_amt = _internal.get_v1_account_misc_read_val(
-                        'ads.startVal2', 1.0)
+                        'ads.startVal2', 1.0
+                    )
                 interval = None
             else:
                 # So far we're cleared to show; now calc our
@@ -113,27 +130,33 @@ class AdsSubsystem:
                 # playing).
                 base = 'ads' if _ba.has_video_ads() else 'ads2'
                 min_lc = _internal.get_v1_account_misc_read_val(
-                    base + '.minLC', 0.0)
+                    base + '.minLC', 0.0
+                )
                 max_lc = _internal.get_v1_account_misc_read_val(
-                    base + '.maxLC', 5.0)
-                min_lc_scale = (_internal.get_v1_account_misc_read_val(
-                    base + '.minLCScale', 0.25))
-                max_lc_scale = (_internal.get_v1_account_misc_read_val(
-                    base + '.maxLCScale', 0.34))
-                min_lc_interval = (_internal.get_v1_account_misc_read_val(
-                    base + '.minLCInterval', 360))
-                max_lc_interval = (_internal.get_v1_account_misc_read_val(
-                    base + '.maxLCInterval', 300))
+                    base + '.maxLC', 5.0
+                )
+                min_lc_scale = _internal.get_v1_account_misc_read_val(
+                    base + '.minLCScale', 0.25
+                )
+                max_lc_scale = _internal.get_v1_account_misc_read_val(
+                    base + '.maxLCScale', 0.34
+                )
+                min_lc_interval = _internal.get_v1_account_misc_read_val(
+                    base + '.minLCInterval', 360
+                )
+                max_lc_interval = _internal.get_v1_account_misc_read_val(
+                    base + '.maxLCInterval', 300
+                )
                 if launch_count < min_lc:
                     lc_amt = 0.0
                 elif launch_count > max_lc:
                     lc_amt = 1.0
                 else:
-                    lc_amt = ((float(launch_count) - min_lc) /
-                              (max_lc - min_lc))
+                    lc_amt = (float(launch_count) - min_lc) / (max_lc - min_lc)
                 incr = (1.0 - lc_amt) * min_lc_scale + lc_amt * max_lc_scale
-                interval = ((1.0 - lc_amt) * min_lc_interval +
-                            lc_amt * max_lc_interval)
+                interval = (
+                    1.0 - lc_amt
+                ) * min_lc_interval + lc_amt * max_lc_interval
                 self.ad_amt += incr
             assert self.ad_amt is not None
             if self.ad_amt >= 1.0:
@@ -143,12 +166,14 @@ class AdsSubsystem:
             # After we've reached the traditional show-threshold once,
             # try again whenever its been INTERVAL since our last successful
             # show.
-            elif (
-                    self.attempted_first_ad and
-                (self.last_ad_completion_time is None or
-                 (interval is not None
-                  and _ba.time(TimeType.REAL) - self.last_ad_completion_time >
-                  (interval * interval_mult)))):
+            elif self.attempted_first_ad and (
+                self.last_ad_completion_time is None
+                or (
+                    interval is not None
+                    and _ba.time(TimeType.REAL) - self.last_ad_completion_time
+                    > (interval * interval_mult)
+                )
+            ):
                 # Reset our other counter too in this case.
                 self.ad_amt = 0.0
             else:
@@ -161,7 +186,6 @@ class AdsSubsystem:
             # (in case some random ad network doesn't properly deliver its
             # completion callback).
             class _Payload:
-
                 def __init__(self, pcall: Callable[[], Any]):
                     self._call = pcall
                     self._ran = False
@@ -171,20 +195,31 @@ class AdsSubsystem:
                     if not self._ran:
                         if fallback:
                             print(
-                                ('ERROR: relying on fallback ad-callback! '
-                                 'last network: ' + app.ads.last_ad_network +
-                                 ' (set ' + str(
-                                     int(time.time() -
-                                         app.ads.last_ad_network_set_time)) +
-                                 's ago); purpose=' + app.ads.last_ad_purpose))
+                                (
+                                    'ERROR: relying on fallback ad-callback! '
+                                    'last network: '
+                                    + app.ads.last_ad_network
+                                    + ' (set '
+                                    + str(
+                                        int(
+                                            time.time()
+                                            - app.ads.last_ad_network_set_time
+                                        )
+                                    )
+                                    + 's ago); purpose='
+                                    + app.ads.last_ad_purpose
+                                )
+                            )
                         _ba.pushcall(self._call)
                         self._ran = True
 
             payload = _Payload(call)
             with _ba.Context('ui'):
-                _ba.timer(5.0,
-                          lambda: payload.run(fallback=True),
-                          timetype=TimeType.REAL)
+                _ba.timer(
+                    5.0,
+                    lambda: payload.run(fallback=True),
+                    timetype=TimeType.REAL,
+                )
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
             _ba.pushcall(call)  # Just run the callback without the ad.

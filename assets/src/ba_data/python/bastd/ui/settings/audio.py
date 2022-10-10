@@ -16,9 +16,11 @@ if TYPE_CHECKING:
 class AudioSettingsWindow(ba.Window):
     """Window for editing audio settings."""
 
-    def __init__(self,
-                 transition: str = 'in_right',
-                 origin_widget: ba.Widget | None = None):
+    def __init__(
+        self,
+        transition: str = 'in_right',
+        origin_widget: ba.Widget | None = None,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
@@ -57,16 +59,26 @@ class AudioSettingsWindow(ba.Window):
             height += spacing * 2.0
 
         uiscale = ba.app.ui.uiscale
-        base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
-                      1.6 if uiscale is ba.UIScale.MEDIUM else 1.0)
+        base_scale = (
+            2.05
+            if uiscale is ba.UIScale.SMALL
+            else 1.6
+            if uiscale is ba.UIScale.MEDIUM
+            else 1.0
+        )
         popup_menu_scale = base_scale * 1.2
 
-        super().__init__(root_widget=ba.containerwidget(
-            size=(width, height),
-            transition=transition,
-            scale=base_scale,
-            scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -20) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(width, height),
+                transition=transition,
+                scale=base_scale,
+                scale_origin_stack_offset=scale_origin,
+                stack_offset=(0, -20)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -77,23 +89,28 @@ class AudioSettingsWindow(ba.Window):
             label=ba.Lstr(resource='backText'),
             button_type='back',
             on_activate_call=self._back,
-            autoselect=True)
+            autoselect=True,
+        )
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
         v = height - 60
         v -= spacing * 1.0
-        ba.textwidget(parent=self._root_widget,
-                      position=(width * 0.5, height - 32),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.ui.title_color,
-                      maxwidth=180,
-                      h_align='center',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._root_widget,
+            position=(width * 0.5, height - 32),
+            size=(0, 0),
+            text=ba.Lstr(resource=self._r + '.titleText'),
+            color=ba.app.ui.title_color,
+            maxwidth=180,
+            h_align='center',
+            v_align='center',
+        )
 
-        ba.buttonwidget(edit=self._back_button,
-                        button_type='backSmall',
-                        size=(60, 60),
-                        label=ba.charstr(ba.SpecialChar.BACK))
+        ba.buttonwidget(
+            edit=self._back_button,
+            button_type='backSmall',
+            size=(60, 60),
+            label=ba.charstr(ba.SpecialChar.BACK),
+        )
 
         self._sound_volume_numedit = svne = ConfigNumberEdit(
             parent=self._root_widget,
@@ -103,11 +120,13 @@ class AudioSettingsWindow(ba.Window):
             displayname=ba.Lstr(resource=self._r + '.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
-            increment=0.1)
+            increment=0.1,
+        )
         if ba.app.ui.use_toolbars:
             ba.widget(
                 edit=svne.plusbutton,
-                right_widget=ba.internal.get_special_widget('party_button'))
+                right_widget=ba.internal.get_special_widget('party_button'),
+            )
         v -= spacing
         self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
@@ -119,22 +138,24 @@ class AudioSettingsWindow(ba.Window):
             maxval=1.0,
             increment=0.1,
             callback=music.music_volume_changed,
-            changesound=False)
+            changesound=False,
+        )
 
         v -= 0.5 * spacing
 
         self._vr_head_relative_audio_button: ba.Widget | None
         if show_vr_head_relative_audio:
             v -= 40
-            ba.textwidget(parent=self._root_widget,
-                          position=(40, v + 24),
-                          size=(0, 0),
-                          text=ba.Lstr(resource=self._r +
-                                       '.headRelativeVRAudioText'),
-                          color=(0.8, 0.8, 0.8),
-                          maxwidth=230,
-                          h_align='left',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(40, v + 24),
+                size=(0, 0),
+                text=ba.Lstr(resource=self._r + '.headRelativeVRAudioText'),
+                color=(0.8, 0.8, 0.8),
+                maxwidth=230,
+                h_align='left',
+                v_align='center',
+            )
 
             popup = PopupMenu(
                 parent=self._root_widget,
@@ -146,22 +167,24 @@ class AudioSettingsWindow(ba.Window):
                 choices_display=[
                     ba.Lstr(resource='autoText'),
                     ba.Lstr(resource='onText'),
-                    ba.Lstr(resource='offText')
+                    ba.Lstr(resource='offText'),
                 ],
                 current_choice=ba.app.config.resolve('VR Head Relative Audio'),
-                on_value_change_call=self._set_vr_head_relative_audio)
+                on_value_change_call=self._set_vr_head_relative_audio,
+            )
             self._vr_head_relative_audio_button = popup.get_button()
-            ba.textwidget(parent=self._root_widget,
-                          position=(width * 0.5, v - 11),
-                          size=(0, 0),
-                          text=ba.Lstr(resource=self._r +
-                                       '.headRelativeVRAudioInfoText'),
-                          scale=0.5,
-                          color=(0.7, 0.8, 0.7),
-                          maxwidth=400,
-                          flatness=1.0,
-                          h_align='center',
-                          v_align='center')
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(width * 0.5, v - 11),
+                size=(0, 0),
+                text=ba.Lstr(resource=self._r + '.headRelativeVRAudioInfoText'),
+                scale=0.5,
+                color=(0.7, 0.8, 0.7),
+                maxwidth=400,
+                flatness=1.0,
+                h_align='center',
+                v_align='center',
+            )
             v -= 30
         else:
             self._vr_head_relative_audio_button = None
@@ -175,18 +198,20 @@ class AudioSettingsWindow(ba.Window):
                 size=(310, 50),
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.soundtrackButtonText'),
-                on_activate_call=self._do_soundtracks)
+                on_activate_call=self._do_soundtracks,
+            )
             v -= spacing * 0.5
-            ba.textwidget(parent=self._root_widget,
-                          position=(0, v),
-                          size=(width, 20),
-                          text=ba.Lstr(resource=self._r +
-                                       '.soundtrackDescriptionText'),
-                          flatness=1.0,
-                          h_align='center',
-                          scale=0.5,
-                          color=(0.7, 0.8, 0.7, 1.0),
-                          maxwidth=400)
+            ba.textwidget(
+                parent=self._root_widget,
+                position=(0, v),
+                size=(width, 20),
+                text=ba.Lstr(resource=self._r + '.soundtrackDescriptionText'),
+                flatness=1.0,
+                h_align='center',
+                scale=0.5,
+                color=(0.7, 0.8, 0.7, 1.0),
+                maxwidth=400,
+            )
         else:
             self._soundtrack_button = None
 
@@ -211,29 +236,38 @@ class AudioSettingsWindow(ba.Window):
         # if we don't have it, request it.
         if not ba.internal.have_permission(ba.Permission.STORAGE):
             ba.playsound(ba.getsound('ding'))
-            ba.screenmessage(ba.Lstr(resource='storagePermissionAccessText'),
-                             color=(0.5, 1, 0.5))
-            ba.timer(1.0,
-                     ba.Call(ba.internal.request_permission,
-                             ba.Permission.STORAGE),
-                     timetype=ba.TimeType.REAL)
+            ba.screenmessage(
+                ba.Lstr(resource='storagePermissionAccessText'),
+                color=(0.5, 1, 0.5),
+            )
+            ba.timer(
+                1.0,
+                ba.Call(ba.internal.request_permission, ba.Permission.STORAGE),
+                timetype=ba.TimeType.REAL,
+            )
             return
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             stb.SoundtrackBrowserWindow(
-                origin_widget=self._soundtrack_button).get_root_widget())
+                origin_widget=self._soundtrack_button
+            ).get_root_widget()
+        )
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings import allsettings
+
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         ba.app.ui.set_main_menu_window(
             allsettings.AllSettingsWindow(
-                transition='in_left').get_root_widget())
+                transition='in_left'
+            ).get_root_widget()
+        )
 
     def _save_state(self) -> None:
         try:

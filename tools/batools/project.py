@@ -25,8 +25,9 @@ def project_centric_path(projroot: str, path: str) -> str:
     projprefix = f'{projroot}/'
     if not abspath.startswith(projprefix):
         raise RuntimeError(
-            f'Path "{abspath}" is not under project root "{projprefix}"')
-    return abspath[len(projprefix):]
+            f'Path "{abspath}" is not under project root "{projprefix}"'
+        )
+    return abspath[len(projprefix) :]
 
 
 def get_legal_notice_private() -> str:
@@ -37,6 +38,7 @@ def get_legal_notice_private() -> str:
 @dataclass
 class LineChange:
     """A change applying to a particular line in a file."""
+
     line_number: int
     expected: str
     can_auto_update: bool
@@ -48,6 +50,7 @@ class Updater:
     def __init__(self, check: bool, fix: bool) -> None:
         from efrotools import getconfig, getlocalconfig
         from pathlib import Path
+
         self._check = check
         self._fix = fix
         self._checkarg = ' --check' if self._check else ''
@@ -64,7 +67,8 @@ class Updater:
         self._file_changes: dict[str, str] = {}
 
         self._license_line_checks = bool(
-            getlocalconfig(Path('.')).get('license_line_checks', True))
+            getlocalconfig(Path('.')).get('license_line_checks', True)
+        )
 
         self._internal_source_dirs: set[str] | None = None
         self._internal_source_files: set[str] | None = None
@@ -126,8 +130,10 @@ class Updater:
             else:
                 sources = getconfig(Path('.')).get('internal_source_files', [])
             if not isinstance(sources, list):
-                raise CleanError(f'Expected list for internal_source_files;'
-                                 f' got {type(sources)}')
+                raise CleanError(
+                    f'Expected list for internal_source_files;'
+                    f' got {type(sources)}'
+                )
             self._internal_source_files = set(sources)
         return self._internal_source_files
 
@@ -143,8 +149,10 @@ class Updater:
             else:
                 sources = getconfig(Path('.')).get('internal_source_dirs', [])
             if not isinstance(sources, list):
-                raise CleanError(f'Expected list for internal_source_dirs;'
-                                 f' got {type(sources)}')
+                raise CleanError(
+                    f'Expected list for internal_source_dirs;'
+                    f' got {type(sources)}'
+                )
             self._internal_source_dirs = set(sources)
         return self._internal_source_dirs
 
@@ -163,8 +171,10 @@ class Updater:
                 unchanged_project_count += 1
             else:
                 if self._check:
-                    print(f'{Clr.RED}ERROR: found out-of-date'
-                          f' project file: {fname}{Clr.RST}')
+                    print(
+                        f'{Clr.RED}ERROR: found out-of-date'
+                        f' project file: {fname}{Clr.RST}'
+                    )
                     sys.exit(255)
 
                 print(f'{Clr.BLU}Writing project file: {fname}{Clr.RST}')
@@ -172,7 +182,8 @@ class Updater:
                     outfile.write(fcode)
         if unchanged_project_count > 0:
             print(
-                f'All {unchanged_project_count} project files are up to date.')
+                f'All {unchanged_project_count} project files are up to date.'
+            )
 
     def _apply_line_changes(self) -> None:
 
@@ -189,12 +200,15 @@ class Updater:
         # If there are any manual-only entries, list then and bail.
         # (Don't wanna allow auto-apply unless it fixes everything)
         if manual_changes:
-            print(f'{Clr.RED}Found erroneous lines '
-                  f'requiring manual correction:{Clr.RST}')
+            print(
+                f'{Clr.RED}Found erroneous lines '
+                f'requiring manual correction:{Clr.RST}'
+            )
             for change in manual_changes:
                 print(
                     f'{Clr.RED}{change[0]}:{change[1].line_number + 1}:'
-                    f' Expected line to be:\n  {change[1].expected}{Clr.RST}')
+                    f' Expected line to be:\n  {change[1].expected}{Clr.RST}'
+                )
 
             sys.exit(-1)
 
@@ -202,18 +216,23 @@ class Updater:
         if auto_changes:
             if not self._fix:
                 for i, change in enumerate(auto_changes):
-                    print(f'{Clr.RED}#{i}:'
-                          f' {change[0]}:{change[1].line_number+1}:'
-                          f'{Clr.RST}')
                     print(
-                        f'{Clr.RED}  Expected "{change[1].expected}"{Clr.RST}')
+                        f'{Clr.RED}#{i}:'
+                        f' {change[0]}:{change[1].line_number+1}:'
+                        f'{Clr.RST}'
+                    )
+                    print(
+                        f'{Clr.RED}  Expected "{change[1].expected}"{Clr.RST}'
+                    )
                     with open(change[0], encoding='utf-8') as infile:
                         lines = infile.read().splitlines()
                     line = lines[change[1].line_number]
                     print(f'{Clr.RED}  Found "{line}"{Clr.RST}')
-                print(f'{Clr.RED}All {len(auto_changes)} errors are'
-                      f' auto-fixable; run tools/pcommand update_project'
-                      f' --fix to apply corrections. {Clr.RST}')
+                print(
+                    f'{Clr.RED}All {len(auto_changes)} errors are'
+                    f' auto-fixable; run tools/pcommand update_project'
+                    f' --fix to apply corrections. {Clr.RST}'
+                )
                 sys.exit(255)
             else:
                 for i, change in enumerate(auto_changes):
@@ -239,9 +258,11 @@ class Updater:
             # Could just ignore these but it probably means I intended
             # to save something and forgot.
             if '/.#' in fsrc:
-                print(f'{Clr.RED}'
-                      f'ERROR: Found an unsaved emacs file: "{fsrc}"'
-                      f'{Clr.RST}')
+                print(
+                    f'{Clr.RED}'
+                    f'ERROR: Found an unsaved emacs file: "{fsrc}"'
+                    f'{Clr.RST}'
+                )
                 sys.exit(255)
 
             fname = 'src/ballistica' + fsrc
@@ -262,15 +283,23 @@ class Updater:
             if header_file.endswith('.h'):
                 self._check_header(header_file)
 
-    def _add_line_correction(self, filename: str, line_number: int,
-                             expected: str, can_auto_update: bool) -> None:
+    def _add_line_correction(
+        self,
+        filename: str,
+        line_number: int,
+        expected: str,
+        can_auto_update: bool,
+    ) -> None:
         # No longer allowing negatives here since they don't show up nicely
         # in correction list.
         assert line_number >= 0
         self._line_corrections.setdefault(filename, []).append(
-            LineChange(line_number=line_number,
-                       expected=expected,
-                       can_auto_update=can_auto_update))
+            LineChange(
+                line_number=line_number,
+                expected=expected,
+                can_auto_update=can_auto_update,
+            )
+        )
 
     def _check_c_license(self, fname: str, lines: list[str]) -> None:
         from efrotools import get_public_license
@@ -285,21 +314,25 @@ class Updater:
             if lines[lnum] != line_public:
                 # Allow auto-correcting from private to public line
                 allow_auto = lines[lnum] == line_private
-                self._add_line_correction(fname,
-                                          line_number=lnum,
-                                          expected=line_public,
-                                          can_auto_update=allow_auto)
+                self._add_line_correction(
+                    fname,
+                    line_number=lnum,
+                    expected=line_public,
+                    can_auto_update=allow_auto,
+                )
         else:
             if lines[lnum] not in [line_public, line_private]:
-                self._add_line_correction(fname,
-                                          line_number=lnum,
-                                          expected=line_private,
-                                          can_auto_update=False)
+                self._add_line_correction(
+                    fname,
+                    line_number=lnum,
+                    expected=line_private,
+                    can_auto_update=False,
+                )
 
     def _check_header(self, fname: str) -> None:
 
         # Make sure its define guard is correct.
-        guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
+        guard = fname[4:].upper().replace('/', '_').replace('.', '_') + '_'
         with open(fname, encoding='utf-8') as fhdr:
             lines = fhdr.read().splitlines()
 
@@ -313,20 +346,24 @@ class Updater:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)
             allow_auto = lines[lnum].startswith('#ifndef BALLISTICA_')
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
+            self._add_line_correction(
+                fname,
+                line_number=lnum,
+                expected=line,
+                can_auto_update=allow_auto,
+            )
         line = '#define ' + guard
         lnum = 3
         if lines[lnum] != line:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)
             allow_auto = lines[lnum].startswith('#define BALLISTICA_')
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
+            self._add_line_correction(
+                fname,
+                line_number=lnum,
+                expected=line,
+                can_auto_update=allow_auto,
+            )
 
         # Check for header guard at bottom
         line = '#endif  // ' + guard
@@ -335,19 +372,27 @@ class Updater:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)
             allow_auto = lines[lnum].startswith('#endif  // BALLISTICA_')
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
+            self._add_line_correction(
+                fname,
+                line_number=lnum,
+                expected=line,
+                can_auto_update=allow_auto,
+            )
 
     def _check_makefiles(self) -> None:
         from efrotools import get_public_license
 
         # Run a few sanity checks on whatever makefiles we come across.
-        fnames = subprocess.run('find . -maxdepth 3 -name Makefile',
-                                shell=True,
-                                capture_output=True,
-                                check=True).stdout.decode().split()
+        fnames = (
+            subprocess.run(
+                'find . -maxdepth 3 -name Makefile',
+                shell=True,
+                capture_output=True,
+                check=True,
+            )
+            .stdout.decode()
+            .split()
+        )
         fnames = [n for n in fnames if '/build/' not in n]
 
         for fname in fnames:
@@ -358,14 +403,16 @@ class Updater:
                 if public_license not in makefile:
                     raise CleanError(f'Pub license not found in {fname}.')
             else:
-                if (get_legal_notice_private() not in makefile
-                        and get_public_license('makefile') not in makefile):
-                    raise CleanError(
-                        f'Priv or pub legal not found in {fname}.')
+                if (
+                    get_legal_notice_private() not in makefile
+                    and get_public_license('makefile') not in makefile
+                ):
+                    raise CleanError(f'Priv or pub legal not found in {fname}.')
 
     def _check_python_file(self, fname: str) -> None:
         # pylint: disable=too-many-branches
         from efrotools import get_public_license, PYVER
+
         with open(fname, encoding='utf-8') as infile:
             contents = infile.read()
             lines = contents.splitlines()
@@ -377,15 +424,18 @@ class Updater:
             copyrightline = 1
             if fname not in ['tools/vmshell']:
                 if not contents.startswith(f'#!/usr/bin/env python{PYVER}'):
-                    raise CleanError(f'Incorrect shebang (first line) for '
-                                     f'{fname}.')
+                    raise CleanError(
+                        f'Incorrect shebang (first line) for ' f'{fname}.'
+                    )
         else:
             copyrightline = 0
 
         # Special case: it there's spinoff autogenerate notice there,
         # look below it.
-        if (lines[copyrightline] == ''
-                and 'THIS FILE IS AUTOGENERATED' in lines[copyrightline + 1]):
+        if (
+            lines[copyrightline] == ''
+            and 'THIS FILE IS AUTOGENERATED' in lines[copyrightline + 1]
+        ):
             copyrightline += 2
 
         if lines[copyrightline].startswith('# Synced from '):
@@ -398,14 +448,16 @@ class Updater:
                 if line == 'import ba':
                     raise CleanError(
                         f'{fname}:{i+1}: no top level ba imports allowed'
-                        f' under ba module.')
+                        f' under ba module.'
+                    )
             if '/bastd/' in fname:
                 # Don't allow importing _ba or _bainternal anywhere here.
                 # (any internal needs should be in ba.internal)
                 if 'import _ba' in line:
                     raise CleanError(
                         f'{fname}:{i+1}: _ba or _bainternal imports not'
-                        f' allowed under bastd.')
+                        f' allowed under bastd.'
+                    )
 
         # In all cases, look for our one-line legal notice.
         # In the public case, look for the rest of our public license too.
@@ -416,33 +468,41 @@ class Updater:
             if len(lines) < lnum + 1:
                 raise RuntimeError('Not enough lines in file:', fname)
 
-            disable_note = ('NOTE: You can disable license line'
-                            ' checks by adding "license_line_checks": false\n'
-                            'to the root dict in config/localconfig.json.\n'
-                            'see https://ballistica.net/wiki'
-                            '/Knowledge-Nuggets#'
-                            'hello-world-creating-a-new-game-type')
+            disable_note = (
+                'NOTE: You can disable license line'
+                ' checks by adding "license_line_checks": false\n'
+                'to the root dict in config/localconfig.json.\n'
+                'see https://ballistica.net/wiki'
+                '/Knowledge-Nuggets#'
+                'hello-world-creating-a-new-game-type'
+            )
 
             if self._public:
                 # Check for public license only.
                 if lines[lnum] != public_license:
-                    raise CleanError(f'License text not found'
-                                     f" at '{fname}' line {lnum+1};"
-                                     f' please correct.\n'
-                                     f'Expected text is: {public_license}\n'
-                                     f'{disable_note}')
+                    raise CleanError(
+                        f'License text not found'
+                        f" at '{fname}' line {lnum+1};"
+                        f' please correct.\n'
+                        f'Expected text is: {public_license}\n'
+                        f'{disable_note}'
+                    )
             else:
                 # Check for public or private license.
-                if (lines[lnum] != public_license
-                        and lines[lnum] != private_license):
-                    raise CleanError(f'License text not found'
-                                     f" at '{fname}' line {lnum+1};"
-                                     f' please correct.\n'
-                                     f'Expected text (for public files):'
-                                     f' {public_license}\n'
-                                     f'Expected text (for private files):'
-                                     f' {private_license}\n'
-                                     f'{disable_note}')
+                if (
+                    lines[lnum] != public_license
+                    and lines[lnum] != private_license
+                ):
+                    raise CleanError(
+                        f'License text not found'
+                        f" at '{fname}' line {lnum+1};"
+                        f' please correct.\n'
+                        f'Expected text (for public files):'
+                        f' {public_license}\n'
+                        f'Expected text (for private files):'
+                        f' {private_license}\n'
+                        f'{disable_note}'
+                    )
 
     def _check_python_files(self) -> None:
         from pathlib import Path
@@ -460,24 +520,32 @@ class Updater:
         dirs_of_packages = ['assets/src/ba_data/python', 'tests']
         for dir_of_packages in dirs_of_packages:
             for name in os.listdir(dir_of_packages):
-                if (not name.startswith('.') and os.path.isdir(
-                        os.path.join(dir_of_packages, name))):
+                if not name.startswith('.') and os.path.isdir(
+                    os.path.join(dir_of_packages, name)
+                ):
                     packagedirs.append(os.path.join(dir_of_packages, name))
 
         for packagedir in packagedirs:
             for root, _dirs, files in os.walk(packagedir):
-                if ('__pycache__' not in root
-                        and os.path.basename(root) != '.vscode'):
+                if (
+                    '__pycache__' not in root
+                    and os.path.basename(root) != '.vscode'
+                ):
                     if '__init__.py' not in files:
-                        print(Clr.RED +
-                              'Error: no __init__.py in package dir: ' + root +
-                              Clr.RST)
+                        print(
+                            Clr.RED
+                            + 'Error: no __init__.py in package dir: '
+                            + root
+                            + Clr.RST
+                        )
                         sys.exit(255)
 
     def _update_visual_studio_project(self, basename: str) -> None:
 
-        fname = (f'ballisticacore-windows/{basename}/'
-                 f'BallisticaCore{basename}.vcxproj')
+        fname = (
+            f'ballisticacore-windows/{basename}/'
+            f'BallisticaCore{basename}.vcxproj'
+        )
 
         # Currently just silently skipping if not found (for public repo).
         if not os.path.exists(fname):
@@ -490,11 +558,16 @@ class Updater:
 
         public_project = 'Internal' not in basename
 
-        all_files = sorted([
-            f for f in (self._source_files + self._header_files)
-            if not f.endswith('.m') and not f.endswith('.mm') and not f.
-            endswith('.c') and self._is_public_source_file(f) == public_project
-        ])
+        all_files = sorted(
+            [
+                f
+                for f in (self._source_files + self._header_files)
+                if not f.endswith('.m')
+                and not f.endswith('.mm')
+                and not f.endswith('.c')
+                and self._is_public_source_file(f) == public_project
+            ]
+        )
 
         # Find the ItemGroup containing stdafx.cpp. This is where we'll dump
         # our stuff.
@@ -504,7 +577,7 @@ class Updater:
             begin_index -= 1
         while lines[end_index] != '  </ItemGroup>':
             end_index += 1
-        group_lines = lines[begin_index + 1:end_index]
+        group_lines = lines[begin_index + 1 : end_index]
 
         # Strip out any existing files from src/ballistica.
         group_lines = [
@@ -515,20 +588,24 @@ class Updater:
         # Note: we can't use C files in this build at the moment; breaks
         # precompiled header stuff. (shouldn't be a problem though).
         group_lines = [
-            '    <' +
-            ('ClInclude' if src.endswith('.h') else 'ClCompile') + ' Include="'
-            + src_root + '\\ballistica' + src.replace('/', '\\') + '" />'
+            '    <'
+            + ('ClInclude' if src.endswith('.h') else 'ClCompile')
+            + ' Include="'
+            + src_root
+            + '\\ballistica'
+            + src.replace('/', '\\')
+            + '" />'
             for src in all_files
         ] + group_lines
 
-        filtered = lines[:begin_index + 1] + group_lines + lines[end_index:]
+        filtered = lines[: begin_index + 1] + group_lines + lines[end_index:]
         self._file_changes[fname] = '\r\n'.join(filtered) + '\r\n'
 
         self._update_visual_studio_project_filters(filtered, fname, src_root)
 
-    def _update_visual_studio_project_filters(self, lines_in: list[str],
-                                              fname: str,
-                                              src_root: str) -> None:
+    def _update_visual_studio_project_filters(
+        self, lines_in: list[str], fname: str, src_root: str
+    ) -> None:
         filterpaths: set[str] = set()
         filterlines: list[str] = [
             '<?xml version="1.0" encoding="utf-8"?>',
@@ -540,18 +617,18 @@ class Updater:
         for line in sourcelines:
             entrytype = line.strip().split()[0][1:]
             path = line.split('"')[1]
-            filterlines.append('    <' + entrytype + ' Include="' + path +
-                               '">')
+            filterlines.append('    <' + entrytype + ' Include="' + path + '">')
 
             # If we have a dir foo/bar/eep we need to create filters for
             # each of foo, foo/bar, and foo/bar/eep
-            splits = path[len(src_root):].split('\\')
+            splits = path[len(src_root) :].split('\\')
             splits = [s for s in splits if s != '']
             splits = splits[:-1]
             for i in range(len(splits)):
-                filterpaths.add('\\'.join(splits[:(i + 1)]))
-            filterlines.append('      <Filter>' + '\\'.join(splits) +
-                               '</Filter>')
+                filterpaths.add('\\'.join(splits[: (i + 1)]))
+            filterlines.append(
+                '      <Filter>' + '\\'.join(splits) + '</Filter>'
+            )
             filterlines.append('    </' + entrytype + '>')
         filterlines += [
             '  </ItemGroup>',
@@ -563,8 +640,9 @@ class Updater:
             '  </ItemGroup>',
             '</Project>',
         ]
-        self._file_changes[fname +
-                           '.filters'] = '\r\n'.join(filterlines) + '\r\n'
+        self._file_changes[fname + '.filters'] = (
+            '\r\n'.join(filterlines) + '\r\n'
+        )
 
     def _update_visual_studio_projects(self) -> None:
         self._update_visual_studio_project('Generic')
@@ -600,15 +678,17 @@ class Updater:
 
             auto_start = lines.index(
                 f'  # AUTOGENERATED_{section}_BEGIN (this section'
-                f' is managed by the "update_project" tool)')
+                f' is managed by the "update_project" tool)'
+            )
             auto_end = lines.index(f'  # AUTOGENERATED_{section}_END')
             our_lines = [
                 '  ${BA_SRC_ROOT}/ballistica' + f
                 for f in sorted(self._source_files + self._header_files)
-                if not f.endswith('.mm') and not f.endswith('.m')
+                if not f.endswith('.mm')
+                and not f.endswith('.m')
                 and self._is_public_source_file(f) == (section == 'PUBLIC')
             ]
-            lines = lines[:auto_start + 1] + our_lines + lines[auto_end:]
+            lines = lines[: auto_start + 1] + our_lines + lines[auto_end:]
 
         self._file_changes[fname] = '\n'.join(lines) + '\n'
 
@@ -622,8 +702,10 @@ class Updater:
             self._update_cmake_file(fname)
 
         # CMake android components:
-        fname = ('ballisticacore-android/BallisticaCore'
-                 '/src/main/cpp/CMakeLists.txt')
+        fname = (
+            'ballisticacore-android/BallisticaCore'
+            '/src/main/cpp/CMakeLists.txt'
+        )
         if not self._public:
             self._update_cmake_file(fname)
 
@@ -640,9 +722,9 @@ class Updater:
         for root, _dirs, files in os.walk(scan_dir):
             for ftst in files:
                 if any(ftst.endswith(ext) for ext in exts):
-                    src_files.add(os.path.join(root, ftst)[len(scan_dir):])
+                    src_files.add(os.path.join(root, ftst)[len(scan_dir) :])
                 if any(ftst.endswith(ext) for ext in header_exts):
-                    header_files.add(os.path.join(root, ftst)[len(scan_dir):])
+                    header_files.add(os.path.join(root, ftst)[len(scan_dir) :])
         self._source_files = sorted(src_files)
         self._header_files = sorted(header_files)
 
@@ -650,46 +732,58 @@ class Updater:
         # Misc sanity checks.
         if not self._public:
             # Make sure we're set to prod master server.
-            with open('src/ballistica/internal/master_server_config.h',
-                      encoding='utf-8') as infile:
+            with open(
+                'src/ballistica/internal/master_server_config.h',
+                encoding='utf-8',
+            ) as infile:
                 msconfig = infile.read()
-                if ('// V2 Master Server:\n'
-                        '\n'
-                        '// PROD\n'
-                        '#if 1\n') not in msconfig:
+                if (
+                    '// V2 Master Server:\n' '\n' '// PROD\n' '#if 1\n'
+                ) not in msconfig:
                     raise CleanError('Not using prod v2 master server.')
 
     def _check_sync_states(self) -> None:
         # Make sure none of our sync targets have been mucked with since
         # their last sync.
-        if (subprocess.run(['tools/pcommand', 'sync', 'check'],
-                           check=False).returncode != 0):
+        if (
+            subprocess.run(
+                ['tools/pcommand', 'sync', 'check'], check=False
+            ).returncode
+            != 0
+        ):
             raise CleanError('Sync check failed; you may need to run "sync".')
 
     def _update_assets_makefile(self) -> None:
-        if (subprocess.run(
-            ['tools/pcommand', 'update_assets_makefile', self._checkarg],
-                check=False).returncode != 0):
-            print(
-                f'{Clr.RED}Error checking/updating assets Makefile.{Clr.RST}')
+        if (
+            subprocess.run(
+                ['tools/pcommand', 'update_assets_makefile', self._checkarg],
+                check=False,
+            ).returncode
+            != 0
+        ):
+            print(f'{Clr.RED}Error checking/updating assets Makefile.{Clr.RST}')
             sys.exit(255)
 
     def _update_meta_makefile(self) -> None:
         try:
-            subprocess.run(['tools/pcommand', 'update_meta_makefile'] +
-                           self._checkarglist,
-                           check=True)
+            subprocess.run(
+                ['tools/pcommand', 'update_meta_makefile'] + self._checkarglist,
+                check=True,
+            )
         except Exception as exc:
             raise CleanError('Error checking/updating meta Makefile.') from exc
 
     def _update_resources_makefile(self) -> None:
         try:
-            subprocess.run(['tools/pcommand', 'update_resources_makefile'] +
-                           self._checkarglist,
-                           check=True)
+            subprocess.run(
+                ['tools/pcommand', 'update_resources_makefile']
+                + self._checkarglist,
+                check=True,
+            )
         except Exception as exc:
             raise CleanError(
-                'Error checking/updating resources Makefile.') from exc
+                'Error checking/updating resources Makefile.'
+            ) from exc
 
     def _update_dummy_modules(self) -> None:
         # Update our dummy _ba module.
@@ -697,8 +791,9 @@ class Updater:
         # build so its success may depend on the cmake build files having
         # already been updated.
         try:
-            subprocess.run(['tools/pcommand', 'update_dummy_modules'] +
-                           self._checkarglist,
-                           check=True)
+            subprocess.run(
+                ['tools/pcommand', 'update_dummy_modules'] + self._checkarglist,
+                check=True,
+            )
         except Exception as exc:
             raise CleanError('Error checking/updating dummy module.') from exc

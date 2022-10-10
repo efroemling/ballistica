@@ -80,13 +80,15 @@ def getrefs(obj: Any) -> list[Any]:
 def printfiles(file: TextIO | None = None) -> None:
     """Print info about open files in the current app."""
     import io
+
     file = sys.stderr if file is None else file
     try:
         import psutil
     except ImportError:
         print(
             "Error: printfiles requires the 'psutil' module to be installed.",
-            file=file)
+            file=file,
+        )
         return
 
     proc = psutil.Process()
@@ -110,16 +112,20 @@ def printfiles(file: TextIO | None = None) -> None:
         textio_s = id(textio) if textio is not None else '<not found>'
         fileio = fileio_ids.get(ofile.fd)
         fileio_s = id(fileio) if fileio is not None else '<not found>'
-        print(f'#{i+1}: path={ofile.path!r},'
-              f' fd={ofile.fd}, mode={mode!r}, TextIOWrapper={textio_s},'
-              f' FileIO={fileio_s}')
+        print(
+            f'#{i+1}: path={ofile.path!r},'
+            f' fd={ofile.fd}, mode={mode!r}, TextIOWrapper={textio_s},'
+            f' FileIO={fileio_s}'
+        )
 
 
-def printrefs(obj: Any,
-              max_level: int = 2,
-              exclude_objs: list[Any] | None = None,
-              expand_ids: list[int] | None = None,
-              file: TextIO | None = None) -> None:
+def printrefs(
+    obj: Any,
+    max_level: int = 2,
+    exclude_objs: list[Any] | None = None,
+    expand_ids: list[int] | None = None,
+    file: TextIO | None = None,
+) -> None:
     """Print human readable list of objects referring to an object.
 
     'max_level' specifies how many levels of recursion are printed.
@@ -129,12 +135,14 @@ def printrefs(obj: Any,
     'expand_ids' can be a list of object ids; if that particular object is
       found, it will always be expanded even if max_level has been reached.
     """
-    _printrefs(obj,
-               level=0,
-               max_level=max_level,
-               exclude_objs=[] if exclude_objs is None else exclude_objs,
-               expand_ids=[] if expand_ids is None else expand_ids,
-               file=sys.stderr if file is None else file)
+    _printrefs(
+        obj,
+        level=0,
+        max_level=max_level,
+        exclude_objs=[] if exclude_objs is None else exclude_objs,
+        expand_ids=[] if expand_ids is None else expand_ids,
+        file=sys.stderr if file is None else file,
+    )
 
 
 def printtypes(limit: int = 50, file: TextIO | None = None) -> None:
@@ -160,8 +168,8 @@ def printtypes(limit: int = 50, file: TextIO | None = None) -> None:
 
     print(f'Types most allocated ({allobjc} total objects):', file=file)
     for i, tpitem in enumerate(
-            sorted(objtypes.items(), key=lambda x: x[1],
-                   reverse=True)[:limit]):
+        sorted(objtypes.items(), key=lambda x: x[1], reverse=True)[:limit]
+    ):
         tpname, tpval = tpitem
         percent = tpval / allobjc * 100.0
         print(f'{i+1}: {tpname}: {tpval} ({percent:.2f}%)', file=file)
@@ -183,8 +191,13 @@ def _desc(obj: Any) -> str:
         # Print length and the first few types.
         tps = [_desctype(i) for i in obj[:3]]
         tpsj = ', '.join(tps)
-        tpss = (f', contains [{tpsj}, ...]'
-                if len(obj) > 3 else f', contains [{tpsj}]' if tps else '')
+        tpss = (
+            f', contains [{tpsj}, ...]'
+            if len(obj) > 3
+            else f', contains [{tpsj}]'
+            if tps
+            else ''
+        )
         extra = f' (len {len(obj)}{tpss})'
     elif isinstance(obj, dict):
         # If it seems to be the vars() for a type or module,
@@ -199,16 +212,27 @@ def _desc(obj: Any) -> str:
                 f'{repr(n)}: {_desctype(v)}' for n, v in list(obj.items())[:3]
             ]
             pairsj = ', '.join(pairs)
-            pairss = (f', contains {{{pairsj}, ...}}' if len(obj) > 3 else
-                      f', contains {{{pairsj}}}' if pairs else '')
+            pairss = (
+                f', contains {{{pairsj}, ...}}'
+                if len(obj) > 3
+                else f', contains {{{pairsj}}}'
+                if pairs
+                else ''
+            )
             extra = f' (len {len(obj)}{pairss})'
     if extra is None:
         extra = ''
     return f'{_desctype(obj)} @ {id(obj)}{extra}'
 
 
-def _printrefs(obj: Any, level: int, max_level: int, exclude_objs: list,
-               expand_ids: list[int], file: TextIO) -> None:
+def _printrefs(
+    obj: Any,
+    level: int,
+    max_level: int,
+    exclude_objs: list,
+    expand_ids: list[int],
+    file: TextIO,
+) -> None:
     ind = '  ' * level
     print(ind + _desc(obj), file=file)
     v = vars()
@@ -233,9 +257,11 @@ def _printrefs(obj: Any, level: int, max_level: int, exclude_objs: list,
 
             # The 'refs' list we just made will be listed as a referrer
             # of this obj, so explicitly exclude it from the obj's listing.
-            _printrefs(ref,
-                       level=level + 1,
-                       max_level=max_level,
-                       exclude_objs=exclude_objs + [refs],
-                       expand_ids=expand_ids,
-                       file=file)
+            _printrefs(
+                ref,
+                level=level + 1,
+                max_level=max_level,
+                exclude_objs=exclude_objs + [refs],
+                expand_ids=expand_ids,
+                file=file,
+            )

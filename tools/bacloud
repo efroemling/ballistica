@@ -21,8 +21,12 @@ import requests
 
 from efro.terminal import Clr
 from efro.error import CleanError
-from efro.dataclassio import (dataclass_from_json, dataclass_to_dict,
-                              dataclass_to_json, ioprepped)
+from efro.dataclassio import (
+    dataclass_from_json,
+    dataclass_to_dict,
+    dataclass_to_json,
+    ioprepped,
+)
 from bacommon.bacloud import RequestData, ResponseData, BACLOUD_VERSION
 
 if TYPE_CHECKING:
@@ -40,14 +44,17 @@ BACLOUD_SERVER_URL = os.getenv('BACLOUD_SERVER_URL', 'https://ballistica.net')
 @dataclass
 class StateData:
     """Persistent state data stored to disk."""
+
     login_token: str | None = None
 
 
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
     tval = time.time()
-    utc_offset = (datetime.datetime.fromtimestamp(tval) -
-                  datetime.datetime.utcfromtimestamp(tval)).total_seconds()
+    utc_offset = (
+        datetime.datetime.fromtimestamp(tval)
+        - datetime.datetime.utcfromtimestamp(tval)
+    ).total_seconds()
     return utc_offset
 
 
@@ -65,20 +72,24 @@ class App:
         # Make sure we can locate the project bacloud is being run from.
         self._project_root = Path(sys.argv[0]).parents[1]
         if not all(
-                Path(self._project_root, name).is_dir()
-                for name in ('tools', 'config', 'tests')):
+            Path(self._project_root, name).is_dir()
+            for name in ('tools', 'config', 'tests')
+        ):
             raise CleanError('Unable to locate project directory.')
 
         # Also run project prereqs checks so we can hopefully inform the user
         # of missing Python modules/etc. instead of just failing cryptically.
         try:
-            subprocess.run(['make', '--quiet', 'prereqs'],
-                           check=True,
-                           cwd=self._project_root)
+            subprocess.run(
+                ['make', '--quiet', 'prereqs'],
+                check=True,
+                cwd=self._project_root,
+            )
         except subprocess.CalledProcessError as exc:
             raise CleanError(
                 '"make prereqs" check failed. '
-                'Install missing requirements and try again.') from exc
+                'Install missing requirements and try again.'
+            ) from exc
 
         self._load_state()
 
@@ -105,8 +116,10 @@ class App:
             with open(self._state_data_path, 'r', encoding='utf-8') as infile:
                 self._state = dataclass_from_json(StateData, infile.read())
         except Exception:
-            print(f'{Clr.RED}Error loading {TOOL_NAME} data;'
-                  f' resetting to defaults.{Clr.RST}')
+            print(
+                f'{Clr.RED}Error loading {TOOL_NAME} data;'
+                f' resetting to defaults.{Clr.RST}'
+            )
 
     def _save_state(self) -> None:
         if not self._state_dir.exists():
@@ -114,10 +127,9 @@ class App:
         with open(self._state_data_path, 'w', encoding='utf-8') as outfile:
             outfile.write(dataclass_to_json(self._state))
 
-    def _servercmd(self,
-                   cmd: str,
-                   payload: dict,
-                   files: dict[str, IO] | None = None) -> ResponseData:
+    def _servercmd(
+        self, cmd: str, payload: dict, files: dict[str, IO] | None = None
+    ) -> ResponseData:
         """Issue a command to the server and get a response."""
 
         response_content: str | None = None
@@ -126,15 +138,16 @@ class App:
         headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
 
         rdata = {
-            'v':
-                BACLOUD_VERSION,
-            'r':
-                dataclass_to_json(
-                    RequestData(command=cmd,
-                                token=self._state.login_token,
-                                payload=payload,
-                                tzoffset=get_tz_offset_seconds(),
-                                isatty=sys.stdout.isatty())),
+            'v': BACLOUD_VERSION,
+            'r': dataclass_to_json(
+                RequestData(
+                    command=cmd,
+                    token=self._state.login_token,
+                    payload=payload,
+                    tzoffset=get_tz_offset_seconds(),
+                    isatty=sys.stdout.isatty(),
+                )
+            ),
         }
 
         # Trying urllib for comparison (note that this doesn't support
@@ -144,21 +157,23 @@ class App:
             import urllib.parse
 
             with urllib.request.urlopen(
-                    urllib.request.Request(
-                        url,
-                        urllib.parse.urlencode(rdata).encode(),
-                        headers)) as raw_response:
+                urllib.request.Request(
+                    url, urllib.parse.urlencode(rdata).encode(), headers
+                )
+            ) as raw_response:
                 if raw_response.getcode() != 200:
                     raise RuntimeError('Error talking to server')
                 response_content = raw_response.read().decode()
 
         # Using requests module.
         else:
-            with requests.post(url,
-                               headers=headers,
-                               data=rdata,
-                               files=files,
-                               timeout=TIMEOUT_SECONDS) as response_raw:
+            with requests.post(
+                url,
+                headers=headers,
+                data=rdata,
+                files=files,
+                timeout=TIMEOUT_SECONDS,
+            ) as response_raw:
                 response_raw.raise_for_status()
                 assert isinstance(response_raw.content, bytes)
                 response_content = response_raw.content.decode()
@@ -181,13 +196,16 @@ class App:
 
     def _upload_file(self, filename: str, call: str, args: dict) -> None:
         import tempfile
+
         print(f'Uploading {Clr.BLU}{filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
             gzpath = Path(tempdir, 'file.gz')
-            subprocess.run(f'gzip --stdout "{srcpath}" > "{gzpath}"',
-                           shell=True,
-                           check=True)
+            subprocess.run(
+                f'gzip --stdout "{srcpath}" > "{gzpath}"',
+                shell=True,
+                check=True,
+            )
             with open(gzpath, 'rb') as infile:
                 putfiles: dict = {'file': infile}
                 _response = self._servercmd(
@@ -198,11 +216,14 @@ class App:
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
+
         self._end_command_args['manifest'] = dataclass_to_dict(
-            DirectoryManifest.create_from_disk(Path(dirmanifest)))
+            DirectoryManifest.create_from_disk(Path(dirmanifest))
+        )
 
     def _handle_uploads(self, uploads: tuple[list[str], str, dict]) -> None:
         from concurrent.futures import ThreadPoolExecutor
+
         assert len(uploads) == 3
         filenames, uploadcmd, uploadargs = uploads
         assert isinstance(filenames, list)
@@ -233,6 +254,7 @@ class App:
     ) -> None:
         """Handle inline file data to be saved to the client."""
         import base64
+
         for fname, fdata in downloads_inline.items():
 
             # If there's a directory where we want our file to go, clear it
@@ -260,8 +282,7 @@ class App:
             # listed when the parent dir is visited, so lets make sure
             # to only acknowledge still-existing ones.
             dirnames = [
-                d for d in dirnames
-                if os.path.exists(os.path.join(basename, d))
+                d for d in dirnames if os.path.exists(os.path.join(basename, d))
             ]
             if not dirnames and not filenames and basename != prunedir:
                 os.rmdir(basename)
@@ -269,6 +290,7 @@ class App:
     def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
         """Handle uploading files inline."""
         import base64
+
         files: dict[str, str] = {}
         for filepath in uploads_inline:
             if not os.path.exists(filepath):
@@ -282,12 +304,14 @@ class App:
 
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
+
         print(f'{Clr.CYN}(url: {url}){Clr.RST}')
         webbrowser.open(url)
 
     def _handle_input_prompt(self, prompt: str, as_password: bool) -> None:
         if as_password:
             from getpass import getpass
+
             self._end_command_args['input'] = getpass(prompt=prompt)
         else:
             if prompt:
@@ -331,12 +355,16 @@ class App:
             if response.open_url is not None:
                 self._handle_open_url(response.open_url)
             if response.input_prompt is not None:
-                self._handle_input_prompt(prompt=response.input_prompt[0],
-                                          as_password=response.input_prompt[1])
+                self._handle_input_prompt(
+                    prompt=response.input_prompt[0],
+                    as_password=response.input_prompt[1],
+                )
             if response.end_message is not None:
-                print(response.end_message,
-                      end=response.end_message_end,
-                      flush=True)
+                print(
+                    response.end_message,
+                    end=response.end_message_end,
+                    flush=True,
+                )
             if response.end_command is not None:
                 nextcall = response.end_command
                 for key, val in self._end_command_args.items():

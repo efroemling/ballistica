@@ -44,7 +44,7 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     available_settings = [
         ba.IntSetting('Target Count', min_value=1, default=3),
         ba.BoolSetting('Enable Impact Bombs', default=True),
-        ba.BoolSetting('Enable Triple Bombs', default=True)
+        ba.BoolSetting('Enable Triple Bombs', default=True),
     ]
     default_music = ba.MusicType.FORWARD_MARCH
 
@@ -55,8 +55,9 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
         # We support any teams or versus sessions.
-        return (issubclass(sessiontype, ba.CoopSession)
-                or issubclass(sessiontype, ba.MultiTeamSession))
+        return issubclass(sessiontype, ba.CoopSession) or issubclass(
+            sessiontype, ba.MultiTeamSession
+        )
 
     def __init__(self, settings: dict):
         super().__init__(settings)
@@ -86,8 +87,11 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
 
     def spawn_player(self, player: Player) -> ba.Actor:
         spawn_center = (0, 3, -5)
-        pos = (spawn_center[0] + random.uniform(-1.5, 1.5), spawn_center[1],
-               spawn_center[2] + random.uniform(-1.5, 1.5))
+        pos = (
+            spawn_center[0] + random.uniform(-1.5, 1.5),
+            spawn_center[1],
+            spawn_center[2] + random.uniform(-1.5, 1.5),
+        )
 
         # Reset their streak.
         player.streak = 0
@@ -153,7 +157,8 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
 
         bullseye = any(
             target.do_hit_at_position(pos, player)
-            for target in list(self._targets))
+            for target in list(self._targets)
+        )
         if bullseye:
             player.streak += 1
         else:
@@ -208,39 +213,42 @@ class Target(ba.Actor):
         # It can be handy to test with this on to make sure the projection
         # isn't too far off from the actual object.
         show_in_space = False
-        loc1 = ba.newnode('locator',
-                          attrs={
-                              'shape': 'circle',
-                              'position': position,
-                              'color': (0, 1, 0),
-                              'opacity': 0.5,
-                              'draw_beauty': show_in_space,
-                              'additive': True
-                          })
-        loc2 = ba.newnode('locator',
-                          attrs={
-                              'shape': 'circleOutline',
-                              'position': position,
-                              'color': (0, 1, 0),
-                              'opacity': 0.3,
-                              'draw_beauty': False,
-                              'additive': True
-                          })
-        loc3 = ba.newnode('locator',
-                          attrs={
-                              'shape': 'circleOutline',
-                              'position': position,
-                              'color': (0, 1, 0),
-                              'opacity': 0.1,
-                              'draw_beauty': False,
-                              'additive': True
-                          })
+        loc1 = ba.newnode(
+            'locator',
+            attrs={
+                'shape': 'circle',
+                'position': position,
+                'color': (0, 1, 0),
+                'opacity': 0.5,
+                'draw_beauty': show_in_space,
+                'additive': True,
+            },
+        )
+        loc2 = ba.newnode(
+            'locator',
+            attrs={
+                'shape': 'circleOutline',
+                'position': position,
+                'color': (0, 1, 0),
+                'opacity': 0.3,
+                'draw_beauty': False,
+                'additive': True,
+            },
+        )
+        loc3 = ba.newnode(
+            'locator',
+            attrs={
+                'shape': 'circleOutline',
+                'position': position,
+                'color': (0, 1, 0),
+                'opacity': 0.1,
+                'draw_beauty': False,
+                'additive': True,
+            },
+        )
         self._nodes = [loc1, loc2, loc3]
         ba.animate_array(loc1, 'size', 1, {0: [0.0], 0.2: [self._r1 * 2.0]})
-        ba.animate_array(loc2, 'size', 1, {
-            0.05: [0.0],
-            0.25: [self._r2 * 2.0]
-        })
+        ba.animate_array(loc2, 'size', 1, {0.05: [0.0], 0.25: [self._r2 * 2.0]})
         ba.animate_array(loc3, 'size', 1, {0.1: [0.0], 0.3: [self._r3 * 2.0]})
         ba.playsound(ba.getsound('laserReverse'))
 
@@ -268,7 +276,7 @@ class Target(ba.Actor):
         if activity.has_ended() or self._hit or not self._nodes:
             return False
 
-        diff = (ba.Vec3(pos) - self._position)
+        diff = ba.Vec3(pos) - self._position
 
         # Disregard Y difference. Our target point probably isn't exactly
         # on the ground anyway.
@@ -284,7 +292,7 @@ class Target(ba.Actor):
                 0.0: (1.0, 0.0, 0.0),
                 0.049: (1.0, 0.0, 0.0),
                 0.05: (1.0, 1.0, 1.0),
-                0.1: (0.0, 1.0, 0.0)
+                0.1: (0.0, 1.0, 0.0),
             }
             cdull = (0.3, 0.3, 0.3)
             popupcolor: Sequence[float]
@@ -301,9 +309,15 @@ class Target(ba.Actor):
                 if streak > 0:
                     ba.playsound(
                         ba.getsound(
-                            'orchestraHit4' if streak > 3 else
-                            'orchestraHit3' if streak > 2 else
-                            'orchestraHit2' if streak > 1 else 'orchestraHit'))
+                            'orchestraHit4'
+                            if streak > 3
+                            else 'orchestraHit3'
+                            if streak > 2
+                            else 'orchestraHit2'
+                            if streak > 1
+                            else 'orchestraHit'
+                        )
+                    )
             elif dist <= self._r2 + self._rfudge:
                 self._nodes[0].color = cdull
                 self._nodes[2].color = cdull
@@ -330,10 +344,12 @@ class Target(ba.Actor):
             if len(activity.players) > 1:
                 popupcolor = ba.safecolor(player.color, target_intensity=0.75)
                 popupstr += ' ' + player.getname()
-            PopupText(popupstr,
-                      position=self._position,
-                      color=popupcolor,
-                      scale=popupscale).autoretain()
+            PopupText(
+                popupstr,
+                position=self._position,
+                color=popupcolor,
+                scale=popupscale,
+            ).autoretain()
 
             # Give this player's team points and update the score-board.
             player.team.score += points
@@ -343,23 +359,28 @@ class Target(ba.Actor):
             # Also give this individual player points
             # (only applies in teams mode).
             assert activity.stats is not None
-            activity.stats.player_scored(player,
-                                         points,
-                                         showpoints=False,
-                                         screenmessage=False)
+            activity.stats.player_scored(
+                player, points, showpoints=False, screenmessage=False
+            )
 
-            ba.animate_array(self._nodes[0], 'size', 1, {
-                0.8: self._nodes[0].size,
-                1.0: [0.0]
-            })
-            ba.animate_array(self._nodes[1], 'size', 1, {
-                0.85: self._nodes[1].size,
-                1.05: [0.0]
-            })
-            ba.animate_array(self._nodes[2], 'size', 1, {
-                0.9: self._nodes[2].size,
-                1.1: [0.0]
-            })
+            ba.animate_array(
+                self._nodes[0],
+                'size',
+                1,
+                {0.8: self._nodes[0].size, 1.0: [0.0]},
+            )
+            ba.animate_array(
+                self._nodes[1],
+                'size',
+                1,
+                {0.85: self._nodes[1].size, 1.05: [0.0]},
+            )
+            ba.animate_array(
+                self._nodes[2],
+                'size',
+                1,
+                {0.9: self._nodes[2].size, 1.1: [0.0]},
+            )
             ba.timer(1.1, ba.Call(self.handlemessage, ba.DieMessage()))
 
         return bullseye

@@ -91,8 +91,9 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
 
         # Base class overrides
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
-                              ba.MusicType.FORWARD_MARCH)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.FORWARD_MARCH
+        )
 
     def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
@@ -107,19 +108,19 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:
         shared = SharedObjects.get()
         base_pos = self.map.get_flag_position(sessionteam.id)
-        ba.newnode('light',
-                   attrs={
-                       'position': base_pos,
-                       'intensity': 0.6,
-                       'height_attenuated': False,
-                       'volume_intensity_scale': 0.1,
-                       'radius': 0.1,
-                       'color': sessionteam.color
-                   })
+        ba.newnode(
+            'light',
+            attrs={
+                'position': base_pos,
+                'intensity': 0.6,
+                'height_attenuated': False,
+                'volume_intensity_scale': 0.1,
+                'radius': 0.1,
+                'color': sessionteam.color,
+            },
+        )
         Flag.project_stand(base_pos)
-        flag = Flag(touchable=False,
-                    position=base_pos,
-                    color=sessionteam.color)
+        flag = Flag(touchable=False, position=base_pos, color=sessionteam.color)
         team = Team(base_pos=base_pos, flag=flag)
 
         mat = self._base_region_materials[sessionteam.id] = ba.Material()
@@ -128,8 +129,11 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
-                ('call', 'at_connect', ba.Call(self._handle_base_collide,
-                                               team)),
+                (
+                    'call',
+                    'at_connect',
+                    ba.Call(self._handle_base_collide, team),
+                ),
             ),
         )
 
@@ -140,8 +144,9 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
                 'position': (base_pos[0], base_pos[1] + 0.75, base_pos[2]),
                 'scale': (0.5, 0.5, 0.5),
                 'type': 'sphere',
-                'materials': [self._base_region_materials[sessionteam.id]]
-            })
+                'materials': [self._base_region_materials[sessionteam.id]],
+            },
+        )
 
         return team
 
@@ -163,13 +168,15 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
             super().handlemessage(msg)
 
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
-        light = ba.newnode('light',
-                           attrs={
-                               'position': team.base_pos,
-                               'height_attenuated': False,
-                               'radius': 0.3,
-                               'color': team.color
-                           })
+        light = ba.newnode(
+            'light',
+            attrs={
+                'position': team.base_pos,
+                'height_attenuated': False,
+                'radius': 0.3,
+                'color': team.color,
+            },
+        )
         ba.animate(light, 'intensity', {0: 0, 0.25: 2.0, 0.5: 0}, loop=True)
         ba.timer(length, light.delete)
 
@@ -203,38 +210,34 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
                 for player in player_team.players:
                     if player.is_alive():
                         pos = player.node.position
-                        light = ba.newnode('light',
-                                           attrs={
-                                               'position': pos,
-                                               'color': player_team.color,
-                                               'height_attenuated': False,
-                                               'radius': 0.4
-                                           })
+                        light = ba.newnode(
+                            'light',
+                            attrs={
+                                'position': pos,
+                                'color': player_team.color,
+                                'height_attenuated': False,
+                                'radius': 0.4,
+                            },
+                        )
                         ba.timer(0.5, light.delete)
-                        ba.animate(light, 'intensity', {
-                            0: 0,
-                            0.1: 1.0,
-                            0.5: 0
-                        })
+                        ba.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.5: 0})
 
-                        new_pos = (self.map.get_start_position(player_team.id))
-                        light = ba.newnode('light',
-                                           attrs={
-                                               'position': new_pos,
-                                               'color': player_team.color,
-                                               'radius': 0.4,
-                                               'height_attenuated': False
-                                           })
+                        new_pos = self.map.get_start_position(player_team.id)
+                        light = ba.newnode(
+                            'light',
+                            attrs={
+                                'position': new_pos,
+                                'color': player_team.color,
+                                'radius': 0.4,
+                                'height_attenuated': False,
+                            },
+                        )
                         ba.timer(0.5, light.delete)
-                        ba.animate(light, 'intensity', {
-                            0: 0,
-                            0.1: 1.0,
-                            0.5: 0
-                        })
+                        ba.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.5: 0})
                         if player.actor:
                             player.actor.handlemessage(
-                                ba.StandMessage(new_pos,
-                                                random.uniform(0, 360)))
+                                ba.StandMessage(new_pos, random.uniform(0, 360))
+                            )
 
                 # Have teammates celebrate.
                 for player in player_team.players:
@@ -254,5 +257,6 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.score,
-                                            self._score_to_win)
+            self._scoreboard.set_team_value(
+                team, team.score, self._score_to_win
+            )

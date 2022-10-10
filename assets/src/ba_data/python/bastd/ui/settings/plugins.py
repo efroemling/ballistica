@@ -15,9 +15,11 @@ if TYPE_CHECKING:
 class PluginSettingsWindow(ba.Window):
     """Window for configuring plugins."""
 
-    def __init__(self,
-                 transition: str = 'in_right',
-                 origin_widget: ba.Widget | None = None):
+    def __init__(
+        self,
+        transition: str = 'in_right',
+        origin_widget: ba.Widget | None = None,
+    ):
         # pylint: disable=too-many-locals
         app = ba.app
 
@@ -34,17 +36,32 @@ class PluginSettingsWindow(ba.Window):
         uiscale = ba.app.ui.uiscale
         self._width = 870.0 if uiscale is ba.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
-        self._height = (390.0 if uiscale is ba.UIScale.SMALL else
-                        450.0 if uiscale is ba.UIScale.MEDIUM else 520.0)
+        self._height = (
+            390.0
+            if uiscale is ba.UIScale.SMALL
+            else 450.0
+            if uiscale is ba.UIScale.MEDIUM
+            else 520.0
+        )
         top_extra = 10 if uiscale is ba.UIScale.SMALL else 0
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            toolbar_visibility='menu_minimal',
-            scale_origin_stack_offset=scale_origin,
-            scale=(2.06 if uiscale is ba.UIScale.SMALL else
-                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        super().__init__(
+            root_widget=ba.containerwidget(
+                size=(self._width, self._height + top_extra),
+                transition=transition,
+                toolbar_visibility='menu_minimal',
+                scale_origin_stack_offset=scale_origin,
+                scale=(
+                    2.06
+                    if uiscale is ba.UIScale.SMALL
+                    else 1.4
+                    if uiscale is ba.UIScale.MEDIUM
+                    else 1.0
+                ),
+                stack_offset=(0, -25)
+                if uiscale is ba.UIScale.SMALL
+                else (0, 0),
+            )
+        )
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
@@ -52,8 +69,9 @@ class PluginSettingsWindow(ba.Window):
         self._sub_height = 724.0
 
         if app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
-            ba.containerwidget(edit=self._root_widget,
-                               on_cancel_call=self._do_back)
+            ba.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._do_back
+            )
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
@@ -64,38 +82,47 @@ class PluginSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back)
-            ba.containerwidget(edit=self._root_widget,
-                               cancel_button=self._back_button)
+                on_activate_call=self._do_back,
+            )
+            ba.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
-        self._title_text = ba.textwidget(parent=self._root_widget,
-                                         position=(0, self._height - 52),
-                                         size=(self._width, 25),
-                                         text=ba.Lstr(resource='pluginsText'),
-                                         color=app.ui.title_color,
-                                         h_align='center',
-                                         v_align='top')
+        self._title_text = ba.textwidget(
+            parent=self._root_widget,
+            position=(0, self._height - 52),
+            size=(self._width, 25),
+            text=ba.Lstr(resource='pluginsText'),
+            color=app.ui.title_color,
+            h_align='center',
+            v_align='top',
+        )
 
         if self._back_button is not None:
-            ba.buttonwidget(edit=self._back_button,
-                            button_type='backSmall',
-                            size=(60, 60),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=self._back_button,
+                button_type='backSmall',
+                size=(60, 60),
+                label=ba.charstr(ba.SpecialChar.BACK),
+            )
 
-        self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
-                                             position=(50 + x_inset, 50),
-                                             simple_culling_v=20.0,
-                                             highlight=False,
-                                             size=(self._scroll_width,
-                                                   self._scroll_height),
-                                             selection_loops_to_parent=True)
+        self._scrollwidget = ba.scrollwidget(
+            parent=self._root_widget,
+            position=(50 + x_inset, 50),
+            simple_culling_v=20.0,
+            highlight=False,
+            size=(self._scroll_width, self._scroll_height),
+            selection_loops_to_parent=True,
+        )
         ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
-        self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
-                                             selection_loops_to_parent=True)
+        self._subcontainer = ba.columnwidget(
+            parent=self._scrollwidget, selection_loops_to_parent=True
+        )
 
         if ba.app.meta.scanresults is None:
-            ba.screenmessage('Still scanning plugins; please try again.',
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                'Still scanning plugins; please try again.', color=(1, 0, 0)
+            )
             ba.playsound(ba.getsound('error'))
         pluglist = ba.app.plugins.potential_plugins
         plugstates: dict[str, dict] = ba.app.config.setdefault('Plugins', {})
@@ -112,10 +139,17 @@ class PluginSettingsWindow(ba.Window):
                 value=checked,
                 maxwidth=self._scroll_width - 100,
                 size=(self._scroll_width - 40, 50),
-                on_value_change_call=ba.Call(self._check_value_changed,
-                                             availplug),
-                textcolor=((0.8, 0.3, 0.3) if not availplug.available else
-                           (0, 1, 0) if active else (0.6, 0.6, 0.6)))
+                on_value_change_call=ba.Call(
+                    self._check_value_changed, availplug
+                ),
+                textcolor=(
+                    (0.8, 0.3, 0.3)
+                    if not availplug.available
+                    else (0, 1, 0)
+                    if active
+                    else (0.6, 0.6, 0.6)
+                ),
+            )
 
             # Make sure we scroll all the way to the end when using
             # keyboard/button nav.
@@ -124,16 +158,19 @@ class PluginSettingsWindow(ba.Window):
             # Keep last from looping to back button when down is pressed.
             if i == len(pluglist) - 1:
                 ba.widget(edit=check, down_widget=check)
-        ba.containerwidget(edit=self._root_widget,
-                           selected_child=self._scrollwidget)
+        ba.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
+        )
 
         self._restore_state()
 
-    def _check_value_changed(self, plug: ba.PotentialPlugin,
-                             value: bool) -> None:
+    def _check_value_changed(
+        self, plug: ba.PotentialPlugin, value: bool
+    ) -> None:
         ba.screenmessage(
             ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
-            color=(1.0, 0.5, 0.0))
+            color=(1.0, 0.5, 0.0),
+        )
         plugstates: dict[str, dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         plugstate = plugstates.setdefault(plug.class_path, {})
@@ -149,8 +186,11 @@ class PluginSettingsWindow(ba.Window):
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.advanced import AdvancedSettingsWindow
+
         self._save_state()
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        ba.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
         ba.app.ui.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget())
+            AdvancedSettingsWindow(transition='in_left').get_root_widget()
+        )

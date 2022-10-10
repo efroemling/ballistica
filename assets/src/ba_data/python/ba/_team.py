@@ -44,10 +44,12 @@ class SessionTeam:
     id: int
     """The unique numeric id of the team."""
 
-    def __init__(self,
-                 team_id: int = 0,
-                 name: ba.Lstr | str = '',
-                 color: Sequence[float] = (1.0, 1.0, 1.0)):
+    def __init__(
+        self,
+        team_id: int = 0,
+        name: ba.Lstr | str = '',
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+    ):
         """Instantiate a ba.SessionTeam.
 
         In most cases, all teams are provided to you by the ba.Session,
@@ -109,7 +111,8 @@ class Team(Generic[PlayerType]):
                 f' operator (__eq__) which will break internal'
                 f' logic. Please remove it.\n'
                 f'For dataclasses you can do "dataclass(eq=False)"'
-                f' in the class decorator.')
+                f' in the class decorator.'
+            )
 
         self.players = []
         self._sessionteam = weakref.ref(sessionteam)
@@ -120,8 +123,9 @@ class Team(Generic[PlayerType]):
         self._expired = False
         self._postinited = True
 
-    def manual_init(self, team_id: int, name: ba.Lstr | str,
-                    color: tuple[float, ...]) -> None:
+    def manual_init(
+        self, team_id: int, name: ba.Lstr | str, color: tuple[float, ...]
+    ) -> None:
         """Manually init a team for uses such as bots."""
         self.id = team_id
         self.name = name
@@ -186,6 +190,7 @@ class Team(Generic[PlayerType]):
             if sessionteam is not None:
                 return sessionteam
         from ba import _error
+
         raise _error.SessionTeamNotFoundError()
 
 

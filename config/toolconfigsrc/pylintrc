@@ -21,8 +21,14 @@ score=no
 init-import=yes
 
 [FORMAT]
-# PEP-8 specifies 79 chars (that's right, not 80)
-max-line-length=79
+# PEP-8 specifies 79 chars (that's right, not 80).
+# Update: switching to 80 to reclaim that extra char. There
+# seems to be a lot of wiggle room in line-lengths even by
+# good PEP-8 citizens (black code formatting defaults to 88).
+# Currently sticking with 80 across the board though since
+# wanting to support coding on phones and smaller devices as
+# much as possible.
+max-line-length=80
 
 [MESSAGES CONTROL]
 # broad-except:

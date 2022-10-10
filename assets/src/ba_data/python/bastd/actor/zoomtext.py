@@ -21,22 +21,24 @@ class ZoomText(ba.Actor):
     Used for things such as the 'BOB WINS' victory messages.
     """
 
-    def __init__(self,
-                 text: str | ba.Lstr,
-                 position: tuple[float, float] = (0.0, 0.0),
-                 shiftposition: tuple[float, float] | None = None,
-                 shiftdelay: float | None = None,
-                 lifespan: float | None = None,
-                 flash: bool = True,
-                 trail: bool = True,
-                 h_align: str = 'center',
-                 color: Sequence[float] = (0.9, 0.4, 0.0),
-                 jitter: float = 0.0,
-                 trailcolor: Sequence[float] = (1.0, 0.35, 0.1, 0.0),
-                 scale: float = 1.0,
-                 project_scale: float = 1.0,
-                 tilt_translate: float = 0.0,
-                 maxwidth: float | None = None):
+    def __init__(
+        self,
+        text: str | ba.Lstr,
+        position: tuple[float, float] = (0.0, 0.0),
+        shiftposition: tuple[float, float] | None = None,
+        shiftdelay: float | None = None,
+        lifespan: float | None = None,
+        flash: bool = True,
+        trail: bool = True,
+        h_align: str = 'center',
+        color: Sequence[float] = (0.9, 0.4, 0.0),
+        jitter: float = 0.0,
+        trailcolor: Sequence[float] = (1.0, 0.35, 0.1, 0.0),
+        scale: float = 1.0,
+        project_scale: float = 1.0,
+        tilt_translate: float = 0.0,
+        maxwidth: float | None = None,
+    ):
         # pylint: disable=too-many-locals
         super().__init__()
         self._dying = False
@@ -61,8 +63,9 @@ class ZoomText(ba.Actor):
                 'maxwidth': maxwidth if maxwidth is not None else 0.0,
                 'tilt_translate': tilt_translate,
                 'h_align': h_align,
-                'v_align': 'center'
-            })
+                'v_align': 'center',
+            },
+        )
 
         # we never jitter in vr mode..
         if ba.app.vr_mode:
@@ -78,79 +81,81 @@ class ZoomText(ba.Actor):
             positionadjusted2 = (shiftposition[0], shiftposition[1] - 100)
             ba.timer(
                 shiftdelay,
-                ba.WeakCall(self._shift, positionadjusted, positionadjusted2))
+                ba.WeakCall(self._shift, positionadjusted, positionadjusted2),
+            )
             if jitter > 0.0:
                 ba.timer(
                     shiftdelay + 0.25,
-                    ba.WeakCall(self._jitter, positionadjusted2,
-                                jitter * scale))
-        color_combine = ba.newnode('combine',
-                                   owner=self.node,
-                                   attrs={
-                                       'input2': color[2],
-                                       'input3': 1.0,
-                                       'size': 4
-                                   })
+                    ba.WeakCall(
+                        self._jitter, positionadjusted2, jitter * scale
+                    ),
+                )
+        color_combine = ba.newnode(
+            'combine',
+            owner=self.node,
+            attrs={'input2': color[2], 'input3': 1.0, 'size': 4},
+        )
         if trail:
-            trailcolor_n = ba.newnode('combine',
-                                      owner=self.node,
-                                      attrs={
-                                          'size': 3,
-                                          'input0': trailcolor[0],
-                                          'input1': trailcolor[1],
-                                          'input2': trailcolor[2]
-                                      })
+            trailcolor_n = ba.newnode(
+                'combine',
+                owner=self.node,
+                attrs={
+                    'size': 3,
+                    'input0': trailcolor[0],
+                    'input1': trailcolor[1],
+                    'input2': trailcolor[2],
+                },
+            )
             trailcolor_n.connectattr('output', self.node, 'trailcolor')
             basemult = 0.85
             ba.animate(
-                self.node, 'trail_project_scale', {
+                self.node,
+                'trail_project_scale',
+                {
                     0: 0 * project_scale,
                     basemult * 0.201: 0.6 * project_scale,
                     basemult * 0.347: 0.8 * project_scale,
                     basemult * 0.478: 0.9 * project_scale,
                     basemult * 0.595: 0.93 * project_scale,
                     basemult * 0.748: 0.95 * project_scale,
-                    basemult * 0.941: 0.95 * project_scale
-                })
+                    basemult * 0.941: 0.95 * project_scale,
+                },
+            )
         if flash:
             mult = 2.0
             tm1 = 0.15
             tm2 = 0.3
-            ba.animate(color_combine,
-                       'input0', {
-                           0: color[0] * mult,
-                           tm1: color[0],
-                           tm2: color[0] * mult
-                       },
-                       loop=True)
-            ba.animate(color_combine,
-                       'input1', {
-                           0: color[1] * mult,
-                           tm1: color[1],
-                           tm2: color[1] * mult
-                       },
-                       loop=True)
-            ba.animate(color_combine,
-                       'input2', {
-                           0: color[2] * mult,
-                           tm1: color[2],
-                           tm2: color[2] * mult
-                       },
-                       loop=True)
+            ba.animate(
+                color_combine,
+                'input0',
+                {0: color[0] * mult, tm1: color[0], tm2: color[0] * mult},
+                loop=True,
+            )
+            ba.animate(
+                color_combine,
+                'input1',
+                {0: color[1] * mult, tm1: color[1], tm2: color[1] * mult},
+                loop=True,
+            )
+            ba.animate(
+                color_combine,
+                'input2',
+                {0: color[2] * mult, tm1: color[2], tm2: color[2] * mult},
+                loop=True,
+            )
         else:
             color_combine.input0 = color[0]
             color_combine.input1 = color[1]
         color_combine.connectattr('output', self.node, 'color')
-        ba.animate(self.node, 'project_scale', {
-            0: 0,
-            0.27: 1.05 * project_scale,
-            0.3: 1 * project_scale
-        })
+        ba.animate(
+            self.node,
+            'project_scale',
+            {0: 0, 0.27: 1.05 * project_scale, 0.3: 1 * project_scale},
+        )
 
         # if they give us a lifespan, kill ourself down the line
         if lifespan is not None:
-            ba.timer(lifespan, ba.WeakCall(self.handlemessage,
-                                           ba.DieMessage()))
+            ba.timer(lifespan, ba.WeakCall(self.handlemessage, ba.DieMessage()))
 
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
@@ -161,18 +166,22 @@ class ZoomText(ba.Actor):
                     self.node.delete()
                 else:
                     ba.animate(
-                        self.node, 'project_scale', {
+                        self.node,
+                        'project_scale',
+                        {
                             0.0: 1 * self._project_scale,
-                            0.6: 1.2 * self._project_scale
-                        })
+                            0.6: 1.2 * self._project_scale,
+                        },
+                    )
                     ba.animate(self.node, 'opacity', {0.0: 1, 0.3: 0})
                     ba.animate(self.node, 'trail_opacity', {0.0: 1, 0.6: 0})
                     ba.timer(0.7, self.node.delete)
             return None
         return super().handlemessage(msg)
 
-    def _jitter(self, position: tuple[float, float],
-                jitter_amount: float) -> None:
+    def _jitter(
+        self, position: tuple[float, float], jitter_amount: float
+    ) -> None:
         if not self.node:
             return
         cmb = ba.newnode('combine', owner=self.node, attrs={'size': 2})
@@ -181,14 +190,17 @@ class ZoomText(ba.Actor):
             timeval = 0.0
             # gen some random keys for that stop-motion-y look
             for _i in range(10):
-                keys[timeval] = (position[index] +
-                                 (random.random() - 0.5) * jitter_amount * 1.6)
+                keys[timeval] = (
+                    position[index]
+                    + (random.random() - 0.5) * jitter_amount * 1.6
+                )
                 timeval += random.random() * 0.1
             ba.animate(cmb, attr, keys, loop=True)
         cmb.connectattr('output', self.node, 'position')
 
-    def _shift(self, position1: tuple[float, float],
-               position2: tuple[float, float]) -> None:
+    def _shift(
+        self, position1: tuple[float, float], position2: tuple[float, float]
+    ) -> None:
         if not self.node:
             return
         cmb = ba.newnode('combine', owner=self.node, attrs={'size': 2})

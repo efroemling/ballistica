@@ -57,6 +57,7 @@ class ErrorSysResponse(SysResponse):
 
     class ErrorType(Enum):
         """Type of error that occurred while sending a message."""
+
         REMOTE = 0
         REMOTE_CLEAN = 1
         LOCAL = 2

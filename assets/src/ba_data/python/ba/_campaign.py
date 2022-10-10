@@ -28,10 +28,12 @@ class Campaign:
     Category: **App Classes**
     """
 
-    def __init__(self,
-                 name: str,
-                 sequential: bool = True,
-                 levels: list[ba.Level] | None = None):
+    def __init__(
+        self,
+        name: str,
+        sequential: bool = True,
+        levels: list[ba.Level] | None = None,
+    ):
         self._name = name
         self._sequential = sequential
         self._levels: list[ba.Level] = []
@@ -67,12 +69,13 @@ class Campaign:
     def getlevel(self, name: str) -> ba.Level:
         """Return a contained ba.Level by name."""
         from ba import _error
+
         for level in self._levels:
             if level.name == name:
                 return level
-        raise _error.NotFoundError("Level '" + name +
-                                   "' not found in campaign '" + self.name +
-                                   "'")
+        raise _error.NotFoundError(
+            "Level '" + name + "' not found in campaign '" + self.name + "'"
+        )
 
     def reset(self) -> None:
         """Reset state for the Campaign."""
@@ -91,9 +94,9 @@ class Campaign:
     @property
     def configdict(self) -> dict[str, Any]:
         """Return the live config dict for this campaign."""
-        val: dict[str, Any] = (_ba.app.config.setdefault('Campaigns',
-                                                         {}).setdefault(
-                                                             self._name, {}))
+        val: dict[str, Any] = _ba.app.config.setdefault(
+            'Campaigns', {}
+        ).setdefault(self._name, {})
         assert isinstance(val, dict)
         return val
 
@@ -121,92 +124,132 @@ def init_campaigns() -> None:
         Campaign(
             'Easy',
             levels=[
-                Level('Onslaught Training',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'training_easy'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Rookie Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'rookie_easy'},
-                      preview_texture_name='courtyardPreview'),
-                Level('Rookie Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'rookie_easy'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Pro Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'pro_easy'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Pro Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'pro_easy'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Pro Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'pro_easy'},
-                      preview_texture_name='towerDPreview'),
-                Level('Uber Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'uber_easy'},
-                      preview_texture_name='courtyardPreview'),
-                Level('Uber Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'uber_easy'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Uber Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'uber_easy'},
-                      preview_texture_name='towerDPreview')
+                Level(
+                    'Onslaught Training',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'training_easy'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Rookie Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'rookie_easy'},
+                    preview_texture_name='courtyardPreview',
+                ),
+                Level(
+                    'Rookie Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'rookie_easy'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Pro Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'pro_easy'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Pro Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'pro_easy'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Pro Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'pro_easy'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Uber Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'uber_easy'},
+                    preview_texture_name='courtyardPreview',
+                ),
+                Level(
+                    'Uber Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'uber_easy'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Uber Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'uber_easy'},
+                    preview_texture_name='towerDPreview',
+                ),
             ],
-        ))
+        )
+    )
 
     # "hard" mode
     register_campaign(
         Campaign(
             'Default',
             levels=[
-                Level('Onslaught Training',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'training'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Rookie Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'rookie'},
-                      preview_texture_name='courtyardPreview'),
-                Level('Rookie Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'rookie'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Pro Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'pro'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Pro Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'pro'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Pro Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'pro'},
-                      preview_texture_name='towerDPreview'),
-                Level('Uber Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'uber'},
-                      preview_texture_name='courtyardPreview'),
-                Level('Uber Football',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'uber'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Uber Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'uber'},
-                      preview_texture_name='towerDPreview'),
-                Level('The Last Stand',
-                      gametype=TheLastStandGame,
-                      settings={},
-                      preview_texture_name='rampagePreview')
+                Level(
+                    'Onslaught Training',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'training'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Rookie Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'rookie'},
+                    preview_texture_name='courtyardPreview',
+                ),
+                Level(
+                    'Rookie Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'rookie'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Pro Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'pro'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Pro Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'pro'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Pro Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'pro'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Uber Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'uber'},
+                    preview_texture_name='courtyardPreview',
+                ),
+                Level(
+                    'Uber Football',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'uber'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Uber Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'uber'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'The Last Stand',
+                    gametype=TheLastStandGame,
+                    settings={},
+                    preview_texture_name='rampagePreview',
+                ),
             ],
-        ))
+        )
+    )
 
     # challenges: our 'official' random extra co-op levels
     register_campaign(
@@ -214,121 +257,153 @@ def init_campaigns() -> None:
             'Challenges',
             sequential=False,
             levels=[
-                Level('Infinite Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'endless'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Infinite Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'endless'},
-                      preview_texture_name='towerDPreview'),
-                Level('Race',
-                      displayname='${GAME}',
-                      gametype=RaceGame,
-                      settings={
-                          'map': 'Big G',
-                          'Laps': 3,
-                          'Bomb Spawning': 0
-                      },
-                      preview_texture_name='bigGPreview'),
-                Level('Pro Race',
-                      displayname='Pro ${GAME}',
-                      gametype=RaceGame,
-                      settings={
-                          'map': 'Big G',
-                          'Laps': 3,
-                          'Bomb Spawning': 1000
-                      },
-                      preview_texture_name='bigGPreview'),
-                Level('Lake Frigid Race',
-                      displayname='${GAME}',
-                      gametype=RaceGame,
-                      settings={
-                          'map': 'Lake Frigid',
-                          'Laps': 6,
-                          'Mine Spawning': 2000,
-                          'Bomb Spawning': 0
-                      },
-                      preview_texture_name='lakeFrigidPreview'),
-                Level('Football',
-                      displayname='${GAME}',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'tournament'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Pro Football',
-                      displayname='Pro ${GAME}',
-                      gametype=FootballCoopGame,
-                      settings={'preset': 'tournament_pro'},
-                      preview_texture_name='footballStadiumPreview'),
-                Level('Runaround',
-                      displayname='${GAME}',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'tournament'},
-                      preview_texture_name='towerDPreview'),
-                Level('Uber Runaround',
-                      displayname='Uber ${GAME}',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'tournament_uber'},
-                      preview_texture_name='towerDPreview'),
-                Level('The Last Stand',
-                      displayname='${GAME}',
-                      gametype=TheLastStandGame,
-                      settings={'preset': 'tournament'},
-                      preview_texture_name='rampagePreview'),
-                Level('Tournament Infinite Onslaught',
-                      displayname='Infinite Onslaught',
-                      gametype=OnslaughtGame,
-                      settings={'preset': 'endless_tournament'},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Tournament Infinite Runaround',
-                      displayname='Infinite Runaround',
-                      gametype=RunaroundGame,
-                      settings={'preset': 'endless_tournament'},
-                      preview_texture_name='towerDPreview'),
-                Level('Target Practice',
-                      displayname='Pro ${GAME}',
-                      gametype=TargetPracticeGame,
-                      settings={},
-                      preview_texture_name='doomShroomPreview'),
-                Level('Target Practice B',
-                      displayname='${GAME}',
-                      gametype=TargetPracticeGame,
-                      settings={
-                          'Target Count': 2,
-                          'Enable Impact Bombs': False,
-                          'Enable Triple Bombs': False
-                      },
-                      preview_texture_name='doomShroomPreview'),
-                Level('Meteor Shower',
-                      displayname='${GAME}',
-                      gametype=MeteorShowerGame,
-                      settings={},
-                      preview_texture_name='rampagePreview'),
-                Level('Epic Meteor Shower',
-                      displayname='${GAME}',
-                      gametype=MeteorShowerGame,
-                      settings={'Epic Mode': True},
-                      preview_texture_name='rampagePreview'),
-                Level('Easter Egg Hunt',
-                      displayname='${GAME}',
-                      gametype=EasterEggHuntGame,
-                      settings={},
-                      preview_texture_name='towerDPreview'),
-                Level('Pro Easter Egg Hunt',
-                      displayname='Pro ${GAME}',
-                      gametype=EasterEggHuntGame,
-                      settings={'Pro Mode': True},
-                      preview_texture_name='towerDPreview'),
+                Level(
+                    'Infinite Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'endless'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Infinite Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'endless'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Race',
+                    displayname='${GAME}',
+                    gametype=RaceGame,
+                    settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 0},
+                    preview_texture_name='bigGPreview',
+                ),
+                Level(
+                    'Pro Race',
+                    displayname='Pro ${GAME}',
+                    gametype=RaceGame,
+                    settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 1000},
+                    preview_texture_name='bigGPreview',
+                ),
+                Level(
+                    'Lake Frigid Race',
+                    displayname='${GAME}',
+                    gametype=RaceGame,
+                    settings={
+                        'map': 'Lake Frigid',
+                        'Laps': 6,
+                        'Mine Spawning': 2000,
+                        'Bomb Spawning': 0,
+                    },
+                    preview_texture_name='lakeFrigidPreview',
+                ),
+                Level(
+                    'Football',
+                    displayname='${GAME}',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'tournament'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Pro Football',
+                    displayname='Pro ${GAME}',
+                    gametype=FootballCoopGame,
+                    settings={'preset': 'tournament_pro'},
+                    preview_texture_name='footballStadiumPreview',
+                ),
+                Level(
+                    'Runaround',
+                    displayname='${GAME}',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'tournament'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Uber Runaround',
+                    displayname='Uber ${GAME}',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'tournament_uber'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'The Last Stand',
+                    displayname='${GAME}',
+                    gametype=TheLastStandGame,
+                    settings={'preset': 'tournament'},
+                    preview_texture_name='rampagePreview',
+                ),
+                Level(
+                    'Tournament Infinite Onslaught',
+                    displayname='Infinite Onslaught',
+                    gametype=OnslaughtGame,
+                    settings={'preset': 'endless_tournament'},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Tournament Infinite Runaround',
+                    displayname='Infinite Runaround',
+                    gametype=RunaroundGame,
+                    settings={'preset': 'endless_tournament'},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Target Practice',
+                    displayname='Pro ${GAME}',
+                    gametype=TargetPracticeGame,
+                    settings={},
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Target Practice B',
+                    displayname='${GAME}',
+                    gametype=TargetPracticeGame,
+                    settings={
+                        'Target Count': 2,
+                        'Enable Impact Bombs': False,
+                        'Enable Triple Bombs': False,
+                    },
+                    preview_texture_name='doomShroomPreview',
+                ),
+                Level(
+                    'Meteor Shower',
+                    displayname='${GAME}',
+                    gametype=MeteorShowerGame,
+                    settings={},
+                    preview_texture_name='rampagePreview',
+                ),
+                Level(
+                    'Epic Meteor Shower',
+                    displayname='${GAME}',
+                    gametype=MeteorShowerGame,
+                    settings={'Epic Mode': True},
+                    preview_texture_name='rampagePreview',
+                ),
+                Level(
+                    'Easter Egg Hunt',
+                    displayname='${GAME}',
+                    gametype=EasterEggHuntGame,
+                    settings={},
+                    preview_texture_name='towerDPreview',
+                ),
+                Level(
+                    'Pro Easter Egg Hunt',
+                    displayname='Pro ${GAME}',
+                    gametype=EasterEggHuntGame,
+                    settings={'Pro Mode': True},
+                    preview_texture_name='towerDPreview',
+                ),
                 Level(
                     name='Ninja Fight',  # (unique id not seen by player)
                     displayname='${GAME}',  # (readable name seen by player)
                     gametype=NinjaFightGame,
                     settings={'preset': 'regular'},
-                    preview_texture_name='courtyardPreview'),
-                Level(name='Pro Ninja Fight',
-                      displayname='Pro ${GAME}',
-                      gametype=NinjaFightGame,
-                      settings={'preset': 'pro'},
-                      preview_texture_name='courtyardPreview')
+                    preview_texture_name='courtyardPreview',
+                ),
+                Level(
+                    name='Pro Ninja Fight',
+                    displayname='Pro ${GAME}',
+                    gametype=NinjaFightGame,
+                    settings={'preset': 'pro'},
+                    preview_texture_name='courtyardPreview',
+                ),
             ],
-        ))
+        )
+    )

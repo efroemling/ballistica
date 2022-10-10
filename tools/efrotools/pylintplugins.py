@@ -39,9 +39,11 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
     """Ignore stuff under 'if TYPE_CHECKING:' block at module level."""
 
     # Look for a non-nested 'if TYPE_CHECKING:'
-    if (isinstance(if_node.test, astroid.Name)
-            and if_node.test.name == 'TYPE_CHECKING'
-            and isinstance(if_node.parent, astroid.Module)):
+    if (
+        isinstance(if_node.test, astroid.Name)
+        and if_node.test.name == 'TYPE_CHECKING'
+        and isinstance(if_node.parent, astroid.Module)
+    ):
 
         module_node = if_node.parent
 
@@ -60,9 +62,11 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
             del module_node.locals[name]
 
         # Now replace its children with a simple pass statement.
-        passnode = astroid.Pass(parent=if_node,
-                                lineno=if_node.lineno + 1,
-                                col_offset=if_node.col_offset + 1)
+        passnode = astroid.Pass(
+            parent=if_node,
+            lineno=if_node.lineno + 1,
+            col_offset=if_node.col_offset + 1,
+        )
         if_node.body = [passnode]
     return if_node
 
@@ -87,8 +91,7 @@ def ignore_reveal_type_call(node: nc.NodeNG) -> nc.NodeNG:
     """
 
     # Let's just replace any reveal_type(x) call with print(x)..
-    if (isinstance(node.func, astroid.Name)
-            and node.func.name == 'reveal_type'):
+    if isinstance(node.func, astroid.Name) and node.func.name == 'reveal_type':
         node.func.name = 'print'
         return node
     return node
@@ -106,8 +109,11 @@ def using_future_annotations(node: nc.NodeNG) -> nc.NodeNG:
     # if we should assume all annotations are defer-eval'ed.
     # NOTE: this will become default at some point within a few years..
     annotations_set = mnode.locals.get('annotations')
-    if (annotations_set and isinstance(annotations_set[0], astroid.ImportFrom)
-            and annotations_set[0].modname == '__future__'):
+    if (
+        annotations_set
+        and isinstance(annotations_set[0], astroid.ImportFrom)
+        and annotations_set[0].modname == '__future__'
+    ):
         return True
     return False
 
@@ -134,12 +140,15 @@ def func_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     # now; can get more specific if we get false positives.
     if node.decorators is not None:
         for dnode in node.decorators.nodes:
-            if (isinstance(dnode, astroid.nodes.Name)
-                    and dnode.name in {'dispatchmethod', 'singledispatch'}):
+            if isinstance(dnode, astroid.nodes.Name) and dnode.name in {
+                'dispatchmethod',
+                'singledispatch',
+            }:
                 return node  # Leave annotations intact.
 
-            if (isinstance(dnode, astroid.nodes.Attribute)
-                    and dnode.attrname in {'register', 'handler'}):
+            if isinstance(
+                dnode, astroid.nodes.Attribute
+            ) and dnode.attrname in {'register', 'handler'}:
                 return node  # Leave annotations intact.
 
     node.args.annotations = [None for _ in node.args.args]
@@ -181,16 +190,20 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
                     for dec in fnode.decorators.nodes:
 
                         # Look for dataclassio.ioprepped.
-                        if (isinstance(dec, astroid.nodes.Attribute) and
-                                dec.attrname in {'ioprepped', 'will_ioprep'}
-                                and isinstance(dec.expr, astroid.nodes.Name)
-                                and dec.expr.name == 'dataclassio'):
+                        if (
+                            isinstance(dec, astroid.nodes.Attribute)
+                            and dec.attrname in {'ioprepped', 'will_ioprep'}
+                            and isinstance(dec.expr, astroid.nodes.Name)
+                            and dec.expr.name == 'dataclassio'
+                        ):
                             found_ioprepped = True
                             break
 
                         # Look for simply 'ioprepped'.
-                        if (isinstance(dec, astroid.nodes.Name)
-                                and dec.name in {'ioprepped', 'will_ioprep'}):
+                        if isinstance(dec, astroid.nodes.Name) and dec.name in {
+                            'ioprepped',
+                            'will_ioprep',
+                        }:
                             found_ioprepped = True
                             break
 
@@ -207,8 +220,9 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
         fnode = node
         willeval = True
         while fnode is not None:
-            if isinstance(fnode,
-                          (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+            if isinstance(
+                fnode, (astroid.FunctionDef, astroid.AsyncFunctionDef)
+            ):
                 willeval = False
                 break
             if isinstance(fnode, astroid.ClassDef):
@@ -232,8 +246,10 @@ ALLOWED_GENERICS = {'Sequence'}
 def _is_strippable_subscript(node: nc.NodeNG) -> bool:
     if isinstance(node, astroid.Subscript):
         # We can strip if its not in our allowed list.
-        if not (isinstance(node.value, astroid.Name)
-                and node.value.name in ALLOWED_GENERICS):
+        if not (
+            isinstance(node.value, astroid.Name)
+            and node.value.name in ALLOWED_GENERICS
+        ):
             return True
     return False
 
@@ -286,8 +302,9 @@ def register_plugins(manager: astroid.Manager) -> None:
     # Let's make Pylint understand these.
     manager.register_transform(astroid.AnnAssign, var_annotations_filter)
     manager.register_transform(astroid.FunctionDef, func_annotations_filter)
-    manager.register_transform(astroid.AsyncFunctionDef,
-                               func_annotations_filter)
+    manager.register_transform(
+        astroid.AsyncFunctionDef, func_annotations_filter
+    )
 
     # Pylint doesn't seem to support Generics much right now, and it seems
     # to lead to some buggy behavior and slowdowns. So let's filter them

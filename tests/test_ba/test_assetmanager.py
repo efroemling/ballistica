@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import weakref
 import tempfile
 from pathlib import Path
+
 # noinspection PyProtectedMember
 from ba._assetmanager import AssetManager
 
@@ -29,9 +30,11 @@ def test_assetmanager() -> None:
             manager = AssetManager(rootdir=Path(tmpdir))
             wref = weakref.ref(manager)
             manager.start()
-            gather = manager.launch_gather(packages=['a@2'],
-                                           flavor=AssetPackageFlavor.DESKTOP,
-                                           account_token='dummytoken')
+            gather = manager.launch_gather(
+                packages=['a@2'],
+                flavor=AssetPackageFlavor.DESKTOP,
+                account_token='dummytoken',
+            )
             wref2 = weakref.ref(gather)
 
             manager.stop()

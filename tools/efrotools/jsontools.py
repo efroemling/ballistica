@@ -32,16 +32,17 @@ class NoIndentEncoder(json.JSONEncoder):
 
     def default(self, o: Any) -> Any:
         import uuid
+
         if isinstance(o, NoIndent):
             key = uuid.uuid4().hex
             self._replacement_map[key] = json.dumps(o.value, **self.kwargs)
             # pylint: disable=consider-using-f-string
-            return '@@%s@@' % (key, )
+            return '@@%s@@' % (key,)
         return super().default(o)
 
     def encode(self, o: Any) -> Any:
         result = super().encode(o)
         for k, v in self._replacement_map.items():
             # pylint: disable=consider-using-f-string
-            result = result.replace('"@@%s@@"' % (k, ), v)
+            result = result.replace('"@@%s@@"' % (k,), v)
         return result

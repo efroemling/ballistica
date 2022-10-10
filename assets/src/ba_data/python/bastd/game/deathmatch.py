@@ -40,7 +40,8 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
 
     @classmethod
     def get_available_settings(
-            cls, sessiontype: type[ba.Session]) -> list[ba.Setting]:
+        cls, sessiontype: type[ba.Session]
+    ) -> list[ba.Setting]:
         settings = [
             ba.IntSetting(
                 'Kills to Win Per Player',
@@ -81,14 +82,16 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         # suiciding until you get a good drop)
         if issubclass(sessiontype, ba.FreeForAllSession):
             settings.append(
-                ba.BoolSetting('Allow Negative Scores', default=False))
+                ba.BoolSetting('Allow Negative Scores', default=False)
+            )
 
         return settings
 
     @classmethod
     def supports_session_type(cls, sessiontype: type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.DualTeamSession)
-                or issubclass(sessiontype, ba.FreeForAllSession))
+        return issubclass(sessiontype, ba.DualTeamSession) or issubclass(
+            sessiontype, ba.FreeForAllSession
+        )
 
     @classmethod
     def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
@@ -100,16 +103,17 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         self._score_to_win: int | None = None
         self._dingsound = ba.getsound('dingSmall')
         self._epic_mode = bool(settings['Epic Mode'])
-        self._kills_to_win_per_player = int(
-            settings['Kills to Win Per Player'])
+        self._kills_to_win_per_player = int(settings['Kills to Win Per Player'])
         self._time_limit = float(settings['Time Limit'])
         self._allow_negative_scores = bool(
-            settings.get('Allow Negative Scores', False))
+            settings.get('Allow Negative Scores', False)
+        )
 
         # Base class overrides.
         self.slow_motion = self._epic_mode
-        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
-                              ba.MusicType.TO_THE_DEATH)
+        self.default_music = (
+            ba.MusicType.EPIC if self._epic_mode else ba.MusicType.TO_THE_DEATH
+        )
 
     def get_instance_description(self) -> str | Sequence:
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
@@ -127,8 +131,9 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         self.setup_standard_powerup_drops()
 
         # Base kills needed to win on the size of the largest team.
-        self._score_to_win = (self._kills_to_win_per_player *
-                              max(1, max(len(t.players) for t in self.teams)))
+        self._score_to_win = self._kills_to_win_per_player * max(
+            1, max(len(t.players) for t in self.teams)
+        )
         self._update_scoreboard()
 
     def handlemessage(self, msg: Any) -> Any:
@@ -169,10 +174,11 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
 
                 # In FFA show scores since its hard to find on the scoreboard.
                 if isinstance(killer.actor, PlayerSpaz) and killer.actor:
-                    killer.actor.set_score_text(str(killer.team.score) + '/' +
-                                                str(self._score_to_win),
-                                                color=killer.team.color,
-                                                flash=True)
+                    killer.actor.set_score_text(
+                        str(killer.team.score) + '/' + str(self._score_to_win),
+                        color=killer.team.color,
+                        flash=True,
+                    )
 
             self._update_scoreboard()
 
@@ -189,8 +195,9 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.score,
-                                            self._score_to_win)
+            self._scoreboard.set_team_value(
+                team, team.score, self._score_to_win
+            )
 
     def end_game(self) -> None:
         results = ba.GameResults()

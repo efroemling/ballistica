@@ -22,10 +22,27 @@ ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
 PRUNE_LIB_NAMES = [
-    'config-*', 'idlelib', 'lib-dynload', 'lib2to3', 'multiprocessing',
-    'pydoc_data', 'site-packages', 'ensurepip', 'tkinter', 'wsgiref',
-    'distutils', 'turtle.py', 'turtledemo', 'test', 'sqlite3/test', 'unittest',
-    'dbm', 'venv', 'ctypes/test', 'imaplib.py', '_sysconfigdata_*'
+    'config-*',
+    'idlelib',
+    'lib-dynload',
+    'lib2to3',
+    'multiprocessing',
+    'pydoc_data',
+    'site-packages',
+    'ensurepip',
+    'tkinter',
+    'wsgiref',
+    'distutils',
+    'turtle.py',
+    'turtledemo',
+    'test',
+    'sqlite3/test',
+    'unittest',
+    'dbm',
+    'venv',
+    'ctypes/test',
+    'imaplib.py',
+    '_sysconfigdata_*',
 ]
 
 # Same but for DLLs dir (windows only)
@@ -43,20 +60,27 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # (via brew remove gettext --ignore-dependencies)
     # NOTE: Should check to see if this is still necessary on Apple silicon
     # since homebrew stuff is no longer in /usr/local there.
-    if ('MacBook-Fro' in platform.node()
-            and os.environ.get('SKIP_GETTEXT_WARNING') != '1'):
-        if (subprocess.run('which gettext', shell=True,
-                           check=False).returncode == 0):
+    if (
+        'MacBook-Fro' in platform.node()
+        and os.environ.get('SKIP_GETTEXT_WARNING') != '1'
+    ):
+        if (
+            subprocess.run('which gettext', shell=True, check=False).returncode
+            == 0
+        ):
             raise CleanError(
-                'NEED TO TEMP-KILL GETTEXT (or set SKIP_GETTEXT_WARNING=1)')
+                'NEED TO TEMP-KILL GETTEXT (or set SKIP_GETTEXT_WARNING=1)'
+            )
 
     builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', 'build'], check=True)
     subprocess.run(
         [
-            'git', 'clone',
-            'https://github.com/beeware/Python-Apple-support.git', builddir
+            'git',
+            'clone',
+            'https://github.com/beeware/Python-Apple-support.git',
+            builddir,
         ],
         check=True,
     )
@@ -72,10 +96,9 @@ def build_apple(arch: str, debug: bool = False) -> None:
     txt = readfile('Makefile')
 
     # Turn doc strings on; looks like it only adds a few hundred k.
-    txt = replace_exact(txt,
-                        '--without-doc-strings',
-                        '--with-doc-strings',
-                        count=2)
+    txt = replace_exact(
+        txt, '--without-doc-strings', '--with-doc-strings', count=2
+    )
 
     # Customize our minimum version requirements
     txt = replace_exact(
@@ -106,15 +129,16 @@ def build_apple(arch: str, debug: bool = False) -> None:
         )
 
         # Debug lib has a different name.
-        txt = replace_exact(txt,
-                            'python$(PYTHON_VER).a',
-                            'python$(PYTHON_VER)d.a',
-                            count=2)
+        txt = replace_exact(
+            txt, 'python$(PYTHON_VER).a', 'python$(PYTHON_VER)d.a', count=2
+        )
 
-        txt = replace_exact(txt,
-                            '/include/python$(PYTHON_VER)',
-                            '/include/python$(PYTHON_VER)d',
-                            count=4)
+        txt = replace_exact(
+            txt,
+            '/include/python$(PYTHON_VER)',
+            '/include/python$(PYTHON_VER)d',
+            count=4,
+        )
 
     # Inject our custom modifications to fire right after their normal
     # Setup.local filtering and right before building (and pass the same
@@ -151,11 +175,11 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # (also this build seems to fail with multiple threads)
     subprocess.run(
         [
-            'make', '-j1', {
-                'mac': 'Python-macOS',
-                'ios': 'Python-iOS',
-                'tvos': 'Python-tvOS'
-            }[arch]
+            'make',
+            '-j1',
+            {'mac': 'Python-macOS', 'ios': 'Python-iOS', 'tvos': 'Python-tvOS'}[
+                arch
+            ],
         ],
         check=True,
     )
@@ -182,9 +206,13 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
-    os.environ['ANDROID_NDK'] = subprocess.check_output(
-        [f'{rootdir}/tools/pcommand', 'android_sdk_utils',
-         'get-ndk-path']).decode().strip()
+    os.environ['ANDROID_NDK'] = (
+        subprocess.check_output(
+            [f'{rootdir}/tools/pcommand', 'android_sdk_utils', 'get-ndk-path']
+        )
+        .decode()
+        .strip()
+    )
 
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')
@@ -192,8 +220,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         ftxt,
         '        '
         'BZip2, GDBM, LibFFI, LibUUID, OpenSSL, Readline, SQLite, XZ, ZLib,\n',
-        '        '
-        'BZip2, LibUUID, OpenSSL, SQLite, XZ, ZLib,\n',
+        '        BZip2, LibUUID, OpenSSL, SQLite, XZ, ZLib,\n',
     )
 
     # Give ourselves a handle to patch the OpenSSL build.
@@ -215,15 +242,18 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     ftxt = replace_exact(ftxt, 'PYVER=3.10.5', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
-        ftxt, '    popd\n', f'    ../../../tools/pcommand'
-        f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n')
+        ftxt,
+        '    popd\n',
+        f'    ../../../tools/pcommand'
+        f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n',
+    )
     writefile('build.sh', ftxt)
 
     # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
-    subprocess.run(f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}',
-                   shell=True,
-                   check=True)
+    subprocess.run(
+        f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}', shell=True, check=True
+    )
     print('python build complete! (android/' + arch + ')')
 
 
@@ -262,12 +292,13 @@ def android_patch_ssl() -> None:
     txt = readfile(fname)
     txt = replace_exact(
         txt,
-        ('char *ossl_safe_getenv(const char *name)\n'
-         '{\n'),
-        ('char *ossl_safe_getenv(const char *name)\n'
-         '{\n'
-         '    // ERICF TWEAK: ALWAYS ALLOW GETENV.\n'
-         '    return getenv(name);\n'),
+        'char *ossl_safe_getenv(const char *name)\n{\n',
+        (
+            'char *ossl_safe_getenv(const char *name)\n'
+            '{\n'
+            '    // ERICF TWEAK: ALWAYS ALLOW GETENV.\n'
+            '    return getenv(name);\n'
+        ),
     )
     writefile(fname, txt)
 
@@ -363,19 +394,23 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
         zlib_ex = ' -I$(prefix)/include -lz'
         bz2_ex = _slrp(
             ' -I$(srcdir)/../Support/BZip2.xcframework/{{slice}}/Headers'
-            ' -L$(srcdir)/../Support/BZip2.xcframework/{{slice}} -lbzip2')
+            ' -L$(srcdir)/../Support/BZip2.xcframework/{{slice}} -lbzip2'
+        )
         ssl_ex = _slrp(
             ' -I$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}/Headers'
             ' -L$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}'
-            ' -lOpenSSL -DUSE_SSL')
+            ' -lOpenSSL -DUSE_SSL'
+        )
         sqlite_ex = ' -I$(srcdir)/Modules/_sqlite'
         hash_ex = _slrp(
             ' -I$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}/Headers'
             ' -L$(srcdir)/../Support/OpenSSL.xcframework/{{slice}}'
-            ' -lOpenSSL -DUSE_SSL')
+            ' -lOpenSSL -DUSE_SSL'
+        )
         lzma_ex = _slrp(
             ' -I$(srcdir)/../Support/XZ.xcframework/{{slice}}/Headers'
-            ' -L$(srcdir)/../Support/XZ.xcframework/{{slice}} -lxz')
+            ' -L$(srcdir)/../Support/XZ.xcframework/{{slice}} -lxz'
+        )
     else:
         raise RuntimeError(f'Unknown platform {platform}')
 
@@ -383,28 +418,100 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
     # If any .so files are coming out of builds, their names should be
     # added here to stop that.
     cmodules = [
-        '_asyncio', '_bisect', '_blake2', '_codecs_cn', '_codecs_hk',
-        '_codecs_iso2022', '_codecs_jp', '_codecs_kr', '_codecs_tw',
-        '_contextvars', '_crypt', '_csv', '_ctypes_test', '_ctypes',
-        '_curses_panel', '_curses', '_datetime', '_decimal', '_elementtree',
-        '_heapq', '_json', '_lsprof', '_lzma', '_md5', '_multibytecodec',
-        '_multiprocessing', '_opcode', '_pickle', '_posixsubprocess', '_queue',
-        '_random', '_sha1', '_sha3', '_sha256', '_sha512', '_socket',
-        '_statistics', '_struct', '_testbuffer', '_testcapi',
-        '_testimportmultiple', '_testinternalcapi', '_testmultiphase', '_uuid',
-        '_xxsubinterpreters', '_xxtestfuzz', '_zoneinfo', 'array', 'audioop',
-        'binascii', 'cmath', 'fcntl', 'grp', 'math', 'mmap', 'ossaudiodev',
-        'parser', 'pyexpat', 'resource', 'select', 'syslog', 'termios',
-        'unicodedata', 'xxlimited', 'zlib'
+        '_asyncio',
+        '_bisect',
+        '_blake2',
+        '_codecs_cn',
+        '_codecs_hk',
+        '_codecs_iso2022',
+        '_codecs_jp',
+        '_codecs_kr',
+        '_codecs_tw',
+        '_contextvars',
+        '_crypt',
+        '_csv',
+        '_ctypes_test',
+        '_ctypes',
+        '_curses_panel',
+        '_curses',
+        '_datetime',
+        '_decimal',
+        '_elementtree',
+        '_heapq',
+        '_json',
+        '_lsprof',
+        '_lzma',
+        '_md5',
+        '_multibytecodec',
+        '_multiprocessing',
+        '_opcode',
+        '_pickle',
+        '_posixsubprocess',
+        '_queue',
+        '_random',
+        '_sha1',
+        '_sha3',
+        '_sha256',
+        '_sha512',
+        '_socket',
+        '_statistics',
+        '_struct',
+        '_testbuffer',
+        '_testcapi',
+        '_testimportmultiple',
+        '_testinternalcapi',
+        '_testmultiphase',
+        '_uuid',
+        '_xxsubinterpreters',
+        '_xxtestfuzz',
+        '_zoneinfo',
+        'array',
+        'audioop',
+        'binascii',
+        'cmath',
+        'fcntl',
+        'grp',
+        'math',
+        'mmap',
+        'ossaudiodev',
+        'parser',
+        'pyexpat',
+        'resource',
+        'select',
+        'syslog',
+        'termios',
+        'unicodedata',
+        'xxlimited',
+        'zlib',
     ]
 
     # Selectively uncomment some existing modules for static compilation.
     enables = [
-        '_asyncio', 'array', 'cmath', 'math', '_contextvars', '_struct',
-        '_random', '_elementtree', '_pickle', '_datetime', '_zoneinfo',
-        '_bisect', '_heapq', '_json', '_statistics', 'unicodedata', 'fcntl',
-        'select', 'mmap', '_csv', '_socket', '_sha3', '_blake2', 'binascii',
-        '_posixsubprocess'
+        '_asyncio',
+        'array',
+        'cmath',
+        'math',
+        '_contextvars',
+        '_struct',
+        '_random',
+        '_elementtree',
+        '_pickle',
+        '_datetime',
+        '_zoneinfo',
+        '_bisect',
+        '_heapq',
+        '_json',
+        '_statistics',
+        'unicodedata',
+        'fcntl',
+        'select',
+        'mmap',
+        '_csv',
+        '_socket',
+        '_sha3',
+        '_blake2',
+        'binascii',
+        '_posixsubprocess',
     ]
     # Note that the _md5 and _sha modules are normally only built if the
     # system does not have the OpenSSL libs containing an optimized
@@ -443,35 +550,41 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
 
     ftxt += f'_ssl _ssl.c{ssl_ex}\n'
 
-    ftxt += (f'_sqlite3'
-             f' _sqlite/cache.c'
-             f' _sqlite/connection.c'
-             f' _sqlite/cursor.c'
-             f' _sqlite/microprotocols.c'
-             f' _sqlite/module.c'
-             f' _sqlite/prepare_protocol.c'
-             f' _sqlite/row.c'
-             f' _sqlite/statement.c'
-             f' _sqlite/util.c'
-             f'{sqlite_ex}'
-             f' -DMODULE_NAME=\'\\"sqlite3\\"\''
-             f' -DSQLITE_OMIT_LOAD_EXTENSION'
-             f' -lsqlite3\n')
+    ftxt += (
+        f'_sqlite3'
+        f' _sqlite/cache.c'
+        f' _sqlite/connection.c'
+        f' _sqlite/cursor.c'
+        f' _sqlite/microprotocols.c'
+        f' _sqlite/module.c'
+        f' _sqlite/prepare_protocol.c'
+        f' _sqlite/row.c'
+        f' _sqlite/statement.c'
+        f' _sqlite/util.c'
+        f'{sqlite_ex}'
+        f' -DMODULE_NAME=\'\\"sqlite3\\"\''
+        f' -DSQLITE_OMIT_LOAD_EXTENSION'
+        f' -lsqlite3\n'
+    )
 
     # Mac needs this:
     if arch == 'mac':
-        ftxt += ('\n'
-                 '# efrotools: mac urllib needs this:\n'
-                 '_scproxy _scproxy.c '
-                 '-framework SystemConfiguration '
-                 '-framework CoreFoundation\n')
+        ftxt += (
+            '\n'
+            '# efrotools: mac urllib needs this:\n'
+            '_scproxy _scproxy.c '
+            '-framework SystemConfiguration '
+            '-framework CoreFoundation\n'
+        )
 
     # Explicitly mark the remaining ones as disabled
     # (so Python won't try to build them as dynamic libs).
     remaining_disabled = ' '.join(cmodules)
-    ftxt += ('\n# Disabled by efrotools build:\n'
-             '*disabled*\n'
-             f'{remaining_disabled}\n')
+    ftxt += (
+        '\n# Disabled by efrotools build:\n'
+        '*disabled*\n'
+        f'{remaining_disabled}\n'
+    )
     writefile(fname, ftxt)
 
     # Ok, this is weird.
@@ -486,35 +599,45 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
     fname = 'Modules/makesetup'
     txt = readfile(fname)
     if platform == 'android':
-        txt = replace_exact(txt, '		*=*)'
-                            '	DEFS="$line$NL$DEFS"; continue;;',
-                            '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
-                            ' continue;;')
+        txt = replace_exact(
+            txt,
+            '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
+            '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;',
+        )
     assert txt.count('[A-Z]*=*') == 1
     writefile(fname, txt)
 
 
 def winprune() -> None:
     """Prune unneeded files from windows python dists."""
-    for libdir in ('assets/src/windows/Win32/Lib',
-                   'assets/src/windows/x64/Lib'):
+    for libdir in (
+        'assets/src/windows/Win32/Lib',
+        'assets/src/windows/x64/Lib',
+    ):
         assert os.path.isdir(libdir)
         assert (' ' not in name for name in PRUNE_LIB_NAMES)
-        subprocess.run(f'cd "{libdir}" && rm -rf ' + ' '.join(PRUNE_LIB_NAMES),
-                       shell=True,
-                       check=True)
+        subprocess.run(
+            f'cd "{libdir}" && rm -rf ' + ' '.join(PRUNE_LIB_NAMES),
+            shell=True,
+            check=True,
+        )
         # Kill python cache dirs.
         subprocess.run(
             f'find "{libdir}" -name __pycache__ -print0 | xargs -0 rm -rf',
             shell=True,
-            check=True)
-    for dlldir in ('assets/src/windows/Win32/DLLs',
-                   'assets/src/windows/x64/DLLs'):
+            check=True,
+        )
+    for dlldir in (
+        'assets/src/windows/Win32/DLLs',
+        'assets/src/windows/x64/DLLs',
+    ):
         assert os.path.isdir(dlldir)
         assert (' ' not in name for name in PRUNE_DLL_NAMES)
-        subprocess.run(f'cd "{dlldir}" && rm -rf ' + ' '.join(PRUNE_DLL_NAMES),
-                       shell=True,
-                       check=True)
+        subprocess.run(
+            f'cd "{dlldir}" && rm -rf ' + ' '.join(PRUNE_DLL_NAMES),
+            shell=True,
+            check=True,
+        )
 
     print('Win-prune successful.')
 
@@ -532,11 +655,13 @@ def gather() -> None:
 
     # First off, clear out any existing output.
     existing_dirs = [
-        os.path.join('src/external', d) for d in os.listdir('src/external')
+        os.path.join('src/external', d)
+        for d in os.listdir('src/external')
         if d.startswith('python-') and d != 'python-notes.txt'
     ]
     existing_dirs += [
-        os.path.join('assets/src', d) for d in os.listdir('assets/src')
+        os.path.join('assets/src', d)
+        for d in os.listdir('assets/src')
         if d.startswith('pylib-')
     ]
     if not do_android:
@@ -559,133 +684,137 @@ def gather() -> None:
             'android_arm': f'build/python_android_arm{bsuffix}/build',
             'android_arm64': f'build/python_android_arm64{bsuffix}/build',
             'android_x86': f'build/python_android_x86{bsuffix}/build',
-            'android_x86_64': f'build/python_android_x86_64{bsuffix}/build'
+            'android_x86_64': f'build/python_android_x86_64{bsuffix}/build',
         }
         bases2 = {
             'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
             'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
             'android_x86': f'build/python_android_x86{bsuffix}/{apost2}',
-            'android_x86_64': f'build/python_android_x86_64{bsuffix}/{apost2}'
+            'android_x86_64': f'build/python_android_x86_64{bsuffix}/{apost2}',
         }
 
         # Note: only need pylib for the first in each group.
         mac_arch_dir = 'macos-arm64_x86_64'
         ios_arch_dir = 'ios-arm64'
         tvos_arch_dir = 'tvos-arm64'
-        builds: list[dict[str, Any]] = [{
-            'name':
-                'macos',
-            'group':
-                'apple',
-            'headers':
-                bases['mac'] +
-                f'/Support/Python.xcframework/{mac_arch_dir}/Headers',
-            'libs': [
-                bases['mac'] +
-                f'/Support/Python.xcframework/{mac_arch_dir}/libPython.a',
-                bases['mac'] +
-                f'/Support/OpenSSL.xcframework/{mac_arch_dir}/libOpenSSL.a',
-                bases['mac'] +
-                f'/Support/XZ.xcframework/{mac_arch_dir}/libxz.a',
-                bases['mac'] +
-                f'/Support/BZip2.xcframework/{mac_arch_dir}/libbzip2.a',
-            ],
-            'pylib':
-                (bases['mac'] + f'/Python-{PY_VER_EXACT_APPLE}-macOS/lib'),
-        }, {
-            'name':
-                'ios',
-            'group':
-                'apple',
-            'headers':
-                bases['ios'] +
-                f'/Support/Python.xcframework/{ios_arch_dir}/Headers',
-            'libs': [
-                bases['ios'] +
-                f'/Support/Python.xcframework/{ios_arch_dir}/libPython.a',
-                bases['ios'] +
-                f'/Support/OpenSSL.xcframework/{ios_arch_dir}/libOpenSSL.a',
-                bases['ios'] +
-                f'/Support/XZ.xcframework/{ios_arch_dir}/libxz.a',
-                bases['ios'] +
-                f'/Support/BZip2.xcframework/{ios_arch_dir}/libbzip2.a',
-            ],
-        }, {
-            'name':
-                'tvos',
-            'group':
-                'apple',
-            'headers':
-                bases['tvos'] +
-                f'/Support/Python.xcframework/{tvos_arch_dir}/Headers',
-            'libs': [
-                bases['tvos'] +
-                f'/Support/Python.xcframework/{tvos_arch_dir}/libPython.a',
-                bases['tvos'] +
-                f'/Support/OpenSSL.xcframework/{tvos_arch_dir}/libOpenSSL.a',
-                bases['tvos'] +
-                f'/Support/XZ.xcframework/{tvos_arch_dir}/libxz.a',
-                bases['tvos'] +
-                f'/Support/BZip2.xcframework/{tvos_arch_dir}/libbzip2.a',
-            ],
-        }, {
-            'name': 'android_arm',
-            'group': 'android',
-            'headers': bases['android_arm'] + f'/usr/include/{libname}',
-            'libs': [
-                bases['android_arm'] + f'/usr/lib/lib{libname}.a',
-                bases2['android_arm'] + '/usr/lib/libssl.a',
-                bases2['android_arm'] + '/usr/lib/libcrypto.a',
-                bases2['android_arm'] + '/usr/lib/liblzma.a',
-                bases2['android_arm'] + '/usr/lib/libsqlite3.a',
-                bases2['android_arm'] + '/usr/lib/libbz2.a',
-                bases2['android_arm'] + '/usr/lib/libuuid.a',
-            ],
-            'libinst': 'android_armeabi-v7a',
-            'pylib': (bases['android_arm'] + '/usr/lib/python' + PY_VER),
-        }, {
-            'name': 'android_arm64',
-            'group': 'android',
-            'headers': bases['android_arm64'] + f'/usr/include/{libname}',
-            'libs': [
-                bases['android_arm64'] + f'/usr/lib/lib{libname}.a',
-                bases2['android_arm64'] + '/usr/lib/libssl.a',
-                bases2['android_arm64'] + '/usr/lib/libcrypto.a',
-                bases2['android_arm64'] + '/usr/lib/liblzma.a',
-                bases2['android_arm64'] + '/usr/lib/libsqlite3.a',
-                bases2['android_arm64'] + '/usr/lib/libbz2.a',
-                bases2['android_arm64'] + '/usr/lib/libuuid.a',
-            ],
-            'libinst': 'android_arm64-v8a',
-        }, {
-            'name': 'android_x86',
-            'group': 'android',
-            'headers': bases['android_x86'] + f'/usr/include/{libname}',
-            'libs': [
-                bases['android_x86'] + f'/usr/lib/lib{libname}.a',
-                bases2['android_x86'] + '/usr/lib/libssl.a',
-                bases2['android_x86'] + '/usr/lib/libcrypto.a',
-                bases2['android_x86'] + '/usr/lib/liblzma.a',
-                bases2['android_x86'] + '/usr/lib/libsqlite3.a',
-                bases2['android_x86'] + '/usr/lib/libbz2.a',
-                bases2['android_x86'] + '/usr/lib/libuuid.a',
-            ],
-            'libinst': 'android_x86',
-        }, {
-            'name': 'android_x86_64',
-            'group': 'android',
-            'headers': bases['android_x86_64'] + f'/usr/include/{libname}',
-            'libs': [
-                bases['android_x86_64'] + f'/usr/lib/lib{libname}.a',
-                bases2['android_x86_64'] + '/usr/lib/libssl.a',
-                bases2['android_x86_64'] + '/usr/lib/libcrypto.a',
-                bases2['android_x86_64'] + '/usr/lib/liblzma.a',
-                bases2['android_x86_64'] + '/usr/lib/libsqlite3.a',
-                bases2['android_x86_64'] + '/usr/lib/libbz2.a',
-                bases2['android_x86_64'] + '/usr/lib/libuuid.a',
-            ],
-            'libinst': 'android_x86_64',
-        }]
+        builds: list[dict[str, Any]] = [
+            {
+                'name': 'macos',
+                'group': 'apple',
+                'headers': bases['mac']
+                + f'/Support/Python.xcframework/{mac_arch_dir}/Headers',
+                'libs': [
+                    bases['mac']
+                    + f'/Support/Python.xcframework/{mac_arch_dir}/libPython.a',
+                    bases['mac']
+                    + f'/Support/OpenSSL.xcframework/{mac_arch_dir}/'
+                    f'libOpenSSL.a',
+                    bases['mac']
+                    + f'/Support/XZ.xcframework/{mac_arch_dir}/libxz.a',
+                    bases['mac']
+                    + f'/Support/BZip2.xcframework/{mac_arch_dir}/libbzip2.a',
+                ],
+                'pylib': (
+                    bases['mac'] + f'/Python-{PY_VER_EXACT_APPLE}-macOS/lib'
+                ),
+            },
+            {
+                'name': 'ios',
+                'group': 'apple',
+                'headers': bases['ios']
+                + f'/Support/Python.xcframework/{ios_arch_dir}/Headers',
+                'libs': [
+                    bases['ios']
+                    + f'/Support/Python.xcframework/{ios_arch_dir}/libPython.a',
+                    bases['ios']
+                    + f'/Support/OpenSSL.xcframework/{ios_arch_dir}/'
+                    f'libOpenSSL.a',
+                    bases['ios']
+                    + f'/Support/XZ.xcframework/{ios_arch_dir}/libxz.a',
+                    bases['ios']
+                    + f'/Support/BZip2.xcframework/{ios_arch_dir}/libbzip2.a',
+                ],
+            },
+            {
+                'name': 'tvos',
+                'group': 'apple',
+                'headers': bases['tvos']
+                + f'/Support/Python.xcframework/{tvos_arch_dir}/Headers',
+                'libs': [
+                    bases['tvos']
+                    + f'/Support/Python.xcframework/{tvos_arch_dir}/'
+                    f'libPython.a',
+                    bases['tvos']
+                    + f'/Support/OpenSSL.xcframework/{tvos_arch_dir}/'
+                    f'libOpenSSL.a',
+                    bases['tvos']
+                    + f'/Support/XZ.xcframework/{tvos_arch_dir}/libxz.a',
+                    bases['tvos']
+                    + f'/Support/BZip2.xcframework/{tvos_arch_dir}/libbzip2.a',
+                ],
+            },
+            {
+                'name': 'android_arm',
+                'group': 'android',
+                'headers': bases['android_arm'] + f'/usr/include/{libname}',
+                'libs': [
+                    bases['android_arm'] + f'/usr/lib/lib{libname}.a',
+                    bases2['android_arm'] + '/usr/lib/libssl.a',
+                    bases2['android_arm'] + '/usr/lib/libcrypto.a',
+                    bases2['android_arm'] + '/usr/lib/liblzma.a',
+                    bases2['android_arm'] + '/usr/lib/libsqlite3.a',
+                    bases2['android_arm'] + '/usr/lib/libbz2.a',
+                    bases2['android_arm'] + '/usr/lib/libuuid.a',
+                ],
+                'libinst': 'android_armeabi-v7a',
+                'pylib': (bases['android_arm'] + '/usr/lib/python' + PY_VER),
+            },
+            {
+                'name': 'android_arm64',
+                'group': 'android',
+                'headers': bases['android_arm64'] + f'/usr/include/{libname}',
+                'libs': [
+                    bases['android_arm64'] + f'/usr/lib/lib{libname}.a',
+                    bases2['android_arm64'] + '/usr/lib/libssl.a',
+                    bases2['android_arm64'] + '/usr/lib/libcrypto.a',
+                    bases2['android_arm64'] + '/usr/lib/liblzma.a',
+                    bases2['android_arm64'] + '/usr/lib/libsqlite3.a',
+                    bases2['android_arm64'] + '/usr/lib/libbz2.a',
+                    bases2['android_arm64'] + '/usr/lib/libuuid.a',
+                ],
+                'libinst': 'android_arm64-v8a',
+            },
+            {
+                'name': 'android_x86',
+                'group': 'android',
+                'headers': bases['android_x86'] + f'/usr/include/{libname}',
+                'libs': [
+                    bases['android_x86'] + f'/usr/lib/lib{libname}.a',
+                    bases2['android_x86'] + '/usr/lib/libssl.a',
+                    bases2['android_x86'] + '/usr/lib/libcrypto.a',
+                    bases2['android_x86'] + '/usr/lib/liblzma.a',
+                    bases2['android_x86'] + '/usr/lib/libsqlite3.a',
+                    bases2['android_x86'] + '/usr/lib/libbz2.a',
+                    bases2['android_x86'] + '/usr/lib/libuuid.a',
+                ],
+                'libinst': 'android_x86',
+            },
+            {
+                'name': 'android_x86_64',
+                'group': 'android',
+                'headers': bases['android_x86_64'] + f'/usr/include/{libname}',
+                'libs': [
+                    bases['android_x86_64'] + f'/usr/lib/lib{libname}.a',
+                    bases2['android_x86_64'] + '/usr/lib/libssl.a',
+                    bases2['android_x86_64'] + '/usr/lib/libcrypto.a',
+                    bases2['android_x86_64'] + '/usr/lib/liblzma.a',
+                    bases2['android_x86_64'] + '/usr/lib/libsqlite3.a',
+                    bases2['android_x86_64'] + '/usr/lib/libbz2.a',
+                    bases2['android_x86_64'] + '/usr/lib/libuuid.a',
+                ],
+                'libinst': 'android_x86_64',
+            },
+        ]
 
         for build in builds:
             grp = build['group']
@@ -708,20 +837,32 @@ def gather() -> None:
                     subprocess.run(['mkdir', '-p', assets_src_dst], check=True)
                     subprocess.run(
                         [
-                            'rsync', '--recursive', '--include', '*.py',
-                            '--exclude', '__pycache__', '--include', '*/',
-                            '--exclude', '*', build['pylib'] + '/',
-                            assets_src_dst
+                            'rsync',
+                            '--recursive',
+                            '--include',
+                            '*.py',
+                            '--exclude',
+                            '__pycache__',
+                            '--include',
+                            '*/',
+                            '--exclude',
+                            '*',
+                            build['pylib'] + '/',
+                            assets_src_dst,
                         ],
                         check=True,
                     )
 
                     # Prune a bunch of modules we don't need to cut
                     # down on size.
-                    subprocess.run('cd "' + assets_src_dst + '" && rm -rf ' +
-                                   ' '.join(PRUNE_LIB_NAMES),
-                                   shell=True,
-                                   check=True)
+                    subprocess.run(
+                        'cd "'
+                        + assets_src_dst
+                        + '" && rm -rf '
+                        + ' '.join(PRUNE_LIB_NAMES),
+                        shell=True,
+                        check=True,
+                    )
 
                     # Some minor filtering to system scripts:
                     # on iOS/tvOS, addusersitepackages() leads to a crash
@@ -734,25 +875,29 @@ def gather() -> None:
                         '    known_paths = addusersitepackages(known_paths)',
                         '    # efro tweak: this craps out on ios/tvos.\n'
                         '    # (and we don\'t use it anyway)\n'
-                        '    # known_paths = addusersitepackages(known_paths)')
+                        '    # known_paths = addusersitepackages(known_paths)',
+                    )
                     writefile(fname, txt)
 
                 # Copy in a base set of headers (everything in a group should
                 # be using the same headers)
-                subprocess.run(f'cp -r "{build["headers"]}" "{header_dst}"',
-                               shell=True,
-                               check=True)
+                subprocess.run(
+                    f'cp -r "{build["headers"]}" "{header_dst}"',
+                    shell=True,
+                    check=True,
+                )
 
                 # Clear whatever pyconfigs came across; we'll build our own
                 # universal one below.
-                subprocess.run('rm ' + header_dst + '/pyconfig*',
-                               shell=True,
-                               check=True)
+                subprocess.run(
+                    'rm ' + header_dst + '/pyconfig*', shell=True, check=True
+                )
 
                 # Write a master pyconfig header that reroutes to each
                 # platform's actual header.
-                with open(header_dst + '/pyconfig.h', 'w',
-                          encoding='utf-8') as hfile:
+                with open(
+                    header_dst + '/pyconfig.h', 'w', encoding='utf-8'
+                ) as hfile:
                     hfile.write(
                         '#if BA_OSTYPE_MACOS\n'
                         '#include "pyconfig-macos.h"\n\n'
@@ -770,11 +915,13 @@ def gather() -> None:
                         '#include "pyconfig-android_x86_64.h"\n\n'
                         '#else\n'
                         '#error unknown platform\n\n'
-                        '#endif\n')
+                        '#endif\n'
+                    )
 
             # Now copy each build's config headers in with unique names.
             cfgs = [
-                f for f in os.listdir(build['headers'])
+                f
+                for f in os.listdir(build['headers'])
                 if f.startswith('pyconfig')
             ]
 
@@ -788,15 +935,25 @@ def gather() -> None:
                     # others; ios for instance points to a arm64 and a
                     # x86_64 variant).
                     contents = readfile(build['headers'] + '/' + cfg)
-                    contents = contents.replace('pyconfig',
-                                                'pyconfig-' + build['name'])
+                    contents = contents.replace(
+                        'pyconfig', 'pyconfig-' + build['name']
+                    )
                     writefile(header_dst + '/' + out, contents)
                 else:
                     # other configs we just rename
-                    subprocess.run('cp "' + build['headers'] + '/' + cfg +
-                                   '" "' + header_dst + '/' + out + '"',
-                                   shell=True,
-                                   check=True)
+                    subprocess.run(
+                        'cp "'
+                        + build['headers']
+                        + '/'
+                        + cfg
+                        + '" "'
+                        + header_dst
+                        + '/'
+                        + out
+                        + '"',
+                        shell=True,
+                        check=True,
+                    )
 
             # Copy in libs. If the lib gave a specific install name,
             # use that; otherwise use name.

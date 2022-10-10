@@ -47,10 +47,12 @@ def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
     from ba._language import Lstr
     from ba._generated.enums import Permission
+
     if not _ba.have_permission(Permission.STORAGE):
         _ba.playsound(_ba.getsound('error'))
-        _ba.screenmessage(Lstr(resource='storagePermissionAccessText'),
-                          color=(1, 0, 0))
+        _ba.screenmessage(
+            Lstr(resource='storagePermissionAccessText'), color=(1, 0, 0)
+        )
         _ba.timer(1.0, lambda: _ba.request_permission(Permission.STORAGE))
         return True
     return False
@@ -80,12 +82,15 @@ def show_user_scripts() -> None:
             if usd is not None and os.path.isdir(usd):
                 file_name = usd + '/about_this_folder.txt'
                 with open(file_name, 'w', encoding='utf-8') as outfile:
-                    outfile.write('You can drop files in here to mod the game.'
-                                  '  See settings/advanced'
-                                  ' in the game for more info.')
+                    outfile.write(
+                        'You can drop files in here to mod the game.'
+                        '  See settings/advanced'
+                        ' in the game for more info.'
+                    )
                 _ba.android_media_scan_file(file_name)
         except Exception:
             from ba import _error
+
             _error.print_exception('error writing about_this_folder stuff')
 
     # On a few platforms we try to open the dir in the UI.
@@ -103,13 +108,14 @@ def create_user_system_scripts() -> None:
     (for editing and experiment with)
     """
     import shutil
+
     app = _ba.app
 
     # First off, if we need permission for this, ask for it.
     if _request_storage_permission():
         return
 
-    path = (app.python_directory_user + '/sys/' + app.version)
+    path = app.python_directory_user + '/sys/' + app.version
     pathtmp = path + '_tmp'
     if os.path.exists(path):
         shutil.rmtree(path)
@@ -123,31 +129,38 @@ def create_user_system_scripts() -> None:
         # to blow them away anyway to make changes;
         # See https://github.com/efroemling/ballistica/wiki
         # /Knowledge-Nuggets#python-cache-files-gotcha
-        return ('__pycache__', )
+        return ('__pycache__',)
 
     print(f'COPYING "{app.python_directory_app}" -> "{pathtmp}".')
     shutil.copytree(app.python_directory_app, pathtmp, ignore=_ignore_filter)
 
     print(f'MOVING "{pathtmp}" -> "{path}".')
     shutil.move(pathtmp, path)
-    print(f"Created system scripts at :'{path}"
-          f"'\nRestart {_ba.appname()} to use them."
-          f' (use ba.quit() to exit the game)')
+    print(
+        f"Created system scripts at :'{path}"
+        f"'\nRestart {_ba.appname()} to use them."
+        f' (use ba.quit() to exit the game)'
+    )
     if app.platform == 'android':
-        print('Note: the new files may not be visible via '
-              'android-file-transfer until you restart your device.')
+        print(
+            'Note: the new files may not be visible via '
+            'android-file-transfer until you restart your device.'
+        )
 
 
 def delete_user_system_scripts() -> None:
     """Clean out the scripts created by create_user_system_scripts()."""
     import shutil
+
     app = _ba.app
-    path = (app.python_directory_user + '/sys/' + app.version)
+    path = app.python_directory_user + '/sys/' + app.version
     if os.path.exists(path):
         shutil.rmtree(path)
-        print(f'User system scripts deleted.\n'
-              f'Restart {_ba.appname()} to use internal'
-              f' scripts. (use ba.quit() to exit the game)')
+        print(
+            f'User system scripts deleted.\n'
+            f'Restart {_ba.appname()} to use internal'
+            f' scripts. (use ba.quit() to exit the game)'
+        )
     else:
         print('User system scripts not found.')
 

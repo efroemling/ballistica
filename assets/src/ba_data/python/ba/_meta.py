@@ -39,6 +39,7 @@ T = TypeVar('T')
 @dataclass
 class ScanResults:
     """Final results from a meta-scan."""
+
     exports: dict[str, list[str]] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -80,7 +81,8 @@ class MetadataSubsystem:
 
         self._scan_complete_cb = scan_complete_cb
         self._scan = DirectoryScan(
-            [_ba.app.python_directory_app, _ba.app.python_directory_user])
+            [_ba.app.python_directory_app, _ba.app.python_directory_user]
+        )
 
         Thread(target=self._run_scan_in_bg, daemon=True).start()
 
@@ -111,8 +113,12 @@ class MetadataSubsystem:
         loading work happens, pass completion_cb_in_bg_thread=True.
         """
         Thread(
-            target=tpartial(self._load_exported_classes, cls, completion_cb,
-                            completion_cb_in_bg_thread),
+            target=tpartial(
+                self._load_exported_classes,
+                cls,
+                completion_cb,
+                completion_cb_in_bg_thread,
+            ),
             daemon=True,
         ).start()
 
@@ -123,6 +129,7 @@ class MetadataSubsystem:
         completion_cb_in_bg_thread: bool,
     ) -> None:
         from ba._general import getclass
+
         classes: list[type[T]] = []
         try:
             classnames = self._wait_for_scan_results().exports_of_class(cls)
@@ -148,7 +155,8 @@ class MetadataSubsystem:
                 logging.warning(
                     'ba.meta._wait_for_scan_results()'
                     ' called in logic thread before scan completed;'
-                    ' this can cause hitches.')
+                    ' this can cause hitches.'
+                )
 
             # Now wait a bit for the scan to complete.
             # Eventually error though if it doesn't.
@@ -157,7 +165,8 @@ class MetadataSubsystem:
                 time.sleep(0.05)
                 if time.time() - starttime > 10.0:
                     raise TimeoutError(
-                        'timeout waiting for meta scan to complete.')
+                        'timeout waiting for meta scan to complete.'
+                    )
         return self.scanresults
 
     def _run_scan_in_bg(self) -> None:
@@ -177,6 +186,7 @@ class MetadataSubsystem:
     def _handle_scan_results(self) -> None:
         """Called in the logic thread with results of a completed scan."""
         from ba._language import Lstr
+
         assert _ba.in_logic_thread()
 
         results = self.scanresults
@@ -188,16 +198,20 @@ class MetadataSubsystem:
         # Errors are more serious and will get included in the regular log.
         if results.warnings or results.errors:
             import textwrap
-            _ba.screenmessage(Lstr(resource='scanScriptsErrorText'),
-                              color=(1, 0, 0))
+
+            _ba.screenmessage(
+                Lstr(resource='scanScriptsErrorText'), color=(1, 0, 0)
+            )
             _ba.playsound(_ba.getsound('error'))
             if results.warnings:
-                allwarnings = textwrap.indent('\n'.join(results.warnings),
-                                              'Warning (meta-scan): ')
+                allwarnings = textwrap.indent(
+                    '\n'.join(results.warnings), 'Warning (meta-scan): '
+                )
                 logging.warning(allwarnings)
             if results.errors:
-                allerrors = textwrap.indent('\n'.join(results.errors),
-                                            'Error (meta-scan): ')
+                allerrors = textwrap.indent(
+                    '\n'.join(results.errors), 'Error (meta-scan): '
+                )
                 logging.error(allerrors)
 
         # Let the game know we're done.
@@ -244,23 +258,28 @@ class DirectoryScan:
                     self._scan_module(moduledir, subpath)
                 except Exception:
                     import traceback
+
                     self.results.warnings.append(
-                        f"Error scanning '{subpath}': " +
-                        traceback.format_exc())
+                        f"Error scanning '{subpath}': " + traceback.format_exc()
+                    )
 
         # Sort our results
         for exportlist in self.results.exports.values():
             exportlist.sort()
 
-    def _get_path_module_entries(self, path: Path, subpath: str | Path,
-                                 modules: list[tuple[Path, Path]]) -> None:
+    def _get_path_module_entries(
+        self, path: Path, subpath: str | Path, modules: list[tuple[Path, Path]]
+    ) -> None:
         """Scan provided path and add module entries to provided list."""
         try:
             # Special case: let's save some time and skip the whole 'ba'
             # package since we know it doesn't contain any meta tags.
             fullpath = Path(path, subpath)
-            entries = [(path, Path(subpath, name))
-                       for name in os.listdir(fullpath) if name != 'ba']
+            entries = [
+                (path, Path(subpath, name))
+                for name in os.listdir(fullpath)
+                if name != 'ba'
+            ]
         except PermissionError:
             # Expected sometimes.
             entries = []
@@ -273,8 +292,10 @@ class DirectoryScan:
         for entry in entries:
             if entry[1].name.endswith('.py'):
                 modules.append(entry)
-            elif (Path(entry[0], entry[1]).is_dir()
-                  and Path(entry[0], entry[1], '__init__.py').is_file()):
+            elif (
+                Path(entry[0], entry[1]).is_dir()
+                and Path(entry[0], entry[1], '__init__.py').is_file()
+            ):
                 modules.append(entry)
 
     def _scan_module(self, moduledir: Path, subpath: Path) -> None:
@@ -289,11 +310,13 @@ class DirectoryScan:
             flines = infile.readlines()
         meta_lines = {
             lnum: l[1:].split()
-            for lnum, l in enumerate(flines) if '# ba_meta ' in l
+            for lnum, l in enumerate(flines)
+            if '# ba_meta ' in l
         }
         is_top_level = len(subpath.parts) <= 1
-        required_api = self._get_api_requirement(subpath, meta_lines,
-                                                 is_top_level)
+        required_api = self._get_api_requirement(
+            subpath, meta_lines, is_top_level
+        )
 
         # Top level modules with no discernible api version get ignored.
         if is_top_level and required_api is None:
@@ -304,7 +327,8 @@ class DirectoryScan:
         if required_api is not None and required_api != CURRENT_API_VERSION:
             self.results.warnings.append(
                 f'Warning: {subpath} requires api {required_api} but'
-                f' we are running {CURRENT_API_VERSION}; ignoring module.')
+                f' we are running {CURRENT_API_VERSION}; ignoring module.'
+            )
             return
 
         # Ok; can proceed with a full scan of this module.
@@ -320,11 +344,14 @@ class DirectoryScan:
                         self._scan_module(submodule[0], submodule[1])
             except Exception:
                 import traceback
-                self.results.warnings.append(
-                    f"Error scanning '{subpath}': {traceback.format_exc()}")
 
-    def _process_module_meta_tags(self, subpath: Path, flines: list[str],
-                                  meta_lines: dict[int, list[str]]) -> None:
+                self.results.warnings.append(
+                    f"Error scanning '{subpath}': {traceback.format_exc()}"
+                )
+
+    def _process_module_meta_tags(
+        self, subpath: Path, flines: list[str], meta_lines: dict[int, list[str]]
+    ) -> None:
         """Pull data from a module based on its ba_meta tags."""
         for lindex, mline in meta_lines.items():
             # meta_lines is just anything containing '# ba_meta '; make sure
@@ -332,9 +359,11 @@ class DirectoryScan:
             if mline[0] != 'ba_meta':
                 self.results.warnings.append(
                     f'Warning: {subpath}:'
-                    f' malformed ba_meta statement on line {lindex + 1}.')
-            elif (len(mline) == 4 and mline[1] == 'require'
-                  and mline[2] == 'api'):
+                    f' malformed ba_meta statement on line {lindex + 1}.'
+                )
+            elif (
+                len(mline) == 4 and mline[1] == 'require' and mline[2] == 'api'
+            ):
                 # Ignore 'require api X' lines in this pass.
                 pass
             elif len(mline) != 3 or mline[1] != 'export':
@@ -342,7 +371,8 @@ class DirectoryScan:
                 # complain for anything else we see.
                 self.results.warnings.append(
                     f'Warning: {subpath}'
-                    f': unrecognized ba_meta statement on line {lindex + 1}.')
+                    f': unrecognized ba_meta statement on line {lindex + 1}.'
+                )
             else:
                 # Looks like we've got a valid export line!
                 modulename = '.'.join(subpath.parts)
@@ -350,7 +380,8 @@ class DirectoryScan:
                     modulename = modulename[:-3]
                 exporttypestr = mline[2]
                 export_class_name = self._get_export_class_name(
-                    subpath, flines, lindex)
+                    subpath, flines, lindex
+                )
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
 
@@ -360,11 +391,13 @@ class DirectoryScan:
                     exporttype = EXPORT_CLASS_NAME_SHORTCUTS.get(exporttypestr)
                     if exporttype is None:
                         exporttype = exporttypestr
-                    self.results.exports.setdefault(exporttype,
-                                                    []).append(classname)
+                    self.results.exports.setdefault(exporttype, []).append(
+                        classname
+                    )
 
-    def _get_export_class_name(self, subpath: Path, lines: list[str],
-                               lindex: int) -> str | None:
+    def _get_export_class_name(
+        self, subpath: Path, lines: list[str], lindex: int
+    ) -> str | None:
         """Given line num of an export tag, returns its operand class name."""
         lindexorig = lindex
         classname = None
@@ -385,7 +418,8 @@ class DirectoryScan:
         if classname is None:
             self.results.warnings.append(
                 f'Warning: {subpath}: class definition not found below'
-                f' "ba_meta export" statement on line {lindexorig + 1}.')
+                f' "ba_meta export" statement on line {lindexorig + 1}.'
+            )
         return classname
 
     def _get_api_requirement(
@@ -399,8 +433,13 @@ class DirectoryScan:
         Malformed api requirement strings will be logged as warnings.
         """
         lines = [
-            l for l in meta_lines.values() if len(l) == 4 and l[0] == 'ba_meta'
-            and l[1] == 'require' and l[2] == 'api' and l[3].isdigit()
+            l
+            for l in meta_lines.values()
+            if len(l) == 4
+            and l[0] == 'ba_meta'
+            and l[1] == 'require'
+            and l[2] == 'api'
+            and l[3].isdigit()
         ]
 
         # We're successful if we find exactly one properly formatted line.
@@ -412,12 +451,14 @@ class DirectoryScan:
             self.results.warnings.append(
                 f'Warning: {subpath}: multiple'
                 ' "# ba_meta require api <NUM>" lines found;'
-                ' ignoring module.')
+                ' ignoring module.'
+            )
         elif not lines and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but
             # no valid "require api" line found, complain.
             self.results.warnings.append(
                 f'Warning: {subpath}:'
                 ' no valid "# ba_meta require api <NUM>" line found;'
-                ' ignoring module.')
+                ' ignoring module.'
+            )
         return None

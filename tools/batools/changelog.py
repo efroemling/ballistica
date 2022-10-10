@@ -27,8 +27,10 @@ def generate(projroot: str) -> None:
     with open(out_path_tmp, 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
-    subprocess.run(f'pandoc -f markdown {out_path_tmp}  > {out_path}',
-                   shell=True,
-                   check=True)
+    subprocess.run(
+        f'pandoc -f markdown {out_path_tmp}  > {out_path}',
+        shell=True,
+        check=True,
+    )
     print(f'Generated changelog at \'{out_path}\'.')
     os.unlink(out_path_tmp)
