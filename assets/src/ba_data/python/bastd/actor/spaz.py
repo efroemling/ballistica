@@ -88,12 +88,12 @@ class Spaz(ba.Actor):
 
         self.play_big_death_sound = False
 
-        # scales how much impacts affect us (most damage calcs)
+        # Scales how much impacts affect us (most damage calcs).
         self.impact_scale = 1.0
 
         self.source_player = source_player
         self._dead = False
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.2
         else:
             self._punch_power_scale = factory.punch_power_scale
@@ -378,6 +378,8 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
+        if self._dead or self.frozen or self.node.knockout > 0.0:
+            return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
@@ -400,6 +402,8 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
+            return
+        if self._dead or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -441,7 +445,9 @@ class Spaz(ba.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node or self.frozen or self.node.knockout > 0.0:
+        if not self.node:
+            return
+        if self._dead or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -483,10 +489,7 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
-
-        if self._dead or self.frozen:
-            return
-        if self.node.knockout > 0.0:
+        if self._dead or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
@@ -519,9 +522,10 @@ class Spaz(ba.Actor):
         self.last_run_time_ms = t_ms
         self.node.run = value
 
-        # filtering these events would be tough since its an analog
+        # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing
+        # the turbo filter to punish players if it looks like they're 
+        # turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
@@ -534,7 +538,7 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
-        # not adding a cooldown time here for now; slightly worried
+        # Not adding a cooldown time here for now; slightly worried
         # input events get clustered up during net-games and we'd wind up
         # killing a lot and making it hard to fly.. should look into this.
         self.node.fly_pressed = True
@@ -716,7 +720,7 @@ class Spaz(ba.Actor):
             ba.timer(0.001, ba.WeakCall(self._hit_self, msg.intensity))
 
         elif isinstance(msg, ba.PowerupMessage):
-            if self._dead or not self.node:
+            if not self.node or self._dead:
                 return True
             if self.pick_up_powerup_callback is not None:
                 self.pick_up_powerup_callback(self)
@@ -1145,8 +1149,8 @@ class Spaz(ba.Actor):
                     scale=0.4,
                     spread=0.1,
                 )
-            if self.hitpoints > 0:
 
+            if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
@@ -1408,7 +1412,7 @@ class Spaz(ba.Actor):
 
     def curse_explode(self, source_player: ba.Player | None = None) -> None:
         """Explode the poor spaz spectacularly."""
-        if self._cursed and self.node:
+        if self.node and self._cursed:
             self.shatter(extreme=True)
             self.handlemessage(ba.DieMessage())
             activity = self._activity()
