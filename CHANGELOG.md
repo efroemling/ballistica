@@ -1,4 +1,4 @@
-### 1.7.11 (build 20897, api 7, 2022-10-09)
+### 1.7.11 (build 20899, api 7, 2022-10-10)
 - Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.
 
 ### 1.7.10 (build 20895, api 7, 2022-10-09)

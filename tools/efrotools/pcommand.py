@@ -528,6 +528,16 @@ def _filter_tool_config(cfg: str) -> str:
 
     cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings)
 
+    name = '__PYTHON_BLACK_EXTRA_ARGS__'
+    if name in cfg:
+        from efrotools.code import black_base_args
+
+        bargs = black_base_args()
+        assert bargs[2] == 'black'
+        cfg = cfg.replace(
+            name, '(' + ' '.join(f'"{b}"' for b in bargs[3:]) + ')'
+        )
+
     # Gen a pylint init to set up our python paths:
     pylint_init_tag = '__EFRO_PYLINT_INIT__'
     if pylint_init_tag in cfg:

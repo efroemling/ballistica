@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing_extensions import assert_type
 import pytest
 
-from efrotools.code import format_python_str
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
 from efro.message import (
@@ -506,14 +505,12 @@ def test_sender_module_single_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL_SINGLE.do_create_sender_module(
-            'TestMessageSenderSingle',
-            protocol_create_code='protocol = TEST_PROTOCOL_SINGLE',
-            enable_sync_sends=True,
-            enable_async_sends=False,
-            private=True,
-        )
+    smod = TEST_PROTOCOL_SINGLE.do_create_sender_module(
+        'TestMessageSenderSingle',
+        protocol_create_code='protocol = TEST_PROTOCOL_SINGLE',
+        enable_sync_sends=True,
+        enable_async_sends=False,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -545,14 +542,12 @@ def test_sender_module_sync_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL.do_create_sender_module(
-            'TestMessageSenderSync',
-            protocol_create_code='protocol = TEST_PROTOCOL',
-            enable_sync_sends=True,
-            enable_async_sends=False,
-            private=True,
-        )
+    smod = TEST_PROTOCOL.do_create_sender_module(
+        'TestMessageSenderSync',
+        protocol_create_code='protocol = TEST_PROTOCOL',
+        enable_sync_sends=True,
+        enable_async_sends=False,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -584,14 +579,12 @@ def test_sender_module_async_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL.do_create_sender_module(
-            'TestMessageSenderAsync',
-            protocol_create_code='protocol = TEST_PROTOCOL',
-            enable_sync_sends=False,
-            enable_async_sends=True,
-            private=True,
-        )
+    smod = TEST_PROTOCOL.do_create_sender_module(
+        'TestMessageSenderAsync',
+        protocol_create_code='protocol = TEST_PROTOCOL',
+        enable_sync_sends=False,
+        enable_async_sends=True,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -623,14 +616,12 @@ def test_sender_module_both_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL_EVOLVED.do_create_sender_module(
-            'TestMessageSenderBBoth',
-            protocol_create_code='protocol = TEST_PROTOCOL_EVOLVED',
-            enable_sync_sends=True,
-            enable_async_sends=True,
-            private=True,
-        )
+    smod = TEST_PROTOCOL_EVOLVED.do_create_sender_module(
+        'TestMessageSenderBBoth',
+        protocol_create_code='protocol = TEST_PROTOCOL_EVOLVED',
+        enable_sync_sends=True,
+        enable_async_sends=True,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -662,13 +653,11 @@ def test_receiver_module_single_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL_SINGLE.do_create_receiver_module(
-            'TestSingleMessageReceiver',
-            'protocol = TEST_PROTOCOL_SINGLE',
-            is_async=False,
-            private=True,
-        )
+    smod = TEST_PROTOCOL_SINGLE.do_create_receiver_module(
+        'TestSingleMessageReceiver',
+        'protocol = TEST_PROTOCOL_SINGLE',
+        is_async=False,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -702,13 +691,11 @@ def test_receiver_module_sync_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL.do_create_receiver_module(
-            'TestSyncMessageReceiver',
-            'protocol = TEST_PROTOCOL',
-            is_async=False,
-            private=True,
-        )
+    smod = TEST_PROTOCOL.do_create_receiver_module(
+        'TestSyncMessageReceiver',
+        'protocol = TEST_PROTOCOL',
+        is_async=False,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
@@ -740,13 +727,11 @@ def test_receiver_module_async_emb() -> None:
     # here, but it requires us to pass code which imports this test module
     # to get at the protocol, and that currently fails in our static mypy
     # tests.
-    smod = format_python_str(
-        TEST_PROTOCOL.do_create_receiver_module(
-            'TestAsyncMessageReceiver',
-            'protocol = TEST_PROTOCOL',
-            is_async=True,
-            private=True,
-        )
+    smod = TEST_PROTOCOL.do_create_receiver_module(
+        'TestAsyncMessageReceiver',
+        'protocol = TEST_PROTOCOL',
+        is_async=True,
+        private=True,
     )
 
     # Clip everything up to our first class declaration.
