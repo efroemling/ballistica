@@ -262,7 +262,7 @@ class Spaz(ba.Actor):
     def _turbo_filter_add_press(self, source: str) -> None:
         """
         Can pass all button presses through here; if we see an obscene number
-        of them in a short time let's shame/pushish this guy for using turbo
+        of them in a short time let's shame/pushish this guy for using turbo.
         """
         t_ms = ba.time(
             timetype=ba.TimeType.BASE, timeformat=ba.TimeFormat.MILLISECONDS
@@ -524,7 +524,7 @@ class Spaz(ba.Actor):
 
         # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're 
+        # the turbo filter to punish players if it looks like they're
         # turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
