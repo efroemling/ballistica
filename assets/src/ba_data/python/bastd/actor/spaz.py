@@ -321,7 +321,7 @@ class Spaz(ba.Actor):
         """
         color_fin = ba.safecolor(color)[:3]
         if not self.node:
-            return
+            return None
         if not self._score_text:
             start_scale = 0.0
             mnode = ba.newnode(
@@ -377,9 +377,9 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
-            return
+            return None
         if self._dead or self.frozen or self.node.knockout > 0.0:
-            return
+            return None
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
@@ -393,7 +393,7 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.jump_pressed = False
 
     def on_pickup_press(self) -> None:
@@ -402,9 +402,9 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
-            return
+            return None
         if self._dead or self.frozen or self.node.knockout > 0.0:
-            return
+            return None
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_pickup_time_ms >= self._pickup_cooldown:
@@ -418,7 +418,7 @@ class Spaz(ba.Actor):
         used by player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.pickup_pressed = False
 
     def on_hold_position_press(self) -> None:
@@ -427,7 +427,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.hold_position_pressed = True
         self._turbo_filter_add_press('holdposition')
 
@@ -437,7 +437,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.hold_position_pressed = False
 
     def on_punch_press(self) -> None:
@@ -446,9 +446,9 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         if self._dead or self.frozen or self.node.knockout > 0.0:
-            return
+            return None
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_punch_time_ms >= self._punch_cooldown:
@@ -479,7 +479,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.punch_pressed = False
 
     def on_bomb_press(self) -> None:
@@ -488,9 +488,9 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         if self._dead or self.frozen or self.node.knockout > 0.0:
-            return
+            return None
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         if t_ms - self.last_bomb_time_ms >= self._bomb_cooldown:
@@ -506,7 +506,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.bomb_pressed = False
 
     def on_run(self, value: float) -> None:
@@ -515,8 +515,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
-
+            return None
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
         self.last_run_time_ms = t_ms
@@ -537,7 +536,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         # Not adding a cooldown time here for now; slightly worried
         # input events get clustered up during net-games and we'd wind up
         # killing a lot and making it hard to fly.. should look into this.
@@ -550,7 +549,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.fly_pressed = False
 
     def on_move(self, x: float, y: float) -> None:
@@ -559,7 +558,7 @@ class Spaz(ba.Actor):
         used for player or AI connections.
         """
         if not self.node:
-            return
+            return None
         self.node.handlemessage('move', x, y)
 
     def on_move_up_down(self, value: float) -> None:
@@ -570,7 +569,7 @@ class Spaz(ba.Actor):
         WARNING: deprecated; use on_move instead.
         """
         if not self.node:
-            return
+            return None
         self.node.move_up_down = value
 
     def on_move_left_right(self, value: float) -> None:
@@ -581,7 +580,7 @@ class Spaz(ba.Actor):
         WARNING: deprecated; use on_move instead.
         """
         if not self.node:
-            return
+            return None
         self.node.move_left_right = value
 
     def on_punched(self, damage: int) -> None:
