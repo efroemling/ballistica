@@ -101,6 +101,7 @@ class PowerupBoxFactory:
         self.tex_health = ba.gettexture('powerupHealth')
         self.tex_land_mines = ba.gettexture('powerupLandMines')
         self.tex_curse = ba.gettexture('powerupCurse')
+        self.pop_sound = ba.getsound('pop01')
         self.health_powerup_sound = ba.getsound('healthPowerup')
         self.powerup_sound = ba.getsound('powerup01')
         self.powerdown_sound = ba.getsound('powerdown01')
@@ -263,6 +264,7 @@ class PowerupBox(ba.Actor):
         # Animate in.
         curve = ba.animate(self.node, 'model_scale', {0: 0, 0.14: 1.6, 0.2: 1})
         ba.timer(0.2, curve.delete)
+        ba.playsound(factory.pop_sound, 0.2, position=self.node.position)
 
         if expire:
             ba.timer(
