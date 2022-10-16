@@ -88,6 +88,10 @@ def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
     from efro.call import tpartial
     from threading import Thread
 
+    # Disabling for now..
+    if bool(True):
+        return
+
     # Hopefully can remove this in Python 3.11?...
     # see issue with is_closing() below for more details.
     transport = getattr(writer, '_transport', None)
@@ -128,7 +132,9 @@ class _InFlightMessage:
     def __init__(self) -> None:
         self._response: bytes | None = None
         self._got_response = asyncio.Event()
-        self.wait_task = asyncio.create_task(self._wait())
+        self.wait_task = asyncio.create_task(
+            self._wait(), name='rpc in flight msg wait'
+        )
 
     async def _wait(self) -> bytes:
         await self._got_response.wait()
@@ -185,11 +191,11 @@ class RPCEndpoint:
         self._handle_raw_message_call = handle_raw_message_call
         self._reader = reader
         self._writer = writer
-        self._debug_print = debug_print
-        self._debug_print_io = debug_print_io
+        self.debug_print = debug_print
+        self.debug_print_io = debug_print_io
         if debug_print_call is None:
             debug_print_call = print
-        self._debug_print_call: Callable[[str], None] = debug_print_call
+        self.debug_print_call: Callable[[str], None] = debug_print_call
         self._label = label
         self._thread = current_thread()
         self._closing = False
@@ -207,7 +213,7 @@ class RPCEndpoint:
 
         # Need to hold weak-refs to these otherwise it creates dep-loops
         # which keeps us alive.
-        self._tasks: list[weakref.ref[asyncio.Task]] = []
+        self._tasks: list[asyncio.Task] = []
 
         # When we last got a keepalive or equivalent (time.monotonic value)
         self._last_keepalive_receive_time: float | None = None
@@ -217,9 +223,9 @@ class RPCEndpoint:
 
         self._in_flight_messages: dict[int, _InFlightMessage] = {}
 
-        if self._debug_print:
+        if self.debug_print:
             peername = self._writer.get_extra_info('peername')
-            self._debug_print_call(
+            self.debug_print_call(
                 f'{self._label}: connected to {peername} at {self._tm()}.'
             )
 
@@ -270,16 +276,19 @@ class RPCEndpoint:
 
         core_tasks = [
             asyncio.create_task(
-                self._run_core_task('keepalive', self._run_keepalive_task())
+                self._run_core_task('keepalive', self._run_keepalive_task()),
+                name='rpc keepalive',
             ),
             asyncio.create_task(
-                self._run_core_task('read', self._run_read_task())
+                self._run_core_task('read', self._run_read_task()),
+                name='rpc read',
             ),
             asyncio.create_task(
-                self._run_core_task('write', self._run_write_task())
+                self._run_core_task('write', self._run_write_task()),
+                name='rpc write',
             ),
         ]
-        self._tasks += [weakref.ref(t) for t in core_tasks]
+        self._tasks += core_tasks
 
         # Run our core tasks until they all complete.
         results = await asyncio.gather(*core_tasks, return_exceptions=True)
@@ -309,8 +318,8 @@ class RPCEndpoint:
         except Exception:
             logging.exception('Error closing %s.', self._label)
 
-        if self._debug_print:
-            self._debug_print_call(f'{self._label}: finished.')
+        if self.debug_print:
+            self.debug_print_call(f'{self._label}: finished.')
 
     async def send_message(
         self,
@@ -330,10 +339,22 @@ class RPCEndpoint:
         override this for a particular message.
         """
         # pylint: disable=too-many-branches
+
+        if self.debug_print_io:
+            self.debug_print_call(
+                f'{self._label}: sending message of size {len(message)}'
+                f' at {self._tm()}.'
+            )
+
         self._check_env()
 
         if self._closing:
             raise CommunicationError('Endpoint is closed.')
+
+        if self.debug_print_io:
+            self.debug_print_call(
+                f'{self._label}: have peerinfo? {self._peer_info is not None}.'
+            )
 
         # We need to know their protocol, so if we haven't gotten a handshake
         # from them yet, just wait.
@@ -348,6 +369,11 @@ class RPCEndpoint:
         # message_id is a 16 bit looping value.
         message_id = self._next_message_id
         self._next_message_id = (self._next_message_id + 1) % 65536
+
+        if self.debug_print_io:
+            self.debug_print_call(
+                f'{self._label}: will enqueue at {self._tm()}.'
+            )
 
         # FIXME - should handle backpressure (waiting here if there are
         # enough packets already enqueued).
@@ -371,13 +397,19 @@ class RPCEndpoint:
                 + message
             )
 
+        if self.debug_print_io:
+            self.debug_print_call(
+                f'{self._label}: enqueued message of size {len(message)}'
+                f' at {self._tm()}.'
+            )
+
         # Make an entry so we know this message is out there.
         assert message_id not in self._in_flight_messages
         msgobj = self._in_flight_messages[message_id] = _InFlightMessage()
 
         # Also add its task to our list so we properly cancel it if we die.
         self._prune_tasks()  # Keep our list from filling with dead tasks.
-        self._tasks.append(weakref.ref(msgobj.wait_task))
+        self._tasks.append(msgobj.wait_task)
 
         # Note: we always want to incorporate a timeout. Individual
         # messages may hang or error on the other end and this ensures
@@ -392,16 +424,17 @@ class RPCEndpoint:
             # Question: we assume this means the above wait_for() was
             # cancelled; what happens if a task running *us* is cancelled
             # though?
-            if self._debug_print:
-                self._debug_print_call(
+            if self.debug_print:
+                self.debug_print_call(
                     f'{self._label}: message {message_id} was cancelled.'
                 )
             if close_on_error:
                 self.close()
+
             raise CommunicationError() from exc
         except asyncio.TimeoutError as exc:
-            if self._debug_print:
-                self._debug_print_call(
+            if self.debug_print:
+                self.debug_print_call(
                     f'{self._label}: message {message_id} timed out.'
                 )
 
@@ -424,21 +457,21 @@ class RPCEndpoint:
         if self._closing:
             return
 
-        if self._debug_print:
-            self._debug_print_call(f'{self._label}: closing...')
+        if self.debug_print:
+            self.debug_print_call(f'{self._label}: closing...')
 
         self._closing = True
 
         # Kill all of our in-flight tasks.
-        if self._debug_print:
-            self._debug_print_call(f'{self._label}: cancelling tasks...')
+        if self.debug_print:
+            self.debug_print_call(f'{self._label}: cancelling tasks...')
         for task in self._get_live_tasks():
             task.cancel()
 
         # Close our writer.
         assert not self._did_close_writer
-        if self._debug_print:
-            self._debug_print_call(f'{self._label}: closing writer...')
+        if self.debug_print:
+            self.debug_print_call(f'{self._label}: closing writer...')
         self._writer.close()
         self._did_close_writer = True
 
@@ -474,8 +507,13 @@ class RPCEndpoint:
             )
 
         live_tasks = self._get_live_tasks()
-        if self._debug_print:
-            self._debug_print_call(
+
+        # Don't need our task list anymore; this should
+        # break any cyclical refs from tasks referring to us.
+        self._tasks = []
+
+        if self.debug_print:
+            self.debug_print_call(
                 f'{self._label}: waiting for tasks to finish: '
                 f' ({live_tasks=})...'
             )
@@ -498,8 +536,8 @@ class RPCEndpoint:
                 id(self),
             )
 
-        if self._debug_print:
-            self._debug_print_call(
+        if self.debug_print:
+            self.debug_print_call(
                 f'{self._label}: tasks finished; waiting for writer close...'
             )
 
@@ -515,15 +553,19 @@ class RPCEndpoint:
             # indefinitely. See https://github.com/python/cpython/issues/83939
             # It sounds like this should be fixed in 3.11 but for now just
             # forcing the issue with a timeout here.
-            await asyncio.wait_for(self._writer.wait_closed(), timeout=30.0)
+            await asyncio.wait_for(
+                self._writer.wait_closed(),
+                # timeout=60.0 * 6.0,
+                timeout=30.0,
+            )
         except asyncio.TimeoutError:
             logging.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
                 self._label,
                 ssl_stream_writer_underlying_transport_info(self._writer),
             )
-            if self._debug_print:
-                self._debug_print_call(
+            if self.debug_print:
+                self.debug_print_call(
                     f'{self._label}: got timeout in _writer.wait_closed();'
                     ' This should be fixed in future Python versions.'
                 )
@@ -531,8 +573,8 @@ class RPCEndpoint:
             if not self._is_expected_connection_error(exc):
                 logging.exception('Error closing _writer for %s.', self._label)
             else:
-                if self._debug_print:
-                    self._debug_print_call(
+                if self.debug_print:
+                    self.debug_print_call(
                         f'{self._label}: silently ignoring error in'
                         f' _writer.wait_closed(): {exc}.'
                     )
@@ -555,14 +597,18 @@ class RPCEndpoint:
         self._check_env()
         assert self._peer_info is None
 
+        # Bug fix: if we don't have this set we will never time out
+        # if we never receive any data from the other end.
+        self._last_keepalive_receive_time = time.monotonic()
+
         # The first thing they should send us is their handshake; then
         # we'll know if/how we can talk to them.
         mlen = await self._read_int_32()
         message = await self._reader.readexactly(mlen)
         self._peer_info = dataclass_from_json(_PeerInfo, message.decode())
         self._last_keepalive_receive_time = time.monotonic()
-        if self._debug_print:
-            self._debug_print_call(
+        if self.debug_print:
+            self.debug_print_call(
                 f'{self._label}: received handshake at {self._tm()}.'
             )
 
@@ -576,8 +622,8 @@ class RPCEndpoint:
                 raise RuntimeError('Got multiple handshakes')
 
             if mtype is _PacketType.KEEPALIVE:
-                if self._debug_print_io:
-                    self._debug_print_call(
+                if self.debug_print_io:
+                    self.debug_print_call(
                         f'{self._label}: received keepalive'
                         f' at {self._tm()}.'
                     )
@@ -606,8 +652,8 @@ class RPCEndpoint:
         else:
             msglen = await self._read_int_16()
         msg = await self._reader.readexactly(msglen)
-        if self._debug_print_io:
-            self._debug_print_call(
+        if self.debug_print_io:
+            self.debug_print_call(
                 f'{self._label}: received message {msgid}'
                 f' of size {msglen} at {self._tm()}.'
             )
@@ -617,14 +663,13 @@ class RPCEndpoint:
         assert not self._closing
         self._prune_tasks()  # Keep from filling with dead tasks.
         self._tasks.append(
-            weakref.ref(
-                asyncio.create_task(
-                    self._handle_raw_message(message_id=msgid, message=msg)
-                )
+            asyncio.create_task(
+                self._handle_raw_message(message_id=msgid, message=msg),
+                name='efro rpc message handle',
             )
         )
-        if self._debug_print:
-            self._debug_print_call(
+        if self.debug_print:
+            self.debug_print_call(
                 f'{self._label}: done handling message at {self._tm()}.'
             )
 
@@ -636,8 +681,8 @@ class RPCEndpoint:
             rsplen = await self._read_int_32()
         else:
             rsplen = await self._read_int_16()
-        if self._debug_print_io:
-            self._debug_print_call(
+        if self.debug_print_io:
+            self.debug_print_call(
                 f'{self._label}: received response {msgid}'
                 f' of size {rsplen} at {self._tm()}.'
             )
@@ -647,8 +692,8 @@ class RPCEndpoint:
             # It's possible for us to get a response to a message
             # that has timed out. In this case we will have no local
             # record of it.
-            if self._debug_print:
-                self._debug_print_call(
+            if self.debug_print:
+                self.debug_print_call(
                     f'{self._label}: got response for nonexistent'
                     f' message id {msgid}; perhaps it timed out?'
                 )
@@ -730,9 +775,9 @@ class RPCEndpoint:
                 and now - self._last_keepalive_receive_time
                 > self._keepalive_timeout
             ):
-                if self._debug_print:
+                if self.debug_print:
                     since = now - self._last_keepalive_receive_time
-                    self._debug_print_call(
+                    self.debug_print_call(
                         f'{self._label}: reached keepalive time-out'
                         f' ({since:.1f}s).'
                     )
@@ -751,15 +796,15 @@ class RPCEndpoint:
                     tasklabel,
                 )
             else:
-                if self._debug_print:
-                    self._debug_print_call(
+                if self.debug_print:
+                    self.debug_print_call(
                         f'{self._label}: {tasklabel} task will exit cleanly'
                         f' due to {exc!r}.'
                     )
         finally:
             # Any core task exiting triggers shutdown.
-            if self._debug_print:
-                self._debug_print_call(
+            if self.debug_print:
+                self.debug_print_call(
                     f'{self._label}: {tasklabel} task exiting...'
                 )
             self.close()
@@ -836,8 +881,8 @@ class RPCEndpoint:
         """Enqueue a raw packet to be sent. Must be called from our loop."""
         self._check_env()
 
-        if self._debug_print_io:
-            self._debug_print_call(
+        if self.debug_print_io:
+            self.debug_print_call(
                 f'{self._label}: enqueueing outgoing packet'
                 f' {data[:50]!r} at {self._tm()}.'
             )
@@ -847,17 +892,7 @@ class RPCEndpoint:
         self._have_out_packets.set()
 
     def _prune_tasks(self) -> None:
-        out: list[weakref.ref[asyncio.Task]] = []
-        for task_weak_ref in self._tasks:
-            task = task_weak_ref()
-            if task is not None and not task.done():
-                out.append(task_weak_ref)
-        self._tasks = out
+        self._tasks = self._get_live_tasks()
 
     def _get_live_tasks(self) -> list[asyncio.Task]:
-        out: list[asyncio.Task] = []
-        for task_weak_ref in self._tasks:
-            task = task_weak_ref()
-            if task is not None and not task.done():
-                out.append(task)
-        return out
+        return [t for t in self._tasks if not t.done()]

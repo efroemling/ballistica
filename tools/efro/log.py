@@ -292,7 +292,8 @@ class LogHandler(logging.Handler):
                     self._file_chunk_ship_task[
                         name
                     ] = self._event_loop.create_task(
-                        self._ship_chunks_task(name)
+                        self._ship_chunks_task(name),
+                        name='log ship file chunks',
                     )
 
         except Exception:
@@ -321,7 +322,6 @@ class LogHandler(logging.Handler):
             traceback.print_exc(file=self._echofile)
 
     async def _ship_chunks_task(self, name: str) -> None:
-        await asyncio.sleep(0.1)
         self._ship_file_chunks(name, cancel_ship_task=False)
 
     def _ship_file_chunks(self, name: str, cancel_ship_task: bool) -> None:

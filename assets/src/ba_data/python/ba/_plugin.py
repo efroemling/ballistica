@@ -222,3 +222,10 @@ class Plugin:
 
     def on_app_shutdown(self) -> None:
         """Called before closing the application."""
+
+    def has_settings_ui(self) -> bool:
+        """Called to ask if we have settings UI we can show."""
+        return False
+
+    def show_settings_ui(self, source_widget: ba.Widget | None) -> None:
+        """Called to show our settings UI."""

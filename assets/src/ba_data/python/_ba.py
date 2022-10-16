@@ -2609,14 +2609,15 @@ def open_file_externally(path: str) -> None:
     return None
 
 
-def open_url(address: str) -> None:
+def open_url(address: str, force_internal: bool = False) -> None:
 
     """Open a provided URL.
 
     Category: **General Utility Functions**
 
     Open the provided url in a web-browser, or display the URL
-    string in a window if that isn't possible.
+    string in a window if that isn't possible (or if force_internal
+    is True).
     """
     return None
 

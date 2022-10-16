@@ -27,7 +27,9 @@ ABS_MAX_LEVEL = 10
 # we're showing some temporary objects that we should be ignoring.
 
 
-def getobjs(cls: type | str, contains: str | None = None) -> list[Any]:
+def getobjs(
+    cls: type | str, contains: str | None = None, expanded: bool = False
+) -> list[Any]:
     """Return all garbage-collected objects matching criteria.
 
     'type' can be an actual type or a string in which case objects
@@ -45,17 +47,51 @@ def getobjs(cls: type | str, contains: str | None = None) -> list[Any]:
     if not isinstance(contains, str | None):
         raise TypeError('Expected a string or None for contains')
 
+    allobjs = _get_all_objects(expanded=expanded)
+
     if isinstance(cls, str):
-        objs = [o for o in gc.get_objects() if cls in str(type(o))]
+        objs = [o for o in allobjs if cls in str(type(o))]
     else:
-        objs = [o for o in gc.get_objects() if isinstance(o, cls)]
+        objs = [o for o in allobjs if isinstance(o, cls)]
     if contains is not None:
         objs = [o for o in objs if contains in str(o)]
 
     return objs
 
 
-def getobj(objid: int) -> Any:
+# Recursively expand slists objects into olist, using seen to track
+# already processed objects.
+def _getr(slist: list[Any], olist: list[Any], seen: set[int]) -> None:
+    for obj in slist:
+        if id(obj) in seen:
+            continue
+        seen.add(id(obj))
+        olist.append(obj)
+        tll = gc.get_referents(obj)
+        if tll:
+            _getr(tll, olist, seen)
+
+
+def _get_all_objects(expanded: bool) -> list[Any]:
+    """Return an expanded list of all objects.
+
+    See https://utcc.utoronto.ca/~cks/space/blog/python/GetAllObjects
+    """
+    gcl = gc.get_objects()
+    if not expanded:
+        return gcl
+    olist: list[Any] = []
+    seen: set[int] = set()
+    # Just in case:
+    seen.add(id(gcl))
+    seen.add(id(olist))
+    seen.add(id(seen))
+    # _getr does the real work.
+    _getr(gcl, olist, seen)
+    return olist
+
+
+def getobj(objid: int, expanded: bool = False) -> Any:
     """Return a garbage-collected object by its id.
 
     Remember that this is VERY inefficient and should only ever be used
@@ -65,7 +101,10 @@ def getobj(objid: int) -> Any:
         raise TypeError(f'Expected an int for objid; got a {type(objid)}.')
 
     # Don't wanna return stuff waiting to be garbage-collected.
-    for obj in gc.get_objects():
+    gc.collect()
+
+    allobjs = _get_all_objects(expanded=expanded)
+    for obj in allobjs:
         if id(obj) == objid:
             return obj
     raise RuntimeError(f'Object with id {objid} not found.')
@@ -145,12 +184,14 @@ def printrefs(
     )
 
 
-def printtypes(limit: int = 50, file: TextIO | None = None) -> None:
+def printtypes(
+    limit: int = 50, file: TextIO | None = None, expanded: bool = False
+) -> None:
     """Print a human readable list of which types have the most instances."""
     assert limit > 0
     objtypes: dict[str, int] = {}
     gc.collect()  # Recommended before get_objects().
-    allobjs = gc.get_objects()
+    allobjs = _get_all_objects(expanded=expanded)
     allobjc = len(allobjs)
     for obj in allobjs:
         modname = type(obj).__module__
@@ -172,6 +213,38 @@ def printtypes(limit: int = 50, file: TextIO | None = None) -> None:
     ):
         tpname, tpval = tpitem
         percent = tpval / allobjc * 100.0
+        print(f'{i+1}: {tpname}: {tpval} ({percent:.2f}%)', file=file)
+
+
+def printsizes(
+    limit: int = 50, file: TextIO | None = None, expanded: bool = False
+) -> None:
+    """Print total allocated sizes of different types."""
+    assert limit > 0
+    objsizes: dict[str, int] = {}
+    gc.collect()  # Recommended before get_objects().
+    allobjs = _get_all_objects(expanded=expanded)
+    totalobjsize = 0
+
+    for obj in allobjs:
+        modname = type(obj).__module__
+        tpname = type(obj).__qualname__
+        if modname != 'builtins':
+            tpname = f'{modname}.{tpname}'
+        objsize = sys.getsizeof(obj)
+        objsizes[tpname] = objsizes.get(tpname, 0) + objsize
+        totalobjsize += objsize
+
+    totalobjmb = totalobjsize / (1024 * 1024)
+    print(
+        f'Types with most allocated bytes ({totalobjmb:.2f} mb total):',
+        file=file,
+    )
+    for i, tpitem in enumerate(
+        sorted(objsizes.items(), key=lambda x: x[1], reverse=True)[:limit]
+    ):
+        tpname, tpval = tpitem
+        percent = tpval / totalobjsize * 100.0
         print(f'{i+1}: {tpname}: {tpval} ({percent:.2f}%)', file=file)
 
 

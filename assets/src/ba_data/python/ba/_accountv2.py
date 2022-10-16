@@ -77,6 +77,7 @@ class AccountV2Subsystem:
             ):
                 self._kicked_off_workspace_load = True
                 _ba.app.workspaces.set_active_workspace(
+                    account=account,
                     workspaceid=account.workspaceid,
                     workspacename=account.workspacename,
                     on_completed=self._on_set_active_workspace_completed,

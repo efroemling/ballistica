@@ -432,7 +432,7 @@ def test_server_interrupt() -> None:
             await asyncio.sleep(0.2)
             tester.server.endpoint.close()
 
-        asyncio.create_task(_kill_connection())
+        _task = asyncio.create_task(_kill_connection())
         with pytest.raises(CommunicationError):
             await tester.server.send_message(_Message(_MessageType.TEST_SLOW))
 
@@ -448,7 +448,7 @@ def test_client_interrupt() -> None:
             await asyncio.sleep(0.2)
             tester.client.endpoint.close()
 
-        asyncio.create_task(_kill_connection())
+        _task = asyncio.create_task(_kill_connection())
         with pytest.raises(CommunicationError):
             await tester.server.send_message(_Message(_MessageType.TEST_SLOW))
 

@@ -2159,13 +2159,19 @@ auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
 auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* address = nullptr;
-  static const char* kwlist[] = {"address", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &address)) {
+  int force_internal{0};
+  static const char* kwlist[] = {"address", "force_internal", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|p",
+                                   const_cast<char**>(kwlist), &address,
+                                   &force_internal)) {
     return nullptr;
   }
   assert(g_app_flavor);
-  g_app_flavor->PushOpenURLCall(address);
+  if (force_internal) {
+    g_logic->PushShowURLCall(address);
+  } else {
+    g_app_flavor->PushOpenURLCall(address);
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2271,14 +2277,15 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "Open the provided file in the default external app."},
 
       {"open_url", (PyCFunction)PyOpenURL, METH_VARARGS | METH_KEYWORDS,
-       "open_url(address: str) -> None\n"
+       "open_url(address: str, force_internal: bool = False) -> None\n"
        "\n"
        "Open a provided URL.\n"
        "\n"
        "Category: **General Utility Functions**\n"
        "\n"
        "Open the provided url in a web-browser, or display the URL\n"
-       "string in a window if that isn't possible.\n"},
+       "string in a window if that isn't possible (or if force_internal\n"
+       "is True).\n"},
 
       {"back_press", (PyCFunction)PyBackPress, METH_VARARGS | METH_KEYWORDS,
        "back_press() -> None\n"

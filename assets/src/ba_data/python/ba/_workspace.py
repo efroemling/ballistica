@@ -36,6 +36,7 @@ class WorkspaceSubsystem:
 
     def set_active_workspace(
         self,
+        account: ba.AccountV2Handle,
         workspaceid: str,
         workspacename: str,
         on_completed: Callable[[], None],
@@ -46,6 +47,7 @@ class WorkspaceSubsystem:
         # interactivity.
         Thread(
             target=lambda: self._set_active_workspace_bg(
+                account=account,
                 workspaceid=workspaceid,
                 workspacename=workspacename,
                 on_completed=on_completed,
@@ -63,6 +65,7 @@ class WorkspaceSubsystem:
 
     def _set_active_workspace_bg(
         self,
+        account: ba.AccountV2Handle,
         workspaceid: str,
         workspacename: str,
         on_completed: Callable[[], None],
@@ -91,11 +94,12 @@ class WorkspaceSubsystem:
             state = bacommon.cloud.WorkspaceFetchState(manifest=manifest)
 
             while True:
-                response = _ba.app.cloud.send_message(
-                    bacommon.cloud.WorkspaceFetchMessage(
-                        workspaceid=workspaceid, state=state
+                with account:
+                    response = _ba.app.cloud.send_message(
+                        bacommon.cloud.WorkspaceFetchMessage(
+                            workspaceid=workspaceid, state=state
+                        )
                     )
-                )
                 state = response.state
                 self._handle_deletes(
                     workspace_dir=wspath, deletes=response.deletes
