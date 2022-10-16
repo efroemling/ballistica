@@ -3884,6 +3884,13 @@ void SpazNode::Step() {
     if (!holding_something_ && hold_node_.exists()) hold_node_.Clear();
   }
 
+   // If we're knocked out, stop any mid-progress to pick up.
+  if (knockout_) {
+    holding_something_ = false;
+    hold_body_ = 0;
+    DispatchDropMessage();
+  }
+
   if (pickup_ == kPickupCooldown - 4) {
     if (!body_pickup_.exists()) {
       body_pickup_ = Object::New<RigidBody>(
