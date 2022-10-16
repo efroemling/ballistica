@@ -1,5 +1,11 @@
-### 1.7.11 (build 20899, api 7, 2022-10-10)
+### 1.7.11 (build 20909, api 7, 2022-10-15)
 - Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.
+- Added `has_settings_ui()` and `show_settings_ui()` methods to ba.Plugin. Plugins can use these to enable a 'Settings' button next to them in the plugin manager that brings up a custom UI.
+- Fixed workspaces functionality, which I broke rather terribly in 1.7.10 when I forgot to test it against all the internal changes there (sorry). Note that there is a slight downside to having workspace syncing enabled now in that it turns off the fast-v2-relaunch-login optimization from 1.7.10.
+- App should now show a message when workspace has been changed and a restart is needed for it to take effect.
+- Fixed an issue where `ba.open_url()` would fall back to internal url display window on some newer Android versions instead of opening a browser. It should now correctly open a browser on regular Android. On AndroidTV/iiRcade/VR it will now always display the internal pop-up. It was trying to use fancy logic before to determine if a browser was available but this seemed to be flaky. Holler if this is not working well on your device/situation.
+- The internal 'fallback' `ba.open_url()` window which shows a url string when a system browser is not available now has a qrcode and a copy button (where copy/paste is supported).
+- Added a 'force_internal' arg to `ba.open_url()` if you would like to always use the internal window instead of attempting to open a browser. Now that we show a copy button and qr code there are some cases where this may be desirable.
 
 ### 1.7.10 (build 20895, api 7, 2022-10-09)
 - Added eval support for cloud-console. This means you can type something like '1+1' in the console and see '2' printed. This is how Python behaves in the stdin console or in-game console or the standard Python interpreter.

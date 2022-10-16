@@ -21,6 +21,7 @@ class PluginSettingsWindow(ba.Window):
         origin_widget: ba.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
@@ -113,11 +114,9 @@ class PluginSettingsWindow(ba.Window):
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
             selection_loops_to_parent=True,
+            claims_left_right=True,
         )
         ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
-        self._subcontainer = ba.columnwidget(
-            parent=self._scrollwidget, selection_loops_to_parent=True
-        )
 
         if ba.app.meta.scanresults is None:
             ba.screenmessage(
@@ -127,17 +126,32 @@ class PluginSettingsWindow(ba.Window):
         pluglist = ba.app.plugins.potential_plugins
         plugstates: dict[str, dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
+
+        plug_line_height = 50
+        sub_width = self._scroll_width
+        sub_height = len(pluglist) * plug_line_height
+        self._subcontainer = ba.containerwidget(
+            parent=self._scrollwidget,
+            size=(sub_width, sub_height),
+            background=False,
+        )
+
         for i, availplug in enumerate(pluglist):
-            active = availplug.class_path in ba.app.plugins.active_plugins
+            plugin = ba.app.plugins.active_plugins.get(availplug.class_path)
+            active = plugin is not None
 
             plugstate = plugstates.setdefault(availplug.class_path, {})
             checked = plugstate.get('enabled', False)
             assert isinstance(checked, bool)
+
+            item_y = sub_height - (i + 1) * plug_line_height
             check = ba.checkboxwidget(
                 parent=self._subcontainer,
                 text=availplug.display_name,
+                autoselect=True,
                 value=checked,
-                maxwidth=self._scroll_width - 100,
+                maxwidth=self._scroll_width - 200,
+                position=(10, item_y),
                 size=(self._scroll_width - 40, 50),
                 on_value_change_call=ba.Call(
                     self._check_value_changed, availplug
@@ -150,14 +164,35 @@ class PluginSettingsWindow(ba.Window):
                     else (0.6, 0.6, 0.6)
                 ),
             )
+            if plugin is not None and plugin.has_settings_ui():
+                button = ba.buttonwidget(
+                    parent=self._subcontainer,
+                    label=ba.Lstr(resource='mainMenu.settingsText'),
+                    autoselect=True,
+                    size=(100, 40),
+                    position=(sub_width - 130, item_y + 6),
+                )
+                ba.buttonwidget(
+                    edit=button,
+                    on_activate_call=ba.Call(plugin.show_settings_ui, button),
+                )
+            else:
+                button = None
+
+            # Allow getting back to back button.
+            if i == 0:
+                ba.widget(
+                    edit=check,
+                    up_widget=self._back_button,
+                    left_widget=self._back_button,
+                )
+                if button is not None:
+                    ba.widget(edit=button, up_widget=self._back_button)
 
             # Make sure we scroll all the way to the end when using
             # keyboard/button nav.
             ba.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
 
-            # Keep last from looping to back button when down is pressed.
-            if i == len(pluglist) - 1:
-                ba.widget(edit=check, down_widget=check)
         ba.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
         )

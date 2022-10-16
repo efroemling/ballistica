@@ -567,6 +567,7 @@
       <w>getpublicpartyenabled</w>
       <w>getpublicpartymaxsize</w>
       <w>getqrcodetexture</w>
+      <w>getr</w>
       <w>getrefs</w>
       <w>getres</w>
       <w>getsession</w>
@@ -918,6 +919,7 @@
       <w>objb</w>
       <w>objexists</w>
       <w>objid</w>
+      <w>objsizes</w>
       <w>objtoyaml</w>
       <w>objtypes</w>
       <w>obstack</w>
@@ -988,6 +990,7 @@
       <w>pdataclass</w>
       <w>pdoc</w>
       <w>pdst</w>
+      <w>peerinfo</w>
       <w>peername</w>
       <w>persp</w>
       <w>pflag</w>
@@ -1035,6 +1038,7 @@
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printrefs</w>
+      <w>printsizes</w>
       <w>printtypes</w>
       <w>priv</w>
       <w>privatetab</w>
@@ -1230,6 +1234,8 @@
       <w>simpletype</w>
       <w>sisssssssss</w>
       <w>sixteenbits</w>
+      <w>slist</w>
+      <w>slists</w>
       <w>smod</w>
       <w>smoothering</w>
       <w>smoothstep</w>
@@ -1369,6 +1375,8 @@
       <w>tmpmat</w>
       <w>tomer</w>
       <w>topos</w>
+      <w>totalobjmb</w>
+      <w>totalobjsize</w>
       <w>touchpad</w>
       <w>toucs</w>
       <w>tournamentbutton</w>

@@ -429,15 +429,12 @@ def _sync_server_files(cfg: Config) -> None:
         outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'),
     )
     if cfg.win_type is not None:
+        fname = 'launch_ballisticacore_server.bat'
         stage_server_file(
             projroot=cfg.projroot,
             mode=modeval,
-            infilename=(
-                f'{cfg.src}/../src/server/launch_ballisticacore_server.bat'
-            ),
-            outfilename=os.path.join(
-                cfg.serverdst, 'launch_ballisticacore_server.bat'
-            ),
+            infilename=f'{cfg.src}/../src/server/{fname}',
+            outfilename=os.path.join(cfg.serverdst, fname),
         )
 
 

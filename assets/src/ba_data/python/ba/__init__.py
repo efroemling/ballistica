@@ -64,6 +64,7 @@ from _ba import (
     getdata,
     in_logic_thread,
 )
+from ba._accountv2 import AccountV2Handle
 from ba._activity import Activity
 from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor
@@ -187,6 +188,7 @@ from ba._collision import Collision, getcollision
 app: App
 
 __all__ = [
+    'AccountV2Handle',
     'Achievement',
     'AchievementSubsystem',
     'Activity',

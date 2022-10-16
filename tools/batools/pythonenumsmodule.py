@@ -44,7 +44,7 @@ def _gen_enums(infilename: str) -> str:
         out += f'\n\nclass {enum_name}(Enum):\n    """'
         out += '\n    '.join(doclines)
         if len(doclines) > 1:
-            out += '\n    """\n'
+            out += '\n    """\n\n'
         else:
             out += '"""\n'
 

@@ -703,8 +703,7 @@ class Updater:
 
         # CMake android components:
         fname = (
-            'ballisticacore-android/BallisticaCore'
-            '/src/main/cpp/CMakeLists.txt'
+            'ballisticacore-android/BallisticaCore/src/main/cpp/CMakeLists.txt'
         )
         if not self._public:
             self._update_cmake_file(fname)

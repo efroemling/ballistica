@@ -183,9 +183,11 @@ def lazy_increment_build() -> None:
     except FileNotFoundError:
         lasthash = ''
     if codehash != lasthash:
-        print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
 
         if not update_hash_only:
+            print(
+                f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}'
+            )
             # Just go ahead and bless; this will increment the build as needed.
             # subprocess.run(['make', 'bless'], check=True)
             subprocess.run(
@@ -1029,11 +1031,10 @@ def win_ci_install_prereqs() -> None:
     # build to succeed. Normally this would happen through our Makefile
     # targets but we can't use them under raw window so we need to just
     # hard-code whatever we need here.
+    lib_dbg_win32 = 'build/prefab/lib/windows/Debug_Win32'
     needed_targets: set[str] = {
-        'build/prefab/lib/windows/Debug_Win32/'
-        'BallisticaCoreGenericInternal.lib',
-        'build/prefab/lib/windows/Debug_Win32/'
-        'BallisticaCoreGenericInternal.pdb',
+        f'{lib_dbg_win32}/BallisticaCoreGenericInternal.lib',
+        f'{lib_dbg_win32}/BallisticaCoreGenericInternal.pdb',
         'ballisticacore-windows/Generic/BallisticaCore.ico',
     }
 
