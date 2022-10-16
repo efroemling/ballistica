@@ -3885,11 +3885,8 @@ void SpazNode::Step() {
   }
 
   // If we're knocked out, stop any mid-progress pick up.
-  if (holding_something_) {
-    if (knockout_) {
-      holding_something_ = false;
-      DispatchDropMessage();
-    }
+  if (knockout_) {
+    DropHeldObject();
   }
 
   if (pickup_ == kPickupCooldown - 4) {
