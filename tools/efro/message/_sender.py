@@ -118,10 +118,10 @@ class MessageSender:
 
     def send(self, bound_obj: Any, message: Message) -> Response | None:
         """Send a message synchronously."""
-        return self.send_split_part_2(
+        return self.unpack_raw_response(
             bound_obj=bound_obj,
             message=message,
-            raw_response=self.send_split_part_1(
+            raw_response=self.fetch_raw_response(
                 bound_obj=bound_obj,
                 message=message,
             ),
@@ -131,16 +131,16 @@ class MessageSender:
         self, bound_obj: Any, message: Message
     ) -> Response | None:
         """Send a message asynchronously."""
-        return self.send_split_part_2(
+        return self.unpack_raw_response(
             bound_obj=bound_obj,
             message=message,
-            raw_response=await self.send_split_part_1_async(
+            raw_response=await self.fetch_raw_response_async(
                 bound_obj=bound_obj,
                 message=message,
             ),
         )
 
-    def send_split_part_1(
+    def fetch_raw_response(
         self, bound_obj: Any, message: Message
     ) -> Response | SysResponse:
         """Send a message synchronously.
@@ -171,14 +171,17 @@ class MessageSender:
             )
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
-    async def send_split_part_1_async(
+    async def fetch_raw_response_async(
         self, bound_obj: Any, message: Message
     ) -> Response | SysResponse:
-        """Send a message asynchronously.
+        """Fetch a raw message response.
 
-        Generally you can just call send(); these split versions are
-        for when message sending and response handling need to happen
-        in different contexts/threads.
+        The result of this should be passed to unpack_raw_response() to
+        produce the final message result.
+
+        Generally you can just call send(); calling fetch and unpack
+        manually is for when message sending and response handling need
+        to happen in different contexts/threads.
         """
 
         if self._send_async_raw_message_call is None:
@@ -203,17 +206,17 @@ class MessageSender:
             )
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
-    def send_split_part_2(
+    def unpack_raw_response(
         self,
         bound_obj: Any,
         message: Message,
         raw_response: Response | SysResponse,
     ) -> Response | None:
-        """Complete message sending (both sync and async).
+        """Convert a raw fetched response into a final response/error/etc.
 
-        Generally you can just call send(); these split versions are
-        for when message sending and response handling need to happen
-        in different contexts/threads.
+        Generally you can just call send(); calling fetch and unpack
+        manually is for when message sending and response handling need
+        to happen in different contexts/threads.
         """
         response = self._unpack_raw_response(bound_obj, raw_response)
         assert (
@@ -353,19 +356,19 @@ class BoundMessageSender:
             bound_obj=self._obj, message=message
         )
 
-    async def send_split_part_1_async_untyped(
+    async def fetch_raw_response_async_untyped(
         self, message: Message
     ) -> Response | SysResponse:
         """Split send (part 1 of 2)."""
         assert self._obj is not None
-        return await self._sender.send_split_part_1_async(
+        return await self._sender.fetch_raw_response_async(
             bound_obj=self._obj, message=message
         )
 
-    def send_split_part_2_untyped(
+    def unpack_raw_response_untyped(
         self, message: Message, raw_response: Response | SysResponse
     ) -> Response | None:
         """Split send (part 2 of 2)."""
-        return self._sender.send_split_part_2(
+        return self._sender.unpack_raw_response(
             bound_obj=self._obj, message=message, raw_response=raw_response
         )
