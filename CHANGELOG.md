@@ -1,3 +1,5 @@
+### 1.7.12 (build 20911, api 7, 2022-10-17)
+
 ### 1.7.11 (build 20909, api 7, 2022-10-15)
 - Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.
 - Added `has_settings_ui()` and `show_settings_ui()` methods to ba.Plugin. Plugins can use these to enable a 'Settings' button next to them in the plugin manager that brings up a custom UI.
