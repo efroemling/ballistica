@@ -735,31 +735,20 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         and/or print debugging info if the Activity still exists.
         """
         try:
-            import gc
-            import types
-
             activity = activity_ref()
             print(
                 'ERROR: Activity is not dying when expected:',
                 activity,
                 '(warning ' + str(counter[0] + 1) + ')',
             )
-            print('This means something is still strong-referencing it.')
+            print(
+                'This means something is still strong-referencing it.\n'
+                'Check out methods such as efro.debug.printrefs() to'
+                ' help debug this sort of thing.'
+            )
+            # Note: no longer calling gc.get_referrers() here because it's
+            # usage can bork stuff. (see notes at top of efro.debug)
             counter[0] += 1
-
-            # FIXME: Running the code below shows us references but winds up
-            #  keeping the object alive; need to figure out why.
-            #  For now we just print refs if the count gets to 3, and then we
-            #  kill the app at 4 so it doesn't matter anyway.
-            if counter[0] == 3:
-                print('Activity references for', activity, ':')
-                refs = list(gc.get_referrers(activity))
-                i = 1
-                for ref in refs:
-                    if isinstance(ref, types.FrameType):
-                        continue
-                    print('  reference', i, ':', ref)
-                    i += 1
             if counter[0] == 4:
                 print('Killing app due to stuck activity... :-(')
                 _ba.quit()

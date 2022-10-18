@@ -155,13 +155,18 @@ auto PyGetCollisionInfo(PyObject* self, PyObject* args) -> PyObject* {
     return DoGetCollideValue(dynamics, c, PyUnicode_AsUTF8(obj));
   } else if (PyTuple_Check(obj)) {
     Py_ssize_t size = PyTuple_GET_SIZE(obj);
+
+    // NOTE: Need to make sure we never release the GIL or call out to
+    // code that could access gc stuff while building this. Ideally should
+    // create contents first and then create/fill the tuple as last step.
+    // See https://bugs.python.org/issue15108.
     PyObject* return_tuple = PyTuple_New(size);
     for (Py_ssize_t i = 0; i < size; i++) {
       PyObject* o = PyTuple_GET_ITEM(obj, i);
       if (PyUnicode_Check(o)) {
         PyObject* val_obj = DoGetCollideValue(dynamics, c, PyUnicode_AsUTF8(o));
         if (val_obj) {
-          PyTuple_SetItem(return_tuple, i, val_obj);
+          PyTuple_SET_ITEM(return_tuple, i, val_obj);
         } else {
           Py_DECREF(return_tuple);
           return nullptr;

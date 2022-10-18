@@ -1,4 +1,7 @@
-### 1.7.12 (build 20911, api 7, 2022-10-17)
+### 1.7.12 (build 20913, api 7, 2022-10-17)
+- Disabled some live-objects warnings as it seems their use of certain gc module functionality might be causing some rare errors/crashes. On further inspection, it turns out that is technically expected. Basically those calls are useful for debugging but can break things. Added a note at the top of efro.debug elaborating on the situation. We can reimplement similar warnings later in a safe manner.
+- Removed `ba._general.print_active_refs()` because the newer stuff in efro.debug does the same thing better.
+- Bug fixes related to v2 account connections.
 
 ### 1.7.11 (build 20909, api 7, 2022-10-15)
 - Switched our Python autoformatting from yapf to black. The yapf project seems to be mostly dead whereas black seems to be thriving. The final straw was yapf not supporting the `match` statement in Python 3.10.

@@ -170,7 +170,13 @@ def garbage_collect_session_end() -> None:
         print('PYTHON GC FOUND', len(gc.garbage), 'UNCOLLECTIBLE OBJECTS:')
         for i, obj in enumerate(gc.garbage):
             print(str(i) + ':', obj)
-    print_live_object_warnings('after session shutdown')
+
+    # NOTE: no longer running these checks. Perhaps we can allow
+    # running them with an explicit flag passed, but we should never
+    # run them by default because gc.get_objects() can mess up the app.
+    # See notes at top of efro.debug.
+    if bool(False):
+        print_live_object_warnings('after session shutdown')
 
 
 def garbage_collect() -> None:
@@ -190,7 +196,11 @@ def print_live_object_warnings(
     ignore_session: ba.Session | None = None,
     ignore_activity: ba.Activity | None = None,
 ) -> None:
-    """Print warnings for remaining objects in the current context."""
+    """Print warnings for remaining objects in the current context.
+
+    IMPORTANT - don't call this in production; usage of gc.get_objects()
+    can bork Python. See notes at top of efro.debug module.
+    """
     # pylint: disable=cyclic-import
     from ba._session import Session
     from ba._actor import Actor

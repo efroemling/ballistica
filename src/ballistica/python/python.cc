@@ -1949,7 +1949,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<float> vals = attr.GetAsFloats();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         PyTuple_SET_ITEM(vals_obj, i, PyFloat_FromDouble(vals[i]));
       }
@@ -1960,7 +1960,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<int64_t> vals = attr.GetAsInts();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         PyTuple_SET_ITEM(vals_obj, i,
                          PyLong_FromLong(static_cast_check_fit<long>(  // NOLINT
@@ -1973,7 +1973,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<Node*> vals = attr.GetAsNodes();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         Node* n = vals[i];
         PyTuple_SET_ITEM(vals_obj, i,
@@ -2018,7 +2018,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<Material*> vals = attr.GetAsMaterials();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         Material* m = vals[i];
 
@@ -2033,7 +2033,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<Texture*> vals = attr.GetAsTextures();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         Texture* t = vals[i];
 
@@ -2048,7 +2048,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<Sound*> vals = attr.GetAsSounds();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         Sound* s = vals[i];
 
@@ -2063,7 +2063,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<Model*> vals = attr.GetAsModels();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         Model* m = vals[i];
 
@@ -2078,7 +2078,7 @@ auto Python::GetNodeAttr(Node* node, const char* attr_name) -> PyObject* {
       std::vector<CollideModel*> vals = attr.GetAsCollideModels();
       Py_ssize_t size = vals.size();
       PyObject* vals_obj = PyTuple_New(size);
-      BA_PRECONDITION(vals_obj);
+      assert(vals_obj);
       for (Py_ssize_t i = 0; i < size; i++) {
         CollideModel* c = vals[i];
 

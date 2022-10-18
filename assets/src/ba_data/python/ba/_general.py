@@ -3,7 +3,6 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
-import gc
 import types
 import weakref
 import random
@@ -16,7 +15,6 @@ from ba._error import print_error, print_exception
 from ba._generated.enums import TimeType
 
 if TYPE_CHECKING:
-    from types import FrameType
     from typing import Any
     from efro.call import Call as Call  # 'as Call' so we re-export.
 
@@ -123,19 +121,6 @@ def utf8_all(data: Any) -> Any:
     if isinstance(data, str):
         return data.encode('utf-8', errors='ignore')
     return data
-
-
-def print_refs(obj: Any) -> None:
-    """Print a list of known live references to an object."""
-
-    # Hmmm; I just noticed that calling this on an object
-    # seems to keep it alive. Should figure out why.
-    print('REFERENCES FOR', obj, ':')
-    refs = list(gc.get_referrers(obj))
-    i = 1
-    for ref in refs:
-        print('     ref', i, ':', ref)
-        i += 1
 
 
 def get_type_name(cls: type) -> str:
@@ -332,56 +317,6 @@ def verify_object_death(obj: object) -> None:
         )
 
 
-def print_active_refs(obj: Any) -> None:
-    """Print info about things referencing a given object.
-
-    Category: **General Utility Functions**
-
-    Useful for tracking down cyclical references and causes for zombie objects.
-    """
-    # pylint: disable=too-many-nested-blocks
-    from types import FrameType, TracebackType
-
-    refs = list(gc.get_referrers(obj))
-    print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
-    for i, ref in enumerate(refs):
-        print(f'{Clr.YLW}#{i+1}:{Clr.BLU} {ref}{Clr.RST}')
-
-        # For certain types of objects such as stack frames, show what is
-        # keeping *them* alive too.
-        if isinstance(ref, FrameType):
-            print(f'{Clr.YLW}  Active referrers to #{i+1}:{Clr.RST}')
-            refs2 = list(gc.get_referrers(ref))
-            for j, ref2 in enumerate(refs2):
-                print(f'{Clr.YLW}  #a{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
-
-                # Can go further down the rabbit-hole if needed...
-                if bool(False):
-                    if isinstance(ref2, TracebackType):
-                        print(
-                            f'{Clr.YLW}    '
-                            f'Active referrers to #a{j+1}:{Clr.RST}'
-                        )
-                        refs3 = list(gc.get_referrers(ref2))
-                        for k, ref3 in enumerate(refs3):
-                            print(
-                                f'{Clr.YLW}    '
-                                f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}'
-                            )
-
-                            if isinstance(ref3, BaseException):
-                                print(
-                                    f'{Clr.YLW}      Active referrers to'
-                                    f' #b{k+1}:{Clr.RST}'
-                                )
-                                refs4 = list(gc.get_referrers(ref3))
-                                for x, ref4 in enumerate(refs4):
-                                    print(
-                                        f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
-                                        f' {ref4}{Clr.RST}'
-                                    )
-
-
 def _verify_object_death(wref: weakref.ref) -> None:
     obj = wref()
     if obj is None:
@@ -395,9 +330,9 @@ def _verify_object_death(wref: weakref.ref) -> None:
 
     print(
         f'{Clr.RED}Error: {name} not dying when expected to:'
-        f' {Clr.BLD}{obj}{Clr.RST}'
+        f' {Clr.BLD}{obj}{Clr.RST}\n'
+        'See efro.debug for ways to debug this.'
     )
-    print_active_refs(obj)
 
 
 def storagename(suffix: str | None = None) -> str:

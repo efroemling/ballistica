@@ -1,6 +1,15 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Utilities for debugging memory leaks or other issues."""
+"""Utilities for debugging memory leaks or other issues.
+
+IMPORTANT - these functions use the gc module which looks 'under the hood'
+at Python and sometimes returns not-fully-initialized objects, which may
+cause crashes or errors due to suddenly having references to them that they
+didn't expect, etc. See https://github.com/python/cpython/issues/59313.
+For this reason, these methods should NEVER be called in production code.
+Enable them only for debugging situations and be aware that their use may
+itself cause problems. The same is true for the gc module itself.
+"""
 from __future__ import annotations
 
 import gc
