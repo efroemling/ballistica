@@ -206,7 +206,7 @@ class Graphics {
                       float upper_top) -> void;
   auto ReleaseFadeEndCommand() -> void;
   auto set_show_fps(bool val) -> void { show_fps_ = val; }
-
+  auto set_show_ping(bool val) -> void { show_ping_ = val; }
   // FIXME - move to graphics_server
   auto set_tv_border(bool val) -> void {
     assert(InLogicThread());
@@ -358,11 +358,13 @@ class Graphics {
   Object::Ref<ImageMesh> progress_bar_top_mesh_;
   Object::Ref<ImageMesh> load_dot_mesh_;
   Object::Ref<TextGroup> fps_text_group_;
+  Object::Ref<TextGroup> ping_text_group_;
   Object::Ref<TextGroup> net_info_text_group_;
   Object::Ref<SpriteMesh> shadow_blotch_mesh_;
   Object::Ref<SpriteMesh> shadow_blotch_soft_mesh_;
   Object::Ref<SpriteMesh> shadow_blotch_soft_obj_mesh_;
   std::string fps_string_;
+  std::string ping_string_;
   std::string net_info_string_;
   std::vector<uint16_t> blotch_indices_;
   std::vector<VertexSprite> blotch_verts_;
@@ -371,6 +373,7 @@ class Graphics {
   std::vector<uint16_t> blotch_soft_obj_indices_;
   std::vector<VertexSprite> blotch_soft_obj_verts_;
   bool show_fps_{};
+  bool show_ping_{};
   bool show_net_info_{};
   bool tv_border_{};
   bool floor_reflection_{};

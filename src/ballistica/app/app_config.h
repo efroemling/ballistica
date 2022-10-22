@@ -61,6 +61,7 @@ class AppConfig {
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
     kShowFPS,
+    kShowPing,
     kTVBorder,
     kKeyboardP2Enabled,
     kEnablePackageMods,
