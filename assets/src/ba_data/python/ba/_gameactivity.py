@@ -259,6 +259,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         self._tournament_time_limit_text_input: ba.NodeActor | None = None
         self._zoom_message_times: dict[int, float] = {}
         self._is_waiting_for_continue = False
+        self.slow_motion = settings.get('Epic Mode', False)
 
         self._continue_cost = _internal.get_v1_account_misc_read_val(
             'continueStartCost', 25
