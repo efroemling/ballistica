@@ -105,7 +105,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         This default implementation simply returns the 'name' class attr.
         """
-        return cls.name if cls.name is not None else 'Untitled Game'
+        return cls.name or 'Untitled Game'
 
     @classmethod
     def get_display_string(cls, settings: dict | None = None) -> ba.Lstr:
@@ -144,7 +144,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         can override this method.
         """
         del sessiontype  # Unused arg.
-        return cls.description if cls.description is not None else ''
+        return cls.description or ''
 
     @classmethod
     def get_description_display_string(
@@ -165,7 +165,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         running under the provided session type.
         """
         del sessiontype  # Unused arg.
-        return [] if cls.available_settings is None else cls.available_settings
+        return cls.available_settings or []
 
     @classmethod
     def get_supported_maps(cls, sessiontype: type[ba.Session]) -> list[str]:
@@ -959,7 +959,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # Move to the stand position and add a flash of light.
         spaz.handlemessage(
             StandMessage(
-                position, angle if angle is not None else random.uniform(0, 360)
+                position, angle or random.uniform(0, 360)
             )
         )
         _ba.playsound(self._spawn_sound, 1, position=spaz.node.position)
