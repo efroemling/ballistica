@@ -103,8 +103,9 @@ class LogHandler(logging.Handler):
         self,
         path: str | Path | None,
         echofile: TextIO | None,
-        suppress_non_root_debug: bool = False,
-        cache_size_limit: int = 0,
+        suppress_non_root_debug: bool,
+        cache_size_limit: int,
+        cache_time_limit: datetime.timedelta | None,
     ):
         super().__init__()
         # pylint: disable=consider-using-with
@@ -121,6 +122,7 @@ class LogHandler(logging.Handler):
         self._cache_size = 0
         assert cache_size_limit >= 0
         self._cache_size_limit = cache_size_limit
+        self._cache_time_limit = cache_time_limit
         self._cache: list[tuple[int, LogEntry]] = []
         self._cache_index_offset = 0
         self._cache_lock = Lock()
@@ -150,6 +152,8 @@ class LogHandler(logging.Handler):
         asyncio.set_event_loop(self._event_loop)
         self._thread_bootstrapped = True
         try:
+            if self._cache_time_limit is not None:
+                self._event_loop.create_task(self._time_prune_cache())
             self._event_loop.run_forever()
         except BaseException:
             # If this ever goes down we're in trouble.
@@ -160,6 +164,28 @@ class LogHandler(logging.Handler):
 
             traceback.print_exc()
             raise
+
+    async def _time_prune_cache(self) -> None:
+        assert self._cache_time_limit is not None
+        while bool(True):
+            await asyncio.sleep(61.27)
+            now = utc_now()
+            with self._cache_lock:
+
+                # Quick out: if oldest cache entry is still valid,
+                # don't touch anything.
+                if (
+                    self._cache
+                    and (now - self._cache[0][1].time) < self._cache_time_limit
+                ):
+                    continue
+
+                # Ok; full prune.
+                self._cache = [
+                    e
+                    for e in self._cache
+                    if (now - e[1].time) < self._cache_time_limit
+                ]
 
     def get_cached(
         self, start_index: int = 0, max_entries: int | None = None
@@ -424,6 +450,7 @@ def setup_logging(
     suppress_non_root_debug: bool = False,
     log_stdout_stderr: bool = False,
     cache_size_limit: int = 0,
+    cache_time_limit: datetime.timedelta | None = None,
 ) -> LogHandler:
     """Set up our logging environment.
 
@@ -456,6 +483,7 @@ def setup_logging(
         echofile=sys.stderr,
         suppress_non_root_debug=suppress_non_root_debug,
         cache_size_limit=cache_size_limit,
+        cache_time_limit=cache_time_limit,
     )
 
     # Note: going ahead with force=True here so that we replace any

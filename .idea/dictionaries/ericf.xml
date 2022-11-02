@@ -224,6 +224,7 @@
       <w>basnmessagesender</w>
       <w>basntoclient</w>
       <w>bastd</w>
+      <w>batocloud</w>
       <w>batools</w>
       <w>batoolsinternal</w>
       <w>baworker</w>
@@ -438,6 +439,7 @@
       <w>cloudbuild</w>
       <w>cloudshell</w>
       <w>cloudshellbuild</w>
+      <w>cloudtoba</w>
       <w>cloudtool</w>
       <w>cloudtoolcmd</w>
       <w>clrblu</w>
@@ -984,6 +986,7 @@
       <w>fulltest</w>
       <w>funcname</w>
       <w>funcnames</w>
+      <w>funcp</w>
       <w>funcptr</w>
       <w>functiontestcase</w>
       <w>functools</w>
@@ -1146,6 +1149,7 @@
       <w>hgfs</w>
       <w>hgignore</w>
       <w>highscores</w>
+      <w>hinst</w>
       <w>hitpoints</w>
       <w>hkscs</w>
       <w>hlsl</w>
@@ -1366,6 +1370,7 @@
       <w>levelmodule</w>
       <w>levelname</w>
       <w>levelno</w>
+      <w>levelstr</w>
       <w>lfull</w>
       <w>lfval</w>
       <w>libballisticacore</w>
@@ -1449,6 +1454,7 @@
       <w>lockstr</w>
       <w>locktype</w>
       <w>locs</w>
+      <w>logcallobj</w>
       <w>logcat</w>
       <w>logincode</w>
       <w>loginid</w>
@@ -1476,6 +1482,7 @@
       <w>ltex</w>
       <w>ltypes</w>
       <w>lubyte</w>
+      <w>luid</w>
       <w>luuid</w>
       <w>lval</w>
       <w>lzma</w>
@@ -1595,6 +1602,7 @@
       <w>msgfull</w>
       <w>msgid</w>
       <w>msglen</w>
+      <w>msgnewline</w>
       <w>msgnum</w>
       <w>msgpriv</w>
       <w>msgpub</w>
@@ -2050,6 +2058,7 @@
       <w>pvrtcfast</w>
       <w>pvval</w>
       <w>pwin</w>
+      <w>pwsz</w>
       <w>pybee</w>
       <w>pybuild</w>
       <w>pybuildapple</w>
@@ -2140,6 +2149,7 @@
       <w>relpath</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
+      <w>rendertarget</w>
       <w>rentry</w>
       <w>representer</w>
       <w>reprlib</w>
@@ -2620,6 +2630,7 @@
       <w>threadpool</w>
       <w>threadtype</w>
       <w>throwiness</w>
+      <w>thumbstick</w>
       <w>ticon</w>
       <w>timedisplay</w>
       <w>timeformat</w>
@@ -2852,6 +2863,7 @@
       <w>wiimote</w>
       <w>wiimotes</w>
       <w>willeval</w>
+      <w>winapi</w>
       <w>winbeast</w>
       <w>wincfg</w>
       <w>wincount</w>
@@ -2894,6 +2906,7 @@
       <w>wttxt</w>
       <w>wvmpth</w>
       <w>xach</w>
+      <w>xbone</w>
       <w>xbox</w>
       <w>xcarchive</w>
       <w>xcassets</w>
@@ -2935,6 +2948,7 @@
       <w>xxsubtype</w>
       <w>xxtestfuzz</w>
       <w>xxxhdpi</w>
+      <w>yaaay</w>
       <w>yach</w>
       <w>yapf</w>
       <w>yapfconfig</w>

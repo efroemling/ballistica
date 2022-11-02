@@ -117,6 +117,7 @@
       <w>basnmessagesender</w>
       <w>basntoclient</w>
       <w>bastd</w>
+      <w>batocloud</w>
       <w>batoolsinternal</w>
       <w>baworker</w>
       <w>bbbb</w>
@@ -243,6 +244,7 @@
       <w>clientinfo</w>
       <w>clienttobasn</w>
       <w>clipcount</w>
+      <w>cloudtoba</w>
       <w>cmakelist</w>
       <w>cmath</w>
       <w>cmds</w>
@@ -516,6 +518,7 @@
       <w>ftou</w>
       <w>fullpath</w>
       <w>funcname</w>
+      <w>funcp</w>
       <w>fval</w>
       <w>fvals</w>
       <w>fvar</w>
@@ -604,6 +607,7 @@
       <w>hexval</w>
       <w>highp</w>
       <w>highquality</w>
+      <w>hinst</w>
       <w>hitchy</w>
       <w>hmmm</w>
       <w>homebrew</w>
@@ -644,6 +648,7 @@
       <w>infotxt</w>
       <w>inides</w>
       <w>initguid</w>
+      <w>initing</w>
       <w>inittab</w>
       <w>inputdevice</w>
       <w>inputter</w>
@@ -722,6 +727,7 @@
       <w>leaderboards</w>
       <w>lenval</w>
       <w>levelno</w>
+      <w>levelstr</w>
       <w>lgui</w>
       <w>lhalf</w>
       <w>libbz</w>
@@ -742,6 +748,7 @@
       <w>lockpath</w>
       <w>lockstr</w>
       <w>locktype</w>
+      <w>logcallobj</w>
       <w>logincode</w>
       <w>loginid</w>
       <w>logmsg</w>
@@ -761,6 +768,7 @@
       <w>lsync</w>
       <w>ltypes</w>
       <w>lubyte</w>
+      <w>luid</w>
       <w>luuid</w>
       <w>lval</w>
       <w>lvec</w>
@@ -832,6 +840,7 @@
       <w>msgfull</w>
       <w>msgid</w>
       <w>msglen</w>
+      <w>msgnewline</w>
       <w>msgnum</w>
       <w>msgpriv</w>
       <w>msgpub</w>
@@ -1077,6 +1086,7 @@
       <w>pverraw</w>
       <w>pvrtc</w>
       <w>pwin</w>
+      <w>pwsz</w>
       <w>pybuildapple</w>
       <w>pycommand</w>
       <w>pyconfig</w>
@@ -1132,6 +1142,7 @@
       <w>relfut</w>
       <w>reloadmedia</w>
       <w>rendererdata</w>
+      <w>rendertarget</w>
       <w>renormalize</w>
       <w>rentry</w>
       <w>rené</w>
@@ -1361,6 +1372,7 @@
       <w>threadname</w>
       <w>threadpool</w>
       <w>threadtype</w>
+      <w>thumbstick</w>
       <w>ticon</w>
       <w>tiltage</w>
       <w>timedisplay</w>
@@ -1498,6 +1510,7 @@
       <w>wheeee</w>
       <w>wiimote</w>
       <w>wiimotes</w>
+      <w>winapi</w>
       <w>windowshade</w>
       <w>winmm</w>
       <w>winsock</w>
@@ -1518,6 +1531,7 @@
       <w>wtfslice</w>
       <w>wunused</w>
       <w>wvmpth</w>
+      <w>xbone</w>
       <w>xcframework</w>
       <w>xclamped</w>
       <w>xcodebuildverbose</w>
@@ -1535,6 +1549,7 @@
       <w>xxlimited</w>
       <w>xxsubinterpreters</w>
       <w>xxtestfuzz</w>
+      <w>yaaay</w>
       <w>yclamped</w>
       <w>ydiff</w>
       <w>ydist</w>

@@ -210,6 +210,8 @@ class RPCEndpoint:
         self._did_close_writer = False
         self._did_wait_closed_writer = False
         self._did_out_packets_buildup_warning = False
+        self._total_bytes_read = 0
+        self._create_time = time.monotonic()
 
         # Need to hold weak-refs to these otherwise it creates dep-loops
         # which keeps us alive.
@@ -422,8 +424,8 @@ class RPCEndpoint:
             return await asyncio.wait_for(msgobj.wait_task, timeout=timeout)
         except asyncio.CancelledError as exc:
             # Question: we assume this means the above wait_for() was
-            # cancelled; what happens if a task running *us* is cancelled
-            # though?
+            # cancelled; how do we distinguish between this and *us* being
+            # cancelled though?
             if self.debug_print:
                 self.debug_print_call(
                     f'{self._label}: message {message_id} was cancelled.'
@@ -432,23 +434,34 @@ class RPCEndpoint:
                 self.close()
 
             raise CommunicationError() from exc
-        except asyncio.TimeoutError as exc:
-            if self.debug_print:
-                self.debug_print_call(
-                    f'{self._label}: message {message_id} timed out.'
-                )
+        except Exception as exc:
 
-            # Stop waiting on the response.
-            msgobj.wait_task.cancel()
+            # If our timer timed-out or anything else went wrong with
+            # the stream, lump it in as a communication error.
+            if isinstance(
+                exc, asyncio.TimeoutError
+            ) or is_asyncio_streams_communication_error(exc):
 
-            # Remove the record of this message.
-            del self._in_flight_messages[message_id]
+                if self.debug_print:
+                    self.debug_print_call(
+                        f'{self._label}: got {type(exc)} sending message'
+                        f' {message_id}; raising CommunicationError.'
+                    )
 
-            if close_on_error:
-                self.close()
+                # Stop waiting on the response.
+                msgobj.wait_task.cancel()
 
-            # Let the user know something went wrong.
-            raise CommunicationError() from exc
+                # Remove the record of this message.
+                del self._in_flight_messages[message_id]
+
+                if close_on_error:
+                    self.close()
+
+                # Let the user know something went wrong.
+                raise CommunicationError() from exc
+
+            # Some unexpected error; let it bubble up.
+            raise
 
     def close(self) -> None:
         """I said seagulls; mmmm; stop it now."""
@@ -589,7 +602,7 @@ class RPCEndpoint:
 
     def _tm(self) -> str:
         """Simple readable time value for debugging."""
-        tval = time.time() % 100.0
+        tval = time.monotonic() % 100.0
         return f'{tval:.2f}'
 
     async def _run_read_task(self) -> None:
@@ -605,6 +618,7 @@ class RPCEndpoint:
         # we'll know if/how we can talk to them.
         mlen = await self._read_int_32()
         message = await self._reader.readexactly(mlen)
+        self._total_bytes_read += mlen
         self._peer_info = dataclass_from_json(_PeerInfo, message.decode())
         self._last_keepalive_receive_time = time.monotonic()
         if self.debug_print:
@@ -652,6 +666,7 @@ class RPCEndpoint:
         else:
             msglen = await self._read_int_16()
         msg = await self._reader.readexactly(msglen)
+        self._total_bytes_read += msglen
         if self.debug_print_io:
             self.debug_print_call(
                 f'{self._label}: received message {msgid}'
@@ -687,6 +702,7 @@ class RPCEndpoint:
                 f' of size {rsplen} at {self._tm()}.'
             )
         rsp = await self._reader.readexactly(rsplen)
+        self._total_bytes_read += rsplen
         msgobj = self._in_flight_messages.get(msgid)
         if msgobj is None:
             # It's possible for us to get a response to a message
@@ -791,9 +807,12 @@ class RPCEndpoint:
             # if something else does.
             if not self._is_expected_connection_error(exc):
                 logging.exception(
-                    'Unexpected error in rpc %s %s task.',
+                    'Unexpected error in rpc %s %s task'
+                    ' (age=%.1f, total_bytes_read=%d).',
                     self._label,
                     tasklabel,
+                    time.monotonic() - self._create_time,
+                    self._total_bytes_read,
                 )
             else:
                 if self.debug_print:
@@ -846,13 +865,19 @@ class RPCEndpoint:
             )
 
     async def _read_int_8(self) -> int:
-        return int.from_bytes(await self._reader.readexactly(1), _BYTE_ORDER)
+        out = int.from_bytes(await self._reader.readexactly(1), _BYTE_ORDER)
+        self._total_bytes_read += 1
+        return out
 
     async def _read_int_16(self) -> int:
-        return int.from_bytes(await self._reader.readexactly(2), _BYTE_ORDER)
+        out = int.from_bytes(await self._reader.readexactly(2), _BYTE_ORDER)
+        self._total_bytes_read += 2
+        return out
 
     async def _read_int_32(self) -> int:
-        return int.from_bytes(await self._reader.readexactly(4), _BYTE_ORDER)
+        out = int.from_bytes(await self._reader.readexactly(4), _BYTE_ORDER)
+        self._total_bytes_read += 4
+        return out
 
     @classmethod
     def _is_expected_connection_error(cls, exc: Exception) -> bool:

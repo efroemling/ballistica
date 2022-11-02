@@ -178,8 +178,8 @@ def _add_extra_targets_internal(targets: list[Target]) -> None:
     # don't get added to git.
     _add_init_module_target(targets, moduledir='bametainternal/generated')
     for srcname, dstname, gencmd in [
-        ('clienttobasn', 'basnmessagesender', 'gen_basn_msg_sender'),
-        ('basntoclient', 'basnmessagereceiver', 'gen_basn_msg_receiver'),
+        ('batocloud', 'basnmessagesender', 'gen_basn_msg_sender'),
+        ('cloudtoba', 'basnmessagereceiver', 'gen_basn_msg_receiver'),
     ]:
         targets.append(
             Target(
