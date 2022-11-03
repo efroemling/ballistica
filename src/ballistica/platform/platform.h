@@ -249,7 +249,7 @@ class Platform {
 
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
-  virtual auto Purchase(const std::string& item) -> void;
+  auto Purchase(const std::string& item) -> void;
 
   // Restore purchases (currently only relevant on Apple platforms).
   virtual auto RestorePurchases() -> void;
@@ -510,6 +510,9 @@ class Platform {
   auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
 
  protected:
+  /// Make a purchase.
+  virtual auto DoPurchase(const std::string& item) -> void;
+
   /// Are we being run from a terminal? (should we show prompts, etc?).
   virtual auto GetIsStdinATerminal() -> bool;
 

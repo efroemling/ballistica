@@ -1050,36 +1050,6 @@ void Input::ProcessStressTesting(int player_count) {
   }
 }
 
-void Input::HandleBackPress(bool from_toolbar) {
-  assert(InLogicThread());
-
-  // This can come through occasionally before our UI is up it seems?
-  // Just ignore in that case.
-  if (g_ui == nullptr || g_ui->screen_root_widget() == nullptr
-      || g_ui->overlay_root_widget() == nullptr
-      || g_ui->root_widget() == nullptr) {
-    // Log(LogLevel::kError, "HandleBackPress() called without main UI");
-    return;
-  }
-
-  // If there's no dialogs/windows up, ask for a menu (owned by the touch-input
-  // if available).
-  if (g_ui->screen_root_widget()->GetChildCount() == 0
-      && g_ui->overlay_root_widget()->GetChildCount() == 0) {
-    g_logic->PushMainMenuPressCall(touch_input_);
-  } else {
-    if (from_toolbar) {
-      // NOTE - this means the toolbar back button can never apply to overlay
-      // widgets; is that ok?...
-      g_ui->screen_root_widget()->HandleMessage(
-          WidgetMessage(WidgetMessage::Type::kCancel));
-    } else {
-      g_ui->root_widget()->HandleMessage(
-          WidgetMessage(WidgetMessage::Type::kCancel));
-    }
-  }
-}
-
 void Input::PushTextInputEvent(const std::string& text) {
   g_logic->thread()->PushCall([this, text] {
     mark_input_active();
@@ -1228,14 +1198,9 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           // If there's no dialogs/windows up, ask for a menu (owned by the
           // touch-screen if available).
           if (g_ui->screen_root_widget()->GetChildCount() == 0) {
-            g_logic->PushMainMenuPressCall(touch_input_);
+            g_ui->PushMainMenuPressCall(touch_input_);
           }
         }
-        handled = true;
-        break;
-      }
-      case SDLK_AC_BACK: {
-        HandleBackPress(false);
         handled = true;
         break;
       }
@@ -1286,7 +1251,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           if (g_ui->screen_root_widget()->GetChildCount() == 0
               && g_ui->overlay_root_widget()->GetChildCount() == 0) {
             if (keyboard_input_) {
-              g_logic->PushMainMenuPressCall(keyboard_input_);
+              g_ui->PushMainMenuPressCall(keyboard_input_);
             }
           } else {
             // Ok there's a UI up.. send along a cancel message.

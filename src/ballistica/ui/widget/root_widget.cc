@@ -1108,12 +1108,7 @@ void RootWidget::SetOverlayWidget(StackWidget* w) {
   overlay_stack_widget_ = w;
 }
 
-void RootWidget::OnCancelCustom() {
-  // if we've got any toolbar buttons selected and hit cancel, flip back to the
-  // main screen stack SelectWidget(screen_stack_widget_); cout << "ROOT CUSTOM
-  // CANCEL" << endl;
-  g_input->HandleBackPress(true);
-}
+void RootWidget::OnCancelCustom() { g_ui->PushBackButtonCall(nullptr); }
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
   if (s == "party_button") {

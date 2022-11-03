@@ -139,7 +139,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
   // Bring up menu if start is pressed.
   if (keysym->sym == start_key_ && !repeat && g_ui && g_ui->screen_root_widget()
       && g_ui->screen_root_widget()->GetChildCount() == 0) {
-    g_logic->PushMainMenuPressCall(this);
+    g_ui->PushMainMenuPressCall(this);
     return true;
   }
 
@@ -411,9 +411,7 @@ void KeyboardInput::UpdateMapping() {
   left_key_assigned_ = right_key_assigned_ = up_key_assigned_ =
       down_key_assigned_ = false;
 
-  int val;
-
-  val = g_python->GetControllerValue(this, "buttonJump");
+  int val = g_python->GetControllerValue(this, "buttonJump");
   jump_key_ = (val == -1) ? jump_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(jump_key_);
 

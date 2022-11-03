@@ -2151,7 +2151,7 @@ auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  g_input->HandleBackPress(true);
+  g_ui->PushBackButtonCall(nullptr);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

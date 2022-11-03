@@ -1,4 +1,6 @@
-### 1.7.13 (build 20917, api 7, 2022-11-02)
+### 1.7.13 (build 20919, api 7, 2022-11-03)
+- Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.
+- Android back-button handling code had to be reworked a bit for sdk 33 (see https://developer.android.com/guide/navigation/predictive-back-gesture). Because of this, back buttons on gamepads or other special cases behave slightly differently, but hopefully still in a reasonable way. Please holler if you find otherwise.
 
 ### 1.7.12 (build 20914, api 7, 2022-10-18)
 - Disabled some live-objects warnings as it seems their use of certain gc module functionality might be causing some rare errors/crashes. On further inspection, it turns out that is technically expected. Basically those calls are useful for debugging but can break things. Added a note at the top of efro.debug elaborating on the situation. We can reimplement similar warnings later in a safe manner.

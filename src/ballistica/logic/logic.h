@@ -42,12 +42,6 @@ class Logic {
   auto PushRemoveGraphicsServerRenderHoldCall() -> void;
   auto PushInterruptSignalCall() -> void;
 
-  /// Push a generic 'menu press' event, optionally associated with an
-  /// input device (nullptr to specify none). Note: caller must ensure
-  /// a RemoveInputDevice() call does not arrive at the logic thread
-  /// before this one.
-  auto PushMainMenuPressCall(InputDevice* device) -> void;
-
   /// Notify the game of a screen-size change (used by the graphics server).
   auto PushScreenResizeCall(float virtual_width, float virtual_height,
                             float physical_width, float physical_height)
@@ -96,7 +90,6 @@ class Logic {
   auto PushStringEditCancelCall() -> void;
   auto PushFriendScoreSetCall(const FriendScoreSet& score_set) -> void;
   auto PushShowURLCall(const std::string& url) -> void;
-  auto PushBackButtonCall(InputDevice* input_device) -> void;
   auto PushOnAppResumeCall() -> void;
   auto PushFrameDefRequest() -> void;
   auto ChangeGameSpeed(int offs) -> void;
@@ -252,7 +245,6 @@ class Logic {
   auto InitSpecialChars() -> void;
   auto Draw() -> void;
   auto InitialScreenCreated() -> void;
-  auto MainMenuPress(InputDevice* device) -> void;
   auto ScreenResize(float virtual_width, float virtual_height,
                     float pixel_width, float pixel_height) -> void;
   auto GameServiceAchievementList(const std::set<std::string>& achievements)

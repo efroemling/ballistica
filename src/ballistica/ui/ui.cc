@@ -6,6 +6,7 @@
 #include "ballistica/assets/component/data.h"
 #include "ballistica/assets/component/sound.h"
 #include "ballistica/audio/audio.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/input/device/input_device.h"
@@ -83,6 +84,36 @@ auto UI::OnAppStart() -> void {
 UI::~UI() {
   assert(root_ui_);
   delete root_ui_;
+}
+
+void UI::PushBackButtonCall(InputDevice* input_device) {
+  g_logic->thread()->PushCall([this, input_device] {
+    assert(InLogicThread());
+
+    // Ignore if UI isn't up yet.
+    if (!overlay_root_widget() || !screen_root_widget()) {
+      return;
+    }
+
+    // If there's a UI up, send along a cancel message.
+    if (overlay_root_widget()->GetChildCount() != 0
+        || screen_root_widget()->GetChildCount() != 0) {
+      root_widget()->HandleMessage(WidgetMessage(WidgetMessage::Type::kCancel));
+    } else {
+      // If there's no main screen or overlay windows, ask for a menu owned by
+      // this device.
+      MainMenuPress(input_device);
+    }
+  });
+}
+
+void UI::PushMainMenuPressCall(InputDevice* device) {
+  g_logic->thread()->PushCall([this, device] { MainMenuPress(device); });
+}
+
+void UI::MainMenuPress(InputDevice* device) {
+  assert(InLogicThread());
+  g_python->HandleDeviceMenuPress(device);
 }
 
 auto UI::IsWindowPresent() const -> bool {

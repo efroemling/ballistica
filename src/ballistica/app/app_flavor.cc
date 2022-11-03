@@ -13,6 +13,7 @@
 #include "ballistica/networking/networking.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/python/python.h"
+#include "ballistica/ui/ui.h"
 
 namespace ballistica {
 
@@ -211,7 +212,7 @@ void AppFlavor::OnResume() {
     // If we've been completely backgrounded,
     // send a menu-press command to the game; this will
     // bring up a pause menu if we're in the game/etc.
-    g_logic->PushMainMenuPressCall(nullptr);
+    g_ui->PushMainMenuPressCall(nullptr);
   }
 }
 
@@ -297,7 +298,7 @@ void AppFlavor::PushPurchaseAckCall(const std::string& purchase,
       [purchase, order_id] { g_platform->PurchaseAck(purchase, order_id); });
 }
 
-void AppFlavor::PushPurchaseCall(const std::string& item) {
+auto AppFlavor::PushPurchaseCall(const std::string& item) -> void {
   thread()->PushCall([item] {
     assert(InMainThread());
     g_platform->Purchase(item);

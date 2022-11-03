@@ -124,7 +124,7 @@ void RootUI::HandleMouseButtonUp(float x, float y) {
     }
     if ((g_graphics->screen_virtual_width() - x < menu_button_size_)
         && (g_graphics->screen_virtual_height() - y < menu_button_size_)) {
-      g_logic->PushMainMenuPressCall(input_device);
+      g_ui->PushMainMenuPressCall(input_device);
       last_menu_button_press_time_ = GetRealTime();
     }
   }

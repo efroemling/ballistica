@@ -879,7 +879,22 @@ void Platform::ShowOnlineScoreUI(const std::string& show,
   Log(LogLevel::kError, "FIXME: ShowOnlineScoreUI() unimplemented");
 }
 
-void Platform::Purchase(const std::string& item) {
+auto Platform::Purchase(const std::string& item) -> void {
+  // We use alternate _c ids for consumables in some cases where
+  // we originally used entitlements. We are all consumables now though
+  // so we can purchase for different accounts.
+  std::string item_filtered{item};
+  if (g_buildconfig.amazon_build()) {
+    if (item == "bundle_bones" || item == "bundle_bernard"
+        || item == "bundle_frosty" || item == "bundle_santa" || item == "pro"
+        || item == "pro_sale") {
+      item_filtered = item + "_c";
+    }
+  }
+  DoPurchase(item_filtered);
+}
+
+auto Platform::DoPurchase(const std::string& item) -> void {
   // Just print 'unavailable' by default.
   g_python->PushObjCall(Python::ObjID::kUnavailableMessageCall);
 }

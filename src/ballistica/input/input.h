@@ -103,7 +103,6 @@ class Input {
   // something.
   auto HaveControllerWithPlayer() -> bool;
   auto HaveRemoteAppController() -> bool;
-  auto HandleBackPress(bool from_toolbar) -> void;
   auto ProcessStressTesting(int player_count) -> void;
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
   auto keyboard_input_2() const -> KeyboardInput* { return keyboard_input_2_; }

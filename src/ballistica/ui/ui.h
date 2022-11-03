@@ -78,6 +78,8 @@ class UI : public ContextTarget {
   // Returns the input-device that currently owns the menu; otherwise nullptr.
   auto GetUIInputDevice() const -> InputDevice*;
 
+  auto PushBackButtonCall(InputDevice* input_device) -> void;
+
   // Returns whether currently selected widgets should flash.
   // This will be false in some situations such as when only touch screen
   // control is active.
@@ -124,7 +126,14 @@ class UI : public ContextTarget {
 
   auto scale() const { return scale_; }
 
+  /// Push a generic 'menu press' event, optionally associated with an
+  /// input device (nullptr to specify none). Note: caller must ensure
+  /// a RemoveInputDevice() call does not arrive at the logic thread
+  /// before this one.
+  auto PushMainMenuPressCall(InputDevice* device) -> void;
+
  private:
+  auto MainMenuPress(InputDevice* device) -> void;
   auto StepScene() -> void;
   RootUI* root_ui_{};
   millisecs_t next_prune_time_{};

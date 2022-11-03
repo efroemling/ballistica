@@ -731,28 +731,6 @@ auto Logic::GetForegroundContext() -> Context {
   }
 }
 
-void Logic::PushBackButtonCall(InputDevice* input_device) {
-  thread()->PushCall([this, input_device] {
-    assert(InLogicThread());
-
-    // Ignore if UI isn't up yet.
-    if (!g_ui || !g_ui->overlay_root_widget() || !g_ui->screen_root_widget()) {
-      return;
-    }
-
-    // If there's a UI up, send along a cancel message.
-    if (g_ui->overlay_root_widget()->GetChildCount() != 0
-        || g_ui->screen_root_widget()->GetChildCount() != 0) {
-      g_ui->root_widget()->HandleMessage(
-          WidgetMessage(WidgetMessage::Type::kCancel));
-    } else {
-      // If there's no main screen or overlay windows, ask for a menu owned by
-      // this device.
-      MainMenuPress(input_device);
-    }
-  });
-}
-
 void Logic::PushStringEditSetCall(const std::string& value) {
   thread()->PushCall([value] {
     if (!g_ui) {
@@ -1117,15 +1095,6 @@ void Logic::PushToggleDebugInfoDisplayCall() {
 
 void Logic::PushToggleCollisionGeometryDisplayCall() {
   thread()->PushCall([] { g_graphics->ToggleDebugDraw(); });
-}
-
-void Logic::PushMainMenuPressCall(InputDevice* device) {
-  thread()->PushCall([this, device] { MainMenuPress(device); });
-}
-
-void Logic::MainMenuPress(InputDevice* device) {
-  assert(InLogicThread());
-  g_python->HandleDeviceMenuPress(device);
 }
 
 void Logic::PushScreenResizeCall(float virtual_width, float virtual_height,

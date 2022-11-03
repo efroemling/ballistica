@@ -46,7 +46,7 @@ class PlatformApple : public Platform {
       -> bool override;
   auto ShowOnlineScoreUI(const std::string& show, const std::string& game,
                          const std::string& game_version) -> void override;
-  auto Purchase(const std::string& item) -> void override;
+  auto DoPurchase(const std::string& item) -> void override;
   auto RestorePurchases() -> void override;
   auto NewAutoReleasePool() -> void* override;
   auto DrainAutoReleasePool(void* pool) -> void override;

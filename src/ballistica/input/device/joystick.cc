@@ -764,7 +764,7 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
       } else {
         // If there's no menu up,
         // tell the game to pop it up and snag menu ownership for ourself.
-        g_logic->PushMainMenuPressCall(this);
+        g_ui->PushMainMenuPressCall(this);
         return;
       }
     }

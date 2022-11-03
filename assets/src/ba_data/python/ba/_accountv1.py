@@ -233,8 +233,8 @@ class AccountV1Subsystem:
 
         # We expose pro options if the server tells us to
         # (which is generally just when we own pro),
-        # or also if we've been grandfathered in or are using ballistica-core
-        # builds.
+        # or also if we've been grandfathered in
+        # or are using ballistica-core builds.
         return self.have_pro() or bool(
             _internal.get_v1_account_misc_read_val_2(
                 'proOptionsUnlocked', False
