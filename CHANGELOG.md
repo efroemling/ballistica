@@ -1,3 +1,5 @@
+### 1.7.14 (build 20921, api 7, 2022-11-03)
+
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.
 - Android back-button handling code had to be reworked a bit for sdk 33 (see https://developer.android.com/guide/navigation/predictive-back-gesture). Because of this, back buttons on gamepads or other special cases behave slightly differently, but hopefully still in a reasonable way. Please holler if you find otherwise.
