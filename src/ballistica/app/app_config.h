@@ -60,6 +60,7 @@ class AppConfig {
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
+    kAutoEnableNewPlugins,
     kShowFPS,
     kTVBorder,
     kKeyboardP2Enabled,

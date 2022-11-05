@@ -117,7 +117,7 @@ class PluginWindow(ba.Window):
 
         ba.imagewidget(
             parent=self._root_widget,
-            position=(settings_button_x + 5, self._height - 60),
+            position=(settings_button_x + 3, self._height - 60),
             size=(35, 35),
             texture=ba.gettexture('settingsIcon'),
         )
