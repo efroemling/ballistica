@@ -228,6 +228,7 @@ class PluginWindow(ba.Window):
         ba.app.config.commit()
 
     def _open_settings(self) -> None:
+        # pylint: disable=cyclic-import
         from bastd.ui.settings.pluginsettings import PluginSettingsWindow
         ba.playsound(ba.getsound('swish'))
 

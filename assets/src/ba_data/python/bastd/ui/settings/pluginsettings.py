@@ -141,6 +141,7 @@ class PluginSettingsWindow(ba.Window):
         cfg.apply_and_commit()
 
     def _do_back(self) -> None:
+        # pylint: disable=cyclic-import
         from bastd.ui.settings.plugins import PluginWindow
 
         ba.containerwidget(
