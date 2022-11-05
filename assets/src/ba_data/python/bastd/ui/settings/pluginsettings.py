@@ -71,7 +71,7 @@ class PluginSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=(0, height - 52),
             size=(width, 25),
-            text='Plugin Settings',
+            text=ba.Lstr(resource='pluginSettingsText'),
             color=ba.app.ui.title_color,
             h_align='center',
             v_align='top'
@@ -83,7 +83,7 @@ class PluginSettingsWindow(ba.Window):
             position=(65,self._y_position),
             size=(350, 60),
             autoselect=True,
-            label='Enable All Plugins',
+            label=ba.Lstr(resource='pluginsEnableAllText'),
             text_scale=1.0,
             on_activate_call=self._enable_all_plugins,
         )
@@ -94,7 +94,7 @@ class PluginSettingsWindow(ba.Window):
             position=(65,self._y_position),
             size=(350, 60),
             autoselect=True,
-            label='Disable All Plugins',
+            label=ba.Lstr(resource='pluginsDisableAllText'),
             text_scale=1.0,
             on_activate_call=self._disable_all_plugins,
         )
@@ -105,7 +105,7 @@ class PluginSettingsWindow(ba.Window):
             position=(65, self._y_position),
             size=(350, 60),
             value=ba.app.config['Auto Enable New Plugins'],
-            text='Auto Enable New Plugins',
+            text=ba.Lstr(resource='AutoEnableNewPluginsText'),
             scale=1.0,
             maxwidth=430,
             on_value_change_call=self._update_value
