@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.ui.config import ConfigCheckBox
 
 if TYPE_CHECKING:
     pass
@@ -101,14 +100,15 @@ class PluginSettingsWindow(ba.Window):
         )
 
         self._y_position -= 70
-        self._enable_new_plugins_check_box = ConfigCheckBox(
+        self._enable_new_plugins_check_box = ba.checkboxwidget(
             parent=self._root_widget,
             position=(65, self._y_position),
             size=(350, 60),
-            configkey='Auto Enable New Plugins',
-            displayname=ba.Lstr(resource='AutoEnableNewPluginsText'),
+            value=ba.app.config['Auto Enable New Plugins'],
+            text=ba.Lstr(resource='AutoEnableNewPluginsText'),
             scale=1.0,
-            maxwidth=430
+            maxwidth=430,
+            on_value_change_call=self._update_value
         )
 
     def _enable_all_plugins(self) -> None:
@@ -134,6 +134,11 @@ class PluginSettingsWindow(ba.Window):
             ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
             color=(1.0, 0.5, 0.0),
         )
+
+    def _update_value(self, val: bool) -> None:
+        cfg = ba.app.config
+        cfg['Auto Enable New Plugins'] = val
+        cfg.apply_and_commit()
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
