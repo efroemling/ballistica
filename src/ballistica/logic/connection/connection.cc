@@ -390,10 +390,10 @@ void Connection::Update() {
 
   if (can_communicate()
       && real_time - last_ping_update_time_ > kPingUpdateInterval + 1000) {
-    // Send a reliable message if ping not updated in a while
-    // purpose of this message it just to calculate ping.
+    // Send a reliable message if ping not updated in a while.
 
     std::vector<uint8_t> data(1);
+    data[0] = BA_PACKET_SIMPLE_PING;
     SendReliableMessage(data);
   }
 
