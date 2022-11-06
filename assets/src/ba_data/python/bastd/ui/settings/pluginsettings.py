@@ -78,7 +78,7 @@ class PluginSettingsWindow(ba.Window):
         )
 
         self._y_position = 170 if uiscale is ba.UIScale.MEDIUM else 205
-        self._plugins_button = ba.buttonwidget(
+        self._enable_plugins_button = ba.buttonwidget(
             parent=self._root_widget,
             position=(65,self._y_position),
             size=(350, 60),
@@ -89,7 +89,7 @@ class PluginSettingsWindow(ba.Window):
         )
 
         self._y_position -= 70
-        self._plugins_button = ba.buttonwidget(
+        self._disable_plugins_button = ba.buttonwidget(
             parent=self._root_widget,
             position=(65,self._y_position),
             size=(350, 60),
@@ -109,6 +109,23 @@ class PluginSettingsWindow(ba.Window):
             scale=1.0,
             maxwidth=430,
             on_value_change_call=self._update_value
+        )
+
+        ba.widget(
+            edit=self._back_button,
+            down_widget=self._enable_plugins_button
+        )
+
+        ba.widget(
+            edit=self._disable_plugins_button,
+            left_widget=self._disable_plugins_button
+        )
+
+        ba.widget(
+            edit=self._enable_new_plugins_check_box,
+            left_widget=self._enable_new_plugins_check_box,
+            right_widget=self._enable_new_plugins_check_box,
+            down_widget=self._enable_new_plugins_check_box
         )
 
     def _enable_all_plugins(self) -> None:

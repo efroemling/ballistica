@@ -122,6 +122,12 @@ class PluginWindow(ba.Window):
             texture=ba.gettexture('settingsIcon'),
         )
 
+        ba.widget(
+            edit=self._settings_button,
+            up_widget=self._settings_button,
+            right_widget=self._settings_button
+        )
+
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             position=(50 + x_inset, 50),
@@ -200,6 +206,7 @@ class PluginWindow(ba.Window):
                     edit=check,
                     up_widget=self._back_button,
                     left_widget=self._back_button,
+                    right_widget=self._settings_button
                 )
                 if button is not None:
                     ba.widget(edit=button, up_widget=self._back_button)
