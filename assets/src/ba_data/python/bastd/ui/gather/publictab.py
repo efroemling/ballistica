@@ -571,6 +571,7 @@ class PublicGatherTab(GatherTab):
             h_align='left',
             v_align='center',
             editable=True,
+            maxwidth=310,
             description=filter_txt,
         )
         ba.widget(edit=self._filter_text, up_widget=self._join_text)
