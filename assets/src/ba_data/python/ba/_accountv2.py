@@ -43,9 +43,7 @@ class AccountV2Subsystem:
         if _ba.app.platform == 'android' and _ba.app.subplatform == 'google':
             from ba._login import LoginAdapterGPGS
 
-            self.login_adapters[LoginType.GPGS] = LoginAdapterGPGS(
-                LoginType.GPGS
-            )
+            self.login_adapters[LoginType.GPGS] = LoginAdapterGPGS()
 
     def on_app_launch(self) -> None:
         """Should be called at standard on_app_launch time."""
@@ -127,7 +125,7 @@ class AccountV2Subsystem:
         for adapter in self.login_adapters.values():
             adapter.set_active_logins(logins)
 
-    def on_implicit_login(
+    def on_implicit_sign_in(
         self, login_type: LoginType, login_id: str, display_name: str
     ) -> None:
         """An implicit login happened."""
@@ -140,7 +138,7 @@ class AccountV2Subsystem:
                 )
             )
 
-    def on_implicit_logout(self, login_type: LoginType) -> None:
+    def on_implicit_sign_out(self, login_type: LoginType) -> None:
         """An implicit logout happened."""
         with _ba.Context('ui'):
             self.login_adapters[login_type].set_implicit_login_state(None)

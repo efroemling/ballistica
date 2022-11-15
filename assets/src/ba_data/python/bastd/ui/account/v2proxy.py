@@ -95,7 +95,7 @@ class V2ProxySignInWindow(ba.Window):
             )
             return
 
-        # Show link(s) the user can use to log in.
+        # Show link(s) the user can use to sign in.
         address = (
             ba.internal.get_master_server_address(version=2) + response.url
         )

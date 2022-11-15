@@ -8,12 +8,12 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
+from bacommon.login import LoginType
 import _ba
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bacommon.login import LoginType
 
 DEBUG_LOG = True
 
@@ -272,8 +272,8 @@ class LoginAdapter:
 class LoginAdapterGPGS(LoginAdapter):
     """Google Play Game Services adapter."""
 
-    def __init__(self, login_type: LoginType):
-        super().__init__(login_type)
+    def __init__(self) -> None:
+        super().__init__(LoginType.GPGS)
 
         # Store int ids for in-flight attempts since they may go through
         # various platform layers and back.

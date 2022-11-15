@@ -1,4 +1,4 @@
-### 1.7.14 (build 20928, api 7, 2022-11-15)
+### 1.7.14 (build 20929, api 7, 2022-11-15)
 - Android Google Play logins now provide V2 accounts with access to all V2 features such as a globally-unique account tag, cloud-console, and workspaces. They should still retain their V1 data as well.
 - V2 accounts now have a 'Manage Account' button in the app account window which will sign you into a browser with your current account.
 - Removed Google App Invite functionality which has been deprecated for a while now. Google Play users can still get tickets by sharing the app via codes (same as other platforms).

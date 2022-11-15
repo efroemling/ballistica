@@ -366,8 +366,8 @@ class Python {
     kLoggingWarningCall,
     kLoggingErrorCall,
     kLoggingCriticalCall,
-    kImplicitLoginCall,
-    kImplicitLogoutCall,
+    kImplicitSignInCall,
+    kImplicitSignOutCall,
     kLoginAdapterGetSignInTokenResponseCall,
     kLast  // Sentinel; must be at end.
   };

@@ -143,7 +143,7 @@ def get_binding_values() -> tuple[Any, ...]:
         logging.warning,  # kLoggingWarningCall
         logging.error,  # kLoggingErrorCall
         logging.critical,  # kLoggingCriticalCall
-        _hooks.implicit_login,  # kImplicitLoginCall
-        _hooks.implicit_logout,  # kImplicitLogoutCall
+        _hooks.implicit_sign_in,  # kImplicitSignInCall
+        _hooks.implicit_sign_out,  # kImplicitSignOutCall
         _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     )  # yapf: disable

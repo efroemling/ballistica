@@ -434,24 +434,26 @@ def have_account_v2_credentials() -> bool:
     return _ba.app.accounts_v2.have_primary_credentials()
 
 
-def implicit_login(
+def implicit_sign_in(
     login_type_str: str, login_id: str, display_name: str
 ) -> None:
     """An implicit login happened."""
     from bacommon.login import LoginType
 
-    _ba.app.accounts_v2.on_implicit_login(
+    _ba.app.accounts_v2.on_implicit_sign_in(
         login_type=LoginType(login_type_str),
         login_id=login_id,
         display_name=display_name,
     )
 
 
-def implicit_logout(login_type_str: str) -> None:
+def implicit_sign_out(login_type_str: str) -> None:
     """An implicit logout happened."""
     from bacommon.login import LoginType
 
-    _ba.app.accounts_v2.on_implicit_logout(login_type=LoginType(login_type_str))
+    _ba.app.accounts_v2.on_implicit_sign_out(
+        login_type=LoginType(login_type_str)
+    )
 
 
 def login_adapter_get_sign_in_token_response(
