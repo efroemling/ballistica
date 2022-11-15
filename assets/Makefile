@@ -174,6 +174,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_language.py \
   build/ba_data/python/ba/_level.py \
   build/ba_data/python/ba/_lobby.py \
+  build/ba_data/python/ba/_login.py \
   build/ba_data/python/ba/_map.py \
   build/ba_data/python/ba/_math.py \
   build/ba_data/python/ba/_messages.py \
@@ -286,7 +287,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/account/link.py \
   build/ba_data/python/bastd/ui/account/settings.py \
   build/ba_data/python/bastd/ui/account/unlink.py \
-  build/ba_data/python/bastd/ui/account/v2.py \
+  build/ba_data/python/bastd/ui/account/v2proxy.py \
   build/ba_data/python/bastd/ui/account/viewer.py \
   build/ba_data/python/bastd/ui/achievements.py \
   build/ba_data/python/bastd/ui/appinvite.py \
@@ -425,6 +426,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_language.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_level.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lobby.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_login.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_map.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_math.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_messages.cpython-310.opt-1.pyc \
@@ -537,7 +539,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/account/__pycache__/link.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/settings.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/unlink.cpython-310.opt-1.pyc \
-  build/ba_data/python/bastd/ui/account/__pycache__/v2.cpython-310.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/v2proxy.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/account/__pycache__/viewer.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/achievements.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/appinvite.cpython-310.opt-1.pyc \
@@ -654,6 +656,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/bacloud.py \
   build/ba_data/python/bacommon/build.py \
   build/ba_data/python/bacommon/cloud.py \
+  build/ba_data/python/bacommon/login.py \
   build/ba_data/python/bacommon/net.py \
   build/ba_data/python/bacommon/servermanager.py \
   build/ba_data/python/bacommon/transfer.py \
@@ -686,6 +689,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/bacloud.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/build.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/cloud.cpython-310.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/login.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/net.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-310.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/transfer.cpython-310.opt-1.pyc \

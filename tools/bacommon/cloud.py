@@ -10,6 +10,7 @@ from enum import Enum
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.transfer import DirectoryManifest
+from bacommon.login import LoginType
 
 if TYPE_CHECKING:
     pass
@@ -154,3 +155,42 @@ class WorkspaceFetchResponse(Response):
     ] = field(default_factory=dict)
 
     done: Annotated[bool, IOAttrs('d')] = False
+
+
+@ioprepped
+@dataclass
+class SignInMessage(Message):
+    """Can I sign in please?"""
+
+    login_type: Annotated[LoginType, IOAttrs('l')]
+    sign_in_token: Annotated[str, IOAttrs('t')]
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [SignInResponse]
+
+
+@ioprepped
+@dataclass
+class SignInResponse(Response):
+    """Here's that sign-in result you asked for, boss."""
+
+    credentials: Annotated[str | None, IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
+class ManageAccountMessage(Message):
+    """Message asking for a manage-account url."""
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [ManageAccountResponse]
+
+
+@ioprepped
+@dataclass
+class ManageAccountResponse(Response):
+    """Here's that sign-in result you asked for, boss."""
+
+    url: Annotated[str | None, IOAttrs('u')]

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 STATUS_CHECK_INTERVAL_SECONDS = 2.0
 
 
-class V2SignInWindow(ba.Window):
+class V2ProxySignInWindow(ba.Window):
     """A window allowing signing in to a v2 account."""
 
     def __init__(self, origin_widget: ba.Widget):

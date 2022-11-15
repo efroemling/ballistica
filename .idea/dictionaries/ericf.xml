@@ -65,6 +65,7 @@
       <w>aiomain</w>
       <w>alarmsound</w>
       <w>alibaba</w>
+      <w>alibname</w>
       <w>allerrors</w>
       <w>allobjc</w>
       <w>allobjs</w>
@@ -1103,6 +1104,7 @@
       <w>googlevr</w>
       <w>goosey</w>
       <w>gotresponse</w>
+      <w>gpgs</w>
       <w>gpio</w>
       <w>gprev</w>
       <w>gpsui</w>
@@ -1866,6 +1868,7 @@
       <w>pentry</w>
       <w>perma</w>
       <w>perrdetail</w>
+      <w>phandle</w>
       <w>phasers</w>
       <w>phasescriptexecution</w>
       <w>phello</w>

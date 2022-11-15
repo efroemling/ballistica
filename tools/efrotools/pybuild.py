@@ -14,9 +14,10 @@ if TYPE_CHECKING:
     from typing import Any
 
 # Python version we build here (not necessarily same as we use in repo).
-PY_VER = '3.10'
-PY_VER_EXACT_ANDROID = '3.10.7'
-PY_VER_EXACT_APPLE = '3.10.7'
+PY_VER_ANDROID = '3.11'
+PY_VER_EXACT_ANDROID = '3.11.0'
+PY_VER_APPLE = '3.10'
+PY_VER_EXACT_APPLE = '3.10.5'
 
 ANDROID_PYTHON_REPO = 'https://github.com/GRRedWings/python3-android'
 
@@ -91,7 +92,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # broke in the underlying build even on old commits so keeping it
     # locked for now...
     # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-    subprocess.run(['git', 'checkout', PY_VER], check=True)
+    subprocess.run(['git', 'checkout', PY_VER_APPLE], check=True)
 
     txt = readfile('Makefile')
 
@@ -240,7 +241,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # after it is extracted.
     ftxt = readfile('build.sh')
 
-    ftxt = replace_exact(ftxt, 'PYVER=3.10.5', f'PYVER={PY_VER_EXACT_ANDROID}')
+    ftxt = replace_exact(ftxt, 'PYVER=3.11.0', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
         ftxt,
         '    popd\n',
@@ -252,7 +253,10 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
     subprocess.run(
-        f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs}', shell=True, check=True
+        f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs} --without-ensurepip'
+        f' --with-build-python=/home/ubuntu/.py311/bin/python3.11',
+        shell=True,
+        check=True,
     )
     print('python build complete! (android/' + arch + ')')
 
@@ -302,30 +306,34 @@ def android_patch_ssl() -> None:
     )
     writefile(fname, txt)
 
-    # Getting a lot of crashes in _armv7_tick, which seems to be a
-    # somewhat known issue with certain arm7 devices. Sounds like
-    # there are no major downsides to disabling this feature, so doing that.
-    # (Sounds like its possible to somehow disable it through an env var
-    # but let's just be sure and #ifdef it out in the source.
-    # see https://github.com/openssl/openssl/issues/17465
-    fname = 'crypto/armcap.c'
-    txt = readfile(fname)
-    txt = replace_exact(
-        txt,
-        '    /* Things that getauxval didn\'t tell us */\n'
-        '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
-        '        _armv7_tick();\n'
-        '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
-        '    }\n',
-        '# if 0  // ericf disabled; causing crashes on some android devices.\n'
-        '    /* Things that getauxval didn\'t tell us */\n'
-        '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
-        '        _armv7_tick();\n'
-        '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
-        '    }\n'
-        '# endif // 0\n',
-    )
-    writefile(fname, txt)
+    # Update: looks like this might have been disabled by default for
+    # newer SSL builds used by 3.11+
+    if bool(False):
+        # Getting a lot of crashes in _armv7_tick, which seems to be a
+        # somewhat known issue with certain arm7 devices. Sounds like
+        # there are no major downsides to disabling this feature, so doing that.
+        # (Sounds like its possible to somehow disable it through an env var
+        # but let's just be sure and #ifdef it out in the source.
+        # see https://github.com/openssl/openssl/issues/17465
+        fname = 'crypto/armcap.c'
+        txt = readfile(fname)
+        txt = replace_exact(
+            txt,
+            '    /* Things that getauxval didn\'t tell us */\n'
+            '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
+            '        _armv7_tick();\n'
+            '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
+            '    }\n',
+            '# if 0  // ericf disabled; causing crashes'
+            ' on some android devices.\n'
+            '    /* Things that getauxval didn\'t tell us */\n'
+            '    if (sigsetjmp(ill_jmp, 1) == 0) {\n'
+            '        _armv7_tick();\n'
+            '        OPENSSL_armcap_P |= ARMV7_TICK;\n'
+            '    }\n'
+            '# endif // 0\n',
+        )
+        writefile(fname, txt)
 
 
 def _patch_py_ssl() -> None:
@@ -373,6 +381,7 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
     if platform == 'android':
         prefix = '$(srcdir)/Android/sysroot/usr'
         uuid_ex = f' -L{prefix}/lib -luuid'
+        uuid_ex += f' -I{prefix}/include/uuid'  # Testing
         zlib_ex = f' -I{prefix}/include -L{prefix}/lib -lz'
         bz2_ex = f' -I{prefix}/include -L{prefix}/lib -lbz2'
         ssl_ex = f' -DUSE_SSL -I{prefix}/include -L{prefix}/lib -lssl -lcrypto'
@@ -552,7 +561,7 @@ def _patch_setup_file(platform: str, arch: str, slc: str) -> None:
 
     ftxt += (
         f'_sqlite3'
-        f' _sqlite/cache.c'
+        f' _sqlite/blob.c'
         f' _sqlite/connection.c'
         f' _sqlite/cursor.c'
         f' _sqlite/microprotocols.c'
@@ -642,7 +651,7 @@ def winprune() -> None:
     print('Win-prune successful.')
 
 
-def gather() -> None:
+def gather(do_android: bool, do_apple: bool) -> None:
     """Gather per-platform python headers, libs, and modules together.
 
     This assumes all embeddable py builds have been run successfully,
@@ -650,8 +659,6 @@ def gather() -> None:
     """
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
-
-    do_android = True
 
     # First off, clear out any existing output.
     existing_dirs = [
@@ -675,7 +682,7 @@ def gather() -> None:
         debug = buildtype == 'debug'
         bsuffix = '_debug' if buildtype == 'debug' else ''
         bsuffix2 = '-debug' if buildtype == 'debug' else ''
-        libname = 'python' + PY_VER + ('d' if debug else '')
+        alibname = 'python' + PY_VER_ANDROID + ('d' if debug else '')
 
         bases = {
             'mac': f'build/python_apple_mac{bsuffix}/build/macOS',
@@ -756,9 +763,9 @@ def gather() -> None:
             {
                 'name': 'android_arm',
                 'group': 'android',
-                'headers': bases['android_arm'] + f'/usr/include/{libname}',
+                'headers': bases['android_arm'] + f'/usr/include/{alibname}',
                 'libs': [
-                    bases['android_arm'] + f'/usr/lib/lib{libname}.a',
+                    bases['android_arm'] + f'/usr/lib/lib{alibname}.a',
                     bases2['android_arm'] + '/usr/lib/libssl.a',
                     bases2['android_arm'] + '/usr/lib/libcrypto.a',
                     bases2['android_arm'] + '/usr/lib/liblzma.a',
@@ -767,14 +774,16 @@ def gather() -> None:
                     bases2['android_arm'] + '/usr/lib/libuuid.a',
                 ],
                 'libinst': 'android_armeabi-v7a',
-                'pylib': (bases['android_arm'] + '/usr/lib/python' + PY_VER),
+                'pylib': (
+                    bases['android_arm'] + '/usr/lib/python' + PY_VER_ANDROID
+                ),
             },
             {
                 'name': 'android_arm64',
                 'group': 'android',
-                'headers': bases['android_arm64'] + f'/usr/include/{libname}',
+                'headers': bases['android_arm64'] + f'/usr/include/{alibname}',
                 'libs': [
-                    bases['android_arm64'] + f'/usr/lib/lib{libname}.a',
+                    bases['android_arm64'] + f'/usr/lib/lib{alibname}.a',
                     bases2['android_arm64'] + '/usr/lib/libssl.a',
                     bases2['android_arm64'] + '/usr/lib/libcrypto.a',
                     bases2['android_arm64'] + '/usr/lib/liblzma.a',
@@ -787,9 +796,9 @@ def gather() -> None:
             {
                 'name': 'android_x86',
                 'group': 'android',
-                'headers': bases['android_x86'] + f'/usr/include/{libname}',
+                'headers': bases['android_x86'] + f'/usr/include/{alibname}',
                 'libs': [
-                    bases['android_x86'] + f'/usr/lib/lib{libname}.a',
+                    bases['android_x86'] + f'/usr/lib/lib{alibname}.a',
                     bases2['android_x86'] + '/usr/lib/libssl.a',
                     bases2['android_x86'] + '/usr/lib/libcrypto.a',
                     bases2['android_x86'] + '/usr/lib/liblzma.a',
@@ -802,9 +811,9 @@ def gather() -> None:
             {
                 'name': 'android_x86_64',
                 'group': 'android',
-                'headers': bases['android_x86_64'] + f'/usr/include/{libname}',
+                'headers': bases['android_x86_64'] + f'/usr/include/{alibname}',
                 'libs': [
-                    bases['android_x86_64'] + f'/usr/lib/lib{libname}.a',
+                    bases['android_x86_64'] + f'/usr/lib/lib{alibname}.a',
                     bases2['android_x86_64'] + '/usr/lib/libssl.a',
                     bases2['android_x86_64'] + '/usr/lib/libcrypto.a',
                     bases2['android_x86_64'] + '/usr/lib/liblzma.a',
@@ -819,6 +828,8 @@ def gather() -> None:
         for build in builds:
             grp = build['group']
             if not do_android and grp == 'android':
+                continue
+            if not do_apple and grp == 'apple':
                 continue
             builddir = f'src/external/python-{grp}{bsuffix2}'
             header_dst = os.path.join(builddir, 'include')

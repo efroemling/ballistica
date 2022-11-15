@@ -6,13 +6,16 @@
 from __future__ import annotations
 
 import time
+import logging
 from typing import TYPE_CHECKING
 
+import bacommon.cloud
+from bacommon.login import LoginType
 import ba
 import ba.internal
 
 if TYPE_CHECKING:
-    pass
+    from ba.internal import LoginAdapter
 
 
 class AccountSettingsWindow(ba.Window):
@@ -27,7 +30,7 @@ class AccountSettingsWindow(ba.Window):
     ):
         # pylint: disable=too-many-statements
 
-        self._sign_in_v2_button: ba.Widget | None = None
+        self._sign_in_v2_proxy_button: ba.Widget | None = None
         self._sign_in_device_button: ba.Widget | None = None
 
         self._close_once_signed_in = close_once_signed_in
@@ -92,16 +95,15 @@ class AccountSettingsWindow(ba.Window):
         # Determine which sign-in/sign-out buttons we should show.
         self._show_sign_in_buttons: list[str] = []
 
-        if app.platform == 'android' and app.subplatform == 'google':
+        if LoginType.GPGS in ba.app.accounts_v2.login_adapters:
             self._show_sign_in_buttons.append('Google Play')
 
-        # Local accounts are generally always available with a few key
-        # exceptions.
-        self._show_sign_in_buttons.append('Local')
+        # Always want to show our web-based v2 login option.
+        self._show_sign_in_buttons.append('V2Proxy')
 
-        # Ditto with shiny new V2 ones.
-        if bool(True):
-            self._show_sign_in_buttons.append('V2')
+        # Legacy v1 device accounts are currently always available
+        # (though we need to start phasing them out at some point).
+        self._show_sign_in_buttons.append('Local')
 
         top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(
@@ -255,8 +257,9 @@ class AccountSettingsWindow(ba.Window):
             account_state == 'signed_out'
             and 'Local' in self._show_sign_in_buttons
         )
-        show_v2_sign_in_button = (
-            account_state == 'signed_out' and 'V2' in self._show_sign_in_buttons
+        show_v2_proxy_sign_in_button = (
+            account_state == 'signed_out'
+            and 'V2Proxy' in self._show_sign_in_buttons
         )
         sign_in_button_space = 70.0
 
@@ -275,9 +278,7 @@ class AccountSettingsWindow(ba.Window):
 
         show_achievements_button = self._signed_in and account_type in (
             'Google Play',
-            'Alibaba',
             'Local',
-            'OUYA',
             'V2',
         )
         achievements_button_space = 60.0
@@ -299,9 +300,7 @@ class AccountSettingsWindow(ba.Window):
         show_reset_progress_button = False
         reset_progress_button_space = 70.0
 
-        show_manage_v2_account_button = (
-            self._signed_in and account_type == 'V2' and bool(False)
-        )  # Disabled for now.
+        show_manage_v2_account_button = self._signed_in and account_type == 'V2'
         manage_v2_account_button_space = 100.0
 
         show_player_profiles_button = self._signed_in
@@ -327,11 +326,11 @@ class AccountSettingsWindow(ba.Window):
         ]
         sign_out_button_space = 70.0
 
-        show_cancel_v2_sign_in_button = (
+        show_cancel_sign_in_button = (
             account_state == 'signing_in'
             and ba.app.accounts_v2.have_primary_credentials()
         )
-        cancel_v2_sign_in_button_space = 70.0
+        cancel_sign_in_button_space = 70.0
 
         if self._subcontainer is not None:
             self._subcontainer.delete()
@@ -346,7 +345,7 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += sign_in_button_space
         if show_device_sign_in_button:
             self._sub_height += sign_in_button_space
-        if show_v2_sign_in_button:
+        if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_game_service_button:
             self._sub_height += game_service_button_space
@@ -376,8 +375,8 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += unlink_accounts_button_space
         if show_sign_out_button:
             self._sub_height += sign_out_button_space
-        if show_cancel_v2_sign_in_button:
-            self._sub_height += cancel_v2_sign_in_button_space
+        if show_cancel_sign_in_button:
+            self._sub_height += cancel_sign_in_button_space
         self._subcontainer = ba.containerwidget(
             parent=self._scrollwidget,
             size=(self._sub_width, self._sub_height),
@@ -528,7 +527,7 @@ class AccountSettingsWindow(ba.Window):
                         ),
                     ],
                 ),
-                on_activate_call=lambda: self._sign_in_press('Google Play'),
+                on_activate_call=lambda: self._sign_in_press(LoginType.GPGS),
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -541,16 +540,16 @@ class AccountSettingsWindow(ba.Window):
             ba.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
 
-        if show_v2_sign_in_button:
+        if show_v2_proxy_sign_in_button:
             button_width = 350
             v -= sign_in_button_space
-            self._sign_in_v2_button = btn = ba.buttonwidget(
+            self._sign_in_v2_proxy_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 label='',
-                on_activate_call=self._v2_sign_in_press,
+                on_activate_call=self._v2_proxy_sign_in_press,
             )
             ba.textwidget(
                 parent=self._subcontainer,
@@ -663,9 +662,7 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 icon=ba.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
-                on_activate_call=lambda: ba.open_url(
-                    'https://ballistica.net/accountsettings'
-                ),
+                on_activate_call=ba.WeakCall(self._on_manage_account_press),
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -1005,9 +1002,9 @@ class AccountSettingsWindow(ba.Window):
                 )
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
-        if show_cancel_v2_sign_in_button:
-            v -= cancel_v2_sign_in_button_space
-            self._cancel_v2_sign_in_button = btn = ba.buttonwidget(
+        if show_cancel_sign_in_button:
+            v -= cancel_sign_in_button_space
+            self._cancel_sign_in_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
@@ -1015,7 +1012,7 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                on_activate_call=self._cancel_v2_sign_in_press,
+                on_activate_call=self._cancel_sign_in_press,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -1065,6 +1062,33 @@ class AccountSettingsWindow(ba.Window):
                 'ERROR: unknown account type in on_achievements_press:',
                 account_type,
             )
+
+    def _on_manage_account_press(self) -> None:
+        ba.screenmessage(ba.Lstr(resource='oneMomentText'))
+
+        # We expect to have a v2 account signed in if we get here.
+        if ba.app.accounts_v2.primary is None:
+            logging.exception(
+                'got manage-account press without v2 account present'
+            )
+            return
+
+        with ba.app.accounts_v2.primary:
+            ba.app.cloud.send_message_cb(
+                bacommon.cloud.ManageAccountMessage(),
+                on_response=ba.WeakCall(self._on_manage_account_response),
+            )
+
+    def _on_manage_account_response(
+        self, response: bacommon.cloud.ManageAccountResponse | Exception
+    ) -> None:
+
+        if isinstance(response, Exception) or response.url is None:
+            ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+
+        ba.open_url(response.url)
 
     def _on_leaderboards_press(self) -> None:
         ba.timer(
@@ -1214,7 +1238,7 @@ class AccountSettingsWindow(ba.Window):
             origin_widget=self._player_profiles_button
         )
 
-    def _cancel_v2_sign_in_press(self) -> None:
+    def _cancel_sign_in_press(self) -> None:
         # Just say we don't wanna be signed in anymore.
         ba.app.accounts_v2.set_primary_credentials(None)
 
@@ -1242,25 +1266,42 @@ class AccountSettingsWindow(ba.Window):
         # Speed UI updates along.
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
 
-    def _sign_in_press(
-        self, account_type: str, show_test_warning: bool = True
+    def _sign_in_press(self, login_type: str | LoginType) -> None:
+
+        # V1 login types are strings.
+        if isinstance(login_type, str):
+            ba.internal.sign_in_v1(login_type)
+
+            # Make note of the type account we're *wanting*
+            # to be signed in with.
+            cfg = ba.app.config
+            cfg['Auto Account State'] = login_type
+            cfg.commit()
+            self._needs_refresh = True
+            ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
+            return
+
+        # V2 login sign-in buttons generally go through adapters.
+        adapter = ba.app.accounts_v2.login_adapters.get(login_type)
+        if adapter is not None:
+            adapter.sign_in(
+                result_cb=ba.WeakCall(self._on_adapter_sign_in_result)
+            )
+        else:
+            ba.screenmessage(f'Unsupported login_type: {login_type.name}')
+
+    def _on_adapter_sign_in_result(
+        self, result: LoginAdapter.SignInResult | Exception
     ) -> None:
-        del show_test_warning  # unused
-        ba.internal.sign_in_v1(account_type)
+        ba.screenmessage('GOT SIGN IN RESULT')
+        logging.debug('GOT SIGN IN RESULT %s', result)
 
-        # Make note of the type account we're *wanting* to be signed in with.
-        cfg = ba.app.config
-        cfg['Auto Account State'] = account_type
-        cfg.commit()
-        self._needs_refresh = True
-        ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
-
-    def _v2_sign_in_press(self) -> None:
+    def _v2_proxy_sign_in_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account.v2 import V2SignInWindow
+        from bastd.ui.account.v2proxy import V2ProxySignInWindow
 
-        assert self._sign_in_v2_button is not None
-        V2SignInWindow(origin_widget=self._sign_in_v2_button)
+        assert self._sign_in_v2_proxy_button is not None
+        V2ProxySignInWindow(origin_widget=self._sign_in_v2_proxy_button)
 
     def _reset_progress(self) -> None:
         try:

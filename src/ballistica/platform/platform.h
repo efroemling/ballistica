@@ -267,7 +267,6 @@ class Platform {
   virtual auto AndroidShowAppInvite(const std::string& title,
                                     const std::string& message,
                                     const std::string& code) -> void;
-  virtual auto AndroidRefreshFile(const std::string& file) -> void;
   virtual auto AndroidShowWifiSettings() -> void;
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
@@ -336,6 +335,10 @@ class Platform {
 
   /// Return the prefix to use for device-account ids on this platform.
   virtual auto GetDeviceV1AccountUUIDPrefix() -> std::string;
+
+  /// Called when a Python LoginAdapter is requesting an explicit sign-in.
+  virtual auto LoginAdapterGetSignInToken(const std::string& login_type,
+                                          int attempt_id) -> void;
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 

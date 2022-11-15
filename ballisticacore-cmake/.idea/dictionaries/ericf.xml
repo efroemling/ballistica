@@ -42,6 +42,7 @@
       <w>airborn</w>
       <w>alext</w>
       <w>alibaba</w>
+      <w>alibname</w>
       <w>allerrors</w>
       <w>allobjc</w>
       <w>allobjs</w>
@@ -1005,6 +1006,7 @@
       <w>pflag</w>
       <w>pflags</w>
       <w>pgmout</w>
+      <w>phandle</w>
       <w>phasescriptexecution</w>
       <w>piplist</w>
       <w>pipvers</w>

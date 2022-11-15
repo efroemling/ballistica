@@ -1227,16 +1227,6 @@ def android_get_external_files_dir() -> str:
     return str()
 
 
-def android_media_scan_file(file_name: str) -> None:
-
-    """(internal)
-
-    Refreshes Android MTP Index for a file; use this to get file
-    modifications to be reflected in Android File Transfer.
-    """
-    return None
-
-
 def android_show_wifi_settings() -> None:
 
     """(internal)"""
@@ -2406,15 +2396,6 @@ def is_os_playing_music() -> bool:
     return bool()
 
 
-def is_ouya_build() -> bool:
-
-    """(internal)
-
-    Returns whether we're running the ouya-specific version
-    """
-    return bool()
-
-
 def is_party_icon_visible() -> bool:
 
     """(internal)"""
@@ -2445,6 +2426,12 @@ def lock_all_input() -> None:
 
     Prevents all keyboard, mouse, and gamepad events from being processed.
     """
+    return None
+
+
+def login_adapter_get_sign_in_token(login_type: str, attempt_id: int) -> None:
+
+    """(internal)"""
     return None
 
 

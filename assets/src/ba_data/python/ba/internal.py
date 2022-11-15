@@ -80,6 +80,7 @@ from _ba import (
     get_replays_dir,
 )
 
+from ba._login import LoginAdapter
 from ba._map import (
     get_map_class,
     register_map,
@@ -178,6 +179,7 @@ from ba._internal import (
 )
 
 __all__ = [
+    'LoginAdapter',
     'show_online_score_ui',
     'set_ui_input_device',
     'is_party_icon_visible',
@@ -247,7 +249,6 @@ __all__ = [
     'set_telnet_access_enabled',
     'new_replay_session',
     'get_replays_dir',
-    # DIVIDER
     'get_unowned_maps',
     'get_unowned_game_types',
     'get_map_class',

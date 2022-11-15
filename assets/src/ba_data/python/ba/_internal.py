@@ -321,7 +321,9 @@ def get_v1_account_state() -> str:
     """(internal)"""
     if HAVE_INTERNAL:
         return _bainternal.get_v1_account_state()
-    raise _no_bainternal_error()
+
+    # Without internal present just consider ourself always signed out.
+    return 'signed_out'
 
 
 def get_v1_account_display_string(full: bool = True) -> str:

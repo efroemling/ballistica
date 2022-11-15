@@ -622,6 +622,22 @@ auto PySetAnalyticsScreen(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
+auto PyLoginAdapterGetSignInToken(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* login_type;
+  int attempt_id;
+  static const char* kwlist[] = {"login_type", "attempt_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "si",
+                                   const_cast<char**>(kwlist), &login_type,
+                                   &attempt_id)) {
+    return nullptr;
+  }
+  g_platform->LoginAdapterGetSignInToken(login_type, attempt_id);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* list_obj;
@@ -655,26 +671,6 @@ auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
   Utils::SetRandomNameList(random_names);
   assert(g_logic);
   g_logic->SetLanguageKeys(language);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-auto PyIsOuyaBuild(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-auto PyAndroidMediaScanFile(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* file_name;
-  static const char* kwlist[] = {"file_name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &file_name)) {
-    return nullptr;
-  }
-  g_platform->AndroidRefreshFile(file_name);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -822,15 +818,6 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)"},
 
-      {"android_media_scan_file", (PyCFunction)PyAndroidMediaScanFile,
-       METH_VARARGS | METH_KEYWORDS,
-       "android_media_scan_file(file_name: str) -> None\n"
-       "\n"
-       "(internal)\n"
-       "\n"
-       "Refreshes Android MTP Index for a file; use this to get file\n"
-       "modifications to be reflected in Android File Transfer."},
-
       {"android_get_external_files_dir",
        (PyCFunction)PyAndroidGetExternalFilesDir, METH_VARARGS | METH_KEYWORDS,
        "android_get_external_files_dir() -> str\n"
@@ -846,13 +833,6 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "android_show_wifi_settings() -> None\n"
        "\n"
        "(internal)"},
-
-      {"is_ouya_build", PyIsOuyaBuild, METH_VARARGS,
-       "is_ouya_build() -> bool\n"
-       "\n"
-       "(internal)\n"
-       "\n"
-       "Returns whether we're running the ouya-specific version"},
 
       {"set_internal_language_keys", PySetInternalLanguageKeys, METH_VARARGS,
        "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
@@ -871,6 +851,13 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "Generally called when opening a new window or entering some UI.\n"
        "'screen' should be a string description of an app location\n"
        "('Main Menu', etc.)"},
+
+      {"login_adapter_get_sign_in_token",
+       (PyCFunction)PyLoginAdapterGetSignInToken, METH_VARARGS | METH_KEYWORDS,
+       "login_adapter_get_sign_in_token(login_type: str, attempt_id: int)"
+       " -> None\n"
+       "\n"
+       "(internal)"},
 
       {"submit_analytics_counts", (PyCFunction)PySubmitAnalyticsCounts,
        METH_VARARGS | METH_KEYWORDS,

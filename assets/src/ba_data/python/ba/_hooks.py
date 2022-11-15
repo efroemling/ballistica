@@ -247,6 +247,14 @@ def google_play_purchases_not_available_message() -> None:
     )
 
 
+def google_play_services_not_available_message() -> None:
+    from ba._language import Lstr
+
+    _ba.screenmessage(
+        Lstr(resource='googlePlayServicesNotAvailableText'), color=(1, 0, 0)
+    )
+
+
 def empty_call() -> None:
     pass
 
@@ -424,3 +432,39 @@ def hash_strings(inputs: list[str]) -> str:
 def have_account_v2_credentials() -> bool:
     """Do we have primary account-v2 credentials set?"""
     return _ba.app.accounts_v2.have_primary_credentials()
+
+
+def implicit_login(
+    login_type_str: str, login_id: str, display_name: str
+) -> None:
+    """An implicit login happened."""
+    from bacommon.login import LoginType
+
+    _ba.app.accounts_v2.on_implicit_login(
+        login_type=LoginType(login_type_str),
+        login_id=login_id,
+        display_name=display_name,
+    )
+
+
+def implicit_logout(login_type_str: str) -> None:
+    """An implicit logout happened."""
+    from bacommon.login import LoginType
+
+    _ba.app.accounts_v2.on_implicit_logout(login_type=LoginType(login_type_str))
+
+
+def login_adapter_get_sign_in_token_response(
+    login_type_str: str, attempt_id_str: str, result_str: str
+) -> None:
+    """Login adapter do-sign-in completed."""
+    from bacommon.login import LoginType
+    from ba._login import LoginAdapterGPGS
+
+    login_type = LoginType(login_type_str)
+    attempt_id = int(attempt_id_str)
+    result = None if result_str == '' else result_str
+    with _ba.Context('ui'):
+        adapter = _ba.app.accounts_v2.login_adapters[login_type]
+        assert isinstance(adapter, LoginAdapterGPGS)
+        adapter.on_sign_in_complete(attempt_id=attempt_id, result=result)

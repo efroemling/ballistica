@@ -188,6 +188,7 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
     firewall/connectivity issues, etc. These issues can often be safely
     ignored or presented to the user as general 'connection-lost' events.
     """
+    # pylint: disable=too-many-return-statements
     import ssl
 
     if isinstance(
@@ -225,6 +226,10 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
         # Assuming this just means client is attempting to connect from some
         # outdated browser or whatnot.
         if 'SSL: WRONG_VERSION_NUMBER' in excstr:
+            return True
+
+        # And seeing this very rarely; assuming its just data corruption?
+        if 'SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC' in excstr:
             return True
 
     return False

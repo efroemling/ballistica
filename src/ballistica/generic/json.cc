@@ -155,17 +155,19 @@ static auto print_number(cJSON* item) -> char* {
   double d = item->valuedouble;
   if (fabs(((double)item->valueint) - d) <= DBL_EPSILON && d <= INT_MAX
       && d >= INT_MIN) {
-    str = (char*)cJSON_malloc(21); /* 2^64+1 can be represented in 21 chars. */
-    if (str) sprintf(str, "%d", item->valueint);
+    size_t sz{21};
+    str = (char*)cJSON_malloc(sz); /* 2^64+1 can be represented in 21 chars. */
+    if (str) snprintf(str, sz, "%d", item->valueint);
   } else {
-    str = (char*)cJSON_malloc(64); /* This is a nice tradeoff. */
+    size_t sz{64};
+    str = (char*)cJSON_malloc(sz); /* This is a nice tradeoff. */
     if (str) {
       if (fabs(floor(d) - d) <= DBL_EPSILON && fabs(d) < 1.0e60)
-        sprintf(str, "%.0f", d);
+        snprintf(str, sz, "%.0f", d);
       else if (fabs(d) < 1.0e-6 || fabs(d) > 1.0e9)
-        sprintf(str, "%e", d);
+        snprintf(str, sz, "%e", d);
       else
-        sprintf(str, "%f", d);
+        snprintf(str, sz, "%f", d);
     }
   }
   return str;
@@ -379,7 +381,7 @@ static auto print_string_ptr(const char* str) -> char* {
           *ptr2++ = 't';
           break;
         default:
-          sprintf(ptr2, "u%04x", token);
+          snprintf(ptr2, 20, "u%04x", token);
           ptr2 += 5;
           break; /* escape and print */
       }

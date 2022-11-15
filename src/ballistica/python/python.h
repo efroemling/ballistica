@@ -318,6 +318,7 @@ class Python {
     kSetLastAdNetworkCall,
     kNoGameCircleMessageCall,
     kGooglePlayPurchasesNotAvailableMessageCall,
+    kGooglePlayServicesNotAvailableMessageCall,
     kEmptyCall,
     kLevelIconPressCall,
     kTrophyIconPressCall,
@@ -365,6 +366,9 @@ class Python {
     kLoggingWarningCall,
     kLoggingErrorCall,
     kLoggingCriticalCall,
+    kImplicitLoginCall,
+    kImplicitLogoutCall,
+    kLoginAdapterGetSignInTokenResponseCall,
     kLast  // Sentinel; must be at end.
   };
 

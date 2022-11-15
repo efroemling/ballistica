@@ -34,6 +34,7 @@
 #include "ballistica/platform/sdl/sdl_app.h"
 #include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
+#include "ballistica/python/python_sys.h"
 
 #if BA_HEADLESS_BUILD
 #include "ballistica/app/app_flavor_headless.h"
@@ -181,6 +182,18 @@ auto Platform::GetLegacyDeviceUUID() -> const std::string& {
     have_device_uuid_ = true;
   }
   return legacy_device_uuid_;
+}
+
+auto Platform::LoginAdapterGetSignInToken(const std::string& login_type,
+                                          int attempt_id) -> void {
+  // Default implementation simply calls completion callback immediately.
+  g_logic->thread()->PushCall([login_type, attempt_id] {
+    PythonRef args(Py_BuildValue("(sss)", login_type.c_str(),
+                                 std::to_string(attempt_id).c_str(), ""),
+                   PythonRef::kSteal);
+    g_python->obj(Python::ObjID::kLoginAdapterGetSignInTokenResponseCall)
+        .Call(args);
+  });
 }
 
 auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
@@ -1029,10 +1042,6 @@ void Platform::SetAnalyticsScreen(const std::string& screen) {}
 void Platform::SubmitAnalyticsCounts() {}
 
 void Platform::SetPlatformMiscReadVals(const std::string& vals) {}
-
-void Platform::AndroidRefreshFile(const std::string& file) {
-  Log(LogLevel::kError, "AndroidRefreshFile() unimplemented");
-}
 
 void Platform::ShowAd(const std::string& purpose) {
   Log(LogLevel::kError, "ShowAd() unimplemented");

@@ -44,6 +44,7 @@ class GatherTab:
         The tab should create and return a container widget covering the
         specified region.
         """
+        raise RuntimeError('Should not get here.')
 
     def on_deactivate(self) -> None:
         """Called when the tab will no longer be the active one."""
