@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import _ba
@@ -203,13 +202,29 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            self._auto_signed_in = True
+            self._auto_signed_in = True  # Only attempt this once
             self._implicit_signed_in_adapter.sign_in(self._on_sign_in_completed)
 
     def _on_sign_in_completed(
-        self, result: LoginAdapter.SignInResult | Exception
+        self,
+        adapter: LoginAdapter,
+        result: LoginAdapter.SignInResult | Exception,
     ) -> None:
-        logging.debug('GOT SIGN-IN COMPLETED WITH %s', result)
+        from ba._internal import get_v1_account_state
+
+        del adapter  # Unused.
+
+        # Silently ignore errors.
+        if isinstance(result, Exception):
+            return
+
+        # If we're still connected and still not signed in,
+        # plug in the credentials we got.
+        connected = _ba.app.cloud.is_connected()
+        signed_in_v1 = get_v1_account_state() == 'signed_in'
+        signed_in_v2 = _ba.app.accounts_v2.have_primary_credentials()
+        if connected and not signed_in_v1 and not signed_in_v2:
+            _ba.app.accounts_v2.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_login_completed:

@@ -33,6 +33,7 @@ class AccountSettingsWindow(ba.Window):
         self._sign_in_v2_proxy_button: ba.Widget | None = None
         self._sign_in_device_button: ba.Widget | None = None
 
+        self._signing_in_adapter: LoginAdapter | None = None
         self._close_once_signed_in = close_once_signed_in
         ba.set_analytics_screen('Account Window')
 
@@ -228,10 +229,10 @@ class AccountSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import confirm
 
-        account_state = ba.internal.get_v1_account_state()
+        v1_state = ba.internal.get_v1_account_state()
         account_type = (
             ba.internal.get_v1_account_type()
-            if account_state == 'signed_in'
+            if v1_state == 'signed_in'
             else 'unknown'
         )
 
@@ -246,19 +247,24 @@ class AccountSettingsWindow(ba.Window):
         show_sign_in_benefits = not self._signed_in
         sign_in_benefits_space = 80.0
 
-        show_signing_in_text = account_state == 'signing_in'
+        show_signing_in_text = (
+            v1_state == 'signing_in' or self._signing_in_adapter is not None
+        )
         signing_in_text_space = 80.0
 
         show_google_play_sign_in_button = (
-            account_state == 'signed_out'
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
             and 'Google Play' in self._show_sign_in_buttons
         )
         show_device_sign_in_button = (
-            account_state == 'signed_out'
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
             and 'Local' in self._show_sign_in_buttons
         )
         show_v2_proxy_sign_in_button = (
-            account_state == 'signed_out'
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
             and 'V2Proxy' in self._show_sign_in_buttons
         )
         sign_in_button_space = 70.0
@@ -326,9 +332,12 @@ class AccountSettingsWindow(ba.Window):
         ]
         sign_out_button_space = 70.0
 
-        show_cancel_sign_in_button = (
-            account_state == 'signing_in'
-            and ba.app.accounts_v2.have_primary_credentials()
+        # We can show cancel if we're either waiting on an adapter to
+        # provide us with v2 credentials or waiting for those credentials
+        # to be verified.
+        show_cancel_sign_in_button = self._signing_in_adapter is not None or (
+            ba.app.accounts_v2.have_primary_credentials()
+            and ba.app.accounts_v2.primary is None
         )
         cancel_sign_in_button_space = 70.0
 
@@ -1239,8 +1248,14 @@ class AccountSettingsWindow(ba.Window):
         )
 
     def _cancel_sign_in_press(self) -> None:
-        # Just say we don't wanna be signed in anymore.
+
+        # If we're waiting on an adapter to give us credentials, abort.
+        self._signing_in_adapter = None
+
+        # Say we don't wanna be signed in anymore if we are.
         ba.app.accounts_v2.set_primary_credentials(None)
+
+        self._needs_refresh = True
 
         # Speed UI updates along.
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
@@ -1284,17 +1299,44 @@ class AccountSettingsWindow(ba.Window):
         # V2 login sign-in buttons generally go through adapters.
         adapter = ba.app.accounts_v2.login_adapters.get(login_type)
         if adapter is not None:
+            self._signing_in_adapter = adapter
             adapter.sign_in(
                 result_cb=ba.WeakCall(self._on_adapter_sign_in_result)
             )
+            # Will get 'Signing in...' to show.
+            self._needs_refresh = True
+            ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
         else:
             ba.screenmessage(f'Unsupported login_type: {login_type.name}')
 
     def _on_adapter_sign_in_result(
-        self, result: LoginAdapter.SignInResult | Exception
+        self,
+        adapter: LoginAdapter,
+        result: LoginAdapter.SignInResult | Exception,
     ) -> None:
-        ba.screenmessage('GOT SIGN IN RESULT')
-        logging.debug('GOT SIGN IN RESULT %s', result)
+        is_us = self._signing_in_adapter is adapter
+
+        # If this isn't our current one we don't care.
+        if not is_us:
+            return
+
+        # If it is us, note that we're done.
+        self._signing_in_adapter = None
+
+        if isinstance(result, Exception):
+            # For now just make a bit of noise if anything went wrong;
+            # can get more specific as needed later.
+            ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+        else:
+            # Success! Plug in these credentials which will begin
+            # verifying them and set our primary account-handle
+            # when finished.
+            ba.app.accounts_v2.set_primary_credentials(result.credentials)
+
+        # Speed any UI updates along.
+        self._needs_refresh = True
+        ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
 
     def _v2_proxy_sign_in_press(self) -> None:
         # pylint: disable=cyclic-import

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
 
-DEBUG_LOG = True
+DEBUG_LOG = False
 
 
 class LoginAdapter:
@@ -33,6 +33,8 @@ class LoginAdapter:
     @dataclass
     class SignInResult:
         """Describes the final result of a sign-in attempt."""
+
+        credentials: str
 
     @dataclass
     class ImplicitLoginState:
@@ -135,7 +137,8 @@ class LoginAdapter:
 
     @final
     def sign_in(
-        self, result_cb: Callable[[SignInResult | Exception], None]
+        self,
+        result_cb: Callable[[LoginAdapter, SignInResult | Exception], None],
     ) -> None:
         """Attempt an explicit sign in via this adapter.
 
@@ -145,8 +148,6 @@ class LoginAdapter:
         """
         assert _ba.in_logic_thread()
         from ba._general import Call
-
-        del result_cb  # Unused.
 
         if DEBUG_LOG:
             logging.debug(
@@ -167,7 +168,11 @@ class LoginAdapter:
                         self.login_type.name,
                     )
                 _ba.pushcall(
-                    Call(result_cb, RuntimeError('fetch-sign-in-token failed'))
+                    Call(
+                        result_cb,
+                        self,
+                        RuntimeError('fetch-sign-in-token failed'),
+                    )
                 )
                 return
 
@@ -184,29 +189,44 @@ class LoginAdapter:
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
-                from ba._language import Lstr
+                # from ba._language import Lstr
 
-                if DEBUG_LOG:
-                    logging.debug(
-                        'LoginAdapter: %s adapter got sign-in response %s...',
-                        self.login_type.name,
-                        response,
-                    )
                 if isinstance(response, Exception):
-                    _ba.screenmessage(
-                        Lstr(resource='errorText'), color=(1, 0, 0)
-                    )
-                    _ba.playsound(_ba.getsound('error'))
+                    if DEBUG_LOG:
+                        logging.debug(
+                            'LoginAdapter: %s adapter got error'
+                            ' sign-in response: %s',
+                            self.login_type.name,
+                            response,
+                        )
+                    # _ba.screenmessage(
+                    #     Lstr(resource='errorText'), color=(1, 0, 0)
+                    # )
+                    # _ba.playsound(_ba.getsound('error'))
+                    _ba.pushcall(Call(result_cb, self, response))
                 else:
-                    _ba.app.accounts_v2.set_primary_credentials(
-                        response.credentials
-                    )
+                    if DEBUG_LOG:
+                        logging.debug(
+                            'LoginAdapter: %s adapter got successful'
+                            ' sign-in response',
+                            self.login_type.name,
+                        )
+                    if response.credentials is None:
+                        result2: LoginAdapter.SignInResult | Exception = (
+                            RuntimeError('No credentials returned.')
+                        )
+                    else:
+                        result2 = self.SignInResult(
+                            credentials=response.credentials
+                        )
+                    _ba.pushcall(Call(result_cb, self, result2))
 
             _ba.app.cloud.send_message_cb(
                 bacommon.cloud.SignInMessage(self.login_type, result),
                 on_response=_got_sign_in_response,
             )
 
+        # Kick off the process by fetching a sign-in token.
         self.get_sign_in_token(completion_cb=_got_sign_in_token_result)
 
     def get_sign_in_token(

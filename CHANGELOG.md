@@ -1,10 +1,11 @@
-### 1.7.14 (build 20929, api 7, 2022-11-15)
+### 1.7.14 (build 20934, api 7, 2022-11-16)
 - Android Google Play logins now provide V2 accounts with access to all V2 features such as a globally-unique account tag, cloud-console, and workspaces. They should still retain their V1 data as well.
 - V2 accounts now have a 'Manage Account' button in the app account window which will sign you into a browser with your current account.
 - Removed Google App Invite functionality which has been deprecated for a while now. Google Play users can still get tickets by sharing the app via codes (same as other platforms).
 - Updated Android root-detection library to the latest version. Please holler if you are getting new false 'your device is rooted' errors when trying to play tournaments or anything like that.
 - Removed a few obsolete internal functions: `_ba.is_ouya_build()`, `_ba.android_media_scan_file()`.
 - Renaming some methods/data to disambiguate 'login' vs 'sign-in', both in the app and on ballistica.net. Those two terms are somewhat ambiguous and interchangeable in English and can either be a verb or a noun. I'd like to keep things clear in Ballistica by always using 'sign-in' for the verb form and 'login' for the noun. For example: 'You can now sign in to your account using your Google Play login'.
+- WARNING: There are currently some rough edges with Google Play V2 accounts; for example Google Play achievements and leaderboards UIs are not currently showing up. I will be cleaning all of this up before the official 1.7.14 release.
 
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.
