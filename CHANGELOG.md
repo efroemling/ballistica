@@ -11,6 +11,7 @@
 - Added 'raw' bool arg to `ba.pushcall()`. Passing True for it disables context save/restore and thread checks.
 - Added `ba.internal.dump_tracebacks()` which can be used to dump the stack state of all Python threads after some delay. Useful for debugging deadlock; just call right before said deadlock occurs. Results will be logged on the next app launch if they cannot be immediately.
 - Fixed a low level event-loop issue that in some cases was preventing the Android version from properly pausing/resuming the app or managing connections while in the background. If you look at the devices section on ballistica.net you should now see your device disappear when you background the app and reappear when you foreground it. Please holler if not.
+- Device accounts are now marked as deprecated, and signing in with one now brings up an 'upgrade' UI which allows converting it to a V2 account. It is my hope to push the entire client ecosystem to V2 accounts as quickly as possible since trying to support both independent V1 accounts and V2 accounts is a substantial technical burden.
 
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.

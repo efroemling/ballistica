@@ -17,6 +17,12 @@ import ba.internal
 if TYPE_CHECKING:
     from ba.internal import LoginAdapter
 
+# We only show v1 linking controls when directly signed in with
+# V1 accounts. Generally V2 accounts should use the web ui for linking.
+# However we have an escape-hatch here if someone needs to access
+# V1 linking for the V1 portion of their V2 account.
+FORCE_ENABLE_V1_LINKING = False
+
 
 class AccountSettingsWindow(ba.Window):
     """Window for account related functionality."""
@@ -275,6 +281,7 @@ class AccountSettingsWindow(ba.Window):
             and 'Device' in self._show_sign_in_buttons
         )
         sign_in_button_space = 70.0
+        deprecated_space = 60
 
         show_game_service_button = self._signed_in and v1_account_type in [
             'Game Center'
@@ -283,12 +290,7 @@ class AccountSettingsWindow(ba.Window):
 
         show_what_is_v2 = self._signed_in and v1_account_type == 'V2'
 
-        show_linked_accounts_text = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
-        )
+        show_linked_accounts_text = self._signed_in
         linked_accounts_text_space = 60.0
 
         show_achievements_button = self._signed_in and v1_account_type in (
@@ -325,16 +327,16 @@ class AccountSettingsWindow(ba.Window):
             70.0 if show_manage_v2_account_button else 100.0
         )
 
-        show_link_accounts_button = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
+        show_link_accounts_button = self._signed_in and (
+            primary_v2_account is None or FORCE_ENABLE_V1_LINKING
         )
         link_accounts_button_space = 70.0
 
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
+
+        show_v2_link_info = self._signed_in and not show_link_accounts_button
+        v2_link_info_space = 70.0
 
         show_sign_out_button = self._signed_in and v1_account_type in [
             'Local',
@@ -361,10 +363,10 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
             self._sub_height += sign_in_button_space
-        if show_device_sign_in_button:
-            self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
+        if show_device_sign_in_button:
+            self._sub_height += sign_in_button_space + deprecated_space
         if show_game_service_button:
             self._sub_height += game_service_button_space
         if show_linked_accounts_text:
@@ -391,6 +393,8 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += link_accounts_button_space
         if show_unlink_accounts_button:
             self._sub_height += unlink_accounts_button_space
+        if show_v2_link_info:
+            self._sub_height += v2_link_info_space
         if show_sign_out_button:
             self._sub_height += sign_out_button_space
         if show_cancel_sign_in_button:
@@ -625,7 +629,7 @@ class AccountSettingsWindow(ba.Window):
 
         if show_device_sign_in_button:
             button_width = 350
-            v -= sign_in_button_space
+            v -= sign_in_button_space + deprecated_space
             self._sign_in_device_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v - 20),
@@ -634,6 +638,18 @@ class AccountSettingsWindow(ba.Window):
                 label='',
                 on_activate_call=lambda: self._sign_in_press('Local'),
             )
+            ba.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 60),
+                text=ba.Lstr(resource='deprecatedText'),
+                scale=0.8,
+                maxwidth=300,
+                color=(0.6, 0.55, 0.45),
+            )
+
             ba.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
@@ -926,6 +942,7 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.95,
+                text=ba.Lstr(resource=self._r + '.linkedAccountsText'),
                 h_align='center',
                 v_align='center',
             )
@@ -933,6 +950,8 @@ class AccountSettingsWindow(ba.Window):
             self._update_linked_accounts_text()
         else:
             self._linked_accounts_text = None
+
+        # Show link/unlink buttons only for V1 accounts.
 
         if show_link_accounts_button:
             v -= link_accounts_button_space
@@ -1012,6 +1031,21 @@ class AccountSettingsWindow(ba.Window):
             self._update_unlink_accounts_button()
         else:
             self._unlink_accounts_button = None
+
+        if show_v2_link_info:
+            v -= v2_link_info_space
+            ba.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + v2_link_info_space - 20),
+                text=ba.Lstr(resource='v2AccountLinkingInfoText'),
+                flatness=1.0,
+                scale=0.8,
+                maxwidth=450,
+                color=(0.5, 0.45, 0.55),
+            )
 
         if show_sign_out_button:
             v -= sign_out_button_space
@@ -1144,6 +1178,14 @@ class AccountSettingsWindow(ba.Window):
         if self._linked_accounts_text is None:
             return
 
+        # Disable this by default when signed in to a V2 account
+        # (since this shows V1 links which we should no longer care about).
+        if (
+            ba.app.accounts_v2.primary is not None
+            and not FORCE_ENABLE_V1_LINKING
+        ):
+            return
+
         # if this is not present, we haven't had contact from the server so
         # let's not proceed..
         if ba.internal.get_public_login_id() is None:
@@ -1153,13 +1195,9 @@ class AccountSettingsWindow(ba.Window):
             accounts = ba.internal.get_v1_account_misc_read_val_2(
                 'linkedAccounts', []
             )
-            # our_account = _bs.get_v1_account_display_string()
-            # accounts = [a for a in accounts if a != our_account]
-            # accounts_str = u', '.join(accounts) if accounts else
-            # ba.Lstr(translate=('settingNames', 'None'))
             # UPDATE - we now just print the number here; not the actual
-            # accounts
-            # (they can see that in the unlink section if they're curious)
+            # accounts (they can see that in the unlink section if they're
+            # curious)
             accounts_str = str(max(0, len(accounts) - 1))
         ba.textwidget(
             edit=self._linked_accounts_text,

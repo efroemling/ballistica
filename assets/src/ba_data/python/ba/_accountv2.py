@@ -9,12 +9,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from efro.call import tpartial
+from bacommon.login import LoginType
 import _ba
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from bacommon.login import LoginType
     from ba._login import LoginAdapter
 
 
@@ -30,7 +30,6 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
-        from bacommon.login import LoginType
 
         # Whether or not everything related to an initial login
         # (or lack thereof) has completed. This includes things like
@@ -179,6 +178,8 @@ class AccountV2Subsystem:
         types even if the default implicit one can't be explicitly
         logged out or otherwise controlled.
         """
+        from ba._language import Lstr
+
         assert _ba.in_logic_thread()
 
         cfg = _ba.app.config
@@ -202,19 +203,26 @@ class AccountV2Subsystem:
             # this implicit login, we may want to let them know that the
             # 'Welcome back FOO' they likely just saw is not actually
             # accurate.
-            if bool(False):
-                if (
-                    self.primary is not None
-                    and not self.login_adapters[login_type].is_back_end_active()
-                ):
+            if (
+                self.primary is not None
+                and not self.login_adapters[login_type].is_back_end_active()
+            ):
+                if login_type is LoginType.GPGS:
+                    service_str = Lstr(resource='googlePlayText')
+                else:
+                    service_str = None
+                if service_str is not None:
                     _ba.timer(
                         2.0,
                         tpartial(
                             _ba.screenmessage,
-                            'Warning: Ignoring your'
-                            ' Google Play Games account.\n'
-                            'If you want to use it,'
-                            ' sign out of your current account.',
+                            Lstr(
+                                resource='notUsingAccountText',
+                                subs=[
+                                    ('${ACCOUNT}', state.display_name),
+                                    ('${SERVICE}', service_str),
+                                ],
+                            ),
                             (1, 0.5, 0),
                         ),
                     )
@@ -328,11 +336,11 @@ class AccountV2Subsystem:
 
         del adapter  # Unused.
 
-        # Make some noise on errors.
-        # (May want to make this more descriptive).
+        # Make some noise on errors since the user knows a sign-in
+        # attempt is happening in this case.
         if isinstance(result, Exception):
             logging.warning(
-                'Error on explicit sign in attempt.', exc_info=result
+                'Error on explicit accountv2 sign in attempt.', exc_info=result
             )
             with _ba.Context('ui'):
                 _ba.screenmessage(
@@ -354,8 +362,12 @@ class AccountV2Subsystem:
 
         del adapter  # Unused.
 
-        # Silently ignore errors.
+        # Log errors but don't inform the user; they're not aware of this
+        # attempt and ignorance is bliss.
         if isinstance(result, Exception):
+            logging.warning(
+                'Error on implicit accountv2 sign in attempt.', exc_info=result
+            )
             return
 
         # If we're still connected and still not signed in,
