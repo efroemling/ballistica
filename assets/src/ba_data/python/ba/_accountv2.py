@@ -331,10 +331,13 @@ class AccountV2Subsystem:
         # Make some noise on errors.
         # (May want to make this more descriptive).
         if isinstance(result, Exception):
+            logging.warning(
+                'Error on explicit sign in attempt.', exc_info=result
+            )
             with _ba.Context('ui'):
                 _ba.screenmessage(
-                    Lstr(resource='errorText'),
-                    color=(1, 1, 0),
+                    Lstr(resource='internal.signInErrorText'),
+                    color=(1, 0, 0),
                 )
                 _ba.playsound(_ba.getsound('error'))
             return
