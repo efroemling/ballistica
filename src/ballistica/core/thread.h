@@ -45,7 +45,8 @@ class Thread {
 
   void SetAcquiresPythonGIL();
 
-  void SetPaused(bool paused);
+  void PushSetPaused(bool paused);
+
   auto thread_id() const -> std::thread::id { return thread_id_; }
 
   // Needed in rare cases where we jump physical threads.
@@ -96,6 +97,10 @@ class Thread {
   /// buffer space it can be possible for an attacker to bring down
   /// the app through a flood of packets.
   auto CheckPushSafety() -> bool;
+
+  static auto GetStillPausingThreads() -> std::vector<Thread*>;
+
+  auto paused() { return paused_; }
 
  private:
   struct ThreadMessage {

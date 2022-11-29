@@ -11,7 +11,7 @@ from ba._gameactivity import GameActivity
 from ba._general import WeakCall
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
@@ -55,56 +55,6 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
 
         # Preload achievement images in case we get some.
         _ba.timer(2.0, WeakCall(self._preload_achievements))
-
-    def _show_standard_scores_to_beat_ui(
-        self, scores: list[dict[str, Any]]
-    ) -> None:
-        from efro.util import asserttype
-        from ba._gameutils import timestring, animate
-        from ba._nodeactor import NodeActor
-        from ba._generated.enums import TimeFormat
-
-        display_type = self.get_score_type()
-        if scores is not None:
-
-            # Sort by originating date so that the most recent is first.
-            scores.sort(reverse=True, key=lambda s: asserttype(s['time'], int))
-
-            # Now make a display for the most recent challenge.
-            for score in scores:
-                if score['type'] == 'score_challenge':
-                    tval = (
-                        score['player']
-                        + ':  '
-                        + timestring(
-                            int(score['value']) * 10,
-                            timeformat=TimeFormat.MILLISECONDS,
-                        ).evaluate()
-                        if display_type == 'time'
-                        else str(score['value'])
-                    )
-                    hattach = 'center' if display_type == 'time' else 'left'
-                    halign = 'center' if display_type == 'time' else 'left'
-                    pos = (20, -70) if display_type == 'time' else (20, -130)
-                    txt = NodeActor(
-                        _ba.newnode(
-                            'text',
-                            attrs={
-                                'v_attach': 'top',
-                                'h_attach': hattach,
-                                'h_align': halign,
-                                'color': (0.7, 0.4, 1, 1),
-                                'shadow': 0.5,
-                                'flatness': 1.0,
-                                'position': pos,
-                                'scale': 0.6,
-                                'text': tval,
-                            },
-                        )
-                    ).autoretain()
-                    assert txt.node is not None
-                    animate(txt.node, 'scale', {1.0: 0.0, 1.1: 0.7, 1.2: 0.6})
-                    break
 
     # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.

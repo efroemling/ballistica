@@ -47,7 +47,7 @@ def bootstrap() -> None:
 
     # Give a soft warning if we're being used with a different binary
     # version than we expect.
-    expected_build = 20934
+    expected_build = 20942
     running_build: int = env['build_number']
     if running_build != expected_build:
         print(
@@ -120,7 +120,8 @@ def bootstrap() -> None:
         import __main__
 
         # Clear out the standard quit/exit messages since they don't
-        # work for us.
+        # work in our embedded situation (should revisit this once we're
+        # usable from a standard interpreter).
         del __main__.__builtins__.quit
         del __main__.__builtins__.exit
 

@@ -11,7 +11,7 @@
 
 namespace ballistica {
 
-void Object::PrintObjects() {
+void Object::LsObjects() {
 #if BA_DEBUG_BUILD
   std::string s;
   {
@@ -47,7 +47,7 @@ void Object::PrintObjects() {
       for (auto&& i : obj_map) {
         sorted.emplace_back(i.second, i.first);
       }
-      std::sort(sorted.begin(), sorted.end());
+      std::sort(sorted.rbegin(), sorted.rend());
       for (auto&& i : sorted) {
         s += "\n   " + std::to_string(i.first) + ": " + i.second;
       }
@@ -56,7 +56,7 @@ void Object::PrintObjects() {
   }
   Log(LogLevel::kInfo, s);
 #else
-  Log(LogLevel::kInfo, "PrintObjects() only functions in debug builds.");
+  Log(LogLevel::kInfo, "LsObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 

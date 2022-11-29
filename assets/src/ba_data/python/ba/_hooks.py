@@ -461,12 +461,12 @@ def login_adapter_get_sign_in_token_response(
 ) -> None:
     """Login adapter do-sign-in completed."""
     from bacommon.login import LoginType
-    from ba._login import LoginAdapterGPGS
+    from ba._login import LoginAdapterNative
 
     login_type = LoginType(login_type_str)
     attempt_id = int(attempt_id_str)
     result = None if result_str == '' else result_str
     with _ba.Context('ui'):
         adapter = _ba.app.accounts_v2.login_adapters[login_type]
-        assert isinstance(adapter, LoginAdapterGPGS)
+        assert isinstance(adapter, LoginAdapterNative)
         adapter.on_sign_in_complete(attempt_id=attempt_id, result=result)

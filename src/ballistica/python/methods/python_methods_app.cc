@@ -6,6 +6,7 @@
 #include "ballistica/app/app_flavor.h"
 #include "ballistica/assets/component/texture.h"
 #include "ballistica/core/logging.h"
+#include "ballistica/core/thread.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/logic/connection/connection_set.h"
 #include "ballistica/logic/host_activity.h"
@@ -308,18 +309,29 @@ auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   int from_other_thread{};
   int suppress_warning{};
   int other_thread_use_fg_context{};
-  static const char* kwlist[] = {"call", "from_other_thread",
+  int raw{0};
+  static const char* kwlist[] = {"call",
+                                 "from_other_thread",
                                  "suppress_other_thread_warning",
-                                 "other_thread_use_fg_context", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ppp",
+                                 "other_thread_use_fg_context",
+                                 "raw",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|pppp",
                                    const_cast<char**>(kwlist), &call_obj,
                                    &from_other_thread, &suppress_warning,
-                                   &other_thread_use_fg_context)) {
+                                   &other_thread_use_fg_context, &raw)) {
     return nullptr;
   }
 
-  // The from-other-thread case is basically a different call.
-  if (from_other_thread) {
+  // 'raw' mode does no thread checking and no context saves/restores.
+  if (raw) {
+    Py_INCREF(call_obj);
+    g_logic->thread()->PushCall([call_obj] {
+      assert(InLogicThread());
+
+      PythonRef(call_obj, PythonRef::kSteal).Call();
+    });
+  } else if (from_other_thread) {
     // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && InLogicThread()) {
@@ -1132,14 +1144,11 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
         {"pushcall", (PyCFunction)PyPushCall, METH_VARARGS | METH_KEYWORDS,
          "pushcall(call: Callable, from_other_thread: bool = False,\n"
          "     suppress_other_thread_warning: bool = False,\n"
-         "     other_thread_use_fg_context: bool = False) -> None\n"
+         "     other_thread_use_fg_context: bool = False,\n"
+         "     raw: bool = False) -> None\n"
          "\n"
-         "Pushes a call onto the event loop to be run during the next cycle.\n"
-         "\n"
+         "Push a call to the logic event-loop.\n"
          "Category: **General Utility Functions**\n"
-         "\n"
-         "This can be handy for calls that are disallowed from within other\n"
-         "callbacks, etc.\n"
          "\n"
          "This call expects to be used in the logic thread, and will "
          "automatically\n"
@@ -1149,8 +1158,9 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
          "however, you can pass 'from_other_thread' as True. In this case\n"
          "the call will always run in the UI context on the logic thread\n"
          "or whichever context is in the foreground if\n"
-         "other_thread_use_fg_context is True."},
-
+         "other_thread_use_fg_context is True.\n"
+         "Passing raw=True will disable thread checks and context"
+         " sets/restores."},
         {"getactivity", (PyCFunction)PyGetActivity,
          METH_VARARGS | METH_KEYWORDS,
          "getactivity(doraise: bool = True) -> <varies>\n"

@@ -73,6 +73,7 @@
       <w>allsettings</w>
       <w>allteams</w>
       <w>allwarnings</w>
+      <w>alogins</w>
       <w>aman</w>
       <w>amazonaws</w>
       <w>aname</w>
@@ -374,6 +375,7 @@
       <w>certifi</w>
       <w>cfconfig</w>
       <w>cfenv</w>
+      <w>cfgdict</w>
       <w>cfgdir</w>
       <w>cfgkey</w>
       <w>cfgkeys</w>
@@ -2513,6 +2515,7 @@
       <w>svne</w>
       <w>svvv</w>
       <w>swht</w>
+      <w>swidth</w>
       <w>swiftc</w>
       <w>swip</w>
       <w>swipsound</w>
@@ -2549,6 +2552,9 @@
       <w>targs</w>
       <w>tasklabel</w>
       <w>tbegin</w>
+      <w>tbfile</w>
+      <w>tbfiles</w>
+      <w>tbpath</w>
       <w>tbtcolor</w>
       <w>tbtn</w>
       <w>tbttxt</w>
@@ -2860,6 +2866,7 @@
       <w>webpages</w>
       <w>weeeird</w>
       <w>whatevs</w>
+      <w>whatisv</w>
       <w>wheee</w>
       <w>whos</w>
       <w>widgetdeathtime</w>

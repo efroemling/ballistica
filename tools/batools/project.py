@@ -729,8 +729,10 @@ class Updater:
 
     def _check_misc(self) -> None:
         # Misc sanity checks.
-        if not self._public:
-            # Make sure we're set to prod master server.
+
+        # Make sure we're set to prod master server.
+        # (but ONLY when checking; still want to be able to run updates).
+        if not self._public and self._check:
             with open(
                 'src/ballistica/internal/master_server_config.h',
                 encoding='utf-8',

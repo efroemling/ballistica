@@ -354,6 +354,7 @@ class App:
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
+        from ba._apputils import log_dumped_tracebacks
 
         assert _ba.in_logic_thread()
 
@@ -407,9 +408,9 @@ class App:
         # overwrite a broken one or whatnot and wipe out data.
         if not self.config_file_healthy:
             if self.platform in ('mac', 'linux', 'windows'):
-                from bastd.ui import configerror
+                from bastd.ui.configerror import ConfigErrorWindow
 
-                configerror.ConfigErrorWindow()
+                _ba.pushcall(ConfigErrorWindow)
                 return
 
             # For now on other systems we just overwrite the bum config.
@@ -459,6 +460,9 @@ class App:
                 'on_app_launch found state %s; expected LAUNCHING.', self.state
             )
 
+        # If any traceback dumps happened last run, log and clear them.
+        log_dumped_tracebacks()
+
         self._launch_completed = True
         self._update_state()
 
@@ -483,8 +487,21 @@ class App:
         assert _ba.in_logic_thread()
 
         if self._app_paused:
-            self.state = self.State.PAUSED
+            # Entering paused state:
+            if self.state is not self.State.PAUSED:
+                self.state = self.State.PAUSED
+                self.cloud.on_app_pause()
+                self.accounts_v1.on_app_pause()
+                self.plugins.on_app_pause()
         else:
+            # Leaving paused state:
+            if self.state is self.State.PAUSED:
+                self.fg_state += 1
+                self.cloud.on_app_resume()
+                self.accounts_v1.on_app_resume()
+                self.music.on_app_resume()
+                self.plugins.on_app_resume()
+
             if self._initial_login_completed and self._meta_scan_completed:
                 self.state = self.State.RUNNING
                 if not self._called_on_app_running:
@@ -498,19 +515,16 @@ class App:
     def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
 
+        assert not self._app_paused  # Should avoid redundant calls.
         self._app_paused = True
         self._update_state()
-        self.plugins.on_app_pause()
 
     def on_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
 
+        assert self._app_paused  # Should avoid redundant calls.
         self._app_paused = False
         self._update_state()
-        self.fg_state += 1
-        self.accounts_v1.on_app_resume()
-        self.music.on_app_resume()
-        self.plugins.on_app_resume()
 
     def on_app_shutdown(self) -> None:
         """(internal)"""

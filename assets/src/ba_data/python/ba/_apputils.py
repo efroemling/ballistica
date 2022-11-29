@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import gc
 import os
+import logging
 from typing import TYPE_CHECKING
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, TextIO
     import ba
 
 
@@ -260,3 +261,51 @@ def print_corrupt_file_error() -> None:
     _ba.timer(
         2.0, Call(_ba.playsound, _ba.getsound('error')), timetype=TimeType.REAL
     )
+
+
+_tbfiles: list[TextIO] = []
+
+
+def dump_tracebacks(delay: float) -> None:
+    """Dump a traceback of all Python threads after a delay in seconds.
+
+    Can be used for debugging deadlock situations. Will dump to a preset
+    file location in the app config dir. Will attempt to log and clear
+    the results after dumping. It will be done at next launch otherwise,
+    or can be done explicitly via log_dumped_tracebacks().
+
+    Do not use this call during regular operation of the app; it is only
+    intended for debugging as it can leak file descriptors/etc.
+    """
+    # pylint: disable=consider-using-with
+    import faulthandler
+    from ba._generated.enums import TimeType
+
+    tbpath = os.path.join(os.path.dirname(_ba.app.config_file_path), '_tbdump')
+
+    # faulthandler needs the raw file descriptor to still be valid when
+    # it fires, so stuff this into a global var to make sure it doesn't get
+    # cleaned up.
+    tbfile = open(tbpath, 'w', encoding='utf-8')
+    _tbfiles.append(tbfile)
+
+    faulthandler.dump_traceback_later(delay, file=tbfile)
+
+    # Attempt to log shortly after dumping.
+    with _ba.Context('ui'):
+        _ba.timer(delay + 1.0, log_dumped_tracebacks, timetype=TimeType.REAL)
+
+
+def log_dumped_tracebacks() -> None:
+    """If a traceback dump exists, log it and clear it. No-op otherwise."""
+
+    try:
+        tbpath = os.path.join(
+            os.path.dirname(_ba.app.config_file_path), '_tbdump'
+        )
+        if os.path.exists(tbpath):
+            with open(tbpath, 'r', encoding='utf-8') as infile:
+                logging.info('Dumped tracebacks:\n%s', infile.read())
+            os.unlink(tbpath)
+    except Exception:
+        logging.exception('Error logging dumped tracebacks.')

@@ -33,6 +33,12 @@ class CloudSubsystem:
         """
         return False  # Needs to be overridden
 
+    def on_app_pause(self) -> None:
+        """Should be called when the app pauses."""
+
+    def on_app_resume(self) -> None:
+        """Should be called when the app resumes."""
+
     def on_connectivity_changed(self, connected: bool) -> None:
         """Called when cloud connectivity state changes."""
         if DEBUG_LOG:

@@ -21,8 +21,8 @@ class Object {
   Object();
   virtual ~Object();
 
-  /// Prints a tally of object types and counts (debug build only).
-  static void PrintObjects();
+  /// Logs a tally of ba::Object types and counts (debug build only).
+  static void LsObjects();
 
   // Object classes can provide descriptive names for themselves;
   // these are used for debugging and other purposes.

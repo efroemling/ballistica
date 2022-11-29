@@ -126,6 +126,7 @@ class Input {
   auto PushTouchEvent(const TouchEvent& touch_event) -> void;
   auto PushDestroyKeyboardInputDevices() -> void;
   auto PushCreateKeyboardInputDevices() -> void;
+  auto LsInputDevices() -> void;
 
   /// Roughly how long in milliseconds have all input devices been idle.
   auto input_idle_time() const { return input_idle_time_; }
@@ -170,7 +171,6 @@ class Input {
   bool have_non_touch_inputs_{};
   float cursor_pos_x_{};
   float cursor_pos_y_{};
-  // millisecs_t last_input_time_{};
   millisecs_t last_click_time_{};
   millisecs_t double_click_time_{200};
   millisecs_t last_mouse_move_time_{};

@@ -100,6 +100,8 @@ from ba._apputils import (
     is_browser_likely_available,
     get_remote_app_name,
     should_submit_debug_info,
+    dump_tracebacks,
+    log_dumped_tracebacks,
 )
 from ba._benchmark import (
     run_gpu_benchmark,
@@ -330,4 +332,6 @@ __all__ = [
     'sign_out_v1',
     'sign_in_v1',
     'mark_config_dirty',
+    'dump_tracebacks',
+    'log_dumped_tracebacks',
 ]

@@ -102,6 +102,9 @@ class LoginAdapter:
         # (possibly) push it to the app for handling.
         self._update_implicit_login_state()
 
+        # This might affect whether we consider that back-end as 'active'.
+        self._update_back_end_active()
+
     def set_active_logins(self, logins: dict[LoginType, str]) -> None:
         """Keep the adapter informed of actively used logins.
 
@@ -116,7 +119,7 @@ class LoginAdapter:
             logging.debug(
                 'LoginAdapter: %s adapter got active logins %s.',
                 self.login_type.name,
-                logins,
+                {k: v[:4] + '...' + v[-4:] for k, v in logins.items()},
             )
 
         self._active_login_id = logins.get(self.login_type)
@@ -229,6 +232,10 @@ class LoginAdapter:
         # Kick off the process by fetching a sign-in token.
         self.get_sign_in_token(completion_cb=_got_sign_in_token_result)
 
+    def is_back_end_active(self) -> bool:
+        """Is this adapter's back-end currently active?"""
+        return self._back_end_active
+
     def get_sign_in_token(
         self, completion_cb: Callable[[str | None], None]
     ) -> None:
@@ -289,8 +296,8 @@ class LoginAdapter:
             self._back_end_active = is_active
 
 
-class LoginAdapterGPGS(LoginAdapter):
-    """Google Play Game Services adapter."""
+class LoginAdapterNative(LoginAdapter):
+    """A login adapter that does its work in the native layer."""
 
     def __init__(self) -> None:
         super().__init__(LoginType.GPGS)
@@ -308,6 +315,9 @@ class LoginAdapterGPGS(LoginAdapter):
         self._sign_in_attempt_num += 1
         _ba.login_adapter_get_sign_in_token(self.login_type.value, attempt_id)
 
+    def on_back_end_active_change(self, active: bool) -> None:
+        _ba.login_adapter_back_end_active_change(self.login_type.value, active)
+
     def on_sign_in_complete(self, attempt_id: int, result: str | None) -> None:
         """Called by the native layer on a completed attempt."""
         assert _ba.in_logic_thread()
@@ -316,3 +326,7 @@ class LoginAdapterGPGS(LoginAdapter):
             return
         callback = self._sign_in_attempts.pop(attempt_id)
         callback(result)
+
+
+class LoginAdapterGPGS(LoginAdapterNative):
+    """Google Play Game Services adapter."""

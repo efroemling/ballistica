@@ -37,8 +37,6 @@ class PlatformApple : public Platform {
                          const std::vector<float>& widths, float scale)
       -> void* override;
   auto GetTextTextureData(void* tex) -> uint8_t* override;
-  auto GetFriendScores(const std::string& game, const std::string& game_version,
-                       void* py_callback) -> void override;
   auto SubmitScore(const std::string& game, const std::string& version,
                    int64_t score) -> void override;
   auto ReportAchievement(const std::string& achievement) -> void override;

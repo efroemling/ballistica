@@ -196,6 +196,11 @@ auto Platform::LoginAdapterGetSignInToken(const std::string& login_type,
   });
 }
 
+auto Platform::LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                               bool active) -> void {
+  // Default is no-op.
+}
+
 auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
   Log(LogLevel::kError, "GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
@@ -860,13 +865,6 @@ void Platform::OnAppStart() {}
 auto Platform::ConvertIncomingLeaderboardScore(
     const std::string& leaderboard_id, int score) -> int {
   return score;
-}
-
-void Platform::GetFriendScores(const std::string& game,
-                               const std::string& game_version, void* data) {
-  // As a default, just fail gracefully.
-  Log(LogLevel::kError, "FIXME: GetFriendScores unimplemented");
-  g_logic->PushFriendScoreSetCall(FriendScoreSet(false, data));
 }
 
 void Platform::SubmitScore(const std::string& game, const std::string& version,

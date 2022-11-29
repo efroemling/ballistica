@@ -156,7 +156,6 @@ void AppFlavor::UpdatePauseResume() {
 void AppFlavor::OnPause() {
   assert(InMainThread());
 
-  // Avoid reading gyro values for a short time to avoid hitches when restored.
   g_graphics->SetGyroEnabled(false);
 
   // IMPORTANT: Any on-pause related stuff that threads need to do must
@@ -234,20 +233,59 @@ void AppFlavor::SetProductPrice(const std::string& product,
 
 void AppFlavor::PauseApp() {
   assert(InMainThread());
+  millisecs_t start_time{Platform::GetCurrentMilliseconds()};
+
+  // Apple mentioned 5 seconds to run stuff once backgrounded or
+  // they bring down the hammer. Let's aim to stay under 2.
+  millisecs_t max_duration{2000};
+
   Platform::DebugLog("PauseApp@"
                      + std::to_string(Platform::GetCurrentMilliseconds()));
   assert(!sys_paused_app_);
   sys_paused_app_ = true;
   UpdatePauseResume();
+
+  // We assume that the OS will completely suspend our process the moment
+  // we return from this call (though this is not technically true on all
+  // platforms). So we want to spin and wait for threads to actually
+  // process the pause message.
+  size_t running_thread_count{};
+  while (std::abs(Platform::GetCurrentMilliseconds() - start_time)
+         < max_duration) {
+    // If/when we get to a point with no threads waiting to be paused,
+    // we're good to go.
+    auto threads{Thread::GetStillPausingThreads()};
+    running_thread_count = threads.size();
+    if (running_thread_count == 0) {
+      Log(LogLevel::kDebug,
+          "PauseApp() completed in "
+              + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
+              + "ms.");
+      return;
+    }
+  }
+
+  // If we made it here, we timed out. Complain.
+  Log(LogLevel::kError,
+      std::string("PauseApp() took too long; ")
+          + std::to_string(running_thread_count)
+          + " threads not yet paused after "
+          + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
+          + " ms.");
 }
 
 void AppFlavor::ResumeApp() {
   assert(InMainThread());
+  millisecs_t start_time{Platform::GetCurrentMilliseconds()};
   Platform::DebugLog("ResumeApp@"
                      + std::to_string(Platform::GetCurrentMilliseconds()));
   assert(sys_paused_app_);
   sys_paused_app_ = false;
   UpdatePauseResume();
+  Log(LogLevel::kDebug,
+      "ResumeApp() completed in "
+          + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
+          + "ms.");
 }
 
 void AppFlavor::DidFinishRenderingFrame(FrameDef* frame) {}
@@ -265,6 +303,7 @@ void AppFlavor::PrimeEventPump() {
 
 #pragma mark Push-Calls
 
+// FIXME - move this call to Platform.
 void AppFlavor::PushShowOnlineScoreUICall(const std::string& show,
                                           const std::string& game,
                                           const std::string& game_version) {
@@ -314,14 +353,6 @@ void AppFlavor::PushRestorePurchasesCall() {
 
 void AppFlavor::PushOpenURLCall(const std::string& url) {
   thread()->PushCall([url] { g_platform->OpenURL(url); });
-}
-
-void AppFlavor::PushGetFriendScoresCall(const std::string& game,
-                                        const std::string& game_version,
-                                        void* data) {
-  thread()->PushCall([game, game_version, data] {
-    g_platform->GetFriendScores(game, game_version, data);
-  });
 }
 
 void AppFlavor::PushSubmitScoreCall(const std::string& game,
