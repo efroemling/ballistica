@@ -455,7 +455,6 @@
     <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_host.h" />
     <ClCompile Include="..\..\src\ballistica\logic\connection\connection_to_host_udp.cc" />
     <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_host_udp.h" />
-    <ClInclude Include="..\..\src\ballistica\logic\friend_score_set.h" />
     <ClCompile Include="..\..\src\ballistica\logic\host_activity.cc" />
     <ClInclude Include="..\..\src\ballistica\logic\host_activity.h" />
     <ClCompile Include="..\..\src\ballistica\logic\logic.cc" />

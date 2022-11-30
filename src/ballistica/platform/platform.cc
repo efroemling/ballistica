@@ -28,7 +28,6 @@
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/logic/friend_score_set.h"
 #include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"

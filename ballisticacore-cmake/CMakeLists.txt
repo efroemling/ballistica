@@ -464,7 +464,6 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host.h
   ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host_udp.cc
   ${BA_SRC_ROOT}/ballistica/logic/connection/connection_to_host_udp.h
-  ${BA_SRC_ROOT}/ballistica/logic/friend_score_set.h
   ${BA_SRC_ROOT}/ballistica/logic/host_activity.cc
   ${BA_SRC_ROOT}/ballistica/logic/host_activity.h
   ${BA_SRC_ROOT}/ballistica/logic/logic.cc

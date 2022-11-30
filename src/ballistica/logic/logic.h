@@ -88,7 +88,6 @@ class Logic {
   auto PushConfirmQuitCall() -> void;
   auto PushStringEditSetCall(const std::string& value) -> void;
   auto PushStringEditCancelCall() -> void;
-  auto PushFriendScoreSetCall(const FriendScoreSet& score_set) -> void;
   auto PushShowURLCall(const std::string& url) -> void;
   auto PushOnAppResumeCall() -> void;
   auto PushFrameDefRequest() -> void;
