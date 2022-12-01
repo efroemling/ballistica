@@ -1118,8 +1118,7 @@ class AccountSettingsWindow(ba.Window):
         )
 
     def _on_what_is_v2_press(self) -> None:
-        bamasteraddr = ba.internal.get_master_server_address(version=2)
-        ba.open_url(f'{bamasteraddr}/whatisv2')
+        show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
         ba.screenmessage(ba.Lstr(resource='oneMomentText'))
@@ -1495,3 +1494,9 @@ class AccountSettingsWindow(ba.Window):
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self}.')
+
+
+def show_what_is_v2_page() -> None:
+    """Show the webpage describing V2 accounts."""
+    bamasteraddr = ba.internal.get_master_server_address(version=2)
+    ba.open_url(f'{bamasteraddr}/whatisv2')

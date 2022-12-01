@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from efro.call import tpartial
+from efro.error import CommunicationError
 from bacommon.login import LoginType
 import _ba
 
@@ -336,18 +337,27 @@ class AccountV2Subsystem:
 
         del adapter  # Unused.
 
-        # Make some noise on errors since the user knows a sign-in
-        # attempt is happening in this case.
+        # Make some noise on errors since the user knows
+        # a sign-in attempt is happening in this case.
         if isinstance(result, Exception):
-            logging.warning(
-                'Error on explicit accountv2 sign in attempt.', exc_info=result
-            )
+            # We expect the occasional communication errors;
+            # Log a full exception for anything else though.
+            if not isinstance(result, CommunicationError):
+                logging.warning(
+                    'Error on explicit accountv2 sign in attempt.',
+                    exc_info=result,
+                )
             with _ba.Context('ui'):
                 _ba.screenmessage(
                     Lstr(resource='internal.signInErrorText'),
                     color=(1, 0, 0),
                 )
                 _ba.playsound(_ba.getsound('error'))
+
+            # Also I suppose we should sign them out in this case since
+            # it could be misleading to be still signed in with the old
+            # account.
+            _ba.app.accounts_v2.set_primary_credentials(None)
             return
 
         _ba.app.accounts_v2.set_primary_credentials(result.credentials)
@@ -365,9 +375,13 @@ class AccountV2Subsystem:
         # Log errors but don't inform the user; they're not aware of this
         # attempt and ignorance is bliss.
         if isinstance(result, Exception):
-            logging.warning(
-                'Error on implicit accountv2 sign in attempt.', exc_info=result
-            )
+            # We expect the occasional communication errors;
+            # Log a full exception for anything else though.
+            if not isinstance(result, CommunicationError):
+                logging.warning(
+                    'Error on implicit accountv2 sign in attempt.',
+                    exc_info=result,
+                )
             return
 
         # If we're still connected and still not signed in,

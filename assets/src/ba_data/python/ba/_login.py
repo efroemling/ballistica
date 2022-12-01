@@ -174,7 +174,7 @@ class LoginAdapter:
                     Call(
                         result_cb,
                         self,
-                        RuntimeError('fetch-sign-in-token failed'),
+                        RuntimeError('fetch-sign-in-token failed.'),
                     )
                 )
                 return
@@ -192,7 +192,6 @@ class LoginAdapter:
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
-                # from ba._language import Lstr
 
                 if isinstance(response, Exception):
                     if DEBUG_LOG:
@@ -202,10 +201,6 @@ class LoginAdapter:
                             self.login_type.name,
                             response,
                         )
-                    # _ba.screenmessage(
-                    #     Lstr(resource='errorText'), color=(1, 0, 0)
-                    # )
-                    # _ba.playsound(_ba.getsound('error'))
                     _ba.pushcall(Call(result_cb, self, response))
                 else:
                     if DEBUG_LOG:
@@ -216,7 +211,10 @@ class LoginAdapter:
                         )
                     if response.credentials is None:
                         result2: LoginAdapter.SignInResult | Exception = (
-                            RuntimeError('No credentials returned.')
+                            RuntimeError(
+                                'No credentials returned after'
+                                ' submitting sign-in-token.'
+                            )
                         )
                     else:
                         result2 = self.SignInResult(

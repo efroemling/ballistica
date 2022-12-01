@@ -381,6 +381,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/tournamentscores.py \
   build/ba_data/python/bastd/ui/trophies.py \
   build/ba_data/python/bastd/ui/url.py \
+  build/ba_data/python/bastd/ui/v2upgrade.py \
   build/ba_data/python/bastd/ui/watch.py \
   build/server/ballisticacore_server.py
 
@@ -633,6 +634,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/__pycache__/tournamentscores.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/trophies.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/url.cpython-310.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/v2upgrade.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/watch.cpython-310.opt-1.pyc \
   build/server/__pycache__/ballisticacore_server.cpython-310.opt-1.pyc
 

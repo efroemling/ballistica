@@ -433,15 +433,17 @@ Thread::~Thread() = default;
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantConditionsOC"
 
-void Thread::LogThreadMessageTally() {
+void Thread::LogThreadMessageTally(
+    std::vector<std::pair<LogLevel, std::string>>* log_entries) {
   // Prevent recursion.
   if (!writing_tally_) {
     writing_tally_ = true;
 
     std::unordered_map<std::string, int> tally;
-    Log(LogLevel::kError, "Thread message tally ("
+    log_entries->emplace_back(std::make_pair(
+        LogLevel::kError, "Thread message tally ("
                               + std::to_string(thread_messages_.size())
-                              + " in list):");
+                              + " in list):"));
     for (auto&& m : thread_messages_) {
       std::string s;
       switch (m.type) {
@@ -475,8 +477,9 @@ void Thread::LogThreadMessageTally() {
     }
     int entry = 1;
     for (auto&& i : tally) {
-      Log(LogLevel::kError, "  #" + std::to_string(entry++) + " ("
-                                + std::to_string(i.second) + "x): " + i.first);
+      log_entries->emplace_back(std::make_pair(
+          LogLevel::kError, "  #" + std::to_string(entry++) + " ("
+                                + std::to_string(i.second) + "x): " + i.first));
     }
     writing_tally_ = false;
   }
@@ -484,6 +487,12 @@ void Thread::LogThreadMessageTally() {
 #pragma clang diagnostic pop
 
 void Thread::PushThreadMessage(const ThreadMessage& t) {
+  // We don't want to make log calls while holding this mutex;
+  // log calls acquire the GIL and if the GIL-holder (generally
+  // the logic thread) is trying to send a thread message to the
+  // thread doing the logging we would get deadlock.
+  // So tally up any logs and send them after.
+  std::vector<std::pair<LogLevel, std::string>> log_entries;
   {
     std::unique_lock<std::mutex> lock(thread_message_mutex_);
 
@@ -506,8 +515,9 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       // Show count periodically.
       if ((std::this_thread::get_id() == g_app->main_thread_id) && foo > 100) {
         foo = 0;
-        Log(LogLevel::kInfo,
-            "MSG COUNT " + std::to_string(thread_messages_.size()));
+        log_entries.emplace_back(std::make_pair(
+            LogLevel::kInfo,
+            "MSG COUNT " + std::to_string(thread_messages_.size())));
       }
     }
 
@@ -515,9 +525,11 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       static bool sent_error = false;
       if (!sent_error) {
         sent_error = true;
-        Log(LogLevel::kError,
-            "ThreadMessage list > 1000 in thread: " + GetCurrentThreadName());
-        LogThreadMessageTally();
+        log_entries.emplace_back(std::make_pair(
+            LogLevel::kError,
+            "ThreadMessage list > 1000 in thread: " + GetCurrentThreadName()));
+
+        LogThreadMessageTally(&log_entries);
       }
     }
 
@@ -531,6 +543,11 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
     // available.
   }
   thread_message_cv_.notify_all();
+
+  // Now log anything we accumulated safely outside of the locked section.
+  for (auto&& log_entry : log_entries) {
+    Log(log_entry.first, log_entry.second);
+  }
 }
 
 auto Thread::SetThreadsPaused(bool paused) -> void {

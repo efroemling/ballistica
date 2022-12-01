@@ -118,7 +118,8 @@ class Thread {
   auto SetInternalThreadName(const std::string& name) -> void;
   auto WaitForNextEvent(bool single_cycle) -> void;
   auto LoopUpkeep(bool once) -> void;
-  auto LogThreadMessageTally() -> void;
+  auto LogThreadMessageTally(
+      std::vector<std::pair<LogLevel, std::string>>* log_entries) -> void;
   auto PushLocalRunnable(Runnable* runnable, bool* completion_flag) -> void;
   auto PushCrossThreadRunnable(Runnable* runnable, bool* completion_flag)
       -> void;
