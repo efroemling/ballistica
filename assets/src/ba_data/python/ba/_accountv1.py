@@ -48,6 +48,9 @@ class AccountV1Subsystem:
 
         _ba.pushcall(do_auto_sign_in)
 
+    def on_app_pause(self) -> None:
+        """Should be called when app is pausing."""
+
     def on_app_resume(self) -> None:
         """Should be called when the app is resumed."""
 

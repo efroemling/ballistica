@@ -116,7 +116,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._newly_complete: bool | None = None
         self._is_more_levels: bool | None = None
         self._next_level_name: str | None = None
-        self._show_friend_scores: bool | None = None
         self._show_info: dict[str, Any] | None = None
         self._name_str: str | None = None
         self._friends_loading_status: ba.Actor | None = None
@@ -175,12 +174,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             + self._campaign.getlevel(self._level_name)
             .get_score_version_string()
             .replace(' ', '_')
-        )
-
-        # If game-center/etc scores are available we show our friends'
-        # scores. Otherwise we show our local high scores.
-        self._show_friend_scores = ba.internal.game_service_has_leaderboard(
-            self._game_name_str, self._game_config_str
         )
 
         try:
@@ -365,21 +358,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         can_select_extra_buttons = ba.app.platform == 'android'
 
         ba.internal.set_ui_input_device(None)  # Menu is up for grabs.
-
-        if self._show_friend_scores:
-            ba.buttonwidget(
-                parent=rootc,
-                color=(0.45, 0.4, 0.5),
-                position=(h_offs - 520, v_offs + 480),
-                size=(300, 60),
-                label=ba.Lstr(resource='topFriendsText'),
-                on_activate_call=ba.WeakCall(self._ui_gc),
-                transition_delay=delay + 0.5,
-                icon=self._game_service_leaderboards_texture,
-                icon_color=self._game_service_icon_color,
-                autoselect=True,
-                selectable=can_select_extra_buttons,
-            )
 
         if self._have_achievements and self._account_has_achievements:
             ba.buttonwidget(
@@ -773,18 +751,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             [p.name for p in self._playerinfos]
         )
 
-        if self._show_friend_scores:
-            self._friends_loading_status = Text(
-                ba.Lstr(
-                    value='${A}...',
-                    subs=[('${A}', ba.Lstr(resource='loadingText'))],
-                ),
-                position=(-405, 150 + 30),
-                color=(1, 1, 1, 0.4),
-                transition=Text.Transition.FADE_IN,
-                scale=0.7,
-                transition_delay=2.0,
-            )
         self._score_loading_status = Text(
             ba.Lstr(
                 value='${A}...',
@@ -850,8 +816,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             # We expect this only in kiosk mode; complain otherwise.
             if not (ba.app.demo_mode or ba.app.arcade_mode):
                 print('got not-signed-in at score-submit; unexpected')
-            if self._show_friend_scores:
-                ba.pushcall(ba.WeakCall(self._got_friend_score_results, None))
             ba.pushcall(ba.WeakCall(self._got_score_results, None))
         else:
             assert self._game_name_str is not None
@@ -862,9 +826,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 name_str,
                 self._score,
                 ba.WeakCall(self._got_score_results),
-                ba.WeakCall(self._got_friend_score_results)
-                if self._show_friend_scores
-                else None,
                 order=self._score_order,
                 tournament_id=self.session.tournament_id,
                 score_type=self._score_type,
@@ -899,138 +860,118 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             assert txt.node
             txt.node.client_only = True
 
-        # If we have no friend scores, display local best scores.
-        if self._show_friend_scores:
+        ts_height = 300
+        ts_h_offs = -480
+        v_offs = 40
+        Text(
+            ba.Lstr(resource='yourBestScoresText')
+            if self._score_type == 'points'
+            else ba.Lstr(resource='yourBestTimesText'),
+            maxwidth=210,
+            position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
+            transition=Text.Transition.IN_RIGHT,
+            v_align=Text.VAlign.CENTER,
+            scale=1.2,
+            transition_delay=1.8,
+        ).autoretain()
 
-            # Host has a button, so we need client-only text.
-            ts_height = 300
-            ts_h_offs = -480
-            v_offs = 40
-            txt = Text(
-                ba.Lstr(resource='topFriendsText'),
-                maxwidth=210,
-                position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                transition=Text.Transition.IN_RIGHT,
-                v_align=Text.VAlign.CENTER,
-                scale=1.2,
-                transition_delay=1.8,
-            ).autoretain()
-            assert txt.node
-            txt.node.client_only = True
-        else:
+        display_scores = list(our_high_scores)
+        display_count = 5
 
-            ts_height = 300
-            ts_h_offs = -480
-            v_offs = 40
-            Text(
-                ba.Lstr(resource='yourBestScoresText')
-                if self._score_type == 'points'
-                else ba.Lstr(resource='yourBestTimesText'),
-                maxwidth=210,
-                position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                transition=Text.Transition.IN_RIGHT,
-                v_align=Text.VAlign.CENTER,
-                scale=1.2,
-                transition_delay=1.8,
-            ).autoretain()
+        while len(display_scores) < display_count:
+            display_scores.append((0, None))
 
-            display_scores = list(our_high_scores)
-            display_count = 5
-
-            while len(display_scores) < display_count:
-                display_scores.append((0, None))
-
-            showed_ours = False
-            h_offs_extra = 85 if self._score_type == 'points' else 130
-            v_offs_extra = 20
-            v_offs_names = 0
-            scale = 1.0
-            p_count = len(self._playerinfos)
-            h_offs_extra -= 75
-            if p_count > 1:
-                h_offs_extra -= 20
-            if p_count == 2:
-                scale = 0.9
-            elif p_count == 3:
-                scale = 0.65
-            elif p_count == 4:
-                scale = 0.5
-            times: list[tuple[float, float]] = []
-            for i in range(display_count):
-                times.insert(
-                    random.randrange(0, len(times) + 1),
-                    (1.9 + i * 0.05, 2.3 + i * 0.05),
-                )
-            for i in range(display_count):
-                try:
-                    if display_scores[i][1] is None:
-                        name_str = '-'
-                    else:
-                        # noinspection PyUnresolvedReferences
-                        name_str = ', '.join(
-                            [p['name'] for p in display_scores[i][1]['players']]
-                        )
-                except Exception:
-                    ba.print_exception(
-                        f'Error calcing name_str for {display_scores}'
-                    )
+        showed_ours = False
+        h_offs_extra = 85 if self._score_type == 'points' else 130
+        v_offs_extra = 20
+        v_offs_names = 0
+        scale = 1.0
+        p_count = len(self._playerinfos)
+        h_offs_extra -= 75
+        if p_count > 1:
+            h_offs_extra -= 20
+        if p_count == 2:
+            scale = 0.9
+        elif p_count == 3:
+            scale = 0.65
+        elif p_count == 4:
+            scale = 0.5
+        times: list[tuple[float, float]] = []
+        for i in range(display_count):
+            times.insert(
+                random.randrange(0, len(times) + 1),
+                (1.9 + i * 0.05, 2.3 + i * 0.05),
+            )
+        for i in range(display_count):
+            try:
+                if display_scores[i][1] is None:
                     name_str = '-'
-                if display_scores[i] == our_score and not showed_ours:
-                    flash = True
-                    color0 = (0.6, 0.4, 0.1, 1.0)
-                    color1 = (0.6, 0.6, 0.6, 1.0)
-                    tdelay1 = 3.7
-                    tdelay2 = 3.7
-                    showed_ours = True
                 else:
-                    flash = False
-                    color0 = (0.6, 0.4, 0.1, 1.0)
-                    color1 = (0.6, 0.6, 0.6, 1.0)
-                    tdelay1 = times[i][0]
-                    tdelay2 = times[i][1]
-                Text(
-                    str(display_scores[i][0])
-                    if self._score_type == 'points'
-                    else ba.timestring(
-                        display_scores[i][0] * 10,
-                        timeformat=ba.TimeFormat.MILLISECONDS,
-                        suppress_format_warning=True,
-                    ),
-                    position=(
-                        ts_h_offs + 20 + h_offs_extra,
-                        v_offs_extra
-                        + ts_height / 2
-                        + -ts_height * (i + 1) / 10
-                        + v_offs
-                        + 11.0,
-                    ),
-                    h_align=Text.HAlign.RIGHT,
-                    v_align=Text.VAlign.CENTER,
-                    color=color0,
-                    flash=flash,
-                    transition=Text.Transition.IN_RIGHT,
-                    transition_delay=tdelay1,
-                ).autoretain()
+                    # noinspection PyUnresolvedReferences
+                    name_str = ', '.join(
+                        [p['name'] for p in display_scores[i][1]['players']]
+                    )
+            except Exception:
+                ba.print_exception(
+                    f'Error calcing name_str for {display_scores}'
+                )
+                name_str = '-'
+            if display_scores[i] == our_score and not showed_ours:
+                flash = True
+                color0 = (0.6, 0.4, 0.1, 1.0)
+                color1 = (0.6, 0.6, 0.6, 1.0)
+                tdelay1 = 3.7
+                tdelay2 = 3.7
+                showed_ours = True
+            else:
+                flash = False
+                color0 = (0.6, 0.4, 0.1, 1.0)
+                color1 = (0.6, 0.6, 0.6, 1.0)
+                tdelay1 = times[i][0]
+                tdelay2 = times[i][1]
+            Text(
+                str(display_scores[i][0])
+                if self._score_type == 'points'
+                else ba.timestring(
+                    display_scores[i][0] * 10,
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                    suppress_format_warning=True,
+                ),
+                position=(
+                    ts_h_offs + 20 + h_offs_extra,
+                    v_offs_extra
+                    + ts_height / 2
+                    + -ts_height * (i + 1) / 10
+                    + v_offs
+                    + 11.0,
+                ),
+                h_align=Text.HAlign.RIGHT,
+                v_align=Text.VAlign.CENTER,
+                color=color0,
+                flash=flash,
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=tdelay1,
+            ).autoretain()
 
-                Text(
-                    ba.Lstr(value=name_str),
-                    position=(
-                        ts_h_offs + 35 + h_offs_extra,
-                        v_offs_extra
-                        + ts_height / 2
-                        + -ts_height * (i + 1) / 10
-                        + v_offs_names
-                        + v_offs
-                        + 11.0,
-                    ),
-                    maxwidth=80.0 + 100.0 * len(self._playerinfos),
-                    v_align=Text.VAlign.CENTER,
-                    color=color1,
-                    flash=flash,
-                    scale=scale,
-                    transition=Text.Transition.IN_RIGHT,
-                    transition_delay=tdelay2,
-                ).autoretain()
+            Text(
+                ba.Lstr(value=name_str),
+                position=(
+                    ts_h_offs + 35 + h_offs_extra,
+                    v_offs_extra
+                    + ts_height / 2
+                    + -ts_height * (i + 1) / 10
+                    + v_offs_names
+                    + v_offs
+                    + 11.0,
+                ),
+                maxwidth=80.0 + 100.0 * len(self._playerinfos),
+                v_align=Text.VAlign.CENTER,
+                color=color1,
+                flash=flash,
+                scale=scale,
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=tdelay2,
+            ).autoretain()
 
         # Show achievements for this level.
         ts_height = -150

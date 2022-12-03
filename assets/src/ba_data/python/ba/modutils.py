@@ -87,7 +87,7 @@ def show_user_scripts() -> None:
                         '  See settings/advanced'
                         ' in the game for more info.'
                     )
-                _ba.android_media_scan_file(file_name)
+
         except Exception:
             from ba import _error
 

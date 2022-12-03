@@ -114,7 +114,6 @@ class Python {
   auto ReleaseGamePadInput() -> void;
   auto CaptureKeyboardInput(PyObject* obj) -> void;
   auto ReleaseKeyboardInput() -> void;
-  auto HandleFriendScoresCB(const FriendScoreSet& ss) -> void;
   auto IssueCallInLogicThreadWarning(PyObject* call) -> void;
 
   /// Borrowed from python's source code: used in overriding of objects' dir()
@@ -318,6 +317,7 @@ class Python {
     kSetLastAdNetworkCall,
     kNoGameCircleMessageCall,
     kGooglePlayPurchasesNotAvailableMessageCall,
+    kGooglePlayServicesNotAvailableMessageCall,
     kEmptyCall,
     kLevelIconPressCall,
     kTrophyIconPressCall,
@@ -365,6 +365,9 @@ class Python {
     kLoggingWarningCall,
     kLoggingErrorCall,
     kLoggingCriticalCall,
+    kImplicitSignInCall,
+    kImplicitSignOutCall,
+    kLoginAdapterGetSignInTokenResponseCall,
     kLast  // Sentinel; must be at end.
   };
 

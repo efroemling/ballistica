@@ -267,7 +267,6 @@ class Platform {
   virtual auto AndroidShowAppInvite(const std::string& title,
                                     const std::string& message,
                                     const std::string& code) -> void;
-  virtual auto AndroidRefreshFile(const std::string& file) -> void;
   virtual auto AndroidShowWifiSettings() -> void;
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
@@ -337,6 +336,14 @@ class Platform {
   /// Return the prefix to use for device-account ids on this platform.
   virtual auto GetDeviceV1AccountUUIDPrefix() -> std::string;
 
+  /// Called when a Python LoginAdapter is requesting an explicit sign-in.
+  virtual auto LoginAdapterGetSignInToken(const std::string& login_type,
+                                          int attempt_id) -> void;
+  /// Called when a Python LoginAdapter is informing us that a back-end is
+  /// active/inactive.
+  virtual auto LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                               bool active) -> void;
+
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 
   // FIXME: currently these are wired up on Android; need to generalize
@@ -365,9 +372,6 @@ class Platform {
   virtual auto ConvertIncomingLeaderboardScore(
       const std::string& leaderboard_id, int score) -> int;
 
-  virtual auto GetFriendScores(const std::string& game,
-                               const std::string& game_version,
-                               void* py_callback) -> void;
   virtual auto SubmitScore(const std::string& game, const std::string& version,
                            int64_t score) -> void;
   virtual auto ReportAchievement(const std::string& achievement) -> void;

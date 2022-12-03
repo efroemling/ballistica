@@ -616,9 +616,6 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         for bottype in self._bot_types_initial:
             self._spawn_bot(bottype)
 
-    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
-        self._show_standard_scores_to_beat_ui(scores)
-
     def _on_bot_spawn(self, spaz: SpazBot) -> None:
         # We want to move to the left by default.
         spaz.target_point_default = ba.Vec3(0, 0, 0)

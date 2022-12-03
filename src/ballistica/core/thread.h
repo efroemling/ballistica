@@ -45,7 +45,8 @@ class Thread {
 
   void SetAcquiresPythonGIL();
 
-  void SetPaused(bool paused);
+  void PushSetPaused(bool paused);
+
   auto thread_id() const -> std::thread::id { return thread_id_; }
 
   // Needed in rare cases where we jump physical threads.
@@ -97,6 +98,10 @@ class Thread {
   /// the app through a flood of packets.
   auto CheckPushSafety() -> bool;
 
+  static auto GetStillPausingThreads() -> std::vector<Thread*>;
+
+  auto paused() { return paused_; }
+
  private:
   struct ThreadMessage {
     enum class Type { kShutdown = 999, kRunnable, kPause, kResume };
@@ -113,7 +118,8 @@ class Thread {
   auto SetInternalThreadName(const std::string& name) -> void;
   auto WaitForNextEvent(bool single_cycle) -> void;
   auto LoopUpkeep(bool once) -> void;
-  auto LogThreadMessageTally() -> void;
+  auto LogThreadMessageTally(
+      std::vector<std::pair<LogLevel, std::string>>* log_entries) -> void;
   auto PushLocalRunnable(Runnable* runnable, bool* completion_flag) -> void;
   auto PushCrossThreadRunnable(Runnable* runnable, bool* completion_flag)
       -> void;

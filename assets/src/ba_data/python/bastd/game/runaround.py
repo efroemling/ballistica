@@ -684,9 +684,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             },
         )
 
-    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
-        self._show_standard_scores_to_beat_ui(scores)
-
     def _update_waves(self) -> None:
         # pylint: disable=too-many-branches
 

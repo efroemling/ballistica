@@ -80,6 +80,15 @@ class IntegrityError(ValueError):
     """Data has been tampered with or corrupted in some form."""
 
 
+class AuthenticationError(Exception):
+    """Authentication has failed for some operation.
+
+    This can be raised if server-side-verification does not match
+    client-supplied credentials, if an invalid password is supplied
+    for a sign-in attempt, etc.
+    """
+
+
 def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
     """Is the provided exception from urllib a communication-related error?
 
@@ -188,6 +197,7 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
     firewall/connectivity issues, etc. These issues can often be safely
     ignored or presented to the user as general 'connection-lost' events.
     """
+    # pylint: disable=too-many-return-statements
     import ssl
 
     if isinstance(
@@ -225,6 +235,10 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
         # Assuming this just means client is attempting to connect from some
         # outdated browser or whatnot.
         if 'SSL: WRONG_VERSION_NUMBER' in excstr:
+            return True
+
+        # And seeing this very rarely; assuming its just data corruption?
+        if 'SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC' in excstr:
             return True
 
     return False

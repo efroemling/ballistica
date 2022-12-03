@@ -697,7 +697,7 @@ class Achievement:
         # Even though there are technically achievements when we're not
         # signed in, lets not show them (otherwise we tend to get
         # confusing 'controller connected' achievements popping up while
-        # waiting to log in which can be confusing).
+        # waiting to sign in which can be confusing).
         if _internal.get_v1_account_state() != 'signed_in':
             return
 

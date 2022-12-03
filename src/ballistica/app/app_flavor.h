@@ -43,16 +43,17 @@ class AppFlavor {
   /// Should process any pending OS events, etc.
   virtual auto RunEvents() -> void;
 
-  // These should be called by the window, view-controller, sdl,
-  // or whatever is driving the app. They must be called from the main thread.
-
-  /// Should be called on mobile when the app is backgrounded.
-  /// Pauses threads, closes network sockets, etc.
+  /// Put the app into a paused state. Should be called from the main
+  /// thread. Pauses work, closes network sockets, etc.
+  /// Corresponds to being backgrounded on mobile, etc.
+  /// It is assumed that, as soon as this call returns, all work is
+  /// finished and all threads can be suspended by the OS without any
+  /// negative side effects.
   auto PauseApp() -> void;
 
   auto paused() const -> bool { return actually_paused_; }
 
-  /// Should be called on mobile when the app is foregrounded.
+  /// Resume the app; corresponds to returning to foreground on mobile/etc.
   /// Spins threads back up, re-opens network sockets, etc.
   auto ResumeApp() -> void;
 
@@ -101,9 +102,6 @@ class AppFlavor {
   auto PushShowOnlineScoreUICall(const std::string& show,
                                  const std::string& game,
                                  const std::string& game_version) -> void;
-  auto PushGetFriendScoresCall(const std::string& game,
-                               const std::string& game_version, void* data)
-      -> void;
   auto PushSubmitScoreCall(const std::string& game,
                            const std::string& game_version, int64_t score)
       -> void;

@@ -326,9 +326,6 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
-    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
-        self._show_standard_scores_to_beat_ui(scores)
-
     def end_game(self) -> None:
         # Tell our bots to celebrate just to rub it in.
         self._bots.final_celebrate()

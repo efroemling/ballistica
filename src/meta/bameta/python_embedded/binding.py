@@ -66,6 +66,7 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.set_last_ad_network,  # kSetLastAdNetworkCall
         _hooks.no_game_circle_message,  # kNoGameCircleMessageCall
         _hooks.google_play_purchases_not_available_message,  # kGooglePlayPurchasesNotAvailableMessageCall
+        _hooks.google_play_services_not_available_message,  # kGooglePlayServicesNotAvailableMessageCall
         _hooks.empty_call,  # kEmptyCall
         _hooks.level_icon_press,  # kLevelIconPressCall
         _hooks.trophy_icon_press,  # kTrophyIconPressCall
@@ -142,4 +143,7 @@ def get_binding_values() -> tuple[Any, ...]:
         logging.warning,  # kLoggingWarningCall
         logging.error,  # kLoggingErrorCall
         logging.critical,  # kLoggingCriticalCall
+        _hooks.implicit_sign_in,  # kImplicitSignInCall
+        _hooks.implicit_sign_out,  # kImplicitSignOutCall
+        _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     )  # yapf: disable

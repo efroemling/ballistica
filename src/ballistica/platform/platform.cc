@@ -28,12 +28,12 @@
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/logic/friend_score_set.h"
 #include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
 #include "ballistica/platform/stdio_console.h"
 #include "ballistica/python/python.h"
+#include "ballistica/python/python_sys.h"
 
 #if BA_HEADLESS_BUILD
 #include "ballistica/app/app_flavor_headless.h"
@@ -181,6 +181,23 @@ auto Platform::GetLegacyDeviceUUID() -> const std::string& {
     have_device_uuid_ = true;
   }
   return legacy_device_uuid_;
+}
+
+auto Platform::LoginAdapterGetSignInToken(const std::string& login_type,
+                                          int attempt_id) -> void {
+  // Default implementation simply calls completion callback immediately.
+  g_logic->thread()->PushCall([login_type, attempt_id] {
+    PythonRef args(Py_BuildValue("(sss)", login_type.c_str(),
+                                 std::to_string(attempt_id).c_str(), ""),
+                   PythonRef::kSteal);
+    g_python->obj(Python::ObjID::kLoginAdapterGetSignInTokenResponseCall)
+        .Call(args);
+  });
+}
+
+auto Platform::LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                               bool active) -> void {
+  // Default is no-op.
 }
 
 auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
@@ -849,13 +866,6 @@ auto Platform::ConvertIncomingLeaderboardScore(
   return score;
 }
 
-void Platform::GetFriendScores(const std::string& game,
-                               const std::string& game_version, void* data) {
-  // As a default, just fail gracefully.
-  Log(LogLevel::kError, "FIXME: GetFriendScores unimplemented");
-  g_logic->PushFriendScoreSetCall(FriendScoreSet(false, data));
-}
-
 void Platform::SubmitScore(const std::string& game, const std::string& version,
                            int64_t score) {
   Log(LogLevel::kError, "FIXME: SubmitScore() unimplemented");
@@ -1029,10 +1039,6 @@ void Platform::SetAnalyticsScreen(const std::string& screen) {}
 void Platform::SubmitAnalyticsCounts() {}
 
 void Platform::SetPlatformMiscReadVals(const std::string& vals) {}
-
-void Platform::AndroidRefreshFile(const std::string& file) {
-  Log(LogLevel::kError, "AndroidRefreshFile() unimplemented");
-}
 
 void Platform::ShowAd(const std::string& purpose) {
   Log(LogLevel::kError, "ShowAd() unimplemented");

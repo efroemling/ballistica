@@ -799,9 +799,6 @@
     <ClInclude Include="..\..\src\ballistica\logic\connection\connection_to_host_udp.h">
       <Filter>ballistica\logic\connection</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\logic\friend_score_set.h">
-      <Filter>ballistica\logic</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\logic\host_activity.cc">
       <Filter>ballistica\logic</Filter>
     </ClCompile>

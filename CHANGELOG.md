@@ -1,4 +1,18 @@
-### 1.7.14 (build 20921, api 7, 2022-11-03)
+### 1.7.14 (build 20956, api 7, 2022-12-01)
+- Android Google Play logins now provide V2 accounts with access to all V2 features such as a globally-unique account tag, cloud-console, and workspaces. They should still retain their V1 data as well.
+- V2 accounts now have a 'Manage Account' button in the app account window which will sign you into a browser with your current account.
+- Removed Google App Invite functionality which has been deprecated for a while now. Google Play users can still get tickets by sharing the app via codes (same as other platforms).
+- Updated Android root-detection library to the latest version. Please holler if you are getting new false 'your device is rooted' errors when trying to play tournaments or anything like that.
+- Removed a few obsolete internal functions: `_ba.is_ouya_build()`, `_ba.android_media_scan_file()`.
+- Renaming some methods/data to disambiguate 'login' vs 'sign-in', both in the app and on ballistica.net. Those two terms are somewhat ambiguous and interchangeable in English and can either be a verb or a noun. I'd like to keep things clear in Ballistica by always using 'sign-in' for the verb form and 'login' for the noun. For example: 'You can now sign in to your account using your Google Play login'.
+- Fixed the 'your config is broken' dialog that shows on desktop builds if the game's config file is corrupt and can't be read. It should let you edit the config or replace it with a default.
+- `ba.printobjects()` is now `ba.ls_objects()`. It technically logs and doesn't print so the former name was a bit misleading.
+- Added `ba.ls_input_devices()` to dump debug info about the current set of input devices. Can be helpful to diagnose mysterious devices joining games unintentionally and things like that.
+- Added 'raw' bool arg to `ba.pushcall()`. Passing True for it disables context save/restore and thread checks.
+- Added `ba.internal.dump_tracebacks()` which can be used to dump the stack state of all Python threads after some delay. Useful for debugging deadlock; just call right before said deadlock occurs. Results will be logged on the next app launch if they cannot be immediately.
+- Fixed a low level event-loop issue that in some cases was preventing the Android version from properly pausing/resuming the app or managing connections while in the background. If you look at the devices section on ballistica.net you should now see your device disappear when you background the app and reappear when you foreground it. Please holler if not.
+- Device accounts are now marked as deprecated, and signing in with one now brings up an 'upgrade' UI which allows converting it to a V2 account. It is my hope to push the entire client ecosystem to V2 accounts as quickly as possible since trying to support both independent V1 accounts and V2 accounts is a substantial technical burden.
+- Fixed an issue where Log calls made within `Thread::PushThreadMessage()` could result in deadlock.
 
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.

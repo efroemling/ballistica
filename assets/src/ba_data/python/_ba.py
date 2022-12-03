@@ -1227,16 +1227,6 @@ def android_get_external_files_dir() -> str:
     return str()
 
 
-def android_media_scan_file(file_name: str) -> None:
-
-    """(internal)
-
-    Refreshes Android MTP Index for a file; use this to get file
-    modifications to be reflected in Android File Transfer.
-    """
-    return None
-
-
 def android_show_wifi_settings() -> None:
 
     """(internal)"""
@@ -2406,15 +2396,6 @@ def is_os_playing_music() -> bool:
     return bool()
 
 
-def is_ouya_build() -> bool:
-
-    """(internal)
-
-    Returns whether we're running the ouya-specific version
-    """
-    return bool()
-
-
 def is_party_icon_visible() -> bool:
 
     """(internal)"""
@@ -2444,6 +2425,42 @@ def lock_all_input() -> None:
     """(internal)
 
     Prevents all keyboard, mouse, and gamepad events from being processed.
+    """
+    return None
+
+
+def login_adapter_back_end_active_change(login_type: str, active: bool) -> None:
+
+    """(internal)"""
+    return None
+
+
+def login_adapter_get_sign_in_token(login_type: str, attempt_id: int) -> None:
+
+    """(internal)"""
+    return None
+
+
+def ls_input_devices() -> None:
+
+    """Print debugging info about game objects.
+
+    Category: **General Utility Functions**
+
+    This call only functions in debug builds of the game.
+    It prints various info about the current object count, etc.
+    """
+    return None
+
+
+def ls_objects() -> None:
+
+    """Log debugging info about C++ level objects.
+
+    Category: **General Utility Functions**
+
+    This call only functions in debug builds of the game.
+    It prints various info about the current object count, etc.
     """
     return None
 
@@ -2666,31 +2683,16 @@ def printnodes() -> None:
     return None
 
 
-def printobjects() -> None:
-
-    """Print debugging info about game objects.
-
-    Category: **General Utility Functions**
-
-    This call only functions in debug builds of the game.
-    It prints various info about the current object count, etc.
-    """
-    return None
-
-
 def pushcall(
     call: Callable,
     from_other_thread: bool = False,
     suppress_other_thread_warning: bool = False,
     other_thread_use_fg_context: bool = False,
+    raw: bool = False,
 ) -> None:
 
-    """Pushes a call onto the event loop to be run during the next cycle.
-
+    """Push a call to the logic event-loop.
     Category: **General Utility Functions**
-
-    This can be handy for calls that are disallowed from within other
-    callbacks, etc.
 
     This call expects to be used in the logic thread, and will automatically
     save and restore the ba.Context to behave seamlessly.
@@ -2700,6 +2702,7 @@ def pushcall(
     the call will always run in the UI context on the logic thread
     or whichever context is in the foreground if
     other_thread_use_fg_context is True.
+    Passing raw=True will disable thread checks and context sets/restores.
     """
     return None
 

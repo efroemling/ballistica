@@ -43,6 +43,20 @@ class SysResponse:
     users of the api never see them.
     """
 
+    def set_local_exception(self, exc: Exception) -> None:
+        """Attach a local exception to facilitate better logging/handling.
+
+        Be aware that this data does not get serialized and only
+        exists on the local object.
+        """
+        setattr(self, '_sr_local_exception', exc)
+
+    def get_local_exception(self) -> Exception | None:
+        """Fetch a local attached exception."""
+        value = getattr(self, '_sr_local_exception', None)
+        assert isinstance(value, Exception | None)
+        return value
+
 
 # Some standard response types:
 

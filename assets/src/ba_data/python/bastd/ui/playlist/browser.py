@@ -63,7 +63,7 @@ class PlaylistBrowserWindow(ba.Window):
         )
 
         uiscale = ba.app.ui.uiscale
-        self._width = 900 if uiscale is ba.UIScale.SMALL else 800
+        self._width = 900.0 if uiscale is ba.UIScale.SMALL else 800.0
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         self._height = (
             480
@@ -365,7 +365,7 @@ class PlaylistBrowserWindow(ba.Window):
 
         self._sub_width = self._scroll_width
         self._sub_height = (
-            40 + rows * (button_height + 2 * button_buffer_v) + 90
+            40.0 + rows * (button_height + 2 * button_buffer_v) + 90
         )
         assert self._sub_width is not None
         assert self._sub_height is not None

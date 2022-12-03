@@ -42,11 +42,13 @@
       <w>airborn</w>
       <w>alext</w>
       <w>alibaba</w>
+      <w>alibname</w>
       <w>allerrors</w>
       <w>allobjc</w>
       <w>allobjs</w>
       <w>allocs</w>
       <w>allwarnings</w>
+      <w>alogins</w>
       <w>alot</w>
       <w>alphaimg</w>
       <w>alphapixels</w>
@@ -216,6 +218,7 @@
       <w>cend</w>
       <w>centiseconds</w>
       <w>certifi</w>
+      <w>cfgdict</w>
       <w>cfgdir</w>
       <w>cfgpath</w>
       <w>changeme</w>
@@ -1005,6 +1008,7 @@
       <w>pflag</w>
       <w>pflags</w>
       <w>pgmout</w>
+      <w>phandle</w>
       <w>phasescriptexecution</w>
       <w>piplist</w>
       <w>pipvers</w>
@@ -1332,6 +1336,7 @@
       <w>subtypestr</w>
       <w>successmsg</w>
       <w>sval</w>
+      <w>swidth</w>
       <w>swiftc</w>
       <w>symbolification</w>
       <w>syscalls</w>
@@ -1343,6 +1348,9 @@
       <w>targs</w>
       <w>tasklabel</w>
       <w>tbegin</w>
+      <w>tbfile</w>
+      <w>tbfiles</w>
+      <w>tbpath</w>
       <w>tcls</w>
       <w>tdels</w>
       <w>tdiff</w>
@@ -1506,6 +1514,7 @@
       <w>weeeird</w>
       <w>welp</w>
       <w>whaaaaaaa</w>
+      <w>whatisv</w>
       <w>wheee</w>
       <w>wheeee</w>
       <w>wiimote</w>

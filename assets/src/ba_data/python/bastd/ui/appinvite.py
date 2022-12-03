@@ -413,6 +413,9 @@ def handle_app_invites_press(force_code: bool = False) -> None:
         and ba.internal.get_v1_account_misc_read_val('enableAppInvites', False)
         and not app.on_tv
     )
+    # Update: google's app invites are deprecated.
+    do_app_invites = False
+
     if force_code:
         do_app_invites = False
 

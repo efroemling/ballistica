@@ -334,11 +334,11 @@ def gen_fulltest_buildfile_linux() -> None:
     batools.build.gen_fulltest_buildfile_linux()
 
 
-def python_version_build_base() -> None:
+def python_version_android_base() -> None:
     """Print built Python base version."""
-    from efrotools.pybuild import PY_VER
+    from efrotools.pybuild import PY_VER_ANDROID
 
-    print(PY_VER, end='')
+    print(PY_VER_ANDROID, end='')
 
 
 def python_version_android() -> None:
@@ -444,7 +444,25 @@ def python_gather() -> None:
     from efrotools import pybuild
 
     os.chdir(PROJROOT)
-    pybuild.gather()
+    pybuild.gather(do_android=True, do_apple=True)
+
+
+def python_gather_android() -> None:
+    """python_gather but only android bits."""
+    import os
+    from efrotools import pybuild
+
+    os.chdir(PROJROOT)
+    pybuild.gather(do_android=True, do_apple=False)
+
+
+def python_gather_apple() -> None:
+    """python_gather but only apple bits."""
+    import os
+    from efrotools import pybuild
+
+    os.chdir(PROJROOT)
+    pybuild.gather(do_android=False, do_apple=True)
 
 
 def python_winprune() -> None:

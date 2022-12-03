@@ -628,7 +628,8 @@ class RPCEndpoint:
 
         # Now just sit and handle stuff as it comes in.
         while True:
-            assert not self._closing
+            if self._closing:
+                return
 
             # Read message type.
             mtype = _PacketType(await self._read_int_8())

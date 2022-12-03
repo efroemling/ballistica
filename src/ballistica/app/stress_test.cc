@@ -50,11 +50,6 @@ void StressTest::Update() {
                   "time,averageFps,nodes,models,collide_models,textures,sounds,"
                   "pssMem,sharedDirtyMem,privateDirtyMem\n");
           fflush(stress_test_stats_file_);
-          if (g_buildconfig.ostype_android()) {
-            // On android, let the OS know we've added or removed a file
-            // (limit to android or we'll get an unimplemented warning).
-            g_platform->AndroidRefreshFile(f_name);
-          }
         }
       }
       if (stress_test_stats_file_ != nullptr) {

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, overload
 
 import _ba
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
 
     from efro.message import Message, Response
     import bacommon.cloud
+
+DEBUG_LOG = False
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
 # autogenerate this. That would give us type safety between this and
@@ -29,6 +32,21 @@ class CloudSubsystem:
         messages will succeed.
         """
         return False  # Needs to be overridden
+
+    def on_app_pause(self) -> None:
+        """Should be called when the app pauses."""
+
+    def on_app_resume(self) -> None:
+        """Should be called when the app resumes."""
+
+    def on_connectivity_changed(self, connected: bool) -> None:
+        """Called when cloud connectivity state changes."""
+        if DEBUG_LOG:
+            logging.debug('CloudSubsystem: Connectivity is now %s.', connected)
+
+        # Inform things that use this.
+        # (TODO: should generalize this into some sort of registration system)
+        _ba.app.accounts_v2.on_cloud_connectivity_changed(connected)
 
     @overload
     def send_message_cb(
@@ -63,6 +81,26 @@ class CloudSubsystem:
         self,
         msg: bacommon.cloud.PingMessage,
         on_response: Callable[[bacommon.cloud.PingResponse | Exception], None],
+    ) -> None:
+        ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.SignInMessage,
+        on_response: Callable[
+            [bacommon.cloud.SignInResponse | Exception], None
+        ],
+    ) -> None:
+        ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.ManageAccountMessage,
+        on_response: Callable[
+            [bacommon.cloud.ManageAccountResponse | Exception], None
+        ],
     ) -> None:
         ...
 
@@ -110,7 +148,6 @@ class CloudSubsystem:
 def cloud_console_exec(code: str) -> None:
     """Called by the cloud console to run code in the logic thread."""
     import sys
-    import logging
     import __main__
     from ba._generated.enums import TimeType
 

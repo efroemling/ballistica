@@ -278,7 +278,7 @@ def show_damage_count(
 
 
 def timestring(
-    timeval: float,
+    timeval: float | int,
     centi: bool = True,
     timeformat: ba.TimeFormat = TimeFormat.SECONDS,
     suppress_format_warning: bool = False,
