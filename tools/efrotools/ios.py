@@ -134,6 +134,7 @@ def _add_build_to_xcarchive(
             MODES['debug']['configuration'],
             '-archivePath',
             str(archivepathbase),
+            '-allowProvisioningUpdates',
         ]
         subprocess.run(args, check=True, capture_output=False)
 
