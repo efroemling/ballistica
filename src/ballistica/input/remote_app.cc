@@ -377,12 +377,14 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
     }
   }
 
-  // Don't reuse a slot for 5 seconds.
+  // Don't reuse a slot for 5 seconds (if its been heard from since this time).
   millisecs_t cooldown_time = GetRealTime() - 5000;
 
   // Ok, not there already.. now look for a non-taken one and return that.
   for (int i = 0; i < kMaxRemoteAppClients; i++) {
-    if (!clients_[i].in_use && clients_[i].last_contact_time < cooldown_time) {
+    if (!clients_[i].in_use
+        && (clients_[i].last_contact_time == 0
+            || clients_[i].last_contact_time < cooldown_time)) {
       // Ok lets fill out the client.
       clients_[i].in_use = true;
       clients_[i].next_state_id = 0;
