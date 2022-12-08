@@ -441,20 +441,23 @@ void TextWidget::SetText(const std::string& text_in_raw) {
   bool do_format_check{};
   bool print_false_positives{};
 
-  if (g_buildconfig.debug_build()) {
-    do_format_check = explicit_bool(true);
-  } else {
-    if (text_in_raw.size() > 1 && text_in_raw[0] == '{'
-        && text_in_raw[text_in_raw.size() - 1] == '}') {
-      // Ok, its got bounds like json; now if its either missing quotes or a
-      // colon then let's check it.
-      if (!strstr(text_in_raw.c_str(), "\"")
-          || !strstr(text_in_raw.c_str(), ":")) {
-        do_format_check = true;
+  // Only non-editable text support resource-strings.
+  if (!editable_) {
+    if (g_buildconfig.debug_build()) {
+      do_format_check = explicit_bool(true);
+    } else {
+      if (text_in_raw.size() > 1 && text_in_raw[0] == '{'
+          && text_in_raw[text_in_raw.size() - 1] == '}') {
+        // Ok, its got bounds like json; now if its either missing quotes or a
+        // colon then let's check it.
+        if (!strstr(text_in_raw.c_str(), "\"")
+            || !strstr(text_in_raw.c_str(), ":")) {
+          do_format_check = true;
 
-        // We wanna avoid doing this check when we don't have to.
-        // so lets print if we get a false positive
-        print_false_positives = true;
+          // We wanna avoid doing this check when we don't have to.
+          // so lets print if we get a false positive
+          print_false_positives = true;
+        }
       }
     }
   }
