@@ -1,4 +1,4 @@
-### 1.7.16 (build 20961, api 7, 2022-12-06)
+### 1.7.16 (build 20962, api 7, 2022-12-07)
 - Fixed a bug where profile names encased in curly brackets could cause harmless error messages.
 - Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
 - The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.
