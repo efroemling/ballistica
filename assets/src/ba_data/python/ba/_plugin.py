@@ -174,7 +174,7 @@ class PluginSubsystem:
                 color=(1, 1, 0),
             )
             plugnames = ', '.join(disappeared_plugs)
-            logging.warning(
+            logging.info(
                 '%d plugin(s) no longer found: %s.',
                 len(disappeared_plugs),
                 plugnames,

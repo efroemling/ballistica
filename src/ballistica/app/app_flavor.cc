@@ -257,10 +257,13 @@ void AppFlavor::PauseApp() {
     auto threads{Thread::GetStillPausingThreads()};
     running_thread_count = threads.size();
     if (running_thread_count == 0) {
-      Log(LogLevel::kDebug,
-          "PauseApp() completed in "
-              + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
-              + "ms.");
+      if (g_buildconfig.debug_build()) {
+        Log(LogLevel::kDebug,
+            "PauseApp() completed in "
+                + std::to_string(Platform::GetCurrentMilliseconds()
+                                 - start_time)
+                + "ms.");
+      }
       return;
     }
   }
@@ -282,10 +285,12 @@ void AppFlavor::ResumeApp() {
   assert(sys_paused_app_);
   sys_paused_app_ = false;
   UpdatePauseResume();
-  Log(LogLevel::kDebug,
-      "ResumeApp() completed in "
-          + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
-          + "ms.");
+  if (g_buildconfig.debug_build()) {
+    Log(LogLevel::kDebug,
+        "ResumeApp() completed in "
+            + std::to_string(Platform::GetCurrentMilliseconds() - start_time)
+            + "ms.");
+  }
 }
 
 void AppFlavor::DidFinishRenderingFrame(FrameDef* frame) {}

@@ -88,17 +88,13 @@ class V2UpgradeWindow(ba.Window):
             on_activate_call=show_what_is_v2_page,
         )
 
-        bamasteraddr = ba.internal.get_master_server_address(version=2)
         upgrade_button = ba.buttonwidget(
             parent=self._root_widget,
             position=(self._width - button_width - 20, 25),
             size=(button_width, 65),
             autoselect=True,
             label=ba.Lstr(resource='upgradeText'),
-            on_activate_call=ba.Call(
-                ba.open_url,
-                f'{bamasteraddr}/v2uda/{self._code}',
-            ),
+            on_activate_call=self._upgrade_press,
         )
 
         ba.containerwidget(
@@ -106,6 +102,16 @@ class V2UpgradeWindow(ba.Window):
             selected_child=upgrade_button,
             cancel_button=cancel_button,
         )
+
+    def _upgrade_press(self) -> None:
+        # Get rid of the window and sign out before kicking the
+        # user over to a browser to do the upgrade. This hopefully
+        # makes it more clear when they come back that they need to
+        # sign in with the 'BombSquad account' option.
+        ba.containerwidget(edit=self._root_widget, transition='out_left')
+        ba.internal.sign_out_v1()
+        bamasteraddr = ba.internal.get_master_server_address(version=2)
+        ba.open_url(f'{bamasteraddr}/v2uda/{self._code}')
 
     def _done(self) -> None:
         ba.containerwidget(edit=self._root_widget, transition='out_left')

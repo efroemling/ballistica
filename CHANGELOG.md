@@ -1,4 +1,14 @@
-### 1.7.14 (build 20956, api 7, 2022-12-01)
+### 1.7.16 (build 20963, api 7, 2022-12-08)
+- Fixed a bug where profile names encased in curly brackets could cause harmless error messages.
+- Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
+- The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.
+- Fixed a bug where the remote app could not connect for the first 5 seconds after launching the app.
+
+### 1.7.15 (build 20960, api 7, 2022-12-04)
+- The cancel button on the 'Sign in with a Bombsquad Account' popup no longer respond to system cancel buttons (escape key, android back button, etc). Turns out some Android people were pressing back repeatedly to come back from a browser after signing in and immediately canceling their sign in attempts in the game before they completed. Hopefully this will avoid some frustration.
+- Fixed an issue where back presses could result in multiple main menu windows appearing.
+
+### 1.7.14 (build 20958, api 7, 2022-12-03)
 - Android Google Play logins now provide V2 accounts with access to all V2 features such as a globally-unique account tag, cloud-console, and workspaces. They should still retain their V1 data as well.
 - V2 accounts now have a 'Manage Account' button in the app account window which will sign you into a browser with your current account.
 - Removed Google App Invite functionality which has been deprecated for a while now. Google Play users can still get tickets by sharing the app via codes (same as other platforms).
@@ -13,6 +23,7 @@
 - Fixed a low level event-loop issue that in some cases was preventing the Android version from properly pausing/resuming the app or managing connections while in the background. If you look at the devices section on ballistica.net you should now see your device disappear when you background the app and reappear when you foreground it. Please holler if not.
 - Device accounts are now marked as deprecated, and signing in with one now brings up an 'upgrade' UI which allows converting it to a V2 account. It is my hope to push the entire client ecosystem to V2 accounts as quickly as possible since trying to support both independent V1 accounts and V2 accounts is a substantial technical burden.
 - Fixed an issue where Log calls made within `Thread::PushThreadMessage()` could result in deadlock.
+- Fixed an issue where some Android hardware buttons could theoretically cause rogue game controller button presses (due to downcasting int values > 255 into a uint8 value).
 
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.
