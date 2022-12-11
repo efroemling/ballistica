@@ -4917,6 +4917,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/indonesian.json \
   build/ba_data/data/languages/italian.json \
   build/ba_data/data/languages/korean.json \
+  build/ba_data/data/languages/malay.json \
   build/ba_data/data/languages/persian.json \
   build/ba_data/data/languages/polish.json \
   build/ba_data/data/languages/portuguese.json \

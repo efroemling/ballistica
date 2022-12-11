@@ -3,6 +3,7 @@
 - Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
 - The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.
 - Fixed a bug where the remote app could not connect for the first 5 seconds after launching the app.
+- Added Malay language. Ick; apparently its been sitting done for a while and I hadn't realized it wasn't added to the game yet. Apologies!. And thanks to all contributors!
 
 ### 1.7.15 (build 20960, api 7, 2022-12-04)
 - The cancel button on the 'Sign in with a Bombsquad Account' popup no longer respond to system cancel buttons (escape key, android back button, etc). Turns out some Android people were pressing back repeatedly to come back from a browser after signing in and immediately canceling their sign in attempts in the game before they completed. Hopefully this will avoid some frustration.
