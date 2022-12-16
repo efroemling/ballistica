@@ -114,6 +114,21 @@ auto PySetPublicPartyMaxSize(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
+auto PySetPublicPartyQueueEnabled(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int enabled;
+  static const char* kwlist[] = {"enabled", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &enabled)) {
+    return nullptr;
+  }
+  assert(g_python);
+  g_logic->SetPublicPartyQueueEnabled(enabled);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PySetAuthenticateClients(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -497,6 +512,13 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       {"set_public_party_max_size", (PyCFunction)PySetPublicPartyMaxSize,
        METH_VARARGS | METH_KEYWORDS,
        "set_public_party_max_size(max_size: int) -> None\n"
+       "\n"
+
+       "(internal)"},
+
+      {"set_public_party_queue_enabled",
+       (PyCFunction)PySetPublicPartyQueueEnabled, METH_VARARGS | METH_KEYWORDS,
+       "set_public_party_queue_enabled(max_size: bool) -> None\n"
        "\n"
        "(internal)"},
 

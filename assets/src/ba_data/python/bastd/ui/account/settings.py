@@ -17,10 +17,9 @@ import ba.internal
 if TYPE_CHECKING:
     from ba.internal import LoginAdapter
 
-# We only show v1 linking controls when directly signed in with
-# V1 accounts. Generally V2 accounts should use the web ui for linking.
-# However we have an escape-hatch here if someone needs to access
-# V1 linking for the V1 portion of their V2 account.
+# These days we're directing people to the web based account settings
+# for V2 account linking and trying to get them to disconnect remaining
+# V1 links, but leaving this escape hatch here in case needed.
 FORCE_ENABLE_V1_LINKING = False
 
 

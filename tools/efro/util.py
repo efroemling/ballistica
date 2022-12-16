@@ -39,6 +39,7 @@ class _EmptyObj:
     pass
 
 
+# TODO: kill this and just use efro.call.tpartial
 if TYPE_CHECKING:
     Call = Call
 else:

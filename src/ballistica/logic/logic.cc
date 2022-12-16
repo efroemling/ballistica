@@ -2108,6 +2108,20 @@ void Logic::SetPublicPartySize(int count) {
   }
 }
 
+auto Logic::SetPublicPartyQueueEnabled(bool enabled) -> void {
+  assert(InLogicThread());
+  if (enabled == public_party_queue_enabled_) {
+    return;
+  }
+  public_party_queue_enabled_ = enabled;
+
+  // Push our new state to the server *ONLY* if public-party is turned on
+  // (wasteful otherwise).
+  if (public_party_enabled_) {
+    g_app_internal->PushPublicPartyState();
+  }
+}
+
 void Logic::SetPublicPartyMaxSize(int count) {
   assert(InLogicThread());
   if (count == public_party_max_size_) {

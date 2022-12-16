@@ -3025,6 +3025,12 @@ def set_public_party_name(name: str) -> None:
     return None
 
 
+def set_public_party_queue_enabled(max_size: bool) -> None:
+
+    """(internal)"""
+    return None
+
+
 def set_public_party_stats_url(url: str | None) -> None:
 
     """(internal)"""

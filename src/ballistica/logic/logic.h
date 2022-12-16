@@ -214,6 +214,10 @@ class Logic {
   auto public_party_size() const { return public_party_size_; }
   auto SetPublicPartySize(int count) -> void;
   auto public_party_max_size() const { return public_party_max_size_; }
+  auto SetPublicPartyQueueEnabled(bool enabled) -> void;
+  auto public_party_queue_enabled() const {
+    return public_party_queue_enabled_;
+  }
   auto public_party_max_player_count() const {
     return public_party_max_player_count_;
   }
@@ -322,6 +326,7 @@ class Logic {
   bool public_party_enabled_{};
   int public_party_size_{1};  // Always count ourself (is that what we want?).
   int public_party_max_size_{8};
+  bool public_party_queue_enabled_{true};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
   std::string public_party_name_;

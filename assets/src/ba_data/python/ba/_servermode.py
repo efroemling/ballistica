@@ -418,6 +418,7 @@ class ServerController:
 
         # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_max_size(self._config.max_party_size)
+        _ba.set_public_party_queue_enabled(self._config.enable_queue)
         _ba.set_public_party_name(self._config.party_name)
         _ba.set_public_party_stats_url(self._config.stats_url)
         _ba.set_public_party_enabled(self._config.party_is_public)

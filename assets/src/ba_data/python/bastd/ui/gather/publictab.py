@@ -1094,7 +1094,6 @@ class PublicGatherTab(GatherTab):
 
         self._parties_sorted.sort(
             key=lambda p: (
-                p[1].queue is None,  # Show non-queued last.
                 p[1].ping if p[1].ping is not None else 999999.0,
                 p[1].index,
             )
