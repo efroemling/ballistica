@@ -159,6 +159,24 @@ class WorkspaceFetchResponse(Response):
 
 @ioprepped
 @dataclass
+class MerchAvailabilityMessage(Message):
+    """Can we show merch link?"""
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [MerchAvailabilityResponse]
+
+
+@ioprepped
+@dataclass
+class MerchAvailabilityResponse(Response):
+    """About that merch..."""
+
+    url: Annotated[str | None, IOAttrs('u')]
+
+
+@ioprepped
+@dataclass
 class SignInMessage(Message):
     """Can I sign in please?"""
 

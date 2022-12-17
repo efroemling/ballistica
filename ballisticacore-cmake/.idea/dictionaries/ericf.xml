@@ -459,6 +459,7 @@
       <w>fastldlt</w>
       <w>fastlsolve</w>
       <w>fastltsolve</w>
+      <w>faulthandler</w>
       <w>fbos</w>
       <w>fcntl</w>
       <w>fdata</w>
@@ -800,6 +801,7 @@
       <w>maskuv</w>
       <w>masterver</w>
       <w>mastervers</w>
+      <w>matchlines</w>
       <w>maximus</w>
       <w>maxpathlen</w>
       <w>maxtries</w>
@@ -1507,6 +1509,7 @@
       <w>wakeups</w>
       <w>walisser</w>
       <w>wasdebug</w>
+      <w>wasn</w>
       <w>watte</w>
       <w>wdeprecated</w>
       <w>weakref</w>

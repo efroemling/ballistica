@@ -1,4 +1,4 @@
-### 1.7.16 (build 20966, api 7, 2022-12-15)
+### 1.7.16 (build 20967, api 7, 2022-12-16)
 - Fixed a bug where profile names encased in curly brackets could cause harmless error messages.
 - Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
 - The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.
@@ -6,6 +6,8 @@
 - Added Malay language. Ick; apparently its been sitting done for a while and I hadn't realized it wasn't added to the game yet. Apologies!. And thanks to all contributors!
 - Added 'enable_queue' server config setting. This defaults to True but can be turned off as a workaround for server owners targeted by queue spam attacks.
 - The public party list no longer sorts servers without queues at the end of the list. This sorting was put there long ago to prioritize fancy new queue-supporting servers but now it would just make the few that opt out of queues hard to find. Doh. So opting out of queues is probably not a great idea until this build is widespread.
+- Public uuids now only change once every 6 months or so instead of with every version bump. This way periods of heavy development won't put added strain on server owners trying to keep ban lists up to date and whatnot.
+- Added a merch button in the in-game store that goes to the ballistica.net merch page (though it only shows up in the few countries where merch is available).
 
 ### 1.7.15 (build 20960, api 7, 2022-12-04)
 - The cancel button on the 'Sign in with a Bombsquad Account' popup no longer respond to system cancel buttons (escape key, android back button, etc). Turns out some Android people were pressing back repeatedly to come back from a browser after signing in and immediately canceling their sign in attempts in the game before they completed. Hopefully this will avoid some frustration.

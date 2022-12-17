@@ -221,8 +221,15 @@ auto Platform::GetPublicDeviceUUID() -> std::string {
     // This UUID is supposed to change periodically, so let's plug in
     // some stuff to enforce that.
     inputs.emplace_back(GetOSVersionString());
-    inputs.emplace_back(kAppVersion);
-    inputs.emplace_back("kerploople");
+
+    // This part gets shuffled periodically by my version-increment tools.
+    // We used to plug version in directly here, but that caused uuids to
+    // shuffle too rapidly during periods of rapid development. This
+    // keeps it more constant.
+    // __last_rand_uuid_component_shuffle_date__ 2022 12 17
+    auto rand_uuid_component{"BMCJPHH0SC22KB0WVJ1RAYD68TPEXL58"};
+
+    inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};
     auto pylist{g_python->StringList(inputs)};
     auto args{g_python->SingleMemberTuple(pylist)};

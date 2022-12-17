@@ -30,6 +30,8 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
         return _language.Lstr(
             translate=('characterNames', item_info['character'])
         )
+    if item_name in ['merch']:
+        return _language.Lstr(resource='merchText')
     if item_name in ['upgrades.pro', 'pro']:
         return _language.Lstr(
             resource='store.bombSquadProNameText',
@@ -50,7 +52,7 @@ def get_store_item_display_size(item_name: str) -> tuple[float, float]:
     """(internal)"""
     if item_name.startswith('characters.'):
         return 340 * 0.6, 430 * 0.6
-    if item_name in ['pro', 'upgrades.pro']:
+    if item_name in ['pro', 'upgrades.pro', 'merch']:
         return 650 * 0.9, 500 * 0.85
     if item_name.startswith('maps.'):
         return 510 * 0.6, 450 * 0.6
@@ -96,6 +98,7 @@ def get_store_items() -> dict[str, dict]:
             'characters.taobaomascot': {'character': 'Taobao Mascot'},
             'characters.santa': {'character': 'Santa Claus'},
             'characters.bunny': {'character': 'Easter Bunny'},
+            'merch': {},
             'pro': {},
             'maps.lake_frigid': {'map_type': maps.LakeFrigid},
             'games.ninja_fight': {
@@ -193,9 +196,7 @@ def get_store_items() -> dict[str, dict]:
             'icons.fireball': {'icon': _ba.charstr(SpecialChar.FIREBALL)},
             'icons.mikirog': {'icon': _ba.charstr(SpecialChar.MIKIROG)},
         }
-    store_items = _ba.app.store_items
-    assert store_items is not None
-    return store_items
+    return _ba.app.store_items
 
 
 def get_store_layout() -> dict[str, list[dict[str, Any]]]:
@@ -261,7 +262,6 @@ def get_store_layout() -> dict[str, list[dict[str, Any]]]:
             ],
         }
     store_layout = _ba.app.store_layout
-    assert store_layout is not None
     store_layout['characters'] = [
         {
             'items': [
@@ -302,6 +302,12 @@ def get_store_layout() -> dict[str, list[dict[str, Any]]]:
                 'items': ['games.easter_egg_hunt'],
             }
         )
+
+    # This will cause merch to show only if the master-server has
+    # given us a link (which means merch is available in our region).
+    store_layout['extras'] = [{'items': ['pro']}]
+    if _ba.app.config.get('Merch Link'):
+        store_layout['extras'][0]['items'].append('merch')
     return store_layout
 
 

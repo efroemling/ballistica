@@ -133,6 +133,12 @@ class CloudSubsystem:
 
     @overload
     def send_message(
+        self, msg: bacommon.cloud.MerchAvailabilityMessage
+    ) -> bacommon.cloud.MerchAvailabilityResponse:
+        ...
+
+    @overload
+    def send_message(
         self, msg: bacommon.cloud.TestMessage
     ) -> bacommon.cloud.TestResponse:
         ...

@@ -851,6 +851,7 @@
       <w>fakeshake</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
+      <w>faulthandler</w>
       <w>fback</w>
       <w>fbase</w>
       <w>fclose</w>
@@ -1525,6 +1526,7 @@
       <w>masterhash</w>
       <w>masterver</w>
       <w>mastervers</w>
+      <w>matchlines</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -2857,6 +2859,7 @@
       <w>wanttype</w>
       <w>warntype</w>
       <w>wasdead</w>
+      <w>wasn</w>
       <w>wavenum</w>
       <w>weakref</w>
       <w>weakrefs</w>

@@ -5598,6 +5598,7 @@ TEX2D_DDS_TARGETS = \
   build/ba_data/textures/menuBG.dds \
   build/ba_data/textures/menuButton.dds \
   build/ba_data/textures/menuIcon.dds \
+  build/ba_data/textures/merch.dds \
   build/ba_data/textures/meter.dds \
   build/ba_data/textures/monkeyFaceLevelColor.dds \
   build/ba_data/textures/monkeyFacePreview.dds \
@@ -6003,6 +6004,7 @@ TEX2D_PVR_TARGETS = \
   build/ba_data/textures/menuBG.pvr \
   build/ba_data/textures/menuButton.pvr \
   build/ba_data/textures/menuIcon.pvr \
+  build/ba_data/textures/merch.pvr \
   build/ba_data/textures/meter.pvr \
   build/ba_data/textures/monkeyFaceLevelColor.pvr \
   build/ba_data/textures/monkeyFacePreview.pvr \
@@ -6408,6 +6410,7 @@ TEX2D_KTX_TARGETS = \
   build/ba_data/textures/menuBG.ktx \
   build/ba_data/textures/menuButton.ktx \
   build/ba_data/textures/menuIcon.ktx \
+  build/ba_data/textures/merch.ktx \
   build/ba_data/textures/meter.ktx \
   build/ba_data/textures/monkeyFaceLevelColor.ktx \
   build/ba_data/textures/monkeyFacePreview.ktx \
@@ -6813,6 +6816,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   build/ba_data/textures/menuBG_preview.png \
   build/ba_data/textures/menuButton_preview.png \
   build/ba_data/textures/menuIcon_preview.png \
+  build/ba_data/textures/merch_preview.png \
   build/ba_data/textures/meter_preview.png \
   build/ba_data/textures/monkeyFaceLevelColor_preview.png \
   build/ba_data/textures/monkeyFacePreview_preview.png \
