@@ -39,3 +39,7 @@
 ### Vishal332008
 - Bug Fixer
 - Modder
+
+### Era0S
+- Fixed a single bug
+- Modder
