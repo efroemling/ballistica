@@ -907,7 +907,11 @@ class StoreBrowserWindow(ba.Window):
                             dummy_name
                         )
                         section['v_spacing'] = (
-                            -17 if self._tab == 'characters' else 0
+                            -25
+                            if self._tab == 'extras'
+                            else -17
+                            if self._tab == 'characters'
+                            else 0
                         )
                         if 'title' not in section:
                             section['title'] = ''
@@ -919,7 +923,13 @@ class StoreBrowserWindow(ba.Window):
                             else 0
                         )
                         section['y_offs'] = (
-                            55
+                            20
+                            if (
+                                self._tab == 'extras'
+                                and uiscale is ba.UIScale.SMALL
+                                and ba.app.config.get('Merch Link')
+                            )
+                            else 55
                             if (
                                 self._tab == 'extras'
                                 and uiscale is ba.UIScale.SMALL

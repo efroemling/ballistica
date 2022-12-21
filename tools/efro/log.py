@@ -37,7 +37,27 @@ class LogLevel(Enum):
     ERROR = 3
     CRITICAL = 4
 
+    @property
+    def python_logging_level(self) -> int:
+        """Give the corresponding logging level."""
+        return LOG_LEVEL_LEVELNOS[self]
 
+    @classmethod
+    def from_python_logging_level(cls, levelno: int) -> LogLevel:
+        """Given a Python logging level, return a LogLevel."""
+        return LEVELNO_LOG_LEVELS[levelno]
+
+
+# Python logging levels from LogLevels
+LOG_LEVEL_LEVELNOS = {
+    LogLevel.DEBUG: logging.DEBUG,
+    LogLevel.INFO: logging.INFO,
+    LogLevel.WARNING: logging.WARNING,
+    LogLevel.ERROR: logging.ERROR,
+    LogLevel.CRITICAL: logging.CRITICAL,
+}
+
+# LogLevels from Python logging levels
 LEVELNO_LOG_LEVELS = {
     logging.DEBUG: LogLevel.DEBUG,
     logging.INFO: LogLevel.INFO,

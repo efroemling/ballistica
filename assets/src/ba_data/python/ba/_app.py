@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from bastd.actor import spazappearance
     from ba._accountv2 import AccountV2Subsystem
     from ba._level import Level
+    from ba._apputils import AppHealthMonitor
 
 
 class App:
@@ -50,7 +51,9 @@ class App:
     # Implementations for these will be filled in by internal libs.
     accounts_v2: AccountV2Subsystem
     cloud: CloudSubsystem
+
     log_handler: efro.log.LogHandler
+    health_monitor: AppHealthMonitor
 
     class State(Enum):
         """High level state the app can be in."""
@@ -346,7 +349,6 @@ class App:
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-locals
         from ba import _asyncio
-        from ba import _apputils
         from ba import _appconfig
         from ba import _map
         from ba import _campaign
@@ -354,11 +356,16 @@ class App:
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
         from ba._generated.enums import TimeType
-        from ba._apputils import log_dumped_tracebacks
+        from ba._apputils import (
+            log_dumped_app_state,
+            handle_leftover_v1_cloud_log_file,
+            AppHealthMonitor,
+        )
 
         assert _ba.in_logic_thread()
 
         self._aioloop = _asyncio.setup_asyncio()
+        self.health_monitor = AppHealthMonitor()
 
         cfg = self.config
 
@@ -402,7 +409,7 @@ class App:
 
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.
-        _apputils.handle_leftover_v1_cloud_log_file()
+        handle_leftover_v1_cloud_log_file()
 
         # Only do this stuff if our config file is healthy so we don't
         # overwrite a broken one or whatnot and wipe out data.
@@ -461,7 +468,7 @@ class App:
             )
 
         # If any traceback dumps happened last run, log and clear them.
-        log_dumped_tracebacks()
+        log_dumped_app_state()
 
         self._launch_completed = True
         self._update_state()
@@ -493,6 +500,7 @@ class App:
                 self.cloud.on_app_pause()
                 self.accounts_v1.on_app_pause()
                 self.plugins.on_app_pause()
+                self.health_monitor.on_app_pause()
         else:
             # Leaving paused state:
             if self.state is self.State.PAUSED:
@@ -501,6 +509,7 @@ class App:
                 self.accounts_v1.on_app_resume()
                 self.music.on_app_resume()
                 self.plugins.on_app_resume()
+                self.health_monitor.on_app_resume()
 
             if self._initial_login_completed and self._meta_scan_completed:
                 self.state = self.State.RUNNING

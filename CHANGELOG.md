@@ -1,4 +1,10 @@
-### 1.7.16 (build 20967, api 7, 2022-12-16)
+### 1.7.17 (build 20973, api 7, 2022-12-20)
+- V2 accounts now show a 'Unlink Legacy (V1) Accounts' button in account settings if they have any old v1 links present. This can be used to clear out old links to replace them with V2 links which work correctly with V2 accounts.
+- `ba.internal.dump_tracebacks()` is now `ba.internal.dump_app_state()` and `ba.internal.log_dumped_tracebacks()` is now `ba.internal.log_dumped_app_state()`. This reflects the fact that these calls may be expanded to include other app state in the future (C++ layer thread states, etc.).
+- Added `ba.app.health_monitor` which will dump app state if the logic thread ever stops responding for 5+ seconds while the app is running (to help diagnose deadlock situations).
+- Various extra logging and bug fixes related to V2 accounts and master server communication (trying to get this stuff working as smoothly as possible now that it is feature-complete).
+
+### 1.7.16 (build 20969, api 7, 2022-12-18)
 - Fixed a bug where profile names encased in curly brackets could cause harmless error messages.
 - Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
 - The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.

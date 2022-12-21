@@ -446,7 +446,9 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
       CheckLayout();
 
       // Ignore mouse stuff while transitioning out.
-      if (transitioning_ && transitioning_out_) break;
+      if (transitioning_ && transitioning_out_) {
+        break;
+      }
 
       float x = m.fval1;
       float y = m.fval2;
@@ -505,7 +507,9 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
       CheckLayout();
 
       // Ignore mouse stuff while transitioning.
-      if (transitioning_ && transitioning_out_) break;
+      if (transitioning_ && transitioning_out_) {
+        break;
+      }
 
       float x = m.fval1;
       float y = m.fval2;
@@ -546,7 +550,9 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
       CheckLayout();
 
       // Ignore mouse stuff while transitioning.
-      if (transitioning_ && transitioning_out_) break;
+      if (transitioning_ && transitioning_out_) {
+        break;
+      }
 
       float x = m.fval1;
       float y = m.fval2;
@@ -909,7 +915,9 @@ void ContainerWidget::Draw(RenderPass* pass, bool draw_transparent) {
   }
 
   // Don't draw if we've fully transitioned out.
-  if (transitioning_out_ && !transitioning_) return;
+  if (transitioning_out_ && !transitioning_) {
+    return;
+  }
 
   float l = transition_offset_x_smoothed_ + transition_scale_offset_x_;
   float r = l + width_;

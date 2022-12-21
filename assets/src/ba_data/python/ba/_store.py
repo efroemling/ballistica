@@ -53,7 +53,9 @@ def get_store_item_display_size(item_name: str) -> tuple[float, float]:
     if item_name.startswith('characters.'):
         return 340 * 0.6, 430 * 0.6
     if item_name in ['pro', 'upgrades.pro', 'merch']:
-        return 650 * 0.9, 500 * 0.85
+        return 650 * 0.9, 500 * (
+            0.72 if _ba.app.config.get('Merch Link') else 0.85
+        )
     if item_name.startswith('maps.'):
         return 510 * 0.6, 450 * 0.6
     if item_name.startswith('icons.'):

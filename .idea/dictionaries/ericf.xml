@@ -721,6 +721,7 @@
       <w>dummyret</w>
       <w>dummytoken</w>
       <w>dummyval</w>
+      <w>dumpminlog</w>
       <w>dups</w>
       <w>dval</w>
       <w>dxml</w>
@@ -1376,6 +1377,7 @@
       <w>levelmodule</w>
       <w>levelname</w>
       <w>levelno</w>
+      <w>levelnos</w>
       <w>levelstr</w>
       <w>lfull</w>
       <w>lfval</w>
@@ -1542,6 +1544,7 @@
       <w>mdiv</w>
       <w>mdocs</w>
       <w>mdocslines</w>
+      <w>mdpath</w>
       <w>mdpi</w>
       <w>megalint</w>
       <w>memfunctions</w>
@@ -1569,6 +1572,7 @@
       <w>minigame</w>
       <w>minigames</w>
       <w>miniplayer</w>
+      <w>minlog</w>
       <w>minping</w>
       <w>minusbutton</w>
       <w>minval</w>
@@ -2342,6 +2346,7 @@
       <w>shobs</w>
       <w>shortname</w>
       <w>shouldn</w>
+      <w>showbuffer</w>
       <w>showpoints</w>
       <w>showstats</w>
       <w>showsubseconds</w>
@@ -2869,6 +2874,7 @@
       <w>webpage</w>
       <w>webpages</w>
       <w>weeeird</w>
+      <w>whatarev</w>
       <w>whatevs</w>
       <w>whatisv</w>
       <w>wheee</w>

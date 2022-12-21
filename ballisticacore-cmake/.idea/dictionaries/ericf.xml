@@ -388,6 +388,7 @@
       <w>dummyret</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
+      <w>dumpminlog</w>
       <w>dval</w>
       <w>dxgi</w>
       <w>dynamicdata</w>
@@ -732,6 +733,7 @@
       <w>leaderboards</w>
       <w>lenval</w>
       <w>levelno</w>
+      <w>levelnos</w>
       <w>levelstr</w>
       <w>lgui</w>
       <w>lhalf</w>
@@ -807,6 +809,7 @@
       <w>maxtries</w>
       <w>maxwait</w>
       <w>maxwidth</w>
+      <w>mdpath</w>
       <w>mediump</w>
       <w>memalign</w>
       <w>memchr</w>
@@ -824,6 +827,7 @@
       <w>millisecs</w>
       <w>minelem</w>
       <w>miniplayer</w>
+      <w>minlog</w>
       <w>minping</w>
       <w>minsdl</w>
       <w>mipmapcount</w>
@@ -1245,6 +1249,7 @@
       <w>shhh</w>
       <w>shifthigh</w>
       <w>shouldnt</w>
+      <w>showbuffer</w>
       <w>shufflable</w>
       <w>signsubscale</w>
       <w>sigsetjmp</w>
@@ -1518,6 +1523,7 @@
       <w>weeeird</w>
       <w>welp</w>
       <w>whaaaaaaa</w>
+      <w>whatarev</w>
       <w>whatisv</w>
       <w>wheee</w>
       <w>wheeee</w>
