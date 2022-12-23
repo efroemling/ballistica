@@ -368,6 +368,7 @@ class Python {
     kImplicitSignInCall,
     kImplicitSignOutCall,
     kLoginAdapterGetSignInTokenResponseCall,
+    kOnTooManyFileDescriptorsCall,
     kLast  // Sentinel; must be at end.
   };
 

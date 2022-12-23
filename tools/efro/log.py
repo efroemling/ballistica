@@ -148,7 +148,7 @@ class LogHandler(logging.Handler):
         self._cache_lock = Lock()
         self._printed_callback_error = False
         self._thread_bootstrapped = False
-        self._thread = Thread(target=self._thread_main, daemon=True)
+        self._thread = Thread(target=self._log_thread_main, daemon=True)
         self._thread.start()
 
         # Spin until our thread is up and running; otherwise we could
@@ -165,7 +165,7 @@ class LogHandler(logging.Handler):
         with self._callbacks_lock:
             self._callbacks.append(call)
 
-    def _thread_main(self) -> None:
+    def _log_thread_main(self) -> None:
         self._event_loop = asyncio.new_event_loop()
         # NOTE: if we ever use default threadpool at all we should allow
         # setting it for our loop.

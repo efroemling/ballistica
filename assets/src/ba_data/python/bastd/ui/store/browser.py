@@ -908,7 +908,10 @@ class StoreBrowserWindow(ba.Window):
                         )
                         section['v_spacing'] = (
                             -25
-                            if self._tab == 'extras'
+                            if (
+                                self._tab == 'extras'
+                                and uiscale is ba.UIScale.SMALL
+                            )
                             else -17
                             if self._tab == 'characters'
                             else 0

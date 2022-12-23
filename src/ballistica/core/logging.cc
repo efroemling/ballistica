@@ -70,11 +70,11 @@ auto Logging::V1CloudLog(const std::string& msg) -> void {
     std::scoped_lock lock(g_app->v1_cloud_log_mutex);
     if (!g_app->v1_cloud_log_full) {
       (g_app->v1_cloud_log) += (msg + "\n");
-      if ((g_app->v1_cloud_log).size() > 10000) {
+      if ((g_app->v1_cloud_log).size() > 25000) {
         // Allow some reasonable overflow for last statement.
-        if ((g_app->v1_cloud_log).size() > 100000) {
+        if ((g_app->v1_cloud_log).size() > 250000) {
           // FIXME: This could potentially chop up utf-8 chars.
-          (g_app->v1_cloud_log).resize(100000);
+          (g_app->v1_cloud_log).resize(250000);
         }
         g_app->v1_cloud_log += "\n<max log size reached>\n";
         g_app->v1_cloud_log_full = true;

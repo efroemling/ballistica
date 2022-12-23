@@ -32,6 +32,7 @@ class NetworkReader {
   auto sd6() const { return sd6_; }
 
  private:
+  auto CheckFDThreshold(int val) -> void;
   auto OpenSockets() -> void;
   auto PokeSelf() -> void;
   auto RunThread() -> int;
@@ -53,6 +54,7 @@ class NetworkReader {
   bool paused_{};
   std::mutex paused_mutex_;
   std::condition_variable paused_cv_;
+  bool passed_fd_threshold_{};
 };
 
 }  // namespace ballistica

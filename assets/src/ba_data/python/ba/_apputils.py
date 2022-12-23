@@ -392,12 +392,12 @@ class AppHealthMonitor:
     def __init__(self) -> None:
         assert _ba.in_logic_thread()
         self._running = True
-        self._thread = Thread(target=self._bg_thread_main, daemon=True)
+        self._thread = Thread(target=self._app_monitor_thread_main, daemon=True)
         self._thread.start()
         self._response = False
         self._first_check = True
 
-    def _bg_thread_main(self) -> None:
+    def _app_monitor_thread_main(self) -> None:
 
         try:
             self._monitor_app()
@@ -467,3 +467,60 @@ class AppHealthMonitor:
         """Should be called when the app resumes."""
         assert _ba.in_logic_thread()
         self._running = True
+
+
+def on_too_many_file_descriptors() -> None:
+    """Called when too many file descriptors are open; trying to debug."""
+    from ba._generated.enums import TimeType
+
+    real_time = _ba.time(TimeType.REAL)
+
+    def _do_log() -> None:
+        import subprocess
+
+        pid = os.getpid()
+        out = f'TOO MANY FDS at {real_time}.\nWe are pid {pid}\n'
+
+        out += (
+            'FD Count: '
+            + subprocess.run(
+                f'ls -l /proc/{pid}/fd | wc -l',
+                shell=True,
+                check=False,
+                capture_output=True,
+            ).stdout.decode()
+            + '\n'
+        )
+
+        out += (
+            'lsof output:\n'
+            + subprocess.run(
+                f'lsof -p {pid}',
+                shell=True,
+                check=False,
+                capture_output=True,
+            ).stdout.decode()
+            + '\n'
+        )
+
+        logging.warning(out)
+
+    Thread(target=_do_log, daemon=True).start()
+
+    # import io
+    # from efro.debug import printtypes
+
+    # with io.StringIO() as fstr:
+    #     fstr.write('Too many FDs.\n')
+    #     printtypes(file=fstr)
+    #     fstr.seek(0)
+    #     logging.warning(fstr.read())
+    # import socket
+
+    # objs: list[Any] = []
+    # for obj in gc.get_objects():
+    #     if isinstance(obj, socket.socket):
+    #         objs.append(obj)
+    # test = open('/Users/ericf/.zshrc', 'r', encoding='utf-8')
+    # reveal_type(test)
+    # print('FOUND', len(objs))
