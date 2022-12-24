@@ -146,4 +146,5 @@ def get_binding_values() -> tuple[Any, ...]:
         _hooks.implicit_sign_in,  # kImplicitSignInCall
         _hooks.implicit_sign_out,  # kImplicitSignOutCall
         _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
+        _apputils.on_too_many_file_descriptors,  # kOnTooManyFileDescriptorsCall
     )  # yapf: disable
