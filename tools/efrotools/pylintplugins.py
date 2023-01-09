@@ -45,6 +45,10 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
         and isinstance(if_node.parent, astroid.Module)
     ):
 
+        # Special case: filelock contains a use-case that breaks us.
+        if if_node.parent.name == 'filelock':
+            return if_node
+
         module_node = if_node.parent
 
         # Remove any locals getting defined under this if statement.
@@ -177,7 +181,7 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
         # Future behavior:
         # Annotated assigns under functions are not evaluated.
         # Class and module vars are normally not either. However we
-        # do evaluate if we come across an 'ioprepped' dataclass
+        # *do* evaluate if we come across an 'ioprepped' dataclass
         # decorator. (the 'ioprepped' decorator explicitly evaluates
         # dataclass annotations).
 
@@ -230,7 +234,8 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
                 break
             fnode = fnode.parent
 
-    # If this annotation won't be eval'ed, replace it with a dummy string.
+    # If this annotation won't be eval'ed, replace its annotation with
+    # a dummy value.
     if not willeval:
         dummyval = astroid.Const(parent=node, value='dummyval')
         node.annotation = dummyval

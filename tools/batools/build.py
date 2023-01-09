@@ -40,22 +40,22 @@ class PyRequirement:
 # as manually-installed bits, pip itself must have some way to allow for
 # that, right?...
 PY_REQUIREMENTS = [
-    PyRequirement(modulename='pylint', minversion=[2, 14, 5]),
-    PyRequirement(modulename='mypy', minversion=[0, 971]),
+    PyRequirement(modulename='pylint', minversion=[2, 15, 9]),
+    PyRequirement(modulename='mypy', minversion=[0, 991]),
     PyRequirement(modulename='cpplint', minversion=[1, 6, 1]),
-    PyRequirement(modulename='pytest', minversion=[7, 1, 2]),
+    PyRequirement(modulename='pytest', minversion=[7, 2, 0]),
     PyRequirement(modulename='pytz'),
     PyRequirement(modulename='ansiwrap'),
     PyRequirement(modulename='yaml', pipname='PyYAML'),
     PyRequirement(modulename='requests'),
     PyRequirement(modulename='pdoc'),
-    PyRequirement(pipname='black', minversion=[22, 10, 0]),
-    PyRequirement(pipname='typing_extensions', minversion=[4, 3, 0]),
+    PyRequirement(pipname='black', minversion=[22, 12, 0]),
+    PyRequirement(pipname='typing_extensions', minversion=[4, 4, 0]),
     PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PyRequirement(pipname='types-requests', minversion=[2, 28, 9]),
+    PyRequirement(pipname='types-requests', minversion=[2, 28, 11, 7]),
     PyRequirement(pipname='types-pytz', minversion=[2022, 2, 1, 0]),
-    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 11]),
-    PyRequirement(pipname='certifi', minversion=[2022, 6, 15]),
+    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 2]),
+    PyRequirement(pipname='certifi', minversion=[2022, 12, 7]),
     PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
 ]
 
