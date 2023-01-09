@@ -1155,7 +1155,6 @@ class StoreBrowserWindow(ba.Window):
                             # Wire this button to the equivalent in the
                             # previous row.
                             if prev_row_buttons is not None:
-                                # pylint: disable=unsubscriptable-object
                                 if len(prev_row_buttons) > col:
                                     ba.widget(
                                         edit=btn,
