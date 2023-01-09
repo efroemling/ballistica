@@ -88,12 +88,12 @@ class Spaz(ba.Actor):
 
         self.play_big_death_sound = False
 
-        # scales how much impacts affect us (most damage calcs)
+        # Scales how much impacts affect us (most damage calcs).
         self.impact_scale = 1.0
 
         self.source_player = source_player
         self._dead = False
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.2
         else:
             self._punch_power_scale = factory.punch_power_scale
@@ -376,7 +376,7 @@ class Spaz(ba.Actor):
         Called to 'press jump' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if not self.node or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
