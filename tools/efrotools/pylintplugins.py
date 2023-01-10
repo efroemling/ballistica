@@ -45,8 +45,17 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
         and isinstance(if_node.parent, astroid.Module)
     ):
 
-        # Special case: filelock contains a use-case that breaks us.
-        if if_node.parent.name == 'filelock':
+        # Special case: some third party modules are starting to contain
+        # code that we don't handle cleanly which results in pylint runs
+        # breaking. For now just ignoring them as they pop up.
+        # We should try to figure out how to disable this filtering
+        # for third party modules altogether or make our filtering more
+        # robust.
+        if if_node.parent.name in {
+            'filelock',
+            'aiohttp.web_app',
+            'aiohttp.web_response',
+        }:
             return if_node
 
         module_node = if_node.parent

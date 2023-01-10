@@ -192,20 +192,15 @@ class LogHandler(logging.Handler):
             now = utc_now()
             with self._cache_lock:
 
-                # Quick out: if oldest cache entry is still valid,
-                # don't touch anything.
-                if (
+                # Prune the oldest entry as long as there is a first one that
+                # is too old.
+                while (
                     self._cache
-                    and (now - self._cache[0][1].time) < self._cache_time_limit
+                    and (now - self._cache[0][1].time) >= self._cache_time_limit
                 ):
-                    continue
-
-                # Ok; full prune.
-                self._cache = [
-                    e
-                    for e in self._cache
-                    if (now - e[1].time) < self._cache_time_limit
-                ]
+                    popped = self._cache.pop(0)
+                    self._cache_size -= popped[0]
+                    self._cache_index_offset += 1
 
     def get_cached(
         self, start_index: int = 0, max_entries: int | None = None
