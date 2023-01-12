@@ -355,6 +355,7 @@ class MessageReceiver:
         """
         assert self.is_async, "can't call async handler on sync receiver"
         msg_decoded: Message | None = None
+        msgtype: type[Message] | None = None
         try:
             msg_decoded = await self._decode_incoming_message_async(
                 bound_obj, msg
@@ -376,7 +377,14 @@ class MessageReceiver:
                 bound_obj, msg_decoded, exc
             )
             if dolog:
-                logging.exception('Error in efro.message handling.')
+                if msgtype is not None:
+                    logging.exception(
+                        'Error handling %s.%s message.',
+                        msgtype.__module__,
+                        msgtype.__qualname__,
+                    )
+                else:
+                    logging.exception('Error in efro.message handling.')
             return rstr
 
 

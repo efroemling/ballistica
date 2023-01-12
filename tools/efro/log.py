@@ -149,6 +149,8 @@ class LogHandler(logging.Handler):
         self._printed_callback_error = False
         self._thread_bootstrapped = False
         self._thread = Thread(target=self._log_thread_main, daemon=True)
+        if __debug__:
+            self._last_slow_emit_warning_time: float | None = None
         self._thread.start()
 
         # Spin until our thread is up and running; otherwise we could
@@ -238,6 +240,9 @@ class LogHandler(logging.Handler):
             )
 
     def emit(self, record: logging.LogRecord) -> None:
+        if __debug__:
+            starttime = time.monotonic()
+
         # Called by logging to send us records.
         # We simply package them up and ship them to our thread.
         # UPDATE: turns out we CAN get log messages from this thread
@@ -281,6 +286,31 @@ class LogHandler(logging.Handler):
                 msg,
             )
         )
+
+        if __debug__:
+            # Make noise if we're taking a significant amount of time here.
+            # Limit the noise to once every so often though; otherwise we
+            # could get a feedback loop where every log emit results in a
+            # warning log which results in another, etc.
+            now = time.monotonic()
+            # noinspection PyUnboundLocalVariable
+            duration = now - starttime
+            if duration > 0.05 and (
+                self._last_slow_emit_warning_time is None
+                or now > self._last_slow_emit_warning_time + 10.0
+            ):
+                # Logging calls from *within* a logging handler
+                # sounds sketchy, so let's just kick this over to
+                # the bg event loop thread we've already got.
+                self._last_slow_emit_warning_time = now
+                self._event_loop.call_soon_threadsafe(
+                    tpartial(
+                        logging.warning,
+                        'efro.log.LogHandler emit took too long'
+                        ' (%.2f seconds).',
+                        duration,
+                    )
+                )
 
     def _emit_in_thread(
         self, name: str, levelno: int, created: float, message: str

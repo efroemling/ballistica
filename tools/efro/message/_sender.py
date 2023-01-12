@@ -44,6 +44,9 @@ class MessageSender:
         self._send_async_raw_message_call: Callable[
             [Any, str], Awaitable[str]
         ] | None = None
+        self._send_async_raw_message_ex_call: Callable[
+            [Any, str, Message], Awaitable[str]
+        ] | None = None
         self._encode_filter_call: Callable[
             [Any, Message, dict], None
         ] | None = None
@@ -78,6 +81,18 @@ class MessageSender:
         """
         assert self._send_async_raw_message_call is None
         self._send_async_raw_message_call = call
+        return call
+
+    def send_async_ex_method(
+        self, call: Callable[[Any, str, Message], Awaitable[str]]
+    ) -> Callable[[Any, str, Message], Awaitable[str]]:
+        """Function decorator for extended send-async method.
+
+        This version of the method also is passed the original unencoded
+        message.
+        """
+        assert self._send_async_raw_message_ex_call is None
+        self._send_async_raw_message_ex_call = call
         return call
 
     def encode_filter_method(
@@ -184,14 +199,23 @@ class MessageSender:
         to happen in different contexts/threads.
         """
 
-        if self._send_async_raw_message_call is None:
+        if (
+            self._send_async_raw_message_call is None
+            and self._send_async_raw_message_ex_call is None
+        ):
             raise RuntimeError('send_async() is unimplemented for this type.')
 
         msg_encoded = self._encode_message(bound_obj, message)
         try:
-            response_encoded = await self._send_async_raw_message_call(
-                bound_obj, msg_encoded
-            )
+            if self._send_async_raw_message_ex_call is not None:
+                response_encoded = await self._send_async_raw_message_ex_call(
+                    bound_obj, msg_encoded, message
+                )
+            else:
+                assert self._send_async_raw_message_call is not None
+                response_encoded = await self._send_async_raw_message_call(
+                    bound_obj, msg_encoded
+                )
         except Exception as exc:
             response = ErrorSysResponse(
                 error_message='Error in MessageSender @send_async_method.',
