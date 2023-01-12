@@ -1,3 +1,5 @@
+### 1.7.18 (build 20984, api 7, 2023-01-12)
+
 ### 1.7.17 (build 20983, api 7, 2023-01-09)
 - V2 accounts now show a 'Unlink Legacy (V1) Accounts' button in account settings if they have any old V1 links present. This can be used to clear out old links to replace them with V2 links which work correctly with V2 accounts.
 - `ba.internal.dump_tracebacks()` is now `ba.internal.dump_app_state()` and `ba.internal.log_dumped_tracebacks()` is now `ba.internal.log_dumped_app_state()`. This reflects the fact that these calls may be expanded to include other app state in the future (C++ layer thread states, etc.).
