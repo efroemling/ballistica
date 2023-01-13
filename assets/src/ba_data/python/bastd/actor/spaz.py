@@ -262,7 +262,7 @@ class Spaz(ba.Actor):
     def _turbo_filter_add_press(self, source: str) -> None:
         """
         Can pass all button presses through here; if we see an obscene number
-        of them in a short time let's shame/pushish this guy for using turbo
+        of them in a short time let's shame/pushish this guy for using turbo.
         """
         t_ms = ba.time(
             timetype=ba.TimeType.BASE, timeformat=ba.TimeFormat.MILLISECONDS
@@ -399,7 +399,7 @@ class Spaz(ba.Actor):
         Called to 'press pick-up' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if not self.node or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(t_ms, int)
