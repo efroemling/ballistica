@@ -72,6 +72,7 @@
       <w>appconfig</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>apptime</w>
@@ -395,6 +396,7 @@
       <w>dynamicdata</w>
       <w>echidna</w>
       <w>echofile</w>
+      <w>echotime</w>
       <w>edef</w>
       <w>effmult</w>
       <w>efro</w>

@@ -115,6 +115,7 @@
       <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
@@ -731,6 +732,7 @@
       <w>eaddrnotavail</w>
       <w>easteregghunt</w>
       <w>echofile</w>
+      <w>echotime</w>
       <w>edcc</w>
       <w>editcontroller</w>
       <w>editgame</w>

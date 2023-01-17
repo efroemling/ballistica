@@ -1,4 +1,6 @@
-### 1.7.18 (build 20991, api 7, 2023-01-17)
+### 1.7.19 (build 20993, api 7, 2023-01-17)
+
+### 1.7.18 (build 20989, api 7, 2023-01-16)
 - Reworked some low level asynchronous messaging functionality in efro.message and efro.rpc. Previously these were a little *too* asynchronous which could lead to messages being received in a different order than they were sent, which is not desirable.
 - Added a way to suppress 'Your build is outdated' messages at launch (see `ba._hooks.show_client_too_old_error()`).
 
