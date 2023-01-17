@@ -185,6 +185,7 @@
       <w>availplug</w>
       <w>aval</w>
       <w>awaitable</w>
+      <w>awaitables</w>
       <w>axismotion</w>
       <w>bacfg</w>
       <w>backgrounded</w>
@@ -863,6 +864,7 @@
       <w>fcontents</w>
       <w>fcount</w>
       <w>fdata</w>
+      <w>fdcount</w>
       <w>fdesc</w>
       <w>fdict</w>
       <w>fdout</w>
@@ -1276,6 +1278,7 @@
       <w>iprof</w>
       <w>isatty</w>
       <w>iscale</w>
+      <w>iscoroutinefunction</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>ispunch</w>

@@ -476,34 +476,17 @@ def on_too_many_file_descriptors() -> None:
     real_time = _ba.time(TimeType.REAL)
 
     def _do_log() -> None:
-        import subprocess
-
         pid = os.getpid()
-        out = f'TOO MANY FDS at {real_time}.\nWe are pid {pid}\n'
-
-        out += (
-            'FD Count: '
-            + subprocess.run(
-                f'ls -l /proc/{pid}/fd | wc -l',
-                shell=True,
-                check=False,
-                capture_output=True,
-            ).stdout.decode()
-            + '\n'
+        try:
+            fdcount: int | str = len(os.listdir(f'/proc/{pid}/fd'))
+        except Exception as exc:
+            fdcount = f'? ({exc})'
+        logging.warning(
+            'TOO MANY FDS at %.2f. We are pid %d. FDCount is %s.',
+            real_time,
+            pid,
+            fdcount,
         )
-
-        out += (
-            'lsof output:\n'
-            + subprocess.run(
-                f'lsof -p {pid}',
-                shell=True,
-                check=False,
-                capture_output=True,
-            ).stdout.decode()
-            + '\n'
-        )
-
-        logging.warning(out)
 
     Thread(target=_do_log, daemon=True).start()
 

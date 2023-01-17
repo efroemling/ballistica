@@ -266,6 +266,9 @@ class LogHandler(logging.Handler):
         # didn't expect to be stringified.
         msg = self.format(record)
 
+        if __debug__:
+            formattime = time.monotonic()
+
         # Also immediately print pretty colored output to our echo file
         # (generally stderr). We do this part here instead of in our bg
         # thread because the delay can throw off command line prompts or
@@ -276,6 +279,9 @@ class LogHandler(logging.Handler):
                 self._echofile.write(f'{ends[0]}{msg}{ends[1]}\n')
             else:
                 self._echofile.write(f'{msg}\n')
+
+        if __debug__:
+            echotime = time.monotonic()
 
         self._event_loop.call_soon_threadsafe(
             tpartial(
@@ -295,6 +301,10 @@ class LogHandler(logging.Handler):
             now = time.monotonic()
             # noinspection PyUnboundLocalVariable
             duration = now - starttime
+            # noinspection PyUnboundLocalVariable
+            format_duration = formattime - starttime
+            # noinspection PyUnboundLocalVariable
+            echo_duration = echotime - formattime
             if duration > 0.05 and (
                 self._last_slow_emit_warning_time is None
                 or now > self._last_slow_emit_warning_time + 10.0
@@ -307,8 +317,10 @@ class LogHandler(logging.Handler):
                     tpartial(
                         logging.warning,
                         'efro.log.LogHandler emit took too long'
-                        ' (%.2f seconds).',
+                        ' (%.2fs total; %.2fs format, %.2fs echo).',
                         duration,
+                        format_duration,
+                        echo_duration,
                     )
                 )
 

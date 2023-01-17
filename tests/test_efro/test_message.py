@@ -198,9 +198,9 @@ class _BoundTestMessageSenderAsync(BoundMessageSender):
     async def send_async(self, message: _TMsg3) -> None:
         ...
 
-    async def send_async(self, message: Message) -> Response | None:
+    def send_async(self, message: Message) -> Awaitable[Response | None]:
         """Send a message asynchronously."""
-        return await self._sender.send_async(self._obj, message)
+        return self._sender.send_async(self._obj, message)
 
 
 # SEND_ASYNC_CODE_TEST_END
@@ -261,9 +261,9 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
     async def send_async(self, message: _TMsg4) -> None:
         ...
 
-    async def send_async(self, message: Message) -> Response | None:
+    def send_async(self, message: Message) -> Awaitable[Response | None]:
         """Send a message asynchronously."""
-        return await self._sender.send_async(self._obj, message)
+        return self._sender.send_async(self._obj, message)
 
 
 # SEND_BOTH_CODE_TEST_END
@@ -424,11 +424,11 @@ class _TestAsyncMessageReceiver(MessageReceiver):
 class _BoundTestAsyncMessageReceiver(BoundMessageReceiver):
     """Protocol-specific bound receiver."""
 
-    async def handle_raw_message(
+    def handle_raw_message(
         self, message: str, raise_unregistered: bool = False
-    ) -> str:
+    ) -> Awaitable[str]:
         """Asynchronously handle a raw incoming message."""
-        return await self._receiver.handle_raw_message_async(
+        return self._receiver.handle_raw_message_async(
             self._obj, message, raise_unregistered
         )
 

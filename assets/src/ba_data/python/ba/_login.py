@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import time
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
@@ -56,6 +57,9 @@ class LoginAdapter:
         # Which login of our type (if any) is associated with the
         # current active primary account.
         self._active_login_id: str | None = None
+
+        self._last_sign_in_time: float | None = None
+        self._last_sign_in_desc: str | None = None
 
     def on_app_launch(self) -> None:
         """Should be called for each adapter in on_app_launch."""
@@ -142,6 +146,7 @@ class LoginAdapter:
     def sign_in(
         self,
         result_cb: Callable[[LoginAdapter, SignInResult | Exception], None],
+        description: str,
     ) -> None:
         """Attempt an explicit sign in via this adapter.
 
@@ -151,6 +156,38 @@ class LoginAdapter:
         """
         assert _ba.in_logic_thread()
         from ba._general import Call
+        from ba._generated.enums import TimeType
+
+        # Have been seeing multiple sign-in attempts come through
+        # nearly simultaneously which can be problematic server-side.
+        # Let's error if a sign-in attempt is made within a few seconds
+        # of the last one to address this.
+        now = time.monotonic()
+        appnow = _ba.time(TimeType.REAL)
+        if self._last_sign_in_time is not None:
+            since_last = now - self._last_sign_in_time
+            if since_last < 1.0:
+                logging.warning(
+                    'LoginAdapter: %s adapter sign_in() called too soon'
+                    ' (%.2fs) after last; this-desc="%s", last-desc="%s",'
+                    ' ba-real-time=%.2f.',
+                    self.login_type.name,
+                    since_last,
+                    description,
+                    self._last_sign_in_desc,
+                    appnow,
+                )
+                _ba.pushcall(
+                    Call(
+                        result_cb,
+                        self,
+                        RuntimeError('sign_in called too soon after last.'),
+                    )
+                )
+                return
+
+        self._last_sign_in_desc = description
+        self._last_sign_in_time = now
 
         if DEBUG_LOG:
             logging.debug(
@@ -223,7 +260,12 @@ class LoginAdapter:
                     _ba.pushcall(Call(result_cb, self, result2))
 
             _ba.app.cloud.send_message_cb(
-                bacommon.cloud.SignInMessage(self.login_type, result),
+                bacommon.cloud.SignInMessage(
+                    self.login_type,
+                    result,
+                    description=description,
+                    apptime=appnow,
+                ),
                 on_response=_got_sign_in_response,
             )
 

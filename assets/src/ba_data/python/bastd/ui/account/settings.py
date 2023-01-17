@@ -1403,7 +1403,8 @@ class AccountSettingsWindow(ba.Window):
         if adapter is not None:
             self._signing_in_adapter = adapter
             adapter.sign_in(
-                result_cb=ba.WeakCall(self._on_adapter_sign_in_result)
+                result_cb=ba.WeakCall(self._on_adapter_sign_in_result),
+                description='account settings button',
             )
             # Will get 'Signing in...' to show.
             self._needs_refresh = True

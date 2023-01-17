@@ -1,4 +1,6 @@
-### 1.7.18 (build 20984, api 7, 2023-01-12)
+### 1.7.18 (build 20991, api 7, 2023-01-17)
+- Reworked some low level asynchronous messaging functionality in efro.message and efro.rpc. Previously these were a little *too* asynchronous which could lead to messages being received in a different order than they were sent, which is not desirable.
+- Added a way to suppress 'Your build is outdated' messages at launch (see `ba._hooks.show_client_too_old_error()`).
 
 ### 1.7.17 (build 20983, api 7, 2023-01-09)
 - V2 accounts now show a 'Unlink Legacy (V1) Accounts' button in account settings if they have any old V1 links present. This can be used to clear out old links to replace them with V2 links which work correctly with V2 accounts.

@@ -282,10 +282,13 @@ class MessageProtocol:
     def _get_module_header(
         self,
         part: Literal['sender', 'receiver'],
-        extra_import_code: str | None = None,
+        extra_import_code: str | None,
+        enable_async_sends: bool,
     ) -> str:
         """Return common parts of generated modules."""
-        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         import textwrap
 
         tpimports: dict[str, list[str]] = {}
@@ -342,7 +345,7 @@ class MessageProtocol:
 
         if part == 'sender':
             import_lines += (
-                'from efro.message import MessageSender,' ' BoundMessageSender'
+                'from efro.message import MessageSender, BoundMessageSender'
             )
             tpimport_typing_extras = ''
         else:
@@ -362,11 +365,18 @@ class MessageProtocol:
             import_lines += f'\n{extra_import_code}\n'
 
         ovld = ', overload' if not single_message_type else ''
+        ovld2 = (
+            ', cast, Awaitable'
+            if (single_message_type and part == 'sender' and enable_async_sends)
+            else ''
+        )
         tpimport_lines = textwrap.indent(tpimport_lines, '    ')
 
         baseimps = ['Any']
         if part == 'receiver':
             baseimps.append('Callable')
+        if part == 'sender' and enable_async_sends:
+            baseimps.append('Awaitable')
         baseimps_s = ', '.join(baseimps)
         out = (
             '# Released under the MIT License. See LICENSE for details.\n'
@@ -375,7 +385,7 @@ class MessageProtocol:
             f'\n'
             f'from __future__ import annotations\n'
             f'\n'
-            f'from typing import TYPE_CHECKING{ovld}\n'
+            f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'
             f'{import_lines}\n'
             f'\n'
@@ -399,13 +409,16 @@ class MessageProtocol:
     ) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
         import textwrap
 
         msgtypes = list(self.message_ids_by_type.keys())
 
         ppre = '_' if private else ''
         out = self._get_module_header(
-            'sender', extra_import_code=protocol_module_level_import_code
+            'sender',
+            extra_import_code=protocol_module_level_import_code,
+            enable_async_sends=enable_async_sends,
         )
         ccind = textwrap.indent(protocol_create_code, '        ')
         out += (
@@ -438,7 +451,8 @@ class MessageProtocol:
                     continue
                 pfx = 'async ' if async_pass else ''
                 sfx = '_async' if async_pass else ''
-                awt = 'await ' if async_pass else ''
+                # awt = 'await ' if async_pass else ''
+                awt = ''
                 how = 'asynchronously' if async_pass else 'synchronously'
 
                 if len(msgtypes) == 1:
@@ -451,22 +465,29 @@ class MessageProtocol:
                         rtypevar = ' | '.join(_filt_tp_name(t) for t in rtypes)
                     else:
                         rtypevar = _filt_tp_name(rtypes[0])
+                    if async_pass:
+                        rtypevar = f'Awaitable[{rtypevar}]'
                     out += (
                         f'\n'
-                        f'    {pfx}def send{sfx}(self,'
+                        f'    def send{sfx}(self,'
                         f' message: {msgtypevar})'
                         f' -> {rtypevar}:\n'
                         f'        """Send a message {how}."""\n'
                         f'        out = {awt}self._sender.'
                         f'send{sfx}(self._obj, message)\n'
-                        f'        assert isinstance(out, {rtypevar})\n'
-                        f'        return out\n'
                     )
+                    if not async_pass:
+                        out += (
+                            f'        assert isinstance(out, {rtypevar})\n'
+                            '        return out\n'
+                        )
+                    else:
+                        out += f'        return cast({rtypevar}, out)\n'
+
                 else:
 
                     for msgtype in msgtypes:
                         msgtypevar = msgtype.__name__
-                        # rtypes = msgtype.get_response_types()
                         rtypes = msgtype.get_response_types()
                         if len(rtypes) > 1:
                             rtypevar = ' | '.join(
@@ -482,10 +503,13 @@ class MessageProtocol:
                             f' -> {rtypevar}:\n'
                             f'        ...\n'
                         )
+                    rtypevar = 'Response | None'
+                    if async_pass:
+                        rtypevar = f'Awaitable[{rtypevar}]'
                     out += (
                         f'\n'
-                        f'    {pfx}def send{sfx}(self, message: Message)'
-                        f' -> Response | None:\n'
+                        f'    def send{sfx}(self, message: Message)'
+                        f' -> {rtypevar}:\n'
                         f'        """Send a message {how}."""\n'
                         f'        return {awt}self._sender.'
                         f'send{sfx}(self._obj, message)\n'
@@ -509,7 +533,9 @@ class MessageProtocol:
         ppre = '_' if private else ''
         msgtypes = list(self.message_ids_by_type.keys())
         out = self._get_module_header(
-            'receiver', extra_import_code=protocol_module_level_import_code
+            'receiver',
+            extra_import_code=protocol_module_level_import_code,
+            enable_async_sends=False,
         )
         ccind = textwrap.indent(protocol_create_code, '        ')
         out += (
@@ -602,11 +628,11 @@ class MessageProtocol:
         if is_async:
             out += (
                 '\n'
-                '    async def handle_raw_message(\n'
+                '    def handle_raw_message(\n'
                 '        self, message: str, raise_unregistered: bool = False\n'
-                '    ) -> str:\n'
+                '    ) -> Awaitable[str]:\n'
                 '        """Asynchronously handle a raw incoming message."""\n'
-                '        return await self._receiver.'
+                '        return self._receiver.'
                 'handle_raw_message_async(\n'
                 '            self._obj, message, raise_unregistered\n'
                 '        )\n'

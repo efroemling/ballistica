@@ -323,12 +323,12 @@ class RPCEndpoint:
         if self.debug_print:
             self.debug_print_call(f'{self._label}: finished.')
 
-    async def send_message(
+    def send_message(
         self,
         message: bytes,
         timeout: float | None = None,
         close_on_error: bool = True,
-    ) -> bytes:
+    ) -> Awaitable[bytes]:
         """Send a message to the peer and return a response.
 
         If timeout is not provided, the default will be used.
@@ -340,7 +340,10 @@ class RPCEndpoint:
         respect to a given endpoint. Pass close_on_error=False to
         override this for a particular message.
         """
-        # pylint: disable=too-many-branches
+        # Note: This call is synchronous so that the first part of it
+        # (enqueueing outgoing messages) happens synchronously. If it were
+        # a pure async call it could be possible for send order to vary
+        # based on how the async tasks get processed.
 
         if self.debug_print_io:
             self.debug_print_call(
@@ -357,16 +360,6 @@ class RPCEndpoint:
             self.debug_print_call(
                 f'{self._label}: have peerinfo? {self._peer_info is not None}.'
             )
-
-        # We need to know their protocol, so if we haven't gotten a handshake
-        # from them yet, just wait.
-        while self._peer_info is None:
-            await asyncio.sleep(0.01)
-        assert self._peer_info is not None
-
-        if self._peer_info.protocol == 1:
-            if len(message) > 65535:
-                raise RuntimeError('Message cannot be larger than 65535 bytes')
 
         # message_id is a 16 bit looping value.
         message_id = self._next_message_id
@@ -420,8 +413,35 @@ class RPCEndpoint:
         if timeout is None:
             timeout = self.DEFAULT_MESSAGE_TIMEOUT
         assert timeout is not None
+
+        bytes_awaitable = msgobj.wait_task
+
+        # Now complete the send asynchronously.
+        return self._send_message(
+            message, timeout, close_on_error, bytes_awaitable, message_id
+        )
+
+    async def _send_message(
+        self,
+        message: bytes,
+        timeout: float | None,
+        close_on_error: bool,
+        bytes_awaitable: asyncio.Task[bytes],
+        message_id: int,
+    ) -> bytes:
+
+        # We need to know their protocol, so if we haven't gotten a handshake
+        # from them yet, just wait.
+        while self._peer_info is None:
+            await asyncio.sleep(0.01)
+        assert self._peer_info is not None
+
+        if self._peer_info.protocol == 1:
+            if len(message) > 65535:
+                raise RuntimeError('Message cannot be larger than 65535 bytes')
+
         try:
-            return await asyncio.wait_for(msgobj.wait_task, timeout=timeout)
+            return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
             # Question: we assume this means the above wait_for() was
             # cancelled; how do we distinguish between this and *us* being
@@ -449,7 +469,7 @@ class RPCEndpoint:
                     )
 
                 # Stop waiting on the response.
-                msgobj.wait_task.cancel()
+                bytes_awaitable.cancel()
 
                 # Remove the record of this message.
                 del self._in_flight_messages[message_id]

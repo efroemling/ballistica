@@ -36,7 +36,7 @@ class AccountV2Subsystem:
         # (or lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
         # into 'running' state.
-        self._initial_login_completed = False
+        self._initial_sign_in_completed = False
 
         self._kicked_off_workspace_load = False
 
@@ -98,7 +98,7 @@ class AccountV2Subsystem:
         if account.workspaceid is not None:
             assert account.workspacename is not None
             if (
-                not self._initial_login_completed
+                not self._initial_sign_in_completed
                 and not self._kicked_off_workspace_load
             ):
                 self._kicked_off_workspace_load = True
@@ -121,9 +121,9 @@ class AccountV2Subsystem:
             return
 
         # Ok; no workspace to worry about; carry on.
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
         """Should be called when logins for the active account change."""
@@ -156,9 +156,9 @@ class AccountV2Subsystem:
         within a few seconds of app launch; the app can move forward
         with the startup sequence at that point.
         """
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
 
     @staticmethod
     def _hashstr(val: str) -> str:
@@ -271,7 +271,7 @@ class AccountV2Subsystem:
                 self._implicit_state_changed = False
 
                 # Once we've made a move here we don't want to
-                # do any more automatic ones.
+                # do any more automatic stuff.
                 self._can_do_auto_sign_in = False
 
             else:
@@ -290,22 +290,23 @@ class AccountV2Subsystem:
                             ' of implicit state change...',
                         )
                     self._implicit_signed_in_adapter.sign_in(
-                        self._on_explicit_sign_in_completed
+                        self._on_explicit_sign_in_completed,
+                        description='implicit state change',
                     )
                     self._implicit_state_changed = False
 
                     # Once we've made a move here we don't want to
-                    # do any more automatic ones.
+                    # do any more automatic stuff.
                     self._can_do_auto_sign_in = False
 
         if not self._can_do_auto_sign_in:
             return
 
         # If we're not currently signed in, we have connectivity, and
-        # we have an available implicit login, auto-sign-in with it.
+        # we have an available implicit login, auto-sign-in with it once.
         # The implicit-state-change logic above should keep things
-        # mostly in-sync, but due to connectivity or other issues that
-        # might not always be the case. We prefer to keep people signed
+        # mostly in-sync, but that might not always be the case due to
+        # connectivity or other issues. We prefer to keep people signed
         # in as a rule, even if there are corner cases where this might
         # not be what they want (A user signing out and then restarting
         # may be auto-signed back in).
@@ -324,7 +325,7 @@ class AccountV2Subsystem:
                 )
             self._can_do_auto_sign_in = False  # Only ATTEMPT once
             self._implicit_signed_in_adapter.sign_in(
-                self._on_implicit_sign_in_completed
+                self._on_implicit_sign_in_completed, description='auto-sign-in'
             )
 
     def _on_explicit_sign_in_completed(
@@ -337,8 +338,8 @@ class AccountV2Subsystem:
 
         del adapter  # Unused.
 
-        # Make some noise on errors since the user knows
-        # a sign-in attempt is happening in this case.
+        # Make some noise on errors since the user knows a
+        # sign-in attempt is happening in this case (the 'explicit' part).
         if isinstance(result, Exception):
             # We expect the occasional communication errors;
             # Log a full exception for anything else though.
@@ -347,6 +348,8 @@ class AccountV2Subsystem:
                     'Error on explicit accountv2 sign in attempt.',
                     exc_info=result,
                 )
+
+            # For now just show 'error'. Should do better than this.
             with _ba.Context('ui'):
                 _ba.screenmessage(
                     Lstr(resource='internal.signInErrorText'),
@@ -395,9 +398,9 @@ class AccountV2Subsystem:
             _ba.app.accounts_v2.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
 
 
 class AccountV2Handle:

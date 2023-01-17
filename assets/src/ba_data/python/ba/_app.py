@@ -235,7 +235,7 @@ class App:
         self.state = self.State.LAUNCHING
 
         self._launch_completed = False
-        self._initial_login_completed = False
+        self._initial_sign_in_completed = False
         self._meta_scan_completed = False
         self._called_on_app_running = False
         self._app_paused = False
@@ -511,7 +511,7 @@ class App:
                 self.plugins.on_app_resume()
                 self.health_monitor.on_app_resume()
 
-            if self._initial_login_completed and self._meta_scan_completed:
+            if self._initial_sign_in_completed and self._meta_scan_completed:
                 self.state = self.State.RUNNING
                 if not self._called_on_app_running:
                     self._called_on_app_running = True
@@ -724,8 +724,8 @@ class App:
             _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))
 
-    def on_initial_login_completed(self) -> None:
-        """Callback to be run after initial login process (or lack thereof).
+    def on_initial_sign_in_completed(self) -> None:
+        """Callback to be run after initial sign-in (or lack thereof).
 
         This period includes things such as syncing account workspaces
         or other data so it may take a substantial amount of time.
@@ -736,5 +736,5 @@ class App:
         # (account workspaces).
         self.meta.start_extra_scan()
 
-        self._initial_login_completed = True
+        self._initial_sign_in_completed = True
         self._update_state()

@@ -94,6 +94,7 @@
       <w>avel</w>
       <w>avels</w>
       <w>awaitable</w>
+      <w>awaitables</w>
       <w>axismotion</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
@@ -464,6 +465,7 @@
       <w>fbos</w>
       <w>fcntl</w>
       <w>fdata</w>
+      <w>fdcount</w>
       <w>fdirx</w>
       <w>fdiry</w>
       <w>fdirz</w>
@@ -672,6 +674,7 @@
       <w>ioprepped</w>
       <w>ioprepping</w>
       <w>ioreg</w>
+      <w>iscoroutinefunction</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
