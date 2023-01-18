@@ -576,7 +576,7 @@ class ServerManagerApp:
         # Set an environment var to change the device name.
         # Device name is used while making connection with master server,
         # cloud-console recognize us with this name.
-        os.environ['BA_HOST_NAME'] = self._config.party_name
+        os.environ['BA_DEVICE_NAME'] = self._config.party_name
 
         print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}', flush=True)
         binary_name = ('BallisticaCoreHeadless.exe'
