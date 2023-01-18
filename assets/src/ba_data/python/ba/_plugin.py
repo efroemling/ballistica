@@ -48,13 +48,14 @@ class PluginSubsystem:
                     available=True,
                 )
             )
-            if class_path not in plugstates:
-                # Go ahead and enable new plugins by default, but we'll
-                # inform the user that they need to restart to pick them up.
-                # they can also disable them in settings so they never load.
-                plugstates[class_path] = {'enabled': True}
-                config_changed = True
-                found_new = True
+            if _ba.app.config['Auto Enable New Plugins'] is True:
+                if class_path not in plugstates:
+                    # Go ahead and enable new plugins by default, but we'll
+                    # inform the user that they need to restart to pick them up.
+                    # they can also disable them in settings so they never load.
+                    plugstates[class_path] = {'enabled': True}
+                    config_changed = True
+                    found_new = True
 
         plugs.potential_plugins.sort(key=lambda p: p.class_path)
 

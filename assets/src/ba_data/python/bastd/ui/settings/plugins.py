@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Plugin settings UI."""
+"""Plugin Window UI."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     pass
 
 
-class PluginSettingsWindow(ba.Window):
+class PluginWindow(ba.Window):
     """Window for configuring plugins."""
 
     def __init__(
@@ -106,6 +106,27 @@ class PluginSettingsWindow(ba.Window):
                 size=(60, 60),
                 label=ba.charstr(ba.SpecialChar.BACK),
             )
+        settings_button_x = 670 if uiscale is ba.UIScale.SMALL else 570
+        self._settings_button = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(settings_button_x, self._height - 60),
+            size=(40, 40),
+            label='',
+            on_activate_call=self._open_settings,
+        )
+
+        ba.imagewidget(
+            parent=self._root_widget,
+            position=(settings_button_x + 3, self._height - 60),
+            size=(35, 35),
+            texture=ba.gettexture('settingsIcon'),
+        )
+
+        ba.widget(
+            edit=self._settings_button,
+            up_widget=self._settings_button,
+            right_widget=self._settings_button
+        )
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
@@ -185,6 +206,7 @@ class PluginSettingsWindow(ba.Window):
                     edit=check,
                     up_widget=self._back_button,
                     left_widget=self._back_button,
+                    right_widget=self._settings_button
                 )
                 if button is not None:
                     ba.widget(edit=button, up_widget=self._back_button)
@@ -211,6 +233,18 @@ class PluginSettingsWindow(ba.Window):
         plugstate = plugstates.setdefault(plug.class_path, {})
         plugstate['enabled'] = value
         ba.app.config.commit()
+
+    def _open_settings(self) -> None:
+        # pylint: disable=cyclic-import
+        from bastd.ui.settings.pluginsettings import PluginSettingsWindow
+        ba.playsound(ba.getsound('swish'))
+
+        ba.containerwidget(
+            edit=self._root_widget,transition='out_left'
+        )
+        ba.app.ui.set_main_menu_window(
+            PluginSettingsWindow(transition='in_right').get_root_widget()
+        )
 
     def _save_state(self) -> None:
         pass

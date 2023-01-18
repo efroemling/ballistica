@@ -667,12 +667,12 @@ class AdvancedSettingsWindow(ba.Window):
         appinvite.handle_app_invites_press()
 
     def _on_plugins_button_press(self) -> None:
-        from bastd.ui.settings.plugins import PluginSettingsWindow
+        from bastd.ui.settings.plugins import PluginWindow
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            PluginSettingsWindow(
+            PluginWindow(
                 origin_widget=self._plugins_button
             ).get_root_widget()
         )

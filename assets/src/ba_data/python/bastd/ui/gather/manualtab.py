@@ -257,6 +257,7 @@ class ManualGatherTab(GatherTab):
             autoselect=True,
             v_align='center',
             scale=1.0,
+            maxwidth=380,
             size=(420, 60),
         )
         ba.widget(edit=self._join_by_address_text, down_widget=txt)
