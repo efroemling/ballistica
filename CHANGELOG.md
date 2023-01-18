@@ -1,8 +1,10 @@
-### 1.7.19 (build 20993, api 7, 2023-01-17)
+### 1.7.19 (build 20995, api 7, 2023-01-18)
 - Fixes an issue where repeated curses could use incorrect countdown times (Thanks EraOSBeta!).
 - Last manual party connect port is now saved. Previously, it always assumed the port to be 43210 (Thanks ritiek!).
 - Added a plugin-settings window under the plugins UI for enabling/disabling, and setting whether plugins are auto-enabled (Thanks vishal332008!).
 - Missing maps are now cleanly filtered out of playlists instead of causing errors/hangs (Thanks imayushsaini!).
+- Added in-game-ping option under advanced settings (Thanks imayushsaini!).
+- `BA_DEVICE_NAME` environment variable can now be used to change the name the local device shows up as. Handy if running multiple servers so you can tell them apart in cloud-console/etc. (Thanks imayushsaini!).
 
 ### 1.7.18 (build 20989, api 7, 2023-01-16)
 - Reworked some low level asynchronous messaging functionality in efro.message and efro.rpc. Previously these were a little *too* asynchronous which could lead to messages being received in a different order than they were sent, which is not desirable.

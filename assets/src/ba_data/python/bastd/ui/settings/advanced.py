@@ -134,7 +134,7 @@ class AdvancedSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=(0, self._height - 52),
             size=(self._width, 25),
-            text=ba.Lstr(resource=self._r + '.titleText'),
+            text=ba.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui.title_color,
             h_align='center',
             v_align='top',
@@ -203,10 +203,10 @@ class AdvancedSettingsWindow(ba.Window):
                 text=''
                 if ba.app.lang.language == 'Test'
                 else ba.Lstr(
-                    resource=self._r + '.translationNoUpdateNeededText'
+                    resource=f'{self._r}.translationNoUpdateNeededText'
                 )
                 if up_to_date
-                else ba.Lstr(resource=self._r + '.translationUpdateNeededText'),
+                else ba.Lstr(resource=f'{self._r}.translationUpdateNeededText'),
                 color=(0.2, 1.0, 0.2, 0.8)
                 if up_to_date
                 else (1.0, 0.2, 0.2, 0.8),
@@ -214,10 +214,10 @@ class AdvancedSettingsWindow(ba.Window):
         else:
             ba.textwidget(
                 edit=self._lang_status_text,
-                text=ba.Lstr(resource=self._r + '.translationFetchErrorText')
+                text=ba.Lstr(resource=f'{self._r}.translationFetchErrorText')
                 if self._complete_langs_error
                 else ba.Lstr(
-                    resource=self._r + '.translationFetchingStatusText'
+                    resource=f'{self._r}.translationFetchingStatusText'
                 ),
                 color=(1.0, 0.5, 0.2)
                 if self._complete_langs_error
@@ -267,7 +267,7 @@ class AdvancedSettingsWindow(ba.Window):
             )
 
         ba.textwidget(
-            edit=self._title_text, text=ba.Lstr(resource=self._r + '.titleText')
+            edit=self._title_text, text=ba.Lstr(resource=f'{self._r}.titleText')
         )
 
         this_button_width = 410
@@ -277,7 +277,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 14),
             size=(this_button_width, 60),
             autoselect=True,
-            label=ba.Lstr(resource=self._r + '.enterPromoCodeText'),
+            label=ba.Lstr(resource=f'{self._r}.enterPromoCodeText'),
             text_scale=1.0,
             on_activate_call=self._on_promo_code_press,
         )
@@ -293,7 +293,7 @@ class AdvancedSettingsWindow(ba.Window):
             parent=self._subcontainer,
             position=(200, v + 10),
             size=(0, 0),
-            text=ba.Lstr(resource=self._r + '.languageText'),
+            text=ba.Lstr(resource=f'{self._r}.languageText'),
             maxwidth=150,
             scale=0.95,
             color=ba.app.ui.title_color,
@@ -371,7 +371,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width * 0.5, v + 10),
             size=(0, 0),
             text=ba.Lstr(
-                resource=self._r + '.helpTranslateText',
+                resource=f'{self._r}.helpTranslateText',
                 subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
             ),
             maxwidth=self._sub_width * 0.9,
@@ -389,7 +389,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 24),
             size=(this_button_width, 60),
             label=ba.Lstr(
-                resource=self._r + '.translationEditorButtonText',
+                resource=f'{self._r}.translationEditorButtonText',
                 subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))],
             ),
             autoselect=True,
@@ -422,7 +422,7 @@ class AdvancedSettingsWindow(ba.Window):
             maxwidth=430,
             textcolor=(0.8, 0.8, 0.8),
             value=lang_inform,
-            text=ba.Lstr(resource=self._r + '.translationInformMe'),
+            text=ba.Lstr(resource=f'{self._r}.translationInformMe'),
             on_value_change_call=ba.WeakCall(self._on_lang_inform_value_change),
         )
 
@@ -439,7 +439,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(50, v),
             size=(self._sub_width - 100, 30),
             configkey='Kick Idle Players',
-            displayname=ba.Lstr(resource=self._r + '.kickIdlePlayersText'),
+            displayname=ba.Lstr(resource=f'{self._r}.kickIdlePlayersText'),
             scale=1.0,
             maxwidth=430,
         )
@@ -450,7 +450,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(50, v),
             size=(self._sub_width - 100, 30),
             configkey='Show Ping',
-            displayname=ba.Lstr(value='Show InGame Ping'),
+            displayname=ba.Lstr(resource=f'{self._r}.showInGamePingText'),
             scale=1.0,
             maxwidth=430,
         )
@@ -461,7 +461,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(50, v),
             size=(self._sub_width - 100, 30),
             configkey='Disable Camera Shake',
-            displayname=ba.Lstr(resource=self._r + '.disableCameraShakeText'),
+            displayname=ba.Lstr(resource=f'{self._r}.disableCameraShakeText'),
             scale=1.0,
             maxwidth=430,
         )
@@ -475,7 +475,7 @@ class AdvancedSettingsWindow(ba.Window):
                 size=(self._sub_width - 100, 30),
                 configkey='Disable Camera Gyro',
                 displayname=ba.Lstr(
-                    resource=self._r + '.disableCameraGyroscopeMotionText'
+                    resource=f'{self._r}.disableCameraGyroscopeMotionText'
                 ),
                 scale=1.0,
                 maxwidth=430,
@@ -491,7 +491,7 @@ class AdvancedSettingsWindow(ba.Window):
                 configkey='Always Use Internal Keyboard',
                 autoselect=True,
                 displayname=ba.Lstr(
-                    resource=self._r + '.alwaysUseInternalKeyboardText'
+                    resource=f'{self._r}.alwaysUseInternalKeyboardText'
                 ),
                 scale=1.0,
                 maxwidth=430,
@@ -501,8 +501,9 @@ class AdvancedSettingsWindow(ba.Window):
                 position=(90, v - 10),
                 size=(0, 0),
                 text=ba.Lstr(
-                    resource=self._r
-                    + '.alwaysUseInternalKeyboardDescriptionText'
+                    resource=(
+                        f'{self._r}.alwaysUseInternalKeyboardDescriptionText'
+                    )
                 ),
                 maxwidth=400,
                 flatness=1.0,
@@ -523,7 +524,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=ba.Lstr(resource=self._r + '.moddingGuideText'),
+            label=ba.Lstr(resource=f'{self._r}.moddingGuideText'),
             text_scale=1.0,
             on_activate_call=ba.Call(
                 ba.open_url, 'https://ballistica.net/wiki/modding-guide'
@@ -556,7 +557,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=ba.Lstr(resource=self._r + '.showUserModsText'),
+            label=ba.Lstr(resource=f'{self._r}.showUserModsText'),
             text_scale=1.0,
             on_activate_call=show_user_scripts,
         )
@@ -583,7 +584,7 @@ class AdvancedSettingsWindow(ba.Window):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=ba.Lstr(resource=self._r + '.vrTestingText'),
+                label=ba.Lstr(resource=f'{self._r}.vrTestingText'),
                 text_scale=1.0,
                 on_activate_call=self._on_vr_test_press,
             )
@@ -598,7 +599,7 @@ class AdvancedSettingsWindow(ba.Window):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=ba.Lstr(resource=self._r + '.netTestingText'),
+                label=ba.Lstr(resource=f'{self._r}.netTestingText'),
                 text_scale=1.0,
                 on_activate_call=self._on_net_test_press,
             )
@@ -611,7 +612,7 @@ class AdvancedSettingsWindow(ba.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 14),
             size=(this_button_width, 60),
             autoselect=True,
-            label=ba.Lstr(resource=self._r + '.benchmarksText'),
+            label=ba.Lstr(resource=f'{self._r}.benchmarksText'),
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press,
         )
@@ -633,7 +634,7 @@ class AdvancedSettingsWindow(ba.Window):
     def _show_restart_needed(self, value: Any) -> None:
         del value  # Unused.
         ba.screenmessage(
-            ba.Lstr(resource=self._r + '.mustRestartText'), color=(1, 1, 0)
+            ba.Lstr(resource=f'{self._r}.mustRestartText'), color=(1, 1, 0)
         )
 
     def _on_lang_inform_value_change(self, val: bool) -> None:

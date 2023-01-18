@@ -132,7 +132,7 @@ class Connection : public Object {
   bool errored_{};
   millisecs_t last_prune_time_{};
   millisecs_t last_ack_send_time_{};
-  millisecs_t last_ping_update_time_{};
+  millisecs_t last_ping_measure_time_{};
   // These are explicitly 16 bit values.
   uint16_t next_out_message_num_ = kFirstConnectionStateNum;
   uint16_t next_out_unreliable_message_num_{};

@@ -24,8 +24,8 @@ const int kPacketPruneTime = 10000;
 // How long to go between pruning our packets.
 const int kPacketPruneInterval = 1000;
 
-// How long to go between updating current ping.
-const int kPingUpdateInterval = 2000;
+// How long to go between updating our ping measurement.
+const int kPingMeasureInterval = 2000;
 
 Connection::Connection() {
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
@@ -80,17 +80,16 @@ void Connection::HandleResends(millisecs_t real_time,
   // (prevents some un-necessary re-sending)
   uint8_t extra_bits = data[offset + 2];
 
-  // Get a rough ping by looking at the previous packet and measuring its
-  // round-trip time if it has not yet been ack'ed.
+  // Ack packets and take the opportunity to measure ping.
   auto test_num = static_cast<uint16_t>(their_next_in - 1u);
   auto j = out_messages_.find(test_num);
   if (j != out_messages_.end()) {
     ReliableMessageOut& msg(j->second);
     if (!msg.acked) {
-      // Dont update too fast.
-      if (real_time - last_ping_update_time_ > kPingUpdateInterval) {
+      // Periodically use this opportunity to measure ping.
+      if (real_time - last_ping_measure_time_ > kPingMeasureInterval) {
         current_ping_ = static_cast<float>(real_time - msg.first_send_time);
-        last_ping_update_time_ = real_time;
+        last_ping_measure_time_ = real_time;
       }
     }
     msg.acked = true;
@@ -388,15 +387,6 @@ void Connection::Update() {
     SendGamePacket(data);
   }
 
-  if (can_communicate()
-      && real_time - last_ping_update_time_ > kPingUpdateInterval + 1000) {
-    // Send a reliable message if ping not updated in a while.
-
-    std::vector<uint8_t> data(1);
-    data[0] = BA_PACKET_SIMPLE_PING;
-    SendReliableMessage(data);
-  }
-
   // Occasionally prune our in and out messages.
   if (real_time - last_prune_time_ > kPacketPruneInterval) {
     last_prune_time_ = real_time;
@@ -451,6 +441,9 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       }
       break;
     }
+    case BA_MESSAGE_NULL:
+      // An empty message that can get thrown around for ping purposes.
+      break;
     default: {
       // Let's silently ignore these since we may be adding various
       // messages mid-protocol in a backwards-compatible way.

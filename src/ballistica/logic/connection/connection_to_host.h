@@ -38,6 +38,7 @@ class ConnectionToHost : public Connection {
   bool got_host_info_ = false;
   // can remove once back-compat protocol is > 29
   bool ignore_old_attach_remote_player_packets_ = false;
+  millisecs_t last_ping_send_time_{};
   // the client-session that we're driving
   Object::WeakRef<ClientSession> client_session_;
 };

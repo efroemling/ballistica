@@ -18,6 +18,9 @@
 
 namespace ballistica {
 
+// How long to go between sending out null packets for pings.
+const int kPingSendInterval = 2000;
+
 ConnectionToHost::ConnectionToHost() = default;
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
@@ -47,7 +50,23 @@ ConnectionToHost::~ConnectionToHost() {
   }
 }
 
-void ConnectionToHost::Update() { Connection::Update(); }
+void ConnectionToHost::Update() {
+  millisecs_t real_time = GetRealTime();
+
+  // Send out null messages occasionally for ping measurement purposes.
+  // Note that we currently only do this from the client since we might not
+  // be sending things otherwise. The server on the other hand should be
+  // sending lots of messages to clients so no need to add to the load there.
+  if (can_communicate()
+      && real_time - last_ping_send_time_ > kPingSendInterval) {
+    std::vector<uint8_t> data(1);
+    data[0] = BA_MESSAGE_NULL;
+    SendReliableMessage(data);
+    last_ping_send_time_ = real_time;
+  }
+
+  Connection::Update();
+}
 
 // Seems we get a false alarm here.
 #pragma clang diagnostic push

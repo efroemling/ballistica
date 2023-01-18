@@ -192,9 +192,8 @@ def filter_playlist(
                 'Import failed while scanning playlist \'%s\': %s', name, exc
             )
         except Exception:
-            from ba import _error
+            logging.exception('Error in filter_playlist.')
 
-            _error.print_exception()
     return goodlist
 
 
