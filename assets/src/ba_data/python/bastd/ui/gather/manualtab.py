@@ -234,6 +234,7 @@ class ManualGatherTab(GatherTab):
         c_width = region_width
         c_height = region_height - 20
         last_addr = ba.app.config.get('Last Manual Party Connect Address', '')
+        last_port = ba.app.config.get('Last Manual Party Connect Port', 43210)
         v = c_height - 70
         v -= 70
         ba.textwidget(
@@ -275,7 +276,7 @@ class ManualGatherTab(GatherTab):
             parent=self._container,
             editable=True,
             description=ba.Lstr(resource='gatherWindow.' 'portText'),
-            text='43210',
+            text=str(last_port),
             autoselect=True,
             max_chars=5,
             position=(c_width * 0.5 - 240 + 490, v - 30),
@@ -811,6 +812,7 @@ class ManualGatherTab(GatherTab):
             # Store for later.
             config = ba.app.config
             config['Last Manual Party Connect Address'] = resolved_address
+            config['Last Manual Party Connect Port'] = port
             config.commit()
             ba.internal.connect_to_party(resolved_address, port=port)
 
