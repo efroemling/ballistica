@@ -523,7 +523,14 @@ auto Platform::GetDeviceName() -> std::string {
 }
 
 auto Platform::DoGetDeviceName() -> std::string {
-  // Just go with hostname as a decent default.
+  // Check devicename in env_var
+  char* devicename;
+  devicename = getenv("BA_DEVICE_NAME");
+  if (devicename != NULL) {
+    return devicename;
+  }
+
+  // Else just go with hostname as a decent default.
   char nbuffer[64];
   int ret = gethostname(nbuffer, sizeof(nbuffer));
   if (ret == 0) {
