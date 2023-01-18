@@ -11,13 +11,11 @@ import ba
 if TYPE_CHECKING:
     pass
 
+
 class PluginSettingsWindow(ba.Window):
     """Plugin Settings Window"""
 
-    def __init__(
-        self,
-        transition: str = 'in_right'
-    ):
+    def __init__(self, transition: str = 'in_right'):
 
         scale_origin: tuple[float, float] | None
         self._transition_out = 'out_right'
@@ -61,7 +59,7 @@ class PluginSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.charstr(ba.SpecialChar.BACK),
             button_type='backSmall',
-            on_activate_call=self._do_back
+            on_activate_call=self._do_back,
         )
         ba.containerwidget(
             edit=self._root_widget, cancel_button=self._back_button
@@ -74,13 +72,13 @@ class PluginSettingsWindow(ba.Window):
             text=ba.Lstr(resource='pluginSettingsText'),
             color=ba.app.ui.title_color,
             h_align='center',
-            v_align='top'
+            v_align='top',
         )
 
         self._y_position = 170 if uiscale is ba.UIScale.MEDIUM else 205
         self._enable_plugins_button = ba.buttonwidget(
             parent=self._root_widget,
-            position=(65,self._y_position),
+            position=(65, self._y_position),
             size=(350, 60),
             autoselect=True,
             label=ba.Lstr(resource='pluginsEnableAllText'),
@@ -91,7 +89,7 @@ class PluginSettingsWindow(ba.Window):
         self._y_position -= 70
         self._disable_plugins_button = ba.buttonwidget(
             parent=self._root_widget,
-            position=(65,self._y_position),
+            position=(65, self._y_position),
             size=(350, 60),
             autoselect=True,
             label=ba.Lstr(resource='pluginsDisableAllText'),
@@ -108,24 +106,23 @@ class PluginSettingsWindow(ba.Window):
             text=ba.Lstr(resource='AutoEnableNewPluginsText'),
             scale=1.0,
             maxwidth=430,
-            on_value_change_call=self._update_value
+            on_value_change_call=self._update_value,
         )
 
         ba.widget(
-            edit=self._back_button,
-            down_widget=self._enable_plugins_button
+            edit=self._back_button, down_widget=self._enable_plugins_button
         )
 
         ba.widget(
             edit=self._disable_plugins_button,
-            left_widget=self._disable_plugins_button
+            left_widget=self._disable_plugins_button,
         )
 
         ba.widget(
             edit=self._enable_new_plugins_check_box,
             left_widget=self._enable_new_plugins_check_box,
             right_widget=self._enable_new_plugins_check_box,
-            down_widget=self._enable_new_plugins_check_box
+            down_widget=self._enable_new_plugins_check_box,
         )
 
     def _enable_all_plugins(self) -> None:

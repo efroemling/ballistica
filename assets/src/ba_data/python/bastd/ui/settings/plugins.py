@@ -125,7 +125,7 @@ class PluginWindow(ba.Window):
         ba.widget(
             edit=self._settings_button,
             up_widget=self._settings_button,
-            right_widget=self._settings_button
+            right_widget=self._settings_button,
         )
 
         self._scrollwidget = ba.scrollwidget(
@@ -206,7 +206,7 @@ class PluginWindow(ba.Window):
                     edit=check,
                     up_widget=self._back_button,
                     left_widget=self._back_button,
-                    right_widget=self._settings_button
+                    right_widget=self._settings_button,
                 )
                 if button is not None:
                     ba.widget(edit=button, up_widget=self._back_button)
@@ -237,11 +237,10 @@ class PluginWindow(ba.Window):
     def _open_settings(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.pluginsettings import PluginSettingsWindow
+
         ba.playsound(ba.getsound('swish'))
 
-        ba.containerwidget(
-            edit=self._root_widget,transition='out_left'
-        )
+        ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             PluginSettingsWindow(transition='in_right').get_root_widget()
         )

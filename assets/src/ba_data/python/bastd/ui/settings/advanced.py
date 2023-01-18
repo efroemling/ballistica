@@ -672,9 +672,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            PluginWindow(
-                origin_widget=self._plugins_button
-            ).get_root_widget()
+            PluginWindow(origin_widget=self._plugins_button).get_root_widget()
         )
 
     def _on_promo_code_press(self) -> None:

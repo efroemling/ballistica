@@ -359,6 +359,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/keyboard.py \
   build/ba_data/python/bastd/ui/settings/nettesting.py \
   build/ba_data/python/bastd/ui/settings/plugins.py \
+  build/ba_data/python/bastd/ui/settings/pluginsettings.py \
   build/ba_data/python/bastd/ui/settings/remoteapp.py \
   build/ba_data/python/bastd/ui/settings/testing.py \
   build/ba_data/python/bastd/ui/settings/touchscreen.py \
@@ -612,6 +613,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/plugins.cpython-310.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/pluginsettings.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-310.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-310.opt-1.pyc \
