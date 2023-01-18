@@ -102,8 +102,11 @@ class PluginSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=(65, self._y_position),
             size=(350, 60),
-            value=ba.app.config['Auto Enable New Plugins'],
-            text=ba.Lstr(resource='AutoEnableNewPluginsText'),
+            value=ba.app.config.get(
+                ba.app.plugins.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,
+                ba.app.plugins.AUTO_ENABLE_NEW_PLUGINS_DEFAULT,
+            ),
+            text=ba.Lstr(resource='pluginsAutoEnableNewText'),
             scale=1.0,
             maxwidth=430,
             on_value_change_call=self._update_value,
@@ -127,9 +130,9 @@ class PluginSettingsWindow(ba.Window):
 
     def _enable_all_plugins(self) -> None:
         cfg = ba.app.config
-        plugs = cfg['Plugins']
-        for plug in plugs:
-            plugs[plug]['enabled'] = True
+        plugs: dict[str, dict] = cfg.setdefault('Plugins', {})
+        for plug in plugs.values():
+            plug['enabled'] = True
         cfg.apply_and_commit()
 
         ba.screenmessage(
@@ -139,9 +142,9 @@ class PluginSettingsWindow(ba.Window):
 
     def _disable_all_plugins(self) -> None:
         cfg = ba.app.config
-        plugs = cfg['Plugins']
-        for plug in plugs:
-            plugs[plug]['enabled'] = False
+        plugs: dict[str, dict] = cfg.setdefault('Plugins', {})
+        for plug in plugs.values():
+            plug['enabled'] = False
         cfg.apply_and_commit()
 
         ba.screenmessage(
@@ -151,7 +154,7 @@ class PluginSettingsWindow(ba.Window):
 
     def _update_value(self, val: bool) -> None:
         cfg = ba.app.config
-        cfg['Auto Enable New Plugins'] = val
+        cfg[ba.app.plugins.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY] = val
         cfg.apply_and_commit()
 
     def _do_back(self) -> None:

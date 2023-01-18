@@ -22,6 +22,9 @@ class PluginSubsystem:
     Access the single shared instance of this class at `ba.app.plugins`.
     """
 
+    AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY = 'Auto Enable New Plugins'
+    AUTO_ENABLE_NEW_PLUGINS_DEFAULT = True
+
     def __init__(self) -> None:
         self.potential_plugins: list[ba.PotentialPlugin] = []
         self.active_plugins: dict[str, ba.Plugin] = {}
@@ -48,7 +51,13 @@ class PluginSubsystem:
                     available=True,
                 )
             )
-            if _ba.app.config['Auto Enable New Plugins'] is True:
+            if (
+                _ba.app.config.get(
+                    self.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,
+                    self.AUTO_ENABLE_NEW_PLUGINS_DEFAULT,
+                )
+                is True
+            ):
                 if class_path not in plugstates:
                     # Go ahead and enable new plugins by default, but we'll
                     # inform the user that they need to restart to pick them up.

@@ -1,4 +1,7 @@
 ### 1.7.19 (build 20993, api 7, 2023-01-17)
+- Fixes an issue where repeated curses could use incorrect countdown times (Thanks EraOSBeta!).
+- Last manual party connect port is now saved. Previously, it always assumed the port to be 43210 (Thanks ritiek!).
+- Added a plugin-settings window under the plugins UI for enabling/disabling, and setting whether plugins are auto-enabled (Thanks vishal332008!).
 
 ### 1.7.18 (build 20989, api 7, 2023-01-16)
 - Reworked some low level asynchronous messaging functionality in efro.message and efro.rpc. Previously these were a little *too* asynchronous which could lead to messages being received in a different order than they were sent, which is not desirable.
