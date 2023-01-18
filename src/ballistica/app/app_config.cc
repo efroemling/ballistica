@@ -222,6 +222,7 @@ void AppConfig::SetupEntries() {
   bool_entries_[BoolID::kAlwaysUseInternalKeyboard] =
       BoolEntry("Always Use Internal Keyboard", g_buildconfig.iircade_build());
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
+  bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
   bool_entries_[BoolID::kTVBorder] =
       BoolEntry("TV Border", g_platform->IsRunningOnTV());
   bool_entries_[BoolID::kKeyboardP2Enabled] =

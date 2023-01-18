@@ -1292,6 +1292,8 @@ void Logic::ApplyConfig() {
 
   chat_muted_ = g_app_config->Resolve(AppConfig::BoolID::kChatMuted);
   g_graphics->set_show_fps(g_app_config->Resolve(AppConfig::BoolID::kShowFPS));
+  g_graphics->set_show_ping(
+      g_app_config->Resolve(AppConfig::BoolID::kShowPing));
 
   // Set tv border (for both client and server).
   // FIXME: this should exist either on the client or the server; not both.

@@ -445,6 +445,17 @@ class AdvancedSettingsWindow(ba.Window):
         )
 
         v -= 42
+        self._show_game_ping_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Ping',
+            displayname=ba.Lstr(value='Show InGame Ping'),
+            scale=1.0,
+            maxwidth=430,
+        )
+
+        v -= 42
         self._disable_camera_shake_check_box = ConfigCheckBox(
             parent=self._subcontainer,
             position=(50, v),
@@ -716,6 +727,8 @@ class AdvancedSettingsWindow(ba.Window):
                     sel_name = 'Benchmarks'
                 elif sel == self._kick_idle_players_check_box.widget:
                     sel_name = 'KickIdlePlayers'
+                elif sel == self._show_game_ping_check_box.widget:
+                    sel_name = 'ShowPing'
                 elif sel == self._disable_camera_shake_check_box.widget:
                     sel_name = 'DisableCameraShake'
                 elif (
@@ -776,6 +789,8 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._benchmarks_button
                 elif sel_name == 'KickIdlePlayers':
                     sel = self._kick_idle_players_check_box.widget
+                elif sel_name == 'ShowPing':
+                    sel = self._show_game_ping_check_box.widget
                 elif sel_name == 'DisableCameraShake':
                     sel = self._disable_camera_shake_check_box.widget
                 elif (

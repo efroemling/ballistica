@@ -63,7 +63,7 @@ class Connection : public Object {
   auto GetBytesResentPerSecond() const -> int64_t {
     return last_resend_bytes_out_;
   }
-  auto average_ping() const -> float { return average_ping_; }
+  auto current_ping() const -> float { return current_ping_; }
   auto can_communicate() const -> bool { return can_communicate_; }
   auto peer_spec() const -> const PlayerSpec& { return peer_spec_; }
   void HandleGamePacketCompressed(const std::vector<uint8_t>& data);
@@ -106,7 +106,7 @@ class Connection : public Object {
   // Leaf classes should set this when they start dying.
   // This prevents any SendGamePacketCompressed() calls from happening.
   bool connection_dying_{};
-  float average_ping_{};
+  float current_ping_{};
   int64_t last_resend_bytes_out_{};
   int64_t last_bytes_out_{};
   int64_t last_bytes_out_compressed_{};
@@ -132,7 +132,7 @@ class Connection : public Object {
   bool errored_{};
   millisecs_t last_prune_time_{};
   millisecs_t last_ack_send_time_{};
-
+  millisecs_t last_ping_update_time_{};
   // These are explicitly 16 bit values.
   uint16_t next_out_message_num_ = kFirstConnectionStateNum;
   uint16_t next_out_unreliable_message_num_{};

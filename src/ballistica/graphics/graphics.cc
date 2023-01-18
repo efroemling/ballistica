@@ -277,6 +277,47 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
     c.Submit();
   }
 
+  if (show_ping_) {
+    float ping{};
+    char ping_str[32];
+    if (ConnectionToHost* connection_to_host =
+            g_logic->connections()->connection_to_host()) {
+      if (connection_to_host->can_communicate()) {
+        ping = connection_to_host->current_ping();
+        snprintf(ping_str, sizeof(ping_str), "%.0f ms", ping);
+        if (ping_str != ping_string_) {
+          ping_string_ = ping_str;
+          if (!ping_text_group_.exists()) {
+            ping_text_group_ = Object::New<TextGroup>();
+          }
+          ping_text_group_->SetText(ping_string_);
+        }
+        SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetColor(0.5f, 0.9f, 0.5f, 1.0f);
+        if (ping > 100.0f) {
+          c.SetColor(0.8f, 0.8f, 0.0f, 1.0f);
+        }
+        if (ping > 500.0f) {
+          c.SetColor(0.9f, 0.2f, 0.2f, 1.0f);
+        }
+
+        int text_elem_count = ping_text_group_->GetElementCount();
+        for (int e = 0; e < text_elem_count; e++) {
+          c.SetTexture(ping_text_group_->GetElementTexture(e));
+          c.SetFlatness(1.0f);
+          c.PushTransform();
+          c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
+                      kScreenMessageZDepth);
+          c.Scale(0.7f, 0.7f);
+          c.DrawMesh(ping_text_group_->GetElementMesh(e));
+          c.PopTransform();
+        }
+        c.Submit();
+      }
+    }
+  }
+
   if (show_net_info_) {
     char net_info_str[128];
     int64_t in_count = 0;
@@ -287,8 +328,6 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
     int64_t out_size_compressed = 0;
     int64_t resends = 0;
     int64_t resends_size = 0;
-    bool do_ping = false;
-    float ping{};
     bool show = false;
 
     // Add in/out data for any host connection.
@@ -304,7 +343,6 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       outCount += connection_to_host->GetMessagesOutPerSecond();
       resends += connection_to_host->GetMessageResendsPerSecond();
       resends_size += connection_to_host->GetBytesResentPerSecond();
-      ping = connection_to_host->average_ping();
     } else {
       int connected_count = 0;
       for (auto&& i : g_logic->connections()->connections_to_clients()) {
@@ -321,40 +359,21 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         outCount += client->GetMessagesOutPerSecond();
         resends += client->GetMessageResendsPerSecond();
         resends_size += client->GetBytesResentPerSecond();
-        ping += client->average_ping();
-      }
-
-      // We want an average for ping.
-      if (connected_count > 0) {
-        ping /= static_cast<float>(connected_count);
       }
     }
 
     if (show) {
-      if (do_ping) {
-        snprintf(net_info_str, sizeof(net_info_str),
-                 "ping: %f\nin:   %d/%d/%d\nout: %d/%d/%d\nrpt: "
-                 "%d/%d",
-                 ping, static_cast_check_fit<int>(in_size),
-                 static_cast_check_fit<int>(in_size_compressed),
-                 static_cast_check_fit<int>(in_count),
-                 static_cast_check_fit<int>(out_size),
-                 static_cast_check_fit<int>(out_size_compressed),
-                 static_cast_check_fit<int>(outCount),
-                 static_cast_check_fit<int>(resends_size),
-                 static_cast_check_fit<int>(resends));
-      } else {
-        snprintf(net_info_str, sizeof(net_info_str),
-                 "in:   %d/%d/%d\nout: %d/%d/%d\nrpt: %d/%d",
-                 static_cast_check_fit<int>(in_size),
-                 static_cast_check_fit<int>(in_size_compressed),
-                 static_cast_check_fit<int>(in_count),
-                 static_cast_check_fit<int>(out_size),
-                 static_cast_check_fit<int>(out_size_compressed),
-                 static_cast_check_fit<int>(outCount),
-                 static_cast_check_fit<int>(resends_size),
-                 static_cast_check_fit<int>(resends));
-      }
+      snprintf(net_info_str, sizeof(net_info_str),
+               "in:   %d/%d/%d\nout: %d/%d/%d\nrpt: %d/%d",
+               static_cast_check_fit<int>(in_size),
+               static_cast_check_fit<int>(in_size_compressed),
+               static_cast_check_fit<int>(in_count),
+               static_cast_check_fit<int>(out_size),
+               static_cast_check_fit<int>(out_size_compressed),
+               static_cast_check_fit<int>(outCount),
+               static_cast_check_fit<int>(resends_size),
+               static_cast_check_fit<int>(resends));
+
       net_info_str[sizeof(net_info_str) - 1] = 0;  // in case we overran..
       if (net_info_str != net_info_string_) {
         net_info_string_ = net_info_str;
@@ -371,9 +390,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         c.SetTexture(net_info_text_group_->GetElementTexture(e));
         c.SetFlatness(1.0f);
         c.PushTransform();
-        c.Translate(4.0f,
-                    (show_fps_ ? 66.0f : 40.0f) + (do_ping ? 17.0f : 0.0f),
-                    kScreenMessageZDepth);
+        c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenMessageZDepth);
         c.Scale(0.7f, 0.7f);
         c.DrawMesh(net_info_text_group_->GetElementMesh(e));
         c.PopTransform();

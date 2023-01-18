@@ -24,6 +24,9 @@ const int kPacketPruneTime = 10000;
 // How long to go between pruning our packets.
 const int kPacketPruneInterval = 1000;
 
+// How long to go between updating current ping.
+const int kPingUpdateInterval = 2000;
+
 Connection::Connection() {
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
   creation_time_ = last_average_update_time_ = GetRealTime();
@@ -84,11 +87,11 @@ void Connection::HandleResends(millisecs_t real_time,
   if (j != out_messages_.end()) {
     ReliableMessageOut& msg(j->second);
     if (!msg.acked) {
-      float smoothing = 0.95f;
-      average_ping_ =
-          smoothing * average_ping_
-          + (1.0f - smoothing)
-                * static_cast<float>(real_time - msg.first_send_time);
+      // Dont update too fast.
+      if (real_time - last_ping_update_time_ > kPingUpdateInterval) {
+        current_ping_ = static_cast<float>(real_time - msg.first_send_time);
+        last_ping_update_time_ = real_time;
+      }
     }
     msg.acked = true;
   }
@@ -383,6 +386,15 @@ void Connection::Update() {
     data[0] = BA_GAMEPACKET_KEEPALIVE;
     EmbedAcks(real_time, &data, 1);
     SendGamePacket(data);
+  }
+
+  if (can_communicate()
+      && real_time - last_ping_update_time_ > kPingUpdateInterval + 1000) {
+    // Send a reliable message if ping not updated in a while.
+
+    std::vector<uint8_t> data(1);
+    data[0] = BA_PACKET_SIMPLE_PING;
+    SendReliableMessage(data);
   }
 
   // Occasionally prune our in and out messages.
