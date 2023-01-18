@@ -162,7 +162,8 @@ def filter_playlist(
 
             if entry['settings']['map'] not in available_maps:
                 raise ImportError(
-                    f"Map not found: '{entry['settings']['map']}'")
+                    f"Map not found: '{entry['settings']['map']}'"
+                )
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue
