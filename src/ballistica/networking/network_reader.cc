@@ -2,6 +2,7 @@
 
 #include "ballistica/networking/network_reader.h"
 
+#include "ballistica/core/thread.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/input/remote_app.h"
 #include "ballistica/logic/connection/connection_set.h"
@@ -175,6 +176,25 @@ static auto HandleGameQuery(const char* buffer, size_t size,
   }
 }
 
+auto NetworkReader::CheckFDThreshold(int val) -> void {
+  if (passed_fd_threshold_) {
+    return;
+  }
+
+  // Let's trigger when we pass 2/3 of the FD limit.
+  if (val < FD_SETSIZE * 2 / 3) {
+    return;
+  }
+
+  // If we pass the threshold, do a one-time dump of info
+  // to try and debug it.
+  passed_fd_threshold_ = true;
+  g_logic->thread()->PushCall([val] {
+    assert(InLogicThread());
+    g_python->obj(Python::ObjID::kOnTooManyFileDescriptorsCall).Call();
+  });
+}
+
 auto NetworkReader::RunThread() -> int {
   if (!HeadlessMode()) {
     remote_server_ = std::make_unique<RemoteAppServer>();
@@ -202,6 +222,7 @@ auto NetworkReader::RunThread() -> int {
           // Try to get a clean error instead of a crash if we exceed our
           // open file descriptor limit (except on windows where FD_SETSIZE
           // is apparently a dummy value).
+          CheckFDThreshold(sd4_);
           if (sd4_ < 0 || sd4_ >= FD_SETSIZE) {
             FatalError("Socket/File Descriptor Overflow (sd4="
                        + std::to_string(sd4_) + ", FD_SETSIZE="
@@ -216,6 +237,7 @@ auto NetworkReader::RunThread() -> int {
           // Try to get a clean error instead of a crash if we exceed our
           // open file descriptor limit (except on windows where FD_SETSIZE
           // is apparently a dummy value).
+          CheckFDThreshold(sd6_);
           if (sd6_ < 0 || sd6_ >= FD_SETSIZE) {
             FatalError("Socket/File Descriptor Overflow (sd6="
                        + std::to_string(sd6_) + ", FD_SETSIZE="

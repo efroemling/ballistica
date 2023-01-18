@@ -682,9 +682,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._bots = SpazBotSet()
         ba.timer(4.0, self._start_updating_waves)
 
-    def _on_got_scores_to_beat(self, scores: list[dict[str, Any]]) -> None:
-        self._show_standard_scores_to_beat_ui(scores)
-
     def _get_dist_grp_totals(self, grps: list[Any]) -> tuple[int, int]:
         totalpts = 0
         totaldudes = 0

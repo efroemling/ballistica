@@ -180,6 +180,7 @@ class Spaz(ba.Actor):
         self._bomb_wear_off_flash_timer: ba.Timer | None = None
         self._multi_bomb_wear_off_timer: ba.Timer | None = None
         self._multi_bomb_wear_off_flash_timer: ba.Timer | None = None
+        self._curse_timer: ba.Timer | None = None
         self.bomb_count = self.default_bomb_count
         self._max_bomb_count = self.default_bomb_count
         self.bomb_type_default = self.default_bomb_type
@@ -620,7 +621,8 @@ class Spaz(ba.Actor):
                 self.node.curse_death_time = int(
                     1000.0 * (tval + self.curse_time)
                 )
-                ba.timer(5.0, ba.WeakCall(self.curse_explode))
+                self._curse_timer = ba.Timer(5.0,
+                                             ba.WeakCall(self.curse_explode))
 
     def equip_boxing_gloves(self) -> None:
         """

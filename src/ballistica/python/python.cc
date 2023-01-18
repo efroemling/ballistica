@@ -14,7 +14,6 @@
 #include "ballistica/input/device/joystick.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/internal/app_internal.h"
-#include "ballistica/logic/friend_score_set.h"
 #include "ballistica/logic/host_activity.h"
 #include "ballistica/logic/player.h"
 #include "ballistica/logic/v1_account.h"
@@ -2143,40 +2142,6 @@ void Python::CaptureKeyboardInput(PyObject* obj) {
   }
 }
 void Python::ReleaseKeyboardInput() { keyboard_call_.Release(); }
-
-void Python::HandleFriendScoresCB(const FriendScoreSet& score_set) {
-  // This is the initial strong-ref to this pointer
-  // so it will be cleaned up properly.
-  Object::Ref<PythonContextCall> cb(
-      static_cast<PythonContextCall*>(score_set.user_data));
-
-  // We pass None on error.
-  if (!score_set.success) {
-    PythonRef args(Py_BuildValue("(O)", Py_None), PythonRef::kSteal);
-    cb->Run(args);
-  } else {
-    // Otherwise convert it to a python list and pass that.
-    PyObject* py_list = PyList_New(0);
-    std::string icon_str;
-#if BA_USE_GOOGLE_PLAY_GAME_SERVICES
-    icon_str = g_logic->CharStr(SpecialChar::kGooglePlayGamesLogo);
-#elif BA_USE_GAME_CIRCLE
-    icon_str = g_logic->CharStr(SpecialChar::kGameCircleLogo);
-#elif BA_USE_GAME_CENTER
-    icon_str = g_logic->CharStr(SpecialChar::kGameCenterLogo);
-#endif
-    for (auto&& i : score_set.entries) {
-      PyObject* obj =
-          Py_BuildValue("[isi]", i.score, (icon_str + i.name).c_str(),
-                        static_cast<int>(i.is_me));
-      PyList_Append(py_list, obj);
-      Py_DECREF(obj);
-    }
-    PythonRef args(Py_BuildValue("(O)", py_list), PythonRef::kSteal);
-    Py_DECREF(py_list);
-    cb->Run(args);
-  }
-}
 
 auto Python::HandleKeyPressEvent(const SDL_Keysym& keysym) -> bool {
   assert(InLogicThread());

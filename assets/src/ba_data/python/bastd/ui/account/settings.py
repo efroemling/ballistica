@@ -17,6 +17,11 @@ import ba.internal
 if TYPE_CHECKING:
     from ba.internal import LoginAdapter
 
+# These days we're directing people to the web based account settings
+# for V2 account linking and trying to get them to disconnect remaining
+# V1 links, but leaving this escape hatch here in case needed.
+FORCE_ENABLE_V1_LINKING = False
+
 
 class AccountSettingsWindow(ba.Window):
     """Window for account related functionality."""
@@ -33,9 +38,13 @@ class AccountSettingsWindow(ba.Window):
         self._sign_in_v2_proxy_button: ba.Widget | None = None
         self._sign_in_device_button: ba.Widget | None = None
 
+        self._show_legacy_unlink_button = False
+
         self._signing_in_adapter: LoginAdapter | None = None
         self._close_once_signed_in = close_once_signed_in
         ba.set_analytics_screen('Account Window')
+
+        self._explicitly_signed_out_of_gpgs = False
 
         # If they provided an origin-widget, scale up from that.
         scale_origin: tuple[float, float] | None
@@ -50,14 +59,8 @@ class AccountSettingsWindow(ba.Window):
         self._r = 'accountSettingsWindow'
         self._modal = modal
         self._needs_refresh = False
-        self._signed_in = ba.internal.get_v1_account_state() == 'signed_in'
-        self._account_state_num = ba.internal.get_v1_account_state_num()
-        self._show_linked = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
-        )
+        self._v1_signed_in = ba.internal.get_v1_account_state() == 'signed_in'
+        self._v1_account_state_num = ba.internal.get_v1_account_state_num()
         self._check_sign_in_timer = ba.Timer(
             1.0,
             ba.WeakCall(self._update),
@@ -66,12 +69,12 @@ class AccountSettingsWindow(ba.Window):
         )
 
         # Currently we can only reset achievements on game-center.
-        account_type: str | None
-        if self._signed_in:
-            account_type = ba.internal.get_v1_account_type()
+        v1_account_type: str | None
+        if self._v1_signed_in:
+            v1_account_type = ba.internal.get_v1_account_type()
         else:
-            account_type = None
-        self._can_reset_achievements = account_type == 'Game Center'
+            v1_account_type = None
+        self._can_reset_achievements = v1_account_type == 'Game Center'
 
         app = ba.app
         uiscale = app.ui.uiscale
@@ -104,7 +107,7 @@ class AccountSettingsWindow(ba.Window):
 
         # Legacy v1 device accounts are currently always available
         # (though we need to start phasing them out at some point).
-        self._show_sign_in_buttons.append('Local')
+        self._show_sign_in_buttons.append('Device')
 
         top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(
@@ -183,31 +186,25 @@ class AccountSettingsWindow(ba.Window):
     def _update(self) -> None:
 
         # If they want us to close once we're signed in, do so.
-        if self._close_once_signed_in and self._signed_in:
+        if self._close_once_signed_in and self._v1_signed_in:
             self._back()
             return
 
         # Hmm should update this to use get_account_state_num.
         # Theoretically if we switch from one signed-in account to another
         # in the background this would break.
-        account_state_num = ba.internal.get_v1_account_state_num()
-        account_state = ba.internal.get_v1_account_state()
-
-        show_linked = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
-        )
+        v1_account_state_num = ba.internal.get_v1_account_state_num()
+        v1_account_state = ba.internal.get_v1_account_state()
+        show_legacy_unlink_button = self._should_show_legacy_unlink_button()
 
         if (
-            account_state_num != self._account_state_num
-            or self._show_linked != show_linked
+            v1_account_state_num != self._v1_account_state_num
+            or show_legacy_unlink_button != self._show_legacy_unlink_button
             or self._needs_refresh
         ):
-            self._show_linked = show_linked
-            self._account_state_num = account_state_num
-            self._signed_in = account_state == 'signed_in'
+            self._v1_account_state_num = v1_account_state_num
+            self._v1_signed_in = v1_account_state == 'signed_in'
+            self._show_legacy_unlink_button = show_legacy_unlink_button
             self._refresh()
 
         # Go ahead and refresh some individual things
@@ -229,22 +226,27 @@ class AccountSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import confirm
 
+        primary_v2_account = ba.app.accounts_v2.primary
+
         v1_state = ba.internal.get_v1_account_state()
-        account_type = (
+        v1_account_type = (
             ba.internal.get_v1_account_type()
             if v1_state == 'signed_in'
             else 'unknown'
         )
 
-        is_google = account_type == 'Google Play'
+        # We expose GPGS-specific functionality only if it is 'active'
+        # (meaning the current GPGS player matches one of our account's
+        # logins).
+        gpgs_adapter = ba.app.accounts_v2.login_adapters.get(LoginType.GPGS)
+        is_gpgs = (
+            False if gpgs_adapter is None else gpgs_adapter.is_back_end_active()
+        )
 
-        show_local_signed_in_as = False
-        local_signed_in_as_space = 50.0
-
-        show_signed_in_as = self._signed_in
+        show_signed_in_as = self._v1_signed_in
         signed_in_as_space = 95.0
 
-        show_sign_in_benefits = not self._signed_in
+        show_sign_in_benefits = not self._v1_signed_in
         sign_in_benefits_space = 80.0
 
         show_signing_in_text = (
@@ -257,32 +259,30 @@ class AccountSettingsWindow(ba.Window):
             and self._signing_in_adapter is None
             and 'Google Play' in self._show_sign_in_buttons
         )
-        show_device_sign_in_button = (
-            v1_state == 'signed_out'
-            and self._signing_in_adapter is None
-            and 'Local' in self._show_sign_in_buttons
-        )
         show_v2_proxy_sign_in_button = (
             v1_state == 'signed_out'
             and self._signing_in_adapter is None
             and 'V2Proxy' in self._show_sign_in_buttons
         )
+        show_device_sign_in_button = (
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
+            and 'Device' in self._show_sign_in_buttons
+        )
         sign_in_button_space = 70.0
+        deprecated_space = 60
 
-        show_game_service_button = self._signed_in and account_type in [
+        show_game_service_button = self._v1_signed_in and v1_account_type in [
             'Game Center'
         ]
         game_service_button_space = 60.0
 
-        show_linked_accounts_text = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
-        )
+        show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
+
+        show_linked_accounts_text = self._v1_signed_in
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = self._signed_in and account_type in (
+        show_achievements_button = self._v1_signed_in and v1_account_type in (
             'Google Play',
             'Local',
             'V2',
@@ -290,42 +290,46 @@ class AccountSettingsWindow(ba.Window):
         achievements_button_space = 60.0
 
         show_achievements_text = (
-            self._signed_in and not show_achievements_button
+            self._v1_signed_in and not show_achievements_button
         )
         achievements_text_space = 27.0
 
-        show_leaderboards_button = self._signed_in and is_google
+        show_leaderboards_button = self._v1_signed_in and is_gpgs
         leaderboards_button_space = 60.0
 
-        show_campaign_progress = self._signed_in
+        show_campaign_progress = self._v1_signed_in
         campaign_progress_space = 27.0
 
-        show_tickets = self._signed_in
+        show_tickets = self._v1_signed_in
         tickets_space = 27.0
 
         show_reset_progress_button = False
         reset_progress_button_space = 70.0
 
-        show_manage_v2_account_button = self._signed_in and account_type == 'V2'
+        show_manage_v2_account_button = (
+            self._v1_signed_in and v1_account_type == 'V2'
+        )
         manage_v2_account_button_space = 100.0
 
-        show_player_profiles_button = self._signed_in
+        show_player_profiles_button = self._v1_signed_in
         player_profiles_button_space = (
             70.0 if show_manage_v2_account_button else 100.0
         )
 
-        show_link_accounts_button = (
-            self._signed_in
-            and ba.internal.get_v1_account_misc_read_val(
-                'allowAccountLinking2', False
-            )
+        show_link_accounts_button = self._v1_signed_in and (
+            primary_v2_account is None or FORCE_ENABLE_V1_LINKING
         )
         link_accounts_button_space = 70.0
 
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_sign_out_button = self._signed_in and account_type in [
+        show_v2_link_info = self._v1_signed_in and not show_link_accounts_button
+        v2_link_info_space = 70.0
+
+        legacy_unlink_button_space = 120.0
+
+        show_sign_out_button = self._v1_signed_in and v1_account_type in [
             'Local',
             'Google Play',
             'V2',
@@ -337,25 +341,23 @@ class AccountSettingsWindow(ba.Window):
         # to be verified.
         show_cancel_sign_in_button = self._signing_in_adapter is not None or (
             ba.app.accounts_v2.have_primary_credentials()
-            and ba.app.accounts_v2.primary is None
+            and primary_v2_account is None
         )
         cancel_sign_in_button_space = 70.0
 
         if self._subcontainer is not None:
             self._subcontainer.delete()
         self._sub_height = 60.0
-        if show_local_signed_in_as:
-            self._sub_height += local_signed_in_as_space
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
             self._sub_height += sign_in_button_space
-        if show_device_sign_in_button:
-            self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
+        if show_device_sign_in_button:
+            self._sub_height += sign_in_button_space + deprecated_space
         if show_game_service_button:
             self._sub_height += game_service_button_space
         if show_linked_accounts_text:
@@ -382,6 +384,10 @@ class AccountSettingsWindow(ba.Window):
             self._sub_height += link_accounts_button_space
         if show_unlink_accounts_button:
             self._sub_height += unlink_accounts_button_space
+        if show_v2_link_info:
+            self._sub_height += v2_link_info_space
+        if self._show_legacy_unlink_button:
+            self._sub_height += legacy_unlink_button_space
         if show_sign_out_button:
             self._sub_height += sign_out_button_space
         if show_cancel_sign_in_button:
@@ -398,27 +404,8 @@ class AccountSettingsWindow(ba.Window):
         first_selectable = None
         v = self._sub_height - 10.0
 
-        if show_local_signed_in_as:
-            v -= local_signed_in_as_space * 0.6
-            ba.textwidget(
-                parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
-                size=(0, 0),
-                text=ba.Lstr(
-                    resource='accountSettingsWindow.deviceSpecificAccountText',
-                    subs=[
-                        ('${NAME}', ba.internal.get_v1_account_display_string())
-                    ],
-                ),
-                scale=0.7,
-                color=(0.5, 0.5, 0.6),
-                maxwidth=self._sub_width * 0.9,
-                flatness=1.0,
-                h_align='center',
-                v_align='center',
-            )
-            v -= local_signed_in_as_space * 0.4
-
+        self._account_name_what_is_text: ba.Widget | None
+        self._account_name_what_is_y = 0.0
         self._account_name_text: ba.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
@@ -437,7 +424,7 @@ class AccountSettingsWindow(ba.Window):
                 h_align='center',
                 v_align='center',
             )
-            v -= signed_in_as_space * 0.4
+            v -= signed_in_as_space * 0.5
             self._account_name_text = ba.textwidget(
                 parent=self._subcontainer,
                 position=(self._sub_width * 0.5, v),
@@ -449,10 +436,39 @@ class AccountSettingsWindow(ba.Window):
                 h_align='center',
                 v_align='center',
             )
+
+            if show_what_is_v2:
+                self._account_name_what_is_y = v - 23.0
+                self._account_name_what_is_text = ba.textwidget(
+                    parent=self._subcontainer,
+                    position=(0.0, self._account_name_what_is_y),
+                    size=(200.0, 60),
+                    text=ba.Lstr(
+                        value='${WHAT}  -->',
+                        subs=[('${WHAT}', ba.Lstr(resource='whatIsThisText'))],
+                    ),
+                    scale=0.6,
+                    color=(0.3, 0.7, 0.05),
+                    maxwidth=200.0,
+                    h_align='right',
+                    v_align='center',
+                    autoselect=True,
+                    selectable=True,
+                    on_activate_call=show_what_is_v2_page,
+                    click_activate=True,
+                )
+                if first_selectable is None:
+                    first_selectable = self._account_name_what_is_text
+            else:
+                self._account_name_what_is_text = None
+
             self._refresh_account_name_text()
+
             v -= signed_in_as_space * 0.4
+
         else:
             self._account_name_text = None
+            self._account_name_what_is_text = None
 
         if self._back_button is None:
             bbtn = ba.internal.get_special_widget('back_button')
@@ -606,7 +622,7 @@ class AccountSettingsWindow(ba.Window):
 
         if show_device_sign_in_button:
             button_width = 350
-            v -= sign_in_button_space
+            v -= sign_in_button_space + deprecated_space
             self._sign_in_device_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v - 20),
@@ -615,6 +631,18 @@ class AccountSettingsWindow(ba.Window):
                 label='',
                 on_activate_call=lambda: self._sign_in_press('Local'),
             )
+            ba.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 60),
+                text=ba.Lstr(resource='deprecatedText'),
+                scale=0.8,
+                maxwidth=300,
+                color=(0.6, 0.55, 0.45),
+            )
+
             ba.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
@@ -709,12 +737,12 @@ class AccountSettingsWindow(ba.Window):
         if show_game_service_button:
             button_width = 300
             v -= game_service_button_space * 0.85
-            account_type = ba.internal.get_v1_account_type()
-            if account_type == 'Game Center':
-                account_type_name = ba.Lstr(resource='gameCenterText')
+            v1_account_type = ba.internal.get_v1_account_type()
+            if v1_account_type == 'Game Center':
+                v1_account_type_name = ba.Lstr(resource='gameCenterText')
             else:
                 raise ValueError(
-                    "unknown account type: '" + str(account_type) + "'"
+                    "unknown account type: '" + str(v1_account_type) + "'"
                 )
             self._game_service_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
@@ -724,7 +752,7 @@ class AccountSettingsWindow(ba.Window):
                 autoselect=True,
                 on_activate_call=ba.internal.show_online_score_ui,
                 size=(button_width, 50),
-                label=account_type_name,
+                label=v1_account_type_name,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -767,11 +795,15 @@ class AccountSettingsWindow(ba.Window):
                 autoselect=True,
                 icon=ba.gettexture(
                     'googlePlayAchievementsIcon'
-                    if is_google
+                    if is_gpgs
                     else 'achievementsIcon'
                 ),
-                icon_color=(0.8, 0.95, 0.7) if is_google else (0.85, 0.8, 0.9),
-                on_activate_call=self._on_achievements_press,
+                icon_color=(0.8, 0.95, 0.7) if is_gpgs else (0.85, 0.8, 0.9),
+                on_activate_call=(
+                    self._on_custom_achievements_press
+                    if is_gpgs
+                    else self._on_achievements_press
+                ),
                 size=(button_width, 50),
                 label='',
             )
@@ -903,6 +935,7 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.95,
+                text=ba.Lstr(resource=self._r + '.linkedAccountsText'),
                 h_align='center',
                 v_align='center',
             )
@@ -910,6 +943,8 @@ class AccountSettingsWindow(ba.Window):
             self._update_linked_accounts_text()
         else:
             self._linked_accounts_text = None
+
+        # Show link/unlink buttons only for V1 accounts.
 
         if show_link_accounts_button:
             v -= link_accounts_button_space
@@ -990,6 +1025,50 @@ class AccountSettingsWindow(ba.Window):
         else:
             self._unlink_accounts_button = None
 
+        if show_v2_link_info:
+            v -= v2_link_info_space
+            ba.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + v2_link_info_space - 20),
+                text=ba.Lstr(resource='v2AccountLinkingInfoText'),
+                flatness=1.0,
+                scale=0.8,
+                maxwidth=450,
+                color=(0.5, 0.45, 0.55),
+            )
+
+        if self._show_legacy_unlink_button:
+            v -= legacy_unlink_button_space
+            button_width_w = button_width * 1.5
+            ba.textwidget(
+                parent=self._subcontainer,
+                position=(self._sub_width * 0.5 - 150.0, v + 75),
+                size=(300.0, 60),
+                text=ba.Lstr(resource='whatIsThisText'),
+                scale=0.8,
+                color=(0.3, 0.7, 0.05),
+                maxwidth=200.0,
+                h_align='center',
+                v_align='center',
+                autoselect=True,
+                selectable=True,
+                on_activate_call=show_what_is_legacy_unlinking_page,
+                click_activate=True,
+            )
+            btn = ba.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width_w) * 0.5, v + 25),
+                autoselect=True,
+                size=(button_width_w, 60),
+                label=ba.Lstr(resource=self._r + '.unlinkLegacyV1AccountsText'),
+                textcolor=(0.8, 0.4, 0),
+                color=(0.55, 0.5, 0.6),
+                on_activate_call=self._unlink_accounts_press,
+            )
+
         if show_sign_out_button:
             v -= sign_out_button_space
             self._sign_out_button = btn = ba.buttonwidget(
@@ -1044,33 +1123,24 @@ class AccountSettingsWindow(ba.Window):
             )
         self._needs_refresh = False
 
+    def _on_custom_achievements_press(self) -> None:
+        ba.timer(
+            0.15,
+            ba.Call(ba.internal.show_online_score_ui, 'achievements'),
+            timetype=ba.TimeType.REAL,
+        )
+
     def _on_achievements_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui import achievements
 
-        account_state = ba.internal.get_v1_account_state()
-        account_type = (
-            ba.internal.get_v1_account_type()
-            if account_state == 'signed_in'
-            else 'unknown'
+        assert self._achievements_button is not None
+        achievements.AchievementsWindow(
+            position=self._achievements_button.get_screen_space_center()
         )
-        # for google play we use the built-in UI; otherwise pop up our own
-        if account_type == 'Google Play':
-            ba.timer(
-                0.15,
-                ba.Call(ba.internal.show_online_score_ui, 'achievements'),
-                timetype=ba.TimeType.REAL,
-            )
-        elif account_type != 'unknown':
-            assert self._achievements_button is not None
-            achievements.AchievementsWindow(
-                position=self._achievements_button.get_screen_space_center()
-            )
-        else:
-            print(
-                'ERROR: unknown account type in on_achievements_press:',
-                account_type,
-            )
+
+    def _on_what_is_v2_press(self) -> None:
+        show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
         ba.screenmessage(ba.Lstr(resource='oneMomentText'))
@@ -1106,7 +1176,7 @@ class AccountSettingsWindow(ba.Window):
             timetype=ba.TimeType.REAL,
         )
 
-    def _have_unlinkable_accounts(self) -> bool:
+    def _have_unlinkable_v1_accounts(self) -> bool:
         # if this is not present, we haven't had contact from the server so
         # let's not proceed..
         if ba.internal.get_public_login_id() is None:
@@ -1119,14 +1189,31 @@ class AccountSettingsWindow(ba.Window):
     def _update_unlink_accounts_button(self) -> None:
         if self._unlink_accounts_button is None:
             return
-        if self._have_unlinkable_accounts():
+        if self._have_unlinkable_v1_accounts():
             clr = (0.75, 0.7, 0.8, 1.0)
         else:
             clr = (1.0, 1.0, 1.0, 0.25)
         ba.textwidget(edit=self._unlink_accounts_button_label, color=clr)
 
+    def _should_show_legacy_unlink_button(self) -> bool:
+
+        # Only show this when fully signed in to a v2 account.
+        if not self._v1_signed_in or ba.app.accounts_v2.primary is None:
+            return False
+
+        out = self._have_unlinkable_v1_accounts()
+        return out
+
     def _update_linked_accounts_text(self) -> None:
         if self._linked_accounts_text is None:
+            return
+
+        # Disable this by default when signed in to a V2 account
+        # (since this shows V1 links which we should no longer care about).
+        if (
+            ba.app.accounts_v2.primary is not None
+            and not FORCE_ENABLE_V1_LINKING
+        ):
             return
 
         # if this is not present, we haven't had contact from the server so
@@ -1138,13 +1225,9 @@ class AccountSettingsWindow(ba.Window):
             accounts = ba.internal.get_v1_account_misc_read_val_2(
                 'linkedAccounts', []
             )
-            # our_account = _bs.get_v1_account_display_string()
-            # accounts = [a for a in accounts if a != our_account]
-            # accounts_str = u', '.join(accounts) if accounts else
-            # ba.Lstr(translate=('settingNames', 'None'))
             # UPDATE - we now just print the number here; not the actual
-            # accounts
-            # (they can see that in the unlink section if they're curious)
+            # accounts (they can see that in the unlink section if they're
+            # curious)
             accounts_str = str(max(0, len(accounts) - 1))
         ba.textwidget(
             edit=self._linked_accounts_text,
@@ -1195,6 +1278,7 @@ class AccountSettingsWindow(ba.Window):
         )
 
     def _refresh_account_name_text(self) -> None:
+
         if self._account_name_text is None:
             return
         try:
@@ -1202,7 +1286,20 @@ class AccountSettingsWindow(ba.Window):
         except Exception:
             ba.print_exception()
             name_str = '??'
+
         ba.textwidget(edit=self._account_name_text, text=name_str)
+        if self._account_name_what_is_text is not None:
+            swidth = ba.internal.get_string_width(
+                name_str, suppress_warning=True
+            )
+            # Eww; number-fudging. Need to recalibrate this if
+            # account name scaling changes.
+            x = self._sub_width * 0.5 - swidth * 0.75 - 170
+
+            ba.textwidget(
+                edit=self._account_name_what_is_text,
+                position=(x, self._account_name_what_is_y),
+            )
 
     def _refresh_achievements(self) -> None:
         if (
@@ -1232,7 +1329,7 @@ class AccountSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.account import unlink
 
-        if not self._have_unlinkable_accounts():
+        if not self._have_unlinkable_v1_accounts():
             ba.playsound(ba.getsound('error'))
             return
         unlink.AccountUnlinkWindow(origin_widget=self._unlink_accounts_button)
@@ -1263,6 +1360,11 @@ class AccountSettingsWindow(ba.Window):
     def _sign_out_press(self) -> None:
 
         if ba.app.accounts_v2.have_primary_credentials():
+            if (
+                ba.app.accounts_v2.primary is not None
+                and LoginType.GPGS in ba.app.accounts_v2.primary.logins
+            ):
+                self._explicitly_signed_out_of_gpgs = True
             ba.app.accounts_v2.set_primary_credentials(None)
         else:
             ba.internal.sign_out_v1()
@@ -1301,7 +1403,8 @@ class AccountSettingsWindow(ba.Window):
         if adapter is not None:
             self._signing_in_adapter = adapter
             adapter.sign_in(
-                result_cb=ba.WeakCall(self._on_adapter_sign_in_result)
+                result_cb=ba.WeakCall(self._on_adapter_sign_in_result),
+                description='account settings button',
             )
             # Will get 'Signing in...' to show.
             self._needs_refresh = True
@@ -1333,6 +1436,27 @@ class AccountSettingsWindow(ba.Window):
             # verifying them and set our primary account-handle
             # when finished.
             ba.app.accounts_v2.set_primary_credentials(result.credentials)
+
+            # Special case - if the user has explicitly logged out and
+            # logged in again with GPGS via this button, warn them that
+            # they need to use the app if they want to switch to a
+            # different GPGS account.
+            if (
+                self._explicitly_signed_out_of_gpgs
+                and adapter.login_type is LoginType.GPGS
+            ):
+                # Delay this slightly so it hopefully pops up after
+                # credentials go through and the account name shows up.
+                ba.timer(
+                    1.5,
+                    ba.Call(
+                        ba.screenmessage,
+                        ba.Lstr(
+                            resource=self._r
+                            + '.googlePlayGamesAccountSwitchText'
+                        ),
+                    ),
+                )
 
         # Speed any UI updates along.
         self._needs_refresh = True
@@ -1402,3 +1526,15 @@ class AccountSettingsWindow(ba.Window):
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self}.')
+
+
+def show_what_is_v2_page() -> None:
+    """Show the webpage describing V2 accounts."""
+    bamasteraddr = ba.internal.get_master_server_address(version=2)
+    ba.open_url(f'{bamasteraddr}/whatisv2')
+
+
+def show_what_is_legacy_unlinking_page() -> None:
+    """Show the webpage describing legacy unlinking."""
+    bamasteraddr = ba.internal.get_master_server_address(version=2)
+    ba.open_url(f'{bamasteraddr}/whatarev1links')

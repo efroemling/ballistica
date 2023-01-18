@@ -1108,7 +1108,15 @@ void RootWidget::SetOverlayWidget(StackWidget* w) {
   overlay_stack_widget_ = w;
 }
 
-void RootWidget::OnCancelCustom() { g_ui->PushBackButtonCall(nullptr); }
+void RootWidget::OnCancelCustom() {
+  // Need to revisit this. If the cancel event it pushes is not handled, it will
+  // wind up back here where it pushes another back call. This cycle repeats
+  // forever until something comes along which does handle cancel events and
+  // then it gets them all. Current repro case is Sign-in-with-BombSquad-Account
+  // window - press escape a few times while that is up and then click cancel;
+  // This code is only used for toolbar mode so should be safe to leave it
+  // disabled for now. g_ui->PushBackButtonCall(nullptr);
+}
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
   if (s == "party_button") {

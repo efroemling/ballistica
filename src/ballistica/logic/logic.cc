@@ -19,7 +19,6 @@
 #include "ballistica/logic/connection/connection_set.h"
 #include "ballistica/logic/connection/connection_to_client_udp.h"
 #include "ballistica/logic/connection/connection_to_host_udp.h"
-#include "ballistica/logic/friend_score_set.h"
 #include "ballistica/logic/host_activity.h"
 #include "ballistica/logic/player.h"
 #include "ballistica/logic/session/client_session.h"
@@ -1138,11 +1137,6 @@ void Logic::PushPlaySoundCall(SystemSoundID sound) {
       [sound] { g_audio->PlaySound(g_assets->GetSound(sound)); });
 }
 
-void Logic::PushFriendScoreSetCall(const FriendScoreSet& score_set) {
-  thread()->PushCall(
-      [score_set] { g_python->HandleFriendScoresCB(score_set); });
-}
-
 void Logic::PushConfirmQuitCall() {
   thread()->PushCall([this] {
     assert(InLogicThread());
@@ -2106,6 +2100,20 @@ void Logic::SetPublicPartySize(int count) {
     return;
   }
   public_party_size_ = count;
+
+  // Push our new state to the server *ONLY* if public-party is turned on
+  // (wasteful otherwise).
+  if (public_party_enabled_) {
+    g_app_internal->PushPublicPartyState();
+  }
+}
+
+auto Logic::SetPublicPartyQueueEnabled(bool enabled) -> void {
+  assert(InLogicThread());
+  if (enabled == public_party_queue_enabled_) {
+    return;
+  }
+  public_party_queue_enabled_ = enabled;
 
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).

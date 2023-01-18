@@ -473,7 +473,6 @@ class PlaylistEditGameWindow(ba.Window):
 
         # Ok now wire up the column.
         try:
-            # pylint: disable=unsubscriptable-object
             prev_widgets: list[ba.Widget] | None = None
             for cwdg in widget_column:
                 if prev_widgets is not None:

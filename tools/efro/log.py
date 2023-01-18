@@ -37,7 +37,27 @@ class LogLevel(Enum):
     ERROR = 3
     CRITICAL = 4
 
+    @property
+    def python_logging_level(self) -> int:
+        """Give the corresponding logging level."""
+        return LOG_LEVEL_LEVELNOS[self]
 
+    @classmethod
+    def from_python_logging_level(cls, levelno: int) -> LogLevel:
+        """Given a Python logging level, return a LogLevel."""
+        return LEVELNO_LOG_LEVELS[levelno]
+
+
+# Python logging levels from LogLevels
+LOG_LEVEL_LEVELNOS = {
+    LogLevel.DEBUG: logging.DEBUG,
+    LogLevel.INFO: logging.INFO,
+    LogLevel.WARNING: logging.WARNING,
+    LogLevel.ERROR: logging.ERROR,
+    LogLevel.CRITICAL: logging.CRITICAL,
+}
+
+# LogLevels from Python logging levels
 LEVELNO_LOG_LEVELS = {
     logging.DEBUG: LogLevel.DEBUG,
     logging.INFO: LogLevel.INFO,
@@ -128,7 +148,9 @@ class LogHandler(logging.Handler):
         self._cache_lock = Lock()
         self._printed_callback_error = False
         self._thread_bootstrapped = False
-        self._thread = Thread(target=self._thread_main, daemon=True)
+        self._thread = Thread(target=self._log_thread_main, daemon=True)
+        if __debug__:
+            self._last_slow_emit_warning_time: float | None = None
         self._thread.start()
 
         # Spin until our thread is up and running; otherwise we could
@@ -145,7 +167,7 @@ class LogHandler(logging.Handler):
         with self._callbacks_lock:
             self._callbacks.append(call)
 
-    def _thread_main(self) -> None:
+    def _log_thread_main(self) -> None:
         self._event_loop = asyncio.new_event_loop()
         # NOTE: if we ever use default threadpool at all we should allow
         # setting it for our loop.
@@ -172,20 +194,15 @@ class LogHandler(logging.Handler):
             now = utc_now()
             with self._cache_lock:
 
-                # Quick out: if oldest cache entry is still valid,
-                # don't touch anything.
-                if (
+                # Prune the oldest entry as long as there is a first one that
+                # is too old.
+                while (
                     self._cache
-                    and (now - self._cache[0][1].time) < self._cache_time_limit
+                    and (now - self._cache[0][1].time) >= self._cache_time_limit
                 ):
-                    continue
-
-                # Ok; full prune.
-                self._cache = [
-                    e
-                    for e in self._cache
-                    if (now - e[1].time) < self._cache_time_limit
-                ]
+                    popped = self._cache.pop(0)
+                    self._cache_size -= popped[0]
+                    self._cache_index_offset += 1
 
     def get_cached(
         self, start_index: int = 0, max_entries: int | None = None
@@ -223,6 +240,9 @@ class LogHandler(logging.Handler):
             )
 
     def emit(self, record: logging.LogRecord) -> None:
+        if __debug__:
+            starttime = time.monotonic()
+
         # Called by logging to send us records.
         # We simply package them up and ship them to our thread.
         # UPDATE: turns out we CAN get log messages from this thread
@@ -246,6 +266,9 @@ class LogHandler(logging.Handler):
         # didn't expect to be stringified.
         msg = self.format(record)
 
+        if __debug__:
+            formattime = time.monotonic()
+
         # Also immediately print pretty colored output to our echo file
         # (generally stderr). We do this part here instead of in our bg
         # thread because the delay can throw off command line prompts or
@@ -257,6 +280,9 @@ class LogHandler(logging.Handler):
             else:
                 self._echofile.write(f'{msg}\n')
 
+        if __debug__:
+            echotime = time.monotonic()
+
         self._event_loop.call_soon_threadsafe(
             tpartial(
                 self._emit_in_thread,
@@ -266,6 +292,37 @@ class LogHandler(logging.Handler):
                 msg,
             )
         )
+
+        if __debug__:
+            # Make noise if we're taking a significant amount of time here.
+            # Limit the noise to once every so often though; otherwise we
+            # could get a feedback loop where every log emit results in a
+            # warning log which results in another, etc.
+            now = time.monotonic()
+            # noinspection PyUnboundLocalVariable
+            duration = now - starttime
+            # noinspection PyUnboundLocalVariable
+            format_duration = formattime - starttime
+            # noinspection PyUnboundLocalVariable
+            echo_duration = echotime - formattime
+            if duration > 0.05 and (
+                self._last_slow_emit_warning_time is None
+                or now > self._last_slow_emit_warning_time + 10.0
+            ):
+                # Logging calls from *within* a logging handler
+                # sounds sketchy, so let's just kick this over to
+                # the bg event loop thread we've already got.
+                self._last_slow_emit_warning_time = now
+                self._event_loop.call_soon_threadsafe(
+                    tpartial(
+                        logging.warning,
+                        'efro.log.LogHandler emit took too long'
+                        ' (%.2fs total; %.2fs format, %.2fs echo).',
+                        duration,
+                        format_duration,
+                        echo_duration,
+                    )
+                )
 
     def _emit_in_thread(
         self, name: str, levelno: int, created: float, message: str

@@ -138,6 +138,11 @@ class ServerConfig:
         tuple[float, float, float], tuple[float, float, float]
     ] | None = None
 
+    # Whether to enable the queue where players can line up before entering
+    # your server. Disabling this can be used as a workaround to deal with
+    # queue spamming attacks.
+    enable_queue: bool = True
+
     # (internal) stress-testing mode.
     stress_test_players: int | None = None
 

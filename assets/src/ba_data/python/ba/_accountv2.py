@@ -4,15 +4,22 @@
 
 from __future__ import annotations
 
+import hashlib
+import logging
 from typing import TYPE_CHECKING
 
+from efro.call import tpartial
+from efro.error import CommunicationError
+from bacommon.login import LoginType
 import _ba
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from bacommon.login import LoginType
     from ba._login import LoginAdapter
+
+
+DEBUG_LOG = False
 
 
 class AccountV2Subsystem:
@@ -24,20 +31,20 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
-        from bacommon.login import LoginType
 
         # Whether or not everything related to an initial login
         # (or lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
         # into 'running' state.
-        self._initial_login_completed = False
+        self._initial_sign_in_completed = False
 
         self._kicked_off_workspace_load = False
 
         self.login_adapters: dict[LoginType, LoginAdapter] = {}
 
         self._implicit_signed_in_adapter: LoginAdapter | None = None
-        self._auto_signed_in = False
+        self._implicit_state_changed = False
+        self._can_do_auto_sign_in = True
 
         if _ba.app.platform == 'android' and _ba.app.subplatform == 'google':
             from ba._login import LoginAdapterGPGS
@@ -91,7 +98,7 @@ class AccountV2Subsystem:
         if account.workspaceid is not None:
             assert account.workspacename is not None
             if (
-                not self._initial_login_completed
+                not self._initial_sign_in_completed
                 and not self._kicked_off_workspace_load
             ):
                 self._kicked_off_workspace_load = True
@@ -114,9 +121,9 @@ class AccountV2Subsystem:
             return
 
         # Ok; no workspace to worry about; carry on.
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
         """Should be called when logins for the active account change."""
@@ -127,7 +134,7 @@ class AccountV2Subsystem:
     def on_implicit_sign_in(
         self, login_type: LoginType, login_id: str, display_name: str
     ) -> None:
-        """An implicit login happened."""
+        """An implicit sign-in happened (called by native layer)."""
         from ba._login import LoginAdapter
 
         with _ba.Context('ui'):
@@ -138,7 +145,7 @@ class AccountV2Subsystem:
             )
 
     def on_implicit_sign_out(self, login_type: LoginType) -> None:
-        """An implicit logout happened."""
+        """An implicit sign-out happened (called by native layer)."""
         with _ba.Context('ui'):
             self.login_adapters[login_type].set_implicit_login_state(None)
 
@@ -149,9 +156,15 @@ class AccountV2Subsystem:
         within a few seconds of app launch; the app can move forward
         with the startup sequence at that point.
         """
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
+
+    @staticmethod
+    def _hashstr(val: str) -> str:
+        md5 = hashlib.md5()
+        md5.update(val.encode())
+        return md5.hexdigest()
 
     def on_implicit_login_state_changed(
         self,
@@ -160,18 +173,75 @@ class AccountV2Subsystem:
     ) -> None:
         """Called when implicit login state changes.
 
-        Logins that tend to sign themselves in/out in the background are
-        considered implicit. We may choose to honor or ignore their states,
-        allowing the user to opt for other login types even if the default
-        implicit one can't be explicitly logged out or otherwise controlled.
+        Login systems that tend to sign themselves in/out in the
+        background are considered implicit. We may choose to honor or
+        ignore their states, allowing the user to opt for other login
+        types even if the default implicit one can't be explicitly
+        logged out or otherwise controlled.
         """
+        from ba._language import Lstr
+
         assert _ba.in_logic_thread()
 
+        cfg = _ba.app.config
+        cfgkey = 'ImplicitLoginStates'
+        cfgdict = _ba.app.config.setdefault(cfgkey, {})
+
         # Store which (if any) adapter is currently implicitly signed in.
+        # Making the assumption there will only ever be one implicit
+        # adapter at a time; may need to update this if that changes.
+        prev_state = cfgdict.get(login_type.value)
         if state is None:
             self._implicit_signed_in_adapter = None
+            new_state = cfgdict[login_type.value] = None
         else:
             self._implicit_signed_in_adapter = self.login_adapters[login_type]
+            new_state = cfgdict[login_type.value] = self._hashstr(
+                state.login_id
+            )
+
+            # Special case: if the user is already signed in but not with
+            # this implicit login, we may want to let them know that the
+            # 'Welcome back FOO' they likely just saw is not actually
+            # accurate.
+            if (
+                self.primary is not None
+                and not self.login_adapters[login_type].is_back_end_active()
+            ):
+                if login_type is LoginType.GPGS:
+                    service_str = Lstr(resource='googlePlayText')
+                else:
+                    service_str = None
+                if service_str is not None:
+                    _ba.timer(
+                        2.0,
+                        tpartial(
+                            _ba.screenmessage,
+                            Lstr(
+                                resource='notUsingAccountText',
+                                subs=[
+                                    ('${ACCOUNT}', state.display_name),
+                                    ('${SERVICE}', service_str),
+                                ],
+                            ),
+                            (1, 0.5, 0),
+                        ),
+                    )
+
+        cfg.commit()
+
+        # We want to respond any time the implicit state changes;
+        # generally this means the user has explicitly signed in/out or
+        # switched accounts within that back-end.
+        if prev_state != new_state:
+            if DEBUG_LOG:
+                logging.debug(
+                    'AccountV2: Implicit state changed (%s -> %s);'
+                    ' will update app sign-in state accordingly.',
+                    prev_state,
+                    new_state,
+                )
+            self._implicit_state_changed = True
 
         # We may want to auto-sign-in based on this new state.
         self._update_auto_sign_in()
@@ -187,12 +257,59 @@ class AccountV2Subsystem:
     def _update_auto_sign_in(self) -> None:
         from ba._internal import get_v1_account_state
 
-        # We attempt auto-sign-in only once.
-        if self._auto_signed_in:
+        # If implicit state has changed, try to respond.
+        if self._implicit_state_changed:
+            if self._implicit_signed_in_adapter is None:
+                # If implicit back-end is signed out, follow suit
+                # immediately; no need to wait for network connectivity.
+                if DEBUG_LOG:
+                    logging.debug(
+                        'AccountV2: Signing out as result'
+                        ' of implicit state change...',
+                    )
+                _ba.app.accounts_v2.set_primary_credentials(None)
+                self._implicit_state_changed = False
+
+                # Once we've made a move here we don't want to
+                # do any more automatic stuff.
+                self._can_do_auto_sign_in = False
+
+            else:
+                # Ok; we've got a new implicit state. If we've got
+                # connectivity, let's attempt to sign in with it.
+                # Consider this an 'explicit' sign in because the
+                # implicit-login state change presumably was triggered
+                # by some user action (signing in, signing out, or
+                # switching accounts via the back-end).
+                # NOTE: should test case where we don't have
+                # connectivity here.
+                if _ba.app.cloud.is_connected():
+                    if DEBUG_LOG:
+                        logging.debug(
+                            'AccountV2: Signing in as result'
+                            ' of implicit state change...',
+                        )
+                    self._implicit_signed_in_adapter.sign_in(
+                        self._on_explicit_sign_in_completed,
+                        description='implicit state change',
+                    )
+                    self._implicit_state_changed = False
+
+                    # Once we've made a move here we don't want to
+                    # do any more automatic stuff.
+                    self._can_do_auto_sign_in = False
+
+        if not self._can_do_auto_sign_in:
             return
 
         # If we're not currently signed in, we have connectivity, and
-        # we have an available implicit adapter, do an auto-sign-in.
+        # we have an available implicit login, auto-sign-in with it once.
+        # The implicit-state-change logic above should keep things
+        # mostly in-sync, but that might not always be the case due to
+        # connectivity or other issues. We prefer to keep people signed
+        # in as a rule, even if there are corner cases where this might
+        # not be what they want (A user signing out and then restarting
+        # may be auto-signed back in).
         connected = _ba.app.cloud.is_connected()
         signed_in_v1 = get_v1_account_state() == 'signed_in'
         signed_in_v2 = _ba.app.accounts_v2.have_primary_credentials()
@@ -202,24 +319,78 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            self._auto_signed_in = True  # Only attempt this once
-            self._implicit_signed_in_adapter.sign_in(self._on_sign_in_completed)
+            if DEBUG_LOG:
+                logging.debug(
+                    'AccountV2: Signing in due to on-launch-auto-sign-in...',
+                )
+            self._can_do_auto_sign_in = False  # Only ATTEMPT once
+            self._implicit_signed_in_adapter.sign_in(
+                self._on_implicit_sign_in_completed, description='auto-sign-in'
+            )
 
-    def _on_sign_in_completed(
+    def _on_explicit_sign_in_completed(
         self,
         adapter: LoginAdapter,
         result: LoginAdapter.SignInResult | Exception,
     ) -> None:
+        """A sign-in has completed that the user asked for explicitly."""
+        from ba._language import Lstr
+
+        del adapter  # Unused.
+
+        # Make some noise on errors since the user knows a
+        # sign-in attempt is happening in this case (the 'explicit' part).
+        if isinstance(result, Exception):
+            # We expect the occasional communication errors;
+            # Log a full exception for anything else though.
+            if not isinstance(result, CommunicationError):
+                logging.warning(
+                    'Error on explicit accountv2 sign in attempt.',
+                    exc_info=result,
+                )
+
+            # For now just show 'error'. Should do better than this.
+            with _ba.Context('ui'):
+                _ba.screenmessage(
+                    Lstr(resource='internal.signInErrorText'),
+                    color=(1, 0, 0),
+                )
+                _ba.playsound(_ba.getsound('error'))
+
+            # Also I suppose we should sign them out in this case since
+            # it could be misleading to be still signed in with the old
+            # account.
+            _ba.app.accounts_v2.set_primary_credentials(None)
+            return
+
+        _ba.app.accounts_v2.set_primary_credentials(result.credentials)
+
+    def _on_implicit_sign_in_completed(
+        self,
+        adapter: LoginAdapter,
+        result: LoginAdapter.SignInResult | Exception,
+    ) -> None:
+        """A sign-in has completed that the user didn't ask for explicitly."""
         from ba._internal import get_v1_account_state
 
         del adapter  # Unused.
 
-        # Silently ignore errors.
+        # Log errors but don't inform the user; they're not aware of this
+        # attempt and ignorance is bliss.
         if isinstance(result, Exception):
+            # We expect the occasional communication errors;
+            # Log a full exception for anything else though.
+            if not isinstance(result, CommunicationError):
+                logging.warning(
+                    'Error on implicit accountv2 sign in attempt.',
+                    exc_info=result,
+                )
             return
 
         # If we're still connected and still not signed in,
-        # plug in the credentials we got.
+        # plug in the credentials we got. We want to be extra cautious
+        # in case the user has since explicitly signed in since we
+        # kicked off.
         connected = _ba.app.cloud.is_connected()
         signed_in_v1 = get_v1_account_state() == 'signed_in'
         signed_in_v2 = _ba.app.accounts_v2.have_primary_credentials()
@@ -227,9 +398,9 @@ class AccountV2Subsystem:
             _ba.app.accounts_v2.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:
-        if not self._initial_login_completed:
-            self._initial_login_completed = True
-            _ba.app.on_initial_login_completed()
+        if not self._initial_sign_in_completed:
+            self._initial_sign_in_completed = True
+            _ba.app.on_initial_sign_in_completed()
 
 
 class AccountV2Handle:

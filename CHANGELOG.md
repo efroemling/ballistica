@@ -1,12 +1,46 @@
-### 1.7.14 (build 20934, api 7, 2022-11-16)
+### 1.7.19 (build 20993, api 7, 2023-01-17)
+
+### 1.7.18 (build 20989, api 7, 2023-01-16)
+- Reworked some low level asynchronous messaging functionality in efro.message and efro.rpc. Previously these were a little *too* asynchronous which could lead to messages being received in a different order than they were sent, which is not desirable.
+- Added a way to suppress 'Your build is outdated' messages at launch (see `ba._hooks.show_client_too_old_error()`).
+
+### 1.7.17 (build 20983, api 7, 2023-01-09)
+- V2 accounts now show a 'Unlink Legacy (V1) Accounts' button in account settings if they have any old V1 links present. This can be used to clear out old links to replace them with V2 links which work correctly with V2 accounts.
+- `ba.internal.dump_tracebacks()` is now `ba.internal.dump_app_state()` and `ba.internal.log_dumped_tracebacks()` is now `ba.internal.log_dumped_app_state()`. This reflects the fact that these calls may be expanded to include other app state in the future (C++ layer thread states, etc.).
+- Added `ba.app.health_monitor` which will dump app state if the logic thread ever stops responding for 5+ seconds while the app is running (to help diagnose deadlock situations).
+- Various extra logging and bug fixes related to V2 accounts and master server communication (trying to get this stuff working as smoothly as possible now that it is feature-complete).
+
+### 1.7.16 (build 20969, api 7, 2022-12-18)
+- Fixed a bug where profile names encased in curly brackets could cause harmless error messages.
+- Android will no longer log errors on ba.open_url() calls if a browser is not available (it still just falls back to the in-app dialog in that case).
+- The 'Upgrade' button for device accounts now signs you out and closes the upgrade window to hopefully make it more clear that you need to sign in with your newly created/upgraded BombSquad account.
+- Fixed a bug where the remote app could not connect for the first 5 seconds after launching the app.
+- Added Malay language. Ick; apparently its been sitting done for a while and I hadn't realized it wasn't added to the game yet. Apologies!. And thanks to all contributors!
+- Added 'enable_queue' server config setting. This defaults to True but can be turned off as a workaround for server owners targeted by queue spam attacks.
+- The public party list no longer sorts servers without queues at the end of the list. This sorting was put there long ago to prioritize fancy new queue-supporting servers but now it would just make the few that opt out of queues hard to find. Doh. So opting out of queues is probably not a great idea until this build is widespread.
+- Public uuids now only change once every 6 months or so instead of with every version bump. This way periods of heavy development won't put added strain on server owners trying to keep ban lists up to date and whatnot.
+- Added a merch button in the in-game store that goes to the ballistica.net merch page (though it only shows up in the few countries where merch is available).
+
+### 1.7.15 (build 20960, api 7, 2022-12-04)
+- The cancel button on the 'Sign in with a Bombsquad Account' popup no longer respond to system cancel buttons (escape key, android back button, etc). Turns out some Android people were pressing back repeatedly to come back from a browser after signing in and immediately canceling their sign in attempts in the game before they completed. Hopefully this will avoid some frustration.
+- Fixed an issue where back presses could result in multiple main menu windows appearing.
+
+### 1.7.14 (build 20958, api 7, 2022-12-03)
 - Android Google Play logins now provide V2 accounts with access to all V2 features such as a globally-unique account tag, cloud-console, and workspaces. They should still retain their V1 data as well.
 - V2 accounts now have a 'Manage Account' button in the app account window which will sign you into a browser with your current account.
 - Removed Google App Invite functionality which has been deprecated for a while now. Google Play users can still get tickets by sharing the app via codes (same as other platforms).
 - Updated Android root-detection library to the latest version. Please holler if you are getting new false 'your device is rooted' errors when trying to play tournaments or anything like that.
 - Removed a few obsolete internal functions: `_ba.is_ouya_build()`, `_ba.android_media_scan_file()`.
 - Renaming some methods/data to disambiguate 'login' vs 'sign-in', both in the app and on ballistica.net. Those two terms are somewhat ambiguous and interchangeable in English and can either be a verb or a noun. I'd like to keep things clear in Ballistica by always using 'sign-in' for the verb form and 'login' for the noun. For example: 'You can now sign in to your account using your Google Play login'.
-- WARNING: There are currently some rough edges with Google Play V2 accounts; for example Google Play achievements and leaderboards UIs are not currently showing up. I will be cleaning all of this up before the official 1.7.14 release.
-- Commit Last Manual Party Connect Port to config. Previously, it always assumed the port to be 43210.
+- Fixed the 'your config is broken' dialog that shows on desktop builds if the game's config file is corrupt and can't be read. It should let you edit the config or replace it with a default.
+- `ba.printobjects()` is now `ba.ls_objects()`. It technically logs and doesn't print so the former name was a bit misleading.
+- Added `ba.ls_input_devices()` to dump debug info about the current set of input devices. Can be helpful to diagnose mysterious devices joining games unintentionally and things like that.
+- Added 'raw' bool arg to `ba.pushcall()`. Passing True for it disables context save/restore and thread checks.
+- Added `ba.internal.dump_tracebacks()` which can be used to dump the stack state of all Python threads after some delay. Useful for debugging deadlock; just call right before said deadlock occurs. Results will be logged on the next app launch if they cannot be immediately.
+- Fixed a low level event-loop issue that in some cases was preventing the Android version from properly pausing/resuming the app or managing connections while in the background. If you look at the devices section on ballistica.net you should now see your device disappear when you background the app and reappear when you foreground it. Please holler if not.
+- Device accounts are now marked as deprecated, and signing in with one now brings up an 'upgrade' UI which allows converting it to a V2 account. It is my hope to push the entire client ecosystem to V2 accounts as quickly as possible since trying to support both independent V1 accounts and V2 accounts is a substantial technical burden.
+- Fixed an issue where Log calls made within `Thread::PushThreadMessage()` could result in deadlock.
+- Fixed an issue where some Android hardware buttons could theoretically cause rogue game controller button presses (due to downcasting int values > 255 into a uint8 value).
 
 ### 1.7.13 (build 20919, api 7, 2022-11-03)
 - Android target-sdk has been updated to 33 (Android 13). Please holler if anything seems broken or is behaving differently than before on Android.

@@ -274,6 +274,44 @@ if TYPE_CHECKING:
     ) -> _CallNoArgs[OutT]:
         ...
 
+    # 4 arg call; 3 args bundled.
+    # noinspection PyPep8Naming
+    @overload
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+        arg3: In3T,
+    ) -> _Call1Arg[In4T, OutT]:
+        ...
+
+    # 4 arg call; 2 args bundled.
+    # noinspection PyPep8Naming
+    @overload
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T], OutT],
+        arg1: In1T,
+        arg2: In2T,
+    ) -> _Call2Args[In3T, In4T, OutT]:
+        ...
+
+    # 4 arg call; 1 arg bundled.
+    # noinspection PyPep8Naming
+    @overload
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T], OutT],
+        arg1: In1T,
+    ) -> _Call3Args[In2T, In3T, In4T, OutT]:
+        ...
+
+    # 4 arg call; no args bundled.
+    # noinspection PyPep8Naming
+    @overload
+    def Call(
+        call: Callable[[In1T, In2T, In3T, In4T], OutT],
+    ) -> _Call4Args[In1T, In2T, In3T, In4T, OutT]:
+        ...
+
     # 5 arg call; 5 args bundled.
     # noinspection PyPep8Naming
     @overload

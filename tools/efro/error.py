@@ -80,6 +80,15 @@ class IntegrityError(ValueError):
     """Data has been tampered with or corrupted in some form."""
 
 
+class AuthenticationError(Exception):
+    """Authentication has failed for some operation.
+
+    This can be raised if server-side-verification does not match
+    client-supplied credentials, if an invalid password is supplied
+    for a sign-in attempt, etc.
+    """
+
+
 def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
     """Is the provided exception from urllib a communication-related error?
 

@@ -40,6 +40,7 @@ from _ba import (
     get_public_party_max_size,
     set_public_party_name,
     set_public_party_max_size,
+    set_public_party_queue_enabled,
     set_authenticate_clients,
     set_public_party_enabled,
     reset_random_player_names,
@@ -100,6 +101,8 @@ from ba._apputils import (
     is_browser_likely_available,
     get_remote_app_name,
     should_submit_debug_info,
+    dump_app_state,
+    log_dumped_app_state,
 )
 from ba._benchmark import (
     run_gpu_benchmark,
@@ -211,6 +214,7 @@ __all__ = [
     'get_public_party_max_size',
     'set_public_party_name',
     'set_public_party_max_size',
+    'set_public_party_queue_enabled',
     'set_authenticate_clients',
     'set_public_party_enabled',
     'reset_random_player_names',
@@ -330,4 +334,6 @@ __all__ = [
     'sign_out_v1',
     'sign_in_v1',
     'mark_config_dirty',
+    'dump_app_state',
+    'log_dumped_app_state',
 ]

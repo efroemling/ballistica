@@ -28,7 +28,6 @@
 #include "ballistica/graphics/mesh/sprite_mesh.h"
 #include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/logic/friend_score_set.h"
 #include "ballistica/logic/logic.h"
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
@@ -196,6 +195,11 @@ auto Platform::LoginAdapterGetSignInToken(const std::string& login_type,
   });
 }
 
+auto Platform::LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                               bool active) -> void {
+  // Default is no-op.
+}
+
 auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
   Log(LogLevel::kError, "GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
@@ -217,8 +221,15 @@ auto Platform::GetPublicDeviceUUID() -> std::string {
     // This UUID is supposed to change periodically, so let's plug in
     // some stuff to enforce that.
     inputs.emplace_back(GetOSVersionString());
-    inputs.emplace_back(kAppVersion);
-    inputs.emplace_back("kerploople");
+
+    // This part gets shuffled periodically by my version-increment tools.
+    // We used to plug version in directly here, but that caused uuids to
+    // shuffle too rapidly during periods of rapid development. This
+    // keeps it more constant.
+    // __last_rand_uuid_component_shuffle_date__ 2022 12 17
+    auto rand_uuid_component{"BMCJPHH0SC22KB0WVJ1RAYD68TPEXL58"};
+
+    inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};
     auto pylist{g_python->StringList(inputs)};
     auto args{g_python->SingleMemberTuple(pylist)};
@@ -860,13 +871,6 @@ void Platform::OnAppStart() {}
 auto Platform::ConvertIncomingLeaderboardScore(
     const std::string& leaderboard_id, int score) -> int {
   return score;
-}
-
-void Platform::GetFriendScores(const std::string& game,
-                               const std::string& game_version, void* data) {
-  // As a default, just fail gracefully.
-  Log(LogLevel::kError, "FIXME: GetFriendScores unimplemented");
-  g_logic->PushFriendScoreSetCall(FriendScoreSet(false, data));
 }
 
 void Platform::SubmitScore(const std::string& game, const std::string& version,

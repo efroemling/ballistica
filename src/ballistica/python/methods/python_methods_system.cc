@@ -638,6 +638,22 @@ auto PyLoginAdapterGetSignInToken(PyObject* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
+auto PyLoginAdapterBackEndActiveChange(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* login_type;
+  int active;
+  static const char* kwlist[] = {"login_type", "active", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sp",
+                                   const_cast<char**>(kwlist), &login_type,
+                                   &active)) {
+    return nullptr;
+  }
+  g_platform->LoginAdapterBackEndActiveChange(login_type, active);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* list_obj;
@@ -715,10 +731,18 @@ auto PyAndroidShowWifiSettings(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-auto PyPrintObjects(PyObject* self, PyObject* args, PyObject* keywds)
+auto PyLsObjects(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Object::PrintObjects();
+  Object::LsObjects();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PyLsInputDevices(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  g_input->LsInputDevices();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -756,6 +780,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "If this returns False, UIs should not show 'copy to clipboard'\n"
        "buttons, etc."},
+
       {"clipboard_has_text", (PyCFunction)PyClipboardHasText, METH_NOARGS,
        "clipboard_has_text() -> bool\n"
        "\n"
@@ -765,6 +790,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "This will return False if no system clipboard is available; no need\n"
        " to call ba.clipboard_is_supported() separately."},
+
       {"clipboard_set_text", (PyCFunction)PyClipboardSetText,
        METH_VARARGS | METH_KEYWORDS,
        "clipboard_set_text(value: str) -> None\n"
@@ -775,6 +801,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Ensure that ba.clipboard_is_supported() returns True before adding\n"
        " buttons/etc. that make use of this functionality."},
+
       {"clipboard_get_text", (PyCFunction)PyClipboardGetText, METH_NOARGS,
        "clipboard_get_text() -> str\n"
        "\n"
@@ -784,9 +811,20 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "Ensure that ba.clipboard_has_text() returns True before calling\n"
        " this function."},
-      {"printobjects", (PyCFunction)PyPrintObjects,
+
+      {"ls_objects", (PyCFunction)PyLsObjects, METH_VARARGS | METH_KEYWORDS,
+       "ls_objects() -> None\n"
+       "\n"
+       "Log debugging info about C++ level objects.\n"
+       "\n"
+       "Category: **General Utility Functions**\n"
+       "\n"
+       "This call only functions in debug builds of the game.\n"
+       "It prints various info about the current object count, etc."},
+
+      {"ls_input_devices", (PyCFunction)PyLsInputDevices,
        METH_VARARGS | METH_KEYWORDS,
-       "printobjects() -> None\n"
+       "ls_input_devices() -> None\n"
        "\n"
        "Print debugging info about game objects.\n"
        "\n"
@@ -855,6 +893,14 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
       {"login_adapter_get_sign_in_token",
        (PyCFunction)PyLoginAdapterGetSignInToken, METH_VARARGS | METH_KEYWORDS,
        "login_adapter_get_sign_in_token(login_type: str, attempt_id: int)"
+       " -> None\n"
+       "\n"
+       "(internal)"},
+
+      {"login_adapter_back_end_active_change",
+       (PyCFunction)PyLoginAdapterBackEndActiveChange,
+       METH_VARARGS | METH_KEYWORDS,
+       "login_adapter_back_end_active_change(login_type: str, active: bool)"
        " -> None\n"
        "\n"
        "(internal)"},

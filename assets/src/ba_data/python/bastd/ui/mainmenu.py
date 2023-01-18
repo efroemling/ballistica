@@ -515,7 +515,20 @@ class MainMenuWindow(ba.Window):
             self._tdelay = 2.0
             self._t_delay_inc = 0.02
             self._t_delay_play = 1.7
-            self._next_refresh_allow_time = ba.time(ba.TimeType.REAL) + 2.01
+
+            def _set_allow_time() -> None:
+                self._next_refresh_allow_time = ba.time(ba.TimeType.REAL) + 2.5
+
+            # Slight hack: widget transitions currently only progress when
+            # frames are being drawn, but this tends to get called before
+            # frame drawing even starts, meaning we don't know exactly how
+            # long we should wait before refreshing to avoid interrupting
+            # the transition. To make things a bit better, let's do a
+            # redundant set of the time in a deferred call which hopefully
+            # happens closer to actual frame draw times.
+            _set_allow_time()
+            ba.pushcall(_set_allow_time)
+
             ba.app.did_menu_intro = True
         self._width = 400.0
         self._height = 200.0

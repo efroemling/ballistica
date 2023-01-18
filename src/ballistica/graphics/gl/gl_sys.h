@@ -61,9 +61,9 @@
 #if BA_OSTYPE_MACOS
 #if BA_XCODE_BUILD
 #include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
 #endif  // BA_XCODE_BUILD
-#include <OpenGL/glext.h>
 #endif  // BA_OSTYPE_MACOS
 
 #endif  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID

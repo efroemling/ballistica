@@ -1818,4 +1818,48 @@ auto Input::GetKeyName(int keycode) -> std::string {
 #pragma clang diagnostic pop
 #endif  // BA_SDL2_BUILD || BA_MINSDL_BUILD
 
+auto Input::LsInputDevices() -> void {
+  BA_PRECONDITION(InLogicThread());
+
+  std::string out;
+
+  std::string ind{"  "};
+  int index{0};
+  for (auto& device : input_devices_) {
+    if (index != 0) {
+      out += "\n";
+    }
+    out += std::to_string(index + 1) + ":\n";
+    out += ind + "name: " + device->GetDeviceName() + "\n";
+    out += ind + "index: " + std::to_string(device->index()) + "\n";
+    out += (ind + "is-controller: " + std::to_string(device->IsController())
+            + "\n");
+    out += (ind + "is-sdl-controller: "
+            + std::to_string(device->IsSDLController()) + "\n");
+    out += (ind + "is-touch-screen: " + std::to_string(device->IsTouchScreen())
+            + "\n");
+    out += (ind + "is-remote-control: "
+            + std::to_string(device->IsRemoteControl()) + "\n");
+    out += (ind + "is-test-input: " + std::to_string(device->IsTestInput())
+            + "\n");
+    out +=
+        (ind + "is-keyboard: " + std::to_string(device->IsKeyboard()) + "\n");
+    out += (ind + "is-mfi-controller: "
+            + std::to_string(device->IsMFiController()) + "\n");
+    out += (ind + "is-local: " + std::to_string(device->IsLocal()) + "\n");
+    out += (ind + "is-ui-only: " + std::to_string(device->IsUIOnly()) + "\n");
+    out += (ind + "is-remote-app: " + std::to_string(device->IsRemoteApp())
+            + "\n");
+
+    out += ind + "attached-to: "
+           + (device->GetRemotePlayer() != nullptr ? "remote-player"
+              : device->GetPlayer() != nullptr     ? "local-player"
+                                                   : "nothing");
+
+    ++index;
+  }
+
+  Log(LogLevel::kInfo, out);
+}
+
 }  // namespace ballistica

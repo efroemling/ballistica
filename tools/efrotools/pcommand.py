@@ -162,6 +162,13 @@ def _spelling(words: list[str]) -> None:
     print(f'Modified {num_modded_dictionaries} dictionaries.')
 
 
+def pur() -> None:
+    """Run pur using project's Python version."""
+    import subprocess
+
+    subprocess.run([sys.executable, '-m', 'pur'] + sys.argv[2:], check=True)
+
+
 def spelling_all() -> None:
     """Add all misspellings from a pycharm run."""
     import subprocess

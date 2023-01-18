@@ -62,12 +62,6 @@ class MessageReceiver:
             [Any, Message | None, Response | SysResponse, dict], None
         ] | None = None
 
-        # TODO: don't currently have async encode equivalent
-        # or either for sender; can add as needed.
-        self._decode_filter_async_call: Callable[
-            [Any, dict, Message], Awaitable[None]
-        ] | None = None
-
     # noinspection PyProtectedMember
     def register_handler(
         self, call: Callable[[Any, Message], Response | None]
@@ -96,14 +90,17 @@ class MessageReceiver:
 
         # Make sure we are only given async methods if we are an async handler
         # and sync ones otherwise.
-        is_async = inspect.iscoroutinefunction(call)
-        if self.is_async != is_async:
-            msg = (
-                'Expected a sync method; found an async one.'
-                if is_async
-                else 'Expected an async method; found a sync one.'
-            )
-            raise ValueError(msg)
+        # UPDATE - can't do this anymore since we now sometimes use
+        # regular functions which return awaitables instead of having
+        # the entire function be async.
+        # is_async = inspect.iscoroutinefunction(call)
+        # if self.is_async != is_async:
+        #     msg = (
+        #         'Expected a sync method; found an async one.'
+        #         if is_async
+        #         else 'Expected an async method; found a sync one.'
+        #     )
+        #     raise ValueError(msg)
 
         # Check annotation types to determine what message types we handle.
         # Return-type annotation can be a Union, but we probably don't
@@ -189,19 +186,6 @@ class MessageReceiver:
         self._decode_filter_call = call
         return call
 
-    def decode_filter_async_method(
-        self, call: Callable[[Any, dict, Message], Awaitable[None]]
-    ) -> Callable[[Any, dict, Message], Awaitable[None]]:
-        """Function decorator for defining a decode filter.
-
-        Decode filters can be used to extract extra data from incoming
-        message dicts. Note that this version will only work with
-        handle_raw_message_async().
-        """
-        assert self._decode_filter_async_call is None
-        self._decode_filter_async_call = call
-        return call
-
     def encode_filter_method(
         self,
         call: Callable[
@@ -247,24 +231,6 @@ class MessageReceiver:
         bound_obj, _msg_dict, msg_decoded = self._decode_incoming_message_base(
             bound_obj=bound_obj, msg=msg
         )
-
-        # If they've set an async filter but are calling sync
-        # handle_raw_message() its likely a bug.
-        assert self._decode_filter_async_call is None
-
-        return msg_decoded
-
-    async def _decode_incoming_message_async(
-        self, bound_obj: Any, msg: str
-    ) -> Message:
-        bound_obj, msg_dict, msg_decoded = self._decode_incoming_message_base(
-            bound_obj=bound_obj, msg=msg
-        )
-
-        if self._decode_filter_async_call is not None:
-            await self._decode_filter_async_call(
-                bound_obj, msg_dict, msg_decoded
-            )
         return msg_decoded
 
     def encode_user_response(
@@ -316,6 +282,7 @@ class MessageReceiver:
         """
         assert not self.is_async, "can't call sync handler on async receiver"
         msg_decoded: Message | None = None
+        msgtype: type[Message] | None = None
         try:
             msg_decoded = self._decode_incoming_message(bound_obj, msg)
             msgtype = type(msg_decoded)
@@ -335,41 +302,93 @@ class MessageReceiver:
                 bound_obj, msg_decoded, exc
             )
             if dolog:
-                logging.exception('Error in efro.message handling.')
+                if msgtype is not None:
+                    logging.exception(
+                        'Error handling %s.%s message.',
+                        msgtype.__module__,
+                        msgtype.__qualname__,
+                    )
+                else:
+                    logging.exception('Error in efro.message handling.')
             return rstr
 
-    async def handle_raw_message_async(
+    def handle_raw_message_async(
         self, bound_obj: Any, msg: str, raise_unregistered: bool = False
-    ) -> str:
+    ) -> Awaitable[str]:
         """Should be called when the receiver gets a message.
 
         The return value is the raw response to the message.
         """
+
+        # Note: This call is synchronous so that the first part of it can
+        # happen synchronously. If the whole call were async we wouldn't be
+        # able to guarantee that messages handlers would be called in the
+        # order the messages were received.
+
         assert self.is_async, "can't call async handler on sync receiver"
         msg_decoded: Message | None = None
+        msgtype: type[Message] | None = None
         try:
-            msg_decoded = await self._decode_incoming_message_async(
-                bound_obj, msg
-            )
+            msg_decoded = self._decode_incoming_message(bound_obj, msg)
             msgtype = type(msg_decoded)
             handler = self._handlers.get(msgtype)
             if handler is None:
                 raise RuntimeError(f'Got unhandled message type: {msgtype}.')
-            response = await handler(bound_obj, msg_decoded)
-            assert isinstance(response, Response | None)
-            return self.encode_user_response(bound_obj, msg_decoded, response)
+            handler_awaitable = handler(bound_obj, msg_decoded)
 
         except Exception as exc:
             if raise_unregistered and isinstance(
                 exc, UnregisteredMessageIDError
             ):
                 raise
-            rstr, dolog = self.encode_error_response(
-                bound_obj, msg_decoded, exc
+            return self._handle_raw_message_async_error(
+                bound_obj, msg_decoded, msgtype, exc
             )
-            if dolog:
+
+        # Return an awaitable to handle the rest asynchronously.
+        return self._handle_raw_message_async(
+            bound_obj, msg_decoded, msgtype, handler_awaitable
+        )
+
+    async def _handle_raw_message_async_error(
+        self,
+        bound_obj: Any,
+        msg_decoded: Message | None,
+        msgtype: type[Message] | None,
+        exc: Exception,
+    ) -> str:
+        rstr, dolog = self.encode_error_response(bound_obj, msg_decoded, exc)
+        if dolog:
+            if msgtype is not None:
+                logging.exception(
+                    'Error handling %s.%s message.',
+                    msgtype.__module__,
+                    msgtype.__qualname__,
+                )
+            else:
                 logging.exception('Error in efro.message handling.')
-            return rstr
+        return rstr
+
+    async def _handle_raw_message_async(
+        self,
+        bound_obj: Any,
+        msg_decoded: Message,
+        msgtype: type[Message] | None,
+        handler_awaitable: Awaitable[Response | None],
+    ) -> str:
+        """Should be called when the receiver gets a message.
+
+        The return value is the raw response to the message.
+        """
+        try:
+            response = await handler_awaitable
+            assert isinstance(response, Response | None)
+            return self.encode_user_response(bound_obj, msg_decoded, response)
+
+        except Exception as exc:
+            return await self._handle_raw_message_async_error(
+                bound_obj, msg_decoded, msgtype, exc
+            )
 
 
 class BoundMessageReceiver:

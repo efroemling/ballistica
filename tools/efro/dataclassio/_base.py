@@ -111,6 +111,8 @@ class IOAttrs:
         boundaries (see efro.util.utc_today()).
     'whole_hours', if True, requires datetime values to lie exactly on hour
         boundaries (see efro.util.utc_this_hour()).
+    'whole_minutes', if True, requires datetime values to lie exactly on minute
+        boundaries (see efro.util.utc_this_minute()).
     'soft_default', if passed, injects a default value into dataclass
         instantiation when the field is not present in the input data.
         This allows dataclasses to add new non-optional fields while
@@ -136,6 +138,7 @@ class IOAttrs:
     store_default: bool = True
     whole_days: bool = False
     whole_hours: bool = False
+    whole_minutes: bool = False
     soft_default: Any = MISSING
     soft_default_factory: Callable[[], Any] | _MissingType = MISSING
 
@@ -145,6 +148,7 @@ class IOAttrs:
         store_default: bool = store_default,
         whole_days: bool = whole_days,
         whole_hours: bool = whole_hours,
+        whole_minutes: bool = whole_minutes,
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
     ):
@@ -160,6 +164,8 @@ class IOAttrs:
             self.whole_days = whole_days
         if whole_hours != cls.whole_hours:
             self.whole_hours = whole_hours
+        if whole_minutes != cls.whole_minutes:
+            self.whole_minutes = whole_minutes
         if soft_default is not cls.soft_default:
 
             # Do what dataclasses does with its default types and
@@ -216,12 +222,17 @@ class IOAttrs:
                 raise ValueError(
                     f'Value {value} at {fieldpath} is not a whole day.'
                 )
-        if self.whole_hours:
+        elif self.whole_hours:
             if any(
                 x != 0 for x in (value.minute, value.second, value.microsecond)
             ):
                 raise ValueError(
                     f'Value {value} at {fieldpath}' f' is not a whole hour.'
+                )
+        elif self.whole_minutes:
+            if any(x != 0 for x in (value.second, value.microsecond)):
+                raise ValueError(
+                    f'Value {value} at {fieldpath}' f' is not a whole minute.'
                 )
 
 

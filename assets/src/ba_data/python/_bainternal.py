@@ -252,7 +252,6 @@ def submit_score(
     name: Any,
     score: int | None,
     callback: Callable,
-    friend_callback: Callable | None,
     order: str = 'increasing',
     tournament_id: str | None = None,
     score_type: str = 'points',

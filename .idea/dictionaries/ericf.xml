@@ -73,6 +73,7 @@
       <w>allsettings</w>
       <w>allteams</w>
       <w>allwarnings</w>
+      <w>alogins</w>
       <w>aman</w>
       <w>amazonaws</w>
       <w>aname</w>
@@ -114,6 +115,7 @@
       <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
@@ -184,6 +186,7 @@
       <w>availplug</w>
       <w>aval</w>
       <w>awaitable</w>
+      <w>awaitables</w>
       <w>axismotion</w>
       <w>bacfg</w>
       <w>backgrounded</w>
@@ -374,6 +377,7 @@
       <w>certifi</w>
       <w>cfconfig</w>
       <w>cfenv</w>
+      <w>cfgdict</w>
       <w>cfgdir</w>
       <w>cfgkey</w>
       <w>cfgkeys</w>
@@ -677,6 +681,7 @@
       <w>dosomething</w>
       <w>dostar</w>
       <w>dostuff</w>
+      <w>downcasting</w>
       <w>downmix</w>
       <w>dpad</w>
       <w>dpath</w>
@@ -718,6 +723,7 @@
       <w>dummyret</w>
       <w>dummytoken</w>
       <w>dummyval</w>
+      <w>dumpminlog</w>
       <w>dups</w>
       <w>dval</w>
       <w>dxml</w>
@@ -726,6 +732,7 @@
       <w>eaddrnotavail</w>
       <w>easteregghunt</w>
       <w>echofile</w>
+      <w>echotime</w>
       <w>edcc</w>
       <w>editcontroller</w>
       <w>editgame</w>
@@ -848,6 +855,7 @@
       <w>fakeshake</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
+      <w>faulthandler</w>
       <w>fback</w>
       <w>fbase</w>
       <w>fclose</w>
@@ -858,6 +866,7 @@
       <w>fcontents</w>
       <w>fcount</w>
       <w>fdata</w>
+      <w>fdcount</w>
       <w>fdesc</w>
       <w>fdict</w>
       <w>fdout</w>
@@ -1271,6 +1280,7 @@
       <w>iprof</w>
       <w>isatty</w>
       <w>iscale</w>
+      <w>iscoroutinefunction</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>ispunch</w>
@@ -1372,6 +1382,7 @@
       <w>levelmodule</w>
       <w>levelname</w>
       <w>levelno</w>
+      <w>levelnos</w>
       <w>levelstr</w>
       <w>lfull</w>
       <w>lfval</w>
@@ -1522,6 +1533,7 @@
       <w>masterhash</w>
       <w>masterver</w>
       <w>mastervers</w>
+      <w>matchlines</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -1537,6 +1549,7 @@
       <w>mdiv</w>
       <w>mdocs</w>
       <w>mdocslines</w>
+      <w>mdpath</w>
       <w>mdpi</w>
       <w>megalint</w>
       <w>memfunctions</w>
@@ -1564,6 +1577,7 @@
       <w>minigame</w>
       <w>minigames</w>
       <w>miniplayer</w>
+      <w>minlog</w>
       <w>minping</w>
       <w>minusbutton</w>
       <w>minval</w>
@@ -2337,6 +2351,7 @@
       <w>shobs</w>
       <w>shortname</w>
       <w>shouldn</w>
+      <w>showbuffer</w>
       <w>showpoints</w>
       <w>showstats</w>
       <w>showsubseconds</w>
@@ -2513,6 +2528,7 @@
       <w>svne</w>
       <w>svvv</w>
       <w>swht</w>
+      <w>swidth</w>
       <w>swiftc</w>
       <w>swip</w>
       <w>swipsound</w>
@@ -2549,6 +2565,9 @@
       <w>targs</w>
       <w>tasklabel</w>
       <w>tbegin</w>
+      <w>tbfile</w>
+      <w>tbfiles</w>
+      <w>tbpath</w>
       <w>tbtcolor</w>
       <w>tbtn</w>
       <w>tbttxt</w>
@@ -2850,6 +2869,7 @@
       <w>wanttype</w>
       <w>warntype</w>
       <w>wasdead</w>
+      <w>wasn</w>
       <w>wavenum</w>
       <w>weakref</w>
       <w>weakrefs</w>
@@ -2859,7 +2879,9 @@
       <w>webpage</w>
       <w>webpages</w>
       <w>weeeird</w>
+      <w>whatarev</w>
       <w>whatevs</w>
+      <w>whatisv</w>
       <w>wheee</w>
       <w>whos</w>
       <w>widgetdeathtime</w>

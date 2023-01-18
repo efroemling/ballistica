@@ -48,6 +48,7 @@
       <w>allobjs</w>
       <w>allocs</w>
       <w>allwarnings</w>
+      <w>alogins</w>
       <w>alot</w>
       <w>alphaimg</w>
       <w>alphapixels</w>
@@ -71,6 +72,7 @@
       <w>appconfig</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>apptime</w>
@@ -93,6 +95,7 @@
       <w>avel</w>
       <w>avels</w>
       <w>awaitable</w>
+      <w>awaitables</w>
       <w>axismotion</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
@@ -217,6 +220,7 @@
       <w>cend</w>
       <w>centiseconds</w>
       <w>certifi</w>
+      <w>cfgdict</w>
       <w>cfgdir</w>
       <w>cfgpath</w>
       <w>changeme</w>
@@ -367,6 +371,7 @@
       <w>doraise</w>
       <w>dosomething</w>
       <w>dout</w>
+      <w>downcasting</w>
       <w>downsample</w>
       <w>dpad</w>
       <w>dpads</w>
@@ -385,11 +390,13 @@
       <w>dummyret</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
+      <w>dumpminlog</w>
       <w>dval</w>
       <w>dxgi</w>
       <w>dynamicdata</w>
       <w>echidna</w>
       <w>echofile</w>
+      <w>echotime</w>
       <w>edef</w>
       <w>effmult</w>
       <w>efro</w>
@@ -456,9 +463,11 @@
       <w>fastldlt</w>
       <w>fastlsolve</w>
       <w>fastltsolve</w>
+      <w>faulthandler</w>
       <w>fbos</w>
       <w>fcntl</w>
       <w>fdata</w>
+      <w>fdcount</w>
       <w>fdirx</w>
       <w>fdiry</w>
       <w>fdirz</w>
@@ -667,6 +676,7 @@
       <w>ioprepped</w>
       <w>ioprepping</w>
       <w>ioreg</w>
+      <w>iscoroutinefunction</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
@@ -728,6 +738,7 @@
       <w>leaderboards</w>
       <w>lenval</w>
       <w>levelno</w>
+      <w>levelnos</w>
       <w>levelstr</w>
       <w>lgui</w>
       <w>lhalf</w>
@@ -797,11 +808,13 @@
       <w>maskuv</w>
       <w>masterver</w>
       <w>mastervers</w>
+      <w>matchlines</w>
       <w>maximus</w>
       <w>maxpathlen</w>
       <w>maxtries</w>
       <w>maxwait</w>
       <w>maxwidth</w>
+      <w>mdpath</w>
       <w>mediump</w>
       <w>memalign</w>
       <w>memchr</w>
@@ -819,6 +832,7 @@
       <w>millisecs</w>
       <w>minelem</w>
       <w>miniplayer</w>
+      <w>minlog</w>
       <w>minping</w>
       <w>minsdl</w>
       <w>mipmapcount</w>
@@ -1240,6 +1254,7 @@
       <w>shhh</w>
       <w>shifthigh</w>
       <w>shouldnt</w>
+      <w>showbuffer</w>
       <w>shufflable</w>
       <w>signsubscale</w>
       <w>sigsetjmp</w>
@@ -1334,6 +1349,7 @@
       <w>subtypestr</w>
       <w>successmsg</w>
       <w>sval</w>
+      <w>swidth</w>
       <w>swiftc</w>
       <w>symbolification</w>
       <w>syscalls</w>
@@ -1345,6 +1361,9 @@
       <w>targs</w>
       <w>tasklabel</w>
       <w>tbegin</w>
+      <w>tbfile</w>
+      <w>tbfiles</w>
+      <w>tbpath</w>
       <w>tcls</w>
       <w>tdels</w>
       <w>tdiff</w>
@@ -1500,6 +1519,7 @@
       <w>wakeups</w>
       <w>walisser</w>
       <w>wasdebug</w>
+      <w>wasn</w>
       <w>watte</w>
       <w>wdeprecated</w>
       <w>weakref</w>
@@ -1508,6 +1528,8 @@
       <w>weeeird</w>
       <w>welp</w>
       <w>whaaaaaaa</w>
+      <w>whatarev</w>
+      <w>whatisv</w>
       <w>wheee</w>
       <w>wheeee</w>
       <w>wiimote</w>

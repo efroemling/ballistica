@@ -159,11 +159,33 @@ class WorkspaceFetchResponse(Response):
 
 @ioprepped
 @dataclass
+class MerchAvailabilityMessage(Message):
+    """Can we show merch link?"""
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [MerchAvailabilityResponse]
+
+
+@ioprepped
+@dataclass
+class MerchAvailabilityResponse(Response):
+    """About that merch..."""
+
+    url: Annotated[str | None, IOAttrs('u')]
+
+
+@ioprepped
+@dataclass
 class SignInMessage(Message):
     """Can I sign in please?"""
 
     login_type: Annotated[LoginType, IOAttrs('l')]
     sign_in_token: Annotated[str, IOAttrs('t')]
+
+    # For debugging. Can remove soft_default once build 20988+ is ubiquitous.
+    description: Annotated[str, IOAttrs('d', soft_default='-')]
+    apptime: Annotated[float, IOAttrs('at', soft_default=-1.0)]
 
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:

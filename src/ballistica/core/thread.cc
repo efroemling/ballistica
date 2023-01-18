@@ -91,7 +91,7 @@ auto Thread::RunAssetsThreadP(void* data) -> void* {
   return nullptr;
 }
 
-void Thread::SetPaused(bool paused) {
+void Thread::PushSetPaused(bool paused) {
   // Can be toggled from the main thread only.
   assert(std::this_thread::get_id() == g_app->main_thread_id);
   PushThreadMessage(ThreadMessage(paused ? ThreadMessage::Type::kPause
@@ -101,13 +101,24 @@ void Thread::SetPaused(bool paused) {
 void Thread::WaitForNextEvent(bool single_cycle) {
   // If we're running a single cycle we never stop to wait.
   if (single_cycle) {
+    // Need to revisit this if we ever do single-cycle for
+    // the gil-holding thread so we don't starve other Python threads.
+    assert(!acquires_python_gil_);
     return;
   }
 
-  // We also never wait if we have pending runnables.
-  // (we run all existing runnables in each loop cycle, but one of those
-  // may have enqueued more).
-  if (has_pending_runnables()) {
+  // We also never wait if we have pending runnables; we wan't to run
+  // things as soon as we can. We chew through all runnables at the end
+  // of the loop so it might seem like there should never be any here,
+  // but runnables can add other runnables that won't get processed until
+  // the next time through.
+  // BUG FIX: We now skip this if we're paused since we don't run runnables
+  //  in that case. This was preventing us from releasing the GIL while paused
+  //  (and I assume causing us to spin full-speed through the loop; ugh).
+  // NOTE: It is theoretically possible for a runnable to add another runnable
+  //  each time through the loop which would effectively starve the GIL as
+  //  well; do we need to worry about that case?
+  if (has_pending_runnables() && !paused_) {
     return;
   }
 
@@ -422,15 +433,17 @@ Thread::~Thread() = default;
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantConditionsOC"
 
-void Thread::LogThreadMessageTally() {
+void Thread::LogThreadMessageTally(
+    std::vector<std::pair<LogLevel, std::string>>* log_entries) {
   // Prevent recursion.
   if (!writing_tally_) {
     writing_tally_ = true;
 
     std::unordered_map<std::string, int> tally;
-    Log(LogLevel::kError, "Thread message tally ("
+    log_entries->emplace_back(std::make_pair(
+        LogLevel::kError, "Thread message tally ("
                               + std::to_string(thread_messages_.size())
-                              + " in list):");
+                              + " in list):"));
     for (auto&& m : thread_messages_) {
       std::string s;
       switch (m.type) {
@@ -464,8 +477,9 @@ void Thread::LogThreadMessageTally() {
     }
     int entry = 1;
     for (auto&& i : tally) {
-      Log(LogLevel::kError, "  #" + std::to_string(entry++) + " ("
-                                + std::to_string(i.second) + "x): " + i.first);
+      log_entries->emplace_back(std::make_pair(
+          LogLevel::kError, "  #" + std::to_string(entry++) + " ("
+                                + std::to_string(i.second) + "x): " + i.first));
     }
     writing_tally_ = false;
   }
@@ -473,14 +487,17 @@ void Thread::LogThreadMessageTally() {
 #pragma clang diagnostic pop
 
 void Thread::PushThreadMessage(const ThreadMessage& t) {
+  // We don't want to make log calls while holding this mutex;
+  // log calls acquire the GIL and if the GIL-holder (generally
+  // the logic thread) is trying to send a thread message to the
+  // thread doing the logging we would get deadlock.
+  // So tally up any logs and send them after.
+  std::vector<std::pair<LogLevel, std::string>> log_entries;
   {
     std::unique_lock<std::mutex> lock(thread_message_mutex_);
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
-
-    // Keep our own count; apparently size() on an stl list involves iterating.
-    // FIXME: Actually I don't think this is the case anymore; should check.
 
     // Debugging: show message count states.
     if (explicit_bool(false)) {
@@ -498,8 +515,9 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       // Show count periodically.
       if ((std::this_thread::get_id() == g_app->main_thread_id) && foo > 100) {
         foo = 0;
-        Log(LogLevel::kInfo,
-            "MSG COUNT " + std::to_string(thread_messages_.size()));
+        log_entries.emplace_back(std::make_pair(
+            LogLevel::kInfo,
+            "MSG COUNT " + std::to_string(thread_messages_.size())));
       }
     }
 
@@ -507,9 +525,11 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
       static bool sent_error = false;
       if (!sent_error) {
         sent_error = true;
-        Log(LogLevel::kError,
-            "ThreadMessage list > 1000 in thread: " + GetCurrentThreadName());
-        LogThreadMessageTally();
+        log_entries.emplace_back(std::make_pair(
+            LogLevel::kError,
+            "ThreadMessage list > 1000 in thread: " + GetCurrentThreadName()));
+
+        LogThreadMessageTally(&log_entries);
       }
     }
 
@@ -523,13 +543,34 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
     // available.
   }
   thread_message_cv_.notify_all();
+
+  // Now log anything we accumulated safely outside of the locked section.
+  for (auto&& log_entry : log_entries) {
+    Log(log_entry.first, log_entry.second);
+  }
 }
 
-void Thread::SetThreadsPaused(bool paused) {
+auto Thread::SetThreadsPaused(bool paused) -> void {
+  assert(std::this_thread::get_id() == g_app->main_thread_id);
   g_app->threads_paused = paused;
   for (auto&& i : g_app->pausable_threads) {
-    i->SetPaused(paused);
+    i->PushSetPaused(paused);
   }
+}
+
+auto Thread::GetStillPausingThreads() -> std::vector<Thread*> {
+  std::vector<Thread*> threads;
+  assert(std::this_thread::get_id() == g_app->main_thread_id);
+
+  // Only return results if an actual pause is in effect.
+  if (g_app->threads_paused) {
+    for (auto&& i : g_app->pausable_threads) {
+      if (!i->paused()) {
+        threads.push_back(i);
+      }
+    }
+  }
+  return threads;
 }
 
 auto Thread::AreThreadsPaused() -> bool { return g_app->threads_paused; }
@@ -553,6 +594,7 @@ auto Thread::GetCurrentThreadName() -> std::string {
     }
   }
 
+  // Ask pthread for the thread name if we don't have one.
   // FIXME - move this to platform.
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
   std::string name = "unknown (sys-name=";

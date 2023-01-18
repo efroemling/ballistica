@@ -4,17 +4,24 @@
 # pylint: disable=too-many-lines
 from __future__ import annotations
 
+import time
 import copy
 import math
+import logging
 import weakref
 from enum import Enum
+from threading import Thread
 from typing import TYPE_CHECKING
 
+from efro.error import CommunicationError
+import bacommon.cloud
 import ba
 import ba.internal
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
+
+MERCH_LINK_KEY = 'Merch Link'
 
 
 class StoreBrowserWindow(ba.Window):
@@ -593,8 +600,14 @@ class StoreBrowserWindow(ba.Window):
             else:
                 self._last_buy_time = curtime
 
-                # Pro is an actual IAP; the rest are ticket purchases.
-                if item == 'pro':
+                # Merch is a special case - just a link.
+                if item == 'merch':
+                    url = ba.app.config.get('Merch Link')
+                    if isinstance(url, str):
+                        ba.open_url(url)
+
+                # Pro is an actual IAP, and the rest are ticket purchases.
+                elif item == 'pro':
                     ba.playsound(ba.getsound('click01'))
 
                     # Purchase either pro or pro_sale depending on whether
@@ -681,7 +694,9 @@ class StoreBrowserWindow(ba.Window):
         assert self.button_infos is not None
         for b_type, b_info in self.button_infos.items():
 
-            if b_type in ['upgrades.pro', 'pro']:
+            if b_type == 'merch':
+                purchased = False
+            elif b_type in ['upgrades.pro', 'pro']:
                 purchased = ba.app.accounts_v1.have_pro()
             else:
                 purchased = ba.internal.get_purchased(b_type)
@@ -707,7 +722,11 @@ class StoreBrowserWindow(ba.Window):
                 color = (0.4, 0.8, 0.1)
                 extra_image_opacity = 1.0
                 call = b_info['call'] if 'call' in b_info else None
-                if b_type in ['upgrades.pro', 'pro']:
+                if b_type == 'merch':
+                    price_text = ''
+                    price_text_left = ''
+                    price_text_right = ''
+                elif b_type in ['upgrades.pro', 'pro']:
                     sale_time = get_available_sale_time('extras')
                     if sale_time is not None:
                         priceraw = ba.internal.get_price('pro')
@@ -888,7 +907,14 @@ class StoreBrowserWindow(ba.Window):
                             dummy_name
                         )
                         section['v_spacing'] = (
-                            -17 if self._tab == 'characters' else 0
+                            -25
+                            if (
+                                self._tab == 'extras'
+                                and uiscale is ba.UIScale.SMALL
+                            )
+                            else -17
+                            if self._tab == 'characters'
+                            else 0
                         )
                         if 'title' not in section:
                             section['title'] = ''
@@ -900,7 +926,13 @@ class StoreBrowserWindow(ba.Window):
                             else 0
                         )
                         section['y_offs'] = (
-                            55
+                            20
+                            if (
+                                self._tab == 'extras'
+                                and uiscale is ba.UIScale.SMALL
+                                and ba.app.config.get('Merch Link')
+                            )
+                            else 55
                             if (
                                 self._tab == 'extras'
                                 and uiscale is ba.UIScale.SMALL
@@ -917,7 +949,9 @@ class StoreBrowserWindow(ba.Window):
                     # pylint: disable=too-many-locals
                     # pylint: disable=too-many-branches
                     # pylint: disable=too-many-nested-blocks
-                    from bastd.ui.store import item as storeitemui
+                    from bastd.ui.store.item import (
+                        instantiate_store_item_display,
+                    )
 
                     title_spacing = 40
                     button_border = 20
@@ -1102,7 +1136,7 @@ class StoreBrowserWindow(ba.Window):
                                 + (b_width + button_spacing) * col,
                                 v - b_height + boffs_v2,
                             )
-                            storeitemui.instantiate_store_item_display(
+                            instantiate_store_item_display(
                                 item_name,
                                 item,
                                 parent_widget=cnt2,
@@ -1121,7 +1155,6 @@ class StoreBrowserWindow(ba.Window):
                             # Wire this button to the equivalent in the
                             # previous row.
                             if prev_row_buttons is not None:
-                                # pylint: disable=unsubscriptable-object
                                 if len(prev_row_buttons) > col:
                                     ba.widget(
                                         edit=btn,
@@ -1325,3 +1358,41 @@ class StoreBrowserWindow(ba.Window):
                 )
         if self._on_close_call is not None:
             self._on_close_call()
+
+
+def _check_merch_availability_in_bg_thread() -> None:
+    # pylint: disable=cell-var-from-loop
+
+    # Merch is available from some countries only.
+    # Make a reasonable check to ask the master-server about this at
+    # launch and store the results.
+    for _i in range(15):
+        try:
+            if ba.app.cloud.is_connected():
+                response = ba.app.cloud.send_message(
+                    bacommon.cloud.MerchAvailabilityMessage()
+                )
+
+                def _store_in_logic_thread() -> None:
+                    cfg = ba.app.config
+                    current: str | None = cfg.get(MERCH_LINK_KEY)
+                    if not isinstance(current, str | None):
+                        current = None
+                    if current != response.url:
+                        cfg[MERCH_LINK_KEY] = response.url
+                        cfg.commit()
+
+                # If we successfully get a response, kick it over to the
+                # logic thread to store and we're done.
+                ba.pushcall(_store_in_logic_thread, from_other_thread=True)
+                return
+        except CommunicationError:
+            pass
+        except Exception:
+            logging.warning(
+                'Unexpected error in merch-availability-check.', exc_info=True
+            )
+        time.sleep(1.1934)  # A bit randomized to avoid aliasing.
+
+
+Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()

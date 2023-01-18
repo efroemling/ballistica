@@ -45,19 +45,23 @@ def instantiate_store_item_display(
     item['name'] = title = get_store_item_name_translated(item_name)
 
     btn: ba.Widget | None
+
+    # Hack; showbuffer stuff isn't working well when we're showing merch.
+    showbuffer = 10 if item_name in {'merch', 'pro', 'pro_sale'} else 76.0
+
     if button:
         item['button'] = btn = ba.buttonwidget(
             parent=parent_widget,
             position=b_pos,
             transition_delay=delay,
-            show_buffer_top=76.0,
+            show_buffer_top=showbuffer,
             enable_sound=False,
             button_type='square',
             size=(b_width, b_height),
             autoselect=True,
             label='',
         )
-        ba.widget(edit=btn, show_buffer_bottom=76.0)
+        ba.widget(edit=btn, show_buffer_bottom=showbuffer)
     else:
         btn = None
 
@@ -92,6 +96,10 @@ def instantiate_store_item_display(
         tint_tex = character.icon_mask_texture
         title_v = 0.255
         price_v = 0.145
+    elif item_name == 'merch':
+        base_text_scale = 0.6
+        title_v = 0.85
+        price_v = 0.15
     elif item_name in ['upgrades.pro', 'pro']:
         base_text_scale = 0.6
         title_v = 0.85
@@ -165,6 +173,23 @@ def instantiate_store_item_display(
             tint2_color=tint2_color,
         )
 
+    if item_name == 'merch':
+        frame_size = b_width * 0.65
+        im_dim = frame_size * (100.0 / 113.0)
+        im_pos = (
+            b_pos[0] + b_width * 0.5 - im_dim * 0.5 + b_offs_x,
+            b_pos[1] + b_height * 0.47 - im_dim * 0.5,
+        )
+        ba.imagewidget(
+            parent=parent_widget,
+            position=im_pos,
+            size=(im_dim, im_dim),
+            transition_delay=delay,
+            draw_controller=btn,
+            opacity=1.0,
+            texture=ba.gettexture('merch'),
+        )
+
     if item_name in ['pro', 'upgrades.pro']:
         frame_size = b_width * 0.5
         im_dim = frame_size * (100.0 / 113.0)
@@ -184,7 +209,6 @@ def instantiate_store_item_display(
         )
         txt = ba.Lstr(resource='store.bombSquadProNewDescriptionText')
 
-        # t = 'foo\nfoo\nfoo\nfoo\nfoo\nfoo'
         item['descriptionText'] = ba.textwidget(
             parent=parent_widget,
             text=txt,

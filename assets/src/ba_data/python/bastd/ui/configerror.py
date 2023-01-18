@@ -20,12 +20,12 @@ class ConfigErrorWindow(ba.Window):
         self._config_file_path = ba.app.config_file_path
         width = 800
         super().__init__(
-            ba.containerwidget(size=(width, 300), transition='in_right')
+            ba.containerwidget(size=(width, 400), transition='in_right')
         )
         padding = 20
         ba.textwidget(
             parent=self._root_widget,
-            position=(padding, 220),
+            position=(padding, 220 + 60),
             size=(width - 2 * padding, 100 - 2 * padding),
             h_align='center',
             v_align='top',
@@ -41,7 +41,7 @@ class ConfigErrorWindow(ba.Window):
         )
         ba.textwidget(
             parent=self._root_widget,
-            position=(padding, 198),
+            position=(padding, 198 + 60),
             size=(width - 2 * padding, 100 - 2 * padding),
             h_align='center',
             v_align='top',

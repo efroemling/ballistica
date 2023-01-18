@@ -80,7 +80,6 @@ class Data;
 class DataData;
 class Dynamics;
 class FrameDef;
-struct FriendScoreSet;
 class GLContext;
 class GlobalsNode;
 class Graphics;
