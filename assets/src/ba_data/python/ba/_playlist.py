@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import _ba
 import copy
 import logging
 from typing import Any, TYPE_CHECKING
@@ -36,6 +37,7 @@ def filter_playlist(playlist: PlaylistType,
     from ba._gameactivity import GameActivity
     goodlist: list[dict] = []
     unowned_maps: Sequence[str]
+    available_maps: list[str] = list(_ba.app.maps.keys())
     if remove_unowned or mark_unowned:
         unowned_maps = get_unowned_maps()
         unowned_game_types = get_unowned_game_types()
@@ -123,6 +125,11 @@ def filter_playlist(playlist: PlaylistType,
                     'bastd.game.targetpractice.TargetPracticeGame')
 
             gameclass = getclass(entry['type'], GameActivity)
+
+            if entry['settings']['map'] not in available_maps:
+                raise ImportError(
+                    f"Map not found: '{entry['settings']['map']}'"
+                )
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue
