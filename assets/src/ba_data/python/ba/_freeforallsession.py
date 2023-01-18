@@ -74,9 +74,15 @@ class FreeForAllSession(MultiTeamSession):
             # Award different point amounts based on number of players.
             point_awards = self.get_ffa_point_awards()
 
-            for i, winner in enumerate(winners):
+            award_index = -1
+            for winner in winners:
+                award_index += len(winner.teams)
                 for team in winner.teams:
-                    points = point_awards[i] if i in point_awards else 0
+                    points = (
+                        point_awards[award_index]
+                        if award_index in point_awards
+                        else 0
+                    )
                     team.customdata['previous_score'] = team.customdata['score']
                     team.customdata['score'] += points
 

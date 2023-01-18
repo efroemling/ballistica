@@ -53,7 +53,6 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             reverse=True,
             key=lambda p: (
                 p.team.sessionteam.customdata['score'],
-                p.team.sessionteam.customdata['score'],
                 p.getname(full=True),
             ),
         )
