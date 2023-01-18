@@ -14,7 +14,7 @@ from ba._activity import Activity
 from ba._score import ScoreConfig
 from ba._language import Lstr
 from ba._messages import PlayerDiedMessage, StandMessage
-from ba._error import NotFoundError, print_error, print_exception
+from ba._error import MapNotFoundError, print_error, print_exception
 from ba._general import Call, WeakCall
 from ba._player import PlayerInfo
 from ba import _map
@@ -274,10 +274,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
     def map(self) -> ba.Map:
         """The map being used for this game.
 
-        Raises a ba.NotFoundError if the map does not currently exist.
+        Raises a ba.MapNotFoundError if the map does not currently exist.
         """
         if self._map is None:
-            raise NotFoundError
+            raise MapNotFoundError
         return self._map
 
     def get_instance_display_string(self) -> ba.Lstr:

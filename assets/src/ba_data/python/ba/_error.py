@@ -69,6 +69,13 @@ class TeamNotFoundError(NotFoundError):
     """
 
 
+class MapNotFoundError(NotFoundError):
+    """Exception raised when an expected ba.Map does not exist.
+
+    Category: **Exception Classes**
+    """
+
+
 class DelegateNotFoundError(NotFoundError):
     """Exception raised when an expected delegate object does not exist.
 

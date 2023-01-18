@@ -35,6 +35,7 @@ def filter_playlist(
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     from ba._map import get_filtered_map_name
+    from ba._error import MapNotFoundError
     from ba._store import get_unowned_maps, get_unowned_game_types
     from ba._general import getclass
     from ba._gameactivity import GameActivity
@@ -161,9 +162,7 @@ def filter_playlist(
             gameclass = getclass(entry['type'], GameActivity)
 
             if entry['settings']['map'] not in available_maps:
-                raise ImportError(
-                    f"Map not found: '{entry['settings']['map']}'"
-                )
+                raise MapNotFoundError()
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue
@@ -179,7 +178,15 @@ def filter_playlist(
             for setting in neededsettings:
                 if setting.name not in entry['settings']:
                     entry['settings'][setting.name] = setting.default
+
             goodlist.append(entry)
+
+        except MapNotFoundError:
+            logging.warning(
+                'Map \'%s\' not found while scanning playlist \'%s\'.',
+                name,
+                entry['settings']['map'],
+            )
         except ImportError as exc:
             logging.warning(
                 'Import failed while scanning playlist \'%s\': %s', name, exc
