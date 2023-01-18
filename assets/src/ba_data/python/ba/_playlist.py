@@ -4,10 +4,11 @@
 
 from __future__ import annotations
 
-import _ba
 import copy
 import logging
 from typing import Any, TYPE_CHECKING
+
+import _ba
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -128,8 +129,7 @@ def filter_playlist(playlist: PlaylistType,
 
             if entry['settings']['map'] not in available_maps:
                 raise ImportError(
-                    f"Map not found: '{entry['settings']['map']}'"
-                )
+                    f"Map not found: '{entry['settings']['map']}'")
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue
