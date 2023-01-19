@@ -211,9 +211,8 @@ class PartyWindow(ba.Window):
             flatness=1.0,
         )
         self._chat_texts.append(txt)
-        if len(self._chat_texts) > 40:
-            first = self._chat_texts.pop(0)
-            first.delete()
+        while len(self._chat_texts) > 40:
+            self._chat_texts.pop(0).delete()
         ba.containerwidget(edit=self._columnwidget, visible_child=txt)
 
     def _on_menu_button_press(self) -> None:

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import threading
+from collections import deque
 from typing import TYPE_CHECKING
 
 import _ba
@@ -68,7 +69,7 @@ class _MacMusicAppThread(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self._commands_available = threading.Event()
-        self._commands: list[list] = []
+        self._commands = deque[list]()
         self._volume = 1.0
         self._current_playlist: str | None = None
         self._orig_volume: int | None = None
@@ -109,7 +110,7 @@ class _MacMusicAppThread(threading.Thread):
             # We're not protecting this list with a mutex but we're
             # just using it as a simple queue so it should be fine.
             while self._commands:
-                cmd = self._commands.pop(0)
+                cmd = self._commands.popleft()
                 if cmd[0] == 'DIE':
                     self._handle_die_command()
                     done = True

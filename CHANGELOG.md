@@ -1,3 +1,5 @@
+### 1.7.20 (build 20999, api 7, 2023-01-19)
+
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 - Fixes an issue where repeated curses could use incorrect countdown times (Thanks EraOSBeta!).
 - Last manual party connect port is now saved. Previously, it always assumed the port to be 43210 (Thanks ritiek!).

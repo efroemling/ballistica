@@ -9,6 +9,7 @@ import asyncio
 import logging
 import weakref
 from enum import Enum
+from collections import deque
 from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated
@@ -201,7 +202,7 @@ class RPCEndpoint:
         self._closing = False
         self._did_wait_closed = False
         self._event_loop = asyncio.get_running_loop()
-        self._out_packets: list[bytes] = []
+        self._out_packets = deque[bytes]()
         self._have_out_packets = asyncio.Event()
         self._run_called = False
         self._peer_info: _PeerInfo | None = None
@@ -758,7 +759,7 @@ class RPCEndpoint:
             await self._have_out_packets.wait()
 
             assert self._out_packets
-            data = self._out_packets.pop(0)
+            data = self._out_packets.popleft()
 
             # Important: only clear this once all packets are sent.
             if not self._out_packets:

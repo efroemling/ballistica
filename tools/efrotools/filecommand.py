@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from typing import TYPE_CHECKING
 from threading import Condition, Thread
 import os
@@ -23,7 +24,7 @@ class _FileBatchesRun:
     ) -> None:
         self.condition = Condition()
         self.paths = paths
-        self.batches: list[list[str]] = []
+        self.batches = deque[list[str]]()
         self.batch_size = batch_size
         self.done = False
         self.errored = False
@@ -141,7 +142,7 @@ def file_batches(
                 if run.errored:
                     raise RuntimeError('BG batch run errored.')
                 while run.batches:
-                    yield run.batches.pop(0)
+                    yield run.batches.popleft()
                 if run.done:
                     break
             except GeneratorExit:
