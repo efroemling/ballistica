@@ -1,7 +1,7 @@
-### 1.7.19 (build 20995, api 7, 2023-01-18)
+### 1.7.19 (build 20997, api 7, 2023-01-19)
 - Fixes an issue where repeated curses could use incorrect countdown times (Thanks EraOSBeta!).
 - Last manual party connect port is now saved. Previously, it always assumed the port to be 43210 (Thanks ritiek!).
-- Added a plugin-settings window under the plugins UI for enabling/disabling, and setting whether plugins are auto-enabled (Thanks vishal332008!).
+- Added a plugin-settings window under the plugins UI which allows enabling/disabling all plugins and setting whether new plugins are auto-enabled (Thanks vishal332008!).
 - Missing maps are now cleanly filtered out of playlists instead of causing errors/hangs (Thanks imayushsaini!).
 - Added in-game-ping option under advanced settings (Thanks imayushsaini!).
 - `BA_DEVICE_NAME` environment variable can now be used to change the name the local device shows up as. Handy if running multiple servers so you can tell them apart in cloud-console/etc. (Thanks imayushsaini!).
