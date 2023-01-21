@@ -129,7 +129,7 @@ class App:
 
     @property
     def debug_build(self) -> bool:
-        """Whether the game was compiled in debug mode.
+        """Whether the app was compiled in debug mode.
 
         Debug builds generally run substantially slower than non-debug
         builds due to compiler optimizations being disabled and extra
