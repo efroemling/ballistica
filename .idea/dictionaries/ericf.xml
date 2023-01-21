@@ -2330,6 +2330,7 @@
       <w>setactivity</w>
       <w>setalpha</w>
       <w>setbuild</w>
+      <w>setclass</w>
       <w>setconfig</w>
       <w>setdata</w>
       <w>setlanguage</w>

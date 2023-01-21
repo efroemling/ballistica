@@ -1240,6 +1240,7 @@
       <w>setactivity</w>
       <w>setattro</w>
       <w>setattrofunc</w>
+      <w>setclass</w>
       <w>setdata</w>
       <w>setname</w>
       <w>setnode</w>

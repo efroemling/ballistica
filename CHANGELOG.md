@@ -1,4 +1,5 @@
-### 1.7.20 (build 20999, api 7, 2023-01-19)
+### 1.7.20 (build 21005, api 7, 2023-01-21)
+- Started work on the ba.app.components subsystem which will be used by different app-modes, plugins, etc. to override various app functionality.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 - Fixes an issue where repeated curses could use incorrect countdown times (Thanks EraOSBeta!).

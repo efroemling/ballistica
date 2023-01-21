@@ -144,6 +144,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_ads.py \
   build/ba_data/python/ba/_analytics.py \
   build/ba_data/python/ba/_app.py \
+  build/ba_data/python/ba/_appcomponent.py \
   build/ba_data/python/ba/_appconfig.py \
   build/ba_data/python/ba/_appdelegate.py \
   build/ba_data/python/ba/_appmode.py \
@@ -398,6 +399,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_ads.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_analytics.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_app.cpython-310.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_appcomponent.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appdelegate.cpython-310.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appmode.cpython-310.opt-1.pyc \
@@ -666,6 +668,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/transfer.py \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/call.py \
+  build/ba_data/python/efro/cloudshell.py \
   build/ba_data/python/efro/dataclassio/__init__.py \
   build/ba_data/python/efro/dataclassio/_api.py \
   build/ba_data/python/efro/dataclassio/_base.py \
@@ -699,6 +702,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/transfer.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/call.cpython-310.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/cloudshell.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_api.cpython-310.opt-1.pyc \
   build/ba_data/python/efro/dataclassio/__pycache__/_base.cpython-310.opt-1.pyc \

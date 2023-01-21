@@ -171,6 +171,12 @@ class LogHandler(logging.Handler):
 
     def _log_thread_main(self) -> None:
         self._event_loop = asyncio.new_event_loop()
+
+        # In our background thread event loop we do a fair amount of
+        # slow synchronous stuff such as mucking with the log cache.
+        # Let's avoid getting tons of warnings about this in debug mode.
+        self._event_loop.slow_callback_duration = 2.0  # Default is 0.1
+
         # NOTE: if we ever use default threadpool at all we should allow
         # setting it for our loop.
         asyncio.set_event_loop(self._event_loop)

@@ -20,6 +20,7 @@ from ba._meta import MetadataSubsystem
 from ba._ads import AdsSubsystem
 from ba._net import NetworkSubsystem
 from ba._workspace import WorkspaceSubsystem
+from ba._appcomponent import AppComponentSubsystem
 from ba import _internal
 
 if TYPE_CHECKING:
@@ -294,6 +295,7 @@ class App:
         # Server Mode.
         self.server: ba.ServerController | None = None
 
+        self.components = AppComponentSubsystem()
         self.meta = MetadataSubsystem()
         self.accounts_v1 = AccountV1Subsystem()
         self.plugins = PluginSubsystem()
