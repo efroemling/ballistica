@@ -108,7 +108,7 @@ class PluginSettingsWindow(ba.Window):
             ),
             text=ba.Lstr(resource='pluginsAutoEnableNewText'),
             scale=1.0,
-            maxwidth=430,
+            maxwidth=308,
             on_value_change_call=self._update_value,
         )
 
