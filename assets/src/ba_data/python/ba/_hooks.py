@@ -27,12 +27,8 @@ def finish_bootstrapping() -> None:
     """Do final bootstrapping related bits."""
     assert _ba.in_logic_thread()
 
-    # Kick off our asyncio event handling, allowing us to use coroutines
-    # in our logic thread alongside our internal event handling.
-    # setup_asyncio()
-
-    # Ok, bootstrapping is done; time to get the show started.
-    _ba.app.on_app_launch()
+    # Ok, low level bootstrapping is done; time to get Python stuff started.
+    _ba.app.on_bootstrapping_completed()
 
 
 def reset_to_main_menu() -> None:
