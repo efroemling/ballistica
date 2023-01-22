@@ -8,7 +8,7 @@
 - Modder
 - Fixed some game modes
 
-### Roman Trapeznikov (Dliwk)
+### Dliwk
 - Bug fixes and a few features.
 
 ### Benefit-Zebra
