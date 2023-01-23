@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.ui.confirm import ConfirmWindow
 
 if TYPE_CHECKING:
     pass
