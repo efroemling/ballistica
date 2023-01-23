@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.ui.confirm import ConfirmWindow
 
 if TYPE_CHECKING:
     pass
@@ -83,7 +84,9 @@ class PluginSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource='pluginsEnableAllText'),
             text_scale=1.0,
-            on_activate_call=self._enable_all_plugins,
+            on_activate_call=lambda: ConfirmWindow(
+                action=self._enable_all_plugins,
+            )
         )
 
         self._y_position -= 70
@@ -94,7 +97,9 @@ class PluginSettingsWindow(ba.Window):
             autoselect=True,
             label=ba.Lstr(resource='pluginsDisableAllText'),
             text_scale=1.0,
-            on_activate_call=self._disable_all_plugins,
+            on_activate_call=lambda: ConfirmWindow(
+                action=self._disable_all_plugins,
+            )
         )
 
         self._y_position -= 70
