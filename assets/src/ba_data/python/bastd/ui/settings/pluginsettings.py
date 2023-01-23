@@ -86,7 +86,7 @@ class PluginSettingsWindow(ba.Window):
             text_scale=1.0,
             on_activate_call=lambda: ConfirmWindow(
                 action=self._enable_all_plugins,
-            )
+            ),
         )
 
         self._y_position -= 70
@@ -99,7 +99,7 @@ class PluginSettingsWindow(ba.Window):
             text_scale=1.0,
             on_activate_call=lambda: ConfirmWindow(
                 action=self._disable_all_plugins,
-            )
+            ),
         )
 
         self._y_position -= 70
