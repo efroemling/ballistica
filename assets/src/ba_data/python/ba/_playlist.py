@@ -184,8 +184,8 @@ def filter_playlist(
         except MapNotFoundError:
             logging.warning(
                 'Map \'%s\' not found while scanning playlist \'%s\'.',
-                name,
                 entry['settings']['map'],
+                name,
             )
         except ImportError as exc:
             logging.warning(
