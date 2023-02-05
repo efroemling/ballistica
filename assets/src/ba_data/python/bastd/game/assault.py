@@ -197,7 +197,6 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         # If its another team's player, they scored.
         player_team = player.team
         if player_team is not team:
-
             # Prevent multiple simultaneous scores.
             if ba.time() != self._last_score_time:
                 self._last_score_time = ba.time()

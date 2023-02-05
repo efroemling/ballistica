@@ -398,7 +398,6 @@ class AppHealthMonitor:
         self._first_check = True
 
     def _app_monitor_thread_main(self) -> None:
-
         try:
             self._monitor_app()
         except Exception:
@@ -417,7 +416,6 @@ class AppHealthMonitor:
         import time
 
         while bool(True):
-
             # Always sleep a bit between checks.
             time.sleep(1.234)
 
@@ -430,7 +428,6 @@ class AppHealthMonitor:
             self._response = False
             _ba.pushcall(self._set_response, raw=True)
             while not self._response:
-
                 # Abort this check if we went into the background.
                 if not self._check_running():
                     break

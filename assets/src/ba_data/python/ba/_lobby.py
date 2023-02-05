@@ -176,7 +176,6 @@ class Chooser:
     """
 
     def __del__(self) -> None:
-
         # Just kill off our base node; the rest should go down with it.
         if self._text_node:
             self._text_node.delete()
@@ -678,7 +677,6 @@ class Chooser:
                 lobby = self.lobby
                 sessionteams = lobby.sessionteams
                 if len(sessionteams) > 1:
-
                     # First, calc how many players are on each team
                     # ..we need to count both active players and
                     # choosers that have been marked as ready.
@@ -750,12 +748,10 @@ class Chooser:
 
             elif msg.what == 'profileindex':
                 if len(self._profilenames) == 1:
-
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
                     _ba.playsound(_ba.getsound('error'))
                 else:
-
                     # Pick the next player profile and assign our name
                     # and character based on that.
                     _ba.playsound(self._deek_sound)
@@ -779,7 +775,6 @@ class Chooser:
     def _update_text(self) -> None:
         assert self._text_node is not None
         if self._ready:
-
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
             text = Lstr(value=self._sessionplayer.getname(full=True))
@@ -802,7 +797,6 @@ class Chooser:
                 {0.15: fin_color, 0.25: (2, 2, 2, 1), 0.35: fin_color},
             )
         else:
-
             # Blend if we're in teams mode; switch instantly otherwise.
             if can_switch_teams:
                 animate_array(
@@ -839,7 +833,6 @@ class Chooser:
         if self.lobby.use_team_colors:
             for i, sessionteam in enumerate(self.lobby.sessionteams):
                 if i != self._selected_team_index:
-
                     # Find the dominant component of this sessionteam's color
                     # and adjust ours so that the component is
                     # not super-dominant.
@@ -927,7 +920,6 @@ class Lobby:
     """
 
     def __del__(self) -> None:
-
         # Reset any players that still have a chooser in us.
         # (should allow the choosers to die).
         sessionplayers = [

@@ -151,7 +151,6 @@ def _writefuncs(
     spcstr = '\n' * spacing
     indstr = ' ' * indent
     for funcname in funcnames:
-
         # Skip some that are not in public builds.
         if funcname in {'master_hash_dump'}:
             continue
@@ -222,7 +221,6 @@ def _writefuncs(
                     'return ba.Player()'
                 )
             elif returns.startswith('ba.') and ' | None' not in returns:
-
                 # We cant import ba at module level so let's
                 # do it within funcs as needed.
                 returnstr = (
@@ -232,7 +230,6 @@ def _writefuncs(
                 )
 
             elif returns in {'object', 'Any'}:
-
                 # We use 'object' when we mean "can vary"
                 # don't want pylint making assumptions in this case.
                 returnstr = 'return _uninferrable()'
@@ -629,7 +626,6 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             and not docstr.splitlines()[0].endswith('.')
             and docstr != '(internal)'
         ):
-
             # Ok.. looks like the first line is a signature.
             # Make sure we've got a signature followed by a blank line.
             if '\n\n' not in docstr:

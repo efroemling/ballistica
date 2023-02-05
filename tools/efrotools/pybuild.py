@@ -120,7 +120,6 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
     assert '--with-pydebug' not in txt
     if debug:
-
         # Add debug build flag
         txt = replace_exact(
             txt,
@@ -337,7 +336,6 @@ def android_patch_ssl() -> None:
 
 
 def _patch_py_ssl() -> None:
-
     # UPDATE: this is now included in Python as of 3.10.6; woohoo!
     if bool(True):
         return
@@ -940,7 +938,6 @@ def gather(do_android: bool, do_apple: bool) -> None:
             for cfg in cfgs:
                 out = cfg.replace('pyconfig', 'pyconfig-' + build['name'])
                 if cfg == 'pyconfig.h':
-
                     # For platform's root pyconfig.h we need to filter
                     # contents too (those headers can themselves include
                     # others; ios for instance points to a arm64 and a

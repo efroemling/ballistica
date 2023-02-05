@@ -262,7 +262,6 @@ def _upload_cache(
     hashes_str: str,
     hashes_existing_str: str,
 ) -> None:
-
     # First, if we've run before, print the files causing us to re-run:
     if hashes_existing_str != '':
         changed_files: set[str] = set()
@@ -492,7 +491,6 @@ def warm_start_cache() -> None:
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
     entries: list[tuple[str, str]] = []
     for fname, url in cachemap.items():
-
         # File hasn't been pulled from cache yet = ignore.
         if not os.path.exists(fname):
             continue

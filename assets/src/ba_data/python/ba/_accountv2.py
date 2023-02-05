@@ -31,7 +31,6 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
-
         # Whether or not everything related to an initial login
         # (or lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app

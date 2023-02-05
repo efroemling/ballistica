@@ -665,7 +665,6 @@ class App:
         # This lets them tear themselves down gracefully.
         host_session: ba.Session | None = _ba.get_foreground_host_session()
         if host_session is not None:
-
             # Kick off a little transaction so we'll hopefully have all the
             # latest account state when we get back to the menu.
             _internal.add_transaction(

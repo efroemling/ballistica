@@ -11,7 +11,6 @@ class QRCodeWindow(popup.PopupWindow):
     """Popup window that shows a QR code."""
 
     def __init__(self, origin_widget: ba.Widget, qr_tex: ba.Texture):
-
         position = origin_widget.get_screen_space_center()
         uiscale = ba.app.ui.uiscale
         scale = (

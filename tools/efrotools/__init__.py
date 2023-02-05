@@ -202,7 +202,6 @@ def py_examine(
     flines = fcontents.splitlines()
 
     if operation == 'pylint_infer':
-
         # See what asteroid can infer about the target symbol.
         symbol = (
             selection
@@ -220,7 +219,6 @@ def py_examine(
         inferred = list(node.infer())
         print(symbol + ':', ', '.join([str(i) for i in inferred]))
     elif operation in ('mypy_infer', 'mypy_locals'):
-
         # Ask mypy for the type of the target symbol.
         symbol = (
             selection

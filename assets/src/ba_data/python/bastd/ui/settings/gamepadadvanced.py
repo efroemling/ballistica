@@ -474,7 +474,6 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         x_offset: float = 0.0,
         displayname: ba.Lstr | None = None,
     ) -> tuple[ba.Widget, ba.Widget]:
-
         if displayname is None:
             displayname = name
         ba.textwidget(

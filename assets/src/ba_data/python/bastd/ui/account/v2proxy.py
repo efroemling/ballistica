@@ -177,7 +177,6 @@ class V2ProxySignInWindow(ba.Window):
     def _got_status(
         self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
     ) -> None:
-
         # For now, if anything goes wrong on the server-side, just abort
         # with a vague error message. Can be more verbose later if need be.
         if (

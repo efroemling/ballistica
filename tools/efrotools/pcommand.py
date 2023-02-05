@@ -729,7 +729,6 @@ def makefile_target_list() -> None:
 
     entries: list[_Entry] = []
     for i, line in enumerate(lines):
-
         # Targets.
         if (
             ':' in line

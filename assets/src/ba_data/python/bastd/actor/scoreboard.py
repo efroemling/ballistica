@@ -150,7 +150,6 @@ class _Entry:
             # We do our own clipping here; should probably try to tap into some
             # existing functionality.
             if isinstance(team_name_label, ba.Lstr):
-
                 # Hmmm; if the team-name is a non-translatable value lets go
                 # ahead and clip it otherwise we leave it as-is so
                 # translation can occur..

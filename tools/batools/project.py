@@ -186,7 +186,6 @@ class Updater:
             )
 
     def _apply_line_changes(self) -> None:
-
         # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: list[tuple[str, LineChange]] = []
         auto_changes: list[tuple[str, LineChange]] = []
@@ -249,7 +248,6 @@ class Updater:
             print(f'No issues found in {fcount} source files.')
 
     def _check_source_files(self) -> None:
-
         for fsrc in self._source_files:
             if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
                 raise Exception('please use .cc for c++ files; found ' + fsrc)
@@ -330,7 +328,6 @@ class Updater:
                 )
 
     def _check_header(self, fname: str) -> None:
-
         # Make sure its define guard is correct.
         guard = fname[4:].upper().replace('/', '_').replace('.', '_') + '_'
         with open(fname, encoding='utf-8') as fhdr:
@@ -541,7 +538,6 @@ class Updater:
                         sys.exit(255)
 
     def _update_visual_studio_project(self, basename: str) -> None:
-
         fname = (
             f'ballisticacore-windows/{basename}/'
             f'BallisticaCore{basename}.vcxproj'

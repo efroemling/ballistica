@@ -534,11 +534,9 @@ class ServerManagerApp:
                     time.sleep(1)
 
     def _load_config_from_file(self, print_confirmation: bool) -> ServerConfig:
-
         out: ServerConfig | None = None
 
         if not os.path.exists(self._config_path):
-
             # Special case:
             # If the user didn't specify a particular config file, allow
             # gracefully falling back to defaults if the default one is
@@ -695,7 +693,6 @@ class ServerManagerApp:
         # If we want to die completely after this subprocess has ended,
         # tell the main thread to die.
         if self._wrapper_shutdown_desired:
-
             # Only do this if the main thread is not already waiting for
             # us to die; otherwise it can lead to deadlock.
             # (we hang in os.kill while main thread is blocked in Thread.join)
@@ -777,7 +774,6 @@ class ServerManagerApp:
         self._send_server_command(StartServerModeCommand(self._config))
 
         while True:
-
             # If the app is trying to shut down, nope out immediately.
             if self._done:
                 break
@@ -815,7 +811,6 @@ class ServerManagerApp:
             # Watch for the server process exiting..
             code: int | None = self._subprocess.poll()
             if code is not None:
-
                 clr = Clr.CYN if code == 0 else Clr.RED
                 print(
                     f'{clr}Server subprocess exited'

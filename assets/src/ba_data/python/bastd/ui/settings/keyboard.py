@@ -312,7 +312,6 @@ class AwaitKeyboardInputWindow(ba.Window):
     """Window for capturing a keypress."""
 
     def __init__(self, button: str, ui: ba.Widget, settings: dict):
-
         self._capture_button = button
         self._capture_key_ui = ui
         self._settings = settings

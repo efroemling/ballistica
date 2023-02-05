@@ -694,7 +694,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             and not self._game_over
             and self._lives > 0
         ):
-
             self._can_end_wave = False
             self._time_bonus_timer = None
             self._time_bonus_text = None
@@ -723,7 +722,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             self._flawless = True  # reset
 
             if won:
-
                 # Completion achievements:
                 if self._preset in {Preset.PRO, Preset.PRO_EASY}:
                     self._award_achievement(
@@ -1151,7 +1149,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         )
 
     def _on_bot_spawn(self, path: int, spaz: SpazBot) -> None:
-
         # Add our custom update callback and set some info for this bot.
         spaz_type = type(spaz)
         assert spaz is not None
@@ -1278,7 +1275,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             ba.is_point_in_box(pos, boxes['b8'])
             and not ba.is_point_in_box(pos, boxes['b9'])
         ) or pos == (0.0, 0.0, 0.0):
-
             # Default to walking right if we're still in the walking area.
             bot.node.move_left_right = speed
             bot.node.move_up_down = 0

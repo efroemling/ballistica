@@ -396,7 +396,6 @@ def get_available_sale_time(tab: str) -> int | None:
 
             # If we haven't calced/loaded start times yet.
             if app.pro_sale_start_time is None:
-
                 # If we've got a time-remaining in our config, start there.
                 if 'PSTR' in config:
                     app.pro_sale_start_time = int(
@@ -404,7 +403,6 @@ def get_available_sale_time(tab: str) -> int | None:
                     )
                     app.pro_sale_start_val = config['PSTR']
                 else:
-
                     # We start the timer once we get the duration from
                     # the server.
                     start_duration = _internal.get_v1_account_misc_read_val(

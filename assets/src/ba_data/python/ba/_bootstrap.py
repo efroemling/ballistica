@@ -173,7 +173,6 @@ class _CustomHelper:
 
 
 def _on_log(entry: LogEntry) -> None:
-
     # Just forward this along to the engine to display in the in-game console,
     # in the Android log, etc.
     _ba.display_log(

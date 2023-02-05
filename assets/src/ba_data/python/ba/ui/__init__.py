@@ -124,7 +124,6 @@ class UIController:
     """
 
     def __init__(self) -> None:
-
         # FIXME: document why we have separate stacks for game and menu...
         self._main_stack_game: list[UIEntry] = []
         self._main_stack_menu: list[UIEntry] = []

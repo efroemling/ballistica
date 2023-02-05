@@ -417,7 +417,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self._read_entries()
 
     def set_stick_image_position(self, x: float, y: float) -> None:
-
         # Clamp this to a circle.
         len_squared = x * x + y * y
         if len_squared > 1.0:
@@ -458,7 +457,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     pass
 
                 def run(self, a: TutorialActivity) -> None:
-
                     # if we're looping, print out how long each cycle took
                     # print out how long each cycle took..
                     if a.last_start_time is not None:
@@ -543,7 +541,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     self._angle = angle
 
                 def run(self, a: TutorialActivity) -> None:
-
                     # if they gave a 'relative to' spaz, position is relative
                     # to them
                     pos: Sequence[float]
@@ -2426,7 +2423,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
             )
 
     def _run_next_entry(self) -> None:
-
         while self._entries:
             entry = self._entries.popleft()
             try:
@@ -2482,7 +2478,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
             self.end()
 
     def _player_pressed_button(self, player: Player) -> None:
-
         # Special case: if there's only one player, we give them a
         # warning on their first press (some players were thinking the
         # on-screen guide meant they were supposed to press something).

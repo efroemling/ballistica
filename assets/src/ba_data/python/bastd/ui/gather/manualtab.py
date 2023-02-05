@@ -107,7 +107,6 @@ class ManualGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> ba.Widget:
-
         c_width = region_width
         c_height = region_height - 20
 
@@ -333,7 +332,6 @@ class ManualGatherTab(GatherTab):
 
     # Tab containing saved favorite addresses
     def _build_favorites_tab(self, region_height: float) -> None:
-
         c_height = region_height - 20
         v = c_height - 35 - 25 - 30
 

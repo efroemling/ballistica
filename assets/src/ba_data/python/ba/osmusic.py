@@ -58,7 +58,6 @@ class OSMusicPlayer(MusicPlayer):
             self._want_to_play = self._actually_playing = True
             _ba.music_player_play(name)
         elif entry_type == 'musicFolder':
-
             # Launch a thread to scan this folder and give us a random
             # valid file within it.
             self._want_to_play = True

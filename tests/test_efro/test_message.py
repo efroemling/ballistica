@@ -499,7 +499,6 @@ def test_protocol_creation() -> None:
 
 
 def test_sender_module_single_emb() -> None:
-
     """Test generation of protocol-specific sender modules for typing/etc."""
     # NOTE: Ideally we should be testing efro.message.create_sender_module()
     # here, but it requires us to pass code which imports this test module

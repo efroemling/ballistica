@@ -1107,7 +1107,6 @@ class Bomb(ba.Actor):
         if not self._exploded and (
             not ispunched or self.bomb_type in ['impact', 'land_mine']
         ):
-
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
             # person causing them).

@@ -124,7 +124,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
     # Various high-level game events come through this method.
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):
-
             # Augment standard behavior.
             super().handlemessage(msg)
 
@@ -177,7 +176,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         )
 
     def _drop_bomb_cluster(self) -> None:
-
         # Random note: code like this is a handy way to plot out extents
         # and debug things.
         loc_test = False
@@ -253,7 +251,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         # of 'teams' mode where each player gets their own team, so we can
         # just always deal in teams and have all cases covered.
         for team in self.teams:
-
             # Set the team score to the max time survived by any player on
             # that team.
             longest_life = 0.0

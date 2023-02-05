@@ -188,7 +188,6 @@ class MusicSubsystem:
         old_mode = self._music_mode
         self._music_mode = mode
         if old_mode != self._music_mode or force_restart:
-
             # If we're switching into test mode we don't
             # actually play anything until its requested.
             # If we're switching *out* of test mode though
@@ -306,7 +305,6 @@ class MusicSubsystem:
                 musictype = None
 
         with _ba.Context('ui'):
-
             # If they don't want to restart music and we're already
             # playing what's requested, we're done.
             if continuous and self.music_types[mode] is musictype:
@@ -358,7 +356,6 @@ class MusicSubsystem:
         return soundtrack
 
     def _play_music_player_music(self, entry: Any) -> None:
-
         # Stop any existing internal music.
         if self._music_node is not None:
             self._music_node.delete()
@@ -368,7 +365,6 @@ class MusicSubsystem:
         self.get_music_player().play(entry)
 
     def _play_internal_music(self, musictype: MusicType | None) -> None:
-
         # Stop any existing music-player playback.
         if self._music_player is not None:
             self._music_player.stop()
@@ -380,7 +376,6 @@ class MusicSubsystem:
 
         # Start up new internal music.
         if musictype is not None:
-
             entry = ASSET_SOUNDTRACK_ENTRIES.get(musictype)
             if entry is None:
                 print(f"Unknown music: '{musictype}'")
@@ -482,7 +477,6 @@ class MusicPlayer:
         """Called on final app shutdown."""
 
     def _update_play_state(self) -> None:
-
         # If we aren't playing, should be, and have positive volume, do so.
         if not self._actually_playing:
             if self._entry_to_play is not None and self._volume > 0.0:

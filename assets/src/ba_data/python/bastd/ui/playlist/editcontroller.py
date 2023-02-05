@@ -67,7 +67,6 @@ class PlaylistEditController:
             if playlist_name is not None:
                 self._name = playlist_name
             else:
-
                 # Find a good unused name.
                 i = 1
                 while True:

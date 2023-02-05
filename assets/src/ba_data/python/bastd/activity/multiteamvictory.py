@@ -412,7 +412,6 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._tips_text = TipsText(offs_y=70)
 
     def _play_victory_music(self) -> None:
-
         # Make sure we don't stomp on the next activity's music choice.
         if not self.is_transitioning_out():
             ba.setmusic(ba.MusicType.VICTORY)

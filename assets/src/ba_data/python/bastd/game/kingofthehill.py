@@ -201,7 +201,6 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         else:
             scoring_team = self._scoring_team()
         if scoring_team:
-
             if scoring_team.time_remaining > 0:
                 ba.playsound(self._tick_sound)
 

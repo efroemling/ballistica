@@ -20,7 +20,6 @@ class PromoCodeWindow(ba.Window):
     def __init__(
         self, modal: bool = False, origin_widget: ba.Widget | None = None
     ):
-
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'

@@ -200,7 +200,6 @@ class AccountV1Subsystem:
             'Player Profiles' not in config
             or '__account__' not in config['Player Profiles']
         ):
-
             # Create a spaz with a nice default purply color.
             _internal.add_transaction(
                 {

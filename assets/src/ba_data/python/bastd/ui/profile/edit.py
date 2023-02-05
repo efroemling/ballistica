@@ -247,7 +247,6 @@ class EditProfileWindow(ba.Window):
                 on_activate_call=self.show_account_profile_info,
             )
         elif self._global:
-
             b_size = 60
             self._icon_button = btn = ba.buttonwidget(
                 parent=self._root_widget,

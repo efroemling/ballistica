@@ -453,7 +453,6 @@ class CoopBrowserWindow(ba.Window):
             ba.print_exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: list[dict[str, Any]] | None) -> None:
-
         # If the number of tournaments or challenges in the data differs from
         # our current arrangement, refresh with the new number.
         if (data is None and self._tournament_button_count != 0) or (

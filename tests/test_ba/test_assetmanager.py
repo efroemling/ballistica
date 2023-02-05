@@ -26,7 +26,6 @@ def test_assetmanager() -> None:
     # Disabling for now...
     if bool(False):
         with tempfile.TemporaryDirectory() as tmpdir:
-
             manager = AssetManager(rootdir=Path(tmpdir))
             wref = weakref.ref(manager)
             manager.start()

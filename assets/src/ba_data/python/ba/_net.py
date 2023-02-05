@@ -26,7 +26,6 @@ class NetworkSubsystem:
     """Network related app subsystem."""
 
     def __init__(self) -> None:
-
         # Anyone accessing/modifying zone_pings should hold this lock,
         # as it is updated by a background thread.
         self.zone_pings_lock = threading.Lock()
@@ -192,7 +191,6 @@ class MasterServerCallThread(threading.Thread):
                 raise TypeError(f'invalid responsetype: {self._response_type}')
 
         except Exception as exc:
-
             # Ignore common network errors; note unexpected ones.
             if not is_urllib_communication_error(exc, url=url):
                 print(

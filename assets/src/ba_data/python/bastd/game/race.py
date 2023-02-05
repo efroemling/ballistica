@@ -250,7 +250,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         this_region = region.index
 
         if last_region != this_region:
-
             # If a player tries to skip regions, smite them.
             # Allow a one region leeway though (its plausible players can get
             # blown over a region, etc).
@@ -293,7 +292,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
                     # A player is finishing.
                     if player.lap == self._laps:
-
                         # In teams mode, hand out points based on the order
                         # players come in.
                         if isinstance(self.session, ba.DualTeamSession):
@@ -569,7 +567,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._race_started = True
 
     def _update_player_order(self) -> None:
-
         # Calc all player distances.
         for player in self.players:
             pos: ba.Vec3 | None
@@ -728,7 +725,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         return spaz
 
     def _check_end_game(self) -> None:
-
         # If there's no teams left racing, finish.
         teams_still_in = len([t for t in self.teams if not t.finished])
         if teams_still_in == 0:
@@ -760,7 +756,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     return
 
     def end_game(self) -> None:
-
         # Stop updating our time text, and set it to show the exact last
         # finish time if we have one. (so users don't get upset if their
         # final time differs from what they see onscreen by a tiny amount)

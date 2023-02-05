@@ -87,7 +87,6 @@ def _emit_group_efrocache_lines(targets: list[Target]) -> list[str]:
         return out
     all_dsts = set()
     for target in targets:
-
         # We may need to make pipeline adjustments if/when we get filenames
         # with spaces in them.
         if ' ' in target.dst:
@@ -116,7 +115,6 @@ RESIZE_CMD = os.path.join(TOOLS_DIR, 'pcommand resize_image')
 def _add_windows_icon(
     targets: list[Target], generic: bool, oculus: bool, inputs: bool
 ) -> None:
-
     sizes = [256, 128, 96, 64, 48, 32, 16]
     all_icons = []
     for size in sizes:

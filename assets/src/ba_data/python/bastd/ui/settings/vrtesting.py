@@ -17,7 +17,6 @@ class VRTestingWindow(TestingWindow):
     """Window for testing vr settings."""
 
     def __init__(self, transition: str = 'in_right'):
-
         entries: list[dict[str, Any]] = []
         app = ba.app
         # these are gear-vr only

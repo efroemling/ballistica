@@ -202,7 +202,6 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         ).autoretain()
 
     def _player_press(self) -> None:
-
         # If this activity is a good 'end point', ask server-mode just once if
         # it wants to do anything special like switch sessions or kill the app.
         if (
@@ -221,7 +220,6 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self.end()
 
     def _safe_assign(self, player: EmptyPlayer) -> None:
-
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:

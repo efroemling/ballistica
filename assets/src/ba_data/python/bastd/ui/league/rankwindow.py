@@ -272,7 +272,6 @@ class LeagueRankWindow(ba.Window):
         pass
 
     def _update(self, show: bool = False) -> None:
-
         cur_time = ba.time(ba.TimeType.REAL)
 
         # if our account state has changed, refresh our UI

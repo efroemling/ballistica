@@ -650,7 +650,6 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._launch()
 
     def _on_pay_with_ad_press(self) -> None:
-
         # If we're already entering, ignore.
         if self._entering:
             return
@@ -679,7 +678,6 @@ class TournamentEntryWindow(popup.PopupWindow):
             )
 
     def _on_ad_complete(self, actually_showed: bool) -> None:
-
         # Make sure any transactions the ad added got locally applied
         # (rewards added, etc.).
         ba.internal.run_transactions()
@@ -726,7 +724,6 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._transition_out()
 
     def _on_cancel(self) -> None:
-
         # Don't allow canceling for several seconds after poking an enter
         # button if it looks like we're waiting on a purchase or entering
         # the tournament.

@@ -693,7 +693,6 @@ class StoreBrowserWindow(ba.Window):
 
         assert self.button_infos is not None
         for b_type, b_info in self.button_infos.items():
-
             if b_type == 'merch':
                 purchased = False
             elif b_type in ['upgrades.pro', 'pro']:

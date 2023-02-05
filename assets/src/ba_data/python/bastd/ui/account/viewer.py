@@ -117,7 +117,6 @@ class AccountViewerWindow(popup.PopupWindow):
                 'showAccountExtrasMenu', False
             )
         ):
-
             self._extras_menu_button = ba.buttonwidget(
                 parent=self.root_widget,
                 size=(20, 20),

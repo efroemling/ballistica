@@ -184,7 +184,6 @@ class AccountSettingsWindow(ba.Window):
         self._restore_state()
 
     def _update(self) -> None:
-
         # If they want us to close once we're signed in, do so.
         if self._close_once_signed_in and self._v1_signed_in:
             self._back()
@@ -1161,7 +1160,6 @@ class AccountSettingsWindow(ba.Window):
     def _on_manage_account_response(
         self, response: bacommon.cloud.ManageAccountResponse | Exception
     ) -> None:
-
         if isinstance(response, Exception) or response.url is None:
             ba.screenmessage(ba.Lstr(resource='errorText'), color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
@@ -1196,7 +1194,6 @@ class AccountSettingsWindow(ba.Window):
         ba.textwidget(edit=self._unlink_accounts_button_label, color=clr)
 
     def _should_show_legacy_unlink_button(self) -> bool:
-
         # Only show this when fully signed in to a v2 account.
         if not self._v1_signed_in or ba.app.accounts_v2.primary is None:
             return False
@@ -1278,7 +1275,6 @@ class AccountSettingsWindow(ba.Window):
         )
 
     def _refresh_account_name_text(self) -> None:
-
         if self._account_name_text is None:
             return
         try:
@@ -1345,7 +1341,6 @@ class AccountSettingsWindow(ba.Window):
         )
 
     def _cancel_sign_in_press(self) -> None:
-
         # If we're waiting on an adapter to give us credentials, abort.
         self._signing_in_adapter = None
 
@@ -1358,7 +1353,6 @@ class AccountSettingsWindow(ba.Window):
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
 
     def _sign_out_press(self) -> None:
-
         if ba.app.accounts_v2.have_primary_credentials():
             if (
                 ba.app.accounts_v2.primary is not None
@@ -1384,7 +1378,6 @@ class AccountSettingsWindow(ba.Window):
         ba.timer(0.1, ba.WeakCall(self._update), timetype=ba.TimeType.REAL)
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
-
         # V1 login types are strings.
         if isinstance(login_type, str):
             ba.internal.sign_in_v1(login_type)

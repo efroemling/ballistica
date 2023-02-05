@@ -268,7 +268,6 @@ class DependencySet(Generic[T]):
         return rootdata
 
     def _resolve(self, dep: Dependency[T], recursion: int) -> None:
-
         # Watch for wacky infinite dep loops.
         if recursion > 10:
             raise RecursionError('Max recursion reached')

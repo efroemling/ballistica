@@ -19,7 +19,6 @@ class TouchscreenSettingsWindow(ba.Window):
         ba.internal.set_touchscreen_editing(False)
 
     def __init__(self) -> None:
-
         self._width = 650
         self._height = 380
         self._spacing = 40

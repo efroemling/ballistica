@@ -222,10 +222,8 @@ class PlayerSpaz(Spaz):
             self._drive_player_position()
 
         elif isinstance(msg, ba.DieMessage):
-
             # Report player deaths to the game.
             if not self._dead:
-
                 # Immediate-mode or left-game deaths don't count as 'kills'.
                 killed = (
                     not msg.immediate and msg.how is not ba.DeathType.LEFT_GAME

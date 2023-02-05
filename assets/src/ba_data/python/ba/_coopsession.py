@@ -189,11 +189,9 @@ class CoopSession(Session):
         # If there are *not* players in the current activity but there
         # *are* in the session:
         if not activity.players and self.sessionplayers:
-
             # If we're in a game, we should restart to pull in players
             # currently waiting in the session.
             if isinstance(activity, GameActivity):
-
                 # Never restart tourney games however; just end the session
                 # if all players are gone.
                 if self.tournament_id is not None:
@@ -292,7 +290,6 @@ class CoopSession(Session):
         if isinstance(
             activity, (JoinActivity, CoopScoreScreen, TransitionActivity)
         ):
-
             if outcome == 'next_level':
                 if self._next_game_instance is None:
                     raise RuntimeError()
@@ -319,11 +316,9 @@ class CoopSession(Session):
 
             # Normal case; launch the next round.
             else:
-
                 # Reset stats for the new activity.
                 self.stats.reset()
                 for player in self.sessionplayers:
-
                     # Skip players that are still choosing a team.
                     if player.in_game:
                         self.stats.register_sessionplayer(player)
@@ -356,7 +351,6 @@ class CoopSession(Session):
         elif isinstance(activity, TutorialActivity):
             self.setactivity(_ba.newactivity(TransitionActivity))
         else:
-
             playerinfos: list[ba.PlayerInfo]
 
             # Generic team games.
@@ -416,7 +410,6 @@ class CoopSession(Session):
             # Looks like we were in a round - check the outcome and
             # go from there.
             if outcome == 'restart':
-
                 # This will pop up back in the same round.
                 self.setactivity(_ba.newactivity(TransitionActivity))
             else:

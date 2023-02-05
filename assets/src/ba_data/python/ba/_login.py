@@ -229,7 +229,6 @@ class LoginAdapter:
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
-
                 if isinstance(response, Exception):
                     if DEBUG_LOG:
                         logging.debug(

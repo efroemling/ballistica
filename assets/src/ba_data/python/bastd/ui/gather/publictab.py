@@ -472,7 +472,6 @@ class PublicGatherTab(GatherTab):
         self._update_timer = None
 
     def save_state(self) -> None:
-
         # Save off a small number of parties with the lowest ping; we'll
         # display these immediately when our UI comes back up which should
         # be enough to make things feel nice and crisp while we do a full
@@ -868,7 +867,6 @@ class PublicGatherTab(GatherTab):
         #     return
 
         if self._sub_tab is SubTabType.JOIN:
-
             # Keep our filter-text up to date from the UI.
             text = self._filter_text
             if text:
@@ -1173,7 +1171,6 @@ class PublicGatherTab(GatherTab):
         # for any that have timed out.
         for party in list(self._parties.values()):
             if party.next_ping_time <= now and ba.app.ping_thread_count < 15:
-
                 # Crank the interval up for high-latency or non-responding
                 # parties to save us some useless work.
                 mult = 1
@@ -1234,7 +1231,6 @@ class PublicGatherTab(GatherTab):
     def _on_public_party_accessible_response(
         self, data: dict[str, Any] | None
     ) -> None:
-
         # If we've got status text widgets, update them.
         text = self._host_status_text
         if text:

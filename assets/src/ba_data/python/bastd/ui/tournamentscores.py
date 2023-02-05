@@ -29,7 +29,6 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
         selected_character: str | None = None,
         on_close_call: Callable[[], Any] | None = None,
     ):
-
         del tournament_activity  # unused arg
         del tint_color  # unused arg
         del tint2_color  # unused arg
@@ -153,7 +152,6 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
                 background=False,
             )
             for i, entry in enumerate(data_t[0]['scores']):
-
                 ba.textwidget(
                     parent=self._subcontainer,
                     position=(sub_width * 0.1 - 5, sub_height - 20 - incr * i),

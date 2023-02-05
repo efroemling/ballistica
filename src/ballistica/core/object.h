@@ -12,7 +12,7 @@
 namespace ballistica {
 
 /// Objects supporting strong and weak referencing and thread enforcement.
-/// A rule or two for for Objects:
+/// A rule or two for Objects:
 /// Don't throw exceptions out of object destructors;
 /// This will break references to that object and lead to crashes if/when they
 /// are used.

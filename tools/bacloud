@@ -256,7 +256,6 @@ class App:
         import base64
 
         for fname, fdata in downloads_inline.items():
-
             # If there's a directory where we want our file to go, clear it
             # out first. File deletes should have run before this so
             # everything under it should be empty and thus killable via rmdir.

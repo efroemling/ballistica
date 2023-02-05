@@ -247,7 +247,6 @@ class PlayOptionsWindow(popup.PopupWindow):
                     if row == rows - 1:
                         bottom_row_buttons.append(btn)
                     if not owned:
-
                         # Ewww; buttons don't currently have alpha so in this
                         # case we draw an image over our button with an empty
                         # texture on it.
@@ -442,7 +441,6 @@ class PlayOptionsWindow(popup.PopupWindow):
         self._transition_out()
 
     def _on_ok_press(self) -> None:
-
         # Disallow if our playlist has disappeared.
         if not self._does_target_playlist_exist():
             return

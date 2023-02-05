@@ -12,7 +12,6 @@ class ShowURLWindow(ba.Window):
     """A window presenting a URL to the user visually."""
 
     def __init__(self, address: str):
-
         # in some cases we might want to show it as a qr code
         # (for long URLs especially)
         app = ba.app

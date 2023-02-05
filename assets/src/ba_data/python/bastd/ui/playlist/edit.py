@@ -393,7 +393,6 @@ class PlaylistEditWindow(ba.Window):
         while self._list_widgets:
             self._list_widgets.pop().delete()
         for index, pentry in enumerate(self._editcontroller.get_playlist()):
-
             try:
                 cls = getclass(pentry['type'], subclassof=ba.GameActivity)
                 desc = cls.get_settings_display_string(pentry)

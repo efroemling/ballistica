@@ -80,7 +80,6 @@ class WorkspaceSubsystem:
             _ba.get_volatile_data_directory(), 'workspaces', workspaceid
         )
         try:
-
             # If it seems we're offline, don't even attempt a sync,
             # but allow using the previous synced state.
             # (is this a good idea?)

@@ -71,7 +71,6 @@ def _get_py_targets(
         dstrootvar = dst[len('assets') + 1 :] + root[len(src) :]
         dstfin = dst + root[len(src) :]
         for fname in fnames:
-
             # Ignore flycheck temp files as well as our _ba dummy module.
             if (
                 not fname.endswith('.py')
@@ -126,7 +125,6 @@ def _get_py_targets(
     # Create py and pyc targets for all physical scripts in src, with
     # the exception of our dynamically generated stuff.
     for physical_root, _dname, physical_fnames in os.walk(src):
-
         # Skip any generated files; we'll add those from the meta manifest.
         # (dont want our results to require a meta build beforehand)
         if physical_root == py_generated_root or physical_root.startswith(
@@ -253,7 +251,6 @@ def _get_extras_targets_win(all_targets: set[str], platform: str) -> str:
     dstbase = 'build/windows'
     for root, _dnames, fnames in os.walk(base):
         for fname in fnames:
-
             # Only include the platform we were passed.
             if not root.startswith('assets/src/windows/' + platform):
                 continue

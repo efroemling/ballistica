@@ -181,7 +181,6 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
         # Spawn more eggs if we've got space.
         if len(self._eggs) < int(self._max_eggs):
-
             # Occasionally spawn a land-mine in addition.
             if self._pro_mode and random.random() < 0.25:
                 mine = Bomb(
@@ -193,7 +192,6 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     # Various high-level game events come through this method.
     def handlemessage(self, msg: Any) -> Any:
-
         # Respawn dead players.
         if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.

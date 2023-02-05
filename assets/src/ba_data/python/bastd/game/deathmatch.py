@@ -137,9 +137,7 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         self._update_scoreboard()
 
     def handlemessage(self, msg: Any) -> Any:
-
         if isinstance(msg, ba.PlayerDiedMessage):
-
             # Augment standard behavior.
             super().handlemessage(msg)
 
@@ -152,7 +150,6 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
 
             # Handle team-kills.
             if killer.team is player.team:
-
                 # In free-for-all, killing yourself loses you a point.
                 if isinstance(self.session, ba.FreeForAllSession):
                     new_score = player.team.score - 1

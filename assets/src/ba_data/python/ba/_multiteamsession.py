@@ -88,7 +88,6 @@ class MultiTeamSession(Session):
             self._playlist_name != '__default__'
             and self._playlist_name in playlists
         ):
-
             # Make sure to copy this, as we muck with it in place once we've
             # got it and we don't want that to affect our config.
             playlist = copy.deepcopy(playlists[self._playlist_name])
@@ -192,7 +191,6 @@ class MultiTeamSession(Session):
         elif isinstance(
             activity, (JoinActivity, TransitionActivity, ScoreScreenActivity)
         ):
-
             # If we're coming from a series-end activity, reset scores.
             if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
                 self.stats.reset()

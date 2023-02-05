@@ -629,7 +629,6 @@ class GetCurrencyWindow(ba.Window):
             )
 
     def _disabled_press(self) -> None:
-
         # if we're on a platform without purchases, inform the user they
         # can link their accounts and buy stuff elsewhere
         app = ba.app

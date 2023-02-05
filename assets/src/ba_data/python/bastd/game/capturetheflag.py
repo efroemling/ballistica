@@ -182,7 +182,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         return 'return ${ARG1} flags', self._score_to_win
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:
-
         # Create our team instance and its initial values.
 
         base_pos = self.map.get_flag_position(sessionteam.id)
@@ -422,7 +421,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             return
 
         if flag.team is team:
-
             # Check times here to prevent too much flashing.
             if (
                 team.last_flag_leave_time is None
@@ -581,7 +579,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             )
 
     def handlemessage(self, msg: Any) -> Any:
-
         if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
             self.respawn_player(msg.getplayer(Player))
@@ -591,7 +588,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))
 
         elif isinstance(msg, FlagPickedUpMessage):
-
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)
             try:

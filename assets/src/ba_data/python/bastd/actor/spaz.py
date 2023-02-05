@@ -964,7 +964,6 @@ class Spaz(ba.Actor):
                 # damage the player. This hopefully gives us a happy medium.
                 max_spillover = SpazFactory.get().max_shield_spillover_damage
                 if self.shield_hitpoints <= 0:
-
                     # FIXME: Transition out perhaps?
                     self.shield.delete()
                     self.shield = None
@@ -1149,7 +1148,6 @@ class Spaz(ba.Actor):
                     spread=0.1,
                 )
             if self.hitpoints > 0:
-
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
@@ -1239,7 +1237,6 @@ class Spaz(ba.Actor):
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
-
                 punch_momentum_angular = (
                     self.node.punch_momentum_angular * self._punch_power_scale
                 )

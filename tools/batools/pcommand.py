@@ -183,7 +183,6 @@ def lazy_increment_build() -> None:
     except FileNotFoundError:
         lasthash = ''
     if codehash != lasthash:
-
         if not update_hash_only:
             print(
                 f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}'
@@ -211,7 +210,6 @@ def get_master_asset_src_dir() -> None:
 
     # Only apply this on my setup
     if os.path.exists(master_assets_dir):
-
         # Ok, for now lets simply use our hard-coded master-src
         # path if we're on master in and not otherwise.  Should
         # probably make this configurable.
@@ -228,7 +226,6 @@ def get_master_asset_src_dir() -> None:
             'origin/master' in output.splitlines()[0]
             and 'ballistica' + 'core' == 'ballisticacore'
         ):
-
             # We seem to be in master in core repo; lets do it.
             print(master_assets_dir)
             return

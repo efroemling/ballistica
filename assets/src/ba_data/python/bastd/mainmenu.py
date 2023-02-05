@@ -414,7 +414,6 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 if activity is None or activity.expired:
                     return
                 with ba.Context(activity):
-
                     self._phrases: list[str] = []
 
                     # Show upcoming achievements in non-vr versions
@@ -904,7 +903,6 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         rotate: float = 0.0,
         vr_depth_offset: float = 0.0,
     ) -> None:
-
         # Temp easter goodness.
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
@@ -1088,7 +1086,6 @@ class MainMenuSession(ba.Session):
     """Session that runs the main menu environment."""
 
     def __init__(self) -> None:
-
         # Gather dependencies we'll need (just our activity).
         self._activity_deps = ba.DependencySet(ba.Dependency(MainMenuActivity))
 

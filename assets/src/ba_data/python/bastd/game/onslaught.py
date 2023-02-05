@@ -163,7 +163,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     announce_player_deaths = True
 
     def __init__(self, settings: dict):
-
         self._preset = Preset(settings.get('preset', 'training'))
         if self._preset in {
             Preset.TRAINING,
@@ -550,7 +549,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             ]
 
         elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
-
             # Show controls help in demo/arcade modes.
             if ba.app.demo_mode or ba.app.arcade_mode:
                 ControlsGuide(
@@ -826,7 +824,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                     entry_count += 1
 
     def spawn_player(self, player: Player) -> ba.Actor:
-
         # We keep track of who got hurt each wave for score purposes.
         player.has_been_hurt = False
         pos = (
@@ -938,7 +935,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._award_achievement('Uber Onslaught Victory', sound=False)
 
     def _update_waves(self) -> None:
-
         # If we have no living bots, go to the next wave.
         assert self._bots is not None
         if (
@@ -1061,7 +1057,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         )
 
     def _update_player_spawn_info(self) -> None:
-
         # If we have no living players lets just blank this.
         assert self._spawn_info_text is not None
         assert self._spawn_info_text.node
@@ -1155,7 +1150,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         )
 
     def _start_next_wave(self) -> None:
-
         # This can happen if we beat a wave as we die.
         # We don't wanna respawn players and whatnot if this happens.
         if self._game_over:
@@ -1171,7 +1165,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         ba.timer(0.4, ba.Call(ba.playsound, self._new_wave_sound))
 
     def _update_wave_ui_and_bonuses(self) -> None:
-
         self.show_zoom_message(
             ba.Lstr(
                 value='${A} ${B}',
@@ -1420,7 +1413,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
     def handlemessage(self, msg: Any) -> Any:
-
         if isinstance(msg, PlayerSpazHurtMessage):
             msg.spaz.getplayer(Player, True).has_been_hurt = True
             self._a_player_has_been_hurt = True
@@ -1487,7 +1479,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._handle_uber_kill_achievements(msg)
 
     def _handle_uber_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
-
         # Uber mine achievement:
         if msg.spazbot.last_attacked_type == ('explosion', 'land_mine'):
             self._land_mine_kills += 1
@@ -1503,7 +1494,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 )
 
     def _handle_pro_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
-
         # TNT achievement:
         if msg.spazbot.last_attacked_type == ('explosion', 'tnt'):
             self._tnt_kills += 1

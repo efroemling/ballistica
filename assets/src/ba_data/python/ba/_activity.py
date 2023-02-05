@@ -191,7 +191,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._customdata: dict | None = {}
 
     def __del__(self) -> None:
-
         # If the activity has been run then we should have already cleaned
         # it up, but we still need to run expire calls for un-run activities.
         if not self._expired:
@@ -670,7 +669,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     def _reset_session_player_for_no_activity(
         self, sessionplayer: ba.SessionPlayer
     ) -> None:
-
         # Let's be extra-defensive here: killing a node/input-call/etc
         # could trigger user-code resulting in errors, but we would still
         # like to complete the reset if possible.
@@ -804,7 +802,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                     )
 
     def _expire_players(self) -> None:
-
         # Issue warnings for any players that left the game but don't
         # get freed soon.
         for ex_player in (p() for p in self._players_that_left):
@@ -833,7 +830,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 print_exception(f'Error expiring {player}.')
 
     def _expire_teams(self) -> None:
-
         # Issue warnings for any teams that left the game but don't
         # get freed soon.
         for ex_team in (p() for p in self._teams_that_left):

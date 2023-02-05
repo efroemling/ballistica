@@ -158,7 +158,6 @@ def cloud_console_exec(code: str) -> None:
     from ba._generated.enums import TimeType
 
     try:
-
         # First try it as eval.
         try:
             evalcode = compile(code, '<console>', 'eval')

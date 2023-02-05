@@ -79,7 +79,6 @@ class GamepadSettingsWindow(ba.Window):
         # If we were supplied with settings, we're a secondary joystick and
         # just operate on that. in the other (normal) case we make our own.
         if not self._is_secondary:
-
             # Fill our temp config with present values (for our primary and
             # secondary controls).
             self._settings = {}
@@ -437,7 +436,6 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if value:
             if 'unassignedButtonsRun' in self._settings:
-
                 # Clear since this is default.
                 del self._settings['unassignedButtonsRun']
                 return
@@ -455,7 +453,6 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if value:
             if 'startButtonActivatesDefaultWidget' in self._settings:
-
                 # Clear since this is default.
                 del self._settings['startButtonActivatesDefaultWidget']
                 return
@@ -471,7 +468,6 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if not value:
             if 'uiOnly' in self._settings:
-
                 # Clear since this is default.
                 del self._settings['uiOnly']
                 return
@@ -487,7 +483,6 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if not value:
             if 'ignoreCompletely' in self._settings:
-
                 # Clear since this is default.
                 del self._settings['ignoreCompletely']
                 return
@@ -503,7 +498,6 @@ class GamepadSettingsWindow(ba.Window):
         assert self._settings is not None
         if not value:
             if 'autoRecalibrateAnalogStick' in self._settings:
-
                 # Clear since this is default.
                 del self._settings['autoRecalibrateAnalogStick']
         else:
@@ -531,7 +525,6 @@ class GamepadSettingsWindow(ba.Window):
         # pylint: disable=too-many-return-statements
         assert self._settings is not None
         if control == 'analogStickLR' + self._ext:
-
             # This actually shows both LR and UD.
             sval1 = (
                 self._settings['analogStickLR' + self._ext]
@@ -574,7 +567,6 @@ class GamepadSettingsWindow(ba.Window):
             'buttonDown' + self._ext,
         ]
         if control in dpad_buttons:
-
             # If *any* dpad buttons are assigned, show only button assignments.
             if any(b in self._settings for b in dpad_buttons):
                 if control in self._settings:
@@ -625,7 +617,6 @@ class GamepadSettingsWindow(ba.Window):
             'buttonRight' + ext,
         ]:
             if event['type'] in ['BUTTONDOWN', 'HATMOTION']:
-
                 # If its a button-down.
                 if event['type'] == 'BUTTONDOWN':
                     value = event['button']
@@ -643,7 +634,6 @@ class GamepadSettingsWindow(ba.Window):
                         if btn in self._settings:
                             del self._settings[btn]
                     if event['hat'] == (2 if self._is_secondary else 1):
-
                         # Exclude value in default case.
                         if 'dpad' + ext in self._settings:
                             del self._settings['dpad' + ext]
@@ -672,12 +662,10 @@ class GamepadSettingsWindow(ba.Window):
 
         elif control == 'analogStickLR' + ext:
             if event['type'] == 'AXISMOTION':
-
                 # Ignore small values or else we might get triggered by noise.
                 if abs(event['value']) > 0.5:
                     axis = event['axis']
                     if axis == (5 if self._is_secondary else 1):
-
                         # Exclude value in default case.
                         if 'analogStickLR' + ext in self._settings:
                             del self._settings['analogStickLR' + ext]
@@ -700,7 +688,6 @@ class GamepadSettingsWindow(ba.Window):
 
         elif control == 'analogStickUD' + ext:
             if event['type'] == 'AXISMOTION':
-
                 # Ignore small values or else we might get triggered by noise.
                 if abs(event['value']) > 0.5:
                     axis = event['axis']
@@ -712,7 +699,6 @@ class GamepadSettingsWindow(ba.Window):
                         lr_axis = 5 if self._is_secondary else 1
                     if axis != lr_axis:
                         if axis == (6 if self._is_secondary else 2):
-
                             # Exclude value in default case.
                             if 'analogStickUD' + ext in self._settings:
                                 del self._settings['analogStickUD' + ext]

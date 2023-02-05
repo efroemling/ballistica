@@ -120,7 +120,6 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
 
     # Called for each spawning player.
     def spawn_player(self, player: Player) -> ba.Actor:
-
         # Let's spawn close to the center.
         spawn_center = (0, 3, -2)
         pos = (
@@ -142,7 +141,6 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
 
     # Called for miscellaneous messages.
     def handlemessage(self, msg: Any) -> Any:
-
         # A player has died.
         if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
@@ -165,7 +163,6 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     # *regardless* of whether is has been won. (this may be called due
     # to a tournament ending or other external reason).
     def end_game(self) -> None:
-
         # Stop our on-screen timer so players can see what they got.
         assert self._timer is not None
         self._timer.stop()

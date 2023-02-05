@@ -17,7 +17,6 @@ class PluginSettingsWindow(ba.Window):
     """Plugin Settings Window"""
 
     def __init__(self, transition: str = 'in_right'):
-
         scale_origin: tuple[float, float] | None
         self._transition_out = 'out_right'
         scale_origin = None

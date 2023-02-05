@@ -37,7 +37,6 @@ def _gen_enums(infilename: str) -> str:
 
     # Now export each of them.
     for lnum in enum_lnums:
-
         doclines, lnum = _parse_doc_lines(lines, lnum)
         enum_name = _parse_name(lines, lnum)
 
@@ -130,7 +129,6 @@ def _find_enum_end(lines: list[str], lnum: int) -> int:
 
 
 def _parse_doc_lines(lines: list[str], lnum: int) -> tuple[list[str], int]:
-
     # First parse the doc-string
     doclines: list[str] = []
     lnumorig = lnum

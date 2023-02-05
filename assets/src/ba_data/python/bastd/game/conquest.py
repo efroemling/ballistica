@@ -204,7 +204,6 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
             if flag.team is not None:
                 flag.team.flags_held += 1
         for team in self.teams:
-
             # If a team finds themselves with no flags, cancel all
             # outstanding spawn-timers.
             if team.flags_held == 0:
@@ -290,7 +289,6 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
         )
 
     def _get_player_spawn_position(self, player: Player) -> Sequence[float]:
-
         # Iterate until we find a spawn owned by this team.
         spawn_count = len(self.map.spawn_by_flag_points)
 

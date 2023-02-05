@@ -911,7 +911,6 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             player.respawn_icon = RespawnIcon(player, respawn_time)
 
         elif isinstance(msg, SpazBotDiedMessage):
-
             # Every time a bad guy dies, spawn a new one.
             ba.timer(3.0, ba.Call(self._spawn_bot, (type(msg.spazbot))))
 

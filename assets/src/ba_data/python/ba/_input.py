@@ -64,7 +64,6 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 return mapping.get(name, -1)
 
     if platform == 'windows':
-
         # XInput (hopefully this mapping is consistent?...)
         if devicename.startswith('XInput Controller'):
             return {
@@ -211,7 +210,6 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'buttonIgnored': 17,
             }.get(name, -1)
         if devicename in ['Wireless 360 Controller', 'Controller']:
-
             # Xbox360 gamepads
             return {
                 'analogStickDeadZone': 1.2,
@@ -325,7 +323,6 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
 
     # Generic android...
     if platform == 'android':
-
         # Steelseries stratus xl.
         if devicename == 'SteelSeries Stratus XL':
             return {
@@ -520,7 +517,6 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
     # Reasonable defaults.
     if platform == 'android':
         if _ba.is_running_on_fire_tv():
-
             # Mostly same as default firetv controller.
             return {
                 'triggerRun2': 23,

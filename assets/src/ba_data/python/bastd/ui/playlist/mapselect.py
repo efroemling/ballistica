@@ -137,7 +137,6 @@ class PlaylistMapSelectWindow(ba.Window):
         unowned_maps = get_unowned_maps()
 
         for mapname in map_list_sorted:
-
             # Disallow ones we don't own.
             if mapname in unowned_maps:
                 continue

@@ -423,7 +423,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 # We only support continuing in non-tournament games.
                 tournament_id = session.tournament_id
                 if tournament_id is None:
-
                     # We currently only support continuing in sequential
                     # co-op campaigns.
                     if isinstance(session, CoopSession):

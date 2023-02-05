@@ -142,7 +142,6 @@ class _MacMusicAppThread(threading.Thread):
             except Exception as exc:
                 print('Error stopping iTunes music:', exc)
         elif self._volume > 0:
-
             # If volume was zero, store pre-playing volume and start
             # playing.
             if old_volume == 0.0:
@@ -228,7 +227,6 @@ class _MacMusicAppThread(threading.Thread):
                 self._play_current_playlist()
 
     def _handle_die_command(self) -> None:
-
         # Only stop if we've actually played something
         # (we don't want to kill music the user has playing).
         if self._current_playlist is not None and self._volume > 0:

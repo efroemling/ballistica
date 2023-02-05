@@ -27,7 +27,6 @@ def _parse_lprop_file(local_properties_path: str) -> str:
 
 
 def _gen_lprop_file(local_properties_path: str) -> str:
-
     os.makedirs(os.path.dirname(local_properties_path), exist_ok=True)
 
     # Ok, we've got no local.properties file; attempt to find

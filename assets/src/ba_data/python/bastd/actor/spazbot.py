@@ -307,7 +307,6 @@ class SpazBot(Spaz):
         if self._mode == 'throw':
             # We can only throw if alive and well.
             if not self._dead and not self.node.knockout:
-
                 assert self._throw_release_time is not None
                 time_till_throw = self._throw_release_time - ba.time()
 
@@ -402,7 +401,6 @@ class SpazBot(Spaz):
         # We might wanna switch states unless we're doing a throw
         # (in which case that's our sole concern).
         if self._mode != 'throw':
-
             # If we're currently charging, keep track of how far we are
             # from our target. When this value increases it means our charge
             # is over (ran by them or something).
@@ -538,10 +536,8 @@ class SpazBot(Spaz):
                 self.last_attacked_type = ('picked_up', 'default')
 
         elif isinstance(msg, ba.DieMessage):
-
             # Report normal deaths for scoring purposes.
             if not self._dead and not msg.immediate:
-
                 killerplayer: ba.Player | None
 
                 # If this guy was being held at the time of death, the
@@ -993,7 +989,6 @@ class SpazBotSet:
         return bots
 
     def _update(self) -> None:
-
         # Update one of our bot lists each time through.
         # First off, remove no-longer-existing bots from the list.
         try:

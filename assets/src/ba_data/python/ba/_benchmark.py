@@ -23,7 +23,6 @@ def run_cpu_benchmark() -> None:
         """Session type for cpu benchmark."""
 
         def __init__(self) -> None:
-
             # print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
             depsets: Sequence[ba.DependencySet] = []
 
@@ -38,7 +37,6 @@ def run_cpu_benchmark() -> None:
             self.setactivity(_ba.newactivity(tutorial.TutorialActivity))
 
         def __del__(self) -> None:
-
             # When we're torn down, restore old graphics settings.
             cfg = _ba.app.config
             cfg['Graphics Quality'] = self._old_quality

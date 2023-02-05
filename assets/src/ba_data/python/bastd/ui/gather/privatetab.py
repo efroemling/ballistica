@@ -275,7 +275,6 @@ class PrivateGatherTab(GatherTab):
         self._update_currency_ui()
 
         if self._state.sub_tab is SubTabType.HOST:
-
             # If we're not signed in, just refresh to show that.
             if (
                 ba.internal.get_v1_account_state() != 'signed_in'
@@ -283,7 +282,6 @@ class PrivateGatherTab(GatherTab):
             ):
                 self._refresh_sub_tab()
             else:
-
                 # Query an updated state periodically.
                 if (
                     self._last_hosting_state_query_time is None
@@ -308,7 +306,6 @@ class PrivateGatherTab(GatherTab):
     def _hosting_state_idle_response(
         self, result: dict[str, Any] | None
     ) -> None:
-
         # This simply passes through to our standard response handler.
         # The one exception is if we've recently sent an action to the
         # server (start/stop hosting/etc.) In that case we want to ignore
@@ -326,7 +323,6 @@ class PrivateGatherTab(GatherTab):
         self._hosting_state_response(result)
 
     def _hosting_state_response(self, result: dict[str, Any] | None) -> None:
-
         # Its possible for this to come back to us after our UI is dead;
         # ignore in that case.
         if not self._container:
@@ -433,7 +429,6 @@ class PrivateGatherTab(GatherTab):
                 )
 
     def _build_join_tab(self) -> None:
-
         ba.textwidget(
             parent=self._container,
             position=(self._c_width * 0.5, self._c_height - 140),
@@ -473,7 +468,6 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _on_get_tickets_press(self) -> None:
-
         if self._waiting_for_start_stop_response:
             return
 
@@ -857,7 +851,6 @@ class PrivateGatherTab(GatherTab):
             )
 
     def _connect_to_party_code(self, code: str) -> None:
-
         # Ignore attempted followup sends for a few seconds.
         # (this will reset if we get a response)
         now = time.time()
@@ -903,7 +896,6 @@ class PrivateGatherTab(GatherTab):
 
         # If we're not hosting, start.
         if self._hostingstate.party_code is None:
-
             # If there's a ticket cost, make sure we have enough tickets.
             if self._hostingstate.tickets_to_host_now > 0:
                 ticket_count: int | None
@@ -945,7 +937,6 @@ class PrivateGatherTab(GatherTab):
         self._refresh_sub_tab()
 
     def _join_connect_press(self) -> None:
-
         # Error immediately if its an empty code.
         code: str | None = None
         if self._join_party_code_text:

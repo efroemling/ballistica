@@ -201,7 +201,6 @@ class LogHandler(logging.Handler):
             await asyncio.sleep(61.27)
             now = utc_now()
             with self._cache_lock:
-
                 # Prune the oldest entry as long as there is a first one that
                 # is too old.
                 while (
@@ -380,7 +379,6 @@ class LogHandler(logging.Handler):
         message: str | logging.LogRecord,
     ) -> None:
         try:
-
             # If they passed a raw record here, bake it down to a string.
             if isinstance(message, logging.LogRecord):
                 message = self.format(message)

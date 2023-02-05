@@ -1021,7 +1021,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
-
         # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -1158,7 +1157,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ).autoretain()
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
-
         # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -1229,7 +1227,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
             # Show world tops.
             if available:
-
                 # Show the number of games represented by this
                 # list (except for in tournaments).
                 if self.session.tournament_id is None:

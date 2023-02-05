@@ -51,7 +51,6 @@ _BYTE_ORDER: Literal['big'] = 'big'
 @ioprepped
 @dataclass
 class _PeerInfo:
-
     # So we can gracefully evolve how we communicate in the future.
     protocol: Annotated[int, IOAttrs('p')]
 
@@ -270,7 +269,6 @@ class RPCEndpoint:
             raise
 
     async def _do_run(self) -> None:
-
         self._check_env()
 
         if self._run_called:
@@ -430,7 +428,6 @@ class RPCEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
-
         # We need to know their protocol, so if we haven't gotten a handshake
         # from them yet, just wait.
         while self._peer_info is None:
@@ -456,13 +453,11 @@ class RPCEndpoint:
 
             raise CommunicationError() from exc
         except Exception as exc:
-
             # If our timer timed-out or anything else went wrong with
             # the stream, lump it in as a communication error.
             if isinstance(
                 exc, asyncio.TimeoutError
             ) or is_asyncio_streams_communication_error(exc):
-
                 if self.debug_print:
                     self.debug_print_call(
                         f'{self._label}: got {type(exc)} sending message'
@@ -754,7 +749,6 @@ class RPCEndpoint:
 
         # Now just write out-messages as they come in.
         while True:
-
             # Wait until some data comes in.
             await self._have_out_packets.wait()
 

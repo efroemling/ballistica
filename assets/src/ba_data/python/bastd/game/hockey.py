@@ -375,7 +375,6 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
             self._scoreboard.set_team_value(team, team.score, winscore)
 
     def handlemessage(self, msg: Any) -> Any:
-
         # Respawn dead players if they're still in the game.
         if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior...

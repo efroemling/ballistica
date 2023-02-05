@@ -518,7 +518,6 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):
-
             # Augment standard behavior.
             super().handlemessage(msg)
             player: Player = msg.getplayer(Player)

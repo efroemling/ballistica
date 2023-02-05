@@ -109,7 +109,6 @@ class TestingWindow(ba.Window):
         v = self._sub_height - 48
 
         for i, entry in enumerate(self._entries):
-
             entry_name = entry['name']
 
             # If we haven't yet, record the default value for this name so

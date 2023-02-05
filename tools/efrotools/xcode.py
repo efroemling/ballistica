@@ -70,7 +70,6 @@ class XCodeBuild:
 
         # In some failure cases we may want to run a clean and try again.
         if self._returncode != 0:
-
             # Getting this error sometimes after xcode updates.
             if 'error: PCH file built from a different branch' in '\n'.join(
                 self._output
@@ -132,7 +131,6 @@ class XCodeBuild:
             self._returncode = proc.returncode
 
     def _print_filtered_line(self, line: str) -> None:
-
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
@@ -320,7 +318,6 @@ class XCodeBuild:
             assert_never(self._section)
 
     def _print_compilec_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             fname = os.path.basename(shlex.split(line)[2])
@@ -340,7 +337,6 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_mkdir_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             return
@@ -356,7 +352,6 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_ld_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
@@ -409,7 +404,6 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_compile_storyboard_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
@@ -431,7 +425,6 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_code_sign_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
@@ -453,7 +446,6 @@ class XCodeBuild:
         sys.stdout.write(line)
 
     def _print_process_info_plist_file_line(self, line: str) -> None:
-
         # First line of the section.
         if self._section_line_count == 0:
             name = os.path.basename(shlex.split(line)[1])
@@ -478,7 +470,6 @@ class XCodeBuild:
         ignore_line_starts: list[str] | None = None,
         ignore_line_start_tails: list[str] | None = None,
     ) -> None:
-
         if ignore_line_starts is None:
             ignore_line_starts = []
         if ignore_line_start_tails is None:
@@ -548,7 +539,6 @@ def project_build_path(
             and configuration in config[project_path]
             and scheme in config[project_path][configuration]
         ):
-
             # Ok we've found a build-dir entry for this project; now if it
             # exists on disk and all timestamps within it are decently
             # close to the one we've got recorded, lets use it.

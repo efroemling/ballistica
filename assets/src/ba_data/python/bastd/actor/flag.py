@@ -247,7 +247,6 @@ class Flag(ba.Actor):
 
     def _tick(self) -> None:
         if self.node:
-
             # Grab our initial position after one tick (in case we fall).
             if self._initial_position is None:
                 self._initial_position = self.node.position

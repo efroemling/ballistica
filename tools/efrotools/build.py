@@ -124,7 +124,6 @@ class Lazybuild:
             )
 
     def _check_paths(self) -> None:
-
         # First check our fullclean paths if we have them.
         # any changes here will kick off a full-clean and then a build.
         if self.srcpaths_fullclean is not None:

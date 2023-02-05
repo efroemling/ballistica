@@ -223,7 +223,6 @@ class Session:
 
         # Limit player counts *unless* we're in a stress test.
         if _ba.app.stress_test_reset_timer is None:
-
             if len(self.sessionplayers) >= self.max_players:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
@@ -257,7 +256,6 @@ class Session:
         activity = self._activity_weak()
 
         if not sessionplayer.in_game:
-
             # Ok, the player is still in the lobby; simply remove them.
             with _ba.Context(self):
                 try:

@@ -218,7 +218,6 @@ class DirtyBit:
 
     @dirty.setter
     def dirty(self, value: bool) -> None:
-
         # If we're freshly clean, set our next auto-dirty time (if we have
         # one).
         if self._dirty and not value and self._auto_dirty_seconds is not None:

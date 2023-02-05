@@ -338,7 +338,6 @@ class ControlsGuide(ba.Actor):
         return device.get_button_name(button).evaluate()
 
     def _start_updating(self) -> None:
-
         # Ok, our delay has passed. Now lets periodically see if we can fade
         # in (if a touch-screen is present we only want to show up if gamepads
         # are connected, etc).

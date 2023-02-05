@@ -206,11 +206,9 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(1.0, light.delete)
 
     def _tick(self) -> None:
-
         # Give the chosen one points.
         player = self._get_chosen_one_player()
         if player is not None:
-
             # This shouldn't happen, but just in case.
             if not player.is_alive():
                 ba.print_error('got dead player as chosen one in _tick')

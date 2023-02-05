@@ -511,7 +511,6 @@ class AchievementSubsystem:
         try:
             ach = self.get_achievement(achname)
             if not ach.complete:
-
                 # Report new achievements to the game-service.
                 _internal.report_achievement(achname)
 
@@ -615,7 +614,6 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
 
 
 def _display_next_achievement() -> None:
-
     # Pull the first achievement off the list and display it, or kill the
     # display-timer if the list is empty.
     app = _ba.app

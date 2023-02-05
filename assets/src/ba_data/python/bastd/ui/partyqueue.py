@@ -119,7 +119,6 @@ class PartyQueueWindow(ba.Window):
                 self._body_image_target = self._eyes_image_target = None
 
         def __del__(self) -> None:
-
             # ew.  our destructor here may get called as part of an internal
             # widget tear-down.
             # running further widget calls here can quietly break stuff, so we

@@ -78,7 +78,6 @@ def _emit_efrocache_lines(targets: list[Target]) -> list[str]:
         return out
     all_dsts = set()
     for target in targets:
-
         # We may need to make pipeline adjustments if/when we get filenames
         # with spaces in them.
         if ' ' in target.dst:
@@ -172,7 +171,6 @@ def _add_python_embedded_targets_internal(targets: list[Target]) -> None:
 
 
 def _add_extra_targets_internal(targets: list[Target]) -> None:
-
     # Add targets to generate message sender/receiver classes for
     # our basn/client protocols. Their outputs go to 'generated' so they
     # don't get added to git.

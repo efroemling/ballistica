@@ -271,7 +271,6 @@ class MessageSender:
     async def _fetch_raw_response_awaitable(
         self, bound_obj: Any, message: Message, send_awaitable: Awaitable[str]
     ) -> Response | SysResponse:
-
         try:
             response_encoded = await send_awaitable
         except Exception as exc:
@@ -360,7 +359,6 @@ class MessageSender:
 
         # Some error occurred. Raise a local Exception for it.
         if isinstance(raw_response, ErrorSysResponse):
-
             # Errors that happened locally can attach their exceptions
             # here for extra logging goodness.
             local_exception = raw_response.get_local_exception()

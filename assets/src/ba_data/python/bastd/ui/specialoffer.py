@@ -397,7 +397,6 @@ class SpecialOfferWindow(ba.Window):
         )
 
     def _update(self) -> None:
-
         # If we've got seconds left on our countdown, update it.
         if self._cancel_delay > 0:
             self._cancel_delay = max(0, self._cancel_delay - 1)
@@ -518,7 +517,6 @@ def show_offer() -> bool:
             has_been_long_enough_since_ad = False
 
         if app.special_offer is not None and has_been_long_enough_since_ad:
-
             # Special case: for pro offers, store this in our prefs so we
             # can re-show it if the user kills us (set phasers to 'NAG'!!!).
             if app.special_offer.get('item') == 'pro_fullprice':

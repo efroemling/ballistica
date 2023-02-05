@@ -979,7 +979,6 @@ def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
         if bool(False):
             print('Launching GUI PyCharm to rebuild caches...', flush=True)
             with subprocess.Popen(str(pycharmbin)) as process:
-
                 # Wait a bit and ask it nicely to die.
                 # We need to make sure it has enough time to do its
                 # cache updating thing even if the system is fully under load.

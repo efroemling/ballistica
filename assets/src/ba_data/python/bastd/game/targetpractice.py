@@ -107,7 +107,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         return spaz
 
     def _spawn_target(self) -> None:
-
         # Generate a few random points; we'll use whichever one is farthest
         # from our existing targets (don't want overlapping targets).
         points = []

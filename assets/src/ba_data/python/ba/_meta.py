@@ -58,7 +58,6 @@ class MetadataSubsystem:
     """
 
     def __init__(self) -> None:
-
         self._scan: DirectoryScan | None = None
 
         # Can be populated before starting the scan.
@@ -244,7 +243,6 @@ class DirectoryScan:
     def run(self) -> None:
         """Do the thing."""
         for pathlist in [self.base_paths, self.extra_paths]:
-
             # Spin and wait until extra paths are provided before doing them.
             if pathlist is self.extra_paths:
                 while not self.extra_paths_set:

@@ -96,7 +96,6 @@ class MessageProtocol:
             type[Response] | type[SysResponse], int
         ] = {}
         for m_id, m_type in message_types.items():
-
             # Make sure only valid message types were passed and each
             # id was assigned only once.
             assert isinstance(m_id, int)
@@ -485,7 +484,6 @@ class MessageProtocol:
                         out += f'        return cast({rtypevar}, out)\n'
 
                 else:
-
                     for msgtype in msgtypes:
                         msgtypevar = msgtype.__name__
                         rtypes = msgtype.get_response_types()

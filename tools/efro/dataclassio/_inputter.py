@@ -436,7 +436,6 @@ class _Inputter(Generic[T]):
         seqtype: type,
         ioattrs: IOAttrs | None,
     ) -> Any:
-
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:
             raise TypeError(
@@ -468,7 +467,6 @@ class _Inputter(Generic[T]):
     def _datetime_from_input(
         self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
     ) -> Any:
-
         # For firestore we expect a datetime object.
         if self._codec is Codec.FIRESTORE:
             # Don't compare exact type here, as firestore can give us
@@ -510,7 +508,6 @@ class _Inputter(Generic[T]):
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.

@@ -163,7 +163,6 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         scoreteam = self._scoring_team
 
         if scoreteam is not None:
-
             if scoreteam.timeremaining > 0:
                 ba.playsound(self._tick_sound)
 

@@ -96,7 +96,6 @@ class ServerController:
     """
 
     def __init__(self, config: ServerConfig) -> None:
-
         self._config = config
         self._playlist_name = '__default__'
         self._ran_access_check = False
@@ -264,7 +263,6 @@ class ServerController:
         """Run in a timer to do prep before beginning to serve."""
         signed_in = get_v1_account_state() == 'signed_in'
         if not signed_in:
-
             # Signing in to the local server account should not take long;
             # complain if it does...
             curtime = time.time()

@@ -199,7 +199,6 @@ class PrepSession:
         # now recurse through them, verifying that we support all contained
         # types and prepping any contained dataclass types.
         for attrname, anntype in resolved_annotations.items():
-
             anntype, ioattrs = _parse_annotated(anntype)
 
             # If we found attached IOAttrs data, make sure it contains

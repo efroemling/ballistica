@@ -653,7 +653,6 @@ class PlaylistBrowserWindow(ba.Window):
         self._selected_playlist = playlist_name
 
     def _update(self) -> None:
-
         # make sure config exists
         if self._config_name_full not in ba.app.config:
             ba.app.config[self._config_name_full] = {}

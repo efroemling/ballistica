@@ -425,7 +425,6 @@ class NetValTestingWindow(TestingWindow):
     """Window to test network related settings."""
 
     def __init__(self, transition: str = 'in_right'):
-
         entries = [
             {'name': 'bufferTime', 'label': 'Buffer Time', 'increment': 1.0},
             {

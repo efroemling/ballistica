@@ -1186,7 +1186,6 @@ class MainMenuWindow(ba.Window):
         ba.internal.show_online_score_ui()
 
     def _save_state(self) -> None:
-
         # Don't do this for the in-game menu.
         if self._in_game:
             return
