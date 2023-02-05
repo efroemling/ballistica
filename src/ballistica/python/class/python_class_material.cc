@@ -99,7 +99,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     std::string name;
     Object::Ref<Material> m;
 
-    // Clion incorrectly things s_create_empty will always be false.
+    // Clion incorrectly thinks s_create_empty will always be false.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantConditionsOC"
 

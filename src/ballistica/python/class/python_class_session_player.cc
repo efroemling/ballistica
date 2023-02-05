@@ -163,7 +163,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
 
     // If the user is creating one, make sure they passed None to get an
     // invalid ref.
-    // Clion incorrectly things s_create_empty will always be false.
+    // Clion incorrectly thinks s_create_empty will always be false.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantConditionsOC"
 

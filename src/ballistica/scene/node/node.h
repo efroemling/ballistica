@@ -188,7 +188,7 @@ class Node : public Object {
 
   void AddToScene(Scene* scene);
 
-  // Called for each message received by an Node.
+  // Called for each message received by a Node.
   virtual void HandleMessage(const char* buffer);
 
  private:

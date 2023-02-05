@@ -10,7 +10,7 @@
 
 namespace ballistica {
 
-// An node used to create simple mathematical relationships via
+// A node used to create simple mathematical relationships via
 // attribute connections
 class MathNode : public Node {
  public:

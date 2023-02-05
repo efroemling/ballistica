@@ -90,7 +90,7 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
           + " objects must only be created in the logic thread (current is ("
           + GetCurrentThreadName() + ").");
     }
-    // Clion incorrectly things s_create_empty will always be false.
+    // Clion incorrectly thinks s_create_empty will always be false.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantConditionsOC"
     if (!s_create_empty_) {

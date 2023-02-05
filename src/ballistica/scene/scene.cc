@@ -172,7 +172,7 @@ void Scene::Step() {
 void Scene::DeleteNode(Node* node) {
   assert(node);
 
-  // Clion incorrectly things in_step_ will always be false.
+  // Clion incorrectly thinks in_step_ will always be false.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnreachableCode"
 #pragma ide diagnostic ignored "ConstantConditionsOC"
@@ -257,7 +257,7 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
                     PyObject* delegate) -> Node* {
   assert(InLogicThread());
 
-  // Clion incorrectly things in_step_ will always be false.
+  // Clion incorrectly thinks in_step_ will always be false.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnreachableCode"
 #pragma ide diagnostic ignored "ConstantConditionsOC"
