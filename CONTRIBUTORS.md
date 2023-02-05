@@ -44,3 +44,6 @@
 - Fixed a single bug
 - Modder
 - Made a SUPER important change
+
+### Radxic
+- Small bug fixes
