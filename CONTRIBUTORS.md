@@ -46,4 +46,4 @@
 - Made a SUPER important change
 
 ### Radxic
-- Small bug fixes
+- Bug fixes
