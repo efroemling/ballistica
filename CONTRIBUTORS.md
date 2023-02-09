@@ -45,5 +45,5 @@
 - Modder
 - Made a SUPER important change
 
-### Radxic
+### Rottlez
 - Bug fixes
