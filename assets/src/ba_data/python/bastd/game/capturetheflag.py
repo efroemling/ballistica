@@ -482,10 +482,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         try:
             spaz = ba.getcollision().sourcenode.getdelegate(PlayerSpaz, True)
         except ba.NotFoundError:
-            return
-
-        if not spaz.is_alive():
-            return
+            return     
 
         player = spaz.getplayer(Player, True)
 
@@ -522,6 +519,9 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                     team.touch_return_timer_ticking = None
             if team.flag_return_touches < 0:
                 ba.print_error('CTF flag_return_touches < 0')
+        
+        if not spaz.is_alive():
+            return
 
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = ba.newnode(
