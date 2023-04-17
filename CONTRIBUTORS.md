@@ -44,3 +44,8 @@
 - Fixed a single bug
 - Modder
 - Made a SUPER important change
+
+### 3alTemp (TrialTemp)
+- Fixed a notorious gameplay bug in Capture the Flag
+- Modder (relevant apparently)
+- :cowboy:
