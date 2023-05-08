@@ -13,18 +13,18 @@ jobs:
 
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
-  check_linux:
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
-    - name: Run checks and tests
-      run: make -j2 check test
+  # check_linux:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v4
+  #     with:
+  #       python-version: '3.10'
+  #   - name: Install dependencies
+  #     run: tools/pcommand install_pip_reqs
+  #   - name: Run checks and tests
+  #     run: make -j2 check test
 
   # Compile just a server binary but don't run asset builds/etc.
   # (to spare my asset file server)

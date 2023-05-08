@@ -523,6 +523,32 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             if team.flag_return_touches < 0:
                 ba.print_error('CTF flag_return_touches < 0')
 
+    def _handle_death_and_flags_hypothetical_problem(self, player: Player) -> None:
+        """
+        Handles flag values when a player dies or leaves the game.
+        Nice and simple fix a long unfixed issue!
+        """
+        # Don't do anything if the player hasn't touched the flag at all.
+        if not player.touching_own_flag: return
+        
+        team = player.team
+        # For each "point" our player has touched the flag (Could be multiple),
+        # deduct one from both our player and the flag's return touches variable.
+        for x in range(player.touching_own_flag): 
+
+            # Deduct
+            player.touching_own_flag -= 1
+            team.flag_return_touches -= 1
+
+            # Update our flag's timer accordingly (Prevents immediate resets in case there might be more people touching it)
+            if team.flag_return_touches == 0:
+                team.touch_return_timer = None
+                team.touch_return_timer_ticking = None
+            # Safety check taken from self._handle_touching_own_flag, just to be sure!
+            if team.flag_return_touches < 0:
+                ba.print_error('CTF flag_return_touches < 0')
+
+
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = ba.newnode(
             'light',
@@ -584,6 +610,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
         if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
+            self._handle_death_and_flags_hypothetical_problem(msg.getplayer(Player)) # Check if we have "flag contact points"
             self.respawn_player(msg.getplayer(Player))
 
         elif isinstance(msg, FlagDiedMessage):
@@ -611,3 +638,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
         else:
             super().handlemessage(msg)
+
+    def on_player_leave(self, player: Player) -> None:
+        self._handle_death_and_flags_hypothetical_problem(player) # Check if we had "flag contact points" here too
