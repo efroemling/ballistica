@@ -28,16 +28,16 @@ jobs:
 
   # Compile just a server binary but don't run asset builds/etc.
   # (to spare my asset file server)
-  # compile_linux:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v4
-  #     with:
-  #       python-version: '3.10'
-  #   - name: Compile binary
-  #     run: make _cmake-simple-ci-server-build
+  compile_linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Compile binary
+      run: make _cmake-simple-ci-server-build
       
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
