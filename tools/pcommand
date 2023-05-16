@@ -94,6 +94,7 @@ from batools.pcommand import (
     checkenv,
     ensure_prefab_platform,
     prefab_run_var,
+    prefab_binary_path,
     make_prefab,
     lazybuild,
     efro_gradle,

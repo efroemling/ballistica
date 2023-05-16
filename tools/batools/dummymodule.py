@@ -909,15 +909,44 @@ def generate(projroot: str) -> None:
     # parallel builds containing checks plus actual builds of cmake-binary.
     # The upside is during iteration this will often just use the same binary
     # we are iterating with, reducing redundant compiles.
-    # TODO(ericf): for the ballistica public repo should make this use
-    #  prefab builds so folks without compiler toolchains can still run
-    #  code checks.
-    print(
-        f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}',
-        flush=True,
-    )
 
-    subprocess.run(['make', 'cmake-binary'], check=True)
+    # Normally here we download a prefab binary to use when generating
+    # dummy modules. This allows people without full compiler setups to
+    # still get dummy modules made so they can check their Python code.
+    # However someone who *is* able to compile their own binaries might want
+    # to go with those so any changes they make to the binary are reflected
+    # in the dummy-modules. Set BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS=1 to
+    # enable that.
+    binary_build_command: list[str]
+    if os.environ.get('BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS') == '1':
+        print(
+            f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}',
+            flush=True,
+        )
+        binary_build_command = ['make', 'cmake-binary']
+        binary_path = 'build/cmake/debug/ballisticakit'
+    else:
+        print(
+            f'{Clr.SMAG}Fetching prefab binary to'
+            f' generate dummy-modules...{Clr.RST}',
+            flush=True,
+        )
+        binary_build_command = ['tools/pcommand', 'make_prefab', 'gui-release']
+        binary_path = (
+            subprocess.run(
+                ['tools/pcommand', 'prefab_binary_path', 'gui-release'],
+                check=True,
+                capture_output=True,
+            )
+            .stdout.decode()
+            .strip()
+        )
+        if not os.path.exists(binary_path):
+            raise RuntimeError(
+                f"Fetched prefab binary not found at '{binary_path}'"
+            )
+
+    subprocess.run(binary_build_command, check=True)
     subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)
 
     pycmd = (
@@ -955,7 +984,7 @@ def generate(projroot: str) -> None:
         # Note: ask Python to not scatter __pycache__ files throughout
         # our build output.
         subprocess.run(
-            ['build/cmake/debug/ballisticakit', '--command', pycmd],
+            [binary_path, '--command', pycmd],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
             check=True,
         )

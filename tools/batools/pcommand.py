@@ -694,6 +694,20 @@ def prefab_run_var() -> None:
     print(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
+def prefab_binary_path() -> None:
+    """Print the current platform prefab binary path."""
+    import batools.build
+
+    if len(sys.argv) != 3:
+        raise RuntimeError('Expected 1 arg.')
+    buildtype, buildmode = sys.argv[2].split('-')
+    platform = batools.build.get_current_prefab_platform()
+    print(
+        f'build/prefab/full/{platform}_{buildtype}/{buildmode}/ballisticakit',
+        end='',
+    )
+
+
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
