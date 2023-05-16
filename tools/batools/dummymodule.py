@@ -941,12 +941,12 @@ def generate(projroot: str) -> None:
             .stdout.decode()
             .strip()
         )
-        if not os.path.exists(binary_path):
-            raise RuntimeError(
-                f"Fetched prefab binary not found at '{binary_path}'"
-            )
 
     subprocess.run(binary_build_command, check=True)
+    if not os.path.exists(binary_path):
+        raise RuntimeError(
+            f"Binary not found at expected path '{binary_path}'."
+        )
     subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)
 
     pycmd = (
