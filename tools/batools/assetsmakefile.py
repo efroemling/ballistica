@@ -532,10 +532,11 @@ def generate_assets_makefile(
     out_files['src/assets/.asset_manifest_public.json'] = _gen_manifest(
         all_targets_public
     )
+    # Only *generate* the private manifest in the private repo. In public
+    # we just give what's already on disk.
+    manprivpath = 'src/assets/.asset_manifest_private.json'
     if not public:
-        out_files['src/assets/.asset_manifest_private.json'] = _gen_manifest(
-            all_targets_private
-        )
+        out_files[manprivpath] = _gen_manifest(all_targets_private)
     return out_files
 
 

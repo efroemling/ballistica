@@ -59,6 +59,7 @@ class SpinoffContext:
         dst_root: str,
         mode: Mode,
         force: bool = False,
+        verbose: bool = False,
         print_full_lists: bool = False,
         override_paths: list[str] | None = None,
         backport_file: str | None = None,
@@ -74,6 +75,7 @@ class SpinoffContext:
 
         self._mode = mode
         self._force = force
+        self._verbose = verbose
         self._print_full_lists = print_full_lists
         self._override_paths = override_paths
         self._backport_file = backport_file
@@ -128,6 +130,7 @@ class SpinoffContext:
             '.asset_manifest_public.json',
             '.asset_manifest_private.json',
         }
+
         self._project_file_suffixes = {
             '.vcxproj',
             '.vcxproj.filters',
@@ -438,11 +441,12 @@ class SpinoffContext:
             else:
                 assert_never(self._mode)
 
-        # Bail at this point if anything went wrong. We don't store state
-        # or update the .gitignore or anything in that case.
-        # Note: perhaps we should? If we wrote a bit of stuff and then
-        # failed we'll get a bunch of complaints about mod times changing
-        # under us next time we run, right?
+        # Always write state at this point. Even if there have been
+        # errors, we want to keep track of the latest states we have for
+        # anything wrote/etc.
+        self._write_state()
+
+        # Bail at this point if anything went wrong.
         if (
             self._src_error_entities
             or self._dst_error_entities
@@ -461,10 +465,6 @@ class SpinoffContext:
         # Update .gitignore to ignore everything spinoff-managed.
         if self._mode is self.Mode.UPDATE or self._mode is self.Mode.OVERRIDE:
             self._write_gitignore()
-
-        # Only writing updated state in case of success. Is there a reason
-        # we would want to write it on errors also?
-        self._write_state()
 
     def _apply_project_configs(self) -> None:
         # pylint: disable=exec-used
@@ -1418,9 +1418,14 @@ class SpinoffContext:
             self._execution_error = True
             print(
                 f'{Clr.RED}Error copying/filtering file:'
-                f" '{src_path_full}'{Clr.RST}: {exc}.",
+                f" '{src_path_full}'{Clr.RST}: {exc}"
+                ' (use --verbose for full traceback)',
                 file=sys.stderr,
             )
+            if self._verbose:
+                import traceback
+
+                traceback.print_exc(file=sys.stderr)
 
     def _handle_src_copy_file(
         self,

@@ -124,6 +124,7 @@ def _main() -> None:
             dst_root,
             single_run_mode,
             force='--force' in sys.argv,
+            verbose='--verbose' in sys.argv,
             print_full_lists='--full' in sys.argv,
         ).run()
 

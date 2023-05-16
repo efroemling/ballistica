@@ -380,15 +380,27 @@ class ProjectUpdater:
                 self._generate_top_level_makefile(path, existing_data)
             elif path == 'src/assets/Makefile':
                 self._generate_assets_makefile(path, existing_data)
-            elif path.startswith('src/assets/.asset_manifest_'):
-                # These are generated as a side-effect of the assets makefile.
+            elif path.startswith('src/assets/.asset_manifest_public'):
+                # These are always generated as a side-effect of the
+                # assets Makefile.
                 self.generate_file('src/assets/Makefile')
+            elif path.startswith('src/assets/.asset_manifest_private'):
+                if self.public:
+                    # In public repos these are just pulled through as-is
+                    # from the source project.
+                    self._generate_passthrough_file(path, existing_data)
+                else:
+                    # In private repos, these are generated as a side-effect
+                    # of the assets Makefile.
+                    self.generate_file('src/assets/Makefile')
+
             elif path == 'src/resources/Makefile':
                 self._generate_resources_makefile(path, existing_data)
             elif path == 'src/meta/Makefile':
                 self._generate_meta_makefile(existing_data)
             elif path.startswith('src/meta/.meta_manifest_'):
-                # These are generated as a side-effect of the meta makefile.
+                # These are always generated as a side-effect of the
+                # meta Makefile.
                 self.generate_file('src/meta/Makefile')
                 assert path in self._generated_files
             else:
@@ -649,6 +661,7 @@ class ProjectUpdater:
         outfiles = generate_assets_makefile(
             self.projroot, path, existing_data, meta_manifests
         )
+
         for out_path, out_contents in outfiles.items():
             self._generated_files[out_path] = out_contents
 
@@ -666,6 +679,9 @@ class ProjectUpdater:
 
     def _update_meta_makefile(self) -> None:
         self.enqueue_update('src/meta/Makefile')
+
+    def _generate_passthrough_file(self, path: str, existing_data: str) -> None:
+        self._generated_files[path] = existing_data
 
     def _generate_meta_makefile(self, existing_data: str) -> None:
         from batools.metamakefile import generate_meta_makefile
