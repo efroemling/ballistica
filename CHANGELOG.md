@@ -209,6 +209,9 @@
 - Starting to move the 'spinoff' system into the public repo (things like
   tools/spinoff and tools/batools/spinoff). This is what will be used to make
   filtered standalone versions of ballistica. More on this soon.
+- The `ba` module is now called `babase` and is now just a feature-set like any
+  other, which simplifies a lot of project logic. It can even be removed from
+  spinoff projects, though in practice it makes little sense to do so.
 - Python dummy-modules are now always generated on an as-needed basis (when
   running things like `make mypy`) and live in build/dummymodules instead of
   under assets src.
