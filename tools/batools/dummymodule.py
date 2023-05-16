@@ -933,7 +933,7 @@ def generate(projroot: str) -> None:
         )
         binary_path = (
             subprocess.run(
-                ['tools/pcommand', 'prefab_binary_path', 'gui-release'],
+                ['tools/pcommand', 'prefab_binary_path', 'server-release'],
                 check=True,
                 capture_output=True,
             )
