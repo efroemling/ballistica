@@ -59,21 +59,32 @@ def check_clean_safety() -> None:
     import os
     import subprocess
 
+    from efro.terminal import Clr
     from efro.error import CleanError
-    from efrotools.pcommand import check_clean_safety as std_snippet
+    import efrotools.pcommand
 
-    # First do standard checks.
-    std_snippet()
+    ignorevar = 'BA_IGNORE_CLEAN_SAFETY_CHECK'
+    if os.environ.get(ignorevar) == '1':
+        return
+    try:
+        # First do standard checks.
+        efrotools.pcommand.check_clean_safety()
 
-    # Then also make sure there are no untracked changes to core files
-    # (since we may be blowing core away here).
-    spinoff_bin = os.path.join(str(PROJROOT), 'tools', 'spinoff')
-    if os.path.exists(spinoff_bin):
-        result = subprocess.run(
-            [spinoff_bin, 'cleancheck', '--soft'], check=False
+        # Then also make sure there are no untracked changes to core files
+        # (since we may be blowing core away here).
+        spinoff_bin = os.path.join(str(PROJROOT), 'tools', 'spinoff')
+        if os.path.exists(spinoff_bin):
+            result = subprocess.run(
+                [spinoff_bin, 'cleancheck', '--soft'], check=False
+            )
+            if result.returncode != 0:
+                raise CleanError()
+    except Exception:
+        print(
+            f'{Clr.RED}Clean safety check failed.'
+            f' Set {ignorevar}=1 to proceed anyway.{Clr.RST}'
         )
-        if result.returncode != 0:
-            raise CleanError()
+        raise
 
 
 def archive_old_builds() -> None:

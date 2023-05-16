@@ -32,7 +32,7 @@ sit on top of Python's module system. So even though our feature-sets still
 often talk to each other directly through native C++ interfaces, they go through
 Python's import mechanism to init each other and acquire those interfaces.
 
-The benefits of this setup is safety and consistency. It does not matter if we
+The benefits of this setup are safety and consistency. It does not matter if we
 do `import bascenev1` in Python or `scene_v1::SceneV1FeatureSet::Import()` from
 C++; in either case we can be sure that both Python and C++ parts of the
 `scene_v1` feature-set have been inited and are ready for use. In earlier

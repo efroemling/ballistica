@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-from batools.spinoff import spinoff_main
 
 if __name__ == '__main__':
-    import batools.spinoff
+    from batools.spinoff import spinoff_main
 
     spinoff_main()
