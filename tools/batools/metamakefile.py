@@ -129,7 +129,7 @@ class MetaMakefileGenerator:
         if public:
             our_lines_private = lines[auto_start_private + 1 : auto_end_private]
         else:
-            # Private targets (available in public through efrocache)
+            # Private targets (but available in public through efrocache).
             targets = []
             our_lines_private_1 = (
                 _empty_line_if(bool(targets))
@@ -146,7 +146,7 @@ class MetaMakefileGenerator:
             )
             all_dsts_private.update(t.dst for t in targets)
 
-            # Private-internal targets (not available at all in public)
+            # Private-internal targets (not available at all in public).
             targets = []
             self._add_pyembed_targets_internal(targets)
             self._add_extra_targets_internal(targets)

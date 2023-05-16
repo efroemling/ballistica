@@ -193,8 +193,9 @@ def win_ci_install_prereqs() -> None:
     ) as infile:
         meta_private: list[str] = json.loads(infile.read())
     for target in meta_public + meta_private:
-        if target.startswith('src/ballistica/mgen/') or target.startswith(
-            'src/assets/ba_data/python/babase/_mgen/'
+        if (target.startswith('src/ballistica/') and '/mgen/' in target) or (
+            target.startswith('src/assets/ba_data/python/')
+            and '/_mgen/' in target
         ):
             needed_targets.add(target)
 

@@ -526,30 +526,6 @@
     <ClInclude Include="..\..\src\ballistica\base\networking\networking.h">
       <Filter>ballistica\base\networking</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\android\amazon\base_plat_andr_amazon.cc">
-      <Filter>ballistica\base\platform\android\amazon</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\android\amazon\base_plat_andr_amazon.h">
-      <Filter>ballistica\base\platform\android\amazon</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\android\base_platform_android.cc">
-      <Filter>ballistica\base\platform\android</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\android\base_platform_android.h">
-      <Filter>ballistica\base\platform\android</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\android\cardboard\base_pl_an_cardboard.cc">
-      <Filter>ballistica\base\platform\android\cardboard</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\android\cardboard\base_pl_an_cardboard.h">
-      <Filter>ballistica\base\platform\android\cardboard</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\android\google\base_plat_andr_google.cc">
-      <Filter>ballistica\base\platform\android\google</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\android\google\base_plat_andr_google.h">
-      <Filter>ballistica\base\platform\android\google</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\platform\apple\base_platform_apple.cc">
       <Filter>ballistica\base\platform\apple</Filter>
     </ClCompile>
@@ -568,9 +544,6 @@
     <ClInclude Include="..\..\src\ballistica\base\platform\linux\base_platform_linux.h">
       <Filter>ballistica\base\platform\linux</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\oculus\main_rift.cc">
-      <Filter>ballistica\base\platform\oculus</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\platform\support\min_sdl_key_names.h">
       <Filter>ballistica\base\platform\support</Filter>
     </ClInclude>
@@ -1908,13 +1881,8 @@
     <Filter Include="ballistica\base\logic" />
     <Filter Include="ballistica\base\networking" />
     <Filter Include="ballistica\base\platform" />
-    <Filter Include="ballistica\base\platform\android" />
-    <Filter Include="ballistica\base\platform\android\amazon" />
-    <Filter Include="ballistica\base\platform\android\cardboard" />
-    <Filter Include="ballistica\base\platform\android\google" />
     <Filter Include="ballistica\base\platform\apple" />
     <Filter Include="ballistica\base\platform\linux" />
-    <Filter Include="ballistica\base\platform\oculus" />
     <Filter Include="ballistica\base\platform\support" />
     <Filter Include="ballistica\base\platform\windows" />
     <Filter Include="ballistica\base\python" />

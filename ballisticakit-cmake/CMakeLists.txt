@@ -373,21 +373,12 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/amazon/base_plat_andr_amazon.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/amazon/base_plat_andr_amazon.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/base_platform_android.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/base_platform_android.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/cardboard/base_pl_an_cardboard.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/cardboard/base_pl_an_cardboard.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/google/base_plat_andr_google.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/android/google/base_plat_andr_google.h
   ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.h
   ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.h
   ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/oculus/main_rift.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/support/min_sdl_key_names.h
   ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.h
