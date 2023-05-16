@@ -931,7 +931,6 @@ def generate(projroot: str) -> None:
             f' generate dummy-modules...{Clr.RST}',
             flush=True,
         )
-        binary_build_command = ['tools/pcommand', 'make_prefab', 'gui-release']
         binary_path = (
             subprocess.run(
                 ['tools/pcommand', 'prefab_binary_path', 'gui-release'],
@@ -941,6 +940,7 @@ def generate(projroot: str) -> None:
             .stdout.decode()
             .strip()
         )
+        binary_build_command = ['make', binary_path]
 
     subprocess.run(binary_build_command, check=True)
     if not os.path.exists(binary_path):

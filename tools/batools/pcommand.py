@@ -702,8 +702,14 @@ def prefab_binary_path() -> None:
         raise RuntimeError('Expected 1 arg.')
     buildtype, buildmode = sys.argv[2].split('-')
     platform = batools.build.get_current_prefab_platform()
+    if buildtype == 'gui':
+        binpath = 'ballisticakit'
+    elif buildtype == 'server':
+        binpath = 'dist/ballisticakit_headless'
+    else:
+        raise ValueError(f"Invalid buildtype '{buildtype}'.")
     print(
-        f'build/prefab/full/{platform}_{buildtype}/{buildmode}/ballisticakit',
+        f'build/prefab/full/{platform}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
 
