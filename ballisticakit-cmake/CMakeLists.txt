@@ -382,8 +382,6 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/base/platform/support/min_sdl_key_names.h
   ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows_oculus.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows_oculus.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
@@ -432,6 +430,7 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.h
   ${BA_SRC_ROOT}/ballistica/core/core.cc
   ${BA_SRC_ROOT}/ballistica/core/core.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.h
   ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.h

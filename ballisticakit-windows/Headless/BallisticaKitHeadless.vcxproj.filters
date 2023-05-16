@@ -553,12 +553,6 @@
     <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.h">
       <Filter>ballistica\base\platform\windows</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.cc">
-      <Filter>ballistica\base\platform\windows</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.h">
-      <Filter>ballistica\base\platform\windows</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc">
       <Filter>ballistica\base\python</Filter>
     </ClCompile>
@@ -703,6 +697,9 @@
     <ClInclude Include="..\..\src\ballistica\core\core.h">
       <Filter>ballistica\core</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.cc">
+      <Filter>ballistica\core\platform\apple</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.h">
       <Filter>ballistica\core\platform\apple</Filter>
     </ClInclude>

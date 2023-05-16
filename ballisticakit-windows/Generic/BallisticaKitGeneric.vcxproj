@@ -373,8 +373,6 @@
     <ClInclude Include="..\..\src\ballistica\base\platform\support\min_sdl_key_names.h" />
     <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.h" />
-    <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\base_python.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_app_timer.cc" />
@@ -423,6 +421,7 @@
     <ClInclude Include="..\..\src\ballistica\classic\support\v1_account.h" />
     <ClCompile Include="..\..\src\ballistica\core\core.cc" />
     <ClInclude Include="..\..\src\ballistica\core\core.h" />
+    <ClCompile Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.h" />
     <ClCompile Include="..\..\src\ballistica\core\platform\core_platform.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\core_platform.h" />
