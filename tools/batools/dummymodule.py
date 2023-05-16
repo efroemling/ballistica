@@ -912,7 +912,10 @@ def generate(projroot: str) -> None:
     # TODO(ericf): for the ballistica public repo should make this use
     #  prefab builds so folks without compiler toolchains can still run
     #  code checks.
-    print(f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}')
+    print(
+        f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}',
+        flush=True,
+    )
 
     subprocess.run(['make', 'cmake-binary'], check=True)
     subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)
@@ -945,7 +948,8 @@ def generate(projroot: str) -> None:
     # Launch ballisticakit and exec ourself from within it.
     print(
         f'{Clr.SMAG}Launching ballisticakit to generate'
-        f' {gencount} dummy-modules...{Clr.RST}'
+        f' {gencount} dummy-modules...{Clr.RST}',
+        flush=True,
     )
     try:
         # Note: ask Python to not scatter __pycache__ files throughout
@@ -955,7 +959,9 @@ def generate(projroot: str) -> None:
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
             check=True,
         )
-        print(f'{Clr.BLU}Dummy-module generation complete.{Clr.RST}')
+        print(
+            f'{Clr.BLU}Dummy-module generation complete.{Clr.RST}', flush=True
+        )
 
     except Exception as exc2:
         # Keep our error simple here; we want focus to be on what went
