@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3.11
 # Released under the MIT License. See LICENSE for details.
 #
 """A collection of commands for use with this project.
@@ -47,13 +47,16 @@ from efrotools.pcommand import (
     try_repeat,
     xcodebuild,
     xcoderun,
+    tweak_empty_py_files,
+    make_ensure,
+    make_target_debug,
+)
+from efrotools.pcommand2 import (
+    with_build_lock,
 )
 from batools.pcommand import (
-    stage_server_file,
-    py_examine,
     resize_image,
     check_clean_safety,
-    clean_orphaned_assets,
     archive_old_builds,
     lazy_increment_build,
     get_master_asset_src_dir,
@@ -64,6 +67,7 @@ from batools.pcommand import (
     gen_fulltest_buildfile_windows,
     gen_fulltest_buildfile_apple,
     gen_fulltest_buildfile_linux,
+    prune_includes,
     python_version_android,
     python_version_apple,
     python_build_apple,
@@ -92,28 +96,31 @@ from batools.pcommand import (
     prefab_run_var,
     make_prefab,
     lazybuild,
-    android_archive_unstripped_libs,
     efro_gradle,
     stage_assets,
-    update_assets_makefile,
     update_project,
-    update_cmake_prefab_lib,
     cmake_prep_dir,
     gen_binding_code,
     gen_flat_data_code,
     wsl_path_to_win,
     wsl_build_check_win_drive,
-    win_ci_binary_build,
     genchangelog,
     android_sdk_utils,
     logcat,
-    update_resources_makefile,
-    update_meta_makefile,
     gen_python_enums_module,
     gen_python_init_module,
-    update_dummy_modules,
-    win_ci_install_prereqs,
+    gen_dummy_modules,
     version,
+)
+from batools.pcommand2 import (
+    gen_monolithic_register_modules,
+    stage_server_file,
+    py_examine,
+    clean_orphaned_assets,
+    win_ci_install_prereqs,
+    win_ci_binary_build,
+    update_cmake_prefab_lib,
+    android_archive_unstripped_libs,
 )
 
 # pylint: enable=unused-import

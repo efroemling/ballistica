@@ -244,7 +244,6 @@ class _Tester:
                     raise RuntimeError(f'{name} did not go down cleanly')
 
     async def _run(self, testcall: Awaitable[None]) -> None:
-
         # Give server a chance to spin up before kicking off client.
         await self.server.start()
 
@@ -286,7 +285,6 @@ def test_keepalive_fail() -> None:
     tester = _Tester(keepalive_interval=kinterval, keepalive_timeout=ktimeout)
 
     async def _do_it() -> None:
-
         # Tell our client to not send keepalives.
         tester.client.endpoint.test_suppress_keepalives = True
 
@@ -311,7 +309,6 @@ def test_keepalive_success() -> None:
     tester = _Tester(keepalive_interval=kinterval, keepalive_timeout=ktimeout)
 
     async def _do_it() -> None:
-
         # Sleep just past the keepalive timeout and make sure the endpoint
         # is NOT going down
         await asyncio.sleep(ktimeout * 1.25)
@@ -325,7 +322,6 @@ def test_simple_messages() -> None:
     tester = _Tester()
 
     async def _do_it() -> None:
-
         # Send some messages both directions and make sure we get the expected
         # response types.
 
@@ -365,7 +361,6 @@ def test_simultaneous_messages() -> None:
     tester = _Tester()
 
     async def _do_it() -> None:
-
         # Send a bunch of messages both ways at once and make sure
         # they all come through simultaneously-ish.
         starttime = time.monotonic()
@@ -395,7 +390,6 @@ def test_message_timeout() -> None:
     tester = _Tester()
 
     async def _do_it() -> None:
-
         # This message should return after a short wait.
         resp = await tester.server.send_message(
             _Message(_MessageType.TEST_SLOW)

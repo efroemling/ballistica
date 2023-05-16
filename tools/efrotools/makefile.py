@@ -41,7 +41,6 @@ class Makefile:
     header_line_empty = '#' + ' ' * 78 + '#'
 
     def __init__(self, contents: str):
-
         self.sections: list[Section] = []
 
         self._original = copy.copy(contents)
@@ -53,7 +52,6 @@ class Makefile:
         # First off, break into paragraphs (continuous sets of lines)
         plines: list[str] = []
         for line in lines:
-
             if line.strip() == '':
                 if plines:
                     paragraphs.append(Paragraph(contents='\n'.join(plines)))
@@ -67,7 +65,6 @@ class Makefile:
         section = Section(name=None, paragraphs=[])
         self.sections.append(section)
         for paragraph in paragraphs:
-
             # Look for our very particular section headers and start
             # a new section whenever we come across one.
             plines = paragraph.contents.splitlines()

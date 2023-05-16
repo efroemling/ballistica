@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Ignored" pattern="file[BallisticaKit]:src/ballistica/config/*&amp;&amp;!file:src/ballistica/config/config_cmake.h&amp;&amp;!file:src/ballistica/config/config_common.h" />
+</component>

@@ -7,3 +7,7 @@ DerivePointerAlignment: false
 
 # want +, -, etc at beginning of split lines
 BreakBeforeBinaryOperators: NonAssignment
+
+# Testing; kinda looks cramped without space but function-call type
+# initializations look odd *with* space. Guess I'll leave default for now.
+# SpaceBeforeCpp11BracedList: true

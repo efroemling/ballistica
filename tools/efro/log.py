@@ -133,7 +133,6 @@ class LogHandler(logging.Handler):
         # pylint: disable=consider-using-with
         self._file = None if path is None else open(path, 'w', encoding='utf-8')
         self._echofile = echofile
-        self._callbacks_lock = Lock()
         self._callbacks: list[Callable[[LogEntry], None]] = []
         self._suppress_non_root_debug = suppress_non_root_debug
         self._file_chunks: dict[str, list[str]] = {'stdout': [], 'stderr': []}
@@ -161,13 +160,42 @@ class LogHandler(logging.Handler):
         while not self._thread_bootstrapped:
             time.sleep(0.001)
 
-    def add_callback(self, call: Callable[[LogEntry], None]) -> None:
+    def add_callback(
+        self, call: Callable[[LogEntry], None], feed_existing_logs: bool = False
+    ) -> None:
         """Add a callback to be run for each LogEntry.
 
         Note that this callback will always run in a background thread.
+        Passing True for feed_existing_logs will cause all cached logs
+        in the handler to be fed to the callback (still in the
+        background thread though).
         """
-        with self._callbacks_lock:
-            self._callbacks.append(call)
+
+        # Kick this over to our bg thread to add the callback and
+        # process cached entries at the same time to ensure there are no
+        # race conditions that could cause entries to be skipped/etc.
+        self._event_loop.call_soon_threadsafe(
+            tpartial(self._add_callback_in_thread, call, feed_existing_logs)
+        )
+
+    def _add_callback_in_thread(
+        self, call: Callable[[LogEntry], None], feed_existing_logs: bool
+    ) -> None:
+        """Add a callback to be run for each LogEntry.
+
+        Note that this callback will always run in a background thread.
+        Passing True for feed_existing_logs will cause all cached logs
+        in the handler to be fed to the callback (still in the
+        background thread though).
+        """
+        assert current_thread() is self._thread
+        self._callbacks.append(call)
+
+        # Run all of our cached entries through the new callback if desired.
+        if feed_existing_logs and self._cache_size_limit > 0:
+            with self._cache_lock:
+                for _id, entry in self._cache:
+                    self._run_callback_on_entry(call, entry)
 
     def _log_thread_main(self) -> None:
         self._event_loop = asyncio.new_event_loop()
@@ -183,12 +211,14 @@ class LogHandler(logging.Handler):
         self._thread_bootstrapped = True
         try:
             if self._cache_time_limit is not None:
-                self._event_loop.create_task(self._time_prune_cache())
+                _prunetask = self._event_loop.create_task(
+                    self._time_prune_cache()
+                )
             self._event_loop.run_forever()
         except BaseException:
-            # If this ever goes down we're in trouble.
-            # We won't be able to log about it though...
-            # Try to make some noise however we can.
+            # If this ever goes down we're in trouble; we won't be able
+            # to log about it though. Try to make some noise however we
+            # can.
             print('LogHandler died!!!', file=sys.stderr)
             import traceback
 
@@ -201,7 +231,6 @@ class LogHandler(logging.Handler):
             await asyncio.sleep(61.27)
             now = utc_now()
             with self._cache_lock:
-
                 # Prune the oldest entry as long as there is a first one that
                 # is too old.
                 while (
@@ -380,7 +409,6 @@ class LogHandler(logging.Handler):
         message: str | logging.LogRecord,
     ) -> None:
         try:
-
             # If they passed a raw record here, bake it down to a string.
             if isinstance(message, logging.LogRecord):
                 message = self.format(message)
@@ -508,24 +536,29 @@ class LogHandler(logging.Handler):
                     self._cache_index_offset += 1
 
         # Pass to callbacks.
-        with self._callbacks_lock:
-            for call in self._callbacks:
-                try:
-                    call(entry)
-                except Exception:
-                    # Only print one callback error to avoid insanity.
-                    if not self._printed_callback_error:
-                        import traceback
-
-                        traceback.print_exc(file=self._echofile)
-                        self._printed_callback_error = True
+        for call in self._callbacks:
+            self._run_callback_on_entry(call, entry)
 
         # Dump to our structured log file.
-        # TODO: set a timer for flushing; don't flush every line.
+        # TODO: should set a timer for flushing; don't flush every line.
         if self._file is not None:
             entry_s = dataclass_to_json(entry)
             assert '\n' not in entry_s  # Make sure its a single line.
             print(entry_s, file=self._file, flush=True)
+
+    def _run_callback_on_entry(
+        self, callback: Callable[[LogEntry], None], entry: LogEntry
+    ) -> None:
+        """Run a callback and handle any errors."""
+        try:
+            callback(entry)
+        except Exception:
+            # Only print the first callback error to avoid insanity.
+            if not self._printed_callback_error:
+                import traceback
+
+                traceback.print_exc(file=self._echofile)
+                self._printed_callback_error = True
 
 
 class FileLogEcho:
@@ -611,7 +644,10 @@ def setup_logging(
         force=True,
     )
     if had_previous_handlers:
-        logging.warning('setup_logging: force-replacing previous handlers.')
+        logging.warning(
+            'setup_logging: Replacing existing handlers.'
+            ' Something may have logged before expected.'
+        )
 
     # Optionally intercept Python's stdout/stderr output and generate
     # log entries from it.

@@ -12,19 +12,21 @@ live client or server code.
 from __future__ import annotations
 
 import os
+import sys
 import json
-import platform
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 if TYPE_CHECKING:
     from typing import Sequence, Any, Literal
 
 # Python major version we're using for all this stuff.
-PYVER = '3.10'
+PYVER = '3.11'
 
 # Python binary assumed by these tools.
-PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'
+# PYTHON_BIN = f 'python{PYVER}' if platform.system() != 'Windows' else 'python'
+# Update; just using the same executable used to launch us.
+PYTHON_BIN = sys.executable
 
 
 def explicit_bool(value: bool) -> bool:
@@ -35,10 +37,14 @@ def explicit_bool(value: bool) -> bool:
 def getlocalconfig(projroot: Path) -> dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
     localconfig: dict[str, Any]
+
+    # Allow overriding path via env var.
+    path = os.environ.get('EFRO_LOCALCONFIG_PATH')
+    if path is None:
+        path = 'config/localconfig.json'
+
     try:
-        with open(
-            Path(projroot, 'config/localconfig.json'), encoding='utf-8'
-        ) as infile:
+        with open(Path(projroot, path), encoding='utf-8') as infile:
             localconfig = json.loads(infile.read())
     except FileNotFoundError:
         localconfig = {}
@@ -46,11 +52,11 @@ def getlocalconfig(projroot: Path) -> dict[str, Any]:
 
 
 def getconfig(projroot: Path) -> dict[str, Any]:
-    """Return a project's config contents (or default if missing)."""
+    """Return a project's projectconfig contents (or default if missing)."""
     config: dict[str, Any]
     try:
         with open(
-            Path(projroot, 'config/config.json'), encoding='utf-8'
+            Path(projroot, 'config/projectconfig.json'), encoding='utf-8'
         ) as infile:
             config = json.loads(infile.read())
     except FileNotFoundError:
@@ -61,10 +67,51 @@ def getconfig(projroot: Path) -> dict[str, Any]:
 def setconfig(projroot: Path, config: dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
-    with Path(projroot, 'config/config.json').open(
+    with Path(projroot, 'config/projectconfig.json').open(
         'w', encoding='utf-8'
     ) as outfile:
         outfile.write(json.dumps(config, indent=2))
+
+
+@overload
+def extract_arg(
+    args: list[str], name: str, required: Literal[False] = False
+) -> str | None:
+    ...
+
+
+@overload
+def extract_arg(args: list[str], name: str, required: Literal[True]) -> str:
+    ...
+
+
+def extract_arg(
+    args: list[str], name: str, required: bool = False
+) -> str | None:
+    """Given a list of args and an arg name, returns a value.
+
+    The arg flag and value are removed from the arg list.
+    raises CleanErrors on any problems.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if not count:
+        if required:
+            raise CleanError(f'Required argument {name} not passed.')
+        return None
+
+    if count > 1:
+        raise CleanError(f'Arg {name} passed multiple times.')
+
+    argindex = args.index(name)
+    if argindex + 1 >= len(args):
+        raise CleanError(f'No value passed after {name} arg.')
+
+    val = args[argindex + 1]
+    del args[argindex : argindex + 2]
+
+    return val
 
 
 def get_public_license(style: str) -> str:
@@ -107,8 +154,8 @@ def replace_exact(opstr: str, old: str, new: str, count: int = 1) -> str:
     """
     found = opstr.count(old)
     if found != count:
-        raise Exception(
-            f'expected {count} string occurrence(s);'
+        raise RuntimeError(
+            f'Expected {count} string occurrence(s);'
             f' found {found}. String = {old}'
         )
     return opstr.replace(old, new)
@@ -124,7 +171,7 @@ def get_files_hash(
     import hashlib
 
     if not isinstance(filenames, list):
-        raise Exception('expected a list')
+        raise RuntimeError(f'Expected a list; got a {type(filenames)}.')
     if TYPE_CHECKING:
         # Help Mypy infer the right type for this.
         hashobj = hashlib.md5()
@@ -198,11 +245,10 @@ def py_examine(
     with open(filename, encoding='utf-8') as infile:
         fcontents = infile.read()
     if '#@' in fcontents:
-        raise Exception('#@ marker found in file; this breaks examinations.')
+        raise RuntimeError('#@ marker found in file; this breaks examinations.')
     flines = fcontents.splitlines()
 
     if operation == 'pylint_infer':
-
         # See what asteroid can infer about the target symbol.
         symbol = (
             selection
@@ -220,7 +266,6 @@ def py_examine(
         inferred = list(node.infer())
         print(symbol + ':', ', '.join([str(i) for i in inferred]))
     elif operation in ('mypy_infer', 'mypy_locals'):
-
         # Ask mypy for the type of the target symbol.
         symbol = (
             selection

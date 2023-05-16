@@ -33,7 +33,7 @@ spaces
 #include "ode/ode_collision_kernel.h"
 #include <iostream>
 #include "ode/ode_util.h"
-#include "ballistica/ballistica.h"
+#include "ballistica/shared/ballistica.h"
 
 #include "ode/ode_collision_space_internal.h"
 

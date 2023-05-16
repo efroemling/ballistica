@@ -1,7 +1,12 @@
 [
- "assets/src/ba_data/python/ba/_generated/__init__.py",
- "assets/src/ba_data/python/ba/_generated/enums.py",
- "src/ballistica/generated/python_embedded/binding.inc",
- "src/ballistica/generated/python_embedded/bootstrap.inc",
- "src/ballistica/generated/python_embedded/bootstrap_monolithic.inc"
+ "src/assets/ba_data/python/babase/_mgen/__init__.py",
+ "src/assets/ba_data/python/babase/_mgen/enums.py",
+ "src/ballistica/base/mgen/pyembed/binding_base.inc",
+ "src/ballistica/classic/mgen/pyembed/binding_classic.inc",
+ "src/ballistica/core/mgen/pyembed/binding_core.inc",
+ "src/ballistica/core/mgen/pyembed/env.inc",
+ "src/ballistica/core/mgen/python_modules_monolithic.h",
+ "src/ballistica/scene_v1/mgen/pyembed/binding_scene_v1.inc",
+ "src/ballistica/template_fs/mgen/pyembed/binding_template_fs.inc",
+ "src/ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc"
 ]

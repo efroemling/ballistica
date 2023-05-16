@@ -155,9 +155,9 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
     """Filter makefile contents to use efrocache lookups."""
 
     if makefile_dir:
-        # Assuming just one level deep at the moment; can revisit later.
-        assert '/' not in makefile_dir
-        to_proj_root = '..'
+        # Assuming two levels deep at the moment; can revisit if needed.
+        assert len(makefile_dir.split('/')) == 2
+        to_proj_root = '../..'
     else:
         to_proj_root = ''
 
@@ -262,7 +262,6 @@ def _upload_cache(
     hashes_str: str,
     hashes_existing_str: str,
 ) -> None:
-
     # First, if we've run before, print the files causing us to re-run:
     if hashes_existing_str != '':
         changed_files: set[str] = set()
@@ -492,7 +491,6 @@ def warm_start_cache() -> None:
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
     entries: list[tuple[str, str]] = []
     for fname, url in cachemap.items():
-
         # File hasn't been pulled from cache yet = ignore.
         if not os.path.exists(fname):
             continue

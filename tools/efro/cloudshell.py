@@ -40,7 +40,7 @@ class HostConfig:
     managed: bool = False
     idle_minutes: int = 5
     can_sudo_reboot: bool = False
-    max_sessions: int = 3
+    max_sessions: int = 4
     reboot_wait_seconds: int = 20
     reboot_attempts: int = 1
 

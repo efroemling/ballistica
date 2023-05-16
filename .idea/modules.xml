@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ballisticacore.iml" filepath="$PROJECT_DIR$/.idea/ballisticacore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/ballisticakit.iml" filepath="$PROJECT_DIR$/.idea/ballisticakit.iml" />
     </modules>
   </component>
 </project>

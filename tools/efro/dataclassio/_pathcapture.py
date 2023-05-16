@@ -27,7 +27,6 @@ class _PathCapture:
         self._pathparts = pathparts
 
     def __getattr__(self, name: str) -> _PathCapture:
-
         # We only allow diving into sub-objects if we are a dataclass.
         if not self._is_dataclass:
             raise TypeError(

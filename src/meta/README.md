@@ -1,3 +1,6 @@
-# BallisticaCore Generated Files
+# Ballistica Meta Source
 
-This directory should contain files used to generated code
+Code in this directory is used for Ballistica's 'meta' build targets.
+These targets generate source code using other source code as inputs.
+
+

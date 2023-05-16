@@ -143,7 +143,8 @@ class PrepSession:
             raise RuntimeError('Max recursion exceeded.')
 
         # We should only be passed classes which are dataclasses.
-        if not isinstance(cls, type) or not dataclasses.is_dataclass(cls):
+        cls_any: Any = cls
+        if not isinstance(cls_any, type) or not dataclasses.is_dataclass(cls):
             raise TypeError(f'Passed arg {cls} is not a dataclass type.')
 
         # Add a pointer to the prep-session while doing the prep.
@@ -175,7 +176,7 @@ class PrepSession:
             # which allows us to pick up nested classes, etc.
             resolved_annotations = get_type_hints(
                 cls,
-                localns=vars(cls),
+                localns=vars(cls),  # type: ignore[arg-type]
                 globalns=self.globalns,
                 include_extras=True,
             )
@@ -199,7 +200,6 @@ class PrepSession:
         # now recurse through them, verifying that we support all contained
         # types and prepping any contained dataclass types.
         for attrname, anntype in resolved_annotations.items():
-
             anntype, ioattrs = _parse_annotated(anntype)
 
             # If we found attached IOAttrs data, make sure it contains
@@ -260,6 +260,7 @@ class PrepSession:
 
         origin = _get_origin(anntype)
 
+        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             self.prep_union(
                 cls, attrname, anntype, recursion_level=recursion_level + 1

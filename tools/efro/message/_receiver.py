@@ -73,7 +73,7 @@ class MessageReceiver:
         """
         # TODO: can use types.GenericAlias in 3.9.
         # (hmm though now that we're there,  it seems a drop-in
-        # replace gives us errors. Should re-test in 3.10 as it seems
+        # replace gives us errors. Should re-test in 3.11 as it seems
         # that typing_extensions handles it differently in that case)
         from typing import _GenericAlias  # type: ignore
         from typing import get_type_hints, get_args
@@ -141,6 +141,7 @@ class MessageReceiver:
 
         # This will contain NoneType for empty return cases, but
         # we expect it to be None.
+        # noinspection PyPep8
         responsetypes = tuple(
             None if r is type(None) else r for r in responsetypes
         )

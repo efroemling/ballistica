@@ -54,7 +54,9 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     cache = FileCache(cachepath)
     cfconfig = Path(projroot, '.clang-format')
 
-    filenames = get_code_filenames(projroot)
+    # Exclude generated files or else we could mess up dependencies
+    # by mucking with their modtimes.
+    filenames = get_code_filenames(projroot, include_generated=False)
     confighash = get_files_hash([cfconfig])
     cache.update(filenames, confighash)
 
@@ -67,7 +69,7 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
         # make sure to use subprocess.
         result = subprocess.call(['clang-format', '-i', filename])
         if result != 0:
-            raise Exception(f'Formatting failed for {filename}')
+            raise RuntimeError(f'Formatting failed for {filename}')
         duration = time.time() - start_time
         print(f'Formatted {filename} in {duration:.2f} seconds.')
         sys.stdout.flush()
@@ -94,15 +96,16 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     # pylint: disable=too-many-locals
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
+
     from efrotools import getconfig, PYVER
     from efro.terminal import Clr
     from efro.error import CleanError
 
     os.chdir(projroot)
-    filenames = get_code_filenames(projroot)
+    filenames = get_code_filenames(projroot, include_generated=True)
     for fpath in filenames:
         if ' ' in fpath:
-            raise Exception(f'Found space in path {fpath}; unexpected.')
+            raise RuntimeError(f'Found space in path {fpath}; unexpected.')
 
     # Check the config for a list of ones to ignore.
     code_blacklist: list[str] = getconfig(projroot).get('cpplint_blacklist', [])
@@ -139,6 +142,10 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         result = subprocess.call(
             [
                 f'python{PYVER}',
+                # Currently (May 2023) seeing a bunch of warnings
+                # about 'sre_compile deprecated'. Ignoring them.
+                '-W',
+                'ignore::DeprecationWarning',
                 '-m',
                 'cpplint',
                 '--root=src',
@@ -164,8 +171,14 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     )
 
 
-def get_code_filenames(projroot: Path) -> list[str]:
-    """Return the list of files to lint-check or auto-formatting."""
+def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
+    """Return the list of files to lint-check or auto-format.
+
+    Be sure to pass False for include_generated if performing any
+    operation that can modify files (such as formatting). Otherwise it
+    could cause dirty generated files to not get updated properly when
+    their sources change).
+    """
     from efrotools import getconfig
 
     exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
@@ -177,7 +190,11 @@ def get_code_filenames(projroot: Path) -> list[str]:
         for root, _dirs, files in os.walk(place):
             for fname in files:
                 if any(fname.endswith(ext) for ext in exts):
-                    codefilenames.append(os.path.join(root, fname))
+                    path = os.path.join(root, fname)
+                    if '/mgen/' in path and not include_generated:
+                        pass
+                    else:
+                        codefilenames.append(path)
     codefilenames.sort()
     return codefilenames
 
@@ -294,7 +311,7 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
 
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
-        raise Exception('pylintrc not found where expected')
+        raise RuntimeError('pylintrc not found where expected')
 
     # Technically we could just run pylint standalone via command line here,
     # but let's go ahead and run it inline so we're consistent with our cached
@@ -311,11 +328,11 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
 
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
-        raise Exception('pylintrc not found where expected')
+        raise RuntimeError('pylintrc not found where expected')
     filenames = get_script_filenames(projroot)
 
     if any(' ' in name for name in filenames):
-        raise Exception('found space in path; unexpected')
+        raise RuntimeError('found space in path; unexpected')
     script_blacklist: list[str] = []
     filenames = [f for f in filenames if f not in script_blacklist]
 
@@ -401,7 +418,7 @@ def _dirty_dep_check(
             recursion2 = recursion
             if fast:
                 # Our one exception is top level ba which basically aggregates.
-                if not fname.endswith('/ba/__init__.py'):
+                if not fname.endswith('/babase/__init__.py'):
                     recursion2 += 1
             if recursion2 <= 1:
                 deps = cacheentry.get('deps', [])
@@ -609,7 +626,7 @@ def _apply_pylint_run_to_cache(
         dep
         for dep in untracked_deps
         if dep not in ignored_untracked_deps
-        and not dep.startswith('bametainternal')
+        and not dep.startswith('baplusmeta')
     )
     if untracked_deps:
         raise CleanError(
@@ -655,7 +672,7 @@ def _apply_pylint_run_to_cache(
     for fname in dirtyfiles:
         mname2 = paths_to_names.get(fname)
         if mname2 is None:
-            raise Exception('unable to get module name for "' + fname + '"')
+            raise RuntimeError('unable to get module name for "' + fname + '"')
         counts = stats_by_module.get(mname2)
 
         # 'statement' count seems to be new and always non-zero; ignore it
@@ -686,10 +703,9 @@ def runmypy(
     projroot: Path, filenames: list[str], full: bool = False, check: bool = True
 ) -> None:
     """Run MyPy on provided filenames."""
-    from efrotools import PYTHON_BIN
 
     args = [
-        PYTHON_BIN,
+        sys.executable,
         '-m',
         'mypy',
         '--pretty',
@@ -824,7 +840,7 @@ def _run_idea_inspections(
     if not iprof.exists():
         iprof = Path(projroot, '.idea/inspectionProfiles/Project_Default.xml')
         if not iprof.exists():
-            raise Exception('No default inspection profile found.')
+            raise RuntimeError('No default inspection profile found.')
     cmd = [str(inspect), str(projroot), str(iprof), tmpdir.name, '-v2']
     if inspectdir is not None:
         cmd += ['-d', str(inspectdir)]
@@ -847,16 +863,8 @@ def _run_idea_inspections(
     if result.returncode != 0:
         # In verbose mode this stuff got printed already.
         if not verbose:
-            stdout = (
-                result.stdout.decode()
-                if isinstance(result.stdout, bytes)
-                else str(result.stdout)
-            )
-            stderr = (
-                result.stderr.decode()
-                if isinstance(result.stdout, bytes)
-                else str(result.stdout)
-            )
+            stdout = result.stdout.decode()
+            stderr = result.stderr.decode()
             print(
                 f'{displayname} inspection failure stdout:\n{stdout}'
                 + f'{displayname} inspection failure stderr:\n{stderr}'
@@ -979,7 +987,6 @@ def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
         if bool(False):
             print('Launching GUI PyCharm to rebuild caches...', flush=True)
             with subprocess.Popen(str(pycharmbin)) as process:
-
                 # Wait a bit and ask it nicely to die.
                 # We need to make sure it has enough time to do its
                 # cache updating thing even if the system is fully under load.
@@ -1011,7 +1018,7 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     import time
 
     cachepath = Path('.cache/check_clioncode')
-    filenames = get_code_filenames(projroot)
+    filenames = get_code_filenames(projroot, include_generated=True)
     clionroot = Path('/Applications/CLion.app')
     # clionbin = Path(clionroot, 'Contents/MacOS/clion')
     inspect = Path(clionroot, 'Contents/bin/inspect.sh')
@@ -1038,7 +1045,7 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
         print('Launching GUI CLion to rebuild caches...', flush=True)
         # process = subprocess.Popen(str(clionbin))
         subprocess.run(
-            ['open', '-a', clionroot, Path(projroot, 'ballisticacore-cmake')],
+            ['open', '-a', clionroot, Path(projroot, 'ballisticakit-cmake')],
             check=True,
         )
 
@@ -1073,7 +1080,7 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
         cachepath=cachepath,
         filenames=filenames,
         full=full,
-        projroot=Path(projroot, 'ballisticacore-cmake'),
+        projroot=Path(projroot, 'ballisticakit-cmake'),
         inspectdir=Path(projroot, 'src/ballistica'),
         displayname='CLion',
         inspect=inspect,
@@ -1086,7 +1093,7 @@ def check_android_studio(projroot: Path, full: bool, verbose: bool) -> None:
     # import time
 
     cachepath = Path('.cache/check_android_studio')
-    filenames = get_code_filenames(projroot)
+    filenames = get_code_filenames(projroot, include_generated=True)
     clionroot = Path('/Applications/Android Studio.app')
     # clionbin = Path(clionroot, 'Contents/MacOS/studio')
     inspect = Path(clionroot, 'Contents/bin/inspect.sh')
@@ -1126,10 +1133,10 @@ def check_android_studio(projroot: Path, full: bool, verbose: bool) -> None:
         cachepath=cachepath,
         filenames=filenames,
         full=full,
-        projroot=Path(projroot, 'ballisticacore-android'),
+        projroot=Path(projroot, 'ballisticakit-android'),
         inspectdir=Path(
             projroot,
-            'ballisticacore-android/BallisticaCore/src/main/cpp/src/ballistica',
+            'ballisticakit-android/BallisticaKit/src/main/cpp/src/ballistica',
         ),
         # inspectdir=None,
         displayname='Android Studio',

@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="ericf">
     <words>
+      <w>_babase</w>
       <w>aaaa</w>
       <w>aaab</w>
       <w>aaac</w>
@@ -121,6 +122,8 @@
       <w>appstate</w>
       <w>appstore</w>
       <w>apptime</w>
+      <w>apptimer</w>
+      <w>apptimers</w>
       <w>apputils</w>
       <w>archivepath</w>
       <w>archivepathbase</w>
@@ -189,29 +192,35 @@
       <w>awaitable</w>
       <w>awaitables</w>
       <w>axismotion</w>
+      <w>babase</w>
+      <w>babasemeta</w>
       <w>bacfg</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
       <w>backporting</w>
       <w>backwin</w>
+      <w>baclassic</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
       <w>bacommon</w>
       <w>badguy</w>
+      <w>baenv</w>
       <w>bafoundation</w>
       <w>bainternal</w>
       <w>ballistica</w>
       <w>ballistica's</w>
-      <w>ballisticacore</w>
-      <w>ballisticacorecb</w>
+      <w>ballisticakit</w>
+      <w>ballisticakitcb</w>
       <w>bamaster</w>
       <w>bamasteraddr</w>
       <w>bamasterlegacy</w>
       <w>bameta</w>
       <w>bametainternal</w>
+      <w>baplus</w>
       <w>barcolor</w>
       <w>barebones</w>
       <w>bargs</w>
+      <w>bascenev</w>
       <w>baseaddr</w>
       <w>baseh</w>
       <w>baseimps</w>
@@ -220,6 +229,7 @@
       <w>baservnode</w>
       <w>basespaz</w>
       <w>basetime</w>
+      <w>basetimer</w>
       <w>baseurl</w>
       <w>baseval</w>
       <w>basew</w>
@@ -229,9 +239,11 @@
       <w>basnmessagesender</w>
       <w>basntoclient</w>
       <w>bastd</w>
+      <w>batemplatefs</w>
       <w>batocloud</w>
       <w>batools</w>
       <w>batoolsinternal</w>
+      <w>bauiv</w>
       <w>baworker</w>
       <w>bbbb</w>
       <w>bblk</w>
@@ -272,6 +284,7 @@
       <w>bmag</w>
       <w>bmas</w>
       <w>bmasl</w>
+      <w>bmcjphh</w>
       <w>bname</w>
       <w>bndl</w>
       <w>boffs</w>
@@ -281,6 +294,7 @@
       <w>bombsquadgame</w>
       <w>bools</w>
       <w>bootlocale</w>
+      <w>bootlog</w>
       <w>bootsubprocess</w>
       <w>borhani</w>
       <w>bot's</w>
@@ -530,6 +544,7 @@
       <w>copyswiftlibs</w>
       <w>cornerpin</w>
       <w>coroutines</w>
+      <w>correcthash</w>
       <w>countdownsounds</w>
       <w>cpbd</w>
       <w>cpnf</w>
@@ -605,10 +620,12 @@
       <w>dcls</w>
       <w>dcmake</w>
       <w>deathmatch</w>
+      <w>debugger's</w>
       <w>deek</w>
       <w>defs</w>
       <w>defsline</w>
       <w>deivit</w>
+      <w>depchecks</w>
       <w>depcls</w>
       <w>depdata</w>
       <w>depdatas</w>
@@ -651,6 +668,8 @@
       <w>disllowed</w>
       <w>dispatchmethod</w>
       <w>displayname</w>
+      <w>displaytime</w>
+      <w>displaytimer</w>
       <w>distro</w>
       <w>distroot</w>
       <w>distros</w>
@@ -871,6 +890,7 @@
       <w>fdesc</w>
       <w>fdict</w>
       <w>fdout</w>
+      <w>featureset</w>
       <w>fecfc</w>
       <w>feedparser</w>
       <w>fentry</w>
@@ -1050,6 +1070,7 @@
       <w>getcollide</w>
       <w>getcollidemodel</w>
       <w>getcollision</w>
+      <w>getcollisionmesh</w>
       <w>getconf</w>
       <w>getconfig</w>
       <w>getcurrency</w>
@@ -1068,6 +1089,7 @@
       <w>getlog</w>
       <w>getlogin</w>
       <w>getmaps</w>
+      <w>getmesh</w>
       <w>getmodel</w>
       <w>getname</w>
       <w>getnodes</w>
@@ -1084,6 +1106,7 @@
       <w>getscanresults</w>
       <w>getscoreconfig</w>
       <w>getsession</w>
+      <w>getsimplesound</w>
       <w>getsockname</w>
       <w>getsound</w>
       <w>getspaz</w>
@@ -1091,6 +1114,7 @@
       <w>gettext</w>
       <w>gettexture</w>
       <w>gettime</w>
+      <w>getuisound</w>
       <w>gfile</w>
       <w>gfxb</w>
       <w>ghnc</w>
@@ -1145,6 +1169,7 @@
       <w>hashtype</w>
       <w>hashval</w>
       <w>hasstarted</w>
+      <w>hastouchscreen</w>
       <w>hatmotion</w>
       <w>hattach</w>
       <w>hcalc</w>
@@ -1180,6 +1205,7 @@
       <w>hostconfig</w>
       <w>hostingconfig</w>
       <w>hostingstate</w>
+      <w>hostsession</w>
       <w>hostuser</w>
       <w>hout</w>
       <w>howtoplay</w>
@@ -1205,6 +1231,7 @@
       <w>ifeq</w>
       <w>ifneq</w>
       <w>iiarcade</w>
+      <w>iiiiisssi</w>
       <w>iircade</w>
       <w>ilang</w>
       <w>ilck</w>
@@ -1357,6 +1384,7 @@
       <w>langtarget</w>
       <w>langutils</w>
       <w>langval</w>
+      <w>lanst</w>
       <w>larmbeast</w>
       <w>lasthash</w>
       <w>lastline</w>
@@ -1387,7 +1415,7 @@
       <w>levelstr</w>
       <w>lfull</w>
       <w>lfval</w>
-      <w>libballisticacore</w>
+      <w>libballisticakit</w>
       <w>libbz</w>
       <w>libbzip</w>
       <w>libcrypto</w>
@@ -1556,6 +1584,7 @@
       <w>memfunctions</w>
       <w>menubar</w>
       <w>meryu</w>
+      <w>mesh</w>
       <w>messagetype</w>
       <w>metallink</w>
       <w>metamakefile</w>
@@ -1568,6 +1597,7 @@
       <w>mhend</w>
       <w>mhsh</w>
       <w>microprotocols</w>
+      <w>microsecs</w>
       <w>mikirog</w>
       <w>millisecs</w>
       <w>mimetypes</w>
@@ -1761,9 +1791,11 @@
       <w>nyko</w>
       <w>obj's</w>
       <w>objb</w>
+      <w>objcount</w>
       <w>objid</w>
       <w>objname</w>
       <w>objs</w>
+      <w>objset</w>
       <w>objsizes</w>
       <w>objt</w>
       <w>objtoyaml</w>
@@ -1785,6 +1817,7 @@
       <w>oival</w>
       <w>okbtn</w>
       <w>oldbook</w>
+      <w>olde</w>
       <w>oldlady</w>
       <w>oldtoken</w>
       <w>onln</w>
@@ -1964,6 +1997,7 @@
       <w>poweruptype</w>
       <w>powervr</w>
       <w>ppos</w>
+      <w>pppp</w>
       <w>ppre</w>
       <w>pproxy</w>
       <w>pptabcom</w>
@@ -1974,6 +2008,7 @@
       <w>precommand</w>
       <w>precompiling</w>
       <w>preconfig</w>
+      <w>predeclares</w>
       <w>preexec</w>
       <w>prefablib</w>
       <w>preflightfast</w>
@@ -2030,6 +2065,7 @@
       <w>proxykey</w>
       <w>prtb</w>
       <w>prunedir</w>
+      <w>prunetask</w>
       <w>prval</w>
       <w>pstats</w>
       <w>pstr</w>
@@ -2100,6 +2136,7 @@
       <w>pygram</w>
       <w>pyio</w>
       <w>pylib</w>
+      <w>pylibpath</w>
       <w>pylibs</w>
       <w>pylint</w>
       <w>pylintfast</w>
@@ -2141,6 +2178,7 @@
       <w>rawkey</w>
       <w>rawpath</w>
       <w>rawpaths</w>
+      <w>rayd</w>
       <w>rcade</w>
       <w>rcfile</w>
       <w>rcva</w>
@@ -2153,6 +2191,7 @@
       <w>realpath</w>
       <w>realsies</w>
       <w>recache</w>
+      <w>reconverge</w>
       <w>recursed</w>
       <w>recursing</w>
       <w>recv</w>
@@ -2172,6 +2211,7 @@
       <w>rentry</w>
       <w>representer</w>
       <w>reprlib</w>
+      <w>repro</w>
       <w>reqs</w>
       <w>reqtype</w>
       <w>reqtypes</w>
@@ -2264,6 +2304,7 @@
       <w>scenefile</w>
       <w>scenefiles</w>
       <w>scenename</w>
+      <w>scenepacket</w>
       <w>sched</w>
       <w>sclx</w>
       <w>scly</w>
@@ -2601,6 +2642,7 @@
       <w>tempfile</w>
       <w>tempfilepath</w>
       <w>templatecb</w>
+      <w>templatefs</w>
       <w>tenum</w>
       <w>termcolors</w>
       <w>termios</w>
@@ -2628,9 +2670,11 @@
       <w>testpath</w>
       <w>testpt</w>
       <w>testresponse</w>
+      <w>testrunnable</w>
       <w>testsealable</w>
       <w>testsentinel</w>
       <w>testsoundtrack</w>
+      <w>testtask</w>
       <w>testthread</w>
       <w>testval</w>
       <w>testwith</w>
@@ -2699,6 +2743,7 @@
       <w>tournamententry</w>
       <w>tournamentscores</w>
       <w>tpartial</w>
+      <w>tpexl</w>
       <w>tpimport</w>
       <w>tpimportex</w>
       <w>tpimports</w>
@@ -2886,6 +2931,7 @@
       <w>whatevs</w>
       <w>whatisv</w>
       <w>wheee</w>
+      <w>wheeee</w>
       <w>whos</w>
       <w>widgetdeathtime</w>
       <w>wiimote</w>

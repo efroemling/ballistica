@@ -139,7 +139,7 @@ def _spelling(words: list[str]) -> None:
     num_modded_dictionaries = 0
     for fname in [
         '.idea/dictionaries/ericf.xml',
-        'ballisticacore-cmake/.idea/dictionaries/ericf.xml',
+        'ballisticakit-cmake/.idea/dictionaries/ericf.xml',
     ]:
         if not os.path.exists(fname):
             continue
@@ -201,7 +201,7 @@ def spelling() -> None:
 
 def xcodebuild() -> None:
     """Run xcodebuild with added smarts."""
-    from efrotools.xcode import XCodeBuild
+    from efrotools.xcodebuild import XCodeBuild
 
     XCodeBuild(projroot=str(PROJROOT), args=sys.argv[2:]).run()
 
@@ -211,7 +211,7 @@ def xcoderun() -> None:
     import os
     import subprocess
     from efro.error import CleanError
-    from efrotools.xcode import project_build_path
+    from efrotools.xcodebuild import project_build_path
 
     if len(sys.argv) != 5:
         raise CleanError(
@@ -276,9 +276,10 @@ def check_clean_safety() -> None:
     """
     import os
     import subprocess
+    from efro.error import CleanError
 
     if len(sys.argv) != 2:
-        raise Exception('invalid arguments')
+        raise CleanError('invalid arguments')
 
     # Make sure we wouldn't be deleting anything not tracked by git
     # or ignored.
@@ -286,15 +287,13 @@ def check_clean_safety() -> None:
         ['git', 'status', '--porcelain=v2']
     ).decode()
     if any(line.startswith('?') for line in output.splitlines()):
-        print(
-            'ERROR: untracked file(s) found; aborting.'
+        raise CleanError(
+            'Untracked file(s) found; aborting.'
             ' (see "git status" from "'
             + os.getcwd()
             + '")  Either \'git add\' them, add them to .gitignore,'
-            ' or remove them and try again.',
-            file=sys.stderr,
+            ' or remove them and try again.'
         )
-        sys.exit(255)
 
 
 def gen_empty_py_init() -> None:
@@ -491,10 +490,20 @@ def tool_config_install() -> None:
 
 def _filter_tool_config(cfg: str) -> str:
     import textwrap
+
     from efrotools import getconfig
 
     # Stick project-root wherever they want.
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
+
+    # Stick a colon-separated list of project Python paths wherever they want.
+    name = '__EFRO_PYTHON_PATHS__'
+    if name in cfg:
+        pypaths = getconfig(PROJROOT).get('python_paths')
+        if pypaths is None:
+            raise RuntimeError('python_paths not set in project config')
+        assert not any(' ' in p for p in pypaths)
+        cfg = cfg.replace(name, ':'.join(f'{PROJROOT}/{p}' for p in pypaths))
 
     # Short project name.
     short_names = {
@@ -530,6 +539,9 @@ def _filter_tool_config(cfg: str) -> str:
     strict_equality = True
     local_partial_types = True
     no_implicit_reexport = True
+
+    enable_error_code = redundant-expr, truthy-bool, \
+truthy-function, unused-awaitable
     """
     ).strip()
 
@@ -545,7 +557,7 @@ def _filter_tool_config(cfg: str) -> str:
             name, '(' + ' '.join(f'"{b}"' for b in bargs[3:]) + ')'
         )
 
-    # Gen a pylint init to set up our python paths:
+    # Gen a pylint init hook which sets up our python paths.
     pylint_init_tag = '__EFRO_PYLINT_INIT__'
     if pylint_init_tag in cfg:
         pypaths = getconfig(PROJROOT).get('python_paths')
@@ -644,14 +656,13 @@ def compile_python_files() -> None:
     the built-in scripts directly (or go through the asset build system which
     properly recreates the .pyc files).
     """
-    import os
     import py_compile
 
     for arg in sys.argv[2:]:
         mode = py_compile.PycInvalidationMode.UNCHECKED_HASH
         py_compile.compile(
             arg,
-            dfile=os.path.basename(arg),
+            # dfile=os.path.basename(arg),
             doraise=True,
             optimize=1,
             invalidation_mode=mode,
@@ -729,7 +740,6 @@ def makefile_target_list() -> None:
 
     entries: list[_Entry] = []
     for i, line in enumerate(lines):
-
         # Targets.
         if (
             ':' in line
@@ -818,3 +828,118 @@ def urandom_pretty() -> None:
 
     bstr = '\n'.join(str(l) for l in lines)
     print(f'({bstr})')
+
+
+def tweak_empty_py_files() -> None:
+    """Find any zero-length Python files and make them length 1."""
+    from efro.error import CleanError
+    import efrotools.pybuild
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected exactly 1 path arg.')
+    efrotools.pybuild.tweak_empty_py_files(sys.argv[2])
+
+
+def make_ensure() -> None:
+    """Make sure a makefile target is up-to-date.
+
+    This can technically be done by simply `make --question`, but this
+    has some extra bells and whistles such as printing some of the commands
+    that would run.
+    Can be useful to run after cloud-builds to ensure the local results
+    consider themselves up-to-date.
+    """
+    # pylint: disable=too-many-locals
+    from efro.error import CleanError
+    from efro.terminal import Clr
+    import subprocess
+
+    dirpath: str | None = None
+    args = sys.argv[2:]
+    if '--dir' in args:
+        argindex = args.index('--dir')
+        dirpath = args[argindex + 1]
+        del args[argindex : argindex + 2]
+
+    if len(args) not in (0, 1):
+        raise CleanError('Expected zero or one target args.')
+    target = args[0] if args else None
+
+    cmd = ['make', '--no-print-directory', '--dry-run']
+    if target is not None:
+        cmd.append(target)
+    results = subprocess.run(cmd, check=False, capture_output=True, cwd=dirpath)
+    out = results.stdout.decode()
+    err = results.stderr.decode()
+    if results.returncode != 0:
+        print(f'Failed command stdout:\n{out}\nFailed command stderr:\n{err}')
+        raise CleanError(f"Command failed during make_ensure: '{cmd}'.")
+
+    targetname: str = '<default>' if target is None else target
+    lines = out.splitlines()
+    in_str = '' if dirpath is None else f"in directory '{dirpath}' "
+    if len(lines) == 1 and 'Nothing to be done for ' in lines[0]:
+        print(f"make_ensure: '{targetname}' target {in_str}is up to date.")
+    else:
+        maxlines = 20
+        if len(lines) > maxlines:
+            outlines = '\n'.join(
+                lines[:maxlines] + [f'(plus {len(lines)-maxlines} more lines)']
+            )
+        else:
+            outlines = '\n'.join(lines)
+
+        print(
+            f"make_ensure: '{targetname}' target {in_str}"
+            f'is out of date; would run:\n\n'
+            '-------------------------- MAKE-ENSURE COMMANDS BEGIN '
+            f'--------------------------\n{Clr.YLW}'
+            f'{outlines}{Clr.RST}\n'
+            '--------------------------- MAKE-ENSURE COMMANDS END '
+            '---------------------------\n'
+        )
+        raise CleanError(
+            f"make_ensure: '{targetname}' target {in_str}is out of date."
+        )
+
+
+def make_target_debug() -> None:
+    """Debug makefile src/target mod times given src and dst path.
+
+    Built to debug stubborn Makefile targets that insist on being
+    rebuilt just after being built via a cloud target.
+    """
+    import os
+    import datetime
+
+    from efro.error import CleanError
+
+    # from efro.util import ago_str, utc_now
+
+    args = sys.argv[2:]
+    if len(args) != 2:
+        raise CleanError('Expected 2 args.')
+
+    def _utc_mod_time(path: str) -> datetime.datetime:
+        mtime = os.path.getmtime(path)
+        mdtime = datetime.datetime.fromtimestamp(mtime, datetime.timezone.utc)
+        # mdtime.replace(tzinfo=datetime.timezone.utc)
+        return mdtime
+
+    # srcname = os.path.basename(args[0])
+    # dstname = os.path.basename(args[1])
+    srctime = _utc_mod_time(args[0])
+    dsttime = _utc_mod_time(args[1])
+    # now = utc_now()
+    # src_ago = ago_str(srctime, maxparts=3, decimals=2, now=now)
+    # dst_ago = ago_str(dsttime, maxparts=3, decimals=2, now=now)
+    srctimestr = (
+        f'{srctime.hour}:{srctime.minute}:{srctime.second}:'
+        f'{srctime.microsecond}'
+    )
+    dsttimestr = (
+        f'{dsttime.hour}:{dsttime.minute}:{dsttime.second}:'
+        f'{dsttime.microsecond}'
+    )
+    print(f'SRC modified at {srctimestr}.')
+    print(f'DST modified at {dsttimestr}.')

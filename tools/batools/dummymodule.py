@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Generates a dummy _ba.py and _bainternal.py based on binary modules.
+# pylint: disable=too-many-lines
+"""Generates dummy .py modules based on binary modules.
 
 This allows us to use code introspection tools such as pylint without spinning
 up the engine, and also allows external scripts to import game scripts
@@ -10,14 +11,15 @@ successfully (albeit with limited functionality).
 from __future__ import annotations
 
 import os
-import sys
+
+# import sys
+import types
 import textwrap
 import subprocess
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools import get_files_hash
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -54,80 +56,52 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             '# Show that our return type varies based on "doraise" value:\n'
             '@overload\n'
             'def getinputdevice(name: str, unique_id: str,'
-            ' doraise: Literal[True] = True) -> ba.InputDevice:\n'
+            ' doraise: Literal[True] = True) -> bascenev1.InputDevice:\n'
             '    ...\n'
             '\n'
             '@overload\n'
             'def getinputdevice(name: str, unique_id: str,'
-            ' doraise: Literal[False]) -> ba.InputDevice | None:\n'
+            ' doraise: Literal[False]) -> bascenev1.InputDevice | None:\n'
             '    ...\n'
             '\n'
             'def getinputdevice(name: str, unique_id: str,'
-            ' doraise: bool=True) -> Any:'
-        )
-    elif sig_in == (
-        'time(timetype: ba.TimeType = TimeType.SIM,'
-        '   timeformat: ba.TimeFormat = TimeFormat.SECONDS)'
-        '   -> <varies>'
-    ):
-        sig = (
-            '# Overloads to return a type based on requested format.\n'
-            '\n'
-            '@overload\n'
-            'def time(timetype: ba.TimeType = TimeType.SIM,\n'
-            '        timeformat: Literal[TimeFormat.SECONDS]'
-            ' = TimeFormat.SECONDS) -> float:\n'
-            '    ...\n'
-            '\n'
-            '# This "*"'
-            ' keyword-only hack lets us accept 1 arg'
-            ' (timeformat=MILLISECS) forms.\n'
-            '@overload\n'
-            'def time(timetype: ba.TimeType = TimeType.SIM, *,\n'
-            '         timeformat: Literal[TimeFormat.MILLISECONDS]) -> int:\n'
-            '    ...\n'
-            '\n'
-            '@overload\n'
-            'def time(timetype: ba.TimeType,\n'
-            '         timeformat: Literal[TimeFormat.MILLISECONDS]) -> int:\n'
-            '    ...\n'
-            '\n'
-            '\n'
-            'def time(timetype: ba.TimeType = TimeType.SIM,\n'
-            '         timeformat: ba.TimeFormat = TimeFormat.SECONDS)'
-            ' -> Any:\n'
+            ' doraise: bool=True) -> Any:\n'
         )
     elif sig_in == 'getactivity(doraise: bool = True) -> <varies>':
         sig = (
             '# Show that our return type varies based on "doraise" value:\n'
             '@overload\n'
-            'def getactivity(doraise: Literal[True] = True) -> ba.Activity:\n'
+            'def getactivity(doraise: Literal[True] = True) ->'
+            ' bascenev1.Activity:\n'
             '    ...\n'
             '\n'
             '\n'
             '@overload\n'
             'def getactivity(doraise: Literal[False])'
-            ' -> ba.Activity | None:\n'
+            ' -> bascenev1.Activity | None:\n'
             '    ...\n'
             '\n'
             '\n'
-            'def getactivity(doraise: bool = True) -> ba.Activity | None:'
+            'def getactivity(doraise: bool = True)'
+            ' -> bascenev1.Activity | None:\n'
         )
     elif sig_in == 'getsession(doraise: bool = True) -> <varies>':
         sig = (
             '# Show that our return type varies based on "doraise" value:\n'
             '@overload\n'
-            'def getsession(doraise: Literal[True] = True) -> ba.Session:\n'
+            'def getsession(doraise: Literal[True] = True) ->'
+            ' bascenev1.Session:\n'
             '    ...\n'
             '\n'
             '\n'
             '@overload\n'
             'def getsession(doraise: Literal[False])'
-            ' -> ba.Session | None:\n'
+            ' -> bascenev1.Session | None:\n'
             '    ...\n'
             '\n'
             '\n'
-            'def getsession(doraise: bool = True) -> ba.Session | None:'
+            'def getsession(doraise: bool = True)'
+            ' -> bascenev1.Session | None:\n'
         )
 
     else:
@@ -151,43 +125,56 @@ def _writefuncs(
     spcstr = '\n' * spacing
     indstr = ' ' * indent
     for funcname in funcnames:
-
         # Skip some that are not in public builds.
         if funcname in {'master_hash_dump'}:
             continue
 
         func = getattr(parent, funcname)
+
+        # Classmethods on classes have type BuiltinMethodType instead
+        # of the usual MethodDescriptorType; treat them special.
+        is_classmethod = isinstance(
+            getattr(parent, funcname), types.BuiltinMethodType
+        ) and isinstance(parent, type)
+
         docstr = func.__doc__
 
         # We expect an empty line and take everything before that to be
         # the function signature.
         if '\n\n' not in docstr:
-            raise Exception(f'docstr missing empty line: {func}')
-        sig = docstr.split('\n\n')[0].replace('\n', ' ').strip()
+            raise RuntimeError(f'docstr missing empty line: {func}')
+        sig = docstr.split('\n\n', maxsplit=1)[0].replace('\n', ' ').strip()
 
-        # Sanity check - make sure name is in the sig.
-        if funcname + '(' not in sig:
-            raise Exception(f'func name not found in sig for {funcname}')
+        # Make sure supplied signature matches the filtered function name.
+        if not sig.startswith(f'{funcname}('):
+            raise RuntimeError(
+                f'Expected signature for function {funcname} to start'
+                f" with '{funcname}'."
+            )
 
         # If these are methods, add self.
         if as_method:
+            slf = 'cls' if is_classmethod else 'self'
             if funcname + '()' in sig:
-                sig = sig.replace(funcname + '()', funcname + '(self)')
+                sig = sig.replace(f'{funcname}()', f'{funcname}({slf})')
             else:
-                sig = sig.replace(funcname + '(', funcname + '(self, ')
+                sig = sig.replace(f'{funcname}(', f'{funcname}({slf}, ')
 
         # We expect sig to have a -> denoting return type.
         if ' -> ' not in sig:
-            raise Exception(f'no "->" found in docstr for {funcname}')
+            raise RuntimeError(f'no "->" found in docstr for {funcname}')
         returns = sig.split('->')[-1].strip()
 
         # Some functions don't have simple signatures; we need to hard-code
         # those here with overloads and whatnot.
         if '<varies>' in sig:
             overloadsigs, returnstr = _get_varying_func_info(sig)
-            defsline = textwrap.indent(overloadsigs, indstr)
+            defslines = textwrap.indent(overloadsigs, indstr)
         else:
-            defsline = f'{indstr}def {sig}:\n'
+            defslines = f'{indstr}def {sig}:\n'
+
+            if is_classmethod:
+                defslines = f'{indstr}@classmethod\n{defslines}'
 
             # Types can be strings for forward-declaration cases.
             if (returns[0] == "'" and returns[-1] == "'") or (
@@ -196,43 +183,74 @@ def _writefuncs(
                 returns = returns[1:-1]
             if returns == 'None':
                 returnstr = 'return None'
-            elif returns == 'ba.Lstr':
+            elif returns == 'babase.Lstr':
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\n'
-                    "return ba.Lstr(value='')"
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    "return babase.Lstr(value='')"
                 )
-            elif returns in {'ba.Activity', 'ba.Activity | None'}:
+            elif returns == 'babase.AppTime':
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn '
-                    + 'ba.Activity(settings={})'
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    'return babase.AppTime(0.0)'
                 )
-            elif returns in {'ba.Session', 'ba.Session | None'}:
+            elif returns == 'bascenev1.BaseTime':
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn '
-                    + 'ba.Session([])'
+                    'import bascenev1  # pylint: disable=cyclic-import\n'
+                    'return bascenev1.BaseTime(0.0)'
                 )
-            elif returns == 'ba.SessionPlayer | None':
+            elif returns == 'bascenev1.Time':
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\n'
-                    'return ba.SessionPlayer()'
+                    'import bascenev1  # pylint: disable=cyclic-import\n'
+                    'return bascenev1.Time(0.0)'
                 )
-            elif returns == 'ba.Player | None':
+            elif returns == 'babase.DisplayTime':
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\n'
-                    'return ba.Player()'
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    'return babase.DisplayTime(0.0)'
                 )
-            elif returns.startswith('ba.') and ' | None' not in returns:
-
-                # We cant import ba at module level so let's
+            elif returns in {'bascenev1.Activity', 'bascenev1.Activity | None'}:
+                returnstr = (
+                    'import bascenev1  # pylint: disable=cyclic-import\nreturn '
+                    + 'bascenev1.Activity(settings={})'
+                )
+            elif returns in {'bascenev1.Session', 'bascenev1.Session | None'}:
+                returnstr = (
+                    'import bascenev1  # pylint: disable=cyclic-import\nreturn '
+                    + 'bascenev1.Session([])'
+                )
+            elif returns == 'bascenev1.SessionPlayer | None':
+                returnstr = (
+                    'import bascenev1  # pylint: disable=cyclic-import\n'
+                    'return bascenev1.SessionPlayer()'
+                )
+            elif returns == 'bascenev1.Player | None':
+                returnstr = (
+                    'import bascenev1  # pylint: disable=cyclic-import\n'
+                    'return bascenev1.Player()'
+                )
+            elif returns.startswith('babase.') and ' | None' not in returns:
+                # We cant import babase at module level so let's
                 # do it within funcs as needed.
                 returnstr = (
-                    'import ba  # pylint: disable=cyclic-import\nreturn '
-                    + returns
-                    + '()'
+                    f'import babase  # pylint: disable=cyclic-import\n'
+                    f'return {returns}()'
+                )
+            elif returns.startswith('bascenev1.') and ' | None' not in returns:
+                # We cant import babase at module level so let's
+                # do it within funcs as needed.
+                returnstr = (
+                    f'import bascenev1  # pylint: disable=cyclic-import\n'
+                    f'return {returns}()'
+                )
+            elif returns.startswith('bauiv1.') and ' | None' not in returns:
+                # We cant import babase at module level so let's
+                # do it within funcs as needed.
+                returnstr = (
+                    f'import bauiv1  # pylint: disable=cyclic-import\n'
+                    f'return {returns}()'
                 )
 
             elif returns in {'object', 'Any'}:
-
                 # We use 'object' when we mean "can vary"
                 # don't want pylint making assumptions in this case.
                 returnstr = 'return _uninferrable()'
@@ -242,12 +260,12 @@ def _writefuncs(
                 returnstr = "return ''"
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
-            elif returns == 'ba.Widget | None':
-                returnstr = 'return Widget()'
-            elif returns == 'ba.InputDevice | None':
+            elif returns == 'bauiv1.Widget | None':
+                returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
+            elif returns == 'bascenev1.InputDevice | None':
                 returnstr = 'return InputDevice()'
-            elif returns == 'list[ba.Widget]':
-                returnstr = 'return [Widget()]'
+            elif returns == 'list[bauiv1.Widget]':
+                returnstr = 'import bauiv1\nreturn [bauiv1.Widget()]'
             elif returns == 'tuple[float, ...]':
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'list[str]':
@@ -267,7 +285,7 @@ def _writefuncs(
                 'appconfig.AppConfig',
             }:
                 returnstr = (
-                    'from ba import '
+                    'from babase import '
                     + returns.split('.')[0]
                     + '; return '
                     + returns
@@ -288,16 +306,18 @@ def _writefuncs(
                 'InputDevice',
                 'Sound',
                 'Texture',
-                'Model',
-                'CollideModel',
+                'Mesh',
+                'CollisionMesh',
+                'SimpleSound',
                 'team.Team',
                 'Vec3',
                 'Widget',
                 'Node',
+                'ContextRef',
             ]:
                 returnstr = 'return ' + returns + '()'
             else:
-                raise Exception(
+                raise RuntimeError(
                     f'unknown returns value: {returns} for {funcname}'
                 )
         returnspc = indstr + '    '
@@ -305,7 +325,7 @@ def _writefuncs(
         docstr_out = _formatdoc(
             _filterdoc(docstr, funcname=funcname), indent + 4
         )
-        out += spcstr + defsline + docstr_out + f'{returnspc}{returnstr}\n'
+        out += spcstr + defslines + docstr_out + f'{returnspc}{returnstr}\n'
     return out
 
 
@@ -391,7 +411,7 @@ def _special_class_cases(classname: str) -> str:
             '\n'
             '    # Note attributes:\n'
             '    # NOTE: I\'m just adding *all* possible node attrs here\n'
-            '    # now now since we have a single ba.Node type; in the\n'
+            '    # now now since we have a single bascenev1.Node type; in the\n'
             '    # future I hope to create proper individual classes\n'
             '    # corresponding to different node types with correct\n'
             '    # attributes per node-type.\n'
@@ -406,9 +426,9 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
-            "    text: ba.Lstr | str = ''\n"
-            '    texture: ba.Texture | None = None\n'
-            '    tint_texture: ba.Texture | None = None\n'
+            "    text: babase.Lstr | str = ''\n"
+            '    texture: bascenev1.Texture | None = None\n'
+            '    tint_texture: bascenev1.Texture | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'
             '    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)\n'
             '    offset: float = 0.0\n'
@@ -424,20 +444,20 @@ def _special_class_cases(classname: str) -> str:
             '    time2: int = 0\n'
             '    timemax: int = 0\n'
             '    client_only: bool = False\n'
-            '    materials: Sequence[Material] = ()\n'
-            '    roller_materials: Sequence[Material] = ()\n'
+            '    materials: Sequence[bascenev1.Material] = ()\n'
+            '    roller_materials: Sequence[bascenev1.Material] = ()\n'
             "    name: str = ''\n"
-            '    punch_materials: Sequence[ba.Material] = ()\n'
-            '    pickup_materials: Sequence[ba.Material] = ()\n'
-            '    extras_material: Sequence[ba.Material] = ()\n'
+            '    punch_materials: Sequence[bascenev1.Material] = ()\n'
+            '    pickup_materials: Sequence[bascenev1.Material] = ()\n'
+            '    extras_material: Sequence[bascenev1.Material] = ()\n'
             '    rotate: float = 0.0\n'
-            '    hold_node: ba.Node | None = None\n'
+            '    hold_node: bascenev1.Node | None = None\n'
             '    hold_body: int = 0\n'
             '    host_only: bool = False\n'
             '    premultiplied: bool = False\n'
-            '    source_player: ba.Player | None = None\n'
-            '    model_opaque: ba.Model | None = None\n'
-            '    model_transparent: ba.Model | None = None\n'
+            '    source_player: bascenev1.Player | None = None\n'
+            '    mesh_opaque: bascenev1.Mesh | None = None\n'
+            '    mesh_transparent: bascenev1.Mesh | None = None\n'
             '    damage_smoothed: float = 0.0\n'
             '    gravity_scale: float = 1.0\n'
             '    punch_power: float = 0.0\n'
@@ -469,13 +489,13 @@ def _special_class_cases(classname: str) -> str:
             '    music_count: int = 0\n'
             '    hurt: float = 0.0\n'
             '    always_show_health_bar: bool = False\n'
-            '    mini_billboard_1_texture: ba.Texture | None = None\n'
+            '    mini_billboard_1_texture: bascenev1.Texture | None = None\n'
             '    mini_billboard_1_start_time: int = 0\n'
             '    mini_billboard_1_end_time: int = 0\n'
-            '    mini_billboard_2_texture: ba.Texture | None = None\n'
+            '    mini_billboard_2_texture: bascenev1.Texture | None = None\n'
             '    mini_billboard_2_start_time: int = 0\n'
             '    mini_billboard_2_end_time: int = 0\n'
-            '    mini_billboard_3_texture: ba.Texture | None = None\n'
+            '    mini_billboard_3_texture: bascenev1.Texture | None = None\n'
             '    mini_billboard_3_start_time: int = 0\n'
             '    mini_billboard_3_end_time: int = 0\n'
             '    boxing_gloves_flashing: bool = False\n'
@@ -496,9 +516,9 @@ def _special_class_cases(classname: str) -> str:
             ' = (-1, -1, -1, 1, 1, 1)\n'
             '    shadow_range: Sequence[float] = (0, 0, 0, 0)\n'
             "    counter_text: str = ''\n"
-            '    counter_texture: ba.Texture | None = None\n'
+            '    counter_texture: bascenev1.Texture | None = None\n'
             '    shattered: int = 0\n'
-            '    billboard_texture: ba.Texture | None = None\n'
+            '    billboard_texture: bascenev1.Texture | None = None\n'
             '    billboard_cross_out: bool = False\n'
             '    billboard_opacity: float = 0.0\n'
             '    slow_motion: bool = False\n'
@@ -511,9 +531,19 @@ def _special_class_cases(classname: str) -> str:
             '    tint: Sequence[float] = (1.0, 1.0, 1.0)\n'
         )
 
+    # Special case: ContextCall needs to be callable.
+    if classname in ['ContextCall']:
+        out += (
+            '\n'
+            '    def __call__(self) -> None:\n'
+            '        """Support for calling."""\n'
+            '        pass\n'
+        )
+
     # Special case: need to be able to use the 'with' statement
     # on some classes.
-    if classname in ['Context']:
+    # TODO - determine these cases programmatically if possible.
+    if classname in ['Context', 'ContextRef']:
         out += (
             '\n'
             '    def __enter__(self) -> None:\n'
@@ -525,6 +555,23 @@ def _special_class_cases(classname: str) -> str:
             '        """Support for "with" statement."""\n'
             '        pass\n'
         )
+
+    # Define bool functionality for classes that support it internally.
+    # (lets mypy know these are safe to use in bool evaluation)
+    # TODO - determine these cases programmatically if possible.
+    if classname in [
+        'Widget',
+        'Node',
+        'InputDevice',
+        'SessionPlayer',
+    ]:
+        out += (
+            '\n'
+            '    def __bool__(self) -> bool:\n'
+            '        """Support for bool evaluation."""\n'
+            '        return bool(True) # Slight obfuscation.\n'
+        )
+
     return out
 
 
@@ -550,7 +597,7 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
     for i, line in enumerate(docslines):
         if line.strip() in ['Attrs:', 'Attributes:']:
             if attributes_line is not None:
-                raise Exception("Multiple 'Attributes:' lines found")
+                raise RuntimeError("Multiple 'Attributes:' lines found")
             attributes_line = i
         if not line.strip():
             empty_lines_count += 1
@@ -581,14 +628,13 @@ def _formatdoc(
     docslines = docstr.splitlines()
 
     if len(docslines) == 1:
-        out += '\n' + indentstr + '"""' + docslines[0] + '"""\n'
+        out += indentstr + '"""' + docslines[0] + '"""\n'
     else:
         for i, line in enumerate(docslines):
             if i != 0 and line != '':
                 docslines[i] = indentstr + inner_indent_str + line
         out += (
-            '\n'
-            + indentstr
+            indentstr
             + '"""'
             + '\n'.join(docslines)
             + ('' if no_end_newline else '\n' + indentstr)
@@ -599,14 +645,15 @@ def _formatdoc(
 
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
-    import types
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     from batools.docs import parse_docs_attrs
 
     out = ''
     for classname in classnames:
         cls = getattr(module, classname)
         if cls is None:
-            raise Exception('unexpected')
+            raise RuntimeError('unexpected')
         out += '\n' '\n'
 
         # Special case:
@@ -629,22 +676,23 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             and not docstr.splitlines()[0].endswith('.')
             and docstr != '(internal)'
         ):
-
             # Ok.. looks like the first line is a signature.
             # Make sure we've got a signature followed by a blank line.
             if '\n\n' not in docstr:
-                raise Exception(
+                raise RuntimeError(
                     f'Constructor docstr missing empty line for {cls}.'
                 )
             sig = docstr.split('\n\n')[0].replace('\n', ' ').strip()
 
-            # Sanity check - make sure name is in the sig.
-            if classname + '(' not in sig:
-                raise Exception(
-                    f'Class name not found in constructor sig for {cls}.'
+            # Make sure supplied signature matches the filtered class name.
+            if not sig.startswith(classname + '('):
+                raise RuntimeError(
+                    f'Expected constructor signature for class {classname}'
+                    f" to start with '{classname}'."
                 )
+            sig = classname + sig.removeprefix(classname)
             sig = sig.replace(classname + '(', '__init__(self, ')
-            out += '    def ' + sig + ':\n        pass\n'
+            out += '    def ' + sig + ' -> None:\n        pass\n'
             has_constructor = True
 
         # Scan its doc-string for attribute info; drop in typed
@@ -664,7 +712,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
                         )
                         out += '\n'
                 else:
-                    raise Exception(
+                    raise RuntimeError(
                         f'Found untyped attr in'
                         f' {classname} docs: {attr.name}'
                     )
@@ -677,8 +725,14 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         for entry in (e for e in dir(cls) if not e.startswith('__')):
             if isinstance(getattr(cls, entry), types.MethodDescriptorType):
                 funcnames.append(entry)
+            elif isinstance(getattr(cls, entry), types.BuiltinMethodType):
+                # We get this for classmethods
+                funcnames.append(entry)
             else:
-                raise Exception(f'Unhandled obj {entry} in {cls}')
+                entrytype = type(getattr(cls, entry))
+                raise RuntimeError(
+                    f'Unhandled obj \'{entry}\' in {cls} (type {entrytype})'
+                )
         funcnames.sort()
         functxt = _writefuncs(
             cls, funcnames, indent=4, spacing=1, as_method=True
@@ -691,245 +745,221 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     return out
 
 
-def generate(mname: str, sources_hash: str, outfilename: str) -> None:
-    """Run the actual generation from within the game."""
-    # pylint: disable=too-many-locals
-    import types
+class Generator:
+    """Context for a module generation pass."""
 
-    from efrotools import get_public_license
-    from efrotools.code import format_python_str
+    def __init__(self, modulename: str, outfilename: str):
+        self.mname = modulename
+        self.outfilename = outfilename
 
-    module = __import__(mname)
+    def run(self) -> None:
+        """Run the actual generation from within the app context."""
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
 
-    funcnames = []
-    classnames = []
-    for entry in (e for e in dir(module) if not e.startswith('__')):
-        if isinstance(getattr(module, entry), types.BuiltinFunctionType):
-            funcnames.append(entry)
-        elif isinstance(getattr(module, entry), type):
-            classnames.append(entry)
-        elif mname == '_ba' and entry == 'app':
-            # Ignore _ba.app.
-            continue
-        else:
-            raise Exception(
-                f'found unknown obj {entry}, {getattr(module, entry)}'
+        from efrotools import get_public_license
+        from efrotools.code import format_python_str
+
+        module = __import__(self.mname)
+
+        funcnames = []
+        classnames = []
+        for entry in (e for e in dir(module) if not e.startswith('__')):
+            if isinstance(getattr(module, entry), types.BuiltinFunctionType):
+                funcnames.append(entry)
+            elif isinstance(getattr(module, entry), type):
+                classnames.append(entry)
+            elif self.mname == '_babase' and entry == 'app':
+                # Ignore _babase.app.
+                continue
+            elif entry == '_ba_feature_set_data':
+                # Ignore the C++ data we stuff into our feature-set modules.
+                continue
+            elif entry == '_REACHED_END_OF_MODULE':
+                # Ignore this marker we use to debug import ordering.
+                continue
+            else:
+                raise RuntimeError(
+                    f'found unknown obj {entry}, {getattr(module, entry)}'
+                )
+        funcnames.sort()
+        classnames.sort()
+        typing_imports = (
+            'TYPE_CHECKING, overload, Sequence, TypeVar'
+            if self.mname == '_babase'
+            else 'TYPE_CHECKING, overload, TypeVar'
+            if self.mname == '_bascenev1'
+            else 'TYPE_CHECKING, TypeVar'
+        )
+        typing_imports_tc = (
+            'Any, Callable, Literal'
+            if self.mname == '_babase'
+            else 'Any, Callable, Literal, Sequence'
+            if self.mname == '_bascenev1'
+            else 'Any, Callable, Literal, Sequence'
+            if self.mname == '_bauiv1'
+            else 'Any, Callable'
+        )
+        tc_import_lines_extra = ''
+        if self.mname == '_babase':
+            tc_import_lines_extra += (
+                '    from babase._app import App\n    import babase\n'
             )
-    funcnames.sort()
-    classnames.sort()
-    typing_imports = (
-        'TYPE_CHECKING, overload, Sequence, TypeVar'
-        if mname == '_ba'
-        else 'TYPE_CHECKING, TypeVar'
-    )
-    typing_imports_tc = (
-        'Any, Callable, Literal' if mname == '_ba' else 'Any, Callable'
-    )
-    tc_import_lines_extra = (
-        '    from ba._app import App\n' '    import ba\n'
-        if mname == '_ba'
-        else ''
-    )
-    app_declare_lines = 'app: App\n' '\n' if mname == '_ba' else ''
-    enum_import_lines = (
-        'from ba._generated.enums import TimeFormat, TimeType\n' '\n'
-        if mname == '_ba'
-        else ''
-    )
-    out = (
-        get_public_license('python') + '\n'
-        '#\n'
-        f'"""A dummy stub module for the real {mname}.\n'
-        '\n'
-        f'The real {mname} is a compiled extension module'
-        ' and only available\n'
-        'in the live engine. This dummy-module allows Pylint/Mypy/etc. to\n'
-        'function reasonably well outside of that environment.\n'
-        '\n'
-        'Make sure this file is never included'
-        ' in dirs seen by the engine!\n'
-        '\n'
-        'In the future perhaps this can be a stub (.pyi) file, but'
-        ' we will need\n'
-        'to make sure that it works with all our tools'
-        ' (mypy, pylint, pycharm).\n'
-        '\n'
-        'NOTE: This file was autogenerated by ' + __name__ + '; '
-        'do not edit by hand.\n'
-        '"""\n'
-        '\n'
-        # '# (hash we can use to see if this file is out of date)\n'
-        # '# SOURCES_HASH='+sources_hash+'\n'
-        # '\n'
-        '# I\'m sorry Pylint. I know this file saddens you. Be strong.\n'
-        '# pylint: disable=useless-suppression\n'
-        '# pylint: disable=unnecessary-pass\n'
-        '# pylint: disable=use-dict-literal\n'
-        '# pylint: disable=use-list-literal\n'
-        '# pylint: disable=unused-argument\n'
-        '# pylint: disable=missing-docstring\n'
-        '# pylint: disable=too-many-locals\n'
-        '# pylint: disable=redefined-builtin\n'
-        '# pylint: disable=too-many-lines\n'
-        '# pylint: disable=redefined-outer-name\n'
-        '# pylint: disable=invalid-name\n'
-        '# pylint: disable=no-value-for-parameter\n'
-        '\n'
-        'from __future__ import annotations\n'
-        '\n'
-        f'from typing import {typing_imports}\n'
-        '\n'
-        f'{enum_import_lines}'
-        'if TYPE_CHECKING:\n'
-        f'    from typing import {typing_imports_tc}\n'
-        f'{tc_import_lines_extra}'
-        '\n'
-        '\n'
-        "_T = TypeVar('_T')\n"
-        '\n'
-        f'{app_declare_lines}'
-        'def _uninferrable() -> Any:\n'
-        '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
-        '    # pylint: disable=undefined-variable\n'
-        '    return _not_a_real_variable  # type: ignore'
-        '\n'
-        '\n'
-    )
+        elif self.mname == '_bascenev1':
+            tc_import_lines_extra += '    import babase\n    import bascenev1\n'
+        elif self.mname == '_bauiv1':
+            tc_import_lines_extra += '    import babase\n    import bauiv1\n'
+        app_declare_lines = 'app: App\n\n' if self.mname == '_babase' else ''
+        enum_import_lines = (
+            ''
+            if self.mname == '_babase'
+            else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            if self.mname == '_bascenev1'
+            else ''
+        )
+        out = (
+            get_public_license('python') + '\n'
+            '#\n'
+            f'"""A dummy stub module for the real {self.mname}.\n'
+            '\n'
+            f'The real {self.mname} is a compiled extension module'
+            ' and only available\n'
+            'in the live engine. This dummy-module allows Pylint/Mypy/etc. to\n'
+            'function reasonably well outside of that environment.\n'
+            '\n'
+            'Make sure this file is never included'
+            ' in dirs seen by the engine!\n'
+            '\n'
+            'In the future perhaps this can be a stub (.pyi) file, but'
+            ' we will need\n'
+            'to make sure that it works with all our tools'
+            ' (mypy, pylint, pycharm).\n'
+            '\n'
+            'NOTE: This file was autogenerated by ' + __name__ + '; '
+            'do not edit by hand.\n'
+            '"""\n'
+            '\n'
+            # '# (hash we can use to see if this file is out of date)\n'
+            # '# SOURCES_HASH='+sources_hash+'\n'
+            # '\n'
+            '# I\'m sorry Pylint. I know this file saddens you. Be strong.\n'
+            '# pylint: disable=useless-suppression\n'
+            '# pylint: disable=unnecessary-pass\n'
+            '# pylint: disable=use-dict-literal\n'
+            '# pylint: disable=use-list-literal\n'
+            '# pylint: disable=unused-argument\n'
+            '# pylint: disable=missing-docstring\n'
+            '# pylint: disable=too-many-locals\n'
+            '# pylint: disable=redefined-builtin\n'
+            '# pylint: disable=too-many-lines\n'
+            '# pylint: disable=redefined-outer-name\n'
+            '# pylint: disable=invalid-name\n'
+            '# pylint: disable=no-value-for-parameter\n'
+            '\n'
+            'from __future__ import annotations\n'
+            '\n'
+            f'from typing import {typing_imports}\n'
+            '\n'
+            f'{enum_import_lines}'
+            'if TYPE_CHECKING:\n'
+            f'    from typing import {typing_imports_tc}\n'
+            f'{tc_import_lines_extra}'
+            '\n'
+            '\n'
+            "_T = TypeVar('_T')\n"
+            '\n'
+            f'{app_declare_lines}'
+            'def _uninferrable() -> Any:\n'
+            '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
+            '    # pylint: disable=undefined-variable\n'
+            '    return _not_a_real_variable  # type: ignore'
+            '\n'
+            '\n'
+        )
 
-    out += _writeclasses(module, classnames)
-    out += _writefuncs(module, funcnames, indent=0, spacing=2, as_method=False)
+        out += _writeclasses(module, classnames)
+        out += _writefuncs(
+            module, funcnames, indent=0, spacing=2, as_method=False
+        )
 
-    # Lastly format it.
-    out = format_python_str(out)
+        # Lastly format it.
+        out = format_python_str(out)
 
-    outhashpath = os.path.join(
-        os.path.dirname(outfilename), f'.{mname}_sources_hash'
-    )
-
-    with open(outfilename, 'w', encoding='utf-8') as outfile:
-        outfile.write(out)
-
-    with open(outhashpath, 'w', encoding='utf-8') as outfile:
-        outfile.write(sources_hash)
+        os.makedirs(os.path.dirname(self.outfilename), exist_ok=True)
+        with open(self.outfilename, 'w', encoding='utf-8') as outfile:
+            outfile.write(out)
 
 
-def _dummy_module_dirty(mname: str) -> tuple[bool, str]:
-    """Test hashes on the dummy-module to see if it needs updates."""
+def generate(projroot: str) -> None:
+    """Generate all dummy-modules."""
 
-    # Let's generate a hash from all sources under the python source dir.
-    pysources = []
-    exts = ['.cc', '.c', '.h']
-    for root, _dirs, files in os.walk('src/ballistica/python'):
-        for fname in files:
-            if any(fname.endswith(ext) for ext in exts):
-                pysources.append(os.path.join(root, fname))
-
-    # Also lets add this script so we re-create when it changes.
-    pysources.append(__file__)
-
-    outpath = f'assets/src/ba_data/python/.{mname}_sources_hash'
-    if not os.path.exists(outpath):
-        existing_hash = ''
-    else:
-        with open(outpath, encoding='utf-8') as infile:
-            existing_hash = infile.read()
-
-    # Important to keep this deterministic...
-    pysources.sort()
-
-    # Note: going with plain integers instead of hex so linters
-    # don't see words and whine about spelling errors.
-    pysources_hash = get_files_hash(pysources, int_only=True)
-    dirty = existing_hash != pysources_hash
-    return dirty, pysources_hash
-
-
-def update(projroot: str, check: bool, force: bool) -> None:
-    """Update dummy-modules as needed."""
-    from pathlib import Path
-
-    from efrotools import getconfig
+    from batools.featureset import FeatureSet
 
     toolsdir = os.path.abspath(os.path.join(projroot, 'tools'))
 
     # Make sure we're running from the project root dir.
-    os.chdir(projroot)
+    if os.path.abspath(projroot) != os.getcwd():
+        raise RuntimeError(
+            f"We expect to be running from '{projroot}'"
+            f" but cwd is '{os.getcwd()}'."
+        )
 
-    public = getconfig(Path('.'))['public']
+    # WARNING: this builds cmake-binary. This could cause problems in
+    # parallel builds containing checks plus actual builds of cmake-binary.
+    # The upside is during iteration this will often just use the same binary
+    # we are iterating with, reducing redundant compiles.
+    # TODO(ericf): for the ballistica public repo should make this use
+    #  prefab builds so folks without compiler toolchains can still run
+    #  code checks.
+    print(f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}')
 
-    # Force makes no sense in check mode.
-    if force and check:
-        raise Exception('cannot specify both force and check mode')
+    subprocess.run(['make', 'cmake-binary'], check=True)
+    subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)
 
-    for mname in ('_ba', '_bainternal'):
-        # Skip internal module in public since it might
-        # not exist and is read-only anyway.
-        if mname == '_bainternal' and public:
-            continue
+    pycmd = (
+        f'import sys\n'
+        f'sys.path.append("build/assets/ba_data/python")\n'
+        f'sys.path.append("{toolsdir}")\n'
+        f'import _babase\n'
+        f'from batools import dummymodule\n'
+    )
 
+    # Generate a dummy module for each featureset that has a binary module.
+    featuresets = FeatureSet.get_all_for_project(project_root=projroot)
+    featuresets = [f for f in featuresets if f.has_native_python_module]
+    mnames: list[str] = [fs.name_python_binary_module for fs in featuresets]
+
+    gencount = 0
+    for mname in mnames:
+        gencount += 1
         outfilename = os.path.abspath(
-            os.path.join(projroot, f'assets/src/ba_data/python/{mname}.py')
+            os.path.join(projroot, f'build/dummymodules/{mname}.py')
         )
-
-        dirty, sources_hash = _dummy_module_dirty(mname)
-
-        if dirty:
-            if check:
-                print(
-                    f'{Clr.RED}ERROR: dummy {mname} module'
-                    f' is out of date.{Clr.RST}'
-                )
-                sys.exit(255)
-        elif not force:
-            # Dummy-module is clean and force is off; we're done here.
-            print(f'Dummy-module {Clr.BLD}{mname}.py{Clr.RST} is up to date.')
-            continue
-
-        print(
-            f'{Clr.MAG}Updating {Clr.BLD}{mname}.py{Clr.RST}{Clr.MAG}'
-            f' dummy-module...{Clr.RST}'
+        pycmd += (
+            f'dummymodule.Generator(modulename="{mname}",'
+            f' outfilename="{outfilename}").run()\n'
         )
+    assert gencount
 
-        # Let's build the cmake version; no sandboxing issues to contend with
-        # there. Also going with the headless build; will need to revisit if
-        # there's ever any functionality not available in that build.
-        subprocess.run(['make', 'cmake-server-build'], check=True)
-
-        # Launch ballisticacore and exec ourself from within it.
-        print(
-            f'Launching ballisticacore to generate'
-            f' {Clr.BLD}{mname}.py{Clr.RST} dummy-module...'
+    # Launch ballisticakit and exec ourself from within it.
+    print(
+        f'{Clr.SMAG}Launching ballisticakit to generate'
+        f' {gencount} dummy-modules...{Clr.RST}'
+    )
+    try:
+        # Note: ask Python to not scatter __pycache__ files throughout
+        # our build output.
+        subprocess.run(
+            ['build/cmake/debug/ballisticakit', '--command', pycmd],
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
+            check=True,
         )
-        try:
-            subprocess.run(
-                [
-                    './ballisticacore',
-                    '-exec',
-                    f'try:\n'
-                    f'    import sys\n'
-                    f'    sys.path.append("{toolsdir}")\n'
-                    f'    from batools import dummymodule\n'
-                    f'    dummymodule.generate(mname="{mname}",\n'
-                    f'        sources_hash="{sources_hash}",\n'
-                    f'        outfilename="{outfilename}")\n'
-                    f'    ba.quit()\n'
-                    f'except Exception as exc:\n'
-                    f'    import sys\n'
-                    f'    import traceback\n'
-                    f'    print("ERROR GENERATING {mname} DUMMY-MODULE")\n'
-                    f'    traceback.print_exc()\n'
-                    f'    sys.exit(255)\n',
-                ],
-                cwd='build/cmake/server-debug/dist',
-                check=True,
-            )
-            print(
-                f'{Clr.BLU}{mname} dummy-module generation complete.{Clr.RST}'
-            )
+        print(f'{Clr.BLU}Dummy-module generation complete.{Clr.RST}')
 
-        except Exception as exc2:
-            # Keep our error simple here; we want focus to be on what went
-            # wrong withing BallisticaCore.
-            raise CleanError(
-                'BallisticaCore dummy-module generation failed.'
-            ) from exc2
+    except Exception as exc2:
+        # Keep our error simple here; we want focus to be on what went
+        # wrong withing BallisticaKit.
+        raise CleanError(
+            'BallisticaKit dummy-module generation failed.'
+        ) from exc2

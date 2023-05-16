@@ -259,8 +259,10 @@ def printsizes(
 
 def _desctype(obj: Any) -> str:
     cls = type(obj)
+    # noinspection PyPep8
     if cls is types.ModuleType:
         return f'{type(obj).__name__} {obj.__name__}'
+    # noinspection PyPep8
     if cls is types.MethodType:
         bnd = 'bound' if hasattr(obj, '__self__') else 'unbound'
         return f'{bnd} {type(obj).__name__} {obj.__name__}'
@@ -321,7 +323,6 @@ def _printrefs(
     if level < max_level or (id(obj) in expand_ids and level < ABS_MAX_LEVEL):
         refs = getrefs(obj)
         for ref in refs:
-
             # It seems we tend to get a transient cell object with contents
             # set to obj. Would be nice to understand why that happens
             # but just ignoring it for now.

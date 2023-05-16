@@ -44,7 +44,6 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
         and if_node.test.name == 'TYPE_CHECKING'
         and isinstance(if_node.parent, astroid.Module)
     ):
-
         # Special case: some third party modules are starting to contain
         # code that we don't handle cleanly which results in pylint runs
         # breaking. For now just ignoring them as they pop up.
@@ -147,7 +146,7 @@ def func_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
 
     # Special-case: certain function decorators *do*
     # evaluate annotations at runtime so we want to leave theirs intact.
-    # This includes functools.singledispatch, ba.dispatchmethod, and
+    # This includes functools.singledispatch, babase.dispatchmethod, and
     # efro.MessageReceiver.
     # Lets just look for a @XXX.register or @XXX.handler decorators for
     # now; can get more specific if we get false positives.
@@ -186,7 +185,6 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     # pylint: disable=too-many-nested-blocks
 
     if using_future_annotations(node):
-
         # Future behavior:
         # Annotated assigns under functions are not evaluated.
         # Class and module vars are normally not either. However we
@@ -201,7 +199,6 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
                 if fnode.decorators is not None:
                     found_ioprepped = False
                     for dec in fnode.decorators.nodes:
-
                         # Look for dataclassio.ioprepped.
                         if (
                             isinstance(dec, astroid.nodes.Attribute)

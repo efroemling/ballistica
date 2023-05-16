@@ -1,0 +1,1970 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\ballistica\base\app\app.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\app_config.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app_config.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\app_headless.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app_headless.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\app_mode.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app_mode.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\app_mode_empty.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app_mode_empty.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\app_vr.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\app_vr.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\sdl_app.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\sdl_app.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app\stress_test.cc">
+      <Filter>ballistica\base\app</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app\stress_test.h">
+      <Filter>ballistica\base\app</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\assets.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\assets_server.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\assets_server.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\collision_mesh_asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\collision_mesh_asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\data_asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\data_asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\mesh_asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\mesh_asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\assets\mesh_asset_renderer_data.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\sound_asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\sound_asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\texture_asset.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\texture_asset.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\texture_asset_preload_data.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\texture_asset_preload_data.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\assets\texture_asset_renderer_data.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\al_sys.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\al_sys.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\audio.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\audio.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\audio_server.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\audio_server.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\audio_source.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\audio_source.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\audio_streamer.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\audio_streamer.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\audio\ogg_stream.cc">
+      <Filter>ballistica\base\audio</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h">
+      <Filter>ballistica\base\audio</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\base.cc">
+      <Filter>ballistica\base</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\base.h">
+      <Filter>ballistica\base</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_draw_snapshot.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse_data.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_height_cache.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_height_cache.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_server.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_server.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow_data.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light.cc">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light_data.h">
+      <Filter>ballistica\base\dynamics\bg</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\collision_cache.cc">
+      <Filter>ballistica\base\dynamics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\collision_cache.h">
+      <Filter>ballistica\base\dynamics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\empty_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\object_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\object_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\post_process_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\post_process_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\render_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\render_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\shield_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\shield_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\simple_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\simple_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\smoke_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\smoke_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\special_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\special_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\component\sprite_component.cc">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\component\sprite_component.h">
+      <Filter>ballistica\base\graphics\component</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\gl\gl_sys.cc">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\gl_sys.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.cc">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\graphics.cc">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\graphics.h">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\graphics_server.cc">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\graphics_server.h">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\graphics_vr.cc">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\graphics_vr.h">
+      <Filter>ballistica\base\graphics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\image_mesh.cc">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\image_mesh.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_buffer.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_buffer_base.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_buffer_vertex_simple_full.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_buffer_vertex_smoke_full.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_buffer_vertex_sprite.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\mesh_data.cc">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_data.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\mesh_data_client_handle.cc">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_data_client_handle.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_index_buffer_16.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_index_buffer_32.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_base.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_dual_texture_full.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_object_split.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_simple_full.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_simple_split.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_smoke_full.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_static_dynamic.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_non_indexed.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_renderer_data.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\sprite_mesh.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.cc">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\framebuffer.h">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\renderer\render_pass.cc">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\render_pass.h">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\renderer\render_target.cc">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\render_target.h">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\renderer\renderer.cc">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\renderer.h">
+      <Filter>ballistica\base\graphics\renderer</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\area_of_interest.cc">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\area_of_interest.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\camera.cc">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\camera.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\frame_def.cc">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\frame_def.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\net_graph.cc">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\net_graph.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_graphics.cc">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\text_graphics.h">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_group.cc">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\text_group.h">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_packer.cc">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\text_packer.h">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\dds.cc">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\dds.h">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx.cc">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx.h">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\pvr.h">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\input_device.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\input_device.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\input_device_delegate.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\input_device_delegate.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\joystick_input.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\joystick_input.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\keyboard_input.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\keyboard_input.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\test_input.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\test_input.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\device\touch_input.cc">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\device\touch_input.h">
+      <Filter>ballistica\base\input\device</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\input.cc">
+      <Filter>ballistica\base\input</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\input.h">
+      <Filter>ballistica\base\input</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\input\support\remote_app_server.cc">
+      <Filter>ballistica\base\input\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\input\support\remote_app_server.h">
+      <Filter>ballistica\base\input\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\logic\logic.cc">
+      <Filter>ballistica\base\logic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\logic\logic.h">
+      <Filter>ballistica\base\logic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\networking\network_reader.cc">
+      <Filter>ballistica\base\networking</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\networking\network_reader.h">
+      <Filter>ballistica\base\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\networking\network_writer.cc">
+      <Filter>ballistica\base\networking</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\networking\network_writer.h">
+      <Filter>ballistica\base\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\networking\networking.cc">
+      <Filter>ballistica\base\networking</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\networking\networking.h">
+      <Filter>ballistica\base\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\amazon\base_plat_andr_amazon.cc">
+      <Filter>ballistica\base\platform\android\amazon</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\amazon\base_plat_andr_amazon.h">
+      <Filter>ballistica\base\platform\android\amazon</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\base_platform_android.cc">
+      <Filter>ballistica\base\platform\android</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\base_platform_android.h">
+      <Filter>ballistica\base\platform\android</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\cardboard\base_pl_an_cardboard.cc">
+      <Filter>ballistica\base\platform\android\cardboard</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\cardboard\base_pl_an_cardboard.h">
+      <Filter>ballistica\base\platform\android\cardboard</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\google\base_plat_andr_google.cc">
+      <Filter>ballistica\base\platform\android\google</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\google\base_plat_andr_google.h">
+      <Filter>ballistica\base\platform\android\google</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\apple\base_platform_apple.cc">
+      <Filter>ballistica\base\platform\apple</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\apple\base_platform_apple.h">
+      <Filter>ballistica\base\platform\apple</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\base_platform.cc">
+      <Filter>ballistica\base\platform</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\base_platform.h">
+      <Filter>ballistica\base\platform</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\linux\base_platform_linux.cc">
+      <Filter>ballistica\base\platform\linux</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\linux\base_platform_linux.h">
+      <Filter>ballistica\base\platform\linux</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\oculus\main_rift.cc">
+      <Filter>ballistica\base\platform\oculus</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\support\min_sdl_key_names.h">
+      <Filter>ballistica\base\platform\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.cc">
+      <Filter>ballistica\base\platform\windows</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.h">
+      <Filter>ballistica\base\platform\windows</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.cc">
+      <Filter>ballistica\base\platform\windows</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows_oculus.h">
+      <Filter>ballistica\base\platform\windows</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc">
+      <Filter>ballistica\base\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\base_python.h">
+      <Filter>ballistica\base\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_app_timer.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_app_timer.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_context_call.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_context_call.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_context_ref.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_context_ref.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_display_timer.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_display_timer.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_vec3.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_vec3.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_app.cc">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_app.h">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.cc">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.h">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_misc.cc">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_misc.h">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc">
+      <Filter>ballistica\base\python\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call.h">
+      <Filter>ballistica\base\python\support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call_runnable.h">
+      <Filter>ballistica\base\python\support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\context.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\context.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\huffman.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\stdio_console.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\ui\console.cc">
+      <Filter>ballistica\base\ui</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\ui\console.h">
+      <Filter>ballistica\base\ui</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc">
+      <Filter>ballistica\base\ui</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\ui\ui.h">
+      <Filter>ballistica\base\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\ui\widget_message.h">
+      <Filter>ballistica\base\ui</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\classic.cc">
+      <Filter>ballistica\classic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\classic.h">
+      <Filter>ballistica\classic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\python\classic_python.cc">
+      <Filter>ballistica\classic\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\python\classic_python.h">
+      <Filter>ballistica\classic\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\python\methods\python_methods_classic.cc">
+      <Filter>ballistica\classic\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\python\methods\python_methods_classic.h">
+      <Filter>ballistica\classic\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\support\v1_account.cc">
+      <Filter>ballistica\classic\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\support\v1_account.h">
+      <Filter>ballistica\classic\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\core.cc">
+      <Filter>ballistica\core</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\core.h">
+      <Filter>ballistica\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.h">
+      <Filter>ballistica\core\platform\apple</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\core_platform.cc">
+      <Filter>ballistica\core\platform</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\platform\core_platform.h">
+      <Filter>ballistica\core\platform</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\linux\core_platform_linux.cc">
+      <Filter>ballistica\core\platform\linux</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\platform\linux\core_platform_linux.h">
+      <Filter>ballistica\core\platform\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\min_sdl.h">
+      <Filter>ballistica\core\platform\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\windows\core_platform_windows.cc">
+      <Filter>ballistica\core\platform\windows</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\platform\windows\core_platform_windows.h">
+      <Filter>ballistica\core\platform\windows</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc">
+      <Filter>ballistica\core\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\python\core_python.h">
+      <Filter>ballistica\core\python</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h">
+      <Filter>ballistica\core\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\support\core_config.cc">
+      <Filter>ballistica\core\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\support\core_config.h">
+      <Filter>ballistica\core\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_asset.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_asset.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_collision_mesh.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_collision_mesh.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_cube_map_texture.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_cube_map_texture.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_data_asset.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_data_asset.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_mesh.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_mesh.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_sound.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_sound.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_texture.cc">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_texture.h">
+      <Filter>ballistica\scene_v1\assets</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection_set.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection_set.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection_to_client.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection_to_client.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection_to_client_udp.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection_to_client_udp.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection_to_host.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection_to_host.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\connection\connection_to_host_udp.cc">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\connection\connection_to_host_udp.h">
+      <Filter>ballistica\scene_v1\connection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\collision.h">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\dynamics.cc">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\dynamics.h">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\impact_sound_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\impact_sound_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\material.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\material.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\material_component.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\material_component.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\material_condition_node.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\material_condition_node.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\material_context.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\material_context.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\node_message_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\node_message_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\node_mod_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\node_mod_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\node_user_msg_mat_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\node_user_msg_mat_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\part_mod_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\part_mod_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\python_call_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\python_call_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\roll_sound_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\roll_sound_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\skid_sound_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\skid_sound_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\material\sound_material_action.cc">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\material\sound_material_action.h">
+      <Filter>ballistica\scene_v1\dynamics\material</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\part.cc">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\part.h">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\dynamics\rigid_body.cc">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\dynamics\rigid_body.h">
+      <Filter>ballistica\scene_v1\dynamics</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\anim_curve_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\anim_curve_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\bomb_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\bomb_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\combine_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\combine_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\explosion_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\explosion_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\flag_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\flag_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\flash_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\flash_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\globals_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\globals_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\image_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\image_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\light_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\light_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\locator_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\locator_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\math_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\math_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\node_attribute.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\node_attribute.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\node_attribute_connection.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\node_attribute_connection.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\node_type.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\null_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\null_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\player_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\player_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\prop_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\prop_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\region_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\region_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\scorch_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\scorch_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\session_globals_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\session_globals_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\shield_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\shield_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\sound_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\sound_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\terrain_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\terrain_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\text_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\text_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\texture_sequence_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\texture_sequence_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\time_display_node.cc">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\time_display_node.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_activity_data.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_activity_data.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_base_timer.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_base_timer.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_input_device.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_input_device.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_material.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_material.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_data.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_data.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_player.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_player.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_assets.cc">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_assets.h">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_input.cc">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_input.h">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_networking.cc">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_networking.h">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_scene.cc">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_scene.h">
+      <Filter>ballistica\scene_v1\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\scene_v1_python.cc">
+      <Filter>ballistica\scene_v1\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\scene_v1_python.h">
+      <Filter>ballistica\scene_v1\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\scene_v1.cc">
+      <Filter>ballistica\scene_v1</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\scene_v1.h">
+      <Filter>ballistica\scene_v1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_controller_interface.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_input_device.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_input_device.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_input_device_delegate.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_input_device_delegate.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_net.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session_net.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_replay.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session_replay.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\host_activity.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\host_activity.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\host_session.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\host_session.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\player.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\player.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\player_spec.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\player_spec.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_app_mode.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_app_mode.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_context.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_context.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_input_device_delegate.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_input_device_delegate.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\session.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\session.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\session_stream.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\session_stream.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\ballistica.cc">
+      <Filter>ballistica\shared</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\ballistica.h">
+      <Filter>ballistica\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_cmake.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_common.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\event_loop.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\exception.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\exception.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\inline.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\logging.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\logging.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\macros.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\macros.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\object.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\object.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\types.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\base64.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\base64.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\buffer.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\json.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\json.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\runnable.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\timer_list.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\timer_list.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\utf8.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\utf8.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\generic\utils.cc">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\utils.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\math\matrix44f.cc">
+      <Filter>ballistica\shared\math</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\math\matrix44f.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\math\point2d.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\math\random.cc">
+      <Filter>ballistica\shared\math</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\math\random.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\math\rect.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\math\vector2f.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\math\vector3f.cc">
+      <Filter>ballistica\shared\math</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\math\vector3f.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\math\vector4f.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\networking\networking_sys.h">
+      <Filter>ballistica\shared\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\networking\sockaddr.cc">
+      <Filter>ballistica\shared\networking</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\networking\sockaddr.h">
+      <Filter>ballistica\shared\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\python\python.cc">
+      <Filter>ballistica\shared\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\python\python_class.cc">
+      <Filter>ballistica\shared\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_class.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\python\python_command.cc">
+      <Filter>ballistica\shared\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_command.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_module_builder.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\python\python_object_set.cc">
+      <Filter>ballistica\shared\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_object_set.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\python\python_ref.cc">
+      <Filter>ballistica\shared\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_ref.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_sys.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.cc">
+      <Filter>ballistica\template_fs\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.h">
+      <Filter>ballistica\template_fs\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\template_fs\python\methods\python_methods_template_fs.cc">
+      <Filter>ballistica\template_fs\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\template_fs\python\methods\python_methods_template_fs.h">
+      <Filter>ballistica\template_fs\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\template_fs\python\template_fs_python.cc">
+      <Filter>ballistica\template_fs\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\template_fs\python\template_fs_python.h">
+      <Filter>ballistica\template_fs\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\template_fs\template_fs.cc">
+      <Filter>ballistica\template_fs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\template_fs\template_fs.h">
+      <Filter>ballistica\template_fs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.cc">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.h">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.cc">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.cc">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.h">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.cc">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.h">
+      <Filter>ballistica\ui_v1\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\methods\python_methods_ui_v1.cc">
+      <Filter>ballistica\ui_v1\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\methods\python_methods_ui_v1.h">
+      <Filter>ballistica\ui_v1\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\ui_v1_python.cc">
+      <Filter>ballistica\ui_v1\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\ui_v1_python.h">
+      <Filter>ballistica\ui_v1\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\support\root_ui.cc">
+      <Filter>ballistica\ui_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\support\root_ui.h">
+      <Filter>ballistica\ui_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\ui_v1.cc">
+      <Filter>ballistica\ui_v1</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\ui_v1.h">
+      <Filter>ballistica\ui_v1</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\button_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\button_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\check_box_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\check_box_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\column_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\column_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\container_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\container_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\h_scroll_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\h_scroll_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\image_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\image_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\root_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\root_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\row_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\row_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\stack_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\stack_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\text_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\text_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceAABB.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceContainer.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceHPoint.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceIndexedTriangle.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceMatrix3x3.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceMatrix4x4.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceOBB.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IcePlane.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IcePoint.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceRandom.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceRay.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceRevisitedRadix.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceSegment.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceTriangle.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\IceUtils.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_array.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_cylinder_box.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_cylinder_plane.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_cylinder_sphere.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_cylinder_trimesh.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_kernel.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_quadtreespace.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_sapspace.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_space.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_std.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_transform.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_box.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_ccylinder.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_distance.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_plane.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_ray.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_sphere.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_trimesh_trimesh.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_collision_util.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_error.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_export-diff.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_fastdot.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_fastldlt.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_fastlsolve.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_fastltsolve.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_joint.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_lcp.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_mass.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_mat.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_math.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_matrix.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_memory.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_misc.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_obstack.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_quickstep.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_rotation.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_step.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_stepfast.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_timer.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\ode_util.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\Opcode.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_AABBCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_AABBTree.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_BaseModel.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_BoxPruning.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_Collider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_LSSCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_MeshInterface.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_Model.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_OBBCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_OptimizedTree.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_Picking.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_PlanesCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_RayCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_SphereCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_SweepAndPrune.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeBuilders.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_VolumeCollider.cpp">
+      <Filter>external\open_dynamics_engine-ef\ode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\external\qr_code_generator\QrCode.cpp">
+      <Filter>external\qr_code_generator</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="ballistica" />
+    <Filter Include="ballistica\base" />
+    <Filter Include="ballistica\base\app" />
+    <Filter Include="ballistica\base\assets" />
+    <Filter Include="ballistica\base\audio" />
+    <Filter Include="ballistica\base\dynamics" />
+    <Filter Include="ballistica\base\dynamics\bg" />
+    <Filter Include="ballistica\base\graphics" />
+    <Filter Include="ballistica\base\graphics\component" />
+    <Filter Include="ballistica\base\graphics\gl" />
+    <Filter Include="ballistica\base\graphics\mesh" />
+    <Filter Include="ballistica\base\graphics\renderer" />
+    <Filter Include="ballistica\base\graphics\support" />
+    <Filter Include="ballistica\base\graphics\text" />
+    <Filter Include="ballistica\base\graphics\texture" />
+    <Filter Include="ballistica\base\input" />
+    <Filter Include="ballistica\base\input\device" />
+    <Filter Include="ballistica\base\input\support" />
+    <Filter Include="ballistica\base\logic" />
+    <Filter Include="ballistica\base\networking" />
+    <Filter Include="ballistica\base\platform" />
+    <Filter Include="ballistica\base\platform\android" />
+    <Filter Include="ballistica\base\platform\android\amazon" />
+    <Filter Include="ballistica\base\platform\android\cardboard" />
+    <Filter Include="ballistica\base\platform\android\google" />
+    <Filter Include="ballistica\base\platform\apple" />
+    <Filter Include="ballistica\base\platform\linux" />
+    <Filter Include="ballistica\base\platform\oculus" />
+    <Filter Include="ballistica\base\platform\support" />
+    <Filter Include="ballistica\base\platform\windows" />
+    <Filter Include="ballistica\base\python" />
+    <Filter Include="ballistica\base\python\class" />
+    <Filter Include="ballistica\base\python\methods" />
+    <Filter Include="ballistica\base\python\support" />
+    <Filter Include="ballistica\base\support" />
+    <Filter Include="ballistica\base\ui" />
+    <Filter Include="ballistica\classic" />
+    <Filter Include="ballistica\classic\python" />
+    <Filter Include="ballistica\classic\python\methods" />
+    <Filter Include="ballistica\classic\support" />
+    <Filter Include="ballistica\core" />
+    <Filter Include="ballistica\core\platform" />
+    <Filter Include="ballistica\core\platform\apple" />
+    <Filter Include="ballistica\core\platform\linux" />
+    <Filter Include="ballistica\core\platform\support" />
+    <Filter Include="ballistica\core\platform\windows" />
+    <Filter Include="ballistica\core\python" />
+    <Filter Include="ballistica\core\support" />
+    <Filter Include="ballistica\scene_v1" />
+    <Filter Include="ballistica\scene_v1\assets" />
+    <Filter Include="ballistica\scene_v1\connection" />
+    <Filter Include="ballistica\scene_v1\dynamics" />
+    <Filter Include="ballistica\scene_v1\dynamics\material" />
+    <Filter Include="ballistica\scene_v1\node" />
+    <Filter Include="ballistica\scene_v1\python" />
+    <Filter Include="ballistica\scene_v1\python\class" />
+    <Filter Include="ballistica\scene_v1\python\methods" />
+    <Filter Include="ballistica\scene_v1\support" />
+    <Filter Include="ballistica\shared" />
+    <Filter Include="ballistica\shared\buildconfig" />
+    <Filter Include="ballistica\shared\foundation" />
+    <Filter Include="ballistica\shared\generic" />
+    <Filter Include="ballistica\shared\math" />
+    <Filter Include="ballistica\shared\networking" />
+    <Filter Include="ballistica\shared\python" />
+    <Filter Include="ballistica\template_fs" />
+    <Filter Include="ballistica\template_fs\python" />
+    <Filter Include="ballistica\template_fs\python\class" />
+    <Filter Include="ballistica\template_fs\python\methods" />
+    <Filter Include="ballistica\ui_v1" />
+    <Filter Include="ballistica\ui_v1\python" />
+    <Filter Include="ballistica\ui_v1\python\class" />
+    <Filter Include="ballistica\ui_v1\python\methods" />
+    <Filter Include="ballistica\ui_v1\support" />
+    <Filter Include="ballistica\ui_v1\widget" />
+    <Filter Include="external" />
+    <Filter Include="external\open_dynamics_engine-ef" />
+    <Filter Include="external\open_dynamics_engine-ef\ode" />
+    <Filter Include="external\qr_code_generator" />
+  </ItemGroup>
+</Project>

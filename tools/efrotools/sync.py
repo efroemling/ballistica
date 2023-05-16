@@ -187,7 +187,6 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                     outfile.write(add_marker(src_proj, srcdata))
             continue
         if src_hash == marker_hash and dst_hash != marker_hash:
-
             # Dst has changed; we only copy backwards to src
             # if we're in full mode.
             if mode == Mode.LIST:
@@ -209,7 +208,6 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             continue
 
         if marker_hash not in (src_hash, dst_hash):
-
             # One more option: source and dst could have been changed in
             # identical ways (common when doing global search/replaces).
             # In this case the calced hash from src and dst will match

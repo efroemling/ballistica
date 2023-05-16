@@ -1,6 +1,9 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """General functionality related to running builds."""
+
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import os
@@ -9,12 +12,11 @@ import datetime
 import subprocess
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
-from efro.util import assert_never
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools.build import Lazybuild
+from efrotools.lazybuild import LazyBuildContext
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
@@ -40,23 +42,24 @@ class PyRequirement:
 # as manually-installed bits, pip itself must have some way to allow for
 # that, right?...
 PY_REQUIREMENTS = [
-    PyRequirement(modulename='pylint', minversion=[2, 15, 9]),
-    PyRequirement(modulename='mypy', minversion=[0, 991]),
+    PyRequirement(modulename='pylint', minversion=[2, 17, 3]),
+    PyRequirement(modulename='mypy', minversion=[1, 2, 0]),
     PyRequirement(modulename='cpplint', minversion=[1, 6, 1]),
-    PyRequirement(modulename='pytest', minversion=[7, 2, 0]),
+    PyRequirement(modulename='pytest', minversion=[7, 3, 1]),
     PyRequirement(modulename='pytz'),
     PyRequirement(modulename='ansiwrap'),
     PyRequirement(modulename='yaml', pipname='PyYAML'),
     PyRequirement(modulename='requests'),
     PyRequirement(modulename='pdoc'),
-    PyRequirement(pipname='black', minversion=[22, 12, 0]),
-    PyRequirement(pipname='typing_extensions', minversion=[4, 4, 0]),
+    PyRequirement(pipname='black', minversion=[23, 3, 0]),
+    PyRequirement(pipname='typing_extensions', minversion=[4, 5, 0]),
     PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PyRequirement(pipname='types-requests', minversion=[2, 28, 11, 7]),
-    PyRequirement(pipname='types-pytz', minversion=[2022, 2, 1, 0]),
-    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 2]),
+    PyRequirement(pipname='types-requests', minversion=[2, 28, 11, 17]),
+    PyRequirement(pipname='types-pytz', minversion=[2023, 3, 0, 0]),
+    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 9]),
     PyRequirement(pipname='certifi', minversion=[2022, 12, 7]),
     PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
+    PyRequirement(pipname='pbxproj', minversion=[3, 5, 0]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -80,7 +83,7 @@ SPARSE_TEST_BUILDS: list[list[str]] = [
 
 # Currently only doing sparse-tests in core; not spinoffs.
 # (whole word will get subbed out in spinoffs so this will be false)
-DO_SPARSE_TEST_BUILDS = 'ballistica' + 'core' == 'ballisticacore'
+DO_SPARSE_TEST_BUILDS = 'ballistica' + 'kit' == 'ballisticakit'
 
 
 class PrefabTarget(Enum):
@@ -96,6 +99,7 @@ class LazyBuildCategory(Enum):
     """Types of sources."""
 
     RESOURCES = 'resources_src'
+    ASSETS = 'assets_src'
     META = 'meta_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
@@ -106,35 +110,52 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
 
     # Everything possibly affecting meta builds.
     if category is LazyBuildCategory.META:
-        Lazybuild(
+        LazyBuildContext(
             target=target,
+            command=command,
+            # Since this category can kick off cleans and blow things away,
+            # its not safe to have multiple builds going with it at once.
+            buildlockname=category.value,
+            # Regular paths; changes to these will trigger meta build.
             srcpaths=[
                 'Makefile',
                 'src/meta',
-                'src/ballistica/core/types.h',
+                'src/ballistica/shared/foundation/types.h',
             ],
-            command=command,
             # Our meta Makefile targets generally don't list tools scripts
             # that can affect their creation as sources, so let's set up
-            # a catch-all here: when any of our tools stuff changes let's
-            # blow away any existing meta builds.
+            # a catch-all here: when any of our tools stuff changes we'll
+            # blow away all existing meta builds.
+            # Update: also including featureset-defs here; any time we're
+            # mucking with those it's good to start fresh to be sure.
             srcpaths_fullclean=[
                 'tools/efrotools',
                 'tools/efrotoolsinternal',
                 'tools/batools',
                 'tools/batoolsinternal',
+                'config/featuresets',
             ],
+            # Also enable an option to maintain a hash of all file paths
+            # in the above sets and do a full-clean whenever that changes.
+            # Takes care of orphaned files if remove a featureset/etc.
+            manifest_file='.cache/lazybuild/meta_manifest',
             command_fullclean='make meta-clean',
         ).run()
 
     # Everything possibly affecting CMake builds.
     elif category is LazyBuildCategory.CMAKE:
-        Lazybuild(
+        LazyBuildContext(
             target=target,
+            # It should be safe to have multiple cmake build going at
+            # once I think; different targets should never stomp on each
+            # other. Actually if anything maybe we'd want to plug target
+            # path into this to watch for the same target getting built
+            # redundantly?
+            buildlockname=None,
             srcpaths=[
                 'Makefile',
                 'src',
-                'ballisticacore-cmake/CMakeLists.txt',
+                'ballisticakit-cmake/CMakeLists.txt',
             ],
             dirfilter=(
                 lambda root, dirname: not (
@@ -154,13 +175,18 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 return False
             return True
 
-        Lazybuild(
+        LazyBuildContext(
             target=target,
+            # It should be safe to have multiple of these build going at
+            # once I think; different targets should never stomp on each
+            # other. Actually if anything maybe we'd want to plug target
+            # path into this to watch for the same target getting built
+            # redundantly?
+            buildlockname=None,
             srcpaths=[
                 'Makefile',
                 'src',
-                'resources/src',
-                'ballisticacore-windows',
+                'ballisticakit-windows',
             ],
             dirfilter=_win_dirfilter,
             command=command,
@@ -168,13 +194,32 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
 
     # Everything possibly affecting resource builds.
     elif category is LazyBuildCategory.RESOURCES:
-        Lazybuild(
+        LazyBuildContext(
             target=target,
+            # Even though this category currently doesn't run any
+            # clean commands, going to restrict to one use at a time for
+            # now in case we want to add that.
+            buildlockname=category.value,
             srcpaths=[
                 'Makefile',
                 'tools/pcommand',
-                'resources/src',
-                'resources/Makefile',
+                'src/resources',
+            ],
+            command=command,
+        ).run()
+
+    # Everything possibly affecting asset builds.
+    elif category is LazyBuildCategory.ASSETS:
+        LazyBuildContext(
+            target=target,
+            # Even though this category currently doesn't run any
+            # clean commands, going to restrict to one use at a time for
+            # now in case we want to add that.
+            buildlockname=category.value,
+            srcpaths=[
+                'Makefile',
+                'tools',
+                'src/assets',
             ],
             command=command,
         ).run()
@@ -249,7 +294,7 @@ def gen_fulltest_buildfile_android() -> None:
 
     lines = []
     for _i, flavor in enumerate(
-        sorted(os.listdir('ballisticacore-android/BallisticaCore/src'))
+        sorted(os.listdir('ballisticakit-android/BallisticaKit/src'))
     ):
         if flavor == 'main' or flavor.startswith('.'):
             continue
@@ -271,7 +316,7 @@ def gen_fulltest_buildfile_android() -> None:
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('android.')]
-        cspre = 'tools/cloudshell linbeast --env android --'
+        cspre = 'tools/cloudshell linbeast --env ba-android-alldeps --'
 
         # This is currently broken; turning off.
         # Update: should be working again; hooray!
@@ -324,7 +369,7 @@ def gen_fulltest_buildfile_android() -> None:
                         f' python_build_android_debug x86_64'
                     )
             elif extra == 'android.package':
-                lines.append('make android-cloud-package')
+                lines.append('make android-package-cloud')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -403,8 +448,8 @@ def gen_fulltest_buildfile_apple() -> None:
     )
 
     # iOS stuff
-    lines.append('make ios-build')
-    lines.append('make ios-new-build')
+    lines.append('make ios-cloud-build')
+    lines.append('make ios-new-cloud-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('ios.')]
@@ -417,7 +462,7 @@ def gen_fulltest_buildfile_apple() -> None:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # tvOS stuff
-    lines.append('make tvos-build')
+    lines.append('make tvos-cloud-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('tvos.')]
@@ -430,21 +475,21 @@ def gen_fulltest_buildfile_apple() -> None:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # macOS stuff
-    lines.append('make mac-build')
+    lines.append('make mac-cloud-build')
     # (throw release build in the mix to hopefully catch opt-mode-only errors).
-    lines.append('make mac-appstore-release-build')
-    lines.append('make mac-new-build')
-    lines.append('make cmake-server-build')
-    lines.append('make cmake-build')
+    lines.append('MAC_CONFIGURATION=Release make mac-appstore-cloud-build')
+    lines.append('make mac-new-cloud-build')
+    lines.append('CMAKE_CLOUDSHELL_HOST=fromini make cmake-cloud-server-build')
+    lines.append('CMAKE_CLOUDSHELL_HOST=fromini make cmake-cloud-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('mac.')]
         for extra in extras:
             if extra == 'mac.package':
-                # FIXME; Currently skipping notarization because it requires us
-                # to be logged in via the gui to succeed.
                 lines.append(
-                    'BA_MAC_DISK_IMAGE_SKIP_NOTARIZATION=1 make mac-package'
+                    'BA_MAC_DISK_IMAGE_SKIP_NOTARIZATION=1'
+                    ' make mac-package-cloud'
+                    # 'make mac-package-cloud'
                 )
             elif extra == 'mac.package.server.x86_64':
                 lines.append('make mac-server-package-x86-64')
@@ -568,7 +613,28 @@ def checkenv() -> None:
             'rsync is required; please install it via apt, brew, etc.'
         )
 
-    # Make sure they've got our target python version.
+    # Make sure rsync is version 3.1.0 or newer.
+    # Macs come with ancient rsync versions with significant downsides such
+    # as single second file mod time resolution which has started to cause
+    # problems with build setups. So now am trying to make sure my Macs
+    # have an up-to-date one installed (via homebrew).
+    rsyncver = tuple(
+        int(s)
+        for s in subprocess.run(
+            ['rsync', '--version'], check=True, capture_output=True
+        )
+        .stdout.decode()
+        .splitlines()[0]
+        .split()[2]
+        .split('.')[:2]
+    )
+    if rsyncver < (3, 1):
+        raise CleanError(
+            'rsync version 3.1 or greater not found;'
+            ' please install it via apt, brew, etc.'
+        )
+
+    # Make sure they've got our target Python version.
     if (
         subprocess.run(
             ['which', PYTHON_BIN], check=False, capture_output=True

@@ -13,7 +13,8 @@
               <option name="patterns">
                 <list>
                   <Item>
-                    <option name="path" value="assets/manifest.json" />
+                    <option name="path" value="src/assets/.asset_manifest_public.json" />
+                    <option name="path" value="src/assets/.asset_manifest_private.json" />
                   </Item>
                 </list>
               </option>

@@ -96,6 +96,7 @@ class _Inputter(Generic[T]):
                 )
             return value
 
+        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.
@@ -333,7 +334,8 @@ class _Inputter(Generic[T]):
 
         # We treat 'Any' dicts simply as json; we don't do any translating.
         if not childtypes or childtypes[0] is typing.Any:
-            if not isinstance(value, dict) or not _is_valid_for_codec(
+            value_any: Any = value
+            if not isinstance(value_any, dict) or not _is_valid_for_codec(
                 value, self._codec
             ):
                 raise TypeError(
@@ -436,7 +438,6 @@ class _Inputter(Generic[T]):
         seqtype: type,
         ioattrs: IOAttrs | None,
     ) -> Any:
-
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:
             raise TypeError(
@@ -468,7 +469,6 @@ class _Inputter(Generic[T]):
     def _datetime_from_input(
         self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
     ) -> Any:
-
         # For firestore we expect a datetime object.
         if self._codec is Codec.FIRESTORE:
             # Don't compare exact type here, as firestore can give us
@@ -510,7 +510,6 @@ class _Inputter(Generic[T]):
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.

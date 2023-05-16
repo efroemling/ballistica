@@ -1,24 +1,25 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Updates assets/Makefile based on source assets present."""
+"""Updates src/assets/Makefile based on source assets present."""
 
 from __future__ import annotations
 
 import json
 import os
-import sys
 from typing import TYPE_CHECKING
-
-from efro.terminal import Clr
 
 if TYPE_CHECKING:
     pass
 
-# Note: code below needs updating when Python version changes (currently 3.10)
-PYC_SUFFIX = '.cpython-310.opt-1.pyc'
+# Note: code below needs updating when Python version changes (currently 3.11)
+PYC_SUFFIX = '.cpython-311.opt-1.pyc'
+
+ASSETS_SRC = 'src/assets'
+BUILD_DIR = 'build/assets'
 
 
 def _get_targets(
+    projroot: str,
     varname: str,
     inext: str,
     outext: str,
@@ -26,22 +27,24 @@ def _get_targets(
     limit_to_prefix: str | None = None,
 ) -> str:
     """Generic function to map source extension to dst files."""
+    # pylint: disable=too-many-locals
 
-    src = 'assets/src'
-    dst = 'assets/build'
+    src = ASSETS_SRC
+    dst = BUILD_DIR
     targets = []
 
     # Create outext targets for all inext files we find.
-    for root, _dname, fnames in os.walk(src):
+    for root, _dname, fnames in os.walk(os.path.join(projroot, src)):
+        src_abs = os.path.join(projroot, src)
         if limit_to_prefix is not None and not root.startswith(
-            os.path.join(src, limit_to_prefix)
+            os.path.join(src_abs, limit_to_prefix)
         ):
             continue
 
-        # Write the target to make sense from within assets/
-        assert root.startswith(src)
-        dstrootvar = 'build' + root[len(src) :]
-        dstfin = dst + root[len(src) :]
+        # Write the target to make sense from within src/assets/
+        assert root.startswith(src_abs)
+        dstrootvar = '$(BUILD_DIR)' + root.removeprefix(src_abs)
+        dstfin = dst + root.removeprefix(src_abs)
         for fname in fnames:
             outname = fname[: -len(inext)] + outext
             if fname.endswith(inext):
@@ -52,6 +55,8 @@ def _get_targets(
 
 
 def _get_py_targets(
+    projroot: str,
+    meta_manifests: dict[str, str],
     src: str,
     dst: str,
     py_targets: list[str],
@@ -60,47 +65,51 @@ def _get_py_targets(
     subset: str,
 ) -> None:
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
 
-    py_generated_root = 'assets/src/ba_data/python/ba/_generated'
+    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
 
-    def _do_get_targets(root: str, fnames: list[str]) -> None:
+    def _do_get_targets(proot: str, fnames: list[str]) -> None:
         # Special case: ignore temp py files in data src.
-        if root == 'assets/src/ba_data/data/maps':
+        if proot == f'{ASSETS_SRC}/ba_data/data/maps':
             return
-        assert root.startswith(src)
-        dstrootvar = dst[len('assets') + 1 :] + root[len(src) :]
-        dstfin = dst + root[len(src) :]
+        assert proot.startswith(src)
+        assert dst.startswith(BUILD_DIR)
+        dstrootvar = (
+            '$(BUILD_DIR)'
+            + dst.removeprefix(BUILD_DIR)
+            + proot.removeprefix(src)
+        )
+        dstfin = dst + proot[len(src) :]
         for fname in fnames:
-
-            # Ignore flycheck temp files as well as our _ba dummy module.
+            # Ignore non-python files and flycheck/emacs temp files.
             if (
                 not fname.endswith('.py')
                 or fname.startswith('flycheck_')
                 or fname.startswith('.#')
-                or fname == '_ba.py'
             ):
                 continue
 
-            if root.startswith('assets/src/ba_data/python-site-packages'):
+            if proot.startswith(f'{ASSETS_SRC}/ba_data/python-site-packages'):
                 in_subset = 'private-common'
-            elif root.startswith('assets/src/ba_data') or root.startswith(
-                'assets/src/server'
+            elif proot.startswith(f'{ASSETS_SRC}/ba_data') or proot.startswith(
+                f'{ASSETS_SRC}/server'
             ):
                 in_subset = 'public'
-            elif root.startswith('tools/efro') and not root.startswith(
+            elif proot.startswith('tools/efro') and not proot.startswith(
                 'tools/efrotools'
             ):
                 # We want to pull just 'efro' out of tools; not efrotools.
                 in_subset = 'public_tools'
-            elif root.startswith('tools/bacommon'):
+            elif proot.startswith('tools/bacommon'):
                 in_subset = 'public_tools'
-            elif root.startswith('assets/src/windows/x64'):
+            elif proot.startswith(f'{ASSETS_SRC}/windows/x64'):
                 in_subset = 'private-windows-x64'
-            elif root.startswith('assets/src/windows/Win32'):
+            elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
-            elif root.startswith('assets/src/pylib-apple'):
+            elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
                 in_subset = 'private-apple'
-            elif root.startswith('assets/src/pylib-android'):
+            elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
                 in_subset = 'private-android'
             else:
                 in_subset = 'private-common'
@@ -125,25 +134,34 @@ def _get_py_targets(
 
     # Create py and pyc targets for all physical scripts in src, with
     # the exception of our dynamically generated stuff.
-    for physical_root, _dname, physical_fnames in os.walk(src):
-
+    for physical_root, _dname, physical_fnames in os.walk(
+        os.path.join(projroot, src)
+    ):
         # Skip any generated files; we'll add those from the meta manifest.
         # (dont want our results to require a meta build beforehand)
-        if physical_root == py_generated_root or physical_root.startswith(
-            py_generated_root + '/'
+        if physical_root == os.path.join(
+            projroot, py_generated_root
+        ) or physical_root.startswith(
+            os.path.join(projroot, py_generated_root) + '/'
         ):
             continue
 
-        _do_get_targets(physical_root, physical_fnames)
+        _do_get_targets(
+            physical_root.removeprefix(projroot + '/'), physical_fnames
+        )
 
     # Now create targets for any of our dynamically generated stuff that
     # lives under this dir.
     meta_targets: list[str] = []
-    for mantype in ['public', 'private']:
-        with open(
-            f'src/meta/.meta_manifest_{mantype}.json', encoding='utf-8'
-        ) as infile:
-            meta_targets += json.loads(infile.read())
+    for manifest in meta_manifests.values():
+        # Sanity check; make sure meta system is giving actual paths;
+        # no accidental makefile vars.
+        if '$' in manifest:
+            raise RuntimeError(
+                'meta-manifest value contains a $; probably a bug.'
+            )
+        meta_targets += json.loads(manifest)
+
     meta_targets = [
         t
         for t in meta_targets
@@ -152,28 +170,39 @@ def _get_py_targets(
 
     for target in meta_targets:
         _do_get_targets(
-            root=os.path.dirname(target), fnames=[os.path.basename(target)]
+            proot=os.path.dirname(target), fnames=[os.path.basename(target)]
         )
 
 
 def _get_py_targets_subset(
-    all_targets: set[str], subset: str, suffix: str
+    projroot: str,
+    meta_manifests: dict[str, str],
+    all_targets: set[str],
+    subset: str,
+    suffix: str,
 ) -> str:
     if subset == 'public_tools':
         src = 'tools'
-        dst = 'assets/build/ba_data/python'
-        copyrule = 'build/ba_data/python/%.py : ../tools/%.py'
+        dst = f'{BUILD_DIR}/ba_data/python'
+        copyrule = '$(BUILD_DIR)/ba_data/python/%.py : $(TOOLS_DIR)/%.py'
     else:
-        src = 'assets/src'
-        dst = 'assets/build'
-        copyrule = 'build/%.py : src/%.py'
+        src = ASSETS_SRC
+        dst = BUILD_DIR
+        copyrule = '$(BUILD_DIR)/%.py : %.py'
 
     # Separate these into '1' and '2'.
     py_targets: list[str] = []
     pyc_targets: list[str] = []
 
     _get_py_targets(
-        src, dst, py_targets, pyc_targets, all_targets, subset=subset
+        projroot,
+        meta_manifests,
+        src,
+        dst,
+        py_targets,
+        pyc_targets,
+        all_targets,
+        subset=subset,
     )
 
     # Need to sort these combined to keep pairs together.
@@ -204,7 +233,7 @@ def _get_py_targets_subset(
         '# (and make non-writable so I\'m less likely to '
         'accidentally edit them there)\n'
         f'{efc}$(SCRIPT_TARGETS_PY{suffix}) : {copyrule}\n'
-        '\t@echo Copying script: $@\n'
+        '\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
         '\t@mkdir -p $(dir $@)\n'
         '\t@rm -f $@\n'
         '\t@cp $^ $@\n'
@@ -238,7 +267,7 @@ def _get_py_targets_subset(
                 + target
                 + ': \\\n      '
                 + py_targets[i]
-                + '\n\t@echo Compiling script: $^\n'
+                + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
                 '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
                 ' compile_python_files $^'
                 ' && chmod 444 $@\n'
@@ -247,15 +276,18 @@ def _get_py_targets_subset(
     return out
 
 
-def _get_extras_targets_win(all_targets: set[str], platform: str) -> str:
+def _get_extras_targets_win(
+    projroot: str, all_targets: set[str], platform: str
+) -> str:
     targets: list[str] = []
-    base = 'assets/src/windows'
-    dstbase = 'build/windows'
-    for root, _dnames, fnames in os.walk(base):
+    base = f'{ASSETS_SRC}/windows'
+    dstbase = 'windows'
+    for root, _dnames, fnames in os.walk(os.path.join(projroot, base)):
         for fname in fnames:
-
             # Only include the platform we were passed.
-            if not root.startswith('assets/src/windows/' + platform):
+            if not root.startswith(
+                os.path.join(projroot, f'{ASSETS_SRC}/windows/{platform}')
+            ):
                 continue
 
             ext = os.path.splitext(fname)[-1]
@@ -295,9 +327,15 @@ def _get_extras_targets_win(all_targets: set[str], platform: str) -> str:
                 'command_template',
                 'fetch_macholib',
             ]:
-                targetpath = os.path.join(dstbase + root[len(base) :], fname)
-                targets.append(targetpath)
-                all_targets.add('assets/' + targetpath)
+                base_abs = os.path.join(projroot, base)
+                assert root.startswith(base_abs)
+                targetpath = os.path.join(
+                    dstbase + root.removeprefix(base_abs), fname
+                )
+                # print(f'DSTBASE {dstbase} ROOT {root}
+                # TARGETPATH {targetpath}')
+                targets.append('$(BUILD_DIR)/' + targetpath)
+                all_targets.add(BUILD_DIR + '/' + targetpath)
                 continue
 
             # Complain if something new shows up instead of blindly
@@ -314,9 +352,9 @@ def _get_extras_targets_win(all_targets: set[str], platform: str) -> str:
     out += (
         '\n# Rule to copy src extras to build.\n'
         f'# __EFROCACHE_TARGET__\n'
-        f'$(EXTRAS_TARGETS_WIN_{p_up}) : build/% :'
-        ' src/%\n'
-        '\t@echo Copying file: $@\n'
+        f'$(EXTRAS_TARGETS_WIN_{p_up}) : $(BUILD_DIR)/% :'
+        ' %\n'
+        '\t@echo Copying file: $(subst $(BUILD_DIR)/,,$@)\n'
         '\t@mkdir -p $(dir $@)\n'
         '\t@rm -f $@\n'
         '\t@cp $^ $@\n'
@@ -325,21 +363,23 @@ def _get_extras_targets_win(all_targets: set[str], platform: str) -> str:
     return out
 
 
-def update_assets_makefile(projroot: str, check: bool) -> None:
+def generate_assets_makefile(
+    projroot: str,
+    fname: str,
+    existing_data: str,
+    meta_manifests: dict[str, str],
+) -> dict[str, str]:
     """Main script entry point."""
     # pylint: disable=too-many-locals
     from efrotools import getconfig
     from pathlib import Path
 
-    # Always operate out of dist root dir.
-    os.chdir(projroot)
-
-    public = getconfig(Path('.'))['public']
+    public = getconfig(Path(projroot))['public']
     assert isinstance(public, bool)
 
-    fname = 'assets/Makefile'
-    with open(fname, encoding='utf-8') as infile:
-        original = infile.read()
+    # with open(fname, encoding='utf-8') as infile:
+    #     original = infile.read()
+    original = existing_data
     lines = original.splitlines()
 
     auto_start_public = lines.index('# __AUTOGENERATED_PUBLIC_BEGIN__')
@@ -353,10 +393,18 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
     # We always auto-generate the public section.
     our_lines_public = [
         _get_py_targets_subset(
-            all_targets_public, subset='public', suffix='_PUBLIC'
+            projroot,
+            meta_manifests,
+            all_targets_public,
+            subset='public',
+            suffix='_PUBLIC',
         ),
         _get_py_targets_subset(
-            all_targets_public, subset='public_tools', suffix='_PUBLIC_TOOLS'
+            projroot,
+            meta_manifests,
+            all_targets_public,
+            subset='public_tools',
+            suffix='_PUBLIC_TOOLS',
         ),
     ]
 
@@ -366,65 +414,105 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
     else:
         our_lines_private = [
             _get_py_targets_subset(
+                projroot,
+                meta_manifests,
                 all_targets_private,
                 subset='private-apple',
                 suffix='_PRIVATE_APPLE',
             ),
             _get_py_targets_subset(
+                projroot,
+                meta_manifests,
                 all_targets_private,
                 subset='private-android',
                 suffix='_PRIVATE_ANDROID',
             ),
             _get_py_targets_subset(
+                projroot,
+                meta_manifests,
                 all_targets_private,
                 subset='private-common',
                 suffix='_PRIVATE_COMMON',
             ),
             _get_py_targets_subset(
+                projroot,
+                meta_manifests,
                 all_targets_private,
                 subset='private-windows-Win32',
                 suffix='_PRIVATE_WIN_WIN32',
             ),
             _get_py_targets_subset(
+                projroot,
+                meta_manifests,
                 all_targets_private,
                 subset='private-windows-x64',
                 suffix='_PRIVATE_WIN_X64',
             ),
             _get_targets(
-                'COB_TARGETS', '.collidemodel.obj', '.cob', all_targets_private
+                projroot,
+                'COB_TARGETS',
+                '.collisionmesh.obj',
+                '.cob',
+                all_targets_private,
             ),
             _get_targets(
-                'BOB_TARGETS', '.model.obj', '.bob', all_targets_private
+                projroot,
+                'BOB_TARGETS',
+                '.mesh.obj',
+                '.bob',
+                all_targets_private,
             ),
             _get_targets(
-                'FONT_TARGETS', '.fdata', '.fdata', all_targets_private
+                projroot,
+                'FONT_TARGETS',
+                '.fdata',
+                '.fdata',
+                all_targets_private,
             ),
-            _get_targets('PEM_TARGETS', '.pem', '.pem', all_targets_private),
             _get_targets(
+                projroot, 'PEM_TARGETS', '.pem', '.pem', all_targets_private
+            ),
+            _get_targets(
+                projroot,
                 'DATA_TARGETS',
                 '.json',
                 '.json',
                 all_targets_private,
                 limit_to_prefix='ba_data/data',
             ),
-            _get_targets('AUDIO_TARGETS', '.wav', '.ogg', all_targets_private),
             _get_targets(
-                'TEX2D_DDS_TARGETS', '.tex2d.png', '.dds', all_targets_private
+                projroot, 'AUDIO_TARGETS', '.wav', '.ogg', all_targets_private
             ),
             _get_targets(
-                'TEX2D_PVR_TARGETS', '.tex2d.png', '.pvr', all_targets_private
+                projroot,
+                'TEX2D_DDS_TARGETS',
+                '.tex2d.png',
+                '.dds',
+                all_targets_private,
             ),
             _get_targets(
-                'TEX2D_KTX_TARGETS', '.tex2d.png', '.ktx', all_targets_private
+                projroot,
+                'TEX2D_PVR_TARGETS',
+                '.tex2d.png',
+                '.pvr',
+                all_targets_private,
             ),
             _get_targets(
+                projroot,
+                'TEX2D_KTX_TARGETS',
+                '.tex2d.png',
+                '.ktx',
+                all_targets_private,
+            ),
+            _get_targets(
+                projroot,
                 'TEX2D_PREVIEW_PNG_TARGETS',
                 '.tex2d.png',
                 '_preview.png',
                 all_targets_private,
             ),
-            _get_extras_targets_win(all_targets_private, 'Win32'),
-            _get_extras_targets_win(all_targets_private, 'x64'),
+            _get_extras_targets_win(projroot, all_targets_private, 'Win32'),
+            _get_extras_targets_win(projroot, all_targets_private, 'x64'),
         ]
     filtered = (
         lines[: auto_start_public + 1]
@@ -433,60 +521,27 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
         + our_lines_private
         + lines[auto_end_private:]
     )
+    out_files: dict[str, str] = {}
+
     out = '\n'.join(filtered) + '\n'
 
-    if out == original:
-        print(f'{fname} is up to date.')
-    else:
-        if check:
-            print(f"{Clr.SRED}ERROR: file is out of date: '{fname}'.{Clr.RST}")
+    out_files[fname] = out
 
-            # Print exact contents if we need to debug:
-            if bool(False):
-                print(
-                    f'EXPECTED ===========================================\n'
-                    f'{out}\n'
-                    f'FOUND ==============================================\n'
-                    f'{original}\n'
-                    f'END COMPARE ========================================'
-                )
-            sys.exit(255)
-        print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
-        with open(fname, 'w', encoding='utf-8') as outfile:
-            outfile.write(out)
-
-    # Lastly, write a simple manifest of the things we expect to have
-    # in build. We can use this to clear out orphaned files as part of builds.
-    _write_manifest(
-        'assets/.asset_manifest_public.json', all_targets_public, check
+    # Write a simple manifest of the things we expect to have in build.
+    # We can use this to clear out orphaned files as part of builds.
+    out_files['src/assets/.asset_manifest_public.json'] = _gen_manifest(
+        all_targets_public
     )
     if not public:
-        _write_manifest(
-            'assets/.asset_manifest_private.json', all_targets_private, check
+        out_files['src/assets/.asset_manifest_private.json'] = _gen_manifest(
+            all_targets_private
         )
+    return out_files
 
 
-def _write_manifest(
-    manifest_path: str, all_targets: set[str], check: bool
-) -> None:
+def _gen_manifest(all_targets: set[str]) -> str:
     # Lastly, write a simple manifest of the things we expect to have
     # in build. We can use this to clear out orphaned files as part of builds.
-    assert all(t.startswith('assets/build/') for t in all_targets)
-    if not os.path.exists(manifest_path):
-        existing_manifest = None
-    else:
-        with open(manifest_path, encoding='utf-8') as infile:
-            existing_manifest = json.loads(infile.read())
+    assert all(t.startswith(BUILD_DIR) for t in all_targets)
     manifest = sorted(t[13:] for t in all_targets)
-    if manifest == existing_manifest:
-        print(f'{manifest_path} is up to date.')
-    else:
-        if check:
-            print(
-                f'{Clr.SRED}ERROR: file is out of date:'
-                f" '{manifest_path}'.{Clr.RST}"
-            )
-            sys.exit(255)
-        print(f'{Clr.SBLU}Updating: {manifest_path}{Clr.RST}')
-        with open(manifest_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(json.dumps(manifest, indent=1))
+    return json.dumps(manifest, indent=1)

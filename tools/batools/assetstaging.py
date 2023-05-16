@@ -30,15 +30,15 @@ class Config:
     def __init__(self, projroot: str) -> None:
         self.projroot = projroot
         # We always calc src relative to this script.
-        self.src = self.projroot + '/assets/build'
+        self.src = self.projroot + '/build/assets'
         self.dst: str | None = None
         self.serverdst: str | None = None
         self.win_extras_src: str | None = None
         self.win_platform: str | None = None
         self.win_type: str | None = None
         self.include_audio = True
-        self.include_models = True
-        self.include_collide_models = True
+        self.include_meshes = True
+        self.include_collision_meshes = True
         self.include_scripts = True
         self.include_python = True
         self.include_textures = True
@@ -61,8 +61,8 @@ class Config:
         self.include_payload_file = True
         self.tex_suffix = '.ktx'
         self.include_audio = False
-        self.include_models = False
-        self.include_collide_models = False
+        self.include_meshes = False
+        self.include_collision_meshes = False
         self.include_scripts = False
         self.include_python = False
         self.include_textures = False
@@ -72,8 +72,8 @@ class Config:
         for arg in args:
             if arg == '-full':
                 self.include_audio = True
-                self.include_models = True
-                self.include_collide_models = True
+                self.include_meshes = True
+                self.include_collision_meshes = True
                 self.include_scripts = True
                 self.include_python = True
                 self.include_textures = True
@@ -83,9 +83,9 @@ class Config:
                 self.include_pylib = True
             elif arg == '-none':
                 pass
-            elif arg == '-models':
-                self.include_models = True
-                self.include_collide_models = True
+            elif arg == '-meshes':
+                self.include_meshes = True
+                self.include_collision_meshes = True
             elif arg == '-python':
                 self.include_python = True
                 self.include_pylib = True
@@ -113,14 +113,14 @@ class Config:
             self.serverdst = args[-1]
             self.include_textures = False
             self.include_audio = False
-            self.include_models = False
+            self.include_meshes = False
         else:
             raise RuntimeError(f'Invalid wintype: "{wintype}"')
 
         if winplt == 'Win32':
-            self.win_extras_src = self.projroot + '/assets/build/windows/Win32'
+            self.win_extras_src = self.projroot + '/build/assets/windows/Win32'
         elif winplt == 'x64':
-            self.win_extras_src = self.projroot + '/assets/build/windows/x64'
+            self.win_extras_src = self.projroot + '/build/assets/windows/x64'
         else:
             raise RuntimeError(f'Invalid winplt: "{winplt}"')
 
@@ -148,7 +148,7 @@ class Config:
             self.serverdst = args[-1]
             self.include_textures = False
             self.include_audio = False
-            self.include_models = False
+            self.include_meshes = False
 
             # Require either -debug or -release in args.
             # FIXME: should require this for all platforms for consistency.
@@ -162,7 +162,7 @@ class Config:
                     "Expected either '-debug' or '-release' in args."
                 )
         elif '-xcode-mac' in args:
-            self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
+            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
                 + '/'
@@ -172,7 +172,7 @@ class Config:
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.dds'
         elif '-xcode-ios' in args:
-            self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
+            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
                 + '/'
@@ -289,8 +289,8 @@ def _sync_windows_extras(cfg: Config) -> None:
     # We could technically copy everything over but this keeps staging
     # dirs a bit tidier.
     dbgsfx = '_d' if cfg.debug else ''
-    # Note: Below needs updating when Python version changes (currently 3.10)
-    toplevelfiles: list[str] = [f'python310{dbgsfx}.dll']
+    # Note: Below needs updating when Python version changes (currently 3.11)
+    toplevelfiles: list[str] = [f'python311{dbgsfx}.dll']
 
     if cfg.win_type == 'win':
         toplevelfiles += [
@@ -383,10 +383,10 @@ def _sync_standard_game_data(cfg: Config) -> None:
     if cfg.include_json:
         cmd += " --include '*.json'"
 
-    if cfg.include_models:
+    if cfg.include_meshes:
         cmd += " --include '*.bob'"
 
-    if cfg.include_collide_models:
+    if cfg.include_collision_meshes:
         cmd += " --include '*.cob'"
 
     cmd += (
@@ -408,32 +408,32 @@ def _sync_server_files(cfg: Config) -> None:
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.src}/../src/server/ballisticacore_server.py',
+        infilename=f'{cfg.projroot}/src/assets/server/ballisticakit_server.py',
         outfilename=os.path.join(
             cfg.serverdst,
-            'ballisticacore_server.py'
+            'ballisticakit_server.py'
             if cfg.win_type is not None
-            else 'ballisticacore_server',
+            else 'ballisticakit_server',
         ),
     )
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.src}/../src/server/README.txt',
+        infilename=f'{cfg.projroot}/src/assets/server/README.txt',
         outfilename=os.path.join(cfg.serverdst, 'README.txt'),
     )
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.src}/../src/server/config_template.yaml',
+        infilename=f'{cfg.projroot}/src/assets/server/config_template.yaml',
         outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'),
     )
     if cfg.win_type is not None:
-        fname = 'launch_ballisticacore_server.bat'
+        fname = 'launch_ballisticakit_server.bat'
         stage_server_file(
             projroot=cfg.projroot,
             mode=modeval,
-            infilename=f'{cfg.src}/../src/server/{fname}',
+            infilename=f'{cfg.projroot}/src/assets/server/{fname}',
             outfilename=os.path.join(cfg.serverdst, fname),
         )
 
@@ -480,7 +480,7 @@ def stage_server_file(
             batools.build.filter_server_config(str(projroot), infilename),
         )
 
-    elif basename == 'ballisticacore_server.py':
+    elif basename == 'ballisticakit_server.py':
         # Run Python in opt mode for release builds.
         with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
@@ -497,7 +497,7 @@ def stage_server_file(
         with open(infilename, encoding='utf-8') as infile:
             readme = infile.read()
         _write_if_changed(outfilename, readme)
-    elif basename == 'launch_ballisticacore_server.bat':
+    elif basename == 'launch_ballisticakit_server.bat':
         # Run Python in opt mode for release builds.
         with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
@@ -510,15 +510,15 @@ def stage_server_file(
             )
             lines[2] = replace_exact(
                 lines[2],
-                'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python.exe -O ballisticacore_server.py',
+                'dist\\\\python.exe ballisticakit_server.py',
+                'dist\\\\python.exe -O ballisticakit_server.py',
             )
         else:
             # In debug mode we use the bundled debug interpreter.
             lines[2] = replace_exact(
                 lines[2],
-                'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python_d.exe ballisticacore_server.py',
+                'dist\\\\python.exe ballisticakit_server.py',
+                'dist\\\\python_d.exe ballisticakit_server.py',
             )
 
         _write_if_changed(outfilename, '\n'.join(lines) + '\n')

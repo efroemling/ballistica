@@ -1,0 +1,7 @@
+# To configure your server, create a config.yaml file in the same directory
+# as the ballisticakit_server script. The config_template.yaml file can be
+# copied or renamed as a convenient starting point.
+
+# Uncomment any of these values to override defaults.
+
+# __CONFIG_TEMPLATE_VALUES__

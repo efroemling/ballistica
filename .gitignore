@@ -57,7 +57,6 @@ gen/
 
 # ew - want to ignore libs built by NDK but not a few specific others..
 libs/
-!**/GameCircleSDK/libs
 !**/PlatformSDK/Android/libs
 
 # Visual Studio
@@ -81,31 +80,19 @@ libs/
 !pythonw_d.exe
 !**/OculusSDK/Tools/**/*.exe
 
-# Note: specifying exact Debug/Release dirs for now; we wind up ignoring
-# some files under LibOVR if we try to glob these together.
-ballisticacore-windows/Debug
-ballisticacore-windows/Release
-ballisticacore-windows/BallisticaCore/Debug
-ballisticacore-windows/BallisticaCore/Release
-ballisticacore-windows/BallisticaCoreHeadless/Debug
-ballisticacore-windows/BallisticaCoreHeadless/Release
-ballisticacore-windows-oculus/BallisticaCoreVR/Projects/Windows/VS2015/Debug
-ballisticacore-windows-oculus/BallisticaCoreVR/Projects/Windows/VS2015/Release
-
 # Android Studio
 # I'm keeping most IDEA related files out of git and only including gradle stuff;
 # It's nice to be able to cleanly re-import the project.
 # As time goes on, I'm making explicit exceptions for some key files (dictionaries, etc)
 # which are nice to keep around.
-ballisticacore-android/**/*.iml
+ballisticakit-android/**/*.iml
 .gradle
-ballisticacore-android/.idea/*
+ballisticakit-android/.idea/*
 
 # Android Studio Stuff we *DO* want to keep
-!ballisticacore-android/.idea/dictionaries
-!ballisticacore-android/.idea/inspectionProfiles
-!ballisticacore-android/.idea/codeStyles
-
+!ballisticakit-android/.idea/dictionaries
+!ballisticakit-android/.idea/inspectionProfiles
+!ballisticakit-android/.idea/codeStyles
 
 # NDK
 .cxx
@@ -114,31 +101,28 @@ ballisticacore-android/.idea/*
 Thumbs.db
 
 # Asset master source link
-assets/src_master
-
-# Asset build cache
-.assetcache
+src/assets/src_master
 
 # XCode
 xcuserdata/
 
-# Generated sources
-/src/ballistica/generated
-/assets/src/ba_data/python/ba/_generated
-/src/meta/bametainternal/generated
+# Meta-generated sources
+/src/ballistica/mgen
+/src/ballistica/*/mgen
+/src/assets/ba_data/python/*/_mgen
+/src/meta/*/mgen
 
 # Dynamically generated resource files
-/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/vr_icon.png
-/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/vr_icon_background.png
-/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/icon.png
-/ballisticacore-android/BallisticaCore/src/main/res/drawable-*/banner.png
-/ballisticacore-android/BallisticaCore/src/main/res/mipmap-*/ic_launcher*.png
-/ballisticacore-android/BallisticaCore/src/cardboard/res/mipmap-*/ic_launcher*.png
-BallisticaCore.ico
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon iOS.appiconset/icon_*.png
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon macOS.appiconset/icon_*.png
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon - App Store.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image Wide.imageset/*.png
-/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image.imageset/*.png
-
+/ballisticakit-android/BallisticaKit/src/cardboard/res/drawable-*/vr_icon.png
+/ballisticakit-android/BallisticaKit/src/cardboard/res/drawable-*/vr_icon_background.png
+/ballisticakit-android/BallisticaKit/src/cardboard/res/drawable-*/icon.png
+/ballisticakit-android/BallisticaKit/src/main/res/drawable-*/banner.png
+/ballisticakit-android/BallisticaKit/src/main/res/mipmap-*/ic_launcher*.png
+/ballisticakit-android/BallisticaKit/src/cardboard/res/mipmap-*/ic_launcher*.png
+BallisticaKit.ico
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/AppIcon iOS.appiconset/icon_*.png
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/AppIcon macOS.appiconset/icon_*.png
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon - App Store.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image Wide.imageset/*.png
+/ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image.imageset/*.png

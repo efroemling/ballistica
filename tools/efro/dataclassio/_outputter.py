@@ -166,6 +166,7 @@ class _Outputter:
                 )
             return value if self._create else None
 
+        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.
@@ -387,8 +388,9 @@ class _Outputter:
         assert len(childtypes) in (0, 2)
 
         # We treat 'Any' dicts simply as json; we don't do any translating.
+        value_any: Any = value
         if not childtypes or childtypes[0] is typing.Any:
-            if not isinstance(value, dict) or not _is_valid_for_codec(
+            if not isinstance(value_any, dict) or not _is_valid_for_codec(
                 value, self._codec
             ):
                 raise TypeError(

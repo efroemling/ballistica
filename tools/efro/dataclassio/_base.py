@@ -152,7 +152,6 @@ class IOAttrs:
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
     ):
-
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
         cls = type(self)
@@ -167,7 +166,6 @@ class IOAttrs:
         if whole_minutes != cls.whole_minutes:
             self.whole_minutes = whole_minutes
         if soft_default is not cls.soft_default:
-
             # Do what dataclasses does with its default types and
             # tell the user to use factory for mutable ones.
             if isinstance(soft_default, (list, dict, set)):

@@ -27,7 +27,6 @@ def _parse_lprop_file(local_properties_path: str) -> str:
 
 
 def _gen_lprop_file(local_properties_path: str) -> str:
-
     os.makedirs(os.path.dirname(local_properties_path), exist_ok=True)
 
     # Ok, we've got no local.properties file; attempt to find
@@ -101,7 +100,7 @@ def run(projroot: str, args: list[str]) -> None:
     # In all cases we make sure there's a local.properties in our android
     # dir that contains valid sdk path.  If not, we attempt to create it.
     local_properties_path = os.path.join(
-        projroot, 'ballisticacore-android', 'local.properties'
+        projroot, 'ballisticakit-android', 'local.properties'
     )
     if os.path.isfile(local_properties_path):
         sdk_dir = _parse_lprop_file(local_properties_path)
@@ -138,7 +137,7 @@ def run(projroot: str, args: list[str]) -> None:
     # as external python builds still ask for this. So now we just pull it from
     # the project gradle file where we set it explicitly.
     if command == 'get-ndk-path':
-        gradlepath = Path(projroot, 'ballisticacore-android/build.gradle')
+        gradlepath = Path(projroot, 'ballisticakit-android/build.gradle')
         with gradlepath.open(encoding='utf-8') as infile:
             lines = [
                 l

@@ -45,7 +45,9 @@ class LocalConfig:
     sftp_dir: str
 
 
-def push_ipa(root: pathlib.Path, modename: str) -> None:
+def push_ipa(
+    root: pathlib.Path, modename: str, signing_config: str | None
+) -> None:
     """Construct ios IPA and push it to staging server for device testing.
 
     This takes some shortcuts to minimize turnaround time;
@@ -54,21 +56,21 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
     The use case for this is quick build iteration on a device
     that is not physically near the build machine.
     """
-    from efrotools.xcode import project_build_path
+    from efrotools.xcodebuild import project_build_path
 
     # Load both the local and project config data.
     cfg = Config(**getconfig(root)['push_ipa_config'])
     lcfg = LocalConfig(**getlocalconfig(root)['push_ipa_local_config'])
 
     if modename not in MODES:
-        raise Exception('invalid mode: "' + str(modename) + '"')
+        raise RuntimeError(f'invalid mode: "{modename}"')
     mode = MODES[modename]
 
     xcprojpath = pathlib.Path(root, cfg.projectpath)
     app_dir = project_build_path(
         projroot=str(root),
         project_path=str(xcprojpath),
-        scheme='BallisticaCore iOS Legacy',
+        scheme='BallisticaKit iOS Legacy',
         configuration=mode['configuration'],
         executable=False,
     )
@@ -84,12 +86,12 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
 
     # Inject our latest build into an existing xcarchive (creating if needed).
     archivepath = _add_build_to_xcarchive(
-        workdir, xcprojpath, built_app_path, cfg
+        workdir, xcprojpath, built_app_path, cfg, signing_config
     )
 
     # Export an IPA from said xcarchive.
     ipa_path = _export_ipa_from_xcarchive(
-        archivepath, exportoptionspath, ipa_dir_path, cfg
+        archivepath, exportoptionspath, ipa_dir_path, cfg, signing_config
     )
 
     # And lastly sync said IPA up to our staging server.
@@ -115,6 +117,7 @@ def _add_build_to_xcarchive(
     xcprojpath: pathlib.Path,
     built_app_path: pathlib.Path,
     cfg: Config,
+    signing_config: str | None,
 ) -> pathlib.Path:
     archivepathbase = pathlib.Path(workdir, cfg.archive_name)
     archivepath = pathlib.Path(workdir, cfg.archive_name + '.xcarchive')
@@ -124,6 +127,7 @@ def _add_build_to_xcarchive(
         print('Base archive not found; doing full build (can take a while)...')
         sys.stdout.flush()
         args = [
+            'tools/pcommand',
             'xcodebuild',
             'archive',
             '-project',
@@ -136,6 +140,9 @@ def _add_build_to_xcarchive(
             str(archivepathbase),
             '-allowProvisioningUpdates',
         ]
+        if signing_config is not None:
+            args += ['-signingconfig', signing_config]
+
         subprocess.run(args, check=True, capture_output=False)
 
     # Now copy our just-built app into the archive.
@@ -154,6 +161,7 @@ def _export_ipa_from_xcarchive(
     exportoptionspath: pathlib.Path,
     ipa_dir_path: pathlib.Path,
     cfg: Config,
+    signing_config: str | None,
 ) -> pathlib.Path:
     import textwrap
 
@@ -188,6 +196,7 @@ def _export_ipa_from_xcarchive(
 
     sys.stdout.flush()
     args = [
+        'tools/pcommand',
         'xcodebuild',
         '-allowProvisioningUpdates',
         '-exportArchive',
@@ -198,6 +207,8 @@ def _export_ipa_from_xcarchive(
         '-exportPath',
         str(ipa_dir_path),
     ]
+    if signing_config is not None:
+        args += ['-signingconfig', signing_config]
     try:
         subprocess.run(args, check=True, capture_output=True)
     except Exception:

@@ -106,7 +106,14 @@ def generate(projroot: str) -> None:
         pdoc.render.configure(
             search=True, show_source=True, template_directory=templatesdir
         )
-        pdoc.pdoc('ba', 'bastd', output_directory=outdirname)
+        pdoc.pdoc(
+            'babase',
+            'bastd',
+            'baclassic',
+            'bascenev1',
+            'bauiv1',
+            output_directory=outdirname,
+        )
     except Exception as exc:
         import traceback
 

@@ -59,7 +59,7 @@ class DirectoryManifest:
             sha = hashlib.sha256()
             fullfilepath = os.path.join(pathstr, filepath)
             if not os.path.isfile(fullfilepath):
-                raise Exception(f'File not found: "{fullfilepath}"')
+                raise RuntimeError(f'File not found: "{fullfilepath}".')
             with open(fullfilepath, 'rb') as infile:
                 filebytes = infile.read()
                 filesize = len(filebytes)

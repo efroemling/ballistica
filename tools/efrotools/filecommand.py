@@ -77,12 +77,10 @@ class _FileBatchesRun:
             if os.path.isfile(path):
                 self._possibly_add_to_pending_batch(path)
             elif os.path.isdir(path):
-
                 # From os.walk docs: we can prune dirs in-place when
                 # running in top-down mode. We can use this to skip
                 # diving into mac packages.
                 for root, dirs, fnames in os.walk(path, topdown=True):
-
                     # If we find dirs that are actually mac packages, pull
                     # them out of the dir list we'll dive into and pass
                     # them directly to our batch for processing.

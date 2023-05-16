@@ -1,14 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Util to get ballisticacore versions."""
+"""Util to get ballisticakit versions."""
 
 from __future__ import annotations
 
 import os
 from enum import Enum
-from typing import TYPE_CHECKING
-
-from typing_extensions import assert_never
+from typing import TYPE_CHECKING, assert_never
 
 from efro.error import CleanError
 
@@ -46,28 +44,34 @@ def get_current_version() -> tuple[str, int]:
     """Pull current version and build_number from the project."""
     version = None
     build_number = None
-    with open('src/ballistica/ballistica.cc', encoding='utf-8') as infile:
+    with open(
+        'src/ballistica/shared/ballistica.cc', encoding='utf-8'
+    ) as infile:
         lines = infile.readlines()
     for line in lines:
-        if line.startswith('const char* kAppVersion = "'):
+        prefix = 'const char* kEngineVersion = "'
+        suffix = '";\n'
+        if line.startswith(prefix) and line.endswith(suffix):
             if version is not None:
-                raise Exception('found multiple version lines')
-            version = line[27:-3]
-        if line.startswith('const int kAppBuildNumber = '):
+                raise RuntimeError('Found multiple version lines.')
+            version = line.removeprefix(prefix).removesuffix(suffix)
+        prefix = 'const int kEngineBuildNumber = '
+        suffix = ';\n'
+        if line.startswith(prefix) and line.endswith(suffix):
             if build_number is not None:
-                raise Exception('found multiple build number lines')
-            build_number = int(line[28:-2])
+                raise RuntimeError('Found multiple build number lines.')
+            build_number = int(line.removeprefix(prefix).removesuffix(suffix))
     if version is None:
-        raise Exception('version not found')
+        raise RuntimeError('Version not found.')
     if build_number is None:
-        raise Exception('build number not found')
+        raise RuntimeError('Build number not found.')
     return version, build_number
 
 
 def get_current_api_version() -> int:
     """Pull current api version from the project."""
     with open(
-        'assets/src/ba_data/python/ba/_meta.py', encoding='utf-8'
+        'src/assets/ba_data/python/babase/_meta.py', encoding='utf-8'
     ) as infile:
         lines = infile.readlines()
     linestart = 'CURRENT_API_VERSION = '
