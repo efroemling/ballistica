@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2022 Eric Froemling
+// Released under the MIT License. See LICENSE for details.
 
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
 #include "ballistica/base/platform/apple/base_platform_apple.h"

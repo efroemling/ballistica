@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2022 Eric Froemling
+// Released under the MIT License. See LICENSE for details.
 
 #ifndef BALLISTICA_BASE_PLATFORM_APPLE_BASE_PLATFORM_APPLE_H_
 #define BALLISTICA_BASE_PLATFORM_APPLE_BASE_PLATFORM_APPLE_H_
