@@ -174,7 +174,9 @@ void BaseFeatureSet::StartApp() {
   python->OnMainThreadStartApp();
   logic->OnMainThreadStartApp();
   graphics_server->OnMainThreadStartApp();
-  bg_dynamics_server->OnMainThreadStartApp();
+  if (bg_dynamics_server) {
+    bg_dynamics_server->OnMainThreadStartApp();
+  }
   network_writer->OnMainThreadStartApp();
   audio_server->OnMainThreadStartApp();
   assets_server->OnMainThreadStartApp();

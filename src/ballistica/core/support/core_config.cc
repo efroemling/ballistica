@@ -92,7 +92,7 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
   }
 
   // REMOVE ME FOR 1.7.20 FINAL.
-  printf("TEMP: forcing log_boot_process true.\n");
+  printf("TEMP: forcing BA_BOOT_LOG=1 during 1.7.20 development.\n");
   cfg.log_boot_process = true;
 
   try {
