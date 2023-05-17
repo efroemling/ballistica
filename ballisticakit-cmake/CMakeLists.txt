@@ -753,7 +753,7 @@ target_include_directories(ballisticakit PRIVATE
   )
 
 target_link_libraries(ballisticakit PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticakit_internal.a ode pthread ${Python_LIBRARIES}
+  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
 
 # Hack for building on rpi (might be due to my manually built Python 3.8)

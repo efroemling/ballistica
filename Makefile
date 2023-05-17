@@ -238,7 +238,7 @@ prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
 build/prefab/full/mac_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_gui/debug/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/mac_%_gui/debug/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac gui release:
@@ -268,7 +268,7 @@ prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
 build/prefab/full/mac_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_gui/release/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/mac_%_gui/release/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac server debug:
@@ -298,7 +298,7 @@ prefab-mac-arm64-server-debug-build: prereqs assets-cmake \
 build/prefab/full/mac_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_server/debug/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/mac_%_server/debug/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac server release:
@@ -330,7 +330,7 @@ prefab-mac-arm64-server-release-build: prereqs assets-cmake \
 build/prefab/full/mac_%_server/release/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_server/release/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/mac_%_server/release/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux gui debug:
@@ -360,7 +360,7 @@ prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
 build/prefab/full/linux_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_gui/debug/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/linux_%_gui/debug/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux gui release:
@@ -390,7 +390,7 @@ prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
 build/prefab/full/linux_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_gui/release/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/linux_%_gui/release/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux server debug:
@@ -422,7 +422,7 @@ prefab-linux-arm64-server-debug-build: prereqs assets-cmake \
 build/prefab/full/linux_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_server/debug/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/linux_%_server/debug/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux server release:
@@ -454,7 +454,7 @@ prefab-linux-arm64-server-release-build: prereqs assets-cmake \
 build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_server/release/libballisticakit_internal.a: .efrocachemap
+build/prefab/lib/linux_%_server/release/libballistica_plus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows gui debug:
@@ -474,10 +474,10 @@ prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
 build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Debug_%/BallisticaKitGenericInternal.lib: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Debug_%/BallisticaKitGenericInternal.pdb: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows gui release:
@@ -498,10 +498,10 @@ build/prefab/full/windows_x86_gui/release
 build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Release_%/BallisticaKitGenericInternal.lib: .efrocachemap
+build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Release_%/BallisticaKitGenericInternal.pdb: .efrocachemap
+build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows server debug:
@@ -523,10 +523,10 @@ prefab-windows-x86-server-debug-build: prereqs \
 build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessInternal.lib: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessInternal.pdb: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows server release:
@@ -548,10 +548,10 @@ prefab-windows-x86-server-release-build: prereqs \
 build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Release_%/BallisticaKitHeadlessInternal.lib: .efrocachemap
+build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/windows/Release_%/BallisticaKitHeadlessInternal.pdb: .efrocachemap
+build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Tell make which of these targets don't represent files.
@@ -933,8 +933,8 @@ windows-release: windows-release-build
 
 # Build a debug windows build (from WSL).
 windows-debug-build: \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericInternal.pdb
+   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -943,8 +943,8 @@ windows-debug-build: \
 
 # Rebuild a debug windows build (from WSL).
 windows-debug-rebuild: \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericInternal.pdb
+   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -953,8 +953,8 @@ windows-debug-rebuild: \
 
 # Build a release windows build (from WSL).
 windows-release-build: \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericInternal.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericInternal.pdb
+   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -963,8 +963,8 @@ windows-release-build: \
 
 # Rebuild a release windows build (from WSL).
 windows-release-rebuild: \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericInternal.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericInternal.pdb
+   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging

@@ -459,7 +459,7 @@ class ProjectUpdater:
 
         src_root = '..\\..\\src'
 
-        public_project = 'Internal' not in os.path.basename(fname)
+        public_project = 'Plus' not in os.path.basename(fname)
 
         all_files = sorted(
             [
@@ -555,10 +555,10 @@ class ProjectUpdater:
         self._update_visual_studio_project('Generic')
         self._update_visual_studio_project('Headless')
         if not self.public:
-            self._update_visual_studio_project('GenericInternal')
-            self._update_visual_studio_project('HeadlessInternal')
+            self._update_visual_studio_project('GenericPlus')
+            self._update_visual_studio_project('HeadlessPlus')
             self._update_visual_studio_project('Oculus')
-            self._update_visual_studio_project('OculusInternal')
+            self._update_visual_studio_project('OculusPlus')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')

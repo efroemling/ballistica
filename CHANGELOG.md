@@ -250,6 +250,11 @@
   future, the default BallisticaKit app may be expanded with editing
   functionality and I feel the name 'Kit' fits better for something used that
   way than 'Core' does.
+- The `ballisticakit_internal` precompiled library has been renamed to
+  `ballistica_plus`. This name better describes what it actually is (basically
+  precompiled native portion of the `plus` feature set). Also by removing the
+  'kit' from the end it will no longer be renamed in spinoff projects, meaning
+  we should be able to recycle the same built libraries in those cases.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

@@ -177,8 +177,8 @@ def win_ci_install_prereqs() -> None:
     # hard-code whatever we need here.
     lib_dbg_win32 = 'build/prefab/lib/windows/Debug_Win32'
     needed_targets: set[str] = {
-        f'{lib_dbg_win32}/BallisticaKitGenericInternal.lib',
-        f'{lib_dbg_win32}/BallisticaKitGenericInternal.pdb',
+        f'{lib_dbg_win32}/BallisticaKitGenericPlus.lib',
+        f'{lib_dbg_win32}/BallisticaKitGenericPlus.pdb',
         'ballisticakit-windows/Generic/BallisticaKit.ico',
     }
 
@@ -245,8 +245,7 @@ def update_cmake_prefab_lib() -> None:
     )
     suffix = '_server' if buildtype == 'server' else '_gui'
     target = (
-        f'build/prefab/lib/{platform}{suffix}/{mode}/'
-        f'libballisticakit_internal.a'
+        f'build/prefab/lib/{platform}{suffix}/{mode}/' f'libballistica_plus.a'
     )
 
     # Build the target and then copy it to dst if it doesn't exist there yet
@@ -254,7 +253,7 @@ def update_cmake_prefab_lib() -> None:
     subprocess.run(['make', target], check=True)
 
     libdir = os.path.join(builddir, 'prefablib')
-    libpath = os.path.join(libdir, 'libballisticakit_internal.a')
+    libpath = os.path.join(libdir, 'libballistica_plus.a')
 
     update = True
     time1 = os.path.getmtime(target)
