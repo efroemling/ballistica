@@ -999,21 +999,22 @@ CMAKE_BUILD_TYPE ?= Debug
 cmake: cmake-build
 	@cd build/cmake/$(CM_BT_LC) && ./ballisticakit
 
-# Build and run the cmake build under lldb.
-# Sets up the ballistica environment to do things like abort() out to the
-# debugger on errors instead of trying to cleanly exit.
-cmake-lldb: cmake-build
-	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
-
-# Build and run the cmake build under lldb.
+# Build and run the cmake build under the gdb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-gdb: cmake-build
 	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
+# Build and run the cmake build under the lldb debugger.
+# Sets up the ballistica environment to do things like abort() out to the
+# debugger on errors instead of trying to cleanly exit.
+cmake-lldb: cmake-build
+	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
+
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
 	@$(STAGE_ASSETS) -cmake build/cmake/$(CM_BT_LC)
+	@tools/pcommand echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)
 
 cmake-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
@@ -1031,6 +1032,8 @@ cmake-server: cmake-server-build
 
 cmake-server-build: assets-cmake resources meta cmake-server-binary
 	@$(STAGE_ASSETS) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
+	@tools/pcommand echo BLD \
+ Server build complete: BLU build/cmake/server-$(CM_BT_LC)
 
 # Build just the headless binary.
 # Note: We currently symlink FOO_headless. In packaged builds we rename it.
