@@ -78,9 +78,9 @@ global. But because `scene_v1` has its own namespace, this global will actually
 be `ballistica::scene_v1::g_base` which will be distinct from any `g_base`
 global held by any other feature-set. So as long as each feature-set correctly
 lives in its own namespace and uses only its own set of globals, things should
-behave pretty much as they do on the Python layer; feature-sets simply import
+work pretty much as they do on the Python layer; feature-sets simply import
 what they use when they themselves are imported and all code throughout the
-feature-set can safely use those globals from that point on.
+feature-set assumes it is safe to use those imported things.
 
 Check out the [Template Feature Set](template_fs) for examples of wrangling
 globals and namespaces to implement a feature-set-front-end in C++.
