@@ -1000,8 +1000,16 @@ cmake: cmake-build
 	@cd build/cmake/$(CM_BT_LC) && ./ballisticakit
 
 # Build and run the cmake build under lldb.
+# Sets up the ballistica environment to do things like abort() out to the
+# debugger on errors instead of trying to cleanly exit.
 cmake-lldb: cmake-build
 	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
+
+# Build and run the cmake build under lldb.
+# Sets up the ballistica environment to do things like abort() out to the
+# debugger on errors instead of trying to cleanly exit.
+cmake-gdb: cmake-build
+	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
