@@ -1,11 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""A simple cloud caching system for making built binaries/assets available.
+"""A simple cloud caching system for making built binaries & assets.
 
-The basic idea here is the ballistica-internal project can flag file targets
-in its Makefiles as 'cached', and the public version of those Makefiles will
-be filtered to contain cache downloads in place of the original build commands.
-Cached files are gathered and uploaded as part of the pubsync process.
+The basic idea here is the ballistica-internal project can flag file
+targets in its Makefiles as 'cached', and the public version of those
+Makefiles will be filtered to contain cache downloads in place of the
+original build commands. Cached files are gathered and uploaded as part
+of the pubsync process.
 """
 
 from __future__ import annotations

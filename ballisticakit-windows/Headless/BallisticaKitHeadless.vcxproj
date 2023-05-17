@@ -181,7 +181,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Library Include="..\..\build\prefab\lib\windows\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
+    <Library Include="..\..\build\prefab\lib\windows\$(Configuration)_$(Platform)\$(MSBuildProjectName)Plus.lib" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ballistica\base\app\app.cc" />
