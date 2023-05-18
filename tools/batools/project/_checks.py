@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 def _get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
-    return 'Copyright (c) 2011-2022 Eric Froemling'
+    return 'Copyright (c) 2011-2023 Eric Froemling'
 
 
 def check_source_files(self: ProjectUpdater) -> None:
