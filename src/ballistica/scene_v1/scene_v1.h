@@ -320,6 +320,10 @@ class SceneV1FeatureSet : public FeatureSetFrontEnd {
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
 
+  /// Instantiate our FeatureSet if needed and return the single
+  /// instance of it. Basically a Python import statement.
+  static auto Import() -> SceneV1FeatureSet*;
+
   void Reset();
 
   void ResetRandomNames();

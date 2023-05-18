@@ -142,6 +142,13 @@ void SceneV1FeatureSet::ResetRandomNames() {
   random_name_registry_->clear();
 }
 
+auto SceneV1FeatureSet::Import() -> SceneV1FeatureSet* {
+  // Since we provide a native Python module, we piggyback our C++ front-end
+  // on top of that. This way our C++ and Python dependencies are resolved
+  // consistently no matter which side we are imported from.
+  return ImportThroughPythonModule<SceneV1FeatureSet>("_bascenev1");
+}
+
 auto SceneV1FeatureSet::GetRandomName(const std::string& full_name)
     -> std::string {
   assert(g_base->InLogicThread());
