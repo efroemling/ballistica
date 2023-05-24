@@ -29,9 +29,10 @@ class BaseSoftInterface {
   virtual void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                          const std::string& suffix,
                                          bool instant, int* result) = 0;
-  virtual auto CreateFeatureSetData(FeatureSetFrontEnd* featureset)
+  virtual auto CreateFeatureSetData(FeatureSetNativeComponent* featureset)
       -> PyObject* = 0;
-  virtual auto FeatureSetFromData(PyObject* obj) -> FeatureSetFrontEnd* = 0;
+  virtual auto FeatureSetFromData(PyObject* obj)
+      -> FeatureSetNativeComponent* = 0;
   virtual void V1CloudLog(const std::string& msg) = 0;
   virtual void PushConsolePrintCall(const std::string& msg) = 0;
   virtual auto GetPyExceptionType(PyExcType exctype) -> PyObject* = 0;

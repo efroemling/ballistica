@@ -10,10 +10,10 @@ namespace ballistica {
 
 const char* kFeatureSetDataAttrName = "_ba_feature_set_data";
 
-FeatureSetFrontEnd::~FeatureSetFrontEnd() = default;
+FeatureSetNativeComponent::~FeatureSetNativeComponent() = default;
 
-auto FeatureSetFrontEnd::BaseImportThroughPythonModule(const char* modulename)
-    -> FeatureSetFrontEnd* {
+auto FeatureSetNativeComponent::BaseImportThroughPythonModule(
+    const char* modulename) -> FeatureSetNativeComponent* {
   // Our feature-set has an associated Python module, so we want all
   // importing to go through Python. This keeps things consistent no
   // matter whether we are used from C++ or Python. We simply import
@@ -58,7 +58,7 @@ auto FeatureSetFrontEnd::BaseImportThroughPythonModule(const char* modulename)
   return feature_set;
 }
 
-void FeatureSetFrontEnd::StoreOnPythonModule(PyObject* module) {
+void FeatureSetNativeComponent::StoreOnPythonModule(PyObject* module) {
   // We need our feature-set-data class from _babase for this.
   assert(core::g_core);
   auto* basefs = core::g_core->SoftImportBase();

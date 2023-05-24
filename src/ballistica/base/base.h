@@ -597,7 +597,7 @@ extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
-class BaseFeatureSet : public FeatureSetFrontEnd,
+class BaseFeatureSet : public FeatureSetNativeComponent,
                        public core::BaseSoftInterface {
  public:
   /// Instantiates our FeatureSet if needed and returns the single
@@ -660,9 +660,9 @@ class BaseFeatureSet : public FeatureSetFrontEnd,
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,
                                  int* result) override;
-  auto CreateFeatureSetData(FeatureSetFrontEnd* featureset)
+  auto CreateFeatureSetData(FeatureSetNativeComponent* featureset)
       -> PyObject* override;
-  auto FeatureSetFromData(PyObject* obj) -> FeatureSetFrontEnd* override;
+  auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void V1CloudLog(const std::string& msg) override;
   void PushConsolePrintCall(const std::string& msg) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;

@@ -10,13 +10,13 @@
 namespace ballistica::base {
 
 /// A simple Python class we use to hold a pointer to a C++
-/// FeatureSetFrontEnd instance. This allows us to piggyback on Python's import
-/// system in our C++ layer.
+/// FeatureSetNativeComponent instance. This allows us to piggyback on Python's
+/// import system in our C++ layer.
 class PythonClassFeatureSetData : public PythonClass {
  public:
   static void SetupType(PyTypeObject* cls);
   static auto type_name() -> const char*;
-  static auto Create(FeatureSetFrontEnd* feature_set) -> PyObject*;
+  static auto Create(FeatureSetNativeComponent* feature_set) -> PyObject*;
   static auto Check(PyObject* o) -> bool {
     return PyObject_TypeCheck(o, &type_obj);
   }
@@ -31,7 +31,7 @@ class PythonClassFeatureSetData : public PythonClass {
                     PyExcType::kType);
   }
 
-  auto feature_set() const -> FeatureSetFrontEnd* {
+  auto feature_set() const -> FeatureSetNativeComponent* {
     assert(feature_set_);
     return feature_set_;
   }
@@ -43,7 +43,7 @@ class PythonClassFeatureSetData : public PythonClass {
   static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
       -> PyObject*;
   static void tp_dealloc(PythonClassFeatureSetData* self);
-  FeatureSetFrontEnd* feature_set_{};
+  FeatureSetNativeComponent* feature_set_{};
   static auto Play(PythonClassFeatureSetData* self, PyObject* args,
                    PyObject* keywds) -> PyObject*;
 };

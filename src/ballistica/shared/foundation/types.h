@@ -38,7 +38,7 @@ typedef int64_t microsecs_t;
 // to keep compile times down.
 struct cJSON;
 class EventLoop;
-class FeatureSetFrontEnd;
+class FeatureSetNativeComponent;
 class JsonDict;
 class Matrix44f;
 class Object;

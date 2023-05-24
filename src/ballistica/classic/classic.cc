@@ -28,9 +28,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   g_classic = new ClassicFeatureSet();
 
   // Store our C++ front-end with our Python module.
-  // This lets anyone get at us by going through the Python
-  // import system (keeping things nice and consistent between
-  // Python and C++ worlds).
+  // This is what allows others to 'import' our C++ front end.
   g_classic->StoreOnPythonModule(module);
 
   // Import any Python stuff we use into objs_.

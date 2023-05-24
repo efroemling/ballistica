@@ -14,15 +14,15 @@ extern const char* kFeatureSetDataAttrName;
 /// Using this, one can 'import' feature-sets directly in C++ without
 /// worrying about wrangling the Python layer (or whether the feature-set
 /// even has a Python component to it).
-class FeatureSetFrontEnd {
+class FeatureSetNativeComponent {
  public:
-  virtual ~FeatureSetFrontEnd();
+  virtual ~FeatureSetNativeComponent();
 
-  /// FeatureSets with C++ front-ends AND Python binary module components
-  /// should use this during module exec to store themselves with the module.
-  /// Then their Import() method should use ImportThroughPythonModule below
-  /// to fetch the front-end. This keeps the C++ and Python layers nicely
-  /// synced.
+  /// Generally a feature-set's native component is stored in a special
+  /// Python object with a predefined name inside its native Python module.
+  /// This allows native feature set components to 'Import' each other by
+  /// importing each other's native Python modules and looking for said
+  /// special object. This method does that storing.
   void StoreOnPythonModule(PyObject* module);
 
  protected:
@@ -38,7 +38,7 @@ class FeatureSetFrontEnd {
 
  private:
   static auto BaseImportThroughPythonModule(const char* modulename)
-      -> FeatureSetFrontEnd*;
+      -> FeatureSetNativeComponent*;
 };
 
 }  // namespace ballistica

@@ -33,12 +33,13 @@ extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern TemplateFsFeatureSet* g_template_fs;
 
-/// Our C++ front-end to our feature set. This is what other C++
-/// feature-sets can 'Import' from us.
-class TemplateFsFeatureSet : public FeatureSetFrontEnd {
+/// The native C++ portion of our feature set. We can make this available
+/// for other feature sets to 'Import' directly in C++ in addition to
+/// exposing functionality though a Python api.
+class TemplateFsFeatureSet : public FeatureSetNativeComponent {
  public:
-  /// Instantiate our FeatureSet if needed and return the single
-  /// instance of it. Basically a Python import statement.
+  /// Instantiate and return our singleton instance.
+  /// Basically a Python import statement.
   static auto Import() -> TemplateFsFeatureSet*;
 
   /// Called when our binary Python module first gets imported.

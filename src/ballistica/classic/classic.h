@@ -55,7 +55,7 @@ extern ClassicFeatureSet* g_classic;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
-class ClassicFeatureSet : public FeatureSetFrontEnd {
+class ClassicFeatureSet : public FeatureSetNativeComponent {
  public:
   /// Instantiate our FeatureSet if needed and return the single
   /// instance of it. Basically a Python import statement.

@@ -42,7 +42,7 @@ extern UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
-class UIV1FeatureSet : public FeatureSetFrontEnd {
+class UIV1FeatureSet : public FeatureSetNativeComponent {
  public:
   /// Instantiate our FeatureSet if needed and return the single
   /// instance of it. Basically a Python import statement.

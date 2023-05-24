@@ -52,21 +52,22 @@ write `import babase` at the top of your Python module, this is what you are
 doing - you are creating a `babase` global for yourself that you can then use
 from anywhere in your module.
 
-Our analog to Python modules in Ballistica C++ is the `FeatureSetFrontEnd`
-class. Feature-sets can define a subclass of `FeatureSetFrontEnd` which exposes
-some C++ functionality, and other feature-sets can call that class's static
-`Import()` method to get access to a shared singleton instance of that
-front-end. So far this sounds pretty similar to Python modules.
+Our analog to Python modules in Ballistica C++ is the
+`FeatureSetNativeComponent` class. Feature-sets can define a subclass of
+`FeatureSetNativeComponent` which exposes some C++ functionality, and other
+feature-sets can call that class's static `Import()` method to get access to the
+shared single instance of that class. So far this sounds pretty similar to
+Python modules.
 
 Where it breaks down, however, is the concept of module globals - the `babase`
 we imported at the top of our Python script and can then use throughout it. Yes,
 we could create a global `g_base` pointer in C++ for the `BaseFeatureSet` we
 just imported, but then *all* our C++ code can access that global and there's no
 elegant way to ensure it has been imported before being used. Alternately we
-could have *no* globals and just have each `FeatureSetFrontEnd` store pointers
-to any other `FeatureSetFrontEnd` it uses, but then we'd have to be passing
-around, storing, and jumping through tons of feature-set pointers constantly to
-do anything in the engine.
+could have *no* globals and just have each `FeatureSetNativeComponent` store
+pointers to any other `FeatureSetNativeComponent` it uses, but then we'd have to
+be passing around, storing, and jumping through tons of feature-set pointers
+constantly to do anything in the engine.
 
 In the end, the happy-medium solution employed by Ballistica is a combination of
 globals and namespaces. Each feature-set has its own C++ namespace that is

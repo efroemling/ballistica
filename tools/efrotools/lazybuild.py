@@ -306,7 +306,7 @@ class LazyBuildContext:
             if not self.printed_trigger:
                 self.printed_trigger = True
                 print(
-                    f'{Clr.MAG}LazyBuildContext: '
+                    f'{Clr.MAG}Lazybuild: '
                     f'{Clr.BLD}{self.target_name_pretty}{Clr.RST}{Clr.MAG}'
                     f' build triggered by change in '
                     f'{Clr.BLD}{path}{Clr.RST}{Clr.MAG}.{Clr.RST}',

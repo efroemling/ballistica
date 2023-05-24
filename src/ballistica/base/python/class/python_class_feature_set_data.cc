@@ -19,7 +19,7 @@ void PythonClassFeatureSetData::SetupType(PyTypeObject* cls) {
   cls->tp_methods = tp_methods;
 }
 
-auto PythonClassFeatureSetData::Create(FeatureSetFrontEnd* feature_set)
+auto PythonClassFeatureSetData::Create(FeatureSetNativeComponent* feature_set)
     -> PyObject* {
   assert(feature_set);
   assert(TypeIsSetUp(&type_obj));

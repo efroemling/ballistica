@@ -57,12 +57,9 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   // Create our feature-set's C++ front-end.
   assert(g_scene_v1 == nullptr);
   g_scene_v1 = new SceneV1FeatureSet();
-  g_scene_v1->python->AddPythonClasses(module);
 
   // Store our C++ front-end with our Python module.
-  // This lets anyone get at us by going through the Python
-  // import system (keeping things nice and consistent between
-  // Python and C++ worlds).
+  // This is what allows others to 'import' our C++ front end.
   g_scene_v1->StoreOnPythonModule(module);
 
   // Import any Python stuff we use into objs_.
@@ -73,6 +70,9 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   g_base = base::BaseFeatureSet::Import();
   assert(g_classic == nullptr);
   g_classic = classic::ClassicFeatureSet::Import();
+
+  // Define our classes.
+  g_scene_v1->python->AddPythonClasses(module);
 
   g_core->BootLog("_bascenev1 exec end");
 }

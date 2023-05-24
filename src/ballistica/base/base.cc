@@ -89,11 +89,11 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
+  g_core->BootLog("_babase exec begin");
+
   // Want to run this at the last possible moment before spinning up
   // our BaseFeatureSet. This locks in baenv customizations.
   g_core->python->ApplyBaEnvConfig();
-
-  g_core->BootLog("_babase exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_base == nullptr);
@@ -103,25 +103,19 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // know we're now present.
   core::g_base_soft = g_base;
 
+  // Define our classes.
+  // NOTE: Normally we'd define our classes *after* we import stuff
+  // (like a regular Python module generally would) but for now we need
+  // FeatureSetData to exist or no modules can call StoreOnPythonModule
+  // which causes problems so we have to do this early. Maybe can revisit
+  // later when things are more untangled.
   g_base->python->AddPythonClasses(module);
 
   // Store our C++ front-end with our Python module.
-  // This lets anyone get at us by going through the Python
-  // import system (keeping things nice and consistent between
-  // Python and C++ worlds).
+  // This is what allows others to 'import' our C++ front end.
   g_base->StoreOnPythonModule(module);
 
-  // baenv can now feed us logs and run some checks.
-  g_core->python->RunBaEnvOnBaBaseImport();
-
-  // ..and because baenv is now feeding us logs, we can push any logs through
-  // that we've been holding on to.
-  g_core->python->EnablePythonLoggingCalls();
-
   g_base->python->ImportPythonObjs();
-
-  // Read the app config. Should this perhaps go in StartApp or something?
-  g_base->python->ReadConfig();
 
   // Import any other C++ feature-set-front-ends we use.
   // FIXME: neither of these should be here.
@@ -129,6 +123,16 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   g_classic = classic::ClassicFeatureSet::Import();
   assert(g_ui_v1 == nullptr);
   g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
+
+  // let baenv know it can now feed us logs and run some checks.
+  g_core->python->RunBaEnvOnBaBaseImport();
+
+  // ..and because baenv is now feeding us logs, we can push any logs through
+  // that we've been holding on to.
+  g_core->python->EnablePythonLoggingCalls();
+
+  // Read the app config. Should this perhaps go in StartApp or something?
+  g_base->python->ReadConfig();
 
   // Marker we pop down at the very end so other modules can run sanity
   // checks to make sure we aren't importing them reciprocally when they
@@ -285,12 +289,13 @@ void BaseFeatureSet::PlusDirectSendV1CloudLogs(const std::string& prefix,
   }
 }
 
-auto BaseFeatureSet::CreateFeatureSetData(FeatureSetFrontEnd* featureset)
+auto BaseFeatureSet::CreateFeatureSetData(FeatureSetNativeComponent* featureset)
     -> PyObject* {
   return PythonClassFeatureSetData::Create(featureset);
 }
 
-auto BaseFeatureSet::FeatureSetFromData(PyObject* obj) -> FeatureSetFrontEnd* {
+auto BaseFeatureSet::FeatureSetFromData(PyObject* obj)
+    -> FeatureSetNativeComponent* {
   if (!PythonClassFeatureSetData::Check(obj)) {
     FatalError("Module FeatureSetData attr is an incorrect type.");
   }
