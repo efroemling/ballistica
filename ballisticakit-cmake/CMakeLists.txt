@@ -641,8 +641,8 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.h
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_front_end.cc
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_front_end.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/logging.cc

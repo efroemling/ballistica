@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_FRONT_END_H_
-#define BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_FRONT_END_H_
+#ifndef BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_NATIVE_COMPONENT_H_
+#define BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_NATIVE_COMPONENT_H_
 
 #include "ballistica/core/core.h"
 #include "ballistica/shared/ballistica.h"
@@ -43,4 +43,4 @@ class FeatureSetNativeComponent {
 
 }  // namespace ballistica
 
-#endif  // BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_FRONT_END_H_
+#endif  // BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_NATIVE_COMPONENT_H_

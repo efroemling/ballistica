@@ -1330,10 +1330,10 @@
     <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error.h">
       <Filter>ballistica\shared\foundation</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.cc">
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.cc">
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.h">
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.h">
       <Filter>ballistica\shared\foundation</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc">

@@ -632,8 +632,8 @@
     <ClInclude Include="..\..\src\ballistica\shared\foundation\exception.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error.h" />
-    <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.cc" />
-    <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_front_end.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\inline.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\logging.cc" />

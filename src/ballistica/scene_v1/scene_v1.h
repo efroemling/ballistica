@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "ballistica/shared/ballistica.h"
-#include "ballistica/shared/foundation/feature_set_front_end.h"
+#include "ballistica/shared/foundation/feature_set_native_component.h"
 #include "ballistica/shared/python/python_ref.h"
 
 // Common header that most everything using our feature-set should include.

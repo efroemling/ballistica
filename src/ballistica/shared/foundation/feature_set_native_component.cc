@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/shared/foundation/feature_set_front_end.h"
+#include "ballistica/shared/foundation/feature_set_native_component.h"
 
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python.h"

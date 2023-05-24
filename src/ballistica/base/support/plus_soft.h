@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "ballistica/shared/ballistica.h"
-#include "ballistica/shared/foundation/feature_set_front_end.h"
+#include "ballistica/shared/foundation/feature_set_native_component.h"
 
 namespace ballistica::base {
 

@@ -7,7 +7,7 @@
 #include <string>
 
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/feature_set_front_end.h"
+#include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
