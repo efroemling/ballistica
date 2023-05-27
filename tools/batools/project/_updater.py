@@ -312,7 +312,10 @@ class ProjectUpdater:
                 )
 
             for i, change in enumerate(auto_changes):
-                print(f'{Clr.BLU}Correcting file: {change[0]}{Clr.RST}')
+                print(
+                    f'{Clr.BLU}{Clr.BLD}Correcting'
+                    f' {change[0]} line {change[1].line_number+1}{Clr.RST}'
+                )
                 with open(
                     os.path.join(self.projroot, change[0]), encoding='utf-8'
                 ) as infile:

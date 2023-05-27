@@ -239,7 +239,7 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
           // Run this with an empty context by default, or foreground if
           // requested.
           ScopedSetContext ssc(other_thread_use_fg_context
-                                   ? g_base->app_mode->GetForegroundContext()
+                                   ? g_base->app_mode()->GetForegroundContext()
                                    : ContextRef(nullptr));
 
           PythonRef(call_obj, PythonRef::kSteal).Call();
@@ -1243,6 +1243,28 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
     "(Used to determine whether the game should avoid playing its own)",
 };
 
+// -------------------------------- exec_arg -----------------------------------
+
+static auto PyExecArg(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_core->core_config().exec_command.has_value()) {
+    return PyUnicode_FromString(g_core->core_config().exec_command->c_str());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyExecArgDef = {
+    "exec_arg",              // name
+    (PyCFunction)PyExecArg,  // method
+    METH_NOARGS,             // flags
+
+    "exec_arg() -> str | None\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1281,6 +1303,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
       PyBootLogDef,
+      PyExecArgDef,
   };
 }
 

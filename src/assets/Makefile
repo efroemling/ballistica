@@ -139,6 +139,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_app.py \
   $(BUILD_DIR)/ba_data/python/babase/_appcomponent.py \
   $(BUILD_DIR)/ba_data/python/babase/_appconfig.py \
+  $(BUILD_DIR)/ba_data/python/babase/_appintent.py \
+  $(BUILD_DIR)/ba_data/python/babase/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/babase/_appmodeselector.py \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
@@ -188,6 +191,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_appmode.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopsession.py \
@@ -405,6 +409,9 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_app.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appcomponent.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appconfig.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appintent.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmode.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmodeselector.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-311.opt-1.pyc \
@@ -454,6 +461,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_appmode.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopsession.cpython-311.opt-1.pyc \

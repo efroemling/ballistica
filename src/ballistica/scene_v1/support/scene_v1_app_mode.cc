@@ -315,7 +315,7 @@ auto SceneV1AppMode::GetActive() -> SceneV1AppMode* {
   // keep in mind that app-mode may change under them.
 
   // Otherwise return our singleton only if it is current.
-  if (g_base->app_mode == g_scene_v1_app_mode) {
+  if (g_base->app_mode() == g_scene_v1_app_mode) {
     return g_scene_v1_app_mode;
   }
   return nullptr;
@@ -1389,7 +1389,7 @@ void SceneV1AppMode::HandleGameQuery(const char* buffer, size_t size,
   if (size == 5) {
     // If we're already in a party, don't advertise since they
     // wouldn't be able to join us anyway.
-    if (g_base->app_mode->HasConnectionToHost()) {
+    if (g_base->app_mode()->HasConnectionToHost()) {
       return;
     }
 

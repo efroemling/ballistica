@@ -234,7 +234,7 @@ auto NetworkReader::RunThread() -> int {
                   memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
                   s_buffer[rresult2 - 1] = 0;  // terminate string
                   std::string response =
-                      g_base->app_mode->HandleJSONPing(s_buffer.data());
+                      g_base->app_mode()->HandleJSONPing(s_buffer.data());
                   if (!response.empty()) {
                     std::vector<char> msg(1 + response.size());
                     msg[0] = BA_PACKET_JSON_PONG;
@@ -302,7 +302,7 @@ auto NetworkReader::RunThread() -> int {
               }
 
               case BA_PACKET_HOST_QUERY: {
-                g_base->app_mode->HandleGameQuery(buffer, rresult2, &from);
+                g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
 
                 // HandleGameQuery(buffer, rresult2, &from);
                 break;
@@ -338,8 +338,9 @@ void NetworkReader::PushIncomingUDPPacketCall(const std::vector<uint8_t>& data,
     return;
   }
 
-  g_base->logic->event_loop()->PushCall(
-      [data, addr] { g_base->app_mode->HandleIncomingUDPPacket(data, addr); });
+  g_base->logic->event_loop()->PushCall([data, addr] {
+    g_base->app_mode()->HandleIncomingUDPPacket(data, addr);
+  });
 }
 
 void NetworkReader::OpenSockets() {

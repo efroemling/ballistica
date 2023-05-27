@@ -895,7 +895,7 @@ void RootWidget::UpdateForFocusedWindow() {
 void RootWidget::UpdateForFocusedWindow(Widget* widget) {
   // Take note if the current session is the main menu; we do a few things
   // differently there.
-  in_main_menu_ = g_base->app_mode->InMainMenu();
+  in_main_menu_ = g_base->app_mode()->InMainMenu();
 
   if (widget == nullptr) {
     toolbar_visibility_ = ToolbarVisibility::kInGame;

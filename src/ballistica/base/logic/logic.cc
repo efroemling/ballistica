@@ -63,7 +63,7 @@ void Logic::OnAppStart() {
     g_base->input->OnAppStart();
     g_base->ui->OnAppStart();
     g_core->platform->OnAppStart();
-    g_base->app_mode->OnAppStart();
+    g_base->app_mode()->OnAppStart();
     if (g_base->HavePlus()) {
       g_base->Plus()->OnAppStart();
     }
@@ -91,7 +91,7 @@ void Logic::OnAppPause() {
   if (g_base->HavePlus()) {
     g_base->Plus()->OnAppPause();
   }
-  g_base->app_mode->OnAppPause();
+  g_base->app_mode()->OnAppPause();
   g_core->platform->OnAppPause();
   g_base->ui->OnAppPause();
   g_base->input->OnAppPause();
@@ -108,7 +108,7 @@ void Logic::OnAppResume() {
   g_base->input->OnAppResume();
   g_base->ui->OnAppResume();
   g_core->platform->OnAppResume();
-  g_base->app_mode->OnAppResume();
+  g_base->app_mode()->OnAppResume();
   if (g_base->HavePlus()) {
     g_base->Plus()->OnAppResume();
   }
@@ -127,7 +127,7 @@ void Logic::OnAppShutdown() {
   if (g_base->HavePlus()) {
     g_base->Plus()->OnAppShutdown();
   }
-  g_base->app_mode->OnAppShutdown();
+  g_base->app_mode()->OnAppShutdown();
   g_core->platform->OnAppResume();
   g_base->ui->OnAppShutdown();
   g_base->input->OnAppShutdown();
@@ -152,7 +152,7 @@ void Logic::ApplyAppConfig() {
   g_base->input->ApplyAppConfig();
   g_base->ui->ApplyAppConfig();
   g_core->platform->ApplyAppConfig();
-  g_base->app_mode->ApplyAppConfig();
+  g_base->app_mode()->ApplyAppConfig();
   if (g_base->HavePlus()) {
     g_base->Plus()->ApplyAppConfig();
   }
@@ -203,7 +203,7 @@ void Logic::OnInitialScreenCreated() {
         1000 / 10, true, NewLambdaRunnable([this] { StepDisplayTime(); }));
   }
   // Let our initial app-mode know it has become active.
-  g_base->app_mode->OnActivate();
+  g_base->app_mode()->OnActivate();
 
   // Let the Python layer know what's up. It will probably flip to
   // 'Launching' state.
@@ -224,6 +224,13 @@ void Logic::CompleteAppBootstrapping() {
 
   g_core->BootLog("app bootstrapping complete");
 
+  // Reset our various subsystems to a default state.
+  g_base->ui->Reset();
+  g_base->input->Reset();
+  g_base->graphics->Reset();
+  g_base->python->Reset();
+  g_base->audio->Reset();
+
   // Let Python know we're done bootstrapping so it can flip the app
   // into the 'launching' state.
   g_base->python->objs()
@@ -232,7 +239,7 @@ void Logic::CompleteAppBootstrapping() {
   app_bootstrapping_complete_ = true;
 
   // TODO(ericf): update this for the shiny new app-mode world.
-  if (explicit_bool(true)) {
+  if (explicit_bool(false)) {
     // If we were passed launch command args, run them.
     if (g_core->core_config().exec_command.has_value()) {
       bool success = PythonCommand(*g_core->core_config().exec_command,
@@ -248,6 +255,8 @@ void Logic::CompleteAppBootstrapping() {
     if (!appmode->GetForegroundSession()) {
       appmode->RunMainMenu();
     }
+  } else {
+    // Reset various subsystems
   }
 
   UpdatePendingWorkTimer();
@@ -267,7 +276,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   g_base->input->OnScreenSizeChange();
   g_base->ui->OnScreenSizeChange();
   g_core->platform->OnScreenSizeChange();
-  g_base->app_mode->OnScreenSizeChange();
+  g_base->app_mode()->OnScreenSizeChange();
   if (g_base->HavePlus()) {
     g_base->Plus()->OnScreenSizeChange();
   }
@@ -287,7 +296,7 @@ void Logic::StepDisplayTime() {
   g_base->input->StepDisplayTime();
   g_base->ui->StepDisplayTime();
   g_core->platform->StepDisplayTime();
-  g_base->app_mode->StepDisplayTime();
+  g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
     g_base->Plus()->StepDisplayTime();
   }

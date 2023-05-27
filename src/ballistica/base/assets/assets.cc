@@ -1326,7 +1326,7 @@ void Assets::SetLanguageKeys(
   }
 
   // Let some subsystems know that language has changed.
-  g_base->app_mode->LanguageChanged();
+  g_base->app_mode()->LanguageChanged();
   g_base->ui->LanguageChanged();
   g_base->graphics->LanguageChanged();
 }

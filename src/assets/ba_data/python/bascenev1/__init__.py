@@ -36,6 +36,8 @@ from _babase import (
     displaytimer,
     DisplayTimer,
 )
+from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
+from babase._appmode import AppMode
 from babase._error import NotFoundError, NodeNotFoundError, ContextError
 from babase._language import Lstr
 from babase._general import (
@@ -54,7 +56,6 @@ from babase._mgen.enums import (
     UIScale,
     InputType,
 )
-
 
 from _bascenev1 import (
     get_foreground_host_session,
@@ -135,6 +136,7 @@ from _bascenev1 import (
 )
 
 
+from bascenev1._appmode import SceneV1AppMode
 from bascenev1._session import Session
 from bascenev1._map import Map
 from bascenev1._coopsession import CoopSession
@@ -199,11 +201,6 @@ from bascenev1._dependency import (
     DependencySet,
     AssetPackage,
 )
-
-# if TYPE_CHECKING:
-#     from babase._app import App
-
-# app: App
 
 __all__ = [
     'app',
@@ -383,6 +380,11 @@ __all__ = [
     'DisplayTimer',
     'Time',
     'BaseTime',
+    'AppIntent',
+    'AppIntentDefault',
+    'AppIntentExec',
+    'AppMode',
+    'SceneV1AppMode',
 ]
 
 # Sanity check: we want to keep ballistica's dependencies and

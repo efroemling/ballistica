@@ -19,19 +19,21 @@ class AppComponentSubsystem:
     Category: **App Classes**
 
     This subsystem acts as a registry for classes providing particular
-    functionality for the app, and allows plugins or other custom code to
-    easily override said functionality.
+    functionality for the app, and allows plugins or other custom code
+    to easily override said functionality.
 
-    Use babase.app.components to get the single shared instance of this class.
+    Access the single shared instance of this class at
+    babase.app.components.
 
-    The general idea with this setup is that a base-class is defined to
-    provide some functionality and then anyone wanting that functionality
-    uses the getclass() method with that base class to return the current
-    registered implementation. The user should not know or care whether
-    they are getting the base class itself or some other implementation.
+    The general idea with this setup is that a base-class Foo is defined
+    to provide some functionality and then anyone wanting that
+    functionality calls getclass(Foo) to return the current registered
+    implementation. The user should not know or care whether they are
+    getting Foo itself or some subclass of it.
 
     Change-callbacks can also be requested for base classes which will
-    fire in a deferred manner when particular base-classes are overridden.
+    fire in a deferred manner when particular base-classes are
+    overridden.
     """
 
     def __init__(self) -> None:
@@ -45,8 +47,9 @@ class AppComponentSubsystem:
 
         The provided implementation class must be a subclass of baseclass.
         """
-        # Currently limiting this to logic-thread use; can revisit if needed
-        # (would need to guard access to our implementations dict).
+        # Currently limiting this to logic-thread use; can revisit if
+        # needed (would need to guard access to our implementations
+        # dict).
         assert _babase.in_logic_thread()
 
         if not issubclass(implementation, baseclass):
@@ -58,16 +61,17 @@ class AppComponentSubsystem:
         self._implementations[baseclass] = implementation
 
         # If we're the first thing getting dirtied, set up a callback to
-        # clean everything. And add ourself to the dirty list regardless.
+        # clean everything. And add ourself to the dirty list
+        # regardless.
         if not self._dirty_base_classes:
             _babase.pushcall(self._run_change_callbacks)
         self._dirty_base_classes.add(baseclass)
 
     def getclass(self, baseclass: T) -> T:
-        """Given a base-class, return the currently set implementation class.
+        """Given a base-class, return the current implementation class.
 
-        If no custom implementation has been set, the provided base-class
-        is returned.
+        If no custom implementation has been set, the provided
+        base-class is returned.
         """
         assert _babase.in_logic_thread()
 
@@ -77,7 +81,7 @@ class AppComponentSubsystem:
     def register_change_callback(
         self, baseclass: T, callback: Callable[[T], None]
     ) -> None:
-        """Register a callback to fire when a class implementation changes.
+        """Register a callback to fire on class implementation changes.
 
         The callback will be scheduled to run in the logic thread event
         loop. Note that any further setclass calls before the callback

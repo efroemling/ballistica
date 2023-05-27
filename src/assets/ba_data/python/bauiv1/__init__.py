@@ -58,6 +58,8 @@ from _babase import (
 )
 from _babase import screenmessage
 
+from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
+from babase._appmode import AppMode
 from babase._general import Call, WeakCall, AppTime, DisplayTime
 from babase._language import Lstr
 from babase._plugin import PotentialPlugin, Plugin
@@ -201,6 +203,10 @@ __all__ = [
     'displaytimer',
     'DisplayTimer',
     'uibounds',
+    'AppIntent',
+    'AppIntentDefault',
+    'AppIntentExec',
+    'AppMode',
 ]
 
 # Sanity check: we want to keep ballistica's dependencies and

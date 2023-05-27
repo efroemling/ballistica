@@ -995,8 +995,8 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           } else {
             // FIXME: Need a call we can make for this.
             bool do_party_button = false;
-            int party_size = g_base->app_mode->GetPartySize();
-            if (party_size > 1 || g_base->app_mode->HasConnectionToHost()
+            int party_size = g_base->app_mode()->GetPartySize();
+            if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
                 || g_base->ui->root_ui()->always_draw_party_icon()) {
               do_party_button = true;
             }

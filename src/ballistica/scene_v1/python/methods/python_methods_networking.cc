@@ -660,7 +660,7 @@ static PyMethodDef PyEndHostScanningDef = {
 static auto PyHaveConnectedClients(PyObject* self, PyObject* args,
                                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_base->app_mode->HasConnectionToClients()) {
+  if (g_base->app_mode()->HasConnectionToClients()) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;

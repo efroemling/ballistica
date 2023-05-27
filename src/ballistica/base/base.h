@@ -702,9 +702,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   UI* const ui;
   Utils* const utils;
 
+  auto* console() const { return console_; }
+  auto* app_mode() const { return app_mode_; }
+  void set_app_mode(AppMode* mode);
+
   // Non-const bits (fixme: clean up access to these).
-  AppMode* app_mode;
-  auto* console() { return console_; }
   TouchInput* touch_input{};
 
  private:
@@ -713,6 +715,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void PrintContextForCallableLabel(const char* label);
   void PrintContextUnavailable();
 
+  AppMode* app_mode_;
   Console* console_{};
   std::string console_startup_messages_;
   bool called_start_app_{};

@@ -10,7 +10,7 @@
 namespace ballistica::scene_v1 {
 
 auto ContextRefSceneV1::FromAppForegroundContext() -> ContextRefSceneV1 {
-  auto* c = g_base->app_mode->GetForegroundContext().Get();
+  auto* c = g_base->app_mode()->GetForegroundContext().Get();
   return ContextRefSceneV1(c);
 }
 

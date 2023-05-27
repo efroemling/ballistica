@@ -416,7 +416,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
   }
 
   if (show_ping_) {
-    std::string ping_str = g_base->app_mode->GetPingString();
+    std::string ping_str = g_base->app_mode()->GetPingString();
     float ping{};
     if (!ping_str.empty()) {
       if (ping_str != ping_string_) {
@@ -452,7 +452,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
   }
 
   if (show_net_info_) {
-    auto net_info_str{g_base->app_mode->GetNetworkDebugString()};
+    auto net_info_str{g_base->app_mode()->GetNetworkDebugString()};
     if (!net_info_str.empty()) {
       if (net_info_str != net_info_string_) {
         net_info_string_ = net_info_str;
@@ -908,6 +908,7 @@ void Graphics::AddScreenMessage(const std::string& msg, const Vector3f& color,
 }
 
 void Graphics::Reset() {
+  assert(g_base->InLogicThread());
   fade_ = 0;
   fade_start_ = 0;
 
@@ -1075,7 +1076,7 @@ void Graphics::DrawWorld(FrameDef* frame_def) {
 
   // Draw all session contents (nodes, etc.)
   overlay_node_z_depth_ = -0.95f;
-  g_base->app_mode->DrawWorld(frame_def);
+  g_base->app_mode()->DrawWorld(frame_def);
   g_base->bg_dynamics->Draw(frame_def);
 
   // Lastly draw any blotches that have been building up.
@@ -1131,7 +1132,7 @@ void Graphics::BuildAndPushFrameDef() {
   // wants to know.
   if (last_frame_def_graphics_quality_ != frame_def->quality()) {
     last_frame_def_graphics_quality_ = frame_def->quality();
-    g_base->app_mode->GraphicsQualityChanged(frame_def->quality());
+    g_base->app_mode()->GraphicsQualityChanged(frame_def->quality());
   }
 
   ApplyCamera(frame_def);
@@ -1142,7 +1143,7 @@ void Graphics::BuildAndPushFrameDef() {
   } else {
     // Ok, we're drawing a real frame.
 
-    bool session_fills_screen = g_base->app_mode->DoesWorldFillScreen();
+    bool session_fills_screen = g_base->app_mode()->DoesWorldFillScreen();
 
     frame_def->set_needs_clear(!session_fills_screen);
     DrawWorld(frame_def);

@@ -266,7 +266,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
   // Let the current app-mode assign it a delegate.
   auto delegate = Object::CompleteDeferred(
-      g_base->app_mode->CreateInputDeviceDelegate(device));
+      g_base->app_mode()->CreateInputDeviceDelegate(device));
   device->set_delegate(delegate);
   delegate->set_input_device(device);
 
@@ -980,12 +980,12 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
       case SDLK_EQUALS:
       case SDLK_PLUS:
-        g_base->app_mode->ChangeGameSpeed(1);
+        g_base->app_mode()->ChangeGameSpeed(1);
         handled = true;
         break;
 
       case SDLK_MINUS:
-        g_base->app_mode->ChangeGameSpeed(-1);
+        g_base->app_mode()->ChangeGameSpeed(-1);
         handled = true;
         break;
 

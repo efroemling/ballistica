@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 
+from efro.call import tpartial
 import _babase
 from babase._language import LanguageSubsystem
 from babase._plugin import PluginSubsystem
@@ -16,22 +17,28 @@ from babase._meta import MetadataSubsystem
 from babase._net import NetworkSubsystem
 from babase._workspace import WorkspaceSubsystem
 from babase._appcomponent import AppComponentSubsystem
+from babase._appmodeselector import AppModeSelector
+from babase._appintent import AppIntentDefault, AppIntentExec
 
 if TYPE_CHECKING:
-    from typing import Any
     import asyncio
+    from typing import Any, Callable
+    from concurrent.futures import Future
 
     from efro.log import LogHandler
     import babase
     from babase._cloud import CloudSubsystem
     from babase._accountv2 import AccountV2Subsystem
     from babase._apputils import AppHealthMonitor
+    from babase._appintent import AppIntent
+    from babase._appmode import AppMode
 
-    # Would autogen this begin
+    # WOULD-AUTOGEN-BEGIN
+
     from baclassic import ClassicSubsystem
     from baplus import PlusSubsystem
 
-    # Would autogen this end
+    # WOULD-AUTOGEN-END
 
 
 class App:
@@ -275,7 +282,15 @@ class App:
         self.lang = LanguageSubsystem()
         self.net = NetworkSubsystem()
         self.workspaces = WorkspaceSubsystem()
-        # self._classic: ClassicSubsystem | None = None
+        self._pending_intent: AppIntent | None = None
+        self._intent: AppIntent | None = None
+        self._mode: AppMode | None = None
+
+        # Controls which app-modes we use for handling given app-intents.
+        # Plugins can override this to change high level app behavior and
+        # spinoff projects can change the default implementation for the
+        # same effect.
+        self.mode_selector: AppModeSelector | None = None
 
         self._asyncio_timer: babase.AppTimer | None = None
 
@@ -298,11 +313,28 @@ class App:
         # if classic_subsystem_type is not None:
         #     self._classic = classic_subsystem_type()
 
-    # Would autogen this begin
+    def _threadpool_no_wait_done(self, fut: Future) -> None:
+        try:
+            fut.result()
+        except Exception:
+            logging.exception(
+                'Error in work submitted via threadpool_submit_no_wait()'
+            )
+
+    def threadpool_submit_no_wait(self, call: Callable[[], Any]) -> None:
+        """Submit work to our threadpool and log any errors.
+
+        Use this when you want to run something asynchronously but don't
+        intend to call result() on it to handle errors/etc.
+        """
+        fut = self.threadpool.submit(call)
+        fut.add_done_callback(self._threadpool_no_wait_done)
+
+    # WOULD-AUTOGEN-BEGIN
 
     @cached_property
     def classic(self) -> ClassicSubsystem | None:
-        """Our classic subsystem."""
+        """Our classic subsystem (if available)."""
 
         try:
             from baclassic import ClassicSubsystem
@@ -316,7 +348,7 @@ class App:
 
     @cached_property
     def plus(self) -> PlusSubsystem | None:
-        """Our plus subsystem."""
+        """Our plus subsystem (if available)."""
 
         try:
             from baplus import PlusSubsystem
@@ -328,7 +360,96 @@ class App:
             logging.exception('Error importing baplus')
             return None
 
-    # Would autogen this begin
+    # WOULD-AUTOGEN-END
+
+    def set_intent(self, intent: AppIntent) -> None:
+        """Set the intent for the app.
+
+        Intent defines what the app is trying to do at a given time.
+        This call is asynchronous; the intent switch will happen in the
+        logic thread in the near future. If set_intent is
+        called repeatedly before the change takes place, the last intent
+        set will be used.
+        """
+
+        # Mark this one as pending. We do this synchronously so that the
+        # last one marked actually takes effect if there is overlap
+        # (doing this in the bg thread could result in race conditions).
+        self._pending_intent = intent
+
+        # Do the actual work of calcing our app-mode/etc. in a bg thread
+        # since it may block for a moment to load modules/etc.
+        self.threadpool_submit_no_wait(tpartial(self._set_intent, intent))
+
+    def _set_intent(self, intent: AppIntent) -> None:
+        # This should be running in a bg thread.
+        assert not _babase.in_logic_thread()
+        try:
+            # Ask the selector what app-mode to use for this intent.
+            if self.mode_selector is None:
+                raise RuntimeError('No AppModeSelector set.')
+            modetype = self.mode_selector.app_mode_for_intent(intent)
+
+            # Make sure the app-mode they return *actually* supports the
+            # intent.
+            if not modetype.supports_intent(intent):
+                raise RuntimeError(
+                    f'Intent {intent} is not supported by AppMode class'
+                    f' {modetype}'
+                )
+
+            # Kick back to the logic thread to apply.
+            mode = modetype()
+            _babase.pushcall(
+                tpartial(self._apply_intent, intent, mode),
+                from_other_thread=True,
+            )
+        except Exception:
+            logging.exception('Error setting app intent to %s.', intent)
+            _babase.pushcall(
+                tpartial(self._apply_intent_error, intent),
+                from_other_thread=True,
+            )
+
+    def _apply_intent(self, intent: AppIntent, mode: AppMode) -> None:
+        assert _babase.in_logic_thread()
+
+        # ONLY apply this intent if it is still the most recent one
+        # submitted.
+        if intent is not self._pending_intent:
+            return
+
+        # If the app-mode for this intent is different than the active
+        # one, switch.
+        # pylint: disable=unidiomatic-typecheck
+        if type(mode) is not type(self._mode):
+            if self._mode is not None:
+                try:
+                    self._mode.on_deactivate()
+                except Exception:
+                    logging.exception(
+                        'Error deactivating app-mode %s.', self._mode
+                    )
+            self._mode = mode
+            try:
+                mode.on_activate()
+            except Exception:
+                # Hmm; what should we do in this case?...
+                logging.exception('Error activating app-mode %s.', mode)
+
+        try:
+            mode.handle_intent(intent)
+        except Exception:
+            logging.exception(
+                'Error handling intent %s in app-mode %s.', intent, mode
+            )
+
+    def _apply_intent_error(self, intent: AppIntent) -> None:
+        from babase._language import Lstr
+
+        del intent  # Unused.
+        _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
+        _babase.getsimplesound('error').play()
 
     def run(self) -> None:
         """Run the app to completion.
@@ -381,11 +502,39 @@ class App:
 
     def on_app_loading(self) -> None:
         """Called when initially entering the loading state."""
+        assert _babase.in_logic_thread()
+
+    class DefaultAppModeSelector(AppModeSelector):
+        """Decides which app modes to use to handle intents."""
+
+        def app_mode_for_intent(self, intent: AppIntent) -> type[AppMode]:
+            # WOULD-AUTOGEN-BEGIN
+
+            import bascenev1
+
+            return bascenev1.SceneV1AppMode
+
+            # WOULD-AUTOGEN-END
 
     def on_app_running(self) -> None:
         """Called when initially entering the running state."""
+        assert _babase.in_logic_thread()
+
+        # Set a default app-mode-selector. Plugins can then override
+        # this if they want.
+        self.mode_selector = self.DefaultAppModeSelector()
 
         self.plugins.on_app_running()
+
+        # If 'exec' code was provided to the app, always kick that off
+        # here.
+        exec_cmd = _babase.exec_arg()
+        if exec_cmd is not None:
+            self.set_intent(AppIntentExec(exec_cmd))
+        elif self._pending_intent is None:
+            # Otherwise tell the app to do its default thing *only* if a
+            # plugin hasn't already told it to do something.
+            self.set_intent(AppIntentDefault())
 
     def on_app_bootstrapping_complete(self) -> None:
         """Called by the C++ layer once its ready to rock."""

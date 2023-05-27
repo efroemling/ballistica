@@ -71,8 +71,8 @@ BaseFeatureSet::BaseFeatureSet()
       text_graphics{new TextGraphics()},
       audio_server{new AudioServer()},
       assets{new Assets()},
-      app_mode{TempSV1CreateAppMode()},
-      // app_mode{AppModeEmpty::GetSingleton()},
+      // app_mode{TempSV1CreateAppMode()},
+      app_mode_{AppModeEmpty::GetSingleton()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr} {
   // We're a singleton. If there's already one of us, something's wrong.
@@ -200,6 +200,11 @@ void BaseFeatureSet::StartApp() {
   // get the ball rolling.
   logic->event_loop()->PushCall([this] { logic->ApplyAppConfig(); });
   g_core->BootLog("start-app end");
+}
+
+void BaseFeatureSet::set_app_mode(AppMode* mode) {
+  assert(InLogicThread());
+  app_mode_ = mode;
 }
 
 auto BaseFeatureSet::AppManagesEventLoop() -> bool {

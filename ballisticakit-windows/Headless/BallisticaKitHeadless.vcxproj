@@ -394,6 +394,7 @@
     <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call.h" />
     <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call_runnable.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h" />
+    <ClInclude Include="..\..\src\ballistica\base\support\classic_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\context.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc" />

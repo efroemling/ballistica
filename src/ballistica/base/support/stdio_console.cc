@@ -107,7 +107,7 @@ void StdioConsole::OnMainThreadStartApp() {
 void StdioConsole::PushCommand(const std::string& command) {
   g_base->logic->event_loop()->PushCall([command] {
     // These are always run in whichever context is 'visible'.
-    ScopedSetContext ssc(g_base->app_mode->GetForegroundContext());
+    ScopedSetContext ssc(g_base->app_mode()->GetForegroundContext());
     PythonCommand cmd(command, "<stdin>");
     if (!g_core->user_ran_commands) {
       g_core->user_ran_commands = true;

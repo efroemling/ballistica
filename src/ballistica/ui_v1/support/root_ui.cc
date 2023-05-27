@@ -42,8 +42,9 @@ RootUI::~RootUI() = default;
 
 void RootUI::TogglePartyWindowKeyPress() {
   assert(g_base->InLogicThread());
-  if (g_base->app_mode->GetPartySize() > 1
-      || g_base->app_mode->HasConnectionToHost() || always_draw_party_icon()) {
+  if (g_base->app_mode()->GetPartySize() > 1
+      || g_base->app_mode()->HasConnectionToHost()
+      || always_draw_party_icon()) {
     ActivatePartyIcon();
   }
 }
@@ -77,8 +78,8 @@ auto RootUI::HandleMouseButtonDown(float x, float y) -> bool {
   // floats over the top). Party button is to the left of menu button.
   if (explicit_bool(DO_OLD_MENU_PARTY_BUTTONS)) {
     bool party_button_active = (!party_window_open_
-                                && (g_base->app_mode->HasConnectionToClients()
-                                    || g_base->app_mode->HasConnectionToHost()
+                                && (g_base->app_mode()->HasConnectionToClients()
+                                    || g_base->app_mode()->HasConnectionToHost()
                                     || always_draw_party_icon()));
     float party_button_left =
         menu_active ? 2 * menu_button_size_ : menu_button_size_;
@@ -202,17 +203,17 @@ void RootUI::Draw(base::FrameDef* frame_def) {
     // To the left of the menu button, draw our connected-players indicator
     // (this probably shouldn't live here).
     bool draw_connected_players_icon = false;
-    int party_size = g_base->app_mode->GetPartySize();
-    bool is_host = (!g_base->app_mode->HasConnectionToHost());
+    int party_size = g_base->app_mode()->GetPartySize();
+    bool is_host = (!g_base->app_mode()->HasConnectionToHost());
     millisecs_t last_connection_to_client_join_time =
-        g_base->app_mode->LastClientJoinTime();
+        g_base->app_mode()->LastClientJoinTime();
 
     bool show_client_joined =
         (is_host && last_connection_to_client_join_time != 0
          && real_time - last_connection_to_client_join_time < 5000);
 
     if (!party_window_open_
-        && (party_size != 0 || g_base->app_mode->HasConnectionToHost()
+        && (party_size != 0 || g_base->app_mode()->HasConnectionToHost()
             || always_draw_party_icon_)) {
       draw_connected_players_icon = true;
     }
@@ -221,7 +222,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
       // Flash and show a message if we're in the main menu instructing the
       // player to start a game.
       bool flash = false;
-      bool in_main_menu = g_base->app_mode->InMainMenu();
+      bool in_main_menu = g_base->app_mode()->InMainMenu();
 
       if (in_main_menu && party_size > 0 && show_client_joined) flash = true;
 

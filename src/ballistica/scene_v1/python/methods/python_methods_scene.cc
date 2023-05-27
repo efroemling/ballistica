@@ -30,6 +30,7 @@
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::scene_v1 {
 
@@ -1611,6 +1612,109 @@ static PyMethodDef PySetInternalMusicDef = {
     "(internal).",
 };
 
+// --------------------------- app_mode_activate -------------------------------
+
+static auto PyAppModeActivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->set_app_mode(SceneV1AppMode::GetSingleton());
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppModeActivateDef = {
+    "app_mode_activate",             // name
+    (PyCFunction)PyAppModeActivate,  // method
+    METH_NOARGS,                     // flags
+
+    "app_mode_activate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// -------------------------- app_mode_deactivate ------------------------------
+
+static auto PyAppModeDeactivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  // Currently doing nothing.
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppModeDeactivateDef = {
+    "app_mode_deactivate",             // name
+    (PyCFunction)PyAppModeDeactivate,  // method
+    METH_NOARGS,                       // flags
+
+    "app_mode_deactivate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------- handle_app_intent_default ---------------------------
+
+static auto PyHandleAppIntentDefault(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  appmode->RunMainMenu();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHandleAppIntentDefaultDef = {
+    "handle_app_intent_default",            // name
+    (PyCFunction)PyHandleAppIntentDefault,  // method
+    METH_NOARGS,                            // flags
+
+    "handle_app_intent_default() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ handle_app_intent_exec -----------------------------
+
+static auto PyHandleAppIntentExec(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* command;
+  static const char* kwlist[] = {"command", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &command)) {
+    return nullptr;
+  }
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+
+  // Run the command.
+  if (g_core->core_config().exec_command.has_value()) {
+    bool success = PythonCommand(*g_core->core_config().exec_command,
+                                 BA_BUILD_COMMAND_FILENAME)
+                       .Exec(true, nullptr, nullptr);
+    if (!success) {
+      // FIXME: what should we do in this case?
+      // exit(1);
+    }
+  }
+  //  If the stuff we just ran didn't result in a session, create a default
+  //  one.
+  if (!appmode->GetForegroundSession()) {
+    appmode->RunMainMenu();
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHandleAppIntentExecDef = {
+    "handle_app_intent_exec",            // name
+    (PyCFunction)PyHandleAppIntentExec,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "handle_app_intent_exec(command: str) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
@@ -1646,6 +1750,10 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimeDef,
       PyBaseTimerDef,
       PyLsInputDevicesDef,
+      PyAppModeActivateDef,
+      PyAppModeDeactivateDef,
+      PyHandleAppIntentDefaultDef,
+      PyHandleAppIntentExecDef,
   };
 }
 

@@ -2665,8 +2665,8 @@ static auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
   // them or whatnot). Also disallow ads if remote apps are connected; at least
   // on Android, ads pause our activity which disconnects the remote app.
   // (need to fix this).
-  if (g_base->app_mode->HasConnectionToHost()
-      || g_base->app_mode->HasConnectionToClients()
+  if (g_base->app_mode()->HasConnectionToHost()
+      || g_base->app_mode()->HasConnectionToClients()
       || g_base->input->HaveRemoteAppController()) {
     Py_RETURN_FALSE;
   }
@@ -2873,8 +2873,8 @@ static auto PyIsPartyIconVisible(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   bool party_button_active =
-      (g_base->app_mode->HasConnectionToClients()
-       || g_base->app_mode->HasConnectionToHost()
+      (g_base->app_mode()->HasConnectionToClients()
+       || g_base->app_mode()->HasConnectionToHost()
        || g_base->ui->root_ui()->always_draw_party_icon());
   if (party_button_active) {
     Py_RETURN_TRUE;

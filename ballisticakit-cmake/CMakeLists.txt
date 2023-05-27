@@ -408,6 +408,7 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h
   ${BA_SRC_ROOT}/ballistica/base/support/app_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/support/classic_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc

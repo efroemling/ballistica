@@ -33,6 +33,8 @@ from _babase import (
     in_logic_thread,
 )
 
+from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
+from babase._appmode import AppMode
 from babase._accountv2 import AccountV2Handle
 from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._app import App
@@ -155,6 +157,10 @@ __all__ = [
     'displaytimer',
     'displaytime',
     'DisplayTimer',
+    'AppIntent',
+    'AppIntentDefault',
+    'AppIntentExec',
+    'AppMode',
 ]
 
 
