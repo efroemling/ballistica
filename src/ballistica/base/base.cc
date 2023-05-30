@@ -219,7 +219,7 @@ void BaseFeatureSet::PrimeAppMainThreadEventPump() {
 }
 
 auto BaseFeatureSet::HavePlus() -> bool {
-  if (!tried_importing_plus_) {
+  if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
@@ -236,7 +236,7 @@ void BaseFeatureSet::set_plus(PlusSoftInterface* plus) {
 
 /// Access the plus feature-set. Will throw an exception if not present.
 auto BaseFeatureSet::plus() -> PlusSoftInterface* {
-  if (!tried_importing_plus_) {
+  if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
@@ -250,7 +250,7 @@ auto BaseFeatureSet::plus() -> PlusSoftInterface* {
 }
 
 auto BaseFeatureSet::HaveClassic() -> bool {
-  if (!tried_importing_classic_) {
+  if (!classic_soft_ && !tried_importing_classic_) {
     python->SoftImportClassic();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
@@ -262,7 +262,7 @@ auto BaseFeatureSet::HaveClassic() -> bool {
 
 /// Access the plus feature-set. Will throw an exception if not present.
 auto BaseFeatureSet::classic() -> ClassicSoftInterface* {
-  if (!tried_importing_classic_) {
+  if (!classic_soft_ && !tried_importing_classic_) {
     python->SoftImportClassic();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
@@ -274,13 +274,14 @@ auto BaseFeatureSet::classic() -> ClassicSoftInterface* {
   }
   return classic_soft_;
 }
+
 void BaseFeatureSet::set_classic(ClassicSoftInterface* classic) {
   assert(classic_soft_ == nullptr);
   classic_soft_ = classic;
 }
 
 auto BaseFeatureSet::HaveUIV1() -> bool {
-  if (!tried_importing_ui_v1_) {
+  if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
     python->SoftImportUIV1();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
@@ -292,7 +293,7 @@ auto BaseFeatureSet::HaveUIV1() -> bool {
 
 /// Access the plus feature-set. Will throw an exception if not present.
 auto BaseFeatureSet::ui_v1() -> UIV1SoftInterface* {
-  if (!tried_importing_ui_v1_) {
+  if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
     python->SoftImportUIV1();
     // Important to set this *after* import attempt, or a second import attempt
     // while first is ongoing can insta-fail. Multiple import attempts shouldn't
