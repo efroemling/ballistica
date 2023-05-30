@@ -30,11 +30,6 @@
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/utils.h"
 
-// FIXME: TEMP; REMOVE THIS SOON.
-auto TempSV1CreateAppMode() -> ballistica::base::AppMode* {
-  return ballistica::scene_v1::SceneV1AppMode::GetSingleton();
-}
-
 namespace ballistica::scene_v1 {
 
 core::CoreFeatureSet* g_core{};

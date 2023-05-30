@@ -416,6 +416,7 @@ add_executable(ballisticakit
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.cc
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
+  ${BA_SRC_ROOT}/ballistica/base/support/ui_v1_soft.h
   ${BA_SRC_ROOT}/ballistica/base/ui/console.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/console.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.cc

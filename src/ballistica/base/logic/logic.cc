@@ -174,6 +174,28 @@ void Logic::OnInitialScreenCreated() {
   // (or no screen in the case of headless-mode).
   // We use this as a cue to kick off our business logic.
 
+  // Let the Python layer know what's up. It will probably flip to
+  // 'Launching' state.
+  CompleteAppBootstrapping();
+
+  // Push an initial frame to the graphics thread. From this point it will be
+  // self-sustaining; sending us a request for a new one each time it receives
+  // one we send it.
+  if (!g_core->HeadlessMode()) {
+    g_base->graphics->BuildAndPushFrameDef();
+  }
+}
+
+// Launch into main menu or whatever else.
+void Logic::CompleteAppBootstrapping() {
+  assert(g_base->InLogicThread());
+  assert(g_base->CurrentContext().IsEmpty());
+
+  assert(!app_bootstrapping_complete_);
+  app_bootstrapping_complete_ = true;
+
+  g_core->BootLog("app bootstrapping complete");
+
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
   // TODO(ericf): It might be nice to kick this off earlier if our logic is
@@ -205,25 +227,6 @@ void Logic::OnInitialScreenCreated() {
   // Let our initial app-mode know it has become active.
   g_base->app_mode()->OnActivate();
 
-  // Let the Python layer know what's up. It will probably flip to
-  // 'Launching' state.
-  CompleteAppBootstrapping();
-
-  // Deliver an initial frame-def to the graphics thread. It will send us a
-  // request for a new one each time it grabs one we send it.
-  if (!g_core->HeadlessMode()) {
-    g_base->graphics->BuildAndPushFrameDef();
-  }
-}
-
-// Launch into main menu or whatever else.
-void Logic::CompleteAppBootstrapping() {
-  assert(g_base->InLogicThread());
-  assert(!app_bootstrapping_complete_);
-  assert(g_base->CurrentContext().IsEmpty());
-
-  g_core->BootLog("app bootstrapping complete");
-
   // Reset our various subsystems to a default state.
   g_base->ui->Reset();
   g_base->input->Reset();
@@ -236,28 +239,6 @@ void Logic::CompleteAppBootstrapping() {
   g_base->python->objs()
       .Get(BasePython::ObjID::kOnAppBootstrappingCompleteCall)
       .Call();
-  app_bootstrapping_complete_ = true;
-
-  // TODO(ericf): update this for the shiny new app-mode world.
-  if (explicit_bool(false)) {
-    // If we were passed launch command args, run them.
-    if (g_core->core_config().exec_command.has_value()) {
-      bool success = PythonCommand(*g_core->core_config().exec_command,
-                                   BA_BUILD_COMMAND_FILENAME)
-                         .Exec(true, nullptr, nullptr);
-      if (!success) {
-        exit(1);
-      }
-    }
-    //  If the stuff we just ran didn't result in a session, create a default
-    //  one.
-    auto* appmode = scene_v1::SceneV1AppMode::GetActiveOrFatal();
-    if (!appmode->GetForegroundSession()) {
-      appmode->RunMainMenu();
-    }
-  } else {
-    // Reset various subsystems
-  }
 
   UpdatePendingWorkTimer();
 }

@@ -655,6 +655,9 @@
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\ui\console.cc">
       <Filter>ballistica\base\ui</Filter>
     </ClCompile>

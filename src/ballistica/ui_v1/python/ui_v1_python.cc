@@ -69,6 +69,7 @@ auto UIV1Python::GetPyWidget(PyObject* o) -> Widget* {
       "Can't get widget from value: " + Python::ObjToString(o) + ".",
       PyExcType::kType);
 }
+
 void UIV1Python::ShowURL(const std::string& url) {
   g_base->logic->event_loop()->PushCall([this, url] {
     assert(g_base->InLogicThread());

@@ -11,13 +11,14 @@ namespace ballistica::base {
 
 class BasePlatform {
  public:
-  /// Create the proper BasePlatform subclass for the current platform.
+  /// Instantiate the appropriate BasePlatform subclass for the current
+  /// environment.
   static auto CreatePlatform() -> BasePlatform*;
 
-  /// Create the proper App module and add it to the main_event_loop.
+  /// Instantiate the appropriate App subclass for the current environment.
   static auto CreateApp() -> App*;
 
-  /// Create the appropriate Graphics subclass for the app.
+  /// Instantiate the appropriate Graphics subclass for the current environment.
   static auto CreateGraphics() -> Graphics*;
 
 #pragma mark IN APP PURCHASES --------------------------------------------------

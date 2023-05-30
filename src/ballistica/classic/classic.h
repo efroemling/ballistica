@@ -3,6 +3,9 @@
 #ifndef BALLISTICA_CLASSIC_CLASSIC_H_
 #define BALLISTICA_CLASSIC_CLASSIC_H_
 
+#include <ballistica/base/input/device/input_device.h>
+
+#include "ballistica/base/support/classic_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
@@ -55,7 +58,8 @@ extern ClassicFeatureSet* g_classic;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
-class ClassicFeatureSet : public FeatureSetNativeComponent {
+class ClassicFeatureSet : public FeatureSetNativeComponent,
+                          public base::ClassicSoftInterface {
  public:
   /// Instantiate our FeatureSet if needed and return the single
   /// instance of it. Basically a Python import statement.

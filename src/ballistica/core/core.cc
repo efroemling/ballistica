@@ -143,7 +143,7 @@ void CoreFeatureSet::PostInit() {
   // Grab whatever Python stuff we use.
   python->ImportPythonObjs();
 
-  // FIXME - MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF FUNCTION
+  // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
   //  For now it does the right thing here since all we have is monolithic
   //  builds but this will need to account for more situations later.
   python->ReleaseMainThreadGIL();

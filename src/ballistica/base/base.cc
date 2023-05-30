@@ -36,16 +36,15 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
-// TEMP.
-extern auto TempSV1CreateAppMode() -> ballistica::base::AppMode*;
-
 namespace ballistica::base {
 
 core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 PlusSoftInterface* g_plus_soft{};
 classic::ClassicFeatureSet* g_classic{};
-ui_v1::UIV1FeatureSet* g_ui_v1{};
+ClassicSoftInterface* g_classic_soft{};
+// ui_v1::UIV1FeatureSet* g_ui_v1{};
+UIV1SoftInterface* g_ui_v1_soft{};
 
 BaseFeatureSet::BaseFeatureSet()
     : python{new BasePython()},
@@ -71,7 +70,6 @@ BaseFeatureSet::BaseFeatureSet()
       text_graphics{new TextGraphics()},
       audio_server{new AudioServer()},
       assets{new Assets()},
-      // app_mode{TempSV1CreateAppMode()},
       app_mode_{AppModeEmpty::GetSingleton()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr} {
@@ -121,8 +119,8 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // FIXME: neither of these should be here.
   assert(g_classic == nullptr);
   g_classic = classic::ClassicFeatureSet::Import();
-  assert(g_ui_v1 == nullptr);
-  g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
+  // assert(g_ui_v1 == nullptr);
+  // g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
 
   // let baenv know it can now feed us logs and run some checks.
   g_core->python->RunBaEnvOnBaBaseImport();

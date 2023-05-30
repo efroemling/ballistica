@@ -44,6 +44,9 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
+  // Let base know that we exist.
+  base::g_ui_v1_soft = g_ui_v1;
+
   g_core->BootLog("_bauiv1 exec end");
 }
 
@@ -52,6 +55,16 @@ auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
   // on top of that. This way our C++ and Python dependencies are resolved
   // consistently no matter which side we are imported from.
   return ImportThroughPythonModule<UIV1FeatureSet>("_bauiv1");
+}
+
+void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
+  python->HandleDeviceMenuPress(device);
+}
+
+void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
+
+void UIV1FeatureSet::DoQuitWindow() {
+  g_ui_v1->python->objs().Get(ui_v1::UIV1Python::ObjID::kQuitWindowCall).Call();
 }
 
 }  // namespace ballistica::ui_v1

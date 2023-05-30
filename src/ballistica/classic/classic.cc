@@ -38,6 +38,9 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
+  // Let base know that we exist.
+  base::g_classic_soft = g_classic;
+
   g_core->BootLog("_baclassic exec end");
 }
 

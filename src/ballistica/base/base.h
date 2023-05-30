@@ -58,6 +58,7 @@ struct BGDynamicsShadowData;
 class BGDynamicsVolumeLight;
 struct BGDynamicsVolumeLightData;
 class Camera;
+class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
 class Console;
@@ -124,6 +125,7 @@ class TextureAssetPreloadData;
 class TextureAssetRendererData;
 class TouchInput;
 class UI;
+class UIV1SoftInterface;
 class AppVR;
 class GraphicsVR;
 
@@ -593,7 +595,9 @@ extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern PlusSoftInterface* g_plus_soft;
 extern classic::ClassicFeatureSet* g_classic;
-extern ui_v1::UIV1FeatureSet* g_ui_v1;
+extern base::ClassicSoftInterface* g_classic_soft;
+extern base::UIV1SoftInterface* g_ui_v1_soft;
+// extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.

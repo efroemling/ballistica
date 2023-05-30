@@ -1692,8 +1692,9 @@ static auto PyHandleAppIntentExec(PyObject* self, PyObject* args,
                                  BA_BUILD_COMMAND_FILENAME)
                        .Exec(true, nullptr, nullptr);
     if (!success) {
-      // FIXME: what should we do in this case?
-      // exit(1);
+      // TODO(ericf): what should we do in this case?
+      //  Obviously if we add return/success values for intents we should set
+      //  that here.
     }
   }
   //  If the stuff we just ran didn't result in a session, create a default

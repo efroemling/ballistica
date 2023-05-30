@@ -121,7 +121,12 @@ void UI::PushMainMenuPressCall(InputDevice* device) {
 
 void UI::MainMenuPress(InputDevice* device) {
   assert(g_base->InLogicThread());
-  g_ui_v1->python->HandleDeviceMenuPress(device);
+  if (g_ui_v1_soft) {
+    g_ui_v1_soft->DoHandleDeviceMenuPress(device);
+  } else {
+    Log(LogLevel::kWarning,
+        "UI::MainMenuPress called without g_ui_v1_soft; unexpected.");
+  }
 }
 
 auto UI::IsWindowPresent() const -> bool {
@@ -405,7 +410,14 @@ void UI::Draw(FrameDef* frame_def) {
   }
 }
 
-void UI::ShowURL(const std::string& url) { g_ui_v1->python->ShowURL(url); }
+void UI::ShowURL(const std::string& url) {
+  if (g_ui_v1_soft) {
+    g_ui_v1_soft->DoShowURL(url);
+  } else {
+    Log(LogLevel::kWarning,
+        "UI::ShowURL called without g_ui_v1_soft present; unexpected.");
+  }
+}
 
 void UI::ConfirmQuit() {
   g_base->logic->event_loop()->PushCall([] {
@@ -413,9 +425,9 @@ void UI::ConfirmQuit() {
     if (g_core->HeadlessMode()) {
       Log(LogLevel::kError, "UI::ConfirmQuit() unhandled on headless.");
     } else {
-      // If input is locked or the in-app-console is up, just quit immediately;
-      // a confirm screen wouldn't work anyway.
-      if (g_base->input->IsInputLocked()
+      // If input is locked or the in-app-console is up or we don't have ui-v1,
+      // just quit immediately; a confirm screen wouldn't work anyway.
+      if (g_base->input->IsInputLocked() || g_ui_v1_soft == nullptr
           || (g_base->console() != nullptr && g_base->console()->active())) {
         // Just go through _babase.quit().
         // FIXME: Shouldn't need to go out to the Python layer here;
@@ -426,9 +438,7 @@ void UI::ConfirmQuit() {
       } else {
         ScopedSetContext ssc(nullptr);
         g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kSwish));
-        g_ui_v1->python->objs()
-            .Get(ui_v1::UIV1Python::ObjID::kQuitWindowCall)
-            .Call();
+        g_ui_v1_soft->DoQuitWindow();
 
         // If we have a keyboard, give it UI ownership.
         InputDevice* keyboard = g_base->input->keyboard_input();
