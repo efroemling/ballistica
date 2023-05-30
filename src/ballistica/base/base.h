@@ -719,6 +719,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
  private:
   BaseFeatureSet();
+  void LogVersionInfo();
   void PrintContextNonLogicThread();
   void PrintContextForCallableLabel(const char* label);
   void PrintContextUnavailable();

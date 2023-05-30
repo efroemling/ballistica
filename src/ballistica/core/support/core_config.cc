@@ -80,9 +80,9 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
   // First set any values we allow env-vars for.
   // We want explicitly passed values to override these in any cases where both
   // forms are accepted.
-  if (auto* envval = getenv("BA_BOOT_LOG")) {
+  if (auto* envval = getenv("BA_LIFECYCLE_LOG")) {
     if (!strcmp(envval, "1")) {
-      cfg.log_boot_process = true;
+      cfg.lifecycle_log = true;
     }
   }
   if (auto* envval = getenv("BA_DEBUGGER_ATTACHED")) {
@@ -92,8 +92,8 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
   }
 
   // REMOVE ME FOR 1.7.20 FINAL.
-  printf("TEMP: forcing BA_BOOT_LOG=1 during 1.7.20 development.\n");
-  cfg.log_boot_process = true;
+  printf("TEMP: forcing BA_LIFECYCLE_LOG=1 during 1.7.20 development.\n");
+  cfg.lifecycle_log = true;
 
   try {
     // First handle single-arg special cases like --help or --version.

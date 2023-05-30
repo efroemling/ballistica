@@ -34,7 +34,7 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->BootLog("logic-thread on-app-start begin");
+  g_core->LifecycleLog("logic-thread on-app-start begin");
   try {
     // Our thread should not be holding the GIL here at the start (and
     // probably not have any Python state at all). So here we set both
@@ -80,7 +80,7 @@ void Logic::OnAppStart() {
       throw std::logic_error(what.c_str());
     });
   }
-  g_core->BootLog("logic-thread on-app-start end");
+  g_core->LifecycleLog("logic-thread on-app-start end");
 }
 
 void Logic::OnAppPause() {
@@ -143,7 +143,7 @@ void Logic::OnAppShutdown() {
 
 void Logic::ApplyAppConfig() {
   assert(g_base->InLogicThread());
-  g_core->BootLog("apply-app-config begin");
+  g_core->LifecycleLog("apply-app-config begin");
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.
@@ -164,7 +164,7 @@ void Logic::ApplyAppConfig() {
   g_base->app->LogicThreadApplyAppConfig();
 
   applied_app_config_ = true;
-  g_core->BootLog("apply-app-config end");
+  g_core->LifecycleLog("apply-app-config end");
 }
 
 void Logic::OnInitialScreenCreated() {
@@ -194,7 +194,7 @@ void Logic::CompleteAppBootstrapping() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->BootLog("app bootstrapping complete");
+  g_core->LifecycleLog("app bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.

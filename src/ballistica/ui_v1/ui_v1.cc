@@ -25,7 +25,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Various ballistica functionality will fail if this has not been done.
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->BootLog("_bauiv1 exec begin");
+  g_core->LifecycleLog("_bauiv1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_ui_v1 == nullptr);
@@ -49,7 +49,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // (save it the trouble of trying to load us if it uses us passively).
   g_base->set_ui_v1(g_ui_v1);
 
-  g_core->BootLog("_bauiv1 exec end");
+  g_core->LifecycleLog("_bauiv1 exec end");
 }
 
 auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {

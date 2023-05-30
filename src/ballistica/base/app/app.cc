@@ -363,24 +363,9 @@ void App::PushResetAchievementsCall() {
 }
 
 void App::OnMainThreadStartApp() {
-  assert(g_core->InMainThread());
-  assert(g_base->input);
+  assert(g_base);
   assert(g_core);
-
-  // If we're running in a terminal, print some info.
-  // if (g_core->platform->is_stdin_a_terminal()) {
-  {
-    char buffer[256];
-    if (g_buildconfig.headless_build()) {
-      snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
-               kEngineVersion, kEngineBuildNumber);
-    } else {
-      snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
-               kEngineVersion, kEngineBuildNumber);
-    }
-    Log(LogLevel::kInfo, buffer);
-  }
-  // }
+  assert(g_core->InMainThread());
 
   // If we've got a nice themed hardware cursor, show it.
   // Otherwise, hide the hardware cursor; we'll draw it in software.
@@ -405,7 +390,7 @@ void App::OnMainThreadStartApp() {
 
 void App::PushCursorUpdate(bool vis) {
   event_loop()->PushCall([vis] {
-    assert(g_core->InMainThread());
+    assert(g_core && g_core->InMainThread());
     g_core->platform->SetHardwareCursorVisible(vis);
   });
 }

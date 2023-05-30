@@ -570,14 +570,14 @@ class App:
             if self._initial_sign_in_completed and self._meta_scan_completed:
                 if self.state != self.State.RUNNING:
                     self.state = self.State.RUNNING
-                    _babase.bootlog('app state running')
+                    _babase.lifecyclelog('app state running')
                     if not self._called_on_app_running:
                         self._called_on_app_running = True
                         self.on_app_running()
             elif self._launch_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
-                    _babase.bootlog('app state loading')
+                    _babase.lifecyclelog('app state loading')
                     if not self._called_on_app_loading:
                         self._called_on_app_loading = True
                         self.on_app_loading()
@@ -587,7 +587,7 @@ class App:
                 assert self._app_bootstrapping_complete
                 if self.state is not self.State.LAUNCHING:
                     self.state = self.State.LAUNCHING
-                    _babase.bootlog('app state launching')
+                    _babase.lifecyclelog('app state launching')
                     if not self._called_on_app_launching:
                         self._called_on_app_launching = True
                         self.on_app_launching()

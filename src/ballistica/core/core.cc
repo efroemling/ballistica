@@ -48,8 +48,8 @@ void CoreFeatureSet::DoImport(const CoreConfig& config) {
   auto seconds_since_actual_start =
       static_cast<double>(CorePlatform::GetCurrentMillisecs() - start_millisecs)
       / 1000.0;
-  g_core->BootLog("core import begin", -seconds_since_actual_start);
-  g_core->BootLog("core import end");
+  g_core->LifecycleLog("core import begin", -seconds_since_actual_start);
+  g_core->LifecycleLog("core import end");
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
@@ -159,13 +159,13 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
   return g_base_soft;
 }
 
-void CoreFeatureSet::BootLog(const char* msg, double offset_seconds) {
-  if (!core_config_.log_boot_process) {
+void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
+  if (!core_config_.lifecycle_log) {
     return;
   }
   char buffer[128];
   // It's not safe to use Log until
-  snprintf(buffer, sizeof(buffer), "BOOT: %s @ %.3fs.", msg,
+  snprintf(buffer, sizeof(buffer), "LIFE: %s @ %.3fs.", msg,
            g_core->GetAppTimeSeconds() + offset_seconds);
   Log(LogLevel::kInfo, buffer);
 }

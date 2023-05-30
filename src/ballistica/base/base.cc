@@ -82,7 +82,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->BootLog("_babase exec begin");
+  g_core->LifecycleLog("_babase exec begin");
 
   // Want to run this at the last possible moment before spinning up
   // our BaseFeatureSet. This locks in baenv customizations.
@@ -125,7 +125,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // import us.
   Python::MarkReachedEndOfModule(module);
 
-  g_core->BootLog("_babase exec end");
+  g_core->LifecycleLog("_babase exec end");
 }
 
 auto BaseFeatureSet::Import() -> BaseFeatureSet* {
@@ -153,7 +153,10 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_running_);  // Shouldn't be possible.
 
-  g_core->BootLog("start-app begin");
+  g_core->LifecycleLog("main-thread start-app begin");
+
+  LogVersionInfo();
+
   // Allow our subsystems to start doing work in their own threads
   // and communicating with other subsystems. Note that we may still
   // want to run some things serially here and ordering may be important
@@ -185,7 +188,19 @@ void BaseFeatureSet::StartApp() {
   // the app config which will kick off screen creation and otherwise
   // get the ball rolling.
   logic->event_loop()->PushCall([this] { logic->ApplyAppConfig(); });
-  g_core->BootLog("start-app end");
+  g_core->LifecycleLog("main-thread start-app end");
+}
+
+void BaseFeatureSet::LogVersionInfo() {
+  char buffer[256];
+  if (g_buildconfig.headless_build()) {
+    snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
+             kEngineVersion, kEngineBuildNumber);
+  } else {
+    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
+             kEngineVersion, kEngineBuildNumber);
+  }
+  Log(LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {

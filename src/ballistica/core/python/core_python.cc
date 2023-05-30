@@ -213,7 +213,7 @@ void CorePython::VerifyPythonEnvironment() {
 void CorePython::MonolithicModeBaEnvConfigure() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->BootLog("baenv.configure() begin");
+  g_core->LifecycleLog("baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
 
@@ -267,7 +267,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
         "This usually means you are running the app from the wrong location.\n"
         "See log for details.");
   }
-  g_core->BootLog("baenv.configure() end");
+  g_core->LifecycleLog("baenv.configure() end");
 }
 
 void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {

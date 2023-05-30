@@ -21,7 +21,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->BootLog("_baclassic exec begin");
+  g_core->LifecycleLog("_baclassic exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_classic == nullptr);
@@ -42,7 +42,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   // (save it the trouble of trying to load us if it uses us passively).
   g_base->set_classic(g_classic);
 
-  g_core->BootLog("_baclassic exec end");
+  g_core->LifecycleLog("_baclassic exec end");
 }
 
 ClassicFeatureSet::ClassicFeatureSet()

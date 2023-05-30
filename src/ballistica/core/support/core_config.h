@@ -42,7 +42,7 @@ class CoreConfig {
   std::optional<std::string> user_python_dir{};
 
   /// Log various stages/times in the bootstrapping process.
-  bool log_boot_process{};
+  bool lifecycle_log{};
 
   /// Normally early C++ Log() calls are held until babase has been imported
   /// so that when they are pushed out to the Python logging calls they are

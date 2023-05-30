@@ -47,7 +47,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->BootLog("_bascenev1 exec begin");
+  g_core->LifecycleLog("_bascenev1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_scene_v1 == nullptr);
@@ -69,7 +69,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   // Define our classes.
   g_scene_v1->python->AddPythonClasses(module);
 
-  g_core->BootLog("_bascenev1 exec end");
+  g_core->LifecycleLog("_bascenev1 exec end");
 }
 
 SceneV1FeatureSet::SceneV1FeatureSet() : python{new SceneV1Python()} {

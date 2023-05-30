@@ -866,9 +866,9 @@ static PyMethodDef PyDisplayLogDef = {
     "directly and should instead be fed Python logging output.",
 };
 
-// ------------------------------- bootlog -------------------------------------
+// ------------------------------ lifecyclelog ---------------------------------
 
-static auto PyBootLog(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"message", nullptr};
@@ -878,18 +878,18 @@ static auto PyBootLog(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  g_core->BootLog(message);
+  g_core->LifecycleLog(message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyBootLogDef = {
-    "bootlog",                     // name
-    (PyCFunction)PyBootLog,        // method
+static PyMethodDef PyLifecycleLogDef = {
+    "lifecyclelog",                // name
+    (PyCFunction)PyLifecycleLog,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "bootlog(message: str) -> None\n"
+    "lifecyclelog(message: str) -> None\n"
     "\n"
     "(internal)",
 };
@@ -1302,7 +1302,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      PyBootLogDef,
+      PyLifecycleLogDef,
       PyExecArgDef,
   };
 }

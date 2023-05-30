@@ -93,8 +93,8 @@ class CoreFeatureSet {
   /// Generally this is the thread that runs graphics and os event processing.
   auto InMainThread() -> bool;
 
-  /// Log a boot-related message (only if core_config.log_boot_process is true).
-  void BootLog(const char* msg, double offset_seconds = 0.0);
+  /// Log a boot-related message (only if core_config.lifecycle_log is true).
+  void LifecycleLog(const char* msg, double offset_seconds = 0.0);
 
   /// Base path of build src dir so we can attempt to remove it from
   /// any source file paths we print.
