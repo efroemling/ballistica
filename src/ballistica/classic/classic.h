@@ -67,6 +67,10 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
+  auto GetControllerValue(base::InputDevice* device,
+                          const std::string& value_name) -> int override;
+  auto GetControllerFloatValue(base::InputDevice* device,
+                               const std::string& value_name) -> float override;
 
   ClassicPython* const python;
   V1Account* const v1_account;

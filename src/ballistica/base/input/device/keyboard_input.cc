@@ -375,7 +375,7 @@ void KeyboardInput::UpdateRun(SDL_Keycode key, bool down) {
 void KeyboardInput::UpdateMapping() {
   assert(g_base->InLogicThread());
 
-  auto* cpy = g_classic->python;
+  auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
   SDL_Keycode up_key_default, down_key_default, left_key_default,
       right_key_default, jump_key_default, punch_key_default, bomb_key_default,
@@ -413,44 +413,44 @@ void KeyboardInput::UpdateMapping() {
   left_key_assigned_ = right_key_assigned_ = up_key_assigned_ =
       down_key_assigned_ = false;
 
-  int val = cpy->GetControllerValue(this, "buttonJump");
+  int val = cl ? cl->GetControllerValue(this, "buttonJump") : -1;
   jump_key_ = (val == -1) ? jump_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(jump_key_);
 
-  val = cpy->GetControllerValue(this, "buttonPunch");
+  val = cl ? cl->GetControllerValue(this, "buttonPunch") : -1;
   punch_key_ = (val == -1) ? punch_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(punch_key_);
 
-  val = cpy->GetControllerValue(this, "buttonBomb");
+  val = cl ? cl->GetControllerValue(this, "buttonBomb") : -1;
   bomb_key_ = (val == -1) ? bomb_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(bomb_key_);
 
-  val = cpy->GetControllerValue(this, "buttonPickUp");
+  val = cl ? cl->GetControllerValue(this, "buttonPickUp") : -1;
   pick_up_key_ = (val == -1) ? pick_up_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(pick_up_key_);
 
-  val = cpy->GetControllerValue(this, "buttonHoldPosition");
+  val = cl ? cl->GetControllerValue(this, "buttonHoldPosition") : -1;
   hold_position_key_ =
       (val == -1) ? hold_position_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(hold_position_key_);
 
-  val = cpy->GetControllerValue(this, "buttonStart");
+  val = cl ? cl->GetControllerValue(this, "buttonStart") : -1;
   start_key_ = (val == -1) ? start_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(start_key_);
 
-  val = cpy->GetControllerValue(this, "buttonUp");
+  val = cl ? cl->GetControllerValue(this, "buttonUp") : -1;
   up_key_ = (val == -1) ? up_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(up_key_);
 
-  val = cpy->GetControllerValue(this, "buttonDown");
+  val = cl ? cl->GetControllerValue(this, "buttonDown") : -1;
   down_key_ = (val == -1) ? down_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(down_key_);
 
-  val = cpy->GetControllerValue(this, "buttonLeft");
+  val = cl ? cl->GetControllerValue(this, "buttonLeft") : -1;
   left_key_ = (val == -1) ? left_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(left_key_);
 
-  val = cpy->GetControllerValue(this, "buttonRight");
+  val = cl ? cl->GetControllerValue(this, "buttonRight") : -1;
   right_key_ = (val == -1) ? right_key_default : (SDL_Keycode)val;
   UpdateArrowKeys(right_key_);
 

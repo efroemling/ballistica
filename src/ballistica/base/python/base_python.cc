@@ -76,6 +76,26 @@ void BasePython::SoftImportPlus() {
   }
 }
 
+void BasePython::SoftImportClassic() {
+  auto gil{Python::ScopedInterpreterLock()};
+  auto result = PythonRef::Stolen(PyImport_ImportModule("_baclassic"));
+  if (!result.Exists()) {
+    // Ignore any errors here for now. All that will matter is whether plus
+    // gave us its interface.
+    PyErr_Clear();
+  }
+}
+
+void BasePython::SoftImportUIV1() {
+  auto gil{Python::ScopedInterpreterLock()};
+  auto result = PythonRef::Stolen(PyImport_ImportModule("_bauiv1"));
+  if (!result.Exists()) {
+    // Ignore any errors here for now. All that will matter is whether plus
+    // gave us its interface.
+    PyErr_Clear();
+  }
+}
+
 void BasePython::ReadConfig() {
   // Read the config file and store the config dict for easy access.
   objs().Get(ObjID::kReadConfigCall).Call();

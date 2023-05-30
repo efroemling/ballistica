@@ -11,6 +11,11 @@ namespace ballistica::base {
 /// case.
 class ClassicSoftInterface {
  public:
+  virtual auto GetControllerValue(base::InputDevice* device,
+                                  const std::string& value_name) -> int = 0;
+  virtual auto GetControllerFloatValue(base::InputDevice* device,
+                                       const std::string& value_name)
+      -> float = 0;
 };
 
 }  // namespace ballistica::base

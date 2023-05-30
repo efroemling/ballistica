@@ -38,8 +38,9 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  // Let base know that we exist.
-  base::g_classic_soft = g_classic;
+  // Let base know we exist.
+  // (save it the trouble of trying to load us if it uses us passively).
+  g_base->set_classic(g_classic);
 
   g_core->BootLog("_baclassic exec end");
 }
@@ -55,6 +56,16 @@ auto ClassicFeatureSet::Import() -> ClassicFeatureSet* {
   // on top of that. This way our C++ and Python dependencies are resolved
   // consistently no matter which side we are imported from.
   return ImportThroughPythonModule<ClassicFeatureSet>("_baclassic");
+}
+
+int ClassicFeatureSet::GetControllerValue(base::InputDevice* device,
+                                          const std::string& value_name) {
+  return python->GetControllerValue(device, value_name);
+}
+
+float ClassicFeatureSet::GetControllerFloatValue(
+    base::InputDevice* device, const std::string& value_name) {
+  return python->GetControllerFloatValue(device, value_name);
 }
 
 }  // namespace ballistica::classic

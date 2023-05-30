@@ -18,15 +18,6 @@ namespace ballistica::core {
 class CoreConfig;
 class CoreFeatureSet;
 }  // namespace ballistica::core
-namespace ballistica::plus {
-class PlusFeatureSet;
-}
-namespace ballistica::classic {
-class ClassicFeatureSet;
-}
-namespace ballistica::ui_v1 {
-class UIV1FeatureSet;
-}
 
 namespace ballistica::base {
 
@@ -593,11 +584,6 @@ enum class SysMeshID {
 // are initially imported (just as regular Python modules do).
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
-extern PlusSoftInterface* g_plus_soft;
-extern classic::ClassicFeatureSet* g_classic;
-extern base::ClassicSoftInterface* g_classic_soft;
-extern base::UIV1SoftInterface* g_ui_v1_soft;
-// extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
@@ -629,11 +615,29 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void SetCurrentContext(const ContextRef& context);
 
-  /// Whether the plus feature-set is available.
+  /// Try to load the plus feature-set and return whether it is available.
   auto HavePlus() -> bool;
 
   /// Access the plus feature-set. Will throw an exception if not present.
-  auto Plus() -> PlusSoftInterface*;
+  auto plus() -> PlusSoftInterface*;
+
+  void set_plus(PlusSoftInterface* plus);
+
+  /// Try to load the classic feature-set and return whether it is available.
+  auto HaveClassic() -> bool;
+
+  /// Access the classic feature-set. Will throw an exception if not present.
+  auto classic() -> ClassicSoftInterface*;
+
+  void set_classic(ClassicSoftInterface* classic);
+
+  /// Try to load the ui_v1 feature-set and return whether it is available.
+  auto HaveUIV1() -> bool;
+
+  /// Access the ui_v1 feature-set. Will throw an exception if not present.
+  auto ui_v1() -> UIV1SoftInterface*;
+
+  void set_ui_v1(UIV1SoftInterface* ui_v1);
 
   /// Return a string that should be universally unique to this particular
   /// running instance of the app.
@@ -721,11 +725,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   AppMode* app_mode_;
   Console* console_{};
+  PlusSoftInterface* plus_soft_{};
+  ClassicSoftInterface* classic_soft_{};
+  UIV1SoftInterface* ui_v1_soft_{};
+
   std::string console_startup_messages_;
+  bool tried_importing_plus_{};
+  bool tried_importing_classic_{};
+  bool tried_importing_ui_v1_{};
   bool called_start_app_{};
   bool app_running_{};
   bool called_run_app_to_completion_{};
-  bool tried_importing_plus_{};
 };
 
 }  // namespace ballistica::base

@@ -2397,7 +2397,7 @@ static auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds)
           &on_completion_call_obj, &pass_actually_showed)) {
     return nullptr;
   }
-  g_base->Plus()->SetAdCompletionCall(on_completion_call_obj,
+  g_base->plus()->SetAdCompletionCall(on_completion_call_obj,
                                       static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
@@ -2407,7 +2407,7 @@ static auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds)
   if (g_core->platform->GetHasAds()) {
     g_core->platform->ShowAd(purpose);
   } else {
-    g_base->Plus()->PushAdViewComplete(purpose, false);
+    g_base->plus()->PushAdViewComplete(purpose, false);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -2442,7 +2442,7 @@ static auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds)
           &on_completion_call_obj, &pass_actually_showed)) {
     return nullptr;
   }
-  g_base->Plus()->SetAdCompletionCall(on_completion_call_obj,
+  g_base->plus()->SetAdCompletionCall(on_completion_call_obj,
                                       static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
@@ -2452,7 +2452,7 @@ static auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds)
   if (g_core->platform->GetHasAds()) {
     g_core->platform->ShowAd(purpose);
   } else {
-    g_base->Plus()->PushAdViewComplete(purpose, false);
+    g_base->plus()->PushAdViewComplete(purpose, false);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

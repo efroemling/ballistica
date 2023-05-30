@@ -57,6 +57,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
   void DoQuitWindow() override;
+  auto NewRootUI() -> ui_v1::RootUI* override;
 
   UIV1Python* const python;
 

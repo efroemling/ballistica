@@ -243,7 +243,7 @@ auto SceneV1InputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
   // This default implementation assumes the device is local
   // so just returns the locally signed in account's public id.
 
-  return g_base->Plus()->GetPublicV1AccountID();
+  return g_base->plus()->GetPublicV1AccountID();
 }
 
 auto SceneV1InputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {

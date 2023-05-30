@@ -150,8 +150,11 @@ void CoreFeatureSet::PostInit() {
 }
 
 auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
-  if (!g_base_soft) {
+  if (!tried_importing_base_) {
     python->SoftImportBase();
+    // Important to set this *AFTER*. Otherwise imports can fail if there is
+    // already one in progress.
+    tried_importing_base_ = true;
   }
   return g_base_soft;
 }

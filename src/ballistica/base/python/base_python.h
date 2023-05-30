@@ -157,6 +157,8 @@ class BasePython {
   auto DoOnce() -> bool;
 
   void SoftImportPlus();
+  void SoftImportClassic();
+  void SoftImportUIV1();
 
  private:
   std::set<std::string> do_once_locations_;

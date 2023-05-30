@@ -65,7 +65,7 @@ void Logic::OnAppStart() {
     g_core->platform->OnAppStart();
     g_base->app_mode()->OnAppStart();
     if (g_base->HavePlus()) {
-      g_base->Plus()->OnAppStart();
+      g_base->plus()->OnAppStart();
     }
     g_base->python->OnAppStart();
   } catch (const std::exception& e) {
@@ -89,7 +89,7 @@ void Logic::OnAppPause() {
   // Note: keep these in opposite order of OnAppStart.
   g_base->python->OnAppPause();
   if (g_base->HavePlus()) {
-    g_base->Plus()->OnAppPause();
+    g_base->plus()->OnAppPause();
   }
   g_base->app_mode()->OnAppPause();
   g_core->platform->OnAppPause();
@@ -110,7 +110,7 @@ void Logic::OnAppResume() {
   g_core->platform->OnAppResume();
   g_base->app_mode()->OnAppResume();
   if (g_base->HavePlus()) {
-    g_base->Plus()->OnAppResume();
+    g_base->plus()->OnAppResume();
   }
   g_base->python->OnAppResume();
 }
@@ -125,7 +125,7 @@ void Logic::OnAppShutdown() {
   // Note: keep these in opposite order of OnAppStart.
   g_base->python->OnAppShutdown();
   if (g_base->HavePlus()) {
-    g_base->Plus()->OnAppShutdown();
+    g_base->plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
   g_core->platform->OnAppResume();
@@ -154,7 +154,7 @@ void Logic::ApplyAppConfig() {
   g_core->platform->ApplyAppConfig();
   g_base->app_mode()->ApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->Plus()->ApplyAppConfig();
+    g_base->plus()->ApplyAppConfig();
   }
   g_base->python->ApplyAppConfig();
 
@@ -259,7 +259,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   g_core->platform->OnScreenSizeChange();
   g_base->app_mode()->OnScreenSizeChange();
   if (g_base->HavePlus()) {
-    g_base->Plus()->OnScreenSizeChange();
+    g_base->plus()->OnScreenSizeChange();
   }
   g_base->python->OnScreenSizeChange();
 }
@@ -279,7 +279,7 @@ void Logic::StepDisplayTime() {
   g_core->platform->StepDisplayTime();
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
-    g_base->Plus()->StepDisplayTime();
+    g_base->plus()->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
   g_base->app->LogicThreadStepDisplayTime();

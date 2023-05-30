@@ -141,6 +141,7 @@ class CoreFeatureSet {
   void UpdateAppTime();
   explicit CoreFeatureSet(CoreConfig config);
   void PostInit();
+  bool tried_importing_base_{};
   EventLoop* main_event_loop_{};
   CoreConfig core_config_;
   bool started_suicide_{};

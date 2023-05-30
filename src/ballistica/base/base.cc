@@ -40,11 +40,6 @@ namespace ballistica::base {
 
 core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
-PlusSoftInterface* g_plus_soft{};
-classic::ClassicFeatureSet* g_classic{};
-ClassicSoftInterface* g_classic_soft{};
-// ui_v1::UIV1FeatureSet* g_ui_v1{};
-UIV1SoftInterface* g_ui_v1_soft{};
 
 BaseFeatureSet::BaseFeatureSet()
     : python{new BasePython()},
@@ -114,13 +109,6 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   g_base->StoreOnPythonModule(module);
 
   g_base->python->ImportPythonObjs();
-
-  // Import any other C++ feature-set-front-ends we use.
-  // FIXME: neither of these should be here.
-  assert(g_classic == nullptr);
-  g_classic = classic::ClassicFeatureSet::Import();
-  // assert(g_ui_v1 == nullptr);
-  // g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
 
   // let baenv know it can now feed us logs and run some checks.
   g_core->python->RunBaEnvOnBaBaseImport();
@@ -238,11 +226,16 @@ auto BaseFeatureSet::HavePlus() -> bool {
     // hurt anything.
     tried_importing_plus_ = true;
   }
-  return g_plus_soft != nullptr;
+  return plus_soft_ != nullptr;
+}
+
+void BaseFeatureSet::set_plus(PlusSoftInterface* plus) {
+  assert(plus_soft_ == nullptr);
+  plus_soft_ = plus;
 }
 
 /// Access the plus feature-set. Will throw an exception if not present.
-auto BaseFeatureSet::Plus() -> PlusSoftInterface* {
+auto BaseFeatureSet::plus() -> PlusSoftInterface* {
   if (!tried_importing_plus_) {
     python->SoftImportPlus();
     // Important to set this *after* import attempt, or a second import attempt
@@ -250,7 +243,71 @@ auto BaseFeatureSet::Plus() -> PlusSoftInterface* {
     // hurt anything.
     tried_importing_plus_ = true;
   }
-  return g_plus_soft;
+  if (!plus_soft_) {
+    throw Exception("plus feature-set not present.");
+  }
+  return plus_soft_;
+}
+
+auto BaseFeatureSet::HaveClassic() -> bool {
+  if (!tried_importing_classic_) {
+    python->SoftImportClassic();
+    // Important to set this *after* import attempt, or a second import attempt
+    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
+    // hurt anything.
+    tried_importing_classic_ = true;
+  }
+  return classic_soft_ != nullptr;
+}
+
+/// Access the plus feature-set. Will throw an exception if not present.
+auto BaseFeatureSet::classic() -> ClassicSoftInterface* {
+  if (!tried_importing_classic_) {
+    python->SoftImportClassic();
+    // Important to set this *after* import attempt, or a second import attempt
+    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
+    // hurt anything.
+    tried_importing_classic_ = true;
+  }
+  if (!classic_soft_) {
+    throw Exception("classic feature-set not present.");
+  }
+  return classic_soft_;
+}
+void BaseFeatureSet::set_classic(ClassicSoftInterface* classic) {
+  assert(classic_soft_ == nullptr);
+  classic_soft_ = classic;
+}
+
+auto BaseFeatureSet::HaveUIV1() -> bool {
+  if (!tried_importing_ui_v1_) {
+    python->SoftImportUIV1();
+    // Important to set this *after* import attempt, or a second import attempt
+    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
+    // hurt anything.
+    tried_importing_ui_v1_ = true;
+  }
+  return ui_v1_soft_ != nullptr;
+}
+
+/// Access the plus feature-set. Will throw an exception if not present.
+auto BaseFeatureSet::ui_v1() -> UIV1SoftInterface* {
+  if (!tried_importing_ui_v1_) {
+    python->SoftImportUIV1();
+    // Important to set this *after* import attempt, or a second import attempt
+    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
+    // hurt anything.
+    tried_importing_ui_v1_ = true;
+  }
+  if (!ui_v1_soft_) {
+    throw Exception("ui_v1 feature-set not present.");
+  }
+  return ui_v1_soft_;
+}
+
+void BaseFeatureSet::set_ui_v1(UIV1SoftInterface* ui_v1) {
+  assert(ui_v1_soft_ == nullptr);
+  ui_v1_soft_ = ui_v1;
 }
 
 auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
@@ -287,8 +344,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
 void BaseFeatureSet::PlusDirectSendV1CloudLogs(const std::string& prefix,
                                                const std::string& suffix,
                                                bool instant, int* result) {
-  if (g_plus_soft != nullptr) {
-    g_plus_soft->DirectSendV1CloudLogs(prefix, suffix, instant, result);
+  if (plus_soft_ != nullptr) {
+    plus_soft_->DirectSendV1CloudLogs(prefix, suffix, instant, result);
   }
 }
 
@@ -308,7 +365,7 @@ auto BaseFeatureSet::FeatureSetFromData(PyObject* obj)
 auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   // If we've got plus present, ask them. Otherwise assume no.
   if (HavePlus()) {
-    return Plus()->IsUnmodifiedBlessedBuild();
+    return plus()->IsUnmodifiedBlessedBuild();
   }
   return false;
 }
@@ -381,7 +438,7 @@ void BaseFeatureSet::V1CloudLog(const std::string& msg) {
         if (g_core == nullptr) {
           logsuffix = msg;
         }
-        Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
+        plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
       }
     }
   }

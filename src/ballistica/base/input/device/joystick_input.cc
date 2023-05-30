@@ -1308,7 +1308,12 @@ void JoystickInput::UpdateMapping() {
     return;
   }
 
-  auto* cpy{g_classic->python};
+  auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
+
+  if (!cl) {
+    Log(LogLevel::kWarning,
+        "Classic not present; can't config joystick mapping.");
+  }
 
   // If we're a child, use our parent's id to search for config values and just
   // tack on a '2'.
@@ -1318,36 +1323,36 @@ void JoystickInput::UpdateMapping() {
   // Grab all button values from Python. Traditionally we stored these
   // with the first index 1 so we need to subtract 1 to get the zero-indexed
   // value. (grumble).
-  jump_button_ = cpy->GetControllerValue(js, "buttonJump" + ext) - 1;
-  punch_button_ = cpy->GetControllerValue(js, "buttonPunch" + ext) - 1;
-  bomb_button_ = cpy->GetControllerValue(js, "buttonBomb" + ext) - 1;
-  pickup_button_ = cpy->GetControllerValue(js, "buttonPickUp" + ext) - 1;
-  start_button_ = cpy->GetControllerValue(js, "buttonStart" + ext) - 1;
-  start_button_2_ = cpy->GetControllerValue(js, "buttonStart2" + ext) - 1;
+  jump_button_ = cl->GetControllerValue(js, "buttonJump" + ext) - 1;
+  punch_button_ = cl->GetControllerValue(js, "buttonPunch" + ext) - 1;
+  bomb_button_ = cl->GetControllerValue(js, "buttonBomb" + ext) - 1;
+  pickup_button_ = cl->GetControllerValue(js, "buttonPickUp" + ext) - 1;
+  start_button_ = cl->GetControllerValue(js, "buttonStart" + ext) - 1;
+  start_button_2_ = cl->GetControllerValue(js, "buttonStart2" + ext) - 1;
   hold_position_button_ =
-      cpy->GetControllerValue(js, "buttonHoldPosition" + ext) - 1;
-  run_button1_ = cpy->GetControllerValue(js, "buttonRun1" + ext) - 1;
-  run_button2_ = cpy->GetControllerValue(js, "buttonRun2" + ext) - 1;
+      cl->GetControllerValue(js, "buttonHoldPosition" + ext) - 1;
+  run_button1_ = cl->GetControllerValue(js, "buttonRun1" + ext) - 1;
+  run_button2_ = cl->GetControllerValue(js, "buttonRun2" + ext) - 1;
   vr_reorient_button_ =
-      cpy->GetControllerValue(js, "buttonVRReorient" + ext) - 1;
-  ignored_button_ = cpy->GetControllerValue(js, "buttonIgnored" + ext) - 1;
-  ignored_button2_ = cpy->GetControllerValue(js, "buttonIgnored2" + ext) - 1;
-  ignored_button3_ = cpy->GetControllerValue(js, "buttonIgnored3" + ext) - 1;
-  ignored_button4_ = cpy->GetControllerValue(js, "buttonIgnored4" + ext) - 1;
+      cl->GetControllerValue(js, "buttonVRReorient" + ext) - 1;
+  ignored_button_ = cl->GetControllerValue(js, "buttonIgnored" + ext) - 1;
+  ignored_button2_ = cl->GetControllerValue(js, "buttonIgnored2" + ext) - 1;
+  ignored_button3_ = cl->GetControllerValue(js, "buttonIgnored3" + ext) - 1;
+  ignored_button4_ = cl->GetControllerValue(js, "buttonIgnored4" + ext) - 1;
   int old_run_trigger_1 = run_trigger1_;
-  run_trigger1_ = cpy->GetControllerValue(js, "triggerRun1" + ext) - 1;
+  run_trigger1_ = cl->GetControllerValue(js, "triggerRun1" + ext) - 1;
   int old_run_trigger_2 = run_trigger2_;
-  run_trigger2_ = cpy->GetControllerValue(js, "triggerRun2" + ext) - 1;
-  up_button_ = cpy->GetControllerValue(js, "buttonUp" + ext) - 1;
-  left_button_ = cpy->GetControllerValue(js, "buttonLeft" + ext) - 1;
-  right_button_ = cpy->GetControllerValue(js, "buttonRight" + ext) - 1;
-  down_button_ = cpy->GetControllerValue(js, "buttonDown" + ext) - 1;
-  up_button2_ = cpy->GetControllerValue(js, "buttonUp2" + ext) - 1;
-  left_button2_ = cpy->GetControllerValue(js, "buttonLeft2" + ext) - 1;
-  right_button2_ = cpy->GetControllerValue(js, "buttonRight2" + ext) - 1;
-  down_button2_ = cpy->GetControllerValue(js, "buttonDown2" + ext) - 1;
+  run_trigger2_ = cl->GetControllerValue(js, "triggerRun2" + ext) - 1;
+  up_button_ = cl->GetControllerValue(js, "buttonUp" + ext) - 1;
+  left_button_ = cl->GetControllerValue(js, "buttonLeft" + ext) - 1;
+  right_button_ = cl->GetControllerValue(js, "buttonRight" + ext) - 1;
+  down_button_ = cl->GetControllerValue(js, "buttonDown" + ext) - 1;
+  up_button2_ = cl->GetControllerValue(js, "buttonUp2" + ext) - 1;
+  left_button2_ = cl->GetControllerValue(js, "buttonLeft2" + ext) - 1;
+  right_button2_ = cl->GetControllerValue(js, "buttonRight2" + ext) - 1;
+  down_button2_ = cl->GetControllerValue(js, "buttonDown2" + ext) - 1;
   unassigned_buttons_run_ = static_cast<bool>(
-      cpy->GetControllerValue(js, "unassignedButtonsRun" + ext));
+      cl->GetControllerValue(js, "unassignedButtonsRun" + ext));
 
   // If our run trigger has changed, reset its calibration.
   // NOTE: It looks like on Mac we're getting analog trigger values from -1 to 1
@@ -1362,21 +1367,21 @@ void JoystickInput::UpdateMapping() {
     run_trigger2_max_ = 0.8f;
   }
 
-  int ival = cpy->GetControllerValue(js, "uiOnly" + ext);
+  int ival = cl->GetControllerValue(js, "uiOnly" + ext);
   if (ival == -1) {
     ui_only_ = false;
   } else {
     ui_only_ = static_cast<bool>(ival);
   }
 
-  ival = cpy->GetControllerValue(js, "ignoreCompletely" + ext);
+  ival = cl->GetControllerValue(js, "ignoreCompletely" + ext);
   if (ival == -1) {
     ignore_completely_ = false;
   } else {
     ignore_completely_ = static_cast<bool>(ival);
   }
 
-  ival = cpy->GetControllerValue(js, "autoRecalibrateAnalogSticks" + ext);
+  ival = cl->GetControllerValue(js, "autoRecalibrateAnalogSticks" + ext);
 
   {
     bool was_on = auto_recalibrate_analog_stick_;
@@ -1402,7 +1407,7 @@ void JoystickInput::UpdateMapping() {
     }
   }
 
-  ival = cpy->GetControllerValue(js, "startButtonActivatesDefaultWidget" + ext);
+  ival = cl->GetControllerValue(js, "startButtonActivatesDefaultWidget" + ext);
 
   if (ival == -1) {
     start_button_activates_default_widget_ = true;
@@ -1411,7 +1416,7 @@ void JoystickInput::UpdateMapping() {
   }
 
   // Update calibration stuff.
-  float as = cpy->GetControllerFloatValue(js, "analogStickDeadZone" + ext);
+  float as = cl->GetControllerFloatValue(js, "analogStickDeadZone" + ext);
 
   if (as < 0) {
     as = 1.0f;
@@ -1425,7 +1430,7 @@ void JoystickInput::UpdateMapping() {
   calibration_threshold_ = kJoystickCalibrationThreshold * as;
   calibration_break_threshold_ = kJoystickCalibrationBreakThreshold * as;
 
-  hat_ = cpy->GetControllerValue(js, "dpad" + ext) - 1;
+  hat_ = cl->GetControllerValue(js, "dpad" + ext) - 1;
 
   // If unset, use our default.
   if (hat_ == -2) {
@@ -1437,7 +1442,7 @@ void JoystickInput::UpdateMapping() {
   }
 
   // Grab our analog stick.
-  analog_lr_ = cpy->GetControllerValue(js, "analogStickLR" + ext) - 1;
+  analog_lr_ = cl->GetControllerValue(js, "analogStickLR" + ext) - 1;
 
   // If we got unset, set to our default.
   if (analog_lr_ == -2) {
@@ -1448,7 +1453,7 @@ void JoystickInput::UpdateMapping() {
     }
   }
 
-  analog_ud_ = cpy->GetControllerValue(js, "analogStickUD" + ext) - 1;
+  analog_ud_ = cl->GetControllerValue(js, "analogStickUD" + ext) - 1;
 
   // If we got unset, set to our default.
   if (analog_ud_ == -2) {
@@ -1461,7 +1466,7 @@ void JoystickInput::UpdateMapping() {
 
   // See whether we have a child-joystick and create it if need be.
   if (!parent_joy_stick_) {
-    int enable = cpy->GetControllerValue(js, "enableSecondary");
+    int enable = cl->GetControllerValue(js, "enableSecondary");
     if (enable == -1) {
       enable = 0;
     }

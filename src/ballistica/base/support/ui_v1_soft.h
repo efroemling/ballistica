@@ -3,6 +3,11 @@
 #ifndef BALLISTICA_BASE_SUPPORT_UI_V1_SOFT_H_
 #define BALLISTICA_BASE_SUPPORT_UI_V1_SOFT_H_
 
+// Predeclare some types we use.
+namespace ballistica::ui_v1 {
+class RootUI;
+}
+
 namespace ballistica::base {
 
 /// 'Soft' interface to the ui_v1 feature-set.
@@ -14,6 +19,7 @@ class UIV1SoftInterface {
   virtual void DoHandleDeviceMenuPress(base::InputDevice* device) = 0;
   virtual void DoShowURL(const std::string& url) = 0;
   virtual void DoQuitWindow() = 0;
+  virtual auto NewRootUI() -> ui_v1::RootUI* = 0;
 };
 
 }  // namespace ballistica::base

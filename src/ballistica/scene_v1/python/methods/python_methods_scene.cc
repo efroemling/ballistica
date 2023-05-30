@@ -1341,7 +1341,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     // Let's also include a public account-id if we have one.
     std::string account_id;
     if (clientid == -1) {
-      account_id = g_base->Plus()->GetPublicV1AccountID();
+      account_id = g_base->plus()->GetPublicV1AccountID();
     } else {
       if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
         auto client2 =

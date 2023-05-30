@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/ui_v1.h"
 
 #include "ballistica/ui_v1/python/ui_v1_python.h"
+#include "ballistica/ui_v1/support/root_ui.h"
 
 namespace ballistica::ui_v1 {
 
@@ -44,8 +45,9 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  // Let base know that we exist.
-  base::g_ui_v1_soft = g_ui_v1;
+  // Let base know we exist.
+  // (save it the trouble of trying to load us if it uses us passively).
+  g_base->set_ui_v1(g_ui_v1);
 
   g_core->BootLog("_bauiv1 exec end");
 }
@@ -67,4 +69,5 @@ void UIV1FeatureSet::DoQuitWindow() {
   g_ui_v1->python->objs().Get(ui_v1::UIV1Python::ObjID::kQuitWindowCall).Call();
 }
 
+RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
 }  // namespace ballistica::ui_v1
