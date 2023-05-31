@@ -14,7 +14,7 @@ jobs:
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
   check_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -29,7 +29,7 @@ jobs:
   # Compile just a server binary but don't run asset builds/etc.
   # (to spare my asset file server)
   compile_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -43,7 +43,7 @@ jobs:
   # added or removed or other changes made.
   # (How ballisticakit becomes bombsquad/etc.)
   spinoff_test_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
