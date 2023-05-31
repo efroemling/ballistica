@@ -153,7 +153,7 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_running_);  // Shouldn't be possible.
 
-  g_core->LifecycleLog("main-thread start-app begin");
+  g_core->LifecycleLog("start-app begin (main thread)");
 
   LogVersionInfo();
 
@@ -188,7 +188,7 @@ void BaseFeatureSet::StartApp() {
   // the app config which will kick off screen creation and otherwise
   // get the ball rolling.
   logic->event_loop()->PushCall([this] { logic->ApplyAppConfig(); });
-  g_core->LifecycleLog("main-thread start-app end");
+  g_core->LifecycleLog("start-app end (main thread)");
 }
 
 void BaseFeatureSet::LogVersionInfo() {

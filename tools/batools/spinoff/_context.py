@@ -947,11 +947,18 @@ class SpinoffContext:
         fnames = os.listdir(path)
         if fnames:
             for fname in fnames:
+                # Special case; never recurse into .git dirs; blowing
+                # away empty dirs there can be harmful. Note: Do we want
+                # to use ignore_names here? Seems like we'd still want
+                # to delete other entries there like __pycache__ though.
+                if fname == '.git':
+                    continue
+
                 fullpath = os.path.join(path, fname)
                 if os.path.isdir(fullpath):
                     self._remove_empty_folders(fullpath)
 
-        # If folder empty, delete it.
+        # If folder is *now* empty, delete it.
         fnames = os.listdir(path)
         if not fnames and remove_root:
             os.rmdir(path)

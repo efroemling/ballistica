@@ -212,6 +212,11 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     ) as outfile:
         outfile.write(template)
 
+    # Create an empty git repo. Some of our project functionality depends
+    # on git so its best to always do this.
+    subprocess.run(['git', 'init'], cwd=path, check=True)
+    print('DID', dst_root)
+
     print(
         f'{Clr.GRN}{Clr.BLD}Spinoff dst project created at'
         f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{Clr.GRN}.{Clr.RST}\n\n'
@@ -219,8 +224,8 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
         f'  {Clr.BLD}{Clr.MAG}./tools/spinoff update{Clr.RST}     '
         '- Syncs src project into dst.\n'
         f'  {Clr.BLD}{Clr.MAG}make update-check{Clr.RST}          '
-        '- Makes sure all project files are up-to-date (they should be).\n'
-        '  At that point you should have a functional dst project.\n'
+        '- Makes sure the project is looking correct.\n\n'
+        'At that point you should have a functional dst project.\n'
     )
 
 
@@ -327,7 +332,7 @@ def _print_available_commands() -> None:
             'List featuresets present in the current project.\n'
             f'  {bgn}create [name, path]{end} '
             'Create a new spinoff project based on this src one.\n'
-            '                      Name should be in CamelCase form.\n'
+            '                      Name should be passed in CamelCase form.\n'
             '                      Use --featuresets a,b to specify included'
             ' feature-sets.\n'
             "                      Pass 'none' or an empty string for no"

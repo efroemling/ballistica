@@ -34,7 +34,7 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("logic-thread on-app-start begin");
+  g_core->LifecycleLog("on-app-start begin (logic thread)");
   try {
     // Our thread should not be holding the GIL here at the start (and
     // probably not have any Python state at all). So here we set both
@@ -80,7 +80,7 @@ void Logic::OnAppStart() {
       throw std::logic_error(what.c_str());
     });
   }
-  g_core->LifecycleLog("logic-thread on-app-start end");
+  g_core->LifecycleLog("on-app-start end (logic thread)");
 }
 
 void Logic::OnAppPause() {
