@@ -38,6 +38,20 @@ jobs:
         python-version: '3.11'
     - name: Compile binary
       run: make _cmake-simple-ci-server-build
+
+  # Test spinoff projects - versions of the project with feature-sets
+  # added or removed or other changes made.
+  # (How ballisticakit becomes bombsquad/etc.)
+  spinoff_test_linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: All featuresets removed
+      run: tools/pcommand spinoff_test empty
       
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
