@@ -210,10 +210,13 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     # on git so its best to always do this.
     subprocess.run(['git', 'init'], cwd=path, check=True, capture_output=True)
 
+    print(
+        f'{Clr.GRN}{Clr.BLD}Spinoff dst project created at'
+        f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{Clr.GRN}.{Clr.RST}'
+    )
     if not noninteractive:
         print(
-            f'{Clr.GRN}{Clr.BLD}Spinoff dst project created at'
-            f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{Clr.GRN}.{Clr.RST}\n\n'
+            '\n'
             'Next, from dst project root, do:\n'
             f'  {Clr.BLD}{Clr.MAG}./tools/spinoff update{Clr.RST}     '
             '- Syncs src project into dst.\n'
