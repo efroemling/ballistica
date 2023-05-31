@@ -302,3 +302,44 @@ def android_archive_unstripped_libs() -> None:
                 ['tar', '-zcf', dstname + '.tgz', dstname], cwd=dst, check=True
             )
             subprocess.run(['rm', dstpath], check=True)
+
+
+def spinoff_test() -> None:
+    """Test spinoff functionality."""
+    import os
+    import subprocess
+
+    from efro.terminal import Clr
+    from efro.error import CleanError
+
+    args = sys.argv[2:]
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg.')
+    testtype = args[0]
+    if testtype == 'empty':
+        path = 'build/spinofftest/empty'
+        print(
+            f'{Clr.SBLU}{Clr.BLD}Running spinoff test'
+            f" {Clr.RST}{Clr.BLD}'{testtype}'{Clr.RST}{Clr.SBLU}{Clr.BLD}"
+            f'...{Clr.RST}',
+            flush=True,
+        )
+        subprocess.run(['rm', '-rf', path], check=True)
+        subprocess.run(
+            [
+                './tools/spinoff',
+                'create',
+                'SpinoffTest',
+                path,
+                '--featuresets',
+                'none',
+                '--noninteractive',
+            ],
+            check=True,
+        )
+        os.makedirs(path, exist_ok=True)
+        print(f'{Clr.BLU}Running spinoff update...{Clr.RST}', flush=True)
+        subprocess.run(['./tools/spinoff', 'update'], cwd=path, check=True)
+        subprocess.run(['make', 'cmake-binary'], cwd=path, check=True)
+    else:
+        raise CleanError(f"Invalid test type '{testtype}'.")
