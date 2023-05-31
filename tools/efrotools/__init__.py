@@ -73,6 +73,22 @@ def setconfig(projroot: Path, config: dict[str, Any]) -> None:
         outfile.write(json.dumps(config, indent=2))
 
 
+def extract_flag(args: list[str], name: str) -> bool:
+    """Given a list of args and a flag name, returns whether it is present.
+
+    The arg flag, if present, is removed from the arg list.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if count > 1:
+        raise CleanError(f'Flag {name} passed multiple times.')
+    if not count:
+        return False
+    args.remove(name)
+    return True
+
+
 @overload
 def extract_arg(
     args: list[str], name: str, required: Literal[False] = False

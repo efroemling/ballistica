@@ -130,35 +130,29 @@ def _main() -> None:
 
 
 def _do_create(src_root: str | None, dst_root: str) -> None:
+    from efrotools import extract_arg, extract_flag
     from efrotools.code import format_python_str
 
     if src_root is not None:
         raise CleanError('This only works on src projects.')
 
     args = sys.argv[2:]
-    args2: list[str] = []
-    i = 0
 
     featuresets: set[str] | None = None
 
-    while i < len(args):
-        if args[i] == '--featuresets':
-            if i >= len(args) - 1:
-                raise CleanError('--featuresets must be followed by an arg.')
-            fsarg = args[i + 1]
-            if fsarg in {'', 'none'}:
-                featuresets = set()
-            else:
-                featuresets = set(fsarg.split(','))
-            i += 2
+    fsarg = extract_arg(args, '--featuresets')
+    if fsarg is not None:
+        if fsarg in {'', 'none'}:
+            featuresets = set()
         else:
-            args2.append(args[i])
-            i += 1
+            featuresets = set(fsarg.split(','))
 
-    if len(args2) != 2:
-        raise CleanError(f'Expected a name and path arg; got {args2}.')
+    noninteractive = extract_flag(args, '--noninteractive')
 
-    name, path = args2  # pylint: disable=unbalanced-tuple-unpacking
+    if len(args) != 2:
+        raise CleanError(f'Expected a name and path arg; got {args}.')
+
+    name, path = args  # pylint: disable=unbalanced-tuple-unpacking
 
     if not name:
         raise CleanError('Name cannot be an empty string.')
@@ -214,19 +208,19 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
 
     # Create an empty git repo. Some of our project functionality depends
     # on git so its best to always do this.
-    subprocess.run(['git', 'init'], cwd=path, check=True)
-    print('DID', dst_root)
+    subprocess.run(['git', 'init'], cwd=path, check=True, capture_output=True)
 
-    print(
-        f'{Clr.GRN}{Clr.BLD}Spinoff dst project created at'
-        f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{Clr.GRN}.{Clr.RST}\n\n'
-        'Next, from dst project root, do:\n'
-        f'  {Clr.BLD}{Clr.MAG}./tools/spinoff update{Clr.RST}     '
-        '- Syncs src project into dst.\n'
-        f'  {Clr.BLD}{Clr.MAG}make update-check{Clr.RST}          '
-        '- Makes sure the project is looking correct.\n\n'
-        'At that point you should have a functional dst project.\n'
-    )
+    if not noninteractive:
+        print(
+            f'{Clr.GRN}{Clr.BLD}Spinoff dst project created at'
+            f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{Clr.GRN}.{Clr.RST}\n\n'
+            'Next, from dst project root, do:\n'
+            f'  {Clr.BLD}{Clr.MAG}./tools/spinoff update{Clr.RST}     '
+            '- Syncs src project into dst.\n'
+            f'  {Clr.BLD}{Clr.MAG}make update-check{Clr.RST}          '
+            '- Makes sure the project is looking correct.\n\n'
+            'At that point you should have a functional dst project.\n'
+        )
 
 
 def _do_featuresets(dst_root: str) -> None:
@@ -338,7 +332,9 @@ def _print_available_commands() -> None:
             "                      Pass 'none' or an empty string for no"
             ' featuresets.\n'
             '                      If unspecified, all src feature-sets will be'
-            ' included.'
+            ' included.\n'
+            '                      Pass --noninteractive to suppress help'
+            ' messages.\n'
         ),
         file=sys.stderr,
     )

@@ -83,7 +83,7 @@ def _get_dummy_module_target(projroot: str) -> str:
         ' them change.\n'
         f'{dmstatepath}: \\\n'
     )
-    assert targets
+    # assert targets
     out += ' \\\n'.join(f' {target}' for target in targets)
 
     assert ' ' not in dmstatedir

@@ -1020,7 +1020,7 @@ cmake-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-      $(PWD)/ballisticakit-cmake
+      $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakit
 
@@ -1041,7 +1041,7 @@ cmake-server-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
-      $(PWD)/ballisticakit-cmake
+      $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist
 	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS)
 
@@ -1163,7 +1163,8 @@ _cmake-simple-ci-server-build:
 	tools/pcommand update_cmake_prefab_lib \
       server debug build/cmake_simple_ci_server_build
 	cd build/cmake_simple_ci_server_build && \
-      cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true $(PWD)/ballisticakit-cmake
+      cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true \
+      $(shell pwd)/ballisticakit-cmake
 	cd build/cmake_simple_ci_server_build && $(MAKE) -j$(CPUS)
 
 # Irony in emacs requires us to use cmake to generate a full
@@ -1175,7 +1176,7 @@ _cmake-simple-ci-server-build:
 	@mkdir -p .cache/irony
 	@cd .cache/irony \
       && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
-      $(PWD)/ballisticakit-cmake
+      $(shell pwd)/ballisticakit-cmake
 	@mv .cache/irony/compile_commands.json . \
       && rm -rf .cache/irony \
       && mkdir .cache/irony \
