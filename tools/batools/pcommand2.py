@@ -340,6 +340,6 @@ def spinoff_test() -> None:
         os.makedirs(path, exist_ok=True)
         print(f'{Clr.BLU}Running spinoff update...{Clr.RST}', flush=True)
         subprocess.run(['./tools/spinoff', 'update'], cwd=path, check=True)
-        subprocess.run(['make', 'cmake-binary'], cwd=path, check=True)
+        subprocess.run(['make', 'cmake-server-binary'], cwd=path, check=True)
     else:
         raise CleanError(f"Invalid test type '{testtype}'.")
