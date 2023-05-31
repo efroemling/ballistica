@@ -31,6 +31,11 @@ if TYPE_CHECKING:
 
     from batools.project import ProjectUpdater
 
+# Tags that default_filter_file() looks for; these can be used to strip
+# out sections that should never be included in spinoff projects.
+STRIP_BEGIN_TAG = '# __SPINOFF_STRIP_BEGIN__'
+STRIP_END_TAG = '# __SPINOFF_STRIP_END__'
+
 
 class SpinoffContext:
     """Guts of the spinoff system."""
@@ -684,6 +689,28 @@ class SpinoffContext:
 
     def default_filter_file(self, src_path: str, text: str) -> str:
         """Run default filtering on a file."""
+
+        # Strip out any sections frames by our strip-begin/end tags.
+        if STRIP_BEGIN_TAG in text:
+            lines = text.splitlines()
+
+            while STRIP_BEGIN_TAG in lines:
+                index = lines.index(STRIP_BEGIN_TAG)
+                endindex = index
+                while lines[endindex] != STRIP_END_TAG:
+                    endindex += 1
+
+                # If the line after us is blank,
+                # include it too to keep spacing clean.
+                if (
+                    len(lines) > (endindex + 1)
+                    and not lines[endindex + 1].strip()
+                ):
+                    endindex += 1
+
+                del lines[index : endindex + 1]
+
+            text = '\n'.join(lines) + '\n'
 
         # Add warnings to some of the git-managed files that we write.
         if src_path == 'README.md':

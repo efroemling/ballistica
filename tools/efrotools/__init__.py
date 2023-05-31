@@ -130,6 +130,36 @@ def extract_arg(
     return val
 
 
+# FIXME: this has not been tested yet.
+def replace_section(
+    text: str,
+    begin_marker: str,
+    end_marker: str,
+    replace_text: str = '',
+    error_if_missing: bool = True,
+) -> str:
+    """Replace all text between two marker strings (including the markers)."""
+    if begin_marker not in text:
+        if error_if_missing:
+            raise RuntimeError(f"Marker not found in text: '{begin_marker}'.")
+        return text
+    splits = text.split(begin_marker)
+    if len(splits) != 2:
+        raise RuntimeError(
+            f"Expected one marker '{begin_marker}'"
+            f'; found {text.count(begin_marker)}.'
+        )
+    before_begin, after_begin = splits
+    splits = after_begin.split(end_marker)
+    if len(splits) != 2:
+        raise RuntimeError(
+            f"Expected one marker '{end_marker}'"
+            f'; found {text.count(end_marker)}.'
+        )
+    _before_end, after_end = splits
+    return before_begin + replace_text + after_end
+
+
 def get_public_license(style: str) -> str:
     """Return the license notice as used for our public facing stuff.
 

@@ -1106,6 +1106,15 @@ auto SceneV1Python::FilterChatMessage(std::string* message, int client_id)
     -> bool {
   assert(message);
   base::ScopedSetContext ssc(nullptr);
+
+  // This string data can be coming straight in off the network; need
+  // to avoid letting malicious garbage through to Python api.
+  if (!Utils::IsValidUTF8(*message)) {
+    BA_LOG_ONCE(LogLevel::kWarning,
+                "FilterChatMessage got invalid UTF8 data; could be an attack.");
+    return false;
+  }
+
   PythonRef args(Py_BuildValue("(si)", message->c_str(), client_id),
                  PythonRef::kSteal);
   PythonRef result = objs().Get(ObjID::kFilterChatMessageCall).Call(args);

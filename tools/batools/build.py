@@ -1036,7 +1036,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         if entry.current_value != previous_value:
             print(
                 f'{Clr.BLU}{entry.name} changed from {previous_value}'
-                f' to {entry.current_value}; clearing existing build at'
+                f' to {entry.current_value}; clearing any existing build at'
                 f' "{dirname}".{Clr.RST}'
             )
             changed = True
