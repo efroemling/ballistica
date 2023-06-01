@@ -288,8 +288,8 @@ def register_appearances() -> None:
         'mel09',
         'mel10',
     ]
-    t.attack_sounds = mel_sounds
     t.jump_sounds = mel_sounds
+    t.attack_sounds = mel_sounds
     t.impact_sounds = mel_sounds
     t.death_sounds = ['melDeath01']
     t.pickup_sounds = mel_sounds
@@ -323,8 +323,8 @@ def register_appearances() -> None:
         'jackHit07',
     ]
     sounds = ['jack01', 'jack02', 'jack03', 'jack04', 'jack05', 'jack06']
-    t.attack_sounds = sounds
     t.jump_sounds = sounds
+    t.attack_sounds = sounds
     t.impact_sounds = hit_sounds
     t.death_sounds = ['jackDeath01']
     t.pickup_sounds = sounds
@@ -350,8 +350,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'santaToes'
     hit_sounds = ['santaHit01', 'santaHit02', 'santaHit03', 'santaHit04']
     sounds = ['santa01', 'santa02', 'santa03', 'santa04', 'santa05']
-    t.attack_sounds = sounds
     t.jump_sounds = sounds
+    t.attack_sounds = sounds
     t.impact_sounds = hit_sounds
     t.death_sounds = ['santaDeath']
     t.pickup_sounds = sounds
@@ -377,8 +377,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'frostyToes'
     frosty_sounds = ['frosty01', 'frosty02', 'frosty03', 'frosty04', 'frosty05']
     frosty_hit_sounds = ['frostyHit01', 'frostyHit02', 'frostyHit03']
-    t.attack_sounds = frosty_sounds
     t.jump_sounds = frosty_sounds
+    t.attack_sounds = frosty_sounds
     t.impact_sounds = frosty_hit_sounds
     t.death_sounds = ['frostyDeath']
     t.pickup_sounds = frosty_sounds
@@ -404,8 +404,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'bonesToes'
     bones_sounds = ['bones1', 'bones2', 'bones3']
     bones_hit_sounds = ['bones1', 'bones2', 'bones3']
-    t.attack_sounds = bones_sounds
     t.jump_sounds = bones_sounds
+    t.attack_sounds = bones_sounds
     t.impact_sounds = bones_hit_sounds
     t.death_sounds = ['bonesDeath']
     t.pickup_sounds = bones_sounds
@@ -430,8 +430,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'bearToes'
     bear_sounds = ['bear1', 'bear2', 'bear3', 'bear4']
     bear_hit_sounds = ['bearHit1', 'bearHit2']
-    t.attack_sounds = bear_sounds
     t.jump_sounds = bear_sounds
+    t.attack_sounds = bear_sounds
     t.impact_sounds = bear_hit_sounds
     t.death_sounds = ['bearDeath']
     t.pickup_sounds = bear_sounds
@@ -457,8 +457,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'penguinToes'
     penguin_sounds = ['penguin1', 'penguin2', 'penguin3', 'penguin4']
     penguin_hit_sounds = ['penguinHit1', 'penguinHit2']
-    t.attack_sounds = penguin_sounds
     t.jump_sounds = penguin_sounds
+    t.attack_sounds = penguin_sounds
     t.impact_sounds = penguin_hit_sounds
     t.death_sounds = ['penguinDeath']
     t.pickup_sounds = penguin_sounds
@@ -484,8 +484,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'aliToes'
     ali_sounds = ['ali1', 'ali2', 'ali3', 'ali4']
     ali_hit_sounds = ['aliHit1', 'aliHit2']
-    t.attack_sounds = ali_sounds
     t.jump_sounds = ali_sounds
+    t.attack_sounds = ali_sounds
     t.impact_sounds = ali_hit_sounds
     t.death_sounds = ['aliDeath']
     t.pickup_sounds = ali_sounds
@@ -511,8 +511,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'cyborgToes'
     cyborg_sounds = ['cyborg1', 'cyborg2', 'cyborg3', 'cyborg4']
     cyborg_hit_sounds = ['cyborgHit1', 'cyborgHit2']
-    t.attack_sounds = cyborg_sounds
     t.jump_sounds = cyborg_sounds
+    t.attack_sounds = cyborg_sounds
     t.impact_sounds = cyborg_hit_sounds
     t.death_sounds = ['cyborgDeath']
     t.pickup_sounds = cyborg_sounds
@@ -538,8 +538,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'agentToes'
     agent_sounds = ['agent1', 'agent2', 'agent3', 'agent4']
     agent_hit_sounds = ['agentHit1', 'agentHit2']
-    t.attack_sounds = agent_sounds
     t.jump_sounds = agent_sounds
+    t.attack_sounds = agent_sounds
     t.impact_sounds = agent_hit_sounds
     t.death_sounds = ['agentDeath']
     t.pickup_sounds = agent_sounds
@@ -565,8 +565,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'jumpsuitToes'
     jumpsuit_sounds = ['jumpsuit1', 'jumpsuit2', 'jumpsuit3', 'jumpsuit4']
     jumpsuit_hit_sounds = ['jumpsuitHit1', 'jumpsuitHit2']
-    t.attack_sounds = jumpsuit_sounds
     t.jump_sounds = jumpsuit_sounds
+    t.attack_sounds = jumpsuit_sounds
     t.impact_sounds = jumpsuit_hit_sounds
     t.death_sounds = ['jumpsuitDeath']
     t.pickup_sounds = jumpsuit_sounds
@@ -597,8 +597,8 @@ def register_appearances() -> None:
         'actionHero4',
     ]
     action_hero_hit_sounds = ['actionHeroHit1', 'actionHeroHit2']
-    t.attack_sounds = action_hero_sounds
     t.jump_sounds = action_hero_sounds
+    t.attack_sounds = action_hero_sounds
     t.impact_sounds = action_hero_hit_sounds
     t.death_sounds = ['actionHeroDeath']
     t.pickup_sounds = action_hero_sounds
@@ -624,8 +624,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'assassinToes'
     assassin_sounds = ['assassin1', 'assassin2', 'assassin3', 'assassin4']
     assassin_hit_sounds = ['assassinHit1', 'assassinHit2']
-    t.attack_sounds = assassin_sounds
     t.jump_sounds = assassin_sounds
+    t.attack_sounds = assassin_sounds
     t.impact_sounds = assassin_hit_sounds
     t.death_sounds = ['assassinDeath']
     t.pickup_sounds = assassin_sounds
@@ -651,8 +651,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'wizardToes'
     wizard_sounds = ['wizard1', 'wizard2', 'wizard3', 'wizard4']
     wizard_hit_sounds = ['wizardHit1', 'wizardHit2']
-    t.attack_sounds = wizard_sounds
     t.jump_sounds = wizard_sounds
+    t.attack_sounds = wizard_sounds
     t.impact_sounds = wizard_hit_sounds
     t.death_sounds = ['wizardDeath']
     t.pickup_sounds = wizard_sounds
@@ -678,8 +678,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'cowboyToes'
     cowboy_sounds = ['cowboy1', 'cowboy2', 'cowboy3', 'cowboy4']
     cowboy_hit_sounds = ['cowboyHit1', 'cowboyHit2']
-    t.attack_sounds = cowboy_sounds
     t.jump_sounds = cowboy_sounds
+    t.attack_sounds = cowboy_sounds
     t.impact_sounds = cowboy_hit_sounds
     t.death_sounds = ['cowboyDeath']
     t.pickup_sounds = cowboy_sounds
@@ -705,8 +705,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'witchToes'
     witch_sounds = ['witch1', 'witch2', 'witch3', 'witch4']
     witch_hit_sounds = ['witchHit1', 'witchHit2']
-    t.attack_sounds = witch_sounds
     t.jump_sounds = witch_sounds
+    t.attack_sounds = witch_sounds
     t.impact_sounds = witch_hit_sounds
     t.death_sounds = ['witchDeath']
     t.pickup_sounds = witch_sounds
@@ -732,8 +732,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'warriorToes'
     warrior_sounds = ['warrior1', 'warrior2', 'warrior3', 'warrior4']
     warrior_hit_sounds = ['warriorHit1', 'warriorHit2']
-    t.attack_sounds = warrior_sounds
     t.jump_sounds = warrior_sounds
+    t.attack_sounds = warrior_sounds
     t.impact_sounds = warrior_hit_sounds
     t.death_sounds = ['warriorDeath']
     t.pickup_sounds = warrior_sounds
@@ -759,8 +759,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'superheroToes'
     superhero_sounds = ['superhero1', 'superhero2', 'superhero3', 'superhero4']
     superhero_hit_sounds = ['superheroHit1', 'superheroHit2']
-    t.attack_sounds = superhero_sounds
     t.jump_sounds = superhero_sounds
+    t.attack_sounds = superhero_sounds
     t.impact_sounds = superhero_hit_sounds
     t.death_sounds = ['superheroDeath']
     t.pickup_sounds = superhero_sounds
@@ -786,8 +786,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'alienToes'
     alien_sounds = ['alien1', 'alien2', 'alien3', 'alien4']
     alien_hit_sounds = ['alienHit1', 'alienHit2']
-    t.attack_sounds = alien_sounds
     t.jump_sounds = alien_sounds
+    t.attack_sounds = alien_sounds
     t.impact_sounds = alien_hit_sounds
     t.death_sounds = ['alienDeath']
     t.pickup_sounds = alien_sounds
@@ -813,8 +813,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'oldLadyToes'
     old_lady_sounds = ['oldLady1', 'oldLady2', 'oldLady3', 'oldLady4']
     old_lady_hit_sounds = ['oldLadyHit1', 'oldLadyHit2']
-    t.attack_sounds = old_lady_sounds
     t.jump_sounds = old_lady_sounds
+    t.attack_sounds = old_lady_sounds
     t.impact_sounds = old_lady_hit_sounds
     t.death_sounds = ['oldLadyDeath']
     t.pickup_sounds = old_lady_sounds
@@ -840,8 +840,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'gladiatorToes'
     gladiator_sounds = ['gladiator1', 'gladiator2', 'gladiator3', 'gladiator4']
     gladiator_hit_sounds = ['gladiatorHit1', 'gladiatorHit2']
-    t.attack_sounds = gladiator_sounds
     t.jump_sounds = gladiator_sounds
+    t.attack_sounds = gladiator_sounds
     t.impact_sounds = gladiator_hit_sounds
     t.death_sounds = ['gladiatorDeath']
     t.pickup_sounds = gladiator_sounds
@@ -867,8 +867,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'wrestlerToes'
     wrestler_sounds = ['wrestler1', 'wrestler2', 'wrestler3', 'wrestler4']
     wrestler_hit_sounds = ['wrestlerHit1', 'wrestlerHit2']
-    t.attack_sounds = wrestler_sounds
     t.jump_sounds = wrestler_sounds
+    t.attack_sounds = wrestler_sounds
     t.impact_sounds = wrestler_hit_sounds
     t.death_sounds = ['wrestlerDeath']
     t.pickup_sounds = wrestler_sounds
@@ -899,8 +899,8 @@ def register_appearances() -> None:
         'operaSinger4',
     ]
     opera_singer_hit_sounds = ['operaSingerHit1', 'operaSingerHit2']
-    t.attack_sounds = opera_singer_sounds
     t.jump_sounds = opera_singer_sounds
+    t.attack_sounds = opera_singer_sounds
     t.impact_sounds = opera_singer_hit_sounds
     t.death_sounds = ['operaSingerDeath']
     t.pickup_sounds = opera_singer_sounds
@@ -926,8 +926,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'pixieToes'
     pixie_sounds = ['pixie1', 'pixie2', 'pixie3', 'pixie4']
     pixie_hit_sounds = ['pixieHit1', 'pixieHit2']
-    t.attack_sounds = pixie_sounds
     t.jump_sounds = pixie_sounds
+    t.attack_sounds = pixie_sounds
     t.impact_sounds = pixie_hit_sounds
     t.death_sounds = ['pixieDeath']
     t.pickup_sounds = pixie_sounds
@@ -953,8 +953,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'robotToes'
     robot_sounds = ['robot1', 'robot2', 'robot3', 'robot4']
     robot_hit_sounds = ['robotHit1', 'robotHit2']
-    t.attack_sounds = robot_sounds
     t.jump_sounds = robot_sounds
+    t.attack_sounds = robot_sounds
     t.impact_sounds = robot_hit_sounds
     t.death_sounds = ['robotDeath']
     t.pickup_sounds = robot_sounds
@@ -980,8 +980,8 @@ def register_appearances() -> None:
     t.toes_mesh = 'bunnyToes'
     bunny_sounds = ['bunny1', 'bunny2', 'bunny3', 'bunny4']
     bunny_hit_sounds = ['bunnyHit1', 'bunnyHit2']
-    t.attack_sounds = bunny_sounds
     t.jump_sounds = ['bunnyJump']
+    t.attack_sounds = bunny_sounds
     t.impact_sounds = bunny_hit_sounds
     t.death_sounds = ['bunnyDeath']
     t.pickup_sounds = bunny_sounds
