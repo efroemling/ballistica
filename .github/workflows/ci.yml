@@ -53,7 +53,7 @@ jobs:
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
     - name: Build spinoff project with no featuresets
-      run: tools/pcommand spinoff_test empty
+      run: make spinoff-test-empty
       
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
