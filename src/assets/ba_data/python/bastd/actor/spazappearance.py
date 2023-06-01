@@ -17,7 +17,7 @@ def get_appearances(include_locked: bool = False) -> list[str]:
     get_purchased = plus.get_purchased
     disallowed = []
     if not include_locked:
-        # hmm yeah this'll be tough to hack...
+        # Hmm yeah this'll be tough to hack...
         if not get_purchased('characters.santa'):
             disallowed.append('Santa Claus')
         if not get_purchased('characters.frosty'):
@@ -84,7 +84,7 @@ def get_appearances(include_locked: bool = False) -> list[str]:
 
 
 class Appearance:
-    """Create and fill out one of these suckers to define a spaz appearance"""
+    """Create and fill out one of these suckers to define a spaz appearance."""
 
     def __init__(self, name: str):
         assert bs.app.classic is not None
@@ -121,7 +121,7 @@ class Appearance:
 def register_appearances() -> None:
     """Register our builtin spaz appearances."""
 
-    # this is quite ugly but will be going away so not worth cleaning up
+    # This is quite ugly but will be going away so not worth cleaning up.
     # pylint: disable=invalid-name
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -492,7 +492,7 @@ def register_appearances() -> None:
     t.fall_sounds = ['aliFall']
     t.style = 'ali'
 
-    # cyborg ###################################
+    # Cyborg ###################################
     t = Appearance('B-9000')
     t.color_texture = 'cyborgColor'
     t.color_mask_texture = 'cyborgColorMask'
