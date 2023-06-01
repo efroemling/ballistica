@@ -46,4 +46,4 @@
 - Made a SUPER important change
 
 ### VinniTR
-- Bug fixes
+- Fixes
