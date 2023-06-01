@@ -12,4 +12,6 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base', 'scene_v1', 'ui_v1'}
+fset.has_native_python_module = False
+
+fset.requirements = {'core', 'base', 'scene_v1', 'ui_v1'}

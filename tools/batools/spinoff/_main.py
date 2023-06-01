@@ -215,7 +215,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     doneclr = Clr.BLU if noninteractive else Clr.GRN
     print(
         f'{doneclr}{Clr.BLD}Spinoff dst project created at'
-        f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{doneclr}.{Clr.RST}'
+        f' {Clr.RST}{Clr.BLD}{path}{Clr.RST}{doneclr}.{Clr.RST}',
     )
     if not noninteractive:
         print(

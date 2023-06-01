@@ -33,7 +33,7 @@ sources: \
   $(PROJ_SRC_DIR)/ballistica/template_fs/mgen/pyembed/binding_template_fs.inc \
   $(PROJ_SRC_DIR)/ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc
 
-$(PROJ_SRC_DIR)/ballistica/core/mgen/python_modules_monolithic.h : $(PROJ_DIR)/config/featuresets/featureset_base.py $(PROJ_DIR)/config/featuresets/featureset_classic.py $(PROJ_DIR)/config/featuresets/featureset_core.py $(PROJ_DIR)/config/featuresets/featureset_plus.py $(PROJ_DIR)/config/featuresets/featureset_scene_v1.py $(PROJ_DIR)/config/featuresets/featureset_template_fs.py $(PROJ_DIR)/config/featuresets/featureset_ui_v1.py
+$(PROJ_SRC_DIR)/ballistica/core/mgen/python_modules_monolithic.h : $(PROJ_DIR)/config/featuresets/featureset_base.py $(PROJ_DIR)/config/featuresets/featureset_classic.py $(PROJ_DIR)/config/featuresets/featureset_core.py $(PROJ_DIR)/config/featuresets/featureset_plus.py $(PROJ_DIR)/config/featuresets/featureset_scene_v1.py $(PROJ_DIR)/config/featuresets/featureset_std.py $(PROJ_DIR)/config/featuresets/featureset_template_fs.py $(PROJ_DIR)/config/featuresets/featureset_ui_v1.py
 	@$(PCOMMAND) gen_monolithic_register_modules $@
 
 $(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base.inc : babasemeta/pyembed/binding_base.py

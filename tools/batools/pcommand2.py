@@ -333,7 +333,9 @@ def spinoff_test() -> None:
             '--featuresets',
             'none',
         ]
-        print(Clr.MAG + ' '.join(cmd) + Clr.RST)
+        # Show the spinoff command we'd use here.
+        print(Clr.MAG + ' '.join(cmd) + Clr.RST, flush=True)
+        # Avoid the 'what to do next' help.
         subprocess.run(
             cmd + ['--noninteractive'],
             check=True,
@@ -341,6 +343,37 @@ def spinoff_test() -> None:
         os.makedirs(path, exist_ok=True)
         print(f'{Clr.MAG}tools/spinoff update{Clr.RST}', flush=True)
         subprocess.run(['tools/spinoff', 'update'], cwd=path, check=True)
-        subprocess.run(['make', 'cmake-server-binary'], cwd=path, check=True)
+        # subprocess.run(['make', 'cmake-server-binary'], cwd=path, check=True)
+
+        # Now let's simply run the mypy target. This will compile a
+        # binary, use that binary to generate dummy Python modules, and
+        # then check the assembled set of Python scripts. If all that
+        # goes through it tells us that this spinoff project is at least
+        # basically functional.
+        subprocess.run(
+            ['make', 'mypy'],
+            cwd=path,
+            env=dict(os.environ, BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS='1'),
+            check=True,
+        )
+
+        # Run the binary with a --help arg and make sure it spits
+        # out what we expect it to.
+        # DISABLING: the dummy-module generation part of the mypy target
+        # covers this.
+        if bool(False):
+            help_output = subprocess.run(
+                [
+                    'build/cmake/server-debug/dist/spinofftest_headless',
+                    '--help',
+                ],
+                cwd=path,
+                check=True,
+                capture_output=True,
+            ).stdout.decode()
+            if '-h, --help ' not in help_output:
+                raise RuntimeError(
+                    'Unexpected output when running test command.'
+                )
     else:
         raise CleanError(f"Invalid test type '{testtype}'.")

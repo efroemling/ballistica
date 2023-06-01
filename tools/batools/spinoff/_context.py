@@ -332,6 +332,10 @@ class SpinoffContext:
             fsmetapackagename = featureset.name_python_package_meta
             paths.add(f'src/meta/{fsmetapackagename}')
 
+            # Omit its tests package.
+            fstestspackagename = featureset.name_python_package_tests
+            paths.add(f'tests/{fstestspackagename}')
+
     @classmethod
     def get_active(cls) -> SpinoffContext:
         """Return the context currently running."""
@@ -1757,8 +1761,9 @@ class SpinoffContext:
         # pylint: disable=too-many-locals
 
         # Ok, *something* differs from our cache. Need to take a closer look.
+
+        # With no dst we have to do the copy of course.
         if not dst_exists:
-            # With no dst gotta do a copy of course.
             self._src_copy_entities.add(src_path)
             return
 
@@ -1801,46 +1806,53 @@ class SpinoffContext:
             )
             return
 
-        # Let's filter the src file and if it matches dst we can just
-        # re-grab our cache info and call it a day.
-        if self._should_filter_src_file(src_path):
-            encoding = self._encoding_for_file(src_path_full)
-            with open(src_path_full, 'rb') as infile:
-                try:
-                    src_data = self._filter_file(
-                        src_path, infile.read().decode(encoding)
-                    )
-                except Exception:
-                    print(f"Error decoding/filtering file: '{src_path}'.")
-                    raise
-            with open(dst_path_full, 'rb') as infile:
-                try:
-                    dst_data = infile.read().decode(encoding)
-                except Exception:
-                    print(f"Error decoding file: '{dst_path}'.")
-                    raise
-            results_are_same = src_data == dst_data
+        is_project_file = self._is_project_file(src_path)
 
-            # Bytes versions are only used very rarely by 'backport'
-            # command so let's lazy compute them here.
-            src_datab = dst_datab = None
+        if is_project_file:
+            # Project files apply arbitrary logic on top of our
+            # copying/filtering (which we cannot check here) so we can
+            # never assume results are unchanging.
+            results_are_same = False
         else:
-            # Ok our src isn't filtered; can be a bit more streamlined.
-            with open(src_path_full, 'rb') as infile:
-                src_datab = infile.read()
-            with open(dst_path_full, 'rb') as infile:
-                dst_datab = infile.read()
-            results_are_same = src_datab == dst_datab
+            # Let's filter the src file and if it matches dst we can just
+            # re-grab our cache info and call it a day.
+            if self._should_filter_src_file(src_path):
+                encoding = self._encoding_for_file(src_path_full)
+                with open(src_path_full, 'rb') as infile:
+                    try:
+                        src_data = self._filter_file(
+                            src_path, infile.read().decode(encoding)
+                        )
+                    except Exception:
+                        print(f"Error decoding/filtering file: '{src_path}'.")
+                        raise
+                with open(dst_path_full, 'rb') as infile:
+                    try:
+                        dst_data = infile.read().decode(encoding)
+                    except Exception:
+                        print(f"Error decoding file: '{dst_path}'.")
+                        raise
+                results_are_same = src_data == dst_data
 
-            # No string versions needed in this case.
-            src_data = dst_data = None
+                # Bytes versions are only used very rarely by 'backport'
+                # command so let's lazy compute them here.
+                src_datab = dst_datab = None
+            else:
+                # Ok our src isn't filtered; can be a bit more streamlined.
+                with open(src_path_full, 'rb') as infile:
+                    src_datab = infile.read()
+                with open(dst_path_full, 'rb') as infile:
+                    dst_datab = infile.read()
+                results_are_same = src_datab == dst_datab
+
+                # No string versions needed in this case.
+                src_data = dst_data = None
 
         if results_are_same:
             # Things match; just update the times we've got recorded
             # for these fellas.
             self._src_recache_entities.add(src_path)
         else:
-            # Ok, something legit changed.
             if (os.path.getsize(dst_path_full) == dst_entity.dst_size) and (
                 os.path.getmtime(dst_path_full) == dst_entity.dst_mtime
             ):

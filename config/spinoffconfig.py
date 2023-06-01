@@ -52,6 +52,7 @@ ctx.src_omit_paths = {
     'ballisticakit-android/build',
     'tools/spinoff',
     '.editorconfig',
+    'src/assets/workspace',
 }
 
 # Use this to 'carve out' directories or exact file paths which will be

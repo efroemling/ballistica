@@ -123,6 +123,14 @@ void BasePython::OnMainThreadStartApp() {
   if (!result.Exists()) {
     FatalError("baenv.on_babase_start_app() failed.");
   }
+
+  // Set up some env stuff (interrupt handlers, etc.)
+  result = g_base->python->objs()
+               .Get(BasePython::ObjID::kSetupEnvForAppRunCall)
+               .Call();
+  if (!result.Exists()) {
+    FatalError("babase._env.setup_env_for_app_run() failed.");
+  }
 }
 
 void BasePython::OnAppStart() {

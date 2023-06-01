@@ -140,8 +140,13 @@ class FeatureSet:
 
     @property
     def name_python_package_meta(self) -> str:
-        """The name of our meta python package."""
+        """The name of our meta Python package."""
         return f'ba{self.name_compact}meta'
+
+    @property
+    def name_python_package_tests(self) -> str:
+        """The name of our Python tests package."""
+        return f'test_ba{self.name_compact}'
 
     @property
     def name_python_binary_module(self) -> str:

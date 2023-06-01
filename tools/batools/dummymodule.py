@@ -953,7 +953,6 @@ def generate(projroot: str) -> None:
         f'import sys\n'
         f'sys.path.append("build/assets/ba_data/python")\n'
         f'sys.path.append("{toolsdir}")\n'
-        f'import _babase\n'
         f'from batools import dummymodule\n'
     )
 
@@ -972,7 +971,6 @@ def generate(projroot: str) -> None:
             f'dummymodule.Generator(modulename="{mname}",'
             f' outfilename="{outfilename}").run()\n'
         )
-    assert gencount
 
     # Launch ballisticakit and exec ourself from within it.
     print(

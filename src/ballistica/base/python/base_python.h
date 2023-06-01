@@ -101,6 +101,8 @@ class BasePython {
     kOnTooManyFileDescriptorsCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,
+    kOnNativeModuleImportCall,
+    kSetupEnvForAppRunCall,
     kLast  // Sentinel; must be at end.
   };
 

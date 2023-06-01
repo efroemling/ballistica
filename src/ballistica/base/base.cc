@@ -113,6 +113,14 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // let baenv know it can now feed us logs and run some checks.
   g_core->python->RunBaEnvOnBaBaseImport();
 
+  // Run some sanity checks/etc.
+  auto result = g_base->python->objs()
+                    .Get(BasePython::ObjID::kOnNativeModuleImportCall)
+                    .Call();
+  if (!result.Exists()) {
+    FatalError("babase._env.on_native_module_import() call failed.");
+  }
+
   // ..and because baenv is now feeding us logs, we can push any logs through
   // that we've been holding on to.
   g_core->python->EnablePythonLoggingCalls();

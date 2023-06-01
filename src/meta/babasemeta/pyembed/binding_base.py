@@ -10,6 +10,7 @@ from babase import _language
 from babase import _apputils
 from babase._mgen import enums
 from babase import _hooks
+from babase import _env
 
 # The C++ layer looks for this variable:
 values = [
@@ -85,4 +86,6 @@ values = [
     _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     _hooks.open_url_with_webbrowser_module,  # kOpenURLWithWebBrowserModuleCall
     _apputils.on_too_many_file_descriptors,  # kOnTooManyFileDescriptorsCall
+    _env.on_native_module_import,  # kOnNativeModuleImportCall
+    _env.setup_env_for_app_run,  # kSetupEnvForAppRunCall
 ]
