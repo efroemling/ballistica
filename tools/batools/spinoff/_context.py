@@ -556,7 +556,8 @@ class SpinoffContext:
                             f'list item {ent} in a dir-list is not a dir'
                         )
 
-        # Likewise make sure nothing in a file list refers to a directory.
+        # Likewise make sure nothing in a file list refers to a
+        # directory.
         for ent in []:
             if os.path.exists(ent):
                 if os.path.isdir(ent):
@@ -567,21 +568,28 @@ class SpinoffContext:
     def _generate_env_hash(self) -> None:
         from efrotools import get_files_hash
         import batools.spinoff
+        import batools.project
 
-        # Generate an 'env' hash we can tag tracked files with, so
-        # that if spinoff scripts or config files change it will
-        # invalidate all tracked files.
+        # Generate an 'env' hash we can tag tracked files with, so that
+        # if spinoff scripts or config files change it will invalidate
+        # all tracked files.
         hashfiles = set[str]()
 
-        # Add all Python files under our spinoff subpackage.
-        for root, _subdirs, fnames in os.walk(
-            os.path.dirname(batools.spinoff.__file__)
-        ):
-            for fname in fnames:
-                if fname.endswith('.py') and not fname.startswith('flycheck_'):
-                    hashfiles.add(os.path.join(root, fname))
+        # Add all Python files under our 'spinoff' and 'project'
+        # subpackages since those are most likely to affect results.
+        for pkgdir in [
+            os.path.dirname(batools.spinoff.__file__),
+            os.path.dirname(batools.project.__file__),
+        ]:
+            for root, _subdirs, fnames in os.walk(pkgdir):
+                for fname in fnames:
+                    if fname.endswith('.py') and not fname.startswith(
+                        'flycheck_'
+                    ):
+                        hashfiles.add(os.path.join(root, fname))
 
-        # Hash config files too since they can affect anything.
+        # Also add src & dst config files since they can affect
+        # anything.
         hashfiles.add(self._src_config_path)
         hashfiles.add(self._dst_config_path)
 

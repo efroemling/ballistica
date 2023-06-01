@@ -353,7 +353,11 @@ def spinoff_test() -> None:
         subprocess.run(
             ['make', 'mypy'],
             cwd=path,
-            env=dict(os.environ, BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS='1'),
+            env=dict(
+                os.environ,
+                BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS='1',
+                BA_DUMMY_MODULE_BINARY_BUILDS_USE_HEADLESS='1',
+            ),
             check=True,
         )
 

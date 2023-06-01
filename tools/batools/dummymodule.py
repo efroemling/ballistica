@@ -919,12 +919,26 @@ def generate(projroot: str) -> None:
     # enable that.
     binary_build_command: list[str]
     if os.environ.get('BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS') == '1':
-        print(
-            f'{Clr.SMAG}Building binary to generate dummy-modules...{Clr.RST}',
-            flush=True,
-        )
-        binary_build_command = ['make', 'cmake-binary']
-        binary_path = 'build/cmake/debug/ballisticakit'
+        # Default to gui binary since that's what people are most likely
+        # to be iterating with anyway (minimizing redundant builds), but
+        # allow using headless builds which may work better in CI
+        # situations and whatnot due to fewer build requirements.
+        if os.environ.get('BA_DUMMY_MODULE_BINARY_BUILDS_USE_HEADLESS') == '1':
+            print(
+                f'{Clr.SMAG}Building (headless) binary to generate'
+                f' dummy-modules...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-server-binary']
+            binary_path = 'build/cmake/server-debug/dist/ballisticakit_headless'
+        else:
+            print(
+                f'{Clr.SMAG}Building (gui) binary to generate'
+                f' dummy-modules...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-binary']
+            binary_path = 'build/cmake/debug/ballisticakit'
     else:
         print(
             f'{Clr.SMAG}Fetching prefab binary to'
