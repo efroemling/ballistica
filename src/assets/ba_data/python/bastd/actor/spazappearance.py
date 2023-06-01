@@ -163,8 +163,6 @@ def register_appearances() -> None:
     t = Appearance('Zoe')
     t.color_texture = 'zoeColor'
     t.color_mask_texture = 'zoeColorMask'
-    t.default_color = (0.6, 0.6, 0.6)
-    t.default_highlight = (0, 1, 0)
     t.icon_texture = 'zoeIcon'
     t.icon_mask_texture = 'zoeIconColorMask'
     t.head_mesh = 'zoeHead'
@@ -193,13 +191,13 @@ def register_appearances() -> None:
     t.pickup_sounds = ['zoePickup01']
     t.fall_sounds = ['zoeFall01']
     t.style = 'female'
+    t.default_color = (0.6, 0.6, 0.6)
+    t.default_highlight = (0, 1, 0)
 
     # Ninja ##########################################
     t = Appearance('Snake Shadow')
     t.color_texture = 'ninjaColor'
     t.color_mask_texture = 'ninjaColorMask'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (0.55, 0.8, 0.55)
     t.icon_texture = 'ninjaIcon'
     t.icon_mask_texture = 'ninjaIconColorMask'
     t.head_mesh = 'ninjaHead'
@@ -221,13 +219,13 @@ def register_appearances() -> None:
     t.pickup_sounds = ninja_attacks
     t.fall_sounds = ['ninjaFall1']
     t.style = 'ninja'
+    t.default_color = (1, 1, 1)
+    t.default_highlight = (0.55, 0.8, 0.55)
 
     # Barbarian #####################################
     t = Appearance('Kronk')
     t.color_texture = 'kronk'
     t.color_mask_texture = 'kronkColorMask'
-    t.default_color = (0.4, 0.5, 0.4)
-    t.default_highlight = (1, 0.5, 0.3)
     t.icon_texture = 'kronkIcon'
     t.icon_mask_texture = 'kronkIconColorMask'
     t.head_mesh = 'kronkHead'
@@ -258,13 +256,13 @@ def register_appearances() -> None:
     t.pickup_sounds = kronk_sounds
     t.fall_sounds = ['kronkFall']
     t.style = 'kronk'
+    t.default_color = (0.4, 0.5, 0.4)
+    t.default_highlight = (1, 0.5, 0.3)
 
     # Chef ###########################################
     t = Appearance('Mel')
     t.color_texture = 'melColor'
     t.color_mask_texture = 'melColorMask'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (0.1, 0.6, 0.1)
     t.icon_texture = 'melIcon'
     t.icon_mask_texture = 'melIconColorMask'
     t.head_mesh = 'melHead'
@@ -295,13 +293,13 @@ def register_appearances() -> None:
     t.pickup_sounds = mel_sounds
     t.fall_sounds = ['melFall01']
     t.style = 'mel'
+    t.default_color = (1, 1, 1)
+    t.default_highlight = (0.1, 0.6, 0.1)
 
     # Pirate #######################################
     t = Appearance('Jack Morgan')
     t.color_texture = 'jackColor'
     t.color_mask_texture = 'jackColorMask'
-    t.default_color = (1, 0.2, 0.1)
-    t.default_highlight = (1, 1, 0)
     t.icon_texture = 'jackIcon'
     t.icon_mask_texture = 'jackIconColorMask'
     t.head_mesh = 'jackHead'
@@ -330,13 +328,13 @@ def register_appearances() -> None:
     t.pickup_sounds = sounds
     t.fall_sounds = ['jackFall01']
     t.style = 'pirate'
+    t.default_color = (1, 0.2, 0.1)
+    t.default_highlight = (1, 1, 0)
 
     # Santa ######################################
     t = Appearance('Santa Claus')
     t.color_texture = 'santaColor'
     t.color_mask_texture = 'santaColorMask'
-    t.default_color = (1, 0, 0)
-    t.default_highlight = (1, 1, 1)
     t.icon_texture = 'santaIcon'
     t.icon_mask_texture = 'santaIconColorMask'
     t.head_mesh = 'santaHead'
@@ -357,13 +355,13 @@ def register_appearances() -> None:
     t.pickup_sounds = sounds
     t.fall_sounds = ['santaFall']
     t.style = 'santa'
+    t.default_color = (1, 0, 0)
+    t.default_highlight = (1, 1, 1)
 
     # Snowman ###################################
     t = Appearance('Frosty')
     t.color_texture = 'frostyColor'
     t.color_mask_texture = 'frostyColorMask'
-    t.default_color = (0.5, 0.5, 1)
-    t.default_highlight = (1, 0.5, 0)
     t.icon_texture = 'frostyIcon'
     t.icon_mask_texture = 'frostyIconColorMask'
     t.head_mesh = 'frostyHead'
@@ -384,13 +382,13 @@ def register_appearances() -> None:
     t.pickup_sounds = frosty_sounds
     t.fall_sounds = ['frostyFall']
     t.style = 'frosty'
+    t.default_color = (0.5, 0.5, 1)
+    t.default_highlight = (1, 0.5, 0)
 
     # Skeleton ################################
     t = Appearance('Bones')
     t.color_texture = 'bonesColor'
     t.color_mask_texture = 'bonesColorMask'
-    t.default_color = (0.6, 0.9, 1)
-    t.default_highlight = (0.6, 0.9, 1)
     t.icon_texture = 'bonesIcon'
     t.icon_mask_texture = 'bonesIconColorMask'
     t.head_mesh = 'bonesHead'
@@ -411,12 +409,13 @@ def register_appearances() -> None:
     t.pickup_sounds = bones_sounds
     t.fall_sounds = ['bonesFall']
     t.style = 'bones'
+    t.default_color = (0.6, 0.9, 1)
+    t.default_highlight = (0.6, 0.9, 1)
 
     # Bear ###################################
     t = Appearance('Bernard')
     t.color_texture = 'bearColor'
     t.color_mask_texture = 'bearColorMask'
-    t.default_color = (0.7, 0.5, 0.0)
     t.icon_texture = 'bearIcon'
     t.icon_mask_texture = 'bearIconColorMask'
     t.head_mesh = 'bearHead'
@@ -437,13 +436,12 @@ def register_appearances() -> None:
     t.pickup_sounds = bear_sounds
     t.fall_sounds = ['bearFall']
     t.style = 'bear'
+    t.default_color = (0.7, 0.5, 0.0)
 
     # Penguin ###################################
     t = Appearance('Pascal')
     t.color_texture = 'penguinColor'
     t.color_mask_texture = 'penguinColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'penguinIcon'
     t.icon_mask_texture = 'penguinIconColorMask'
     t.head_mesh = 'penguinHead'
@@ -464,13 +462,13 @@ def register_appearances() -> None:
     t.pickup_sounds = penguin_sounds
     t.fall_sounds = ['penguinFall']
     t.style = 'penguin'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Ali ###################################
     t = Appearance('Taobao Mascot')
     t.color_texture = 'aliColor'
     t.color_mask_texture = 'aliColorMask'
-    t.default_color = (1, 0.5, 0)
-    t.default_highlight = (1, 1, 1)
     t.icon_texture = 'aliIcon'
     t.icon_mask_texture = 'aliIconColorMask'
     t.head_mesh = 'aliHead'
@@ -491,13 +489,13 @@ def register_appearances() -> None:
     t.pickup_sounds = ali_sounds
     t.fall_sounds = ['aliFall']
     t.style = 'ali'
+    t.default_color = (1, 0.5, 0)
+    t.default_highlight = (1, 1, 1)
 
     # Cyborg ###################################
     t = Appearance('B-9000')
     t.color_texture = 'cyborgColor'
     t.color_mask_texture = 'cyborgColorMask'
-    t.default_color = (0.5, 0.5, 0.5)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'cyborgIcon'
     t.icon_mask_texture = 'cyborgIconColorMask'
     t.head_mesh = 'cyborgHead'
@@ -518,13 +516,13 @@ def register_appearances() -> None:
     t.pickup_sounds = cyborg_sounds
     t.fall_sounds = ['cyborgFall']
     t.style = 'cyborg'
+    t.default_color = (0.5, 0.5, 0.5)
+    t.default_highlight = (1, 0, 0)
 
     # Agent ###################################
     t = Appearance('Agent Johnson')
     t.color_texture = 'agentColor'
     t.color_mask_texture = 'agentColorMask'
-    t.default_color = (0.3, 0.3, 0.33)
-    t.default_highlight = (1, 0.5, 0.3)
     t.icon_texture = 'agentIcon'
     t.icon_mask_texture = 'agentIconColorMask'
     t.head_mesh = 'agentHead'
@@ -545,13 +543,13 @@ def register_appearances() -> None:
     t.pickup_sounds = agent_sounds
     t.fall_sounds = ['agentFall']
     t.style = 'agent'
+    t.default_color = (0.3, 0.3, 0.33)
+    t.default_highlight = (1, 0.5, 0.3)
 
     # Jumpsuit ###################################
     t = Appearance('Lee')
     t.color_texture = 'jumpsuitColor'
     t.color_mask_texture = 'jumpsuitColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'jumpsuitIcon'
     t.icon_mask_texture = 'jumpsuitIconColorMask'
     t.head_mesh = 'jumpsuitHead'
@@ -572,13 +570,13 @@ def register_appearances() -> None:
     t.pickup_sounds = jumpsuit_sounds
     t.fall_sounds = ['jumpsuitFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # ActionHero ###################################
     t = Appearance('Todd McBurton')
     t.color_texture = 'actionHeroColor'
     t.color_mask_texture = 'actionHeroColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'actionHeroIcon'
     t.icon_mask_texture = 'actionHeroIconColorMask'
     t.head_mesh = 'actionHeroHead'
@@ -604,13 +602,13 @@ def register_appearances() -> None:
     t.pickup_sounds = action_hero_sounds
     t.fall_sounds = ['actionHeroFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Assassin ###################################
     t = Appearance('Zola')
     t.color_texture = 'assassinColor'
     t.color_mask_texture = 'assassinColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'assassinIcon'
     t.icon_mask_texture = 'assassinIconColorMask'
     t.head_mesh = 'assassinHead'
@@ -631,13 +629,13 @@ def register_appearances() -> None:
     t.pickup_sounds = assassin_sounds
     t.fall_sounds = ['assassinFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Wizard ###################################
     t = Appearance('Grumbledorf')
     t.color_texture = 'wizardColor'
     t.color_mask_texture = 'wizardColorMask'
-    t.default_color = (0.2, 0.4, 1.0)
-    t.default_highlight = (0.06, 0.15, 0.4)
     t.icon_texture = 'wizardIcon'
     t.icon_mask_texture = 'wizardIconColorMask'
     t.head_mesh = 'wizardHead'
@@ -658,13 +656,13 @@ def register_appearances() -> None:
     t.pickup_sounds = wizard_sounds
     t.fall_sounds = ['wizardFall']
     t.style = 'spaz'
+    t.default_color = (0.2, 0.4, 1.0)
+    t.default_highlight = (0.06, 0.15, 0.4)
 
     # Cowboy ###################################
     t = Appearance('Butch')
     t.color_texture = 'cowboyColor'
     t.color_mask_texture = 'cowboyColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'cowboyIcon'
     t.icon_mask_texture = 'cowboyIconColorMask'
     t.head_mesh = 'cowboyHead'
@@ -685,13 +683,13 @@ def register_appearances() -> None:
     t.pickup_sounds = cowboy_sounds
     t.fall_sounds = ['cowboyFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Witch ###################################
     t = Appearance('Witch')
     t.color_texture = 'witchColor'
     t.color_mask_texture = 'witchColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'witchIcon'
     t.icon_mask_texture = 'witchIconColorMask'
     t.head_mesh = 'witchHead'
@@ -712,13 +710,13 @@ def register_appearances() -> None:
     t.pickup_sounds = witch_sounds
     t.fall_sounds = ['witchFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Warrior ###################################
     t = Appearance('Warrior')
     t.color_texture = 'warriorColor'
     t.color_mask_texture = 'warriorColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'warriorIcon'
     t.icon_mask_texture = 'warriorIconColorMask'
     t.head_mesh = 'warriorHead'
@@ -739,13 +737,13 @@ def register_appearances() -> None:
     t.pickup_sounds = warrior_sounds
     t.fall_sounds = ['warriorFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Superhero ###################################
     t = Appearance('Middle-Man')
     t.color_texture = 'superheroColor'
     t.color_mask_texture = 'superheroColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'superheroIcon'
     t.icon_mask_texture = 'superheroIconColorMask'
     t.head_mesh = 'superheroHead'
@@ -766,13 +764,13 @@ def register_appearances() -> None:
     t.pickup_sounds = superhero_sounds
     t.fall_sounds = ['superheroFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Alien ###################################
     t = Appearance('Alien')
     t.color_texture = 'alienColor'
     t.color_mask_texture = 'alienColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'alienIcon'
     t.icon_mask_texture = 'alienIconColorMask'
     t.head_mesh = 'alienHead'
@@ -793,13 +791,13 @@ def register_appearances() -> None:
     t.pickup_sounds = alien_sounds
     t.fall_sounds = ['alienFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # OldLady ###################################
     t = Appearance('OldLady')
     t.color_texture = 'oldLadyColor'
     t.color_mask_texture = 'oldLadyColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'oldLadyIcon'
     t.icon_mask_texture = 'oldLadyIconColorMask'
     t.head_mesh = 'oldLadyHead'
@@ -820,13 +818,13 @@ def register_appearances() -> None:
     t.pickup_sounds = old_lady_sounds
     t.fall_sounds = ['oldLadyFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Gladiator ###################################
     t = Appearance('Gladiator')
     t.color_texture = 'gladiatorColor'
     t.color_mask_texture = 'gladiatorColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'gladiatorIcon'
     t.icon_mask_texture = 'gladiatorIconColorMask'
     t.head_mesh = 'gladiatorHead'
@@ -847,13 +845,13 @@ def register_appearances() -> None:
     t.pickup_sounds = gladiator_sounds
     t.fall_sounds = ['gladiatorFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Wrestler ###################################
     t = Appearance('Wrestler')
     t.color_texture = 'wrestlerColor'
     t.color_mask_texture = 'wrestlerColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'wrestlerIcon'
     t.icon_mask_texture = 'wrestlerIconColorMask'
     t.head_mesh = 'wrestlerHead'
@@ -874,13 +872,13 @@ def register_appearances() -> None:
     t.pickup_sounds = wrestler_sounds
     t.fall_sounds = ['wrestlerFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # OperaSinger ###################################
     t = Appearance('Gretel')
     t.color_texture = 'operaSingerColor'
     t.color_mask_texture = 'operaSingerColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'operaSingerIcon'
     t.icon_mask_texture = 'operaSingerIconColorMask'
     t.head_mesh = 'operaSingerHead'
@@ -906,13 +904,13 @@ def register_appearances() -> None:
     t.pickup_sounds = opera_singer_sounds
     t.fall_sounds = ['operaSingerFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Pixie ###################################
     t = Appearance('Pixel')
     t.color_texture = 'pixieColor'
     t.color_mask_texture = 'pixieColorMask'
-    t.default_color = (0, 1, 0.7)
-    t.default_highlight = (0.65, 0.35, 0.75)
     t.icon_texture = 'pixieIcon'
     t.icon_mask_texture = 'pixieIconColorMask'
     t.head_mesh = 'pixieHead'
@@ -933,13 +931,13 @@ def register_appearances() -> None:
     t.pickup_sounds = pixie_sounds
     t.fall_sounds = ['pixieFall']
     t.style = 'pixie'
+    t.default_color = (0, 1, 0.7)
+    t.default_highlight = (0.65, 0.35, 0.75)
 
     # Robot ###################################
     t = Appearance('Robot')
     t.color_texture = 'robotColor'
     t.color_mask_texture = 'robotColorMask'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
     t.icon_texture = 'robotIcon'
     t.icon_mask_texture = 'robotIconColorMask'
     t.head_mesh = 'robotHead'
@@ -960,13 +958,13 @@ def register_appearances() -> None:
     t.pickup_sounds = robot_sounds
     t.fall_sounds = ['robotFall']
     t.style = 'spaz'
+    t.default_color = (0.3, 0.5, 0.8)
+    t.default_highlight = (1, 0, 0)
 
     # Bunny ###################################
     t = Appearance('Easter Bunny')
     t.color_texture = 'bunnyColor'
     t.color_mask_texture = 'bunnyColorMask'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (1, 0.5, 0.5)
     t.icon_texture = 'bunnyIcon'
     t.icon_mask_texture = 'bunnyIconColorMask'
     t.head_mesh = 'bunnyHead'
@@ -987,3 +985,5 @@ def register_appearances() -> None:
     t.pickup_sounds = bunny_sounds
     t.fall_sounds = ['bunnyFall']
     t.style = 'bunny'
+    t.default_color = (1, 1, 1)
+    t.default_highlight = (1, 0.5, 0.5)
