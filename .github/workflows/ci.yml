@@ -52,8 +52,6 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
-    - name: Build prereqs
-      run: make prereqs
     - name: Build spinoff project with no featuresets
       run: tools/pcommand spinoff_test empty
       
