@@ -16,7 +16,6 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::base {
 
@@ -1038,7 +1037,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           g_base->ui->PushMainMenuPressCall(keyboard_input_);
         } else {
           // Ok there *is* a main menu up. Send it a cancel message.
-          g_base->ui->root_widget()->HandleMessage(
+          g_base->ui->SendWidgetMessage(
               WidgetMessage(WidgetMessage::Type::kCancel));
         }
         handled = true;
@@ -1144,16 +1143,15 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
   }
   mark_input_active();
 
-  ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  if (std::abs(amount.y) > 0.0001f && root_widget) {
-    root_widget->HandleMessage(WidgetMessage(WidgetMessage::Type::kMouseWheel,
-                                             nullptr, cursor_pos_x_,
-                                             cursor_pos_y_, amount.y));
+  if (std::abs(amount.y) > 0.0001f) {
+    g_base->ui->SendWidgetMessage(
+        WidgetMessage(WidgetMessage::Type::kMouseWheel, nullptr, cursor_pos_x_,
+                      cursor_pos_y_, amount.y));
   }
-  if (std::abs(amount.x) > 0.0001f && root_widget) {
-    root_widget->HandleMessage(WidgetMessage(WidgetMessage::Type::kMouseWheelH,
-                                             nullptr, cursor_pos_x_,
-                                             cursor_pos_y_, amount.x));
+  if (std::abs(amount.x) > 0.0001f) {
+    g_base->ui->SendWidgetMessage(
+        WidgetMessage(WidgetMessage::Type::kMouseWheelH, nullptr, cursor_pos_x_,
+                      cursor_pos_y_, amount.x));
   }
   mouse_move_count_++;
 
@@ -1180,15 +1178,13 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
   mark_input_active();
 
   bool handled = false;
-  ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  if (root_widget) {
-    handled = root_widget->HandleMessage(
-        WidgetMessage(WidgetMessage::Type::kMouseWheelVelocity, nullptr,
-                      cursor_pos_x_, cursor_pos_y_, velocity.y, momentum));
-    root_widget->HandleMessage(
-        WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
-                      cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
-  }
+  handled = g_base->ui->SendWidgetMessage(
+      WidgetMessage(WidgetMessage::Type::kMouseWheelVelocity, nullptr,
+                    cursor_pos_x_, cursor_pos_y_, velocity.y, momentum));
+  g_base->ui->SendWidgetMessage(
+      WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
+                    cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
+
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
 
@@ -1233,11 +1229,11 @@ void Input::HandleMouseMotion(const Vector2f& position) {
   }
 
   // UI interaction.
-  ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  if (root_widget && !IsInputLocked())
-    handled = root_widget->HandleMessage(
+  if (!IsInputLocked()) {
+    handled = g_base->ui->SendWidgetMessage(
         WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, cursor_pos_x_,
                       cursor_pos_y_));
+  }
 
   // Manual camera motion.
   Camera* camera = g_base->graphics->camera();
@@ -1259,6 +1255,7 @@ void Input::PushMouseDownEvent(int button, const Vector2f& position) {
 }
 
 void Input::HandleMouseDown(int button, const Vector2f& position) {
+  assert(g_base);
   assert(g_base->graphics);
   assert(g_base->InLogicThread());
 
@@ -1266,7 +1263,7 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
     return;
   }
 
-  if (g_base == nullptr || g_base->ui->screen_root_widget() == nullptr) {
+  if (!g_base->ui->MainMenuVisible()) {
     return;
   }
 
@@ -1286,7 +1283,7 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   last_click_time_ = click_time;
 
   bool handled{};
-  auto* root_widget = g_base->ui->root_widget();
+  // auto* root_widget = g_base->ui->root_widget();
 
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
@@ -1302,8 +1299,8 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
     }
   }
 
-  if (root_widget && !handled) {
-    handled = root_widget->HandleMessage(
+  if (!handled) {
+    handled = g_base->ui->SendWidgetMessage(
         WidgetMessage(WidgetMessage::Type::kMouseDown, nullptr, cursor_pos_x_,
                       cursor_pos_y_, double_click ? 2 : 1));
   }
@@ -1353,11 +1350,11 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
                                 cursor_pos_y_);
   }
 
-  ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  if (root_widget) {
-    handled = root_widget->HandleMessage(WidgetMessage(
-        WidgetMessage::Type::kMouseUp, nullptr, cursor_pos_x_, cursor_pos_y_));
-  }
+  // ui_v1::Widget* root_widget = g_base->ui->root_widget();
+  // if (root_widget) {
+  handled = g_base->ui->SendWidgetMessage(WidgetMessage(
+      WidgetMessage::Type::kMouseUp, nullptr, cursor_pos_x_, cursor_pos_y_));
+  // }
 
   Camera* camera = g_base->graphics->camera();
   if (!handled && camera) {
@@ -1484,7 +1481,6 @@ auto Input::IsCursorVisible() const -> bool {
   if (!g_base->ui) {
     return false;
   }
-  ui_v1::ContainerWidget* screen_root_widget = g_base->ui->screen_root_widget();
 
   // Keeps mouse hidden to start with..
   if (mouse_move_count_ < 2) {
@@ -1494,7 +1490,7 @@ auto Input::IsCursorVisible() const -> bool {
 
   // Show our cursor if any dialogs/windows are up or else if its been
   // moved very recently.
-  if (screen_root_widget && screen_root_widget->GetChildCount() > 0) {
+  if (g_base->ui->MainMenuVisible()) {
     val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 5000);
   } else {
     val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 1000);

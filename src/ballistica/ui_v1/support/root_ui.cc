@@ -59,8 +59,8 @@ void RootUI::ActivatePartyIcon() const {
                      - menu_button_size_ * 0.5f;
   float icon_pos_v = g_base->graphics->screen_virtual_height() * 0.5f
                      - menu_button_size_ * 0.5f;
-  bool menu_active = !(g_base->ui && g_base->ui->screen_root_widget()
-                       && g_base->ui->screen_root_widget()->HasChildren());
+  bool menu_active = !(g_ui_v1 && g_ui_v1->screen_root_widget()
+                       && g_ui_v1->screen_root_widget()->HasChildren());
   if (menu_active) {
     icon_pos_h -= menu_button_size_;
   }
@@ -71,8 +71,8 @@ void RootUI::ActivatePartyIcon() const {
 
 auto RootUI::HandleMouseButtonDown(float x, float y) -> bool {
   // Whether the menu button is visible/active.
-  bool menu_active = !(g_base->ui && g_base->ui->screen_root_widget()
-                       && g_base->ui->screen_root_widget()->HasChildren());
+  bool menu_active = !(g_ui_v1 && g_ui_v1->screen_root_widget()
+                       && g_ui_v1->screen_root_widget()->HasChildren());
 
   // Handle party button presses (need to do this before UI since it
   // floats over the top). Party button is to the left of menu button.
@@ -150,8 +150,8 @@ void RootUI::Draw(base::FrameDef* frame_def) {
 
     // Menu button.
     // Update time-dependent stuff to this point.
-    bool active = !(g_base->ui && g_base->ui->screen_root_widget()
-                    && g_base->ui->screen_root_widget()->HasChildren());
+    bool active = !(g_ui_v1 && g_ui_v1->screen_root_widget()
+                    && g_ui_v1->screen_root_widget()->HasChildren());
     if (real_time - menu_update_time_ > 500) {
       menu_update_time_ = real_time - 500;
     }

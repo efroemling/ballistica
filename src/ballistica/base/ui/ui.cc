@@ -4,7 +4,6 @@
 
 #include "ballistica/base/app/app_config.h"
 #include "ballistica/base/audio/audio.h"
-#include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -12,8 +11,6 @@
 #include "ballistica/base/ui/console.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/ui_v1/python/ui_v1_python.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
@@ -58,9 +55,11 @@ void UI::StepDisplayTime() { assert(g_base->InLogicThread()); }
 void UI::OnAppStart() {
   assert(g_base->InLogicThread());
 
-  root_ui_ = g_base->ui_v1()->NewRootUI();
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->OnAppStart();
+  }
 
-  // Make sure we know when forced-ui-scale is enabled.
+  // Make sure user knows when forced-ui-scale is enabled.
   if (force_scale_) {
     if (scale_ == UIScale::kSmall) {
       ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
@@ -93,12 +92,19 @@ void UI::ApplyAppConfig() {
           AppConfig::BoolID::kAlwaysUseInternalKeyboard));
 }
 
-auto UI::MainMenuVisible() -> bool {
+auto UI::MainMenuVisible() const -> bool {
   if (g_base->HaveUIV1()) {
     return g_base->ui_v1()->MainMenuVisible();
   }
   return false;
 }
+
+// FIXME should be same as MainMenuVisible.
+// auto UI::IsWindowPresent() const -> bool {
+//  return ((screen_root_widget_.Exists() && screen_root_widget_->HasChildren())
+//          || (overlay_root_widget_.Exists()
+//              && overlay_root_widget_->HasChildren()));
+//}
 
 auto UI::PartyIconVisible() -> bool {
   if (g_base->HaveUIV1()) {
@@ -111,6 +117,13 @@ void UI::ActivatePartyIcon() {
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->ActivatePartyIcon();
   }
+}
+
+auto UI::PartyWindowOpen() -> bool {
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->PartyWindowOpen();
+  }
+  return false;
 }
 
 void UI::HandleLegacyRootUIMouseMotion(float x, float y) {
@@ -136,15 +149,10 @@ void UI::PushBackButtonCall(InputDevice* input_device) {
   g_base->logic->event_loop()->PushCall([this, input_device] {
     assert(g_base->InLogicThread());
 
-    // Ignore if UI isn't up yet.
-    if (!overlay_root_widget() || !screen_root_widget()) {
-      return;
-    }
-
     // If there's a UI up, send along a cancel message.
-    if (overlay_root_widget()->GetChildCount() != 0
-        || screen_root_widget()->GetChildCount() != 0) {
-      root_widget()->HandleMessage(WidgetMessage(WidgetMessage::Type::kCancel));
+    if (g_base->ui->MainMenuVisible()) {
+      g_base->ui->SendWidgetMessage(
+          WidgetMessage(WidgetMessage::Type::kCancel));
     } else {
       // If there's no main screen or overlay windows, ask for a menu owned by
       // this device.
@@ -166,12 +174,6 @@ void UI::MainMenuPress(InputDevice* device) {
     Log(LogLevel::kWarning,
         "UI::MainMenuPress called without ui_v1 present; unexpected.");
   }
-}
-
-auto UI::IsWindowPresent() const -> bool {
-  return ((screen_root_widget_.Exists() && screen_root_widget_->HasChildren())
-          || (overlay_root_widget_.Exists()
-              && overlay_root_widget_->HasChildren()));
 }
 
 void UI::SetUIInputDevice(InputDevice* input_device) {
@@ -202,82 +204,27 @@ UI::UILock::~UILock() {
 }
 
 void UI::Reset() {
-  // Hmm; technically we don't need to recreate these each time we reset.
-  root_widget_.Clear();
-
-  // Kill our screen-root widget.
-  screen_root_widget_.Clear();
-
-  // (Re)create our screen-root widget.
-  auto sw(Object::New<ui_v1::StackWidget>());
-  sw->set_is_main_window_stack(true);
-  sw->SetWidth(g_base->graphics->screen_virtual_width());
-  sw->SetHeight(g_base->graphics->screen_virtual_height());
-  sw->set_translate(0, 0);
-  screen_root_widget_ = sw;
-
-  // (Re)create our screen-overlay widget.
-  auto ow(Object::New<ui_v1::StackWidget>());
-  ow->set_is_overlay_window_stack(true);
-  ow->SetWidth(g_base->graphics->screen_virtual_width());
-  ow->SetHeight(g_base->graphics->screen_virtual_height());
-  ow->set_translate(0, 0);
-  overlay_root_widget_ = ow;
-
-  // (Re)create our abs-root widget.
-  auto rw(Object::New<ui_v1::RootWidget>());
-  root_widget_ = rw;
-  rw->SetWidth(g_base->graphics->screen_virtual_width());
-  rw->SetHeight(g_base->graphics->screen_virtual_height());
-  rw->SetScreenWidget(sw.Get());
-  rw->Setup();
-  rw->SetOverlayWidget(ow.Get());
-
-  sw->GlobalSelect();
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->Reset();
+  }
 }
 
 auto UI::ShouldHighlightWidgets() const -> bool {
   // Show selection highlights only if we've got controllers connected and only
   // when the main UI is visible (dont want a selection highlight for toolbar
   // buttons during a game).
-  return (
-      g_base->input->have_non_touch_inputs()
-      && ((screen_root_widget_.Exists() && screen_root_widget_->HasChildren())
-          || (overlay_root_widget_.Exists()
-              && overlay_root_widget_->HasChildren())));
+  return (g_base->input->have_non_touch_inputs() && MainMenuVisible());
 }
 
 auto UI::ShouldShowButtonShortcuts() const -> bool {
   return g_base->input->have_non_touch_inputs();
 }
 
-void UI::AddWidget(ui_v1::Widget* w, ui_v1::ContainerWidget* parent) {
-  assert(g_base->InLogicThread());
-
-  BA_PRECONDITION(parent != nullptr);
-
-  // If they're adding an initial window/dialog to our screen-stack
-  // or overlay stack, send a reset-local-input message so that characters
-  // who have lost focus will not get stuck running or whatnot.
-  // We should come up with a more generalized way to track this sort of
-  // focus as this is a bit hacky, but it works for now.
-  auto* screen_root_widget = screen_root_widget_.Get();
-  auto* overlay_root_widget = overlay_root_widget_.Get();
-  if ((screen_root_widget && !screen_root_widget->HasChildren()
-       && parent == screen_root_widget)
-      || (overlay_root_widget && !overlay_root_widget->HasChildren()
-          && parent == overlay_root_widget)) {
-    g_base->input->ResetHoldStates();
-  }
-
-  parent->AddWidget(w);
-}
-
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> int {
-  if (!root_widget_.Exists()) {
-    return false;
+  if (g_base->HaveUIV1()) {
+    return g_base->ui_v1()->SendWidgetMessage(m);
   }
-  return root_widget_->HandleMessage(m);
+  return false;
 }
 
 void UI::DeleteWidget(ui_v1::Widget* widget) {
@@ -291,16 +238,14 @@ void UI::DeleteWidget(ui_v1::Widget* widget) {
 }
 
 void UI::OnScreenSizeChange() {
-  if (root_widget_.Exists()) {
-    root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
-    root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->OnScreenSizeChange();
   }
 }
 
 void UI::LanguageChanged() {
-  // As well as existing UI stuff.
-  if (ui_v1::Widget* root_widget = g_base->ui->root_widget()) {
-    root_widget->OnLanguageChange();
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->OnLanguageChange();
   }
 }
 
@@ -315,9 +260,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
 
   // We only allow input-devices to control the UI when there's a window/dialog
   // on the screen (even though our top/bottom bars still exist).
-  if ((!screen_root_widget_.Exists() || (!screen_root_widget_->HasChildren()))
-      && (!overlay_root_widget_.Exists()
-          || (!overlay_root_widget_->HasChildren()))) {
+  if (!MainMenuVisible()) {
     return nullptr;
   }
 
@@ -332,15 +275,20 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
   // However, if no events are received by that device for a long time,
   // it is up for grabs to the next device that requests it.
 
-  if ((GetUIInputDevice() == nullptr) || (input_device == GetUIInputDevice())
-      || (time - last_input_device_use_time_ > (1000 * kUIOwnerTimeoutSeconds))
-      || !g_base->input->HaveManyLocalActiveInputDevices()) {
+  if (!g_base->HaveUIV1()) {
+    ret_val = nullptr;
+  } else if ((GetUIInputDevice() == nullptr)
+             || (input_device == GetUIInputDevice())
+             || (time - last_input_device_use_time_
+                 > (1000 * kUIOwnerTimeoutSeconds))
+             || !g_base->input->HaveManyLocalActiveInputDevices()) {
     // Don't actually assign yet; only update times and owners if there's a
     // widget to be had (we don't want some guy who moved his character 3
     // seconds ago to automatically own a newly created widget).
     last_input_device_use_time_ = time;
     ui_input_device_ = input_device;
-    ret_val = screen_root_widget_.Get();
+    // ret_val = screen_root_widget_.Get();
+    ret_val = g_base->ui_v1()->GetRootWidget();
   } else {
     // For rejected input devices, play error sounds sometimes so they know
     // they're not the chosen one.
@@ -397,55 +345,8 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
 }
 
 void UI::Draw(FrameDef* frame_def) {
-  RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
-
-  // Draw interface elements.
-  auto* root_widget = root_widget_.Get();
-
-  if (root_widget && root_widget->HasChildren()) {
-    // Draw our opaque and transparent parts separately.
-    // This way we can draw front-to-back for opaque and back-to-front for
-    // transparent.
-
-    g_base->graphics->set_drawing_opaque_only(true);
-
-    // Do a wee bit of shifting based on tilt just for fun.
-    Vector3f tilt = 0.1f * g_base->graphics->tilt();
-    {
-      EmptyComponent c(overlay_flat_pass);
-      c.SetTransparent(false);
-      c.PushTransform();
-      c.Translate(-tilt.y, tilt.x, -0.5f);
-
-      // We want our widgets to cover 0.1f in z space.
-      c.Scale(1.0f, 1.0f, 0.1f);
-      c.Submit();
-      root_widget->Draw(overlay_flat_pass, false);
-      c.PopTransform();
-      c.Submit();
-    }
-
-    g_base->graphics->set_drawing_opaque_only(false);
-    g_base->graphics->set_drawing_transparent_only(true);
-
-    {
-      EmptyComponent c(overlay_flat_pass);
-      c.SetTransparent(true);
-      c.PushTransform();
-      c.Translate(-tilt.y, tilt.x, -0.5f);
-
-      // We want our widgets to cover 0.1f in z space.
-      c.Scale(1.0f, 1.0f, 0.1f);
-      c.Submit();
-      root_widget->Draw(overlay_flat_pass, true);
-      c.PopTransform();
-      c.Submit();
-    }
-
-    g_base->graphics->set_drawing_transparent_only(false);
-  }
-  if (root_ui_) {
-    root_ui_->Draw(frame_def);
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->Draw(frame_def);
   }
 }
 

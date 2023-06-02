@@ -18,7 +18,8 @@ class CoreFeatureSet;
 }
 namespace ballistica::base {
 class BaseFeatureSet;
-}
+class WidgetMessage;
+}  // namespace ballistica::base
 
 namespace ballistica::ui_v1 {
 
@@ -64,11 +65,48 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void HandleLegacyRootUIMouseMotion(float x, float y) override;
   auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
   void HandleLegacyRootUIMouseUp(float x, float y) override;
+  void Draw(base::FrameDef* frame_def) override;
 
   UIV1Python* const python;
 
+  auto root_ui() const -> ui_v1::RootUI* {
+    assert(root_ui_);
+    return root_ui_;
+  }
+  void OnAppStart() override;
+  auto PartyWindowOpen() -> bool override;
+
+  // Return the root widget containing all windows & dialogs
+  // Whenever this contains children, the UI is considered to be in focus
+  auto screen_root_widget() -> ui_v1::ContainerWidget* {
+    return screen_root_widget_.Get();
+  }
+
+  auto overlay_root_widget() -> ui_v1::ContainerWidget* {
+    return overlay_root_widget_.Get();
+  }
+
+  // Return the absolute root widget; this includes persistent UI
+  // bits such as the top/bottom bars
+  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
+  void Reset() override;
+
+  // Add a widget to a container.
+  // If a parent is provided, the widget is added to it; otherwise it is added
+  // to the root widget.
+  void AddWidget(Widget* w, ContainerWidget* to);
+  void OnScreenSizeChange() override;
+  void OnLanguageChange() override;
+  auto GetRootWidget() -> ui_v1::Widget* override;
+  auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
+
  private:
   UIV1FeatureSet();
+
+  RootUI* root_ui_{};
+  Object::Ref<ContainerWidget> screen_root_widget_;
+  Object::Ref<ContainerWidget> overlay_root_widget_;
+  Object::Ref<RootWidget> root_widget_;
 };
 
 }  // namespace ballistica::ui_v1

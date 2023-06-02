@@ -3,10 +3,13 @@
 #ifndef BALLISTICA_BASE_SUPPORT_UI_V1_SOFT_H_
 #define BALLISTICA_BASE_SUPPORT_UI_V1_SOFT_H_
 
+#include "ballistica/base/ui/ui.h"
+
 // Predeclare some types we use.
 namespace ballistica::ui_v1 {
 class RootUI;
-}
+class Widget;
+}  // namespace ballistica::ui_v1
 
 namespace ballistica::base {
 
@@ -26,6 +29,14 @@ class UIV1SoftInterface {
   virtual void HandleLegacyRootUIMouseMotion(float x, float y) = 0;
   virtual auto HandleLegacyRootUIMouseDown(float x, float y) -> bool = 0;
   virtual void HandleLegacyRootUIMouseUp(float x, float y) = 0;
+  virtual void Draw(FrameDef* frame_def) = 0;
+  virtual void OnAppStart() = 0;
+  virtual auto PartyWindowOpen() -> bool = 0;
+  virtual void Reset() = 0;
+  virtual void OnScreenSizeChange() = 0;
+  virtual void OnLanguageChange() = 0;
+  virtual auto GetRootWidget() -> ui_v1::Widget* = 0;
+  virtual auto SendWidgetMessage(const WidgetMessage& m) -> int = 0;
 };
 
 }  // namespace ballistica::base

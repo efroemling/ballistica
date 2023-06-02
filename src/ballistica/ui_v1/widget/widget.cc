@@ -33,7 +33,7 @@ void Widget::SetToolbarVisibility(ToolbarVisibility v) {
   // Most widgets can never influence the global toolbar so we can
   // do a quick out.
   if (parent_widget_ != nullptr && parent_widget_->is_window_stack()) {
-    g_base->ui->root_widget()->UpdateForFocusedWindow();
+    g_ui_v1->root_widget()->UpdateForFocusedWindow();
   }
 }
 
@@ -52,7 +52,7 @@ auto Widget::IsInMainStack() const -> bool {
   }
   // Navigate up to the top of the hierarchy and see if the
   // screen-root widget is in there somewhere.
-  ContainerWidget* screen_root = g_base->ui->screen_root_widget();
+  ContainerWidget* screen_root = g_ui_v1->screen_root_widget();
   assert(screen_root);
   if (!screen_root) {
     return false;
@@ -70,7 +70,7 @@ auto Widget::IsInMainStack() const -> bool {
 auto Widget::IsInOverlayStack() const -> bool {
   // Navigate up to the top of the hierarchy and see if the overlay-root widget
   // is in there somewhere.
-  ContainerWidget* overlay_root = g_base->ui->overlay_root_widget();
+  ContainerWidget* overlay_root = g_ui_v1->overlay_root_widget();
   assert(overlay_root);
   ContainerWidget* parent = parent_widget_;
   while (parent != nullptr) {
@@ -99,7 +99,7 @@ auto Widget::IsHierarchySelected() const -> bool {
       return false;
     }
     p = p->GetOwnerWidget();
-    if (!p || p == g_base->ui->root_widget()) {
+    if (!p || p == g_ui_v1->root_widget()) {
       break;
     }
   }

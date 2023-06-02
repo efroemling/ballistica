@@ -3,10 +3,15 @@
 #include "ballistica/ui_v1/ui_v1.h"
 
 #include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/graphics/component/empty_component.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/root_widget.h"
+#include "ballistica/ui_v1/widget/stack_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -77,8 +82,8 @@ RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
 bool UIV1FeatureSet::MainMenuVisible() {
   // We consider anything on our screen or overlay stacks to be a 'main menu'.
   // Probably need a better name than 'main menu' though.
-  auto* screen_root = g_base->ui->screen_root_widget();
-  auto* overlay_root = g_base->ui->overlay_root_widget();
+  auto* screen_root = screen_root_widget();
+  auto* overlay_root = overlay_root_widget();
   return ((screen_root && screen_root->HasChildren())
           || (overlay_root && overlay_root->HasChildren()));
 }
@@ -86,35 +91,180 @@ bool UIV1FeatureSet::MainMenuVisible() {
 bool UIV1FeatureSet::PartyIconVisible() {
   int party_size = g_base->app_mode()->GetPartySize();
   if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
-      || g_base->ui->root_ui()->always_draw_party_icon()) {
+      || root_ui()->always_draw_party_icon()) {
     return true;
   }
   return false;
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
-  if (auto* root_ui = g_base->ui->root_ui()) {
-    root_ui->ActivatePartyIcon();
+  if (auto* r = root_ui()) {
+    r->ActivatePartyIcon();
   }
+}
+bool UIV1FeatureSet::PartyWindowOpen() {
+  if (auto* r = root_ui()) {
+    return r->party_window_open();
+  }
+  return false;
 }
 
 void UIV1FeatureSet::HandleLegacyRootUIMouseMotion(float x, float y) {
-  if (auto* root_ui = g_base->ui->root_ui()) {
-    root_ui->HandleMouseMotion(x, y);
+  if (auto* r = root_ui()) {
+    r->HandleMouseMotion(x, y);
   }
 }
 
 auto UIV1FeatureSet::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
-  if (auto* root_ui = g_base->ui->root_ui()) {
-    return root_ui->HandleMouseButtonDown(x, y);
+  if (auto* r = root_ui()) {
+    return r->HandleMouseButtonDown(x, y);
   }
   return false;
 }
 
 void UIV1FeatureSet::HandleLegacyRootUIMouseUp(float x, float y) {
-  if (auto* root_ui = g_base->ui->root_ui()) {
-    root_ui->HandleMouseButtonUp(x, y);
+  if (auto* r = root_ui()) {
+    r->HandleMouseButtonUp(x, y);
   }
+}
+
+void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
+  base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
+
+  // Draw interface elements.
+  auto* root_widget = root_widget_.Get();
+
+  if (root_widget && root_widget->HasChildren()) {
+    // Draw our opaque and transparent parts separately.
+    // This way we can draw front-to-back for opaque and back-to-front for
+    // transparent.
+
+    g_base->graphics->set_drawing_opaque_only(true);
+
+    // Do a wee bit of shifting based on tilt just for fun.
+    Vector3f tilt = 0.1f * g_base->graphics->tilt();
+    {
+      base::EmptyComponent c(overlay_flat_pass);
+      c.SetTransparent(false);
+      c.PushTransform();
+      c.Translate(-tilt.y, tilt.x, -0.5f);
+
+      // We want our widgets to cover 0.1f in z space.
+      c.Scale(1.0f, 1.0f, 0.1f);
+      c.Submit();
+      root_widget->Draw(overlay_flat_pass, false);
+      c.PopTransform();
+      c.Submit();
+    }
+
+    g_base->graphics->set_drawing_opaque_only(false);
+    g_base->graphics->set_drawing_transparent_only(true);
+
+    {
+      base::EmptyComponent c(overlay_flat_pass);
+      c.SetTransparent(true);
+      c.PushTransform();
+      c.Translate(-tilt.y, tilt.x, -0.5f);
+
+      // We want our widgets to cover 0.1f in z space.
+      c.Scale(1.0f, 1.0f, 0.1f);
+      c.Submit();
+      root_widget->Draw(overlay_flat_pass, true);
+      c.PopTransform();
+      c.Submit();
+    }
+
+    g_base->graphics->set_drawing_transparent_only(false);
+  }
+
+  if (auto* r = root_ui()) {
+    r->Draw(frame_def);
+  }
+}
+
+void UIV1FeatureSet::OnAppStart() {
+  assert(g_base->InLogicThread());
+  root_ui_ = g_base->ui_v1()->NewRootUI();
+}
+
+void UIV1FeatureSet::Reset() {
+  // Hmm; technically we don't need to recreate these each time we reset.
+  root_widget_.Clear();
+
+  // Kill our screen-root widget.
+  screen_root_widget_.Clear();
+
+  // (Re)create our screen-root widget.
+  auto sw(Object::New<ui_v1::StackWidget>());
+  sw->set_is_main_window_stack(true);
+  sw->SetWidth(g_base->graphics->screen_virtual_width());
+  sw->SetHeight(g_base->graphics->screen_virtual_height());
+  sw->set_translate(0, 0);
+  screen_root_widget_ = sw;
+
+  // (Re)create our screen-overlay widget.
+  auto ow(Object::New<ui_v1::StackWidget>());
+  ow->set_is_overlay_window_stack(true);
+  ow->SetWidth(g_base->graphics->screen_virtual_width());
+  ow->SetHeight(g_base->graphics->screen_virtual_height());
+  ow->set_translate(0, 0);
+  overlay_root_widget_ = ow;
+
+  // (Re)create our abs-root widget.
+  auto rw(Object::New<ui_v1::RootWidget>());
+  root_widget_ = rw;
+  rw->SetWidth(g_base->graphics->screen_virtual_width());
+  rw->SetHeight(g_base->graphics->screen_virtual_height());
+  rw->SetScreenWidget(sw.Get());
+  rw->Setup();
+  rw->SetOverlayWidget(ow.Get());
+
+  sw->GlobalSelect();
+}
+
+void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
+  assert(g_base->InLogicThread());
+
+  BA_PRECONDITION(parent != nullptr);
+
+  // If they're adding an initial window/dialog to our screen-stack
+  // or overlay stack, send a reset-local-input message so that characters
+  // who have lost focus will not get stuck running or whatnot.
+  // We should come up with a more generalized way to track this sort of
+  // focus as this is a bit hacky, but it works for now.
+  auto* screen_root_widget = screen_root_widget_.Get();
+  auto* overlay_root_widget = overlay_root_widget_.Get();
+  if ((screen_root_widget && !screen_root_widget->HasChildren()
+       && parent == screen_root_widget)
+      || (overlay_root_widget && !overlay_root_widget->HasChildren()
+          && parent == overlay_root_widget)) {
+    g_base->input->ResetHoldStates();
+  }
+
+  parent->AddWidget(w);
+}
+
+void UIV1FeatureSet::OnScreenSizeChange() {
+  if (root_widget_.Exists()) {
+    root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
+    root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
+  }
+}
+
+void UIV1FeatureSet::OnLanguageChange() {
+  // As well as existing UI stuff.
+  if (auto* r = root_widget()) {
+    r->OnLanguageChange();
+  }
+}
+
+Widget* UIV1FeatureSet::GetRootWidget() { return root_widget(); }
+
+auto UIV1FeatureSet::SendWidgetMessage(const base::WidgetMessage& m) -> int {
+  if (!root_widget_.Exists()) {
+    return false;
+  }
+  return root_widget_->HandleMessage(m);
 }
 
 }  // namespace ballistica::ui_v1

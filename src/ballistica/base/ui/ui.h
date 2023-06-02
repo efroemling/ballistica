@@ -60,30 +60,19 @@ class UI {
   /// This can be called from any thread.
   void ConfirmQuit();
 
-  auto MainMenuVisible() -> bool;
+  /// Return whether there is UI present in either the main or overlay
+  /// stacks. Generally this implies the focus should be on the UI.
+  auto MainMenuVisible() const -> bool;
   auto PartyIconVisible() -> bool;
   void ActivatePartyIcon();
   void HandleLegacyRootUIMouseMotion(float x, float y);
   auto HandleLegacyRootUIMouseDown(float x, float y) -> bool;
   void HandleLegacyRootUIMouseUp(float x, float y);
-
-  // Return the root widget containing all windows & dialogs
-  // Whenever this contains children, the UI is considered to be in focus
-  auto screen_root_widget() -> ui_v1::ContainerWidget* {
-    return screen_root_widget_.Get();
-  }
-
-  auto overlay_root_widget() -> ui_v1::ContainerWidget* {
-    return overlay_root_widget_.Get();
-  }
+  auto PartyWindowOpen() -> bool;
 
   /// Return whether there is UI present in either the main or overlay
   /// stacks. Generally this implies the focus should be on the UI.
-  auto IsWindowPresent() const -> bool;
-
-  // Return the absolute root widget; this includes persistent UI
-  // bits such as the top/bottom bars
-  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
+  // auto IsWindowPresent() const -> bool;
 
   void Draw(FrameDef* frame_def);
 
@@ -91,11 +80,6 @@ class UI {
   // Also potentially locks other inputs out of controlling the UI,
   // so only call this if you intend on sending a message to that widget.
   auto GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget*;
-
-  // Add a widget to a container.
-  // If a parent is provided, the widget is added to it; otherwise it is added
-  // to the root widget.
-  void AddWidget(ui_v1::Widget* w, ui_v1::ContainerWidget* to);
 
   // Send message to the active widget.
   auto SendWidgetMessage(const WidgetMessage& msg) -> int;
@@ -130,11 +114,6 @@ class UI {
     BA_DISALLOW_CLASS_COPIES(UILock);
   };
 
-  auto root_ui() const -> ui_v1::RootUI* {
-    assert(root_ui_);
-    return root_ui_;
-  }
-
   auto scale() const { return scale_; }
 
   /// Push a generic 'menu press' event, optionally associated with an
@@ -145,13 +124,9 @@ class UI {
 
  private:
   void MainMenuPress(InputDevice* device);
-  ui_v1::RootUI* root_ui_{};
   Object::WeakRef<InputDevice> ui_input_device_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
-  Object::Ref<ui_v1::ContainerWidget> screen_root_widget_;
-  Object::Ref<ui_v1::ContainerWidget> overlay_root_widget_;
-  Object::Ref<ui_v1::RootWidget> root_widget_;
   int ui_lock_count_{};
   UIScale scale_{UIScale::kLarge};
   bool force_scale_{};

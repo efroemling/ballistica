@@ -263,7 +263,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
@@ -445,7 +445,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(b.Get(), parent_widget);
+    g_ui_v1->AddWidget(b.Get(), parent_widget);
   }
 
   return b->NewPyRef();
@@ -566,7 +566,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
@@ -634,7 +634,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
 
   return widget->NewPyRef();
@@ -738,7 +738,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
@@ -822,7 +822,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(b.Get(), parent_widget);
+    g_ui_v1->AddWidget(b.Get(), parent_widget);
   }
 
   return b->NewPyRef();
@@ -928,7 +928,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -992,7 +992,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
 
   return widget->NewPyRef();
@@ -1134,11 +1134,10 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     if (parent_obj == Py_None) {
-      BA_PRECONDITION(g_base && g_base->ui
-                      && g_base->ui->screen_root_widget() != nullptr);
+      BA_PRECONDITION(g_ui_v1 && g_ui_v1->screen_root_widget() != nullptr);
     }
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -1146,7 +1145,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     widget = Object::New<ContainerWidget>();
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
 
   // Set applicable values.
@@ -1402,7 +1401,7 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -1445,7 +1444,7 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // If making a new widget, add it to the parent.
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
 
   return widget->NewPyRef();
@@ -1547,7 +1546,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -1618,7 +1617,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
   return widget->NewPyRef();
 
@@ -1725,7 +1724,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -1791,7 +1790,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
   return widget->NewPyRef();
 
@@ -1943,7 +1942,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } else {
     parent_widget = parent_obj == Py_None
-                        ? g_base->ui->screen_root_widget()
+                        ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
                             UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
@@ -2099,7 +2098,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
-    g_base->ui->AddWidget(widget.Get(), parent_widget);
+    g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
   return widget->NewPyRef();
 
@@ -2545,7 +2544,7 @@ static auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
     return nullptr;
   }
   assert(g_base->input);
-  g_base->ui->root_ui()->set_always_draw_party_icon(static_cast<bool>(value));
+  g_ui_v1->root_ui()->set_always_draw_party_icon(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2572,7 +2571,7 @@ static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
     return nullptr;
   }
   assert(g_base->input);
-  g_base->ui->root_ui()->set_party_window_open(static_cast<bool>(value));
+  g_ui_v1->root_ui()->set_party_window_open(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2600,7 +2599,7 @@ static auto PyGetSpecialWidget(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
-  RootWidget* root_widget = g_base->ui->root_widget();
+  RootWidget* root_widget = g_ui_v1->root_widget();
   BA_PRECONDITION(root_widget);
   Widget* w = root_widget->GetSpecialWidget(name);
   if (w == nullptr) {
@@ -2872,10 +2871,9 @@ static PyMethodDef PyConsolePrintDef = {
 static auto PyIsPartyIconVisible(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  bool party_button_active =
-      (g_base->app_mode()->HasConnectionToClients()
-       || g_base->app_mode()->HasConnectionToHost()
-       || g_base->ui->root_ui()->always_draw_party_icon());
+  bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
+                              || g_base->app_mode()->HasConnectionToHost()
+                              || g_ui_v1->root_ui()->always_draw_party_icon());
   if (party_button_active) {
     Py_RETURN_TRUE;
   } else {

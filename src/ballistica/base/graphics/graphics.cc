@@ -1180,7 +1180,7 @@ void Graphics::BuildAndPushFrameDef() {
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
     if (g_core->IsVRMode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
-        if (!g_base->ui->IsWindowPresent()) {
+        if (!g_base->ui->MainMenuVisible()) {
           BA_LOG_ONCE(LogLevel::kError,
                       "Drawing in overlay pass in VR mode with no UI present; "
                       "shouldn't happen!");

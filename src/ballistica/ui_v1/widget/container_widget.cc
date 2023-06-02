@@ -1086,7 +1086,7 @@ void ContainerWidget::AddWidget(Widget* w) {
       // direct selected child (which may not affect the global selection).
       if (is_window_stack_
           && (is_overlay_window_stack_
-              || !g_base->ui->root_widget()
+              || !g_ui_v1->root_widget()
                       ->overlay_window_stack()
                       ->HasChildren())) {
         w->GlobalSelect();
@@ -1094,7 +1094,7 @@ void ContainerWidget::AddWidget(Widget* w) {
         // Special case for the main window stack; whenever a window is added,
         // update the toolbar state for the topmost living container.
         if (is_main_window_stack_) {
-          g_base->ui->root_widget()->UpdateForFocusedWindow();
+          g_ui_v1->root_widget()->UpdateForFocusedWindow();
         }
       } else {
         SelectWidget(w);
@@ -1232,7 +1232,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
   // *immediately* (otherwise we'd have to wait for our transition to complete
   // before the toolbar switches).
   if (transitioning_ && transitioning_out_ && parent->is_main_window_stack_) {
-    g_base->ui->root_widget()->UpdateForFocusedWindow();
+    g_ui_v1->root_widget()->UpdateForFocusedWindow();
   }
 }
 
@@ -1275,7 +1275,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
   if (is_overlay_window_stack_) {
     if (widgets_.empty()) {
       // Eww this logic should be in some sort of controller.
-      g_base->ui->root_widget()->ReselectLastSelectedWidget();
+      g_ui_v1->root_widget()->ReselectLastSelectedWidget();
       return;
     }
   }
@@ -1293,7 +1293,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
         // direct selected child (which may not affect the global selection).
         if (is_window_stack_
             && (is_overlay_window_stack_
-                || !g_base->ui->root_widget()
+                || !g_ui_v1->root_widget()
                         ->overlay_window_stack()
                         ->HasChildren())) {
           (**i).GlobalSelect();
@@ -1308,7 +1308,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
   // Special case: if we're the main window stack,
   // update the active toolbar/etc.
   if (is_main_window_stack_) {
-    g_base->ui->root_widget()->UpdateForFocusedWindow();
+    g_ui_v1->root_widget()->UpdateForFocusedWindow();
   }
 }
 
@@ -1559,8 +1559,7 @@ auto ContainerWidget::GetClosestDownWidget(float our_x, float our_y,
 void ContainerWidget::SelectDownWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
-  if (!g_base->ui || !g_base->ui->root_widget()
-      || !g_base->ui->screen_root_widget()) {
+  if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogLevel::kError, "SelectDownWidget called before UI init.");
     return;
   }
@@ -1581,9 +1580,9 @@ void ContainerWidget::SelectDownWidget() {
           float x = our_x;
           float y = our_y;
           WidgetPointToScreen(&x, &y);
-          g_base->ui->root_widget()->ScreenPointToWidget(&x, &y);
-          w = g_base->ui->root_widget()->GetClosestDownWidget(
-              x, y, g_base->ui->screen_root_widget());
+          g_ui_v1->root_widget()->ScreenPointToWidget(&x, &y);
+          w = g_ui_v1->root_widget()->GetClosestDownWidget(
+              x, y, g_ui_v1->screen_root_widget());
         }
         // When we find no viable targets for an autoselect widget we do
         // nothing.
@@ -1625,8 +1624,7 @@ void ContainerWidget::SelectDownWidget() {
 void ContainerWidget::SelectUpWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
-  if (!g_base->ui || !g_base->ui->root_widget()
-      || !g_base->ui->screen_root_widget()) {
+  if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogLevel::kError, "SelectUpWidget called before UI init.");
     return;
   }
@@ -1647,9 +1645,9 @@ void ContainerWidget::SelectUpWidget() {
           float x = our_x;
           float y = our_y;
           WidgetPointToScreen(&x, &y);
-          g_base->ui->root_widget()->ScreenPointToWidget(&x, &y);
-          w = g_base->ui->root_widget()->GetClosestUpWidget(
-              x, y, g_base->ui->screen_root_widget());
+          g_ui_v1->root_widget()->ScreenPointToWidget(&x, &y);
+          w = g_ui_v1->root_widget()->GetClosestUpWidget(
+              x, y, g_ui_v1->screen_root_widget());
         }
         // When we find no viable targets for an autoselect widget we do
         // nothing.
@@ -1691,8 +1689,7 @@ void ContainerWidget::SelectUpWidget() {
 void ContainerWidget::SelectLeftWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
-  if (!g_base->ui || !g_base->ui->root_widget()
-      || !g_base->ui->screen_root_widget()) {
+  if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogLevel::kError, "SelectLeftWidget called before UI init.");
     return;
   }
@@ -1743,8 +1740,8 @@ void ContainerWidget::SelectLeftWidget() {
 void ContainerWidget::SelectRightWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
-  if (!g_base->ui || !g_base->ui->root_widget()
-      || !g_base->ui->screen_root_widget()) {
+  if (!g_base->ui || !g_ui_v1->root_widget()
+      || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogLevel::kError, "SelectRightWidget called before UI init.");
     return;
   }
@@ -1797,8 +1794,8 @@ void ContainerWidget::SelectRightWidget() {
 void ContainerWidget::SelectNextWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
-  if (!g_base->ui || !g_base->ui->root_widget()
-      || !g_base->ui->screen_root_widget()) {
+  if (!g_base->ui || !g_ui_v1->root_widget()
+      || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogLevel::kError, "SelectNextWidget called before UI init.");
     return;
   }

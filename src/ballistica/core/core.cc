@@ -42,8 +42,8 @@ void CoreFeatureSet::DoImport(const CoreConfig& config) {
   g_core = new CoreFeatureSet(config);
   g_core->PostInit();
 
-  // Slightly hacky: have to report our begin time after the fact since
-  // core didn't exist before. Can at least add an offset to give an accurate
+  // Slightly hacky: have to report our begin time after the fact since core
+  // didn't exist before. Can at least add an offset to give an accurate
   // time though.
   auto seconds_since_actual_start =
       static_cast<double>(CorePlatform::GetCurrentMillisecs() - start_millisecs)
@@ -67,14 +67,14 @@ void CoreFeatureSet::PostInit() {
   // Some of this stuff accesses g_core so we need to run it *after*
   // assigning our singleton.
 
-  // Test our static-type-name functionality.
-  // This code runs at compile time and extracts human readable type names using
-  // __PRETTY_FUNCTION__ type functionality. However, it is dependent on
-  // specific compiler output and so could break easily if anything changes.
-  // Here we add some compile-time checks to alert us if that happens.
+  // Test our static-type-name functionality. This code runs at compile time
+  // and extracts human readable type names using __PRETTY_FUNCTION__ type
+  // functionality. However, it is dependent on specific compiler output and
+  // so could break easily if anything changes. Here we add some
+  // compile-time checks to alert us if that happens.
 
-  // Remember that results can vary per compiler; make sure we match
-  // any one of the expected formats.
+  // Remember that results can vary per compiler; make sure we match any one
+  // of the expected formats.
   static_assert(static_type_name_constexpr<decltype(g_core)>()
                     == "ballistica::core::CoreFeatureSet *"
                 || static_type_name_constexpr<decltype(g_core)>()
@@ -94,13 +94,10 @@ void CoreFeatureSet::PostInit() {
       || static_type_name_constexpr<decltype(testrunnable)>()
              == "Object::Ref<Runnable>");
 
-  // int testint{};
-  // static_assert(static_type_name_constexpr<decltype(testint)>() == "int");
-
-  // If anything above breaks, enable this code to debug/fix it.
-  // This will print a calculated type name as well as the full string
-  // it was parsed from. Use this to adjust the filtering as necessary so
-  // the resulting type name matches what is expected.
+  // If anything above breaks, enable this code to debug/fix it. This will
+  // print a calculated type name as well as the full string it was parsed
+  // from. Use this to adjust the filtering as necessary so the resulting
+  // type name matches what is expected.
   if (explicit_bool(false)) {
     Log(LogLevel::kError, "static_type_name check; name is '"
                               + static_type_name<decltype(g_core)>()

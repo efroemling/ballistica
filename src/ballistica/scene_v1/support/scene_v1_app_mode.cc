@@ -1117,7 +1117,7 @@ void SceneV1AppMode::LocalDisplayChatMessage(
 
       // Show it on the screen if they don't have their chat window open
       // (and don't have chat muted).
-      if (!g_base->ui->root_ui()->party_window_open()) {
+      if (!g_base->ui->PartyWindowOpen()) {
         if (!chat_muted_) {
           ScreenMessage(final_message, {0.7f, 1.0f, 0.7f});
         }

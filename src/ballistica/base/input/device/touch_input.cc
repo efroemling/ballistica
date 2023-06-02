@@ -350,7 +350,7 @@ void TouchInput::UpdateDPad() {
 
 void TouchInput::Draw(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
-  bool active = (!g_base->ui->IsWindowPresent());
+  bool active = (!g_base->ui->MainMenuVisible());
   millisecs_t real_time = frame_def->real_time();
 
   // Update our action center whenever possible in case screen is resized.
@@ -915,7 +915,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
     // Normal in-game operation:
 
     // Normal operation is disabled while a UI is up.
-    if (g_base->ui->IsWindowPresent()) {
+    if (g_base->ui->MainMenuVisible()) {
       return false;
     }
 
@@ -1038,7 +1038,7 @@ auto TouchInput::HandleTouchMoved(void* touch, float x, float y) -> bool {
   }
 
   // Ignore button/pad touches while gui is up.
-  if (g_base->ui->IsWindowPresent()) {
+  if (g_base->ui->MainMenuVisible()) {
     return false;
   }
   if (touch == buttons_touch_) {

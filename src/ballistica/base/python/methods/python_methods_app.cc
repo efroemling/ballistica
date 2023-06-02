@@ -5,15 +5,15 @@
 #include "ballistica/base/app/app.h"
 #include "ballistica/base/app/app_mode.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/scene_v1/assets/scene_texture.h"
-#include "ballistica/scene_v1/python/class/python_class_activity_data.h"
-#include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
