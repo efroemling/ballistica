@@ -59,6 +59,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DoQuitWindow() override;
   auto NewRootUI() -> ui_v1::RootUI* override;
   auto MainMenuVisible() -> bool override;
+  auto PartyIconVisible() -> bool override;
+  void ActivatePartyIcon() override;
 
   UIV1Python* const python;
 

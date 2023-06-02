@@ -61,6 +61,8 @@ class UI {
   void ConfirmQuit();
 
   auto MainMenuVisible() -> bool;
+  auto PartyIconVisible() -> bool;
+  void ActivatePartyIcon();
 
   // Return the root widget containing all windows & dialogs
   // Whenever this contains children, the UI is considered to be in focus

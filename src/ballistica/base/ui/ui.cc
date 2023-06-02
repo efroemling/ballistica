@@ -100,6 +100,18 @@ auto UI::MainMenuVisible() -> bool {
   return false;
 }
 
+auto UI::PartyIconVisible() -> bool {
+  if (g_base->HaveUIV1()) {
+    return g_base->ui_v1()->PartyIconVisible();
+  }
+  return false;
+}
+
+void UI::ActivatePartyIcon() {
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->ActivatePartyIcon();
+  }
+}
 void UI::PushBackButtonCall(InputDevice* input_device) {
   g_base->logic->event_loop()->PushCall([this, input_device] {
     assert(g_base->InLogicThread());

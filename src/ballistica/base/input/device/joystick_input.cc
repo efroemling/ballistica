@@ -8,13 +8,12 @@
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/classic/python/classic_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::base {
@@ -990,21 +989,14 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
                      || e->jbutton.button == back_button_) {
             wm = WidgetMessage::Type::kCancel;
           } else {
-            // FIXME: Need a call we can make for this.
-            bool do_party_button = false;
-            int party_size = g_base->app_mode()->GetPartySize();
-            if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
-                || g_base->ui->root_ui()->always_draw_party_icon()) {
-              do_party_button = true;
-            }
-
             // Toggle the party UI if we're pressing the party button.
             // (currently don't allow remote to do this.. need to make it
             // customizable)
-            if (do_party_button && e->jbutton.button == pickup_button_
+            if (g_base->ui->PartyIconVisible()
+                && e->jbutton.button == pickup_button_
                 && (!IsRemoteControl())) {
               pass = false;
-              g_base->ui->root_ui()->ActivatePartyIcon();
+              g_base->ui->ActivatePartyIcon();
               break;
             }
             wm = WidgetMessage::Type::kActivate;

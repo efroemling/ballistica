@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include "ballistica/base/app/app_mode.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
@@ -78,6 +79,21 @@ bool UIV1FeatureSet::MainMenuVisible() {
   auto* overlay_root = g_base->ui->overlay_root_widget();
   return ((screen_root && screen_root->HasChildren())
           || (overlay_root && overlay_root->HasChildren()));
+}
+
+bool UIV1FeatureSet::PartyIconVisible() {
+  int party_size = g_base->app_mode()->GetPartySize();
+  if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
+      || g_base->ui->root_ui()->always_draw_party_icon()) {
+    return true;
+  }
+  return false;
+}
+
+void UIV1FeatureSet::ActivatePartyIcon() {
+  if (auto* root_ui = g_base->ui->root_ui()) {
+    root_ui->ActivatePartyIcon();
+  }
 }
 
 }  // namespace ballistica::ui_v1

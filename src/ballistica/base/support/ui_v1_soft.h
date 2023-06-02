@@ -21,6 +21,8 @@ class UIV1SoftInterface {
   virtual void DoQuitWindow() = 0;
   virtual auto NewRootUI() -> ui_v1::RootUI* = 0;
   virtual auto MainMenuVisible() -> bool = 0;
+  virtual auto PartyIconVisible() -> bool = 0;
+  virtual void ActivatePartyIcon() = 0;
 };
 
 }  // namespace ballistica::base
