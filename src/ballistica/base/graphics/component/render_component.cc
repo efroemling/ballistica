@@ -2,8 +2,6 @@
 
 #include "ballistica/base/graphics/component/render_component.h"
 
-#include "ballistica/scene_v1/dynamics/rigid_body.h"
-
 namespace ballistica::base {
 
 void RenderComponent::ScissorPush(const Rect& rIn) {

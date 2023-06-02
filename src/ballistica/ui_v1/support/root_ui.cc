@@ -123,6 +123,8 @@ void RootUI::HandleMouseButtonUp(float x, float y) {
     } else if (keyboard_input) {
       input_device = keyboard_input;
     }
+
+    // Handle top right corner menu button.
     if ((g_base->graphics->screen_virtual_width() - x < menu_button_size_)
         && (g_base->graphics->screen_virtual_height() - y
             < menu_button_size_)) {

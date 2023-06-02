@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 # Tags that default_filter_file() looks for; these can be used to strip
 # out sections that should never be included in spinoff projects.
-STRIP_TAG_PAIRS = [
+STRIP_TAG_PAIRS: list[tuple[str, str]] = [
     ('# __SPINOFF_STRIP_BEGIN__', '# __SPINOFF_STRIP_END__'),
     ('// __SPINOFF_STRIP_BEGIN__', '// __SPINOFF_STRIP_END__'),
 ]

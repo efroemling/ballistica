@@ -30,8 +30,6 @@ class CorePython {
     kPrependSysPathCall,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
-    kBaEnvOnBaBaseImportCall,
-    kBaEnvOnBaBaseStartAppCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -48,10 +46,6 @@ class CorePython {
   /// Should be called just before base feature set import; locks in the
   /// baenv environment and runs some checks.
   void ApplyBaEnvConfig();
-
-  /// Should be called at the end of base import; runs a few checks/etc.
-  /// that cannot be run until _babase is actually imported.
-  void RunBaEnvOnBaBaseImport();
 
   /// Calls Python logging function (logging.error, logging.warning, etc.)
   /// Can be called from any thread at any time. If called before Python

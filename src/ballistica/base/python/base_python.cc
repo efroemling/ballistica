@@ -111,23 +111,11 @@ void BasePython::Reset() {
 }
 
 void BasePython::OnMainThreadStartApp() {
-  // Let the baenv Python module know we're starting the app.
-  // This allows it to make significant env modifications such as capturing
-  // interrupt signals or tweaking garbage collection that we may not want to
-  // do until we know we're actually running an app (and not just using bit of
-  // _babase functionality for some other purpose).
   auto gil{Python::ScopedInterpreterLock()};
-  auto result = g_core->python->objs()
-                    .Get(core::CorePython::ObjID::kBaEnvOnBaBaseStartAppCall)
-                    .Call();
-  if (!result.Exists()) {
-    FatalError("baenv.on_babase_start_app() failed.");
-  }
-
   // Set up some env stuff (interrupt handlers, etc.)
-  result = g_base->python->objs()
-               .Get(BasePython::ObjID::kSetupEnvForAppRunCall)
-               .Call();
+  auto result = g_base->python->objs()
+                    .Get(BasePython::ObjID::kSetupEnvForAppRunCall)
+                    .Call();
   if (!result.Exists()) {
     FatalError("babase._env.setup_env_for_app_run() failed.");
   }

@@ -6,8 +6,8 @@
 #include <cstring>
 #endif
 
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/graphics/texture/ktx.h"
-#include "ballistica/scene_v1/assets/scene_texture.h"
 
 namespace ballistica::base {
 

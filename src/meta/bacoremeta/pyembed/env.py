@@ -40,17 +40,3 @@ def get_env_config() -> baenv.EnvConfig:
     import baenv
 
     return baenv.get_config()
-
-
-def on_babase_import() -> None:
-    """Called when _babase is execing."""
-    import baenv
-
-    baenv.on_babase_import()
-
-
-def on_babase_start_app() -> None:
-    """Called when starting the app."""
-    import baenv
-
-    baenv.on_babase_start_app()

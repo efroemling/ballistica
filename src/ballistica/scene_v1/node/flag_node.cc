@@ -8,6 +8,7 @@
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"

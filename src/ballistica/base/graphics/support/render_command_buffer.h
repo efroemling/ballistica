@@ -5,10 +5,9 @@
 
 #include <vector>
 
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/graphics/mesh/mesh.h"
 #include "ballistica/base/graphics/support/frame_def.h"
-#include "ballistica/scene_v1/assets/scene_mesh.h"
-#include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/math/matrix44f.h"
 

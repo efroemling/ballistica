@@ -27,7 +27,6 @@
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/classic/classic.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -109,9 +108,6 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   g_base->StoreOnPythonModule(module);
 
   g_base->python->ImportPythonObjs();
-
-  // let baenv know it can now feed us logs and run some checks.
-  g_core->python->RunBaEnvOnBaBaseImport();
 
   // Run some sanity checks/etc.
   auto result = g_base->python->objs()

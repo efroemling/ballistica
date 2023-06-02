@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21034
+TARGET_BALLISTICA_BUILD = 21035
 TARGET_BALLISTICA_VERSION = '1.7.20'
 
 _g_env_config: EnvConfig | None = None
@@ -217,18 +217,3 @@ def configure(
         os.environ['SSL_CERT_FILE'] = os.environ[
             'REQUESTS_CA_BUNDLE'
         ] = certifi.where()
-
-
-def on_babase_import() -> None:
-    """Should be called just after _babase is imported.
-
-    Sets up logging and issue warnings if anything in the running
-    _babase environment seems wonky. Many significant environment
-    modifications such as interrupt handling do not happen until
-    on_babase_start_app(). This allows bits of _babase to be used under
-    existing environments without messing things up too badly.
-    """
-
-
-def on_babase_start_app() -> None:
-    """Called when ballistica's babase module is spinning up an app."""

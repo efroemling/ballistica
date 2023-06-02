@@ -7,8 +7,8 @@
 #include <unordered_map>
 
 #include "ballistica/base/support/context.h"
+#include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/generic/timer_list.h"
-#include "ballistica/ui_v1/widget/widget.h"
 
 // UI-Locks: make sure widget-lists don't change under you.
 // Use a read-lock if you just need to ensure lists remain intact but won't be
@@ -22,6 +22,14 @@
 #endif
 #define BA_UI_READ_LOCK UI::UILock ui_lock(false)
 #define BA_UI_WRITE_LOCK UI::UILock ui_lock(true)
+
+// Predeclare a few things from ui_v1.
+namespace ballistica::ui_v1 {
+class ContainerWidget;
+class RootWidget;
+class Widget;
+class RootUI;
+}  // namespace ballistica::ui_v1
 
 namespace ballistica::base {
 
@@ -51,6 +59,8 @@ class UI {
   /// High level call to request a quit ui (or in some cases quit immediately).
   /// This can be called from any thread.
   void ConfirmQuit();
+
+  auto MainMenuVisible() -> bool;
 
   // Return the root widget containing all windows & dialogs
   // Whenever this contains children, the UI is considered to be in focus

@@ -759,10 +759,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         || e->jbutton.button == start_button_2_) {
       // If there's some UI up already, we just pass this along to it.
       // otherwise we request a main menu.
-      if (g_base && g_base->ui->screen_root_widget()
-          && g_base->ui->screen_root_widget()->HasChildren()) {
-        // Do nothing in this case.
-      } else {
+      if (!g_base->ui->MainMenuVisible()) {
         // If there's no menu up,
         // tell the game to pop it up and snag menu ownership for ourself.
         g_base->ui->PushMainMenuPressCall(this);
@@ -770,7 +767,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
       }
     }
 
-    // On our oculus build, select presses reset the orientation.
+    // On our Oculus build, select presses reset the orientation.
     if (e->jbutton.button == vr_reorient_button_ && g_core->IsVRMode()) {
       ScreenMessage(g_base->assets->GetResourceString("vrOrientationResetText"),
                     {0, 1, 0});

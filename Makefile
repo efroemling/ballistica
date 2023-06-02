@@ -591,6 +591,12 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 spinoff-test-empty:
 	tools/pcommand spinoff_test empty $(SPINOFF_TEST_EXTRA_ARGS)
 
+spinoff-test-base:
+	tools/pcommand spinoff_test base $(SPINOFF_TEST_EXTRA_ARGS)
+
+spinoff-test-clean:
+	rm -rf build/spinofftest
+
 # Grab the current parent project and sync it into ourself.
 spinoff-update:
 	@tools/pcommand spinoff_check_submodule_parent

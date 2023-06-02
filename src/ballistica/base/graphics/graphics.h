@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
-#include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/rect.h"

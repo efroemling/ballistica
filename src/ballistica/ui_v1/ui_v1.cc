@@ -2,8 +2,10 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
+#include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -70,4 +72,12 @@ void UIV1FeatureSet::DoQuitWindow() {
 }
 
 RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
+
+bool UIV1FeatureSet::MainMenuVisible() {
+  auto* screen_root = g_base->ui->screen_root_widget();
+  auto* overlay_root = g_base->ui->overlay_root_widget();
+  return ((screen_root && screen_root->HasChildren())
+          || (overlay_root && overlay_root->HasChildren()));
+}
+
 }  // namespace ballistica::ui_v1

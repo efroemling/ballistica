@@ -37,7 +37,6 @@
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/graphics/support/render_command_buffer.h"
 #include "ballistica/base/graphics/text/text_group.h"
-#include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector3f.h"

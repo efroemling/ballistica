@@ -967,12 +967,8 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
     switch (keysym->sym) {
       // Menu button on android/etc. pops up the menu.
       case SDLK_MENU: {
-        if (g_base && g_base->ui->screen_root_widget()) {
-          // If there's no dialogs/windows up, ask for a menu (owned by the
-          // touch-screen if available).
-          if (g_base->ui->screen_root_widget()->GetChildCount() == 0) {
-            g_base->ui->PushMainMenuPressCall(touch_input_);
-          }
+        if (!g_base->ui->MainMenuVisible()) {
+          g_base->ui->PushMainMenuPressCall(touch_input_);
         }
         handled = true;
         break;
@@ -1025,15 +1021,19 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
             && g_base->ui->root_widget() && g_base->ui->overlay_root_widget()) {
           // If there's no dialogs/windows up, ask for a menu owned by the
           // keyboard.
-          if (g_base->ui->screen_root_widget()->GetChildCount() == 0
-              && g_base->ui->overlay_root_widget()->GetChildCount() == 0) {
+          if (!g_base->ui->MainMenuVisible()) {
             if (keyboard_input_) {
               g_base->ui->PushMainMenuPressCall(keyboard_input_);
             }
           } else {
             // Ok there's a UI up.. send along a cancel message.
-            g_base->ui->root_widget()->HandleMessage(
-                WidgetMessage(WidgetMessage::Type::kCancel));
+            if (g_base->ui->overlay_root_widget()->HasChildren()) {
+              g_base->ui->overlay_root_widget()->HandleMessage(
+                  WidgetMessage(WidgetMessage::Type::kCancel));
+            } else if (g_base->ui->root_widget()->HasChildren()) {
+              g_base->ui->root_widget()->HandleMessage(
+                  WidgetMessage(WidgetMessage::Type::kCancel));
+            }
           }
         }
         handled = true;

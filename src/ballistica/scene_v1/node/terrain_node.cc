@@ -6,6 +6,8 @@
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
+#include "ballistica/scene_v1/assets/scene_mesh.h"
+#include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

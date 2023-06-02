@@ -17,15 +17,6 @@ void CorePython::ApplyBaEnvConfig() {
   g_core->platform->SetBaEnvVals(envcfg);
 }
 
-void CorePython::RunBaEnvOnBaBaseImport() {
-  // Runs at the end of our import; just for checks/etc.
-  auto result =
-      objs().Get(core::CorePython::ObjID::kBaEnvOnBaBaseImportCall).Call();
-  if (!result.Exists()) {
-    FatalError("baenv.on_babase_import() failed.");
-  }
-}
-
 void CorePython::InitPython() {
   assert(g_core->InMainThread());
   assert(g_buildconfig.monolithic_build());
@@ -177,10 +168,6 @@ void CorePython::ImportPythonObjs() {
                         *ctx.DictGetItem("import_baenv_and_run_configure"));
     objs_.StoreCallable(ObjID::kBaEnvGetConfigCall,
                         *ctx.DictGetItem("get_env_config"));
-    objs_.StoreCallable(ObjID::kBaEnvOnBaBaseImportCall,
-                        *ctx.DictGetItem("on_babase_import"));
-    objs_.StoreCallable(ObjID::kBaEnvOnBaBaseStartAppCall,
-                        *ctx.DictGetItem("on_babase_start_app"));
   }
 }
 

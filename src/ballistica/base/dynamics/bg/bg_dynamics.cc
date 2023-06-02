@@ -2,6 +2,7 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 
+#include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h"
@@ -9,7 +10,6 @@
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/smoke_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
-#include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {

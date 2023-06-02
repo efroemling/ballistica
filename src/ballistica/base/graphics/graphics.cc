@@ -26,8 +26,6 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/ui_v1/support/root_ui.h"
-#include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::base {
 

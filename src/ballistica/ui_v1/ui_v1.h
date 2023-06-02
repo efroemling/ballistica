@@ -58,6 +58,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DoShowURL(const std::string& url) override;
   void DoQuitWindow() override;
   auto NewRootUI() -> ui_v1::RootUI* override;
+  auto MainMenuVisible() -> bool override;
 
   UIV1Python* const python;
 

@@ -188,7 +188,9 @@ void App::OnAppResume() {
     // If we've been completely backgrounded,
     // send a menu-press command to the game; this will
     // bring up a pause menu if we're in the game/etc.
-    g_base->ui->PushMainMenuPressCall(nullptr);
+    if (!g_base->ui->MainMenuVisible()) {
+      g_base->ui->PushMainMenuPressCall(nullptr);
+    }
   }
 }
 

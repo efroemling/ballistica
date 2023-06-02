@@ -3,9 +3,8 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 
 #include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/classic/python/classic_python.h"
-#include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::base {
 
@@ -136,9 +135,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
   }
 
   // Bring up menu if start is pressed.
-  if (keysym->sym == start_key_ && !repeat && g_base->ui
-      && g_base->ui->screen_root_widget()
-      && g_base->ui->screen_root_widget()->GetChildCount() == 0) {
+  if (keysym->sym == start_key_ && !repeat && !g_base->ui->MainMenuVisible()) {
     g_base->ui->PushMainMenuPressCall(this);
     return true;
   }

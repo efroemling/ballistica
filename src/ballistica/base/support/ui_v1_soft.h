@@ -20,6 +20,7 @@ class UIV1SoftInterface {
   virtual void DoShowURL(const std::string& url) = 0;
   virtual void DoQuitWindow() = 0;
   virtual auto NewRootUI() -> ui_v1::RootUI* = 0;
+  virtual auto MainMenuVisible() -> bool = 0;
 };
 
 }  // namespace ballistica::base

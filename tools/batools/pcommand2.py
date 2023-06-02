@@ -325,8 +325,8 @@ def spinoff_test() -> None:
     if len(args) != 1:
         raise CleanError('Expected 1 arg.')
     testtype = args[0]
-    if testtype == 'empty':
-        path = 'build/spinofftest/empty'
+    if testtype in {'empty', 'base'}:
+        path = f'build/spinofftest/{testtype}'
         print(
             f'{Clr.SBLU}{Clr.BLD}Running spinoff test'
             f" {Clr.RST}{Clr.BLD}'{testtype}'{Clr.RST}{Clr.SBLU}{Clr.BLD}"
@@ -357,7 +357,7 @@ def spinoff_test() -> None:
                 'SpinoffTest',
                 path,
                 '--featuresets',
-                'none',
+                'none' if testtype == 'empty' else testtype,
             ] + (['--submodule-parent'] if submodule_parent else [])
 
             # Show the spinoff command we'd use here.
