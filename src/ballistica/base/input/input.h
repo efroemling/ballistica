@@ -148,6 +148,7 @@ class Input {
 
   void CaptureJoystickInput(HandleJoystickEventCall* call);
   void ReleaseJoystickInput();
+  void RebuildInputDeviceDelegates();
 
  private:
   void UpdateInputDeviceCounts();

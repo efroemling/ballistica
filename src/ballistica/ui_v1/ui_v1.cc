@@ -75,6 +75,8 @@ void UIV1FeatureSet::DoQuitWindow() {
 RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
 
 bool UIV1FeatureSet::MainMenuVisible() {
+  // We consider anything on our screen or overlay stacks to be a 'main menu'.
+  // Probably need a better name than 'main menu' though.
   auto* screen_root = g_base->ui->screen_root_widget();
   auto* overlay_root = g_base->ui->overlay_root_widget();
   return ((screen_root && screen_root->HasChildren())

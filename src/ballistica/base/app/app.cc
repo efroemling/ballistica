@@ -11,6 +11,8 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/support/stdio_console.h"
+#include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
@@ -49,6 +51,24 @@ void App::LogicThreadApplyAppConfig() {
 }
 
 void App::LogicThreadStepDisplayTime() { assert(g_base->InLogicThread()); }
+
+void App::LogicThreadOnAppRunning() {
+  assert(g_base && g_base->InLogicThread());
+}
+
+void App::LogicThreadOnInitialAppModeSet() {
+  assert(g_core && g_base && g_base->InLogicThread());
+
+  // We want any sort of raw Python input to only start accepting commands
+  // once we've got an initial app-mode set. Generally said commands will
+  // assume we're running in that mode and will fail if run before it is set.
+  if (auto* console = g_base->console()) {
+    console->EnableInput();
+  }
+  if (g_base->stdio_console) {
+    g_base->stdio_console->Start();
+  }
+}
 
 auto App::ManagesEventLoop() const -> bool {
   // We have 2 redundant values for essentially the same thing;

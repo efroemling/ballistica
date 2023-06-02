@@ -126,6 +126,9 @@ class App {
   auto event_loop() const -> EventLoop* { return event_loop_; }
   void LogicThreadShutdownComplete();
 
+  void LogicThreadOnAppRunning();
+  void LogicThreadOnInitialAppModeSet();
+
  private:
   void UpdatePauseResume();
   void OnAppPause();

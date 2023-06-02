@@ -224,7 +224,10 @@ static auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     } else {
       // Perhaps will want to return None in this case once we've got
       // newer versions of InputDevice; we'll see...
-      throw Exception("Unexpected input-device type owns the UI.");
+      throw Exception(
+          "Unexpected delegate "
+          + (delegate ? delegate->GetObjectDescription() : "(nullptr)")
+          + " for ui-input-device " + d->GetObjectDescription() + ".");
     }
   } else {
     Py_RETURN_NONE;
@@ -270,7 +273,10 @@ static auto PyGetInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
     } else {
       // Perhaps will want to return None in this case once we've got
       // newer versions of InputDevice; we'll see...
-      throw Exception("Unexpected input-device type owns the UI.");
+      throw Exception(
+          "Unexpected delegate "
+          + (delegate ? delegate->GetObjectDescription() : "(nullptr)")
+          + " for input device " + d->GetObjectDescription() + ".");
     }
   } else {
     if (doraise) {

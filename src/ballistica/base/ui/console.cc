@@ -110,6 +110,12 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     }
     case SDLK_KP_ENTER:
     case SDLK_RETURN: {
+      if (!input_enabled_) {
+        Log(LogLevel::kWarning,
+            "Console input is not allowed until the app reaches the 'running' "
+            "state.");
+        break;
+      }
       input_history_position_ = 0;
       if (input_string_ == "clear") {
         last_line_.clear();
@@ -118,7 +124,9 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         PushCommand(input_string_);
       }
       input_history_.push_front(input_string_);
-      if (input_history_.size() > 100) input_history_.pop_back();
+      if (input_history_.size() > 100) {
+        input_history_.pop_back();
+      }
       input_string_.resize(0);
       input_text_dirty_ = true;
       break;
@@ -162,6 +170,11 @@ void Console::PushCommand(const std::string& command) {
       cmd.Exec(true, nullptr, nullptr);
     }
   });
+}
+
+void Console::EnableInput() {
+  assert(g_base->InLogicThread());
+  input_enabled_ = true;
 }
 
 void Console::ToggleState() {

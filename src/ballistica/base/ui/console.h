@@ -24,6 +24,7 @@ class Console {
   void ToggleState();
   void Print(const std::string& s_in);
   void Draw(RenderPass* pass);
+  void EnableInput();
 
  private:
   void PushCommand(const std::string& command);
@@ -58,6 +59,7 @@ class Console {
     Object::Ref<TextGroup> s_mesh_;
   };
 
+  bool input_enabled_{};
   std::string input_string_;
   std::list<std::string> input_history_;
   int input_history_position_{};

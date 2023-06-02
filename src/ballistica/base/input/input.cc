@@ -260,6 +260,18 @@ void Input::PushAddInputDeviceCall(InputDevice* input_device,
   });
 }
 
+void Input::RebuildInputDeviceDelegates() {
+  assert(g_base->InLogicThread());
+  for (auto&& device_ref : input_devices_) {
+    if (auto* device = device_ref.Get()) {
+      auto delegate = Object::CompleteDeferred(
+          g_base->app_mode()->CreateInputDeviceDelegate(device));
+      device->set_delegate(delegate);
+      delegate->set_input_device(device);
+    }
+  }
+}
+
 void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   assert(g_base->InLogicThread());
 
@@ -1018,24 +1030,16 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
       case SDLK_ESCAPE:
 
-        if (g_base && g_base->ui->screen_root_widget()
-            && g_base->ui->root_widget() && g_base->ui->overlay_root_widget()) {
-          // If there's no dialogs/windows up, ask for a menu owned by the
-          // keyboard.
-          if (!g_base->ui->MainMenuVisible()) {
-            if (keyboard_input_) {
-              g_base->ui->PushMainMenuPressCall(keyboard_input_);
-            }
-          } else {
-            // Ok there's a UI up.. send along a cancel message.
-            if (g_base->ui->overlay_root_widget()->HasChildren()) {
-              g_base->ui->overlay_root_widget()->HandleMessage(
-                  WidgetMessage(WidgetMessage::Type::kCancel));
-            } else if (g_base->ui->root_widget()->HasChildren()) {
-              g_base->ui->root_widget()->HandleMessage(
-                  WidgetMessage(WidgetMessage::Type::kCancel));
-            }
-          }
+        if (!g_base->ui->MainMenuVisible()) {
+          // There's no main menu up. Ask for one.
+
+          // Note: keyboard_input_ may be nullptr but escape key should still
+          // function for menus; it just won't claim ownership.
+          g_base->ui->PushMainMenuPressCall(keyboard_input_);
+        } else {
+          // Ok there *is* a main menu up. Send it a cancel message.
+          g_base->ui->root_widget()->HandleMessage(
+              WidgetMessage(WidgetMessage::Type::kCancel));
         }
         handled = true;
         break;

@@ -17,8 +17,17 @@ namespace ballistica::base {
 
 StdioConsole::StdioConsole() = default;
 
-void StdioConsole::OnMainThreadStartApp() {
-  // Ok, we're spinning up an app.
+void StdioConsole::Start() {
+  if (auto* loop = g_core->main_event_loop()) {
+    loop->PushCall([this] { StartInMainThread(); });
+  } else {
+    Log(LogLevel::kError,
+        "StdioConsole::Start() called before main_event_loop available.");
+  }
+}
+
+void StdioConsole::StartInMainThread() {
+  assert(g_core && g_core->InMainThread());
 
   // Spin up our thread.
   event_loop_ = new EventLoop(EventLoopID::kStdin);

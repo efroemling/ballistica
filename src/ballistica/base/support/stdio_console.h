@@ -10,10 +10,11 @@ namespace ballistica::base {
 class StdioConsole {
  public:
   StdioConsole();
-  void OnMainThreadStartApp();
+  void Start();
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
  private:
+  void StartInMainThread();
   void PushCommand(const std::string& command);
   EventLoop* event_loop_{};
   std::string pending_input_;

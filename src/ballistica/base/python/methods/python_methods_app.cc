@@ -1265,6 +1265,46 @@ static PyMethodDef PyExecArgDef = {
     "(internal)\n",
 };
 
+// ----------------------------- on_app_running --------------------------------
+
+static auto PyOnAppRunning(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base && g_base->InLogicThread());
+  g_base->app->LogicThreadOnAppRunning();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOnAppRunningDef = {
+    "on_app_running",             // name
+    (PyCFunction)PyOnAppRunning,  // method
+    METH_NOARGS,                  // flags
+
+    "on_app_running() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ on_initial_app_mode_set ----------------------------
+
+static auto PyOnInitialAppModeSet(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base && g_base->InLogicThread());
+  g_base->app->LogicThreadOnInitialAppModeSet();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOnInitialAppModeSetDef = {
+    "on_initial_app_mode_set",           // name
+    (PyCFunction)PyOnInitialAppModeSet,  // method
+    METH_NOARGS,                         // flags
+
+    "on_initial_app_mode_set() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1304,6 +1344,8 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyIsOSPlayingMusicDef,
       PyLifecycleLogDef,
       PyExecArgDef,
+      PyOnAppRunningDef,
+      PyOnInitialAppModeSetDef,
   };
 }
 

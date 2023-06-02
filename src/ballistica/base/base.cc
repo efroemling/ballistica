@@ -179,9 +179,6 @@ void BaseFeatureSet::StartApp() {
   assets_server->OnMainThreadStartApp();
   g_core->platform->OnMainThreadStartApp();  // FIXME SHOULD NOT NEED THIS
   app->OnMainThreadStartApp();
-  if (stdio_console) {
-    stdio_console->OnMainThreadStartApp();
-  }
 
   // Take note that we're now 'running'. Various code such as anything that
   // pushes messages to threads can watch for this state to avoid crashing
@@ -209,7 +206,27 @@ void BaseFeatureSet::LogVersionInfo() {
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
   assert(InLogicThread());
-  app_mode_ = mode;
+  if (mode == app_mode_) {
+    Log(LogLevel::kWarning,
+        "set_app_mode called with already-current app-mode; unexpected.");
+  }
+  try {
+    // Tear down previous mode (if any).
+    if (app_mode_) {
+      // Nothing here yet.
+    }
+
+    // Set and build up new one.
+    app_mode_ = mode;
+
+    // App modes each provide their own input-device delegate types.
+    input->RebuildInputDeviceDelegates();
+  } catch (const Exception& exc) {
+    // Anything going wrong while switching app-modes leaves us in an
+    // undefined state; don't try to continue.
+    FatalError(std::string("Error setting native layer app-mode: ")
+               + exc.what());
+  }
 }
 
 auto BaseFeatureSet::AppManagesEventLoop() -> bool {

@@ -423,7 +423,10 @@ class App:
         # one, switch.
         # pylint: disable=unidiomatic-typecheck
         if type(mode) is not type(self._mode):
-            if self._mode is not None:
+            if self._mode is None:
+                is_initial_mode = True
+            else:
+                is_initial_mode = False
                 try:
                     self._mode.on_deactivate()
                 except Exception:
@@ -436,6 +439,9 @@ class App:
             except Exception:
                 # Hmm; what should we do in this case?...
                 logging.exception('Error activating app-mode %s.', mode)
+
+            if is_initial_mode:
+                _babase.on_initial_app_mode_set()
 
         try:
             mode.handle_intent(intent)
@@ -520,6 +526,9 @@ class App:
         """Called when initially entering the running state."""
         assert _babase.in_logic_thread()
 
+        # Let the native layer know.
+        _babase.on_app_running()
+
         # Set a default app-mode-selector. Plugins can then override
         # this if they want.
         self.mode_selector = self.DefaultAppModeSelector()
@@ -527,7 +536,7 @@ class App:
         self.plugins.on_app_running()
 
         # If 'exec' code was provided to the app, always kick that off
-        # here.
+        # here as an intent.
         exec_cmd = _babase.exec_arg()
         if exec_cmd is not None:
             self.set_intent(AppIntentExec(exec_cmd))
