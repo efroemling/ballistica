@@ -82,7 +82,9 @@ void CoreFeatureSet::PostInit() {
                 || static_type_name_constexpr<decltype(g_core)>()
                        == "class ballistica::core::CoreFeatureSet*"
                 || static_type_name_constexpr<decltype(g_core)>()
-                       == "CoreFeatureSet*");
+                       == "CoreFeatureSet*"
+                || static_type_name_constexpr<decltype(g_core)>()
+                       == "core::CoreFeatureSet*");
   Object::Ref<Runnable> testrunnable{};
   static_assert(
       static_type_name_constexpr<decltype(testrunnable)>()
@@ -100,6 +102,10 @@ void CoreFeatureSet::PostInit() {
   // it was parsed from. Use this to adjust the filtering as necessary so
   // the resulting type name matches what is expected.
   if (explicit_bool(false)) {
+    Log(LogLevel::kError, "static_type_name check; name is '"
+                              + static_type_name<decltype(g_core)>()
+                              + "' debug_full is '"
+                              + static_type_name<decltype(g_core)>(true) + "'");
     Log(LogLevel::kError,
         "static_type_name check; name is '"
             + static_type_name<decltype(testrunnable)>() + "' debug_full is '"

@@ -143,7 +143,7 @@ void Logic::OnAppShutdown() {
 
 void Logic::ApplyAppConfig() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("apply-app-config begin");
+  g_core->LifecycleLog("apply-app-config");
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.
@@ -164,7 +164,6 @@ void Logic::ApplyAppConfig() {
   g_base->app->LogicThreadApplyAppConfig();
 
   applied_app_config_ = true;
-  g_core->LifecycleLog("apply-app-config end");
 }
 
 void Logic::OnInitialScreenCreated() {
