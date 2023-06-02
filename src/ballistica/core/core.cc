@@ -61,6 +61,11 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
       vr_mode{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_core == nullptr);
+}
+
+void CoreFeatureSet::PostInit() {
+  // Some of this stuff accesses g_core so we need to run it *after*
+  // assigning our singleton.
 
   // Test our static-type-name functionality.
   // This code runs at compile time and extracts human readable type names using
@@ -100,11 +105,6 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
             + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
             + static_type_name<decltype(testrunnable)>(true) + "'");
   }
-}
-
-void CoreFeatureSet::PostInit() {
-  // Some of this stuff accesses g_core so we need to run it *after*
-  // assigning our singleton.
 
   // Enable extra timing logs via env var.
   const char* debug_timing_env = getenv("BA_DEBUG_TIMING");
