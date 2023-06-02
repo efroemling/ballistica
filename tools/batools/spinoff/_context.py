@@ -33,8 +33,10 @@ if TYPE_CHECKING:
 
 # Tags that default_filter_file() looks for; these can be used to strip
 # out sections that should never be included in spinoff projects.
-STRIP_BEGIN_TAG = '# __SPINOFF_STRIP_BEGIN__'
-STRIP_END_TAG = '# __SPINOFF_STRIP_END__'
+STRIP_TAG_PAIRS = [
+    ('# __SPINOFF_STRIP_BEGIN__', '# __SPINOFF_STRIP_END__'),
+    ('// __SPINOFF_STRIP_BEGIN__', '// __SPINOFF_STRIP_END__'),
+]
 
 
 class SpinoffContext:
@@ -703,24 +705,25 @@ class SpinoffContext:
         """Run default filtering on a file."""
 
         # Strip out any sections frames by our strip-begin/end tags.
-        if STRIP_BEGIN_TAG in text:
+        if any(t[0] in text for t in STRIP_TAG_PAIRS):
             lines = text.splitlines()
 
-            while STRIP_BEGIN_TAG in lines:
-                index = lines.index(STRIP_BEGIN_TAG)
-                endindex = index
-                while lines[endindex] != STRIP_END_TAG:
-                    endindex += 1
+            for begin_tag, end_tag in STRIP_TAG_PAIRS:
+                while begin_tag in lines:
+                    index = lines.index(begin_tag)
+                    endindex = index
+                    while lines[endindex] != end_tag:
+                        endindex += 1
 
-                # If the line after us is blank,
-                # include it too to keep spacing clean.
-                if (
-                    len(lines) > (endindex + 1)
-                    and not lines[endindex + 1].strip()
-                ):
-                    endindex += 1
+                    # If the line after us is blank,
+                    # include it too to keep spacing clean.
+                    if (
+                        len(lines) > (endindex + 1)
+                        and not lines[endindex + 1].strip()
+                    ):
+                        endindex += 1
 
-                del lines[index : endindex + 1]
+                    del lines[index : endindex + 1]
 
             text = '\n'.join(lines) + '\n'
 

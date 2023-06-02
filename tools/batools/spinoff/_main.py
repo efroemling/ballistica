@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 from enum import Enum
+from pathlib import Path
 from typing import assert_never
 
 from efro.error import CleanError
@@ -31,6 +32,7 @@ class Command(Enum):
     BACKPORT = 'backport'
     FEATURESETS = 'featuresets'
     CREATE = 'create'
+    ADD_SUBMODULE_PARENT = 'add-submodule-parent'
 
 
 def spinoff_main() -> None:
@@ -71,15 +73,6 @@ def _main() -> None:
     else:
         src_root = None
 
-    # By default we assume our src project is a git submodule at
-    # submodules/ballistica, but this can be overridden to an arbitrary
-    # directory via the project localconfig.
-    # src_proj_val = getlocalconfig(Path(dst_root)).get('spinoff_src')
-    # if isinstance(src_proj_val, str):
-    #     src_root = src_proj_val
-    # else:
-    #     src_root = os.path.join(dst_root, 'submodules', 'ballistica')
-
     single_run_mode: SpinoffContext.Mode | None = None
 
     if cmd is Command.STATUS:
@@ -104,6 +97,11 @@ def _main() -> None:
         _do_featuresets(dst_root)
     elif cmd is Command.CREATE:
         _do_create(src_root, dst_root)
+    elif cmd is Command.ADD_SUBMODULE_PARENT:
+        from efrotools import getconfig
+
+        public = getconfig(Path(dst_root))['public']
+        _do_add_submodule_parent(dst_root, is_new=False, public=public)
     else:
         assert_never(cmd)
 
@@ -130,9 +128,13 @@ def _main() -> None:
 
 
 def _do_create(src_root: str | None, dst_root: str) -> None:
+    # pylint: disable=too-many-locals
     from efrotools import extract_arg, extract_flag
     from efrotools.code import format_python_str
+    from efrotools import getconfig
 
+    # Note: in our case dst_root is actualy what becomes the src project
+    # should clean up these var names to make that clearer.
     if src_root is not None:
         raise CleanError('This only works on src projects.')
 
@@ -148,6 +150,8 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
             featuresets = set(fsarg.split(','))
 
     noninteractive = extract_flag(args, '--noninteractive')
+
+    submodule_parent = extract_flag(args, '--submodule-parent')
 
     if len(args) != 2:
         raise CleanError(f'Expected a name and path arg; got {args}.')
@@ -169,16 +173,6 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     subprocess.run(['mkdir', '-p', path], check=True)
     subprocess.run(['mkdir', os.path.join(path, 'tools')], check=True)
     subprocess.run(['mkdir', os.path.join(path, 'config')], check=True)
-
-    subprocess.run(
-        [
-            'ln',
-            '-s',
-            os.path.join(dst_root, 'tools', 'spinoff'),
-            os.path.join(path, 'tools'),
-        ],
-        check=True,
-    )
 
     # Read in the dummy module we use as a template.
     template_path = os.path.join(
@@ -209,6 +203,21 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     # Create an empty git repo. Some of our project functionality depends
     # on git so its best to always do this.
     subprocess.run(['git', 'init'], cwd=path, check=True, capture_output=True)
+
+    public = getconfig(Path(dst_root))['public']
+
+    if submodule_parent:
+        _do_add_submodule_parent(path, is_new=True, public=public)
+    else:
+        subprocess.run(
+            [
+                'ln',
+                '-s',
+                os.path.join(dst_root, 'tools', 'spinoff'),
+                os.path.join(path, 'tools'),
+            ],
+            check=True,
+        )
 
     # Go with green for interactive use since the command is 'done'.
     # Otherwise go blue since its probably part of some larger picture.
@@ -311,36 +320,97 @@ def _print_available_commands() -> None:
     print(
         (
             'Available commands:\n'
-            f'  {bgn}status{end}              '
+            f'  {bgn}status{end}               '
             'Print list of files update would affect.\n'
-            f'  {bgn}diff{end}                '
+            f'  {bgn}diff{end}                 '
             'Print diffs for what update would do.\n'
-            f'  {bgn}update{end}              '
+            f'  {bgn}update{end}               '
             'Sync all spinoff files from src project.\n'
-            f'  {bgn}check{end}               '
+            f'  {bgn}check{end}                '
             'Make sure everything is kosher.\n'
-            f'  {bgn}clean{end}               '
+            f'  {bgn}clean{end}                '
             'Remove all spinoff files'
-            ' (minus a few such as .gitignore).\n'
-            f'  {bgn}cleanlist{end}           '
+            ' (minus a few exceptions such\n'
+            '                       as .gitignore).\n'
+            f'  {bgn}cleanlist{end}            '
             'Shows what clean would do.\n'
-            f'  {bgn}override [file...]{end}  '
+            f'  {bgn}override [file...]{end}   '
             'Remove files from spinoff, leaving local copies in place.\n'
-            f'  {bgn}backport [file]{end}     '
+            f'  {bgn}backport [file]{end}      '
             'Help get changes to spinoff dst files back to src.\n'
-            f'  {bgn}featuresets{end}         '
+            f'  {bgn}featuresets{end}          '
             'List featuresets present in the current project.\n'
-            f'  {bgn}create [name, path]{end} '
+            f'  {bgn}create [name, path]{end}  '
             'Create a new spinoff project based on this src one.\n'
-            '                      Name should be passed in CamelCase form.\n'
-            '                      Use --featuresets a,b to specify included'
+            '                       Name should be passed in CamelCase form.\n'
+            '                       By default, includes all feature-sets from'
+            ' src.\n'
+            '                       Pass --featuresets a,b to specify included'
             ' feature-sets.\n'
-            "                      Pass 'none' or an empty string for no"
+            "                       Use 'none' or an empty string for no"
             ' featuresets.\n'
-            '                      If unspecified, all src feature-sets will be'
-            ' included.\n'
-            '                      Pass --noninteractive to suppress help'
+            '                       Pass --noninteractive to suppress help'
             ' messages.\n'
+            '                       By default, the spinoff project will'
+            ' directly access this\n'
+            '                       parent project via a local symlink. To'
+            ' instead set up a\n'
+            '                       git submodule at \'submodules/ballistica\''
+            ' in the spinoff\n'
+            '                       project, pass --submodule-parent.\n'
+            f'  {bgn}add-submodule-parent{end} Adds a git submodule parent'
+            ' to an already existing dst\n'
+            '                       project in the current directory.'
+            ' The same can be\n'
+            '                       achieved by passing --submodule-parent to'
+            ' the \'create\'\n'
+            '                       command.'
         ),
         file=sys.stderr,
+    )
+
+
+def _do_add_submodule_parent(dst_root: str, is_new: bool, public: bool) -> None:
+    if os.path.exists(os.path.join(dst_root, 'submodules/ballistica')):
+        raise CleanError('This project already has a submodule parent.')
+
+    if not is_new:
+        if not os.path.islink(os.path.join(dst_root, 'tools/spinoff')):
+            raise CleanError(
+                'Invalid dst project; expected a symlink for tools/spinoff.'
+            )
+
+    repo = (
+        'https://github.com/efroemling/ballistica.git'
+        if public
+        else 'git@github.com:efroemling/ballistica-internal.git'
+    )
+
+    print(f'{Clr.BLU}Setting up parent project submodule...{Clr.RST}')
+    submodules_root = os.path.join(dst_root, 'submodules')
+    os.mkdir(submodules_root)
+    subprocess.run(
+        [
+            'git',
+            'submodule',
+            'add',
+            repo,
+            'submodules/ballistica',
+        ],
+        cwd=dst_root,
+        check=True,
+    )
+    subprocess.run(
+        [
+            'ln',
+            '-sf',
+            '../submodules/ballistica/tools/spinoff',
+            os.path.join(dst_root, 'tools', 'spinoff'),
+        ],
+        check=True,
+    )
+    print(
+        f'{Clr.BLU}Created parent project submodule at'
+        f' {Clr.RST}{Clr.BLD}submodules/ballistica{Clr.RST}'
+        f'{Clr.BLU}.{Clr.RST}'
     )

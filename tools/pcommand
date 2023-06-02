@@ -123,6 +123,7 @@ from batools.pcommand2 import (
     update_cmake_prefab_lib,
     android_archive_unstripped_libs,
     spinoff_test,
+    spinoff_check_submodule_parent,
 )
 
 # pylint: enable=unused-import

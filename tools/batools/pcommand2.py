@@ -12,7 +12,7 @@ from efrotools.pcommand import PROJROOT
 
 
 def gen_monolithic_register_modules() -> None:
-    """Generate .h file for registering py modules in monolithic builds."""
+    """Generate .h file for registering py modules."""
     import os
     import textwrap
 
@@ -309,10 +309,19 @@ def spinoff_test() -> None:
     import os
     import subprocess
 
+    from efrotools import extract_flag
     from efro.terminal import Clr
     from efro.error import CleanError
 
     args = sys.argv[2:]
+
+    submodule_parent = extract_flag(args, '--submodule-parent')
+
+    # A spinoff symlink means we're a spun-off project.
+    if os.path.islink('tools/spinoff'):
+        raise CleanError(
+            'This must be run in a src project; this appears to be a dst.'
+        )
     if len(args) != 1:
         raise CleanError('Expected 1 arg.')
     testtype = args[0]
@@ -324,23 +333,42 @@ def spinoff_test() -> None:
             f'...{Clr.RST}',
             flush=True,
         )
-        subprocess.run(['rm', '-rf', path], check=True)
-        cmd = [
-            './tools/spinoff',
-            'create',
-            'SpinoffTest',
-            path,
-            '--featuresets',
-            'none',
-        ]
-        # Show the spinoff command we'd use here.
-        print(Clr.MAG + ' '.join(cmd) + Clr.RST, flush=True)
-        # Avoid the 'what to do next' help.
-        subprocess.run(
-            cmd + ['--noninteractive'],
-            check=True,
-        )
-        os.makedirs(path, exist_ok=True)
+
+        if os.path.exists(path):
+            if bool(False):
+                subprocess.run(['rm', '-rf', path], check=True)
+            submpath = os.path.join(path, 'submodules/ballistica')
+            if os.path.exists(submpath):
+                print(
+                    f'{Clr.BLU}Pulling latest parent submodule'
+                    f' for existing test setup...{Clr.RST}',
+                    flush=True,
+                )
+                subprocess.run(
+                    f'cd "{submpath}" && git checkout master && git pull',
+                    shell=True,
+                    check=True,
+                )
+
+        else:
+            cmd = [
+                './tools/spinoff',
+                'create',
+                'SpinoffTest',
+                path,
+                '--featuresets',
+                'none',
+            ] + (['--submodule-parent'] if submodule_parent else [])
+
+            # Show the spinoff command we'd use here.
+            print(Clr.MAG + ' '.join(cmd) + Clr.RST, flush=True)
+
+            # Avoid the 'what to do next' help.
+            subprocess.run(
+                cmd + ['--noninteractive'],
+                check=True,
+            )
+
         print(f'{Clr.MAG}tools/spinoff update{Clr.RST}', flush=True)
         subprocess.run(['tools/spinoff', 'update'], cwd=path, check=True)
         # subprocess.run(['make', 'cmake-server-binary'], cwd=path, check=True)
@@ -381,3 +409,24 @@ def spinoff_test() -> None:
                 )
     else:
         raise CleanError(f"Invalid test type '{testtype}'.")
+
+
+def spinoff_check_submodule_parent() -> None:
+    """Make sure this dst proj has a submodule parent."""
+    import os
+    from efro.error import CleanError
+
+    # Make sure we're a spinoff dst project. The spinoff command will be
+    # a symlink if this is the case.
+    if not os.path.exists('tools/spinoff'):
+        raise CleanError(
+            'This does not appear to be a spinoff-enabled project.'
+        )
+    if not os.path.islink('tools/spinoff'):
+        raise CleanError('This project is a spinoff parent; we require a dst.')
+
+    if not os.path.isdir('submodules/ballistica'):
+        raise CleanError(
+            'This project is not using a submodule for its parent.\n'
+            'To set one up, run `tools/spinoff add-submodule-parent`'
+        )

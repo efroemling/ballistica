@@ -589,7 +589,32 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 ################################################################################
 
 spinoff-test-empty:
-	tools/pcommand spinoff_test empty
+	tools/pcommand spinoff_test empty $(SPINOFF_TEST_EXTRA_ARGS)
+
+# Grab the current parent project and sync it into ourself.
+spinoff-update:
+	@tools/pcommand spinoff_check_submodule_parent
+	$(MAKE) update
+	@tools/pcommand echo BLU Pulling current parent project...
+	git submodule update
+	@tools/pcommand echo BLU Syncing parent into current project...
+	tools/spinoff update
+	@$(MAKE) update-check  # Make sure spinoff didn't break anything.
+	@tools/pcommand echo GRN Spinoff update successful!
+
+# Upgrade to latest parent project and sync it into ourself.
+spinoff-upgrade:
+	@tools/pcommand spinoff_check_submodule_parent
+	$(MAKE) update
+	@tools/pcommand echo BLU Pulling latest parent project...
+	cd submodules/ballistica && git checkout master && git pull
+	@tools/pcommand echo BLU Syncing parent into current project...
+	tools/spinoff update
+	@$(MAKE) update-check  # Make sure spinoff didn't break anything.
+	@tools/pcommand echo GRN Spinoff upgrade successful!
+
+# Tell make which of these targets don't represent files.
+.PHONY: spinoff-test-empty spinoff-update spinoff-upgrade
 
 
 ################################################################################
