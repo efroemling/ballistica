@@ -23,6 +23,9 @@ class UIV1SoftInterface {
   virtual auto MainMenuVisible() -> bool = 0;
   virtual auto PartyIconVisible() -> bool = 0;
   virtual void ActivatePartyIcon() = 0;
+  virtual void HandleLegacyRootUIMouseMotion(float x, float y) = 0;
+  virtual auto HandleLegacyRootUIMouseDown(float x, float y) -> bool = 0;
+  virtual void HandleLegacyRootUIMouseUp(float x, float y) = 0;
 };
 
 }  // namespace ballistica::base

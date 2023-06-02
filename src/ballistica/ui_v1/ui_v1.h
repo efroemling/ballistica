@@ -61,6 +61,9 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
+  void HandleLegacyRootUIMouseMotion(float x, float y) override;
+  auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
+  void HandleLegacyRootUIMouseUp(float x, float y) override;
 
   UIV1Python* const python;
 

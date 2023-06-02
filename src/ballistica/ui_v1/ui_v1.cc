@@ -96,4 +96,23 @@ void UIV1FeatureSet::ActivatePartyIcon() {
   }
 }
 
+void UIV1FeatureSet::HandleLegacyRootUIMouseMotion(float x, float y) {
+  if (auto* root_ui = g_base->ui->root_ui()) {
+    root_ui->HandleMouseMotion(x, y);
+  }
+}
+
+auto UIV1FeatureSet::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
+  if (auto* root_ui = g_base->ui->root_ui()) {
+    return root_ui->HandleMouseButtonDown(x, y);
+  }
+  return false;
+}
+
+void UIV1FeatureSet::HandleLegacyRootUIMouseUp(float x, float y) {
+  if (auto* root_ui = g_base->ui->root_ui()) {
+    root_ui->HandleMouseButtonUp(x, y);
+  }
+}
+
 }  // namespace ballistica::ui_v1

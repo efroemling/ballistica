@@ -112,6 +112,26 @@ void UI::ActivatePartyIcon() {
     g_base->ui_v1()->ActivatePartyIcon();
   }
 }
+
+void UI::HandleLegacyRootUIMouseMotion(float x, float y) {
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->HandleLegacyRootUIMouseMotion(x, y);
+  }
+}
+
+auto UI::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
+  if (g_base->HaveUIV1()) {
+    return g_base->ui_v1()->HandleLegacyRootUIMouseDown(x, y);
+  }
+  return false;
+}
+
+void UI::HandleLegacyRootUIMouseUp(float x, float y) {
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->HandleLegacyRootUIMouseUp(x, y);
+  }
+}
+
 void UI::PushBackButtonCall(InputDevice* input_device) {
   g_base->logic->event_loop()->PushCall([this, input_device] {
     assert(g_base->InLogicThread());

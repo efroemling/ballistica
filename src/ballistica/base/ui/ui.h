@@ -63,6 +63,9 @@ class UI {
   auto MainMenuVisible() -> bool;
   auto PartyIconVisible() -> bool;
   void ActivatePartyIcon();
+  void HandleLegacyRootUIMouseMotion(float x, float y);
+  auto HandleLegacyRootUIMouseDown(float x, float y) -> bool;
+  void HandleLegacyRootUIMouseUp(float x, float y);
 
   // Return the root widget containing all windows & dialogs
   // Whenever this contains children, the UI is considered to be in focus

@@ -16,7 +16,6 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::base {
@@ -986,7 +985,9 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F5: {
-        g_base->ui->root_ui()->TogglePartyWindowKeyPress();
+        if (g_base->ui->PartyIconVisible()) {
+          g_base->ui->ActivatePartyIcon();
+        }
         handled = true;
         break;
       }
@@ -1217,7 +1218,7 @@ void Input::HandleMouseMotion(const Vector2f& position) {
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
 
-  bool handled2{};
+  bool handled{};
 
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
@@ -1230,13 +1231,13 @@ void Input::HandleMouseMotion(const Vector2f& position) {
   // UI interaction.
   ui_v1::Widget* root_widget = g_base->ui->root_widget();
   if (root_widget && !IsInputLocked())
-    handled2 = root_widget->HandleMessage(
+    handled = root_widget->HandleMessage(
         WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, cursor_pos_x_,
                       cursor_pos_y_));
 
   // Manual camera motion.
   Camera* camera = g_base->graphics->camera();
-  if (!handled2 && camera && camera->manual()) {
+  if (!handled && camera && camera->manual()) {
     float move_h = (cursor_pos_x_ - old_cursor_pos_x)
                    / g_base->graphics->screen_virtual_width();
     float move_v = (cursor_pos_y_ - old_cursor_pos_y)
@@ -1244,7 +1245,8 @@ void Input::HandleMouseMotion(const Vector2f& position) {
     camera->ManualHandleMouseMove(move_h, move_v);
   }
 
-  g_base->ui->root_ui()->HandleMouseMotion(cursor_pos_x_, cursor_pos_y_);
+  // Old screen edge UI.
+  g_base->ui->HandleLegacyRootUIMouseMotion(cursor_pos_x_, cursor_pos_y_);
 }
 
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
@@ -1269,8 +1271,6 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
 
-  // printf("Mouse down at %f %f\n", position.x, position.y);
-
   // Convert normalized view coords to our virtual ones.
   cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
       position.x * g_base->graphics->screen_pixel_width());
@@ -1281,33 +1281,32 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   bool double_click = (click_time - last_click_time_ <= double_click_time_);
   last_click_time_ = click_time;
 
-  bool handled2 = false;
-  ui_v1::Widget* root_widget = g_base->ui->root_widget();
+  bool handled{};
+  auto* root_widget = g_base->ui->root_widget();
 
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
   // with stuff under it by blocking touches, etc)
   if (touch_input_ && touch_input_->editing()) {
-    handled2 = touch_input_->HandleTouchDown(reinterpret_cast<void*>(1),
-                                             cursor_pos_x_, cursor_pos_y_);
+    handled = touch_input_->HandleTouchDown(reinterpret_cast<void*>(1),
+                                            cursor_pos_x_, cursor_pos_y_);
   }
 
-  if (!handled2) {
-    if (g_base->ui->root_ui()->HandleMouseButtonDown(cursor_pos_x_,
-                                                     cursor_pos_y_)) {
-      handled2 = true;
+  if (!handled) {
+    if (g_base->ui->HandleLegacyRootUIMouseDown(cursor_pos_x_, cursor_pos_y_)) {
+      handled = true;
     }
   }
 
-  if (root_widget && !handled2) {
-    handled2 = root_widget->HandleMessage(
+  if (root_widget && !handled) {
+    handled = root_widget->HandleMessage(
         WidgetMessage(WidgetMessage::Type::kMouseDown, nullptr, cursor_pos_x_,
                       cursor_pos_y_, double_click ? 2 : 1));
   }
 
   // Manual camera input.
   Camera* camera = g_base->graphics->camera();
-  if (!handled2 && camera) {
+  if (!handled && camera) {
     switch (button) {
       case SDL_BUTTON_LEFT:
         camera->set_mouse_left_down(true);
@@ -1340,7 +1339,7 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  bool handled2{};
+  bool handled{};
 
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
@@ -1351,11 +1350,13 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
   }
 
   ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  if (root_widget)
-    handled2 = root_widget->HandleMessage(WidgetMessage(
+  if (root_widget) {
+    handled = root_widget->HandleMessage(WidgetMessage(
         WidgetMessage::Type::kMouseUp, nullptr, cursor_pos_x_, cursor_pos_y_));
+  }
+
   Camera* camera = g_base->graphics->camera();
-  if (!handled2 && camera) {
+  if (!handled && camera) {
     switch (button) {
       case SDL_BUTTON_LEFT:
         camera->set_mouse_left_down(false);
@@ -1371,7 +1372,8 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
     }
     camera->UpdateManualMode();
   }
-  g_base->ui->root_ui()->HandleMouseButtonUp(cursor_pos_x_, cursor_pos_y_);
+
+  g_base->ui->HandleLegacyRootUIMouseUp(cursor_pos_x_, cursor_pos_y_);
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {

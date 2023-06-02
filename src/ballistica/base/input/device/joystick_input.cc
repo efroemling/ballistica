@@ -14,7 +14,6 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::base {
 
@@ -1014,11 +1013,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
 
   // If there's a UI up (even if we didn't get it) lets not pass events along.
   // The only exception is if we're doing a reset.
-  ui_v1::Widget* root{};
-  if (g_base) {
-    root = g_base->ui->screen_root_widget();
-  }
-  if (root && root->HasChildren() && !resetting_) {
+  if (g_base->ui->MainMenuVisible() && !resetting_) {
     return;
   }
 
