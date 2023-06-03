@@ -16,8 +16,10 @@ submodule and remove the 'spinoff' section in .gitignore.
 
 from batools.spinoff._context import SpinoffContext
 from batools.spinoff._main import spinoff_main
+from batools.spinoff._test import spinoff_test
 
 __all__ = [
     'SpinoffContext',
     'spinoff_main',
+    'spinoff_test',
 ]

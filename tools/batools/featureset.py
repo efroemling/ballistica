@@ -51,8 +51,8 @@ class FeatureSet:
 
         # Whether this featureset defines a native Python module within
         # its C++ code. The build process will try to create dummy
-        # modules for all native modules you must tell it if you don't
-        # have one.
+        # modules for all native modules, so to avoid errors you must
+        # tell it if you don't have one.
         self.has_native_python_module = True
 
         # If True, for feature-set 'foo_bar', the build system will

@@ -341,12 +341,32 @@ class SpinoffContext:
 
         self._read_state()
 
+        # First, ask git if there are any untracked files in src. we use
+        # git's managed file list so these wouldn't get synced which
+        # would be confusing. So we'd rather just error in this case.
+        try:
+            output = subprocess.check_output(
+                ['git', 'status', '--porcelain=v2'],
+                cwd=self._src_root,
+            ).decode()
+            if any(line.startswith('?') for line in output.splitlines()):
+                raise CleanError(
+                    'There appear to be files in the src project'
+                    ' untracked by git. Everything must be added to'
+                    ' git for spinoff to function.'
+                )
+        except subprocess.CalledProcessError as exc:
+            raise CleanError(
+                "'git status' command failed in src dir."
+                ' Spinoff requires the src project to be git managed.'
+            ) from exc
+
         # Get the list of src files managed by git.
         self._src_git_files = set[str](
             subprocess.run(
                 ['git', 'ls-files'],
                 check=True,
-                cwd=os.path.join(self._src_root),
+                cwd=self._src_root,
                 capture_output=True,
             )
             .stdout.decode()

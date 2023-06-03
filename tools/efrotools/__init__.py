@@ -130,7 +130,6 @@ def extract_arg(
     return val
 
 
-# FIXME: this has not been tested yet.
 def replace_section(
     text: str,
     begin_marker: str,
