@@ -98,13 +98,27 @@ ctx.src_unchecked_paths = {
     'ballisticakit-android/BallisticaKit/src/*/assets',
 }
 
-# Files at or under these paths are considered 'project' files.
+# Paths/names/suffixes we consider 'project' files.
 # These files are synced after all other files and go through
 # batools.project.Updater class as part of their filtering.
 # This allows them to update themselves in the same way as they
 # do when running 'make update' for the project; adding the final
 # filtered set of project source files to themself, etc.
-ctx.project_file_paths = set()
+ctx.project_file_paths = {'src/assets/ba_data/python/babase/_app.py'}
+ctx.project_file_names = {
+    'Makefile',
+    'CMakeLists.txt',
+    '.meta_manifest_public.json',
+    '.meta_manifest_private.json',
+    '.asset_manifest_public.json',
+    '.asset_manifest_private.json',
+}
+
+ctx.project_file_suffixes = {
+    '.vcxproj',
+    '.vcxproj.filters',
+    '.pbxproj',
+}
 
 # Everything actually synced into dst will use the following filter rules:
 

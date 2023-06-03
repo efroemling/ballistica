@@ -820,7 +820,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             Object::WeakRef<Widget> weakref(this);
             g_base->logic->event_loop()->PushCall([weakref] {
               Widget* w = weakref.Get();
-              if (w) g_base->ui->DeleteWidget(w);
+              if (w) {
+                g_ui_v1->DeleteWidget(w);
+              }
             });
             return;
           }
@@ -875,7 +877,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                   Object::WeakRef<Widget> weakref(this);
                   g_base->logic->event_loop()->PushCall([weakref] {
                     Widget* w = weakref.Get();
-                    if (w) g_base->ui->DeleteWidget(w);
+                    if (w) {
+                      g_ui_v1->DeleteWidget(w);
+                    }
                   });
                   return;
                 }

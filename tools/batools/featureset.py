@@ -28,49 +28,50 @@ class FeatureSet:
 
     _active_feature_set: FeatureSet | None = None
 
-    @classmethod
-    def get_all_for_project(cls, project_root: str) -> list[FeatureSet]:
-        """Return all feature-sets for the current project."""
-        project_root_abs = os.path.abspath(project_root)
-
-        # Only do this once per project.
-        if project_root_abs not in _g_feature_sets:
-            _g_feature_sets[project_root_abs] = _build_feature_set_list(
-                project_root_abs
-            )
-        return _g_feature_sets[project_root_abs]
-
-    @classmethod
-    def resolve_requirements(
-        cls, featuresets: list[FeatureSet], reqs: set[str]
-    ) -> set[str]:
-        """Resolve all required feature-sets based on a given set of them.
-
-        Throws descriptive CleanErrors if any are missing.
-        """
-        fsets = {f.name: f for f in featuresets}
-        reqs_out = set[str]()
-        for req in reqs:
-            cls._resolve_requirements(fsets, reqs_out, req)
-        return reqs_out
-
-    @classmethod
-    def _resolve_requirements(
-        cls, featuresets: dict[str, FeatureSet], reqs_out: set[str], req: str
-    ) -> None:
-        if req in reqs_out:
-            return
-        featureset = featuresets.get(req)
-        if featureset is None:
-            raise CleanError(f"Required featureset '{req}' not found.")
-        reqs_out.add(req)
-        for sub_req in featureset.requirements:
-            cls._resolve_requirements(featuresets, reqs_out, sub_req)
-
     def __init__(self, name: str):
-        self.requirements = set[str]()
+        # (internal; don't set this)
         self.internal = False
+
+        # Other feature-sets this one requires. Any spinoff project this
+        # feature-set is included in will implicitly include these as
+        # well.
+        self.requirements = set[str]()
+
+        # Feature-sets this one can use but can survive without. Note
+        # that each of these requirements must have
+        # 'allow_as_soft_requirement' enabled. While it is possible to
+        # programmatically check for the presence of *any* feature-set,
+        # officially listing soft-requirements ensures that any expected
+        # python-app-subsystems are in place even for feature-sets not
+        # included in the spinoff project (though be aware their type
+        # annotations will be 'Any | None' in that case instead of the
+        # usual 'FooBarSubsystem | None' due to 'FooBarSubsystem' not
+        # actually existing).
+        self.soft_requirements = set[str]()
+
+        # Whether this featureset defines a native Python module within
+        # its C++ code. The build process will try to create dummy
+        # modules for all native modules you must tell it if you don't
+        # have one.
         self.has_native_python_module = True
+
+        # If True, for feature-set 'foo_bar', the build system will
+        # define a 'babase.app.foo_bar' attr which points to a lazy
+        # loaded instance of type 'bafoobar.FooBarSubsystem'.
+        self.has_python_app_subsystem = False
+
+        # If True, feature-set 'foo_bar', will be allowed to be listed
+        # as a soft-requirement of other feature sets and its
+        # python-app-subsystem will be annotated as type
+        # 'bafoobar.FooBarSubsystem | None' instead of simply
+        # 'bafoobar.FooBarSubsystem'. This forces type-checked code to
+        # account for the possibility that it will not be present. Note
+        # that this currently requires has_python_app_subsystem to be
+        # True (because if a soft-required feature-set is missing we
+        # must assume that is the case anyway because there's no way to
+        # know).
+        self.allow_as_soft_requirement = False
+
         self.validate_name(name)
 
         # Paths of files we should disable c++ namespace checks for.
@@ -228,6 +229,45 @@ class FeatureSet:
             assert type(self)._active_feature_set is self
             type(self)._active_feature_set = None
 
+    @classmethod
+    def get_all_for_project(cls, project_root: str) -> list[FeatureSet]:
+        """Return all feature-sets for the current project."""
+        project_root_abs = os.path.abspath(project_root)
+
+        # Only do this once per project.
+        if project_root_abs not in _g_feature_sets:
+            _g_feature_sets[project_root_abs] = _build_feature_set_list(
+                project_root_abs
+            )
+        return _g_feature_sets[project_root_abs]
+
+    @classmethod
+    def resolve_requirements(
+        cls, featuresets: list[FeatureSet], reqs: set[str]
+    ) -> set[str]:
+        """Resolve all required feature-sets based on a given set of them.
+
+        Throws descriptive CleanErrors if any are missing.
+        """
+        fsets = {f.name: f for f in featuresets}
+        reqs_out = set[str]()
+        for req in reqs:
+            cls._resolve_requirements(fsets, reqs_out, req)
+        return reqs_out
+
+    @classmethod
+    def _resolve_requirements(
+        cls, featuresets: dict[str, FeatureSet], reqs_out: set[str], req: str
+    ) -> None:
+        if req in reqs_out:
+            return
+        featureset = featuresets.get(req)
+        if featureset is None:
+            raise CleanError(f"Required featureset '{req}' not found.")
+        reqs_out.add(req)
+        for sub_req in featureset.requirements:
+            cls._resolve_requirements(featuresets, reqs_out, sub_req)
+
 
 def _build_feature_set_list(project_root: str) -> list[FeatureSet]:
     featuresets: list[FeatureSet] = []
@@ -246,28 +286,56 @@ def _build_feature_set_list(project_root: str) -> list[FeatureSet]:
         featureset.apply_config(os.path.join(fsdir, filename))
         featuresets.append(featureset)
 
-    # Run some sanity checks to make sure our featuresets don't have
-    # clashing names/etc. (for instance, foo_v1 and foov_1 would resolve
-    # to the same foov1 py module name).
+    # Run some sanity checks to make sure our full set of featuresets
+    # don't have clashing names/etc. (for instance, foo_v1 and foov_1
+    # would resolve to the same foov1 py module name).
 
-    fsnames = {f.name for f in featuresets}
-    assert len(fsnames) == len(featuresets)
+    featuresets_by_name = {f.name: f for f in featuresets}
+    assert len(featuresets_by_name) == len(featuresets)
 
     assert len({f.name_compact for f in featuresets}) == len(featuresets)
     assert len({f.name_compact for f in featuresets}) == len(featuresets)
 
     for featureset in featuresets:
+        # Require soft-req-enabled feature-sets to have app subsystems
+        # enabled (see above for explanation).
+        if featureset.allow_as_soft_requirement:
+            if not featureset.has_python_app_subsystem:
+                raise CleanError(
+                    f"Feature-set '{featureset.name}'"
+                    " has 'allow_as_soft_requirement' set to True but"
+                    " 'has_python_app_subsystem' set to False;"
+                    ' soft-requireable feature-sets currently MUST'
+                    ' provide a subsystem.'
+                )
+
         for req in featureset.requirements:
             if req == featureset.name:
                 raise CleanError(
                     f"Feature-set '{featureset.name}'"
                     f' lists itself as a requirement; this is not allowed.'
                 )
-            if req not in fsnames:
+            if req not in featuresets_by_name:
                 raise CleanError(
                     f"Undefined feature-set '{req}'"
                     f' listed as a requirement of feature-set'
                     f" '{featureset.name}'."
+                )
+        for req in featureset.soft_requirements:
+            if req == featureset.name:
+                raise CleanError(
+                    f"Feature-set '{featureset.name}'"
+                    f' lists itself as a soft-requirement; this is not allowed.'
+                )
+            if (
+                req in featuresets_by_name
+                and not featuresets_by_name[req].allow_as_soft_requirement
+            ):
+                raise CleanError(
+                    f"Feature-set '{req}'"
+                    f' is listed as a soft-requirement of feature-set'
+                    f" '{featureset.name}' but is not allowed to be soft"
+                    ' required.'
                 )
 
     return featuresets

@@ -129,20 +129,10 @@ class SpinoffContext:
 
         self._execution_error = False
 
-        self._project_file_names = {
-            'Makefile',
-            'CMakeLists.txt',
-            '.meta_manifest_public.json',
-            '.meta_manifest_private.json',
-            '.asset_manifest_public.json',
-            '.asset_manifest_private.json',
-        }
+        self.project_file_paths = set[str]()
+        self.project_file_names = set[str]()
+        self.project_file_suffixes = set[str]()
 
-        self._project_file_suffixes = {
-            '.vcxproj',
-            '.vcxproj.filters',
-            '.pbxproj',
-        }
         # Set of files/symlinks in src.
         self._src_entities: dict[str, SrcEntity] = {}
 
@@ -1300,8 +1290,10 @@ class SpinoffContext:
         if path.startswith('tools/') or path.startswith('src/external'):
             return False
         bname = os.path.basename(path)
-        return bname in self._project_file_names or any(
-            bname.endswith(s) for s in self._project_file_suffixes
+        return (
+            path in self.project_file_paths
+            or bname in self.project_file_names
+            or any(bname.endswith(s) for s in self.project_file_suffixes)
         )
 
     def _update(self) -> None:
@@ -1401,6 +1393,7 @@ class SpinoffContext:
         print_individual_updates: bool,
         is_project_file: bool = False,
     ) -> None:
+        # pylint: disable=too-many-locals
         src_entity = self._src_entities[src_path]
         dst_path = src_entity.dst
         src_path_full = os.path.join(self._src_root, src_path)
@@ -1465,10 +1458,12 @@ class SpinoffContext:
                     f'{Clr.RED}Error removing failed dst file: {exc2}{Clr.RST}'
                 )
             self._execution_error = True
+            verbose_note = (
+                '' if self._verbose else ' (use --verbose for full traceback)'
+            )
             print(
                 f'{Clr.RED}Error copying/filtering file:'
-                f" '{src_path_full}'{Clr.RST}: {exc}"
-                ' (use --verbose for full traceback)',
+                f" '{src_path_full}'{Clr.RST}: {exc}{verbose_note}",
                 file=sys.stderr,
             )
             if self._verbose:

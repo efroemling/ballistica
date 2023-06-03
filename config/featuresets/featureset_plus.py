@@ -14,3 +14,9 @@ fset = FeatureSet.get_active()
 
 fset.requirements = {'base'}
 fset.internal = True
+
+# We provide 'babase.app.plus'.
+fset.has_python_app_subsystem = True
+
+# We want things to work without us.
+fset.allow_as_soft_requirement = True

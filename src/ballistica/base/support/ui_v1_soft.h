@@ -37,6 +37,7 @@ class UIV1SoftInterface {
   virtual void OnLanguageChange() = 0;
   virtual auto GetRootWidget() -> ui_v1::Widget* = 0;
   virtual auto SendWidgetMessage(const WidgetMessage& m) -> int = 0;
+  virtual void ApplyAppConfig() = 0;
 };
 
 }  // namespace ballistica::base

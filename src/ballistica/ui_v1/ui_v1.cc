@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include "ballistica/base/app/app_config.h"
 #include "ballistica/base/app/app_mode.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -12,6 +13,7 @@
 #include "ballistica/ui_v1/widget/container_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
+#include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -74,7 +76,7 @@ void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
 
 void UIV1FeatureSet::DoQuitWindow() {
-  g_ui_v1->python->objs().Get(ui_v1::UIV1Python::ObjID::kQuitWindowCall).Call();
+  g_ui_v1->python->objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call();
 }
 
 RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
@@ -195,7 +197,7 @@ void UIV1FeatureSet::Reset() {
   screen_root_widget_.Clear();
 
   // (Re)create our screen-root widget.
-  auto sw(Object::New<ui_v1::StackWidget>());
+  auto sw(Object::New<StackWidget>());
   sw->set_is_main_window_stack(true);
   sw->SetWidth(g_base->graphics->screen_virtual_width());
   sw->SetHeight(g_base->graphics->screen_virtual_height());
@@ -203,7 +205,7 @@ void UIV1FeatureSet::Reset() {
   screen_root_widget_ = sw;
 
   // (Re)create our screen-overlay widget.
-  auto ow(Object::New<ui_v1::StackWidget>());
+  auto ow(Object::New<StackWidget>());
   ow->set_is_overlay_window_stack(true);
   ow->SetWidth(g_base->graphics->screen_virtual_width());
   ow->SetHeight(g_base->graphics->screen_virtual_height());
@@ -211,7 +213,7 @@ void UIV1FeatureSet::Reset() {
   overlay_root_widget_ = ow;
 
   // (Re)create our abs-root widget.
-  auto rw(Object::New<ui_v1::RootWidget>());
+  auto rw(Object::New<RootWidget>());
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
@@ -265,6 +267,21 @@ auto UIV1FeatureSet::SendWidgetMessage(const base::WidgetMessage& m) -> int {
     return false;
   }
   return root_widget_->HandleMessage(m);
+}
+
+void UIV1FeatureSet::DeleteWidget(Widget* widget) {
+  assert(widget);
+  if (widget) {
+    ContainerWidget* parent = widget->parent_widget();
+    if (parent) {
+      parent->DeleteWidget(widget);
+    }
+  }
+}
+
+void UIV1FeatureSet::ApplyAppConfig() {
+  TextWidget::set_always_use_internal_keyboard(g_base->app_config->Resolve(
+      base::AppConfig::BoolID::kAlwaysUseInternalKeyboard));
 }
 
 }  // namespace ballistica::ui_v1

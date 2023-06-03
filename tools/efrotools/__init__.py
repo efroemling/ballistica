@@ -136,6 +136,7 @@ def replace_section(
     begin_marker: str,
     end_marker: str,
     replace_text: str = '',
+    keep_markers: bool = False,
     error_if_missing: bool = True,
 ) -> str:
     """Replace all text between two marker strings (including the markers)."""
@@ -157,7 +158,9 @@ def replace_section(
             f'; found {text.count(end_marker)}.'
         )
     _before_end, after_end = splits
-    return before_begin + replace_text + after_end
+    if keep_markers:
+        replace_text = f'{begin_marker}{replace_text}{end_marker}'
+    return f'{before_begin}{replace_text}{after_end}'
 
 
 def get_public_license(style: str) -> str:

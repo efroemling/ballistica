@@ -95,10 +95,13 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // If a parent is provided, the widget is added to it; otherwise it is added
   // to the root widget.
   void AddWidget(Widget* w, ContainerWidget* to);
+  void DeleteWidget(Widget* widget);
+
   void OnScreenSizeChange() override;
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
+  void ApplyAppConfig() override;
 
  private:
   UIV1FeatureSet();

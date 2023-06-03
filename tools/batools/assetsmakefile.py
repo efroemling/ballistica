@@ -57,6 +57,7 @@ def _get_targets(
 def _get_py_targets(
     projroot: str,
     meta_manifests: dict[str, str],
+    explicit_sources: set[str],
     src: str,
     dst: str,
     py_targets: list[str],
@@ -66,14 +67,17 @@ def _get_py_targets(
 ) -> None:
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
 
-    def _do_get_targets(proot: str, fnames: list[str]) -> None:
+    def _do_get_targets(
+        proot: str, fnames: list[str], is_explicit: bool = False
+    ) -> None:
         # Special case: ignore temp py files in data src.
         if proot == f'{ASSETS_SRC}/ba_data/data/maps':
             return
-        assert proot.startswith(src)
+        assert proot.startswith(src), f'{proot} does not start with {src}'
         assert dst.startswith(BUILD_DIR)
         dstrootvar = (
             '$(BUILD_DIR)'
@@ -87,6 +91,16 @@ def _get_py_targets(
                 not fname.endswith('.py')
                 or fname.startswith('flycheck_')
                 or fname.startswith('.#')
+            ):
+                continue
+
+            # Ignore any files in the list of explicit sources we got;
+            # we explicitly add those at the end and don't want to do it
+            # twice (since we don't know if this one will always exist
+            # anyway).
+            if (
+                os.path.join(proot, fname) in explicit_sources
+                and not is_explicit
             ):
                 continue
 
@@ -122,7 +136,9 @@ def _get_py_targets(
             # gamedata pass includes only data; otherwise do all else
 
             # .py:
-            all_targets.add(os.path.join(dstfin, fname))
+            targetpath = os.path.join(dstfin, fname)
+            assert targetpath not in all_targets
+            all_targets.add(targetpath)
             py_targets.append(os.path.join(dstrootvar, fname))
 
             # and .pyc:
@@ -173,14 +189,25 @@ def _get_py_targets(
             proot=os.path.dirname(target), fnames=[os.path.basename(target)]
         )
 
+    # Now create targets for any explicitly passed paths.
+    for expsrc in explicit_sources:
+        if expsrc.startswith(f'{src}/'):
+            _do_get_targets(
+                proot=os.path.dirname(expsrc),
+                fnames=[os.path.basename(expsrc)],
+                is_explicit=True,
+            )
+
 
 def _get_py_targets_subset(
     projroot: str,
     meta_manifests: dict[str, str],
+    explicit_sources: set[str],
     all_targets: set[str],
     subset: str,
     suffix: str,
 ) -> str:
+    # pylint: disable=too-many-locals
     if subset == 'public_tools':
         src = 'tools'
         dst = f'{BUILD_DIR}/ba_data/python'
@@ -197,6 +224,7 @@ def _get_py_targets_subset(
     _get_py_targets(
         projroot,
         meta_manifests,
+        explicit_sources,
         src,
         dst,
         py_targets,
@@ -368,6 +396,7 @@ def generate_assets_makefile(
     fname: str,
     existing_data: str,
     meta_manifests: dict[str, str],
+    explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
     # pylint: disable=too-many-locals
@@ -377,8 +406,6 @@ def generate_assets_makefile(
     public = getconfig(Path(projroot))['public']
     assert isinstance(public, bool)
 
-    # with open(fname, encoding='utf-8') as infile:
-    #     original = infile.read()
     original = existing_data
     lines = original.splitlines()
 
@@ -395,6 +422,7 @@ def generate_assets_makefile(
         _get_py_targets_subset(
             projroot,
             meta_manifests,
+            explicit_sources,
             all_targets_public,
             subset='public',
             suffix='_PUBLIC',
@@ -402,6 +430,7 @@ def generate_assets_makefile(
         _get_py_targets_subset(
             projroot,
             meta_manifests,
+            explicit_sources,
             all_targets_public,
             subset='public_tools',
             suffix='_PUBLIC_TOOLS',
@@ -416,6 +445,7 @@ def generate_assets_makefile(
             _get_py_targets_subset(
                 projroot,
                 meta_manifests,
+                explicit_sources,
                 all_targets_private,
                 subset='private-apple',
                 suffix='_PRIVATE_APPLE',
@@ -423,6 +453,7 @@ def generate_assets_makefile(
             _get_py_targets_subset(
                 projroot,
                 meta_manifests,
+                explicit_sources,
                 all_targets_private,
                 subset='private-android',
                 suffix='_PRIVATE_ANDROID',
@@ -430,6 +461,7 @@ def generate_assets_makefile(
             _get_py_targets_subset(
                 projroot,
                 meta_manifests,
+                explicit_sources,
                 all_targets_private,
                 subset='private-common',
                 suffix='_PRIVATE_COMMON',
@@ -437,6 +469,7 @@ def generate_assets_makefile(
             _get_py_targets_subset(
                 projroot,
                 meta_manifests,
+                explicit_sources,
                 all_targets_private,
                 subset='private-windows-Win32',
                 suffix='_PRIVATE_WIN_WIN32',
@@ -444,6 +477,7 @@ def generate_assets_makefile(
             _get_py_targets_subset(
                 projroot,
                 meta_manifests,
+                explicit_sources,
                 all_targets_private,
                 subset='private-windows-x64',
                 suffix='_PRIVATE_WIN_X64',
@@ -470,7 +504,11 @@ def generate_assets_makefile(
                 all_targets_private,
             ),
             _get_targets(
-                projroot, 'PEM_TARGETS', '.pem', '.pem', all_targets_private
+                projroot,
+                'PEM_TARGETS',
+                '.pem',
+                '.pem',
+                all_targets_private,
             ),
             _get_targets(
                 projroot,
@@ -481,7 +519,11 @@ def generate_assets_makefile(
                 limit_to_prefix='ba_data/data',
             ),
             _get_targets(
-                projroot, 'AUDIO_TARGETS', '.wav', '.ogg', all_targets_private
+                projroot,
+                'AUDIO_TARGETS',
+                '.wav',
+                '.ogg',
+                all_targets_private,
             ),
             _get_targets(
                 projroot,

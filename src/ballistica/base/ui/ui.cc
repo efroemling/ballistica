@@ -8,12 +8,10 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/ui_v1_soft.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/ui_v1/widget/root_widget.h"
-#include "ballistica/ui_v1/widget/stack_widget.h"
-#include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::base {
 
@@ -87,9 +85,9 @@ void UI::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
 void UI::ApplyAppConfig() {
   assert(g_base->InLogicThread());
-  ui_v1::TextWidget::set_always_use_internal_keyboard(
-      g_base->app_config->Resolve(
-          AppConfig::BoolID::kAlwaysUseInternalKeyboard));
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->ApplyAppConfig();
+  }
 }
 
 auto UI::MainMenuVisible() const -> bool {
@@ -225,16 +223,6 @@ auto UI::SendWidgetMessage(const WidgetMessage& m) -> int {
     return g_base->ui_v1()->SendWidgetMessage(m);
   }
   return false;
-}
-
-void UI::DeleteWidget(ui_v1::Widget* widget) {
-  assert(widget);
-  if (widget) {
-    ui_v1::ContainerWidget* parent = widget->parent_widget();
-    if (parent) {
-      parent->DeleteWidget(widget);
-    }
-  }
 }
 
 void UI::OnScreenSizeChange() {

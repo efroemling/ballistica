@@ -84,9 +84,6 @@ class UI {
   // Send message to the active widget.
   auto SendWidgetMessage(const WidgetMessage& msg) -> int;
 
-  // Use this to destroy any named widget (even those in containers).
-  void DeleteWidget(ui_v1::Widget* widget);
-
   void SetUIInputDevice(InputDevice* input_device);
 
   // Returns the input-device that currently owns the menu; otherwise nullptr.

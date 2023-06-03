@@ -13,3 +13,5 @@ from batools.featureset import FeatureSet
 fset = FeatureSet.get_active()
 
 fset.requirements = {'core'}
+
+fset.soft_requirements = {'classic', 'plus'}
