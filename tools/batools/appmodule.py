@@ -116,12 +116,22 @@ def generate_app_module(
     )
 
     # Set default app-mode-selection logic.
-
-    # TEMP - fill this out with proper logic/options.
+    contents = (
+        '# Hmm; need to think about how we auto-construct this; how\n'
+        '# do we determine which app modes to check and in what\n'
+        '# order?\n'
+    )
     if 'scene_v1' in fsets:
-        contents = 'import bascenev1\n\nreturn bascenev1.SceneV1AppMode\n'
-    else:
-        contents = "raise RuntimeError('FIXME: unimplemented.')\n"
+        contents += (
+            'import bascenev1\n'
+            '\n'
+            'if bascenev1.SceneV1AppMode.supports_intent(intent):\n'
+            '    return bascenev1.SceneV1AppMode\n\n'
+        )
+    contents += (
+        "raise RuntimeError(f'No handler found for"
+        " intent {type(intent)}.')\n"
+    )
 
     indent = '            '
     out = replace_section(
@@ -135,6 +145,6 @@ def generate_app_module(
     # Note: we *should* format this string, but because this code
     # runs with every project update I'm just gonna try to keep the
     # formatting correct manually for now to save a bit of time.
-    # (project update time jumps from 0.3 to 0.5 seconds if I format
-    # thie one file).
+    # (project update time jumps from 0.3 to 0.5 seconds if I enable
+    # formatting here for just this one file).
     return out

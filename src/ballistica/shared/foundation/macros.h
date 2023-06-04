@@ -114,32 +114,38 @@
 
 /// Test a condition and throw an exception if it fails (on both debug and
 /// release builds)
-#define BA_PRECONDITION(b)                                       \
-  {                                                              \
-    if (!(b)) {                                                  \
-      throw ::ballistica::Exception("Precondition failed: " #b); \
-    }                                                            \
-  }                                                              \
+#define BA_PRECONDITION(b)                                                \
+  {                                                                       \
+    if (!(b)) {                                                           \
+      throw ::ballistica::Exception(std::string("Precondition failed @ ") \
+                                    + cxpr_base_name(__FILE__)            \
+                                    + ":" BA_TOSTRING(__LINE__) ": " #b); \
+    }                                                                     \
+  }                                                                       \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 /// Test a condition and simply print a log message if it fails (on both debug
 /// and release builds)
-#define BA_PRECONDITION_LOG(b)                           \
-  {                                                      \
-    if (!(b)) {                                          \
-      Log(LogLevel::kError, "Precondition failed: " #b); \
-    }                                                    \
-  }                                                      \
+#define BA_PRECONDITION_LOG(b)                                        \
+  {                                                                   \
+    if (!(b)) {                                                       \
+      Log(LogLevel::kError, std::string("Precondition failed @ ")     \
+                                + cxpr_base_name(__FILE__)            \
+                                + ":" BA_TOSTRING(__LINE__) ": " #b); \
+    }                                                                 \
+  }                                                                   \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 /// Test a condition and abort the program if it fails (on both debug
 /// and release builds)
-#define BA_PRECONDITION_FATAL(b)              \
-  {                                           \
-    if (!(b)) {                               \
-      FatalError("Precondition failed: " #b); \
-    }                                         \
-  }                                           \
+#define BA_PRECONDITION_FATAL(b)                       \
+  {                                                    \
+    if (!(b)) {                                        \
+      FatalError(std::string("Precondition failed @ ") \
+                 + cxpr_base_name(__FILE__)            \
+                 + ":" BA_TOSTRING(__LINE__) ": " #b); \
+    }                                                  \
+  }                                                    \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 #ifdef __cplusplus

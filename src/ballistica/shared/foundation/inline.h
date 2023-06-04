@@ -94,6 +94,19 @@ auto static_cast_check_type(IN_TYPE in) -> OUT_TYPE {
   return out_static;
 }
 
+/// Given a path, returns the basename as a constexpr.
+/// Handy for less verbose __FILE__ usage without adding runtime overhead.
+constexpr const char* cxpr_base_name(const char* path) {
+  const char* file = path;
+  while (*path) {
+    const char* cur = path++;
+    if (*cur == '/' || *cur == '\\') {
+      file = path;
+    }
+  }
+  return file;
+}
+
 // This stuff hijacks compile-type pretty-function-printing functionality
 // to give human-readable strings for arbitrary types. Note that these
 // will not be consistent across platforms and should only be used for
