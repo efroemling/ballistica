@@ -359,9 +359,8 @@ auto SceneV1AppMode::GetActiveOrFatal() -> SceneV1AppMode* {
 }
 
 auto SceneV1AppMode::GetSingleton() -> SceneV1AppMode* {
-  // TODO(ericf): Turn this back on once we're creating in logic thread.
+  assert(g_base->InLogicThread());
 
-  // assert(g_base->InLogicThread());  // Can relax this if need be.
   if (g_scene_v1_app_mode == nullptr) {
     g_scene_v1_app_mode = new SceneV1AppMode();
   }

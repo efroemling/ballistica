@@ -206,6 +206,7 @@ void BaseFeatureSet::LogVersionInfo() {
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
   assert(InLogicThread());
+
   if (mode == app_mode_) {
     Log(LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
@@ -213,7 +214,7 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
   try {
     // Tear down previous mode (if any).
     if (app_mode_) {
-      // Nothing here yet.
+      app_mode_->OnDeactivate();
     }
 
     // Set and build up new one.
@@ -221,6 +222,8 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
     // App modes each provide their own input-device delegate types.
     input->RebuildInputDeviceDelegates();
+
+    app_mode_->OnActivate();
   } catch (const Exception& exc) {
     // Anything going wrong while switching app-modes leaves us in an
     // undefined state; don't try to continue.
