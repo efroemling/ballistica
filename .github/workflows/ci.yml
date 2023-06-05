@@ -23,12 +23,11 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
-    - name: Run checks and tests
-      run: make -j2 check test
+    - name: Run checks
+      run: make check
 
-  # Compile just a server binary but don't run asset builds/etc.
-  # (to spare my asset file server)
-  compile_linux:
+  # Compile a server binary and run some tests.
+  build_and_test_linux:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -38,6 +37,8 @@ jobs:
         python-version: '3.11'
     - name: Compile binary
       run: make _cmake-simple-ci-server-build
+    - name: Run tests
+      run: make test
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.
