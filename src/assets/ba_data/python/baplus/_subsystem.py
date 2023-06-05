@@ -11,7 +11,7 @@ from babase._appsubsystem import AppSubsystem
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    from babase import App
+    from babase import App, CloudSubsystem
     from babase._accountv2 import AccountV2Subsystem
 
 
@@ -31,6 +31,7 @@ class PlusSubsystem(AppSubsystem):
     # the overhead of this wrapper at runtime.
 
     accounts: AccountV2Subsystem
+    cloud: CloudSubsystem
 
     def on_app_launching(self) -> None:
         """(internal)"""

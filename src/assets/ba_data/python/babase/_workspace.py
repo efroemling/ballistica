@@ -75,6 +75,9 @@ class WorkspaceSubsystem:
         class _SkipSyncError(RuntimeError):
             pass
 
+        plus = _babase.app.plus
+        assert plus is not None
+
         set_path = True
         wspath = Path(
             _babase.get_volatile_data_directory(), 'workspaces', workspaceid
@@ -83,7 +86,7 @@ class WorkspaceSubsystem:
             # If it seems we're offline, don't even attempt a sync,
             # but allow using the previous synced state.
             # (is this a good idea?)
-            if not _babase.app.cloud.is_connected():
+            if not plus.cloud.is_connected():
                 raise _SkipSyncError()
 
             manifest = DirectoryManifest.create_from_disk(wspath)
@@ -94,7 +97,7 @@ class WorkspaceSubsystem:
 
             while True:
                 with account:
-                    response = _babase.app.cloud.send_message(
+                    response = plus.cloud.send_message(
                         bacommon.cloud.WorkspaceFetchMessage(
                             workspaceid=workspaceid, state=state
                         )

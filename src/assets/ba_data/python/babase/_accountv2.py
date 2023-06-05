@@ -289,7 +289,7 @@ class AccountV2Subsystem:
                 # switching accounts via the back-end).
                 # NOTE: should test case where we don't have
                 # connectivity here.
-                if _babase.app.cloud.is_connected():
+                if plus.cloud.is_connected():
                     if DEBUG_LOG:
                         logging.debug(
                             'AccountV2: Signing in as result'
@@ -316,7 +316,7 @@ class AccountV2Subsystem:
         # in as a rule, even if there are corner cases where this might
         # not be what they want (A user signing out and then restarting
         # may be auto-signed back in).
-        connected = _babase.app.cloud.is_connected()
+        connected = plus.cloud.is_connected()
         signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
         if (
@@ -400,7 +400,7 @@ class AccountV2Subsystem:
         # plug in the credentials we got. We want to be extra cautious
         # in case the user has since explicitly signed in since we
         # kicked off.
-        connected = _babase.app.cloud.is_connected()
+        connected = plus.cloud.is_connected()
         signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
         if connected and not signed_in_v1 and not signed_in_v2:

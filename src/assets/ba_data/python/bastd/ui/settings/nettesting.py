@@ -370,7 +370,8 @@ def _test_v2_cloud_message() -> None:
     def _send() -> None:
         # Note: this runs in another thread so need to avoid exceptions.
         results.send_time = time.monotonic()
-        bui.app.cloud.send_message_cb(bacommon.cloud.PingMessage(), _cb)
+        assert bui.app.plus is not None
+        bui.app.plus.cloud.send_message_cb(bacommon.cloud.PingMessage(), _cb)
 
     # This stuff expects to be run from the logic thread.
     bui.pushcall(_send, from_other_thread=True)

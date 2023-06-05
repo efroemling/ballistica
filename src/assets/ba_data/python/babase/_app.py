@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from efro.log import LogHandler
     import babase
-    from babase import CloudSubsystem, AppIntent, AppMode, AppSubsystem
+    from babase import AppIntent, AppMode, AppSubsystem
     from babase._apputils import AppHealthMonitor
 
     # __FEATURESET_APP_SUBSYSTEM_IMPORTS_BEGIN__
@@ -52,7 +52,6 @@ class App:
 
     # pylint: disable=too-many-public-methods
 
-    cloud: CloudSubsystem
     plugins: PluginSubsystem
 
     # log_handler: LogHandler

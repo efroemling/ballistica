@@ -1373,10 +1373,13 @@ def _check_merch_availability_in_bg_thread() -> None:
     # Merch is available from some countries only.
     # Make a reasonable check to ask the master-server about this at
     # launch and store the results.
+    plus = bui.app.plus
+    assert plus is not None
+
     for _i in range(15):
         try:
-            if bui.app.cloud.is_connected():
-                response = bui.app.cloud.send_message(
+            if plus.cloud.is_connected():
+                response = plus.cloud.send_message(
                     bacommon.cloud.MerchAvailabilityMessage()
                 )
 

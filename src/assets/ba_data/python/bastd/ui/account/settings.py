@@ -1175,7 +1175,7 @@ class AccountSettingsWindow(bui.Window):
             return
 
         with plus.accounts.primary:
-            bui.app.cloud.send_message_cb(
+            plus.cloud.send_message_cb(
                 bacommon.cloud.ManageAccountMessage(),
                 on_response=bui.WeakCall(self._on_manage_account_response),
             )

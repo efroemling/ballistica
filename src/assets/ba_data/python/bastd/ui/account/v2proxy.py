@@ -74,7 +74,8 @@ class V2ProxySignInWindow(bui.Window):
         self._update_timer: bui.AppTimer | None = None
 
         # Ask the cloud for a proxy login id.
-        bui.app.cloud.send_message_cb(
+        assert bui.app.plus is not None
+        bui.app.plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
             on_response=bui.WeakCall(self._on_proxy_request_response),
         )
@@ -162,7 +163,8 @@ class V2ProxySignInWindow(bui.Window):
     def _ask_for_status(self) -> None:
         assert self._proxyid is not None
         assert self._proxykey is not None
-        bui.app.cloud.send_message_cb(
+        assert bui.app.plus is not None
+        bui.app.plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyStateQueryMessage(
                 proxyid=self._proxyid, proxykey=self._proxykey
             ),
@@ -197,7 +199,7 @@ class V2ProxySignInWindow(bui.Window):
             # so it can clean up (not a huge deal if this fails)
             assert self._proxyid is not None
             try:
-                bui.app.cloud.send_message_cb(
+                plus.cloud.send_message_cb(
                     bacommon.cloud.LoginProxyCompleteMessage(
                         proxyid=self._proxyid
                     ),

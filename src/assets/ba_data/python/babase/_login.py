@@ -257,7 +257,8 @@ class LoginAdapter:
                         )
                     _babase.pushcall(Call(result_cb, self, result2))
 
-            _babase.app.cloud.send_message_cb(
+            assert _babase.app.plus is not None
+            _babase.app.plus.cloud.send_message_cb(
                 bacommon.cloud.SignInMessage(
                     self.login_type,
                     result,
