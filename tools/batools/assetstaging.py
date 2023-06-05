@@ -408,7 +408,8 @@ def _sync_server_files(cfg: Config) -> None:
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.projroot}/src/assets/server/ballisticakit_server.py',
+        infilename=f'{cfg.projroot}/src/assets/server_package/'
+        'ballisticakit_server.py',
         outfilename=os.path.join(
             cfg.serverdst,
             'ballisticakit_server.py'
@@ -419,13 +420,14 @@ def _sync_server_files(cfg: Config) -> None:
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.projroot}/src/assets/server/README.txt',
+        infilename=f'{cfg.projroot}/src/assets/server_package/README.txt',
         outfilename=os.path.join(cfg.serverdst, 'README.txt'),
     )
     stage_server_file(
         projroot=cfg.projroot,
         mode=modeval,
-        infilename=f'{cfg.projroot}/src/assets/server/config_template.yaml',
+        infilename=f'{cfg.projroot}/src/assets/server_package/'
+        'config_template.yaml',
         outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'),
     )
     if cfg.win_type is not None:
@@ -433,7 +435,7 @@ def _sync_server_files(cfg: Config) -> None:
         stage_server_file(
             projroot=cfg.projroot,
             mode=modeval,
-            infilename=f'{cfg.projroot}/src/assets/server/{fname}',
+            infilename=f'{cfg.projroot}/src/assets/server_package/{fname}',
             outfilename=os.path.join(cfg.serverdst, fname),
         )
 

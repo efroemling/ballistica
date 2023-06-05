@@ -601,6 +601,6 @@
  "ba_data/python/efro/rpc.py",
  "ba_data/python/efro/terminal.py",
  "ba_data/python/efro/util.py",
- "server/__pycache__/ballisticakit_server.cpython-311.opt-1.pyc",
- "server/ballisticakit_server.py"
+ "server_package/__pycache__/ballisticakit_server.cpython-311.opt-1.pyc",
+ "server_package/ballisticakit_server.py"
 ]

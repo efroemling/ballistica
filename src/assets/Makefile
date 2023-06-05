@@ -37,7 +37,7 @@ cmake:
 
 # Build everything needed for our server builds.
 server:
-	@echo Note: skipping warm_start_asset_build for server target.
+	@echo Note - skipping warm_start_asset_build for server target.
 	@$(MAKE) assets-server
 	@$(TOOLS_DIR)/pcommand clean_orphaned_assets
 
@@ -414,7 +414,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/modutils.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/ui/__init__.py \
-  $(BUILD_DIR)/server/ballisticakit_server.py
+  $(BUILD_DIR)/server_package/ballisticakit_server.py
 
 SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -686,7 +686,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/modutils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/ui/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/server/__pycache__/ballisticakit_server.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/server_package/__pycache__/ballisticakit_server.cpython-311.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -7524,8 +7524,7 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 # These targets don't correspond to actual files; make sure make knows that.
-.PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean \
-        data data-clean meshes meshes-clean \
-        textures-clean scripts scripts-clean \
-        assets assets-cmake assets-win-Win32 assets-win-x64 assets-mac \
-        assets-ios assets-android asset_sources clean
+.PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\
+        data-clean meshes meshes-clean textures-clean scripts scripts-clean	\
+        assets assets-cmake assets-server assets-win-Win32 assets-win-x64		\
+        assets-mac assets-ios assets-android asset_sources clean

@@ -49,7 +49,7 @@
   ],
   "python_source_dirs": [
     "src/assets/ba_data/python",
-    "src/assets/server",
+    "src/assets/server_package",
     "src/assets/workspace",
     "src/meta",
     "tools",
