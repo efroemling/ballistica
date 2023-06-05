@@ -14,6 +14,12 @@ if TYPE_CHECKING:
 def test_babase_imports() -> None:
     """Testing."""
     import subprocess
+    import platform
+
+    # Currently skipping this on Windows, as we can't assemble a
+    # complete build there currently (can only compile binaries).
+    if platform.system() == 'Windows':
+        return
 
     # Put together the headless binary we use for testing.
     subprocess.run(['make', 'cmake-server-build'], check=True)
