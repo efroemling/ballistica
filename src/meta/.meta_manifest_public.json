@@ -2,6 +2,7 @@
  "src/assets/ba_data/python/babase/_mgen/__init__.py",
  "src/assets/ba_data/python/babase/_mgen/enums.py",
  "src/ballistica/base/mgen/pyembed/binding_base.inc",
+ "src/ballistica/base/mgen/pyembed/binding_base_app.inc",
  "src/ballistica/classic/mgen/pyembed/binding_classic.inc",
  "src/ballistica/core/mgen/pyembed/binding_core.inc",
  "src/ballistica/core/mgen/pyembed/env.inc",

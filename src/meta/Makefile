@@ -25,6 +25,7 @@ sources: \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/__init__.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/enums.py \
   $(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base.inc \
+  $(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base_app.inc \
   $(PROJ_SRC_DIR)/ballistica/classic/mgen/pyembed/binding_classic.inc \
   $(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/binding_core.inc \
   $(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/env.inc \
@@ -37,6 +38,9 @@ $(PROJ_SRC_DIR)/ballistica/core/mgen/python_modules_monolithic.h : $(PROJ_DIR)/c
 	@$(PCOMMAND) gen_monolithic_register_modules $@
 
 $(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base.inc : babasemeta/pyembed/binding_base.py
+	@$(PCOMMAND) gen_binding_code $< $@
+
+$(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base_app.inc : babasemeta/pyembed/binding_base_app.py
 	@$(PCOMMAND) gen_binding_code $< $@
 
 $(PROJ_SRC_DIR)/ballistica/classic/mgen/pyembed/binding_classic.inc : baclassicmeta/pyembed/binding_classic.py
@@ -77,6 +81,7 @@ efrocache-list:
 	@echo "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/__init__.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/enums.py" \
         "$(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base.inc" \
+        "$(PROJ_SRC_DIR)/ballistica/base/mgen/pyembed/binding_base_app.inc" \
         "$(PROJ_SRC_DIR)/ballistica/classic/mgen/pyembed/binding_classic.inc" \
         "$(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/binding_core.inc" \
         "$(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/env.inc" \

@@ -24,6 +24,7 @@ Exception::Exception(std::string message_in, PyExcType python_type)
     stack_trace_ = core::g_core->platform->GetStackTrace();
   }
 }
+
 Exception::Exception(PyExcType python_type) : python_type_(python_type) {
   thread_name_ = CurrentThreadName();
 

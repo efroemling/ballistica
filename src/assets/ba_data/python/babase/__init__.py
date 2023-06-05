@@ -186,6 +186,9 @@ def _simplify_module_names() -> None:
 _simplify_module_names()
 del _simplify_module_names
 
+# Allow the native layer to wrap a few things up.
+_babase.reached_end_of_babase()
+
 # Marker we pop down at the very end so other modules can run sanity
 # checks to make sure we aren't importing them reciprocally when they
 # import us.

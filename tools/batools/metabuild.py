@@ -67,7 +67,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     entries = [
         l.strip().split(',  # ')
         for l in pycode.splitlines()
-        if l.startswith('    ')
+        if l.startswith('    ') and '#' in l
     ]
     if not all(len(l) == 2 for l in entries):
         raise RuntimeError('malformatted data.')

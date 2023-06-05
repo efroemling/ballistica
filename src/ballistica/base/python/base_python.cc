@@ -66,7 +66,16 @@ void BasePython::ImportPythonObjs() {
 #include "ballistica/base/mgen/pyembed/binding_base.inc"
 }
 
+void BasePython::ImportPythonAppObjs() {
+  // Import and grab all the Python stuff we use from C++.
+  // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
+#include "ballistica/base/mgen/pyembed/binding_base_app.inc"
+}
+
 void BasePython::SoftImportPlus() {
+  // To keep our init order clean, we want to root out any attempted uses
+  // of plus before _babase has been fully inited.
+
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baplus"));
   if (!result.Exists()) {
@@ -97,6 +106,7 @@ void BasePython::SoftImportUIV1() {
 }
 
 void BasePython::ReadConfig() {
+  auto gil{Python::ScopedInterpreterLock()};
   // Read the config file and store the config dict for easy access.
   objs().Get(ObjID::kReadConfigCall).Call();
   objs_.Store(ObjID::kConfig, *objs().Get(ObjID::kApp).GetAttr("config"));
@@ -121,12 +131,7 @@ void BasePython::OnMainThreadStartApp() {
   }
 }
 
-void BasePython::OnAppStart() {
-  assert(g_base->InLogicThread());
-
-  // FIXME - THIS SHOULD PROBABLY REPLACE LOGIC-COMPLETE-BOOTSTRAPPING
-  // g_python->InitBallisticaPython();
-}
+void BasePython::OnAppStart() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnAppPause() {
   assert(g_base->InLogicThread());

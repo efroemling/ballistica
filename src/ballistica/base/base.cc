@@ -107,6 +107,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // This is what allows others to 'import' our C++ front end.
   g_base->StoreOnPythonModule(module);
 
+  // Import all the Python stuff we use.
   g_base->python->ImportPythonObjs();
 
   // Run some sanity checks/etc.
@@ -121,19 +122,30 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // that we've been holding on to.
   g_core->python->EnablePythonLoggingCalls();
 
-  // Read the app config. Should this perhaps go in StartApp or something?
-  g_base->python->ReadConfig();
-
   // Marker we pop down at the very end so other modules can run sanity
   // checks to make sure we aren't importing them reciprocally when they
   // import us.
   Python::MarkReachedEndOfModule(module);
+  assert(!g_base->base_native_import_completed_);
+  g_base->base_native_import_completed_ = true;
 
   g_core->LifecycleLog("_babase exec end");
 }
 
+void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
+  assert(!base_import_completed_);
+
+  g_base->python->ImportPythonAppObjs();
+
+  base_import_completed_ = true;
+}
+
 auto BaseFeatureSet::Import() -> BaseFeatureSet* {
   return ImportThroughPythonModule<BaseFeatureSet>("_babase");
+}
+
+auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
+  return base_import_completed_ && base_native_import_completed_;
 }
 
 void BaseFeatureSet::OnScreenAndAssetsReady() {
@@ -160,6 +172,9 @@ void BaseFeatureSet::StartApp() {
   g_core->LifecycleLog("start-app begin (main thread)");
 
   LogVersionInfo();
+
+  // Read the app config.
+  g_base->python->ReadConfig();
 
   // Allow our subsystems to start doing work in their own threads
   // and communicating with other subsystems. Note that we may still
@@ -464,7 +479,10 @@ void BaseFeatureSet::V1CloudLog(const std::string& msg) {
   // to the master server with various other context info included.
 
   // We currently need both plus and classic for this system to function.
-  if (!(HavePlus() && HaveClassic())) {
+  if (!IsBaseCompletelyImported()) {
+    printf(
+        "WARNING: V1CloudLog called before babase import complete; will be "
+        "ignored.\n");
     return;
   }
 

@@ -108,6 +108,7 @@ class BasePython {
 
   void AddPythonClasses(PyObject* module);
   void ImportPythonObjs();
+  void ImportPythonAppObjs();
   void ReadConfig();
 
   const auto& objs() { return objs_; }

@@ -62,15 +62,20 @@ assets: prereqs meta
 	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS)
 
-# Build assets required for cmake builds (linux, mac)
+# Build assets required for cmake builds (linux, mac).
 assets-cmake: prereqs meta
 	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
-# Build only script assets required for cmake builds (linux, mac)
+# Build only script assets required for cmake builds (linux, mac).
 assets-cmake-scripts: prereqs meta
 	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) scripts-cmake
+
+# Build assets required for server builds.
+assets-server: prereqs meta
+	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
+ cd src/assets \&\& $(MAKE) -j$(CPUS) server
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
 assets-windows: prereqs meta
@@ -850,10 +855,22 @@ build/dummymodules/.dummy_modules_state: \
 #                                                                              #
 ################################################################################
 
+# Set the following from the command line to influence the build:
+
+# Override this to run only particular tests.
+# Examples:
+#   tests/test_efro
+#   tests/test_efro/test_message.py
+TEST_TARGET ?= tests
+
 # Run all tests. (live execution verification)
 test: py_check_prepass
 	@tools/pcommand echo BLU Running all tests...
-	@tools/pcommand pytest -v tests
+	@tools/pcommand pytest -v $(TEST_TARGET)
+
+test-verbose: py_check_prepass
+	@tools/pcommand echo BLU Running all tests...
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv $(TEST_TARGET)
 
 # Run tests with any caching disabled.
 test-full: test
@@ -1071,7 +1088,7 @@ cmake-clean:
 cmake-server: cmake-server-build
 	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticakit_server
 
-cmake-server-build: assets-cmake resources meta cmake-server-binary
+cmake-server-build: assets-server meta cmake-server-binary
 	@$(STAGE_ASSETS) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
 	@tools/pcommand echo BLD \
  Server build complete: BLU build/cmake/server-$(CM_BT_LC)

@@ -650,6 +650,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// in reality we are unmodified).
   auto IsUnmodifiedBlessedBuild() -> bool override;
 
+  /// Return true if both babase and _babase modules have completed their
+  /// import execs. To keep our init order well defined, we want to avoid
+  /// allowing certain functionality before this time.
+  auto IsBaseCompletelyImported() -> bool;
+
   auto InAssetsThread() const -> bool override;
   auto InLogicThread() const -> bool override;
   auto InGraphicsThread() const -> bool override;
@@ -681,6 +686,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void DoPushObjCall(const PythonObjectSetBase* objset, int id) override;
   void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                      const std::string& arg) override;
+  void OnReachedEndOfBaBaseImport();
 
   /// Called in the logic thread once our screen is up and assets are loading.
   void OnScreenAndAssetsReady();
@@ -737,6 +743,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool called_start_app_{};
   bool app_running_{};
   bool called_run_app_to_completion_{};
+  bool base_import_completed_{};
+  bool base_native_import_completed_{};
 };
 
 }  // namespace ballistica::base

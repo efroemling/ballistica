@@ -1305,6 +1305,26 @@ static PyMethodDef PyOnInitialAppModeSetDef = {
     "(internal)\n",
 };
 
+// ------------------------- reached_end_of_babase -----------------------------
+
+static auto PyReachedEndOfBaBase(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base);
+  g_base->OnReachedEndOfBaBaseImport();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyReachedEndOfBaBaseDef = {
+    "reached_end_of_babase",            // name
+    (PyCFunction)PyReachedEndOfBaBase,  // method
+    METH_NOARGS,                        // flags
+
+    "reached_end_of_babase() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1346,6 +1366,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,
+      PyReachedEndOfBaBaseDef,
   };
 }
 

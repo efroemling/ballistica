@@ -1311,9 +1311,9 @@ static PyMethodDef PyDoOnceDef = {
     "...     print('HelloWorld once from loop!')",
 };
 
-// -------------------------------- _app ---------------------------------------
+// ------------------------------- getapp --------------------------------------
 
-static auto PyApp(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyGetApp(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
@@ -1326,12 +1326,12 @@ static auto PyApp(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyAppDef = {
-    "_app",                        // name
-    (PyCFunction)PyApp,            // method
+static PyMethodDef PyGetAppDef = {
+    "getapp",                      // name
+    (PyCFunction)PyGetApp,         // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "_app() -> babase.App\n"
+    "getapp() -> babase.App\n"
     "\n"
     "(internal)",
 };
@@ -1392,7 +1392,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
       PyDoOnceDef,
-      PyAppDef,
+      PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
       PyAndroidShowWifiSettingsDef,
       PySetInternalLanguageKeysDef,

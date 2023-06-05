@@ -4,17 +4,19 @@
 # Run make update to update the project after editing this..
 # pylint: disable=missing-module-docstring, line-too-long
 from __future__ import annotations
-
-import babase
-from babase import _language
-from babase import _apputils
 from babase._mgen import enums
-from babase import _hooks
-from babase import _env
+from babase import (
+    _language,
+    _apputils,
+    _hooks,
+    _env,
+    _error,
+    _general,
+)
+
 
 # The C++ layer looks for this variable:
 values = [
-    babase.app,  # kApp
     _hooks.reset_to_main_menu,  # kResetToMainMenuCall
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
@@ -56,22 +58,19 @@ values = [
     _hooks.shutdown,  # kShutdownCall
     _hooks.show_post_purchase_message,  # kShowPostPurchaseMessageCall
     _hooks.on_app_bootstrapping_complete,  # kOnAppBootstrappingCompleteCall
-    babase.app.handle_deep_link,  # kDeepLinkCall
-    babase.app.lang.get_resource,  # kGetResourceCall
-    babase.app.lang.translate,  # kTranslateCall
-    babase.Lstr,  # kLStrClass
-    babase.Call,  # kCallClass
+    _language.Lstr,  # kLStrClass
+    _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
-    babase.ContextError,  # kContextError
-    babase.NotFoundError,  # kNotFoundError
-    babase.NodeNotFoundError,  # kNodeNotFoundError
-    babase.SessionTeamNotFoundError,  # kSessionTeamNotFoundError
-    babase.InputDeviceNotFoundError,  # kInputDeviceNotFoundError
-    babase.DelegateNotFoundError,  # kDelegateNotFoundError
-    babase.SessionPlayerNotFoundError,  # kSessionPlayerNotFoundError
-    babase.WidgetNotFoundError,  # kWidgetNotFoundError
-    babase.ActivityNotFoundError,  # kActivityNotFoundError
-    babase.SessionNotFoundError,  # kSessionNotFoundError
+    _error.ContextError,  # kContextError
+    _error.NotFoundError,  # kNotFoundError
+    _error.NodeNotFoundError,  # kNodeNotFoundError
+    _error.SessionTeamNotFoundError,  # kSessionTeamNotFoundError
+    _error.InputDeviceNotFoundError,  # kInputDeviceNotFoundError
+    _error.DelegateNotFoundError,  # kDelegateNotFoundError
+    _error.SessionPlayerNotFoundError,  # kSessionPlayerNotFoundError
+    _error.WidgetNotFoundError,  # kWidgetNotFoundError
+    _error.ActivityNotFoundError,  # kActivityNotFoundError
+    _error.SessionNotFoundError,  # kSessionNotFoundError
     enums.TimeFormat,  # kTimeFormatClass
     enums.TimeType,  # kTimeTypeClass
     enums.InputType,  # kInputTypeClass
