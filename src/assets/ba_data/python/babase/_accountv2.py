@@ -273,7 +273,7 @@ class AccountV2Subsystem:
                         'AccountV2: Signing out as result'
                         ' of implicit state change...',
                     )
-                _babase.app.accounts.set_primary_credentials(None)
+                plus.accounts.set_primary_credentials(None)
                 self._implicit_state_changed = False
 
                 # Once we've made a move here we don't want to
@@ -318,7 +318,7 @@ class AccountV2Subsystem:
         # may be auto-signed back in).
         connected = _babase.app.cloud.is_connected()
         signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
-        signed_in_v2 = _babase.app.accounts.have_primary_credentials()
+        signed_in_v2 = plus.accounts.have_primary_credentials()
         if (
             connected
             and not signed_in_v1
@@ -344,6 +344,9 @@ class AccountV2Subsystem:
 
         del adapter  # Unused.
 
+        plus = _babase.app.plus
+        assert plus is not None
+
         # Make some noise on errors since the user knows a
         # sign-in attempt is happening in this case (the 'explicit' part).
         if isinstance(result, Exception):
@@ -365,10 +368,10 @@ class AccountV2Subsystem:
             # Also I suppose we should sign them out in this case since
             # it could be misleading to be still signed in with the old
             # account.
-            _babase.app.accounts.set_primary_credentials(None)
+            plus.accounts.set_primary_credentials(None)
             return
 
-        _babase.app.accounts.set_primary_credentials(result.credentials)
+        plus.accounts.set_primary_credentials(result.credentials)
 
     def _on_implicit_sign_in_completed(
         self,
@@ -399,9 +402,9 @@ class AccountV2Subsystem:
         # kicked off.
         connected = _babase.app.cloud.is_connected()
         signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
-        signed_in_v2 = _babase.app.accounts.have_primary_credentials()
+        signed_in_v2 = plus.accounts.have_primary_credentials()
         if connected and not signed_in_v1 and not signed_in_v2:
-            _babase.app.accounts.set_primary_credentials(result.credentials)
+            plus.accounts.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_sign_in_completed:

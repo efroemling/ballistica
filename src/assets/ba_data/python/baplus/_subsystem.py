@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from typing import Callable, Any
 
     from babase import App
+    from babase._accountv2 import AccountV2Subsystem
 
 
 class PlusSubsystem(AppSubsystem):
@@ -28,6 +29,13 @@ class PlusSubsystem(AppSubsystem):
     # Note: this is basically just a wrapper around _baplus for
     # type-checking purposes. Maybe there's some smart way we could skip
     # the overhead of this wrapper at runtime.
+
+    accounts: AccountV2Subsystem
+
+    def on_app_launching(self) -> None:
+        """(internal)"""
+        _baplus.on_app_launching()
+        self.accounts.on_app_launching()
 
     @staticmethod
     def add_v1_account_transaction(
@@ -153,11 +161,6 @@ class PlusSubsystem(AppSubsystem):
         Category: General Utility Functions
         """
         return _baplus.mark_config_dirty()
-
-    @staticmethod
-    def on_app_launching() -> None:
-        """(internal)"""
-        _baplus.on_app_launching()
 
     @staticmethod
     def power_ranking_query(callback: Callable, season: Any = None) -> None:

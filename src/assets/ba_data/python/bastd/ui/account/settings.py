@@ -95,7 +95,7 @@ class AccountSettingsWindow(bui.Window):
         # Determine which sign-in/sign-out buttons we should show.
         self._show_sign_in_buttons: list[str] = []
 
-        if LoginType.GPGS in bui.app.accounts.login_adapters:
+        if LoginType.GPGS in plus.accounts.login_adapters:
             self._show_sign_in_buttons.append('Google Play')
 
         # Always want to show our web-based v2 login option.
@@ -227,7 +227,7 @@ class AccountSettingsWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        primary_v2_account = bui.app.accounts.primary
+        primary_v2_account = plus.accounts.primary
 
         v1_state = plus.get_v1_account_state()
         v1_account_type = (
@@ -237,7 +237,7 @@ class AccountSettingsWindow(bui.Window):
         # We expose GPGS-specific functionality only if it is 'active'
         # (meaning the current GPGS player matches one of our account's
         # logins).
-        gpgs_adapter = bui.app.accounts.login_adapters.get(LoginType.GPGS)
+        gpgs_adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
         is_gpgs = (
             False if gpgs_adapter is None else gpgs_adapter.is_back_end_active()
         )
@@ -339,7 +339,7 @@ class AccountSettingsWindow(bui.Window):
         # provide us with v2 credentials or waiting for those credentials
         # to be verified.
         show_cancel_sign_in_button = self._signing_in_adapter is not None or (
-            bui.app.accounts.have_primary_credentials()
+            plus.accounts.have_primary_credentials()
             and primary_v2_account is None
         )
         cancel_sign_in_button_space = 70.0
@@ -1164,14 +1164,17 @@ class AccountSettingsWindow(bui.Window):
     def _on_manage_account_press(self) -> None:
         bui.screenmessage(bui.Lstr(resource='oneMomentText'))
 
+        plus = bui.app.plus
+        assert plus is not None
+
         # We expect to have a v2 account signed in if we get here.
-        if bui.app.accounts.primary is None:
+        if plus.accounts.primary is None:
             logging.exception(
                 'got manage-account press without v2 account present'
             )
             return
 
-        with bui.app.accounts.primary:
+        with plus.accounts.primary:
             bui.app.cloud.send_message_cb(
                 bacommon.cloud.ManageAccountMessage(),
                 on_response=bui.WeakCall(self._on_manage_account_response),
@@ -1217,8 +1220,11 @@ class AccountSettingsWindow(bui.Window):
         bui.textwidget(edit=self._unlink_accounts_button_label, color=clr)
 
     def _should_show_legacy_unlink_button(self) -> bool:
+        plus = bui.app.plus
+        assert plus is not None
+
         # Only show this when fully signed in to a v2 account.
-        if not self._v1_signed_in or bui.app.accounts.primary is None:
+        if not self._v1_signed_in or plus.accounts.primary is None:
             return False
 
         out = self._have_unlinkable_v1_accounts()
@@ -1233,7 +1239,7 @@ class AccountSettingsWindow(bui.Window):
 
         # Disable this by default when signed in to a V2 account
         # (since this shows V1 links which we should no longer care about).
-        if bui.app.accounts.primary is not None and not FORCE_ENABLE_V1_LINKING:
+        if plus.accounts.primary is not None and not FORCE_ENABLE_V1_LINKING:
             return
 
         # if this is not present, we haven't had contact from the server so
@@ -1373,8 +1379,11 @@ class AccountSettingsWindow(bui.Window):
         # If we're waiting on an adapter to give us credentials, abort.
         self._signing_in_adapter = None
 
+        plus = bui.app.plus
+        assert plus is not None
+
         # Say we don't wanna be signed in anymore if we are.
-        bui.app.accounts.set_primary_credentials(None)
+        plus.accounts.set_primary_credentials(None)
 
         self._needs_refresh = True
 
@@ -1385,13 +1394,13 @@ class AccountSettingsWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        if bui.app.accounts.have_primary_credentials():
+        if plus.accounts.have_primary_credentials():
             if (
-                bui.app.accounts.primary is not None
-                and LoginType.GPGS in bui.app.accounts.primary.logins
+                plus.accounts.primary is not None
+                and LoginType.GPGS in plus.accounts.primary.logins
             ):
                 self._explicitly_signed_out_of_gpgs = True
-            bui.app.accounts.set_primary_credentials(None)
+            plus.accounts.set_primary_credentials(None)
         else:
             plus.sign_out_v1()
 
@@ -1427,7 +1436,7 @@ class AccountSettingsWindow(bui.Window):
             return
 
         # V2 login sign-in buttons generally go through adapters.
-        adapter = bui.app.accounts.login_adapters.get(login_type)
+        adapter = plus.accounts.login_adapters.get(login_type)
         if adapter is not None:
             self._signing_in_adapter = adapter
             adapter.sign_in(
@@ -1463,7 +1472,9 @@ class AccountSettingsWindow(bui.Window):
             # Success! Plug in these credentials which will begin
             # verifying them and set our primary account-handle
             # when finished.
-            bui.app.accounts.set_primary_credentials(result.credentials)
+            plus = bui.app.plus
+            assert plus is not None
+            plus.accounts.set_primary_credentials(result.credentials)
 
             # Special case - if the user has explicitly logged out and
             # logged in again with GPGS via this button, warn them that

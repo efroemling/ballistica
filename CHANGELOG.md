@@ -255,6 +255,11 @@
   precompiled native portion of the `plus` feature set). Also by removing the
   'kit' from the end it will no longer be renamed in spinoff projects, meaning
   we should be able to recycle the same built libraries in those cases.
+- Moved `babase.app.accounts` to `babase.app.plus.accounts`. This is a little
+  more verbose but is cleaner in a way since that functionality is part of plus
+  and is not available when plus is missing. So now there's
+  `babase.app.classic.accounts` for v1 stuff and `babase.app.plus.accounts` for
+  v2 stuff.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

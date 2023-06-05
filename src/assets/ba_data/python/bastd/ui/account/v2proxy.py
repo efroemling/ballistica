@@ -188,8 +188,10 @@ class V2ProxySignInWindow(bui.Window):
             isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
             and response.state is response.State.SUCCESS
         ):
+            plus = bui.app.plus
+            assert plus is not None
             assert response.credentials is not None
-            bui.app.accounts.set_primary_credentials(response.credentials)
+            plus.accounts.set_primary_credentials(response.credentials)
 
             # As a courtesy, tell the server we're done with this proxy
             # so it can clean up (not a huge deal if this fails)

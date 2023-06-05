@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from efro.log import LogHandler
     import babase
     from babase import CloudSubsystem, AppIntent, AppMode, AppSubsystem
-    from babase._accountv2 import AccountV2Subsystem
     from babase._apputils import AppHealthMonitor
 
     # __FEATURESET_APP_SUBSYSTEM_IMPORTS_BEGIN__
@@ -53,8 +52,6 @@ class App:
 
     # pylint: disable=too-many-public-methods
 
-    # Implementations for these will be filled in by internal libs.
-    accounts: AccountV2Subsystem
     cloud: CloudSubsystem
     plugins: PluginSubsystem
 
@@ -517,10 +514,10 @@ class App:
         if self.plus is not None:
             self.plus.on_app_launching()
 
-        self.accounts.on_app_launching()
+        # self.accounts.on_app_launching()
 
-        # Make sure this runs after we init our accounts stuff, since
-        # classic accounts key off of our v2 ones.
+        # Make sure this runs after we init our plus, since
+        # classic accounts here key off of our v2 ones in plus.
         if self.classic is not None:
             self.classic.on_app_launching()
 
@@ -683,6 +680,7 @@ class App:
 
     def on_app_resume(self) -> None:
         """Called when resuming."""
+        assert _babase.in_logic_thread()
         self.fg_state += 1
 
         # Resume all app subsystems in the same order they were inited.
@@ -696,6 +694,7 @@ class App:
 
     def on_app_shutdown(self) -> None:
         """(internal)"""
+        assert _babase.in_logic_thread()
         self.state = self.State.SHUTTING_DOWN
 
         # Shutdown all app subsystems in the opposite order they were

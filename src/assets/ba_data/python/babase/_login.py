@@ -306,9 +306,10 @@ class LoginAdapter:
                     self.login_type.name,
                 )
 
+            assert _babase.app.plus is not None
             _babase.pushcall(
                 Call(
-                    _babase.app.accounts.on_implicit_login_state_changed,
+                    _babase.app.plus.accounts.on_implicit_login_state_changed,
                     self.login_type,
                     self._implicit_login_state,
                 )

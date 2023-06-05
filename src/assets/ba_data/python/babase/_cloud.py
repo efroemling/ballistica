@@ -39,9 +39,12 @@ class CloudSubsystem(AppSubsystem):
         if DEBUG_LOG:
             logging.debug('CloudSubsystem: Connectivity is now %s.', connected)
 
+        plus = _babase.app.plus
+        assert plus is not None
+
         # Inform things that use this.
         # (TODO: should generalize this into some sort of registration system)
-        _babase.app.accounts.on_cloud_connectivity_changed(connected)
+        plus.accounts.on_cloud_connectivity_changed(connected)
 
     @overload
     def send_message_cb(
