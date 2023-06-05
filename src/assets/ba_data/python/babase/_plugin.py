@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 import _babase
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     import babase
 
 
-class PluginSubsystem:
+class PluginSubsystem(AppSubsystem):
     """Subsystem for plugin handling in the app.
 
     Category: **App Classes**
@@ -28,6 +29,7 @@ class PluginSubsystem:
     AUTO_ENABLE_NEW_PLUGINS_DEFAULT = True
 
     def __init__(self) -> None:
+        super().__init__()
         self.potential_plugins: list[babase.PotentialPlugin] = []
         self.active_plugins: dict[str, babase.Plugin] = {}
 
@@ -46,6 +48,13 @@ class PluginSubsystem:
         results = _babase.app.meta.scanresults
         assert results is not None
 
+        auto_enable_new_plugins = (
+            _babase.app.config.get(
+                self.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,
+                self.AUTO_ENABLE_NEW_PLUGINS_DEFAULT,
+            )
+            is True
+        )
         # Create a potential-plugin for each class we found in the scan.
         for class_path in results.exports_of_class(Plugin):
             plugs.potential_plugins.append(
@@ -55,13 +64,7 @@ class PluginSubsystem:
                     available=True,
                 )
             )
-            if (
-                _babase.app.config.get(
-                    self.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,
-                    self.AUTO_ENABLE_NEW_PLUGINS_DEFAULT,
-                )
-                is True
-            ):
+            if auto_enable_new_plugins:
                 if class_path not in plugstates:
                     # Go ahead and enable new plugins by default, but we'll
                     # inform the user that they need to restart to pick them up.
@@ -72,12 +75,9 @@ class PluginSubsystem:
 
         plugs.potential_plugins.sort(key=lambda p: p.class_path)
 
-        # Note: these days we complete meta-scan and immediately activate
-        # plugins, so we don't need the message about 'restart to activate'
-        # anymore.
-        # FIXME: We actually now have an option to NOT activate new plugins
-        # so we should selectively re-enable this.
-        if found_new and bool(False):
+        # If we're *not* auto-enabling new plugins, at least let the
+        # user know we found something new.
+        if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
                 Lstr(resource='pluginsDetectedText'), color=(0, 1, 0)
             )
@@ -87,7 +87,6 @@ class PluginSubsystem:
             _babase.app.config.commit()
 
     def on_app_running(self) -> None:
-        """Should be called when the app reaches the running state."""
         # Load up our plugins and go ahead and call their on_app_running calls.
         self.load_plugins()
         for plugin in self.active_plugins.values():
@@ -99,7 +98,6 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_running()')
 
     def on_app_pause(self) -> None:
-        """Called when the app goes to a suspended state."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_pause()
@@ -109,7 +107,6 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_pause()')
 
     def on_app_resume(self) -> None:
-        """Run when the app resumes from a suspended state."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_resume()
@@ -119,7 +116,6 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_resume()')
 
     def on_app_shutdown(self) -> None:
-        """Called when the app is being closed."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_shutdown()

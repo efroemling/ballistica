@@ -35,6 +35,7 @@ from _babase import (
 
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
+from babase._appsubsystem import AppSubsystem
 from babase._accountv2 import AccountV2Handle
 from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._app import App
@@ -161,6 +162,7 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'AppSubsystem',
 ]
 
 

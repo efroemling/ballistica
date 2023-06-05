@@ -6,12 +6,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _baplus
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+    from babase import App
 
-class PlusSubsystem:
+
+class PlusSubsystem(AppSubsystem):
     """Subsystem for plus functionality in the app.
 
     The single shared instance of this app can be accessed at
@@ -25,9 +28,6 @@ class PlusSubsystem:
     # Note: this is basically just a wrapper around _baplus for
     # type-checking purposes. Maybe there's some smart way we could skip
     # the overhead of this wrapper at runtime.
-
-    def __init__(self) -> None:
-        pass
 
     @staticmethod
     def add_v1_account_transaction(
@@ -157,7 +157,7 @@ class PlusSubsystem:
     @staticmethod
     def on_app_launching() -> None:
         """(internal)"""
-        return _baplus.on_app_launching()
+        _baplus.on_app_launching()
 
     @staticmethod
     def power_ranking_query(callback: Callable, season: Any = None) -> None:

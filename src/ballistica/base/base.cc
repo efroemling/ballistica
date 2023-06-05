@@ -460,8 +460,14 @@ void BaseFeatureSet::ScreenMessage(const std::string& s,
 
 void BaseFeatureSet::V1CloudLog(const std::string& msg) {
   // If we've got a fully running app environment, let the Python layer
-  // handle logs. It will group log messages intelligently and ship them
+  // handle this. It will group log messages intelligently and ship them
   // to the master server with various other context info included.
+
+  // We currently need both plus and classic for this system to function.
+  if (!(HavePlus() && HaveClassic())) {
+    return;
+  }
+
   if (app_running_) {
     python->objs().PushCall(BasePython::ObjID::kHandleV1CloudLogCall);
   } else {

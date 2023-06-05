@@ -19,56 +19,41 @@ using core::g_core;
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "RedundantCast"
 
-PythonRef::PythonRef(PyObject* obj_in, ReferenceBehavior b) {
-  assert(Python::HaveGIL());
+static void ClearPythonExceptionAndWarnIfUnset() {
+  // We're assuming that a nullptr passed to us means a Python call has
+  // failed and set an exception. So we're clearing that exception since
+  // we'll be handling it by converting it to a C++ one. However let's warn
+  // if we were passed nullptr but *no* Python exception is set. We want to
+  // avoid that situation because it opens up the possibility of us clearing
+  // exceptions that aren't related to our nullptr.
+  if (!PyErr_Occurred()) {
+    Log(LogLevel::kWarning,
+        "A PythonRef acquire/steal call was passed nullptr but no Python "
+        "exception is set. This situation should be avoided; only pass "
+        "acquire/steal if it is directly due to a Python exception.");
+  } else {
+    PyErr_Clear();
+  }
+}
+
+PythonRef::PythonRef(PyObject* obj, ReferenceBehavior b) {
   switch (b) {
     case kSteal:
-      Steal(obj_in);
+      Steal(obj);
       break;
     case kStealSoft:
-      if (obj_in) {
-        Steal(obj_in);
-      }
+      StealSoft(obj);
       break;
     case kAcquire:
-      Acquire(obj_in);
+      Acquire(obj);
       break;
     case kAcquireSoft:
-      if (obj_in) {
-        Acquire(obj_in);
-        break;
-      }
+      AcquireSoft(obj);
       break;
   }
 }
 
-void PythonRef::Acquire(PyObject* obj_in) {
-  BA_PRECONDITION(obj_in);
-  assert(Python::HaveGIL());
-
-  // Assign and increment the new one before decrementing our old
-  // (in case its the same one or prev gets deallocated and accesses us
-  // somehow).
-  PyObject* prev = obj_;
-  Py_INCREF(obj_in);
-  obj_ = obj_in;
-  if (prev) {
-    Py_DECREF(prev);
-  }
-}
-
-void PythonRef::AcquireSoft(PyObject* obj_in) {
-  if (!obj_in) {
-    Release();
-    return;
-  }
-  Acquire(obj_in);
-}
-
-void PythonRef::Steal(PyObject* obj_in) {
-  BA_PRECONDITION(obj_in);
-  assert(Python::HaveGIL());
-
+void PythonRef::SetObj(PyObject* obj_in) {
   // Assign before decrementing the old
   // (in case prev gets deallocated and accesses us somehow).
   PyObject* prev = obj_;
@@ -78,12 +63,46 @@ void PythonRef::Steal(PyObject* obj_in) {
   }
 }
 
-void PythonRef::StealSoft(PyObject* obj_in) {
+void PythonRef::Steal(PyObject* obj_in) {
+  assert(Python::HaveGIL());
   if (!obj_in) {
+    ClearPythonExceptionAndWarnIfUnset();
+    throw Exception("nullptr passed to PythonRef::Steal.");
+  }
+  SetObj(obj_in);
+}
+
+void PythonRef::StealSoft(PyObject* obj_in) {
+  assert(Python::HaveGIL());
+  if (!obj_in) {
+    // 'Soft' versions don't assume nullptr is due to an exception,
+    // so we don't touch Python exception state here.
     Release();
     return;
   }
-  Steal(obj_in);
+  SetObj(obj_in);
+}
+
+void PythonRef::Acquire(PyObject* obj_in) {
+  assert(Python::HaveGIL());
+  if (!obj_in) {
+    ClearPythonExceptionAndWarnIfUnset();
+    throw Exception("nullptr passed to PythonRef::Acquire.");
+  }
+  Py_INCREF(obj_in);
+  SetObj(obj_in);
+}
+
+void PythonRef::AcquireSoft(PyObject* obj_in) {
+  assert(Python::HaveGIL());
+  if (!obj_in) {
+    // 'Soft' versions don't assume nullptr is due to an exception,
+    // so we don't touch Python exception state here.
+    Release();
+    return;
+  }
+  Py_INCREF(obj_in);
+  SetObj(obj_in);
 }
 
 void PythonRef::Release() {

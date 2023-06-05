@@ -15,17 +15,24 @@ class PythonRef {
  public:
   /// Defines referencing behavior when creating new instances.
   enum ReferenceBehavior {
-    /// Steal the provided object reference (and throw an Exception if it is
-    /// nullptr).
+    /// Steal the provided object reference. If nullptr is passed, it is
+    /// assumed to be due to a Python exception occurring. The Python
+    /// exception is then cleared, a C++ exception is raised, and a warning
+    /// is logged if no Python exception was set.
     kSteal,
-    /// Steal the provided object reference or set as unreferenced if it is
-    /// nullptr.
+    /// Steal the provided object reference. If nullptr is passed, set as
+    /// unreferenced. Does not touch Python exception state, so be sure to
+    /// clear that yourself if the nullptr case is due to an Exception.
     kStealSoft,
-    /// Acquire a new reference to the provided object (and throw an Exception
-    /// if it is nullptr).
+    /// Acquire a new reference to the provided object. If nullptr is
+    /// passed, it is assumed to be due to a Python exception occurring. The
+    /// Python exception is then cleared, a C++ exception is raised, and a
+    /// warning is logged if no Python exception was set.
     kAcquire,
-    /// Acquire a new reference to the provided object or set as unreferenced if
-    /// it is nullptr.
+    /// Acquire a new reference to the provided object. If nullptr is
+    /// passed, set as unreferenced. Does not touch Python exception state,
+    /// so be sure to clear that yourself if the nullptr case is due to an
+    /// exception.
     kAcquireSoft
   };
 
@@ -35,22 +42,22 @@ class PythonRef {
   /// See ReferenceBehavior docs.
   PythonRef(PyObject* obj, ReferenceBehavior behavior);
 
-  /// Shortcut to create a new PythonRef using  ReferenceBehavior::kSteal.
+  /// Shortcut to create a new PythonRef using ReferenceBehavior::kSteal.
   static auto Stolen(PyObject* obj) -> PythonRef {
-    return PythonRef(obj, ReferenceBehavior::kSteal);
+    return {obj, ReferenceBehavior::kSteal};
   }
 
   static auto StolenSoft(PyObject* obj) -> PythonRef {
-    return PythonRef(obj, ReferenceBehavior::kStealSoft);
+    return {obj, ReferenceBehavior::kStealSoft};
   }
 
-  /// Shortcut to create a new PythonRef using  ReferenceBehavior::kAcquire.
+  /// Shortcut to create a new PythonRef using ReferenceBehavior::kAcquire.
   static auto Acquired(PyObject* obj) -> PythonRef {
-    return PythonRef(obj, ReferenceBehavior::kAcquire);
+    return {obj, ReferenceBehavior::kAcquire};
   }
 
   static auto AcquiredSoft(PyObject* obj) -> PythonRef {
-    return PythonRef(obj, ReferenceBehavior::kAcquireSoft);
+    return {obj, ReferenceBehavior::kAcquireSoft};
   }
 
   /// Copy constructor acquires a new reference (or sets as unreferenced)
@@ -84,19 +91,27 @@ class PythonRef {
     return !(*this == other);
   }
 
-  /// Acquire a new reference to the passed object. Throws an exception if
-  /// nullptr is passed.
-  void Acquire(PyObject* obj);
-
-  /// Acquire a new reference to the passed object. Sets to null reference
-  /// if nullptr is passed.
-  void AcquireSoft(PyObject* obj);
-
-  /// Steal the passed reference. Throws an Exception if nullptr is passed.
+  /// Steal the provided object reference. If nullptr is passed, it is
+  /// assumed to be due to a Python exception occurring. The Python
+  /// exception is then cleared, a C++ exception is raised, and a warning is
+  /// logged if no Python exception was set.
   void Steal(PyObject* obj);
 
-  /// Steal the passed reference. Sets to null reference if nullptr is passed.
+  /// Steal the provided object reference. If nullptr is passed, set as
+  /// unreferenced. Does not touch Python exception state, so be sure to
+  /// clear that yourself if the nullptr case is due to an Exception.
   void StealSoft(PyObject* obj);
+
+  /// Acquire a new reference to the provided object. If nullptr is passed,
+  /// it is assumed to be due to a Python exception occurring. The Python
+  /// exception is then cleared, a C++ exception is raised, and a warning is
+  /// logged if no Python exception was set.
+  void Acquire(PyObject* obj);
+
+  /// Acquire a new reference to the provided object. If nullptr is passed,
+  /// set as unreferenced. Does not touch Python exception state, so be sure
+  /// to clear that yourself if the nullptr case is due to an exception.
+  void AcquireSoft(PyObject* obj);
 
   /// Release the held reference (if one is held).
   void Release();
@@ -162,8 +177,8 @@ class PythonRef {
   /// Throws an exception if unset.
   auto UnicodeCheck() const -> bool;
 
-  /// Call the PyObject. On error, (optionally) prints errors and returns empty
-  /// ref.
+  /// Call the PyObject. On error, (optionally) prints errors and returns
+  /// empty ref.
   auto Call(PyObject* args, PyObject* keywds = nullptr,
             bool print_errors = true) const -> PythonRef;
   auto Call(const PythonRef& args, const PythonRef& keywds = PythonRef(),
@@ -177,6 +192,7 @@ class PythonRef {
 
  private:
   void ThrowIfUnset() const;
+  void SetObj(PyObject* obj);
   PyObject* obj_{};
 };
 

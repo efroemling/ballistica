@@ -118,7 +118,7 @@ def generate_app_module(
     # Set default app-mode-selection logic.
     contents = (
         '# Hmm; need to think about how we auto-construct this; how\n'
-        '# do we determine which app modes to check and in what\n'
+        '# should we determine which app modes to check and in what\n'
         '# order?\n'
     )
     if 'scene_v1' in fsets:

@@ -181,7 +181,7 @@ void CorePython::ReleaseMainThreadGIL() {
 
 void CorePython::SoftImportBase() {
   auto gil{Python::ScopedInterpreterLock()};
-  auto result = PythonRef::Stolen(PyImport_ImportModule("_babase"));
+  auto result = PythonRef::StolenSoft(PyImport_ImportModule("_babase"));
   if (!result.Exists()) {
     // Ignore any errors here for now. All that will matter is whether base
     // gave us its interface.

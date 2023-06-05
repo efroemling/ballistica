@@ -142,6 +142,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_appintent.py \
   $(BUILD_DIR)/ba_data/python/babase/_appmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_appmodeselector.py \
+  $(BUILD_DIR)/ba_data/python/babase/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
@@ -413,6 +414,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appintent.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmode.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmodeselector.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appsubsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-311.opt-1.pyc \

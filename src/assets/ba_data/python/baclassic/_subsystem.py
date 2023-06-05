@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import _babase
 import _bauiv1
 import bascenev1
+from babase._appsubsystem import AppSubsystem
 from babase._general import AppTime
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     from baclassic._net import MasterServerCallback
 
 
-class ClassicSubsystem:
+class ClassicSubsystem(AppSubsystem):
     """Subsystem for classic functionality in the app.
 
     The single shared instance of this app can be accessed at
@@ -55,6 +56,7 @@ class ClassicSubsystem:
     from baclassic._music import MusicPlayMode  # FIXME move 2 subsys
 
     def __init__(self) -> None:
+        super().__init__()
         self._env = _babase.env()
 
         self.accounts = AccountV1Subsystem()
@@ -252,16 +254,13 @@ class ClassicSubsystem:
         self.accounts.on_app_launching()
 
     def on_app_pause(self) -> None:
-        """Called when the app is getting paused."""
         self.accounts.on_app_pause()
 
     def on_app_resume(self) -> None:
-        """Called when the app is getting resumed."""
         self.accounts.on_app_resume()
         self.music.on_app_resume()
 
     def on_app_shutdown(self) -> None:
-        """Called when the app is shutting down."""
         self.music.on_app_shutdown()
 
     def pause(self) -> None:

@@ -14,6 +14,7 @@ from efro.call import tpartial
 from efro.log import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 import _babase
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Any, TextIO
@@ -78,8 +79,8 @@ def handle_v1_cloud_log() -> None:
     if app.classic is None or app.plus is None:
         if _babase.do_once():
             logging.warning(
-                'handle_v1_cloud_log should not be used'
-                ' without classic or plus.'
+                'handle_v1_cloud_log should not be called'
+                ' without classic and plus present.'
             )
         return
 
@@ -350,11 +351,12 @@ def log_dumped_app_state() -> None:
         logging.exception('Error logging dumped app state.')
 
 
-class AppHealthMonitor:
+class AppHealthMonitor(AppSubsystem):
     """Logs things like app-not-responding issues."""
 
     def __init__(self) -> None:
         assert _babase.in_logic_thread()
+        super().__init__()
         self._running = True
         self._thread = Thread(target=self._app_monitor_thread_main, daemon=True)
         self._thread.start()
@@ -420,12 +422,10 @@ class AppHealthMonitor:
             self._first_check = False
 
     def on_app_pause(self) -> None:
-        """Should be called when the app pauses."""
         assert _babase.in_logic_thread()
         self._running = False
 
     def on_app_resume(self) -> None:
-        """Should be called when the app resumes."""
         assert _babase.in_logic_thread()
         self._running = True
 

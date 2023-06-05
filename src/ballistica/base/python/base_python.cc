@@ -53,7 +53,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
   // FIXME: should be able to do this in Python bootstrapping
   //  code.
   auto register_call =
-      PythonRef(PyImport_ImportModule("collections.abc"), PythonRef::kSteal)
+      PythonRef::Stolen(PyImport_ImportModule("collections.abc"))
           .GetAttr("Sequence")
           .GetAttr("register");
   PythonRef args(Py_BuildValue("(O)", vec3), PythonRef::kSteal);
@@ -68,7 +68,7 @@ void BasePython::ImportPythonObjs() {
 
 void BasePython::SoftImportPlus() {
   auto gil{Python::ScopedInterpreterLock()};
-  auto result = PythonRef::Stolen(PyImport_ImportModule("_baplus"));
+  auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baplus"));
   if (!result.Exists()) {
     // Ignore any errors here for now. All that will matter is whether plus
     // gave us its interface.
@@ -78,7 +78,7 @@ void BasePython::SoftImportPlus() {
 
 void BasePython::SoftImportClassic() {
   auto gil{Python::ScopedInterpreterLock()};
-  auto result = PythonRef::Stolen(PyImport_ImportModule("_baclassic"));
+  auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baclassic"));
   if (!result.Exists()) {
     // Ignore any errors here for now. All that will matter is whether plus
     // gave us its interface.
@@ -88,7 +88,7 @@ void BasePython::SoftImportClassic() {
 
 void BasePython::SoftImportUIV1() {
   auto gil{Python::ScopedInterpreterLock()};
-  auto result = PythonRef::Stolen(PyImport_ImportModule("_bauiv1"));
+  auto result = PythonRef::StolenSoft(PyImport_ImportModule("_bauiv1"));
   if (!result.Exists()) {
     // Ignore any errors here for now. All that will matter is whether plus
     // gave us its interface.
