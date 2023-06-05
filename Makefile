@@ -1213,18 +1213,6 @@ ballisticakit-cmake/.clang-format: .clang-format
 	@mkdir -p ballisticakit-cmake
 	@cd ballisticakit-cmake && ln -sf ../.clang-format .
 
-# Simple target for CI to build a binary but not download/assemble assets/etc.
-_cmake-simple-ci-server-build:
-	SKIP_ENV_CHECKS=1 $(MAKE) meta
-	rm -rf build/cmake_simple_ci_server_build
-	mkdir -p build/cmake_simple_ci_server_build
-	tools/pcommand update_cmake_prefab_lib \
-      server debug build/cmake_simple_ci_server_build
-	cd build/cmake_simple_ci_server_build && \
-      cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true \
-      $(shell pwd)/ballisticakit-cmake
-	cd build/cmake_simple_ci_server_build && $(MAKE) -j$(CPUS)
-
 # Irony in emacs requires us to use cmake to generate a full
 # list of compile commands for all files; lets try to keep it up to date
 # whenever CMakeLists changes.
@@ -1264,4 +1252,4 @@ _windows-wsl-rebuild:
 	@tools/pcommand echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
 # Tell make which of these targets don't represent files.
-.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
+.PHONY: _windows-wsl-build _windows-wsl-rebuild
