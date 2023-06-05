@@ -343,7 +343,8 @@ def hash_strings(inputs: list[str]) -> str:
 def have_account_v2_credentials() -> bool:
     """Do we have primary account-v2 credentials set?"""
     assert _babase.app.plus is not None
-    return _babase.app.plus.accounts.have_primary_credentials()
+    have: bool = _babase.app.plus.accounts.have_primary_credentials()
+    return have
 
 
 def implicit_sign_in(
