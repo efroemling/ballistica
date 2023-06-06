@@ -4,39 +4,19 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import pytest
+
+from batools import testrun
 
 
-if TYPE_CHECKING:
-    pass
-
-
+@pytest.mark.skipif(
+    testrun.test_runs_disabled(),
+    reason='Test app runs disabled here.',
+)
 def test_babase_imports() -> None:
     """Testing."""
-    import subprocess
-    import platform
 
-    # Currently skipping this on Windows, as we can't assemble a
-    # complete build there currently (can only compile binaries).
-    if platform.system() == 'Windows':
-        return
-
-    # Put together the headless binary we use for testing.
-    subprocess.run(['make', 'cmake-server-build'], check=True)
-    builddir = 'build/cmake/server-debug/dist'
-
-    # Make sure we can cleanly import both our Python package and binary
-    # module by themselves.
-    subprocess.run(
-        f'PYTHONPATH={builddir}/ba_data/python'
-        f' {builddir}/ballisticakit_headless -c "import babase"',
-        check=True,
-        shell=True,
-    )
-
-    subprocess.run(
-        f'PYTHONPATH={builddir}/ba_data/python'
-        f' {builddir}/ballisticakit_headless -c "import _babase"',
-        check=True,
-        shell=True,
-    )
+    # Make sure our package and binary module can be cleanly imported by
+    # themselves.
+    testrun.run_command('import babase')
+    testrun.run_command('import _babase')
