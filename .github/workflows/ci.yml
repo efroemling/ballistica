@@ -55,9 +55,9 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
-    - name: Build spinoff project with no featuresets
-      run: make spinoff-test-empty
-    - name: Build spinoff project with only base featureset
+    - name: Build spinoff project with only core featureset
+      run: make spinoff-test-core
+    - name: Build spinoff project with core and base featuresets
       run: make spinoff-test-base
       
   # Most of our toolset doesn't work on raw Windows without WSL set up,
