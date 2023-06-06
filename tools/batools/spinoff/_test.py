@@ -16,6 +16,7 @@ def spinoff_test(args: list[str]) -> None:
     import os
     import subprocess
 
+    from batools.featureset import FeatureSet
     from efrotools import extract_flag
     from efro.terminal import Clr
     from efro.error import CleanError
@@ -29,8 +30,11 @@ def spinoff_test(args: list[str]) -> None:
         )
     if len(args) != 1:
         raise CleanError('Expected 1 arg.')
+
+    featuresets = {fs.name: fs for fs in FeatureSet.get_all_for_project('.')}
+
     testtype = args[0]
-    if testtype in {'empty', 'base'}:
+    if testtype in featuresets:
         path = f'build/spinofftest/{testtype}'
         print(
             f'{Clr.BLD}Running spinoff test{Clr.RST}'
@@ -64,7 +68,7 @@ def spinoff_test(args: list[str]) -> None:
                 'SpinoffTest',
                 path,
                 '--featuresets',
-                'none' if testtype == 'empty' else testtype,
+                testtype,
             ] + (['--submodule-parent'] if submodule_parent else [])
 
             # Show the spinoff command we'd use here.
