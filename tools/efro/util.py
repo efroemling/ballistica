@@ -25,7 +25,7 @@ except ModuleNotFoundError:
 if TYPE_CHECKING:
     import asyncio
     from efro.call import Call as Call  # 'as Call' so we re-export.
-    from typing import Any, Callable, NoReturn
+    from typing import Any, Callable
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')

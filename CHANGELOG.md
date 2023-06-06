@@ -105,7 +105,7 @@
   revamped these in 1.5, and, after working with them for a few years, I feel
   that having a single time(), timer(), and Timer() call with a variety of
   arguments influencing behavior is unwieldy, so I'll be splitting things out
-  into a few seperate and simplified versions. Details follow.
+  into a few separate and simplified versions. Details follow.
 - There is now the concept of 'app-time'. This was previously called '
   real-time'. It is basically time that has elapsed while the app is actively
   running. It never jumps ahead or goes backwards and it stops progressing while
@@ -168,7 +168,7 @@
   basically using the new 'display-time' concept). The engine should now be
   better at maintaining smooth looking animation at other frame-rates. Please
   holler if you see otherwise. Note this doesn't affect the issue where pure SDL
-  builds like PC/Linux are locked to 60fps; that's a seperate thing.
+  builds like PC/Linux are locked to 60fps; that's a separate thing.
 - You can set env-var `BA_DEBUG_LOG_DISPLAY_TIME=1` to get display-time stat
   logs to make sure things are working smoothly on your setup.
 - The engine no longer requires that ba_data and other required files exist in
@@ -185,7 +185,7 @@
 - The `-exec` command-line arg has been renamed to be either `--exec` or `-e`.
 - Added a command arg accessible via `--command` or `-c`. Unlike the exec arg
   which runs as part of the app event loop, this command runs *instead* of the
-  normal event loop. It can be thought of as analagous to the `-c` arg for the
+  normal event loop. It can be thought of as analogous to the `-c` arg for the
   Python interpreter. This provides a clean way to do things like introspect
   ballistica's binary modules without having to worry about data files being
   present or about exiting the app after the command runs. The app simply
@@ -201,7 +201,7 @@
   ba.app.run()'`.
 - Related to the above, it is now possible for `ba.app.python_directory_app`,
   `ba.app.python_directory_user`, and `ba.app.python_directory_app_site` to be
-  None if ballisticia is being run in a non-standard environment setup. Just
+  None if ballistica is being run in a non-standard environment setup. Just
   something to watch out for.
 - The `ba` module is no longer imported by default. Since most modding will go
   through other modules now such as `bascenev` or `bauiv1` it seemed odd to be
@@ -1559,7 +1559,7 @@
 ### 1.4.100 (14264)
 
 - added a 'playlistCode' option in the server config which corresponds with
-  playlist codes added in Ballisticakit 1.4.100 (used for sharing playlists with
+  playlist codes added in BombSquad 1.4.100 (used for sharing playlists with
   friends). Now you can create a custom playlist, grab a code for it, and easily
   use it in a dedicated server.
 

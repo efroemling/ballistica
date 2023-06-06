@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from efrotools import readfile, writefile, replace_exact
 
 if TYPE_CHECKING:
-    from typing import Any
+    pass
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.11'

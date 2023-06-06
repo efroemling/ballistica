@@ -15,7 +15,6 @@ from efrotools import get_public_license, PYVER
 
 if TYPE_CHECKING:
     from batools.project._updater import ProjectUpdater
-    from batools.featureset import FeatureSet
 
 
 def _get_legal_notice_private() -> str:

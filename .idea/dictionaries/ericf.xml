@@ -67,6 +67,7 @@
       <w>alarmsound</w>
       <w>alibaba</w>
       <w>alibname</w>
+      <w>alldeps</w>
       <w>allerrors</w>
       <w>allobjc</w>
       <w>allobjs</w>
@@ -81,6 +82,7 @@
       <w>anamorphosis</w>
       <w>andr</w>
       <w>androidaddr</w>
+      <w>androideabi</w>
       <w>androidstudiocode</w>
       <w>anim</w>
       <w>animcurve</w>
@@ -100,6 +102,7 @@
       <w>apis</w>
       <w>apiversion</w>
       <w>apks</w>
+      <w>apntzcreds</w>
       <w>apost</w>
       <w>appath</w>
       <w>appathout</w>
@@ -110,10 +113,13 @@
       <w>appengine</w>
       <w>appiconset</w>
       <w>appid</w>
+      <w>appintentsmetadataprocessor</w>
       <w>appinvite</w>
       <w>appkit</w>
       <w>applescript</w>
       <w>appletv</w>
+      <w>appletvos</w>
+      <w>appletvsimulator</w>
       <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
@@ -125,10 +131,13 @@
       <w>apptimer</w>
       <w>apptimers</w>
       <w>apputils</w>
+      <w>archbase</w>
       <w>archivepath</w>
       <w>archivepathbase</w>
+      <w>archos</w>
       <w>archs</w>
       <w>argh</w>
+      <w>argindex</w>
       <w>argparse</w>
       <w>argsjoined</w>
       <w>argstr</w>
@@ -197,14 +206,18 @@
       <w>bacfg</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backported</w>
       <w>backporting</w>
       <w>backwin</w>
       <w>baclassic</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
       <w>bacommon</w>
+      <w>bacoremeta</w>
       <w>badguy</w>
       <w>baenv</w>
+      <w>bafoobar</w>
+      <w>bafoobarmeta</w>
       <w>bafoundation</w>
       <w>bainternal</w>
       <w>ballistica</w>
@@ -217,15 +230,21 @@
       <w>bameta</w>
       <w>bametainternal</w>
       <w>baplus</w>
+      <w>baplusmeta</w>
       <w>barcolor</w>
       <w>barebones</w>
       <w>bargs</w>
       <w>bascenev</w>
       <w>baseaddr</w>
+      <w>basebasename</w>
       <w>baseh</w>
+      <w>baseheaders</w>
       <w>baseimps</w>
       <w>basemult</w>
+      <w>basenames</w>
+      <w>baseplatform</w>
       <w>basepos</w>
+      <w>basepylib</w>
       <w>baservnode</w>
       <w>basespaz</w>
       <w>basetime</w>
@@ -263,6 +282,7 @@
       <w>bgdynamics</w>
       <w>bgmodel</w>
       <w>bgrn</w>
+      <w>bgrp</w>
       <w>bgterrain</w>
       <w>bgtex</w>
       <w>bgthread</w>
@@ -270,7 +290,9 @@
       <w>binc</w>
       <w>bincfg</w>
       <w>bindcode</w>
+      <w>bindir</w>
       <w>bindvals</w>
+      <w>binpath</w>
       <w>bisectmodule</w>
       <w>bitcode</w>
       <w>blarg</w>
@@ -305,6 +327,8 @@
       <w>botspawnpts</w>
       <w>bottlenecked</w>
       <w>bottype</w>
+      <w>bpath</w>
+      <w>bpcolor</w>
       <w>bpos</w>
       <w>bpresult</w>
       <w>brandassets</w>
@@ -336,6 +360,11 @@
       <w>builddir</w>
       <w>buildfile</w>
       <w>buildfilename</w>
+      <w>buildfiles</w>
+      <w>buildline</w>
+      <w>buildlockname</w>
+      <w>buildlocks</w>
+      <w>buildmode</w>
       <w>buildnum</w>
       <w>buildserver</w>
       <w>buildtype</w>
@@ -351,6 +380,7 @@
       <w>cacert</w>
       <w>cachable</w>
       <w>cachebasename</w>
+      <w>cachedir</w>
       <w>cacheentry</w>
       <w>cachefile</w>
       <w>cachemap</w>
@@ -363,6 +393,7 @@
       <w>callargs</w>
       <w>callname</w>
       <w>callnode</w>
+      <w>callproc</w>
       <w>cameraflash</w>
       <w>camerashake</w>
       <w>campaignname</w>
@@ -371,6 +402,7 @@
       <w>caplog</w>
       <w>capturetheflag</w>
       <w>carentity</w>
+      <w>casefix</w>
       <w>cashregistersound</w>
       <w>cbegin</w>
       <w>cbgn</w>
@@ -383,13 +415,16 @@
       <w>ccind</w>
       <w>ccode</w>
       <w>ccompiler</w>
+      <w>cdirname</w>
       <w>cdrk</w>
       <w>cdull</w>
       <w>cdval</w>
       <w>cend</w>
       <w>centeuro</w>
       <w>centiseconds</w>
+      <w>certfile</w>
       <w>certifi</w>
+      <w>certpass</w>
       <w>cfconfig</w>
       <w>cfenv</w>
       <w>cfgdict</w>
@@ -399,6 +434,7 @@
       <w>cfgpath</w>
       <w>cfgs</w>
       <w>cfgui</w>
+      <w>cfield</w>
       <w>cflags</w>
       <w>cfuncs</w>
       <w>cgitb</w>
@@ -429,6 +465,7 @@
       <w>checktype</w>
       <w>childanntype</w>
       <w>childanntypes</w>
+      <w>childid</w>
       <w>childnode</w>
       <w>childtype</w>
       <w>childtypes</w>
@@ -439,6 +476,7 @@
       <w>chromebooks</w>
       <w>chunksize</w>
       <w>cjkcodecs</w>
+      <w>clangstatcache</w>
       <w>classline</w>
       <w>classmethod</w>
       <w>classmethods</w>
@@ -474,8 +512,11 @@
       <w>cmath</w>
       <w>cmathmodule</w>
       <w>cmds</w>
+      <w>cmdspath</w>
+      <w>cmdsraw</w>
       <w>cmembers</w>
       <w>cmodel</w>
+      <w>cmodule</w>
       <w>cmodules</w>
       <w>cmpf</w>
       <w>cmplen</w>
@@ -489,6 +530,7 @@
       <w>codeop</w>
       <w>collapsable</w>
       <w>collidemodel</w>
+      <w>collisionmesh</w>
       <w>colordiff</w>
       <w>colorpicker</w>
       <w>colorsys</w>
@@ -498,6 +540,7 @@
       <w>comms</w>
       <w>compat</w>
       <w>compileall</w>
+      <w>compilearch</w>
       <w>compileassetcatalog</w>
       <w>compilec</w>
       <w>compilelocations</w>
@@ -525,6 +568,7 @@
       <w>contextvarsmodule</w>
       <w>controlsguide</w>
       <w>conv</w>
+      <w>converticonsetfile</w>
       <w>convertlocationval</w>
       <w>cookiejar</w>
       <w>cooldown</w>
@@ -553,6 +597,8 @@
       <w>cpplintcodefull</w>
       <w>cpplintfull</w>
       <w>cpplintmodule</w>
+      <w>cpresource</w>
+      <w>cpresources</w>
       <w>cpuinfo</w>
       <w>cpus</w>
       <w>cpython</w>
@@ -563,6 +609,7 @@
       <w>creditslist</w>
       <w>credstr</w>
       <w>cresult</w>
+      <w>cruftpath</w>
       <w>cryptmodule</w>
       <w>cryptosimple</w>
       <w>cspbd</w>
@@ -582,6 +629,7 @@
       <w>curdir</w>
       <w>curhash</w>
       <w>curhashes</w>
+      <w>currenthash</w>
       <w>curstate</w>
       <w>curtime</w>
       <w>curtimestr</w>
@@ -624,6 +672,7 @@
       <w>deek</w>
       <w>defs</w>
       <w>defsline</w>
+      <w>defslines</w>
       <w>deivit</w>
       <w>depchecks</w>
       <w>depcls</w>
@@ -637,6 +686,7 @@
       <w>dereferencing</w>
       <w>deregistering</w>
       <w>deregistration</w>
+      <w>derq</w>
       <w>descpos</w>
       <w>desctype</w>
       <w>dest</w>
@@ -645,6 +695,7 @@
       <w>devicename</w>
       <w>devtool</w>
       <w>dffc</w>
+      <w>dfile</w>
       <w>dgram</w>
       <w>dhave</w>
       <w>dheadless</w>
@@ -677,10 +728,13 @@
       <w>dliwk</w>
       <w>dlldir</w>
       <w>dlls</w>
+      <w>dmacosx</w>
       <w>dmake</w>
       <w>dmgname</w>
       <w>dmitry</w>
       <w>dmodule</w>
+      <w>dmstatedir</w>
+      <w>dmstatepath</w>
       <w>dmypy</w>
       <w>dname</w>
       <w>dnames</w>
@@ -694,6 +748,7 @@
       <w>dofilter</w>
       <w>domreg</w>
       <w>domsg</w>
+      <w>doneclr</w>
       <w>dont</w>
       <w>doplay</w>
       <w>doraise</w>
@@ -719,7 +774,10 @@
       <w>dstattr</w>
       <w>dstbase</w>
       <w>dstdata</w>
+      <w>dstdir</w>
+      <w>dstdirfull</w>
       <w>dstdirname</w>
+      <w>dstent</w>
       <w>dstfile</w>
       <w>dstfin</w>
       <w>dstjson</w>
@@ -728,9 +786,13 @@
       <w>dstnode</w>
       <w>dstpath</w>
       <w>dstpathfull</w>
+      <w>dstrootsl</w>
       <w>dstrootvar</w>
       <w>dsts</w>
+      <w>dsttime</w>
+      <w>dsttimestr</w>
       <w>dstvar</w>
+      <w>dsymutil</w>
       <w>dtest</w>
       <w>dtime</w>
       <w>dualteamscore</w>
@@ -745,6 +807,7 @@
       <w>dummyval</w>
       <w>dumpminlog</w>
       <w>dups</w>
+      <w>dusing</w>
       <w>dval</w>
       <w>dxml</w>
       <w>dynload</w>
@@ -818,6 +881,7 @@
       <w>ericfroemling</w>
       <w>ericsson's</w>
       <w>errcount</w>
+      <w>errfile</w>
       <w>errname</w>
       <w>errno</w>
       <w>errored</w>
@@ -860,6 +924,8 @@
       <w>exportoptionspath</w>
       <w>exporttype</w>
       <w>exporttypestr</w>
+      <w>expsrc</w>
+      <w>extractappintentsmetadata</w>
       <w>extradata</w>
       <w>extraflagmat</w>
       <w>extrahash</w>
@@ -867,6 +933,7 @@
       <w>exts</w>
       <w>f'baseval</w>
       <w>f'chmod</w>
+      <w>f'dstbase</w>
       <w>f'final</w>
       <w>f'fixme</w>
       <w>factoryclass</w>
@@ -875,6 +942,7 @@
       <w>fakeshake</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
+      <w>fatstdlib</w>
       <w>faulthandler</w>
       <w>fback</w>
       <w>fbase</w>
@@ -883,14 +951,19 @@
       <w>fcntl</w>
       <w>fcntlmodule</w>
       <w>fcode</w>
+      <w>fcodefin</w>
       <w>fcontents</w>
       <w>fcount</w>
       <w>fdata</w>
       <w>fdcount</w>
       <w>fdesc</w>
       <w>fdict</w>
+      <w>fdirs</w>
       <w>fdout</w>
       <w>featureset</w>
+      <w>featuresetdef</w>
+      <w>featuresets</w>
+      <w>featuresettest</w>
       <w>fecfc</w>
       <w>feedparser</w>
       <w>fentry</w>
@@ -930,6 +1003,7 @@
       <w>filterval</w>
       <w>finalhash</w>
       <w>finalmaterials</w>
+      <w>finalpath</w>
       <w>finfo</w>
       <w>firebase</w>
       <w>firestore</w>
@@ -937,6 +1011,7 @@
       <w>firstline</w>
       <w>firstpartykey</w>
       <w>flac</w>
+      <w>flagindex</w>
       <w>flagmat</w>
       <w>flagmaterial</w>
       <w>flagmats</w>
@@ -959,8 +1034,10 @@
       <w>fnmatch</w>
       <w>fnode</w>
       <w>fnum</w>
+      <w>fobjc</w>
       <w>foof</w>
       <w>foos</w>
+      <w>foov</w>
       <w>fooval</w>
       <w>fopen</w>
       <w>forcetype</w>
@@ -978,6 +1055,7 @@
       <w>fparts</w>
       <w>fpath</w>
       <w>fpathrel</w>
+      <w>fpaths</w>
       <w>fpathshort</w>
       <w>fprint</w>
       <w>fproject</w>
@@ -995,12 +1073,21 @@
       <w>froemling</w>
       <w>frombuffer</w>
       <w>fromini</w>
+      <w>fsarg</w>
+      <w>fsconfigpath</w>
       <w>fsdf</w>
+      <w>fset</w>
+      <w>fsetname</w>
+      <w>fsets</w>
       <w>fsettings</w>
+      <w>fsmetapackagename</w>
+      <w>fsname</w>
+      <w>fspackagename</w>
       <w>fsplit</w>
       <w>fsrc</w>
       <w>fstab</w>
       <w>fstat</w>
+      <w>fstestspackagename</w>
       <w>fstrs</w>
       <w>fsum</w>
       <w>ftime</w>
@@ -1056,8 +1143,10 @@
       <w>gearvr</w>
       <w>genchangelog</w>
       <w>gencmd</w>
+      <w>gencount</w>
       <w>gendocs</w>
       <w>gendummymodule</w>
+      <w>generatedsymfile</w>
       <w>genericpath</w>
       <w>genmapjson</w>
       <w>genstartercache</w>
@@ -1120,12 +1209,15 @@
       <w>ghnc</w>
       <w>gioacchino</w>
       <w>gitattributes</w>
+      <w>gitfiledir</w>
       <w>gitignore</w>
+      <w>gitignored</w>
       <w>gitignorelines</w>
       <w>gitignoreraw</w>
       <w>gitignores</w>
       <w>gitlog</w>
       <w>gitlogcore</w>
+      <w>gitpath</w>
       <w>globalns</w>
       <w>globalsnode</w>
       <w>gmake</w>
@@ -1142,6 +1234,7 @@
       <w>gpio</w>
       <w>gprev</w>
       <w>gpsui</w>
+      <w>gradians</w>
       <w>gradlepath</w>
       <w>gradlew</w>
       <w>graphlib</w>
@@ -1149,6 +1242,7 @@
       <w>grpentry</w>
       <w>grpkey</w>
       <w>grpmodule</w>
+      <w>grpname</w>
       <w>grps</w>
       <w>grpval</w>
       <w>grumbledorf</w>
@@ -1161,6 +1255,7 @@
       <w>handlemessage</w>
       <w>hant</w>
       <w>hashfilename</w>
+      <w>hashfiles</w>
       <w>hashlines</w>
       <w>hashobj</w>
       <w>hashopenssl</w>
@@ -1228,8 +1323,10 @@
       <w>iconutil</w>
       <w>ident</w>
       <w>idevices</w>
+      <w>ifdef</w>
       <w>ifeq</w>
       <w>ifneq</w>
+      <w>ignorevar</w>
       <w>iiarcade</w>
       <w>iiiiisssi</w>
       <w>iircade</w>
@@ -1249,6 +1346,7 @@
       <w>imgw</w>
       <w>importlines</w>
       <w>incentivized</w>
+      <w>includelines</w>
       <w>includetest</w>
       <w>incmd</w>
       <w>incr</w>
@@ -1274,6 +1372,7 @@
       <w>initialplayerinfos</w>
       <w>initing</w>
       <w>inits</w>
+      <w>inittab</w>
       <w>inmobi</w>
       <w>inpath</w>
       <w>inpaths</w>
@@ -1304,6 +1403,7 @@
       <w>ioprepping</w>
       <w>ioreg</w>
       <w>ipaddress</w>
+      <w>iphonesimulator</w>
       <w>ipos</w>
       <w>iprof</w>
       <w>isatty</w>
@@ -1399,6 +1499,7 @@
       <w>lbval</w>
       <w>lbzip</w>
       <w>lcfg</w>
+      <w>lchmod</w>
       <w>lcolor</w>
       <w>lcrypto</w>
       <w>ldpi</w>
@@ -1413,8 +1514,10 @@
       <w>levelno</w>
       <w>levelnos</w>
       <w>levelstr</w>
+      <w>lffi</w>
       <w>lfull</w>
       <w>lfval</w>
+      <w>libballistica</w>
       <w>libballisticakit</w>
       <w>libbz</w>
       <w>libbzip</w>
@@ -1447,6 +1550,7 @@
       <w>lindex</w>
       <w>lindexorig</w>
       <w>linearstep</w>
+      <w>linebegin</w>
       <w>linebits</w>
       <w>lineheight</w>
       <w>linemax</w>
@@ -1512,6 +1616,7 @@
       <w>lsbo</w>
       <w>lsbt</w>
       <w>lshort</w>
+      <w>lsplits</w>
       <w>lsprof</w>
       <w>lsqlite</w>
       <w>lsregister</w>
@@ -1547,6 +1652,8 @@
       <w>malhotra</w>
       <w>mallimportedby</w>
       <w>mandir</w>
+      <w>manfile</w>
+      <w>manprivpath</w>
       <w>mantype</w>
       <w>manualtab</w>
       <w>mapdata</w>
@@ -1567,7 +1674,9 @@
       <w>mathnode</w>
       <w>mathutils</w>
       <w>maxdepth</w>
+      <w>maxlines</w>
       <w>maxlinks</w>
+      <w>maxparts</w>
       <w>maxpathlen</w>
       <w>maxtries</w>
       <w>maxval</w>
@@ -1624,6 +1733,7 @@
       <w>mmapmodule</w>
       <w>mmult</w>
       <w>mname</w>
+      <w>mnames</w>
       <w>mnode</w>
       <w>mnpp</w>
       <w>modder</w>
@@ -1632,6 +1742,8 @@
       <w>modestr</w>
       <w>modeval</w>
       <w>modpack</w>
+      <w>modstr</w>
+      <w>modtime</w>
       <w>modtimes</w>
       <w>moduledir</w>
       <w>modulefinder</w>
@@ -1640,6 +1752,7 @@
       <w>modutils</w>
       <w>moola</w>
       <w>mopaque</w>
+      <w>morecnt</w>
       <w>moreso</w>
       <w>mpath</w>
       <w>mrmaxmeier</w>
@@ -1710,7 +1823,9 @@
       <w>mywidget</w>
       <w>namecap</w>
       <w>namedarg</w>
+      <w>namel</w>
       <w>nametext</w>
+      <w>nameu</w>
       <w>nameval</w>
       <w>nboxes</w>
       <w>nbuffer</w>
@@ -1735,6 +1850,8 @@
       <w>newnode</w>
       <w>newpath</w>
       <w>newtoken</w>
+      <w>newuuid</w>
+      <w>newuuids</w>
       <w>nextcall</w>
       <w>nextfilenum</w>
       <w>nextlevel</w>
@@ -1794,6 +1911,7 @@
       <w>objcount</w>
       <w>objid</w>
       <w>objname</w>
+      <w>objpath</w>
       <w>objs</w>
       <w>objset</w>
       <w>objsizes</w>
@@ -1819,7 +1937,10 @@
       <w>oldbook</w>
       <w>olde</w>
       <w>oldlady</w>
+      <w>oldpath</w>
       <w>oldtoken</w>
+      <w>olduuid</w>
+      <w>olduuids</w>
       <w>onln</w>
       <w>onscreencountdown</w>
       <w>onscreenkeyboard</w>
@@ -1852,9 +1973,11 @@
       <w>outdata</w>
       <w>outdelay</w>
       <w>outdict</w>
+      <w>outdir</w>
       <w>outext</w>
       <w>outfilename</w>
       <w>outfilepath</w>
+      <w>outfiles</w>
       <w>outhashpath</w>
       <w>outmsg</w>
       <w>outname</w>
@@ -1879,6 +2002,7 @@
       <w>pandoc</w>
       <w>pandroid</w>
       <w>parallelized</w>
+      <w>parentpath</w>
       <w>parsermodule</w>
       <w>parsetok</w>
       <w>partyqueue</w>
@@ -1886,21 +2010,27 @@
       <w>passnode</w>
       <w>passthrough</w>
       <w>passwd</w>
+      <w>patchpaths</w>
       <w>patcomp</w>
+      <w>pathbar</w>
       <w>pathcapture</w>
       <w>pathdst</w>
       <w>pathlib</w>
       <w>pathlist</w>
       <w>pathnames</w>
       <w>pathparts</w>
+      <w>pathsegs</w>
       <w>pathsrc</w>
       <w>pathstonames</w>
       <w>pathtmp</w>
       <w>pathwonky</w>
       <w>patsubst</w>
       <w>pausable</w>
+      <w>pbasename</w>
       <w>pbrowser</w>
       <w>pbtn</w>
+      <w>pbxgrp</w>
+      <w>pbxgrps</w>
       <w>pbxproj</w>
       <w>pcall</w>
       <w>pchild</w>
@@ -1917,6 +2047,7 @@
       <w>perma</w>
       <w>perrdetail</w>
       <w>phandle</w>
+      <w>phasename</w>
       <w>phasers</w>
       <w>phasescriptexecution</w>
       <w>phello</w>
@@ -1929,6 +2060,7 @@
       <w>pipname</w>
       <w>pipvers</w>
       <w>pkey</w>
+      <w>pkgdir</w>
       <w>pkgutil</w>
       <w>platstr</w>
       <w>playercast</w>
@@ -1967,6 +2099,8 @@
       <w>plvel</w>
       <w>pmats</w>
       <w>pname</w>
+      <w>pnamel</w>
+      <w>pnameu</w>
       <w>pngs</w>
       <w>pnode</w>
       <w>podcasts</w>
@@ -1982,6 +2116,7 @@
       <w>popuptext</w>
       <w>positionadjusted</w>
       <w>posixpath</w>
+      <w>posixshmem</w>
       <w>posixsubprocess</w>
       <w>posonlyargs</w>
       <w>postinit</w>
@@ -2008,7 +2143,9 @@
       <w>precommand</w>
       <w>precompiling</w>
       <w>preconfig</w>
+      <w>predeclare</w>
       <w>predeclares</w>
+      <w>predecs</w>
       <w>preexec</w>
       <w>prefablib</w>
       <w>preflightfast</w>
@@ -2022,6 +2159,7 @@
       <w>premult</w>
       <w>premultiplied</w>
       <w>premultiply</w>
+      <w>prepass</w>
       <w>prepdata</w>
       <w>preprocessing</w>
       <w>prereq</w>
@@ -2046,6 +2184,8 @@
       <w>processinfoplistfile</w>
       <w>processpch</w>
       <w>processpchplusplus</w>
+      <w>processproductpackaging</w>
+      <w>processproductpackagingder</w>
       <w>procs</w>
       <w>profileindex</w>
       <w>profilekey</w>
@@ -2055,12 +2195,16 @@
       <w>projbasename</w>
       <w>projconfig</w>
       <w>projdir</w>
+      <w>projectconfig</w>
       <w>projectpath</w>
       <w>projectroot</w>
+      <w>projname</w>
       <w>projpath</w>
       <w>projprefix</w>
       <w>projroot</w>
       <w>projs</w>
+      <w>projsrc</w>
+      <w>projtxt</w>
       <w>promocode</w>
       <w>proxykey</w>
       <w>prtb</w>
@@ -2089,6 +2233,7 @@
       <w>punchmats</w>
       <w>punchpos</w>
       <w>punchsound</w>
+      <w>pupdatedata</w>
       <w>pupgrade</w>
       <w>purply</w>
       <w>pushcall</w>
@@ -2118,6 +2263,7 @@
       <w>pybuild</w>
       <w>pybuildapple</w>
       <w>pycache</w>
+      <w>pycfgpath</w>
       <w>pycharm's</w>
       <w>pycharmbin</w>
       <w>pycharmfull</w>
@@ -2146,6 +2292,7 @@
       <w>pylintscripts</w>
       <w>pylintscriptsfast</w>
       <w>pylintscriptsfull</w>
+      <w>pymodulenames</w>
       <w>pyobjc</w>
       <w>pyoffs</w>
       <w>pypaths</w>
@@ -2215,6 +2362,7 @@
       <w>reqs</w>
       <w>reqtype</w>
       <w>reqtypes</w>
+      <w>requireable</w>
       <w>resample</w>
       <w>resetbtn</w>
       <w>resetinput</w>
@@ -2264,6 +2412,8 @@
       <w>rspobj</w>
       <w>rsptypes</w>
       <w>rstr</w>
+      <w>rsync's</w>
+      <w>rsyncver</w>
       <w>rtest</w>
       <w>rtnetlink</w>
       <w>rtxt</w>
@@ -2319,6 +2469,7 @@
       <w>scproxy</w>
       <w>screenmessage</w>
       <w>scriptdirs</w>
+      <w>scriptdst</w>
       <w>scriptfiles</w>
       <w>scriptsdir</w>
       <w>scrlw</w>
@@ -2401,10 +2552,13 @@
       <w>showsubseconds</w>
       <w>shroom</w>
       <w>shutil</w>
+      <w>signingconfig</w>
+      <w>signingconfigname</w>
       <w>sigsetjmp</w>
       <w>simplesubclasses</w>
       <w>simpletype</w>
       <w>sincelaunch</w>
+      <w>sincestr</w>
       <w>singledispatch</w>
       <w>singledispatchmethod</w>
       <w>sirplus</w>
@@ -2430,6 +2584,7 @@
       <w>socketmodule</w>
       <w>socketserver</w>
       <w>softdefault</w>
+      <w>softreq</w>
       <w>somevar</w>
       <w>sortname</w>
       <w>soundtrackname</w>
@@ -2460,18 +2615,22 @@
       <w>specialchar</w>
       <w>specialoffer</w>
       <w>spinoff</w>
+      <w>spinoff's</w>
+      <w>spinoffconfig</w>
       <w>spinoffdata</w>
       <w>spinoffs</w>
       <w>spinup</w>
       <w>splayer</w>
       <w>splitlen</w>
       <w>splitnumstr</w>
+      <w>spwd</w>
       <w>squadcore</w>
       <w>srcabs</w>
       <w>srcattr</w>
       <w>srcdata</w>
       <w>srcdir</w>
       <w>srcfolder</w>
+      <w>srcgrp</w>
       <w>srcid</w>
       <w>srcjson</w>
       <w>srcname</w>
@@ -2483,6 +2642,8 @@
       <w>srcpy</w>
       <w>srcpydata</w>
       <w>srcstr</w>
+      <w>srctime</w>
+      <w>srctimestr</w>
       <w>srctxt</w>
       <w>sred</w>
       <w>sshd</w>
@@ -2515,6 +2676,7 @@
       <w>stdspaz</w>
       <w>stedit</w>
       <w>steelseries</w>
+      <w>stgdict</w>
       <w>stickman</w>
       <w>storable</w>
       <w>storagename</w>
@@ -2548,6 +2710,7 @@
       <w>subdirs</w>
       <w>subfieldpath</w>
       <w>subfolders</w>
+      <w>submpath</w>
       <w>subname</w>
       <w>subpath</w>
       <w>subpaths</w>
@@ -2574,6 +2737,12 @@
       <w>swht</w>
       <w>swidth</w>
       <w>swiftc</w>
+      <w>swiftcompile</w>
+      <w>swiftdriver</w>
+      <w>swiftdriverjobdiscovery</w>
+      <w>swiftemitmodule</w>
+      <w>swiftgeneratepch</w>
+      <w>swiftmergegeneratedheaders</w>
       <w>swip</w>
       <w>swipsound</w>
       <w>sylw</w>
@@ -2652,6 +2821,7 @@
       <w>testcapi</w>
       <w>testcapimodule</w>
       <w>testclass</w>
+      <w>testclinic</w>
       <w>testconsole</w>
       <w>testd</w>
       <w>testdl</w>
@@ -2676,6 +2846,7 @@
       <w>testsoundtrack</w>
       <w>testtask</w>
       <w>testthread</w>
+      <w>testtype</w>
       <w>testval</w>
       <w>testwith</w>
       <w>texcoords</w>
@@ -2695,6 +2866,8 @@
       <w>this'll</w>
       <w>thislinelen</w>
       <w>thismodule</w>
+      <w>thisname</w>
+      <w>thispath</w>
       <w>threadlocals</w>
       <w>threadpool</w>
       <w>threadtype</w>
@@ -2711,6 +2884,7 @@
       <w>timestring</w>
       <w>timestrval</w>
       <w>timetype</w>
+      <w>timevalfin</w>
       <w>tipstext</w>
       <w>titletext</w>
       <w>tkinval</w>
@@ -2724,6 +2898,7 @@
       <w>tnode</w>
       <w>tntspawner</w>
       <w>tntspawnpos</w>
+      <w>tomllib</w>
       <w>toolconfigs</w>
       <w>toolconfigsrc</w>
       <w>toolsdir</w>
@@ -2731,6 +2906,7 @@
       <w>topkilledcount</w>
       <w>toplevel</w>
       <w>toplevelfiles</w>
+      <w>toplevelname</w>
       <w>totaldudes</w>
       <w>totalobjmb</w>
       <w>totalobjsize</w>
@@ -2743,6 +2919,8 @@
       <w>tournamententry</w>
       <w>tournamentscores</w>
       <w>tpartial</w>
+      <w>tpath</w>
+      <w>tpathsegs</w>
       <w>tpexl</w>
       <w>tpimport</w>
       <w>tpimportex</w>
@@ -2781,6 +2959,7 @@
       <w>tvalue</w>
       <w>tvos</w>
       <w>twidth</w>
+      <w>tword</w>
       <w>twrths</w>
       <w>txtactor</w>
       <w>txtl</w>
@@ -2797,6 +2976,7 @@
       <w>typeshed</w>
       <w>typestr</w>
       <w>tzdiff</w>
+      <w>tzinfo</w>
       <w>tzinfos</w>
       <w>tzoffset</w>
       <w>tzpath</w>
@@ -2863,6 +3043,7 @@
       <w>usid</w>
       <w>utcnow</w>
       <w>utimensat</w>
+      <w>uuidentry</w>
       <w>uuidmodule</w>
       <w>uval</w>
       <w>valanntype</w>
@@ -2915,6 +3096,7 @@
       <w>waaah</w>
       <w>waittime</w>
       <w>wanttype</w>
+      <w>warnstr</w>
       <w>warntype</w>
       <w>wasdead</w>
       <w>wasn</w>
@@ -2985,9 +3167,12 @@
       <w>xcarchive</w>
       <w>xcassets</w>
       <w>xcframework</w>
+      <w>xcft</w>
+      <w>xcode's</w>
       <w>xcodebuild</w>
       <w>xcodebuildverbose</w>
       <w>xcoderun</w>
+      <w>xcodesortkey</w>
       <w>xcpretty</w>
       <w>xcprojpath</w>
       <w>xcrun</w>

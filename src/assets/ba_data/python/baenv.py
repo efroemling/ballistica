@@ -24,8 +24,6 @@ from typing import TYPE_CHECKING
 from efro.log import setup_logging, LogLevel
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from efro.log import LogHandler
 
 # Build number and version of the ballistica binary we expect to be

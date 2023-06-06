@@ -27,7 +27,7 @@ from batools.spinoff._state import (
 )
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Iterable
+    from typing import Callable, Iterable
 
     from batools.project import ProjectUpdater
 
@@ -77,7 +77,7 @@ class SpinoffContext:
         # By default, if dst files have their modtimes changed but
         # still line up with src files, we can recover. But one may
         # choose to error in that case to track down things mucking
-        # with dst files when they shouldnt' be.
+        # with dst files when they shouldn't be.
         self.strict = False
 
         self._mode = mode
@@ -216,7 +216,7 @@ class SpinoffContext:
         # not manage itself (to prevent accidentally working in such places).
         self.src_write_paths = set[str]()
 
-        # Paths wwhich will NOT be gitignored/etc. (in dst format)
+        # Paths which will NOT be gitignored/etc. (in dst format)
         self.dst_write_paths = set[str]()
 
         # Special set of paths managed by spinoff but ALSO stored in git in
@@ -580,6 +580,8 @@ class SpinoffContext:
     def _generate_env_hash(self) -> None:
         # pylint: disable=cyclic-import
         from efrotools import get_files_hash
+
+        # noinspection PyUnresolvedReferences
         import batools.spinoff
         import batools.project
 
@@ -1570,7 +1572,7 @@ class SpinoffContext:
                 except Exception:
                     self._execution_error = True
                     print(
-                        (f"Error removing file: '{dst_path_full}'."),
+                        f"Error removing file: '{dst_path_full}'.",
                         file=sys.stderr,
                     )
         return removed_f_count
@@ -1654,7 +1656,7 @@ class SpinoffContext:
         out = set[str]()
         assert self._src_git_files is not None
         for gitpath in self._src_git_files:
-            # If omit-path contians this one or any component is found
+            # If omit-path contains this one or any component is found
             # in omit-names, pretend it doesn't exist.
             if _any_path_contains(self._src_omit_paths_expanded, gitpath):
                 continue  # Omitting
@@ -1795,8 +1797,8 @@ class SpinoffContext:
 
         do_backport = False
 
-        src_datab: bytes | None
-        dst_datab: bytes | None
+        src_datab: bytes | None = None
+        dst_datab: bytes | None = None
         src_data: str | None = None
         dst_data: str | None = None
 

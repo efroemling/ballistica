@@ -44,6 +44,7 @@
       <w>alext</w>
       <w>alibaba</w>
       <w>alibname</w>
+      <w>alldeps</w>
       <w>allerrors</w>
       <w>allobjc</w>
       <w>allobjs</w>
@@ -56,6 +57,7 @@
       <w>alsa</w>
       <w>alsoft</w>
       <w>anchorx</w>
+      <w>androideabi</w>
       <w>animcurve</w>
       <w>aniso</w>
       <w>annarg</w>
@@ -69,9 +71,13 @@
       <w>aparsed</w>
       <w>apientry</w>
       <w>apiversion</w>
+      <w>apntzcreds</w>
       <w>apost</w>
       <w>appcomponent</w>
       <w>appconfig</w>
+      <w>appintentsmetadataprocessor</w>
+      <w>appletvos</w>
+      <w>appletvsimulator</w>
       <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
@@ -81,6 +87,9 @@
       <w>apptime</w>
       <w>apptimer</w>
       <w>apptimers</w>
+      <w>archbase</w>
+      <w>archos</w>
+      <w>argindex</w>
       <w>argsjoined</w>
       <w>argstr</w>
       <w>armcap</w>
@@ -106,11 +115,15 @@
       <w>babasemeta</w>
       <w>backgrounded</w>
       <w>backgrounding</w>
+      <w>backported</w>
       <w>backporting</w>
       <w>backtraces</w>
       <w>backwin</w>
       <w>baclassic</w>
+      <w>bacoremeta</w>
       <w>baenv</w>
+      <w>bafoobar</w>
+      <w>bafoobarmeta</w>
       <w>bainternal</w>
       <w>ballistica</w>
       <w>ballistica's</w>
@@ -120,11 +133,17 @@
       <w>bameta</w>
       <w>bametainternal</w>
       <w>baplus</w>
+      <w>baplusmeta</w>
       <w>barebones</w>
       <w>bargs</w>
       <w>bascenev</w>
       <w>baseaddr</w>
+      <w>basebasename</w>
+      <w>baseheaders</w>
       <w>baseimps</w>
+      <w>basenames</w>
+      <w>baseplatform</w>
+      <w>basepylib</w>
       <w>basetime</w>
       <w>basetimer</w>
       <w>basetype</w>
@@ -150,10 +169,13 @@
       <w>bezanson</w>
       <w>bgdynamics</w>
       <w>bgra</w>
+      <w>bgrp</w>
       <w>bigendian</w>
       <w>bilinear</w>
       <w>bindcode</w>
+      <w>bindir</w>
       <w>bindvals</w>
+      <w>binpath</w>
       <w>binpow</w>
       <w>bitcount</w>
       <w>bitdepth</w>
@@ -187,6 +209,8 @@
       <w>bootstrappy</w>
       <w>bootsubprocess</w>
       <w>bouyancy</w>
+      <w>bpath</w>
+      <w>bpcolor</w>
       <w>bppv</w>
       <w>bpresult</w>
       <w>bresult</w>
@@ -208,6 +232,11 @@
       <w>bucketnum</w>
       <w>bufs</w>
       <w>buildconfig</w>
+      <w>buildfiles</w>
+      <w>buildline</w>
+      <w>buildlockname</w>
+      <w>buildlocks</w>
+      <w>buildmode</w>
       <w>buildnumber</w>
       <w>buttondown</w>
       <w>buttonmouse</w>
@@ -215,6 +244,7 @@
       <w>buttonwidget</w>
       <w>bwst</w>
       <w>cacert</w>
+      <w>cachedir</w>
       <w>cadata</w>
       <w>cafile</w>
       <w>calced</w>
@@ -223,6 +253,7 @@
       <w>caled</w>
       <w>callargs</w>
       <w>callbackobj</w>
+      <w>callproc</w>
       <w>camalign</w>
       <w>camelback</w>
       <w>camerashake</w>
@@ -230,6 +261,7 @@
       <w>capitan</w>
       <w>caplog</w>
       <w>cargs</w>
+      <w>casefix</w>
       <w>cbegin</w>
       <w>cbgn</w>
       <w>cbresults</w>
@@ -238,12 +270,16 @@
       <w>ccind</w>
       <w>ccontext</w>
       <w>ccylinder</w>
+      <w>cdirname</w>
       <w>cend</w>
       <w>centiseconds</w>
+      <w>certfile</w>
       <w>certifi</w>
+      <w>certpass</w>
       <w>cfgdict</w>
       <w>cfgdir</w>
       <w>cfgpath</w>
+      <w>cfield</w>
       <w>changeme</w>
       <w>charn</w>
       <w>charnum</w>
@@ -256,12 +292,14 @@
       <w>checksummed</w>
       <w>childanntype</w>
       <w>childanntypes</w>
+      <w>childid</w>
       <w>childtype</w>
       <w>childtypes</w>
       <w>childval</w>
       <w>chrono</w>
       <w>chunksize</w>
       <w>cjief</w>
+      <w>clangstatcache</w>
       <w>classdict</w>
       <w>classline</w>
       <w>cleanupcheck</w>
@@ -274,7 +312,10 @@
       <w>cmakelist</w>
       <w>cmath</w>
       <w>cmds</w>
+      <w>cmdspath</w>
+      <w>cmdsraw</w>
       <w>cmdvals</w>
+      <w>cmodule</w>
       <w>cmodules</w>
       <w>cmplen</w>
       <w>codedata</w>
@@ -284,8 +325,10 @@
       <w>collapseable</w>
       <w>collidable</w>
       <w>collider</w>
+      <w>collisionmesh</w>
       <w>columnwidget</w>
       <w>comms</w>
+      <w>compilearch</w>
       <w>compileassetcatalog</w>
       <w>compilec</w>
       <w>compilemetalfile</w>
@@ -295,6 +338,7 @@
       <w>connectattr</w>
       <w>containerwidget</w>
       <w>controlfp</w>
+      <w>converticonsetfile</w>
       <w>cooldown</w>
       <w>coopscore</w>
       <w>copypng</w>
@@ -306,6 +350,8 @@
       <w>cout</w>
       <w>cpel</w>
       <w>cpplint</w>
+      <w>cpresource</w>
+      <w>cpresources</w>
       <w>cptr</w>
       <w>cpuid</w>
       <w>crashenv</w>
@@ -316,6 +362,7 @@
       <w>cresult</w>
       <w>crom</w>
       <w>crosswire</w>
+      <w>cruftpath</w>
       <w>crvel</w>
       <w>cryptosimple</w>
       <w>csize</w>
@@ -329,6 +376,7 @@
       <w>ctargetref</w>
       <w>ctracker</w>
       <w>cubemap</w>
+      <w>currenthash</w>
       <w>curtime</w>
       <w>curv</w>
       <w>cutef</w>
@@ -359,6 +407,7 @@
       <w>deallocation</w>
       <w>debugger's</w>
       <w>deek</w>
+      <w>defslines</w>
       <w>deinit</w>
       <w>deltaval</w>
       <w>demangle</w>
@@ -370,6 +419,7 @@
       <w>deregistering</w>
       <w>deregistration</w>
       <w>dernit</w>
+      <w>derq</w>
       <w>desctype</w>
       <w>destdir</w>
       <w>dets</w>
@@ -377,6 +427,7 @@
       <w>dfba</w>
       <w>dffc</w>
       <w>dfff</w>
+      <w>dfile</w>
       <w>dfmt</w>
       <w>dictval</w>
       <w>didn</w>
@@ -390,11 +441,15 @@
       <w>dlife</w>
       <w>dliwk</w>
       <w>dllpath</w>
+      <w>dmacosx</w>
       <w>dmake</w>
       <w>dmgname</w>
+      <w>dmstatedir</w>
+      <w>dmstatepath</w>
       <w>dname</w>
       <w>dncm</w>
       <w>dobell</w>
+      <w>doneclr</w>
       <w>doneptr</w>
       <w>doraise</w>
       <w>dosomething</w>
@@ -410,15 +465,24 @@
       <w>dsound</w>
       <w>dstabs</w>
       <w>dstattr</w>
+      <w>dstbase</w>
+      <w>dstdir</w>
+      <w>dstdirfull</w>
+      <w>dstent</w>
       <w>dstnode</w>
       <w>dstpath</w>
       <w>dstr</w>
+      <w>dstrootsl</w>
+      <w>dsttime</w>
+      <w>dsttimestr</w>
+      <w>dsymutil</w>
       <w>dtest</w>
       <w>dummymodules</w>
       <w>dummyret</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
       <w>dumpminlog</w>
+      <w>dusing</w>
       <w>dval</w>
       <w>dxgi</w>
       <w>dynamicdata</w>
@@ -456,6 +520,7 @@
       <w>ericf</w>
       <w>ericsson</w>
       <w>ericsson's</w>
+      <w>errfile</w>
       <w>errname</w>
       <w>erroring</w>
       <w>escval</w>
@@ -479,10 +544,13 @@
       <w>expl</w>
       <w>exportlist</w>
       <w>exporttypestr</w>
+      <w>expsrc</w>
+      <w>extractappintentsmetadata</w>
       <w>extradata</w>
       <w>extrahash</w>
       <w>extrascale</w>
       <w>exts</w>
+      <w>f'dstbase</w>
       <w>facepts</w>
       <w>fairydust</w>
       <w>fakeshake</w>
@@ -491,15 +559,21 @@
       <w>fastldlt</w>
       <w>fastlsolve</w>
       <w>fastltsolve</w>
+      <w>fatstdlib</w>
       <w>faulthandler</w>
       <w>fbos</w>
       <w>fcntl</w>
+      <w>fcodefin</w>
       <w>fdata</w>
       <w>fdcount</w>
+      <w>fdirs</w>
       <w>fdirx</w>
       <w>fdiry</w>
       <w>fdirz</w>
       <w>featureset</w>
+      <w>featuresetdef</w>
+      <w>featuresets</w>
+      <w>featuresettest</w>
       <w>fentry</w>
       <w>fenv</w>
       <w>fesetround</w>
@@ -519,10 +593,12 @@
       <w>filterdoc</w>
       <w>filterstr</w>
       <w>filterval</w>
+      <w>finalpath</w>
       <w>finishedptr</w>
       <w>firstpartykey</w>
       <w>fjco</w>
       <w>fjcoiwef</w>
+      <w>flagindex</w>
       <w>flipbit</w>
       <w>floinkdingle</w>
       <w>floooff</w>
@@ -532,13 +608,16 @@
       <w>fname</w>
       <w>fnode</w>
       <w>fnumc</w>
+      <w>fobjc</w>
       <w>focuswindow</w>
+      <w>foov</w>
       <w>fopen</w>
       <w>fourcc</w>
       <w>fovs</w>
       <w>fovx</w>
       <w>fovy</w>
       <w>fpath</w>
+      <w>fpaths</w>
       <w>framebuffers</w>
       <w>framedef</w>
       <w>frameldefs</w>
@@ -552,6 +631,15 @@
       <w>fromini</w>
       <w>frompos</w>
       <w>frontmost</w>
+      <w>fsarg</w>
+      <w>fsconfigpath</w>
+      <w>fset</w>
+      <w>fsetname</w>
+      <w>fsets</w>
+      <w>fsmetapackagename</w>
+      <w>fsname</w>
+      <w>fspackagename</w>
+      <w>fstestspackagename</w>
       <w>fsum</w>
       <w>ftos</w>
       <w>ftou</w>
@@ -576,6 +664,8 @@
       <w>gearvr</w>
       <w>genchangelog</w>
       <w>gencmd</w>
+      <w>gencount</w>
+      <w>generatedsymfile</w>
       <w>getactivity</w>
       <w>getattro</w>
       <w>getattrofunc</w>
@@ -621,6 +711,9 @@
       <w>gettime</w>
       <w>gettotalrefcount</w>
       <w>getuisound</w>
+      <w>gitfiledir</w>
+      <w>gitignored</w>
+      <w>gitpath</w>
       <w>gles</w>
       <w>glext</w>
       <w>globalns</w>
@@ -628,9 +721,11 @@
       <w>googleplaytab</w>
       <w>gpgs</w>
       <w>gqualstr</w>
+      <w>gradians</w>
       <w>graphlib</w>
       <w>grav</w>
       <w>grisha</w>
+      <w>grpname</w>
       <w>gstate</w>
       <w>gthm</w>
       <w>guiddef</w>
@@ -641,6 +736,7 @@
       <w>halign</w>
       <w>handfull</w>
       <w>handlemessage</w>
+      <w>hashfiles</w>
       <w>hastouchscreen</w>
       <w>hatmotion</w>
       <w>haveint</w>
@@ -679,6 +775,8 @@
       <w>ifaddr</w>
       <w>ifaddrs</w>
       <w>ifdebug</w>
+      <w>ifdef</w>
+      <w>ignorevar</w>
       <w>iiiiisss</w>
       <w>iiiiisssi</w>
       <w>iircade</w>
@@ -688,6 +786,7 @@
       <w>imayushsaini</w>
       <w>importlines</w>
       <w>incentivized</w>
+      <w>includelines</w>
       <w>indata</w>
       <w>inet</w>
       <w>infoset</w>
@@ -712,6 +811,7 @@
       <w>ioprepped</w>
       <w>ioprepping</w>
       <w>ioreg</w>
+      <w>iphonesimulator</w>
       <w>iscoroutinefunction</w>
       <w>iserverget</w>
       <w>iserverput</w>
@@ -771,14 +871,17 @@
       <w>lastline</w>
       <w>lastvalid</w>
       <w>lbzip</w>
+      <w>lchmod</w>
       <w>leaderboard</w>
       <w>leaderboards</w>
       <w>lenval</w>
       <w>levelno</w>
       <w>levelnos</w>
       <w>levelstr</w>
+      <w>lffi</w>
       <w>lgui</w>
       <w>lhalf</w>
+      <w>libballistica</w>
       <w>libbz</w>
       <w>libbzip</w>
       <w>libutf</w>
@@ -786,6 +889,7 @@
       <w>lightshad</w>
       <w>linearsize</w>
       <w>linearstep</w>
+      <w>linebegin</w>
       <w>linemax</w>
       <w>linestart</w>
       <w>linkstoryboards</w>
@@ -812,6 +916,7 @@
       <w>lrintf</w>
       <w>lscope</w>
       <w>lshort</w>
+      <w>lsplits</w>
       <w>lsregister</w>
       <w>lstr</w>
       <w>lsync</w>
@@ -839,6 +944,8 @@
       <w>makelevel</w>
       <w>malhotra</w>
       <w>mallocs</w>
+      <w>manfile</w>
+      <w>manprivpath</w>
       <w>mantype</w>
       <w>manualtab</w>
       <w>maskhigh</w>
@@ -847,6 +954,8 @@
       <w>mastervers</w>
       <w>matchlines</w>
       <w>maximus</w>
+      <w>maxlines</w>
+      <w>maxparts</w>
       <w>maxpathlen</w>
       <w>maxtries</w>
       <w>maxwait</w>
@@ -881,11 +990,15 @@
       <w>mmacosx</w>
       <w>mmask</w>
       <w>mmdevapi</w>
+      <w>mnames</w>
       <w>modder</w>
       <w>modders</w>
       <w>modelview</w>
+      <w>modstr</w>
+      <w>modtime</w>
       <w>moduletype</w>
       <w>momemtary</w>
+      <w>morecnt</w>
       <w>moreso</w>
       <w>mqrspec</w>
       <w>msaa</w>
@@ -920,6 +1033,8 @@
       <w>mystatspage</w>
       <w>mywidget</w>
       <w>namecap</w>
+      <w>namel</w>
+      <w>nameu</w>
       <w>nameval</w>
       <w>nbuffer</w>
       <w>ndebug</w>
@@ -944,6 +1059,8 @@
       <w>newname</w>
       <w>newnode</w>
       <w>newtoken</w>
+      <w>newuuid</w>
+      <w>newuuids</w>
       <w>nextchar</w>
       <w>ninjafightplug</w>
       <w>nitpicky</w>
@@ -983,6 +1100,7 @@
       <w>objcount</w>
       <w>objexists</w>
       <w>objid</w>
+      <w>objpath</w>
       <w>objset</w>
       <w>objsizes</w>
       <w>objtoyaml</w>
@@ -999,7 +1117,10 @@
       <w>oldbook</w>
       <w>olde</w>
       <w>oldname</w>
+      <w>oldpath</w>
       <w>oldtoken</w>
+      <w>olduuid</w>
+      <w>olduuids</w>
       <w>onslaughtplug</w>
       <w>oooo</w>
       <w>ooooooo</w>
@@ -1033,6 +1154,8 @@
       <w>ourself</w>
       <w>ourstanding</w>
       <w>outdict</w>
+      <w>outdir</w>
+      <w>outfiles</w>
       <w>outmsg</w>
       <w>outpath</w>
       <w>outputter</w>
@@ -1044,14 +1167,21 @@
       <w>pairsj</w>
       <w>pairss</w>
       <w>parameteriv</w>
+      <w>parentpath</w>
       <w>passcode</w>
+      <w>patchpaths</w>
+      <w>pathbar</w>
       <w>pathcapture</w>
       <w>pathdst</w>
       <w>pathlist</w>
       <w>pathparts</w>
+      <w>pathsegs</w>
       <w>pathsrc</w>
       <w>pathwonky</w>
       <w>pausable</w>
+      <w>pbasename</w>
+      <w>pbxgrp</w>
+      <w>pbxgrps</w>
       <w>pcommands</w>
       <w>pdataclass</w>
       <w>pdoc</w>
@@ -1063,10 +1193,12 @@
       <w>pflags</w>
       <w>pgmout</w>
       <w>phandle</w>
+      <w>phasename</w>
       <w>phasescriptexecution</w>
       <w>piplist</w>
       <w>pipvers</w>
       <w>pixelformat</w>
+      <w>pkgdir</w>
       <w>platstr</w>
       <w>playerspaztype</w>
       <w>playpause</w>
@@ -1075,6 +1207,8 @@
       <w>pluginsettings</w>
       <w>plugnames</w>
       <w>pname</w>
+      <w>pnamel</w>
+      <w>pnameu</w>
       <w>podcast</w>
       <w>podcasts</w>
       <w>popd</w>
@@ -1082,6 +1216,7 @@
       <w>positivex</w>
       <w>positivey</w>
       <w>positivez</w>
+      <w>posixshmem</w>
       <w>posonlyargs</w>
       <w>postinit</w>
       <w>postrun</w>
@@ -1095,10 +1230,12 @@
       <w>preconfig</w>
       <w>predeclare</w>
       <w>predeclares</w>
+      <w>predecs</w>
       <w>prefs</w>
       <w>preloaded</w>
       <w>preloads</w>
       <w>premult</w>
+      <w>prepass</w>
       <w>prepdata</w>
       <w>prereq</w>
       <w>prerun</w>
@@ -1115,13 +1252,19 @@
       <w>processinfoplistfile</w>
       <w>processpch</w>
       <w>processpchplusplus</w>
+      <w>processproductpackaging</w>
+      <w>processproductpackagingder</w>
       <w>profilers</w>
       <w>prog</w>
       <w>proj</w>
       <w>projbasename</w>
       <w>projdir</w>
+      <w>projectconfig</w>
+      <w>projname</w>
       <w>projpath</w>
       <w>projprefix</w>
+      <w>projsrc</w>
+      <w>projtxt</w>
       <w>prolly</w>
       <w>proxykey</w>
       <w>prtb</w>
@@ -1141,6 +1284,7 @@
       <w>pulseaudio</w>
       <w>punchmomentumlinear</w>
       <w>punchthrough</w>
+      <w>pupdatedata</w>
       <w>pushcall</w>
       <w>putbits</w>
       <w>putbitshigh</w>
@@ -1151,6 +1295,7 @@
       <w>pwin</w>
       <w>pwsz</w>
       <w>pybuildapple</w>
+      <w>pycfgpath</w>
       <w>pycommand</w>
       <w>pyconfig</w>
       <w>pycontext</w>
@@ -1158,6 +1303,7 @@
       <w>pyhome</w>
       <w>pylib</w>
       <w>pylibpath</w>
+      <w>pymodulenames</w>
       <w>pyobj</w>
       <w>pyobjs</w>
       <w>pythondevmode</w>
@@ -1214,6 +1360,7 @@
       <w>rené</w>
       <w>reprfunc</w>
       <w>repro</w>
+      <w>requireable</w>
       <w>rerase</w>
       <w>resends</w>
       <w>resetbtn</w>
@@ -1242,6 +1389,8 @@
       <w>rsplen</w>
       <w>rspobj</w>
       <w>rsptypes</w>
+      <w>rsync's</w>
+      <w>rsyncver</w>
       <w>rtest</w>
       <w>rtypes</w>
       <w>rtypevar</w>
@@ -1261,6 +1410,7 @@
       <w>scenepacket</w>
       <w>scenetime</w>
       <w>screenmessage</w>
+      <w>scriptdst</w>
       <w>scrollwidget</w>
       <w>scutil</w>
       <w>sddata</w>
@@ -1309,10 +1459,13 @@
       <w>shouldnt</w>
       <w>showbuffer</w>
       <w>shufflable</w>
+      <w>signingconfig</w>
+      <w>signingconfigname</w>
       <w>signsubscale</w>
       <w>sigsetjmp</w>
       <w>simd</w>
       <w>simpletype</w>
+      <w>sincestr</w>
       <w>sisssssssss</w>
       <w>sixteenbits</w>
       <w>slist</w>
@@ -1326,6 +1479,7 @@
       <w>sockaddr</w>
       <w>soffs</w>
       <w>softdefault</w>
+      <w>softreq</w>
       <w>solaris</w>
       <w>sortname</w>
       <w>sourcenode</w>
@@ -1333,16 +1487,22 @@
       <w>spaz</w>
       <w>spead</w>
       <w>sphrand</w>
+      <w>spinoff's</w>
+      <w>spinoffconfig</w>
       <w>spinup</w>
       <w>spivak</w>
+      <w>spwd</w>
       <w>srcabs</w>
       <w>srcattr</w>
       <w>srcfolder</w>
+      <w>srcgrp</w>
       <w>srcid</w>
       <w>srcname</w>
       <w>srcpath</w>
       <w>srcpaths</w>
       <w>srcsz</w>
+      <w>srctime</w>
+      <w>srctimestr</w>
       <w>sresult</w>
       <w>sscanf</w>
       <w>ssize</w>
@@ -1375,6 +1535,7 @@
       <w>stephane</w>
       <w>stepnum</w>
       <w>stepsize</w>
+      <w>stgdict</w>
       <w>storagenames</w>
       <w>storecmd</w>
       <w>stot</w>
@@ -1395,6 +1556,7 @@
       <w>subentities</w>
       <w>subfieldpath</w>
       <w>subitems</w>
+      <w>submpath</w>
       <w>subpaths</w>
       <w>subplatform</w>
       <w>subscale</w>
@@ -1404,6 +1566,12 @@
       <w>sval</w>
       <w>swidth</w>
       <w>swiftc</w>
+      <w>swiftcompile</w>
+      <w>swiftdriver</w>
+      <w>swiftdriverjobdiscovery</w>
+      <w>swiftemitmodule</w>
+      <w>swiftgeneratepch</w>
+      <w>swiftmergegeneratedheaders</w>
       <w>symbolification</w>
       <w>syscalls</w>
       <w>sysresponse</w>
@@ -1429,12 +1597,14 @@
       <w>templatefs</w>
       <w>tempvec</w>
       <w>tenum</w>
+      <w>testclinic</w>
       <w>testint</w>
       <w>testinternalcapi</w>
       <w>testnode</w>
       <w>testresponse</w>
       <w>testrunnable</w>
       <w>testtask</w>
+      <w>testtype</w>
       <w>texel</w>
       <w>texqualstr</w>
       <w>textcolor</w>
@@ -1445,6 +1615,8 @@
       <w>theres</w>
       <w>thislinelen</w>
       <w>thismodule</w>
+      <w>thisname</w>
+      <w>thispath</w>
       <w>threadlocals</w>
       <w>threadname</w>
       <w>threadpool</w>
@@ -1459,10 +1631,13 @@
       <w>timesteps</w>
       <w>timetype</w>
       <w>timetypes</w>
+      <w>timevalfin</w>
       <w>tkinval</w>
       <w>tlog</w>
       <w>tmpmat</w>
       <w>tomer</w>
+      <w>tomllib</w>
+      <w>toplevelname</w>
       <w>topos</w>
       <w>totalobjmb</w>
       <w>totalobjsize</w>
@@ -1471,6 +1646,8 @@
       <w>tournamentbutton</w>
       <w>toutf</w>
       <w>tpartial</w>
+      <w>tpath</w>
+      <w>tpathsegs</w>
       <w>tpexl</w>
       <w>tpimport</w>
       <w>tpimportex</w>
@@ -1503,10 +1680,12 @@
       <w>tvos</w>
       <w>tweakage</w>
       <w>twidth</w>
+      <w>tword</w>
       <w>twotimer</w>
       <w>twst</w>
       <w>typeobj</w>
       <w>typestr</w>
+      <w>tzinfo</w>
       <w>tzoffset</w>
       <w>tzpath</w>
       <w>uber</w>
@@ -1537,6 +1716,7 @@
       <w>userspace</w>
       <w>usid</w>
       <w>uther</w>
+      <w>uuidentry</w>
       <w>uuidmodule</w>
       <w>uuids</w>
       <w>uval</w>
@@ -1576,6 +1756,7 @@
       <w>wack</w>
       <w>wakeups</w>
       <w>walisser</w>
+      <w>warnstr</w>
       <w>wasdebug</w>
       <w>wasn</w>
       <w>watte</w>
@@ -1616,9 +1797,12 @@
       <w>wvmpth</w>
       <w>xbone</w>
       <w>xcframework</w>
+      <w>xcft</w>
       <w>xclamped</w>
+      <w>xcode's</w>
       <w>xcodebuildverbose</w>
       <w>xcoderun</w>
+      <w>xcodesortkey</w>
       <w>xcrun</w>
       <w>xdiff</w>
       <w>xdist</w>

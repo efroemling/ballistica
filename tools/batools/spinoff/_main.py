@@ -133,7 +133,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     from efrotools import getconfig
     import batools.spinoff
 
-    # Note: in our case dst_root is actualy what becomes the src project
+    # Note: in our case dst_root is actually what becomes the src project
     # should clean up these var names to make that clearer.
     if src_root is not None:
         raise CleanError('This only works on src projects.')
