@@ -5,7 +5,6 @@
 
 #include <string>
 
-#include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {

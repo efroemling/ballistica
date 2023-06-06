@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import random
+import weakref
 import logging
 from typing import TYPE_CHECKING
 
@@ -28,7 +29,7 @@ from baclassic import _input
 from baclassic import _profile
 
 if TYPE_CHECKING:
-    from typing import Callable, Any
+    from typing import Callable, Any, Sequence
 
     import babase
     import baclassic
@@ -680,3 +681,56 @@ class ClassicSubsystem(AppSubsystem):
                 delay,
                 Call(ServerDialogWindow, sddata),
             )
+
+    def ticket_icon_press(self) -> None:
+        """(internal)"""
+        from bastd.ui.resourcetypeinfo import ResourceTypeInfoWindow
+
+        ResourceTypeInfoWindow(
+            origin_widget=_bauiv1.get_special_widget('tickets_info_button')
+        )
+
+    def party_icon_activate(self, origin: Sequence[float]) -> None:
+        """(internal)"""
+        from bastd.ui.party import PartyWindow
+        from babase import app
+
+        assert not app.headless_mode
+
+        _bauiv1.getsound('swish').play()
+
+        # If it exists, dismiss it; otherwise make a new one.
+        if (
+            self.ui.party_window is not None
+            and self.ui.party_window() is not None
+        ):
+            self.ui.party_window().close()
+        else:
+            self.ui.party_window = weakref.ref(PartyWindow(origin=origin))
+
+    def device_menu_press(self, device_id: int | None) -> None:
+        """(internal)"""
+        from bastd.ui.mainmenu import MainMenuWindow
+        from bauiv1 import set_ui_input_device
+
+        assert _babase.app is not None
+        in_main_menu = self.ui.has_main_menu_window()
+        if not in_main_menu:
+            set_ui_input_device(device_id)
+
+            if not _babase.app.headless_mode:
+                _bauiv1.getsound('swish').play()
+
+            self.ui.set_main_menu_window(MainMenuWindow().get_root_widget())
+
+    def show_url_window(self, address: str) -> None:
+        """(internal)"""
+        from bastd.ui.url import ShowURLWindow
+
+        ShowURLWindow(address)
+
+    def quit_window(self) -> None:
+        """(internal)"""
+        from bastd.ui.confirm import QuitWindow
+
+        QuitWindow()

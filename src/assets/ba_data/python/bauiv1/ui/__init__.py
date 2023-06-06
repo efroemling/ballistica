@@ -7,13 +7,13 @@ from __future__ import annotations
 import os
 import weakref
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast, Type
+from typing import TYPE_CHECKING
 
 import _babase
 import _bauiv1
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Type
 
     import babase
     import bauiv1
@@ -112,9 +112,13 @@ class UIEntry:
 
         # TEMP HARD CODED - WILL REPLACE THIS WITH BA_META LOOKUPS.
         if self._name == 'mainmenu':
-            from bastd.ui import mainmenu
+            # Shut pylint up.
+            if bool(False):
+                return UILocation
+            raise RuntimeError('FIXME UNIMPLEMENTED')
+            # from bastd.ui import mainmenu
+            # return cast(Type[UILocation], mainmenu.MainMenuWindow)
 
-            return cast(Type[UILocation], mainmenu.MainMenuWindow)
         raise ValueError('unknown ui class ' + str(self._name))
 
 

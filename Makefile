@@ -604,6 +604,15 @@ spinoff-test-base:
 spinoff-test-plus:
 	tools/pcommand spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
+spinoff-test-template_fs:
+	tools/pcommand spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)
+
+spinoff-test-ui_v1:
+	tools/pcommand spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
+
+spinoff-test-scene_v1:
+	tools/pcommand spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
+
 spinoff-test-clean:
 	rm -rf build/spinofftest
 
@@ -630,8 +639,9 @@ spinoff-upgrade:
 	@tools/pcommand echo GRN Spinoff upgrade successful!
 
 # Tell make which of these targets don't represent files.
-.PHONY: spinoff-test-core spinoff-test-base spinoff-test-plus	\
-        spinoff-test-clean spinoff-update spinoff-upgrade
+.PHONY: spinoff-test-core spinoff-test-base spinoff-test-plus				\
+        spinoff-test-template_fs spinoff-test-clean spinoff-update	\
+        spinoff-upgrade
 
 
 ################################################################################
