@@ -27,8 +27,8 @@ auto main(int argc, char** argv) -> int {
   auto core_config =
       ballistica::core::CoreConfig::FromCommandLineAndEnv(argc, argv);
 
-  // Arg-parsing may have yielded an error or printed simple output for things
-  // such as '--help', in which case we're done.
+  // Arg-parsing may have yielded an error or printed simple output for
+  // things such as '--help', in which case we're done.
   if (core_config.immediate_return_code.has_value()) {
     return *core_config.immediate_return_code;
   }
@@ -39,12 +39,13 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21049;
+const int kEngineBuildNumber = 21050;
 const char* kEngineVersion = "1.7.20";
 
 auto MonolithicMain(const core::CoreConfig& core_config) -> int {
-  // This code is meant to be run standalone so won't inherit any feature-set's
-  // globals; we'll need to collect anything we need explicitly.
+  // This code is meant to be run standalone so won't inherit any
+  // feature-set's globals; we'll need to collect anything we need
+  // explicitly.
   core::CoreFeatureSet* l_core{};
   core::BaseSoftInterface* l_base{};
 
@@ -57,15 +58,15 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       }
     }
 
-    // No matter what we're doing, we need the core feature set. Some ballistica
-    // functionality implicitly uses core, so we should always import it first
-    // thing even if we don't explicitly use it.
+    // No matter what we're doing, we need the core feature set. Some
+    // ballistica functionality implicitly uses core, so we should always
+    // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
-    // If a command was passed, simply run it and exit. We want to act simply
-    // as a Python interpreter in that case; we don't do any environment setup
-    // (aside from the bits core does automatically such as making our built
-    // in binary modules available).
+    // If a command was passed, simply run it and exit. We want to act
+    // simply as a Python interpreter in that case; we don't do any
+    // environment setup (aside from the bits core does automatically such
+    // as making our built in binary modules available).
     if (l_core->core_config().call_command.has_value()) {
       auto gil{Python::ScopedInterpreterLock()};
       bool success = PythonCommand(*l_core->core_config().call_command,
@@ -81,9 +82,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // -------------------------------------------------------------------------
 
     // First, set up our environment using our internal paths and whatnot
-    // (essentially the baenv.configure() call). This needs to be done before
-    // any other ba* modules are imported since it may affect where those
-    // modules get loaded from in the first place.
+    // (essentially the baenv.configure() call). This needs to be done
+    // before any other ba* modules are imported since it may affect where
+    // those modules get loaded from in the first place.
     l_core->python->MonolithicModeBaEnvConfigure();
 
     // We need the base feature-set to run a full app but we don't have a hard
@@ -105,20 +106,20 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // Phase 3: "We come to it at last; the great battle of our time."
     // -------------------------------------------------------------------------
 
-    // At this point we unleash the beast and then simply process
-    // events until the app exits (or we return from this function and let the
+    // At this point we unleash the beast and then simply process events
+    // until the app exits (or we return from this function and let the
     // environment do that part).
 
     if (l_base->AppManagesEventLoop()) {
       // In environments where we control the event loop... do that.
       l_base->RunAppToCompletion();
     } else {
-      // Under managed environments we now simply return and let the environment
-      // feed us events until the app exits. However, we may need to first
-      // 'prime the pump' here for our main thread event loop. For instance, if
-      // our event loop is driven by frame draws, we may need to manually pump
-      // events until we receive the 'create-screen' message from the logic
-      // thread which gets our frame draws going.
+      // Under managed environments we now simply return and let the
+      // environment feed us events until the app exits. However, we may
+      // need to first 'prime the pump' here for our main thread event loop.
+      // For instance, if our event loop is driven by frame draws, we may
+      // need to manually pump events until we receive the 'create-screen'
+      // message from the logic thread which gets our frame draws going.
       l_base->PrimeAppMainThreadEventPump();
     }
   } catch (const std::exception& exc) {
