@@ -7,9 +7,12 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from efro.dataclassio import dataclass_from_dict
 import _babase
 import _bauiv1
+import _bascenev1
 import bascenev1
+from babase._general import Call
 from babase._appsubsystem import AppSubsystem
 from babase._general import AppTime
 import _baclassic
@@ -387,7 +390,6 @@ class ClassicSubsystem(AppSubsystem):
         """Attempt to cleanly get back to the main menu."""
         # pylint: disable=cyclic-import
         from baclassic import _benchmark
-        from babase import Call
         from bastd.mainmenu import MainMenuSession
 
         plus = _babase.app.plus
@@ -636,3 +638,45 @@ class ClassicSubsystem(AppSubsystem):
     ) -> float:
         """(internal)"""
         return _baclassic.value_test(arg, change, absolute)
+
+    def set_master_server_source(self, source: int) -> None:
+        """(internal)"""
+        _bascenev1.set_master_server_source(source)
+
+    def get_game_port(self) -> int:
+        """(internal)"""
+        return _bascenev1.get_game_port()
+
+    def v2_upgrade_window(self, login_name: str, code: str) -> None:
+        """(internal)"""
+
+        from bastd.ui.v2upgrade import V2UpgradeWindow
+
+        V2UpgradeWindow(login_name, code)
+
+    def account_link_code_window(self, data: dict[str, Any]) -> None:
+        """(internal)"""
+        from bastd.ui.account.link import AccountLinkCodeWindow
+
+        AccountLinkCodeWindow(data)
+
+    def server_dialog(self, delay: float, data: dict[str, Any]) -> None:
+        """(internal)"""
+        from bastd.ui.serverdialog import (
+            ServerDialogData,
+            ServerDialogWindow,
+        )
+
+        try:
+            sddata = dataclass_from_dict(ServerDialogData, data)
+        except Exception:
+            sddata = None
+            logging.warning(
+                'Got malformatted ServerDialogData: %s',
+                data,
+            )
+        if sddata is not None:
+            _babase.apptimer(
+                delay,
+                Call(ServerDialogWindow, sddata),
+            )
