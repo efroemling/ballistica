@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from typing import Any, Callable
     from concurrent.futures import Future
 
-    from efro.log import LogHandler
     import babase
     from babase import AppIntent, AppMode, AppSubsystem
     from babase._apputils import AppHealthMonitor

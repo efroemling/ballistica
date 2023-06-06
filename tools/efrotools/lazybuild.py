@@ -86,13 +86,6 @@ class LazyBuildContext:
         # as dependency relationships in a Makefile.
         self.srcpaths_fullclean = srcpaths_fullclean
         self.command_fullclean = command_fullclean
-        if (self.srcpaths_fullclean is None) != (
-            self.command_fullclean is None
-        ):
-            raise RuntimeError(
-                'Must provide both srcpaths_fullclean and'
-                ' command_fullclean together'
-            )
 
         # We also support a 'manifest' file which is a hash of all filenames
         # processed as part of srcpaths OR srcpaths_fullclean. If defined,

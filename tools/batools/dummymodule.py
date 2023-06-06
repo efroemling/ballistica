@@ -886,7 +886,7 @@ class Generator:
             outfile.write(out)
 
 
-def generate(projroot: str) -> None:
+def generate_dummy_modules(projroot: str) -> None:
     """Generate all dummy-modules."""
 
     from batools.featureset import FeatureSet
@@ -969,6 +969,8 @@ def generate(projroot: str) -> None:
     featuresets = FeatureSet.get_all_for_project(project_root=projroot)
     featuresets = [f for f in featuresets if f.has_native_python_module]
     mnames: list[str] = [fs.name_python_binary_module for fs in featuresets]
+
+    os.makedirs('build/dummymodules', exist_ok=True)
 
     gencount = 0
     for mname in mnames:

@@ -20,9 +20,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 if TYPE_CHECKING:
-    from typing import Sequence, Any
-
-    import babase
+    pass
 
 
 def on_app_bootstrapping_complete() -> None:

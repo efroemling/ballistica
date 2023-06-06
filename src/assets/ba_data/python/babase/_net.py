@@ -8,7 +8,6 @@ import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
     import socket
 
 # Timeout for standard functions talking to the master-server/etc.

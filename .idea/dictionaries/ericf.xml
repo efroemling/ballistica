@@ -113,6 +113,7 @@
       <w>appengine</w>
       <w>appiconset</w>
       <w>appid</w>
+      <w>appintent</w>
       <w>appintentsmetadataprocessor</w>
       <w>appinvite</w>
       <w>appkit</w>
@@ -121,12 +122,14 @@
       <w>appletvos</w>
       <w>appletvsimulator</w>
       <w>appmode</w>
+      <w>appmodeselector</w>
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
+      <w>appsubsystem</w>
       <w>apptime</w>
       <w>apptimer</w>
       <w>apptimers</w>
@@ -1546,6 +1549,7 @@
       <w>libxm</w>
       <w>libxmu</w>
       <w>libxz</w>
+      <w>lifecyclelog</w>
       <w>linbeast</w>
       <w>lindex</w>
       <w>lindexorig</w>
@@ -1740,6 +1744,7 @@
       <w>modders</w>
       <w>modename</w>
       <w>modestr</w>
+      <w>modetype</w>
       <w>modeval</w>
       <w>modpack</w>
       <w>modstr</w>

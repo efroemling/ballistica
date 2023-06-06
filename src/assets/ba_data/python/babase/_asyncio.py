@@ -31,7 +31,6 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
 
     import _babase
     import babase
-    from babase._mgen.enums import TimeType
 
     assert _babase.in_logic_thread()
 

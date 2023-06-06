@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 if TYPE_CHECKING:
-    from babase._app import App
+    pass
 
 
 class AppSubsystem:

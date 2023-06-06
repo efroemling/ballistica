@@ -979,12 +979,12 @@ def gen_python_init_module() -> None:
 def gen_dummy_modules() -> None:
     """Generate all dummy modules."""
     from efro.error import CleanError
-    from batools.dummymodule import generate
+    from batools.dummymodule import generate_dummy_modules
 
     if len(sys.argv) != 2:
         raise CleanError(f'Expected no args; got {len(sys.argv)-2}.')
 
-    generate(projroot=str(PROJROOT))
+    generate_dummy_modules(projroot=str(PROJROOT))
 
 
 def version() -> None:

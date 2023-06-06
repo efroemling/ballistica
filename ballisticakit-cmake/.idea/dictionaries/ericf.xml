@@ -75,15 +75,18 @@
       <w>apost</w>
       <w>appcomponent</w>
       <w>appconfig</w>
+      <w>appintent</w>
       <w>appintentsmetadataprocessor</w>
       <w>appletvos</w>
       <w>appletvsimulator</w>
       <w>appmode</w>
+      <w>appmodeselector</w>
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
       <w>appspot</w>
       <w>appstate</w>
+      <w>appsubsystem</w>
       <w>apptime</w>
       <w>apptimer</w>
       <w>apptimers</w>
@@ -886,6 +889,7 @@
       <w>libbzip</w>
       <w>libutf</w>
       <w>libuuid</w>
+      <w>lifecyclelog</w>
       <w>lightshad</w>
       <w>linearsize</w>
       <w>linearstep</w>
@@ -994,6 +998,7 @@
       <w>modder</w>
       <w>modders</w>
       <w>modelview</w>
+      <w>modetype</w>
       <w>modstr</w>
       <w>modtime</w>
       <w>moduletype</w>

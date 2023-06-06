@@ -103,12 +103,13 @@ class LazyBuildCategory(Enum):
     META = 'meta_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
+    DUMMYMODULES = 'dummymodules_src'
 
 
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     """Run some lazybuild presets."""
 
-    # Everything possibly affecting meta builds.
+    # Meta builds.
     if category is LazyBuildCategory.META:
         LazyBuildContext(
             target=target,
@@ -135,14 +136,14 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools/batoolsinternal',
                 'config/featuresets',
             ],
-            # Also enable an option to maintain a hash of all file paths
-            # in the above sets and do a full-clean whenever that changes.
-            # Takes care of orphaned files if remove a featureset/etc.
-            manifest_file='.cache/lazybuild/meta_manifest',
+            # Maintain a hash of all srcpaths and do a full-clean
+            # whenever that changes. Takes care of orphaned files if a
+            # featureset is removed/etc.
+            manifest_file=f'.cache/lazybuild/manifest_{category.value}',
             command_fullclean='make meta-clean',
         ).run()
 
-    # Everything possibly affecting CMake builds.
+    # CMake builds.
     elif category is LazyBuildCategory.CMAKE:
         LazyBuildContext(
             target=target,
@@ -165,7 +166,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             command=command,
         ).run()
 
-    # Everything possibly affecting Windows binary builds.
+    # Windows binary builds.
     elif category is LazyBuildCategory.WIN:
 
         def _win_dirfilter(root: str, dirname: str) -> bool:
@@ -192,7 +193,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             command=command,
         ).run()
 
-    # Everything possibly affecting resource builds.
+    # Resource builds.
     elif category is LazyBuildCategory.RESOURCES:
         LazyBuildContext(
             target=target,
@@ -208,7 +209,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             command=command,
         ).run()
 
-    # Everything possibly affecting asset builds.
+    # Asset builds.
     elif category is LazyBuildCategory.ASSETS:
 
         def _filefilter(root: str, filename: str) -> bool:
@@ -232,6 +233,37 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             command=command,
             filefilter=_filefilter,
+        ).run()
+
+    # Dummymodule builds.
+    elif category is LazyBuildCategory.DUMMYMODULES:
+
+        def _filefilter(root: str, filename: str) -> bool:
+            # In our C++ sources, only look at stuff with 'python' in the
+            # name.
+            if root.startswith('ballistica'):
+                return 'python' in filename
+
+            # In other srcpaths use everything.
+            return True
+
+        LazyBuildContext(
+            target=target,
+            # This category builds binaries and other crazy stuff
+            # so we definitely want to restrict to one at a time.
+            buildlockname=category.value,
+            srcpaths=[
+                'config/featuresets',
+                'tools/batools/dummymodule.py',
+                'src/ballistica',
+            ],
+            command=command,
+            filefilter=_filefilter,
+            # Maintain a hash of all srcpaths and do a full-clean
+            # whenever that changes. Takes care of orphaned files if a
+            # featureset is removed/etc.
+            manifest_file=f'.cache/lazybuild/manifest_{category.value}',
+            command_fullclean='make dummymodules-clean',
         ).run()
 
     else:
