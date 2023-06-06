@@ -210,6 +210,15 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
 
     # Everything possibly affecting asset builds.
     elif category is LazyBuildCategory.ASSETS:
+
+        def _filefilter(root: str, filename: str) -> bool:
+            # Exclude tools/spinoff; it doesn't affect asset builds
+            # and we don't want to break if it is a symlink pointing
+            # to a not-present parent repo.
+            if root == 'tools' and filename == 'spinoff':
+                return False
+            return True
+
         LazyBuildContext(
             target=target,
             # Even though this category currently doesn't run any
@@ -222,6 +231,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/assets',
             ],
             command=command,
+            filefilter=_filefilter,
         ).run()
 
     else:
