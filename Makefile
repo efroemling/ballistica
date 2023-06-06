@@ -595,9 +595,6 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 #                                                                              #
 ################################################################################
 
-spinoff-test-empty:
-	tools/pcommand spinoff_test empty $(SPINOFF_TEST_EXTRA_ARGS)
-
 spinoff-test-core:
 	tools/pcommand spinoff_test core $(SPINOFF_TEST_EXTRA_ARGS)
 
@@ -633,8 +630,8 @@ spinoff-upgrade:
 	@tools/pcommand echo GRN Spinoff upgrade successful!
 
 # Tell make which of these targets don't represent files.
-.PHONY: spinoff-test-empty spinoff-test-core spinoff-test-base							\
-        spinoff-test-plus spinoff-test-clean spinoff-update spinoff-upgrade
+.PHONY: spinoff-test-core spinoff-test-base spinoff-test-plus	\
+        spinoff-test-clean spinoff-update spinoff-upgrade
 
 
 ################################################################################

@@ -34,7 +34,7 @@ def spinoff_test(args: list[str]) -> None:
     featuresets = {fs.name: fs for fs in FeatureSet.get_all_for_project('.')}
 
     testtype = args[0]
-    if testtype == 'empty' or testtype in featuresets:
+    if testtype in featuresets:
         path = f'build/spinofftest/{testtype}'
         print(
             f'{Clr.BLD}Running spinoff test{Clr.RST}'
@@ -68,7 +68,7 @@ def spinoff_test(args: list[str]) -> None:
                 'SpinoffTest',
                 path,
                 '--featuresets',
-                'none' if testtype == 'empty' else testtype,
+                testtype,
             ] + (['--submodule-parent'] if submodule_parent else [])
 
             # Show the spinoff command we'd use here.
