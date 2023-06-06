@@ -38,6 +38,9 @@ class ClassicSoftInterface {
   virtual auto GetV1AccountProductPurchased(const char* item) -> bool = 0;
   virtual auto GetV1AccountProductPurchasesState() -> int = 0;
   virtual void SetV1DeviceAccount(const std::string& name) = 0;
+  virtual auto GetClientInfoQueryResponseCall() -> PyObject* = 0;
+  virtual auto BuildPublicPartyStateVal() -> PyObject* = 0;
+  virtual auto GetV1AccountDisplayString(bool full) -> std::string = 0;
 };
 
 }  // namespace ballistica::base

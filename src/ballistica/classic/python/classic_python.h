@@ -28,6 +28,7 @@ class ClassicPython {
                           const std::string& value_name) -> int;
   auto GetControllerFloatValue(base::InputDevice* device,
                                const std::string& value_name) -> float;
+  auto BuildPublicPartyStateVal() -> PyObject*;
 
   const auto& objs() { return objs_; }
 

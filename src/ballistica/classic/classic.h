@@ -19,6 +19,9 @@ class CoreFeatureSet;
 namespace ballistica::base {
 class BaseFeatureSet;
 }
+namespace ballistica::scene_v1 {
+class SceneV1FeatureSet;
+}
 
 namespace ballistica::classic {
 
@@ -55,6 +58,7 @@ enum class V1LoginState {
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern ClassicFeatureSet* g_classic;
+extern scene_v1::SceneV1FeatureSet* g_scene_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
@@ -88,6 +92,9 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
   auto GetV1AccountProductPurchased(const char* item) -> bool override;
   auto GetV1AccountProductPurchasesState() -> int override;
   void SetV1DeviceAccount(const std::string& name) override;
+  auto GetClientInfoQueryResponseCall() -> PyObject* override;
+  auto BuildPublicPartyStateVal() -> PyObject* override;
+  auto GetV1AccountDisplayString(bool full) -> std::string override;
 
   ClassicPython* const python;
   V1Account* const v1_account;

@@ -4,6 +4,7 @@
 
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/classic/python/methods/python_methods_classic.h"
+#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_module_builder.h"
 
@@ -89,6 +90,19 @@ auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
     }
   }
   return static_cast<float>(PyFloat_AsDouble(ret_val.Get()));
+}
+
+auto ClassicPython::BuildPublicPartyStateVal() -> PyObject* {
+  auto* appmode = scene_v1::SceneV1AppMode::GetActiveOrThrow();
+  return Py_BuildValue(
+      "(iiiiisssi)", static_cast<int>(appmode->public_party_enabled()),
+      appmode->public_party_size(), appmode->public_party_max_size(),
+      appmode->public_party_player_count(),
+      appmode->public_party_max_player_count(),
+      appmode->public_party_name().c_str(),
+      appmode->public_party_min_league().c_str(),
+      appmode->public_party_stats_url().c_str(),
+      static_cast<int>(appmode->public_party_queue_enabled()));
 }
 
 }  // namespace ballistica::classic

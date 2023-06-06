@@ -5,12 +5,17 @@
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/classic/support/v1_account.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/scene_v1/support/player_spec.h"
+#include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::classic {
 
 core::CoreFeatureSet* g_core{};
 base::BaseFeatureSet* g_base{};
 ClassicFeatureSet* g_classic{};
+scene_v1::SceneV1FeatureSet* g_scene_v1{};
 
 void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   // Ok, our feature-set's Python module is getting imported.
@@ -42,6 +47,9 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   // Let base know we exist.
   // (save it the trouble of trying to load us if it uses us passively).
   g_base->set_classic(g_classic);
+
+  assert(g_scene_v1 == nullptr);
+  g_scene_v1 = scene_v1::SceneV1FeatureSet::Import();
 
   g_core->LifecycleLog("_baclassic exec end");
 }
@@ -182,6 +190,28 @@ void ClassicFeatureSet::SetV1DeviceAccount(const std::string& name) {
   g_classic->v1_account->PushSetV1LoginCall(
       acc_type, classic::V1LoginState::kSignedIn, name,
       g_core->platform->GetDeviceV1AccountID());
+}
+
+auto ClassicFeatureSet::GetClientInfoQueryResponseCall() -> PyObject* {
+  return g_scene_v1->python->objs()
+      .Get(scene_v1::SceneV1Python::ObjID::kClientInfoQueryResponseCall)
+      .Get();
+}
+
+auto ClassicFeatureSet::BuildPublicPartyStateVal() -> PyObject* {
+  return python->BuildPublicPartyStateVal();
+}
+
+std::string ClassicFeatureSet::GetV1AccountDisplayString(bool full) {
+  if (full) {
+    assert(Utils::IsValidUTF8(
+        scene_v1::PlayerSpec::GetAccountPlayerSpec().GetDisplayString()));
+    return scene_v1::PlayerSpec::GetAccountPlayerSpec().GetDisplayString();
+  } else {
+    assert(Utils::IsValidUTF8(
+        scene_v1::PlayerSpec::GetAccountPlayerSpec().GetShortName()));
+    return scene_v1::PlayerSpec::GetAccountPlayerSpec().GetShortName();
+  }
 }
 
 }  // namespace ballistica::classic
