@@ -3,6 +3,11 @@
 #ifndef BALLISTICA_BASE_SUPPORT_CLASSIC_SOFT_H_
 #define BALLISTICA_BASE_SUPPORT_CLASSIC_SOFT_H_
 
+#include <string>
+#include <vector>
+
+#include "ballistica/base/base.h"
+
 namespace ballistica::base {
 
 /// 'Soft' interface to the classic feature-set.
@@ -16,6 +21,23 @@ class ClassicSoftInterface {
   virtual auto GetControllerFloatValue(base::InputDevice* device,
                                        const std::string& value_name)
       -> float = 0;
+  virtual auto IsV1AccountSignedIn() -> bool = 0;
+  virtual auto HandleSignOutV1() -> bool = 0;
+  virtual void V2SetV1AccountState(const char* statestr, const char* loginid,
+                                   const char* tag) = 0;
+  virtual auto GetV1AccountToken() -> std::string = 0;
+  virtual auto GetV1AccountExtra() -> std::string = 0;
+  virtual auto GetV1AccountExtra2() -> std::string = 0;
+  virtual auto GetV1AccountLoginName() -> std::string = 0;
+  virtual auto GetV1AccountTypeString() -> std::string = 0;
+  virtual auto GetV1AccountLoginStateString() -> std::string = 0;
+  virtual auto GetV1AccountLoginStateNum() -> int = 0;
+  virtual auto GetV1AccountLoginID() -> std::string = 0;
+  virtual void SetV1AccountProductsPurchased(
+      const std::vector<std::string>& purchases) = 0;
+  virtual auto GetV1AccountProductPurchased(const char* item) -> bool = 0;
+  virtual auto GetV1AccountProductPurchasesState() -> int = 0;
+  virtual void SetV1DeviceAccount(const std::string& name) = 0;
 };
 
 }  // namespace ballistica::base

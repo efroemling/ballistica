@@ -71,6 +71,23 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
                           const std::string& value_name) -> int override;
   auto GetControllerFloatValue(base::InputDevice* device,
                                const std::string& value_name) -> float override;
+  auto IsV1AccountSignedIn() -> bool override;
+  auto HandleSignOutV1() -> bool override;
+  void V2SetV1AccountState(const char* statestr, const char* loginid,
+                           const char* tag) override;
+  auto GetV1AccountToken() -> std::string override;
+  auto GetV1AccountExtra() -> std::string override;
+  auto GetV1AccountExtra2() -> std::string override;
+  auto GetV1AccountLoginName() -> std::string override;
+  auto GetV1AccountTypeString() -> std::string override;
+  auto GetV1AccountLoginStateString() -> std::string override;
+  auto GetV1AccountLoginStateNum() -> int override;
+  auto GetV1AccountLoginID() -> std::string override;
+  void SetV1AccountProductsPurchased(
+      const std::vector<std::string>& purchases) override;
+  auto GetV1AccountProductPurchased(const char* item) -> bool override;
+  auto GetV1AccountProductPurchasesState() -> int override;
+  void SetV1DeviceAccount(const std::string& name) override;
 
   ClassicPython* const python;
   V1Account* const v1_account;

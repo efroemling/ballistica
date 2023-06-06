@@ -4,6 +4,7 @@
 
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/classic/support/v1_account.h"
+#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::classic {
 
@@ -58,14 +59,129 @@ auto ClassicFeatureSet::Import() -> ClassicFeatureSet* {
   return ImportThroughPythonModule<ClassicFeatureSet>("_baclassic");
 }
 
-int ClassicFeatureSet::GetControllerValue(base::InputDevice* device,
-                                          const std::string& value_name) {
+auto ClassicFeatureSet::GetControllerValue(base::InputDevice* device,
+                                           const std::string& value_name)
+    -> int {
   return python->GetControllerValue(device, value_name);
 }
 
-float ClassicFeatureSet::GetControllerFloatValue(
-    base::InputDevice* device, const std::string& value_name) {
+auto ClassicFeatureSet::GetControllerFloatValue(base::InputDevice* device,
+                                                const std::string& value_name)
+    -> float {
   return python->GetControllerFloatValue(device, value_name);
+}
+
+auto ClassicFeatureSet::IsV1AccountSignedIn() -> bool {
+  return v1_account->GetLoginState() == classic::V1LoginState::kSignedIn;
+}
+
+auto ClassicFeatureSet::HandleSignOutV1() -> bool {
+  // For particular account types we can simply set our state; no need to
+  // bring any other parties in to play.
+  if (g_classic->account_type == classic::V1AccountType::kDevice
+      || g_classic->account_type == classic::V1AccountType::kServer
+      || g_classic->account_type == classic::V1AccountType::kV2) {
+    g_classic->v1_account->PushSetV1LoginCall(
+        g_classic->account_type, classic::V1LoginState::kSignedOut, "", "");
+    return true;  // We handled it.
+  }
+  // We didn't handle it.
+  return false;
+}
+void ClassicFeatureSet::V2SetV1AccountState(const char* statestr,
+                                            const char* loginid,
+                                            const char* tag) {
+  V1LoginState state;
+  if (statestr == std::string("signing_in")) {
+    state = classic::V1LoginState::kSigningIn;
+  } else if (statestr == std::string("signed_in")) {
+    state = classic::V1LoginState::kSignedIn;
+  } else {
+    throw Exception("Invalid state value.");
+  }
+  g_classic->v1_account->PushSetV1LoginCall(classic::V1AccountType::kV2, state,
+                                            tag, loginid);
+}
+
+auto ClassicFeatureSet::GetV1AccountToken() -> std::string {
+  return g_classic->v1_account->GetToken();
+}
+
+auto ClassicFeatureSet::GetV1AccountExtra() -> std::string {
+  return g_classic->v1_account->GetExtra();
+}
+
+auto ClassicFeatureSet::GetV1AccountExtra2() -> std::string {
+  return g_classic->v1_account->GetExtra2();
+}
+
+auto ClassicFeatureSet::GetV1AccountLoginName() -> std::string {
+  return g_classic->v1_account->GetLoginName();
+}
+
+auto ClassicFeatureSet::GetV1AccountTypeString() -> std::string {
+  return V1Account::AccountTypeToString(g_classic->account_type);
+}
+
+auto ClassicFeatureSet::GetV1AccountLoginStateString() -> std::string {
+  const char* out;
+  auto state{g_classic->v1_account->GetLoginState()};
+  switch (state) {
+    case classic::V1LoginState::kSignedIn:
+      out = "signed_in";
+      break;
+    case classic::V1LoginState::kSignedOut:
+      out = "signed_out";
+      break;
+    case classic::V1LoginState::kSigningIn:
+      out = "signing_in";
+      break;
+    default:
+      Log(LogLevel::kError, "Unknown V1LoginState '"
+                                + std::to_string(static_cast<int>(state))
+                                + "'");
+      out = "signed_out";
+      break;
+  }
+  return out;
+}
+
+auto ClassicFeatureSet::GetV1AccountLoginStateNum() -> int {
+  int num;
+  g_classic->v1_account->GetLoginState(&num);
+  return num;
+}
+
+auto ClassicFeatureSet::GetV1AccountLoginID() -> std::string {
+  return g_classic->v1_account->GetLoginID();
+}
+
+void ClassicFeatureSet::SetV1AccountProductsPurchased(
+    const std::vector<std::string>& purchases) {
+  g_classic->v1_account->SetProductsPurchased(purchases);
+}
+
+auto ClassicFeatureSet::GetV1AccountProductPurchased(const char* item) -> bool {
+  return g_classic->v1_account->GetProductPurchased(item);
+}
+
+auto ClassicFeatureSet::GetV1AccountProductPurchasesState() -> int {
+  return g_classic->v1_account->product_purchases_state();
+}
+
+void ClassicFeatureSet::SetV1DeviceAccount(const std::string& name) {
+  classic::V1AccountType acc_type;
+
+  // on headless builds we keep these distinct from regular
+  // device accounts (so we get a 'ServerXXX' name, etc)
+  if (g_buildconfig.headless_build()) {
+    acc_type = classic::V1AccountType::kServer;
+  } else {
+    acc_type = classic::V1AccountType::kDevice;
+  }
+  g_classic->v1_account->PushSetV1LoginCall(
+      acc_type, classic::V1LoginState::kSignedIn, name,
+      g_core->platform->GetDeviceV1AccountID());
 }
 
 }  // namespace ballistica::classic
