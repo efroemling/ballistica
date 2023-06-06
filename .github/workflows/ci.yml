@@ -65,7 +65,7 @@ jobs:
   # run unit tests there since some behavior (filesystem, etc) can vary
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
-  check_and_compile_windows:
+  build_and_test_windows:
     runs-on: windows-2019
     steps:
     - uses: actions/checkout@v3
@@ -78,7 +78,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest typing_extensions
         python tools/pcommand win_ci_install_prereqs
-    - name: Run tests
-      run: python tools/pcommand pytest -v tests
     - name: Compile binary
       run: python tools/pcommand win_ci_binary_build
+    - name: Run tests
+      run: python tools/pcommand pytest -v tests
