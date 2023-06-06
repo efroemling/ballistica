@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """A nice collection of ready-to-use pcommands for this package."""
 from __future__ import annotations
 

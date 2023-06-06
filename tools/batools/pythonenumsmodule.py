@@ -65,7 +65,7 @@ def _parse_name(lines: list[str], lnum: int) -> str:
         or bits[1] != 'class'
         or bits[3] != '{'
     ):
-        raise Exception(f'Unexpected format for enum on line {lnum + 1}.')
+        raise RuntimeError(f'Unexpected format for enum on line {lnum + 1}.')
     enum_name = bits[2]
     return enum_name
 
@@ -121,7 +121,7 @@ def _find_enum_end(lines: list[str], lnum: int) -> int:
     lnumend = lnum + 1
     while True:
         if lnumend > len(lines) - 1:
-            raise Exception(f'No end found for enum on line {lnum + 1}.')
+            raise RuntimeError(f'No end found for enum on line {lnum + 1}.')
         if '};' in lines[lnumend]:
             break
         lnumend += 1
@@ -134,13 +134,13 @@ def _parse_doc_lines(lines: list[str], lnum: int) -> tuple[list[str], int]:
     lnumorig = lnum
     while True:
         if lnum > len(lines) - 1:
-            raise Exception(
+            raise RuntimeError(
                 f'No end found for enum docstr line {lnumorig + 1}.'
             )
         if lines[lnum].startswith('enum class '):
             break
         if not lines[lnum].startswith('///'):
-            raise Exception(f'Invalid docstr at line {lnum + 1}.')
+            raise RuntimeError(f'Invalid docstr at line {lnum + 1}.')
         doclines.append(lines[lnum][4:])
         lnum += 1
     return doclines, lnum

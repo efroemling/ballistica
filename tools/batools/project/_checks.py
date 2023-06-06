@@ -53,9 +53,6 @@ def _source_file_feature_set_namespace_check(
     self: ProjectUpdater, fname: str, lines: list[str]
 ) -> None:
     """Make sure C++ code uses correct namespaces based on its location."""
-    # pylint: disable=too-many-branches
-    # if bool(True):
-    #     return
 
     # Extensions we know we're skipping.
     if any(fname.endswith(x) for x in ['.c', '.swift']):

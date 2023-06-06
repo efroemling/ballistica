@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=invalid-name
 from __future__ import annotations
 
 # This file is exec'ed by tools/spinoff, allowing us to customize

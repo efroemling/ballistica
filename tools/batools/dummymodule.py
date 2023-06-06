@@ -645,8 +645,6 @@ def _formatdoc(
 
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     from batools.docs import parse_docs_attrs
 
     out = ''
@@ -754,9 +752,6 @@ class Generator:
 
     def run(self) -> None:
         """Run the actual generation from within the app context."""
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         from efrotools import get_public_license
         from efrotools.code import format_python_str

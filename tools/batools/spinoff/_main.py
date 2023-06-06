@@ -14,7 +14,6 @@ from typing import assert_never
 from efro.error import CleanError
 from efro.terminal import Clr
 from efrotools import replace_exact
-import batools.spinoff
 from batools.spinoff._context import SpinoffContext
 
 
@@ -128,10 +127,11 @@ def _main() -> None:
 
 
 def _do_create(src_root: str | None, dst_root: str) -> None:
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, cyclic-import
     from efrotools import extract_arg, extract_flag
     from efrotools.code import format_python_str
     from efrotools import getconfig
+    import batools.spinoff
 
     # Note: in our case dst_root is actualy what becomes the src project
     # should clean up these var names to make that clearer.

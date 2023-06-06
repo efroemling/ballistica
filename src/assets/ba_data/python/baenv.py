@@ -78,10 +78,8 @@ def configure(
     affecting where those modules get loaded from.
     """
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
-    global _g_env_config  # pylint: disable=global-statement, invalid-name
+    global _g_env_config  # pylint: disable=global-statement
     if _g_env_config is not None:
         raise RuntimeError('An EnvConfig has already been created.')
 

@@ -80,7 +80,6 @@ class MetaMakefileGenerator:
     def run(self) -> dict[str, str]:
         """Do the thing."""
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
 
         public = getconfig(Path(self._projroot))['public']
         assert isinstance(public, bool)

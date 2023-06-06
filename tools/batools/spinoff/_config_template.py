@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=useless-suppression, disable=invalid-name, missing-docstring
 
 # A TEMPLATE CONFIG FOR CREATED SPINOFF DST PROJECTS.
 # THIS IS NOT USED AT RUNTIME; IT ONLY EXISTS FOR TYPE-CHECKING PURPOSES.

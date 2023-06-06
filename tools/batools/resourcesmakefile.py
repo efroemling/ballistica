@@ -57,9 +57,6 @@ class ResourcesMakefileGenerator:
         existing_data: str,
         projname: str,
     ) -> None:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
-
         from efrotools import getconfig
 
         self.public = getconfig(Path(projroot))['public']

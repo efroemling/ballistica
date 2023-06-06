@@ -200,7 +200,7 @@ def _run(cmd: str, echo: bool = False) -> None:
         print(cmd)
     result = os.system(cmd)
     if result != 0:
-        raise Exception("error running cmd: '" + cmd + "'")
+        raise RuntimeError(f"Error running cmd: '{cmd}'.")
 
 
 def _write_payload_file(assets_root: str, full: bool) -> None:
@@ -251,7 +251,9 @@ def _sync_windows_extras(cfg: Config) -> None:
     assert cfg.win_platform is not None
     assert cfg.win_type is not None
     if not os.path.isdir(cfg.win_extras_src):
-        raise Exception('win extras src dir not found: ' + cfg.win_extras_src)
+        raise RuntimeError(
+            "Win extras src dir not found: '{cfg.win_extras_src}'."
+        )
 
     # Ok, lets do full syncs on each subdir we find so we
     # properly delete anything in dst that disappeared from src.

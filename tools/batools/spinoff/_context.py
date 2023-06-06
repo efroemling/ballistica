@@ -578,6 +578,7 @@ class SpinoffContext:
                     )
 
     def _generate_env_hash(self) -> None:
+        # pylint: disable=cyclic-import
         from efrotools import get_files_hash
         import batools.spinoff
         import batools.project
@@ -1125,7 +1126,6 @@ class SpinoffContext:
 
     def _override(self) -> None:
         """Add one or more overrides."""
-        # pylint: disable=eval-used
         try:
             override_paths, src_paths = self._check_override_paths()
 

@@ -513,8 +513,6 @@ class App:
         if self.plus is not None:
             self.plus.on_app_launching()
 
-        # self.accounts.on_app_launching()
-
         # Make sure this runs after we init our plus, since
         # classic accounts here key off of our v2 ones in plus.
         if self.classic is not None:
@@ -543,6 +541,12 @@ class App:
         'run'.
         """
         assert _babase.in_logic_thread()
+
+        # Normally plus tells us when initial sign-in is done. If it's
+        # not present, however, we just do that ourself so we can
+        # proceed on to the running state.
+        if self.plus is None:
+            _babase.pushcall(self.on_initial_sign_in_completed)
 
     def on_app_running(self) -> None:
         """Called when the app enters the running state.
@@ -708,13 +712,15 @@ class App:
 
     def read_config(self) -> None:
         """(internal)"""
-        from babase._appconfig import read_config
+        from babase._appconfig import read_app_config
 
-        self._config, self.config_file_healthy = read_config()
+        self._config, self.config_file_healthy = read_app_config()
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""
         from babase._language import Lstr
+
+        assert _babase.in_logic_thread()
 
         appname = _babase.appname()
         if url.startswith(f'{appname}://code/'):
@@ -733,13 +739,17 @@ class App:
     def on_initial_sign_in_completed(self) -> None:
         """Callback to be run after initial sign-in (or lack thereof).
 
+        This normally gets called by the plus subsystem.
         This period includes things such as syncing account workspaces
         or other data so it may take a substantial amount of time.
         This should also run after a short amount of time if no login
         has occurred.
         """
+        assert _babase.in_logic_thread()
+        assert not self._initial_sign_in_completed
+
         # Tell meta it can start scanning extra stuff that just showed up
-        # (account workspaces).
+        # (namely account workspaces).
         self.meta.start_extra_scan()
 
         self._initial_sign_in_completed = True

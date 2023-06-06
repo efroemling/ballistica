@@ -19,10 +19,12 @@ def _parse_lprop_file(local_properties_path: str) -> str:
         lines = infile.read().splitlines()
     sdk_dir_lines = [l for l in lines if 'sdk.dir=' in l]
     if len(sdk_dir_lines) != 1:
-        raise Exception("Couldn't find sdk dir in local.properties")
+        raise RuntimeError("Couldn't find sdk dir in local.properties.")
     sdk_dir = sdk_dir_lines[0].split('=')[1].strip()
     if not os.path.isdir(sdk_dir):
-        raise Exception(f'Sdk dir from local.properties not found: {sdk_dir}.')
+        raise RuntimeError(
+            f'Sdk dir from local.properties not found: {sdk_dir}.'
+        )
     return sdk_dir
 
 
@@ -110,7 +112,7 @@ def run(projroot: str, args: list[str]) -> None:
     # Sanity check; look for a few things in the sdk that we expect to
     # be there.
     if not os.path.isfile(sdk_dir + '/platform-tools/adb'):
-        raise Exception(
+        raise RuntimeError(
             'ERROR: android sdk at "' + sdk_dir + '" does not seem valid'
         )
 
@@ -152,7 +154,7 @@ def run(projroot: str, args: list[str]) -> None:
         ver = lines[0].strip().replace("'", '').replace('"', '').split()[-1]
         path = os.path.join(sdk_dir, 'ndk', ver)
         if not os.path.isdir(path):
-            raise Exception(f'NDK listed in gradle not found: {path}')
+            raise RuntimeError(f'NDK listed in gradle not found: {path}.')
         print(path)
 
     if command == 'get-adb-path':
@@ -160,7 +162,7 @@ def run(projroot: str, args: list[str]) -> None:
 
         adbpath = Path(sdk_dir, 'platform-tools/adb')
         if not os.path.exists(adbpath):
-            raise Exception(f'ADB not found at expected path {adbpath}')
+            raise RuntimeError(f"ADB not found at expected path '{adbpath}'.")
 
         # Ok, we've got a valid adb path.
         # Now, for extra credit, let's see if 'which adb' points to the

@@ -94,8 +94,8 @@ class AppConfig(dict):
         self.commit()
 
 
-def read_config() -> tuple[AppConfig, bool]:
-    """Read the game config."""
+def read_app_config() -> tuple[AppConfig, bool]:
+    """Read the app config."""
     import os
     import json
 
