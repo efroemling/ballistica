@@ -147,7 +147,7 @@ class FeatureSet:
     @property
     def name_python_package_tests(self) -> str:
         """The name of our Python tests package."""
-        return f'test_ba{self.name_compact}'
+        return f'test_{self.name}'
 
     @property
     def name_python_binary_module(self) -> str:

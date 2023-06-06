@@ -10,13 +10,12 @@ from batools import testrun
 
 
 @pytest.mark.skipif(
-    testrun.test_runs_disabled(),
-    reason='Test app runs disabled here.',
+    testrun.test_runs_disabled(), reason=testrun.test_runs_disabled_reason()
 )
-def test_babase_imports() -> None:
-    """Testing."""
+def test_imports() -> None:
+    """Test imports for our featureset."""
 
     # Make sure our package and binary module can be cleanly imported by
     # themselves.
-    testrun.run_command('import babase')
-    testrun.run_command('import _babase')
+    testrun.run_command('import bauiv1')
+    testrun.run_command('import _bauiv1')

@@ -24,6 +24,12 @@ def test_runs_disabled() -> bool:
     return False
 
 
+def test_runs_disabled_reason() -> str:
+    """Why are test runs disabled here?"""
+    # Can get more specific later.
+    return 'App test runs disabled here.'
+
+
 def get_binary() -> str:
     """Return a path to a server build binary, building it if need be."""
 

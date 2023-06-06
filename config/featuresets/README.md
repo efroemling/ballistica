@@ -30,6 +30,6 @@ with specific naming conventions:
   named `bafoobarmeta` ('ba' prefix, name with spaces removed, 'meta' suffix)
   that lives under [meta source files](../../src/meta).
 - **Test Package**: If feature set `foo_bar` provides a set of tests, it should
-  be a directory named `test_bafoobar` ('test_ba' prefix, name with spaces
-  removed) under [tests](../../tests).
+  be a directory named `test_foo_bar` ('test_' prefix, unmodified feature set
+  name) under [tests](../../tests).
 

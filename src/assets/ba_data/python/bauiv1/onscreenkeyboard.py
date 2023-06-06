@@ -7,22 +7,30 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-import bauiv1 as bui
+from typing import TYPE_CHECKING
+
+import babase
+from _babase import screenmessage
+import _bauiv1
+from bauiv1.ui import Window
+
+if TYPE_CHECKING:
+    import bauiv1 as bui
 
 
-class OnScreenKeyboardWindow(bui.Window):
+class OnScreenKeyboardWindow(Window):
     """Simple built-in on-screen keyboard."""
 
     def __init__(self, textwidget: bui.Widget, label: str, max_chars: int):
         self._target_text = textwidget
         self._width = 700
         self._height = 400
-        assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        assert babase.app.classic is not None
+        uiscale = babase.app.classic.ui.uiscale
+        top_extra = 20 if uiscale is babase.UIScale.SMALL else 0
         super().__init__(
-            root_widget=bui.containerwidget(
-                parent=bui.get_special_widget('overlay_stack'),
+            root_widget=_bauiv1.containerwidget(
+                parent=_bauiv1.get_special_widget('overlay_stack'),
                 size=(self._width, self._height + top_extra),
                 transition='in_scale',
                 scale_origin_stack_offset=(
@@ -30,49 +38,49 @@ class OnScreenKeyboardWindow(bui.Window):
                 ),
                 scale=(
                     2.0
-                    if uiscale is bui.UIScale.SMALL
+                    if uiscale is babase.UIScale.SMALL
                     else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
+                    if uiscale is babase.UIScale.MEDIUM
                     else 1.0
                 ),
                 stack_offset=(0, 0)
-                if uiscale is bui.UIScale.SMALL
+                if uiscale is babase.UIScale.SMALL
                 else (0, 0)
-                if uiscale is bui.UIScale.MEDIUM
+                if uiscale is babase.UIScale.MEDIUM
                 else (0, 0),
             )
         )
-        self._done_button = bui.buttonwidget(
+        self._done_button = _bauiv1.buttonwidget(
             parent=self._root_widget,
             position=(self._width - 200, 44),
             size=(140, 60),
             autoselect=True,
-            label=bui.Lstr(resource='doneText'),
+            label=babase.Lstr(resource='doneText'),
             on_activate_call=self._done,
         )
-        bui.containerwidget(
+        _bauiv1.containerwidget(
             edit=self._root_widget,
             on_cancel_call=self._cancel,
             start_button=self._done_button,
         )
 
-        bui.textwidget(
+        _bauiv1.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
             scale=0.95,
             text=label,
             maxwidth=self._width - 140,
-            color=bui.app.classic.ui.title_color,
+            color=babase.app.classic.ui.title_color,
             h_align='center',
             v_align='center',
         )
 
-        self._text_field = bui.textwidget(
+        self._text_field = _bauiv1.textwidget(
             parent=self._root_widget,
             position=(70, self._height - 116),
             max_chars=max_chars,
-            text=cast(str, bui.textwidget(query=self._target_text)),
+            text=cast(str, _bauiv1.textwidget(query=self._target_text)),
             on_return_press_call=self._done,
             autoselect=True,
             size=(self._width - 140, 55),
@@ -122,7 +130,7 @@ class OnScreenKeyboardWindow(bui.Window):
         key_color = self._key_color
         key_color_dark = self._key_color_dark
 
-        self._click_sound = bui.getsound('click01')
+        self._click_sound = _bauiv1.getsound('click01')
 
         # kill prev char keys
         for key in self._char_keys:
@@ -137,21 +145,21 @@ class OnScreenKeyboardWindow(bui.Window):
             h = row_starts[row_num]
             # shift key before row 3
             if row_num == 2 and self._shift_button is None:
-                self._shift_button = bui.buttonwidget(
+                self._shift_button = _bauiv1.buttonwidget(
                     parent=self._root_widget,
                     position=(h - key_width * 2.0, v),
                     size=(key_width * 1.7, key_height),
                     autoselect=True,
                     textcolor=key_textcolor,
                     color=key_color_dark,
-                    label=bui.charstr(bui.SpecialChar.SHIFT),
+                    label=babase.charstr(babase.SpecialChar.SHIFT),
                     enable_sound=False,
                     extra_touch_border_scale=0.3,
                     button_type='square',
                 )
 
             for _ in row:
-                btn = bui.buttonwidget(
+                btn = _bauiv1.buttonwidget(
                     parent=self._root_widget,
                     position=(h, v),
                     size=(key_width, key_height),
@@ -171,7 +179,7 @@ class OnScreenKeyboardWindow(bui.Window):
                 if self._backspace_button is not None:
                     self._backspace_button.delete()
 
-                self._backspace_button = bui.buttonwidget(
+                self._backspace_button = _bauiv1.buttonwidget(
                     parent=self._root_widget,
                     position=(h + 4, v),
                     size=(key_width * 1.8, key_height),
@@ -180,7 +188,7 @@ class OnScreenKeyboardWindow(bui.Window):
                     repeat=True,
                     textcolor=key_textcolor,
                     color=key_color_dark,
-                    label=bui.charstr(bui.SpecialChar.DELETE),
+                    label=babase.charstr(babase.SpecialChar.DELETE),
                     button_type='square',
                     on_activate_call=self._del,
                 )
@@ -188,7 +196,7 @@ class OnScreenKeyboardWindow(bui.Window):
             # Do space bar and stuff.
             if row_num == 2:
                 if self._num_mode_button is None:
-                    self._num_mode_button = bui.buttonwidget(
+                    self._num_mode_button = _bauiv1.buttonwidget(
                         parent=self._root_widget,
                         position=(112, v - 8),
                         size=(key_width * 2, key_height + 5),
@@ -201,7 +209,7 @@ class OnScreenKeyboardWindow(bui.Window):
                         label='',
                     )
                 if self._emoji_button is None:
-                    self._emoji_button = bui.buttonwidget(
+                    self._emoji_button = _bauiv1.buttonwidget(
                         parent=self._root_widget,
                         position=(56, v - 8),
                         size=(key_width, key_height + 5),
@@ -209,13 +217,13 @@ class OnScreenKeyboardWindow(bui.Window):
                         enable_sound=False,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=bui.charstr(bui.SpecialChar.LOGO_FLAT),
+                        label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
                         extra_touch_border_scale=0.3,
                         button_type='square',
                     )
                 btn1 = self._num_mode_button
                 if self._space_button is None:
-                    self._space_button = bui.buttonwidget(
+                    self._space_button = _bauiv1.buttonwidget(
                         parent=self._root_widget,
                         position=(210, v - 12),
                         size=(key_width * 6.1, key_height + 15),
@@ -224,49 +232,51 @@ class OnScreenKeyboardWindow(bui.Window):
                         autoselect=True,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=bui.Lstr(resource='spaceKeyText'),
-                        on_activate_call=bui.Call(self._type_char, ' '),
+                        label=babase.Lstr(resource='spaceKeyText'),
+                        on_activate_call=babase.Call(self._type_char, ' '),
                     )
 
                     # Show change instructions only if we have more than one
                     # keyboard option.
                     keyboards = (
-                        bui.app.meta.scanresults.exports_of_class(bui.Keyboard)
-                        if bui.app.meta.scanresults is not None
+                        babase.app.meta.scanresults.exports_of_class(
+                            babase.Keyboard
+                        )
+                        if babase.app.meta.scanresults is not None
                         else []
                     )
                     if len(keyboards) > 1:
-                        bui.textwidget(
+                        _bauiv1.textwidget(
                             parent=self._root_widget,
                             h_align='center',
                             position=(210, v - 70),
                             size=(key_width * 6.1, key_height + 15),
-                            text=bui.Lstr(
+                            text=babase.Lstr(
                                 resource='keyboardChangeInstructionsText'
                             ),
                             scale=0.75,
                         )
                 btn2 = self._space_button
                 btn3 = self._emoji_button
-                bui.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
-                bui.widget(
+                _bauiv1.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
+                _bauiv1.widget(
                     edit=btn2, left_widget=btn1, right_widget=self._done_button
                 )
-                bui.widget(edit=btn3, left_widget=btn1)
-                bui.widget(edit=self._done_button, left_widget=btn2)
+                _bauiv1.widget(edit=btn3, left_widget=btn1)
+                _bauiv1.widget(edit=self._done_button, left_widget=btn2)
 
-        bui.containerwidget(
+        _bauiv1.containerwidget(
             edit=self._root_widget, selected_child=self._char_keys[14]
         )
 
         self._refresh()
 
     def _get_keyboard(self) -> bui.Keyboard:
-        assert bui.app.meta.scanresults is not None
-        classname = bui.app.meta.scanresults.exports_of_class(bui.Keyboard)[
-            self._keyboard_index
-        ]
-        kbclass = bui.getclass(classname, bui.Keyboard)
+        assert babase.app.meta.scanresults is not None
+        classname = babase.app.meta.scanresults.exports_of_class(
+            babase.Keyboard
+        )[self._keyboard_index]
+        kbclass = babase.getclass(classname, babase.Keyboard)
         return kbclass()
 
     def _refresh(self) -> None:
@@ -275,23 +285,23 @@ class OnScreenKeyboardWindow(bui.Window):
             chars = list(self._chars)
             if self._mode == 'caps':
                 chars = [c.upper() for c in chars]
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._shift_button,
                 color=self._key_color_lit
                 if self._mode == 'caps'
                 else self._key_color_dark,
-                label=bui.charstr(bui.SpecialChar.SHIFT),
+                label=babase.charstr(babase.SpecialChar.SHIFT),
                 on_activate_call=self._shift,
             )
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._num_mode_button,
                 label='123#&*',
                 on_activate_call=self._num_mode,
             )
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._emoji_button,
                 color=self._key_color_dark,
-                label=bui.charstr(bui.SpecialChar.LOGO_FLAT),
+                label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
                 on_activate_call=self._next_mode,
             )
         else:
@@ -299,21 +309,21 @@ class OnScreenKeyboardWindow(bui.Window):
                 chars = list(self._keyboard.nums)
             else:
                 chars = list(self._keyboard.pages[self._mode])
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._shift_button,
                 color=self._key_color_dark,
                 label='',
                 on_activate_call=self._null_press,
             )
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._num_mode_button,
                 label='abc',
                 on_activate_call=self._abc_mode,
             )
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=self._emoji_button,
                 color=self._key_color_dark,
-                label=bui.charstr(bui.SpecialChar.LOGO_FLAT),
+                label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
                 on_activate_call=self._next_mode,
             )
 
@@ -324,7 +334,7 @@ class OnScreenKeyboardWindow(bui.Window):
                 # No such char.
                 have_char = False
                 pagename = self._mode
-                if bui.do_once():
+                if babase.do_once():
                     errstr = (
                         f'Size of page "{pagename}" of keyboard'
                         f' "{self._keyboard.name}" is incorrect:'
@@ -332,10 +342,10 @@ class OnScreenKeyboardWindow(bui.Window):
                         f' (size of default "normal" page)'
                     )
                     logging.error(errstr)
-            bui.buttonwidget(
+            _bauiv1.buttonwidget(
                 edit=btn,
                 label=chars[i] if have_char else ' ',
-                on_activate_call=bui.Call(
+                on_activate_call=babase.Call(
                     self._type_char, chars[i] if have_char else ' '
                 ),
             )
@@ -360,20 +370,22 @@ class OnScreenKeyboardWindow(bui.Window):
         self._refresh()
 
     def _next_keyboard(self) -> None:
-        assert bui.app.meta.scanresults is not None
-        kbexports = bui.app.meta.scanresults.exports_of_class(bui.Keyboard)
+        assert babase.app.meta.scanresults is not None
+        kbexports = babase.app.meta.scanresults.exports_of_class(
+            babase.Keyboard
+        )
         self._keyboard_index = (self._keyboard_index + 1) % len(kbexports)
 
         self._load_keyboard()
         if len(kbexports) < 2:
-            bui.getsound('error').play()
-            bui.screenmessage(
-                bui.Lstr(resource='keyboardNoOthersAvailableText'),
+            _bauiv1.getsound('error').play()
+            screenmessage(
+                babase.Lstr(resource='keyboardNoOthersAvailableText'),
                 color=(1, 0, 0),
             )
         else:
-            bui.screenmessage(
-                bui.Lstr(
+            screenmessage(
+                babase.Lstr(
                     resource='keyboardSwitchText',
                     subs=[('${NAME}', self._keyboard.name)],
                 ),
@@ -394,29 +406,29 @@ class OnScreenKeyboardWindow(bui.Window):
 
     def _del(self) -> None:
         self._click_sound.play()
-        txt = cast(str, bui.textwidget(query=self._text_field))
+        txt = cast(str, _bauiv1.textwidget(query=self._text_field))
         # pylint: disable=unsubscriptable-object
         txt = txt[:-1]
-        bui.textwidget(edit=self._text_field, text=txt)
+        _bauiv1.textwidget(edit=self._text_field, text=txt)
 
     def _type_char(self, char: str) -> None:
         self._click_sound.play()
         if char.isspace():
             if (
-                bui.apptime() - self._last_space_press
+                babase.apptime() - self._last_space_press
                 < self._double_space_interval
             ):
                 self._last_space_press = 0
                 self._next_keyboard()
                 self._del()  # We typed unneeded space around 1s ago.
                 return
-            self._last_space_press = bui.apptime()
+            self._last_space_press = babase.apptime()
 
         # Operate in unicode so we don't do anything funky like chop utf-8
         # chars in half.
-        txt = cast(str, bui.textwidget(query=self._text_field))
+        txt = cast(str, _bauiv1.textwidget(query=self._text_field))
         txt += char
-        bui.textwidget(edit=self._text_field, text=txt)
+        _bauiv1.textwidget(edit=self._text_field, text=txt)
 
         # If we were caps, go back only if not Shift is pressed twice.
         if self._mode == 'caps' and not self._double_press_shift:
@@ -424,13 +436,13 @@ class OnScreenKeyboardWindow(bui.Window):
         self._refresh()
 
     def _cancel(self) -> None:
-        bui.getsound('swish').play()
-        bui.containerwidget(edit=self._root_widget, transition='out_scale')
+        _bauiv1.getsound('swish').play()
+        _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_scale')
+        _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
         if self._target_text:
-            bui.textwidget(
+            _bauiv1.textwidget(
                 edit=self._target_text,
-                text=cast(str, bui.textwidget(query=self._text_field)),
+                text=cast(str, _bauiv1.textwidget(query=self._text_field)),
             )
