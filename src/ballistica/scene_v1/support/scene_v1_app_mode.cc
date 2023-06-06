@@ -7,10 +7,12 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
@@ -24,7 +26,6 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 
 namespace ballistica::scene_v1 {
 

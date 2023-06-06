@@ -734,3 +734,29 @@ class ClassicSubsystem(AppSubsystem):
         from bastd.ui.confirm import QuitWindow
 
         QuitWindow()
+
+    def get_draw_score_screen_activity(self) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.drawscore import DrawScoreScreenActivity
+
+        return DrawScoreScreenActivity
+
+    def get_team_series_victory_score_screen_activity(
+        self,
+    ) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.multiteamvictory import (
+            TeamSeriesVictoryScoreScreenActivity,
+        )
+
+        return TeamSeriesVictoryScoreScreenActivity
+
+    def get_free_for_all_victory_score_screen_activity(
+        self,
+    ) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.freeforallvictory import (
+            FreeForAllVictoryScoreScreenActivity,
+        )
+
+        return FreeForAllVictoryScoreScreenActivity

@@ -12,7 +12,7 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base', 'scene_v1', 'ui_v1'}
+fset.requirements = {'base', 'scene_v1', 'ui_v1', 'std'}
 
 # We provide 'babase.app.classic'.
 fset.has_python_app_subsystem = True

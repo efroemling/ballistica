@@ -86,11 +86,12 @@ auto ClassicFeatureSet::IsV1AccountSignedIn() -> bool {
 auto ClassicFeatureSet::HandleSignOutV1() -> bool {
   // For particular account types we can simply set our state; no need to
   // bring any other parties in to play.
-  if (g_classic->account_type == classic::V1AccountType::kDevice
-      || g_classic->account_type == classic::V1AccountType::kServer
-      || g_classic->account_type == classic::V1AccountType::kV2) {
-    g_classic->v1_account->PushSetV1LoginCall(
-        g_classic->account_type, classic::V1LoginState::kSignedOut, "", "");
+  if (g_classic->v1_account_type() == classic::V1AccountType::kDevice
+      || g_classic->v1_account_type() == classic::V1AccountType::kServer
+      || g_classic->v1_account_type() == classic::V1AccountType::kV2) {
+    g_classic->v1_account->PushSetV1LoginCall(g_classic->v1_account_type(),
+                                              classic::V1LoginState::kSignedOut,
+                                              "", "");
     return true;  // We handled it.
   }
   // We didn't handle it.
@@ -128,7 +129,7 @@ auto ClassicFeatureSet::GetV1AccountLoginName() -> std::string {
 }
 
 auto ClassicFeatureSet::GetV1AccountTypeString() -> std::string {
-  return V1Account::AccountTypeToString(g_classic->account_type);
+  return V1Account::AccountTypeToString(g_classic->v1_account_type());
 }
 
 auto ClassicFeatureSet::GetV1AccountLoginStateString() -> std::string {
@@ -202,7 +203,7 @@ auto ClassicFeatureSet::BuildPublicPartyStateVal() -> PyObject* {
   return python->BuildPublicPartyStateVal();
 }
 
-std::string ClassicFeatureSet::GetV1AccountDisplayString(bool full) {
+auto ClassicFeatureSet::GetV1AccountDisplayString(bool full) -> std::string {
   if (full) {
     assert(Utils::IsValidUTF8(
         scene_v1::PlayerSpec::GetAccountPlayerSpec().GetDisplayString()));
@@ -212,6 +213,31 @@ std::string ClassicFeatureSet::GetV1AccountDisplayString(bool full) {
         scene_v1::PlayerSpec::GetAccountPlayerSpec().GetShortName()));
     return scene_v1::PlayerSpec::GetAccountPlayerSpec().GetShortName();
   }
+}
+
+auto ClassicFeatureSet::GetV1AccountTypeFromString(const char* value) -> int {
+  return static_cast<int>(V1Account::AccountTypeFromString(value));
+}
+
+auto ClassicFeatureSet::GetV1AccountTypeIconString(int account_type_in)
+    -> std::string {
+  return V1Account::AccountTypeToIconString(
+      static_cast<V1AccountType>(account_type_in));
+}
+
+auto ClassicFeatureSet::V1AccountTypeToString(int account_type_in)
+    -> std::string {
+  return V1Account::AccountTypeToString(
+      static_cast<V1AccountType>(account_type_in));
+}
+
+auto ClassicFeatureSet::GetV1AccountType() -> int {
+  return static_cast<int>(v1_account_type());
+}
+
+void ClassicFeatureSet::PlayMusic(const std::string& music_type,
+                                  bool continuous) {
+  python->PlayMusic(music_type, continuous);
 }
 
 }  // namespace ballistica::classic

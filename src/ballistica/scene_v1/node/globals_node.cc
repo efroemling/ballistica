@@ -6,7 +6,7 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
-#include "ballistica/classic/python/classic_python.h"
+#include "ballistica/base/support/classic_soft.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -180,7 +180,12 @@ void GlobalsNode::SetAsForeground() {
   g_base->audio->SetSoundPitch(slow_motion_ ? 0.4f : 1.0f);
 
   // Tell the scripting layer to play our current music.
-  g_classic->python->PlayMusic(music_, music_continuous_);
+  if (g_base->HaveClassic()) {
+    g_base->classic()->PlayMusic(music_, music_continuous_);
+  } else {
+    BA_LOG_ONCE(LogLevel::kWarning,
+                "Classic not present; music will not play.");
+  }
 }
 
 auto GlobalsNode::IsCurrentGlobals() const -> bool {
@@ -464,7 +469,14 @@ void GlobalsNode::SetUseFixedVROverlay(bool val) {
 
 void GlobalsNode::SetMusicCount(int val) {
   if (music_count_ != val && IsCurrentGlobals()) {
-    g_classic->python->PlayMusic(music_, music_continuous_);
+    // Tell the scripting layer to play our current music.
+    if (g_base->HaveClassic()) {
+      g_base->classic()->PlayMusic(music_, music_continuous_);
+    } else {
+      BA_LOG_ONCE(LogLevel::kWarning,
+                  "Classic not present; music will not play (b).");
+    }
+    // g_classic->python->PlayMusic(music_, music_continuous_);
   }
   music_count_ = val;
 }

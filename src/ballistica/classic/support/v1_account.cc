@@ -166,22 +166,23 @@ void V1Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
     assert(g_base->InLogicThread());
 
     // We want redundant sets to be no-ops.
-    if (login_state_ != login_state || g_classic->account_type != account_type
-        || login_id_ != login_id || login_name_ != login_name) {
+    if (login_state_ != login_state
+        || g_classic->v1_account_type() != account_type || login_id_ != login_id
+        || login_name_ != login_name) {
       // Special case: if they sent a sign-out for an account type that is
       // currently not signed in, ignore it.
       if (login_state == V1LoginState::kSignedOut
-          && (account_type != g_classic->account_type)) {
+          && (account_type != g_classic->v1_account_type())) {
         // No-op.
       } else {
         login_state_ = login_state;
-        g_classic->account_type = account_type;
+        g_classic->set_v1_account_type(account_type);
         login_id_ = login_id;
         login_name_ = Utils::GetValidUTF8(login_name.c_str(), "gthm");
 
         // If they signed out of an account, account type switches to invalid.
         if (login_state == V1LoginState::kSignedOut) {
-          g_classic->account_type = V1AccountType::kInvalid;
+          g_classic->set_v1_account_type(V1AccountType::kInvalid);
         }
         login_state_num_ += 1;
         call_login_did_change = true;

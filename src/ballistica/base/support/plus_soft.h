@@ -12,7 +12,7 @@
 
 namespace ballistica::base {
 
-/// 'Soft' interface to the plus feature-set.
+/// 'Soft' interface to the plus feature-set, managed by base.
 /// Feature-sets listing plus as a soft requirement must limit their use of
 /// plus to these methods and should be prepared to handle the not-present
 /// case.

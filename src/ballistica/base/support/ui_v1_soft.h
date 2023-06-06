@@ -13,7 +13,7 @@ class Widget;
 
 namespace ballistica::base {
 
-/// 'Soft' interface to the ui_v1 feature-set.
+/// 'Soft' interface to the ui_v1 feature-set, managed by base.
 /// Feature-sets listing ui_v1 as a soft requirement must limit their use of
 /// it to these methods and should be prepared to handle the not-present
 /// case.

@@ -2,7 +2,6 @@
 
 #include "ballistica/scene_v1/scene_v1.h"
 
-#include "ballistica/classic/classic.h"
 #include "ballistica/scene_v1/node/anim_curve_node.h"
 #include "ballistica/scene_v1/node/bomb_node.h"
 #include "ballistica/scene_v1/node/combine_node.h"
@@ -35,7 +34,6 @@ namespace ballistica::scene_v1 {
 core::CoreFeatureSet* g_core{};
 base::BaseFeatureSet* g_base{};
 SceneV1FeatureSet* g_scene_v1{};
-classic::ClassicFeatureSet* g_classic{};
 
 void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   // Ok, our feature-set's Python module is getting imported.
@@ -66,8 +64,6 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   // Import any other C++ feature-set-front-ends we use.
   assert(g_base == nullptr);
   g_base = base::BaseFeatureSet::Import();
-  assert(g_classic == nullptr);
-  g_classic = classic::ClassicFeatureSet::Import();
 
   g_core->LifecycleLog("_bascenev1 exec end");
 }

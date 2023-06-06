@@ -595,24 +595,31 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 #                                                                              #
 ################################################################################
 
+# Build and check a spinoff project including only the core feature-set.
 spinoff-test-core:
 	tools/pcommand spinoff_test core $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project including only the base feature-set.
 spinoff-test-base:
 	tools/pcommand spinoff_test base $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project including only the plus feature-set.
 spinoff-test-plus:
 	tools/pcommand spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project with only the template_fs feature-set.
 spinoff-test-template_fs:
 	tools/pcommand spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project with only the ui_v1 feature-set.
 spinoff-test-ui_v1:
 	tools/pcommand spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project with only the scene_v1 feature-set.
 spinoff-test-scene_v1:
 	tools/pcommand spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Blow away all spinoff-test builds.
 spinoff-test-clean:
 	rm -rf build/spinofftest
 

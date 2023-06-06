@@ -22,9 +22,6 @@ class CoreFeatureSet;
 namespace ballistica::base {
 class BaseFeatureSet;
 }
-namespace ballistica::classic {
-class ClassicFeatureSet;
-}
 
 namespace ballistica::scene_v1 {
 
@@ -313,7 +310,6 @@ enum class NodeAttributeType {
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern SceneV1FeatureSet* g_scene_v1;
-extern classic::ClassicFeatureSet* g_classic;
 
 class SceneV1FeatureSet : public FeatureSetNativeComponent {
  public:

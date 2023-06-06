@@ -5,8 +5,6 @@
 
 #include <string>
 
-#include "ballistica/classic/classic.h"
-
 namespace ballistica::scene_v1 {
 
 /// a PlayerSpec is a portable description of an entity such as a player or
@@ -51,7 +49,7 @@ class PlayerSpec {
  private:
   std::string name_;
   std::string short_name_;
-  classic::V1AccountType account_type_{classic::V1AccountType::kInvalid};
+  int v1_account_type_{};
 };
 
 }  // namespace ballistica::scene_v1

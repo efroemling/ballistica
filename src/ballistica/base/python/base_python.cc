@@ -74,7 +74,9 @@ void BasePython::ImportPythonAppObjs() {
 
 void BasePython::SoftImportPlus() {
   // To keep our init order clean, we want to root out any attempted uses
-  // of plus before _babase has been fully inited.
+  // of this before _babase/babase has been fully imported.
+  assert(g_base);
+  assert(g_base->IsBaseCompletelyImported());
 
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baplus"));
@@ -86,6 +88,11 @@ void BasePython::SoftImportPlus() {
 }
 
 void BasePython::SoftImportClassic() {
+  // To keep our init order clean, we want to root out any attempted uses
+  // of this before _babase/babase has been fully imported.
+  assert(g_base);
+  assert(g_base->IsBaseCompletelyImported());
+
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baclassic"));
   if (!result.Exists()) {
@@ -96,6 +103,11 @@ void BasePython::SoftImportClassic() {
 }
 
 void BasePython::SoftImportUIV1() {
+  // To keep our init order clean, we want to root out any attempted uses
+  // of this before _babase/babase has been fully imported.
+  assert(g_base);
+  assert(g_base->IsBaseCompletelyImported());
+
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_bauiv1"));
   if (!result.Exists()) {

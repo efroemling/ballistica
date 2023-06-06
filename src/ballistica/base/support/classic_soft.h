@@ -10,7 +10,7 @@
 
 namespace ballistica::base {
 
-/// 'Soft' interface to the classic feature-set.
+/// 'Soft' interface to the classic feature-set, managed by base.
 /// Feature-sets listing classic as a soft requirement must limit their use of
 /// it to these methods and should be prepared to handle the not-present
 /// case.
@@ -29,6 +29,7 @@ class ClassicSoftInterface {
   virtual auto GetV1AccountExtra() -> std::string = 0;
   virtual auto GetV1AccountExtra2() -> std::string = 0;
   virtual auto GetV1AccountLoginName() -> std::string = 0;
+  virtual auto GetV1AccountType() -> int = 0;
   virtual auto GetV1AccountTypeString() -> std::string = 0;
   virtual auto GetV1AccountLoginStateString() -> std::string = 0;
   virtual auto GetV1AccountLoginStateNum() -> int = 0;
@@ -41,6 +42,10 @@ class ClassicSoftInterface {
   virtual auto GetClientInfoQueryResponseCall() -> PyObject* = 0;
   virtual auto BuildPublicPartyStateVal() -> PyObject* = 0;
   virtual auto GetV1AccountDisplayString(bool full) -> std::string = 0;
+  virtual auto GetV1AccountTypeFromString(const char* value) -> int = 0;
+  virtual auto GetV1AccountTypeIconString(int account_type) -> std::string = 0;
+  virtual auto V1AccountTypeToString(int account_type) -> std::string = 0;
+  virtual void PlayMusic(const std::string& music_type, bool continuous) = 0;
 };
 
 }  // namespace ballistica::base

@@ -56,14 +56,16 @@ class FreeForAllSession(MultiTeamSession):
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:
         # pylint: disable=cyclic-import
         from efro.util import asserttype
-        from bastd.activity.drawscore import DrawScoreScreenActivity
-        from bastd.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity,
-        )
-        from bastd.activity.freeforallvictory import (
-            FreeForAllVictoryScoreScreenActivity,
-        )
 
+        classic = _babase.app.classic
+        assert classic is not None
+        draw_score_screen_activity = classic.get_draw_score_screen_activity()
+        team_series_victory_score_screen_activity = (
+            classic.get_team_series_victory_score_screen_activity()
+        )
+        free_for_all_victory_score_screen_activity = (
+            classic.get_free_for_all_victory_score_screen_activity()
+        )
         winners = results.winnergroups
 
         # If there's multiple players and everyone has the same score,
@@ -71,7 +73,7 @@ class FreeForAllSession(MultiTeamSession):
         if len(self.sessionplayers) > 1 and len(winners) < 2:
             self.setactivity(
                 _bascenev1.newactivity(
-                    DrawScoreScreenActivity, {'results': results}
+                    draw_score_screen_activity, {'results': results}
                 )
             )
         else:
@@ -100,14 +102,14 @@ class FreeForAllSession(MultiTeamSession):
             ):
                 self.setactivity(
                     _bascenev1.newactivity(
-                        TeamSeriesVictoryScoreScreenActivity,
+                        team_series_victory_score_screen_activity,
                         {'winner': series_winners[0]},
                     )
                 )
             else:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        FreeForAllVictoryScoreScreenActivity,
+                        free_for_all_victory_score_screen_activity,
                         {'results': results},
                     )
                 )

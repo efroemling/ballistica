@@ -95,14 +95,21 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
   auto GetClientInfoQueryResponseCall() -> PyObject* override;
   auto BuildPublicPartyStateVal() -> PyObject* override;
   auto GetV1AccountDisplayString(bool full) -> std::string override;
+  auto GetV1AccountTypeFromString(const char* value) -> int override;
+  auto GetV1AccountTypeIconString(int account_type) -> std::string override;
+  auto V1AccountTypeToString(int account_type) -> std::string override;
+  auto GetV1AccountType() -> int override;
 
   ClassicPython* const python;
   V1Account* const v1_account;
 
-  V1AccountType account_type{V1AccountType::kInvalid};
+  auto v1_account_type() const { return v1_account_type_; }
+  void set_v1_account_type(V1AccountType tp) { v1_account_type_ = tp; }
+  void PlayMusic(const std::string& music_type, bool continuous) override;
 
  private:
   ClassicFeatureSet();
+  V1AccountType v1_account_type_{V1AccountType::kInvalid};
 };
 
 }  // namespace ballistica::classic
