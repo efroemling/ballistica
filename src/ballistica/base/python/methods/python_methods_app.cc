@@ -368,8 +368,8 @@ static PyMethodDef PyAppTimerDef = {
     "##### Examples\n"
     "Print some stuff through time:\n"
     ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.apptimer(1.0, ba.Call(ba.screenmessage, 'hello from the "
-    "future!'))\n"
+    ">>> babase.apptimer(1.0, ba.Call(ba.screenmessage,\n"
+    "                          'hello from the future!'))\n"
     ">>> babase.apptimer(2.0, ba.Call(ba.screenmessage,\n"
     "...                       'hello from the future 2!'))\n",
 };

@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, TypeVar, Protocol, NewType
 from efro.terminal import Clr
 import _babase
 from babase._error import print_error, print_exception
-from babase._mgen.enums import TimeType
 
 if TYPE_CHECKING:
     from typing import Any
@@ -322,6 +321,7 @@ def verify_object_death(obj: object) -> None:
         ref = weakref.ref(obj)
     except Exception:
         print_exception('Unable to create weak-ref in verify_object_death')
+        return
 
     # Use a slight range for our checks so they don't all land at once
     # if we queue a lot of them.

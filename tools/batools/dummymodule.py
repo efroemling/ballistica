@@ -176,6 +176,12 @@ def _writefuncs(
             if is_classmethod:
                 defslines = f'{indstr}@classmethod\n{defslines}'
 
+            if funcname == 'quit':
+                defslines = (
+                    f'{indstr}# noinspection PyShadowingBuiltins\n'
+                    f'{defslines}'
+                )
+
             # Types can be strings for forward-declaration cases.
             if (returns[0] == "'" and returns[-1] == "'") or (
                 returns[0] == '"' and returns[-1] == '"'
@@ -788,7 +794,7 @@ class Generator:
             else 'TYPE_CHECKING, TypeVar'
         )
         typing_imports_tc = (
-            'Any, Callable, Literal'
+            'Any, Callable'
             if self.mname == '_babase'
             else 'Any, Callable, Literal, Sequence'
             if self.mname == '_bascenev1'
@@ -799,7 +805,7 @@ class Generator:
         tc_import_lines_extra = ''
         if self.mname == '_babase':
             tc_import_lines_extra += (
-                '    from babase._app import App\n    import babase\n'
+                '    from babase import App\n    import babase\n'
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'

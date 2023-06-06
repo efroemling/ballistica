@@ -21,8 +21,6 @@ class AppModeSelector:
     modifying this.
     """
 
-    # pylint: disable=useless-return
-
     def app_mode_for_intent(self, intent: AppIntent) -> type[AppMode]:
         """Given an AppIntent, return the AppMode that should handle it.
 

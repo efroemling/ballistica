@@ -422,7 +422,6 @@ class App:
 
         # If the app-mode for this intent is different than the active
         # one, switch.
-        # pylint: disable=unidiomatic-typecheck
         if type(mode) is not type(self._mode):
             if self._mode is None:
                 is_initial_mode = True

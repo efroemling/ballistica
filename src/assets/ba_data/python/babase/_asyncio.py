@@ -42,7 +42,7 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     except RuntimeError:
         pass
 
-    global _asyncio_event_loop  # pylint: disable=invalid-name
+    global _asyncio_event_loop
     _asyncio_event_loop = asyncio.new_event_loop()
     _asyncio_event_loop.set_default_executor(babase.app.threadpool)
 
@@ -72,7 +72,7 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
                     warn_time,
                 )
 
-    global _asyncio_timer  # pylint: disable=invalid-name
+    global _asyncio_timer
     _asyncio_timer = _babase.AppTimer(1.0 / 30.0, run_cycle, repeat=True)
 
     if bool(False):

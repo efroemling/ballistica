@@ -4,7 +4,11 @@
 # Run make update to update the project after editing this..
 # pylint: disable=missing-module-docstring, line-too-long
 from __future__ import annotations
+
+# noinspection PyProtectedMember
 from babase._mgen import enums
+
+# noinspection PyProtectedMember
 from babase import (
     _language,
     _apputils,
