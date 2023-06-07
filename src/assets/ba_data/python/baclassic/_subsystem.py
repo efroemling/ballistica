@@ -850,3 +850,18 @@ class ClassicSubsystem(AppSubsystem):
         ProfileBrowserWindow(
             transition, in_main_menu, selected_profile, origin_widget
         )
+
+    def preload_map_preview_media(self) -> None:
+        """Preload media needed for map preview UIs.
+
+        Category: **Asset Functions**
+        """
+        try:
+            _bauiv1.getmesh('level_select_button_opaque')
+            _bauiv1.getmesh('level_select_button_transparent')
+            for maptype in list(self.maps.values()):
+                map_tex_name = maptype.get_preview_texture_name()
+                if map_tex_name is not None:
+                    _bauiv1.gettexture(map_tex_name)
+        except Exception:
+            logging.exception('Error preloading map preview media.')

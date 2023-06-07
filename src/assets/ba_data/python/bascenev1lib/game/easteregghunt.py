@@ -38,7 +38,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
     """A game where score is based on collecting eggs."""
 

@@ -28,7 +28,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
     """A game type based on acquiring kills."""
 

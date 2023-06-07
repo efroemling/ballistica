@@ -28,9 +28,8 @@ CURRENT_API_VERSION = 8
 # This is purely a convenience; it is possible to use full class paths
 # instead of these or to make the meta system aware of arbitrary classes.
 EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
-    'plugin': 'ba.Plugin',
-    'keyboard': 'ba.Keyboard',
-    'game': 'ba.GameActivity',
+    'plugin': 'babase.Plugin',
+    'keyboard': 'babase.Keyboard',
 }
 
 T = TypeVar('T')
@@ -54,7 +53,7 @@ class MetadataSubsystem:
 
     Category: **App Classes**
 
-    Access the single shared instance of this class at 'ba.app.meta'.
+    Access the single shared instance of this class at 'babase.app.meta'.
     """
 
     def __init__(self) -> None:
@@ -159,7 +158,7 @@ class MetadataSubsystem:
         if self.scanresults is None:
             if _babase.in_logic_thread():
                 logging.warning(
-                    'ba.meta._wait_for_scan_results()'
+                    'babase.meta._wait_for_scan_results()'
                     ' called in logic thread before scan completed;'
                     ' this can cause hitches.'
                 )
@@ -392,15 +391,27 @@ class DirectoryScan:
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
 
-                    # If export type is one of our shortcuts, sub in the
-                    # actual class path. Otherwise assume its a classpath
-                    # itself.
-                    exporttype = EXPORT_CLASS_NAME_SHORTCUTS.get(exporttypestr)
-                    if exporttype is None:
-                        exporttype = exporttypestr
-                    self.results.exports.setdefault(exporttype, []).append(
-                        classname
-                    )
+                    # Since we'll soon have multiple versions of 'game'
+                    # classes we need to migrate people to using base
+                    # class names for them.
+                    if exporttypestr == 'game':
+                        self.results.warnings.append(
+                            f'{subpath}:'
+                            " '# ba_meta export game' tag should be replaced by"
+                            f" '# ba_meta export bascenev1.GameActivity'."
+                        )
+                    else:
+                        # If export type is one of our shortcuts, sub in the
+                        # actual class path. Otherwise assume its a classpath
+                        # itself.
+                        exporttype = EXPORT_CLASS_NAME_SHORTCUTS.get(
+                            exporttypestr
+                        )
+                        if exporttype is None:
+                            exporttype = exporttypestr
+                        self.results.exports.setdefault(exporttype, []).append(
+                            classname
+                        )
 
     def _get_export_class_name(
         self, subpath: Path, lines: list[str], lindex: int

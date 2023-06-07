@@ -8,6 +8,8 @@ In some specific cases you may need to pull in individual submodules instead.
 """
 # pylint: disable=redefined-builtin
 
+from efro.util import set_canonical_module_names
+
 import _babase
 from _babase import (
     SimpleSound,
@@ -165,26 +167,8 @@ __all__ = [
     'AppSubsystem',
 ]
 
-
-# Have these things present themselves cleanly as 'ba.Foo'
-# instead of 'ba._submodule.Foo'
-def _simplify_module_names() -> None:
-    import os
-
-    # Though pdoc gets confused when we override __module__,
-    # so let's make an exception for it.
-    if os.environ.get('BA_DOCS_GENERATION', '0') != '1':
-        from efro.util import set_canonical_module
-
-        globs = globals()
-        set_canonical_module(
-            module_globals=globs,
-            names=[n for n in globs.keys() if not n.startswith('_')],
-        )
-
-
-_simplify_module_names()
-del _simplify_module_names
+# We want stuff to show up as babase.Foo instead of babase._sub.Foo.
+set_canonical_module_names(globals())
 
 # Allow the native layer to wrap a few things up.
 _babase.reached_end_of_babase()

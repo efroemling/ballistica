@@ -13,7 +13,6 @@ from bascenev1._gameutils import get_trophy_string
 from bascenev1._map import (
     get_map_class,
     register_map,
-    preload_map_preview_media,
     get_map_display_string,
     get_filtered_map_name,
 )
@@ -30,7 +29,6 @@ __all__ = [
     'get_trophy_string',
     'get_map_class',
     'register_map',
-    'preload_map_preview_media',
     'get_map_display_string',
     'get_filtered_map_name',
     'PlayerProfilesChangedMessage',

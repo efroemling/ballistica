@@ -706,29 +706,33 @@ def unchanging_hostname() -> str:
     return os.uname().nodename
 
 
-def set_canonical_module(
-    module_globals: dict[str, Any], names: list[str]
-) -> None:
-    """Override any __module__ attrs on passed classes/etc.
-
-    This allows classes to present themselves using clean paths such as
-    mymodule.MyClass instead of possibly ugly internal ones such as
-    mymodule._internal._stuff.MyClass.
-    """
+def set_canonical_module_names(module_globals: dict[str, Any]) -> None:
+    """Do the thing."""
     modulename = module_globals.get('__name__')
     if not isinstance(modulename, str):
         raise RuntimeError('Unable to get module name.')
-    for name in names:
-        obj = module_globals[name]
+    assert not modulename.startswith('_')
+    modulename_prefix = f'{modulename}.'
+    modulename_prefix_2 = f'_{modulename}.'
+
+    for name, obj in module_globals.items():
+        if name.startswith('_'):
+            continue
         existing = getattr(obj, '__module__', None)
         try:
-            if existing is not None and existing != modulename:
+            # Override the module ONLY if it lives under us somewhere.
+            # So ourpackage._submodule.Foo becomes ourpackage.Foo
+            # but otherpackage._submodule.Foo remains untouched.
+            if existing is not None and (
+                existing.startswith(modulename_prefix)
+                or existing.startswith(modulename_prefix_2)
+            ):
                 obj.__module__ = modulename
         except Exception:
             import logging
 
             logging.warning(
-                'set_canonical_module: unable to change __module__'
+                'set_canonical_module_names: unable to change __module__'
                 " from '%s' to '%s' on %s object at '%s'.",
                 existing,
                 modulename,

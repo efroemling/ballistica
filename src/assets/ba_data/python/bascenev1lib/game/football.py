@@ -89,7 +89,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
     """Football game for teams mode."""
 

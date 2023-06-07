@@ -10,7 +10,7 @@ data formats in a nondestructive manner.
 
 from __future__ import annotations
 
-from efro.util import set_canonical_module
+from efro.util import set_canonical_module_names
 from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData
 from efro.dataclassio._prep import (
     ioprep,
@@ -47,4 +47,4 @@ __all__ = [
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'
 # instead of 'thismodule._internalmodule.SomeClass'
-set_canonical_module(module_globals=globals(), names=__all__)
+set_canonical_module_names(globals())

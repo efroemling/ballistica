@@ -26,7 +26,6 @@ class PlaylistEditController:
         playlist_name: str | None = None,
     ):
         from bascenev1.internal import filter_playlist
-        from bascenev1.internal import preload_map_preview_media
         from bauiv1lib.playlist import PlaylistTypeVars
         from bauiv1lib.playlist.edit import PlaylistEditWindow
 
@@ -34,7 +33,9 @@ class PlaylistEditController:
 
         # Since we may be showing our map list momentarily,
         # lets go ahead and preload all map preview textures.
-        preload_map_preview_media()
+        if bui.app.classic is not None:
+            bui.app.classic.preload_map_preview_media()
+
         self._sessiontype = sessiontype
 
         self._editing_game = False

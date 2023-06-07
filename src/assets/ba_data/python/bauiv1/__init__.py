@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import logging
 
+from efro.util import set_canonical_module_names
+
 from _babase import (
     app,
     ContextRef,
@@ -208,6 +210,9 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
 ]
+
+# We want stuff to show up as bauiv1.Foo instead of bauiv1._sub.Foo.
+set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

@@ -30,7 +30,7 @@ class Team(bs.Team[Player]):
     """Our team type for this game."""
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     """
     A co-op game where you try to defeat a group

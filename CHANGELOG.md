@@ -1,4 +1,4 @@
-### 1.7.20 (build 21058, api 8, 2023-06-07)
+### 1.7.20 (build 21060, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -271,6 +271,13 @@
   with `bascenev1lib`. That should mostly do it. Random tip: check out the
   `tools/pcommand mypy_files` as a handy tool to help get your mods updated.
 - (build 21057) Fixed an issue with news items erroring on the main menu (thanks for the heads up Rikko)
+- (build 21059) Fixed an issue where trying to add a new playlist would error (thanks for the heads up SEBASTIAN2059)
+- (build 21059) Fixed meta scanning which was coming up empty. Note that games
+  must now tag themselves via `ba_meta export bascenev1.GameActivity` instead of
+  `ba_meta export game` to be discovered. Warnings will be issued if the old tag
+  form is found. This is necessary because there will be totally different
+  concepts of game-activities/etc. in future scene versions so we need to use
+  exact class names instead of the 'game' shortcut.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

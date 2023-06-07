@@ -18,20 +18,6 @@ if TYPE_CHECKING:
     import bascenev1
 
 
-def preload_map_preview_media() -> None:
-    """Preload media needed for map preview UIs.
-
-    Category: **Asset Functions**
-    """
-    assert _babase.app.classic is not None
-    _bascenev1.getmesh('level_select_button_opaque')
-    _bascenev1.getmesh('level_select_button_transparent')
-    for maptype in list(_babase.app.classic.maps.values()):
-        map_tex_name = maptype.get_preview_texture_name()
-        if map_tex_name is not None:
-            _bascenev1.gettexture(map_tex_name)
-
-
 def get_filtered_map_name(name: str) -> str:
     """Filter a map name to account for name changes, etc.
 

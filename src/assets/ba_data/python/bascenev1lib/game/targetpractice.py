@@ -36,7 +36,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
     """Game where players try to hit targets with bombs."""
 

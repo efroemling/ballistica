@@ -18,12 +18,6 @@ directly, it will most likely not work without classic present.
 
 # ba_meta require api 8
 
-# import traceback
-# traceback.print_stack()
-# sys.stderr.flush()
-# sys.stdout.flush()
-
-
 # Note: Code relying on classic should import things from here *only*
 # for type-checking and use the versions in app.classic at runtime; that
 # way type-checking will cleanly cover the classic-not-present case

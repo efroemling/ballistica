@@ -46,7 +46,7 @@ class Team(bs.Team[Player]):
         self.holdingflag = False
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
     """Game where you try to keep the flag away from your enemies."""
 

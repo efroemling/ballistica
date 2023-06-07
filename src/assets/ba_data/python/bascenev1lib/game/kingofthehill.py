@@ -44,7 +44,7 @@ class Team(bs.Team[Player]):
         self.time_remaining = time_remaining
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
     """Game where a team wins by holding a 'hill' for a set amount of time."""
 

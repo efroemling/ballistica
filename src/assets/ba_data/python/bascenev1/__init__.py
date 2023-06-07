@@ -18,6 +18,8 @@ import logging
 # other modules; the goal is to let most simple mods rely solely on this
 # module to keep things simple.
 
+from efro.util import set_canonical_module_names
+
 from _babase import (
     app,
     ContextRef,
@@ -393,6 +395,10 @@ __all__ = [
     'Campaign',
     'Level',
 ]
+
+# We want stuff here to show up as bascenev1.Foo instead of
+# bascenev1._submodule.Foo.
+set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

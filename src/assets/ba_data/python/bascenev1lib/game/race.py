@@ -74,7 +74,7 @@ class Team(bs.Team[Player]):
         self.finished = False
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class RaceGame(bs.TeamGameActivity[Player, Team]):
     """Game of racing around a track."""
 

@@ -33,7 +33,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class AssaultGame(bs.TeamGameActivity[Player, Team]):
     """Game where you score by touching the other team's flag."""
 

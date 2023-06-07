@@ -72,7 +72,7 @@ class Team(bs.Team[Player]):
         self.flags_held = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class ConquestGame(bs.TeamGameActivity[Player, Team]):
     """A game where teams try to claim all flags on the map."""
 

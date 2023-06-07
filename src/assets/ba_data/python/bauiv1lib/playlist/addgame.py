@@ -182,8 +182,6 @@ class PlaylistAddGameWindow(bui.Window):
         bui.pushcall(self._refresh, from_other_thread=True)
 
     def _refresh(self, select_get_more_games_button: bool = False) -> None:
-        # from bui import get_game_types
-
         if self._column is not None:
             self._column.delete()
 

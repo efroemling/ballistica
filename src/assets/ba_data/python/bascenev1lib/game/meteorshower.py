@@ -30,7 +30,7 @@ class Team(bs.Team[Player]):
     """Our team type for this game."""
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
     """Minigame involving dodging falling bombs."""
 

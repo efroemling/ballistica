@@ -34,7 +34,7 @@ class Team(bs.Team[Player]):
         self.time_remaining = time_remaining
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
     """
     Game involving trying to remain the one 'chosen one'

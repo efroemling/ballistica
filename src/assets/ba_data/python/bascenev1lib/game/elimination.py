@@ -180,7 +180,7 @@ class Team(bs.Team[Player]):
         self.spawn_order: list[Player] = []
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class EliminationGame(bs.TeamGameActivity[Player, Team]):
     """Game type where last player(s) left alive win."""
 

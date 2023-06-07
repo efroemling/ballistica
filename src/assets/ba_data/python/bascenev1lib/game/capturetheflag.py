@@ -95,7 +95,7 @@ class Team(bs.Team[Player]):
         self.touch_return_timer_ticking: bs.NodeActor | None = None
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     """Game of stealing other team's flag and returning it to your base."""
 

@@ -113,7 +113,7 @@ class Team(bs.Team[Player]):
         self.score = 0
 
 
-# ba_meta export game
+# ba_meta export bascenev1.GameActivity
 class HockeyGame(bs.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
