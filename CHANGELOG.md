@@ -1,4 +1,4 @@
-### 1.7.20 (build 21055, api 8, 2023-06-07)
+### 1.7.20 (build 21058, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -268,8 +268,9 @@
   when bascenev2 comes along, it can have its own unique associated library of
   stuff (bascenev2lib). To upgrade existing code, go through and replace
   instances of `bastd.ui` with `bauiv1lib` and all other instances of `bastd`
-  with `bascenev1lib`. That should mostly do it. As a random tip: check out the
+  with `bascenev1lib`. That should mostly do it. Random tip: check out the
   `tools/pcommand mypy_files` as a handy tool to help get your mods updated.
+- (build 21057) Fixed an issue with news items erroring on the main menu (thanks for the heads up Rikko)
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 
