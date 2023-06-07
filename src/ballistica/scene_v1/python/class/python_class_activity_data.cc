@@ -143,7 +143,7 @@ auto PythonClassActivityData::Start(PythonClassActivityData* self)
   if (!a) {
     throw Exception("Invalid activity data.", PyExcType::kActivityNotFound);
   }
-  a->start();
+  a->Start();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

@@ -48,7 +48,7 @@ class HostActivity : public SceneV1Context {
     assert(scene_.Exists());
     return scene_.Get();
   }
-  void start();
+  void Start();
 
   // A utility function; faster than dynamic_cast.
   auto GetAsHostActivity() -> HostActivity* override;
@@ -110,7 +110,7 @@ class HostActivity : public SceneV1Context {
   bool started_{};
   int out_of_bounds_in_a_row_{};
   bool paused_{};
-  float game_speed_{};
+  float game_speed_{1.0f};
   millisecs_t base_time_{};
   Object::Ref<Scene> scene_;
   Object::WeakRef<HostSession> host_session_;

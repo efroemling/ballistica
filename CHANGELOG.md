@@ -1,4 +1,4 @@
-### 1.7.20 (build 21060, api 8, 2023-06-07)
+### 1.7.20 (build 21061, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -278,6 +278,8 @@
   form is found. This is necessary because there will be totally different
   concepts of game-activities/etc. in future scene versions so we need to use
   exact class names instead of the 'game' shortcut.
+- (build 21060) Fixed a bug where epic mode was not in slow motion (but sounds
+  still were hehehehe).
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

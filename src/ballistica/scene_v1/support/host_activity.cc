@@ -83,7 +83,6 @@ HostActivity::~HostActivity() {
   // in it.
   if (auto* host_session = host_session_.Get()) {
     for (auto timer_id : session_base_timer_ids_) {
-      // printf("WOULD KILL BASE TIMER %d\n", timer_id);
       host_session->DeleteTimer(TimeType::kBase, timer_id);
     }
   }
@@ -160,7 +159,7 @@ void HostActivity::RegisterContextCall(base::PythonContextCall* call) {
   }
 }
 
-void HostActivity::start() {
+void HostActivity::Start() {
   if (started_) {
     Log(LogLevel::kError, "HostActivity::Start() called twice.");
     return;
@@ -181,7 +180,7 @@ void HostActivity::start() {
       host_session->NewTimer(TimeType::kBase, kGameStepMilliseconds, true,
                              NewLambdaRunnable([this] { StepScene(); }));
   session_base_timer_ids_.push_back(step_scene_timer_id_);
-  SetGameSpeed(1.0f);
+  UpdateStepTimerLength();
 }
 
 auto HostActivity::GetAsHostActivity() -> HostActivity* { return this; }
@@ -245,14 +244,14 @@ void HostActivity::SetPaused(bool val) {
 }
 
 void HostActivity::SetGameSpeed(float speed) {
-  if (!started_) {
-    return;
-  }
   if (speed == game_speed_) {
     return;
   }
   assert(speed >= 0.0f);
   game_speed_ = speed;
+  if (!started_) {
+    return;
+  }
   UpdateStepTimerLength();
 }
 
