@@ -7,18 +7,14 @@ import copy
 import weakref
 from typing import TYPE_CHECKING
 
-import _bauiv1
-
 if TYPE_CHECKING:
     from typing import Any
 
-    import baclassic
     import bascenev1
-    import bauiv1
 
 
 class Level:
-    """An entry in a baclassic.Campaign consisting of a name, game type, and settings.
+    """An entry in a bascenev1.Campaign.
 
     Category: **Gameplay Classes**
     """
@@ -36,7 +32,7 @@ class Level:
         self._settings = settings
         self._preview_texture_name = preview_texture_name
         self._displayname = displayname
-        self._campaign: weakref.ref[baclassic.Campaign] | None = None
+        self._campaign: weakref.ref[bascenev1.Campaign] | None = None
         self._index: int | None = None
         self._score_version_string: str | None = None
 
@@ -63,9 +59,9 @@ class Level:
         """The preview texture name for this Level."""
         return self._preview_texture_name
 
-    def get_preview_texture(self) -> bauiv1.Texture:
-        """Load/return the preview Texture for this Level."""
-        return _bauiv1.gettexture(self._preview_texture_name)
+    # def get_preview_texture(self) -> bauiv1.Texture:
+    #     """Load/return the preview Texture for this Level."""
+    #     return _bauiv1.gettexture(self._preview_texture_name)
 
     @property
     def displayname(self) -> bascenev1.Lstr:
@@ -90,7 +86,7 @@ class Level:
         return self._gametype
 
     @property
-    def campaign(self) -> baclassic.Campaign | None:
+    def campaign(self) -> bascenev1.Campaign | None:
         """The baclassic.Campaign this Level is associated with, or None."""
         return None if self._campaign is None else self._campaign()
 
@@ -174,7 +170,7 @@ class Level:
         assert isinstance(val, dict)
         return val
 
-    def set_campaign(self, campaign: baclassic.Campaign, index: int) -> None:
+    def set_campaign(self, campaign: bascenev1.Campaign, index: int) -> None:
         """For use by baclassic.Campaign when adding levels to itself.
 
         (internal)"""

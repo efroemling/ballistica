@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
     import babase
-    import baclassic
     import bascenev1
 
 
@@ -66,7 +65,8 @@ def get_map_class(name: str) -> type[Map]:
     assert _babase.app.classic is not None
     name = get_filtered_map_name(name)
     try:
-        return _babase.app.classic.maps[name]
+        mapclass: type[Map] = _babase.app.classic.maps[name]
+        return mapclass
     except KeyError:
         from babase import _error
 

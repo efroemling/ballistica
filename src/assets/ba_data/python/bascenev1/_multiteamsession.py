@@ -41,11 +41,13 @@ class MultiTeamSession(Session):
         """Set up playlists & launch a bascenev1.Activity to accept joiners."""
         # pylint: disable=cyclic-import
         from bascenev1 import _playlist
-        from bastd.activity.multiteamjoin import MultiTeamJoinActivity
 
         app = _babase.app
-        assert app.classic is not None
+        classic = app.classic
+        assert classic is not None
         cfg = app.config
+
+        multi_team_join_activity = classic.get_multi_team_join_activity()
 
         if self.use_teams:
             team_names = cfg.get('Custom Team Names', DEFAULT_TEAM_NAMES)
@@ -65,18 +67,18 @@ class MultiTeamSession(Session):
             max_players=self.get_max_players(),
         )
 
-        self._series_length = app.classic.teams_series_length
-        self._ffa_series_length = app.classic.ffa_series_length
+        self._series_length: int = classic.teams_series_length
+        self._ffa_series_length: int = classic.ffa_series_length
 
         show_tutorial = cfg.get('Show Tutorial', True)
 
         self._tutorial_activity_instance: bascenev1.Activity | None
         if show_tutorial:
-            from bastd.tutorial import TutorialActivity
+            tutorial_activity = classic.get_tutorial_activity()
 
             # Get this loading.
             self._tutorial_activity_instance = _bascenev1.newactivity(
-                TutorialActivity
+                tutorial_activity
             )
         else:
             self._tutorial_activity_instance = None
@@ -131,7 +133,7 @@ class MultiTeamSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.setactivity(_bascenev1.newactivity(MultiTeamJoinActivity))
+        self.setactivity(_bascenev1.newactivity(multi_team_join_activity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -173,14 +175,17 @@ class MultiTeamSession(Session):
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
         # pylint: disable=cyclic-import
-        from bastd.tutorial import TutorialActivity
-        from bastd.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity,
-        )
         from bascenev1._activitytypes import (
             TransitionActivity,
             JoinActivity,
             ScoreScreenActivity,
+        )
+
+        classic = _babase.app.classic
+        assert classic is not None
+        tutorial_activity = classic.get_tutorial_activity()
+        team_series_victory_score_screen_activity = (
+            classic.get_team_series_victory_score_screen_activity()
         )
 
         # If we have a tutorial to show, that's the first thing we do no
@@ -192,7 +197,7 @@ class MultiTeamSession(Session):
         # If we're leaving the tutorial activity, pop a transition activity
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
-        elif isinstance(activity, TutorialActivity):
+        elif isinstance(activity, tutorial_activity):
             self.setactivity(_bascenev1.newactivity(TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
@@ -201,7 +206,7 @@ class MultiTeamSession(Session):
             activity, (JoinActivity, TransitionActivity, ScoreScreenActivity)
         ):
             # If we're coming from a series-end activity, reset scores.
-            if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
+            if isinstance(activity, team_series_victory_score_screen_activity):
                 self.stats.reset()
                 self._game_number = 0
                 for team in self.sessionteams:

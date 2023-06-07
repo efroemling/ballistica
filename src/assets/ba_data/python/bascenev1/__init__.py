@@ -147,6 +147,9 @@ from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
 from bascenev1._score import ScoreType, ScoreConfig
 from bascenev1._dualteamsession import DualTeamSession
+from bascenev1._lobby import Lobby, Chooser
+from bascenev1._campaign import Campaign
+from bascenev1._level import Level
 from bascenev1._messages import (
     UNHANDLED,
     OutOfBoundsMessage,
@@ -385,6 +388,10 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
     'SceneV1AppMode',
+    'Lobby',
+    'Chooser',
+    'Campaign',
+    'Level',
 ]
 
 # Sanity check: we want to keep ballistica's dependencies and

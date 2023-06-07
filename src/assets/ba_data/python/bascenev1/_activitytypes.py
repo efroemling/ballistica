@@ -18,7 +18,7 @@ from bascenev1._music import MusicType, setmusic
 if TYPE_CHECKING:
     import babase
     import bascenev1
-    from baclassic._lobby import JoinInfo
+    from bascenev1._lobby import JoinInfo
 
 
 class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
@@ -41,14 +41,17 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.mainmenu import MainMenuSession
+
+        assert _babase.app.classic is not None
         from babase._general import Call
+
+        main_menu_session = _babase.app.classic.get_main_menu_session()
 
         super().on_begin()
         _babase.unlock_all_input()
         assert _babase.app.classic is not None
         _babase.app.classic.ads.call_after_ad(
-            Call(_bascenev1.new_host_session, MainMenuSession)
+            Call(_bascenev1.new_host_session, main_menu_session)
         )
 
 
@@ -110,10 +113,10 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor import background  # FIXME: Don't use bastd from here.
+        from bastd.actor.background import Background
 
         super().on_transition_in()
-        self._background = background.Background(
+        self._background = Background(
             fade_time=0.5, start_faded=False, show_logo=False
         )
 

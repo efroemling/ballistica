@@ -34,17 +34,21 @@ class DualTeamSession(MultiTeamSession):
 
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:
         # pylint: disable=cyclic-import
-        from bastd.activity.drawscore import DrawScoreScreenActivity
-        from bastd.activity.dualteamscore import TeamVictoryScoreScreenActivity
-        from bastd.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity,
-        )
+        classic = _babase.app.classic
+        assert classic is not None
 
+        draw_score_screen_activity = classic.get_draw_score_screen_activity()
+        team_victory_score_screen_activity = (
+            classic.get_team_series_victory_score_screen_activity()
+        )
+        team_series_victory_score_screen_activity = (
+            classic.get_team_series_victory_score_screen_activity()
+        )
         winnergroups = results.winnergroups
 
         # If everyone has the same score, call it a draw.
         if len(winnergroups) < 2:
-            self.setactivity(_bascenev1.newactivity(DrawScoreScreenActivity))
+            self.setactivity(_bascenev1.newactivity(draw_score_screen_activity))
         else:
             winner = winnergroups[0].teams[0]
             winner.customdata['score'] += 1
@@ -53,12 +57,13 @@ class DualTeamSession(MultiTeamSession):
             if winner.customdata['score'] >= (self._series_length - 1) / 2 + 1:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        TeamSeriesVictoryScoreScreenActivity, {'winner': winner}
+                        team_series_victory_score_screen_activity,
+                        {'winner': winner},
                     )
                 )
             else:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        TeamVictoryScoreScreenActivity, {'winner': winner}
+                        team_victory_score_screen_activity, {'winner': winner}
                     )
                 )

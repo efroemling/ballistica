@@ -181,13 +181,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appdelegate.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_campaign.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_level.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_lobby.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_profile.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_servermode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_subsystem.py \
@@ -205,6 +201,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopsession.py \
@@ -217,6 +214,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameresults.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameutils.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_level.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_lobby.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_map.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_messages.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_multiteamsession.py \
@@ -225,6 +224,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_player.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
@@ -453,13 +453,9 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_analytics.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appdelegate.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_campaign.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_level.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_lobby.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_profile.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_servermode.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_store.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_subsystem.cpython-311.opt-1.pyc \
@@ -477,6 +473,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_appmode.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_campaign.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopsession.cpython-311.opt-1.pyc \
@@ -489,6 +486,8 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameresults.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameutils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_hooks.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_level.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_lobby.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_map.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_messages.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_multiteamsession.cpython-311.opt-1.pyc \
@@ -497,6 +496,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_player.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_playlist.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_powerup.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_profile.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_score.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_session.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_settings.cpython-311.opt-1.pyc \

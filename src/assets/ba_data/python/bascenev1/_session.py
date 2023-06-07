@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
     import babase
-    import baclassic
     import bascenev1
 
 
@@ -47,7 +46,7 @@ class Session:
     # at the class level so that looks better and nobody get lost while
     # reading large __init__
 
-    lobby: baclassic.Lobby
+    lobby: bascenev1.Lobby
     """The baclassic.Lobby instance where new bascenev1.Player-s go to select
        a Profile/Team/etc. before being added to games.
        Be aware this value may be None if a Session does not allow
@@ -93,12 +92,12 @@ class Session:
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-branches
         from efro.util import empty_weakref
-        from baclassic._lobby import Lobby
         from bascenev1._dependency import (
             Dependency,
             AssetPackage,
             DependencyError,
         )
+        from bascenev1._lobby import Lobby
         from bascenev1._stats import Stats
         from bascenev1._gameactivity import GameActivity
         from bascenev1._activity import Activity
@@ -409,7 +408,6 @@ class Session:
         will replace the old.
         """
         from babase._general import Call
-        from babase._mgen.enums import TimeType
 
         # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:
@@ -436,7 +434,7 @@ class Session:
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
-        from baclassic._lobby import PlayerReadyMessage
+        from bascenev1._lobby import PlayerReadyMessage
         from bascenev1._messages import PlayerProfilesChangedMessage, UNHANDLED
 
         if isinstance(msg, PlayerReadyMessage):
@@ -629,7 +627,7 @@ class Session:
                     self._activity_should_end_immediately_delay,
                 )
 
-    def _on_player_ready(self, chooser: baclassic.Chooser) -> None:
+    def _on_player_ready(self, chooser: bascenev1.Chooser) -> None:
         """Called when a bascenev1.Player has checked themself ready."""
         lobby = chooser.lobby
         activity = self._activity_weak()
@@ -691,7 +689,7 @@ class Session:
                 _babase.pushcall(self.begin_next_activity)
 
     def _add_chosen_player(
-        self, chooser: baclassic.Chooser
+        self, chooser: bascenev1.Chooser
     ) -> bascenev1.SessionPlayer:
         from bascenev1._team import SessionTeam
 

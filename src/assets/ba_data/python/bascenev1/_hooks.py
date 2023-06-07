@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
 
 def launch_main_menu_session() -> None:
-    from bastd.mainmenu import MainMenuSession
+    assert _babase.app.classic is not None
 
-    _bascenev1.new_host_session(MainMenuSession)
+    _bascenev1.new_host_session(_babase.app.classic.get_main_menu_session())
 
 
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:

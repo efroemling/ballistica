@@ -31,17 +31,10 @@ directly, it will most likely not work without classic present.
 import logging
 
 from baclassic._subsystem import ClassicSubsystem
-from baclassic._campaign import Campaign
-from baclassic._level import Level
-from baclassic._lobby import Lobby, Chooser
 from baclassic._achievement import Achievement, AchievementSubsystem
 
 __all__ = [
     'ClassicSubsystem',
-    'Campaign',
-    'Level',
-    'Lobby',
-    'Chooser',
     'Achievement',
     'AchievementSubsystem',
 ]

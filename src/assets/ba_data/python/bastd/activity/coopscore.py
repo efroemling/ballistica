@@ -50,7 +50,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self._menu_icon_texture = bui.gettexture('menuIcon')
         self._next_level_icon_texture = bui.gettexture('nextLevelIcon')
 
-        self._campaign: baclassic.Campaign = settings['campaign']
+        self._campaign: bs.Campaign = settings['campaign']
 
         self._have_achievements = (
             bs.app.classic is not None

@@ -13,14 +13,13 @@ import _babase
 from babase._error import print_exception, print_error, NotFoundError
 from babase._language import Lstr
 from babase._mgen.enums import SpecialChar, InputType
-from bascenev1._gameutils import animate, animate_array
 import _bascenev1
-from baclassic._profile import get_player_profile_colors
+from bascenev1._profile import get_player_profile_colors
+from bascenev1._gameutils import animate, animate_array
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    import baclassic
     import bascenev1
 
 MAX_QUICK_CHANGE_COUNT = 30
@@ -32,7 +31,7 @@ QUICK_CHANGE_RESET_INTERVAL = 1.0
 class JoinInfo:
     """Display useful info for joiners."""
 
-    def __init__(self, lobby: baclassic.Lobby):
+    def __init__(self, lobby: bascenev1.Lobby):
         from bascenev1._nodeactor import NodeActor
         from babase._general import WeakCall
 
@@ -121,8 +120,6 @@ class JoinInfo:
         self._timer = _bascenev1.Timer(4.0, WeakCall(self._update), repeat=True)
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
-        from baclassic import _input
-
         classic = _babase.app.classic
         assert classic is not None
 
@@ -164,7 +161,7 @@ class JoinInfo:
 class PlayerReadyMessage:
     """Tells an object a player has been selected from the given chooser."""
 
-    chooser: baclassic.Chooser
+    chooser: bascenev1.Chooser
 
 
 @dataclass
@@ -354,7 +351,7 @@ class Chooser:
         ):
             app.classic.lobby_random_profile_index += 1
         if app.classic.lobby_random_profile_index < len(profilenames):
-            profileindex = app.classic.lobby_random_profile_index
+            profileindex: int = app.classic.lobby_random_profile_index
             app.classic.lobby_random_profile_index += 1
             return profileindex
         assert '_random' in profilenames
@@ -384,14 +381,14 @@ class Chooser:
         return self.lobby.sessionteams[self._selected_team_index]
 
     @property
-    def lobby(self) -> baclassic.Lobby:
+    def lobby(self) -> bascenev1.Lobby:
         """The chooser's baclassic.Lobby."""
         lobby = self._lobby()
         if lobby is None:
             raise NotFoundError('Lobby does not exist.')
         return lobby
 
-    def get_lobby(self) -> baclassic.Lobby | None:
+    def get_lobby(self) -> bascenev1.Lobby | None:
         """Return this chooser's lobby if it still exists; otherwise None."""
         return self._lobby()
 
@@ -581,15 +578,17 @@ class Chooser:
 
     def _set_ready(self, ready: bool) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.profile import browser as pbrowser
         from babase._general import Call
+
+        classic = _babase.app.classic
+        assert classic is not None
 
         profilename = self._profilenames[self._profileindex]
 
         # Handle '_edit' as a special case.
         if profilename == '_edit' and ready:
             with _babase.ContextRef.empty():
-                pbrowser.ProfileBrowserWindow(in_main_menu=False)
+                classic.profile_browser_window(in_main_menu=False)
 
                 # Give their input-device UI ownership too
                 # (prevent someone else from snatching it in crowded games)

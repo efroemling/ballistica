@@ -12,7 +12,6 @@ from bascenev1._session import Session
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
     import babase
-    import baclassic
     import bascenev1
 
 TEAM_COLORS = [(0.2, 0.4, 1.6)]
@@ -36,27 +35,29 @@ class CoopSession(Session):
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
 
-    campaign: baclassic.Campaign | None
+    campaign: bascenev1.Campaign | None
     """The baclassic.Campaign instance this Session represents, or None if
        there is no associated Campaign."""
 
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""
         # pylint: disable=cyclic-import
-        from bastd.activity.coopjoin import CoopJoinActivity
 
         _babase.increment_analytics_count('Co-op session start')
         app = _babase.app
-        assert app.classic is not None
+        classic = app.classic
+        assert classic is not None
+
+        coop_join_activity = classic.get_coop_join_activity()
 
         # If they passed in explicit min/max, honor that.
         # Otherwise defer to user overrides or defaults.
-        if 'min_players' in app.classic.coop_session_args:
-            min_players = app.classic.coop_session_args['min_players']
+        if 'min_players' in classic.coop_session_args:
+            min_players = classic.coop_session_args['min_players']
         else:
             min_players = 1
-        if 'max_players' in app.classic.coop_session_args:
-            max_players = app.classic.coop_session_args['max_players']
+        if 'max_players' in classic.coop_session_args:
+            max_players = classic.coop_session_args['max_players']
         else:
             max_players = app.config.get('Coop Game Max Players', 4)
 
@@ -72,21 +73,21 @@ class CoopSession(Session):
         )
 
         # Tournament-ID if we correspond to a co-op tournament (otherwise None)
-        self.tournament_id: str | None = app.classic.coop_session_args.get(
+        self.tournament_id: str | None = classic.coop_session_args.get(
             'tournament_id'
         )
 
-        self.campaign = app.classic.getcampaign(
-            app.classic.coop_session_args['campaign']
+        self.campaign = classic.getcampaign(
+            classic.coop_session_args['campaign']
         )
-        self.campaign_level_name: str = app.classic.coop_session_args['level']
+        self.campaign_level_name: str = classic.coop_session_args['level']
 
         self._ran_tutorial_activity = False
         self._tutorial_activity: bascenev1.Activity | None = None
         self._custom_menu_ui: list[dict[str, Any]] = []
 
         # Start our joining screen.
-        self.setactivity(_bascenev1.newactivity(CoopJoinActivity))
+        self.setactivity(_bascenev1.newactivity(coop_join_activity))
 
         self._next_game_instance: bascenev1.GameActivity | None = None
         self._next_game_level_name: str | None = None
@@ -112,6 +113,9 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from bascenev1._gameactivity import GameActivity
 
+        classic = _babase.app.classic
+        assert classic is not None
+
         # Instantiate levels we may be running soon to let them load in the bg.
 
         # Build an instance for the current level.
@@ -134,7 +138,7 @@ class CoopSession(Session):
         levels = self.campaign.levels
         level = self.campaign.getlevel(self.campaign_level_name)
 
-        nextlevel: baclassic.Level | None
+        nextlevel: bascenev1.Level | None
         if level.index < len(levels) - 1:
             nextlevel = levels[level.index + 1]
         else:
@@ -166,9 +170,8 @@ class CoopSession(Session):
             and self._tutorial_activity is None
             and not self._ran_tutorial_activity
         ):
-            from bastd.tutorial import TutorialActivity
-
-            self._tutorial_activity = _bascenev1.newactivity(TutorialActivity)
+            tutorial_activity = classic.get_tutorial_activity()
+            self._tutorial_activity = _bascenev1.newactivity(tutorial_activity)
 
     def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         return self._custom_menu_ui
@@ -220,14 +223,14 @@ class CoopSession(Session):
         self, resume_callback: Callable[[], Any]
     ) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.tournamententry import TournamentEntryWindow
         from bascenev1._gameactivity import GameActivity
 
+        assert _babase.app.classic is not None
         activity = self.getactivity()
         if activity is not None and not activity.expired:
             assert self.tournament_id is not None
             assert isinstance(activity, GameActivity)
-            TournamentEntryWindow(
+            _babase.app.classic.tournament_entry_window(
                 tournament_id=self.tournament_id,
                 tournament_activity=activity,
                 on_close_call=resume_callback,
@@ -267,8 +270,6 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from babase._language import Lstr
         from babase._general import WeakCall
-        from bastd.tutorial import TutorialActivity
-        from bastd.activity.coopscore import CoopScoreScreen
         from bascenev1._gameresults import GameResults
         from bascenev1._player import PlayerInfo
         from bascenev1._activitytypes import JoinActivity, TransitionActivity
@@ -276,6 +277,11 @@ class CoopSession(Session):
         from bascenev1._score import ScoreType
 
         app = _babase.app
+        classic = app.classic
+        assert classic is not None
+
+        tutorial_activity = classic.get_tutorial_activity()
+        coop_score_screen = classic.get_coop_score_screen()
 
         # If we're running a TeamGameActivity we'll have a GameResults
         # as results. Otherwise its an old CoopGameActivity so its giving
@@ -297,7 +303,7 @@ class CoopSession(Session):
         # If we're in a between-round activity or a restart-activity,
         # hop into a round.
         if isinstance(
-            activity, (JoinActivity, CoopScoreScreen, TransitionActivity)
+            activity, (JoinActivity, coop_score_screen, TransitionActivity)
         ):
             if outcome == 'next_level':
                 if self._next_game_instance is None:
@@ -357,7 +363,7 @@ class CoopSession(Session):
 
         # If we were in a tutorial, just pop a transition to get to the
         # actual round.
-        elif isinstance(activity, TutorialActivity):
+        elif isinstance(activity, tutorial_activity):
             self.setactivity(_bascenev1.newactivity(TransitionActivity))
         else:
             playerinfos: list[bascenev1.PlayerInfo]
@@ -424,7 +430,7 @@ class CoopSession(Session):
             else:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        CoopScoreScreen,
+                        coop_score_screen,
                         {
                             'playerinfos': playerinfos,
                             'score': score,

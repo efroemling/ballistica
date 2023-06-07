@@ -584,7 +584,9 @@ class TournamentButton:
             bui.textwidget(edit=self.button_text, text=txt)
             bui.imagewidget(
                 edit=self.image,
-                texture=campaign.getlevel(levelname).get_preview_texture(),
+                texture=bui.gettexture(
+                    campaign.getlevel(levelname).preview_texture_name
+                ),
                 opacity=1.0 if enabled else 0.5,
             )
 

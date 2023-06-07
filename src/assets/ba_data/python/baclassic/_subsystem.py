@@ -16,6 +16,7 @@ import bascenev1
 from babase._general import Call
 from babase._appsubsystem import AppSubsystem
 from babase._general import AppTime
+from bascenev1 import _profile
 import _baclassic
 from baclassic._music import MusicSubsystem
 from baclassic._accountv1 import AccountV1Subsystem
@@ -26,12 +27,12 @@ from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
 from baclassic._ui import UISubsystem
 from baclassic import _input
-from baclassic import _profile
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Sequence
 
     import babase
+    import bauiv1
     import baclassic
     from bastd.actor import spazappearance
     from baclassic._appdelegate import AppDelegate
@@ -54,9 +55,9 @@ class ClassicSubsystem(AppSubsystem):
     # baclassic/__init__.py. This way this version can be used for
     # runtime via babase.app.classic which enforces handling of the
     # package-not-present case.
-    from baclassic._level import Level
-    from baclassic._campaign import Campaign
-    from baclassic._lobby import Lobby, Chooser
+    from bascenev1._level import Level
+    from bascenev1._campaign import Campaign
+    from bascenev1._lobby import Lobby, Chooser
     from baclassic._music import MusicPlayMode  # FIXME move 2 subsys
 
     def __init__(self) -> None:
@@ -71,7 +72,7 @@ class ClassicSubsystem(AppSubsystem):
         self.ui = UISubsystem()
 
         # Co-op Campaigns.
-        self.campaigns: dict[str, baclassic.Campaign] = {}
+        self.campaigns: dict[str, bascenev1.Campaign] = {}
         self.custom_coop_practice_games: list[str] = []
 
         # Lobby.
@@ -169,7 +170,7 @@ class ClassicSubsystem(AppSubsystem):
     def on_app_launching(self) -> None:
         """Called when the app is first entering the launching state."""
         # pylint: disable=too-many-locals
-        from baclassic import _campaign
+        from bascenev1 import _campaign
         from bascenev1 import _map
         from bastd.actor import spazappearance
         from bastd import maps as stdmaps
@@ -325,7 +326,7 @@ class ClassicSubsystem(AppSubsystem):
                     # FIXME: This should not be an actor attr.
                     activity.paused_text = None
 
-    def add_coop_practice_level(self, level: baclassic.Level) -> None:
+    def add_coop_practice_level(self, level: bascenev1.Level) -> None:
         """Adds an individual level to the 'practice' section in Co-op."""
 
         # Assign this level to our catch-all campaign.
@@ -523,7 +524,7 @@ class ClassicSubsystem(AppSubsystem):
 
         return _tournament.get_tournament_prize_strings(entry)
 
-    def getcampaign(self, name: str) -> baclassic.Campaign:
+    def getcampaign(self, name: str) -> bascenev1.Campaign:
         """Return a campaign by name."""
         return self.campaigns[name]
 
@@ -751,6 +752,14 @@ class ClassicSubsystem(AppSubsystem):
 
         return TeamSeriesVictoryScoreScreenActivity
 
+    def get_team_victory_score_screen_activity(
+        self,
+    ) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.dualteamscore import TeamVictoryScoreScreenActivity
+
+        return TeamVictoryScoreScreenActivity
+
     def get_free_for_all_victory_score_screen_activity(
         self,
     ) -> type[bascenev1.Activity]:
@@ -760,3 +769,82 @@ class ClassicSubsystem(AppSubsystem):
         )
 
         return FreeForAllVictoryScoreScreenActivity
+
+    def get_coop_join_activity(self) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.coopjoin import CoopJoinActivity
+
+        return CoopJoinActivity
+
+    def get_coop_score_screen(self) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.coopscore import CoopScoreScreen
+
+        return CoopScoreScreen
+
+    def get_multi_team_join_activity(self) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.activity.multiteamjoin import MultiTeamJoinActivity
+
+        return MultiTeamJoinActivity
+
+    def get_tutorial_activity(self) -> type[bascenev1.Activity]:
+        """(internal)"""
+        from bastd.tutorial import TutorialActivity
+
+        return TutorialActivity
+
+    def tournament_entry_window(
+        self,
+        tournament_id: str,
+        tournament_activity: bascenev1.Activity | None = None,
+        position: tuple[float, float] = (0.0, 0.0),
+        delegate: Any = None,
+        scale: float | None = None,
+        offset: tuple[float, float] = (0.0, 0.0),
+        on_close_call: Callable[[], Any] | None = None,
+    ) -> None:
+        """(internal)"""
+        from bastd.ui.tournamententry import TournamentEntryWindow
+
+        TournamentEntryWindow(
+            tournament_id,
+            tournament_activity,
+            position,
+            delegate,
+            scale,
+            offset,
+            on_close_call,
+        )
+
+    def get_main_menu_session(self) -> type[bascenev1.Session]:
+        """(internal)"""
+        from bastd.mainmenu import MainMenuSession
+
+        return MainMenuSession
+
+    def continues_window(
+        self,
+        activity: bascenev1.Activity,
+        cost: int,
+        continue_call: Callable[[], Any],
+        cancel_call: Callable[[], Any],
+    ) -> None:
+        """(internal)"""
+        from bastd.ui.continues import ContinuesWindow
+
+        ContinuesWindow(activity, cost, continue_call, cancel_call)
+
+    def profile_browser_window(
+        self,
+        transition: str = 'in_right',
+        in_main_menu: bool = True,
+        selected_profile: str | None = None,
+        origin_widget: bauiv1.Widget | None = None,
+    ) -> None:
+        """(internal)"""
+        from bastd.ui.profile.browser import ProfileBrowserWindow
+
+        ProfileBrowserWindow(
+            transition, in_main_menu, selected_profile, origin_widget
+        )

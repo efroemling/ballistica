@@ -10,10 +10,10 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
     import babase
-    import baclassic
+    import bascenev1
 
 
-def register_campaign(campaign: baclassic.Campaign) -> None:
+def register_campaign(campaign: bascenev1.Campaign) -> None:
     """Register a new campaign."""
     assert _babase.app.classic is not None
     _babase.app.classic.campaigns[campaign.name] = campaign
@@ -29,11 +29,11 @@ class Campaign:
         self,
         name: str,
         sequential: bool = True,
-        levels: list[baclassic.Level] | None = None,
+        levels: list[bascenev1.Level] | None = None,
     ):
         self._name = name
         self._sequential = sequential
-        self._levels: list[baclassic.Level] = []
+        self._levels: list[bascenev1.Level] = []
         if levels is not None:
             for level in levels:
                 self.addlevel(level)
@@ -49,7 +49,7 @@ class Campaign:
         return self._sequential
 
     def addlevel(
-        self, level: baclassic.Level, index: int | None = None
+        self, level: bascenev1.Level, index: int | None = None
     ) -> None:
         """Adds a baclassic.Level to the Campaign."""
         if level.campaign is not None:
@@ -61,11 +61,11 @@ class Campaign:
             self._levels.insert(index, level)
 
     @property
-    def levels(self) -> list[baclassic.Level]:
+    def levels(self) -> list[bascenev1.Level]:
         """The list of baclassic.Level-s in the Campaign."""
         return self._levels
 
-    def getlevel(self, name: str) -> baclassic.Level:
+    def getlevel(self, name: str) -> bascenev1.Level:
         """Return a contained baclassic.Level by name."""
         from babase import _error
 
@@ -104,7 +104,7 @@ class Campaign:
 def init_campaigns() -> None:
     """Fill out initial default Campaigns."""
     # pylint: disable=cyclic-import
-    from baclassic._level import Level
+    from bascenev1._level import Level
     from bastd.game.onslaught import OnslaughtGame
     from bastd.game.football import FootballCoopGame
     from bastd.game.runaround import RunaroundGame

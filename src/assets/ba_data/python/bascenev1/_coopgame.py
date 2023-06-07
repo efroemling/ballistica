@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from typing import Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     import babase
-    import baclassic
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')

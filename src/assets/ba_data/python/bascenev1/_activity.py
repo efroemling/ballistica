@@ -22,7 +22,6 @@ from bascenev1._player import Player
 
 if TYPE_CHECKING:
     from typing import Any
-    import baclassic
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound=Player)

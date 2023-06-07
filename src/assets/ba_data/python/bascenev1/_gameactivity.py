@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from bastd.actor.bomb import TNTSpawner
     import babase
     import bascenev1
-    import baclassic
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
 TeamT = TypeVar('TeamT', bound='bascenev1.Team')
@@ -435,8 +434,11 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=cyclic-import
-        from bastd.ui.continues import ContinuesWindow
         from bascenev1._coopsession import CoopSession
+
+        classic = _babase.app.classic
+        assert classic is not None
+        continues_window = classic.continues_window
 
         plus = _babase.app.plus
         try:
@@ -464,7 +466,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                                 with _babase.ContextRef.empty():
                                     _babase.apptimer(
                                         0.5,
-                                        lambda: ContinuesWindow(
+                                        lambda: continues_window(
                                             self,
                                             self._continue_cost,
                                             continue_call=WeakCall(
