@@ -28,7 +28,7 @@ from efrotools.pcommand import (
     pylint,
     pylint_files,
     mypy,
-    runmypy,
+    mypy_files,
     dmypy,
     tool_config_install,
     sync,

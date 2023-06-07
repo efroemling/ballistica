@@ -1,4 +1,4 @@
-### 1.7.20 (build 21054, api 8, 2023-06-06)
+### 1.7.20 (build 21055, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -262,6 +262,14 @@
   stuff.
 - For similar reasons, moved the `ba*.app.cloud` subsystem to
   `ba*.app.plus.cloud`.
+- The big single ballistica standard library Python package containing all the
+  built in games, actors, windows, etc. (bastd) has been split out into parts
+  associated with bascenev1 (bascenev1lib) and bauiv1 (bauiv1lib). This way,
+  when bascenev2 comes along, it can have its own unique associated library of
+  stuff (bascenev2lib). To upgrade existing code, go through and replace
+  instances of `bastd.ui` with `bauiv1lib` and all other instances of `bastd`
+  with `bascenev1lib`. That should mostly do it. As a random tip: check out the
+  `tools/pcommand mypy_files` as a handy tool to help get your mods updated.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

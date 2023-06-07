@@ -23,8 +23,8 @@ from bascenev1 import _music
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
-    from bastd.actor.playerspaz import PlayerSpaz
-    from bastd.actor.bomb import TNTSpawner
+    from bascenev1lib.actor.playerspaz import PlayerSpaz
+    from bascenev1lib.actor.bomb import TNTSpawner
     import babase
     import bascenev1
 
@@ -541,7 +541,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerDiedMessage):
             # pylint: disable=cyclic-import
-            from bastd.actor.spaz import Spaz
+            from bascenev1lib.actor.spaz import Spaz
 
             player = msg.getplayer(self.playertype)
             killer = msg.getkillerplayer(self.playertype)
@@ -667,7 +667,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def _show_info(self) -> None:
         """Show the game description."""
         from bascenev1._gameutils import animate
-        from bastd.actor.zoomtext import ZoomText
+        from bascenev1lib.actor.zoomtext import ZoomText
 
         name = self.get_instance_display_string()
         ZoomText(
@@ -906,7 +906,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         respawn_time = round(max(1.0, respawn_time), 0)
 
         if player.actor and not self.has_ended():
-            from bastd.actor.respawnicon import RespawnIcon
+            from bascenev1lib.actor.respawnicon import RespawnIcon
 
             player.customdata['respawn_timer'] = _bascenev1.Timer(
                 respawn_time, WeakCall(self.spawn_player_if_exists, player)
@@ -947,7 +947,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         from babase import _math
         from bascenev1._gameutils import animate
         from bascenev1._coopsession import CoopSession
-        from bastd.actor.playerspaz import PlayerSpaz
+        from bascenev1lib.actor.playerspaz import PlayerSpaz
 
         name = player.getname()
         color = player.color
@@ -1002,7 +1002,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def setup_standard_powerup_drops(self, enable_tnt: bool = True) -> None:
         """Create standard powerup drops for the current map."""
         # pylint: disable=cyclic-import
-        from bastd.actor.powerupbox import DEFAULT_POWERUP_INTERVAL
+        from bascenev1lib.actor.powerupbox import DEFAULT_POWERUP_INTERVAL
 
         self._powerup_drop_timer = _bascenev1.Timer(
             DEFAULT_POWERUP_INTERVAL,
@@ -1016,7 +1016,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
     def _standard_drop_powerup(self, index: int, expire: bool = True) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
+        from bascenev1lib.actor.powerupbox import PowerupBox, PowerupBoxFactory
 
         PowerupBox(
             position=self.map.powerup_spawn_points[index],
@@ -1035,7 +1035,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def _setup_standard_tnt_drops(self) -> None:
         """Standard tnt drop."""
         # pylint: disable=cyclic-import
-        from bastd.actor.bomb import TNTSpawner
+        from bascenev1lib.actor.bomb import TNTSpawner
 
         for i, point in enumerate(self.map.tnt_points):
             assert self._tnt_spawners is not None
@@ -1270,7 +1270,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     ) -> None:
         """Zooming text used to announce game names and winners."""
         # pylint: disable=cyclic-import
-        from bastd.actor.zoomtext import ZoomText
+        from bascenev1lib.actor.zoomtext import ZoomText
 
         # Reserve a spot on the screen (in case we get multiple of these so
         # they don't overlap).

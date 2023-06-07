@@ -204,7 +204,7 @@ class PlayerRecord:
             scale2: float,
             sound2: bascenev1.Sound | None,
         ) -> None:
-            from bastd.actor.popuptext import PopupText
+            from bascenev1lib.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
             # a current position for them.
@@ -368,7 +368,7 @@ class Stats:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bastd.actor.popuptext import PopupText
+        from bascenev1lib.actor.popuptext import PopupText
         from babase import _math
         from babase._language import Lstr
         from bascenev1._gameactivity import GameActivity

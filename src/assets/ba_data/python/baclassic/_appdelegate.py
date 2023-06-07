@@ -32,7 +32,7 @@ class AppDelegate:
         when done.
         """
         # Replace the main window once we come up successfully.
-        from bastd.ui.playlist.editgame import PlaylistEditGameWindow
+        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         assert _babase.app.classic is not None
         _babase.app.classic.ui.clear_main_menu_window(transition='out_left')

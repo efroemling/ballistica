@@ -82,15 +82,15 @@ class StoreSubsystem:
         """
         # pylint: disable=cyclic-import
         from babase._mgen.enums import SpecialChar
-        from bastd import maps
+        from bascenev1lib import maps
 
         assert _babase.app.classic is not None
 
         if _babase.app.classic.store_items is None:
-            from bastd.game import ninjafight
-            from bastd.game import meteorshower
-            from bastd.game import targetpractice
-            from bastd.game import easteregghunt
+            from bascenev1lib.game import ninjafight
+            from bascenev1lib.game import meteorshower
+            from bascenev1lib.game import targetpractice
+            from bascenev1lib.game import easteregghunt
 
             # IMPORTANT - need to keep this synced with the master server.
             # (doing so manually for now)

@@ -13,7 +13,7 @@ from bascenev1._gameactivity import GameActivity
 
 if TYPE_CHECKING:
     from typing import Sequence
-    from bastd.actor.playerspaz import PlayerSpaz
+    from bascenev1lib.actor.playerspaz import PlayerSpaz
     import babase
     import bascenev1
 
@@ -94,7 +94,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
         from babase._language import Lstr
-        from bastd.actor.text import Text
+        from bascenev1lib.actor.text import Text
 
         assert _babase.app.classic is not None
         ts_h_offs = 30

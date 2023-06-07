@@ -397,7 +397,7 @@ def mypy() -> None:
     efrotools.code.mypy(PROJROOT, full)
 
 
-def runmypy() -> None:
+def mypy_files() -> None:
     """Run mypy checks on provided filenames."""
     from efro.terminal import Clr
     from efro.error import CleanError
@@ -407,7 +407,7 @@ def runmypy() -> None:
         raise CleanError('Expected at least 1 filename arg.')
     filenames = sys.argv[2:]
     try:
-        efrotools.code.runmypy(PROJROOT, filenames)
+        efrotools.code.mypy_files(PROJROOT, filenames)
         print(f'{Clr.GRN}Mypy Passed.{Clr.RST}')
     except Exception as exc:
         raise CleanError('Mypy Failed.') from exc

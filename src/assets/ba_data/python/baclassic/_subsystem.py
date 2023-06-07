@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     import babase
     import bauiv1
     import baclassic
-    from bastd.actor import spazappearance
+    from bascenev1lib.actor import spazappearance
     from baclassic._appdelegate import AppDelegate
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
@@ -172,8 +172,8 @@ class ClassicSubsystem(AppSubsystem):
         # pylint: disable=too-many-locals
         from bascenev1 import _campaign
         from bascenev1 import _map
-        from bastd.actor import spazappearance
-        from bastd import maps as stdmaps
+        from bascenev1lib.actor import spazappearance
+        from bascenev1lib import maps as stdmaps
         from babase._apputils import handle_leftover_v1_cloud_log_file
         from baclassic._appdelegate import AppDelegate
         import bauiv1 as bui
@@ -239,7 +239,7 @@ class ClassicSubsystem(AppSubsystem):
             plus = bui.app.plus
             assert plus is not None
 
-            from bastd.ui.specialoffer import show_offer
+            from bauiv1lib.specialoffer import show_offer
 
             if (
                 'pendingSpecialOffer' in cfg
@@ -340,7 +340,7 @@ class ClassicSubsystem(AppSubsystem):
     ) -> bool:
         """High level way to launch a local co-op session."""
         # pylint: disable=cyclic-import
-        from bastd.ui.coop.level import CoopLevelLockedWindow
+        from bauiv1lib.coop.level import CoopLevelLockedWindow
 
         assert _babase.app.classic is not None
 
@@ -379,7 +379,7 @@ class ClassicSubsystem(AppSubsystem):
                 bascenev1.new_host_session(_coopsession.CoopSession)
             except Exception:
                 logging.exception('Error creating coopsession after fade end.')
-                from bastd.mainmenu import MainMenuSession
+                from bascenev1lib.mainmenu import MainMenuSession
 
                 bascenev1.new_host_session(MainMenuSession)
 
@@ -392,7 +392,7 @@ class ClassicSubsystem(AppSubsystem):
         """Attempt to cleanly get back to the main menu."""
         # pylint: disable=cyclic-import
         from baclassic import _benchmark
-        from bastd.mainmenu import MainMenuSession
+        from bascenev1lib.mainmenu import MainMenuSession
 
         plus = _babase.app.plus
         assert plus is not None
@@ -626,7 +626,7 @@ class ClassicSubsystem(AppSubsystem):
     def show_config_error_window(self) -> bool:
         """(internal)"""
         if self.platform in ('mac', 'linux', 'windows'):
-            from bastd.ui.configerror import ConfigErrorWindow
+            from bauiv1lib.configerror import ConfigErrorWindow
 
             _babase.pushcall(ConfigErrorWindow)
             return True
@@ -652,19 +652,19 @@ class ClassicSubsystem(AppSubsystem):
     def v2_upgrade_window(self, login_name: str, code: str) -> None:
         """(internal)"""
 
-        from bastd.ui.v2upgrade import V2UpgradeWindow
+        from bauiv1lib.v2upgrade import V2UpgradeWindow
 
         V2UpgradeWindow(login_name, code)
 
     def account_link_code_window(self, data: dict[str, Any]) -> None:
         """(internal)"""
-        from bastd.ui.account.link import AccountLinkCodeWindow
+        from bauiv1lib.account.link import AccountLinkCodeWindow
 
         AccountLinkCodeWindow(data)
 
     def server_dialog(self, delay: float, data: dict[str, Any]) -> None:
         """(internal)"""
-        from bastd.ui.serverdialog import (
+        from bauiv1lib.serverdialog import (
             ServerDialogData,
             ServerDialogWindow,
         )
@@ -685,7 +685,7 @@ class ClassicSubsystem(AppSubsystem):
 
     def ticket_icon_press(self) -> None:
         """(internal)"""
-        from bastd.ui.resourcetypeinfo import ResourceTypeInfoWindow
+        from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
         ResourceTypeInfoWindow(
             origin_widget=_bauiv1.get_special_widget('tickets_info_button')
@@ -693,7 +693,7 @@ class ClassicSubsystem(AppSubsystem):
 
     def party_icon_activate(self, origin: Sequence[float]) -> None:
         """(internal)"""
-        from bastd.ui.party import PartyWindow
+        from bauiv1lib.party import PartyWindow
         from babase import app
 
         assert not app.headless_mode
@@ -711,7 +711,7 @@ class ClassicSubsystem(AppSubsystem):
 
     def device_menu_press(self, device_id: int | None) -> None:
         """(internal)"""
-        from bastd.ui.mainmenu import MainMenuWindow
+        from bauiv1lib.mainmenu import MainMenuWindow
         from bauiv1 import set_ui_input_device
 
         assert _babase.app is not None
@@ -726,19 +726,19 @@ class ClassicSubsystem(AppSubsystem):
 
     def show_url_window(self, address: str) -> None:
         """(internal)"""
-        from bastd.ui.url import ShowURLWindow
+        from bauiv1lib.url import ShowURLWindow
 
         ShowURLWindow(address)
 
     def quit_window(self) -> None:
         """(internal)"""
-        from bastd.ui.confirm import QuitWindow
+        from bauiv1lib.confirm import QuitWindow
 
         QuitWindow()
 
     def get_draw_score_screen_activity(self) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.drawscore import DrawScoreScreenActivity
+        from bascenev1lib.activity.drawscore import DrawScoreScreenActivity
 
         return DrawScoreScreenActivity
 
@@ -746,7 +746,7 @@ class ClassicSubsystem(AppSubsystem):
         self,
     ) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.multiteamvictory import (
+        from bascenev1lib.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity,
         )
 
@@ -756,7 +756,9 @@ class ClassicSubsystem(AppSubsystem):
         self,
     ) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.dualteamscore import TeamVictoryScoreScreenActivity
+        from bascenev1lib.activity.dualteamscore import (
+            TeamVictoryScoreScreenActivity,
+        )
 
         return TeamVictoryScoreScreenActivity
 
@@ -764,7 +766,7 @@ class ClassicSubsystem(AppSubsystem):
         self,
     ) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.freeforallvictory import (
+        from bascenev1lib.activity.freeforallvictory import (
             FreeForAllVictoryScoreScreenActivity,
         )
 
@@ -772,25 +774,25 @@ class ClassicSubsystem(AppSubsystem):
 
     def get_coop_join_activity(self) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.coopjoin import CoopJoinActivity
+        from bascenev1lib.activity.coopjoin import CoopJoinActivity
 
         return CoopJoinActivity
 
     def get_coop_score_screen(self) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.coopscore import CoopScoreScreen
+        from bascenev1lib.activity.coopscore import CoopScoreScreen
 
         return CoopScoreScreen
 
     def get_multi_team_join_activity(self) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.activity.multiteamjoin import MultiTeamJoinActivity
+        from bascenev1lib.activity.multiteamjoin import MultiTeamJoinActivity
 
         return MultiTeamJoinActivity
 
     def get_tutorial_activity(self) -> type[bascenev1.Activity]:
         """(internal)"""
-        from bastd.tutorial import TutorialActivity
+        from bascenev1lib.tutorial import TutorialActivity
 
         return TutorialActivity
 
@@ -805,7 +807,7 @@ class ClassicSubsystem(AppSubsystem):
         on_close_call: Callable[[], Any] | None = None,
     ) -> None:
         """(internal)"""
-        from bastd.ui.tournamententry import TournamentEntryWindow
+        from bauiv1lib.tournamententry import TournamentEntryWindow
 
         TournamentEntryWindow(
             tournament_id,
@@ -819,7 +821,7 @@ class ClassicSubsystem(AppSubsystem):
 
     def get_main_menu_session(self) -> type[bascenev1.Session]:
         """(internal)"""
-        from bastd.mainmenu import MainMenuSession
+        from bascenev1lib.mainmenu import MainMenuSession
 
         return MainMenuSession
 
@@ -831,7 +833,7 @@ class ClassicSubsystem(AppSubsystem):
         cancel_call: Callable[[], Any],
     ) -> None:
         """(internal)"""
-        from bastd.ui.continues import ContinuesWindow
+        from bauiv1lib.continues import ContinuesWindow
 
         ContinuesWindow(activity, cost, continue_call, cancel_call)
 
@@ -843,7 +845,7 @@ class ClassicSubsystem(AppSubsystem):
         origin_widget: bauiv1.Widget | None = None,
     ) -> None:
         """(internal)"""
-        from bastd.ui.profile.browser import ProfileBrowserWindow
+        from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         ProfileBrowserWindow(
             transition, in_main_menu, selected_profile, origin_widget

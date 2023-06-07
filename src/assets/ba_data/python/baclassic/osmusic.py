@@ -38,7 +38,7 @@ class OSMusicPlayer(MusicPlayer):
         selection_target_name: str,
     ) -> Any:
         # pylint: disable=cyclic-import
-        from bastd.ui.soundtrack.entrytypeselect import (
+        from bauiv1lib.soundtrack.entrytypeselect import (
             SoundtrackEntryTypeSelectWindow,
         )
 

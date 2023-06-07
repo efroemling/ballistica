@@ -105,15 +105,15 @@ def init_campaigns() -> None:
     """Fill out initial default Campaigns."""
     # pylint: disable=cyclic-import
     from bascenev1._level import Level
-    from bastd.game.onslaught import OnslaughtGame
-    from bastd.game.football import FootballCoopGame
-    from bastd.game.runaround import RunaroundGame
-    from bastd.game.thelaststand import TheLastStandGame
-    from bastd.game.race import RaceGame
-    from bastd.game.targetpractice import TargetPracticeGame
-    from bastd.game.meteorshower import MeteorShowerGame
-    from bastd.game.easteregghunt import EasterEggHuntGame
-    from bastd.game.ninjafight import NinjaFightGame
+    from bascenev1lib.game.onslaught import OnslaughtGame
+    from bascenev1lib.game.football import FootballCoopGame
+    from bascenev1lib.game.runaround import RunaroundGame
+    from bascenev1lib.game.thelaststand import TheLastStandGame
+    from bascenev1lib.game.race import RaceGame
+    from bascenev1lib.game.targetpractice import TargetPracticeGame
+    from bascenev1lib.game.meteorshower import MeteorShowerGame
+    from bascenev1lib.game.easteregghunt import EasterEggHuntGame
+    from bascenev1lib.game.ninjafight import NinjaFightGame
 
     # TODO: Campaigns should be load-on-demand; not all imported at launch
     # like this.

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 def run_cpu_benchmark() -> None:
     """Run a cpu benchmark."""
     # pylint: disable=cyclic-import
-    from bastd import tutorial
+    from bascenev1lib import tutorial
     from bascenev1._session import Session
 
     class BenchmarkSession(Session):

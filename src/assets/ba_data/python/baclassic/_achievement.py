@@ -892,8 +892,8 @@ class Achievement:
         from babase._language import Lstr
         from babase._mgen.enums import SpecialChar
         from bascenev1._coopsession import CoopSession
-        from bastd.actor.image import Image
-        from bastd.actor.text import Text
+        from bascenev1lib.actor.image import Image
+        from bascenev1lib.actor.text import Text
 
         # Yeah this needs cleaning up.
         if style == 'post_game':
@@ -1231,8 +1231,8 @@ class Achievement:
         from babase._general import WeakCall
         from babase._language import Lstr
         from babase._mgen.enums import SpecialChar
-        from bastd.actor.text import Text
-        from bastd.actor.image import Image
+        from bascenev1lib.actor.text import Text
+        from bascenev1lib.actor.image import Image
         from bascenev1 import _gameutils
         from bascenev1._messages import DieMessage
 

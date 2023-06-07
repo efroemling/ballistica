@@ -81,84 +81,108 @@ def filter_playlist(
                 'Happy_Thoughts.HappyThoughtsGame',
                 'bsAssault.AssaultGame',
                 'bs_assault.AssaultGame',
+                'bastd.game.assault.AssaultGame',
             ):
-                entry['type'] = 'bastd.game.assault.AssaultGame'
+                entry['type'] = 'bascenev1lib.game.assault.AssaultGame'
             if entry['type'] in (
                 'King_of_the_Hill.KingOfTheHillGame',
                 'bsKingOfTheHill.KingOfTheHillGame',
                 'bs_king_of_the_hill.KingOfTheHillGame',
+                'bastd.game.kingofthehill.KingOfTheHillGame',
             ):
-                entry['type'] = 'bastd.game.kingofthehill.KingOfTheHillGame'
+                entry[
+                    'type'
+                ] = 'bascenev1lib.game.kingofthehill.KingOfTheHillGame'
             if entry['type'] in (
                 'Capture_the_Flag.CTFGame',
                 'bsCaptureTheFlag.CTFGame',
                 'bs_capture_the_flag.CTFGame',
+                'bastd.game.capturetheflag.CaptureTheFlagGame',
             ):
-                entry['type'] = 'bastd.game.capturetheflag.CaptureTheFlagGame'
+                entry[
+                    'type'
+                ] = 'bascenev1lib.game.capturetheflag.CaptureTheFlagGame'
             if entry['type'] in (
                 'Death_Match.DeathMatchGame',
                 'bsDeathMatch.DeathMatchGame',
                 'bs_death_match.DeathMatchGame',
+                'bastd.game.deathmatch.DeathMatchGame',
             ):
-                entry['type'] = 'bastd.game.deathmatch.DeathMatchGame'
+                entry['type'] = 'bascenev1lib.game.deathmatch.DeathMatchGame'
             if entry['type'] in (
                 'ChosenOne.ChosenOneGame',
                 'bsChosenOne.ChosenOneGame',
                 'bs_chosen_one.ChosenOneGame',
+                'bastd.game.chosenone.ChosenOneGame',
             ):
-                entry['type'] = 'bastd.game.chosenone.ChosenOneGame'
+                entry['type'] = 'bascenev1lib.game.chosenone.ChosenOneGame'
             if entry['type'] in (
                 'Conquest.Conquest',
                 'Conquest.ConquestGame',
                 'bsConquest.ConquestGame',
                 'bs_conquest.ConquestGame',
+                'bastd.game.conquest.ConquestGame',
             ):
-                entry['type'] = 'bastd.game.conquest.ConquestGame'
+                entry['type'] = 'bascenev1lib.game.conquest.ConquestGame'
             if entry['type'] in (
                 'Elimination.EliminationGame',
                 'bsElimination.EliminationGame',
                 'bs_elimination.EliminationGame',
+                'bastd.game.elimination.EliminationGame',
             ):
-                entry['type'] = 'bastd.game.elimination.EliminationGame'
+                entry['type'] = 'bascenev1lib.game.elimination.EliminationGame'
             if entry['type'] in (
                 'Football.FootballGame',
                 'bsFootball.FootballTeamGame',
                 'bs_football.FootballTeamGame',
+                'bastd.game.football.FootballTeamGame',
             ):
-                entry['type'] = 'bastd.game.football.FootballTeamGame'
+                entry['type'] = 'bascenev1lib.game.football.FootballTeamGame'
             if entry['type'] in (
                 'Hockey.HockeyGame',
                 'bsHockey.HockeyGame',
                 'bs_hockey.HockeyGame',
+                'bastd.game.hockey.HockeyGame',
             ):
-                entry['type'] = 'bastd.game.hockey.HockeyGame'
+                entry['type'] = 'bascenev1lib.game.hockey.HockeyGame'
             if entry['type'] in (
                 'Keep_Away.KeepAwayGame',
                 'bsKeepAway.KeepAwayGame',
                 'bs_keep_away.KeepAwayGame',
+                'bastd.game.keepaway.KeepAwayGame',
             ):
-                entry['type'] = 'bastd.game.keepaway.KeepAwayGame'
+                entry['type'] = 'bascenev1lib.game.keepaway.KeepAwayGame'
             if entry['type'] in (
                 'Race.RaceGame',
                 'bsRace.RaceGame',
                 'bs_race.RaceGame',
+                'bastd.game.race.RaceGame',
             ):
-                entry['type'] = 'bastd.game.race.RaceGame'
+                entry['type'] = 'bascenev1lib.game.race.RaceGame'
             if entry['type'] in (
                 'bsEasterEggHunt.EasterEggHuntGame',
                 'bs_easter_egg_hunt.EasterEggHuntGame',
+                'bastd.game.easteregghunt.EasterEggHuntGame',
             ):
-                entry['type'] = 'bastd.game.easteregghunt.EasterEggHuntGame'
+                entry[
+                    'type'
+                ] = 'bascenev1lib.game.easteregghunt.EasterEggHuntGame'
             if entry['type'] in (
                 'bsMeteorShower.MeteorShowerGame',
                 'bs_meteor_shower.MeteorShowerGame',
+                'bastd.game.meteorshower.MeteorShowerGame',
             ):
-                entry['type'] = 'bastd.game.meteorshower.MeteorShowerGame'
+                entry[
+                    'type'
+                ] = 'bascenev1lib.game.meteorshower.MeteorShowerGame'
             if entry['type'] in (
                 'bsTargetPractice.TargetPracticeGame',
                 'bs_target_practice.TargetPracticeGame',
+                'bastd.game.targetpractice.TargetPracticeGame',
             ):
-                entry['type'] = 'bastd.game.targetpractice.TargetPracticeGame'
+                entry[
+                    'type'
+                ] = 'bascenev1lib.game.targetpractice.TargetPracticeGame'
 
             gameclass = getclass(entry['type'], GameActivity)
 

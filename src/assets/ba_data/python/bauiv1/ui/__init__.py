@@ -116,7 +116,7 @@ class UIEntry:
             if bool(False):
                 return UILocation
             raise RuntimeError('FIXME UNIMPLEMENTED')
-            # from bastd.ui import mainmenu
+            # from bauiv1lib import mainmenu
             # return cast(Type[UILocation], mainmenu.MainMenuWindow)
 
         raise ValueError('unknown ui class ' + str(self._name))

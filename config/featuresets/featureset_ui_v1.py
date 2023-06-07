@@ -12,7 +12,7 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base'}
+fset.requirements = {'core', 'base'}
 
 # We'd prefer our name's title form to be 'UI V1', not the default 'Ui V1'.
 fset.name_title = 'UI V1'

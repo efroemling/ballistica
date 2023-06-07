@@ -1010,7 +1010,7 @@ class Lobby:
     def reload_profiles(self) -> None:
         """Reload available player profiles."""
         # pylint: disable=cyclic-import
-        from bastd.actor.spazappearance import get_appearances
+        from bascenev1lib.actor.spazappearance import get_appearances
 
         assert _babase.app.classic is not None
 

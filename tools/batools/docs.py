@@ -108,7 +108,7 @@ def generate(projroot: str) -> None:
         )
         pdoc.pdoc(
             'babase',
-            'bastd',
+            'bascenev1lib',
             'baclassic',
             'bascenev1',
             'bauiv1',

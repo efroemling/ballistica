@@ -32,7 +32,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // FIXME: Should be an attr of the session class, not hard-coded.
   is_main_menu_ =
       static_cast<bool>(strstr(Python::ObjToString(session_type_obj).c_str(),
-                               "bastd.mainmenu.MainMenuSession"));
+                               "bascenev1lib.mainmenu.MainMenuSession"));
   // Log(LogLevel::kInfo, "MAIN MENU? " + std::to_string(is_main_menu()));
 
   kick_idle_players_ = appmode->kick_idle_players();

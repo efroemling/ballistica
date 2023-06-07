@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=missing-module-docstring, invalid-name
 from __future__ import annotations
 
 # This file is exec'ed by the spinoff system, allowing us to define
@@ -12,7 +12,7 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base'}
+fset.requirements = {'core', 'base'}
 fset.soft_requirements = {'classic'}
 
 fset.internal = True

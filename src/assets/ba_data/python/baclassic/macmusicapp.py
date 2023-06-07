@@ -33,7 +33,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         selection_target_name: str,
     ) -> Any:
         # pylint: disable=cyclic-import
-        from bastd.ui.soundtrack import entrytypeselect as etsel
+        from bauiv1lib.soundtrack import entrytypeselect as etsel
 
         return etsel.SoundtrackEntryTypeSelectWindow(
             callback, current_entry, selection_target_name

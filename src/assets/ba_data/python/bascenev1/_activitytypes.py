@@ -80,8 +80,8 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor.tipstext import TipsText
-        from bastd.actor.background import Background
+        from bascenev1lib.actor.tipstext import TipsText
+        from bascenev1lib.actor.background import Background
 
         super().on_transition_in()
         self._background = Background(
@@ -113,7 +113,7 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor.background import Background
+        from bascenev1lib.actor.background import Background
 
         super().on_transition_in()
         self._background = Background(
@@ -166,8 +166,8 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         _bascenev1.timer(time_till_assign, WeakCall(self._safe_assign, player))
 
     def on_transition_in(self) -> None:
-        from bastd.actor.tipstext import TipsText
-        from bastd.actor.background import Background
+        from bascenev1lib.actor.tipstext import TipsText
+        from bascenev1lib.actor.background import Background
 
         super().on_transition_in()
         self._background = Background(
@@ -179,7 +179,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor.text import Text
+        from bascenev1lib.actor.text import Text
         from babase import _language
 
         super().on_begin()

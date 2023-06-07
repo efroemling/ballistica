@@ -35,7 +35,7 @@ class Actor:
     Sounds, etc. into a high-level cohesive unit.
 
     Some example actors include the Bomb, Flag, and Spaz classes that
-    live in the bastd.actor.* modules.
+    live in the bascenev1lib.actor.* modules.
 
     One key feature of Actors is that they generally 'die'
     (killing off or transitioning out their nodes) when the last Python
@@ -43,7 +43,7 @@ class Actor:
 
     ##### Example
     >>> # Create a flag Actor in our game activity:
-    ... from bastd.actor.flag import Flag
+    ... from bascenev1lib.actor.flag import Flag
     ... self.flag = Flag(position=(0, 10, 0))
     ...
     ... # Later, destroy the flag.

@@ -706,7 +706,7 @@ def _filter_module_name(mpath: str) -> str:
     return mpath[:-9] if mpath.endswith('.__init__') else mpath
 
 
-def runmypy(
+def mypy_files(
     projroot: Path, filenames: list[str], full: bool = False, check: bool = True
 ) -> None:
     """Run MyPy on provided filenames."""
@@ -736,7 +736,7 @@ def mypy(projroot: Path, full: bool) -> None:
     print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
     starttime = time.time()
     try:
-        runmypy(projroot, filenames, full)
+        mypy_files(projroot, filenames, full)
     except Exception as exc:
         raise CleanError('Mypy failed.') from exc
     duration = time.time() - starttime

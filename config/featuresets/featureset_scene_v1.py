@@ -12,4 +12,4 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base', 'std', 'classic'}
+fset.requirements = {'core', 'base', 'classic', 'scene_v1_lib'}

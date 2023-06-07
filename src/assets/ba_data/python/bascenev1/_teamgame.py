@@ -15,7 +15,7 @@ from bascenev1._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
-    from bastd.actor.playerspaz import PlayerSpaz
+    from bascenev1lib.actor.playerspaz import PlayerSpaz
     import babase
     import bascenev1
 
@@ -57,7 +57,7 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
         from bascenev1._coopsession import CoopSession
-        from bastd.actor.controlsguide import ControlsGuide
+        from bascenev1lib.actor.controlsguide import ControlsGuide
 
         super().on_transition_in()
 

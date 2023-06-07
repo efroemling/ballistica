@@ -338,7 +338,7 @@ def py_examine(
         with tmppath.open('w', encoding='utf-8') as outfile:
             outfile.write('\n'.join(flines))
         try:
-            code.runmypy(projroot, [str(tmppath)], check=False)
+            code.mypy_files(projroot, [str(tmppath)], check=False)
         except Exception as exc:
             print('error running mypy:', exc)
         tmppath.unlink()

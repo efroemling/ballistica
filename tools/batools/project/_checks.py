@@ -376,13 +376,13 @@ def _check_python_file(self: ProjectUpdater, fname: str) -> None:
                         f'{fname}:{i+1}: no top level babase imports allowed'
                         f' under babase module.'
                     )
-            if '/bastd/' in fname:
+            if '/bascenev1lib/' in fname:
                 # Don't allow importing _babase or _baplus anywhere here.
                 # (any internal needs should be in babase.internal)
                 if 'import _babase' in line:
                     raise CleanError(
                         f'{fname}:{i+1}: _babase or _baplus imports not'
-                        f' allowed under bastd.'
+                        f' allowed under bascenev1lib.'
                     )
 
     # In all cases, look for our one-line legal notice.

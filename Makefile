@@ -615,9 +615,17 @@ spinoff-test-template_fs:
 spinoff-test-ui_v1:
 	tools/pcommand spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project with only the ui_v1_lib feature-set.
+spinoff-test-ui_v1_lib:
+	tools/pcommand spinoff_test ui_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
+
 # Build and check a spinoff project with only the scene_v1 feature-set.
 spinoff-test-scene_v1:
 	tools/pcommand spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
+
+# Build and check a spinoff project with only the scene_v1_lib feature-set.
+spinoff-test-scene_v1_lib:
+	tools/pcommand spinoff_test scene_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Blow away all spinoff-test builds.
 spinoff-test-clean:
