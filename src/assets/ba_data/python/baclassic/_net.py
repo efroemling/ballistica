@@ -94,6 +94,7 @@ class MasterServerV1CallThread(threading.Thread):
                     + '?'
                     + urllib.parse.urlencode(self._data)
                 )
+                assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(
                         url,
@@ -105,6 +106,7 @@ class MasterServerV1CallThread(threading.Thread):
                 )
             elif self._request_type == 'post':
                 url = plus.get_master_server_address() + '/' + self._request
+                assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(
                         url,

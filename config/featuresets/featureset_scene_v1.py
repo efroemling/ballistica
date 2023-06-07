@@ -12,5 +12,4 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'base'}
-fset.soft_requirements = {'classic'}
+fset.requirements = {'base', 'std', 'classic'}

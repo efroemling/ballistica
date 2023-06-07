@@ -230,7 +230,7 @@ class Chooser:
         # To calc our random character we pick a random one out of our
         # unlocked list and then locate that character's index in the full
         # list.
-        char_index_offset = app.classic.lobby_random_char_index_offset
+        char_index_offset: int = app.classic.lobby_random_char_index_offset
         self._random_character_index = (
             sessionplayer.inputdevice.id + char_index_offset
         ) % len(self._character_names)
