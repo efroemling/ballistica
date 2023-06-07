@@ -1,4 +1,4 @@
-### 1.7.20 (build 21061, api 8, 2023-06-07)
+### 1.7.20 (build 21063, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -280,6 +280,12 @@
   exact class names instead of the 'game' shortcut.
 - (build 21060) Fixed a bug where epic mode was not in slow motion (but sounds
   still were hehehehe).
+- (build 21062) The audio server no longer stops all playing sounds when it is
+  reset. This behavior was intented to keep game sounds from 'bleeding' out into
+  the main menu, but with app-mode-switches now causing resets just after launch
+  it is making some early UI sounds (such as the 'power-down' sound if a plugin
+  disappears) sound cut-off and broken. Please holler if you notice any sounds
+  that get 'stuck' playing after games/etc.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

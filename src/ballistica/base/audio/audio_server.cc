@@ -644,10 +644,26 @@ void AudioServer::Process() {
 }
 
 void AudioServer::Reset() {
-  // Stop all playing sounds.
-  for (auto&& i : sources_) {
-    i->Stop();
+  // Note: up until version 1.7.20, the audio server would stop all playing
+  // sounds when reset. This would prevent against long sounds playing at
+  // the end of a game session 'bleeding' into the main menu/etc. However,
+  // these days, resets are becoming more common due to app-mode switches
+  // and whatnot, and the chances of cutting off an intended ui sound are
+  // growing. In particular, a 'power down' sound at launch when a plugin is
+  // no longer found is being cut off by the initial app-mode switch.
+
+  // So disabling the stop behavior for now and hoping that doesn't bite us.
+  // Ideally we should have sounds contexts so that we can stop sounds for
+  // a particular scene when that scene ends/etc. This would also fix our
+  // current problem where epic mode screws up the pitch on our UI sounds.
+
+  if (explicit_bool(false)) {
+    // Stop all playing sounds.
+    for (auto&& i : sources_) {
+      i->Stop();
+    }
   }
+  // Still need to reset this though or epic-mode will screw us up.
   SetSoundPitch(1.0f);
 }
 
