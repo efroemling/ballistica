@@ -58,7 +58,7 @@ class CorePlatformWindows : public CorePlatform {
   auto GetSubplatformName() -> std::string override;
   bool have_stdin_stdout_ = false;
 
-  auto GetWinStackTraceDescription(WinStackTrace* stack_trace) -> std::string;
+  auto FormatWinStackTraceForDisplay(WinStackTrace* stack_trace) -> std::string;
 
  private:
   std::mutex win_stack_mutex_;

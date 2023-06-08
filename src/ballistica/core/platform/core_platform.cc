@@ -1058,10 +1058,10 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
   // The stack trace should capture the stack state immediately upon
   // construction but should do the bare minimum amount of work to store it. Any
   // expensive operations such as symbolification should be deferred until
-  // GetDescription().
+  // FormatForDisplay().
   PlatformStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
 
-  auto GetDescription() noexcept -> std::string override {
+  auto FormatForDisplay() noexcept -> std::string override {
     try {
       std::string s;
       char** symbols = backtrace_symbols(array_, nsize_);

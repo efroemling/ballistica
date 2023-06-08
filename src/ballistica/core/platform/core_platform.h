@@ -19,14 +19,14 @@ namespace ballistica::core {
 /// trace classes should capture the stack state immediately upon
 /// construction but should do the bare minimum amount of work to store it.
 /// Any expensive operations such as symbolification should be deferred
-/// until GetDescription().
+/// until FormatForDisplay().
 class PlatformStackTrace {
  public:
   virtual ~PlatformStackTrace() = default;
 
   // Return a human readable version of the trace (with symbolification if
   // available).
-  virtual auto GetDescription() noexcept -> std::string = 0;
+  virtual auto FormatForDisplay() noexcept -> std::string = 0;
 
   // Should return a copy of itself allocated via new() (or nullptr if not
   // possible).
@@ -362,8 +362,10 @@ class CorePlatform {
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  /// Should return a subclass of PlatformStackTrace allocated via new.
-  /// Platforms with no meaningful stack trace functionality can return nullptr.
+  /// Should return a subclass of PlatformStackTrace allocated via new. It
+  /// is up to the caller to call delete on the returned trace when done
+  /// with it. Platforms with no meaningful stack trace functionality can
+  /// return nullptr.
   virtual auto GetStackTrace() -> PlatformStackTrace*;
 
   // Called during stress testing.

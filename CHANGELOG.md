@@ -1,4 +1,4 @@
-### 1.7.20 (build 21074, api 8, 2023-06-08)
+### 1.7.20 (build 21075, api 8, 2023-06-08)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -303,6 +303,8 @@
 - (build 21073) Stack traces are now implemented under windows so should show up
   for fatal errors and whatnot. Also fatal error logging now mentions when stack
   traces are not available.
+- (build 21074) Added `babase.native_stack_trace()` to fetch native stack traces
+  as strings.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

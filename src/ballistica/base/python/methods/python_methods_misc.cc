@@ -1383,6 +1383,37 @@ static PyMethodDef PyUnlockAllInputDef = {
     "Resumes normal keyboard, mouse, and gamepad event processing.",
 };
 
+// --------------------------- native_stack_trace ------------------------------
+
+static auto PyNativeStackTrace(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_core);
+  auto* trace = g_core->platform->GetStackTrace();
+  if (!trace) {
+    Py_RETURN_NONE;
+  }
+  auto out = trace->FormatForDisplay();
+  delete trace;
+  return PyUnicode_FromString(out.c_str());
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeStackTraceDef = {
+    "native_stack_trace",             // name
+    (PyCFunction)PyNativeStackTrace,  // method
+    METH_NOARGS,                      // flags
+
+    "native_stack_trace() -> str | None\n"
+    "\n"
+    "Return a native stack trace as a string, or None if not available.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"
+    "\n"
+    "Stack traces contain different data and formatting across platforms.\n"
+    "Only use them for debugging.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1436,6 +1467,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
       PyHasTouchScreenDef,
+      PyNativeStackTraceDef,
   };
 }
 

@@ -58,8 +58,8 @@ class WinStackTrace : public PlatformStackTrace {
 
   // Return a human readable version of the trace (with symbolification if
   // available).
-  auto GetDescription() noexcept -> std::string {
-    return platform_->GetWinStackTraceDescription(this);
+  auto FormatForDisplay() noexcept -> std::string {
+    return platform_->FormatWinStackTraceForDisplay(this);
   }
 
   // Should return a copy of itself allocated via new() (or nullptr if not
@@ -87,7 +87,7 @@ class WinStackTrace : public PlatformStackTrace {
   void* stack_[kTraceMaxStackFrames];
 };
 
-auto CorePlatformWindows::GetWinStackTraceDescription(
+auto CorePlatformWindows::FormatWinStackTraceForDisplay(
     WinStackTrace* stack_trace) -> std::string {
   try {
     std::string out;
@@ -214,7 +214,7 @@ CorePlatformWindows::CorePlatformWindows() {
   // printStackTrace();
 
   // auto* testtrace = new WinStackTrace(this);
-  // printf("WINTRACE:\n%s", testtrace->GetDescription().c_str());
+  // printf("WINTRACE:\n%s", testtrace->FormatForDisplay().c_str());
   // printf("WOOHOO!\n");
   // fflush(stdout);
 

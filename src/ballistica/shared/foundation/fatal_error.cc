@@ -72,7 +72,7 @@ void FatalError::ReportFatalError(const std::string& message,
     if (g_core && g_core->platform) {
       core::PlatformStackTrace* trace{g_core->platform->GetStackTrace()};
       if (trace) {
-        std::string tracestr = trace->GetDescription();
+        std::string tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {
           logmsg += ("\nCPP-STACK-TRACE-BEGIN:\n" + tracestr
                      + "\nCPP-STACK-TRACE-END");

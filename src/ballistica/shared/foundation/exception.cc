@@ -65,7 +65,7 @@ auto Exception::what() const noexcept -> const char* {
       if (stack_trace_ != nullptr) {
         const_cast<Exception*>(this)->full_description_ =
             message_ + "\nThrown from " + thread_name_ + " thread:\n"
-            + stack_trace_->GetDescription();
+            + stack_trace_->FormatForDisplay();
       } else {
         const_cast<Exception*>(this)->full_description_ = message_;
       }
