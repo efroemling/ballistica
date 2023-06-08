@@ -4,12 +4,15 @@
 #define BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
 #if BA_OSTYPE_WINDOWS
 
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::core {
+
+class WinStackTrace;
 
 class CorePlatformWindows : public CorePlatform {
  public:
@@ -18,6 +21,7 @@ class CorePlatformWindows : public CorePlatform {
   static auto UTF8Encode(const std::wstring& wstr) -> std::string;
   static auto UTF8Decode(const std::string& str) -> std::wstring;
 
+  auto GetStackTrace() -> PlatformStackTrace* override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto GenerateUUID() -> std::string override;
@@ -53,6 +57,13 @@ class CorePlatformWindows : public CorePlatform {
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
   bool have_stdin_stdout_ = false;
+
+  auto GetWinStackTraceDescription(WinStackTrace* stack_trace) -> std::string;
+
+ private:
+  std::mutex win_stack_mutex_;
+  bool win_sym_inited_{};
+  void* win_sym_process_{};
 };
 
 }  // namespace ballistica::core

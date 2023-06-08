@@ -30,7 +30,7 @@ class PlatformStackTrace {
 
   // Should return a copy of itself allocated via new() (or nullptr if not
   // possible).
-  virtual auto copy() const noexcept -> PlatformStackTrace* = 0;
+  virtual auto Copy() const noexcept -> PlatformStackTrace* = 0;
 };
 
 /// This class attempts to abstract away most platform-specific

@@ -1078,7 +1078,7 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
     }
   }
 
-  auto copy() const noexcept -> PlatformStackTrace* override {
+  auto Copy() const noexcept -> PlatformStackTrace* override {
     try {
       auto s = new PlatformStackTraceExecInfo(*this);
 

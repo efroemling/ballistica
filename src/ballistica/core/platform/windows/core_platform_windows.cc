@@ -12,6 +12,11 @@
 #include <stdio.h>
 #include <sysinfoapi.h>
 
+/* clang-format off */
+// Builds fail if this is further up.
+#include <dbghelp.h>
+/* clang-format on */
+
 #pragma comment(lib, "Rpcrt4.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -20,7 +25,9 @@
 #else
 #pragma comment(lib, "python311.lib")
 #endif
+#pragma comment(lib, "DbgHelp.lib")
 
+// GUI Only Stuff.
 #if !BA_HEADLESS_BUILD
 #pragma comment(lib, "libogg.lib")
 #pragma comment(lib, "libvorbis.lib")
@@ -38,6 +45,108 @@
 #endif
 
 namespace ballistica::core {
+
+static const int kTraceMaxStackFrames{256};
+static const int kTraceMaxFunctionNameLength{1024};
+
+class WinStackTrace : public PlatformStackTrace {
+ public:
+  explicit WinStackTrace(CorePlatformWindows* platform) : platform_{platform} {
+    number_of_frames_ =
+        CaptureStackBackTrace(0, kTraceMaxStackFrames, stack_, NULL);
+  }
+
+  // Return a human readable version of the trace (with symbolification if
+  // available).
+  auto GetDescription() noexcept -> std::string {
+    return platform_->GetWinStackTraceDescription(this);
+  }
+
+  // Should return a copy of itself allocated via new() (or nullptr if not
+  // possible).
+  auto Copy() const noexcept -> PlatformStackTrace* override {
+    try {
+      auto s = new WinStackTrace(*this);
+
+      // Vanilla copy constructor should do the right thing here.
+      assert(s->number_of_frames_ == number_of_frames_
+             && memcmp(s->stack_, stack_, sizeof(stack_)) == 0);
+      return s;
+    } catch (const std::exception&) {
+      // If this is failing we're in big trouble anyway.
+      return nullptr;
+    }
+  }
+
+  auto number_of_frames() const { return number_of_frames_; }
+  auto* stack() const { return stack_; }
+
+ private:
+  CorePlatformWindows* platform_;
+  WORD number_of_frames_{};
+  void* stack_[kTraceMaxStackFrames];
+};
+
+auto CorePlatformWindows::GetWinStackTraceDescription(
+    WinStackTrace* stack_trace) -> std::string {
+  try {
+    std::string out;
+
+    // Win docs say this is not thread safe so limit to one at a time.
+    std::scoped_lock lock(win_stack_mutex_);
+
+    // Docs say to do this only once.
+    if (!win_sym_inited_) {
+      win_sym_process_ = GetCurrentProcess();
+      SymInitialize(win_sym_process_, NULL, TRUE);
+      win_sym_inited_ = true;
+    }
+
+    char buf[sizeof(SYMBOL_INFO)
+             + (kTraceMaxFunctionNameLength - 1) * sizeof(TCHAR)];
+    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(buf);
+    symbol->MaxNameLen = kTraceMaxFunctionNameLength;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    DWORD displacement;
+    IMAGEHLP_LINE64 line;
+    line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+    std::string build_src_dir = g_core ? g_core->build_src_dir() : "";
+
+    char linebuf[kTraceMaxFunctionNameLength + 128];
+    for (int i = 0; i < stack_trace->number_of_frames(); i++) {
+      DWORD64 address = (DWORD64)(stack_trace->stack()[i]);
+      SymFromAddr(win_sym_process_, address, NULL, symbol);
+      if (SymGetLineFromAddr64(win_sym_process_, address, &displacement,
+                               &line)) {
+        const char* filename = line.FileName;
+        if (!build_src_dir.empty()
+            && !strncmp(filename, build_src_dir.c_str(),
+                        build_src_dir.size())) {
+          filename += build_src_dir.size();
+        }
+        snprintf(linebuf, sizeof(linebuf),
+                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol->Name,
+                 filename, line.LineNumber,
+                 reinterpret_cast<void*>(symbol->Address));
+      } else {
+        snprintf(linebuf, sizeof(linebuf),
+                 "SymGetLineFromAddr64 returned error code %lu.\n",
+                 GetLastError());
+        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
+                 symbol->Name, reinterpret_cast<void*>(symbol->Address));
+      }
+      out += linebuf;
+    }
+    return out;
+  } catch (const std::exception&) {
+    return "stack-trace construction failed.";
+  }
+}
+
+auto CorePlatformWindows::GetStackTrace() -> PlatformStackTrace* {
+  return new WinStackTrace(this);
+}
 
 // Convert a wide Unicode string to an UTF8 string.
 auto CorePlatformWindows::UTF8Encode(const std::wstring& wstr) -> std::string {
@@ -61,9 +170,53 @@ auto CorePlatformWindows::UTF8Decode(const std::string& str) -> std::wstring {
   return wstr;
 }
 
+#define TRACE_MAX_STACK_FRAMES 256
+#define TRACE_MAX_FUNCTION_NAME_LENGTH 1024
+
+// int printStackTrace() {
+//   void* stack[TRACE_MAX_STACK_FRAMES];
+//   if (!win_sym_inited_) {
+//     win_sym_process_ = GetCurrentProcess();
+//     SymInitialize(win_sym_process_, NULL, TRUE);
+//     win_sym_inited_ = true;
+//   }
+//   WORD numberOfFrames =
+//       CaptureStackBackTrace(0, TRACE_MAX_STACK_FRAMES, stack, NULL);
+
+//   char buf[sizeof(SYMBOL_INFO)
+//            + (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR)];
+//   SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
+//   symbol->MaxNameLen = TRACE_MAX_FUNCTION_NAME_LENGTH;
+//   symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+//   DWORD displacement;
+//   IMAGEHLP_LINE64 line;
+//   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+//   for (int i = 0; i < numberOfFrames; i++) {
+//     DWORD64 address = (DWORD64)(stack[i]);
+//     SymFromAddr(win_sym_process_, address, NULL, symbol);
+//     if (SymGetLineFromAddr64(win_sym_process_, address, &displacement,
+//     &line)) {
+//       printf("\tat %s in %s: line: %lu: address: 0x%0X\n", symbol->Name,
+//              line.FileName, line.LineNumber, symbol->Address);
+//     } else {
+//       printf("\tSymGetLineFromAddr64 returned error code %lu.\n",
+//              GetLastError());
+//       printf("\tat %s, address 0x%0X.\n", symbol->Name, symbol->Address);
+//     }
+//   }
+//   return 0;
+// }
+
 CorePlatformWindows::CorePlatformWindows() {
   // We should be built in unicode mode.
   assert(sizeof(TCHAR) == 2);
+
+  // printStackTrace();
+
+  // auto* testtrace = new WinStackTrace(this);
+  // printf("WINTRACE:\n%s", testtrace->GetDescription().c_str());
+  // printf("WOOHOO!\n");
+  // fflush(stdout);
 
   // Need to init winsock immediately since we use it for
   // threading/logging/etc.

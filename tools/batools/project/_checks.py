@@ -132,7 +132,11 @@ def _get_namespace_info(lines: list[str], index: int) -> tuple[str, bool]:
         if lines[index].startswith('}'):
             return name, True
         if not (
-            lines[index].startswith('class ') and lines[index].endswith(';')
+            (
+                lines[index].startswith('class ')
+                or lines[index].startswith('struct ')
+            )
+            and lines[index].endswith(';')
         ):
             # Found a non-predeclare statement
             return name, False
