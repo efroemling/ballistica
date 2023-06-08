@@ -97,13 +97,6 @@ auto UI::MainMenuVisible() const -> bool {
   return false;
 }
 
-// FIXME should be same as MainMenuVisible.
-// auto UI::IsWindowPresent() const -> bool {
-//  return ((screen_root_widget_.Exists() && screen_root_widget_->HasChildren())
-//          || (overlay_root_widget_.Exists()
-//              && overlay_root_widget_->HasChildren()));
-//}
-
 auto UI::PartyIconVisible() -> bool {
   if (g_base->HaveUIV1()) {
     return g_base->ui_v1()->PartyIconVisible();
@@ -211,7 +204,7 @@ auto UI::ShouldHighlightWidgets() const -> bool {
   // Show selection highlights only if we've got controllers connected and only
   // when the main UI is visible (dont want a selection highlight for toolbar
   // buttons during a game).
-  return (g_base->input->have_non_touch_inputs() && MainMenuVisible());
+  return g_base->input->have_non_touch_inputs() && MainMenuVisible();
 }
 
 auto UI::ShouldShowButtonShortcuts() const -> bool {

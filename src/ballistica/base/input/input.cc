@@ -1263,9 +1263,9 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
     return;
   }
 
-  if (!g_base->ui->MainMenuVisible()) {
-    return;
-  }
+  //  if (!g_base->ui->MainMenuVisible()) {
+  //    return;
+  //  }
 
   mark_input_active();
 

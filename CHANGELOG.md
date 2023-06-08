@@ -1,4 +1,4 @@
-### 1.7.20 (build 21064, api 8, 2023-06-07)
+### 1.7.20 (build 21066, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -292,6 +292,8 @@
   problem within the plugin's code. This is now correctly handled and reported.
   Which is good because this situation will come up a lot for people upgrading
   old plugins which reference 'ba' and other modules that no longer exist.
+- (build 21064) Fixed an issue where the menu button wasn't clickable in-game
+  (thanks for the heads up Irvin).
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

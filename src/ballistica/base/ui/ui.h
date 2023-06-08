@@ -25,11 +25,8 @@
 
 // Predeclare a few things from ui_v1.
 namespace ballistica::ui_v1 {
-class ContainerWidget;
-class RootWidget;
 class Widget;
-class RootUI;
-}  // namespace ballistica::ui_v1
+}
 
 namespace ballistica::base {
 
@@ -50,8 +47,6 @@ class UI {
 
   void Reset();
 
-  // auto IsCurrentContext() const -> bool;
-
   /// Pop up an in-game window to show a url (NOT in a browser).
   /// Can be called from any thread.
   void ShowURL(const std::string& url);
@@ -69,10 +64,6 @@ class UI {
   auto HandleLegacyRootUIMouseDown(float x, float y) -> bool;
   void HandleLegacyRootUIMouseUp(float x, float y);
   auto PartyWindowOpen() -> bool;
-
-  /// Return whether there is UI present in either the main or overlay
-  /// stacks. Generally this implies the focus should be on the UI.
-  // auto IsWindowPresent() const -> bool;
 
   void Draw(FrameDef* frame_def);
 
