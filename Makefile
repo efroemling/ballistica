@@ -138,13 +138,13 @@ meta-clean:
 # (except for a few things such as localconfig.json).
 clean:
 	$(CHECK_CLEAN_SAFETY)
-	rm -rf build
+	rm -rf build  # Handle this part ourself; can confuse git.
 	git clean -dfx $(ROOT_CLEAN_IGNORES)
 
 # Show what clean would delete without actually deleting it.
 clean-list:
 	$(CHECK_CLEAN_SAFETY)
-	@echo Would remove build  # We do this ourself; not git.
+	@echo Would remove build  # Handle this part ourself; can confuse git.
 	git clean -dnx $(ROOT_CLEAN_IGNORES)
 
 # Build/update dummy python modules.

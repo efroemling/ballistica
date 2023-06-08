@@ -234,7 +234,7 @@ def print_corrupt_file_error() -> None:
         _babase.apptimer(2.0, _babase.getsimplesound('error').play)
 
 
-_tbfiles: list[TextIO] = []
+_tb_held_files: list[TextIO] = []
 
 
 @ioprepped
@@ -298,11 +298,12 @@ def dump_app_state(
         os.path.dirname(_babase.app.config_file_path), '_appstate_dump_tb'
     )
 
+    tbfile = open(tbpath, 'w', encoding='utf-8')
+
     # faulthandler needs the raw file descriptor to still be valid when
     # it fires, so stuff this into a global var to make sure it doesn't get
     # cleaned up.
-    tbfile = open(tbpath, 'w', encoding='utf-8')
-    _tbfiles.append(tbfile)
+    _tb_held_files.append(tbfile)
 
     if delay > 0.0:
         faulthandler.dump_traceback_later(delay, file=tbfile)
@@ -329,6 +330,14 @@ def log_dumped_app_state() -> None:
             os.path.dirname(_babase.app.config_file_path), '_appstate_dump_md'
         )
         if os.path.exists(mdpath):
+            # We may be hanging on to open file descriptors for use by
+            # faulthandler (see above). If we are, we need to clear them
+            # now or else we'll get 'file in use' errors below when we
+            # try to unlink it on windows.
+            for heldfile in _tb_held_files:
+                heldfile.close()
+            _tb_held_files.clear()
+
             with open(mdpath, 'r', encoding='utf-8') as infile:
                 metadata = dataclass_from_json(
                     DumpedAppStateMetadata, infile.read()

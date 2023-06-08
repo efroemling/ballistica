@@ -14,6 +14,8 @@
 
 /* clang-format off */
 // Builds fail if this is further up.
+// This define gives us the unicode version.
+#define DBGHELP_TRANSLATE_TCHAR
 #include <dbghelp.h>
 /* clang-format on */
 
@@ -119,22 +121,24 @@ auto CorePlatformWindows::FormatWinStackTraceForDisplay(
       SymFromAddr(win_sym_process_, address, NULL, symbol);
       if (SymGetLineFromAddr64(win_sym_process_, address, &displacement,
                                &line)) {
-        const char* filename = line.FileName;
+        std::string filename_s = UTF8Encode(std::wstring(line.FileName));
+        const char* filename = filename_s.c_str();
         if (!build_src_dir.empty()
             && !strncmp(filename, build_src_dir.c_str(),
                         build_src_dir.size())) {
           filename += build_src_dir.size();
         }
         snprintf(linebuf, sizeof(linebuf),
-                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol->Name,
-                 filename, line.LineNumber,
-                 reinterpret_cast<void*>(symbol->Address));
+                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i,
+                 UTF8Encode(std::wstring(symbol->Name)).c_str(), filename,
+                 line.LineNumber, reinterpret_cast<void*>(symbol->Address));
       } else {
         snprintf(linebuf, sizeof(linebuf),
                  "SymGetLineFromAddr64 returned error code %lu.\n",
                  GetLastError());
         snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
-                 symbol->Name, reinterpret_cast<void*>(symbol->Address));
+                 UTF8Encode(std::wstring(symbol->Name)).c_str(),
+                 reinterpret_cast<void*>(symbol->Address));
       }
       out += linebuf;
     }
