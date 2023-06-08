@@ -127,8 +127,7 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggingErrorCall));
   assert(objs().Exists(ObjID::kLoggingCriticalCall));
 
-  // Now that we've grabbed Python logging calls above, we can push any
-  // early log calls along to Python. They're no longer our problem.
+  // Push any early log calls we've been holding on to along to Python.
   {
     std::scoped_lock lock(early_log_lock_);
     python_logging_calls_enabled_ = true;
@@ -140,21 +139,12 @@ void CorePython::EnablePythonLoggingCalls() {
 }
 
 void CorePython::ImportPythonObjs() {
-  // Define a few calls we can use for environment setup.
-
-  // Grab core stuff that we might need before our _babase module gets spun up
-  // (which is when all the stuff in binding_base gets fetched).
-  // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
+  // Grab core Python objs we use.
 #include "ballistica/core/mgen/pyembed/binding_core.inc"
 
-  // Normally we wait until babase is imported to push early logs through to
-  // Python (so that our log handling is fully bootstrapped), but technically
-  // we can push things out to Python any time now since we grabbed the logging
-  // calls above. Do so if asked.
-  if (!g_core->core_config().hold_early_logs) {
-    EnablePythonLoggingCalls();
-  }
-
+  // Also grab a few things we define in env.inc. Normally this sort of
+  // thing would go in _hooks.py in our Python package, but because we are
+  // core we don't have one, so we have to do it via inline code.
   {
 #include "ballistica/core/mgen/pyembed/env.inc"
     auto ctx = PythonRef(PyDict_New(), PythonRef::kSteal);

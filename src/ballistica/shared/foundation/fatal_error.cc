@@ -37,7 +37,7 @@ void FatalError::ReportFatalError(const std::string& message,
   // immediately in order to get the debugger's attention.
   if (g_core && g_core->core_config().debugger_attached) {
     if (!message.empty()) {
-      printf("FATAL ERROR: %s\n", message.c_str());
+      printf("FATAL ERROR (debugger mode): %s\n", message.c_str());
       fflush(stdout);
     }
     abort();
@@ -78,6 +78,8 @@ void FatalError::ReportFatalError(const std::string& message,
                      + "\nCPP-STACK-TRACE-END");
         }
         delete trace;
+      } else {
+        logmsg += "\n(CPP-STACK-TRACE-UNAVAILABLE)";
       }
     }
   }

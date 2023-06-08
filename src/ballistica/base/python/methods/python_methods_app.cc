@@ -47,7 +47,11 @@ static PyMethodDef PyAppNameDef = {
 static auto PyRunApp(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  printf("WOULD RUN!\n");
+  FatalError("NOT WORKING YET; COME BACK SOON.");
+
+  assert(g_base);
+  g_base->RunAppToCompletion();
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

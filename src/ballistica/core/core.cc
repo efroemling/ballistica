@@ -146,6 +146,14 @@ void CoreFeatureSet::PostInit() {
   // Grab whatever Python stuff we use.
   python->ImportPythonObjs();
 
+  // Normally we wait until babase is imported to push early logs through to
+  // Python (so that our log handling system is fully bootstrapped), but
+  // technically we can push our log calls out to Python any time now since
+  // we grabbed the logging calls above. Do so immediately here if asked.
+  if (!g_core->core_config().hold_early_logs) {
+    python->EnablePythonLoggingCalls();
+  }
+
   // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
   //  For now it does the right thing here since all we have is monolithic
   //  builds but this will need to account for more situations later.
