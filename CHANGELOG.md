@@ -1,4 +1,4 @@
-### 1.7.20 (build 21072, api 8, 2023-06-08)
+### 1.7.20 (build 21073, api 8, 2023-06-08)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -299,6 +299,7 @@
   (thanks for the heads- up SEBASTIAN2059)
 - (build 21070) Fixed an issue where teams series would incorrectly end after 1
   round (thanks for the heads up SEBASTIAN2059)
+- (build 21072) Fixed a crash drawing a terrain node with no texture set.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

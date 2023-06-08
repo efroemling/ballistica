@@ -704,20 +704,6 @@ void CorePlatformWindows::DisplayLog(const std::string& name, LogLevel level,
   OutputDebugString(UTF8Decode(msg).c_str());
 }
 
-// (The default SDL handler now covers us)
-// bool CorePlatformWindows::BlockingFatalErrorDialog(const std::string&
-// message) {
-//   if (HeadlessMode()) {
-//     return CorePlatform::BlockingFatalErrorDialog(message);
-//   }
-//   MessageBoxA(nullptr, (message.c_str()), "BallisticaKit",
-//               MB_ICONERROR | MB_OK);
-
-//   // Our message-box call is blocking so we can return false here
-//   // and let the app self-terminate at this point.
-//   return false;
-// }
-
 auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
   wchar_t sz_file_name[MAX_PATH + 1];
   GetModuleFileName(nullptr, sz_file_name, MAX_PATH + 1);
