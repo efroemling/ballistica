@@ -23,6 +23,7 @@ from _babase import (
     DisplayTimer,
     Vec3,
     do_once,
+    screenmessage,
     pushcall,
     quit,
     safecolor,
@@ -165,6 +166,7 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
     'AppSubsystem',
+    'screenmessage',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

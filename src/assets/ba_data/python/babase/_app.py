@@ -472,10 +472,6 @@ class App:
         self._app_bootstrapping_complete = True
         self._update_state()
 
-        assert not self._meta_scan_completed
-        self._meta_scan_completed = True
-        self._update_state()
-
     def on_app_launching(self) -> None:
         """Called when the app enters the launching state.
 
@@ -528,6 +524,10 @@ class App:
 
         # Now that we know what's out there, build our final plugin set.
         self.plugins.on_meta_scan_complete()
+
+        assert not self._meta_scan_completed
+        self._meta_scan_completed = True
+        self._update_state()
 
     def on_app_loading(self) -> None:
         """Called when the app enters the loading state.

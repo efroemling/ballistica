@@ -1,4 +1,4 @@
-### 1.7.20 (build 21063, api 8, 2023-06-07)
+### 1.7.20 (build 21064, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -286,6 +286,12 @@
   it is making some early UI sounds (such as the 'power-down' sound if a plugin
   disappears) sound cut-off and broken. Please holler if you notice any sounds
   that get 'stuck' playing after games/etc.
+- (build 21063) Improved error handling when loading plugins. If plugin code
+  encountered a ModuleNotFound error while executing, it was being incorrectly
+  reported that the plugin itself had disappeared, when actually it was just a
+  problem within the plugin's code. This is now correctly handled and reported.
+  Which is good because this situation will come up a lot for people upgrading
+  old plugins which reference 'ba' and other modules that no longer exist.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

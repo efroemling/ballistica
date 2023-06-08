@@ -621,12 +621,14 @@ def _apply_pylint_run_to_cache(
         'binascii',
     }
 
+    # Special case:
     # Ignore generated dummy-modules (we don't directly check those anymore
     # so they'll be listed as external).
-    assert os.path.isdir('build/dummymodules')
-    for fname in os.listdir('build/dummymodules'):
-        if fname.endswith('.py'):
-            ignored_untracked_deps.add(fname.removesuffix('.py'))
+    if os.path.exists('build/dummymodules'):
+        assert os.path.isdir('build/dummymodules')
+        for fname in os.listdir('build/dummymodules'):
+            if fname.endswith('.py'):
+                ignored_untracked_deps.add(fname.removesuffix('.py'))
 
     # Ignore some specific untracked deps; complain about any others.
     untracked_deps = set(

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import importlib.util
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -138,11 +139,29 @@ class PluginSubsystem(AppSubsystem):
         )
         disappeared_plugs: set[str] = set()
         for plugkey in plugkeys:
+            # Originally I was just catching ModuleNotFoundError on the
+            # getclass() call to detect plugins disappearing. However
+            # this breaks if the module *does* exist but itself imports
+            # something that does not exist; in that case we would
+            # incorrectly show that the plugin had disappeared.
+            #
+            # So now we're first explicitly asking Python if it can
+            # locate the module, and if it can then we treat any further
+            # errors including ModuleNotFound as problems with the
+            # module's code; not ours.
             try:
-                cls = getclass(plugkey, Plugin)
-            except ModuleNotFoundError:
+                spec = importlib.util.find_spec(plugkey.split('.')[0])
+            except Exception:
+                spec = None
+
+            if spec is None:
                 disappeared_plugs.add(plugkey)
                 continue
+
+            # Ok; it seems that there's *something* there. Now try to load
+            # it and treat any further errors as the module's fault.
+            try:
+                cls = getclass(plugkey, Plugin)
             except Exception as exc:
                 _babase.getsimplesound('error').play()
                 _babase.screenmessage(
@@ -155,7 +174,7 @@ class PluginSubsystem(AppSubsystem):
                     ),
                     color=(1, 0, 0),
                 )
-                logging.exception("Error loading plugin class '%s'", plugkey)
+                logging.exception("Error loading plugin class '%s'.", plugkey)
                 continue
             try:
                 plugin = cls()
