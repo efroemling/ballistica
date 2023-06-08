@@ -1,4 +1,4 @@
-### 1.7.20 (build 21068, api 8, 2023-06-07)
+### 1.7.20 (build 21071, api 8, 2023-06-07)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -297,6 +297,8 @@
 - (build 21067) Fixed timing bugs in MeteorShower and a few other places caused
   by incorrect use of `bs.apptime()` there `bs.time()` should have been used
   (thanks for the heads- up SEBASTIAN2059)
+- (build 21070) Fixed an issue where teams series would incorrectly end after 1
+  round (thanks for the heads up SEBASTIAN2059)
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

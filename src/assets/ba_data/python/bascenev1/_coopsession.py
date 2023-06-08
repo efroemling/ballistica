@@ -42,13 +42,12 @@ class CoopSession(Session):
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""
         # pylint: disable=cyclic-import
+        from bascenev1lib.activity.coopjoin import CoopJoinActivity
 
         _babase.increment_analytics_count('Co-op session start')
         app = _babase.app
         classic = app.classic
         assert classic is not None
-
-        coop_join_activity = classic.get_coop_join_activity()
 
         # If they passed in explicit min/max, honor that.
         # Otherwise defer to user overrides or defaults.
@@ -87,7 +86,7 @@ class CoopSession(Session):
         self._custom_menu_ui: list[dict[str, Any]] = []
 
         # Start our joining screen.
-        self.setactivity(_bascenev1.newactivity(coop_join_activity))
+        self.setactivity(_bascenev1.newactivity(CoopJoinActivity))
 
         self._next_game_instance: bascenev1.GameActivity | None = None
         self._next_game_level_name: str | None = None
@@ -170,8 +169,9 @@ class CoopSession(Session):
             and self._tutorial_activity is None
             and not self._ran_tutorial_activity
         ):
-            tutorial_activity = classic.get_tutorial_activity()
-            self._tutorial_activity = _bascenev1.newactivity(tutorial_activity)
+            from bascenev1lib.tutorial import TutorialActivity
+
+            self._tutorial_activity = _bascenev1.newactivity(TutorialActivity)
 
     def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         return self._custom_menu_ui
@@ -275,13 +275,12 @@ class CoopSession(Session):
         from bascenev1._activitytypes import JoinActivity, TransitionActivity
         from bascenev1._coopgame import CoopGameActivity
         from bascenev1._score import ScoreType
+        from bascenev1lib.activity.coopscore import CoopScoreScreen
+        from bascenev1lib.tutorial import TutorialActivity
 
         app = _babase.app
         classic = app.classic
         assert classic is not None
-
-        tutorial_activity = classic.get_tutorial_activity()
-        coop_score_screen = classic.get_coop_score_screen()
 
         # If we're running a TeamGameActivity we'll have a GameResults
         # as results. Otherwise its an old CoopGameActivity so its giving
@@ -303,7 +302,7 @@ class CoopSession(Session):
         # If we're in a between-round activity or a restart-activity,
         # hop into a round.
         if isinstance(
-            activity, (JoinActivity, coop_score_screen, TransitionActivity)
+            activity, (JoinActivity, CoopScoreScreen, TransitionActivity)
         ):
             if outcome == 'next_level':
                 if self._next_game_instance is None:
@@ -363,7 +362,7 @@ class CoopSession(Session):
 
         # If we were in a tutorial, just pop a transition to get to the
         # actual round.
-        elif isinstance(activity, tutorial_activity):
+        elif isinstance(activity, TutorialActivity):
             self.setactivity(_bascenev1.newactivity(TransitionActivity))
         else:
             playerinfos: list[bascenev1.PlayerInfo]
@@ -430,7 +429,7 @@ class CoopSession(Session):
             else:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        coop_score_screen,
+                        CoopScoreScreen,
                         {
                             'playerinfos': playerinfos,
                             'score': score,

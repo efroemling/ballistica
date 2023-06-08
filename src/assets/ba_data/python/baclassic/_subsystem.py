@@ -736,66 +736,6 @@ class ClassicSubsystem(AppSubsystem):
 
         QuitWindow()
 
-    def get_draw_score_screen_activity(self) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.drawscore import DrawScoreScreenActivity
-
-        return DrawScoreScreenActivity
-
-    def get_team_series_victory_score_screen_activity(
-        self,
-    ) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.multiteamvictory import (
-            TeamSeriesVictoryScoreScreenActivity,
-        )
-
-        return TeamSeriesVictoryScoreScreenActivity
-
-    def get_team_victory_score_screen_activity(
-        self,
-    ) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.dualteamscore import (
-            TeamVictoryScoreScreenActivity,
-        )
-
-        return TeamVictoryScoreScreenActivity
-
-    def get_free_for_all_victory_score_screen_activity(
-        self,
-    ) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.freeforallvictory import (
-            FreeForAllVictoryScoreScreenActivity,
-        )
-
-        return FreeForAllVictoryScoreScreenActivity
-
-    def get_coop_join_activity(self) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.coopjoin import CoopJoinActivity
-
-        return CoopJoinActivity
-
-    def get_coop_score_screen(self) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.coopscore import CoopScoreScreen
-
-        return CoopScoreScreen
-
-    def get_multi_team_join_activity(self) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.activity.multiteamjoin import MultiTeamJoinActivity
-
-        return MultiTeamJoinActivity
-
-    def get_tutorial_activity(self) -> type[bascenev1.Activity]:
-        """(internal)"""
-        from bascenev1lib.tutorial import TutorialActivity
-
-        return TutorialActivity
-
     def tournament_entry_window(
         self,
         tournament_id: str,

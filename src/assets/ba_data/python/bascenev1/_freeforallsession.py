@@ -56,16 +56,14 @@ class FreeForAllSession(MultiTeamSession):
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:
         # pylint: disable=cyclic-import
         from efro.util import asserttype
+        from bascenev1lib.activity.multiteamvictory import (
+            TeamSeriesVictoryScoreScreenActivity,
+        )
+        from bascenev1lib.activity.freeforallvictory import (
+            FreeForAllVictoryScoreScreenActivity,
+        )
+        from bascenev1lib.activity.drawscore import DrawScoreScreenActivity
 
-        classic = _babase.app.classic
-        assert classic is not None
-        draw_score_screen_activity = classic.get_draw_score_screen_activity()
-        team_series_victory_score_screen_activity = (
-            classic.get_team_series_victory_score_screen_activity()
-        )
-        free_for_all_victory_score_screen_activity = (
-            classic.get_free_for_all_victory_score_screen_activity()
-        )
         winners = results.winnergroups
 
         # If there's multiple players and everyone has the same score,
@@ -73,7 +71,7 @@ class FreeForAllSession(MultiTeamSession):
         if len(self.sessionplayers) > 1 and len(winners) < 2:
             self.setactivity(
                 _bascenev1.newactivity(
-                    draw_score_screen_activity, {'results': results}
+                    DrawScoreScreenActivity, {'results': results}
                 )
             )
         else:
@@ -102,14 +100,14 @@ class FreeForAllSession(MultiTeamSession):
             ):
                 self.setactivity(
                     _bascenev1.newactivity(
-                        team_series_victory_score_screen_activity,
+                        TeamSeriesVictoryScoreScreenActivity,
                         {'winner': series_winners[0]},
                     )
                 )
             else:
                 self.setactivity(
                     _bascenev1.newactivity(
-                        free_for_all_victory_score_screen_activity,
+                        FreeForAllVictoryScoreScreenActivity,
                         {'results': results},
                     )
                 )

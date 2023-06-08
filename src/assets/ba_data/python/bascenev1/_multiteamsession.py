@@ -41,13 +41,12 @@ class MultiTeamSession(Session):
         """Set up playlists & launch a bascenev1.Activity to accept joiners."""
         # pylint: disable=cyclic-import
         from bascenev1 import _playlist
+        from bascenev1lib.activity.multiteamjoin import MultiTeamJoinActivity
 
         app = _babase.app
         classic = app.classic
         assert classic is not None
         cfg = app.config
-
-        multi_team_join_activity = classic.get_multi_team_join_activity()
 
         if self.use_teams:
             team_names = cfg.get('Custom Team Names', DEFAULT_TEAM_NAMES)
@@ -74,7 +73,9 @@ class MultiTeamSession(Session):
 
         self._tutorial_activity_instance: bascenev1.Activity | None
         if show_tutorial:
-            tutorial_activity = classic.get_tutorial_activity()
+            from bascenev1lib.tutorial import TutorialActivity
+
+            tutorial_activity = TutorialActivity
 
             # Get this loading.
             self._tutorial_activity_instance = _bascenev1.newactivity(
@@ -133,7 +134,7 @@ class MultiTeamSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.setactivity(_bascenev1.newactivity(multi_team_join_activity))
+        self.setactivity(_bascenev1.newactivity(MultiTeamJoinActivity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -175,17 +176,14 @@ class MultiTeamSession(Session):
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
         # pylint: disable=cyclic-import
+        from bascenev1lib.tutorial import TutorialActivity
+        from bascenev1lib.activity.multiteamvictory import (
+            TeamSeriesVictoryScoreScreenActivity,
+        )
         from bascenev1._activitytypes import (
             TransitionActivity,
             JoinActivity,
             ScoreScreenActivity,
-        )
-
-        classic = _babase.app.classic
-        assert classic is not None
-        tutorial_activity = classic.get_tutorial_activity()
-        team_series_victory_score_screen_activity = (
-            classic.get_team_series_victory_score_screen_activity()
         )
 
         # If we have a tutorial to show, that's the first thing we do no
@@ -197,7 +195,7 @@ class MultiTeamSession(Session):
         # If we're leaving the tutorial activity, pop a transition activity
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
-        elif isinstance(activity, tutorial_activity):
+        elif isinstance(activity, TutorialActivity):
             self.setactivity(_bascenev1.newactivity(TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
@@ -206,7 +204,7 @@ class MultiTeamSession(Session):
             activity, (JoinActivity, TransitionActivity, ScoreScreenActivity)
         ):
             # If we're coming from a series-end activity, reset scores.
-            if isinstance(activity, team_series_victory_score_screen_activity):
+            if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
                 self.stats.reset()
                 self._game_number = 0
                 for team in self.sessionteams:
