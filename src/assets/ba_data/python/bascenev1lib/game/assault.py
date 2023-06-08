@@ -199,8 +199,8 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
         player_team = player.team
         if player_team is not team:
             # Prevent multiple simultaneous scores.
-            if bs.apptime() != self._last_score_time:
-                self._last_score_time = bs.apptime()
+            if bs.time() != self._last_score_time:
+                self._last_score_time = bs.time()
                 self.stats.player_scored(player, 50, big_message=True)
                 self._score_sound.play()
                 self._flash_base(team)

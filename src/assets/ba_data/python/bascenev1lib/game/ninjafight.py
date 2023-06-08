@@ -178,9 +178,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
         # ..if we didn't win, leave scores as default (None) which means
         # we lost.
         if self._won:
-            elapsed_time_ms = int(
-                (bs.apptime() - self._timer.starttime) * 1000.0
-            )
+            elapsed_time_ms = int((bs.time() - self._timer.starttime) * 1000.0)
             bs.cameraflash()
             self._winsound.play()
             for team in self.teams:

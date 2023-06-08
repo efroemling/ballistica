@@ -53,17 +53,17 @@ class TimeDisplayNode : public Node {
   void OnLanguageChange() override;
 
  private:
-  bool output_dirty_ = true;
+  bool output_dirty_{true};
   std::string output_;
-  millisecs_t time_min_ = -999999999;
-  millisecs_t time_max_ = 999999999;
-  millisecs_t time2_ = 0;
-  millisecs_t time1_ = 0;
-  bool show_sub_seconds_ = false;
+  millisecs_t time_min_{-999999999};
+  millisecs_t time_max_{999999999};
+  millisecs_t time2_{};
+  millisecs_t time1_{};
+  bool show_sub_seconds_{};
   std::string time_suffix_hours_;
   std::string time_suffix_minutes_;
   std::string time_suffix_seconds_;
-  bool translations_dirty_ = true;
+  bool translations_dirty_{true};
 };
 
 }  // namespace ballistica::scene_v1

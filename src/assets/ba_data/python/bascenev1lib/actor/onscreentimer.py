@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import logging
 
 import bascenev1 as bs
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
+    from typing import Any
 
 
 class OnScreenTimer(bs.Actor):
@@ -65,13 +66,15 @@ class OnScreenTimer(bs.Actor):
             endtime = bs.time()
 
         if self._starttime_ms is None:
-            print('Warning: OnScreenTimer.stop() called without start() first')
+            logging.warning(
+                'OnScreenTimer.stop() called without first calling start()'
+            )
         else:
             endtime_ms = int(endtime * 1000)
             self.inputnode.timemax = endtime_ms - self._starttime_ms
 
     def getstarttime(self) -> float:
-        """Return the sim-time when start() was called.
+        """Return the scene-time when start() was called.
 
         Time will be returned in seconds if timeformat is SECONDS or
         milliseconds if it is MILLISECONDS.

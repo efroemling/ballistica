@@ -127,7 +127,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
             # Augment standard behavior.
             super().handlemessage(msg)
 
-            curtime = bs.apptime()
+            curtime = bs.time()
 
             # Record the player's moment of death.
             # assert isinstance(msg.spaz.player
@@ -214,7 +214,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         self._meteor_time = max(0.01, self._meteor_time * 0.9)
 
     def end_game(self) -> None:
-        cur_time = bs.apptime()
+        cur_time = bs.time()
         assert self._timer is not None
         start_time = self._timer.getstarttime()
 

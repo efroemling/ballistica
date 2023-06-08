@@ -301,7 +301,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self._start_time = bs.apptime()
+        self._start_time = bs.time()
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         if self._solo_mode:
@@ -513,7 +513,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
         # for their team.
         if self._get_total_team_lives(player.team) == 0:
             assert self._start_time is not None
-            player.team.survival_seconds = int(bs.apptime() - self._start_time)
+            player.team.survival_seconds = int(bs.time() - self._start_time)
 
     def _get_total_team_lives(self, team: Team) -> int:
         return sum(player.lives for player in team.players)
@@ -547,7 +547,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                 if self._get_total_team_lives(player.team) == 0:
                     assert self._start_time is not None
                     player.team.survival_seconds = int(
-                        bs.apptime() - self._start_time
+                        bs.time() - self._start_time
                     )
             else:
                 # Otherwise, in regular mode, respawn.
