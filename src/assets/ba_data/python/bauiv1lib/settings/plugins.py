@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1lib import popup
 
 if TYPE_CHECKING:
     pass
@@ -108,7 +109,21 @@ class PluginWindow(bui.Window):
                 size=(60, 60),
                 label=bui.charstr(bui.SpecialChar.BACK),
             )
+
         settings_button_x = 670 if uiscale is bui.UIScale.SMALL else 570
+
+        self._category_button = bui.buttonwidget(
+            parent=self._root_widget,
+            scale=0.7,
+            position=(settings_button_x - 140, self._height - 60),
+            size=(130, 60),
+            label=bui.Lstr(resource='AllText'),
+            autoselect=True,
+            on_activate_call=bui.WeakCall(self._show_options),
+            color=(0.55, 0.73, 0.25),
+            iconscale=1.2,
+        )
+
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(settings_button_x, self._height - 60),
@@ -158,68 +173,7 @@ class PluginWindow(bui.Window):
             size=(sub_width, sub_height),
             background=False,
         )
-
-        for i, availplug in enumerate(pluglist):
-            plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
-            active = plugin is not None
-
-            plugstate = plugstates.setdefault(availplug.class_path, {})
-            checked = plugstate.get('enabled', False)
-            assert isinstance(checked, bool)
-
-            item_y = sub_height - (i + 1) * plug_line_height
-            check = bui.checkboxwidget(
-                parent=self._subcontainer,
-                text=availplug.display_name,
-                autoselect=True,
-                value=checked,
-                maxwidth=self._scroll_width - 200,
-                position=(10, item_y),
-                size=(self._scroll_width - 40, 50),
-                on_value_change_call=bui.Call(
-                    self._check_value_changed, availplug
-                ),
-                textcolor=(
-                    (0.8, 0.3, 0.3)
-                    if not availplug.available
-                    else (0, 1, 0)
-                    if active
-                    else (0.6, 0.6, 0.6)
-                ),
-            )
-            if plugin is not None and plugin.has_settings_ui():
-                button = bui.buttonwidget(
-                    parent=self._subcontainer,
-                    label=bui.Lstr(resource='mainMenu.settingsText'),
-                    autoselect=True,
-                    size=(100, 40),
-                    position=(sub_width - 130, item_y + 6),
-                )
-                bui.buttonwidget(
-                    edit=button,
-                    on_activate_call=bui.Call(plugin.show_settings_ui, button),
-                )
-            else:
-                button = None
-
-            # Allow getting back to back button.
-            if i == 0:
-                bui.widget(
-                    edit=check,
-                    up_widget=self._back_button,
-                    left_widget=self._back_button,
-                    right_widget=self._settings_button,
-                )
-                if button is not None:
-                    bui.widget(edit=button, up_widget=self._back_button)
-
-            # Make sure we scroll all the way to the end when using
-            # keyboard/button nav.
-            bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
-
-        bui.containerwidget(
-            edit=self._root_widget, selected_child=self._scrollwidget
-        )
+        self._show_plugins("All")
 
         self._restore_state()
 
@@ -246,6 +200,265 @@ class PluginWindow(bui.Window):
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             PluginSettingsWindow(transition='in_right').get_root_widget()
+        )
+
+    def _show_options(self) -> None:
+        assert bui.app.classic is not None
+        uiscale = bui.app.classic.ui.uiscale
+
+        popup.PopupMenuWindow(
+            position=self._category_button.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65
+                if uiscale is bui.UIScale.MEDIUM
+                else 1.23
+            ),
+            choices=['All', 'Enabled', 'Disabled'],
+            choices_display=[
+                bui.Lstr(
+                    resource='AllText'
+                ),
+                bui.Lstr(
+                    resource='EnabledText'
+                ),
+                bui.Lstr(
+                    resource='DisabledText'
+                )],
+            current_choice='Default',
+            delegate=self,
+        )
+
+    def popup_menu_selected_choice(
+        self, popup_window: popup.PopupMenuWindow, choice: str
+    ) -> None:
+        """Called when a choice is selected in the popup."""
+        del popup_window  # unused
+        
+        self._clear_scroll_widget()
+        self._show_plugins(choice)
+
+        bui.buttonwidget(
+            edit=self._category_button,
+            label=bui.Lstr(resource=(choice + 'Text'))
+        )
+
+    def popup_menu_closing(self, popup_window: popup.PopupWindow) -> None:
+        """Called when the popup is closing."""
+
+    def _clear_scroll_widget(self) -> None:
+        existing_widgets = self._subcontainer.get_children()
+        if existing_widgets:
+            for i in existing_widgets:
+                i.delete()
+
+    def _show_plugins(self, category: str) -> None:
+        pluglist = bui.app.plugins.potential_plugins
+        plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
+        assert isinstance(plugstates, dict)
+        
+        plug_line_height = 50
+        sub_width = self._scroll_width
+        sub_height = len(pluglist) * plug_line_height
+        sub_height1 = 0
+        sub_height2 = 0
+        num_of_plugs_active = 0
+        num_of_plugs_disabled = 0
+        
+        for i, availplug in enumerate(pluglist):
+            # counting number of enabled and disabled plugins
+            plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
+            active = plugin is not None
+            if active:
+                num_of_plugs_active = num_of_plugs_active + 1
+            elif availplug.available and not active:
+                num_of_plugs_disabled = num_of_plugs_disabled + 1
+
+        if category == "All":
+            bui.containerwidget(
+                edit=self._subcontainer,
+                size=(self._scroll_width,
+                      sub_height
+                     )
+            )
+        if category == "Enabled":
+            sub_height1 = num_of_plugs_active * plug_line_height
+            bui.containerwidget(
+                edit=self._subcontainer,
+                size=(self._scroll_width,
+                      sub_height1
+                     )
+            )
+        elif category == "Disabled":
+            sub_height2 = num_of_plugs_disabled * plug_line_height
+            bui.containerwidget(
+                edit=self._subcontainer,
+                size=(self._scroll_width,
+                      sub_height2
+                     )
+            )
+
+        num_of_plugs = 0
+        for i, availplug in enumerate(pluglist):
+            plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
+            active = plugin is not None
+
+            plugstate = plugstates.setdefault(availplug.class_path, {})
+            checked = plugstate.get('enabled', False)
+            assert isinstance(checked, bool)
+
+            if category == "All":
+                item_y = sub_height - (i + 1) * plug_line_height
+                check = bui.checkboxwidget(
+                    parent=self._subcontainer,
+                    text=availplug.display_name,
+                    autoselect=True,
+                    value=checked,
+                    maxwidth=self._scroll_width - 200,
+                    position=(10, item_y),
+                    size=(self._scroll_width - 40, 50),
+                    on_value_change_call=bui.Call(
+                        self._check_value_changed, availplug
+                    ),
+                    textcolor=(
+                        (0.8, 0.3, 0.3)
+                        if not availplug.available
+                        else (0, 1, 0)
+                        if active
+                        else (0.6, 0.6, 0.6)
+                    ),
+                )
+                if plugin is not None and plugin.has_settings_ui():
+                    button = bui.buttonwidget(
+                        parent=self._subcontainer,
+                        label=bui.Lstr(resource='mainMenu.settingsText'),
+                        autoselect=True,
+                        size=(100, 40),
+                        position=(sub_width - 130, item_y + 6),
+                    )
+                    bui.buttonwidget(
+                        edit=button,
+                        on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                    )
+                else:
+                    button = None
+
+                # Allow getting back to back button.
+                if i == 0:
+                    bui.widget(
+                        edit=check,
+                        up_widget=self._back_button,
+                        left_widget=self._back_button,
+                        right_widget=self._settings_button,
+                    )
+                    if button is not None:
+                        bui.widget(edit=button, up_widget=self._back_button)
+
+                # Make sure we scroll all the way to the end when using
+                # keyboard/button nav.
+                bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+
+            elif category == "Enabled":
+                if active:
+                    item_y = sub_height1 - (num_of_plugs + 1) * plug_line_height
+                    check = bui.checkboxwidget(
+                        parent=self._subcontainer,
+                        text=availplug.display_name,
+                        autoselect=True,
+                        value=checked,
+                        maxwidth=self._scroll_width - 200,
+                        position=(10, item_y),
+                        size=(self._scroll_width - 40, 50),
+                        on_value_change_call=bui.Call(
+                            self._check_value_changed, availplug
+                        ),
+                        textcolor=(
+                            (0.8, 0.3, 0.3)
+                            if not availplug.available
+                            else (0, 1, 0)
+                        ),
+                    )
+                    if plugin is not None and plugin.has_settings_ui():
+                        button = bui.buttonwidget(
+                            parent=self._subcontainer,
+                            label=bui.Lstr(resource='mainMenu.settingsText'),
+                            autoselect=True,
+                            size=(100, 40),
+                            position=(sub_width - 130, item_y + 6),
+                        )
+                        bui.buttonwidget(
+                            edit=button,
+                            on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                        )
+                    else:
+                        button = None
+
+                    # Allow getting back to back button.
+                    if i == 0:
+                        bui.widget(
+                            edit=check,
+                            up_widget=self._back_button,
+                            left_widget=self._back_button,
+                            right_widget=self._settings_button,
+                        )
+                        if button is not None:
+                            bui.widget(edit=button, up_widget=self._back_button)
+
+                    # Make sure we scroll all the way to the end when using
+                    # keyboard/button nav.
+                    bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+                    num_of_plugs = num_of_plugs + 1
+            
+            elif category == "Disabled":
+                if availplug.available and not active:
+                    item_y = sub_height2 - (num_of_plugs + 1) * plug_line_height
+                    check = bui.checkboxwidget(
+                        parent=self._subcontainer,
+                        text=availplug.display_name,
+                        autoselect=True,
+                        value=checked,
+                        maxwidth=self._scroll_width - 200,
+                        position=(10, item_y),
+                        size=(self._scroll_width - 40, 50),
+                        on_value_change_call=bui.Call(
+                            self._check_value_changed, availplug
+                        ),
+                        textcolor=(0.6, 0.6, 0.6),
+                    )
+                    if plugin is not None and plugin.has_settings_ui():
+                        button = bui.buttonwidget(
+                            parent=self._subcontainer,
+                            label=bui.Lstr(resource='mainMenu.settingsText'),
+                            autoselect=True,
+                            size=(100, 40),
+                            position=(sub_width - 130, item_y + 6),
+                        )
+                        bui.buttonwidget(
+                            edit=button,
+                            on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                        )
+                    else:
+                        button = None
+
+                    # Allow getting back to back button.
+                    if i == 0:
+                        bui.widget(
+                            edit=check,
+                            up_widget=self._back_button,
+                            left_widget=self._back_button,
+                            right_widget=self._settings_button,
+                        )
+                        if button is not None:
+                            bui.widget(edit=button, up_widget=self._back_button)
+
+                    # Make sure we scroll all the way to the end when using
+                    # keyboard/button nav.
+                    bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+                    num_of_plugs = num_of_plugs + 1
+
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
         )
 
     def _save_state(self) -> None:
