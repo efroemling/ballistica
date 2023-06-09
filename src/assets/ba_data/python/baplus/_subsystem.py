@@ -33,10 +33,9 @@ class PlusSubsystem(AppSubsystem):
     accounts: AccountV2Subsystem
     cloud: CloudSubsystem
 
-    def on_app_launching(self) -> None:
-        """(internal)"""
-        _baplus.on_app_launching()
-        self.accounts.on_app_launching()
+    def on_app_loading(self) -> None:
+        _baplus.on_app_loading()
+        self.accounts.on_app_loading()
 
     @staticmethod
     def add_v1_account_transaction(

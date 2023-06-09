@@ -91,9 +91,9 @@ class GatherWindow(bui.Window):
             self._transition_out = 'out_right'
             scale_origin = None
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_location('Gather')
+        bui.app.ui_v1.set_main_menu_location('Gather')
         bui.set_party_icon_always_visible(True)
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
         x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -128,7 +128,7 @@ class GatherWindow(bui.Window):
             )
         )
 
-        if uiscale is bui.UIScale.SMALL and bui.app.classic.ui.use_toolbars:
+        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._back
             )
@@ -161,7 +161,7 @@ class GatherWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 42 + t_offs_y),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=(
                 1.5
                 if not condensed
@@ -224,7 +224,7 @@ class GatherWindow(bui.Window):
             if tabtype is not None:
                 self._tabs[tab_id] = tabtype(self)
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=self._tab_row.tabs[tabdefs[-1][0]].button,
                 right_widget=bui.get_special_widget('party_button'),
@@ -273,8 +273,8 @@ class GatherWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.selecting_private_party_playlist = True
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.selecting_private_party_playlist = True
+        bui.app.ui_v1.set_main_menu_window(
             PlayWindow(origin_widget=origin_widget).get_root_widget()
         )
 
@@ -334,7 +334,7 @@ class GatherWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection: \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
+            bui.app.ui_v1.window_states[type(self)] = {
                 'sel_name': sel_name,
             }
         except Exception:
@@ -349,7 +349,7 @@ class GatherWindow(bui.Window):
 
             sel: bui.Widget | None
             assert bui.app.classic is not None
-            winstate = bui.app.classic.ui.window_states.get(type(self), {})
+            winstate = bui.app.ui_v1.window_states.get(type(self), {})
             sel_name = winstate.get('sel_name', None)
             assert isinstance(sel_name, (str, type(None)))
             current_tab = self.TabID.ABOUT
@@ -388,6 +388,6 @@ class GatherWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             MainMenuWindow(transition='in_left').get_root_widget()
         )

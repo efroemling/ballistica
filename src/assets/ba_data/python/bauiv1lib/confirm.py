@@ -52,7 +52,7 @@ class ConfirmWindow:
             transition = 'in_right'
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self.root_widget = bui.containerwidget(
             size=(width, height),
             transition=transition,
@@ -158,7 +158,7 @@ class QuitWindow:
         origin_widget: bui.Widget | None = None,
     ):
         assert bui.app.classic is not None
-        ui = bui.app.classic.ui
+        ui = bui.app.ui_v1
         app = bui.app
         self._back = back
 

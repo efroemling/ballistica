@@ -39,7 +39,7 @@ class GraphicsSettingsWindow(bui.Window):
 
         spacing = 32
         self._have_selected_child = False
-        uiscale = app.classic.ui.uiscale
+        uiscale = app.ui_v1.uiscale
         width = 450.0
         height = 302.0
 
@@ -68,7 +68,7 @@ class GraphicsSettingsWindow(bui.Window):
             )
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         base_scale = (
             2.4
             if uiscale is bui.UIScale.SMALL
@@ -110,7 +110,7 @@ class GraphicsSettingsWindow(bui.Window):
             position=(0, height - 44),
             size=(width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -161,7 +161,7 @@ class GraphicsSettingsWindow(bui.Window):
                 xoffset=-70,
                 textscale=0.85,
             )
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=gmc.plusbutton,
                     right_widget=bui.get_special_widget('party_button'),
@@ -182,7 +182,7 @@ class GraphicsSettingsWindow(bui.Window):
             position=(60, v),
             size=(160, 25),
             text=bui.Lstr(resource=self._r + '.visualsText'),
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
             h_align='center',
@@ -214,7 +214,7 @@ class GraphicsSettingsWindow(bui.Window):
             position=(230, v),
             size=(160, 25),
             text=bui.Lstr(resource=self._r + '.texturesText'),
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
             h_align='center',
@@ -235,7 +235,7 @@ class GraphicsSettingsWindow(bui.Window):
             current_choice=bui.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures,
         )
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=textures_popup.get_button(),
                 right_widget=bui.get_special_widget('party_button'),
@@ -251,7 +251,7 @@ class GraphicsSettingsWindow(bui.Window):
                 position=(h_offs + 60, v),
                 size=(160, 25),
                 text=bui.Lstr(resource=self._r + '.resolutionText'),
-                color=bui.app.classic.ui.heading_color,
+                color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
                 h_align='center',
@@ -366,7 +366,7 @@ class GraphicsSettingsWindow(bui.Window):
                 position=(230, v),
                 size=(160, 25),
                 text=bui.Lstr(resource=self._r + '.verticalSyncText'),
-                color=bui.app.classic.ui.heading_color,
+                color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
                 h_align='center',
@@ -433,7 +433,7 @@ class GraphicsSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             allsettings.AllSettingsWindow(
                 transition='in_left'
             ).get_root_widget()

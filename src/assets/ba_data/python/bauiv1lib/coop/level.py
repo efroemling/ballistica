@@ -15,7 +15,7 @@ class CoopLevelLockedWindow(bui.Window):
         height = 250.0
         lock_tex = bui.gettexture('lock')
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -53,7 +53,7 @@ class CoopLevelLockedWindow(bui.Window):
                 subs=[('${LEVEL}', dep_name)],
             ),
             maxwidth=400,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=0.8,
         )
         bui.imagewidget(

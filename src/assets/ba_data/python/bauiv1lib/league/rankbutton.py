@@ -351,7 +351,7 @@ class LeagueRankButton:
                     fallback_resource='coopSelectWindow.powerRankingText',
                 )
                 assert bui.app.classic is not None
-                t_color = bui.app.classic.ui.title_color
+                t_color = bui.app.ui_v1.title_color
             bui.textwidget(edit=self._title_text, text=txt, color=t_color)
         bui.textwidget(edit=self._value_text, text=status_text)
 

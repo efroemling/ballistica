@@ -156,6 +156,7 @@ dummymodules: prereqs meta
  rm -rf build/dummymodules \&\& ./tools/pcommand gen_dummy_modules
 
 dummymodules-clean:
+	rm -f $(LAZYBUILDDIR)/dummymodules
 	rm -rf build/dummymodules
 
 # Generate docs.

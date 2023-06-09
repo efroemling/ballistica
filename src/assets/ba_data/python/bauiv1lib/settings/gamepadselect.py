@@ -24,7 +24,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
     bs.release_gamepad_input()
     assert bui.app.classic is not None
     try:
-        bui.app.classic.ui.clear_main_menu_window(transition='out_left')
+        bui.app.ui_v1.clear_main_menu_window(transition='out_left')
     except Exception:
         logging.exception('Error transitioning out main_menu_window.')
     bui.getsound('activateBeep').play()
@@ -32,14 +32,14 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
     inputdevice = event['input_device']
     assert isinstance(inputdevice, bs.InputDevice)
     if inputdevice.allows_configuring:
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             gamepad.GamepadSettingsWindow(inputdevice).get_root_widget()
         )
     else:
         width = 700
         height = 200
         button_width = 100
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         dlg = bui.containerwidget(
             scale=(
                 1.7
@@ -51,7 +51,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
             size=(width, height),
             transition='in_right',
         )
-        bui.app.classic.ui.set_main_menu_window(dlg)
+        bui.app.ui_v1.set_main_menu_window(dlg)
         device_name = inputdevice.name
         if device_name == 'iDevice':
             msg = bui.Lstr(
@@ -78,7 +78,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
 
             bui.containerwidget(edit=dlg, transition='out_right')
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 controls.ControlsSettingsWindow(
                     transition='in_left'
                 ).get_root_widget()
@@ -105,7 +105,7 @@ class GamepadSelectWindow(bui.Window):
         self._r = 'configGamepadSelectWindow'
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 scale=(
@@ -142,7 +142,7 @@ class GamepadSelectWindow(bui.Window):
             size=(width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
             maxwidth=250,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
@@ -163,7 +163,7 @@ class GamepadSelectWindow(bui.Window):
             scale=0.8,
             text=bui.Lstr(resource=self._r + '.pressAnyButtonText'),
             maxwidth=width * 0.95,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             h_align='center',
             v_align='top',
         )
@@ -189,7 +189,7 @@ class GamepadSelectWindow(bui.Window):
         bs.release_gamepad_input()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left'
             ).get_root_widget()

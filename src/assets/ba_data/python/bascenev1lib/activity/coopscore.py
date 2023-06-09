@@ -341,7 +341,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # main menu up, so instead we add a callback for when the menu
         # closes; if we're still alive, we'll come up then.
         # If there's no main menu this gets called immediately.
-        bui.app.classic.add_main_menu_close_callback(bui.WeakCall(self.show_ui))
+        bui.app.ui_v1.add_main_menu_close_callback(bui.WeakCall(self.show_ui))
 
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""

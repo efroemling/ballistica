@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import babase
 from _babase import screenmessage
 import _bauiv1
-from bauiv1.ui import Window
+from bauiv1._uitypes import Window
 
 if TYPE_CHECKING:
     import bauiv1 as bui
@@ -26,7 +26,7 @@ class OnScreenKeyboardWindow(Window):
         self._width = 700
         self._height = 400
         assert babase.app.classic is not None
-        uiscale = babase.app.classic.ui.uiscale
+        uiscale = babase.app.ui_v1.uiscale
         top_extra = 20 if uiscale is babase.UIScale.SMALL else 0
         super().__init__(
             root_widget=_bauiv1.containerwidget(
@@ -71,7 +71,7 @@ class OnScreenKeyboardWindow(Window):
             scale=0.95,
             text=label,
             maxwidth=self._width - 140,
-            color=babase.app.classic.ui.title_color,
+            color=babase.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )

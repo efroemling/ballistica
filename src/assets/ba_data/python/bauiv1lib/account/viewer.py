@@ -36,7 +36,7 @@ class AccountViewerWindow(PopupWindow):
         self._account_id = account_id
         self._profile_id = profile_id
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
             scale = (
                 2.6
@@ -178,7 +178,7 @@ class AccountViewerWindow(PopupWindow):
             choices_display.append(bui.Lstr(resource='banThisPlayerText'))
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         PopupMenuWindow(
             position=self._extras_menu_button.get_screen_space_center(),
             scale=(
@@ -344,7 +344,7 @@ class AccountViewerWindow(PopupWindow):
                     h_align='center',
                     v_align='center',
                     scale=title_scale,
-                    color=bui.app.classic.ui.infotextcolor,
+                    color=bui.app.ui_v1.infotextcolor,
                     text=account_title,
                     maxwidth=sub_width * maxwidth_scale,
                 )
@@ -376,7 +376,7 @@ class AccountViewerWindow(PopupWindow):
                     h_align='center',
                     v_align='center',
                     scale=title_scale,
-                    color=bui.app.classic.ui.infotextcolor,
+                    color=bui.app.ui_v1.infotextcolor,
                     text=bui.Lstr(resource='rankText'),
                     maxwidth=sub_width * maxwidth_scale,
                 )
@@ -532,7 +532,7 @@ class AccountViewerWindow(PopupWindow):
                     h_align='center',
                     v_align='center',
                     scale=title_scale,
-                    color=bui.app.classic.ui.infotextcolor,
+                    color=bui.app.ui_v1.infotextcolor,
                     text=bui.Lstr(resource='achievementsText'),
                     maxwidth=sub_width * maxwidth_scale,
                 )
@@ -566,7 +566,7 @@ class AccountViewerWindow(PopupWindow):
                     h_align='center',
                     v_align='center',
                     scale=title_scale,
-                    color=bui.app.classic.ui.infotextcolor,
+                    color=bui.app.ui_v1.infotextcolor,
                     flatness=1.0,
                     text=bui.Lstr(
                         resource='trophiesThisSeasonText',

@@ -82,7 +82,6 @@ from babase._mgen.enums import (
 )
 from babase._text import timestring
 
-
 from _bauiv1 import (
     uibounds,
     set_party_window_open,
@@ -112,7 +111,8 @@ from _bauiv1 import (
     Widget,
     widget,
 )
-from bauiv1.ui import Window, uicleanupcheck
+from bauiv1._uitypes import Window, uicleanupcheck
+from bauiv1._subsystem import UIV1Subsystem
 
 
 __all__ = [
@@ -209,6 +209,7 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'UIV1Subsystem',
 ]
 
 # We want stuff to show up as bauiv1.Foo instead of bauiv1._sub.Foo.

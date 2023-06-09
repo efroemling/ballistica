@@ -40,9 +40,7 @@ class PlayOptionsWindow(PopupWindow):
         # We behave differently if we're being used for playlist selection
         # vs starting a game directly (should make this more elegant).
         assert bui.app.classic is not None
-        self._selecting_mode = (
-            bui.app.classic.ui.selecting_private_party_playlist
-        )
+        self._selecting_mode = bui.app.ui_v1.selecting_private_party_playlist
 
         self._do_randomize_val = bui.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0
@@ -142,7 +140,7 @@ class PlayOptionsWindow(PopupWindow):
             self._height += 40
 
         # Creates our _root_widget.
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
@@ -479,7 +477,7 @@ class PlayOptionsWindow(PopupWindow):
             cfg['Private Party Host Session Type'] = typename
             bui.getsound('gunCocking').play()
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 GatherWindow(transition='in_right').get_root_widget()
             )
             self._transition_out(transition='out_left')

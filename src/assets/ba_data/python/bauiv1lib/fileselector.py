@@ -30,7 +30,7 @@ class FileSelectorWindow(bui.Window):
         if valid_file_extensions is None:
             valid_file_extensions = []
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 700 if uiscale is bui.UIScale.SMALL else 600
         self._x_inset = x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
         self._height = 365 if uiscale is bui.UIScale.SMALL else 418
@@ -68,7 +68,7 @@ class FileSelectorWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 42),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource=self._r + '.titleFolderText')
@@ -121,7 +121,7 @@ class FileSelectorWindow(bui.Window):
             parent=self._root_widget,
             position=(self._folder_center, self._height - 98),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             text=self._path,

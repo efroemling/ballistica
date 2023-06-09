@@ -20,7 +20,7 @@ class EditProfileWindow(bui.Window):
         """Transitions out and recreates ourself."""
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 self.getname(), self._in_main_menu
             ).get_root_widget()
@@ -53,7 +53,7 @@ class EditProfileWindow(bui.Window):
             self._color,
             self._highlight,
         ) = bui.app.classic.get_player_profile_colors(existing_profile)
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = width = 780.0 if uiscale is bui.UIScale.SMALL else 680.0
         self._x_inset = x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
@@ -112,7 +112,7 @@ class EditProfileWindow(bui.Window):
                 if existing_profile is None
                 else bui.Lstr(resource=self._r + '.titleEditText')
             ),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=290,
             scale=1.0,
             h_align='center',
@@ -235,7 +235,7 @@ class EditProfileWindow(bui.Window):
                 position=(self._width * 0.5, v - 39),
                 size=(0, 0),
                 scale=0.6,
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 text=txtl,
                 maxwidth=270,
                 h_align='center',
@@ -286,7 +286,7 @@ class EditProfileWindow(bui.Window):
                 draw_controller=btn,
                 text=bui.Lstr(resource=self._r + '.iconText'),
                 scale=0.7,
-                color=bui.app.classic.ui.title_color,
+                color=bui.app.ui_v1.title_color,
                 maxwidth=120,
             )
 
@@ -315,7 +315,7 @@ class EditProfileWindow(bui.Window):
                 position=(self._width * 0.5, v - 39),
                 size=(0, 0),
                 scale=0.6,
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 text=txtl,
                 maxwidth=240,
                 h_align='center',
@@ -362,7 +362,7 @@ class EditProfileWindow(bui.Window):
                 position=(self._width * 0.5, v - 43),
                 size=(0, 0),
                 scale=0.6,
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 text=txtl,
                 maxwidth=270,
                 h_align='center',
@@ -423,7 +423,7 @@ class EditProfileWindow(bui.Window):
             draw_controller=btn,
             text=bui.Lstr(resource=self._r + '.colorText'),
             scale=0.7,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=120,
         )
 
@@ -451,7 +451,7 @@ class EditProfileWindow(bui.Window):
             draw_controller=btn,
             text=bui.Lstr(resource=self._r + '.characterText'),
             scale=0.7,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=130,
         )
 
@@ -493,7 +493,7 @@ class EditProfileWindow(bui.Window):
             draw_controller=btn,
             text=bui.Lstr(resource=self._r + '.highlightText'),
             scale=0.7,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=120,
         )
         self._update_character()
@@ -655,7 +655,7 @@ class EditProfileWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             ProfileBrowserWindow(
                 'in_left',
                 selected_profile=self._existing_profile,
@@ -801,7 +801,7 @@ class EditProfileWindow(bui.Window):
             plus.run_v1_account_transactions()
             bui.containerwidget(edit=self._root_widget, transition='out_right')
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 ProfileBrowserWindow(
                     'in_left',
                     selected_profile=new_name,

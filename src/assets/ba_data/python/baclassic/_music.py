@@ -112,8 +112,8 @@ class MusicSubsystem:
 
             self._music_player_type = MacMusicAppMusicPlayer
 
-    def on_app_launching(self) -> None:
-        """Should be called by app on_app_launching()."""
+    def on_app_loading(self) -> None:
+        """Should be called by app on_app_loading()."""
 
         # If we're using a non-default playlist, lets go ahead and get our
         # music-player going since it may hitch (better while we're faded

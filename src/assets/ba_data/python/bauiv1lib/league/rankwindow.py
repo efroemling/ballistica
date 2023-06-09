@@ -57,7 +57,7 @@ class LeagueRankWindow(bui.Window):
             scale_origin = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1320 if uiscale is bui.UIScale.SMALL else 1120
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -119,7 +119,7 @@ class LeagueRankWindow(bui.Window):
                 fallback_resource='coopSelectWindow.powerRankingText',
             ),
             h_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.4,
             maxwidth=600,
             v_align='center',
@@ -1148,6 +1148,6 @@ class LeagueRankWindow(bui.Window):
         )
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 CoopBrowserWindow(transition='in_left').get_root_widget()
             )

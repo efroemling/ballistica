@@ -481,7 +481,7 @@ class PublicGatherTab(GatherTab):
         # be enough to make things feel nice and crisp while we do a full
         # server re-query or whatnot.
         assert bui.app.classic is not None
-        bui.app.classic.ui.window_states[type(self)] = State(
+        bui.app.ui_v1.window_states[type(self)] = State(
             sub_tab=self._sub_tab,
             parties=[(i, copy.copy(p)) for i, p in self._parties_sorted[:40]],
             next_entry_index=self._next_entry_index,
@@ -492,7 +492,7 @@ class PublicGatherTab(GatherTab):
 
     def restore_state(self) -> None:
         assert bui.app.classic is not None
-        state = bui.app.classic.ui.window_states.get(type(self))
+        state = bui.app.ui_v1.window_states.get(type(self))
         if state is None:
             state = State()
         assert isinstance(state, State)
@@ -695,7 +695,7 @@ class PublicGatherTab(GatherTab):
             v_align='center',
             maxwidth=200,
             scale=0.8,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             position=(210, v - 9),
             text=party_name_text,
         )
@@ -722,7 +722,7 @@ class PublicGatherTab(GatherTab):
             v_align='center',
             maxwidth=200,
             scale=0.8,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             position=(210, v - 9),
             text=bui.Lstr(
                 resource='maxPartySizeText',

@@ -343,10 +343,7 @@ class Graphics::ScreenMessageEntry {
         texture(texture_in),
         tint_texture(tint_texture_in),
         tint(tint_in),
-        tint2(tint2_in),
-        v_smoothed(0.0f),
-        translation_dirty(true),
-        mesh_dirty(true) {}
+        tint2(tint2_in) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
   bool align_left;
@@ -358,9 +355,9 @@ class Graphics::ScreenMessageEntry {
   std::string s_translated;
   Object::Ref<TextureAsset> texture;
   Object::Ref<TextureAsset> tint_texture;
-  float v_smoothed;
-  bool translation_dirty;
-  bool mesh_dirty;
+  float v_smoothed{};
+  bool translation_dirty{true};
+  bool mesh_dirty{true};
 
  private:
   Object::Ref<TextGroup> s_mesh_;
@@ -368,6 +365,8 @@ class Graphics::ScreenMessageEntry {
 
 // Draw controls and things that lie on top of the action.
 void Graphics::DrawMiscOverlays(RenderPass* pass) {
+  assert(g_base && g_base->InLogicThread());
+
   // Every now and then, update our stats.
   while (g_core->GetAppTimeMillisecs() >= next_stat_update_time_) {
     if (g_core->GetAppTimeMillisecs() - next_stat_update_time_ > 1000) {
@@ -580,7 +579,11 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
             a *= 0.8f;
           }
 
-          assert(!i->translation_dirty);
+          if (i->translation_dirty) {
+            BA_LOG_ONCE(
+                LogLevel::kWarning,
+                "Found dirty translation on screenmessage draw pass 1.");
+          }
           float str_height =
               g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
           float str_width =
@@ -667,7 +670,11 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           } else {
             a = 1;
           }
-          assert(!i->translation_dirty);
+          if (i->translation_dirty) {
+            BA_LOG_ONCE(
+                LogLevel::kWarning,
+                "Found dirty translation on screenmessage draw pass 2.");
+          }
           float str_height =
               g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
           float str_width =
@@ -685,7 +692,9 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           for (int e = 0; e < elem_count; e++) {
             // Gracefully skip unloaded textures.
             TextureAsset* t = i->GetText().GetElementTexture(e);
-            if (!t->preloaded()) continue;
+            if (!t->preloaded()) {
+              continue;
+            }
             c.SetTexture(t);
             if (i->GetText().GetElementCanColor(e)) {
               c.SetColor(r, g, b, a);
@@ -703,7 +712,9 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           }
 
           v += scale * (36 + str_height);
-          if (v > g_base->graphics->screen_virtual_height() + 30) break;
+          if (v > g_base->graphics->screen_virtual_height() + 30) {
+            break;
+          }
         }
         c.Submit();
       }
@@ -809,7 +820,9 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         for (int e = 0; e < elem_count; e++) {
           // Gracefully skip unloaded textures.
           TextureAsset* t = i->GetText().GetElementTexture(e);
-          if (!t->preloaded()) continue;
+          if (!t->preloaded()) {
+            continue;
+          }
           c.SetTexture(t);
           if (i->GetText().GetElementCanColor(e)) {
             c.SetColor(r, g, b, a);
@@ -884,10 +897,11 @@ void Graphics::AddScreenMessage(const std::string& msg, const Vector3f& color,
                                 bool top, TextureAsset* texture,
                                 TextureAsset* tint_texture,
                                 const Vector3f& tint, const Vector3f& tint2) {
+  assert(g_base->InLogicThread());
+
   // So we know we're always dealing with valid utf8.
   std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");
 
-  assert(g_base->InLogicThread());
   if (top) {
     float start_v = -40.0f;
     if (!screen_messages_top_.empty()) {
@@ -1525,6 +1539,8 @@ void Graphics::SetSupportsHighQualityGraphics(bool s) {
 }
 
 void Graphics::ClearScreenMessageTranslations() {
+  assert(g_base && g_base->InLogicThread());
+
   for (auto&& i : screen_messages_) {
     i.translation_dirty = true;
   }
@@ -1995,6 +2011,7 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 }
 
 void Graphics::LanguageChanged() {
+  assert(g_base && g_base->InLogicThread());
   // Also clear translations on all screen-messages.
   ClearScreenMessageTranslations();
 }

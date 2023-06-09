@@ -976,13 +976,14 @@ def generate_dummy_modules(projroot: str) -> None:
     featuresets = [f for f in featuresets if f.has_native_python_module]
     mnames: list[str] = [fs.name_python_binary_module for fs in featuresets]
 
-    os.makedirs('build/dummymodules', exist_ok=True)
+    builddir = 'build/dummymodules'
+    os.makedirs(builddir, exist_ok=True)
 
     gencount = 0
     for mname in mnames:
         gencount += 1
         outfilename = os.path.abspath(
-            os.path.join(projroot, f'build/dummymodules/{mname}.py')
+            os.path.join(projroot, builddir, f'{mname}.py')
         )
         pycmd += (
             f'dummymodule.Generator(modulename="{mname}",'
@@ -1004,12 +1005,12 @@ def generate_dummy_modules(projroot: str) -> None:
             check=True,
         )
         print(
-            f'{Clr.BLU}Dummy-module generation complete.{Clr.RST}', flush=True
+            f'{Clr.BLD}{Clr.BLU}Generated {gencount} dummy-modules'
+            f' {Clr.RST}(in {builddir}){Clr.RST}{Clr.BLD}{Clr.BLU}.',
+            flush=True,
         )
 
     except Exception as exc2:
         # Keep our error simple here; we want focus to be on what went
         # wrong withing BallisticaKit.
-        raise CleanError(
-            'BallisticaKit dummy-module generation failed.'
-        ) from exc2
+        raise CleanError('Dummy-module generation failed.') from exc2

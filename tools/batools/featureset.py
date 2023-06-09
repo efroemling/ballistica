@@ -60,6 +60,15 @@ class FeatureSet:
         # loaded instance of type 'bafoobar.FooBarSubsystem'.
         self.has_python_app_subsystem = False
 
+        # By default, Python app subsystems will be created in
+        # alphabetical order based on their feature set name. All
+        # subsystem calbacks adhere to this ordering. If there are any
+        # feature sets whose subsystems should always be created before
+        # this one's, list them here. Note that this does not affect
+        # whether or not the feature set is included in the build; only
+        # the init order in cases when it is.
+        self.python_app_subsystem_dependencies = set[str]()
+
         # If True, feature-set 'foo_bar', will be allowed to be listed
         # as a soft-requirement of other feature sets and its
         # python-app-subsystem will be annotated as type

@@ -179,13 +179,11 @@ class ManualGatherTab(GatherTab):
 
     def save_state(self) -> None:
         assert bui.app.classic is not None
-        bui.app.classic.ui.window_states[type(self)] = State(
-            sub_tab=self._sub_tab
-        )
+        bui.app.ui_v1.window_states[type(self)] = State(sub_tab=self._sub_tab)
 
     def restore_state(self) -> None:
         assert bui.app.classic is not None
-        state = bui.app.classic.ui.window_states.get(type(self))
+        state = bui.app.ui_v1.window_states.get(type(self))
         if state is None:
             state = State()
         assert isinstance(state, State)
@@ -342,7 +340,7 @@ class ManualGatherTab(GatherTab):
         v = c_height - 35 - 25 - 30
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -405,7 +403,7 @@ class ManualGatherTab(GatherTab):
             label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             autoselect=True,
         )
-        if uiscale is bui.UIScale.SMALL and bui.app.classic.ui.use_toolbars:
+        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=btn1,
                 left_widget=bui.get_special_widget('back_button'),
@@ -484,7 +482,7 @@ class ManualGatherTab(GatherTab):
         c_width = 600
         c_height = 310
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._favorite_edit_window = cnt = bui.containerwidget(
             scale=(
                 1.8

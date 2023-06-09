@@ -24,7 +24,7 @@ class PlaylistAddGameWindow(bui.Window):
         self._editcontroller = editcontroller
         self._r = 'addGameWindow'
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 750 if uiscale is bui.UIScale.SMALL else 650
         x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -74,7 +74,7 @@ class PlaylistAddGameWindow(bui.Window):
             on_activate_call=self._add,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=select_button,
                 right_widget=bui.get_special_widget('party_button'),
@@ -87,7 +87,7 @@ class PlaylistAddGameWindow(bui.Window):
             scale=1.0,
             text=bui.Lstr(resource=self._r + '.titleText'),
             h_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=250,
             v_align='center',
         )

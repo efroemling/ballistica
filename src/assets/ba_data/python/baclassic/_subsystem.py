@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import random
-import weakref
 import logging
 from typing import TYPE_CHECKING
 
@@ -25,7 +24,6 @@ from baclassic._net import MasterServerResponseType, MasterServerV1CallThread
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
-from baclassic._ui import UISubsystem
 from baclassic import _input
 
 if TYPE_CHECKING:
@@ -69,7 +67,6 @@ class ClassicSubsystem(AppSubsystem):
         self.ach = AchievementSubsystem()
         self.store = StoreSubsystem()
         self.music = MusicSubsystem()
-        self.ui = UISubsystem()
 
         # Co-op Campaigns.
         self.campaigns: dict[str, bascenev1.Campaign] = {}
@@ -122,7 +119,6 @@ class ClassicSubsystem(AppSubsystem):
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
-        self.main_menu_resume_callbacks: list = []  # Can probably go away.
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.delegate: AppDelegate | None = None
 
@@ -157,18 +153,7 @@ class ClassicSubsystem(AppSubsystem):
         assert isinstance(self._env['user_agent_string'], str)
         return self._env['user_agent_string']
 
-    def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
-        """(internal)"""
-
-        # If there's no main menu up, just call immediately.
-        if not self.ui.has_main_menu_window():
-            with _babase.ContextRef.empty():
-                call()
-        else:
-            self.main_menu_resume_callbacks.append(call)
-
-    def on_app_launching(self) -> None:
-        """Called when the app is first entering the launching state."""
+    def on_app_loading(self) -> None:
         # pylint: disable=too-many-locals
         from bascenev1 import _campaign
         from bascenev1 import _map
@@ -183,8 +168,7 @@ class ClassicSubsystem(AppSubsystem):
 
         cfg = _babase.app.config
 
-        self.ui.on_app_launching()
-        self.music.on_app_launching()
+        self.music.on_app_loading()
 
         self.delegate = AppDelegate()
 
@@ -256,7 +240,7 @@ class ClassicSubsystem(AppSubsystem):
         # master-server and/or get rid of it.
         handle_leftover_v1_cloud_log_file()
 
-        self.accounts.on_app_launching()
+        self.accounts.on_app_loading()
 
     def on_app_pause(self) -> None:
         self.accounts.on_app_pause()
@@ -398,7 +382,7 @@ class ClassicSubsystem(AppSubsystem):
         assert plus is not None
 
         if reset_ui:
-            self.ui.clear_main_menu_window()
+            _babase.app.ui_v1.clear_main_menu_window()
 
         if isinstance(bascenev1.get_foreground_host_session(), MainMenuSession):
             # It may be possible we're on the main menu but the screen is faded
@@ -690,39 +674,6 @@ class ClassicSubsystem(AppSubsystem):
         ResourceTypeInfoWindow(
             origin_widget=_bauiv1.get_special_widget('tickets_info_button')
         )
-
-    def party_icon_activate(self, origin: Sequence[float]) -> None:
-        """(internal)"""
-        from bauiv1lib.party import PartyWindow
-        from babase import app
-
-        assert not app.headless_mode
-
-        _bauiv1.getsound('swish').play()
-
-        # If it exists, dismiss it; otherwise make a new one.
-        if (
-            self.ui.party_window is not None
-            and self.ui.party_window() is not None
-        ):
-            self.ui.party_window().close()
-        else:
-            self.ui.party_window = weakref.ref(PartyWindow(origin=origin))
-
-    def device_menu_press(self, device_id: int | None) -> None:
-        """(internal)"""
-        from bauiv1lib.mainmenu import MainMenuWindow
-        from bauiv1 import set_ui_input_device
-
-        assert _babase.app is not None
-        in_main_menu = self.ui.has_main_menu_window()
-        if not in_main_menu:
-            set_ui_input_device(device_id)
-
-            if not _babase.app.headless_mode:
-                _bauiv1.getsound('swish').play()
-
-            self.ui.set_main_menu_window(MainMenuWindow().get_root_widget())
 
     def show_url_window(self, address: str) -> None:
         """(internal)"""

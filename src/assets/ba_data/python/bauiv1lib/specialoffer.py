@@ -78,7 +78,7 @@ class SpecialOfferWindow(bui.Window):
         self._offer = copy.deepcopy(offer)
         self._width = 580
         self._height = 590
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),

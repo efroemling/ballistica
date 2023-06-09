@@ -89,7 +89,7 @@ class PlaylistEditController:
             self._edit_ui_selection = 'add_button'
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistEditWindow(
                 editcontroller=self, transition=transition
             ).get_root_widget()
@@ -148,8 +148,8 @@ class PlaylistEditController:
         from bauiv1lib.playlist.addgame import PlaylistAddGameWindow
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.clear_main_menu_window(transition='out_left')
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.clear_main_menu_window(transition='out_left')
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistAddGameWindow(editcontroller=self).get_root_widget()
         )
 
@@ -171,8 +171,8 @@ class PlaylistEditController:
         from bauiv1lib.playlist.edit import PlaylistEditWindow
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.clear_main_menu_window(transition='out_right')
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.clear_main_menu_window(transition='out_right')
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistEditWindow(
                 editcontroller=self, transition='in_left'
             ).get_root_widget()
@@ -201,10 +201,8 @@ class PlaylistEditController:
             # If we were editing, go back to our list.
             if self._editing_game:
                 bui.getsound('powerdown01').play()
-                bui.app.classic.ui.clear_main_menu_window(
-                    transition='out_right'
-                )
-                bui.app.classic.ui.set_main_menu_window(
+                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
+                bui.app.ui_v1.set_main_menu_window(
                     PlaylistEditWindow(
                         editcontroller=self, transition='in_left'
                     ).get_root_widget()
@@ -212,10 +210,8 @@ class PlaylistEditController:
 
             # Otherwise we were adding; go back to the add type choice list.
             else:
-                bui.app.classic.ui.clear_main_menu_window(
-                    transition='out_right'
-                )
-                bui.app.classic.ui.set_main_menu_window(
+                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
+                bui.app.ui_v1.set_main_menu_window(
                     PlaylistAddGameWindow(
                         editcontroller=self, transition='in_left'
                     ).get_root_widget()
@@ -236,8 +232,8 @@ class PlaylistEditController:
                 self._selected_index = insert_index
 
             bui.getsound('gunCocking').play()
-            bui.app.classic.ui.clear_main_menu_window(transition='out_right')
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.clear_main_menu_window(transition='out_right')
+            bui.app.ui_v1.set_main_menu_window(
                 PlaylistEditWindow(
                     editcontroller=self, transition='in_left'
                 ).get_root_widget()

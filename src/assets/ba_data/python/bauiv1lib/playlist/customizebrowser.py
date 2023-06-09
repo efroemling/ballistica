@@ -46,7 +46,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         self._max_playlists = 30
         self._r = 'gameListWindow'
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 750.0 if uiscale is bui.UIScale.SMALL else 650.0
         x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
@@ -95,7 +95,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
                 resource=self._r + '.titleText',
                 subs=[('${TYPE}', self._pvars.window_title_name)],
             ),
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             maxwidth=290,
             h_align='center',
             v_align='center',
@@ -286,7 +286,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             edit=scrollwidget,
             left_widget=new_button,
             right_widget=bui.get_special_widget('party_button')
-            if bui.app.classic.ui.use_toolbars
+            if bui.app.ui_v1.use_toolbars
             else None,
         )
 
@@ -334,7 +334,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             browser.PlaylistBrowserWindow(
                 transition='in_left', sessiontype=self._sessiontype
             ).get_root_widget()

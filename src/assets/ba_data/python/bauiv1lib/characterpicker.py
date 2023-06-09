@@ -34,7 +34,7 @@ class CharacterPicker(PopupWindow):
         assert bui.app.classic is not None
 
         del parent  # unused here
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
             scale = (
                 1.85

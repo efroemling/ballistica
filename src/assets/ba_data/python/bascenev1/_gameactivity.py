@@ -460,7 +460,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
                             assert _babase.app.classic is not None
-                            hmmw = _babase.app.classic.ui.has_main_menu_window()
+                            hmmw = _babase.app.ui_v1.has_main_menu_window()
                             if not gnode.paused and not hmmw:
                                 self._is_waiting_for_continue = True
                                 with _babase.ContextRef.empty():

@@ -35,7 +35,7 @@ class HelpWindow(bui.Window):
 
         self._main_menu = main_menu
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 950 if uiscale is bui.UIScale.SMALL else 750
         x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
@@ -75,7 +75,7 @@ class HelpWindow(bui.Window):
                 resource=self._r + '.titleText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -91,7 +91,7 @@ class HelpWindow(bui.Window):
             capture_arrows=True,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=self._scrollwidget,
                 right_widget=bui.get_special_widget('party_button'),
@@ -102,7 +102,7 @@ class HelpWindow(bui.Window):
 
         # ugly: create this last so it gets first dibs at touch events (since
         # we have it close to the scroll widget)
-        if uiscale is bui.UIScale.SMALL and bui.app.classic.ui.use_toolbars:
+        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._close
             )
@@ -706,6 +706,6 @@ class HelpWindow(bui.Window):
         )
         if self._main_menu:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 MainMenuWindow(transition='in_left').get_root_widget()
             )

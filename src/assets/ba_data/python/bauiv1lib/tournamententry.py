@@ -66,7 +66,7 @@ class TournamentEntryWindow(PopupWindow):
 
         self._on_close_call = on_close_call
         if scale is None:
-            uiscale = bui.app.classic.ui.uiscale
+            uiscale = bui.app.ui_v1.uiscale
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
@@ -249,7 +249,7 @@ class TournamentEntryWindow(PopupWindow):
 
         self._get_tickets_button: bui.Widget | None = None
         self._ticket_count_text: bui.Widget | None = None
-        if not bui.app.classic.ui.use_toolbars:
+        if not bui.app.ui_v1.use_toolbars:
             if bui.app.classic.allow_ticket_purchases:
                 self._get_tickets_button = bui.buttonwidget(
                     parent=self.root_widget,

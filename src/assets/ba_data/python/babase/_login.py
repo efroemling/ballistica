@@ -50,7 +50,7 @@ class LoginAdapter:
         self._implicit_login_state: LoginAdapter.ImplicitLoginState | None = (
             None
         )
-        self._on_app_launching_called = False
+        self._on_app_loading_called = False
         self._implicit_login_state_dirty = False
         self._back_end_active = False
 
@@ -61,11 +61,11 @@ class LoginAdapter:
         self._last_sign_in_time: float | None = None
         self._last_sign_in_desc: str | None = None
 
-    def on_app_launching(self) -> None:
-        """Should be called for each adapter in on_app_launching."""
+    def on_app_loading(self) -> None:
+        """Should be called for each adapter in on_app_loading."""
 
-        assert not self._on_app_launching_called
-        self._on_app_launching_called = True
+        assert not self._on_app_loading_called
+        self._on_app_loading_called = True
 
         # Any implicit state we received up until now needs to be pushed
         # to the app account subsystem.
@@ -297,7 +297,7 @@ class LoginAdapter:
         # sent along to the app. We wait until on-app-launch has been
         # called so that account-client-v2 has had a chance to load
         # any existing state so it can properly respond to this.
-        if self._implicit_login_state_dirty and self._on_app_launching_called:
+        if self._implicit_login_state_dirty and self._on_app_loading_called:
             from babase._general import Call
 
             if DEBUG_LOG:

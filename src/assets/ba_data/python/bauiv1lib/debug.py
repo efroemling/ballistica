@@ -19,8 +19,8 @@ class DebugWindow(bui.Window):
         from bauiv1lib import popup
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_location('Benchmarks & Stress Tests')
-        uiscale = bui.app.classic.ui.uiscale
+        bui.app.ui_v1.set_main_menu_location('Benchmarks & Stress Tests')
+        uiscale = bui.app.ui_v1.uiscale
         self._width = width = 580
         self._height = height = (
             350
@@ -42,7 +42,7 @@ class DebugWindow(bui.Window):
         self._stress_test_round_duration = 30
 
         self._r = 'debugWindow'
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -76,7 +76,7 @@ class DebugWindow(bui.Window):
             size=(width, 30),
             text=bui.Lstr(resource=self._r + '.titleText'),
             h_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             v_align='center',
             maxwidth=260,
         )
@@ -136,7 +136,7 @@ class DebugWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.stressTestTitleText'),
             maxwidth=200,
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             scale=0.85,
             h_align='center',
             v_align='center',
@@ -150,7 +150,7 @@ class DebugWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.stressTestPlaylistTypeText'),
             maxwidth=130,
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             scale=0.65,
             h_align='right',
             v_align='center',
@@ -180,7 +180,7 @@ class DebugWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.stressTestPlaylistNameText'),
             maxwidth=130,
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             scale=0.65,
             h_align='right',
             v_align='center',
@@ -381,6 +381,6 @@ class DebugWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AdvancedSettingsWindow(transition='in_left').get_root_widget()
         )

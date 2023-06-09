@@ -39,7 +39,7 @@ class PurchaseWindow(bui.Window):
         self._items = list(items)
         self._width = 580
         self._height = 520
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),

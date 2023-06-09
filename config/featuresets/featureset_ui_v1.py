@@ -14,5 +14,8 @@ fset = FeatureSet.get_active()
 
 fset.requirements = {'core', 'base'}
 
+# We provide 'babase.app.ui_v1'.
+fset.has_python_app_subsystem = True
+
 # We'd prefer our name's title form to be 'UI V1', not the default 'Ui V1'.
 fset.name_title = 'UI V1'

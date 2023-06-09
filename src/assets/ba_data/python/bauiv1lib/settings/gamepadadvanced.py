@@ -28,7 +28,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
 
         self._r = parent_window.get_r()
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 900 if uiscale is bui.UIScale.SMALL else 700
         self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = 402 if uiscale is bui.UIScale.SMALL else 512
@@ -62,7 +62,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.advancedTitleText'),
             maxwidth=320,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )

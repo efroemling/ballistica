@@ -46,7 +46,7 @@ class GamepadSettingsWindow(bui.Window):
         self._height = 440 if self._is_secondary else 450
         self._spacing = 40
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -206,7 +206,7 @@ class GamepadSettingsWindow(bui.Window):
                 position=(0, v + 5),
                 size=(self._width, 25),
                 text=bui.Lstr(resource=self._r + '.titleText'),
-                color=bui.app.classic.ui.title_color,
+                color=bui.app.ui_v1.title_color,
                 maxwidth=310,
                 h_align='center',
                 v_align='center',
@@ -218,7 +218,7 @@ class GamepadSettingsWindow(bui.Window):
                 position=(0, v + 3),
                 size=(self._width, 25),
                 text=self._name,
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 maxwidth=self._width * 0.9,
                 h_align='center',
                 v_align='center',
@@ -245,7 +245,7 @@ class GamepadSettingsWindow(bui.Window):
                 position=(0, v + 5),
                 size=(self._width, 25),
                 text=bui.Lstr(resource=self._r + '.secondaryText'),
-                color=bui.app.classic.ui.title_color,
+                color=bui.app.ui_v1.title_color,
                 maxwidth=300,
                 h_align='center',
                 v_align='center',
@@ -794,7 +794,7 @@ class GamepadSettingsWindow(bui.Window):
         )
         if self._is_main_menu:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 ControlsSettingsWindow(transition='in_left').get_root_widget()
             )
 
@@ -845,7 +845,7 @@ class GamepadSettingsWindow(bui.Window):
             from bauiv1lib.settings.controls import ControlsSettingsWindow
 
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 ControlsSettingsWindow(transition='in_left').get_root_widget()
             )
 
@@ -871,7 +871,7 @@ class AwaitGamepadInputWindow(bui.Window):
         width = 400
         height = 150
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 scale=(

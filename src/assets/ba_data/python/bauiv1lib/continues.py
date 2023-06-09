@@ -100,7 +100,7 @@ class ContinuesWindow(bui.Window):
 
         self._tickets_text_base: str | None
         self._tickets_text: bui.Widget | None
-        if not bui.app.classic.ui.use_toolbars:
+        if not bui.app.ui_v1.use_toolbars:
             self._tickets_text_base = bui.Lstr(
                 resource='getTicketsWindow.youHaveShortText',
                 fallback_resource='getTicketsWindow.youHaveText',

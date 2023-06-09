@@ -188,7 +188,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # min-view-time show a 'press any button to continue..'
         # thing after a bit.
         assert _babase.app.classic is not None
-        if _babase.app.classic.ui.uiscale is UIScale.LARGE:
+        if _babase.app.ui_v1.uiscale is UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
             sval = _language.Lstr(resource='pressAnyKeyButtonText')

@@ -84,7 +84,7 @@ class CoopBrowserWindow(bui.Window):
         self._campaign_percent_text: bui.Widget | None = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1320 if uiscale is bui.UIScale.SMALL else 1120
         self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -94,7 +94,7 @@ class CoopBrowserWindow(bui.Window):
             if uiscale is bui.UIScale.MEDIUM
             else 800
         )
-        app.classic.ui.set_main_menu_location('Coop Select')
+        app.ui_v1.set_main_menu_location('Coop Select')
         self._r = 'coopSelectWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
 
@@ -127,7 +127,7 @@ class CoopBrowserWindow(bui.Window):
             )
         )
 
-        if app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = bui.buttonwidget(
@@ -150,7 +150,7 @@ class CoopBrowserWindow(bui.Window):
         self._store_button_widget: bui.Widget | None
         self._league_rank_button_widget: bui.Widget | None
 
-        if not app.classic.ui.use_toolbars:
+        if not app.ui_v1.use_toolbars:
             prb = self._league_rank_button = LeagueRankButton(
                 parent=self._root_widget,
                 position=(
@@ -232,13 +232,13 @@ class CoopBrowserWindow(bui.Window):
                 fallback_resource='playModes.coopText',
             ),
             h_align='center',
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             scale=1.5,
             maxwidth=500,
             v_align='center',
         )
 
-        if app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.textwidget(edit=txt, text='')
 
         if self._back_button is not None:
@@ -261,7 +261,7 @@ class CoopBrowserWindow(bui.Window):
         self._scroll_width = self._width - (130 + 2 * x_inset)
         self._scroll_height = self._height - (
             190
-            if uiscale is bui.UIScale.SMALL and app.classic.ui.use_toolbars
+            if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars
             else 160
         )
 
@@ -272,7 +272,7 @@ class CoopBrowserWindow(bui.Window):
             parent=self._root_widget,
             highlight=False,
             position=(65 + x_inset, 120)
-            if uiscale is bui.UIScale.SMALL and app.classic.ui.use_toolbars
+            if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars
             else (65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
             simple_culling_v=10.0,
@@ -322,7 +322,7 @@ class CoopBrowserWindow(bui.Window):
 
     def _update_corner_button_positions(self) -> None:
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         offs = (
             -55
             if uiscale is bui.UIScale.SMALL and bui.is_party_icon_visible()
@@ -734,7 +734,7 @@ class CoopBrowserWindow(bui.Window):
             text='',
             h_align='left',
             v_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.1,
         )
 
@@ -784,7 +784,7 @@ class CoopBrowserWindow(bui.Window):
             text=txt,
             h_align='left',
             v_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.1,
         )
         self._tournament_info_button = bui.buttonwidget(
@@ -826,7 +826,7 @@ class CoopBrowserWindow(bui.Window):
                 text=unavailable_text,
                 h_align='left',
                 v_align='center',
-                color=bui.app.classic.ui.title_color,
+                color=bui.app.ui_v1.title_color,
                 scale=0.9,
             )
             v -= 40
@@ -890,7 +890,7 @@ class CoopBrowserWindow(bui.Window):
             ),
             h_align='left',
             v_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.1,
         )
 
@@ -1029,7 +1029,7 @@ class CoopBrowserWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert self._league_rank_button is not None
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             LeagueRankWindow(
                 origin_widget=self._league_rank_button.get_button()
             ).get_root_widget()
@@ -1053,7 +1053,7 @@ class CoopBrowserWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert self._store_button is not None
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             StoreBrowserWindow(
                 origin_widget=self._store_button.get_button(),
                 show_tab=show_tab,
@@ -1224,7 +1224,7 @@ class CoopBrowserWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlayWindow(transition='in_left').get_root_widget()
         )
 
@@ -1243,9 +1243,7 @@ class CoopBrowserWindow(bui.Window):
             else:
                 raise ValueError('unrecognized selection')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
-                'sel_name': sel_name
-            }
+            bui.app.ui_v1.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
@@ -1257,7 +1255,7 @@ class CoopBrowserWindow(bui.Window):
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self), {}).get(
+            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
                 'sel_name'
             )
             if sel_name == 'Back':

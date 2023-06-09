@@ -24,7 +24,7 @@ class TestingWindow(bui.Window):
         back_call: Callable[[], bui.Window] | None = None,
     ):
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 600
         self._height = 324 if uiscale is bui.UIScale.SMALL else 400
         self._entries = copy.deepcopy(entries)
@@ -60,7 +60,7 @@ class TestingWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 35),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=245,
@@ -78,7 +78,7 @@ class TestingWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 75),
             size=(0, 0),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             h_align='center',
             v_align='center',
             maxwidth=self._width * 0.75,
@@ -224,4 +224,4 @@ class TestingWindow(bui.Window):
             else AdvancedSettingsWindow(transition='in_left')
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(backwin.get_root_widget())
+        bui.app.ui_v1.set_main_menu_window(backwin.get_root_widget())

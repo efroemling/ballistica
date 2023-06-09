@@ -49,7 +49,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         if do_music_folder:
             self._height += spacing
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
 
         # NOTE: When something is selected, we close our UI and kick off
         # another window which then calls us back when its done, so the
@@ -85,7 +85,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             position=(self._width * 0.5, self._height - 32),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.selectASourceText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=230,
             h_align='center',
             v_align='center',
@@ -96,7 +96,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             position=(self._width * 0.5, self._height - 56),
             size=(0, 0),
             text=selection_target_name,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=0.7,
             maxwidth=230,
             h_align='center',
@@ -178,7 +178,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             )
         else:
             current_playlist_entry = None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
             ).get_root_widget()
@@ -192,7 +192,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             FileSelectorWindow(
                 base_path,
                 callback=self._music_file_selector_cb,
@@ -211,7 +211,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             FileSelectorWindow(
                 base_path,
                 callback=self._music_folder_selector_cb,

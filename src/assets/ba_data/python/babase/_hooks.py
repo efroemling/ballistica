@@ -235,13 +235,6 @@ def purchases_restored_message() -> None:
     )
 
 
-def dismiss_wii_remotes_window() -> None:
-    assert _babase.app.classic is not None
-    call = _babase.app.classic.ui.dismiss_wii_remotes_window_call
-    if call is not None:
-        call()
-
-
 def unavailable_message() -> None:
     from babase._language import Lstr
 

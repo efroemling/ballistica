@@ -73,7 +73,7 @@ class AccountSettingsWindow(bui.Window):
 
         app = bui.app
         assert app.classic is not None
-        uiscale = app.classic.ui.uiscale
+        uiscale = app.ui_v1.uiscale
 
         self._width = 760 if uiscale is bui.UIScale.SMALL else 660
         x_offs = 50 if uiscale is bui.UIScale.SMALL else 0
@@ -124,7 +124,7 @@ class AccountSettingsWindow(bui.Window):
                 else (0, 0),
             )
         )
-        if uiscale is bui.UIScale.SMALL and app.classic.ui.use_toolbars:
+        if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars:
             self._back_button = None
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._back
@@ -157,7 +157,7 @@ class AccountSettingsWindow(bui.Window):
             position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             maxwidth=self._width - 340,
             h_align='center',
             v_align='center',
@@ -419,7 +419,7 @@ class AccountSettingsWindow(bui.Window):
                 size=(0, 0),
                 text=txt,
                 scale=0.9,
-                color=bui.app.classic.ui.title_color,
+                color=bui.app.ui_v1.title_color,
                 maxwidth=self._sub_width * 0.9,
                 h_align='center',
                 v_align='center',
@@ -563,7 +563,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -618,7 +618,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -687,7 +687,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -712,7 +712,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -735,7 +735,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -765,7 +765,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -818,7 +818,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -849,7 +849,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -927,7 +927,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -992,7 +992,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -1024,7 +1024,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -1094,7 +1094,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -1115,7 +1115,7 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -1537,7 +1537,7 @@ class AccountSettingsWindow(bui.Window):
 
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 MainMenuWindow(transition='in_left').get_root_widget()
             )
 
@@ -1551,14 +1551,14 @@ class AccountSettingsWindow(bui.Window):
             else:
                 raise ValueError('unrecognized selection')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = sel_name
+            bui.app.ui_v1.window_states[type(self)] = sel_name
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self))
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':

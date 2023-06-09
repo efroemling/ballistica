@@ -36,7 +36,7 @@ class CreditsListWindow(bui.Window):
             transition = 'in_right'
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 870 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = 398 if uiscale is bui.UIScale.SMALL else 500
@@ -61,7 +61,7 @@ class CreditsListWindow(bui.Window):
             )
         )
 
-        if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._back
             )
@@ -101,7 +101,7 @@ class CreditsListWindow(bui.Window):
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
             h_align='center',
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=330,
             v_align='center',
         )
@@ -113,7 +113,7 @@ class CreditsListWindow(bui.Window):
             capture_arrows=True,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=scroll,
                 right_widget=bui.get_special_widget('party_button'),
@@ -360,6 +360,6 @@ class CreditsListWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             MainMenuWindow(transition='in_left').get_root_widget()
         )

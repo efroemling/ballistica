@@ -43,7 +43,7 @@ class ServerDialogWindow(bui.Window):
         self._width = 500
         self._height = 160 + min(200, txt_height)
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),

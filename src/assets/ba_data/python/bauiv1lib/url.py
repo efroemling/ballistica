@@ -15,7 +15,7 @@ class ShowURLWindow(bui.Window):
         # (for long URLs especially)
         app = bui.app
         assert app.classic is not None
-        uiscale = app.classic.ui.uiscale
+        uiscale = app.ui_v1.uiscale
         self._address = address
 
         self._width = 800
@@ -37,7 +37,7 @@ class ShowURLWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 10),
             size=(0, 0),
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource='directBrowserToURLText'),
@@ -48,7 +48,7 @@ class ShowURLWindow(bui.Window):
             position=(self._width * 0.5, self._height - 60),
             size=(0, 0),
             scale=1.3,
-            color=app.classic.ui.infotextcolor,
+            color=app.ui_v1.infotextcolor,
             h_align='center',
             v_align='center',
             text=address,

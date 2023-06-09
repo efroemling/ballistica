@@ -53,7 +53,7 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
             position=(20, self._height - 54),
             size=(self._width, 25),
             text=bui.Lstr(resource=self._r + '.selectAPlaylistText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=200,

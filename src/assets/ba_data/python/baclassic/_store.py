@@ -65,7 +65,7 @@ class StoreSubsystem:
                 0.72
                 if (
                     _babase.app.config.get('Merch Link')
-                    and _babase.app.classic.ui.uiscale is UIScale.SMALL
+                    and _babase.app.ui_v1.uiscale is UIScale.SMALL
                 )
                 else 0.85
             )

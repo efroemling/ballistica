@@ -22,7 +22,7 @@ class ShowFriendCodeWindow(bui.Window):
         self._width = 650
         self._height = 400
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -61,7 +61,7 @@ class ShowFriendCodeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.8),
             size=(0, 0),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=1.0,
             flatness=1.0,
             h_align='center',
@@ -94,7 +94,7 @@ class ShowFriendCodeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.37),
             size=(0, 0),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=1.0,
             flatness=1.0,
             h_align='center',

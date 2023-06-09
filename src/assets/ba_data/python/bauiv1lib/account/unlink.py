@@ -35,7 +35,7 @@ class AccountUnlinkWindow(bui.Window):
         self._scroll_width = 400
         self._scroll_height = 200
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         base_scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
@@ -74,7 +74,7 @@ class AccountUnlinkWindow(bui.Window):
                 resource='accountSettingsWindow.unlinkAccountsInstructionsText'
             ),
             maxwidth=self._width * 0.7,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             h_align='center',
             v_align='center',
         )

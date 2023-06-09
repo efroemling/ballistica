@@ -35,7 +35,7 @@ class ProfileUpgradeWindow(bui.Window):
         self._width = 680
         self._height = 350
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._base_scale = (
             2.05
             if uiscale is bui.UIScale.SMALL
@@ -90,7 +90,7 @@ class ProfileUpgradeWindow(bui.Window):
             position=(self._width * 0.5, self._height - 38),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.upgradeToGlobalProfileText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
             h_align='center',
@@ -103,7 +103,7 @@ class ProfileUpgradeWindow(bui.Window):
             position=(self._width * 0.5, self._height - 100),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.upgradeProfileInfoText'),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
             h_align='center',
@@ -138,7 +138,7 @@ class ProfileUpgradeWindow(bui.Window):
         )
 
         self._tickets_text: bui.Widget | None
-        if not bui.app.classic.ui.use_toolbars:
+        if not bui.app.ui_v1.use_toolbars:
             self._tickets_text = bui.textwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.9 - 5, self._height - 30),

@@ -29,11 +29,9 @@ class PlayWindow(bui.Window):
         # We can currently be used either for main menu duty or for selecting
         # playlists (should make this more elegant/general).
         assert bui.app.classic is not None
-        self._is_main_menu = (
-            not bui.app.classic.ui.selecting_private_party_playlist
-        )
+        self._is_main_menu = not bui.app.ui_v1.selecting_private_party_playlist
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 1000 if uiscale is bui.UIScale.SMALL else 800
         x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
         height = 550
@@ -92,7 +90,7 @@ class PlayWindow(bui.Window):
             scale=1.7,
             res_scale=2.0,
             maxwidth=400,
-            color=bui.app.classic.ui.heading_color,
+            color=bui.app.ui_v1.heading_color,
             h_align='center',
             v_align='center',
         )
@@ -103,7 +101,7 @@ class PlayWindow(bui.Window):
             size=(60, 60),
             label=bui.charstr(bui.SpecialChar.BACK),
         )
-        if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.textwidget(edit=txt, text='')
 
         v = height - (110 if self._is_main_menu else 90)
@@ -112,7 +110,7 @@ class PlayWindow(bui.Window):
         v -= 280 if self._is_main_menu else 180
         v += (
             30
-            if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL
+            if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL
             else 0
         )
         hoffs = x_offs + 80 if self._is_main_menu else x_offs - 100
@@ -155,7 +153,7 @@ class PlayWindow(bui.Window):
                 on_activate_call=self._coop,
             )
 
-            if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+            if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
                 bui.widget(
                     edit=btn,
                     left_widget=bui.get_special_widget('back_button'),
@@ -258,7 +256,7 @@ class PlayWindow(bui.Window):
             on_activate_call=self._team_tourney,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=btn,
                 up_widget=bui.get_special_widget('tickets_plus_button'),
@@ -491,7 +489,7 @@ class PlayWindow(bui.Window):
             color=clr,
         )
 
-        if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             back_button.delete()
             bui.containerwidget(
                 edit=self._root_widget,
@@ -528,7 +526,7 @@ class PlayWindow(bui.Window):
 
             self._save_state()
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 MainMenuWindow(transition='in_left').get_root_widget()
             )
             bui.containerwidget(
@@ -539,7 +537,7 @@ class PlayWindow(bui.Window):
 
             self._save_state()
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 GatherWindow(transition='in_left').get_root_widget()
             )
             bui.containerwidget(
@@ -560,7 +558,7 @@ class PlayWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             CoopBrowserWindow(origin_widget=self._coop_button).get_root_widget()
         )
 
@@ -571,7 +569,7 @@ class PlayWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistBrowserWindow(
                 origin_widget=self._teams_button, sessiontype=bs.DualTeamSession
             ).get_root_widget()
@@ -584,7 +582,7 @@ class PlayWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
@@ -723,14 +721,14 @@ class PlayWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection {sel}')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = sel_name
+            bui.app.ui_v1.window_states[type(self)] = sel_name
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self))
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
             if sel_name == 'Team Games':
                 sel = self._teams_button
             elif sel_name == 'Co-op Games' and self._coop_button is not None:

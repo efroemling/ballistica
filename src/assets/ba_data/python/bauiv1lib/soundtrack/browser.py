@@ -37,7 +37,7 @@ class SoundtrackBrowserWindow(bui.Window):
 
         self._r = 'editSoundtrackWindow'
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 800 if uiscale is bui.UIScale.SMALL else 600
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -71,7 +71,7 @@ class SoundtrackBrowserWindow(bui.Window):
         )
 
         assert bui.app.classic is not None
-        if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = bui.buttonwidget(
@@ -95,7 +95,7 @@ class SoundtrackBrowserWindow(bui.Window):
             size=(0, 0),
             maxwidth=300,
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
@@ -246,7 +246,7 @@ class SoundtrackBrowserWindow(bui.Window):
             edit=self._scrollwidget,
             left_widget=self._new_button,
             right_widget=bui.get_special_widget('party_button')
-            if bui.app.classic.ui.use_toolbars
+            if bui.app.ui_v1.use_toolbars
             else self._scrollwidget,
         )
         self._col = bui.columnwidget(parent=scrollwidget, border=2, margin=0)
@@ -399,7 +399,7 @@ class SoundtrackBrowserWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             audio.AudioSettingsWindow(transition='in_left').get_root_widget()
         )
 
@@ -440,7 +440,7 @@ class SoundtrackBrowserWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             SoundtrackEditWindow(
                 existing_soundtrack=self._selected_soundtrack
             ).get_root_widget()
@@ -567,14 +567,14 @@ class SoundtrackBrowserWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = sel_name
+            bui.app.ui_v1.window_states[type(self)] = sel_name
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self))
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':

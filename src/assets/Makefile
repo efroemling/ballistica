@@ -190,7 +190,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_ui.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
@@ -311,8 +310,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/ui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/link.py \
@@ -462,7 +462,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tips.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tournament.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_ui.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/macmusicapp.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-311.opt-1.pyc \
@@ -583,8 +582,9 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/ui/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/link.cpython-311.opt-1.pyc \

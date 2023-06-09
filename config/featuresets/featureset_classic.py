@@ -14,8 +14,15 @@ fset = FeatureSet.get_active()
 
 fset.requirements = {'core', 'base', 'scene_v1', 'scene_v1_lib', 'ui_v1'}
 
+# We can make use of plus stuff but can live without it.
+fset.soft_requirements = {'plus'}
+
 # We provide 'babase.app.classic'.
 fset.has_python_app_subsystem = True
+
+# If 'plus' is present, our subsystem should be inited after it
+# (classic accounts key off of plus's v2 accounts)
+fset.python_app_subsystem_dependencies = {'plus'}
 
 # We want things to work without us.
 fset.allow_as_soft_requirement = True

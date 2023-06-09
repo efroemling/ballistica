@@ -39,14 +39,14 @@ class AllSettingsWindow(bui.Window):
             self._transition_out = 'out_right'
             scale_origin = None
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 900 if uiscale is bui.UIScale.SMALL else 580
         x_inset = 75 if uiscale is bui.UIScale.SMALL else 0
         height = 435
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
@@ -66,7 +66,7 @@ class AllSettingsWindow(bui.Window):
             )
         )
 
-        if bui.app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             self._back_button = None
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._do_back
@@ -90,7 +90,7 @@ class AllSettingsWindow(bui.Window):
             position=(0, height - 44),
             size=(width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=130,
@@ -141,7 +141,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_controllers,
         )
-        if bui.app.classic.ui.use_toolbars and self._back_button is None:
+        if bui.app.ui_v1.use_toolbars and self._back_button is None:
             bbtn = bui.get_special_widget('back_button')
             bui.widget(edit=ctb, left_widget=bbtn)
         _b_title(
@@ -165,7 +165,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_graphics,
         )
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             pbtn = bui.get_special_widget('party_button')
             bui.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
         _b_title(x_offs3, v, gfxb, bui.Lstr(resource=self._r + '.graphicsText'))
@@ -240,7 +240,7 @@ class AllSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             MainMenuWindow(transition='in_left').get_root_widget()
         )
 
@@ -251,7 +251,7 @@ class AllSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             ControlsSettingsWindow(
                 origin_widget=self._controllers_button
             ).get_root_widget()
@@ -264,7 +264,7 @@ class AllSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             GraphicsSettingsWindow(
                 origin_widget=self._graphics_button
             ).get_root_widget()
@@ -277,7 +277,7 @@ class AllSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AudioSettingsWindow(
                 origin_widget=self._audio_button
             ).get_root_widget()
@@ -290,7 +290,7 @@ class AllSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AdvancedSettingsWindow(
                 origin_widget=self._advanced_button
             ).get_root_widget()
@@ -312,16 +312,14 @@ class AllSettingsWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
-                'sel_name': sel_name
-            }
+            bui.app.ui_v1.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self), {}).get(
+            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
                 'sel_name'
             )
             sel: bui.Widget | None

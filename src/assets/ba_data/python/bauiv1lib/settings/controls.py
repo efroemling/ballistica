@@ -109,7 +109,7 @@ class ControlsSettingsWindow(bui.Window):
             height += spacing
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         smallscale = 1.7 if show_keyboard else 2.2
         super().__init__(
             root_widget=bui.containerwidget(
@@ -153,7 +153,7 @@ class ControlsSettingsWindow(bui.Window):
             position=(0, height - 49),
             size=(width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -176,7 +176,7 @@ class ControlsSettingsWindow(bui.Window):
                 label=bui.Lstr(resource=self._r + '.configureTouchText'),
                 on_activate_call=self._do_touchscreen,
             )
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -200,7 +200,7 @@ class ControlsSettingsWindow(bui.Window):
                 label=bui.Lstr(resource=self._r + '.configureControllersText'),
                 on_activate_call=self._do_gamepads,
             )
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -229,7 +229,7 @@ class ControlsSettingsWindow(bui.Window):
                 label=bui.Lstr(resource=self._r + '.configureKeyboardText'),
                 on_activate_call=self._config_keyboard,
             )
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -264,7 +264,7 @@ class ControlsSettingsWindow(bui.Window):
                 label=bui.Lstr(resource=self._r + '.configureMobileText'),
                 on_activate_call=self._do_mobile_devices,
             )
-            if bui.app.classic.ui.use_toolbars:
+            if bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn,
                     right_widget=bui.get_special_widget('party_button'),
@@ -307,7 +307,7 @@ class ControlsSettingsWindow(bui.Window):
                 scale=0.5,
                 h_align='center',
                 v_align='center',
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 maxwidth=width * 0.8,
             )
             v -= spacing
@@ -337,7 +337,7 @@ class ControlsSettingsWindow(bui.Window):
                 scale=1.0,
                 h_align='right',
                 v_align='center',
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 maxwidth=180,
             )
             bui.textwidget(
@@ -348,7 +348,7 @@ class ControlsSettingsWindow(bui.Window):
                 scale=0.5,
                 h_align='center',
                 v_align='center',
-                color=bui.app.classic.ui.infotextcolor,
+                color=bui.app.ui_v1.infotextcolor,
                 maxwidth=width * 0.8,
             )
             v -= spacing * 1.5
@@ -366,7 +366,7 @@ class ControlsSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             ConfigKeyboardWindow(
                 bs.getinputdevice('Keyboard', '#1')
             ).get_root_widget()
@@ -379,7 +379,7 @@ class ControlsSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             ConfigKeyboardWindow(
                 bs.getinputdevice('Keyboard', '#2')
             ).get_root_widget()
@@ -392,7 +392,7 @@ class ControlsSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             RemoteAppSettingsWindow().get_root_widget()
         )
 
@@ -403,7 +403,7 @@ class ControlsSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             GamepadSelectWindow().get_root_widget()
         )
 
@@ -414,7 +414,7 @@ class ControlsSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             TouchscreenSettingsWindow().get_root_widget()
         )
 
@@ -433,11 +433,11 @@ class ControlsSettingsWindow(bui.Window):
         else:
             sel_name = 'Back'
         assert bui.app.classic is not None
-        bui.app.classic.ui.window_states[type(self)] = sel_name
+        bui.app.ui_v1.window_states[type(self)] = sel_name
 
     def _restore_state(self) -> None:
         assert bui.app.classic is not None
-        sel_name = bui.app.classic.ui.window_states.get(type(self))
+        sel_name = bui.app.ui_v1.window_states.get(type(self))
         if sel_name == 'GamePads':
             sel = self._gamepads_button
         elif sel_name == 'Touch':
@@ -467,6 +467,6 @@ class ControlsSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AllSettingsWindow(transition='in_left').get_root_widget()
         )

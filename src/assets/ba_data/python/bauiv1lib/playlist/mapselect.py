@@ -43,7 +43,7 @@ class PlaylistMapSelectWindow(bui.Window):
             self._previous_map = ''
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 715 if uiscale is bui.UIScale.SMALL else 615
         x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
         height = (
@@ -94,7 +94,7 @@ class PlaylistMapSelectWindow(bui.Window):
                 resource='mapSelectTitleText',
                 subs=[('${GAME}', self._gametype.get_display_string())],
             ),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
@@ -202,7 +202,7 @@ class PlaylistMapSelectWindow(bui.Window):
                     bui.widget(edit=btn, left_widget=self._cancel_button)
                 if y == 0:
                     bui.widget(edit=btn, up_widget=self._cancel_button)
-                if x == columns - 1 and bui.app.classic.ui.use_toolbars:
+                if x == columns - 1 and bui.app.ui_v1.use_toolbars:
                     bui.widget(
                         edit=btn,
                         right_widget=bui.get_special_widget('party_button'),
@@ -276,7 +276,7 @@ class PlaylistMapSelectWindow(bui.Window):
         self._config['settings']['map'] = map_name
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistEditGameWindow(
                 self._gametype,
                 self._sessiontype,
@@ -298,7 +298,7 @@ class PlaylistMapSelectWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistEditGameWindow(
                 self._gametype,
                 self._sessiontype,

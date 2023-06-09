@@ -539,7 +539,7 @@ class PrivateGatherTab(GatherTab):
             and hostingstate.party_code is None
             and hostingstate.tickets_to_host_now != 0
         ):
-            if not bui.app.classic.ui.use_toolbars:
+            if not bui.app.ui_v1.use_toolbars:
                 if bui.app.classic.allow_ticket_purchases:
                     self._get_tickets_button = bui.buttonwidget(
                         parent=self._container,
@@ -615,12 +615,12 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if bui.app.classic.ui.selecting_private_party_playlist:
+            if bui.app.ui_v1.selecting_private_party_playlist:
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
                 )
-                bui.app.classic.ui.selecting_private_party_playlist = False
+                bui.app.ui_v1.selecting_private_party_playlist = False
         else:
             # We've got a current party; show its info.
             bui.textwidget(
@@ -994,13 +994,11 @@ class PrivateGatherTab(GatherTab):
 
     def save_state(self) -> None:
         assert bui.app.classic is not None
-        bui.app.classic.ui.window_states[type(self)] = copy.deepcopy(
-            self._state
-        )
+        bui.app.ui_v1.window_states[type(self)] = copy.deepcopy(self._state)
 
     def restore_state(self) -> None:
         assert bui.app.classic is not None
-        state = bui.app.classic.ui.window_states.get(type(self))
+        state = bui.app.ui_v1.window_states.get(type(self))
         if state is None:
             state = State()
         assert isinstance(state, State)

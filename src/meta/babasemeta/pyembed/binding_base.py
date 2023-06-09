@@ -44,7 +44,6 @@ values = [
     _hooks.play_gong_sound,  # kPlayGongSoundCall
     _hooks.launch_coop_game,  # kLaunchCoopGameCall
     _hooks.purchases_restored_message,  # kPurchasesRestoredMessageCall
-    _hooks.dismiss_wii_remotes_window,  # kDismissWiiRemotesWindowCall
     _hooks.unavailable_message,  # kUnavailableMessageCall
     _hooks.set_last_ad_network,  # kSetLastAdNetworkCall
     _hooks.no_game_circle_message,  # kNoGameCircleMessageCall

@@ -30,7 +30,7 @@ class NetTestingWindow(bui.Window):
         self._height = 500
         self._printed_lines: list[str] = []
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -135,7 +135,7 @@ class NetTestingWindow(bui.Window):
 
     def _show_val_testing(self) -> None:
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             NetValTestingWindow().get_root_widget()
         )
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -145,7 +145,7 @@ class NetTestingWindow(bui.Window):
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AdvancedSettingsWindow(transition='in_left').get_root_widget()
         )
         bui.containerwidget(edit=self._root_widget, transition='out_right')

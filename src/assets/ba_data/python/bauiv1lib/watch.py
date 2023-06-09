@@ -44,7 +44,7 @@ class WatchWindow(bui.Window):
             self._transition_out = 'out_right'
             scale_origin = None
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_location('Watch')
+        bui.app.ui_v1.set_main_menu_location('Watch')
         self._tab_data: dict[str, Any] = {}
         self._my_replays_scroll_width: float | None = None
         self._my_replays_watch_replay_button: bui.Widget | None = None
@@ -54,7 +54,7 @@ class WatchWindow(bui.Window):
         self._my_replays_rename_window: bui.Widget | None = None
         self._my_replay_rename_text: bui.Widget | None = None
         self._r = 'watchWindow'
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -88,7 +88,7 @@ class WatchWindow(bui.Window):
             )
         )
 
-        if uiscale is bui.UIScale.SMALL and bui.app.classic.ui.use_toolbars:
+        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._back
             )
@@ -116,7 +116,7 @@ class WatchWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.5,
             h_align='center',
             v_align='center',
@@ -143,7 +143,7 @@ class WatchWindow(bui.Window):
             on_select_call=self._set_tab,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             first_tab = self._tab_row.tabs[tabdefs[0][0]]
             last_tab = self._tab_row.tabs[tabdefs[-1][0]]
             bui.widget(
@@ -204,7 +204,7 @@ class WatchWindow(bui.Window):
         self._tab_data = {}
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if tab_id is self.TabID.MY_REPLAYS:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
@@ -291,7 +291,7 @@ class WatchWindow(bui.Window):
             )
             bui.widget(edit=btn1, up_widget=self._tab_row.tabs[tab_id].button)
             assert bui.app.classic is not None
-            if uiscale is bui.UIScale.SMALL and bui.app.classic.ui.use_toolbars:
+            if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
                 bui.widget(
                     edit=btn1,
                     left_widget=bui.get_special_widget('back_button'),
@@ -388,7 +388,7 @@ class WatchWindow(bui.Window):
         c_width = 600
         c_height = 250
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._my_replays_rename_window = cnt = bui.containerwidget(
             scale=(
                 1.8
@@ -617,9 +617,7 @@ class WatchWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection {sel}')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
-                'sel_name': sel_name
-            }
+            bui.app.ui_v1.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
@@ -629,7 +627,7 @@ class WatchWindow(bui.Window):
         try:
             sel: bui.Widget | None
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self), {}).get(
+            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
                 'sel_name'
             )
             assert isinstance(sel_name, (str, type(None)))
@@ -670,6 +668,6 @@ class WatchWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             MainMenuWindow(transition='in_left').get_root_widget()
         )

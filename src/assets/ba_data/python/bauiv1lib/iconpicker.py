@@ -33,7 +33,7 @@ class IconPicker(PopupWindow):
         del tint_color  # unused_here
         del tint2_color  # unused here
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
             scale = (
                 1.85

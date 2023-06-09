@@ -67,7 +67,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (
                 0.9
-                if (app.classic.ui.uiscale is bs.UIScale.SMALL or vr_mode)
+                if (app.ui_v1.uiscale is bs.UIScale.SMALL or vr_mode)
                 else 0.7
             )
             self.my_name = bs.NodeActor(
@@ -118,7 +118,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         #  Any differences need to happen at the engine level so everyone sees
         #  things in their own optimal way.
         vr_mode = app.vr_mode
-        uiscale = app.classic.ui.uiscale
+        uiscale = app.ui_v1.uiscale
 
         # In cases where we're doing lots of dev work lets always show the
         # build number.
@@ -322,11 +322,11 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
             assert bs.app.classic is not None
             if bool(False):
-                uicontroller = bs.app.classic.ui.controller
+                uicontroller = bs.app.ui_v1.controller
                 assert uicontroller is not None
                 uicontroller.show_main_menu()
             else:
-                main_menu_location = bs.app.classic.ui.get_main_menu_location()
+                main_menu_location = bs.app.ui_v1.get_main_menu_location()
 
                 # When coming back from a kiosk-mode game, jump to
                 # the kiosk start screen.
@@ -334,7 +334,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     # pylint: disable=cyclic-import
                     from bauiv1lib.kiosk import KioskWindow
 
-                    bs.app.classic.ui.set_main_menu_window(
+                    bs.app.ui_v1.set_main_menu_window(
                         KioskWindow().get_root_widget()
                     )
                 # ..or in normal cases go back to the main menu
@@ -343,14 +343,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         # pylint: disable=cyclic-import
                         from bauiv1lib.gather import GatherWindow
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             GatherWindow(transition=None).get_root_widget()
                         )
                     elif main_menu_location == 'Watch':
                         # pylint: disable=cyclic-import
                         from bauiv1lib.watch import WatchWindow
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             WatchWindow(transition=None).get_root_widget()
                         )
                     elif main_menu_location == 'Team Game Select':
@@ -359,7 +359,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                             PlaylistBrowserWindow,
                         )
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             PlaylistBrowserWindow(
                                 sessiontype=bs.DualTeamSession, transition=None
                             ).get_root_widget()
@@ -370,7 +370,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                             PlaylistBrowserWindow,
                         )
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             PlaylistBrowserWindow(
                                 sessiontype=bs.FreeForAllSession,
                                 transition=None,
@@ -380,21 +380,21 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         # pylint: disable=cyclic-import
                         from bauiv1lib.coop.browser import CoopBrowserWindow
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             CoopBrowserWindow(transition=None).get_root_widget()
                         )
                     elif main_menu_location == 'Benchmarks & Stress Tests':
                         # pylint: disable=cyclic-import
                         from bauiv1lib.debug import DebugWindow
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             DebugWindow(transition=None).get_root_widget()
                         )
                     else:
                         # pylint: disable=cyclic-import
                         from bauiv1lib.mainmenu import MainMenuWindow
 
-                        bs.app.classic.ui.set_main_menu_window(
+                        bs.app.ui_v1.set_main_menu_window(
                             MainMenuWindow(transition=None).get_root_widget()
                         )
 
@@ -982,10 +982,7 @@ class NewsDisplay:
             assert bs.app.classic is not None
             scl = (
                 1.2
-                if (
-                    bs.app.classic.ui.uiscale is bs.UIScale.SMALL
-                    or bs.app.vr_mode
-                )
+                if (bs.app.ui_v1.uiscale is bs.UIScale.SMALL or bs.app.vr_mode)
                 else 0.8
             )
 

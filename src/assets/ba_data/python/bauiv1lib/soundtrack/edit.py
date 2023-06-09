@@ -29,7 +29,7 @@ class SoundtrackEditWindow(bui.Window):
         self._folder_tex = bui.gettexture('folder')
         self._file_tex = bui.gettexture('file')
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 848 if uiscale is bui.UIScale.SMALL else 648
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -87,7 +87,7 @@ class SoundtrackEditWindow(bui.Window):
                     else '.newSoundtrackText'
                 )
             ),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=280,
@@ -350,7 +350,7 @@ class SoundtrackEditWindow(bui.Window):
         else:
             soundtrack[musictype] = entry
 
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             cls(state, transition='in_left').get_root_widget()
         )
 
@@ -368,7 +368,7 @@ class SoundtrackEditWindow(bui.Window):
             'last_edited_song_type': song_type,
         }
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             music.get_music_player()
             .select_entry(
                 bui.Call(self._restore_editor, state, song_type),
@@ -428,7 +428,7 @@ class SoundtrackEditWindow(bui.Window):
         # Resets music back to normal.
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.REGULAR)
         bui.containerwidget(edit=self._root_widget, transition='out_right')
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget()
         )
 
@@ -482,7 +482,7 @@ class SoundtrackEditWindow(bui.Window):
             bui.app.classic.MusicPlayMode.REGULAR, force_restart=True
         )
 
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget()
         )
 

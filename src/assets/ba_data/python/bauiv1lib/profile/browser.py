@@ -32,7 +32,7 @@ class ProfileBrowserWindow(bui.Window):
         else:
             back_label = bui.Lstr(resource='doneText')
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 700.0 if uiscale is bui.UIScale.SMALL else 600.0
         x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
@@ -102,7 +102,7 @@ class ProfileBrowserWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.titleText'),
             maxwidth=300,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=0.9,
             h_align='center',
             v_align='center',
@@ -176,7 +176,7 @@ class ProfileBrowserWindow(bui.Window):
             position=(self._width * 0.5, self._height - 71),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.explanationText'),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.83,
             scale=0.6,
             h_align='center',
@@ -249,7 +249,7 @@ class ProfileBrowserWindow(bui.Window):
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 existing_profile=None, in_main_menu=self._in_main_menu
             ).get_root_widget()
@@ -310,7 +310,7 @@ class ProfileBrowserWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 self._selected_profile, in_main_menu=self._in_main_menu
             ).get_root_widget()
@@ -332,7 +332,7 @@ class ProfileBrowserWindow(bui.Window):
         )
         if self._in_main_menu:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 AccountSettingsWindow(transition='in_left').get_root_widget()
             )
 
@@ -434,14 +434,14 @@ class ProfileBrowserWindow(bui.Window):
             else:
                 sel_name = 'Back'
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = sel_name
+            bui.app.ui_v1.window_states[type(self)] = sel_name
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self))
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':

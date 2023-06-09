@@ -21,12 +21,20 @@ class AppSubsystem:
     building one out of this base class provides some conveniences such
     as predefined callbacks during app state changes.
 
-    Subsystems must be registered with the app before it reaches the
-    'running' state.
+    Subsystems must be registered with the app before it completes its
+    transition to the 'running' state.
     """
 
     def __init__(self) -> None:
         _babase.app.register_subsystem(self)
+
+    def on_app_loading(self) -> None:
+        """Called when the app reaches the loading state.
+
+        Note that subsystems created after the app switches to the
+        loading state will not receive this callback. Subsystems created
+        by plugins are an example of this.
+        """
 
     def on_app_running(self) -> None:
         """Called when the app reaches the running state."""

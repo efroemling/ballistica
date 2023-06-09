@@ -453,7 +453,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         # Make sure to stay out of the way of menu/party buttons in the corner.
         assert bs.app.classic is not None
-        uiscale = bs.app.classic.ui.uiscale
+        uiscale = bs.app.ui_v1.uiscale
         l_offs = (
             -80
             if uiscale is bs.UIScale.SMALL

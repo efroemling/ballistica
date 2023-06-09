@@ -32,7 +32,7 @@ class PromoCodeWindow(bui.Window):
         self._r = 'promoCodeWindow'
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -113,7 +113,7 @@ class PromoCodeWindow(bui.Window):
         )
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 AdvancedSettingsWindow(transition='in_left').get_root_widget()
             )
 
@@ -132,7 +132,7 @@ class PromoCodeWindow(bui.Window):
         )
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(
+            bui.app.ui_v1.set_main_menu_window(
                 AdvancedSettingsWindow(transition='in_left').get_root_widget()
             )
         plus.add_v1_account_transaction(

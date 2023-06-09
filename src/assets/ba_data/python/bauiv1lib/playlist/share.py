@@ -81,7 +81,7 @@ class SharePlaylistResultsWindow(bui.Window):
         self._width = 450
         self._height = 300
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -119,7 +119,7 @@ class SharePlaylistResultsWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.745),
             size=(0, 0),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=1.0,
             flatness=1.0,
             h_align='center',
@@ -134,7 +134,7 @@ class SharePlaylistResultsWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.645),
             size=(0, 0),
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             scale=0.6,
             flatness=1.0,
             h_align='center',

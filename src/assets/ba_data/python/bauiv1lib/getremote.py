@@ -14,7 +14,7 @@ class GetBSRemoteWindow(PopupWindow):
     def __init__(self) -> None:
         position = (0.0, 0.0)
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         scale = (
             2.3
             if uiscale is bui.UIScale.SMALL

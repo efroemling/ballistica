@@ -35,8 +35,8 @@ class AppDelegate:
         from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         assert _babase.app.classic is not None
-        _babase.app.classic.ui.clear_main_menu_window(transition='out_left')
-        _babase.app.classic.ui.set_main_menu_window(
+        _babase.app.ui_v1.clear_main_menu_window(transition='out_left')
+        _babase.app.ui_v1.set_main_menu_window(
             PlaylistEditGameWindow(
                 gameclass,
                 sessiontype,

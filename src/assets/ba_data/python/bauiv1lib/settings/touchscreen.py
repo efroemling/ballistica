@@ -27,7 +27,7 @@ class TouchscreenSettingsWindow(bui.Window):
         bs.set_touchscreen_editing(True)
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -58,7 +58,7 @@ class TouchscreenSettingsWindow(bui.Window):
             position=(25, self._height - 50),
             size=(self._width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=280,
             h_align='center',
             v_align='center',
@@ -278,7 +278,7 @@ class TouchscreenSettingsWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left'
             ).get_root_widget()

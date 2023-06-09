@@ -224,7 +224,7 @@ class PartyQueueWindow(bui.Window):
 
     def __init__(self, queue_id: str, address: str, port: int):
         assert bui.app.classic is not None
-        bui.app.classic.ui.have_party_queue_window = True
+        bui.app.ui_v1.have_party_queue_window = True
         self._address = address
         self._port = port
         self._queue_id = queue_id
@@ -266,7 +266,7 @@ class PartyQueueWindow(bui.Window):
         self._line_image: bui.Widget | None = None
         self.eyes_mesh: bui.Mesh = bui.getmesh('plasticEyesTransparent')
         self._white_tex = bui.gettexture('white')
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -333,7 +333,7 @@ class PartyQueueWindow(bui.Window):
             assert plus is not None
 
             assert bui.app.classic is not None
-            bui.app.classic.ui.have_party_queue_window = False
+            bui.app.ui_v1.have_party_queue_window = False
             plus.add_v1_account_transaction(
                 {'type': 'PARTY_QUEUE_REMOVE', 'q': self._queue_id}
             )

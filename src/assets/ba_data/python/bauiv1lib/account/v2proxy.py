@@ -23,7 +23,7 @@ class V2ProxySignInWindow(bui.Window):
         self._proxykey: str | None = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -107,7 +107,7 @@ class V2ProxySignInWindow(bui.Window):
             text=bui.Lstr(
                 resource='accountSettingsWindow.v2LinkInstructionsText'
             ),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.9,
             h_align='center',
             v_align='center',

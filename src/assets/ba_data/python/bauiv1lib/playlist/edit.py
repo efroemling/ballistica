@@ -30,7 +30,7 @@ class PlaylistEditWindow(bui.Window):
         prev_selection = self._editcontroller.get_edit_ui_selection()
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 770 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -78,7 +78,7 @@ class PlaylistEditWindow(bui.Window):
             text_scale=1.2,
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=btn,
                 right_widget=bui.get_special_widget('party_button'),
@@ -95,7 +95,7 @@ class PlaylistEditWindow(bui.Window):
             position=(-10, self._height - 50),
             size=(self._width, 25),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.05,
             h_align='center',
             v_align='center',
@@ -286,7 +286,7 @@ class PlaylistEditWindow(bui.Window):
         bui.getsound('powerdown01').play()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistCustomizeBrowserWindow(
                 transition='in_left',
                 sessiontype=self._editcontroller.get_session_type(),
@@ -375,7 +375,7 @@ class PlaylistEditWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistCustomizeBrowserWindow(
                 transition='in_left',
                 sessiontype=self._editcontroller.get_session_type(),

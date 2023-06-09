@@ -310,7 +310,7 @@ class PopupMenu:
         if choices_display is None:
             choices_display = []
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
             scale = (
                 2.3

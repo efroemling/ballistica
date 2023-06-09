@@ -52,7 +52,7 @@ class StoreBrowserWindow(bui.Window):
 
         app = bui.app
         assert app.classic is not None
-        uiscale = app.classic.ui.uiscale
+        uiscale = app.ui_v1.uiscale
 
         bui.set_analytics_screen('Store Window')
 
@@ -189,7 +189,7 @@ class StoreBrowserWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 44),
             size=(0, 0),
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             scale=1.5,
             h_align='center',
             v_align='center',
@@ -326,7 +326,7 @@ class StoreBrowserWindow(bui.Window):
 
     def _update_get_tickets_button_pos(self) -> None:
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         pos = (
             self._width
             - 252
@@ -890,7 +890,7 @@ class StoreBrowserWindow(bui.Window):
                     self._height: float | None = None
 
                     assert bui.app.classic is not None
-                    uiscale = bui.app.classic.ui.uiscale
+                    uiscale = bui.app.ui_v1.uiscale
 
                     # Pre-calc a few things and add them to store-data.
                     for section in self._sections:
@@ -1268,7 +1268,7 @@ class StoreBrowserWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
+            bui.app.ui_v1.window_states[type(self)] = {
                 'sel_name': sel_name,
             }
         except Exception:
@@ -1280,7 +1280,7 @@ class StoreBrowserWindow(bui.Window):
         try:
             sel: bui.Widget | None
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self), {}).get(
+            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
                 'sel_name'
             )
             assert isinstance(sel_name, (str, type(None)))
@@ -1342,7 +1342,7 @@ class StoreBrowserWindow(bui.Window):
         ).get_root_widget()
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.classic.ui.set_main_menu_window(window)
+            bui.app.ui_v1.set_main_menu_window(window)
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
@@ -1356,11 +1356,11 @@ class StoreBrowserWindow(bui.Window):
         if not self._modal:
             assert bui.app.classic is not None
             if self._back_location == 'CoopBrowserWindow':
-                bui.app.classic.ui.set_main_menu_window(
+                bui.app.ui_v1.set_main_menu_window(
                     CoopBrowserWindow(transition='in_left').get_root_widget()
                 )
             else:
-                bui.app.classic.ui.set_main_menu_window(
+                bui.app.ui_v1.set_main_menu_window(
                     MainMenuWindow(transition='in_left').get_root_widget()
                 )
         if self._on_close_call is not None:

@@ -35,7 +35,7 @@ class PluginWindow(bui.Window):
             scale_origin = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -71,7 +71,7 @@ class PluginWindow(bui.Window):
         self._sub_height = 724.0
 
         assert app.classic is not None
-        if app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._do_back
             )
@@ -96,7 +96,7 @@ class PluginWindow(bui.Window):
             position=(0, self._height - 52),
             size=(self._width, 25),
             text=bui.Lstr(resource='pluginsText'),
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -244,7 +244,7 @@ class PluginWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PluginSettingsWindow(transition='in_right').get_root_widget()
         )
 
@@ -263,6 +263,6 @@ class PluginWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AdvancedSettingsWindow(transition='in_left').get_root_widget()
         )

@@ -51,11 +51,7 @@ def friends_button_press() -> None:
 def party_icon_activate(origin: Sequence[float]) -> None:
     from babase import app
 
-    if app.classic is None:
-        logging.exception('Classic not present.')
-        return
-
-    app.classic.party_icon_activate(origin)
+    app.ui_v1.party_icon_activate(origin)
 
 
 def quit_window() -> None:
@@ -71,11 +67,7 @@ def quit_window() -> None:
 def device_menu_press(device_id: int | None) -> None:
     from babase import app
 
-    if app.classic is None:
-        logging.exception('Classic not present.')
-        return
-
-    app.classic.device_menu_press(device_id)
+    app.ui_v1.device_menu_press(device_id)
 
 
 def show_url_window(address: str) -> None:

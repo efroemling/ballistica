@@ -52,7 +52,7 @@ class GetCurrencyWindow(bui.Window):
             scale_origin = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 800.0
         x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = 480.0
@@ -99,7 +99,7 @@ class GetCurrencyWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 55),
             size=(0, 0),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=1.2,
             h_align='center',
             v_align='center',
@@ -745,7 +745,7 @@ class GetCurrencyWindow(bui.Window):
             ).get_root_widget()
             if not self._from_modal_store:
                 assert bui.app.classic is not None
-                bui.app.classic.ui.set_main_menu_window(window)
+                bui.app.ui_v1.set_main_menu_window(window)
         self._transitioning_out = True
 
 

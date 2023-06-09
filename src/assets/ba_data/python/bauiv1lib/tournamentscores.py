@@ -41,7 +41,7 @@ class TournamentScoresWindow(PopupWindow):
         self._subcontainer: bui.Widget | None = None
         self._on_close_call = on_close_call
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
             scale = (
                 2.3

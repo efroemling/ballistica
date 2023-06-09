@@ -59,7 +59,7 @@ class AudioSettingsWindow(bui.Window):
             show_soundtracks = True
             height += spacing * 2.0
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         base_scale = (
             2.05
             if uiscale is bui.UIScale.SMALL
@@ -100,7 +100,7 @@ class AudioSettingsWindow(bui.Window):
             position=(width * 0.5, height - 32),
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.titleText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=180,
             h_align='center',
             v_align='center',
@@ -123,7 +123,7 @@ class AudioSettingsWindow(bui.Window):
             maxval=1.0,
             increment=0.1,
         )
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             bui.widget(
                 edit=svne.plusbutton,
                 right_widget=bui.get_special_widget('party_button'),
@@ -251,7 +251,7 @@ class AudioSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             stb.SoundtrackBrowserWindow(
                 origin_widget=self._soundtrack_button
             ).get_root_widget()
@@ -266,7 +266,7 @@ class AudioSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             allsettings.AllSettingsWindow(
                 transition='in_left'
             ).get_root_widget()
@@ -292,14 +292,14 @@ class AudioSettingsWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = sel_name
+            bui.app.ui_v1.window_states[type(self)] = sel_name
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self))
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
             sel: bui.Widget | None
             if sel_name == 'SoundMinus':
                 sel = self._sound_volume_numedit.minusbutton

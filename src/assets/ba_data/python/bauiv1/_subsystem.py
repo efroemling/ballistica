@@ -5,19 +5,22 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import weakref
 
-import bauiv1 as bui
 import _babase
 from babase._mgen.enums import UIScale
+from babase._appsubsystem import AppSubsystem
+import _bauiv1
+import bauiv1
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Sequence
 
-    from bauiv1.ui import UICleanupCheck, UIController
+    from bauiv1._uitypes import UICleanupCheck, UIController
     import babase
 
 
-class UISubsystem:
+class UIV1Subsystem(AppSubsystem):
     """Consolidated UI functionality for the app.
 
     Category: **App Classes**
@@ -26,12 +29,16 @@ class UISubsystem:
     """
 
     def __init__(self) -> None:
+        super().__init__()
         env = _babase.env()
 
         self.controller: UIController | None = None
 
-        self._main_menu_window: bui.Widget | None = None
+        self._main_menu_window: bauiv1.Widget | None = None
         self._main_menu_location: str | None = None
+
+        # From classic.
+        self.main_menu_resume_callbacks: list = []  # Can probably go away.
 
         self._uiscale: babase.UIScale
 
@@ -49,7 +56,6 @@ class UISubsystem:
         self.main_menu_selection: str | None = None  # FIXME: Kill this.
         self.have_party_queue_window = False
         self.quit_window: Any = None
-        self.dismiss_wii_remotes_window_call: (Callable[[], Any] | None) = None
         self.cleanupchecks: list[UICleanupCheck] = []
         self.upkeeptimer: babase.AppTimer | None = None
         self.use_toolbars = env.get('toolbar_test', True)
@@ -68,9 +74,8 @@ class UISubsystem:
         """Current ui scale for the app."""
         return self._uiscale
 
-    def on_app_launching(self) -> None:
-        """Should be run on app launch."""
-        from bauiv1.ui import UIController, ui_upkeep
+    def on_app_loading(self) -> None:
+        from bauiv1._uitypes import UIController, ui_upkeep
 
         # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
         # medium, and large UI modes. (doesn't run off screen, etc).
@@ -104,7 +109,7 @@ class UISubsystem:
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.upkeeptimer = _babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def set_main_menu_window(self, window: bui.Widget) -> None:
+    def set_main_menu_window(self, window: bauiv1.Widget) -> None:
         """Set the current 'main' window, replacing any existing."""
         existing = self._main_menu_window
         from inspect import currentframe, getframeinfo
@@ -145,18 +150,28 @@ class UISubsystem:
                 )
                 existing.delete()
 
-        bui.apptimer(1.0, _delay_kill)
+        bauiv1.apptimer(1.0, _delay_kill)
         self._main_menu_window = window
 
     def clear_main_menu_window(self, transition: str | None = None) -> None:
         """Clear any existing 'main' window with the provided transition."""
         if self._main_menu_window:
             if transition is not None:
-                bui.containerwidget(
+                bauiv1.containerwidget(
                     edit=self._main_menu_window, transition=transition
                 )
             else:
                 self._main_menu_window.delete()
+
+    def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
+        """(internal)"""
+
+        # If there's no main menu up, just call immediately.
+        if not self.has_main_menu_window():
+            with _babase.ContextRef.empty():
+                call()
+        else:
+            self.main_menu_resume_callbacks.append(call)
 
     def has_main_menu_window(self) -> bool:
         """Return whether a main menu window is present."""
@@ -169,3 +184,33 @@ class UISubsystem:
     def get_main_menu_location(self) -> str | None:
         """Return the current named main menu location, if any."""
         return self._main_menu_location
+
+    def party_icon_activate(self, origin: Sequence[float]) -> None:
+        """(internal)"""
+        from bauiv1lib.party import PartyWindow
+        from babase import app
+
+        assert not app.headless_mode
+
+        _bauiv1.getsound('swish').play()
+
+        # If it exists, dismiss it; otherwise make a new one.
+        if self.party_window is not None and self.party_window() is not None:
+            self.party_window().close()
+        else:
+            self.party_window = weakref.ref(PartyWindow(origin=origin))
+
+    def device_menu_press(self, device_id: int | None) -> None:
+        """(internal)"""
+        from bauiv1lib.mainmenu import MainMenuWindow
+        from bauiv1 import set_ui_input_device
+
+        assert _babase.app is not None
+        in_main_menu = self.has_main_menu_window()
+        if not in_main_menu:
+            set_ui_input_device(device_id)
+
+            if not _babase.app.headless_mode:
+                _bauiv1.getsound('swish').play()
+
+            self.set_main_menu_window(MainMenuWindow().get_root_widget())

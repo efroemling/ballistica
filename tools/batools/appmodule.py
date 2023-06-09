@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from efro.error import CleanError
-
 if TYPE_CHECKING:
     from batools.featureset import FeatureSet
 
@@ -82,31 +80,46 @@ def generate_app_module(
         else:
             fset = fsets[fsetname]
             if fset.has_python_app_subsystem:
-                if not fset.allow_as_soft_requirement:
-                    raise CleanError(
-                        f'allow_as_soft_requirement is False for'
-                        f' feature-set {fset.name};'
-                        f' this is not yet supported.'
-                    )
                 modname = fset.name_python_package
                 classname = f'{fset.name_camel}Subsystem'
-                contents += (
-                    f'\n'
-                    f'@cached_property\n'
-                    f'def {fset.name}(self) -> {classname} | None:\n'
-                    f'    """Our {fset.name} subsystem (if available)."""\n'
-                    f'\n'
-                    f'    try:\n'
-                    f'        from {modname} import {classname}\n'
-                    f'\n'
-                    f'        return {classname}()\n'
-                    f'    except ImportError:\n'
-                    f'        return None\n'
-                    f'    except Exception:\n'
-                    f"        logging.exception('Error importing"
-                    f" {modname}.')\n"
-                    f'        return None\n'
-                )
+                # If they are allowed as a soft requirement, *everyone*
+                # has to access them as TYPE | None. Originally I planned to
+                # add the '| None' *only* if another present feature set was
+                # soft referencing them, but it turns out that code tuned
+                # to expect TYPE hits a lot of 'code will never be executed'
+                # errors in the type checker if we switch it to 'TYPE | None'
+                # so we need to be consistent.
+                if fset.allow_as_soft_requirement:
+                    contents += (
+                        f'\n'
+                        f'@cached_property\n'
+                        f'def {fset.name}(self) -> {classname} | None:\n'
+                        f'    """Our {fset.name} subsystem (if available)."""\n'
+                        f'\n'
+                        f'    try:\n'
+                        f'        from {modname} import {classname}\n'
+                        f'\n'
+                        f'        return {classname}()\n'
+                        f'    except ImportError:\n'
+                        f'        return None\n'
+                        f'    except Exception:\n'
+                        f"        logging.exception('Error importing"
+                        f" {modname}.')\n"
+                        f'        return None\n'
+                    )
+                else:
+                    contents += (
+                        f'\n'
+                        f'@cached_property\n'
+                        f'def {fset.name}(self) -> {classname}:\n'
+                        f'    """Our {fset.name} subsystem'
+                        ' (always available)."""\n'
+                        f'\n'
+                        f'    from {modname} import {classname}\n'
+                        f'\n'
+                        f'    return {classname}()\n'
+                    )
+
     out = replace_section(
         out,
         f'{indent}# __FEATURESET_APP_SUBSYSTEM_PROPERTIES_BEGIN__\n',
@@ -115,7 +128,29 @@ def generate_app_module(
         keep_markers=True,
     )
 
-    # Set default app-mode-selection logic.
+    # Generate code to create app subsystems in the proper order.
+    all_ss_fsets = {
+        fsetname: fset
+        for fsetname, fset in fsets.items()
+        if fset.has_python_app_subsystem
+    }
+    init_order: list[str] = []
+    for fsetname, fset in sorted(all_ss_fsets.items()):
+        _add_init(fset, all_ss_fsets, init_order, 0)
+
+    contents = '# Poke these attrs to create all our subsystems.\n' + ''.join(
+        f'_ = self.{fsetname}\n' for fsetname in init_order
+    )
+    indent = '        '
+    out = replace_section(
+        out,
+        f'{indent}# __FEATURESET_APP_SUBSYSTEM_CREATE_BEGIN__\n',
+        f'{indent}# __FEATURESET_APP_SUBSYSTEM_CREATE_END__\n',
+        textwrap.indent(f'{info}\n\n{contents}\n', indent),
+        keep_markers=True,
+    )
+
+    # Generate default app-mode-selection logic.
     contents = (
         '# Hmm; need to think about how we auto-construct this; how\n'
         '# should we determine which app modes to check and in what\n'
@@ -148,3 +183,36 @@ def generate_app_module(
     # (project update time jumps from 0.3 to 0.5 seconds if I enable
     # formatting here for just this one file).
     return out
+
+
+def _add_init(
+    fset: FeatureSet,
+    allsets: dict[str, FeatureSet],
+    init_order: list[str],
+    depth: int,
+) -> None:
+    # If we hit max recursion, we've got a dependency cycle.
+    if depth > 10:
+        raise RuntimeError(
+            'App subsystem dependency cycle detected'
+            f" (involving feature set '{fset.name}')."
+        )
+
+    # If this one is already added, we're done.
+    if fset.name in init_order:
+        return
+
+    # First add all of its dependencies.
+    for depname in sorted(fset.python_app_subsystem_dependencies):
+        depfset = allsets.get(depname)
+        # Only matters if this is in the actual set of featuresets.
+        if depfset is None:
+            continue
+        _add_init(depfset, allsets, init_order, depth + 1)
+
+    # We should not have been added via the above code (dependency cycle
+    # should have been detected in that case).
+    assert fset.name not in init_order
+
+    # Finally add the fset itself.
+    init_order.append(fset.name)

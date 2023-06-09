@@ -16,7 +16,7 @@ class RemoteAppSettingsWindow(bui.Window):
         height = 390
         spacing = 40
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -52,7 +52,7 @@ class RemoteAppSettingsWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(resource=self._r + '.titleText'),
             maxwidth=370,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             scale=0.8,
             h_align='center',
             v_align='center',
@@ -140,7 +140,7 @@ class RemoteAppSettingsWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left'
             ).get_root_widget()

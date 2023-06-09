@@ -41,7 +41,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             else 'Teams Series Victory Screen'
         )
         assert babase.app.classic is not None
-        if babase.app.classic.ui.uiscale is babase.UIScale.LARGE:
+        if babase.app.ui_v1.uiscale is babase.UIScale.LARGE:
             sval = babase.Lstr(resource='pressAnyKeyButtonPlayAgainText')
         else:
             sval = babase.Lstr(resource='pressAnyButtonPlayAgainText')

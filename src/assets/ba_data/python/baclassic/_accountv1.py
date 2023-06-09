@@ -35,7 +35,7 @@ class AccountV1Subsystem:
         # not be signed in yet; go ahead and queue them up in that case.
         self.pending_promo_codes: list[str] = []
 
-    def on_app_launching(self) -> None:
+    def on_app_loading(self) -> None:
         """Called when the app is done bootstrapping."""
 
         # Auto-sign-in to a local account in a moment if we're set to.

@@ -102,7 +102,7 @@ class PlaylistEditGameWindow(bui.Window):
 
         self._choice_selections: dict[str, int] = {}
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 720 if uiscale is bui.UIScale.SMALL else 620
         x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
         height = (
@@ -165,7 +165,7 @@ class PlaylistEditGameWindow(bui.Window):
             else bui.Lstr(resource='doneText'),
         )
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             pbtn = bui.get_special_widget('party_button')
             bui.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
@@ -174,7 +174,7 @@ class PlaylistEditGameWindow(bui.Window):
             position=(-8, height - 70 + y_extra2),
             size=(width, 25),
             text=gametype.get_display_string(),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             maxwidth=235,
             scale=1.1,
             h_align='center',
@@ -517,7 +517,7 @@ class PlaylistEditGameWindow(bui.Window):
         # Replace ourself with the map-select UI.
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,

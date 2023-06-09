@@ -34,7 +34,7 @@ class AccountLinkWindow(bui.Window):
         self._width = 560
         self._height = 420
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         base_scale = (
             1.65
             if uiscale is bui.UIScale.SMALL
@@ -77,7 +77,7 @@ class AccountLinkWindow(bui.Window):
                 subs=[('${COUNT}', str(maxlinks))],
             ),
             maxwidth=self._width * 0.9,
-            color=bui.app.classic.ui.infotextcolor,
+            color=bui.app.ui_v1.infotextcolor,
             max_height=self._height * 0.6,
             h_align='center',
             v_align='center',
@@ -150,7 +150,7 @@ class AccountLinkCodeWindow(bui.Window):
         self._width = 350
         self._height = 200
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),

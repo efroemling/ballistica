@@ -355,7 +355,7 @@ class KioskWindow(bui.Window):
 
     def _restore_state(self) -> None:
         assert bui.app.classic is not None
-        sel_name = bui.app.classic.ui.window_states.get(type(self))
+        sel_name = bui.app.ui_v1.window_states.get(type(self))
         sel: bui.Widget | None
         if sel_name == 'b1':
             sel = self._b1
@@ -395,7 +395,7 @@ class KioskWindow(bui.Window):
         else:
             sel_name = 'b1'
         assert bui.app.classic is not None
-        bui.app.classic.ui.window_states[type(self)] = sel_name
+        bui.app.ui_v1.window_states[type(self)] = sel_name
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -506,6 +506,4 @@ class KioskWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
-        bui.app.classic.ui.set_main_menu_window(
-            MainMenuWindow().get_root_widget()
-        )
+        bui.app.ui_v1.set_main_menu_window(MainMenuWindow().get_root_widget())

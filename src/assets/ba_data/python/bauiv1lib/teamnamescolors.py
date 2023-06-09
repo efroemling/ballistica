@@ -27,7 +27,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         # Creates our _root_widget.
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL

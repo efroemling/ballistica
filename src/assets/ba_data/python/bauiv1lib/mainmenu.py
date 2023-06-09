@@ -212,12 +212,9 @@ class MainMenuWindow(bui.Window):
 
         app = bui.app
         assert app.classic is not None
-        self._have_quit_button = (
-            app.classic.ui.uiscale is bui.UIScale.LARGE
-            or (
-                app.classic.platform == 'windows'
-                and app.classic.subplatform == 'oculus'
-            )
+        self._have_quit_button = app.ui_v1.uiscale is bui.UIScale.LARGE or (
+            app.classic.platform == 'windows'
+            and app.classic.subplatform == 'oculus'
         )
 
         self._have_store_button = not self._in_game
@@ -345,7 +342,7 @@ class MainMenuWindow(bui.Window):
             )
             self._store_button = store_button = sbtn.get_button()
             assert bui.app.classic is not None
-            uiscale = bui.app.classic.ui.uiscale
+            uiscale = bui.app.ui_v1.uiscale
             icon_size = (
                 55
                 if uiscale is bui.UIScale.SMALL
@@ -440,7 +437,7 @@ class MainMenuWindow(bui.Window):
             b_buffer = 10.0
             t_scale = 0.75
             assert bui.app.classic is not None
-            uiscale = bui.app.classic.ui.uiscale
+            uiscale = bui.app.ui_v1.uiscale
             if uiscale is bui.UIScale.SMALL:
                 b_size *= 0.6
                 b_buffer *= 1.0
@@ -574,7 +571,7 @@ class MainMenuWindow(bui.Window):
             b_count += 1
         if self._have_store_button:
             b_count += 1
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         if uiscale is bui.UIScale.SMALL:
             root_widget_scale = 1.6
             play_button_width = self._button_width * 0.65
@@ -646,7 +643,7 @@ class MainMenuWindow(bui.Window):
             )
         else:
             self._demo_menu_button = None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         foof = (
             -1
             if uiscale is bui.UIScale.SMALL
@@ -890,7 +887,7 @@ class MainMenuWindow(bui.Window):
             # In this case we have a leave *and* a disconnect button.
             self._height += 50
         self._height += 50 * (len(custom_menu_entries))
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         bui.containerwidget(
             edit=self._root_widget,
             size=(self._width, self._height),
@@ -1053,7 +1050,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             KioskWindow(transition='in_left').get_root_widget()
         )
 
@@ -1064,7 +1061,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AccountSettingsWindow(
                 origin_widget=self._account_button
             ).get_root_widget()
@@ -1084,7 +1081,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             StoreBrowserWindow(
                 origin_widget=self._store_button
             ).get_root_widget()
@@ -1172,7 +1169,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             CreditsListWindow(
                 origin_widget=self._credits_button
             ).get_root_widget()
@@ -1185,7 +1182,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             HelpWindow(
                 main_menu=True, origin_widget=self._how_to_play_button
             ).get_root_widget()
@@ -1198,7 +1195,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AllSettingsWindow(
                 origin_widget=self._settings_button
             ).get_root_widget()
@@ -1220,7 +1217,7 @@ class MainMenuWindow(bui.Window):
         if self._in_game:
             return
         assert bui.app.classic is not None
-        ui = bui.app.classic.ui
+        ui = bui.app.ui_v1
         sel = self._root_widget.get_selected_child()
         if sel == self._start_button:
             ui.main_menu_selection = 'Start'
@@ -1253,7 +1250,7 @@ class MainMenuWindow(bui.Window):
         if self._in_game:
             return
         assert bui.app.classic is not None
-        sel_name = bui.app.classic.ui.main_menu_selection
+        sel_name = bui.app.ui_v1.main_menu_selection
         sel: bui.Widget | None
         if sel_name is None:
             sel_name = 'Start'
@@ -1287,7 +1284,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             GatherWindow(origin_widget=self._gather_button).get_root_widget()
         )
 
@@ -1298,7 +1295,7 @@ class MainMenuWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             WatchWindow(origin_widget=self._watch_button).get_root_widget()
         )
 
@@ -1310,8 +1307,8 @@ class MainMenuWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
 
         assert bui.app.classic is not None
-        bui.app.classic.ui.selecting_private_party_playlist = False
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.selecting_private_party_playlist = False
+        bui.app.ui_v1.set_main_menu_window(
             PlayWindow(origin_widget=self._start_button).get_root_widget()
         )
 
@@ -1320,9 +1317,9 @@ class MainMenuWindow(bui.Window):
         bui.app.classic.resume()
         if self._root_widget:
             bui.containerwidget(edit=self._root_widget, transition='out_right')
-        bui.app.classic.ui.clear_main_menu_window()
+        bui.app.ui_v1.clear_main_menu_window()
 
         # If there's callbacks waiting for this window to go away, call them.
-        for call in bui.app.classic.main_menu_resume_callbacks:
+        for call in bui.app.ui_v1.main_menu_resume_callbacks:
             call()
-        del bui.app.classic.main_menu_resume_callbacks[:]
+        del bui.app.ui_v1.main_menu_resume_callbacks[:]

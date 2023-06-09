@@ -17,7 +17,7 @@ class PluginSettingsWindow(bui.Window):
         scale_origin = None
 
         assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         width = 470.0 if uiscale is bui.UIScale.SMALL else 470.0
         height = (
             365.0
@@ -66,7 +66,7 @@ class PluginSettingsWindow(bui.Window):
             position=(0, height - 52),
             size=(width, 25),
             text=bui.Lstr(resource='pluginSettingsText'),
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -165,6 +165,6 @@ class PluginSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PluginWindow(transition='in_left').get_root_widget()
         )

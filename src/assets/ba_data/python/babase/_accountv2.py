@@ -56,11 +56,11 @@ class AccountV2Subsystem:
 
             self.login_adapters[LoginType.GPGS] = LoginAdapterGPGS()
 
-    def on_app_launching(self) -> None:
-        """Should be called at standard on_app_launching time."""
+    def on_app_loading(self) -> None:
+        """Should be called at standard on_app_loading time."""
 
         for adapter in self.login_adapters.values():
-            adapter.on_app_launching()
+            adapter.on_app_loading()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
         """Set credentials for the primary app account."""

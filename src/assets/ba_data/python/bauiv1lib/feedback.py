@@ -26,7 +26,7 @@ def ask_for_rating() -> bui.Widget | None:
     height = 400
     spacing = 40
     assert bui.app.classic is not None
-    uiscale = bui.app.classic.ui.uiscale
+    uiscale = bui.app.ui_v1.uiscale
     dlg = bui.containerwidget(
         size=(width, height),
         transition='in_right',
@@ -51,7 +51,7 @@ def ask_for_rating() -> bui.Widget | None:
         parent=dlg,
         position=(15, v - 55),
         size=(width - 30, 30),
-        color=bui.app.classic.ui.infotextcolor,
+        color=bui.app.ui_v1.infotextcolor,
         text=bui.Lstr(
             resource='pleaseRateText',
             subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],

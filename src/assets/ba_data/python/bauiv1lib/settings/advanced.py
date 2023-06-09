@@ -46,7 +46,7 @@ class AdvancedSettingsWindow(bui.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -116,7 +116,7 @@ class AdvancedSettingsWindow(bui.Window):
 
         self._r = 'settingsWindowAdvanced'
 
-        if app.classic.ui.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._do_back
             )
@@ -141,7 +141,7 @@ class AdvancedSettingsWindow(bui.Window):
             position=(0, self._height - 52),
             size=(self._width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
-            color=app.classic.ui.title_color,
+            color=app.ui_v1.title_color,
             h_align='center',
             v_align='top',
         )
@@ -307,7 +307,7 @@ class AdvancedSettingsWindow(bui.Window):
             text=bui.Lstr(resource=f'{self._r}.languageText'),
             maxwidth=150,
             scale=0.95,
-            color=bui.app.classic.ui.title_color,
+            color=bui.app.ui_v1.title_color,
             h_align='right',
             v_align='center',
         )
@@ -638,7 +638,7 @@ class AdvancedSettingsWindow(bui.Window):
         for child in self._subcontainer.get_children():
             bui.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
 
-        if bui.app.classic.ui.use_toolbars:
+        if bui.app.ui_v1.use_toolbars:
             pbtn = bui.get_special_widget('party_button')
             bui.widget(edit=self._scrollwidget, right_widget=pbtn)
             if self._back_button is None:
@@ -669,7 +669,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             VRTestingWindow(transition='in_right').get_root_widget()
         )
 
@@ -689,7 +689,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             NetTestingWindow(transition='in_right').get_root_widget()
         )
 
@@ -711,7 +711,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PluginWindow(origin_widget=self._plugins_button).get_root_widget()
         )
 
@@ -729,7 +729,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             PromoCodeWindow(
                 origin_widget=self._promo_code_button
             ).get_root_widget()
@@ -741,7 +741,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             DebugWindow(transition='in_right').get_root_widget()
         )
 
@@ -798,9 +798,7 @@ class AdvancedSettingsWindow(bui.Window):
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
-            bui.app.classic.ui.window_states[type(self)] = {
-                'sel_name': sel_name
-            }
+            bui.app.ui_v1.window_states[type(self)] = {'sel_name': sel_name}
 
         except Exception:
             logging.exception('Error saving state for %s.', self)
@@ -809,7 +807,7 @@ class AdvancedSettingsWindow(bui.Window):
         # pylint: disable=too-many-branches
         try:
             assert bui.app.classic is not None
-            sel_name = bui.app.classic.ui.window_states.get(type(self), {}).get(
+            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
                 'sel_name'
             )
             if sel_name == 'Back':
@@ -895,6 +893,6 @@ class AdvancedSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
-        bui.app.classic.ui.set_main_menu_window(
+        bui.app.ui_v1.set_main_menu_window(
             AllSettingsWindow(transition='in_left').get_root_widget()
         )
