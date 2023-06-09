@@ -28,7 +28,6 @@ SceneV1InputDeviceDelegate::~SceneV1InputDeviceDelegate() {
 }
 std::optional<Vector3f> SceneV1InputDeviceDelegate::GetPlayerPosition() {
   PlayerNode* player_node{};
-
   // Try to come up with whichever scene is in the foreground, and try
   // to pull a node for the player we're attached to.
 
@@ -45,6 +44,7 @@ std::optional<Vector3f> SceneV1InputDeviceDelegate::GetPlayerPosition() {
     }
   }
   if (player_node) {
+    auto pos = player_node->position();
     return Vector3f(player_node->position());
   }
   return {};

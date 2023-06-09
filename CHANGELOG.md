@@ -1,4 +1,4 @@
-### 1.7.20 (build 21080, api 8, 2023-06-08)
+### 1.7.20 (build 21081, api 8, 2023-06-08)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -313,6 +313,8 @@
   system scripts living in your mods directory under `sys/$(YOUR_APP_VERSION)`.
   Tools for creating/destroying these setups are now at `babase.modutils` (they
   had been placed under bauiv1 but that was just silly).
+- (build 21080) Fixed an issue where the touch screen controller arrow on
+  Android would not show correctly under the player.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

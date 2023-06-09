@@ -499,6 +499,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
   if (AttachedToPlayer()) {
     auto pos = delegate().GetPlayerPosition();
     if (pos) {
+      have_player_position = true;
       player_position = pos->AsStdVector();
     }
   }
