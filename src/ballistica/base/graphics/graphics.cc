@@ -582,7 +582,8 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           if (i->translation_dirty) {
             BA_LOG_ONCE(
                 LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 1.");
+                "Found dirty translation on screenmessage draw pass 1; raw="
+                    + i->s_raw);
           }
           float str_height =
               g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
@@ -673,7 +674,8 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           if (i->translation_dirty) {
             BA_LOG_ONCE(
                 LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 2.");
+                "Found dirty translation on screenmessage draw pass 2; raw="
+                    + i->s_raw);
           }
           float str_height =
               g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
@@ -1901,7 +1903,11 @@ void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
 }
 
 auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
-  assert(!translation_dirty);
+  if (translation_dirty) {
+    BA_LOG_ONCE(
+        LogLevel::kWarning,
+        "Found dirty translation on screenmessage GetText; raw=" + s_raw);
+  }
   if (!s_mesh_.Exists()) {
     s_mesh_ = Object::New<TextGroup>();
     mesh_dirty = true;
