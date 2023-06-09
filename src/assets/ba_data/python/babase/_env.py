@@ -64,8 +64,8 @@ def on_native_module_import() -> None:
 def setup_env_for_app_run() -> None:
     """Set stuff such as interrupt handlers for a run of the app."""
     import gc
-    import _babase
     import baenv
+    import _babase
 
     global _g_babase_app_started  # pylint: disable=global-statement
 
@@ -134,6 +134,21 @@ def setup_env_for_app_run() -> None:
         import asyncio
 
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+def on_app_launching() -> None:
+    """Called when the app reaches the launching state."""
+    import _babase
+    import baenv
+
+    assert _babase.in_logic_thread()
+
+    # Let the user know if the app python dir is a custom one.
+    if baenv.g_user_system_scripts_dir is not None:
+        _babase.screenmessage(
+            f"Using user system scripts: '{baenv.g_user_system_scripts_dir}'",
+            color=(0.6, 0.6, 1.0),
+        )
 
 
 def _feed_logs_to_babase(log_handler: LogHandler) -> None:

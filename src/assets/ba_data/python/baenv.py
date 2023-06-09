@@ -28,11 +28,12 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21078
+TARGET_BALLISTICA_BUILD = 21079
 TARGET_BALLISTICA_VERSION = '1.7.20'
 
 _g_env_config: EnvConfig | None = None
 g_paths_set_failed = False  # pylint: disable=invalid-name
+g_user_system_scripts_dir: str | None = None  # pylint: disable=invalid-name
 
 
 @dataclass
@@ -43,6 +44,7 @@ class EnvConfig:
     data_dir: str
     user_python_dir: str | None
     app_python_dir: str | None
+    standard_app_python_dir: str
     site_python_dir: str | None
     log_handler: LogHandler | None
 
@@ -76,6 +78,7 @@ def configure(
     affecting where those modules get loaded from.
     """
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
 
     global _g_env_config  # pylint: disable=global-statement
     if _g_env_config is not None:
@@ -125,6 +128,10 @@ def configure(
 
     # Ok now Python paths.
 
+    # By default, app-python-dir is simply ba_data/python under
+    # data-dir.
+    standard_app_python_dir = str(Path(data_dir, 'ba_data', 'python'))
+
     # If _babase has already been imported, there's not much we can do
     # at this point aside from complain and inform for next time.
     if '_babase' in sys.modules:
@@ -141,10 +148,8 @@ def configure(
         # Ok; _babase hasn't been imported yet so we can muck with
         # Python paths.
 
-        # By default, app-python-dir is simply ba_data/python under
-        # data-dir.
         if app_python_dir is None:
-            app_python_dir = str(Path(data_dir, 'ba_data', 'python'))
+            app_python_dir = standard_app_python_dir
 
         # Likewise site-python-dir defaults to ba_data/python-site-packages.
         if site_python_dir is None:
@@ -156,7 +161,18 @@ def configure(
         if user_python_dir is None:
             user_python_dir = str(Path(config_dir, 'mods'))
 
-        # Ok, now add these to sys.path.
+        # Wherever our user_python_dir is, if we find a sys/FOO dir
+        # under it where FOO matches our version, use that as our
+        # app_python_dir.
+        check_dir = os.path.join(
+            user_python_dir, 'sys', TARGET_BALLISTICA_VERSION
+        )
+        if os.path.isdir(check_dir):
+            global g_user_system_scripts_dir  # pylint: disable=global-statement
+            g_user_system_scripts_dir = check_dir
+            app_python_dir = check_dir
+
+        # Ok, now apply these to sys.path.
 
         # First off, strip out any instances of the path containing this
         # module. We will probably be re-adding the same path in a
@@ -194,6 +210,7 @@ def configure(
         data_dir=data_dir,
         user_python_dir=user_python_dir,
         app_python_dir=app_python_dir,
+        standard_app_python_dir=standard_app_python_dir,
         site_python_dir=site_python_dir,
         log_handler=log_handler,
     )

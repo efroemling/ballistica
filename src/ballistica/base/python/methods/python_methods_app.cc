@@ -207,6 +207,10 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
+  if (!g_base->logic->event_loop()) {
+    throw Exception("pushcall cannot be used before start-app is called.");
+  }
+
   // 'raw' mode does no thread checking and no context saves/restores.
   if (raw) {
     assert(Python::HaveGIL());

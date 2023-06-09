@@ -2799,34 +2799,6 @@ static PyMethodDef PyOpenFileExternallyDef = {
     "Open the provided file in the default external app.",
 };
 
-// -------------------------- open_dir_externally ------------------------------
-
-static auto PyOpenDirExternally(PyObject* self, PyObject* args,
-                                PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  char* path = nullptr;
-  static const char* kwlist[] = {"path", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &path)) {
-    return nullptr;
-  }
-  g_core->platform->OpenDirExternally(path);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOpenDirExternallyDef = {
-    "open_dir_externally",             // name
-    (PyCFunction)PyOpenDirExternally,  // method
-    METH_VARARGS | METH_KEYWORDS,      // flags
-
-    "open_dir_externally(path: str) -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Open the provided dir in the default external app.",
-};
-
 // ----------------------------- console_print ---------------------------------
 
 static auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
@@ -2899,7 +2871,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetQRCodeTextureDef,
       PyIsPartyIconVisibleDef,
       PyConsolePrintDef,
-      PyOpenDirExternallyDef,
       PyOpenFileExternallyDef,
       PyOpenURLDef,
       PyBackPressDef,

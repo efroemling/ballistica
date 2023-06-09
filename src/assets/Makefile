@@ -174,6 +174,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
   $(BUILD_DIR)/ba_data/python/babase/internal.py \
+  $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
@@ -310,7 +311,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/modutils.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/ui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
@@ -446,6 +446,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_text.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_workspace.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/internal.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/modutils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_accountv1.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_achievement.cpython-311.opt-1.pyc \
@@ -582,7 +583,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/modutils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/ui/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-311.opt-1.pyc \

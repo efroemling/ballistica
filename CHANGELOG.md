@@ -1,4 +1,4 @@
-### 1.7.20 (build 21078, api 8, 2023-06-08)
+### 1.7.20 (build 21079, api 8, 2023-06-08)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -309,6 +309,10 @@
   windows. Please holler if you are still seeing this. This file gets written
   for debugging whenever the logic thread remains unresponsive for several
   seconds.
+- (build 21078) Custom system scripts dirs works again (complete copies of app
+  system scripts living in your mods directory under `sys/$(YOUR_APP_VERSION)`.
+  Tools for creating/destroying these setups are now at `babase.modutils` (they
+  had been placed under bauiv1 but that was just silly).
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

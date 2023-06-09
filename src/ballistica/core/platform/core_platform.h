@@ -546,7 +546,7 @@ class CorePlatform {
 
  private:
   bool is_stdin_a_terminal_{};
-  bool using_custom_app_python_dir_{};  // FIXME not wired up currently.
+  bool using_custom_app_python_dir_{};
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
   bool is_tegra_k1_{};

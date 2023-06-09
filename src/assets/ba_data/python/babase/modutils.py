@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import os
 
 import _babase
-import _bauiv1
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -50,7 +49,7 @@ def _request_storage_permission() -> bool:
     from babase._mgen.enums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):
-        _bauiv1.getsound('error').play()
+        _babase.getsimplesound('error').play()
         _babase.screenmessage(
             Lstr(resource='storagePermissionAccessText'), color=(1, 0, 0)
         )
@@ -103,7 +102,7 @@ def show_user_scripts() -> None:
 
     # On a few platforms we try to open the dir in the UI.
     if app.classic is not None and app.classic.platform in ['mac', 'windows']:
-        _bauiv1.open_dir_externally(app.python_directory_user)
+        _babase.open_dir_externally(app.python_directory_user)
 
     # Otherwise we just print a pretty version of it.
     else:
@@ -111,9 +110,9 @@ def show_user_scripts() -> None:
 
 
 def create_user_system_scripts() -> None:
-    """Set up a copy of Ballistica system scripts under your user scripts dir.
+    """Set up a copy of Ballistica app scripts under user scripts dir.
 
-    (for editing and experiment with)
+    (for editing and experimenting)
     """
     import shutil
 
@@ -180,7 +179,7 @@ def delete_user_system_scripts() -> None:
             f' scripts. (use babase.quit() to exit the game)'
         )
     else:
-        print('User system scripts not found.')
+        print(f"User system scripts not found at '{path}'.")
 
     # If the sys path is empty, kill it.
     dpath = app.python_directory_user + '/sys'
