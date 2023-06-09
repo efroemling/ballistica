@@ -47,7 +47,11 @@ static PyMethodDef PyAppNameDef = {
 static auto PyRunApp(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  printf("WOULD RUN!\n");
+  FatalError("NOT WORKING YET; COME BACK SOON.");
+
+  assert(g_base);
+  g_base->RunAppToCompletion();
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -201,6 +205,10 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
                                    &from_other_thread, &suppress_warning,
                                    &other_thread_use_fg_context, &raw)) {
     return nullptr;
+  }
+
+  if (!g_base->logic->event_loop()) {
+    throw Exception("pushcall cannot be used before start-app is called.");
   }
 
   // 'raw' mode does no thread checking and no context saves/restores.

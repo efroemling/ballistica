@@ -1383,6 +1383,65 @@ static PyMethodDef PyUnlockAllInputDef = {
     "Resumes normal keyboard, mouse, and gamepad event processing.",
 };
 
+// --------------------------- native_stack_trace ------------------------------
+
+static auto PyNativeStackTrace(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_core);
+  auto* trace = g_core->platform->GetStackTrace();
+  if (!trace) {
+    Py_RETURN_NONE;
+  }
+  auto out = trace->FormatForDisplay();
+  delete trace;
+  return PyUnicode_FromString(out.c_str());
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeStackTraceDef = {
+    "native_stack_trace",             // name
+    (PyCFunction)PyNativeStackTrace,  // method
+    METH_NOARGS,                      // flags
+
+    "native_stack_trace() -> str | None\n"
+    "\n"
+    "Return a native stack trace as a string, or None if not available.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"
+    "\n"
+    "Stack traces contain different data and formatting across platforms.\n"
+    "Only use them for debugging.",
+};
+
+// -------------------------- open_dir_externally ------------------------------
+
+static auto PyOpenDirExternally(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  char* path = nullptr;
+  static const char* kwlist[] = {"path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &path)) {
+    return nullptr;
+  }
+  g_core->platform->OpenDirExternally(path);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOpenDirExternallyDef = {
+    "open_dir_externally",             // name
+    (PyCFunction)PyOpenDirExternally,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+
+    "open_dir_externally(path: str) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Open the provided dir in the default external app.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1436,6 +1495,8 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
       PyHasTouchScreenDef,
+      PyNativeStackTraceDef,
+      PyOpenDirExternallyDef,
   };
 }
 

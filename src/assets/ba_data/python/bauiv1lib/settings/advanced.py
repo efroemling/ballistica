@@ -188,7 +188,7 @@ class AdvancedSettingsWindow(bui.Window):
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use (called in bg thread)."""
-        from bauiv1 import modutils as _unused2
+        from babase import modutils as _unused2
         from bauiv1lib import config as _unused1
         from bauiv1lib.settings import vrtesting as _unused3
         from bauiv1lib.settings import nettesting as _unused4
@@ -235,7 +235,7 @@ class AdvancedSettingsWindow(bui.Window):
         # pylint: disable=too-many-locals
 
         from bauiv1lib.config import ConfigCheckBox
-        from bauiv1.modutils import show_user_scripts
+        from babase.modutils import show_user_scripts
 
         plus = bui.app.plus
         assert plus is not None

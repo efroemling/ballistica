@@ -59,7 +59,7 @@ def run_stress_test(
     round_duration: int = 30,
 ) -> None:
     """Run a stress test."""
-    from bauiv1 import modutils
+    from babase import modutils
     from babase._general import Call
 
     _babase.screenmessage(

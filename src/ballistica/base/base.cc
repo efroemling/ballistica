@@ -134,9 +134,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
 
 void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
   assert(!base_import_completed_);
-
   g_base->python->ImportPythonAppObjs();
-
   base_import_completed_ = true;
 }
 
@@ -176,12 +174,12 @@ void BaseFeatureSet::StartApp() {
   // Read the app config.
   g_base->python->ReadConfig();
 
-  // Allow our subsystems to start doing work in their own threads
-  // and communicating with other subsystems. Note that we may still
-  // want to run some things serially here and ordering may be important
-  // (for instance we want to give our main thread a chance to register
-  // all initial input devices with the logic thread before the logic
-  // thread applies the current config to them).
+  // Allow our subsystems to start doing work in their own threads and
+  // communicating with other subsystems. Note that we may still want to run
+  // some things serially here and ordering may be important (for instance
+  // we want to give our main thread a chance to register all initial input
+  // devices with the logic thread before the logic thread applies the
+  // current config to them).
 
   python->OnMainThreadStartApp();
   logic->OnMainThreadStartApp();
@@ -226,6 +224,7 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     Log(LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }
+
   try {
     // Tear down previous mode (if any).
     if (app_mode_) {
@@ -275,9 +274,9 @@ void BaseFeatureSet::PrimeAppMainThreadEventPump() {
 auto BaseFeatureSet::HavePlus() -> bool {
   if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_plus_ = true;
   }
   return plus_soft_ != nullptr;
@@ -292,9 +291,9 @@ void BaseFeatureSet::set_plus(PlusSoftInterface* plus) {
 auto BaseFeatureSet::plus() -> PlusSoftInterface* {
   if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_plus_ = true;
   }
   if (!plus_soft_) {
@@ -306,9 +305,9 @@ auto BaseFeatureSet::plus() -> PlusSoftInterface* {
 auto BaseFeatureSet::HaveClassic() -> bool {
   if (!classic_soft_ && !tried_importing_classic_) {
     python->SoftImportClassic();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_classic_ = true;
   }
   return classic_soft_ != nullptr;
@@ -318,9 +317,9 @@ auto BaseFeatureSet::HaveClassic() -> bool {
 auto BaseFeatureSet::classic() -> ClassicSoftInterface* {
   if (!classic_soft_ && !tried_importing_classic_) {
     python->SoftImportClassic();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_classic_ = true;
   }
   if (!classic_soft_) {
@@ -337,9 +336,9 @@ void BaseFeatureSet::set_classic(ClassicSoftInterface* classic) {
 auto BaseFeatureSet::HaveUIV1() -> bool {
   if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
     python->SoftImportUIV1();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_ui_v1_ = true;
   }
   return ui_v1_soft_ != nullptr;
@@ -349,9 +348,9 @@ auto BaseFeatureSet::HaveUIV1() -> bool {
 auto BaseFeatureSet::ui_v1() -> UIV1SoftInterface* {
   if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
     python->SoftImportUIV1();
-    // Important to set this *after* import attempt, or a second import attempt
-    // while first is ongoing can insta-fail. Multiple import attempts shouldn't
-    // hurt anything.
+    // Important to set this *after* import attempt, or a second import
+    // attempt while first is ongoing can insta-fail. Multiple import
+    // attempts shouldn't hurt anything.
     tried_importing_ui_v1_ = true;
   }
   if (!ui_v1_soft_) {
@@ -380,8 +379,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       }
     }
     if (!have_app_instance_uuid) {
-      // As an emergency fallback simply use a single random number.
-      // We should probably simply disallow this before Python is up.
+      // As an emergency fallback simply use a single random number. We
+      // should probably simply disallow this before Python is up.
       Log(LogLevel::kWarning, "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           core::CorePlatform::GetCurrentMillisecs()));  // NOLINT

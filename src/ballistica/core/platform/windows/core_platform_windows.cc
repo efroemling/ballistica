@@ -12,6 +12,13 @@
 #include <stdio.h>
 #include <sysinfoapi.h>
 
+/* clang-format off */
+// Builds fail if this is further up.
+// This define gives us the unicode version.
+#define DBGHELP_TRANSLATE_TCHAR
+#include <dbghelp.h>
+/* clang-format on */
+
 #pragma comment(lib, "Rpcrt4.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -20,7 +27,9 @@
 #else
 #pragma comment(lib, "python311.lib")
 #endif
+#pragma comment(lib, "DbgHelp.lib")
 
+// GUI Only Stuff.
 #if !BA_HEADLESS_BUILD
 #pragma comment(lib, "libogg.lib")
 #pragma comment(lib, "libvorbis.lib")
@@ -31,6 +40,7 @@
 #endif
 
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 
 #if !defined(UNICODE) || !defined(_UNICODE)
@@ -38,6 +48,130 @@
 #endif
 
 namespace ballistica::core {
+
+static const int kTraceMaxStackFrames{256};
+static const int kTraceMaxFunctionNameLength{1024};
+
+class WinStackTrace : public PlatformStackTrace {
+ public:
+  explicit WinStackTrace(CorePlatformWindows* platform) : platform_{platform} {
+    number_of_frames_ =
+        CaptureStackBackTrace(0, kTraceMaxStackFrames, stack_, NULL);
+  }
+
+  // Return a human readable version of the trace (with symbolification if
+  // available).
+  auto FormatForDisplay() noexcept -> std::string {
+    return platform_->FormatWinStackTraceForDisplay(this);
+  }
+
+  // Should return a copy of itself allocated via new() (or nullptr if not
+  // possible).
+  auto Copy() const noexcept -> PlatformStackTrace* override {
+    try {
+      auto s = new WinStackTrace(*this);
+
+      // Vanilla copy constructor should do the right thing here.
+      assert(s->number_of_frames_ == number_of_frames_
+             && memcmp(s->stack_, stack_, sizeof(stack_)) == 0);
+      return s;
+    } catch (const std::exception&) {
+      // If this is failing we're in big trouble anyway.
+      return nullptr;
+    }
+  }
+
+  auto number_of_frames() const { return number_of_frames_; }
+  auto* stack() const { return stack_; }
+
+ private:
+  CorePlatformWindows* platform_;
+  WORD number_of_frames_{};
+  void* stack_[kTraceMaxStackFrames];
+};
+
+auto CorePlatformWindows::FormatWinStackTraceForDisplay(
+    WinStackTrace* stack_trace) -> std::string {
+  try {
+    std::string out;
+
+    // Win docs say this is not thread safe so limit to one at a time.
+    std::scoped_lock lock(win_stack_mutex_);
+
+    // Docs say to do this only once.
+    if (!win_sym_inited_) {
+      win_sym_process_ = GetCurrentProcess();
+      SymInitialize(win_sym_process_, NULL, TRUE);
+      win_sym_inited_ = true;
+    }
+
+    char buf[sizeof(SYMBOL_INFO)
+             + (kTraceMaxFunctionNameLength - 1) * sizeof(TCHAR)];
+    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(buf);
+    symbol->MaxNameLen = kTraceMaxFunctionNameLength;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    DWORD64 s_displacement;
+    DWORD l_displacement;
+    IMAGEHLP_LINE64 line;
+    line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+    std::string build_src_dir = g_core ? g_core->build_src_dir() : "";
+
+    char linebuf[kTraceMaxFunctionNameLength + 128];
+    for (int i = 0; i < stack_trace->number_of_frames(); i++) {
+      DWORD64 address = (DWORD64)(stack_trace->stack()[i]);
+      std::string symbol_name_s;
+      if (SymFromAddr(win_sym_process_, address, &s_displacement, symbol)) {
+        symbol_name_s = UTF8Encode(symbol->Name);
+        if (!Utils::IsValidUTF8(symbol_name_s)) {
+          // Debugging some wonky utf8 I was seeing come through.
+          symbol_name_s = "(got invalid utf8 for symbol name)";
+        }
+      } else {
+        symbol_name_s = "(unknown symbol name)";
+      }
+      const char* symbol_name = symbol_name_s.c_str();
+
+      if (SymGetLineFromAddr64(win_sym_process_, address, &l_displacement,
+                               &line)) {
+        std::string filename_s = UTF8Encode(line.FileName);
+
+        if (!Utils::IsValidUTF8(filename_s)) {
+          // Debugging some wonky utf8 I was seeing come through.
+          filename_s = "(got invalid utf8 for filename)";
+        }
+        const char* filename = filename_s.c_str();
+
+        // If our filename starts with build_src_dir, trim that part
+        // off to make things nice and pretty.
+        if (!build_src_dir.empty()
+            && !strncmp(filename, build_src_dir.c_str(),
+                        build_src_dir.size())) {
+          filename += build_src_dir.size();
+        }
+
+        snprintf(linebuf, sizeof(linebuf),
+                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol_name,
+                 filename, line.LineNumber,
+                 reinterpret_cast<void*>(symbol->Address));
+      } else {
+        snprintf(linebuf, sizeof(linebuf),
+                 "SymGetLineFromAddr64 returned error code %lu.\n",
+                 GetLastError());
+        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
+                 symbol_name, reinterpret_cast<void*>(symbol->Address));
+      }
+      out += linebuf;
+    }
+    return out;
+  } catch (const std::exception&) {
+    return "stack-trace construction failed.";
+  }
+}
+
+auto CorePlatformWindows::GetStackTrace() -> PlatformStackTrace* {
+  return new WinStackTrace(this);
+}
 
 // Convert a wide Unicode string to an UTF8 string.
 auto CorePlatformWindows::UTF8Encode(const std::wstring& wstr) -> std::string {
@@ -149,7 +283,7 @@ auto CorePlatformWindows::DoGetConfigDirectoryMonolithicDefault()
   if (result != S_OK) {
     throw Exception("Unable to get user local-app-data dir.");
   }
-  std::string configdir = UTF8Encode(std::wstring(path)) + "\\BallisticaKit";
+  std::string configdir = UTF8Encode(path) + "\\BallisticaKit";
   return configdir;
 }
 
@@ -232,7 +366,7 @@ auto CorePlatformWindows::DoAbsPath(const std::string& path,
     // Buffer not big enough. Should handle this case.
     return false;
   }
-  *outpath = UTF8Encode(std::wstring(abspath));
+  *outpath = UTF8Encode(abspath);
   return true;
 }
 
@@ -683,7 +817,7 @@ std::string CorePlatformWindows::DoGetDeviceName() {
   if (result == 0) {
     device_name = "BallisticaKit Game";
   } else {
-    device_name = UTF8Encode(std::wstring(computer_name));
+    device_name = UTF8Encode(computer_name);
     if (device_name.size() == 0) {
       device_name = "BallisticaKit Game";
     }
@@ -704,20 +838,6 @@ void CorePlatformWindows::DisplayLog(const std::string& name, LogLevel level,
   OutputDebugString(UTF8Decode(msg).c_str());
 }
 
-// (The default SDL handler now covers us)
-// bool CorePlatformWindows::BlockingFatalErrorDialog(const std::string&
-// message) {
-//   if (HeadlessMode()) {
-//     return CorePlatform::BlockingFatalErrorDialog(message);
-//   }
-//   MessageBoxA(nullptr, (message.c_str()), "BallisticaKit",
-//               MB_ICONERROR | MB_OK);
-
-//   // Our message-box call is blocking so we can return false here
-//   // and let the app self-terminate at this point.
-//   return false;
-// }
-
 auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
   wchar_t sz_file_name[MAX_PATH + 1];
   GetModuleFileName(nullptr, sz_file_name, MAX_PATH + 1);
@@ -733,7 +853,7 @@ auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
     // If the app path happens to be the current dir, return
     // the default of "." which gives us cleaner looking paths in
     // stack traces/etc.
-    auto out = UTF8Encode(std::wstring(sz_file_name));
+    auto out = UTF8Encode(sz_file_name);
     if (out == GetCWD()) {
       return CorePlatform::DoGetDataDirectoryMonolithicDefault();
     }
@@ -762,7 +882,7 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
 
   // If it was found and fits in our small static buffer, we're done.
   if (result <= kStaticBufferSize) {
-    return UTF8Encode(std::wstring(buffer));
+    return UTF8Encode(buffer);
   }
 
   // Ok; apparently its big. Allocate a buffer big enough to hold it and try
@@ -777,7 +897,7 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
     Log(LogLevel::kError, "GetEnv to allocated buffer failed; unexpected.");
     return {};
   }
-  return UTF8Encode(std::wstring(big_buffer.data()));
+  return UTF8Encode(big_buffer.data());
 }
 
 void CorePlatformWindows::SetEnv(const std::string& name,
@@ -822,7 +942,7 @@ std::string CorePlatformWindows::GetCWD() {
   if (result == nullptr) {
     throw Exception("Error getting CWD; errno=" + std::to_string(errno));
   }
-  return UTF8Encode(std::wstring(buffer));
+  return UTF8Encode(buffer);
 }
 
 void CorePlatformWindows::OpenFileExternally(const std::string& path) {

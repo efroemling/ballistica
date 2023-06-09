@@ -123,10 +123,10 @@ void CoreFeatureSet::PostInit() {
   // We can use it to make error messages/etc. more pretty by stripping out
   // all but sub-project paths.
   const char* f = __FILE__;
-  auto* f_end = strstr(
-      f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH "app" BA_DIRSLASH "app.cc");
-  if (!f) {
-    Log(LogLevel::kWarning, "Unable to calc project dir from __FILE__.");
+  auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
+                          "core" BA_DIRSLASH "core.cc");
+  if (!f_end) {
+    Log(LogLevel::kWarning, "Unable to calc build source dir from __FILE__.");
   } else {
     build_src_dir_ = std::string(f).substr(0, f_end - f);
   }
@@ -145,6 +145,14 @@ void CoreFeatureSet::PostInit() {
 
   // Grab whatever Python stuff we use.
   python->ImportPythonObjs();
+
+  // Normally we wait until babase is imported to push early logs through to
+  // Python (so that our log handling system is fully bootstrapped), but
+  // technically we can push our log calls out to Python any time now since
+  // we grabbed the logging calls above. Do so immediately here if asked.
+  if (!g_core->core_config().hold_early_logs) {
+    python->EnablePythonLoggingCalls();
+  }
 
   // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
   //  For now it does the right thing here since all we have is monolithic

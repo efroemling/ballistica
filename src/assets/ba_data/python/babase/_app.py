@@ -482,8 +482,11 @@ class App:
         from babase import _asyncio
         from babase import _appconfig
         from babase._apputils import log_dumped_app_state, AppHealthMonitor
+        import babase._env
 
         assert _babase.in_logic_thread()
+
+        babase._env.on_app_launching()
 
         self._aioloop = _asyncio.setup_asyncio()
         self.health_monitor = AppHealthMonitor()

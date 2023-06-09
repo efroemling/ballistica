@@ -34,6 +34,7 @@ from _babase import (
     clipboard_get_text,
     clipboard_set_text,
     in_logic_thread,
+    native_stack_trace,
 )
 
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
@@ -167,6 +168,7 @@ __all__ = [
     'AppMode',
     'AppSubsystem',
     'screenmessage',
+    'native_stack_trace',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

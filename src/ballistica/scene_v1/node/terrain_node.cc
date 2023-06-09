@@ -229,7 +229,9 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
                           : background_ ? frame_def->beauty_pass_bg()
                                         : frame_def->beauty_pass());
   c.SetWorldSpace(true);
-  c.SetTexture(color_texture_->texture_data());
+  if (color_texture_.Exists()) {
+    c.SetTexture(color_texture_->texture_data());
+  }
   if (lighting_) {
     c.SetLightShadow(base::LightShadowType::kTerrain);
   } else {

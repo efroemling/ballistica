@@ -43,7 +43,7 @@ Exception::Exception(const Exception& other) noexcept {
     full_description_ = other.full_description_;
     python_type_ = other.python_type_;
     if (other.stack_trace_) {
-      stack_trace_ = other.stack_trace_->copy();
+      stack_trace_ = other.stack_trace_->Copy();
     }
   } catch (const std::exception&) {
     // Hmmm not sure what we should do if this happens;
@@ -65,7 +65,7 @@ auto Exception::what() const noexcept -> const char* {
       if (stack_trace_ != nullptr) {
         const_cast<Exception*>(this)->full_description_ =
             message_ + "\nThrown from " + thread_name_ + " thread:\n"
-            + stack_trace_->GetDescription();
+            + stack_trace_->FormatForDisplay();
       } else {
         const_cast<Exception*>(this)->full_description_ = message_;
       }

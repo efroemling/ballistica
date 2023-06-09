@@ -251,32 +251,6 @@ auto CorePlatform::GetDefaultVolatileDataDirectory() -> std::string {
 auto CorePlatform::GetAppPythonDirectory() -> std::optional<std::string> {
   BA_PRECONDITION(have_ba_env_vals_);
   return ba_env_app_python_dir_;
-
-  // TODO(ericf) - recreate this behavior within baenv.
-  //   // If there is a sys/VERSION in the user-python dir we use that.
-  //   app_python_dir_ = GetUserPythonDirectoryMonolithicDefault() + BA_DIRSLASH
-  //                     + "sys" + BA_DIRSLASH + kEngineVersion;
-
-  //   // Fall back to our default if that doesn't exist.
-  //   if (FilePathExists(app_python_dir_)) {
-  //     using_custom_app_python_dir_ = true;
-  //     Log(LogLevel::kInfo,
-  //         "Using custom app Python path: '"
-  //             + (GetUserPythonDirectoryMonolithicDefault() + BA_DIRSLASH +
-  //             "sys"
-  //                + BA_DIRSLASH + kEngineVersion)
-  //             + "'.");
-
-  //   } else {
-  //     // Special case: if CWD is '.', omit the './' for a prettier path.
-  //     app_python_dir_ = std::string("ba_data") + BA_DIRSLASH + "python";
-  //     auto data_dir = GetDataDirectoryMonolithicDefault();
-  //     if (data_dir != ".") {
-  //       app_python_dir_ = data_dir + BA_DIRSLASH + app_python_dir_;
-  //     }
-  //   }
-  // }
-  // return app_python_dir_;
 }
 
 auto CorePlatform::GetSitePythonDirectory() -> std::optional<std::string> {
@@ -1058,10 +1032,10 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
   // The stack trace should capture the stack state immediately upon
   // construction but should do the bare minimum amount of work to store it. Any
   // expensive operations such as symbolification should be deferred until
-  // GetDescription().
+  // FormatForDisplay().
   PlatformStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
 
-  auto GetDescription() noexcept -> std::string override {
+  auto FormatForDisplay() noexcept -> std::string override {
     try {
       std::string s;
       char** symbols = backtrace_symbols(array_, nsize_);
@@ -1078,7 +1052,7 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
     }
   }
 
-  auto copy() const noexcept -> PlatformStackTrace* override {
+  auto Copy() const noexcept -> PlatformStackTrace* override {
     try {
       auto s = new PlatformStackTraceExecInfo(*this);
 
@@ -1249,6 +1223,14 @@ void CorePlatform::SetBaEnvVals(const PythonRef& ref) {
       ref.GetAttr("user_python_dir").ValueAsOptionalString();
   ba_env_site_python_dir_ =
       ref.GetAttr("site_python_dir").ValueAsOptionalString();
+
+  // Consider app-python-dir 'custom' if baenv provided a value
+  // for it AND that value differs from baenv's default.
+  auto standard_app_python_dir =
+      ref.GetAttr("standard_app_python_dir").ValueAsString();
+  using_custom_app_python_dir_ =
+      ba_env_app_python_dir_.has_value()
+      && *ba_env_app_python_dir_ != standard_app_python_dir;
 
   // Ok, now look for the existence of ba_data in the dir we've got.
   auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";

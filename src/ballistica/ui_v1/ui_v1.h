@@ -18,7 +18,7 @@ class CoreFeatureSet;
 }
 namespace ballistica::base {
 class BaseFeatureSet;
-class WidgetMessage;
+struct WidgetMessage;
 }  // namespace ballistica::base
 
 namespace ballistica::ui_v1 {
