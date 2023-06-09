@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import weakref
 
 import _babase
 from babase._mgen.enums import UIScale
@@ -16,7 +15,7 @@ import bauiv1
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
-    from bauiv1._uitypes import UICleanupCheck, UIController
+    from bauiv1._uitypes import UICleanupCheck, UIController, Window
     import babase
 
 
@@ -36,6 +35,7 @@ class UIV1Subsystem(AppSubsystem):
 
         self._main_menu_window: bauiv1.Widget | None = None
         self._main_menu_location: str | None = None
+        self.quit_window: bauiv1.Widget | None = None
 
         # From classic.
         self.main_menu_resume_callbacks: list = []  # Can probably go away.
@@ -55,11 +55,9 @@ class UIV1Subsystem(AppSubsystem):
         self.window_states: dict[type, Any] = {}  # FIXME: Kill this.
         self.main_menu_selection: str | None = None  # FIXME: Kill this.
         self.have_party_queue_window = False
-        self.quit_window: Any = None
         self.cleanupchecks: list[UICleanupCheck] = []
         self.upkeeptimer: babase.AppTimer | None = None
         self.use_toolbars = env.get('toolbar_test', True)
-        self.party_window: Any = None  # FIXME: Don't use Any.
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
@@ -184,33 +182,3 @@ class UIV1Subsystem(AppSubsystem):
     def get_main_menu_location(self) -> str | None:
         """Return the current named main menu location, if any."""
         return self._main_menu_location
-
-    def party_icon_activate(self, origin: Sequence[float]) -> None:
-        """(internal)"""
-        from bauiv1lib.party import PartyWindow
-        from babase import app
-
-        assert not app.headless_mode
-
-        _bauiv1.getsound('swish').play()
-
-        # If it exists, dismiss it; otherwise make a new one.
-        if self.party_window is not None and self.party_window() is not None:
-            self.party_window().close()
-        else:
-            self.party_window = weakref.ref(PartyWindow(origin=origin))
-
-    def device_menu_press(self, device_id: int | None) -> None:
-        """(internal)"""
-        from bauiv1lib.mainmenu import MainMenuWindow
-        from bauiv1 import set_ui_input_device
-
-        assert _babase.app is not None
-        in_main_menu = self.has_main_menu_window()
-        if not in_main_menu:
-            set_ui_input_device(device_id)
-
-            if not _babase.app.headless_mode:
-                _bauiv1.getsound('swish').play()
-
-            self.set_main_menu_window(MainMenuWindow().get_root_widget())

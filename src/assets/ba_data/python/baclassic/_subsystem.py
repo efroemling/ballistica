@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import random
 import logging
+import weakref
 from typing import TYPE_CHECKING
 
 from efro.dataclassio import dataclass_from_dict
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from baclassic._appdelegate import AppDelegate
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
+    from bauiv1lib.party import PartyWindow
 
 
 class ClassicSubsystem(AppSubsystem):
@@ -121,6 +123,7 @@ class ClassicSubsystem(AppSubsystem):
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.delegate: AppDelegate | None = None
+        self.party_window: weakref.ref[PartyWindow] | None = None
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
@@ -756,3 +759,38 @@ class ClassicSubsystem(AppSubsystem):
                     _bauiv1.gettexture(map_tex_name)
         except Exception:
             logging.exception('Error preloading map preview media.')
+
+    def party_icon_activate(self, origin: Sequence[float]) -> None:
+        """(internal)"""
+        from bauiv1lib.party import PartyWindow
+        from babase import app
+
+        assert not app.headless_mode
+
+        _bauiv1.getsound('swish').play()
+
+        # If it exists, dismiss it; otherwise make a new one.
+        party_window = (
+            None if self.party_window is None else self.party_window()
+        )
+        if party_window is not None:
+            party_window.close()
+        else:
+            self.party_window = weakref.ref(PartyWindow(origin=origin))
+
+    def device_menu_press(self, device_id: int | None) -> None:
+        """(internal)"""
+        from bauiv1lib.mainmenu import MainMenuWindow
+        from bauiv1 import set_ui_input_device
+
+        assert _babase.app is not None
+        in_main_menu = _babase.app.ui_v1.has_main_menu_window()
+        if not in_main_menu:
+            set_ui_input_device(device_id)
+
+            if not _babase.app.headless_mode:
+                _bauiv1.getsound('swish').play()
+
+            _babase.app.ui_v1.set_main_menu_window(
+                MainMenuWindow().get_root_widget()
+            )

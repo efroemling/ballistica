@@ -608,6 +608,10 @@ spinoff-test-base:
 spinoff-test-plus:
 	tools/pcommand spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
+# Build and check a spinoff project including only the classic feature-set.
+spinoff-test-classic:
+	tools/pcommand spinoff_test classic $(SPINOFF_TEST_EXTRA_ARGS)
+
 # Build and check a spinoff project with only the template_fs feature-set.
 spinoff-test-template_fs:
 	tools/pcommand spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)

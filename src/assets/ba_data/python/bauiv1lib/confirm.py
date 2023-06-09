@@ -157,7 +157,8 @@ class QuitWindow:
         back: bool = False,
         origin_widget: bui.Widget | None = None,
     ):
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
         ui = bui.app.ui_v1
         app = bui.app
         self._back = back

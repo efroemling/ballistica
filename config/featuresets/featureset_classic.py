@@ -12,7 +12,14 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we should apply to.
 fset = FeatureSet.get_active()
 
-fset.requirements = {'core', 'base', 'scene_v1', 'scene_v1_lib', 'ui_v1'}
+fset.requirements = {
+    'core',
+    'base',
+    'scene_v1',
+    'scene_v1_lib',
+    'ui_v1',
+    'ui_v1_lib',
+}
 
 # We can make use of plus stuff but can live without it.
 fset.soft_requirements = {'plus'}

@@ -8,9 +8,9 @@ import math
 import logging
 from typing import TYPE_CHECKING, cast
 
-from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
 import bascenev1 as bs
+from bauiv1lib.popup import PopupMenuWindow
 
 if TYPE_CHECKING:
     from typing import Sequence, Any

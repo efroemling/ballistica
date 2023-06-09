@@ -14,4 +14,4 @@ fset = FeatureSet.get_active()
 
 fset.has_native_python_module = False
 
-fset.requirements = {'core', 'base', 'ui_v1'}
+fset.requirements = {'core', 'base', 'ui_v1', 'classic'}

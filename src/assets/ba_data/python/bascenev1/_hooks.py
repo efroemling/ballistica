@@ -45,9 +45,11 @@ def filter_chat_message(msg: str, client_id: int) -> str | None:
 
 
 def local_chat_message(msg: str) -> None:
-    assert _babase.app.classic is not None
-    if (
-        _babase.app.ui_v1.party_window is not None
-        and _babase.app.ui_v1.party_window() is not None
-    ):
-        _babase.app.ui_v1.party_window().on_chat_message(msg)
+    classic = _babase.app.classic
+    assert classic is not None
+    party_window = (
+        None if classic.party_window is None else classic.party_window()
+    )
+
+    if party_window is not None:
+        party_window.on_chat_message(msg)
