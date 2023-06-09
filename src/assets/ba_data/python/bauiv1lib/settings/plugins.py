@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from enum import Enum
+import logging
 from typing import TYPE_CHECKING, assert_never
 
 import bauiv1 as bui
@@ -136,7 +137,7 @@ class PluginWindow(bui.Window):
             size=(130, 60),
             label=bui.Lstr(resource='allText'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._show_options),
+            on_activate_call=bui.WeakCall(self._show_category_options),
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
@@ -214,15 +215,14 @@ class PluginWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
-        bui.getsound('swish').play()
-
+        self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             PluginSettingsWindow(transition='in_right').get_root_widget()
         )
 
-    def _show_options(self) -> None:
+    def _show_category_options(self) -> None:
         uiscale = bui.app.ui_v1.uiscale
 
         popup.PopupMenuWindow(
@@ -373,10 +373,38 @@ class PluginWindow(bui.Window):
             num_shown += 1
 
     def _save_state(self) -> None:
-        pass
+        try:
+            sel = self._root_widget.get_selected_child()
+            if sel == self._category_button:
+                sel_name = 'Category'
+            elif sel == self._settings_button:
+                sel_name = 'Settings'
+            elif sel == self._back_button:
+                sel_name = 'Back'
+            else:
+                raise ValueError(f'unrecognized selection \'{sel}\'')
+            assert bui.app.classic is not None
+            bui.app.ui_v1.window_states[type(self)] = sel_name
+        except Exception:
+            logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
-        pass
+        try:
+            assert bui.app.classic is not None
+            sel_name = bui.app.ui_v1.window_states.get(type(self))
+            sel: bui.Widget | None
+            if sel_name == 'Category':
+                sel = self._category_button
+            elif sel_name == 'Settings':
+                sel = self._settings_button
+            elif sel_name == 'Back':
+                sel = self._back_button
+            else:
+                sel = self._scrollwidget
+            if sel:
+                bui.containerwidget(edit=self._root_widget, selected_child=sel)
+        except Exception:
+            logging.exception('Error restoring state for %s.', self)
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
