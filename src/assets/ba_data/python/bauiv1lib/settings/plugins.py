@@ -203,8 +203,7 @@ class PluginWindow(bui.Window):
         )
 
     def _show_options(self) -> None:
-        assert bui.app.classic is not None
-        uiscale = bui.app.classic.ui.uiscale
+        uiscale = bui.app.ui_v1.uiscale
 
         popup.PopupMenuWindow(
             position=self._category_button.get_screen_space_center(),
@@ -217,15 +216,10 @@ class PluginWindow(bui.Window):
             ),
             choices=['All', 'Enabled', 'Disabled'],
             choices_display=[
-                bui.Lstr(
-                    resource='AllText'
-                ),
-                bui.Lstr(
-                    resource='EnabledText'
-                ),
-                bui.Lstr(
-                    resource='DisabledText'
-                )],
+                bui.Lstr(resource='AllText'),
+                bui.Lstr(resource='EnabledText'),
+                bui.Lstr(resource='DisabledText'),
+            ],
             current_choice='Default',
             delegate=self,
         )
@@ -235,13 +229,13 @@ class PluginWindow(bui.Window):
     ) -> None:
         """Called when a choice is selected in the popup."""
         del popup_window  # unused
-        
+
         self._clear_scroll_widget()
         self._show_plugins(choice)
 
         bui.buttonwidget(
             edit=self._category_button,
-            label=bui.Lstr(resource=(choice + 'Text'))
+            label=bui.Lstr(resource=(choice + 'Text')),
         )
 
     def popup_menu_closing(self, popup_window: popup.PopupWindow) -> None:
@@ -257,7 +251,7 @@ class PluginWindow(bui.Window):
         pluglist = bui.app.plugins.potential_plugins
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
-        
+
         plug_line_height = 50
         sub_width = self._scroll_width
         sub_height = len(pluglist) * plug_line_height
@@ -265,7 +259,7 @@ class PluginWindow(bui.Window):
         sub_height2 = 0
         num_of_plugs_active = 0
         num_of_plugs_disabled = 0
-        
+
         for i, availplug in enumerate(pluglist):
             # counting number of enabled and disabled plugins
             plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
@@ -277,26 +271,17 @@ class PluginWindow(bui.Window):
 
         if category == "All":
             bui.containerwidget(
-                edit=self._subcontainer,
-                size=(self._scroll_width,
-                      sub_height
-                     )
+                edit=self._subcontainer, size=(self._scroll_width, sub_height)
             )
         if category == "Enabled":
             sub_height1 = num_of_plugs_active * plug_line_height
             bui.containerwidget(
-                edit=self._subcontainer,
-                size=(self._scroll_width,
-                      sub_height1
-                     )
+                edit=self._subcontainer, size=(self._scroll_width, sub_height1)
             )
         elif category == "Disabled":
             sub_height2 = num_of_plugs_disabled * plug_line_height
             bui.containerwidget(
-                edit=self._subcontainer,
-                size=(self._scroll_width,
-                      sub_height2
-                     )
+                edit=self._subcontainer, size=(self._scroll_width, sub_height2)
             )
 
         num_of_plugs = 0
@@ -339,7 +324,9 @@ class PluginWindow(bui.Window):
                     )
                     bui.buttonwidget(
                         edit=button,
-                        on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                        on_activate_call=bui.Call(
+                            plugin.show_settings_ui, button
+                        ),
                     )
                 else:
                     button = None
@@ -357,7 +344,9 @@ class PluginWindow(bui.Window):
 
                 # Make sure we scroll all the way to the end when using
                 # keyboard/button nav.
-                bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+                bui.widget(
+                    edit=check, show_buffer_top=40, show_buffer_bottom=40
+                )
 
             elif category == "Enabled":
                 if active:
@@ -389,7 +378,9 @@ class PluginWindow(bui.Window):
                         )
                         bui.buttonwidget(
                             edit=button,
-                            on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                            on_activate_call=bui.Call(
+                                plugin.show_settings_ui, button
+                            ),
                         )
                     else:
                         button = None
@@ -407,9 +398,11 @@ class PluginWindow(bui.Window):
 
                     # Make sure we scroll all the way to the end when using
                     # keyboard/button nav.
-                    bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+                    bui.widget(
+                        edit=check, show_buffer_top=40, show_buffer_bottom=40
+                    )
                     num_of_plugs = num_of_plugs + 1
-            
+
             elif category == "Disabled":
                 if availplug.available and not active:
                     item_y = sub_height2 - (num_of_plugs + 1) * plug_line_height
@@ -436,7 +429,9 @@ class PluginWindow(bui.Window):
                         )
                         bui.buttonwidget(
                             edit=button,
-                            on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                            on_activate_call=bui.Call(
+                                plugin.show_settings_ui, button
+                            ),
                         )
                     else:
                         button = None
@@ -454,7 +449,9 @@ class PluginWindow(bui.Window):
 
                     # Make sure we scroll all the way to the end when using
                     # keyboard/button nav.
-                    bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+                    bui.widget(
+                        edit=check, show_buffer_top=40, show_buffer_bottom=40
+                    )
                     num_of_plugs = num_of_plugs + 1
 
         bui.containerwidget(
