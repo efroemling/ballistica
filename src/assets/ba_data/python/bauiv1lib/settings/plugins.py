@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bastd.ui import popup
+from bauiv1lib import popup
 
 if TYPE_CHECKING:
     pass
@@ -192,7 +192,7 @@ class PluginWindow(bui.Window):
 
     def _open_settings(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings.pluginsettings import PluginSettingsWindow
+        from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
         bui.getsound('swish').play()
 
@@ -469,7 +469,7 @@ class PluginWindow(bui.Window):
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings.advanced import AdvancedSettingsWindow
+        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
         self._save_state()
         bui.containerwidget(
