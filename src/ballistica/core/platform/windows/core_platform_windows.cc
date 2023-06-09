@@ -40,6 +40,7 @@
 #endif
 
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 
 #if !defined(UNICODE) || !defined(_UNICODE)
@@ -109,7 +110,8 @@ auto CorePlatformWindows::FormatWinStackTraceForDisplay(
     SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(buf);
     symbol->MaxNameLen = kTraceMaxFunctionNameLength;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    DWORD displacement;
+    DWORD64 s_displacement;
+    DWORD l_displacement;
     IMAGEHLP_LINE64 line;
     line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
@@ -118,27 +120,46 @@ auto CorePlatformWindows::FormatWinStackTraceForDisplay(
     char linebuf[kTraceMaxFunctionNameLength + 128];
     for (int i = 0; i < stack_trace->number_of_frames(); i++) {
       DWORD64 address = (DWORD64)(stack_trace->stack()[i]);
-      SymFromAddr(win_sym_process_, address, NULL, symbol);
-      if (SymGetLineFromAddr64(win_sym_process_, address, &displacement,
+      std::string symbol_name_s;
+      if (SymFromAddr(win_sym_process_, address, &s_displacement, symbol)) {
+        symbol_name_s = UTF8Encode(symbol->Name);
+        if (!Utils::IsValidUTF8(symbol_name_s)) {
+          // Debugging some wonky utf8 I was seeing come through.
+          symbol_name_s = "(got invalid utf8 for symbol name)";
+        }
+      } else {
+        symbol_name_s = "(unknown symbol name)";
+      }
+      const char* symbol_name = symbol_name_s.c_str();
+
+      if (SymGetLineFromAddr64(win_sym_process_, address, &l_displacement,
                                &line)) {
-        std::string filename_s = UTF8Encode(std::wstring(line.FileName));
+        std::string filename_s = UTF8Encode(line.FileName);
+
+        if (!Utils::IsValidUTF8(filename_s)) {
+          // Debugging some wonky utf8 I was seeing come through.
+          filename_s = "(got invalid utf8 for filename)";
+        }
         const char* filename = filename_s.c_str();
+
+        // If our filename starts with build_src_dir, trim that part
+        // off to make things nice and pretty.
         if (!build_src_dir.empty()
             && !strncmp(filename, build_src_dir.c_str(),
                         build_src_dir.size())) {
           filename += build_src_dir.size();
         }
+
         snprintf(linebuf, sizeof(linebuf),
-                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i,
-                 UTF8Encode(std::wstring(symbol->Name)).c_str(), filename,
-                 line.LineNumber, reinterpret_cast<void*>(symbol->Address));
+                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol_name,
+                 filename, line.LineNumber,
+                 reinterpret_cast<void*>(symbol->Address));
       } else {
         snprintf(linebuf, sizeof(linebuf),
                  "SymGetLineFromAddr64 returned error code %lu.\n",
                  GetLastError());
         snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
-                 UTF8Encode(std::wstring(symbol->Name)).c_str(),
-                 reinterpret_cast<void*>(symbol->Address));
+                 symbol_name, reinterpret_cast<void*>(symbol->Address));
       }
       out += linebuf;
     }
@@ -174,53 +195,9 @@ auto CorePlatformWindows::UTF8Decode(const std::string& str) -> std::wstring {
   return wstr;
 }
 
-#define TRACE_MAX_STACK_FRAMES 256
-#define TRACE_MAX_FUNCTION_NAME_LENGTH 1024
-
-// int printStackTrace() {
-//   void* stack[TRACE_MAX_STACK_FRAMES];
-//   if (!win_sym_inited_) {
-//     win_sym_process_ = GetCurrentProcess();
-//     SymInitialize(win_sym_process_, NULL, TRUE);
-//     win_sym_inited_ = true;
-//   }
-//   WORD numberOfFrames =
-//       CaptureStackBackTrace(0, TRACE_MAX_STACK_FRAMES, stack, NULL);
-
-//   char buf[sizeof(SYMBOL_INFO)
-//            + (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR)];
-//   SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
-//   symbol->MaxNameLen = TRACE_MAX_FUNCTION_NAME_LENGTH;
-//   symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-//   DWORD displacement;
-//   IMAGEHLP_LINE64 line;
-//   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-//   for (int i = 0; i < numberOfFrames; i++) {
-//     DWORD64 address = (DWORD64)(stack[i]);
-//     SymFromAddr(win_sym_process_, address, NULL, symbol);
-//     if (SymGetLineFromAddr64(win_sym_process_, address, &displacement,
-//     &line)) {
-//       printf("\tat %s in %s: line: %lu: address: 0x%0X\n", symbol->Name,
-//              line.FileName, line.LineNumber, symbol->Address);
-//     } else {
-//       printf("\tSymGetLineFromAddr64 returned error code %lu.\n",
-//              GetLastError());
-//       printf("\tat %s, address 0x%0X.\n", symbol->Name, symbol->Address);
-//     }
-//   }
-//   return 0;
-// }
-
 CorePlatformWindows::CorePlatformWindows() {
   // We should be built in unicode mode.
   assert(sizeof(TCHAR) == 2);
-
-  // printStackTrace();
-
-  // auto* testtrace = new WinStackTrace(this);
-  // printf("WINTRACE:\n%s", testtrace->FormatForDisplay().c_str());
-  // printf("WOOHOO!\n");
-  // fflush(stdout);
 
   // Need to init winsock immediately since we use it for
   // threading/logging/etc.
@@ -306,7 +283,7 @@ auto CorePlatformWindows::DoGetConfigDirectoryMonolithicDefault()
   if (result != S_OK) {
     throw Exception("Unable to get user local-app-data dir.");
   }
-  std::string configdir = UTF8Encode(std::wstring(path)) + "\\BallisticaKit";
+  std::string configdir = UTF8Encode(path) + "\\BallisticaKit";
   return configdir;
 }
 
@@ -389,7 +366,7 @@ auto CorePlatformWindows::DoAbsPath(const std::string& path,
     // Buffer not big enough. Should handle this case.
     return false;
   }
-  *outpath = UTF8Encode(std::wstring(abspath));
+  *outpath = UTF8Encode(abspath);
   return true;
 }
 
@@ -840,7 +817,7 @@ std::string CorePlatformWindows::DoGetDeviceName() {
   if (result == 0) {
     device_name = "BallisticaKit Game";
   } else {
-    device_name = UTF8Encode(std::wstring(computer_name));
+    device_name = UTF8Encode(computer_name);
     if (device_name.size() == 0) {
       device_name = "BallisticaKit Game";
     }
@@ -876,7 +853,7 @@ auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
     // If the app path happens to be the current dir, return
     // the default of "." which gives us cleaner looking paths in
     // stack traces/etc.
-    auto out = UTF8Encode(std::wstring(sz_file_name));
+    auto out = UTF8Encode(sz_file_name);
     if (out == GetCWD()) {
       return CorePlatform::DoGetDataDirectoryMonolithicDefault();
     }
@@ -905,7 +882,7 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
 
   // If it was found and fits in our small static buffer, we're done.
   if (result <= kStaticBufferSize) {
-    return UTF8Encode(std::wstring(buffer));
+    return UTF8Encode(buffer);
   }
 
   // Ok; apparently its big. Allocate a buffer big enough to hold it and try
@@ -920,7 +897,7 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
     Log(LogLevel::kError, "GetEnv to allocated buffer failed; unexpected.");
     return {};
   }
-  return UTF8Encode(std::wstring(big_buffer.data()));
+  return UTF8Encode(big_buffer.data());
 }
 
 void CorePlatformWindows::SetEnv(const std::string& name,
@@ -965,7 +942,7 @@ std::string CorePlatformWindows::GetCWD() {
   if (result == nullptr) {
     throw Exception("Error getting CWD; errno=" + std::to_string(errno));
   }
-  return UTF8Encode(std::wstring(buffer));
+  return UTF8Encode(buffer);
 }
 
 void CorePlatformWindows::OpenFileExternally(const std::string& path) {
