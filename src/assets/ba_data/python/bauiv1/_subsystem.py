@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import babase
@@ -121,9 +122,7 @@ class UIV1Subsystem(babase.AppSubsystem):
                 frameinfo = getframeinfo(frame)
                 frameline = f'{frameinfo.filename} {frameinfo.lineno}'
         except Exception:
-            from babase._error import print_exception
-
-            print_exception('Error calcing line for set_main_menu_window')
+            logging.exception('Error calcing line for set_main_menu_window')
 
         # With our legacy main-menu system, the caller is responsible for
         # clearing out the old main menu window when assigning the new.

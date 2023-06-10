@@ -127,7 +127,8 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     if dirtyfiles:
         print(
             f'{Clr.BLU}CppLint checking'
-            f' {len(dirtyfiles)} file(s)...{Clr.RST}'
+            f' {len(dirtyfiles)} file(s)...{Clr.RST}',
+            flush=True,
         )
 
     disabled_filters: list[str] = [

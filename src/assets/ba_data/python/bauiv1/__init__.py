@@ -17,8 +17,6 @@ from __future__ import annotations
 import logging
 
 from efro.util import set_canonical_module_names
-
-
 from babase import (
     get_display_resolution,
     get_max_graphics_quality,
@@ -75,20 +73,15 @@ from babase import (
     get_ip_address_type,
     getclass,
     get_type_name,
-)
-from babase._apputils import get_remote_app_name, is_browser_likely_available
-from babase._login import LoginAdapter
-
-
-from babase._error import NotFoundError
-
-from babase._mgen.enums import (
     Permission,
     UIScale,
     SpecialChar,
+    NotFoundError,
+    timestring,
+    LoginAdapter,
+    get_remote_app_name,
+    is_browser_likely_available,
 )
-from babase._text import timestring
-
 from _bauiv1 import (
     uibounds,
     set_party_window_open,
@@ -120,7 +113,6 @@ from _bauiv1 import (
 )
 from bauiv1._uitypes import Window, uicleanupcheck
 from bauiv1._subsystem import UIV1Subsystem
-
 
 __all__ = [
     'lock_all_input',

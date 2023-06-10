@@ -59,6 +59,7 @@ from _babase import (
     get_display_resolution,
 )
 
+from babase._login import LoginAdapter
 from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
@@ -95,7 +96,11 @@ from babase._error import (
 
 from babase._language import Lstr, LanguageSubsystem
 from babase._appconfig import AppConfig
-from babase._apputils import is_browser_likely_available, garbage_collect
+from babase._apputils import (
+    is_browser_likely_available,
+    garbage_collect,
+    get_remote_app_name,
+)
 from babase._general import (
     DisplayTime,
     AppTime,
@@ -219,6 +224,9 @@ __all__ = [
     'add_clean_frame_callback',
     'get_max_graphics_quality',
     'get_display_resolution',
+    'LoginAdapter',
+    'get_remote_app_name',
+    'is_browser_likely_available',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.
