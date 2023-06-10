@@ -338,7 +338,9 @@ class PluginWindow(bui.Window):
                     self._check_value_changed, availplug
                 ),
                 textcolor=(
-                    (0.8, 0.3, 0.3) if not availplug.available else (0, 1, 0)
+                    (0.8, 0.3, 0.3) if not availplug.available else
+                    (0, 1, 0) if active else
+                    (0.6, 0.6, 0.6)
                 ),
             )
             if plugin is not None and plugin.has_settings_ui():
