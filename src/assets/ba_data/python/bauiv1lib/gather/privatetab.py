@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Defines the Private tab in the gather UI."""
 
 from __future__ import annotations

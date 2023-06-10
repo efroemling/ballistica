@@ -741,32 +741,26 @@ format-makefile: prereqs
 
 # Run all project checks. (static analysis)
 check: py_check_prereqs
-# TEMP - disabling some checks during 1.7.20 refactor.
-	@$(DMAKE) -j$(CPUS) update-check cpplint mypy
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
-#	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
-#	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full: py_check_prereqs
-# TEMP - disabling some checks during 1.7.20 refactor.
-	@$(DMAKE) -j$(CPUS) update-check cpplint-full mypy-full
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
-#	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
-#	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2: py_check_prereqs
 # TEMP - disabling some during 1.7.20 refactor.
-	@$(DMAKE) -j$(CPUS) update-check cpplint mypy
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
-#	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy pycharm depcheck
+#	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy pycharm
 #	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 # TEMP - disabling some checks during 1.7.20 refactor.
 check2-full: py_check_prereqs
-	@$(DMAKE) -j$(CPUS) update-check cpplint-full mypy-full
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 #	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full \
 #   pycharm-full
@@ -811,11 +805,6 @@ pycharm: py_check_prereqs
 # Run PyCharm checks without caching (all files are checked).
 pycharm-full: py_check_prereqs
 	@tools/pcommand pycharm -full
-
-# Run extra mypy checks with various dependency permutations.
-# ensures packages don't depend on thing they're not supposed to.
-depchecks: py_check_prereqs
-	@tools/pcommand depchecks
 
 # Build prerequisites needed for python checks.
 #
@@ -891,34 +880,24 @@ test-rpc:
 
 # Format, update, check, & test the project. Do this before commits.
 preflight:
-# TEMP - disabling some checks during the 1.7.20 refactor
 	@$(MAKE) format
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint mypy test
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
-#	@$(MAKE) format
-#	@$(MAKE) update
-#	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
-#	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
 preflight-full:
-# TEMP - disabling some checks during the 1.7.20 refactor
 	@$(MAKE) format-full
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint-full mypy-full test-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
-#	@$(MAKE) format-full
-#	@$(MAKE) update
-#	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
-#	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 # TEMP - disabling some checks during the 1.7.20 refactor
 	@$(MAKE) format
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint mypy test
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 #	@$(MAKE) format
 #	@$(MAKE) update
@@ -930,7 +909,7 @@ preflight2-full:
 # TEMP - disabling some checks during the 1.7.20 refactor
 	@$(MAKE) format-full
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint-full mypy-full test-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 #	@$(MAKE) format-full
 #	@$(MAKE) update

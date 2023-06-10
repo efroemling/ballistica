@@ -1427,7 +1427,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     tourney_info = bs.app.classic.accounts.tournament_info[
                         tournament_id
                     ]
-                    # pylint: disable=unbalanced-tuple-unpacking
                     (
                         pr1,
                         pv1,
@@ -1438,7 +1437,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     ) = bs.app.classic.get_tournament_prize_strings(
                         tourney_info
                     )
-                    # pylint: enable=unbalanced-tuple-unpacking
+
                     Text(
                         bs.Lstr(resource='coopSelectWindow.prizesText'),
                         position=(-360, -70 + 77),

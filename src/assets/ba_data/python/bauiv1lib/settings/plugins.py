@@ -36,7 +36,6 @@ class PluginWindow(bui.Window):
         transition: str = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         app = bui.app
 

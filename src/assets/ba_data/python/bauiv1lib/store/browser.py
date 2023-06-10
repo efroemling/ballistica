@@ -1386,7 +1386,6 @@ def _check_merch_availability_in_bg_thread() -> None:
                 def _store_in_logic_thread() -> None:
                     cfg = bui.app.config
                     current: str | None = cfg.get(MERCH_LINK_KEY)
-                    # pylint: disable=isinstance-second-argument-not-valid-type
                     if not isinstance(current, str | None):
                         current = None
                     if current != response.url:

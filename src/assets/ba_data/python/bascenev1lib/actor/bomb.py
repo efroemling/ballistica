@@ -146,8 +146,8 @@ class BombFactory:
     def __init__(self) -> None:
         """Instantiate a BombFactory.
 
-        You shouldn't need to do this; call bascenev1lib.actor.bomb.get_factory()
-        to get a shared instance.
+        You shouldn't need to do this; call
+        bascenev1lib.actor.bomb.get_factory() to get a shared instance.
         """
         shared = SharedObjects.get()
 

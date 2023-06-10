@@ -114,7 +114,6 @@ class GameResults:
         (properly formatted for the score type.)
         """
         from babase._language import Lstr
-        from babase._mgen.enums import TimeFormat
         from babase._text import timestring
         from bascenev1._score import ScoreType
 

@@ -632,6 +632,8 @@ class App:
         """
 
         def app_mode_for_intent(self, intent: AppIntent) -> type[AppMode]:
+            # pylint: disable=cyclic-import
+
             # __GOOD_PLACE_FOR_CUSTOM_SPINOFF_LOGIC__
 
             # __DEFAULT_APP_MODE_SELECTION_BEGIN__

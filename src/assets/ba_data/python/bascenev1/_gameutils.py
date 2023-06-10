@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, NewType
 
 import _babase
-from babase._mgen.enums import TimeType, TimeFormat, SpecialChar, UIScale
+from babase._mgen.enums import SpecialChar, UIScale
 from babase._error import ActivityNotFoundError
 import _bascenev1
 
@@ -123,7 +123,6 @@ def animate_array(
 
     Like bs.animate, but operates on array attributes.
     """
-    # pylint: disable=too-many-locals
     combine = _bascenev1.newnode('combine', owner=node, attrs={'size': size})
     items = list(keys.items())
     items.sort()

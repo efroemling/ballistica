@@ -262,7 +262,6 @@ class MultiTeamSession(Session):
         announcement of the same.
         """
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-locals
         from babase._math import normalized_color
         from babase._language import Lstr
         from bascenev1._gameutils import cameraflash

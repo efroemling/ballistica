@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -86,8 +85,8 @@ class OnScreenCountdown(bs.Actor):
             self._timeremaining = max(0, self._timeremaining - 1)
             tval = self._timeremaining
 
-        # if there's a countdown sound for this time that we
-        # haven't played yet, play it
+        # If there's a countdown sound for this time that we
+        # haven't played yet, play it.
         if tval == 10:
             assert self.node
             assert isinstance(self.node.scale, float)

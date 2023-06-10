@@ -423,8 +423,6 @@ class TournamentButton:
         )
         x_offs = 90
 
-        # This seems to be a false alarm.
-        # pylint: disable=unbalanced-tuple-unpacking
         (
             pr1,
             pv1,
@@ -433,7 +431,7 @@ class TournamentButton:
             pr3,
             pv3,
         ) = bui.app.classic.get_tournament_prize_strings(entry)
-        # pylint: enable=unbalanced-tuple-unpacking
+
         enabled = 'requiredLeague' not in entry
         bui.buttonwidget(
             edit=self.button,

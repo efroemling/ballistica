@@ -157,7 +157,6 @@ class ClassicSubsystem(AppSubsystem):
         return self._env['user_agent_string']
 
     def on_app_loading(self) -> None:
-        # pylint: disable=too-many-locals
         from bascenev1 import _campaign
         from bascenev1 import _map
         from bascenev1lib.actor import spazappearance

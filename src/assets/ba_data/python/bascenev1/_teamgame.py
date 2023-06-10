@@ -140,7 +140,6 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
         # pylint: disable=arguments-renamed
         from bascenev1._coopsession import CoopSession
         from bascenev1._multiteamsession import MultiTeamSession
-        from babase._general import Call
 
         # Announce win (but only for the first finish() call)
         # (also don't announce in co-op sessions; we leave that up to them).
