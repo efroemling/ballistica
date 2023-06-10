@@ -281,7 +281,7 @@
 - (build 21060) Fixed a bug where epic mode was not in slow motion (but sounds
   still were hehehehe).
 - (build 21062) The audio server no longer stops all playing sounds when it is
-  reset. This behavior was intented to keep game sounds from 'bleeding' out into
+  reset. This behavior was intended to keep game sounds from 'bleeding' out into
   the main menu, but with app-mode-switches now causing resets just after launch
   it is making some early UI sounds (such as the 'power-down' sound if a plugin
   disappears) sound cut-off and broken. Please holler if you notice any sounds

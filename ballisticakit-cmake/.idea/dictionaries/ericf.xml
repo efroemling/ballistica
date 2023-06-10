@@ -49,6 +49,7 @@
       <w>allobjc</w>
       <w>allobjs</w>
       <w>allocs</w>
+      <w>allsets</w>
       <w>allwarnings</w>
       <w>alogins</w>
       <w>alot</w>
@@ -418,6 +419,8 @@
       <w>demangling</w>
       <w>denom</w>
       <w>depchecks</w>
+      <w>depfset</w>
+      <w>depname</w>
       <w>dereferencing</w>
       <w>deregistering</w>
       <w>deregistration</w>
@@ -747,6 +750,7 @@
       <w>havnt</w>
       <w>hdiutil</w>
       <w>healthcare</w>
+      <w>heldfile</w>
       <w>hexval</w>
       <w>highp</w>
       <w>highquality</w>
@@ -1154,8 +1158,10 @@
       <w>ossaudiodev</w>
       <w>osssssssssss</w>
       <w>ostype</w>
+      <w>otherpackage</w>
       <w>ourcode</w>
       <w>ourname</w>
+      <w>ourpackage</w>
       <w>ourself</w>
       <w>ourstanding</w>
       <w>outdict</w>
@@ -1381,6 +1387,7 @@
       <w>rgui</w>
       <w>richcompare</w>
       <w>rigth</w>
+      <w>rikko</w>
       <w>ritiek</w>
       <w>rname</w>
       <w>rootwidget</w>
@@ -1699,6 +1706,7 @@
       <w>uibounds</w>
       <w>uiid</w>
       <w>uinl</w>
+      <w>uitypes</w>
       <w>unbased</w>
       <w>unblessed</w>
       <w>uncas</w>

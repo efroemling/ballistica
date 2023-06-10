@@ -72,6 +72,7 @@
       <w>allobjc</w>
       <w>allobjs</w>
       <w>allpaths</w>
+      <w>allsets</w>
       <w>allsettings</w>
       <w>allteams</w>
       <w>allwarnings</w>
@@ -682,6 +683,8 @@
       <w>depdata</w>
       <w>depdatas</w>
       <w>depentry</w>
+      <w>depfset</w>
+      <w>depname</w>
       <w>deps</w>
       <w>depset</w>
       <w>depsets</w>
@@ -1278,6 +1281,7 @@
       <w>headerregistry</w>
       <w>heapqmodule</w>
       <w>hehe</w>
+      <w>heldfile</w>
       <w>helpui</w>
       <w>hexdigest</w>
       <w>hfile</w>
@@ -1969,11 +1973,13 @@
       <w>ossaudiodev</w>
       <w>ostype</w>
       <w>osval</w>
+      <w>otherpackage</w>
       <w>otherplayer</w>
       <w>otherspawn</w>
       <w>ourcode</w>
       <w>ourhash</w>
       <w>ourname</w>
+      <w>ourpackage</w>
       <w>ourself</w>
       <w>outdata</w>
       <w>outdelay</w>
@@ -2394,6 +2400,7 @@
       <w>reversedepsraw</w>
       <w>rfudge</w>
       <w>rgba</w>
+      <w>rikko</w>
       <w>ritiek</w>
       <w>rlcompleter</w>
       <w>rlock</w>
@@ -2999,6 +3006,7 @@
       <w>uilocation</w>
       <w>uinl</w>
       <w>uiscale</w>
+      <w>uitypes</w>
       <w>uiupkeeptimer</w>
       <w>unallowed</w>
       <w>uname</w>

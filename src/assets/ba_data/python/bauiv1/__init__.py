@@ -18,59 +18,66 @@ import logging
 
 from efro.util import set_canonical_module_names
 
-from _babase import (
-    app,
-    ContextRef,
-    fade_screen,
-    set_ui_input_device,
-    is_running_on_fire_tv,
+
+from babase import (
     get_display_resolution,
     get_max_graphics_quality,
+    add_clean_frame_callback,
+    has_gamma_control,
+    get_string_width,
+    get_string_height,
+    set_analytics_screen,
+    is_xcode_build,
+    get_low_level_config_value,
+    set_low_level_config_value,
+    have_permission,
+    request_permission,
+    workspaces_in_use,
+    increment_analytics_count,
+    get_replays_dir,
+    is_running_on_fire_tv,
+    set_ui_input_device,
+    fade_screen,
     apptime,
     apptimer,
     AppTimer,
     displaytime,
     displaytimer,
     DisplayTimer,
-    quit,
     in_logic_thread,
-    add_clean_frame_callback,
-    charstr,
-    pushcall,
-    has_gamma_control,
-    get_string_width,
-    get_string_height,
-    set_analytics_screen,
-    is_xcode_build,
-    set_low_level_config_value,
-    get_low_level_config_value,
-    have_permission,
-    request_permission,
-    appnameupper,
-    safecolor,
     appname,
-    workspaces_in_use,
-    increment_analytics_count,
-    get_replays_dir,
+    appnameupper,
+    clipboard_set_text,
+    clipboard_is_supported,
     lock_all_input,
     unlock_all_input,
+    safecolor,
+    quit,
+    charstr,
+    pushcall,
+    ContextRef,
+    app,
+    AppIntent,
+    AppIntentDefault,
+    AppIntentExec,
+    AppMode,
+    Call,
+    WeakCall,
+    AppTime,
+    DisplayTime,
+    screenmessage,
+    Lstr,
+    PotentialPlugin,
+    Plugin,
     do_once,
-    clipboard_is_supported,
-    clipboard_set_text,
+    Keyboard,
+    commit_app_config,
+    get_ip_address_type,
+    getclass,
+    get_type_name,
 )
-from _babase import screenmessage
-
-from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
-from babase._appmode import AppMode
-from babase._general import Call, WeakCall, AppTime, DisplayTime
-from babase._language import Lstr
-from babase._plugin import PotentialPlugin, Plugin
 from babase._apputils import get_remote_app_name, is_browser_likely_available
 from babase._login import LoginAdapter
-from babase._general import getclass, get_type_name
-from babase._net import get_ip_address_type
-from babase._keyboard import Keyboard
-from babase._appconfig import commit_app_config
 
 
 from babase._error import NotFoundError
@@ -180,6 +187,7 @@ __all__ = [
     'hscrollwidget',
     'Widget',
     'getclass',
+    'get_type_name',
     'get_ip_address_type',
     'do_once',
     'Keyboard',
@@ -189,7 +197,6 @@ __all__ = [
     'set_party_window_open',
     'add_clean_frame_callback',
     'in_logic_thread',
-    'get_type_name',
     'open_file_externally',
     'appnameupper',
     'commit_app_config',

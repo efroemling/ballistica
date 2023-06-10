@@ -62,7 +62,7 @@ class FeatureSet:
 
         # By default, Python app subsystems will be created in
         # alphabetical order based on their feature set name. All
-        # subsystem calbacks adhere to this ordering. If there are any
+        # subsystem callbacks adhere to this ordering. If there are any
         # feature sets whose subsystems should always be created before
         # this one's, list them here. Note that this does not affect
         # whether or not the feature set is included in the build; only

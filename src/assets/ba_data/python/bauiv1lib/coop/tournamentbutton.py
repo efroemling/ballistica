@@ -423,6 +423,8 @@ class TournamentButton:
         )
         x_offs = 90
 
+        # pylint: disable=useless-suppression
+        # pylint: disable=unbalanced-tuple-unpacking
         (
             pr1,
             pv1,
@@ -431,6 +433,8 @@ class TournamentButton:
             pr3,
             pv3,
         ) = bui.app.classic.get_tournament_prize_strings(entry)
+        # pylint: enable=unbalanced-tuple-unpacking
+        # pylint: enable=useless-suppression
 
         enabled = 'requiredLeague' not in entry
         bui.buttonwidget(

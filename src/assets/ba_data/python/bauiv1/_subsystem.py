@@ -10,7 +10,7 @@ import babase
 import _bauiv1
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Sequence
+    from typing import Any, Callable
 
     from bauiv1._uitypes import UICleanupCheck, UIController
     import bauiv1

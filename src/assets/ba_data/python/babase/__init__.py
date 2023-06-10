@@ -12,6 +12,17 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    get_max_graphics_quality,
+    add_clean_frame_callback,
+    has_gamma_control,
+    get_string_width,
+    get_string_height,
+    get_low_level_config_value,
+    set_low_level_config_value,
+    request_permission,
+    have_permission,
+    increment_analytics_count,
+    fade_screen,
     env,
     SimpleSound,
     ContextRef,
@@ -36,8 +47,19 @@ from _babase import (
     clipboard_set_text,
     in_logic_thread,
     native_stack_trace,
+    lock_all_input,
+    unlock_all_input,
+    appname,
+    appnameupper,
+    set_ui_input_device,
+    is_running_on_fire_tv,
+    get_replays_dir,
+    workspaces_in_use,
+    is_xcode_build,
+    get_display_resolution,
 )
 
+from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
 from babase._appsubsystem import AppSubsystem
@@ -45,6 +67,7 @@ from babase._accountv2 import AccountV2Handle
 from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._app import App
 from babase._cloud import CloudSubsystem
+from babase._net import get_ip_address_type
 from babase._mgen.enums import (
     Permission,
     SpecialChar,
@@ -83,6 +106,7 @@ from babase._general import (
     verify_object_death,
     storagename,
     getclass,
+    get_type_name,
 )
 from babase._keyboard import Keyboard
 from babase._math import normalized_color, is_point_in_box, vec3validate
@@ -171,6 +195,30 @@ __all__ = [
     'screenmessage',
     'native_stack_trace',
     'env',
+    'lock_all_input',
+    'unlock_all_input',
+    'appname',
+    'appnameupper',
+    'commit_app_config',
+    'get_ip_address_type',
+    'get_type_name',
+    'fade_screen',
+    'set_ui_input_device',
+    'is_running_on_fire_tv',
+    'get_replays_dir',
+    'increment_analytics_count',
+    'workspaces_in_use',
+    'request_permission',
+    'have_permission',
+    'get_low_level_config_value',
+    'set_low_level_config_value',
+    'is_xcode_build',
+    'get_string_width',
+    'get_string_height',
+    'has_gamma_control',
+    'add_clean_frame_callback',
+    'get_max_graphics_quality',
+    'get_display_resolution',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

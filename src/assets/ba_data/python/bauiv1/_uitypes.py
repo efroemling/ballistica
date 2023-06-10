@@ -15,7 +15,6 @@ import _bauiv1
 if TYPE_CHECKING:
     from typing import Any, Type
 
-    import babase
     import bauiv1
 
 # Set environment variable BA_DEBUG_UI_CLEANUP_CHECKS to 1
