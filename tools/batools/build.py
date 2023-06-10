@@ -60,6 +60,7 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='certifi', minversion=[2022, 12, 7]),
     PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
     PyRequirement(pipname='pbxproj', minversion=[3, 5, 0]),
+    PyRequirement(pipname='filelock', minversion=[3, 12, 0]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -883,31 +884,6 @@ def get_pip_reqs() -> list[str]:
         assert isinstance(name, str)
         out.append(name)
     return out
-
-
-# def update_makebob() -> None:
-#     """Build fresh make_bob binaries for all relevant platforms."""
-#     print('Building mac_x86_64...', flush=True)
-#     env = dict(os.environ)
-#     env['CMAKE_BUILD_TYPE'] = 'Release'
-#     subprocess.run(['make', 'cmake-build'], check=True, env=env)
-#     subprocess.run(
-#         [
-#             'cp', '-v', 'build/cmake/release/make_bob',
-#             'tools/make_bob/mac_x86_64/'
-#         ],
-#         check=True,
-#     )
-#     print('Building linux_x86_64...', flush=True)
-#     subprocess.run(['make', 'linux-vm-build'], check=True, env=env)
-#     subprocess.run(
-#         [
-#             'cp', '-v', 'build/linux-release/make_bob',
-#             'tools/make_bob/linux_x86_64/'
-#         ],
-#         check=True,
-#     )
-#     print('All builds complete!', flush=True)
 
 
 def _get_server_config_raw_contents(projroot: str) -> str:
