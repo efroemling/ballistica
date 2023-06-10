@@ -12,6 +12,7 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    env,
     SimpleSound,
     ContextRef,
     ContextCall,
@@ -169,6 +170,7 @@ __all__ = [
     'AppSubsystem',
     'screenmessage',
     'native_stack_trace',
+    'env',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

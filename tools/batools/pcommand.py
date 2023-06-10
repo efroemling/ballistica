@@ -280,6 +280,16 @@ def gen_fulltest_buildfile_linux() -> None:
     batools.build.gen_fulltest_buildfile_linux()
 
 
+def gen_fulltest_buildfile_spinoff() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    import batools.build
+
+    batools.build.gen_fulltest_buildfile_spinoff()
+
+
 def python_version_android_base() -> None:
     """Print built Python base version."""
     from efrotools.pybuild import PY_VER_ANDROID
@@ -954,26 +964,6 @@ def gen_python_enums_module() -> None:
     generate(
         projroot=str(PROJROOT), infilename=sys.argv[2], outfilename=sys.argv[3]
     )
-
-
-def gen_python_init_module() -> None:
-    """Generate a basic __init__.py."""
-    import os
-    from efro.terminal import Clr
-    from batools.project import project_centric_path
-
-    if len(sys.argv) != 3:
-        raise RuntimeError('Expected an outfile arg.')
-    outfilename = sys.argv[2]
-    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-    prettypath = project_centric_path(projroot=str(PROJROOT), path=outfilename)
-    print(f'Meta-building {Clr.BLD}{prettypath}{Clr.RST}')
-    with open(outfilename, 'w', encoding='utf-8') as outfile:
-        outfile.write(
-            '# Released under the MIT License.'
-            ' See LICENSE for details.\n'
-            '#\n'
-        )
 
 
 def gen_dummy_modules() -> None:

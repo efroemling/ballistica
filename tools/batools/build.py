@@ -415,7 +415,10 @@ def gen_fulltest_buildfile_android() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_android', 'w', encoding='utf-8') as outfile:
+    os.makedirs('build', exist_ok=True)
+    with open(
+        'build/fulltest_buildfile_android', 'w', encoding='utf-8'
+    ) as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -467,7 +470,10 @@ def gen_fulltest_buildfile_windows() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_windows', 'w', encoding='utf-8') as outfile:
+    os.makedirs('build', exist_ok=True)
+    with open(
+        'build/fulltest_buildfile_windows', 'w', encoding='utf-8'
+    ) as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -544,7 +550,10 @@ def gen_fulltest_buildfile_apple() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_apple', 'w', encoding='utf-8') as outfile:
+    os.makedirs('build', exist_ok=True)
+    with open(
+        'build/fulltest_buildfile_apple', 'w', encoding='utf-8'
+    ) as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -572,7 +581,33 @@ def gen_fulltest_buildfile_linux() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_linux', 'w', encoding='utf-8') as outfile:
+    os.makedirs('build', exist_ok=True)
+    with open(
+        'build/fulltest_buildfile_linux', 'w', encoding='utf-8'
+    ) as outfile:
+        outfile.write('\n'.join(lines))
+
+
+def gen_fulltest_buildfile_spinoff() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    from batools.featureset import FeatureSet
+
+    # Run a spinoff test with each of our feature-sets individually.
+    # Note that there will likely be redundant tests with the same final
+    # resolved sets of feature sets. We can filter those out later if it
+    # seems worthwhile.
+    targets = sorted(f.name for f in FeatureSet.get_all_for_project('.'))
+    lines = []
+    for target in targets:
+        lines.append(f'SPINOFF_TEST_TARGET={target} make spinoff-test-cloud')
+
+    os.makedirs('build', exist_ok=True)
+    with open(
+        'build/fulltest_buildfile_spinoff', 'w', encoding='utf-8'
+    ) as outfile:
         outfile.write('\n'.join(lines))
 
 

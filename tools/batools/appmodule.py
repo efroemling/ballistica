@@ -20,6 +20,7 @@ def generate_app_module(
     """Generate babase._app.py based on its existing version."""
 
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
     import textwrap
 
     from efrotools import replace_section
@@ -95,6 +96,7 @@ def generate_app_module(
                         f'@cached_property\n'
                         f'def {fset.name}(self) -> {classname} | None:\n'
                         f'    """Our {fset.name} subsystem (if available)."""\n'
+                        f'    # pylint: disable=cyclic-import\n'
                         f'\n'
                         f'    try:\n'
                         f'        from {modname} import {classname}\n'
@@ -114,6 +116,7 @@ def generate_app_module(
                         f'def {fset.name}(self) -> {classname}:\n'
                         f'    """Our {fset.name} subsystem'
                         ' (always available)."""\n'
+                        f'    # pylint: disable=cyclic-import\n'
                         f'\n'
                         f'    from {modname} import {classname}\n'
                         f'\n'

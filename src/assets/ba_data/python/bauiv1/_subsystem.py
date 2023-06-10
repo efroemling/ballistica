@@ -6,20 +6,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
-from babase._mgen.enums import UIScale
-from babase._appsubsystem import AppSubsystem
+import babase
 import _bauiv1
-import bauiv1
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
-    from bauiv1._uitypes import UICleanupCheck, UIController, Window
-    import babase
+    from bauiv1._uitypes import UICleanupCheck, UIController
+    import bauiv1
 
 
-class UIV1Subsystem(AppSubsystem):
+class UIV1Subsystem(babase.AppSubsystem):
     """Consolidated UI functionality for the app.
 
     Category: **App Classes**
@@ -29,7 +26,7 @@ class UIV1Subsystem(AppSubsystem):
 
     def __init__(self) -> None:
         super().__init__()
-        env = _babase.env()
+        env = babase.env()
 
         self.controller: UIController | None = None
 
@@ -44,11 +41,11 @@ class UIV1Subsystem(AppSubsystem):
 
         interfacetype = env['ui_scale']
         if interfacetype == 'large':
-            self._uiscale = UIScale.LARGE
+            self._uiscale = babase.UIScale.LARGE
         elif interfacetype == 'medium':
-            self._uiscale = UIScale.MEDIUM
+            self._uiscale = babase.UIScale.MEDIUM
         elif interfacetype == 'small':
-            self._uiscale = UIScale.SMALL
+            self._uiscale = babase.UIScale.SMALL
         else:
             raise RuntimeError(f'Invalid UIScale value: {interfacetype}')
 
@@ -91,10 +88,10 @@ class UIV1Subsystem(AppSubsystem):
         # easily.
 
         if bool(False):  # force-test ui scale
-            self._uiscale = UIScale.SMALL
-            with _babase.ContextRef.empty():
-                _babase.pushcall(
-                    lambda: _babase.screenmessage(
+            self._uiscale = babase.UIScale.SMALL
+            with babase.ContextRef.empty():
+                babase.pushcall(
+                    lambda: babase.screenmessage(
                         f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
                         color=(1, 0, 1),
                         log=True,
@@ -105,7 +102,7 @@ class UIV1Subsystem(AppSubsystem):
 
         # Kick off our periodic UI upkeep.
         # FIXME: Can probably kill this if we do immediate UI death checks.
-        self.upkeeptimer = _babase.AppTimer(2.6543, ui_upkeep, repeat=True)
+        self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
     def set_main_menu_window(self, window: bauiv1.Widget) -> None:
         """Set the current 'main' window, replacing any existing."""
@@ -148,14 +145,14 @@ class UIV1Subsystem(AppSubsystem):
                 )
                 existing.delete()
 
-        bauiv1.apptimer(1.0, _delay_kill)
+        babase.apptimer(1.0, _delay_kill)
         self._main_menu_window = window
 
     def clear_main_menu_window(self, transition: str | None = None) -> None:
         """Clear any existing 'main' window with the provided transition."""
         if self._main_menu_window:
             if transition is not None:
-                bauiv1.containerwidget(
+                _bauiv1.containerwidget(
                     edit=self._main_menu_window, transition=transition
                 )
             else:
@@ -166,7 +163,7 @@ class UIV1Subsystem(AppSubsystem):
 
         # If there's no main menu up, just call immediately.
         if not self.has_main_menu_window():
-            with _babase.ContextRef.empty():
+            with babase.ContextRef.empty():
                 call()
         else:
             self.main_menu_resume_callbacks.append(call)

@@ -67,6 +67,7 @@ from batools.pcommand import (
     gen_fulltest_buildfile_windows,
     gen_fulltest_buildfile_apple,
     gen_fulltest_buildfile_linux,
+    gen_fulltest_buildfile_spinoff,
     prune_includes,
     python_version_android,
     python_version_apple,
@@ -109,11 +110,11 @@ from batools.pcommand import (
     android_sdk_utils,
     logcat,
     gen_python_enums_module,
-    gen_python_init_module,
     gen_dummy_modules,
     version,
 )
 from batools.pcommand2 import (
+    gen_python_init_module,
     gen_monolithic_register_modules,
     stage_server_file,
     py_examine,

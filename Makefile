@@ -51,7 +51,7 @@ PREREQS_POST_UPDATE_ONLY = $(PREREQ_IRONY_BUILD_DB)
 # This installs tool config files, runs environment checks, etc.
 prereqs: $(PREREQS_SAFE) $(PREREQS_POST_UPDATE_ONLY)
 
-# Set of prereqs that is safe to run if the project state is dirty.
+# Set of prereqs safe to run if the project state is dirty.
 prereqs-pre-update: $(PREREQS_SAFE)
 
 prereqs-clean:
@@ -67,7 +67,7 @@ assets-cmake: prereqs meta
 	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
-# Build only script assets required for cmake builds (linux, mac).
+# Build only script assets for cmake builds (linux, mac).
 assets-cmake-scripts: prereqs meta
 	@tools/pcommand lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) scripts-cmake
@@ -596,39 +596,45 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 #                                                                              #
 ################################################################################
 
-# Build and check a spinoff project including only the core feature-set.
+SPINOFF_TEST_TARGET ?= core
+
+# Run a given spinoff test.
+spinoff-test:
+	tools/pcommand spinoff_test $(SPINOFF_TEST_TARGET) $(SPINOFF_TEST_EXTRA_ARGS)
+
+# Build and check core feature set alone.
 spinoff-test-core:
 	tools/pcommand spinoff_test core $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project including only the base feature-set.
+# Build and check base feature set alone.
 spinoff-test-base:
 	tools/pcommand spinoff_test base $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project including only the plus feature-set.
+# Build and check plus feature set alone.
 spinoff-test-plus:
 	tools/pcommand spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project including only the classic feature-set.
+# Build and check classic feature set alone.
 spinoff-test-classic:
 	tools/pcommand spinoff_test classic $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project with only the template_fs feature-set.
+# Build and check template_fs feature set alone.
 spinoff-test-template_fs:
 	tools/pcommand spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project with only the ui_v1 feature-set.
+# Build and check ui_v1 feature set alone.
 spinoff-test-ui_v1:
 	tools/pcommand spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project with only the ui_v1_lib feature-set.
+# Build and check ui_v1_lib feature set alone.
 spinoff-test-ui_v1_lib:
 	tools/pcommand spinoff_test ui_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project with only the scene_v1 feature-set.
+# Build and check scene_v1 feature set alone.
 spinoff-test-scene_v1:
 	tools/pcommand spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
-# Build and check a spinoff project with only the scene_v1_lib feature-set.
+# Build and check scene_v1_lib feature set alone.
 spinoff-test-scene_v1_lib:
 	tools/pcommand spinoff_test scene_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 

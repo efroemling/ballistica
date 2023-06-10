@@ -337,6 +337,7 @@ class App:
     @cached_property
     def classic(self) -> ClassicSubsystem | None:
         """Our classic subsystem (if available)."""
+        # pylint: disable=cyclic-import
 
         try:
             from baclassic import ClassicSubsystem
@@ -351,6 +352,7 @@ class App:
     @cached_property
     def plus(self) -> PlusSubsystem | None:
         """Our plus subsystem (if available)."""
+        # pylint: disable=cyclic-import
 
         try:
             from baplus import PlusSubsystem
@@ -365,6 +367,7 @@ class App:
     @cached_property
     def ui_v1(self) -> UIV1Subsystem:
         """Our ui_v1 subsystem (always available)."""
+        # pylint: disable=cyclic-import
 
         from bauiv1 import UIV1Subsystem
 

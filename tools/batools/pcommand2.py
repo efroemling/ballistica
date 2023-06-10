@@ -329,3 +329,23 @@ def spinoff_check_submodule_parent() -> None:
             'This project is not using a submodule for its parent.\n'
             'To set one up, run `tools/spinoff add-submodule-parent`'
         )
+
+
+def gen_python_init_module() -> None:
+    """Generate a basic __init__.py."""
+    import os
+    from efro.terminal import Clr
+    from batools.project import project_centric_path
+
+    if len(sys.argv) != 3:
+        raise RuntimeError('Expected an outfile arg.')
+    outfilename = sys.argv[2]
+    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
+    prettypath = project_centric_path(projroot=str(PROJROOT), path=outfilename)
+    print(f'Meta-building {Clr.BLD}{prettypath}{Clr.RST}')
+    with open(outfilename, 'w', encoding='utf-8') as outfile:
+        outfile.write(
+            '# Released under the MIT License.'
+            ' See LICENSE for details.\n'
+            '#\n'
+        )

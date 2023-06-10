@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,22 +13,34 @@ if TYPE_CHECKING:
 
 def spinoff_test(args: list[str]) -> None:
     """High level test run command; accepts args and raises CleanErrors."""
-
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import os
     import subprocess
 
     from batools.featureset import FeatureSet
-    from efrotools import extract_flag
+    from efrotools import extract_flag, getconfig
     from efro.terminal import Clr
     from efro.error import CleanError
 
     submodule_parent = extract_flag(args, '--submodule-parent')
+    shared_test_parent = extract_flag(args, '--shared-test-parent')
+    if submodule_parent and shared_test_parent:
+        raise CleanError(
+            "spinoff-test: can't pass both submodule parent"
+            ' and shared test parent.'
+        )
+    public = getconfig(Path('.'))['public']
+    if shared_test_parent and public:
+        raise CleanError('--shared-test-parent not available in public repo.')
 
     # A spinoff symlink means we're a spun-off project.
     if os.path.islink('tools/spinoff'):
         raise CleanError(
             'This must be run in a src project; this appears to be a dst.'
         )
+
     if len(args) != 1:
         raise CleanError('Expected 1 arg.')
 
@@ -62,11 +75,54 @@ def spinoff_test(args: list[str]) -> None:
                 )
 
         else:
+            # Normally we spin the project off from where we currently
+            # are, but for cloud builds we may want to use a dedicated
+            # shared source instead. (since we need a git managed source
+            # we need to pull something fresh from git instead of just
+            # using the files that were synced up by cloudshell).
+            spinoff_src = '.'
+            spinoff_path = path
+            if shared_test_parent:
+                spinoff_src = 'build/spinoff_shared_test_parent'
+                # Need an abs target path since we change cwd in this case.
+                spinoff_path = os.path.abspath(path)
+                if bool(False):
+                    print('TEMP BLOWING AWAY')
+                    subprocess.run(['rm', '-rf', spinoff_src], check=True)
+                if os.path.exists(spinoff_src):
+                    print(
+                        'Pulling latest spinoff_shared_test_parent...',
+                        flush=True,
+                    )
+                    subprocess.run(
+                        ['git', 'pull', '--ff-only'],
+                        check=True,
+                        cwd=spinoff_src,
+                    )
+                else:
+                    os.makedirs(spinoff_src, exist_ok=True)
+                    cmd = [
+                        'git',
+                        'clone',
+                        'git@github.com:efroemling/ballistica-internal.git',
+                        spinoff_src,
+                    ]
+
+                    print(
+                        f'{Clr.BLU}Creating spinoff shared test parent'
+                        f" at '{spinoff_src}' with command {cmd}...{Clr.RST}"
+                    )
+                    subprocess.run(
+                        cmd,
+                        check=True,
+                    )
+                # raise CleanError('SO FAR SO GOOD5')
+
             cmd = [
                 './tools/spinoff',
                 'create',
                 'SpinoffTest',
-                path,
+                spinoff_path,
                 '--featuresets',
                 testtype,
             ] + (['--submodule-parent'] if submodule_parent else [])
@@ -77,12 +133,12 @@ def spinoff_test(args: list[str]) -> None:
             # Avoid the 'what to do next' help.
             subprocess.run(
                 cmd + ['--noninteractive'],
+                cwd=spinoff_src,
                 check=True,
             )
 
         print(f'{Clr.MAG}tools/spinoff update{Clr.RST}', flush=True)
         subprocess.run(['tools/spinoff', 'update'], cwd=path, check=True)
-        # subprocess.run(['make', 'cmake-server-binary'], cwd=path, check=True)
 
         # Now let's simply run the mypy target. This will compile a
         # binary, use that binary to generate dummy Python modules, and
