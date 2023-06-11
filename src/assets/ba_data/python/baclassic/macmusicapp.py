@@ -7,9 +7,9 @@ import threading
 from collections import deque
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 from baclassic._music import MusicPlayer
-import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -47,8 +47,8 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         self._thread.get_playlists(callback)
 
     def on_play(self, entry: Any) -> None:
-        assert _babase.app.classic is not None
-        music = _babase.app.classic.music
+        assert babase.app.classic is not None
+        music = babase.app.classic.music
         entry_type = music.get_soundtrack_entry_type(entry)
         if entry_type == 'iTunesPlaylist':
             self._thread.play_playlist(music.get_soundtrack_entry_name(entry))
@@ -81,27 +81,27 @@ class _MacMusicAppThread(threading.Thread):
         from babase._general import Call
         from babase._language import Lstr
 
-        _babase.set_thread_name('BA_MacMusicAppThread')
-        _babase.mac_music_app_init()
+        babase.set_thread_name('BA_MacMusicAppThread')
+        babase.mac_music_app_init()
 
         # Let's mention to the user we're launching Music.app in case
         # it causes any funny business (this used to background the app
         # sometimes, though I think that is fixed now)
         def do_print() -> None:
-            bui.apptimer(
+            babase.apptimer(
                 1.0,
                 Call(
-                    _babase.screenmessage,
+                    babase.screenmessage,
                     Lstr(resource='usingItunesText'),
                     (0, 1, 0),
                 ),
             )
 
-        _babase.pushcall(do_print, from_other_thread=True)
+        babase.pushcall(do_print, from_other_thread=True)
 
         # Here we grab this to force the actual launch.
-        _babase.mac_music_app_get_volume()
-        _babase.mac_music_app_get_library_source()
+        babase.mac_music_app_get_volume()
+        babase.mac_music_app_get_library_source()
         done = False
         while not done:
             self._commands_available.wait()
@@ -137,15 +137,15 @@ class _MacMusicAppThread(threading.Thread):
         if old_volume > 0.0 and volume == 0.0:
             try:
                 assert self._orig_volume is not None
-                _babase.mac_music_app_stop()
-                _babase.mac_music_app_set_volume(self._orig_volume)
+                babase.mac_music_app_stop()
+                babase.mac_music_app_set_volume(self._orig_volume)
             except Exception as exc:
                 print('Error stopping iTunes music:', exc)
         elif self._volume > 0:
             # If volume was zero, store pre-playing volume and start
             # playing.
             if old_volume == 0.0:
-                self._orig_volume = _babase.mac_music_app_get_volume()
+                self._orig_volume = babase.mac_music_app_get_volume()
             self._update_mac_music_app_volume()
             if old_volume == 0.0:
                 self._play_current_playlist()
@@ -172,7 +172,7 @@ class _MacMusicAppThread(threading.Thread):
         from babase._general import Call
 
         try:
-            playlists = _babase.mac_music_app_get_playlists()
+            playlists = babase.mac_music_app_get_playlists()
             playlists = [
                 p
                 for p in playlists
@@ -196,15 +196,15 @@ class _MacMusicAppThread(threading.Thread):
         except Exception as exc:
             print('Error getting iTunes playlists:', exc)
             playlists = []
-        _babase.pushcall(Call(target, playlists), from_other_thread=True)
+        babase.pushcall(Call(target, playlists), from_other_thread=True)
 
     def _handle_play_command(self, target: str | None) -> None:
         if target is None:
             if self._current_playlist is not None and self._volume > 0:
                 try:
                     assert self._orig_volume is not None
-                    _babase.mac_music_app_stop()
-                    _babase.mac_music_app_set_volume(self._orig_volume)
+                    babase.mac_music_app_stop()
+                    babase.mac_music_app_set_volume(self._orig_volume)
                 except Exception as exc:
                     print('Error stopping iTunes music:', exc)
             self._current_playlist = None
@@ -214,15 +214,15 @@ class _MacMusicAppThread(threading.Thread):
             if self._current_playlist is not None and self._volume > 0:
                 try:
                     assert self._orig_volume is not None
-                    _babase.mac_music_app_stop()
-                    _babase.mac_music_app_set_volume(self._orig_volume)
+                    babase.mac_music_app_stop()
+                    babase.mac_music_app_set_volume(self._orig_volume)
                 except Exception as exc:
                     print('Error stopping iTunes music:', exc)
 
             # Set our playlist and play it if our volume is up.
             self._current_playlist = target
             if self._volume > 0:
-                self._orig_volume = _babase.mac_music_app_get_volume()
+                self._orig_volume = babase.mac_music_app_get_volume()
                 self._update_mac_music_app_volume()
                 self._play_current_playlist()
 
@@ -232,8 +232,8 @@ class _MacMusicAppThread(threading.Thread):
         if self._current_playlist is not None and self._volume > 0:
             try:
                 assert self._orig_volume is not None
-                _babase.mac_music_app_stop()
-                _babase.mac_music_app_set_volume(self._orig_volume)
+                babase.mac_music_app_stop()
+                babase.mac_music_app_set_volume(self._orig_volume)
             except Exception as exc:
                 print('Error stopping iTunes music:', exc)
 
@@ -242,13 +242,13 @@ class _MacMusicAppThread(threading.Thread):
             from babase._general import Call
 
             assert self._current_playlist is not None
-            if _babase.mac_music_app_play_playlist(self._current_playlist):
+            if babase.mac_music_app_play_playlist(self._current_playlist):
                 pass
             else:
-                _babase.pushcall(
+                babase.pushcall(
                     Call(
-                        _babase.screenmessage,
-                        _babase.app.lang.get_resource('playlistNotFoundText')
+                        babase.screenmessage,
+                        babase.app.lang.get_resource('playlistNotFoundText')
                         + ': \''
                         + self._current_playlist
                         + '\'',
@@ -264,6 +264,6 @@ class _MacMusicAppThread(threading.Thread):
             )
 
     def _update_mac_music_app_volume(self) -> None:
-        _babase.mac_music_app_set_volume(
+        babase.mac_music_app_set_volume(
             max(0, min(100, int(100.0 * self._volume)))
         )

@@ -213,8 +213,10 @@ from bascenev1._dependency import (
     DependencySet,
     AssetPackage,
 )
+from bascenev1._gameutils import get_trophy_string
 
 __all__ = [
+    'get_trophy_string',
     'app',
     'get_local_active_input_devices_count',
     'lock_all_input',

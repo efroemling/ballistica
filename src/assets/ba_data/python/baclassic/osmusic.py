@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import os
 import random
+import logging
 import threading
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 from baclassic._music import MusicPlayer
 
 if TYPE_CHECKING:
@@ -47,17 +49,17 @@ class OSMusicPlayer(MusicPlayer):
         )
 
     def on_set_volume(self, volume: float) -> None:
-        _babase.music_player_set_volume(volume)
+        babase.music_player_set_volume(volume)
 
     def on_play(self, entry: Any) -> None:
-        assert _babase.app.classic is not None
-        music = _babase.app.classic.music
+        assert babase.app.classic is not None
+        music = babase.app.classic.music
         entry_type = music.get_soundtrack_entry_type(entry)
         name = music.get_soundtrack_entry_name(entry)
         assert name is not None
         if entry_type == 'musicFile':
             self._want_to_play = self._actually_playing = True
-            _babase.music_player_play(name)
+            babase.music_player_play(name)
         elif entry_type == 'musicFolder':
             # Launch a thread to scan this folder and give us a random
             # valid file within it.
@@ -72,10 +74,8 @@ class OSMusicPlayer(MusicPlayer):
     def _on_play_folder_cb(
         self, result: str | list[str], error: str | None = None
     ) -> None:
-        from babase import _language
-
         if error is not None:
-            rstr = _language.Lstr(
+            rstr = babase.Lstr(
                 resource='internal.errorPlayingMusicText'
             ).evaluate()
             if isinstance(result, str):
@@ -88,7 +88,7 @@ class OSMusicPlayer(MusicPlayer):
                 err_str = (
                     rstr.replace('${MUSIC}', '<multiple>') + '; ' + str(error)
                 )
-            _babase.screenmessage(err_str, color=(1, 0, 0))
+            babase.screenmessage(err_str, color=(1, 0, 0))
             return
 
         # There's a chance a stop could have been issued before our thread
@@ -97,15 +97,15 @@ class OSMusicPlayer(MusicPlayer):
             print('_on_play_folder_cb called with _want_to_play False')
         else:
             self._actually_playing = True
-            _babase.music_player_play(result)
+            babase.music_player_play(result)
 
     def on_stop(self) -> None:
         self._want_to_play = False
         self._actually_playing = False
-        _babase.music_player_stop()
+        babase.music_player_stop()
 
     def on_app_shutdown(self) -> None:
-        _babase.music_player_shutdown()
+        babase.music_player_shutdown()
 
 
 class _PickFolderSongThread(threading.Thread):
@@ -124,9 +124,9 @@ class _PickFolderSongThread(threading.Thread):
         from babase import _language
         from babase._general import Call
 
-        do_print_error = True
+        do_log_error = True
         try:
-            _babase.set_thread_name('BA_PickFolderSongThread')
+            babase.set_thread_name('BA_PickFolderSongThread')
             all_files: list[str] = []
             valid_extensions = ['.' + x for x in self._valid_extensions]
             for root, _subdirs, filenames in os.walk(self._path):
@@ -139,25 +139,23 @@ class _PickFolderSongThread(threading.Thread):
                             root + '/' + fname,
                         )
             if not all_files:
-                do_print_error = False
+                do_log_error = False
                 raise RuntimeError(
                     _language.Lstr(
                         resource='internal.noMusicFilesInFolderText'
                     ).evaluate()
                 )
-            _babase.pushcall(
+            babase.pushcall(
                 Call(self._callback, all_files, None), from_other_thread=True
             )
         except Exception as exc:
-            from babase import _error
-
-            if do_print_error:
-                _error.print_exception()
+            if do_log_error:
+                logging.exception('Error in _PickFolderSongThread')
             try:
                 err_str = str(exc)
             except Exception:
                 err_str = '<ENCERR4523>'
-            _babase.pushcall(
+            babase.pushcall(
                 Call(self._callback, self._path, err_str),
                 from_other_thread=True,
             )

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
@@ -15,8 +15,7 @@ if TYPE_CHECKING:
 def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
     """Given a tournament entry, return strings for its prize levels."""
     # pylint: disable=too-many-locals
-    from babase._mgen.enums import SpecialChar
-    from bascenev1._gameutils import get_trophy_string
+    from bascenev1 import get_trophy_string
 
     range1 = entry.get('prizeRange1')
     range2 = entry.get('prizeRange2')
@@ -48,7 +47,9 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
         # in to compensate so the ticket counts line up.
         if prize is not None:
             pvval = (
-                _babase.charstr(SpecialChar.TICKET_BACKING) + str(prize) + pvval
+                babase.charstr(babase.SpecialChar.TICKET_BACKING)
+                + str(prize)
+                + pvval
             )
         out_vals.append(prval)
         out_vals.append(pvval)

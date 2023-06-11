@@ -9,9 +9,9 @@ import weakref
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import _babase
-import _bascenev1
+import babase
 from babase.internal import DEFAULT_REQUEST_TIMEOUT_SECONDS
+import bascenev1
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -44,10 +44,10 @@ class MasterServerV1CallThread(threading.Thread):
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: MasterServerCallback | None = callback
-        self._context = _babase.ContextRef()
+        self._context = babase.ContextRef()
 
         # Save and restore the context we were created from.
-        activity = _bascenev1.getactivity(doraise=False)
+        activity = bascenev1.getactivity(doraise=False)
         self._activity = weakref.ref(activity) if activity is not None else None
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
@@ -77,14 +77,14 @@ class MasterServerV1CallThread(threading.Thread):
         from efro.error import is_urllib_communication_error
         from babase._general import Call, utf8_all
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus is not None
         response_data: Any = None
         url: str | None = None
         try:
-            assert _babase.app.classic is not None
+            assert babase.app.classic is not None
             self._data = utf8_all(self._data)
-            _babase.set_thread_name('BA_ServerCallThread')
+            babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
                 url = (
                     plus.get_master_server_address()
@@ -98,9 +98,9 @@ class MasterServerV1CallThread(threading.Thread):
                     urllib.request.Request(
                         url,
                         None,
-                        {'User-Agent': _babase.app.classic.user_agent_string},
+                        {'User-Agent': babase.app.classic.user_agent_string},
                     ),
-                    context=_babase.app.net.sslcontext,
+                    context=babase.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             elif self._request_type == 'post':
@@ -110,9 +110,9 @@ class MasterServerV1CallThread(threading.Thread):
                     urllib.request.Request(
                         url,
                         urllib.parse.urlencode(self._data).encode(),
-                        {'User-Agent': _babase.app.classic.user_agent_string},
+                        {'User-Agent': babase.app.classic.user_agent_string},
                     ),
-                    context=_babase.app.net.sslcontext,
+                    context=babase.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             else:
@@ -148,6 +148,6 @@ class MasterServerV1CallThread(threading.Thread):
             response_data = None
 
         if self._callback is not None:
-            _babase.pushcall(
+            babase.pushcall(
                 Call(self._run_callback, response_data), from_other_thread=True
             )

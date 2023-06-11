@@ -12,6 +12,18 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    music_player_set_volume,
+    music_player_play,
+    music_player_stop,
+    music_player_shutdown,
+    mac_music_app_init,
+    mac_music_app_get_volume,
+    mac_music_app_get_library_source,
+    mac_music_app_stop,
+    mac_music_app_set_volume,
+    mac_music_app_get_playlists,
+    mac_music_app_play_playlist,
+    set_thread_name,
     show_progress_bar,
     print_load_info,
     reload_media,
@@ -131,6 +143,7 @@ _babase.app = app = App()
 app.postinit()
 
 __all__ = [
+    'set_thread_name',
     'app',
     'AccountV2Handle',
     'AccountV2Subsystem',
@@ -243,6 +256,17 @@ __all__ = [
     'print_load_info',
     'show_progress_bar',
     'handle_leftover_v1_cloud_log_file',
+    'music_player_set_volume',
+    'music_player_play',
+    'music_player_stop',
+    'music_player_shutdown',
+    'mac_music_app_init',
+    'mac_music_app_get_volume',
+    'mac_music_app_get_library_source',
+    'mac_music_app_stop',
+    'mac_music_app_set_volume',
+    'mac_music_app_get_playlists',
+    'mac_music_app_play_playlist',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.
