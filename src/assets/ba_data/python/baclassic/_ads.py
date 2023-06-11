@@ -6,9 +6,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-import _babase
-import _bauiv1
-import _bascenev1
+import babase
+import bauiv1
+import bascenev1
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -37,15 +37,15 @@ class AdsSubsystem:
         from babase._language import Lstr
 
         # Print this message once every 10 minutes at most.
-        tval = _babase.apptime()
+        tval = babase.apptime()
         if self.last_in_game_ad_remove_message_show_time is None or (
             tval - self.last_in_game_ad_remove_message_show_time > 60 * 10
         ):
             self.last_in_game_ad_remove_message_show_time = tval
-            with _babase.ContextRef.empty():
-                _babase.apptimer(
+            with babase.ContextRef.empty():
+                babase.apptimer(
                     1.0,
-                    lambda: _babase.screenmessage(
+                    lambda: babase.screenmessage(
                         Lstr(
                             resource='removeInGameAdsText',
                             subs=[
@@ -65,7 +65,7 @@ class AdsSubsystem:
     ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
-        _bauiv1.show_ad(purpose, on_completion_call)
+        bauiv1.show_ad(purpose, on_completion_call)
 
     def show_ad_2(
         self,
@@ -74,7 +74,7 @@ class AdsSubsystem:
     ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
-        _bauiv1.show_ad_2(purpose, on_completion_call)
+        bauiv1.show_ad_2(purpose, on_completion_call)
 
     def call_after_ad(self, call: Callable[[], Any]) -> None:
         """Run a call after potentially showing an ad."""
@@ -82,7 +82,7 @@ class AdsSubsystem:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
-        app = _babase.app
+        app = babase.app
         plus = app.plus
         classic = app.classic
         assert plus is not None
@@ -90,12 +90,12 @@ class AdsSubsystem:
         show = True
 
         # No ads without net-connections, etc.
-        if not _bauiv1.can_show_ad():
+        if not bauiv1.can_show_ad():
             show = False
         if classic.accounts.have_pro():
             show = False  # Pro disables interstitials.
         try:
-            session = _bascenev1.get_foreground_host_session()
+            session = bascenev1.get_foreground_host_session()
             assert session is not None
             is_tournament = session.tournament_id is not None
         except Exception:
@@ -128,7 +128,7 @@ class AdsSubsystem:
                 # ad-show-threshold and see if we should *actually* show
                 # (we reach our threshold faster the longer we've been
                 # playing).
-                base = 'ads' if _bauiv1.has_video_ads() else 'ads2'
+                base = 'ads' if bauiv1.has_video_ads() else 'ads2'
                 min_lc = plus.get_v1_account_misc_read_val(base + '.minLC', 0.0)
                 max_lc = plus.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
                 min_lc_scale = plus.get_v1_account_misc_read_val(
@@ -166,7 +166,7 @@ class AdsSubsystem:
                 self.last_ad_completion_time is None
                 or (
                     interval is not None
-                    and _babase.apptime() - self.last_ad_completion_time
+                    and babase.apptime() - self.last_ad_completion_time
                     > (interval * interval_mult)
                 )
             ):
@@ -201,12 +201,12 @@ class AdsSubsystem:
                                 + 's ago); purpose='
                                 + app.classic.ads.last_ad_purpose
                             )
-                        _babase.pushcall(self._call)
+                        babase.pushcall(self._call)
                         self._ran = True
 
             payload = _Payload(call)
-            with _babase.ContextRef.empty():
-                _babase.apptimer(5.0, lambda: payload.run(fallback=True))
+            with babase.ContextRef.empty():
+                babase.apptimer(5.0, lambda: payload.run(fallback=True))
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
-            _babase.pushcall(call)  # Just run the callback without the ad.
+            babase.pushcall(call)  # Just run the callback without the ad.

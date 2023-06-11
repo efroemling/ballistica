@@ -19,7 +19,7 @@ from bacommon.servermanager import (
     ClientListCommand,
     KickCommand,
 )
-import _babase
+import babase
 import bascenev1
 
 if TYPE_CHECKING:
@@ -33,30 +33,30 @@ def _cmd(command_data: bytes) -> None:
     """Handle commands coming in from our server manager parent process."""
     import pickle
 
-    assert _babase.app.classic is not None
+    assert babase.app.classic is not None
 
     command = pickle.loads(command_data)
     assert isinstance(command, ServerCommand)
 
     if isinstance(command, StartServerModeCommand):
-        assert _babase.app.classic.server is None
-        _babase.app.classic.server = ServerController(command.config)
+        assert babase.app.classic.server is None
+        babase.app.classic.server = ServerController(command.config)
         return
 
     if isinstance(command, ShutdownCommand):
-        assert _babase.app.classic.server is not None
-        _babase.app.classic.server.shutdown(
+        assert babase.app.classic.server is not None
+        babase.app.classic.server.shutdown(
             reason=command.reason, immediate=command.immediate
         )
         return
 
     if isinstance(command, ChatMessageCommand):
-        assert _babase.app.classic.server is not None
+        assert babase.app.classic.server is not None
         bascenev1.chatmessage(command.message, clients=command.clients)
         return
 
     if isinstance(command, ScreenMessageCommand):
-        assert _babase.app.classic.server is not None
+        assert babase.app.classic.server is not None
 
         # Note: we have to do transient messages if
         # clients is specified, so they won't show up
@@ -70,13 +70,13 @@ def _cmd(command_data: bytes) -> None:
         return
 
     if isinstance(command, ClientListCommand):
-        assert _babase.app.classic.server is not None
-        _babase.app.classic.server.print_client_list()
+        assert babase.app.classic.server is not None
+        babase.app.classic.server.print_client_list()
         return
 
     if isinstance(command, KickCommand):
-        assert _babase.app.classic.server is not None
-        _babase.app.classic.server.kick(
+        assert babase.app.classic.server is not None
+        babase.app.classic.server.kick(
             client_id=command.client_id, ban_time=command.ban_time
         )
         return
@@ -113,8 +113,8 @@ class ServerController:
         # Now sit around doing any pre-launch prep such as waiting for
         # account sign-in or fetching playlists; this will kick off the
         # session once done.
-        with _babase.ContextRef.empty():
-            self._prep_timer = _babase.AppTimer(
+        with babase.ContextRef.empty():
+            self._prep_timer = babase.AppTimer(
                 0.25, self._prepare_to_serve, repeat=True
             )
 
@@ -184,15 +184,13 @@ class ServerController:
         return False
 
     def _execute_shutdown(self) -> None:
-        from babase._language import Lstr
-
         if self._executing_shutdown:
             return
         self._executing_shutdown = True
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
-            _babase.screenmessage(
-                Lstr(resource='internal.serverRestartingText'),
+            babase.screenmessage(
+                babase.Lstr(resource='internal.serverRestartingText'),
                 color=(1, 0.5, 0.0),
             )
             print(
@@ -200,24 +198,24 @@ class ServerController:
                 f' at {timestrval}.{Clr.RST}'
             )
         else:
-            _babase.screenmessage(
-                Lstr(resource='internal.serverShuttingDownText'),
+            babase.screenmessage(
+                babase.Lstr(resource='internal.serverShuttingDownText'),
                 color=(1, 0.5, 0.0),
             )
             print(
                 f'{Clr.SBLU}Exiting for server-shutdown'
                 f' at {timestrval}.{Clr.RST}'
             )
-        with _babase.ContextRef.empty():
-            _babase.apptimer(2.0, _babase.quit)
+        with babase.ContextRef.empty():
+            babase.apptimer(2.0, babase.quit)
 
     def _run_access_check(self) -> None:
         """Check with the master server to see if we're likely joinable."""
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
 
-        _babase.app.classic.master_server_v1_get(
+        babase.app.classic.master_server_v1_get(
             'bsAccessCheck',
-            {'port': bascenev1.get_game_port(), 'b': _babase.app.build_number},
+            {'port': bascenev1.get_game_port(), 'b': babase.app.build_number},
             callback=self._access_check_response,
         )
 
@@ -256,7 +254,7 @@ class ServerController:
 
     def _prepare_to_serve(self) -> None:
         """Run in a timer to do prep before beginning to serve."""
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus is not None
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if not signed_in:
@@ -296,7 +294,7 @@ class ServerController:
 
         if can_launch:
             self._prep_timer = None
-            _babase.pushcall(self._launch_server_session)
+            babase.pushcall(self._launch_server_session)
 
     def _on_playlist_fetch_response(
         self,
@@ -337,7 +335,7 @@ class ServerController:
         """Kick off a host-session based on the current server config."""
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        app = _babase.app
+        app = babase.app
         classic = app.classic
         plus = app.plus
         assert plus is not None
@@ -382,7 +380,7 @@ class ServerController:
         if self._first_run:
             curtimestr = time.strftime('%c')
             startupmsg = (
-                f'{Clr.BLD}{Clr.BLU}{_babase.appnameupper()} {app.version}'
+                f'{Clr.BLD}{Clr.BLU}{babase.appnameupper()} {app.version}'
                 f' ({app.build_number})'
                 f' entering server-mode {curtimestr}{Clr.RST}'
             )
@@ -426,8 +424,8 @@ class ServerController:
         # And here.. we.. go.
         if self._config.stress_test_players is not None:
             # Special case: run a stress test.
-            assert _babase.app.classic is not None
-            _babase.app.classic.run_stress_test(
+            assert babase.app.classic is not None
+            babase.app.classic.run_stress_test(
                 playlist_type='Random',
                 playlist_name='__default__',
                 player_count=self._config.stress_test_players,

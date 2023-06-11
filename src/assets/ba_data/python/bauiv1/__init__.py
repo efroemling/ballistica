@@ -83,6 +83,9 @@ from babase import (
     is_browser_likely_available,
 )
 from _bauiv1 import (
+    show_ad,
+    show_ad_2,
+    can_show_ad,
     show_online_score_ui,
     uibounds,
     set_party_window_open,
@@ -211,6 +214,9 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
     'UIV1Subsystem',
+    'show_ad',
+    'show_ad_2',
+    'can_show_ad',
 ]
 
 # We want stuff to show up as bauiv1.Foo instead of bauiv1._sub.Foo.

@@ -145,8 +145,6 @@ class ClassicSubsystem(babase.AppSubsystem):
         return self._env['user_agent_string']
 
     def on_app_loading(self) -> None:
-        from bascenev1 import _campaign
-        from bascenev1 import _map
         from bascenev1lib.actor import spazappearance
         from bascenev1lib import maps as stdmaps
 
@@ -190,10 +188,10 @@ class ClassicSubsystem(babase.AppSubsystem):
             stdmaps.Courtyard,
             stdmaps.Rampage,
         ]:
-            _map.register_map(maptype)
+            bascenev1.register_map(maptype)
 
         spazappearance.register_appearances()
-        _campaign.init_campaigns()
+        bascenev1.init_campaigns()
 
         launch_count = cfg.get('launchCount', 0)
         launch_count += 1
@@ -345,10 +343,10 @@ class ClassicSubsystem(babase.AppSubsystem):
             self.coop_session_args[arg_name] = arg_val
 
         def _fade_end() -> None:
-            from bascenev1 import _coopsession
+            from bascenev1 import CoopSession
 
             try:
-                bascenev1.new_host_session(_coopsession.CoopSession)
+                bascenev1.new_host_session(CoopSession)
             except Exception:
                 logging.exception('Error creating coopsession after fade end.')
                 from bascenev1lib.mainmenu import MainMenuSession

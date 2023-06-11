@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import logging
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
@@ -123,9 +124,7 @@ class MusicSubsystem:
             ]:
                 self.get_music_player()
         except Exception:
-            from babase import _error
-
-            _error.print_exception('error prepping music-player')
+            logging.exception('Error prepping music-player.')
 
     def on_app_shutdown(self) -> None:
         """Should be called when the app is shutting down."""
@@ -213,9 +212,7 @@ class MusicSubsystem:
                 return entry_type
             raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
-            from babase import _error
-
-            _error.print_exception()
+            logging.exception('Error in get_soundtrack_entry_type.')
             return 'default'
 
     def get_soundtrack_entry_name(self, entry: Any) -> str:
@@ -239,9 +236,7 @@ class MusicSubsystem:
                 return entry['name']
             raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
-            from babase import _error
-
-            _error.print_exception()
+            logging.exception('Error in get_soundtrack_entry_name.')
             return 'default'
 
     def on_app_resume(self) -> None:

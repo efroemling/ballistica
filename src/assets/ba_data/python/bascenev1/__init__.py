@@ -146,9 +146,10 @@ from bascenev1._profile import (
     get_player_profile_icon,
     get_player_profile_colors,
 )
+from bascenev1._campaign import init_campaigns
 from bascenev1._appmode import SceneV1AppMode
 from bascenev1._session import Session
-from bascenev1._map import Map
+from bascenev1._map import Map, register_map
 from bascenev1._coopsession import CoopSession
 from bascenev1._debug import print_live_object_warnings
 from bascenev1._multiteamsession import MultiTeamSession
@@ -410,6 +411,8 @@ __all__ = [
     'get_player_profile_icon',
     'get_player_profile_colors',
     'set_master_server_source',
+    'init_campaigns',
+    'register_map',
 ]
 
 # We want stuff here to show up as bascenev1.Foo instead of
