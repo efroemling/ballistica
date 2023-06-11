@@ -4,18 +4,17 @@
 from __future__ import annotations
 
 import weakref
+import logging
 from typing import TYPE_CHECKING
 
-import _babase
-from babase._error import print_error, print_exception, NodeNotFoundError
-from babase._language import Lstr
+import babase
+
 import _bascenev1
 from bascenev1._player import Player
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
 
-    import babase
     import bascenev1
 
 
@@ -196,7 +195,7 @@ class Session:
                     with self.context:
                         self.on_team_join(team)
                 except Exception:
-                    print_exception(f'Error in on_team_join for {self}.')
+                    logging.exception('Error in on_team_join for %s.', self)
 
         self.lobby = Lobby()
         self.stats = Stats()
@@ -214,7 +213,7 @@ class Session:
         """The sessionglobals bascenev1.Node for the session."""
         node = self._sessionglobalsnode
         if not node:
-            raise NodeNotFoundError()
+            raise babase.NodeNotFoundError()
         return node
 
     def should_allow_mid_activity_joins(
@@ -236,15 +235,15 @@ class Session:
         """
         # Limit player counts *unless* we're in a stress test.
         if (
-            _babase.app.classic is not None
-            and _babase.app.classic.stress_test_reset_timer is None
+            babase.app.classic is not None
+            and babase.app.classic.stress_test_reset_timer is None
         ):
             if len(self.sessionplayers) >= self.max_players:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _bascenev1.getsound('error').play()
                 _bascenev1.screenmessage(
-                    Lstr(
+                    babase.Lstr(
                         resource='playerLimitReachedText',
                         subs=[('${COUNT}', str(self.max_players))],
                     ),
@@ -277,15 +276,15 @@ class Session:
                 try:
                     self.lobby.remove_chooser(sessionplayer)
                 except Exception:
-                    print_exception('Error in Lobby.remove_chooser().')
+                    logging.exception('Error in Lobby.remove_chooser().')
         else:
             # Ok, they've already entered the game. Remove them from
             # teams/activities/etc.
             sessionteam = sessionplayer.sessionteam
             assert sessionteam is not None
 
-            _babase.screenmessage(
-                Lstr(
+            babase.screenmessage(
+                babase.Lstr(
                     resource='playerLeftText',
                     subs=[('${PLAYER}', sessionplayer.getname(full=True))],
                 )
@@ -342,17 +341,18 @@ class Session:
                     self.sessionteams.remove(sessionteam)
                     self.on_team_leave(sessionteam)
                 except Exception:
-                    print_exception(
-                        f'Error in on_team_leave for Session {self}.'
+                    logging.exception(
+                        'Error in on_team_leave for Session %s.', self
                     )
             else:
                 print('Team no in Session teams in on_player_leave.')
             try:
                 sessionteam.leave()
             except Exception:
-                print_exception(
-                    f'Error clearing sessiondata'
-                    f' for team {sessionteam} in session {self}.'
+                logging.exception(
+                    'Error clearing sessiondata for team %s in session %s.',
+                    sessionteam,
+                    self,
                 )
 
     def end(self) -> None:
@@ -370,17 +370,16 @@ class Session:
         from bascenev1._activitytypes import EndSessionActivity
 
         with self.context:
-            curtime = _babase.apptime()
+            curtime = babase.apptime()
             if self._ending:
                 # Ignore repeats unless its been a while.
                 assert self._launch_end_session_activity_time is not None
                 since_last = curtime - self._launch_end_session_activity_time
                 if since_last < 30.0:
                     return
-                print_error(
-                    '_launch_end_session_activity called twice (since_last='
-                    + str(since_last)
-                    + ')'
+                logging.error(
+                    '_launch_end_session_activity called twice (since_last=%s)',
+                    since_last,
                 )
             self._launch_end_session_activity_time = curtime
             self.setactivity(_bascenev1.newactivity(EndSessionActivity))
@@ -482,7 +481,7 @@ class Session:
             return
 
         if activity is self._activity_retained:
-            print_error('Activity set to already-current activity.')
+            logging.error('Activity set to already-current activity.')
             return
 
         if self._next_activity is not None:
@@ -523,8 +522,8 @@ class Session:
         # the activity should have no refs left to it and should die (which
         # will trigger the next activity to run).
         if prev_activity is not None:
-            with _babase.ContextRef.empty():
-                _babase.apptimer(
+            with babase.ContextRef.empty():
+                babase.apptimer(
                     max(0.0, activity.transition_time), prev_activity.expire
                 )
         self._in_set_activity = False
@@ -551,9 +550,12 @@ class Session:
             with self.context:
                 self.on_activity_end(activity, results)
         except Exception:
-            print_exception(
-                f'Error in on_activity_end() for session {self}'
-                f' activity {activity} with results {results}'
+            logging.error(
+                'Error in on_activity_end() for session %s'
+                ' activity %s with results %s',
+                self,
+                activity,
+                results,
             )
 
     def _request_player(self, sessionplayer: bascenev1.SessionPlayer) -> bool:
@@ -568,7 +570,7 @@ class Session:
             with self.context:
                 result = self.on_player_request(sessionplayer)
         except Exception:
-            print_exception(f'Error in on_player_request for {self}')
+            logging.exception('Error in on_player_request for %s.', self)
             result = False
 
         # If they said yes, add the player to the lobby.
@@ -578,7 +580,7 @@ class Session:
                 try:
                     self.lobby.add_chooser(sessionplayer)
                 except Exception:
-                    print_exception('Error in lobby.add_chooser().')
+                    logging.exception('Error in lobby.add_chooser().')
 
         return result
 
@@ -598,7 +600,7 @@ class Session:
         """
         if self._next_activity is None:
             # Should this ever happen?
-            print_error('begin_next_activity() called with no _next_activity')
+            logging.error('begin_next_activity() called with no _next_activity')
             return
 
         # We store both a weak and a strong ref to the new activity;
@@ -654,8 +656,8 @@ class Session:
                 # Get our next activity going.
                 self._complete_end_activity(activity, {})
             else:
-                _babase.screenmessage(
-                    Lstr(
+                babase.screenmessage(
+                    babase.Lstr(
                         resource='notEnoughPlayersText',
                         subs=[('${COUNT}', str(min_players))],
                     ),
@@ -681,12 +683,12 @@ class Session:
         # hitches.
         garbage_collect()
 
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
         with self.context:
             if can_show_ad_on_death:
-                _babase.app.classic.ads.call_after_ad(self.begin_next_activity)
+                babase.app.classic.ads.call_after_ad(self.begin_next_activity)
             else:
-                _babase.pushcall(self.begin_next_activity)
+                babase.pushcall(self.begin_next_activity)
 
     def _add_chosen_player(
         self, chooser: bascenev1.Chooser
@@ -721,8 +723,8 @@ class Session:
             ):
                 pass_to_activity = False
                 with self.context:
-                    _babase.screenmessage(
-                        Lstr(
+                    babase.screenmessage(
+                        babase.Lstr(
                             resource='playerDelayedJoinText',
                             subs=[
                                 ('${PLAYER}', sessionplayer.getname(full=True))
@@ -751,7 +753,7 @@ class Session:
                 try:
                     self.on_team_join(sessionteam)
                 except Exception:
-                    print_exception(f'Error in on_team_join for {self}.')
+                    logging.exception('Error in on_team_join for %s.', self)
 
             # Add player's team to the Activity.
             if pass_to_activity:

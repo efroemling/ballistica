@@ -6,15 +6,16 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, TypeVar
 
-import _babase
+import babase
+
 import _bascenev1
-from babase._general import WeakCall
 from bascenev1._gameactivity import GameActivity
 
 if TYPE_CHECKING:
     from typing import Sequence
+
     from bascenev1lib.actor.playerspaz import PlayerSpaz
-    import babase
+
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
@@ -52,11 +53,13 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         super().on_begin()
 
         # Show achievements remaining.
-        if not (_babase.app.demo_mode or _babase.app.arcade_mode):
-            _bascenev1.timer(3.8, WeakCall(self._show_remaining_achievements))
+        if not (babase.app.demo_mode or babase.app.arcade_mode):
+            _bascenev1.timer(
+                3.8, babase.WeakCall(self._show_remaining_achievements)
+            )
 
         # Preload achievement images in case we get some.
-        _bascenev1.timer(2.0, WeakCall(self._preload_achievements))
+        _bascenev1.timer(2.0, babase.WeakCall(self._preload_achievements))
 
     # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.
@@ -84,8 +87,8 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
                 player.actor.handlemessage(CelebrateMessage(duration))
 
     def _preload_achievements(self) -> None:
-        assert _babase.app.classic is not None
-        achievements = _babase.app.classic.ach.achievements_for_coop_level(
+        assert babase.app.classic is not None
+        achievements = babase.app.classic.ach.achievements_for_coop_level(
             self._get_coop_level_name()
         )
         for ach in achievements:
@@ -96,17 +99,17 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         from babase._language import Lstr
         from bascenev1lib.actor.text import Text
 
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
         ts_h_offs = 30
         v_offs = -200
         achievements = [
             a
-            for a in _babase.app.classic.ach.achievements_for_coop_level(
+            for a in babase.app.classic.ach.achievements_for_coop_level(
                 self._get_coop_level_name()
             )
             if not a.complete
         ]
-        vrmode = _babase.app.vr_mode
+        vrmode = babase.app.vr_mode
         if achievements:
             Text(
                 Lstr(resource='achievementsRemainingText'),
@@ -158,8 +161,8 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         False otherwise
         """
 
-        classic = _babase.app.classic
-        plus = _babase.app.plus
+        classic = babase.app.classic
+        plus = babase.app.plus
         if classic is None or plus is None:
             logging.warning(
                 '_award_achievement is a no-op without classic and plus.'
@@ -222,7 +225,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         """Set up a beeping noise to play when any players are near death."""
         self._life_warning_beep = None
         self._life_warning_beep_timer = _bascenev1.Timer(
-            1.0, WeakCall(self._update_life_warning), repeat=True
+            1.0, babase.WeakCall(self._update_life_warning), repeat=True
         )
 
     def _update_life_warning(self) -> None:

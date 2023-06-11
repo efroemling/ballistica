@@ -5,12 +5,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
 from bascenev1._multiteamsession import MultiTeamSession
 
 if TYPE_CHECKING:
-    import babase
     import bascenev1
 
 
@@ -29,7 +29,7 @@ class DualTeamSession(MultiTeamSession):
     _playlists_var = 'Team Tournament Playlists'
 
     def __init__(self) -> None:
-        _babase.increment_analytics_count('Teams session start')
+        babase.increment_analytics_count('Teams session start')
         super().__init__()
 
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 if TYPE_CHECKING:
     from typing import Sequence
-    import babase
+
     import bascenev1
 
 

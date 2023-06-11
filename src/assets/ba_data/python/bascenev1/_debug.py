@@ -5,12 +5,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
 
-    import babase
     import bascenev1
 
 
@@ -31,7 +30,7 @@ def print_live_object_warnings(
     from bascenev1._actor import Actor
     from bascenev1._activity import Activity
 
-    assert _babase.app.classic is not None
+    assert babase.app.classic is not None
 
     sessions: list[bascenev1.Session] = []
     activities: list[bascenev1.Activity] = []
@@ -39,7 +38,7 @@ def print_live_object_warnings(
 
     # Once we come across leaked stuff, printing again is probably
     # redundant.
-    if _babase.app.classic.printed_live_object_warning:
+    if babase.app.classic.printed_live_object_warning:
         return
     for obj in gc.get_objects():
         if isinstance(obj, Actor):
@@ -53,17 +52,17 @@ def print_live_object_warnings(
     for session in sessions:
         if session is ignore_session:
             continue
-        _babase.app.classic.printed_live_object_warning = True
+        babase.app.classic.printed_live_object_warning = True
         print(f'ERROR: Session found {when}: {session}')
 
     # Complain about any remaining activities.
     for activity in activities:
         if activity is ignore_activity:
             continue
-        _babase.app.classic.printed_live_object_warning = True
+        babase.app.classic.printed_live_object_warning = True
         print(f'ERROR: Activity found {when}: {activity}')
 
     # Complain about any remaining actors.
     for actor in actors:
-        _babase.app.classic.printed_live_object_warning = True
+        babase.app.classic.printed_live_object_warning = True
         print(f'ERROR: Actor found {when}: {actor}')

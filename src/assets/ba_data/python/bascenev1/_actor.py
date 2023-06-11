@@ -5,10 +5,11 @@
 from __future__ import annotations
 
 import weakref
+import logging
 from typing import TYPE_CHECKING, TypeVar, overload
 
+import babase
 
-from babase._error import print_exception, ActivityNotFoundError
 import _bascenev1
 from bascenev1._messages import (
     DieMessage,
@@ -20,7 +21,6 @@ from bascenev1._messages import (
 if TYPE_CHECKING:
     from typing import Any, Literal
 
-    import babase
     import bascenev1
 
 ActorT = TypeVar('ActorT', bound='Actor')
@@ -93,7 +93,9 @@ class Actor:
             if not self.expired:
                 self.handlemessage(DieMessage())
         except Exception:
-            print_exception('exception in bascenev1.Actor.__del__() for', self)
+            logging.exception(
+                'Error in bascenev1.Actor.__del__() for %s.', self
+            )
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
@@ -120,7 +122,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise ActivityNotFoundError()
+            raise babase.ActivityNotFoundError()
         activity.retain_actor(self)
         return self
 
@@ -190,7 +192,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise ActivityNotFoundError()
+            raise babase.ActivityNotFoundError()
         return activity
 
     # Overloads to convey our exact return type depending on 'doraise' value.
@@ -212,5 +214,5 @@ class Actor:
         """
         activity = self._activity()
         if activity is None and doraise:
-            raise ActivityNotFoundError()
+            raise babase.ActivityNotFoundError()
         return activity

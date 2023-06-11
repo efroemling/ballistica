@@ -11,8 +11,8 @@ import _babase
 
 if TYPE_CHECKING:
     from typing import Any
+
     import babase
-    import baclassic
     import bascenev1
 
 

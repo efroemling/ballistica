@@ -5,13 +5,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
 from bascenev1._session import Session
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
-    import babase
+
     import bascenev1
 
 TEAM_COLORS = [(0.2, 0.4, 1.6)]
@@ -44,8 +45,8 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from bascenev1lib.activity.coopjoin import CoopJoinActivity
 
-        _babase.increment_analytics_count('Co-op session start')
-        app = _babase.app
+        babase.increment_analytics_count('Co-op session start')
+        app = babase.app
         classic = app.classic
         assert classic is not None
 
@@ -112,7 +113,7 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from bascenev1._gameactivity import GameActivity
 
-        classic = _babase.app.classic
+        classic = babase.app.classic
         assert classic is not None
 
         # Instantiate levels we may be running soon to let them load in the bg.
@@ -212,7 +213,7 @@ class CoopSession(Session):
         # Hmm; no players anywhere. Let's end the entire session if we're
         # running a GUI (or just the current game if we're running headless).
         else:
-            if not _babase.app.headless_mode:
+            if not babase.app.headless_mode:
                 self.end()
             else:
                 if isinstance(activity, GameActivity):
@@ -225,12 +226,12 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from bascenev1._gameactivity import GameActivity
 
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
         activity = self.getactivity()
         if activity is not None and not activity.expired:
             assert self.tournament_id is not None
             assert isinstance(activity, GameActivity)
-            _babase.app.classic.tournament_entry_window(
+            babase.app.classic.tournament_entry_window(
                 tournament_id=self.tournament_id,
                 tournament_activity=activity,
                 on_close_call=resume_callback,
@@ -278,7 +279,7 @@ class CoopSession(Session):
         from bascenev1lib.activity.coopscore import CoopScoreScreen
         from bascenev1lib.tutorial import TutorialActivity
 
-        app = _babase.app
+        app = babase.app
         classic = app.classic
         assert classic is not None
 
@@ -293,7 +294,7 @@ class CoopSession(Session):
         # If we're running with a gui and at any point we have no
         # in-game players, quit out of the session (this can happen if
         # someone leaves in the tutorial for instance).
-        if not _babase.app.headless_mode:
+        if not babase.app.headless_mode:
             active_players = [p for p in self.sessionplayers if p.in_game]
             if not active_players:
                 self.end()

@@ -6,12 +6,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
 from bascenev1._multiteamsession import MultiTeamSession
 
 if TYPE_CHECKING:
-    import babase
     import bascenev1
 
 
@@ -50,7 +50,7 @@ class FreeForAllSession(MultiTeamSession):
         return point_awards
 
     def __init__(self) -> None:
-        _babase.increment_analytics_count('Free-for-all session start')
+        babase.increment_analytics_count('Free-for-all session start')
         super().__init__()
 
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:

@@ -8,11 +8,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar
 from enum import Enum
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
-    import babase
+
     import bascenev1
 
 
@@ -257,8 +257,8 @@ class HitMessage:
         """Instantiate a message with given values."""
 
         self.srcnode = srcnode
-        self.pos = pos if pos is not None else _babase.Vec3()
-        self.velocity = velocity if velocity is not None else _babase.Vec3()
+        self.pos = pos if pos is not None else babase.Vec3()
+        self.velocity = velocity if velocity is not None else babase.Vec3()
         self.magnitude = magnitude
         self.velocity_magnitude = velocity_magnitude
         self.radius = radius
