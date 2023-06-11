@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
 
-import _babase
-import _bascenev1
-from bascenev1._music import MusicType
+import babase
+import bascenev1
+from bascenev1 import MusicType
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -116,7 +116,7 @@ class MusicSubsystem:
         # music-player going since it may hitch (better while we're faded
         # out than later).
         try:
-            cfg = _babase.app.config
+            cfg = babase.app.config
             if 'Soundtrack' in cfg and cfg['Soundtrack'] not in [
                 '__default__',
                 'Default Soundtrack',
@@ -166,7 +166,7 @@ class MusicSubsystem:
 
     def supports_soundtrack_entry_type(self, entry_type: str) -> bool:
         """Return whether provided soundtrack entry type is supported here."""
-        uas = _babase.env()['user_agent_string']
+        uas = babase.env()['user_agent_string']
         assert isinstance(uas, str)
 
         # FIXME: Generalize this.
@@ -175,7 +175,7 @@ class MusicSubsystem:
         if entry_type in ('musicFile', 'musicFolder'):
             return (
                 'android' in uas
-                and _babase.android_get_external_files_dir() is not None
+                and babase.android_get_external_files_dir() is not None
             )
         if entry_type == 'default':
             return True
@@ -246,7 +246,7 @@ class MusicSubsystem:
 
     def on_app_resume(self) -> None:
         """Should be run when the app resumes from a suspended state."""
-        if _babase.is_os_playing_music():
+        if babase.is_os_playing_music():
             self.do_play_music(None)
 
     def do_play_music(
@@ -272,7 +272,7 @@ class MusicSubsystem:
                 print(f"Invalid music type: '{musictype}'")
                 musictype = None
 
-        with _babase.ContextRef.empty():
+        with babase.ContextRef.empty():
             # If they don't want to restart music and we're already
             # playing what's requested, we're done.
             if continuous and self.music_types[mode] is musictype:
@@ -281,7 +281,7 @@ class MusicSubsystem:
 
             # If the OS tells us there's currently music playing,
             # all our operations default to playing nothing.
-            if _babase.is_os_playing_music():
+            if babase.is_os_playing_music():
                 musictype = None
 
             # If we're not in the mode this music is being set for,
@@ -312,7 +312,7 @@ class MusicSubsystem:
 
     def _get_user_soundtrack(self) -> dict[str, Any]:
         """Return current user soundtrack or empty dict otherwise."""
-        cfg = _babase.app.config
+        cfg = babase.app.config
         soundtrack: dict[str, Any] = {}
         soundtrackname = cfg.get('Soundtrack')
         if soundtrackname is not None and soundtrackname != '__default__':
@@ -329,7 +329,7 @@ class MusicSubsystem:
         #     self._music_node.delete()
         #     self._music_node = None
         if self._playing_internal_music:
-            _bascenev1.set_internal_music(None)
+            bascenev1.set_internal_music(None)
             self._playing_internal_music = False
 
         # Do the thing.
@@ -345,7 +345,7 @@ class MusicSubsystem:
         #     self._music_node.delete()
         #     self._music_node = None
         if self._playing_internal_music:
-            _bascenev1.set_internal_music(None)
+            bascenev1.set_internal_music(None)
             self._playing_internal_music = False
 
         # Start up new internal music.
@@ -365,8 +365,8 @@ class MusicSubsystem:
             #         'loop': entry.loop,
             #     },
             # )
-            _bascenev1.set_internal_music(
-                _babase.getsimplesound(entry.assetname),
+            bascenev1.set_internal_music(
+                babase.getsimplesound(entry.assetname),
                 volume=entry.volume * 5.0,
                 loop=entry.loop,
             )
@@ -408,7 +408,7 @@ class MusicPlayer:
     def play(self, entry: Any) -> None:
         """Play provided entry."""
         if not self._have_set_initial_volume:
-            self._volume = _babase.app.config.resolve('Music Volume')
+            self._volume = babase.app.config.resolve('Music Volume')
             self.on_set_volume(self._volume)
             self._have_set_initial_volume = True
         self._entry_to_play = copy.deepcopy(entry)
@@ -470,5 +470,5 @@ class MusicPlayer:
 
 def do_play_music(*args: Any, **keywds: Any) -> None:
     """A passthrough used by the C++ layer."""
-    assert _babase.app.classic is not None
-    _babase.app.classic.music.do_play_music(*args, **keywds)
+    assert babase.app.classic is not None
+    babase.app.classic.music.do_play_music(*args, **keywds)

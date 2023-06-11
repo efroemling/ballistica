@@ -121,9 +121,6 @@ class _PickFolderSongThread(threading.Thread):
         self._path = path
 
     def run(self) -> None:
-        from babase import _language
-        from babase._general import Call
-
         do_log_error = True
         try:
             babase.set_thread_name('BA_PickFolderSongThread')
@@ -141,12 +138,13 @@ class _PickFolderSongThread(threading.Thread):
             if not all_files:
                 do_log_error = False
                 raise RuntimeError(
-                    _language.Lstr(
+                    babase.Lstr(
                         resource='internal.noMusicFilesInFolderText'
                     ).evaluate()
                 )
             babase.pushcall(
-                Call(self._callback, all_files, None), from_other_thread=True
+                babase.Call(self._callback, all_files, None),
+                from_other_thread=True,
             )
         except Exception as exc:
             if do_log_error:
@@ -156,6 +154,6 @@ class _PickFolderSongThread(threading.Thread):
             except Exception:
                 err_str = '<ENCERR4523>'
             babase.pushcall(
-                Call(self._callback, self._path, err_str),
+                babase.Call(self._callback, self._path, err_str),
                 from_other_thread=True,
             )

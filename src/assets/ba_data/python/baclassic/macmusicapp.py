@@ -3,6 +3,7 @@
 """Music playback functionality using the Mac Music (formerly iTunes) app."""
 from __future__ import annotations
 
+import logging
 import threading
 from collections import deque
 from typing import TYPE_CHECKING
@@ -78,9 +79,6 @@ class _MacMusicAppThread(threading.Thread):
 
     def run(self) -> None:
         """Run the Music.app thread."""
-        from babase._general import Call
-        from babase._language import Lstr
-
         babase.set_thread_name('BA_MacMusicAppThread')
         babase.mac_music_app_init()
 
@@ -90,9 +88,9 @@ class _MacMusicAppThread(threading.Thread):
         def do_print() -> None:
             babase.apptimer(
                 1.0,
-                Call(
+                babase.Call(
                     babase.screenmessage,
-                    Lstr(resource='usingItunesText'),
+                    babase.Lstr(resource='usingItunesText'),
                     (0, 1, 0),
                 ),
             )
@@ -169,8 +167,6 @@ class _MacMusicAppThread(threading.Thread):
     def _handle_get_playlists_command(
         self, target: Callable[[list[str]], None]
     ) -> None:
-        from babase._general import Call
-
         try:
             playlists = babase.mac_music_app_get_playlists()
             playlists = [
@@ -196,7 +192,7 @@ class _MacMusicAppThread(threading.Thread):
         except Exception as exc:
             print('Error getting iTunes playlists:', exc)
             playlists = []
-        babase.pushcall(Call(target, playlists), from_other_thread=True)
+        babase.pushcall(babase.Call(target, playlists), from_other_thread=True)
 
     def _handle_play_command(self, target: str | None) -> None:
         if target is None:
@@ -239,14 +235,12 @@ class _MacMusicAppThread(threading.Thread):
 
     def _play_current_playlist(self) -> None:
         try:
-            from babase._general import Call
-
             assert self._current_playlist is not None
             if babase.mac_music_app_play_playlist(self._current_playlist):
                 pass
             else:
                 babase.pushcall(
-                    Call(
+                    babase.Call(
                         babase.screenmessage,
                         babase.app.lang.get_resource('playlistNotFoundText')
                         + ': \''
@@ -257,10 +251,8 @@ class _MacMusicAppThread(threading.Thread):
                     from_other_thread=True,
                 )
         except Exception:
-            from babase import _error
-
-            _error.print_exception(
-                f'error playing playlist {self._current_playlist}'
+            logging.exception(
+                "Error playing playlist '%s'.", self._current_playlist
             )
 
     def _update_mac_music_app_volume(self) -> None:

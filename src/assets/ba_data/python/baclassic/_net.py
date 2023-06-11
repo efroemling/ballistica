@@ -75,7 +75,6 @@ class MasterServerV1CallThread(threading.Thread):
         import json
 
         from efro.error import is_urllib_communication_error
-        from babase._general import Call, utf8_all
 
         plus = babase.app.plus
         assert plus is not None
@@ -83,7 +82,7 @@ class MasterServerV1CallThread(threading.Thread):
         url: str | None = None
         try:
             assert babase.app.classic is not None
-            self._data = utf8_all(self._data)
+            self._data = babase.utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
                 url = (
@@ -149,5 +148,6 @@ class MasterServerV1CallThread(threading.Thread):
 
         if self._callback is not None:
             babase.pushcall(
-                Call(self._run_callback, response_data), from_other_thread=True
+                babase.Call(self._run_callback, response_data),
+                from_other_thread=True,
             )

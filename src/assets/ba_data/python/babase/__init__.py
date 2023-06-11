@@ -12,6 +12,9 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    android_get_external_files_dir,
+    is_os_playing_music,
+    getsimplesound,
     music_player_set_volume,
     music_player_play,
     music_player_stop,
@@ -122,6 +125,7 @@ from babase._apputils import (
     get_remote_app_name,
 )
 from babase._general import (
+    utf8_all,
     DisplayTime,
     AppTime,
     WeakCall,
@@ -267,6 +271,10 @@ __all__ = [
     'mac_music_app_set_volume',
     'mac_music_app_get_playlists',
     'mac_music_app_play_playlist',
+    'utf8_all',
+    'getsimplesound',
+    'is_os_playing_music',
+    'android_get_external_files_dir',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

@@ -62,6 +62,7 @@ from babase._mgen.enums import (
 )
 
 from _bascenev1 import (
+    set_internal_music,
     set_master_server_source,
     get_foreground_host_session,
     get_foreground_host_activity,
@@ -216,6 +217,7 @@ from bascenev1._dependency import (
 from bascenev1._gameutils import get_trophy_string
 
 __all__ = [
+    'set_internal_music',
     'get_trophy_string',
     'app',
     'get_local_active_input_devices_count',

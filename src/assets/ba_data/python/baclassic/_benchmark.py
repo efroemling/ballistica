@@ -96,9 +96,7 @@ def stop_stress_test() -> None:
 
 def start_stress_test(args: dict[str, Any]) -> None:
     """(internal)"""
-    from babase._general import Call
-    from bascenev1._dualteamsession import DualTeamSession
-    from bascenev1._freeforallsession import FreeForAllSession
+    from bascenev1 import DualTeamSession, FreeForAllSession
 
     assert babase.app.classic is not None
 
@@ -121,9 +119,9 @@ def start_stress_test(args: dict[str, Any]) -> None:
         appconfig['Team Tournament Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
-            Call(
+            babase.Call(
                 babase.pushcall,
-                Call(bascenev1.new_host_session, DualTeamSession),
+                babase.Call(bascenev1.new_host_session, DualTeamSession),
             ),
         )
     else:
@@ -131,26 +129,24 @@ def start_stress_test(args: dict[str, Any]) -> None:
         appconfig['Free-for-All Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
-            Call(
+            babase.Call(
                 babase.pushcall,
-                Call(bascenev1.new_host_session, FreeForAllSession),
+                babase.Call(bascenev1.new_host_session, FreeForAllSession),
             ),
         )
     babase.set_stress_testing(True, args['player_count'])
     babase.app.classic.stress_test_reset_timer = babase.AppTimer(
-        args['round_duration'], Call(_reset_stress_test, args)
+        args['round_duration'], babase.Call(_reset_stress_test, args)
     )
 
 
 def _reset_stress_test(args: dict[str, Any]) -> None:
-    from babase._general import Call
-
     babase.set_stress_testing(False, args['player_count'])
     babase.screenmessage('Resetting stress test...')
     session = bascenev1.get_foreground_host_session()
     assert session is not None
     session.end()
-    babase.apptimer(1.0, Call(start_stress_test, args))
+    babase.apptimer(1.0, babase.Call(start_stress_test, args))
 
 
 def run_gpu_benchmark() -> None:
@@ -161,8 +157,6 @@ def run_gpu_benchmark() -> None:
 
 def run_media_reload_benchmark() -> None:
     """Kick off a benchmark to test media reloading speeds."""
-    from babase._general import Call
-
     babase.reload_media()
     babase.show_progress_bar()
 
@@ -182,8 +176,8 @@ def run_media_reload_benchmark() -> None:
                     color=(1, 1, 0),
                 )
 
-        babase.add_clean_frame_callback(Call(doit, start_time))
+        babase.add_clean_frame_callback(babase.Call(doit, start_time))
 
     # The reload starts (should add a completion callback to the
     # reload func to fix this).
-    babase.apptimer(0.05, Call(delay_add, babase.apptime()))
+    babase.apptimer(0.05, babase.Call(delay_add, babase.apptime()))
