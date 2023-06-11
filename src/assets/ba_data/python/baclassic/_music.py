@@ -15,9 +15,6 @@ from bascenev1._music import MusicType
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    import babase
-    import baclassic
-
 
 class MusicPlayMode(Enum):
     """Influences behavior when playing music.

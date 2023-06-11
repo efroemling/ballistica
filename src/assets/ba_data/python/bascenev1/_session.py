@@ -25,7 +25,7 @@ class Session:
     Category: **Gameplay Classes**
 
     Examples of sessions are bascenev1.FreeForAllSession,
-    bascenv1.DualTeamSession, and bascenev1.CoopSession.
+    bascenev1.DualTeamSession, and bascenev1.CoopSession.
 
     A Session is responsible for wrangling and transitioning between various
     bascenev1.Activity instances such as mini-games and score-screens, and for

@@ -20,6 +20,7 @@ import logging
 
 from efro.util import set_canonical_module_names
 
+
 from _babase import (
     app,
     ContextRef,
@@ -38,6 +39,7 @@ from _babase import (
     displaytimer,
     DisplayTimer,
 )
+from babase import Plugin
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
 from babase._error import NotFoundError, NodeNotFoundError, ContextError
@@ -394,6 +396,7 @@ __all__ = [
     'Chooser',
     'Campaign',
     'Level',
+    'Plugin',
 ]
 
 # We want stuff here to show up as bascenev1.Foo instead of

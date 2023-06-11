@@ -13,12 +13,11 @@ from bascenev1lib.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any
 
-    import baclassic
-
 
 class HockeyStadium(bs.Map):
     """Stadium map used for ice hockey games."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import hockey_stadium as defs
 
     name = 'Hockey Stadium'
@@ -176,6 +175,7 @@ class FootballStadium(bs.Map):
 class Bridgit(bs.Map):
     """Map with a narrow bridge in the middle."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import bridgit as defs
 
     name = 'Bridgit'
@@ -281,6 +281,7 @@ class Bridgit(bs.Map):
 class BigG(bs.Map):
     """Large G shaped map for racing"""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import big_g as defs
 
     name = 'Big G'
@@ -391,6 +392,7 @@ class BigG(bs.Map):
 class Roundabout(bs.Map):
     """CTF map featuring two platforms and a long way around between them"""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import roundabout as defs
 
     name = 'Roundabout'
@@ -495,6 +497,7 @@ class Roundabout(bs.Map):
 class MonkeyFace(bs.Map):
     """Map sorta shaped like a monkey face; teehee!"""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import monkey_face as defs
 
     name = 'Monkey Face'
@@ -599,6 +602,7 @@ class MonkeyFace(bs.Map):
 class ZigZag(bs.Map):
     """A very long zig-zaggy map"""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import zig_zag as defs
 
     name = 'Zigzag'
@@ -706,6 +710,7 @@ class ZigZag(bs.Map):
 class ThePad(bs.Map):
     """A simple square shaped map with a raised edge."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import the_pad as defs
 
     name = 'The Pad'
@@ -794,6 +799,7 @@ class ThePad(bs.Map):
 class DoomShroom(bs.Map):
     """A giant mushroom. Of doom!"""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import doom_shroom as defs
 
     name = 'Doom Shroom'
@@ -889,6 +895,7 @@ class DoomShroom(bs.Map):
 class LakeFrigid(bs.Map):
     """An icy lake fit for racing."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import lake_frigid as defs
 
     name = 'Lake Frigid'
@@ -975,6 +982,7 @@ class LakeFrigid(bs.Map):
 class TipTop(bs.Map):
     """A pointy map good for king-of-the-hill-ish games."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import tip_top as defs
 
     name = 'Tip Top'
@@ -1052,6 +1060,7 @@ class TipTop(bs.Map):
 class CragCastle(bs.Map):
     """A lovely castle map."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import crag_castle as defs
 
     name = 'Crag Castle'
@@ -1267,6 +1276,7 @@ class TowerD(bs.Map):
 class HappyThoughts(bs.Map):
     """Flying map."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import happy_thoughts as defs
 
     name = 'Happy Thoughts'
@@ -1382,6 +1392,7 @@ class HappyThoughts(bs.Map):
 class StepRightUp(bs.Map):
     """Wide stepped map good for CTF or Assault."""
 
+    # noinspection PyUnresolvedReferences
     from bascenev1lib.mapdata import step_right_up as defs
 
     name = 'Step Right Up'

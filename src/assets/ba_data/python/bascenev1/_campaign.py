@@ -5,18 +5,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
-    import babase
     import bascenev1
 
 
 def register_campaign(campaign: bascenev1.Campaign) -> None:
     """Register a new campaign."""
-    assert _babase.app.classic is not None
-    _babase.app.classic.campaigns[campaign.name] = campaign
+    assert babase.app.classic is not None
+    babase.app.classic.campaigns[campaign.name] = campaign
 
 
 class Campaign:
@@ -67,25 +66,24 @@ class Campaign:
 
     def getlevel(self, name: str) -> bascenev1.Level:
         """Return a contained baclassic.Level by name."""
-        from babase import _error
 
         for level in self._levels:
             if level.name == name:
                 return level
-        raise _error.NotFoundError(
+        raise babase.NotFoundError(
             "Level '" + name + "' not found in campaign '" + self.name + "'"
         )
 
     def reset(self) -> None:
         """Reset state for the Campaign."""
-        _babase.app.config.setdefault('Campaigns', {})[self._name] = {}
+        babase.app.config.setdefault('Campaigns', {})[self._name] = {}
 
-    # FIXME should these give/take baclsssic.Level instances instead
+    # FIXME should these give/take baclassic.Level instances instead
     #  of level names?..
     def set_selected_level(self, levelname: str) -> None:
         """Set the Level currently selected in the UI (by name)."""
         self.configdict['Selection'] = levelname
-        _babase.app.config.commit()
+        babase.app.config.commit()
 
     def get_selected_level(self) -> str:
         """Return the name of the Level currently selected in the UI."""
@@ -94,7 +92,7 @@ class Campaign:
     @property
     def configdict(self) -> dict[str, Any]:
         """Return the live config dict for this campaign."""
-        val: dict[str, Any] = _babase.app.config.setdefault(
+        val: dict[str, Any] = babase.app.config.setdefault(
             'Campaigns', {}
         ).setdefault(self._name, {})
         assert isinstance(val, dict)
@@ -116,7 +114,7 @@ def init_campaigns() -> None:
     from bascenev1lib.game.ninjafight import NinjaFightGame
 
     # TODO: Campaigns should be load-on-demand; not all imported at launch
-    # like this.
+    #  like this.
 
     # FIXME: Once translations catch up, we can convert these to use the
     #  generic display-name '${GAME} Training' type stuff.

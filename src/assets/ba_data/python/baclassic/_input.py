@@ -9,8 +9,6 @@ import _babase
 
 if TYPE_CHECKING:
     from typing import Any
-    import babase
-    import bascenev1
 
 
 def get_input_device_mapped_value(

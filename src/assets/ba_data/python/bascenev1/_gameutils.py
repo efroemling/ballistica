@@ -7,27 +7,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NewType
 
-import _babase
-from babase._mgen.enums import SpecialChar, UIScale
-from babase._error import ActivityNotFoundError
+import babase
 import _bascenev1
 
 if TYPE_CHECKING:
     from typing import Sequence
 
-    import babase
     import bascenev1
 
 Time = NewType('Time', float)
 BaseTime = NewType('BaseTime', float)
 
 TROPHY_CHARS = {
-    '1': SpecialChar.TROPHY1,
-    '2': SpecialChar.TROPHY2,
-    '3': SpecialChar.TROPHY3,
-    '0a': SpecialChar.TROPHY0A,
-    '0b': SpecialChar.TROPHY0B,
-    '4': SpecialChar.TROPHY4,
+    '1': babase.SpecialChar.TROPHY1,
+    '2': babase.SpecialChar.TROPHY2,
+    '3': babase.SpecialChar.TROPHY3,
+    '0a': babase.SpecialChar.TROPHY0A,
+    '0b': babase.SpecialChar.TROPHY0B,
+    '4': babase.SpecialChar.TROPHY4,
 }
 
 
@@ -46,7 +43,7 @@ class GameTip:
 def get_trophy_string(trophy_id: str) -> str:
     """Given a trophy id, returns a string to visualize it."""
     if trophy_id in TROPHY_CHARS:
-        return _babase.charstr(TROPHY_CHARS[trophy_id])
+        return babase.charstr(TROPHY_CHARS[trophy_id])
     return '?'
 
 
@@ -101,7 +98,7 @@ def animate(
     # We operate in either activities or sessions..
     try:
         globalsnode = _bascenev1.getactivity().globalsnode
-    except ActivityNotFoundError:
+    except babase.ActivityNotFoundError:
         globalsnode = _bascenev1.getsession().sessionglobalsnode
 
     globalsnode.connectattr('time', curve, 'in')
@@ -133,7 +130,7 @@ def animate_array(
     # We operate in either activities or sessions..
     try:
         globalsnode = _bascenev1.getactivity().globalsnode
-    except ActivityNotFoundError:
+    except babase.ActivityNotFoundError:
         globalsnode = _bascenev1.getsession().sessionglobalsnode
 
     for i in range(size):
@@ -182,13 +179,13 @@ def show_damage_count(
     Category: **Gameplay Functions**
     """
     lifespan = 1.0
-    app = _babase.app
+    app = babase.app
 
     # FIXME: Should never vary game elements based on local config.
     #  (connected clients may have differing configs so they won't
     #  get the intended results).
     assert app.classic is not None
-    do_big = app.ui_v1.uiscale is UIScale.SMALL or app.vr_mode
+    do_big = app.ui_v1.uiscale is babase.UIScale.SMALL or app.vr_mode
     txtnode = _bascenev1.newnode(
         'text',
         attrs={

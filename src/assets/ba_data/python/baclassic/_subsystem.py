@@ -55,9 +55,9 @@ class ClassicSubsystem(AppSubsystem):
     # baclassic/__init__.py. This way this version can be used for
     # runtime via babase.app.classic which enforces handling of the
     # package-not-present case.
-    from bascenev1._level import Level
-    from bascenev1._campaign import Campaign
-    from bascenev1._lobby import Lobby, Chooser
+    # from bascenev1._level import Level
+    # from bascenev1._campaign import Campaign
+    # from bascenev1._lobby import Lobby, Chooser
     from baclassic._music import MusicPlayMode  # FIXME move 2 subsys
 
     def __init__(self) -> None:

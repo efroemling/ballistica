@@ -321,7 +321,6 @@ def _test_v1_transaction() -> None:
         results[0] = True  # Success!
 
     def _do_it() -> None:
-        plus = bui.app.plus
         assert plus is not None
         # Fire off a transaction with a callback.
         plus.add_v1_account_transaction(

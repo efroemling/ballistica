@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from typing import Any
 
     import babase
-    import baclassic
     from bacommon.servermanager import ServerConfig
 
 

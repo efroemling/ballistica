@@ -6,13 +6,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _baplus
-from babase._appsubsystem import AppSubsystem
+from babase import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    from babase import App, CloudSubsystem
-    from babase._accountv2 import AccountV2Subsystem
+    from babase import CloudSubsystem, AccountV2Subsystem
 
 
 class PlusSubsystem(AppSubsystem):
@@ -37,6 +36,7 @@ class PlusSubsystem(AppSubsystem):
         _baplus.on_app_loading()
         self.accounts.on_app_loading()
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
     def add_v1_account_transaction(
         transaction: dict, callback: Callable | None = None

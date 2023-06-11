@@ -214,6 +214,7 @@
       <w>backporting</w>
       <w>backwin</w>
       <w>baclassic</w>
+      <w>baclassicmeta</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
       <w>bacommon</w>
@@ -284,6 +285,7 @@
       <w>bfiledir</w>
       <w>bfiles</w>
       <w>bgdynamics</w>
+      <w>bgmesh</w>
       <w>bgmodel</w>
       <w>bgrn</w>
       <w>bgrp</w>
@@ -519,6 +521,7 @@
       <w>cmdspath</w>
       <w>cmdsraw</w>
       <w>cmembers</w>
+      <w>cmesh</w>
       <w>cmodel</w>
       <w>cmodule</w>
       <w>cmodules</w>
@@ -621,6 +624,7 @@
       <w>cspre</w>
       <w>cssclass</w>
       <w>csspbt</w>
+      <w>cstore</w>
       <w>cstr</w>
       <w>csum</w>
       <w>csval</w>
@@ -708,6 +712,7 @@
       <w>dictval</w>
       <w>didn</w>
       <w>diemessages</w>
+      <w>diesound</w>
       <w>difflib</w>
       <w>dilateerode</w>
       <w>dincrease</w>
@@ -1295,6 +1300,7 @@
       <w>hmac</w>
       <w>hmmm</w>
       <w>hmmmm</w>
+      <w>hmmw</w>
       <w>hmph</w>
       <w>hoffs</w>
       <w>holdingflag</w>
@@ -1664,6 +1670,7 @@
       <w>manprivpath</w>
       <w>mantype</w>
       <w>manualtab</w>
+      <w>mapclass</w>
       <w>mapdata</w>
       <w>mapdef</w>
       <w>mapdefs</w>
@@ -2107,6 +2114,7 @@
       <w>plugstate</w>
       <w>plugstates</w>
       <w>plusbutton</w>
+      <w>plusnet</w>
       <w>plvel</w>
       <w>pmats</w>
       <w>pname</w>
@@ -2732,6 +2740,7 @@
       <w>subprocesses</w>
       <w>subrepos</w>
       <w>subsel</w>
+      <w>subsys</w>
       <w>subtypestr</w>
       <w>subval</w>
       <w>subvalue</w>

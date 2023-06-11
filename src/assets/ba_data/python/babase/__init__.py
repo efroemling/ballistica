@@ -64,7 +64,7 @@ from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
 from babase._appsubsystem import AppSubsystem
-from babase._accountv2 import AccountV2Handle
+from babase._accountv2 import AccountV2Handle, AccountV2Subsystem
 from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._app import App
 from babase._cloud import CloudSubsystem
@@ -115,6 +115,7 @@ from babase._general import (
     storagename,
     getclass,
     get_type_name,
+    json_prep,
 )
 from babase._keyboard import Keyboard
 from babase._math import normalized_color, is_point_in_box, vec3validate
@@ -127,6 +128,7 @@ app.postinit()
 __all__ = [
     'app',
     'AccountV2Handle',
+    'AccountV2Subsystem',
     'ActivityNotFoundError',
     'ActorNotFoundError',
     'app',
@@ -230,6 +232,7 @@ __all__ = [
     'LoginAdapter',
     'get_remote_app_name',
     'is_browser_likely_available',
+    'json_prep',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

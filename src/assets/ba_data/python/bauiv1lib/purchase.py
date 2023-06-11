@@ -183,7 +183,6 @@ class PurchaseWindow(bui.Window):
                 return
 
             def do_it() -> None:
-                plus = bui.app.plus
                 assert plus is not None
 
                 plus.in_game_purchase(self._items[0], self._price)

@@ -5,12 +5,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Callable
-    import babase
-    import bascenev1 as bs
+    import bascenev1
 
 
 class AppDelegate:
@@ -21,8 +20,8 @@ class AppDelegate:
 
     def create_default_game_settings_ui(
         self,
-        gameclass: type[bs.GameActivity],
-        sessiontype: type[bs.Session],
+        gameclass: type[bascenev1.GameActivity],
+        sessiontype: type[bascenev1.Session],
         settings: dict | None,
         completion_call: Callable[[dict | None], None],
     ) -> None:
@@ -34,9 +33,9 @@ class AppDelegate:
         # Replace the main window once we come up successfully.
         from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
-        assert _babase.app.classic is not None
-        _babase.app.ui_v1.clear_main_menu_window(transition='out_left')
-        _babase.app.ui_v1.set_main_menu_window(
+        assert babase.app.classic is not None
+        babase.app.ui_v1.clear_main_menu_window(transition='out_left')
+        babase.app.ui_v1.set_main_menu_window(
             PlaylistEditGameWindow(
                 gameclass,
                 sessiontype,

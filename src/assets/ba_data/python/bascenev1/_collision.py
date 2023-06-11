@@ -6,12 +6,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 import _bascenev1
-from babase._error import NodeNotFoundError
 
 if TYPE_CHECKING:
-    import babase
     import bascenev1
 
 
@@ -24,7 +22,7 @@ class Collision:
     @property
     def position(self) -> bascenev1.Vec3:
         """The position of the current collision."""
-        return _babase.Vec3(_bascenev1.get_collision_info('position'))
+        return babase.Vec3(_bascenev1.get_collision_info('position'))
 
     @property
     def sourcenode(self) -> bascenev1.Node:
@@ -37,7 +35,7 @@ class Collision:
         node = _bascenev1.get_collision_info('sourcenode')
         assert isinstance(node, (_bascenev1.Node, type(None)))
         if not node:
-            raise NodeNotFoundError()
+            raise babase.NodeNotFoundError()
         return node
 
     @property
@@ -51,7 +49,7 @@ class Collision:
         node = _bascenev1.get_collision_info('opposingnode')
         assert isinstance(node, (_bascenev1.Node, type(None)))
         if not node:
-            raise NodeNotFoundError()
+            raise babase.NodeNotFoundError()
         return node
 
     @property

@@ -124,6 +124,7 @@
       <w>backtraces</w>
       <w>backwin</w>
       <w>baclassic</w>
+      <w>baclassicmeta</w>
       <w>bacoremeta</w>
       <w>baenv</w>
       <w>bafoobar</w>
@@ -172,6 +173,7 @@
       <w>benning</w>
       <w>bezanson</w>
       <w>bgdynamics</w>
+      <w>bgmesh</w>
       <w>bgra</w>
       <w>bgrp</w>
       <w>bigendian</w>
@@ -319,6 +321,7 @@
       <w>cmdspath</w>
       <w>cmdsraw</w>
       <w>cmdvals</w>
+      <w>cmesh</w>
       <w>cmodule</w>
       <w>cmodules</w>
       <w>cmplen</w>
@@ -375,6 +378,7 @@
       <w>csspbt</w>
       <w>cstdint</w>
       <w>cstdlib</w>
+      <w>cstore</w>
       <w>cstring</w>
       <w>csval</w>
       <w>ctargetref</w>
@@ -437,6 +441,7 @@
       <w>dfmt</w>
       <w>dictval</w>
       <w>didn</w>
+      <w>diesound</w>
       <w>diffbit</w>
       <w>dinl</w>
       <w>dirfilter</w>
@@ -757,6 +762,7 @@
       <w>hinst</w>
       <w>hitchy</w>
       <w>hmmm</w>
+      <w>hmmw</w>
       <w>homebrew</w>
       <w>hostactivity</w>
       <w>hostcmd</w>
@@ -956,6 +962,7 @@
       <w>manprivpath</w>
       <w>mantype</w>
       <w>manualtab</w>
+      <w>mapclass</w>
       <w>maskhigh</w>
       <w>maskuv</w>
       <w>masterver</w>
@@ -1217,6 +1224,7 @@
       <w>plen</w>
       <w>pluginsettings</w>
       <w>plugnames</w>
+      <w>plusnet</w>
       <w>pname</w>
       <w>pnamel</w>
       <w>pnameu</w>
@@ -1573,6 +1581,7 @@
       <w>subplatform</w>
       <w>subscale</w>
       <w>subscr</w>
+      <w>subsys</w>
       <w>subtypestr</w>
       <w>successmsg</w>
       <w>sval</w>

@@ -15,7 +15,6 @@ from babase.internal import DEFAULT_REQUEST_TIMEOUT_SECONDS
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-    import socket
 
     MasterServerCallback = Callable[[None | dict[str, Any]], None]
 

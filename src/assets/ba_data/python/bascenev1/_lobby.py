@@ -5,14 +5,12 @@
 
 from __future__ import annotations
 
+import logging
 import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import _babase
-from babase._error import print_exception, print_error, NotFoundError
-from babase._language import Lstr
-from babase._mgen.enums import SpecialChar, InputType
+import babase
 import _bascenev1
 from bascenev1._profile import get_player_profile_colors
 from bascenev1._gameutils import animate, animate_array
@@ -33,20 +31,19 @@ class JoinInfo:
 
     def __init__(self, lobby: bascenev1.Lobby):
         from bascenev1._nodeactor import NodeActor
-        from babase._general import WeakCall
 
         self._state = 0
         self._press_to_punch: str | bascenev1.Lstr = (
             'C'
-            if _babase.app.iircade_mode
-            else _babase.charstr(SpecialChar.LEFT_BUTTON)
+            if babase.app.iircade_mode
+            else babase.charstr(babase.SpecialChar.LEFT_BUTTON)
         )
         self._press_to_bomb: str | bascenev1.Lstr = (
             'B'
-            if _babase.app.iircade_mode
-            else _babase.charstr(SpecialChar.RIGHT_BUTTON)
+            if babase.app.iircade_mode
+            else babase.charstr(babase.SpecialChar.RIGHT_BUTTON)
         )
-        self._joinmsg = Lstr(resource='pressAnyButtonToJoinText')
+        self._joinmsg = babase.Lstr(resource='pressAnyButtonToJoinText')
         can_switch_teams = len(lobby.sessionteams) > 1
 
         # If we have a keyboard, grab keys for punch and pickup.
@@ -56,7 +53,7 @@ class JoinInfo:
         if keyboard is not None:
             self._update_for_keyboard(keyboard)
 
-        flatness = 1.0 if _babase.app.vr_mode else 0.0
+        flatness = 1.0 if babase.app.vr_mode else 0.0
         self._text = NodeActor(
             _bascenev1.newnode(
                 'text',
@@ -72,39 +69,43 @@ class JoinInfo:
             )
         )
 
-        if _babase.app.demo_mode or _babase.app.arcade_mode:
+        if babase.app.demo_mode or babase.app.arcade_mode:
             self._messages = [self._joinmsg]
         else:
-            msg1 = Lstr(
+            msg1 = babase.Lstr(
                 resource='pressToSelectProfileText',
                 subs=[
                     (
                         '${BUTTONS}',
-                        _babase.charstr(SpecialChar.UP_ARROW)
+                        babase.charstr(babase.SpecialChar.UP_ARROW)
                         + ' '
-                        + _babase.charstr(SpecialChar.DOWN_ARROW),
+                        + babase.charstr(babase.SpecialChar.DOWN_ARROW),
                     )
                 ],
             )
-            msg2 = Lstr(
+            msg2 = babase.Lstr(
                 resource='pressToOverrideCharacterText',
-                subs=[('${BUTTONS}', Lstr(resource='bombBoldText'))],
+                subs=[('${BUTTONS}', babase.Lstr(resource='bombBoldText'))],
             )
-            msg3 = Lstr(
+            msg3 = babase.Lstr(
                 value='${A} < ${B} >',
                 subs=[('${A}', msg2), ('${B}', self._press_to_bomb)],
             )
             self._messages = (
                 (
                     [
-                        Lstr(
+                        babase.Lstr(
                             resource='pressToSelectTeamText',
                             subs=[
                                 (
                                     '${BUTTONS}',
-                                    _babase.charstr(SpecialChar.LEFT_ARROW)
+                                    babase.charstr(
+                                        babase.SpecialChar.LEFT_ARROW
+                                    )
                                     + ' '
-                                    + _babase.charstr(SpecialChar.RIGHT_ARROW),
+                                    + babase.charstr(
+                                        babase.SpecialChar.RIGHT_ARROW
+                                    ),
                                 )
                             ],
                         )
@@ -117,36 +118,44 @@ class JoinInfo:
                 + [self._joinmsg]
             )
 
-        self._timer = _bascenev1.Timer(4.0, WeakCall(self._update), repeat=True)
+        self._timer = _bascenev1.Timer(
+            4.0, babase.WeakCall(self._update), repeat=True
+        )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
-        classic = _babase.app.classic
+        classic = babase.app.classic
         assert classic is not None
 
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = Lstr(
+        self._press_to_punch = babase.Lstr(
             resource='orText',
             subs=[
-                ('${A}', Lstr(value='\'${K}\'', subs=[('${K}', punch_key)])),
+                (
+                    '${A}',
+                    babase.Lstr(value='\'${K}\'', subs=[('${K}', punch_key)]),
+                ),
                 ('${B}', self._press_to_punch),
             ],
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = Lstr(
+        self._press_to_bomb = babase.Lstr(
             resource='orText',
             subs=[
-                ('${A}', Lstr(value='\'${K}\'', subs=[('${K}', bomb_key)])),
+                (
+                    '${A}',
+                    babase.Lstr(value='\'${K}\'', subs=[('${K}', bomb_key)]),
+                ),
                 ('${B}', self._press_to_bomb),
             ],
         )
-        self._joinmsg = Lstr(
+        self._joinmsg = babase.Lstr(
             value='${A} < ${B} >',
             subs=[
-                ('${A}', Lstr(resource='pressPunchToJoinText')),
+                ('${A}', babase.Lstr(resource='pressPunchToJoinText')),
                 ('${B}', self._press_to_punch),
             ],
         )
@@ -208,7 +217,7 @@ class Chooser:
         self._last_change: Sequence[float | int] = (0, 0)
         self._profiles: dict[str, dict[str, Any]] = {}
 
-        app = _babase.app
+        app = babase.app
         assert app.classic is not None
 
         # Load available player profiles either from the local config or
@@ -269,7 +278,7 @@ class Chooser:
 
         # Set our initial name to '<choosing player>' in case anyone asks.
         self._sessionplayer.setname(
-            Lstr(resource='choosingPlayerText').evaluate(), real=False
+            babase.Lstr(resource='choosingPlayerText').evaluate(), real=False
         )
 
         # Init these to our rando but they should get switched to the
@@ -285,7 +294,7 @@ class Chooser:
         self._set_ready(False)
 
     def _select_initial_profile(self) -> int:
-        app = _babase.app
+        app = babase.app
         assert app.classic is not None
         profilenames = self._profilenames
         inputdevice = self._sessionplayer.inputdevice
@@ -385,7 +394,7 @@ class Chooser:
         """The chooser's baclassic.Lobby."""
         lobby = self._lobby()
         if lobby is None:
-            raise NotFoundError('Lobby does not exist.')
+            raise babase.NotFoundError('Lobby does not exist.')
         return lobby
 
     def get_lobby(self) -> bascenev1.Lobby | None:
@@ -394,7 +403,7 @@ class Chooser:
 
     def update_from_profile(self) -> None:
         """Set character/colors based on the current profile."""
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
         self._profilename = self._profilenames[self._profileindex]
         if self._profilename == '_edit':
             pass
@@ -415,7 +424,7 @@ class Chooser:
             # so no exploit opportunities)
             if (
                 character not in self._character_names
-                and character in _babase.app.classic.spaz_appearances
+                and character in babase.app.classic.spaz_appearances
             ):
                 self._character_names.append(character)
             self._character_index = self._character_names.index(character)
@@ -427,9 +436,8 @@ class Chooser:
 
     def reload_profiles(self) -> None:
         """Reload all player profiles."""
-        from babase._general import json_prep
 
-        app = _babase.app
+        app = babase.app
         assert app.classic is not None
 
         # Re-construct our profile index and other stuff since the profile
@@ -457,7 +465,7 @@ class Chooser:
         # (non-unicode/non-json) version.
         # Make sure they conform to our standards
         # (unicode strings, no tuples, etc)
-        self._profiles = json_prep(self._profiles)
+        self._profiles = babase.json_prep(self._profiles)
 
         # Filter out any characters we're unaware of.
         for profile in list(self._profiles.items()):
@@ -535,20 +543,20 @@ class Chooser:
             try:
                 name = self._sessionplayer.inputdevice.get_default_player_name()
             except Exception:
-                print_exception('Error getting _random chooser name.')
+                logging.exception('Error getting _random chooser name.')
                 name = 'Invalid'
             clamp = not full
         elif name == '__account__':
             try:
                 name = self._sessionplayer.inputdevice.get_v1_account_name(full)
             except Exception:
-                print_exception('Error getting account name for chooser.')
+                logging.exception('Error getting account name for chooser.')
                 name = 'Invalid'
             clamp = not full
         elif name == '_edit':
             # Explicitly flattening this to a str; it's only relevant on
             # the host so that's ok.
-            name = Lstr(
+            name = babase.Lstr(
                 resource='createEditPlayerText',
                 fallback_resource='editProfileWindow.titleNewText',
             ).evaluate()
@@ -561,11 +569,11 @@ class Chooser:
                         icon = (
                             self._profiles[name_raw]['icon']
                             if 'icon' in self._profiles[name_raw]
-                            else _babase.charstr(SpecialChar.LOGO)
+                            else babase.charstr(babase.SpecialChar.LOGO)
                         )
                         name = icon + name
                 except Exception:
-                    print_exception('Error applying global icon.')
+                    logging.exception('Error applying global icon.')
             else:
                 # We now clamp non-full versions of names so there's at
                 # least some hope of reading them in-game.
@@ -578,51 +586,54 @@ class Chooser:
 
     def _set_ready(self, ready: bool) -> None:
         # pylint: disable=cyclic-import
-        from babase._general import Call
 
-        classic = _babase.app.classic
+        classic = babase.app.classic
         assert classic is not None
 
         profilename = self._profilenames[self._profileindex]
 
         # Handle '_edit' as a special case.
         if profilename == '_edit' and ready:
-            with _babase.ContextRef.empty():
+            with babase.ContextRef.empty():
                 classic.profile_browser_window(in_main_menu=False)
 
                 # Give their input-device UI ownership too
                 # (prevent someone else from snatching it in crowded games)
-                _babase.set_ui_input_device(self._sessionplayer.inputdevice.id)
+                babase.set_ui_input_device(self._sessionplayer.inputdevice.id)
             return
 
         if not ready:
             self._sessionplayer.assigninput(
-                InputType.LEFT_PRESS,
-                Call(self.handlemessage, ChangeMessage('team', -1)),
+                babase.InputType.LEFT_PRESS,
+                babase.Call(self.handlemessage, ChangeMessage('team', -1)),
             )
             self._sessionplayer.assigninput(
-                InputType.RIGHT_PRESS,
-                Call(self.handlemessage, ChangeMessage('team', 1)),
+                babase.InputType.RIGHT_PRESS,
+                babase.Call(self.handlemessage, ChangeMessage('team', 1)),
             )
             self._sessionplayer.assigninput(
-                InputType.BOMB_PRESS,
-                Call(self.handlemessage, ChangeMessage('character', 1)),
+                babase.InputType.BOMB_PRESS,
+                babase.Call(self.handlemessage, ChangeMessage('character', 1)),
             )
             self._sessionplayer.assigninput(
-                InputType.UP_PRESS,
-                Call(self.handlemessage, ChangeMessage('profileindex', -1)),
+                babase.InputType.UP_PRESS,
+                babase.Call(
+                    self.handlemessage, ChangeMessage('profileindex', -1)
+                ),
             )
             self._sessionplayer.assigninput(
-                InputType.DOWN_PRESS,
-                Call(self.handlemessage, ChangeMessage('profileindex', 1)),
+                babase.InputType.DOWN_PRESS,
+                babase.Call(
+                    self.handlemessage, ChangeMessage('profileindex', 1)
+                ),
             )
             self._sessionplayer.assigninput(
                 (
-                    InputType.JUMP_PRESS,
-                    InputType.PICK_UP_PRESS,
-                    InputType.PUNCH_PRESS,
+                    babase.InputType.JUMP_PRESS,
+                    babase.InputType.PICK_UP_PRESS,
+                    babase.InputType.PUNCH_PRESS,
                 ),
-                Call(self.handlemessage, ChangeMessage('ready', 1)),
+                babase.Call(self.handlemessage, ChangeMessage('ready', 1)),
             )
             self._ready = False
             self._update_text()
@@ -630,31 +641,31 @@ class Chooser:
         else:
             self._sessionplayer.assigninput(
                 (
-                    InputType.LEFT_PRESS,
-                    InputType.RIGHT_PRESS,
-                    InputType.UP_PRESS,
-                    InputType.DOWN_PRESS,
-                    InputType.JUMP_PRESS,
-                    InputType.BOMB_PRESS,
-                    InputType.PICK_UP_PRESS,
+                    babase.InputType.LEFT_PRESS,
+                    babase.InputType.RIGHT_PRESS,
+                    babase.InputType.UP_PRESS,
+                    babase.InputType.DOWN_PRESS,
+                    babase.InputType.JUMP_PRESS,
+                    babase.InputType.BOMB_PRESS,
+                    babase.InputType.PICK_UP_PRESS,
                 ),
                 self._do_nothing,
             )
             self._sessionplayer.assigninput(
                 (
-                    InputType.JUMP_PRESS,
-                    InputType.BOMB_PRESS,
-                    InputType.PICK_UP_PRESS,
-                    InputType.PUNCH_PRESS,
+                    babase.InputType.JUMP_PRESS,
+                    babase.InputType.BOMB_PRESS,
+                    babase.InputType.PICK_UP_PRESS,
+                    babase.InputType.PUNCH_PRESS,
                 ),
-                Call(self.handlemessage, ChangeMessage('ready', 0)),
+                babase.Call(self.handlemessage, ChangeMessage('ready', 0)),
             )
 
             # Store the last profile picked by this input for reuse.
             input_device = self._sessionplayer.inputdevice
             name = input_device.name
             unique_id = input_device.unique_identifier
-            device_profiles = _babase.app.config.setdefault(
+            device_profiles = babase.app.config.setdefault(
                 'Default Player Profiles', {}
             )
 
@@ -670,7 +681,7 @@ class Chooser:
                     del device_profiles[profilekey]
             else:
                 device_profiles[profilekey] = profilename
-            _babase.app.config.commit()
+            babase.app.config.commit()
 
             # Set this player's short and full name.
             self._sessionplayer.setname(
@@ -688,7 +699,7 @@ class Chooser:
         # Team auto-balance kicks us to another team if we try to
         # join the team with the most players.
         if not self._ready:
-            if _babase.app.config.get('Auto Balance Teams', False):
+            if babase.app.config.get('Auto Balance Teams', False):
                 lobby = self.lobby
                 sessionteams = lobby.sessionteams
                 if len(sessionteams) > 1:
@@ -725,7 +736,7 @@ class Chooser:
 
     # TODO: should handle this at the engine layer so this is unnecessary.
     def _handle_repeat_message_attack(self) -> None:
-        now = _babase.apptime()
+        now = babase.apptime()
         count = self._last_change[1]
         if now - self._last_change[0] < QUICK_CHANGE_INTERVAL:
             count += 1
@@ -745,11 +756,11 @@ class Chooser:
 
             # If we've been removed from the lobby, ignore this stuff.
             if self._dead:
-                print_error('chooser got ChangeMessage after dying')
+                logging.error('chooser got ChangeMessage after dying')
                 return
 
             if not self._text_node:
-                print_error('got ChangeMessage after nodes died')
+                logging.error('got ChangeMessage after nodes died')
                 return
 
             if msg.what == 'team':
@@ -794,18 +805,21 @@ class Chooser:
         if self._ready:
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = Lstr(value=self._sessionplayer.getname(full=True))
-            text = Lstr(
+            text = babase.Lstr(value=self._sessionplayer.getname(full=True))
+            text = babase.Lstr(
                 value='${A} (${B})',
-                subs=[('${A}', text), ('${B}', Lstr(resource='readyText'))],
+                subs=[
+                    ('${A}', text),
+                    ('${B}', babase.Lstr(resource='readyText')),
+                ],
             )
         else:
-            text = Lstr(value=self._getname(full=True))
+            text = babase.Lstr(value=self._getname(full=True))
 
         can_switch_teams = len(self.lobby.sessionteams) > 1
 
         # Flash as we're coming in.
-        fin_color = _babase.safecolor(self.get_color()) + (1,)
+        fin_color = babase.safecolor(self.get_color()) + (1,)
         if not self._inited:
             animate_array(
                 self._text_node,
@@ -876,7 +890,7 @@ class Chooser:
         return self._sessionplayer
 
     def _update_icon(self) -> None:
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
             tex = _bascenev1.gettexture('black')
             tint_tex = _bascenev1.gettexture('black')
@@ -887,14 +901,14 @@ class Chooser:
             return
 
         try:
-            tex_name = _babase.app.classic.spaz_appearances[
+            tex_name = babase.app.classic.spaz_appearances[
                 self._character_names[self._character_index]
             ].icon_texture
-            tint_tex_name = _babase.app.classic.spaz_appearances[
+            tint_tex_name = babase.app.classic.spaz_appearances[
                 self._character_names[self._character_index]
             ].icon_mask_texture
         except Exception:
-            print_exception('Error updating char icon list')
+            logging.exception('Error updating char icon list')
             tex_name = 'neoSpazIcon'
             tint_tex_name = 'neoSpazIconColorMask'
 
@@ -1012,7 +1026,7 @@ class Lobby:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.spazappearance import get_appearances
 
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
 
         # We may have gained or lost character names if the user
         # bought something; reload these too.
@@ -1020,13 +1034,13 @@ class Lobby:
         self.character_names_local_unlocked.sort(key=lambda x: x.lower())
 
         # Do any overall prep we need to such as creating account profile.
-        _babase.app.classic.accounts.ensure_have_account_player_profile()
+        babase.app.classic.accounts.ensure_have_account_player_profile()
         for chooser in self.choosers:
             try:
                 chooser.reload_profiles()
                 chooser.update_from_profile()
             except Exception:
-                print_exception('Error reloading profiles.')
+                logging.exception('Error reloading profiles.')
 
     def update_positions(self) -> None:
         """Update positions for all choosers."""
@@ -1068,9 +1082,9 @@ class Lobby:
                 self.choosers.remove(chooser)
                 break
         if not found:
-            print_error(f'remove_chooser did not find player {player}')
+            logging.exception('remove_chooser did not find player %s.', player)
         elif chooser in self.choosers:
-            print_error(f'chooser remains after removal for {player}')
+            logging.exception('chooser remains after removal for %s.', player)
         self.update_positions()
 
     def remove_all_choosers(self) -> None:

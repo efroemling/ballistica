@@ -475,7 +475,6 @@ class SpecialOfferWindow(bui.Window):
                 return
 
             def do_it() -> None:
-                plus = bui.app.plus
                 assert plus is not None
 
                 plus.in_game_purchase(
