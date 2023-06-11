@@ -1,3 +1,3 @@
 <component name="DependencyValidationManager">
-  <scope name="PyIgnoreUnresolved" pattern="file:tools/pcommand||file:src/meta/bametainternal/python_embedded/internal_api.py||file:tools/bacloud||file:src/assets/ba_data/python/bastd/maps.py" />
+  <scope name="PyIgnoreUnresolved" pattern="file[ballisticakit]:*||file:tools/pcommand" />
 </component>

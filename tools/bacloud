@@ -30,7 +30,7 @@ from efro.dataclassio import (
 from bacommon.bacloud import RequestData, ResponseData, BACLOUD_VERSION
 
 if TYPE_CHECKING:
-    from typing import BinaryIO, IO
+    from typing import IO
 
 TOOL_NAME = 'bacloud'
 
@@ -367,6 +367,7 @@ class App:
             if response.end_command is not None:
                 nextcall = response.end_command
                 for key, val in self._end_command_args.items():
+                    # noinspection PyUnresolvedReferences
                     nextcall[1][key] = val
 
 

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import os
 
-# import sys
 import types
 import textwrap
 import subprocess
@@ -25,6 +24,10 @@ if TYPE_CHECKING:
     from types import ModuleType
     from typing import Sequence, Any
     from batools.docs import AttributeInfo
+
+
+class DummyModuleDef:
+    """Defines custom dummy module generation behavior."""
 
 
 def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
@@ -894,6 +897,7 @@ class Generator:
 
 def generate_dummy_modules(projroot: str) -> None:
     """Generate all dummy-modules."""
+    # pylint: disable=cyclic-import
 
     from batools.featureset import FeatureSet
 

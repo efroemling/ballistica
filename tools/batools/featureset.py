@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from efro.util import snake_case_to_title
 from efro.error import CleanError
+from batools.dummymodule import DummyModuleDef
 
 if TYPE_CHECKING:
     pass
@@ -81,12 +82,15 @@ class FeatureSet:
         # know).
         self.allow_as_soft_requirement = False
 
-        self.validate_name(name)
+        # Override this to customize how your dummy module is generated.
+        self.dummy_module_def = DummyModuleDef()
 
         # Paths of files we should disable c++ namespace checks for.
         # (generally external-originating code that doesn't conform to our
         # ballistica feature-set based namespace scheme)
         self.cpp_namespace_check_disable_files = set[str]()
+
+        self.validate_name(name)
 
         # Our standard snake_case name.
         self._name = name

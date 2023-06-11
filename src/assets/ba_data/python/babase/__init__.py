@@ -69,6 +69,9 @@ from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._app import App
 from babase._cloud import CloudSubsystem
 from babase._net import get_ip_address_type
+
+# noinspection PyProtectedMember
+# (PyCharm inspection bug?)
 from babase._mgen.enums import (
     Permission,
     SpecialChar,
