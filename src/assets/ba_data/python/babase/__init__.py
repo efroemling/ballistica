@@ -104,6 +104,7 @@ from babase._error import (
 from babase._language import Lstr, LanguageSubsystem
 from babase._appconfig import AppConfig
 from babase._apputils import (
+    handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
     garbage_collect,
     get_remote_app_name,
@@ -241,6 +242,7 @@ __all__ = [
     'reload_media',
     'print_load_info',
     'show_progress_bar',
+    'handle_leftover_v1_cloud_log_file',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

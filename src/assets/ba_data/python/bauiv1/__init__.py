@@ -83,6 +83,7 @@ from babase import (
     is_browser_likely_available,
 )
 from _bauiv1 import (
+    show_online_score_ui,
     uibounds,
     set_party_window_open,
     get_qrcode_texture,
@@ -115,6 +116,7 @@ from bauiv1._uitypes import Window, uicleanupcheck
 from bauiv1._subsystem import UIV1Subsystem
 
 __all__ = [
+    'show_online_score_ui',
     'lock_all_input',
     'unlock_all_input',
     'get_qrcode_texture',

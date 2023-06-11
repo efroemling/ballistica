@@ -62,6 +62,7 @@ from babase._mgen.enums import (
 )
 
 from _bascenev1 import (
+    set_master_server_source,
     get_foreground_host_session,
     get_foreground_host_activity,
     get_game_roster,
@@ -139,7 +140,11 @@ from _bascenev1 import (
     BaseTimer,
 )
 
-
+from bascenev1._profile import (
+    get_player_colors,
+    get_player_profile_icon,
+    get_player_profile_colors,
+)
 from bascenev1._appmode import SceneV1AppMode
 from bascenev1._session import Session
 from bascenev1._map import Map
@@ -397,6 +402,10 @@ __all__ = [
     'Campaign',
     'Level',
     'Plugin',
+    'get_player_colors',
+    'get_player_profile_icon',
+    'get_player_profile_colors',
+    'set_master_server_source',
 ]
 
 # We want stuff here to show up as bascenev1.Foo instead of
