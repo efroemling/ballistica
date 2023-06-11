@@ -6,12 +6,10 @@
 from __future__ import annotations
 
 import random
+import logging
 from typing import TYPE_CHECKING, TypeVar
 
-import _babase
-from babase._language import Lstr
-from babase._error import MapNotFoundError, print_error, print_exception
-from babase._general import WeakCall
+import babase
 import _bascenev1
 from bascenev1._activity import Activity
 from bascenev1._player import PlayerInfo
@@ -25,7 +23,6 @@ if TYPE_CHECKING:
 
     from bascenev1lib.actor.playerspaz import PlayerSpaz
     from bascenev1lib.actor.bomb import TNTSpawner
-    import babase
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
@@ -89,8 +86,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
         bascenev1.GameActivity.get_supported_maps() they can just rely on
         the default implementation here which calls those methods.
         """
-        assert _babase.app.classic is not None
-        delegate = _babase.app.classic.delegate
+        assert babase.app.classic is not None
+        delegate = babase.app.classic.delegate
         assert delegate is not None
         delegate.create_default_game_settings_ui(
             cls, sessiontype, settings, completion_call
@@ -115,18 +112,18 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
         Subclasses should override getname(); not this.
         """
-        name = Lstr(translate=('gameNames', cls.getname()))
+        name = babase.Lstr(translate=('gameNames', cls.getname()))
 
         # A few substitutions for 'Epic', 'Solo' etc. modes.
         # FIXME: Should provide a way for game types to define filters of
         #  their own and should not rely on hard-coded settings names.
         if settings is not None:
             if 'Solo Mode' in settings and settings['Solo Mode']:
-                name = Lstr(
+                name = babase.Lstr(
                     resource='soloNameFilterText', subs=[('${NAME}', name)]
                 )
             if 'Epic Mode' in settings and settings['Epic Mode']:
-                name = Lstr(
+                name = babase.Lstr(
                     resource='epicNameFilterText', subs=[('${NAME}', name)]
                 )
 
@@ -135,7 +132,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     @classmethod
     def get_team_display_string(cls, name: str) -> babase.Lstr:
         """Given a team name, returns a localized version of it."""
-        return Lstr(translate=('teamNames', name))
+        return babase.Lstr(translate=('teamNames', name))
 
     @classmethod
     def get_description(cls, sessiontype: type[bascenev1.Session]) -> str:
@@ -157,7 +154,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         Sub-classes should override get_description(); not this.
         """
         description = cls.get_description(sessiontype)
-        return Lstr(translate=('gameDescriptions', description))
+        return babase.Lstr(translate=('gameDescriptions', description))
 
     @classmethod
     def get_available_settings(
@@ -179,8 +176,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
         for this game-type for the given bascenev1.Session type.
         """
         del sessiontype  # Unused arg.
-        assert _babase.app.classic is not None
-        return _babase.app.classic.getmaps('melee')
+        assert babase.app.classic is not None
+        return babase.app.classic.getmaps('melee')
 
     @classmethod
     def get_settings_display_string(cls, config: dict[str, Any]) -> babase.Lstr:
@@ -194,7 +191,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # In newer configs, map is in settings; it used to be in the
         # config root.
         if 'map' in config['settings']:
-            sval = Lstr(
+            sval = babase.Lstr(
                 value='${NAME} @ ${MAP}',
                 subs=[
                     ('${NAME}', name),
@@ -209,7 +206,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 ],
             )
         elif 'map' in config:
-            sval = Lstr(
+            sval = babase.Lstr(
                 value='${NAME} @ ${MAP}',
                 subs=[
                     ('${NAME}', name),
@@ -223,7 +220,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             )
         else:
             print('invalid game config - expected map entry under settings')
-            sval = Lstr(value='???')
+            sval = babase.Lstr(value='???')
         return sval
 
     @classmethod
@@ -240,7 +237,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Instantiate the Activity."""
         super().__init__(settings)
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
 
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
@@ -297,7 +294,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         exist.
         """
         if self._map is None:
-            raise MapNotFoundError
+            raise babase.MapNotFoundError
         return self._map
 
     def get_instance_display_string(self) -> babase.Lstr:
@@ -323,7 +320,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                     self.session.campaign_level_name
                 ).displayname
         except Exception:
-            print_error('error getting campaign level name')
+            logging.exception('Error getting campaign level name.')
         return self.get_instance_display_string()
 
     def get_instance_description(self) -> str | Sequence:
@@ -401,7 +398,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """
 
     def _continue_choice(self, do_continue: bool) -> None:
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus is not None
         self._is_waiting_for_continue = False
         if self.has_ended():
@@ -436,11 +433,11 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # pylint: disable=cyclic-import
         from bascenev1._coopsession import CoopSession
 
-        classic = _babase.app.classic
+        classic = babase.app.classic
         assert classic is not None
         continues_window = classic.continues_window
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
         try:
             if plus is not None and plus.get_v1_account_misc_read_val(
                 'enableContinues', False
@@ -459,20 +456,20 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
-                            assert _babase.app.classic is not None
-                            hmmw = _babase.app.ui_v1.has_main_menu_window()
+                            assert babase.app.classic is not None
+                            hmmw = babase.app.ui_v1.has_main_menu_window()
                             if not gnode.paused and not hmmw:
                                 self._is_waiting_for_continue = True
-                                with _babase.ContextRef.empty():
-                                    _babase.apptimer(
+                                with babase.ContextRef.empty():
+                                    babase.apptimer(
                                         0.5,
                                         lambda: continues_window(
                                             self,
                                             self._continue_cost,
-                                            continue_call=WeakCall(
+                                            continue_call=babase.WeakCall(
                                                 self._continue_choice, True
                                             ),
-                                            cancel_call=WeakCall(
+                                            cancel_call=babase.WeakCall(
                                                 self._continue_choice, False
                                             ),
                                         ),
@@ -480,15 +477,15 @@ class GameActivity(Activity[PlayerT, TeamT]):
                                 return
 
         except Exception:
-            print_exception('Error handling continues.')
+            logging.exception('Error handling continues.')
 
         self.end_game()
 
     def on_begin(self) -> None:
         super().on_begin()
 
-        if _babase.app.classic is not None:
-            _babase.app.classic.game_begin_analytics()
+        if babase.app.classic is not None:
+            babase.app.classic.game_begin_analytics()
 
         # We don't do this in on_transition_in because it may depend on
         # players/teams which aren't available until now.
@@ -510,13 +507,13 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # time is left.
         tournament_id = self.session.tournament_id
         if tournament_id is not None:
-            assert _babase.app.plus is not None
-            _babase.app.plus.tournament_query(
+            assert babase.app.plus is not None
+            babase.app.plus.tournament_query(
                 args={
                     'tournamentIDs': [tournament_id],
                     'source': 'in-game time remaining query',
                 },
-                callback=WeakCall(self._on_tournament_query_response),
+                callback=babase.WeakCall(self._on_tournament_query_response),
             )
 
     def _on_tournament_query_response(
@@ -526,8 +523,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
             data_t = data['t']  # This used to be the whole payload.
 
             # Keep our cached tourney info up to date
-            assert _babase.app.classic is not None
-            _babase.app.classic.accounts.cache_tournament_info(data_t)
+            assert babase.app.classic is not None
+            babase.app.classic.accounts.cache_tournament_info(data_t)
             self._setup_tournament_time_limit(
                 max(5, data_t[0]['timeRemaining'])
             )
@@ -598,11 +595,11 @@ class GameActivity(Activity[PlayerT, TeamT]):
         subs = []
         for i in range(len(sb_desc_l) - 1):
             subs.append(('${ARG' + str(i + 1) + '}', str(sb_desc_l[i + 1])))
-        translation = Lstr(
+        translation = babase.Lstr(
             translate=('gameDescriptions', sb_desc_l[0]), subs=subs
         )
         sb_desc = translation
-        vrmode = _babase.app.vr_mode
+        vrmode = babase.app.vr_mode
         yval = -34 if is_empty else -20
         yval -= 16
         sbpos = (
@@ -698,15 +695,17 @@ class GameActivity(Activity[PlayerT, TeamT]):
         subs = []
         for i in range(len(desc_l) - 1):
             subs.append(('${ARG' + str(i + 1) + '}', str(desc_l[i + 1])))
-        translation = Lstr(translate=('gameDescriptions', desc_l[0]), subs=subs)
+        translation = babase.Lstr(
+            translate=('gameDescriptions', desc_l[0]), subs=subs
+        )
 
         # Do some standard filters (epic mode, etc).
         if self.settings_raw.get('Epic Mode', False):
-            translation = Lstr(
+            translation = babase.Lstr(
                 resource='epicDescriptionFilterText',
                 subs=[('${DESCRIPTION}', translation)],
             )
-        vrmode = _babase.app.vr_mode
+        vrmode = babase.app.vr_mode
         dnode = _bascenev1.newnode(
             'text',
             attrs={
@@ -741,8 +740,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # If there's any tips left on the list, display one.
         if self.tips:
             tip = self.tips.pop(random.randrange(len(self.tips)))
-            tip_title = Lstr(
-                value='${A}:', subs=[('${A}', Lstr(resource='tipText'))]
+            tip_title = babase.Lstr(
+                value='${A}:', subs=[('${A}', babase.Lstr(resource='tipText'))]
             )
             icon: bascenev1.Texture | None = None
             sound: bascenev1.Sound | None = None
@@ -753,14 +752,14 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 assert isinstance(tip, str)
 
             # Do a few substitutions.
-            tip_lstr = Lstr(
+            tip_lstr = babase.Lstr(
                 translate=('tips', tip),
-                subs=[('${PICKUP}', _babase.charstr(SpecialChar.TOP_BUTTON))],
+                subs=[('${PICKUP}', babase.charstr(SpecialChar.TOP_BUTTON))],
             )
             base_position = (75, 50)
             tip_scale = 0.8
             tip_title_scale = 1.2
-            vrmode = _babase.app.vr_mode
+            vrmode = babase.app.vr_mode
 
             t_offs = -350.0
             tnode = _bascenev1.newnode(
@@ -909,7 +908,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
             from bascenev1lib.actor.respawnicon import RespawnIcon
 
             player.customdata['respawn_timer'] = _bascenev1.Timer(
-                respawn_time, WeakCall(self.spawn_player_if_exists, player)
+                respawn_time,
+                babase.WeakCall(self.spawn_player_if_exists, player),
             )
             player.customdata['respawn_icon'] = RespawnIcon(
                 player, respawn_time
@@ -958,7 +958,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             playerspaztype = PlayerSpaz
 
         light_color = _math.normalized_color(color)
-        display_color = _babase.safecolor(color, target_intensity=0.75)
+        display_color = babase.safecolor(color, target_intensity=0.75)
         spaz = playerspaztype(
             color=color,
             highlight=highlight,
@@ -1006,7 +1006,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
         self._powerup_drop_timer = _bascenev1.Timer(
             DEFAULT_POWERUP_INTERVAL,
-            WeakCall(self._standard_drop_powerups),
+            babase.WeakCall(self._standard_drop_powerups),
             repeat=True,
         )
         self._standard_drop_powerups()
@@ -1030,7 +1030,9 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # Drop one powerup per point.
         points = self.map.powerup_spawn_points
         for i in range(len(points)):
-            _bascenev1.timer(i * 0.4, WeakCall(self._standard_drop_powerup, i))
+            _bascenev1.timer(
+                i * 0.4, babase.WeakCall(self._standard_drop_powerup, i)
+            )
 
     def _setup_standard_tnt_drops(self) -> None:
         """Standard tnt drop."""
@@ -1055,7 +1057,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             return
         self._standard_time_limit_time = int(duration)
         self._standard_time_limit_timer = _bascenev1.Timer(
-            1.0, WeakCall(self._standard_time_limit_tick), repeat=True
+            1.0, babase.WeakCall(self._standard_time_limit_tick), repeat=True
         )
         self._standard_time_limit_text = NodeActor(
             _bascenev1.newnode(
@@ -1121,7 +1123,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                     'color': (1, 0.7, 0, 1),
                     'position': (0, -90),
                     'scale': 1.2,
-                    'text': Lstr(resource='timeExpiredText'),
+                    'text': babase.Lstr(resource='timeExpiredText'),
                 },
             )
             _bascenev1.getsound('refWhistle').play()
@@ -1145,7 +1147,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # then we have to mess with contexts and whatnot since its currently
         # not available in activity contexts. :-/
         self._tournament_time_limit_timer = _bascenev1.BaseTimer(
-            1.0, WeakCall(self._tournament_time_limit_tick), repeat=True
+            1.0, babase.WeakCall(self._tournament_time_limit_tick), repeat=True
         )
         self._tournament_time_limit_title_text = NodeActor(
             _bascenev1.newnode(
@@ -1161,7 +1163,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                     'position': (60, 50),
                     'flatness': 1.0,
                     'scale': 0.5,
-                    'text': Lstr(resource='tournamentText'),
+                    'text': babase.Lstr(resource='tournamentText'),
                 },
             )
         )
@@ -1233,7 +1235,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         if self._tournament_time_limit <= 0:
             self._tournament_time_limit_timer = None
             self.end_game()
-            tval = Lstr(
+            tval = babase.Lstr(
                 resource='tournamentTimeExpiredText',
                 fallback_resource='timeExpiredText',
             )
@@ -1275,7 +1277,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # Reserve a spot on the screen (in case we get multiple of these so
         # they don't overlap).
         i = 0
-        cur_time = _babase.apptime()
+        cur_time = babase.apptime()
         while True:
             if (
                 i not in self._zoom_message_times
@@ -1303,8 +1305,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
             # If settings doesn't specify a map, pick a random one from the
             # list of supported ones.
             unowned_maps: list[str] = (
-                _babase.app.classic.store.get_unowned_maps()
-                if _babase.app.classic is not None
+                babase.app.classic.store.get_unowned_maps()
+                if babase.app.classic is not None
                 else []
             )
             valid_maps: list[str] = [
@@ -1313,7 +1315,9 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 if m not in unowned_maps
             ]
             if not valid_maps:
-                _babase.screenmessage(Lstr(resource='noValidMapsErrorText'))
+                babase.screenmessage(
+                    babase.Lstr(resource='noValidMapsErrorText')
+                )
                 raise RuntimeError('No valid maps')
             map_name = valid_maps[random.randrange(len(valid_maps))]
         return map_name

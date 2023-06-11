@@ -4,16 +4,10 @@
 from __future__ import annotations
 
 import weakref
+import logging
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-import _babase
-from babase._error import (
-    print_exception,
-    SessionTeamNotFoundError,
-    SessionPlayerNotFoundError,
-    NodeNotFoundError,
-)
-from babase._general import Call, verify_object_death
+import babase
 import _bascenev1
 from bascenev1._dependency import DependencyComponent
 from bascenev1._team import Team
@@ -179,7 +173,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         # is dying.
         self._actor_refs: list[bascenev1.Actor] = []
         self._actor_weak_refs: list[weakref.ref[bascenev1.Actor]] = []
-        self._last_prune_dead_actors_time = _babase.apptime()
+        self._last_prune_dead_actors_time = babase.apptime()
         self._prune_dead_actors_timer: bascenev1.Timer | None = None
 
         self.teams = []
@@ -193,15 +187,15 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         # If the activity has been run then we should have already cleaned
         # it up, but we still need to run expire calls for un-run activities.
         if not self._expired:
-            with _babase.ContextRef.empty():
+            with babase.ContextRef.empty():
                 self._expire()
 
         # Inform our owner that we officially kicked the bucket.
         if self._transitioning_out:
             session = self._session()
             if session is not None:
-                _babase.pushcall(
-                    Call(
+                babase.pushcall(
+                    babase.Call(
                         session.transitioning_out_activity_was_freed,
                         self.can_show_ad_on_death,
                     )
@@ -219,7 +213,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         """
         node = self._globalsnode
         if not node:
-            raise NodeNotFoundError()
+            raise babase.NodeNotFoundError()
         return node
 
     @property
@@ -290,10 +284,12 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         # and reports any lingering references keeping it alive.
         # We store the timer on the activity so as soon as the activity dies
         # it gets cleaned up.
-        with _babase.ContextRef.empty():
+        with babase.ContextRef.empty():
             ref = weakref.ref(self)
-            self._activity_death_check_timer = _babase.AppTimer(
-                5.0, Call(self._check_activity_death, ref, [0]), repeat=True
+            self._activity_death_check_timer = babase.AppTimer(
+                5.0,
+                babase.Call(self._check_activity_death, ref, [0]),
+                repeat=True,
             )
 
         # Run _expire in an empty context; nothing should be happening in
@@ -302,7 +298,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         # and we can't properly provide context in that situation anyway; might
         # as well be consistent).
         if not self._expired:
-            with _babase.ContextRef.empty():
+            with babase.ContextRef.empty():
                 self._expire()
         else:
             raise RuntimeError(
@@ -460,7 +456,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_transition_in()
             except Exception:
-                print_exception(f'Error in on_transition_in for {self}.')
+                logging.exception('Error in on_transition_in for %s.', self)
 
         # Tell the C++ layer that this activity is the main one, so it uses
         # settings from our globals, directs various events to us, etc.
@@ -474,7 +470,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_transition_out()
             except Exception:
-                print_exception(f'Error in on_transition_out for {self}.')
+                logging.exception('Error in on_transition_out for %s.', self)
 
     def begin(self, session: bascenev1.Session) -> None:
         """Begin the activity.
@@ -570,7 +566,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_player_join(player)
             except Exception:
-                print_exception(f'Error in on_player_join for {self}.')
+                logging.exception('Error in on_player_join for %s.', self)
 
     def remove_player(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         """Remove a player from the Activity while it is running.
@@ -600,11 +596,11 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_player_leave(player)
             except Exception:
-                print_exception(f'Error in on_player_leave for {self}.')
+                logging.exception('Error in on_player_leave for %s.', self)
             try:
                 player.leave()
             except Exception:
-                print_exception(f'Error on leave for {player} in {self}.')
+                logging.exception('Error on leave for %s in %s.', player, self)
 
             self._reset_session_player_for_no_activity(sessionplayer)
 
@@ -629,7 +625,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_team_join(team)
             except Exception:
-                print_exception(f'Error in on_team_join for {self}.')
+                logging.exception('Error in on_team_join for %s.', self)
 
     def remove_team(self, sessionteam: bascenev1.SessionTeam) -> None:
         """Remove a team from a Running Activity
@@ -651,11 +647,11 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             try:
                 self.on_team_leave(team)
             except Exception:
-                print_exception(f'Error in on_team_leave for {self}.')
+                logging.exception('Error in on_team_leave for %s.', self)
             try:
                 team.leave()
             except Exception:
-                print_exception(f'Error on leave for {team} in {self}.')
+                logging.exception('Error on leave for %s in %s.', team, self)
 
             sessionteam.activityteam = None
 
@@ -675,16 +671,18 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         try:
             sessionplayer.setnode(None)
         except Exception:
-            print_exception(
-                f'Error resetting SessionPlayer node on {sessionplayer}'
-                f' for {self}.'
+            logging.exception(
+                'Error resetting SessionPlayer node on %s for %s.',
+                sessionplayer,
+                self,
             )
         try:
             sessionplayer.resetinput()
         except Exception:
-            print_exception(
-                f'Error resetting SessionPlayer input on {sessionplayer}'
-                f' for {self}.'
+            logging.exception(
+                'Error resetting SessionPlayer input on %s for %s.',
+                sessionplayer,
+                self,
             )
 
         # These should never fail I think...
@@ -749,10 +747,10 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             counter[0] += 1
             if counter[0] == 4:
                 print('Killing app due to stuck activity... :-(')
-                _babase.quit()
+                babase.quit()
 
         except Exception:
-            print_exception('Error on _check_activity_death/')
+            logging.exception('Error on _check_activity_death.')
 
     def _expire(self) -> None:
         """Put the activity in a state where it can be garbage-collected.
@@ -766,12 +764,12 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         try:
             self.on_expire()
         except Exception:
-            print_exception(f'Error in Activity on_expire() for {self}.')
+            logging.exception('Error in Activity on_expire() for %s.', self)
 
         try:
             self._customdata = None
         except Exception:
-            print_exception(f'Error clearing customdata for {self}.')
+            logging.exception('Error clearing customdata for %s.', self)
 
         # Don't want to be holding any delay-delete refs at this point.
         self._prune_delay_deletes()
@@ -786,19 +784,19 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         try:
             self._activity_data.expire()
         except Exception:
-            print_exception(f'Error expiring _activity_data for {self}.')
+            logging.exception('Error expiring _activity_data for %s.', self)
 
     def _expire_actors(self) -> None:
         # Expire all Actors.
         for actor_ref in self._actor_weak_refs:
             actor = actor_ref()
             if actor is not None:
-                verify_object_death(actor)
+                babase.verify_object_death(actor)
                 try:
                     actor.on_expire()
                 except Exception:
-                    print_exception(
-                        f'Error in Actor.on_expire()' f' for {actor_ref()}.'
+                    logging.exception(
+                        'Error in Actor.on_expire() for %s.', actor_ref()
                     )
 
     def _expire_players(self) -> None:
@@ -806,57 +804,57 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         # get freed soon.
         for ex_player in (p() for p in self._players_that_left):
             if ex_player is not None:
-                verify_object_death(ex_player)
+                babase.verify_object_death(ex_player)
 
         for player in self.players:
             # This should allow our bascenev1.Player instance to be freed.
             # Complain if that doesn't happen.
-            verify_object_death(player)
+            babase.verify_object_death(player)
 
             try:
                 player.expire()
             except Exception:
-                print_exception(f'Error expiring {player}')
+                logging.exception('Error expiring %s.', player)
 
             # Reset the SessionPlayer to a not-in-an-activity state.
             try:
                 sessionplayer = player.sessionplayer
                 self._reset_session_player_for_no_activity(sessionplayer)
-            except SessionPlayerNotFoundError:
+            except babase.SessionPlayerNotFoundError:
                 # Conceivably, someone could have held on to a Player object
                 # until now whos underlying SessionPlayer left long ago...
                 pass
             except Exception:
-                print_exception(f'Error expiring {player}.')
+                logging.exception('Error expiring %s.', player)
 
     def _expire_teams(self) -> None:
         # Issue warnings for any teams that left the game but don't
         # get freed soon.
         for ex_team in (p() for p in self._teams_that_left):
             if ex_team is not None:
-                verify_object_death(ex_team)
+                babase.verify_object_death(ex_team)
 
         for team in self.teams:
             # This should allow our bascenev1.Team instance to die.
             # Complain if that doesn't happen.
-            verify_object_death(team)
+            babase.verify_object_death(team)
 
             try:
                 team.expire()
             except Exception:
-                print_exception(f'Error expiring {team}')
+                logging.exception('Error expiring %s.', team)
 
             try:
                 sessionteam = team.sessionteam
                 sessionteam.activityteam = None
-            except SessionTeamNotFoundError:
+            except babase.SessionTeamNotFoundError:
                 # It is expected that Team objects may last longer than
                 # the SessionTeam they came from (game objects may hold
                 # team references past the point at which the underlying
                 # player/team has left the game)
                 pass
             except Exception:
-                print_exception(f'Error expiring Team {team}.')
+                logging.exception('Error expiring Team %s.', team)
 
     def _prune_delay_deletes(self) -> None:
         self._delay_delete_players.clear()
@@ -871,7 +869,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         ]
 
     def _prune_dead_actors(self) -> None:
-        self._last_prune_dead_actors_time = _babase.apptime()
+        self._last_prune_dead_actors_time = babase.apptime()
 
         # Prune our strong refs when the Actor's exists() call gives False
         self._actor_refs = [a for a in self._actor_refs if a.exists()]

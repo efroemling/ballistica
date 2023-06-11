@@ -5,17 +5,16 @@ from __future__ import annotations
 
 import copy
 import random
+import logging
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 import _bascenev1
-from babase._error import NotFoundError, print_error
 from bascenev1._session import Session
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    import babase
     import bascenev1
 
 DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
@@ -43,7 +42,7 @@ class MultiTeamSession(Session):
         from bascenev1 import _playlist
         from bascenev1lib.activity.multiteamjoin import MultiTeamJoinActivity
 
-        app = _babase.app
+        app = babase.app
         classic = app.classic
         assert classic is not None
         cfg = app.config
@@ -163,8 +162,8 @@ class MultiTeamSession(Session):
     def get_max_players(self) -> int:
         """Return max number of Players allowed to join the game at once."""
         if self.use_teams:
-            return _babase.app.config.get('Team Game Max Players', 8)
-        return _babase.app.config.get('Free-for-All Max Players', 8)
+            return babase.app.config.get('Team Game Max Players', 8)
+        return babase.app.config.get('Free-for-All Max Players', 8)
 
     def _instantiate_next_game(self) -> None:
         self._next_game_instance = _bascenev1.newactivity(
@@ -229,7 +228,7 @@ class MultiTeamSession(Session):
                 # (ie: no longer sitting in the lobby).
                 try:
                     has_team = player.sessionteam is not None
-                except NotFoundError:
+                except babase.NotFoundError:
                     has_team = False
                 if has_team:
                     self.stats.register_sessionplayer(player)
@@ -245,7 +244,7 @@ class MultiTeamSession(Session):
     def _switch_to_score_screen(self, results: Any) -> None:
         """Switch to a score screen after leaving a round."""
         del results  # Unused arg.
-        print_error('this should be overridden')
+        logging.error('This should be overridden.', stack_info=True)
 
     def announce_game_results(
         self,
@@ -262,8 +261,6 @@ class MultiTeamSession(Session):
         announcement of the same.
         """
         # pylint: disable=cyclic-import
-        from babase._math import normalized_color
-        from babase._language import Lstr
         from bascenev1._gameutils import cameraflash
         from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._messages import CelebrateMessage
@@ -286,14 +283,14 @@ class MultiTeamSession(Session):
                     wins_resource = 'winsPlayerText'
                 else:
                     wins_resource = 'winsTeamText'
-                wins_text = Lstr(
+                wins_text = babase.Lstr(
                     resource=wins_resource,
                     subs=[('${NAME}', winning_sessionteam.name)],
                 )
                 activity.show_zoom_message(
                     wins_text,
                     scale=0.85,
-                    color=normalized_color(winning_sessionteam.color),
+                    color=babase.normalized_color(winning_sessionteam.color),
                 )
 
 

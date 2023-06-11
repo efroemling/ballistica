@@ -222,7 +222,6 @@ class ClassicSubsystem(AppSubsystem):
         # Run a test in a few seconds to see if we should pop up an existing
         # pending special offer.
         def check_special_offer() -> None:
-            plus = bui.app.plus
             assert plus is not None
 
             from bauiv1lib.specialoffer import show_offer
