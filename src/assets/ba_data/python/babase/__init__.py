@@ -12,6 +12,7 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    have_chars,
     android_get_external_files_dir,
     is_os_playing_music,
     getsimplesound,
@@ -275,6 +276,7 @@ __all__ = [
     'getsimplesound',
     'is_os_playing_music',
     'android_get_external_files_dir',
+    'have_chars',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

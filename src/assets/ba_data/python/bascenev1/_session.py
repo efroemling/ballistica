@@ -406,8 +406,6 @@ class Session:
         this time, unless 'force' is True, in which case the new results
         will replace the old.
         """
-        from babase._general import Call
-
         # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:
             return
@@ -428,7 +426,8 @@ class Session:
 
                 # Set a timer to set in motion this activity's demise.
                 self._activity_end_timer = _bascenev1.BaseTimer(
-                    delay, Call(self._complete_end_activity, activity, results)
+                    delay,
+                    babase.Call(self._complete_end_activity, activity, results),
                 )
 
     def handlemessage(self, msg: Any) -> Any:
@@ -675,13 +674,12 @@ class Session:
     ) -> None:
         """(internal)"""
         # pylint: disable=cyclic-import
-        from babase._apputils import garbage_collect
 
         # Since things should be generally still right now, it's a good time
         # to run garbage collection to clear out any circular dependency
         # loops. We keep this disabled normally to avoid non-deterministic
         # hitches.
-        garbage_collect()
+        babase.garbage_collect()
 
         assert babase.app.classic is not None
         with self.context:

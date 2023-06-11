@@ -9,12 +9,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from efro.util import asserttype
+import babase
+
 from bascenev1._team import Team, SessionTeam
 
 if TYPE_CHECKING:
     from typing import Sequence
 
-    import babase
     import bascenev1
 
 
@@ -113,8 +114,6 @@ class GameResults:
 
         (properly formatted for the score type.)
         """
-        from babase._language import Lstr
-        from babase._text import timestring
         from bascenev1._score import ScoreType
 
         if not self._game_set:
@@ -122,13 +121,13 @@ class GameResults:
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
                 if score[1] is None:
-                    return Lstr(value='-')
+                    return babase.Lstr(value='-')
                 if self._scoretype is ScoreType.SECONDS:
-                    return timestring(score[1], centi=False)
+                    return babase.timestring(score[1], centi=False)
                 if self._scoretype is ScoreType.MILLISECONDS:
-                    return timestring(score[1] / 1000.0, centi=True)
-                return Lstr(value=str(score[1]))
-        return Lstr(value='-')
+                    return babase.timestring(score[1] / 1000.0, centi=True)
+                return babase.Lstr(value=str(score[1]))
+        return babase.Lstr(value='-')
 
     @property
     def playerinfos(self) -> list[bascenev1.PlayerInfo]:

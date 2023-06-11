@@ -4,22 +4,18 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic, cast
 
-import _babase
-from babase._error import (
-    SessionPlayerNotFoundError,
-    print_exception,
-    ActorNotFoundError,
-)
+import babase
+
 import _bascenev1
 from bascenev1._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
     from typing import Sequence, Any, Callable
 
-    import babase
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
@@ -130,7 +126,7 @@ class Player(Generic[TeamT]):
                 self.actor.handlemessage(DieMessage(how=DeathType.LEFT_GAME))
             self.actor = None
         except Exception:
-            print_exception(f'Error killing actor on leave for {self}')
+            logging.exception('Error killing actor on leave for %s.', self)
         self._nodeactor = None
         del self._team
         del self._customdata
@@ -147,7 +143,7 @@ class Player(Generic[TeamT]):
         try:
             self.on_expire()
         except Exception:
-            print_exception(f'Error in on_expire for {self}.')
+            logging.exception('Error in on_expire for %s.', self)
 
         self._nodeactor = None
         self.actor = None
@@ -193,7 +189,7 @@ class Player(Generic[TeamT]):
         assert self._postinited
         if bool(self._sessionplayer):
             return self._sessionplayer
-        raise SessionPlayerNotFoundError()
+        raise babase.SessionPlayerNotFoundError()
 
     @property
     def node(self) -> bascenev1.Node:
@@ -216,8 +212,8 @@ class Player(Generic[TeamT]):
         assert self._postinited
         assert not self._expired
         if self.actor is None:
-            raise ActorNotFoundError
-        return _babase.Vec3(self.node.position)
+            raise babase.ActorNotFoundError
+        return babase.Vec3(self.node.position)
 
     def exists(self) -> bool:
         """Whether the underlying player still exists.

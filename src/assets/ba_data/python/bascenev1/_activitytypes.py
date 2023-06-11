@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
-from babase._mgen.enums import InputType, UIScale
 from bascenev1._activity import Activity
 
 # False-positive from pylint due to our class-generics-filter.
@@ -16,7 +16,6 @@ from bascenev1._team import EmptyTeam  # pylint: disable=W0611
 from bascenev1._music import MusicType, setmusic
 
 if TYPE_CHECKING:
-    import babase
     import bascenev1
     from bascenev1._lobby import JoinInfo
 
@@ -36,22 +35,21 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
-        _babase.fade_screen(False)
-        _babase.lock_all_input()
+        babase.fade_screen(False)
+        babase.lock_all_input()
 
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
 
-        assert _babase.app.classic is not None
-        from babase._general import Call
+        assert babase.app.classic is not None
 
-        main_menu_session = _babase.app.classic.get_main_menu_session()
+        main_menu_session = babase.app.classic.get_main_menu_session()
 
         super().on_begin()
-        _babase.unlock_all_input()
-        assert _babase.app.classic is not None
-        _babase.app.classic.ads.call_after_ad(
-            Call(_bascenev1.new_host_session, main_menu_session)
+        babase.unlock_all_input()
+        assert babase.app.classic is not None
+        babase.app.classic.ads.call_after_ad(
+            babase.Call(_bascenev1.new_host_session, main_menu_session)
         )
 
 
@@ -90,7 +88,7 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._tips_text = TipsText()
         setmusic(MusicType.CHAR_SELECT)
         self._join_info = self.session.lobby.create_join_info()
-        _babase.set_analytics_screen('Joining Screen')
+        babase.set_analytics_screen('Joining Screen')
 
 
 class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
@@ -142,7 +140,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
 
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self._birth_time = _babase.apptime()
+        self._birth_time = babase.apptime()
         self._min_view_time = 5.0
         self._allow_server_transition = False
         self._background: bascenev1.Actor | None = None
@@ -154,16 +152,16 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._server_transitioning: bool | None = None
 
     def on_player_join(self, player: EmptyPlayer) -> None:
-        from babase._general import WeakCall
-
         super().on_player_join(player)
         time_till_assign = max(
-            0, self._birth_time + self._min_view_time - _babase.apptime()
+            0, self._birth_time + self._min_view_time - babase.apptime()
         )
 
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
-        _bascenev1.timer(time_till_assign, WeakCall(self._safe_assign, player))
+        _bascenev1.timer(
+            time_till_assign, babase.WeakCall(self._safe_assign, player)
+        )
 
     def on_transition_in(self) -> None:
         from bascenev1lib.actor.tipstext import TipsText
@@ -180,20 +178,19 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.text import Text
-        from babase import _language
 
         super().on_begin()
 
         # Pop up a 'press any button to continue' statement after our
         # min-view-time show a 'press any button to continue..'
         # thing after a bit.
-        assert _babase.app.classic is not None
-        if _babase.app.ui_v1.uiscale is UIScale.LARGE:
+        assert babase.app.classic is not None
+        if babase.app.ui_v1.uiscale is babase.UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = _language.Lstr(resource='pressAnyKeyButtonText')
+            sval = babase.Lstr(resource='pressAnyKeyButtonText')
         else:
-            sval = _language.Lstr(resource='pressAnyButtonText')
+            sval = babase.Lstr(resource='pressAnyButtonText')
 
         Text(
             self._custom_continue_message
@@ -215,12 +212,12 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # it wants to do anything special like switch sessions or kill the app.
         if (
             self._allow_server_transition
-            and _babase.app.classic is not None
-            and _babase.app.classic.server is not None
+            and babase.app.classic is not None
+            and babase.app.classic.server is not None
             and self._server_transitioning is None
         ):
             self._server_transitioning = (
-                _babase.app.classic.server.handle_transition()
+                babase.app.classic.server.handle_transition()
             )
             assert isinstance(self._server_transitioning, bool)
 
@@ -237,10 +234,10 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         if not self.is_transitioning_out() and player:
             player.assigninput(
                 (
-                    InputType.JUMP_PRESS,
-                    InputType.PUNCH_PRESS,
-                    InputType.BOMB_PRESS,
-                    InputType.PICK_UP_PRESS,
+                    babase.InputType.JUMP_PRESS,
+                    babase.InputType.PUNCH_PRESS,
+                    babase.InputType.BOMB_PRESS,
+                    babase.InputType.PICK_UP_PRESS,
                 ),
                 self._player_press,
             )

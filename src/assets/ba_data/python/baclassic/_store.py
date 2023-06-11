@@ -7,13 +7,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+import bascenev1
 
 if TYPE_CHECKING:
     from typing import Any
-
-    import babase
-    import bascenev1
 
 
 class StoreSubsystem:
@@ -26,29 +24,26 @@ class StoreSubsystem:
     def get_store_item_name_translated(self, item_name: str) -> babase.Lstr:
         """Return a babase.Lstr for a store item name."""
         # pylint: disable=cyclic-import
-        from babase import _language
-        from bascenev1 import _map
-
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
-            return _language.Lstr(
+            return babase.Lstr(
                 translate=('characterNames', item_info['character'])
             )
         if item_name in ['merch']:
-            return _language.Lstr(resource='merchText')
+            return babase.Lstr(resource='merchText')
         if item_name in ['upgrades.pro', 'pro']:
-            return _language.Lstr(
+            return babase.Lstr(
                 resource='store.bombSquadProNameText',
-                subs=[('${APP_NAME}', _language.Lstr(resource='titleText'))],
+                subs=[('${APP_NAME}', babase.Lstr(resource='titleText'))],
             )
         if item_name.startswith('maps.'):
-            map_type: type[_map.Map] = item_info['map_type']
-            return _map.get_map_display_string(map_type.name)
+            map_type: type[bascenev1.Map] = item_info['map_type']
+            return bascenev1.get_map_display_string(map_type.name)
         if item_name.startswith('games.'):
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
             return gametype.get_display_string()
         if item_name.startswith('icons.'):
-            return _language.Lstr(resource='editProfileWindow.iconText')
+            return babase.Lstr(resource='editProfileWindow.iconText')
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -58,14 +53,12 @@ class StoreSubsystem:
         if item_name.startswith('characters.'):
             return 340 * 0.6, 430 * 0.6
         if item_name in ['pro', 'upgrades.pro', 'merch']:
-            from babase._mgen.enums import UIScale
-
-            assert _babase.app.classic is not None
+            assert babase.app.classic is not None
             return 650 * 0.9, 500 * (
                 0.72
                 if (
-                    _babase.app.config.get('Merch Link')
-                    and _babase.app.ui_v1.uiscale is UIScale.SMALL
+                    babase.app.config.get('Merch Link')
+                    and babase.app.ui_v1.uiscale is babase.UIScale.SMALL
                 )
                 else 0.85
             )
@@ -81,12 +74,11 @@ class StoreSubsystem:
         (internal)
         """
         # pylint: disable=cyclic-import
-        from babase._mgen.enums import SpecialChar
         from bascenev1lib import maps
 
-        assert _babase.app.classic is not None
+        assert babase.app.classic is not None
 
-        if _babase.app.classic.store_items is None:
+        if babase.app.classic.store_items is None:
             from bascenev1lib.game import ninjafight
             from bascenev1lib.game import meteorshower
             from bascenev1lib.game import targetpractice
@@ -94,7 +86,7 @@ class StoreSubsystem:
 
             # IMPORTANT - need to keep this synced with the master server.
             # (doing so manually for now)
-            _babase.app.classic.store_items = {
+            babase.app.classic.store_items = {
                 'characters.kronk': {'character': 'Kronk'},
                 'characters.zoe': {'character': 'Zoe'},
                 'characters.jackmorgan': {'character': 'Jack Morgan'},
@@ -134,135 +126,157 @@ class StoreSubsystem:
                     'previewTex': 'towerDPreview',
                 },
                 'icons.flag_us': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_UNITED_STATES)
+                    'icon': babase.charstr(
+                        babase.SpecialChar.FLAG_UNITED_STATES
+                    )
                 },
                 'icons.flag_mexico': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_MEXICO)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_MEXICO)
                 },
                 'icons.flag_germany': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_GERMANY)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_GERMANY)
                 },
                 'icons.flag_brazil': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_BRAZIL)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_BRAZIL)
                 },
                 'icons.flag_russia': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_RUSSIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_RUSSIA)
                 },
                 'icons.flag_china': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_CHINA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_CHINA)
                 },
                 'icons.flag_uk': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_UNITED_KINGDOM)
+                    'icon': babase.charstr(
+                        babase.SpecialChar.FLAG_UNITED_KINGDOM
+                    )
                 },
                 'icons.flag_canada': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_CANADA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_CANADA)
                 },
                 'icons.flag_india': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_INDIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_INDIA)
                 },
                 'icons.flag_japan': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_JAPAN)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_JAPAN)
                 },
                 'icons.flag_france': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_FRANCE)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_FRANCE)
                 },
                 'icons.flag_indonesia': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_INDONESIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_INDONESIA)
                 },
                 'icons.flag_italy': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_ITALY)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_ITALY)
                 },
                 'icons.flag_south_korea': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_SOUTH_KOREA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_SOUTH_KOREA)
                 },
                 'icons.flag_netherlands': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_NETHERLANDS)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_NETHERLANDS)
                 },
                 'icons.flag_uae': {
-                    'icon': _babase.charstr(
-                        SpecialChar.FLAG_UNITED_ARAB_EMIRATES
+                    'icon': babase.charstr(
+                        babase.SpecialChar.FLAG_UNITED_ARAB_EMIRATES
                     )
                 },
                 'icons.flag_qatar': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_QATAR)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_QATAR)
                 },
                 'icons.flag_egypt': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_EGYPT)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_EGYPT)
                 },
                 'icons.flag_kuwait': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_KUWAIT)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_KUWAIT)
                 },
                 'icons.flag_algeria': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_ALGERIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_ALGERIA)
                 },
                 'icons.flag_saudi_arabia': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_SAUDI_ARABIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_SAUDI_ARABIA)
                 },
                 'icons.flag_malaysia': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_MALAYSIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_MALAYSIA)
                 },
                 'icons.flag_czech_republic': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_CZECH_REPUBLIC)
+                    'icon': babase.charstr(
+                        babase.SpecialChar.FLAG_CZECH_REPUBLIC
+                    )
                 },
                 'icons.flag_australia': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_AUSTRALIA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_AUSTRALIA)
                 },
                 'icons.flag_singapore': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_SINGAPORE)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_SINGAPORE)
                 },
                 'icons.flag_iran': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_IRAN)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_IRAN)
                 },
                 'icons.flag_poland': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_POLAND)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_POLAND)
                 },
                 'icons.flag_argentina': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_ARGENTINA)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_ARGENTINA)
                 },
                 'icons.flag_philippines': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_PHILIPPINES)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_PHILIPPINES)
                 },
                 'icons.flag_chile': {
-                    'icon': _babase.charstr(SpecialChar.FLAG_CHILE)
+                    'icon': babase.charstr(babase.SpecialChar.FLAG_CHILE)
                 },
-                'icons.fedora': {'icon': _babase.charstr(SpecialChar.FEDORA)},
-                'icons.hal': {'icon': _babase.charstr(SpecialChar.HAL)},
-                'icons.crown': {'icon': _babase.charstr(SpecialChar.CROWN)},
+                'icons.fedora': {
+                    'icon': babase.charstr(babase.SpecialChar.FEDORA)
+                },
+                'icons.hal': {'icon': babase.charstr(babase.SpecialChar.HAL)},
+                'icons.crown': {
+                    'icon': babase.charstr(babase.SpecialChar.CROWN)
+                },
                 'icons.yinyang': {
-                    'icon': _babase.charstr(SpecialChar.YIN_YANG)
+                    'icon': babase.charstr(babase.SpecialChar.YIN_YANG)
                 },
                 'icons.eyeball': {
-                    'icon': _babase.charstr(SpecialChar.EYE_BALL)
+                    'icon': babase.charstr(babase.SpecialChar.EYE_BALL)
                 },
-                'icons.skull': {'icon': _babase.charstr(SpecialChar.SKULL)},
-                'icons.heart': {'icon': _babase.charstr(SpecialChar.HEART)},
-                'icons.dragon': {'icon': _babase.charstr(SpecialChar.DRAGON)},
-                'icons.helmet': {'icon': _babase.charstr(SpecialChar.HELMET)},
+                'icons.skull': {
+                    'icon': babase.charstr(babase.SpecialChar.SKULL)
+                },
+                'icons.heart': {
+                    'icon': babase.charstr(babase.SpecialChar.HEART)
+                },
+                'icons.dragon': {
+                    'icon': babase.charstr(babase.SpecialChar.DRAGON)
+                },
+                'icons.helmet': {
+                    'icon': babase.charstr(babase.SpecialChar.HELMET)
+                },
                 'icons.mushroom': {
-                    'icon': _babase.charstr(SpecialChar.MUSHROOM)
+                    'icon': babase.charstr(babase.SpecialChar.MUSHROOM)
                 },
                 'icons.ninja_star': {
-                    'icon': _babase.charstr(SpecialChar.NINJA_STAR)
+                    'icon': babase.charstr(babase.SpecialChar.NINJA_STAR)
                 },
                 'icons.viking_helmet': {
-                    'icon': _babase.charstr(SpecialChar.VIKING_HELMET)
+                    'icon': babase.charstr(babase.SpecialChar.VIKING_HELMET)
                 },
-                'icons.moon': {'icon': _babase.charstr(SpecialChar.MOON)},
-                'icons.spider': {'icon': _babase.charstr(SpecialChar.SPIDER)},
+                'icons.moon': {'icon': babase.charstr(babase.SpecialChar.MOON)},
+                'icons.spider': {
+                    'icon': babase.charstr(babase.SpecialChar.SPIDER)
+                },
                 'icons.fireball': {
-                    'icon': _babase.charstr(SpecialChar.FIREBALL)
+                    'icon': babase.charstr(babase.SpecialChar.FIREBALL)
                 },
-                'icons.mikirog': {'icon': _babase.charstr(SpecialChar.MIKIROG)},
+                'icons.mikirog': {
+                    'icon': babase.charstr(babase.SpecialChar.MIKIROG)
+                },
             }
-        return _babase.app.classic.store_items
+        return babase.app.classic.store_items
 
     def get_store_layout(self) -> dict[str, list[dict[str, Any]]]:
         """Return what's available in the store at a given time.
 
         Categorized by tab and by section.
         """
-        plus = _babase.app.plus
-        classic = _babase.app.classic
+        plus = babase.app.plus
+        classic = babase.app.classic
 
         assert classic is not None
         assert plus is not None
@@ -373,7 +387,7 @@ class StoreSubsystem:
         # This will cause merch to show only if the master-server has
         # given us a link (which means merch is available in our region).
         store_layout['extras'] = [{'items': ['pro']}]
-        if _babase.app.config.get('Merch Link'):
+        if babase.app.config.get('Merch Link'):
             store_layout['extras'][0]['items'].append('merch')
         return store_layout
 
@@ -394,7 +408,7 @@ class StoreSubsystem:
 
     def get_available_purchase_count(self, tab: str | None = None) -> int:
         """(internal)"""
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return 0
         try:
@@ -419,7 +433,7 @@ class StoreSubsystem:
     def _calc_count_for_tab(
         self, tabval: list[dict[str, Any]], our_tickets: int, count: int
     ) -> int:
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus
         for section in tabval:
             for item in section['items']:
@@ -437,14 +451,13 @@ class StoreSubsystem:
         """(internal)"""
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-nested-blocks
-        # pylint: disable=too-many-locals
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus is not None
 
         try:
             import datetime
 
-            app = _babase.app
+            app = babase.app
             assert app.classic is not None
             sale_times: list[int | None] = []
 
@@ -459,7 +472,7 @@ class StoreSubsystem:
                     # If we've got a time-remaining in our config, start there.
                     if 'PSTR' in config:
                         app.classic.pro_sale_start_time = int(
-                            _babase.apptime() * 1000
+                            babase.apptime() * 1000
                         )
                         app.classic.pro_sale_start_val = config['PSTR']
                     else:
@@ -470,7 +483,7 @@ class StoreSubsystem:
                         )
                         if start_duration is not None:
                             app.classic.pro_sale_start_time = int(
-                                _babase.apptime() * 1000
+                                babase.apptime() * 1000
                             )
                             app.classic.pro_sale_start_val = (
                                 60000 * start_duration
@@ -485,7 +498,7 @@ class StoreSubsystem:
                     0,
                     app.classic.pro_sale_start_val
                     - (
-                        int(_babase.apptime() * 1000.0)
+                        int(babase.apptime() * 1000.0)
                         - app.classic.pro_sale_start_time
                     ),
                 )
@@ -519,9 +532,7 @@ class StoreSubsystem:
             return min(sale_times_int) if sale_times_int else None
 
         except Exception:
-            from babase import _error
-
-            _error.print_exception('error calcing sale time')
+            logging.exception('Error calcing sale time.')
             return None
 
     def get_unowned_maps(self) -> list[str]:
@@ -529,9 +540,9 @@ class StoreSubsystem:
 
         Category: **Asset Functions**
         """
-        plus = _babase.app.plus
+        plus = babase.app.plus
         unowned_maps: set[str] = set()
-        if not _babase.app.headless_mode:
+        if not babase.app.headless_mode:
             for map_section in self.get_store_layout()['maps']:
                 for mapitem in map_section['items']:
                     if plus is None or not plus.get_purchased(mapitem):
@@ -542,9 +553,9 @@ class StoreSubsystem:
     def get_unowned_game_types(self) -> set[type[bascenev1.GameActivity]]:
         """Return present game types not owned by the current account."""
         try:
-            plus = _babase.app.plus
+            plus = babase.app.plus
             unowned_games: set[type[bascenev1.GameActivity]] = set()
-            if not _babase.app.headless_mode:
+            if not babase.app.headless_mode:
                 for section in self.get_store_layout()['minigames']:
                     for mname in section['items']:
                         if plus is None or not plus.get_purchased(mname):
@@ -552,7 +563,5 @@ class StoreSubsystem:
                             unowned_games.add(m_info['gametype'])
             return unowned_games
         except Exception:
-            from babase import _error
-
-            _error.print_exception('error calcing un-owned games')
+            logging.exception('Error calcing un-owned games.')
             return set()

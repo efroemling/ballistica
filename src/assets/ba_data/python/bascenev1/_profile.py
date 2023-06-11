@@ -6,7 +6,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
@@ -43,9 +43,7 @@ def get_player_profile_icon(profilename: str) -> str:
 
     (non-account profiles only)
     """
-    from babase._mgen.enums import SpecialChar
-
-    appconfig = _babase.app.config
+    appconfig = babase.app.config
     icon: str
     try:
         is_global = appconfig['Player Profiles'][profilename]['global']
@@ -55,7 +53,7 @@ def get_player_profile_icon(profilename: str) -> str:
         try:
             icon = appconfig['Player Profiles'][profilename]['icon']
         except KeyError:
-            icon = _babase.charstr(SpecialChar.LOGO)
+            icon = babase.charstr(babase.SpecialChar.LOGO)
     else:
         icon = ''
     return icon
@@ -65,15 +63,13 @@ def get_player_profile_colors(
     profilename: str | None, profiles: dict[str, dict[str, Any]] | None = None
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """Given a profile, return colors for them."""
-    appconfig = _babase.app.config
+    appconfig = babase.app.config
     if profiles is None:
         profiles = appconfig['Player Profiles']
 
     # Special case: when being asked for a random color in kiosk mode,
     # always return default purple.
-    if (
-        _babase.app.demo_mode or _babase.app.arcade_mode
-    ) and profilename is None:
+    if (babase.app.demo_mode or babase.app.arcade_mode) and profilename is None:
         color = (0.5, 0.4, 1.0)
         highlight = (0.4, 0.4, 0.5)
     else:

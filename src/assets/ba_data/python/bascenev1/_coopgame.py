@@ -96,7 +96,6 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
-        from babase._language import Lstr
         from bascenev1lib.actor.text import Text
 
         assert babase.app.classic is not None
@@ -112,7 +111,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         vrmode = babase.app.vr_mode
         if achievements:
             Text(
-                Lstr(resource='achievementsRemainingText'),
+                babase.Lstr(resource='achievementsRemainingText'),
                 host_only=True,
                 position=(ts_h_offs - 10 + 40, v_offs - 10),
                 transition=Text.Transition.FADE_IN,
@@ -182,9 +181,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
             if ach.hard_mode_only and campaign.name == 'Easy':
                 return
         except Exception:
-            from babase._error import print_exception
-
-            print_exception()
+            logging.exception('Error in _award_achievement.')
 
         # If we haven't awarded this one, check to see if we've got it.
         # If not, set it through the game service *and* add a transaction

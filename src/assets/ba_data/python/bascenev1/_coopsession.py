@@ -178,11 +178,9 @@ class CoopSession(Session):
         return self._custom_menu_ui
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
-        from babase._general import WeakCall
-
         super().on_player_leave(sessionplayer)
 
-        _bascenev1.timer(2.0, WeakCall(self._handle_empty_activity))
+        _bascenev1.timer(2.0, babase.WeakCall(self._handle_empty_activity))
 
     def _handle_empty_activity(self) -> None:
         """Handle cases where all players have left the current activity."""
@@ -269,15 +267,14 @@ class CoopSession(Session):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
-        from babase._language import Lstr
-        from babase._general import WeakCall
+        from bascenev1lib.activity.coopscore import CoopScoreScreen
+        from bascenev1lib.tutorial import TutorialActivity
+
         from bascenev1._gameresults import GameResults
         from bascenev1._player import PlayerInfo
         from bascenev1._activitytypes import JoinActivity, TransitionActivity
         from bascenev1._coopgame import CoopGameActivity
         from bascenev1._score import ScoreType
-        from bascenev1lib.activity.coopscore import CoopScoreScreen
-        from bascenev1lib.tutorial import TutorialActivity
 
         app = babase.app
         classic = app.classic
@@ -346,9 +343,9 @@ class CoopSession(Session):
                     if self.tournament_id is not None:
                         self._custom_menu_ui = [
                             {
-                                'label': Lstr(resource='restartText'),
+                                'label': babase.Lstr(resource='restartText'),
                                 'resume_on_call': False,
-                                'call': WeakCall(
+                                'call': babase.WeakCall(
                                     self._on_tournament_restart_menu_press
                                 ),
                             }
@@ -356,8 +353,8 @@ class CoopSession(Session):
                     else:
                         self._custom_menu_ui = [
                             {
-                                'label': Lstr(resource='restartText'),
-                                'call': WeakCall(self.restart),
+                                'label': babase.Lstr(resource='restartText'),
+                                'call': babase.WeakCall(self.restart),
                             }
                         ]
 

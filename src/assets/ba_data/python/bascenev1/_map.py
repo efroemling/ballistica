@@ -6,15 +6,14 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
-from babase import _math
 from bascenev1._actor import Actor
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
 
-    import babase
     import bascenev1
 
 
@@ -38,9 +37,7 @@ def get_map_display_string(name: str) -> babase.Lstr:
 
     Category: **Asset Functions**
     """
-    from babase import _language
-
-    return _language.Lstr(translate=('mapsNames', name))
+    return babase.Lstr(translate=('mapsNames', name))
 
 
 def get_map_class(name: str) -> type[Map]:
@@ -48,15 +45,13 @@ def get_map_class(name: str) -> type[Map]:
 
     Category: **Asset Functions**
     """
-    assert _babase.app.classic is not None
+    assert babase.app.classic is not None
     name = get_filtered_map_name(name)
     try:
-        mapclass: type[Map] = _babase.app.classic.maps[name]
+        mapclass: type[Map] = babase.app.classic.maps[name]
         return mapclass
     except KeyError:
-        from babase import _error
-
-        raise _error.NotFoundError(f"Map not found: '{name}'") from None
+        raise babase.NotFoundError(f"Map not found: '{name}'") from None
 
 
 class Map(Actor):
@@ -133,9 +128,7 @@ class Map(Actor):
         try:
             self.preloaddata = _bascenev1.getactivity().preloads[type(self)]
         except Exception as exc:
-            from babase import _error
-
-            raise _error.NotFoundError(
+            raise babase.NotFoundError(
                 'Preload data not found for '
                 + str(type(self))
                 + '; make sure to call the type\'s preload()'
@@ -262,7 +255,7 @@ class Map(Actor):
         return (
             None
             if val is None
-            else _math.vec3validate(val)
+            else babase.vec3validate(val)
             if __debug__
             else val
         )
@@ -336,7 +329,7 @@ class Map(Actor):
         farthestpt_dist = -1.0
         farthestpt = None
         for _i in range(10):
-            testpt = _babase.Vec3(_getpt())
+            testpt = babase.Vec3(_getpt())
             closest_player_dist = 9999.0
             for ppt in player_pts:
                 dist = (ppt - testpt).length()
@@ -376,7 +369,7 @@ class Map(Actor):
 
 def register_map(maptype: type[Map]) -> None:
     """Register a map class with the game."""
-    assert _babase.app.classic is not None
-    if maptype.name in _babase.app.classic.maps:
+    assert babase.app.classic is not None
+    if maptype.name in babase.app.classic.maps:
         raise RuntimeError('map "' + maptype.name + '" already registered')
-    _babase.app.classic.maps[maptype.name] = maptype
+    babase.app.classic.maps[maptype.name] = maptype

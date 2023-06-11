@@ -6,17 +6,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import _babase
-from babase._error import print_exception
-import _bascenev1
-import _bauiv1
+import babase
+import bascenev1
+import bauiv1
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    import babase
-    import bascenev1
-    import bauiv1
     import baclassic
 
 # This could use some cleanup.
@@ -82,7 +78,7 @@ class AchievementSubsystem:
         self.achievements_to_display: (
             list[tuple[baclassic.Achievement, bool]]
         ) = []
-        self.achievement_display_timer: _bascenev1.BaseTimer | None = None
+        self.achievement_display_timer: bascenev1.BaseTimer | None = None
         self.last_achievement_display_time: float = 0.0
         self.achievement_completion_banner_slots: set[int] = set()
         self._init_achievements()
@@ -516,7 +512,7 @@ class AchievementSubsystem:
 
     def award_local_achievement(self, achname: str) -> None:
         """For non-game-based achievements such as controller-connection."""
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             logging.warning('achievements require plus feature-set')
             return
@@ -535,7 +531,7 @@ class AchievementSubsystem:
                 self.display_achievement_banner(achname)
 
         except Exception:
-            print_exception()
+            logging.exception('Error in award_local_achievement.')
 
     def display_achievement_banner(self, achname: str) -> None:
         """Display a completion banner for an achievement.
@@ -549,12 +545,12 @@ class AchievementSubsystem:
             #  purely local context somehow instead of trying to inject these
             #  into whatever activity happens to be active
             #  (since that won't work while in client mode).
-            activity = _bascenev1.get_foreground_host_activity()
+            activity = bascenev1.get_foreground_host_activity()
             if activity is not None:
                 with activity.context:
                     self.get_achievement(achname).announce_completion()
         except Exception:
-            print_exception('error showing server ach')
+            logging.exception('Error in display_achievement_banner.')
 
     def set_completed_achievements(self, achs: Sequence[str]) -> None:
         """Set the current state of completed achievements.
@@ -568,7 +564,7 @@ class AchievementSubsystem:
         # us which achievements we currently have.  We always defer to them,
         # even if that means we have to un-set an achievement we think we have.
 
-        cfg = _babase.app.config
+        cfg = babase.app.config
         cfg['Achievements'] = {}
         for a_name in achs:
             self.get_achievement(a_name).set_complete(True)
@@ -608,8 +604,8 @@ class AchievementSubsystem:
             self.achievements[4].announce_completion()
             self.achievements[5].announce_completion()
 
-        _bascenev1.basetimer(3.0, testcall1)
-        _bascenev1.basetimer(7.0, testcall2)
+        bascenev1.basetimer(3.0, testcall1)
+        bascenev1.basetimer(7.0, testcall2)
 
 
 def _get_ach_mult(include_pro_bonus: bool = False) -> int:
@@ -617,8 +613,8 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
 
     (just for display; changing this here won't affect actual rewards)
     """
-    plus = _babase.app.plus
-    classic = _babase.app.classic
+    plus = babase.app.plus
+    classic = babase.app.classic
     if plus is None or classic is None:
         return 5
     val: int = plus.get_v1_account_misc_read_val('achAwardMult', 5)
@@ -631,7 +627,7 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
 def _display_next_achievement() -> None:
     # Pull the first achievement off the list and display it, or kill the
     # display-timer if the list is empty.
-    app = _babase.app
+    app = babase.app
     assert app.classic is not None
     ach_ss = app.classic.ach
     if app.classic.ach.achievements_to_display:
@@ -639,7 +635,7 @@ def _display_next_achievement() -> None:
             ach, sound = ach_ss.achievements_to_display.pop(0)
             ach.show_completion_banner(sound)
         except Exception:
-            print_exception('error showing next achievement')
+            logging.exception('Error in _display_next_achievement.')
             ach_ss.achievements_to_display = []
             ach_ss.achievement_display_timer = None
     else:
@@ -681,13 +677,13 @@ class Achievement:
 
     def get_icon_ui_texture(self, complete: bool) -> bauiv1.Texture:
         """Return the icon texture to display for this achievement"""
-        return _bauiv1.gettexture(
+        return bauiv1.gettexture(
             self._icon_name if complete else 'achievementEmpty'
         )
 
     def get_icon_texture(self, complete: bool) -> bascenev1.Texture:
         """Return the icon texture to display for this achievement"""
-        return _bascenev1.gettexture(
+        return bascenev1.gettexture(
             self._icon_name if complete else 'achievementEmpty'
         )
 
@@ -712,7 +708,7 @@ class Achievement:
     def announce_completion(self, sound: bool = True) -> None:
         """Kick off an announcement for this achievement's completion."""
 
-        app = _babase.app
+        app = babase.app
         plus = app.plus
         classic = app.classic
         if plus is None or classic is None:
@@ -739,9 +735,9 @@ class Achievement:
         # clear itself if an activity died and took it down with it.
         if (
             ach_ss.achievement_display_timer is None
-            or _babase.apptime() - ach_ss.last_achievement_display_time > 2.0
-        ) and _bascenev1.getactivity(doraise=False) is not None:
-            ach_ss.achievement_display_timer = _bascenev1.BaseTimer(
+            or babase.apptime() - ach_ss.last_achievement_display_time > 2.0
+        ) and bascenev1.getactivity(doraise=False) is not None:
+            ach_ss.achievement_display_timer = bascenev1.BaseTimer(
                 1.0, _display_next_achievement, repeat=True
             )
 
@@ -761,13 +757,11 @@ class Achievement:
     @property
     def display_name(self) -> babase.Lstr:
         """Return a babase.Lstr for this Achievement's name."""
-        from babase._language import Lstr
-
         name: babase.Lstr | str
         try:
             if self._level_name != '':
                 campaignname, campaign_level = self._level_name.split(':')
-                classic = _babase.app.classic
+                classic = babase.app.classic
                 assert classic is not None
                 name = (
                     classic.getcampaign(campaignname)
@@ -778,8 +772,8 @@ class Achievement:
                 name = ''
         except Exception:
             name = ''
-            print_exception()
-        return Lstr(
+            logging.exception('Error calcing achievement display-name.')
+        return babase.Lstr(
             resource='achievements.' + self._name + '.name',
             subs=[('${LEVEL}', name)],
         )
@@ -787,42 +781,40 @@ class Achievement:
     @property
     def description(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's brief description."""
-        from babase._language import Lstr
-
         if (
             'description'
-            in _babase.app.lang.get_resource('achievements')[self._name]
+            in babase.app.lang.get_resource('achievements')[self._name]
         ):
-            return Lstr(resource='achievements.' + self._name + '.description')
-        return Lstr(resource='achievements.' + self._name + '.descriptionFull')
+            return babase.Lstr(
+                resource='achievements.' + self._name + '.description'
+            )
+        return babase.Lstr(
+            resource='achievements.' + self._name + '.descriptionFull'
+        )
 
     @property
     def description_complete(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's description when complete."""
-        from babase._language import Lstr
-
         if (
             'descriptionComplete'
-            in _babase.app.lang.get_resource('achievements')[self._name]
+            in babase.app.lang.get_resource('achievements')[self._name]
         ):
-            return Lstr(
+            return babase.Lstr(
                 resource='achievements.' + self._name + '.descriptionComplete'
             )
-        return Lstr(
+        return babase.Lstr(
             resource='achievements.' + self._name + '.descriptionFullComplete'
         )
 
     @property
     def description_full(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's full description."""
-        from babase._language import Lstr
-
-        return Lstr(
+        return babase.Lstr(
             resource='achievements.' + self._name + '.descriptionFull',
             subs=[
                 (
                     '${LEVEL}',
-                    Lstr(
+                    babase.Lstr(
                         translate=(
                             'coopLevelNames',
                             ACH_LEVEL_NAMES.get(self._name, '?'),
@@ -835,14 +827,12 @@ class Achievement:
     @property
     def description_full_complete(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's full desc. when completed."""
-        from babase._language import Lstr
-
-        return Lstr(
+        return babase.Lstr(
             resource='achievements.' + self._name + '.descriptionFullComplete',
             subs=[
                 (
                     '${LEVEL}',
-                    Lstr(
+                    babase.Lstr(
                         translate=(
                             'coopLevelNames',
                             ACH_LEVEL_NAMES.get(self._name, '?'),
@@ -854,7 +844,7 @@ class Achievement:
 
     def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
         """Get the ticket award value for this achievement."""
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return 0
         val: int = plus.get_v1_account_misc_read_val(
@@ -866,7 +856,7 @@ class Achievement:
     @property
     def power_ranking_value(self) -> int:
         """Get the power-ranking award value for this achievement."""
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return 0
         val: int = plus.get_v1_account_misc_read_val(
@@ -889,9 +879,7 @@ class Achievement:
         Shows the Achievement icon, name, and description.
         """
         # pylint: disable=cyclic-import
-        from babase._language import Lstr
-        from babase._mgen.enums import SpecialChar
-        from bascenev1._coopsession import CoopSession
+        from bascenev1 import CoopSession
         from bascenev1lib.actor.image import Image
         from bascenev1lib.actor.text import Text
 
@@ -923,7 +911,7 @@ class Achievement:
             hmo = False
         else:
             try:
-                session = _bascenev1.getsession()
+                session = bascenev1.getsession()
                 if isinstance(session, CoopSession):
                     campaign = session.campaign
                     assert campaign is not None
@@ -931,7 +919,7 @@ class Achievement:
                 else:
                     hmo = False
             except Exception:
-                print_exception('Error determining campaign.')
+                logging.exception('Error determining campaign.')
                 hmo = False
 
         objs: list[bascenev1.Actor]
@@ -1007,7 +995,7 @@ class Achievement:
 
             if hmo:
                 txtactor = Text(
-                    Lstr(resource='difficultyHardOnlyText'),
+                    babase.Lstr(resource='difficultyHardOnlyText'),
                     host_only=True,
                     maxwidth=txt2_max_w * 0.7,
                     position=(x + 60, y + 5),
@@ -1031,7 +1019,7 @@ class Achievement:
             award_x = -100
             objs.append(
                 Text(
-                    _babase.charstr(SpecialChar.TICKET),
+                    babase.charstr(babase.SpecialChar.TICKET),
                     host_only=True,
                     position=(x + award_x + 33, y + 7),
                     transition=Text.Transition.FADE_IN,
@@ -1086,9 +1074,9 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        _bascenev1.gettexture('achievementOutline'),
+                        bascenev1.gettexture('achievementOutline'),
                         host_only=True,
-                        mesh_transparent=_bascenev1.getmesh(
+                        mesh_transparent=bascenev1.getmesh(
                             'achievementOutline'
                         ),
                         color=(2, 1.4, 0.4, 1),
@@ -1106,7 +1094,7 @@ class Achievement:
                     award_x = -100
                     objs.append(
                         Text(
-                            _babase.charstr(SpecialChar.TICKET),
+                            babase.charstr(babase.SpecialChar.TICKET),
                             host_only=True,
                             position=(x + award_x + 33, y + 7),
                             transition=Text.Transition.IN_RIGHT,
@@ -1142,7 +1130,7 @@ class Achievement:
                     # when that's the case.
                     if hmo:
                         txtactor = Text(
-                            Lstr(resource='difficultyHardOnlyText'),
+                            babase.Lstr(resource='difficultyHardOnlyText'),
                             host_only=True,
                             maxwidth=300 * 0.7,
                             position=(x + 60, y + 5),
@@ -1211,14 +1199,14 @@ class Achievement:
         Return the sub-dict in settings where this achievement's
         state is stored, creating it if need be.
         """
-        val: dict[str, Any] = _babase.app.config.setdefault(
+        val: dict[str, Any] = babase.app.config.setdefault(
             'Achievements', {}
         ).setdefault(self._name, {'Complete': False})
         assert isinstance(val, dict)
         return val
 
     def _remove_banner_slot(self) -> None:
-        classic = _babase.app.classic
+        classic = babase.app.classic
         assert classic is not None
         assert self._completion_banner_slot is not None
         classic.ach.achievement_completion_banner_slots.remove(
@@ -1228,21 +1216,16 @@ class Achievement:
 
     def show_completion_banner(self, sound: bool = True) -> None:
         """Create the banner/sound for an acquired achievement announcement."""
-        from babase._general import WeakCall
-        from babase._language import Lstr
-        from babase._mgen.enums import SpecialChar
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image
-        from bascenev1 import _gameutils
-        from bascenev1._messages import DieMessage
 
-        app = _babase.app
+        app = babase.app
         assert app.classic is not None
-        app.classic.ach.last_achievement_display_time = _babase.apptime()
+        app.classic.ach.last_achievement_display_time = babase.apptime()
 
         # Just piggy-back onto any current activity
         # (should we use the session instead?..)
-        activity = _bascenev1.getactivity(doraise=False)
+        activity = bascenev1.getactivity(doraise=False)
 
         # If this gets called while this achievement is occupying a slot
         # already, ignore it. (probably should never happen in real
@@ -1255,10 +1238,10 @@ class Achievement:
             return
 
         if sound:
-            _bascenev1.getsound('achievement').play(host_only=True)
+            bascenev1.getsound('achievement').play(host_only=True)
         else:
-            _bascenev1.timer(
-                0.5, lambda: _bascenev1.getsound('ding').play(host_only=True)
+            bascenev1.timer(
+                0.5, lambda: bascenev1.getsound('ding').play(host_only=True)
             )
 
         in_time = 0.300
@@ -1276,8 +1259,8 @@ class Achievement:
                 # Remove us from that slot when we close.
                 # Use an app-timer in an empty context so the removal
                 # runs even if our activity/session dies.
-                with _babase.ContextRef.empty():
-                    _babase.apptimer(
+                with babase.ContextRef.empty():
+                    babase.apptimer(
                         in_time + out_time, self._remove_banner_slot
                     )
                 break
@@ -1286,7 +1269,7 @@ class Achievement:
         y_offs = 110 * self._completion_banner_slot
         objs: list[bascenev1.Actor] = []
         obj = Image(
-            _bascenev1.gettexture('shadow'),
+            bascenev1.gettexture('shadow'),
             position=(-30, 30 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1301,7 +1284,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            _bascenev1.gettexture('light'),
+            bascenev1.gettexture('light'),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1316,10 +1299,10 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj.node.premultiplied = True
-        combine = _bascenev1.newnode(
+        combine = bascenev1.newnode(
             'combine', owner=obj.node, attrs={'size': 2}
         )
-        _gameutils.animate(
+        bascenev1.animate(
             combine,
             'input0',
             {
@@ -1330,7 +1313,7 @@ class Achievement:
                 in_time + 2.0: 0,
             },
         )
-        _gameutils.animate(
+        bascenev1.animate(
             combine,
             'input1',
             {
@@ -1342,7 +1325,7 @@ class Achievement:
             },
         )
         combine.connectattr('output', obj.node, 'scale')
-        _gameutils.animate(obj.node, 'rotate', {0: 0.0, 0.35: 360.0}, loop=True)
+        bascenev1.animate(obj.node, 'rotate', {0: 0.0, 0.35: 360.0}, loop=True)
         obj = Image(
             self.get_icon_texture(True),
             position=(-180, 60 + y_offs),
@@ -1360,7 +1343,7 @@ class Achievement:
 
         # Flash.
         color = self.get_icon_color(True)
-        combine = _bascenev1.newnode(
+        combine = bascenev1.newnode(
             'combine', owner=obj.node, attrs={'size': 3}
         )
         keys = {
@@ -1370,7 +1353,7 @@ class Achievement:
             in_time + 0.6: 1.5 * color[0],
             in_time + 2.0: 1.0 * color[0],
         }
-        _gameutils.animate(combine, 'input0', keys)
+        bascenev1.animate(combine, 'input0', keys)
         keys = {
             in_time: 1.0 * color[1],
             in_time + 0.4: 1.5 * color[1],
@@ -1378,7 +1361,7 @@ class Achievement:
             in_time + 0.6: 1.5 * color[1],
             in_time + 2.0: 1.0 * color[1],
         }
-        _gameutils.animate(combine, 'input1', keys)
+        bascenev1.animate(combine, 'input1', keys)
         keys = {
             in_time: 1.0 * color[2],
             in_time + 0.4: 1.5 * color[2],
@@ -1386,12 +1369,12 @@ class Achievement:
             in_time + 0.6: 1.5 * color[2],
             in_time + 2.0: 1.0 * color[2],
         }
-        _gameutils.animate(combine, 'input2', keys)
+        bascenev1.animate(combine, 'input2', keys)
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            _bascenev1.gettexture('achievementOutline'),
-            mesh_transparent=_bascenev1.getmesh('achievementOutline'),
+            bascenev1.gettexture('achievementOutline'),
+            mesh_transparent=bascenev1.getmesh('achievementOutline'),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1406,7 +1389,7 @@ class Achievement:
 
         # Flash.
         color = (2, 1.4, 0.4, 1)
-        combine = _bascenev1.newnode(
+        combine = bascenev1.newnode(
             'combine', owner=obj.node, attrs={'size': 3}
         )
         keys = {
@@ -1416,7 +1399,7 @@ class Achievement:
             in_time + 0.6: 1.5 * color[0],
             in_time + 2.0: 1.0 * color[0],
         }
-        _gameutils.animate(combine, 'input0', keys)
+        bascenev1.animate(combine, 'input0', keys)
         keys = {
             in_time: 1.0 * color[1],
             in_time + 0.4: 1.5 * color[1],
@@ -1424,7 +1407,7 @@ class Achievement:
             in_time + 0.6: 1.5 * color[1],
             in_time + 2.0: 1.0 * color[1],
         }
-        _gameutils.animate(combine, 'input1', keys)
+        bascenev1.animate(combine, 'input1', keys)
         keys = {
             in_time: 1.0 * color[2],
             in_time + 0.4: 1.5 * color[2],
@@ -1432,13 +1415,14 @@ class Achievement:
             in_time + 0.6: 1.5 * color[2],
             in_time + 2.0: 1.0 * color[2],
         }
-        _gameutils.animate(combine, 'input2', keys)
+        bascenev1.animate(combine, 'input2', keys)
         combine.connectattr('output', obj.node, 'color')
         objs.append(obj)
 
         objt = Text(
-            Lstr(
-                value='${A}:', subs=[('${A}', Lstr(resource='achievementText'))]
+            babase.Lstr(
+                value='${A}:',
+                subs=[('${A}', babase.Lstr(resource='achievementText'))],
             ),
             position=(-120, 91 + y_offs),
             front=True,
@@ -1474,7 +1458,7 @@ class Achievement:
         objt.node.host_only = True
 
         objt = Text(
-            _babase.charstr(SpecialChar.TICKET),
+            babase.charstr(babase.SpecialChar.TICKET),
             position=(-120 - 170 + 5, 75 + y_offs - 20),
             front=True,
             v_attach=Text.VAttach.BOTTOM,
@@ -1554,6 +1538,7 @@ class Achievement:
         objt.node.host_only = True
 
         for actor in objs:
-            _bascenev1.timer(
-                out_time + 1.000, WeakCall(actor.handlemessage, DieMessage())
+            bascenev1.timer(
+                out_time + 1.000,
+                babase.WeakCall(actor.handlemessage, bascenev1.DieMessage()),
             )

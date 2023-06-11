@@ -8,10 +8,11 @@ import copy
 import logging
 from typing import Any, TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Sequence
+
     from bascenev1._session import Session
 
 PlaylistType = list[dict[str, Any]]
@@ -35,18 +36,16 @@ def filter_playlist(
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     from bascenev1._map import get_filtered_map_name
-    from babase._error import MapNotFoundError
-    from babase._general import getclass
     from bascenev1._gameactivity import GameActivity
 
-    assert _babase.app.classic is not None
+    assert babase.app.classic is not None
 
     goodlist: list[dict] = []
     unowned_maps: Sequence[str]
-    available_maps: list[str] = list(_babase.app.classic.maps.keys())
-    if (remove_unowned or mark_unowned) and _babase.app.classic is not None:
-        unowned_maps = _babase.app.classic.store.get_unowned_maps()
-        unowned_game_types = _babase.app.classic.store.get_unowned_game_types()
+    available_maps: list[str] = list(babase.app.classic.maps.keys())
+    if (remove_unowned or mark_unowned) and babase.app.classic is not None:
+        unowned_maps = babase.app.classic.store.get_unowned_maps()
+        unowned_game_types = babase.app.classic.store.get_unowned_game_types()
     else:
         unowned_maps = []
         unowned_game_types = set()
@@ -184,10 +183,10 @@ def filter_playlist(
                     'type'
                 ] = 'bascenev1lib.game.targetpractice.TargetPracticeGame'
 
-            gameclass = getclass(entry['type'], GameActivity)
+            gameclass = babase.getclass(entry['type'], GameActivity)
 
             if entry['settings']['map'] not in available_maps:
-                raise MapNotFoundError()
+                raise babase.MapNotFoundError()
 
             if remove_unowned and gameclass in unowned_game_types:
                 continue
@@ -206,7 +205,7 @@ def filter_playlist(
 
             goodlist.append(entry)
 
-        except MapNotFoundError:
+        except babase.MapNotFoundError:
             logging.warning(
                 'Map \'%s\' not found while scanning playlist \'%s\'.',
                 entry['settings']['map'],

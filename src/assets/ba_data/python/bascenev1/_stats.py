@@ -5,24 +5,18 @@ from __future__ import annotations
 
 import random
 import weakref
+import logging
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-import _babase
+import babase
+
 import _bascenev1
-from babase._error import (
-    print_exception,
-    print_error,
-    SessionTeamNotFoundError,
-    SessionPlayerNotFoundError,
-    NotFoundError,
-)
 
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    import babase
     import bascenev1
 
 
@@ -84,7 +78,7 @@ class PlayerRecord:
         assert self._sessionteam is not None
         team = self._sessionteam()
         if team is None:
-            raise SessionTeamNotFoundError()
+            raise babase.SessionTeamNotFoundError()
         return team
 
     @property
@@ -95,7 +89,7 @@ class PlayerRecord:
         no longer exists.
         """
         if not self._sessionplayer:
-            raise SessionPlayerNotFoundError()
+            raise babase.SessionPlayerNotFoundError()
         return self._sessionplayer
 
     def getname(self, full: bool = False) -> str:
@@ -213,13 +207,13 @@ class PlayerRecord:
                 if self._sessionplayer.activityplayer is not None:
                     try:
                         our_pos = self._sessionplayer.activityplayer.position
-                    except NotFoundError:
+                    except babase.NotFoundError:
                         pass
             if our_pos is None:
                 return
 
             # Jitter position a bit since these often come in clusters.
-            our_pos = _babase.Vec3(
+            our_pos = babase.Vec3(
                 our_pos[0] + (random.random() - 0.5) * 2.0,
                 our_pos[1] + (random.random() - 0.5) * 2.0,
                 our_pos[2] + (random.random() - 0.5) * 2.0,
@@ -279,7 +273,7 @@ class Stats:
         # Load our media into this activity's context.
         if activity is not None:
             if activity.expired:
-                print_error('unexpected finalized activity')
+                logging.exception('Unexpected finalized activity.')
             else:
                 with activity.context:
                     self._load_activity_media()
@@ -403,7 +397,7 @@ class Stats:
                         color=_math.normalized_color(player.team.color),
                     )
             except Exception:
-                print_exception('error showing big_message')
+                logging.exception('Error showing big_message.')
 
         # If we currently have a actor, pop up a score over it.
         if display and showpoints:
@@ -450,7 +444,7 @@ class Stats:
                     image=player.get_icon(),
                 )
         except Exception:
-            print_exception('error announcing score')
+            logging.exception('Error announcing score.')
 
         s_player.score += points
         s_player.accumscore += points
@@ -524,4 +518,4 @@ class Stats:
                         image=player.get_icon(),
                     )
         except Exception:
-            print_exception('error announcing kill')
+            logging.exception('Error announcing kill.')

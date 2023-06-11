@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import logging
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
@@ -23,15 +24,15 @@ def get_input_device_mapped_value(
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
 
-    app = _babase.app
+    app = babase.app
     assert app.classic is not None
     useragentstring = app.classic.user_agent_string
     platform = app.classic.platform
     subplatform = app.classic.subplatform
-    appconfig = _babase.app.config
+    appconfig = babase.app.config
 
     # iiRcade: hard-code for a/b/c/x for now...
-    if _babase.app.iircade_mode:
+    if babase.app.iircade_mode:
         return {
             'triggerRun2': 19,
             'unassignedButtonsRun': False,
@@ -97,7 +98,7 @@ def get_input_device_mapped_value(
             }.get(name, -1)
 
     # Look for some exact types.
-    if _babase.is_running_on_fire_tv():
+    if babase.is_running_on_fire_tv():
         if devicename in ['Thunder', 'Amazon Fire Game Controller']:
             return {
                 'triggerRun2': 23,
@@ -516,7 +517,7 @@ def get_input_device_mapped_value(
 
     # Reasonable defaults.
     if platform == 'android':
-        if _babase.is_running_on_fire_tv():
+        if babase.is_running_on_fire_tv():
             # Mostly same as default firetv controller.
             return {
                 'triggerRun2': 23,
@@ -575,11 +576,7 @@ def _gen_android_input_hash() -> str:
                     except PermissionError:
                         pass
         except Exception:
-            from babase import _error
-
-            _error.print_exception(
-                'error in _gen_android_input_hash inner loop'
-            )
+            logging.exception('Error in _gen_android_input_hash inner loop.')
     return md5.hexdigest()
 
 
@@ -591,7 +588,7 @@ def get_input_device_map_hash() -> str:
     (Different Android versions, for example, may return different
     key codes for button presses on a given type of controller)
     """
-    app = _babase.app
+    app = babase.app
 
     # Currently only using this when classic is present.
     # Need to replace with a modern equivalent.
@@ -604,9 +601,7 @@ def get_input_device_map_hash() -> str:
                     app.classic.input_map_hash = ''
             return app.classic.input_map_hash
         except Exception:
-            from babase import _error
-
-            _error.print_exception('Exception in get_input_map_hash')
+            logging.exception('Error in get_input_map_hash.')
             return ''
     return ''
 
@@ -618,7 +613,7 @@ def get_input_device_config(
 
     The dict will be created if it does not exist.
     """
-    cfg = _babase.app.config
+    cfg = babase.app.config
     ccfgs: dict[str, Any] = cfg.setdefault('Controllers', {})
     ccfgs.setdefault(name, {})
     if default:

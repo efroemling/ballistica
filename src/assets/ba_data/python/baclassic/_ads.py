@@ -34,7 +34,6 @@ class AdsSubsystem:
 
     def do_remove_in_game_ads_message(self) -> None:
         """(internal)"""
-        from babase._language import Lstr
 
         # Print this message once every 10 minutes at most.
         tval = babase.apptime()
@@ -46,14 +45,19 @@ class AdsSubsystem:
                 babase.apptimer(
                     1.0,
                     lambda: babase.screenmessage(
-                        Lstr(
+                        babase.Lstr(
                             resource='removeInGameAdsText',
                             subs=[
                                 (
                                     '${PRO}',
-                                    Lstr(resource='store.bombSquadProNameText'),
+                                    babase.Lstr(
+                                        resource='store.bombSquadProNameText'
+                                    ),
                                 ),
-                                ('${APP_NAME}', Lstr(resource='titleText')),
+                                (
+                                    '${APP_NAME}',
+                                    babase.Lstr(resource='titleText'),
+                                ),
                             ],
                         ),
                         color=(1, 1, 0),

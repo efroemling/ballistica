@@ -25,7 +25,6 @@ import bascenev1
 if TYPE_CHECKING:
     from typing import Any
 
-    import babase
     from bacommon.servermanager import ServerConfig
 
 

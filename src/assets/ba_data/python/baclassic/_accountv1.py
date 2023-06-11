@@ -8,8 +8,7 @@ import copy
 import time
 from typing import TYPE_CHECKING
 
-import _babase
-import bauiv1 as bui
+import babase
 
 if TYPE_CHECKING:
     from typing import Any
@@ -40,15 +39,15 @@ class AccountV1Subsystem:
 
         # Auto-sign-in to a local account in a moment if we're set to.
         def do_auto_sign_in() -> None:
-            if _babase.app.plus is None:
+            if babase.app.plus is None:
                 return
             if (
-                _babase.app.headless_mode
-                or _babase.app.config.get('Auto Account State') == 'Local'
+                babase.app.headless_mode
+                or babase.app.config.get('Auto Account State') == 'Local'
             ):
-                _babase.app.plus.sign_in_v1('Local')
+                babase.app.plus.sign_in_v1('Local')
 
-        _babase.pushcall(do_auto_sign_in)
+        babase.pushcall(do_auto_sign_in)
 
     def on_app_pause(self) -> None:
         """Should be called when app is pausing."""
@@ -66,16 +65,14 @@ class AccountV1Subsystem:
 
         (internal)
         """
-        from babase._language import Lstr
-
-        _babase.screenmessage(
-            Lstr(
+        babase.screenmessage(
+            babase.Lstr(
                 resource='getTicketsWindow.receivedTicketsText',
                 subs=[('${COUNT}', str(count))],
             ),
             color=(0, 1, 0),
         )
-        _babase.getsimplesound('cashRegister').play()
+        babase.getsimplesound('cashRegister').play()
 
     def cache_league_rank_data(self, data: Any) -> None:
         """(internal)"""
@@ -98,8 +95,8 @@ class AccountV1Subsystem:
             total_ach_value = data['at']
         else:
             total_ach_value = 0
-            assert _babase.app.classic is not None
-            for ach in _babase.app.classic.ach.achievements:
+            assert babase.app.classic is not None
+            for ach in babase.app.classic.ach.achievements:
                 if ach.complete:
                     total_ach_value += ach.power_ranking_value
 
@@ -129,13 +126,13 @@ class AccountV1Subsystem:
             raise ValueError('invalid subset value: ' + str(subset))
 
         if data['p']:
-            if _babase.app.plus is None:
+            if babase.app.plus is None:
                 pro_mult = 1.0
             else:
                 pro_mult = (
                     1.0
                     + float(
-                        _babase.app.plus.get_v1_account_misc_read_val(
+                        babase.app.plus.get_v1_account_misc_read_val(
                             'proPowerRankingBoost', 0.0
                         )
                     )
@@ -161,21 +158,21 @@ class AccountV1Subsystem:
 
             # Also store the time we received this, so we can adjust
             # time-remaining values/etc.
-            cache_entry['timeReceived'] = _babase.apptime()
+            cache_entry['timeReceived'] = babase.apptime()
             cache_entry['valid'] = True
 
     def get_purchased_icons(self) -> list[str]:
         """(internal)"""
         # pylint: disable=cyclic-import
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return []
         if plus.get_v1_account_state() != 'signed_in':
             return []
         icons = []
         store_items: dict[str, Any] = (
-            _babase.app.classic.store.get_store_items()
-            if _babase.app.classic is not None
+            babase.app.classic.store.get_store_items()
+            if babase.app.classic is not None
             else {}
         )
         for item_name, item in list(store_items.items()):
@@ -190,7 +187,7 @@ class AccountV1Subsystem:
 
         (internal)
         """
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return
         # This only applies when we're signed in.
@@ -199,12 +196,12 @@ class AccountV1Subsystem:
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not _babase.have_chars(
+        if not babase.have_chars(
             plus.get_v1_account_display_string(full=False)
         ):
             return
 
-        config = _babase.app.config
+        config = babase.app.config
         if (
             'Player Profiles' not in config
             or '__account__' not in config['Player Profiles']
@@ -226,7 +223,7 @@ class AccountV1Subsystem:
     def have_pro(self) -> bool:
         """Return whether pro is currently unlocked."""
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return False
 
@@ -236,7 +233,7 @@ class AccountV1Subsystem:
             plus.get_purchased('upgrades.pro')
             or plus.get_purchased('static.pro')
             or plus.get_purchased('static.pro_sale')
-            or 'ballistica' + 'kit' == _babase.appname()
+            or 'ballistica' + 'kit' == babase.appname()
         )
 
     def have_pro_options(self) -> bool:
@@ -246,7 +243,7 @@ class AccountV1Subsystem:
         before Pro was a requirement for these options.
         """
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return False
 
@@ -256,33 +253,29 @@ class AccountV1Subsystem:
         # or are using ballistica-core builds.
         return self.have_pro() or bool(
             plus.get_v1_account_misc_read_val_2('proOptionsUnlocked', False)
-            or _babase.app.config.get('lc14292', 0) > 1
+            or babase.app.config.get('lc14292', 0) > 1
         )
 
     def show_post_purchase_message(self) -> None:
         """(internal)"""
-        from babase._language import Lstr
-
-        cur_time = _babase.apptime()
+        cur_time = babase.apptime()
         if (
             self.last_post_purchase_message_time is None
             or cur_time - self.last_post_purchase_message_time > 3.0
         ):
             self.last_post_purchase_message_time = cur_time
-            _babase.screenmessage(
-                Lstr(
+            babase.screenmessage(
+                babase.Lstr(
                     resource='updatingAccountText',
                     fallback_resource='purchasingText',
                 ),
                 color=(0, 1, 0),
             )
-            _babase.getsimplesound('click01').play()
+            babase.getsimplesound('click01').play()
 
     def on_account_state_changed(self) -> None:
         """(internal)"""
-        from babase._language import Lstr
-
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
             return
         # Run any pending promo codes we had queued up while not signed in.
@@ -291,8 +284,9 @@ class AccountV1Subsystem:
             and self.pending_promo_codes
         ):
             for code in self.pending_promo_codes:
-                _babase.screenmessage(
-                    Lstr(resource='submittingPromoCodeText'), color=(0, 1, 0)
+                babase.screenmessage(
+                    babase.Lstr(resource='submittingPromoCodeText'),
+                    color=(0, 1, 0),
                 )
                 plus.add_v1_account_transaction(
                     {
@@ -306,12 +300,12 @@ class AccountV1Subsystem:
 
     def add_pending_promo_code(self, code: str) -> None:
         """(internal)"""
-        from babase._language import Lstr
-
-        plus = _babase.app.plus
+        plus = babase.app.plus
         if plus is None:
-            _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
-            _babase.getsimplesound('error').play()
+            babase.screenmessage(
+                babase.Lstr(resource='errorText'), color=(1, 0, 0)
+            )
+            babase.getsimplesound('error').play()
             return
 
         # If we're not signed in, queue up the code to run the next time we
@@ -325,16 +319,17 @@ class AccountV1Subsystem:
                 # If we're still not signed in and have pending codes,
                 # inform the user that they need to sign in to use them.
                 if self.pending_promo_codes:
-                    _babase.screenmessage(
-                        Lstr(resource='signInForPromoCodeText'), color=(1, 0, 0)
+                    babase.screenmessage(
+                        babase.Lstr(resource='signInForPromoCodeText'),
+                        color=(1, 0, 0),
                     )
-                    _babase.getsimplesound('error').play()
+                    babase.getsimplesound('error').play()
 
             self.pending_promo_codes.append(code)
-            bui.apptimer(6.0, check_pending_codes)
+            babase.apptimer(6.0, check_pending_codes)
             return
-        _babase.screenmessage(
-            Lstr(resource='submittingPromoCodeText'), color=(0, 1, 0)
+        babase.screenmessage(
+            babase.Lstr(resource='submittingPromoCodeText'), color=(0, 1, 0)
         )
         plus.add_v1_account_transaction(
             {'type': 'PROMO_CODE', 'expire_time': time.time() + 5, 'code': code}

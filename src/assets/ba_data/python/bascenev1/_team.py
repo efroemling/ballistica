@@ -5,14 +5,14 @@
 from __future__ import annotations
 
 import weakref
+import logging
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-from babase._error import print_exception
+import babase
 
 if TYPE_CHECKING:
     from typing import Sequence
 
-    import babase
     import bascenev1
 
 
@@ -170,7 +170,7 @@ class Team(Generic[PlayerT]):
         try:
             self.on_expire()
         except Exception:
-            print_exception(f'Error in on_expire for {self}.')
+            logging.exception('Error in on_expire for %s.', self)
 
         del self._customdata
         del self.players
@@ -189,9 +189,8 @@ class Team(Generic[PlayerT]):
             sessionteam = self._sessionteam()
             if sessionteam is not None:
                 return sessionteam
-        from babase import _error
 
-        raise _error.SessionTeamNotFoundError()
+        raise babase.SessionTeamNotFoundError()
 
 
 class EmptyTeam(Team['bascenev1.EmptyPlayer']):
