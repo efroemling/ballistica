@@ -179,10 +179,15 @@ def _writefuncs(
             if is_classmethod:
                 defslines = f'{indstr}@classmethod\n{defslines}'
 
-            if funcname == 'quit':
+            if funcname in {'quit', 'newnode', 'basetimer'}:
                 defslines = (
                     f'{indstr}# noinspection PyShadowingBuiltins\n'
                     f'{defslines}'
+                )
+
+            if funcname in {'basetimer', 'timer'}:
+                defslines = (
+                    f'{indstr}# noinspection PyShadowingNames\n' f'{defslines}'
                 )
 
             # Types can be strings for forward-declaration cases.
@@ -654,6 +659,7 @@ def _formatdoc(
 
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     from batools.docs import parse_docs_attrs
 
     out = ''
@@ -662,6 +668,13 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         if cls is None:
             raise RuntimeError('unexpected')
         out += '\n' '\n'
+
+        # Special case: get PyCharm to shut up about Node's methods
+        # shadowing builtin types.
+        if classname in {'Node', 'SessionPlayer'}:
+            out += '# noinspection PyShadowingBuiltins\n'
+        if classname in {'Timer', 'BaseTimer'}:
+            out += '# noinspection PyShadowingNames\n'
 
         # Special case:
         if classname == 'Vec3':
@@ -818,7 +831,8 @@ class Generator:
         enum_import_lines = (
             ''
             if self.mname == '_babase'
-            else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            else ''
             if self.mname == '_bascenev1'
             else ''
         )

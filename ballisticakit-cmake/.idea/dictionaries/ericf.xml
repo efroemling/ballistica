@@ -160,6 +160,7 @@
       <w>basntoclient</w>
       <w>bastd</w>
       <w>batemplatefs</w>
+      <w>batemplatefsmeta</w>
       <w>batocloud</w>
       <w>batoolsinternal</w>
       <w>bauiv</w>
@@ -1509,6 +1510,7 @@
       <w>sphrand</w>
       <w>spinoff's</w>
       <w>spinoffconfig</w>
+      <w>spinofftest</w>
       <w>spinup</w>
       <w>spivak</w>
       <w>spwd</w>

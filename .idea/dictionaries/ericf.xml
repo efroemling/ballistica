@@ -264,6 +264,7 @@
       <w>basntoclient</w>
       <w>bastd</w>
       <w>batemplatefs</w>
+      <w>batemplatefsmeta</w>
       <w>batocloud</w>
       <w>batools</w>
       <w>batoolsinternal</w>
@@ -2639,6 +2640,7 @@
       <w>spinoffconfig</w>
       <w>spinoffdata</w>
       <w>spinoffs</w>
+      <w>spinofftest</w>
       <w>spinup</w>
       <w>splayer</w>
       <w>splitlen</w>

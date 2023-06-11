@@ -224,9 +224,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         bascenev1.NotFoundError.
         """
         if self._stats is None:
-            from babase._error import NotFoundError
-
-            raise NotFoundError()
+            raise babase.NotFoundError()
         return self._stats
 
     def on_expire(self) -> None:
@@ -337,9 +335,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         """
         session = self._session()
         if session is None:
-            from babase._error import SessionNotFoundError
-
-            raise SessionNotFoundError()
+            raise babase.SessionNotFoundError()
         return session
 
     def on_player_join(self, player: PlayerT) -> None:

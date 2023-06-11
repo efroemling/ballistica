@@ -7,6 +7,8 @@ import copy
 import weakref
 from typing import TYPE_CHECKING
 
+import babase
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -66,9 +68,7 @@ class Level:
     @property
     def displayname(self) -> bascenev1.Lstr:
         """The localized name for this Level."""
-        from babase import _language
-
-        return _language.Lstr(
+        return babase.Lstr(
             translate=(
                 'coopLevelNames',
                 self._displayname

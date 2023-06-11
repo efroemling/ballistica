@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, TypeVar
 
 import babase
@@ -99,9 +100,7 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
                             'Team Player'
                         )
         except Exception:
-            from babase import _error
-
-            _error.print_exception()
+            logging.exception('Error in on_begin.')
 
     def spawn_player_spaz(
         self,

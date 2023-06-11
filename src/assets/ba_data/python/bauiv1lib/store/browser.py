@@ -87,7 +87,7 @@ class StoreBrowserWindow(bui.Window):
         self._current_tab: StoreBrowserWindow.TabID | None = None
         extra_top = 30 if uiscale is bui.UIScale.SMALL else 0
 
-        self._request: Any = None
+        self.request: Any = None
         self._r = 'store'
         self._last_buy_time: float | None = None
 
@@ -467,13 +467,13 @@ class StoreBrowserWindow(bui.Window):
                 # FIXME: clean this up.
                 # pylint: disable=protected-access
                 window = self._window()
-                if window is not None and (window._request is self):
-                    window._request = None
+                if window is not None and (window.request is self):
+                    window.request = None
                     # noinspection PyProtectedMember
                     window._on_response(data)
 
         # Kick off a server request.
-        self._request = _Request(self)
+        self.request = _Request(self)
 
     # Actually start the purchase locally.
     def _purchase_check_result(

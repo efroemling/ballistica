@@ -734,7 +734,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
     def _show_tip(self) -> None:
         # pylint: disable=too-many-locals
-        from babase._mgen.enums import SpecialChar
         from bascenev1._gameutils import animate, GameTip
 
         # If there's any tips left on the list, display one.
@@ -754,7 +753,9 @@ class GameActivity(Activity[PlayerT, TeamT]):
             # Do a few substitutions.
             tip_lstr = babase.Lstr(
                 translate=('tips', tip),
-                subs=[('${PICKUP}', babase.charstr(SpecialChar.TOP_BUTTON))],
+                subs=[
+                    ('${PICKUP}', babase.charstr(babase.SpecialChar.TOP_BUTTON))
+                ],
             )
             base_position = (75, 50)
             tip_scale = 0.8
@@ -944,7 +945,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Create and wire up a bascenev1.PlayerSpaz for the provided Player."""
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from babase import _math
         from bascenev1._gameutils import animate
         from bascenev1._coopsession import CoopSession
         from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -957,7 +957,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         if not issubclass(playerspaztype, PlayerSpaz):
             playerspaztype = PlayerSpaz
 
-        light_color = _math.normalized_color(color)
+        light_color = babase.normalized_color(color)
         display_color = babase.safecolor(color, target_intensity=0.75)
         spaz = playerspaztype(
             color=color,
