@@ -21,12 +21,11 @@ from collections import deque
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+
 from bascenev1lib.actor.spaz import Spaz
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
-
-    import baclassic
 
 
 def _safesetattr(node: bs.Node | None, attr: str, value: Any) -> None:

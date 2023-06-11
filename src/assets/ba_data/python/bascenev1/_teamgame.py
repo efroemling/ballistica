@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-import _babase
+import babase
+
 import _bascenev1
 from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
@@ -15,8 +16,9 @@ from bascenev1._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
+
     from bascenev1lib.actor.playerspaz import PlayerSpaz
-    import babase
+
     import bascenev1
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
@@ -86,14 +88,14 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
             # Award a few (classic) achievements.
             if isinstance(self.session, FreeForAllSession):
                 if len(self.players) >= 2:
-                    if _babase.app.classic is not None:
-                        _babase.app.classic.ach.award_local_achievement(
+                    if babase.app.classic is not None:
+                        babase.app.classic.ach.award_local_achievement(
                             'Free Loader'
                         )
             elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
-                    if _babase.app.classic is not None:
-                        _babase.app.classic.ach.award_local_achievement(
+                    if babase.app.classic is not None:
+                        babase.app.classic.ach.award_local_achievement(
                             'Team Player'
                         )
         except Exception:

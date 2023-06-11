@@ -10,8 +10,7 @@ import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
-    import baclassic
-    import bascenev1 as bs
+    pass
 
 
 # FIXME: Could change this to be a classmethod of session types?
@@ -31,7 +30,7 @@ class PlaylistTypeVars:
                 resource='playModes.teamsText', fallback_resource='teamsText'
             )
             self.get_default_list_call = get_default_teams_playlist
-            self.session_type_name = 'ba.DualTeamSession'
+            self.session_type_name = 'bascenev1.DualTeamSession'
             self.config_name = 'Team Tournament'
             self.window_title_name = babase.Lstr(
                 resource='playModes.teamsText', fallback_resource='teamsText'
@@ -44,7 +43,7 @@ class PlaylistTypeVars:
                 fallback_resource='freeForAllText',
             )
             self.get_default_list_call = get_default_free_for_all_playlist
-            self.session_type_name = 'ba.FreeForAllSession'
+            self.session_type_name = 'bascenev1.FreeForAllSession'
             self.config_name = 'Free-for-All'
             self.window_title_name = babase.Lstr(
                 resource='playModes.freeForAllText',

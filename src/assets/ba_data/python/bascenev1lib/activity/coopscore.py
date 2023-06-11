@@ -9,15 +9,15 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
-from bascenev1lib.actor.text import Text
-from bascenev1lib.actor.zoomtext import ZoomText
 import bascenev1 as bs
 import bauiv1 as bui
+
+from bascenev1lib.actor.text import Text
+from bascenev1lib.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    import baclassic
     from bauiv1lib.store.button import StoreButton
     from bauiv1lib.league.rankbutton import LeagueRankButton
 

@@ -302,6 +302,7 @@ class PluginWindow(bui.Window):
         else:
             # Make sure we handle all cases.
             assert_never(self._category)
+            sub_height = 0
 
         num_shown = 0
         for i, availplug in enumerate(pluglist):
@@ -320,6 +321,7 @@ class PluginWindow(bui.Window):
                 show = availplug.available and not active
             else:
                 assert_never(self._category)
+                show = False
 
             if not show:
                 continue
