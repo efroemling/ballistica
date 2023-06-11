@@ -12,6 +12,10 @@ from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
+    show_progress_bar,
+    print_load_info,
+    reload_media,
+    set_stress_testing,
     get_max_graphics_quality,
     add_clean_frame_callback,
     has_gamma_control,
@@ -233,6 +237,10 @@ __all__ = [
     'get_remote_app_name',
     'is_browser_likely_available',
     'json_prep',
+    'set_stress_testing',
+    'reload_media',
+    'print_load_info',
+    'show_progress_bar',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

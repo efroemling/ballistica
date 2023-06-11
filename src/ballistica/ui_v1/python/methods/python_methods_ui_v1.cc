@@ -2508,29 +2508,6 @@ static PyMethodDef PyShowAppInviteDef = {
     "Category: **General Utility Functions**",
 };
 
-// --------------------------- show_progress_bar -------------------------------
-
-static auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-  g_base->graphics->EnableProgressBar(false);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyShowProgressBarDef = {
-    "show_progress_bar",             // name
-    (PyCFunction)PyShowProgressBar,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-
-    "show_progress_bar() -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
-};
-
 // --------------------- set_party_icon_always_visible -------------------------
 
 static auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
@@ -2880,7 +2857,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
       PySetPartyIconAlwaysVisibleDef,
-      PyShowProgressBarDef,
       PyShowAppInviteDef,
       PyShowAdDef,
       PyShowAd2Def,
