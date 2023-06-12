@@ -35,10 +35,15 @@ def test_runs_disabled_reason() -> str:
     return 'App test runs disabled here.'
 
 
+def acquire_binary_for_python_command(purpose: str) -> str:
+    """Run acquire_binary as used for python_command call."""
+    return acquire_binary(assets=True, purpose=purpose)
+
+
 def python_command(cmd: str, purpose: str) -> None:
     """Run a cmd with a built bin and PYTHONPATH set to its scripts dir."""
 
-    binpath = acquire_binary(assets=True, purpose=purpose)
+    binpath = acquire_binary_for_python_command(purpose=purpose)
     bindir = os.path.dirname(binpath)
 
     cmdargs = [binpath, '--command', cmd]
@@ -51,19 +56,23 @@ def python_command(cmd: str, purpose: str) -> None:
 
 
 def acquire_binary(assets: bool, purpose: str) -> str:
-    """Return a path to a runnable binary, building or downloading as needed.
+    """Return path to a runnable binary, building/downloading as needed.
 
     If 'assets' is False, only the binary itself will be fetched or
     assembled; no scripts or assets. This generally saves some time, but
     must only be used for very simple '-c' command cases where no assets
     will be needed.
 
-    By default, binaries used here will be downloaded prefab builds.
-    This allows people without full compiler setups to still perform app
-    runs for things like dummy-module generation. However, someone who
-    *is* able to compile their own binaries might prefer to use their
-    own binaries here so that changes to their local repo are properly
-    reflected in app runs and whatnot. Set environment variable
+    Be aware that it is up to the particular environment whether a gui
+    or headless binary will be provided. Commands should be designed to
+    work with either.
+
+    By default, downloaded prefab builds will be used here. This allows
+    people without full compiler setups to still perform app runs for
+    things like dummy-module generation. However, someone who *is* able
+    to compile their own binaries might prefer to use their own binaries
+    here so that changes to their local repo are properly reflected in
+    app runs and whatnot. Set environment variable
     BA_APP_RUN_ENABLE_BUILDS=1 to enable that.
 
     When local builds are enabled, we use the same gui build targets as

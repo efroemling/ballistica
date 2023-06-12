@@ -349,3 +349,18 @@ def gen_python_init_module() -> None:
             ' See LICENSE for details.\n'
             '#\n'
         )
+
+
+def tests_warm_start() -> None:
+    """Warm-start some stuff needed by tests.
+
+    This keeps logs clearer by showing any binary builds/downloads we
+    need to do instead of having those silently happen as part of
+    tests.
+    """
+    from batools import apprun
+
+    # We do lots of apprun.python_command() within test. Pre-build the
+    # binary that they need to do their thing.
+    if not apprun.test_runs_disabled():
+        apprun.acquire_binary_for_python_command(purpose='running tests')

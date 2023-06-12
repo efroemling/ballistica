@@ -837,10 +837,12 @@ TEST_TARGET ?= tests
 # Run all tests. (live execution verification)
 test: py_check_prereqs
 	@tools/pcommand echo BLU Running all tests...
+	@tools/pcommand tests_warm_start
 	@tools/pcommand pytest -v $(TEST_TARGET)
 
 test-verbose: py_check_prereqs
 	@tools/pcommand echo BLU Running all tests...
+	@tools/pcommand tests_warm_start
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug \
       -s -vv $(TEST_TARGET)
 
