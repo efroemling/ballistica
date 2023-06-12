@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
 
 if TYPE_CHECKING:
     pass
@@ -105,7 +105,7 @@ def get_all_tips() -> list[str]:
             'color of sparks from its fuse:  yellow..orange..red..BOOM.'
         ),
     ]
-    app = _babase.app
+    app = babase.app
     if not app.iircade_mode:
         tips += [
             'If your framerate is choppy, try turning down resolution\nor '

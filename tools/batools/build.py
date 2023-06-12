@@ -35,11 +35,11 @@ class PyRequirement:
 # entries; this accounts for manual installations or other nonstandard
 # setups.
 
-# Note 2: That is probably overkill. We can probably just replace
-# this with a simple requirements.txt file, can't we? Feels like we're
-# mostly reinventing the wheel here. We just need a clean way to
-# check/list missing stuff without necessarily installing it. And as far
-# as manually-installed bits, pip itself must have some way to allow for
+# Note 2: That is probably overkill. We can probably just replace this
+# with a simple requirements.txt file, can't we? Feels like we're mostly
+# reinventing the wheel here. We just need a clean way to check/list
+# missing stuff without necessarily installing it. And as far as
+# manually-installed bits, pip itself must have some way to allow for
 # that, right?...
 PY_REQUIREMENTS = [
     PyRequirement(modulename='pylint', minversion=[2, 17, 3]),
@@ -63,9 +63,9 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='filelock', minversion=[3, 12, 0]),
 ]
 
-# Parts of full-tests suite we only run on particular days.
-# (This runs in listed order so should be randomized by hand to avoid
-# clustering similar tests too much)
+# Parts of full-tests suite we only run on particular days. This runs in
+# listed order so should be randomized by hand to avoid clustering
+# similar tests too much.
 SPARSE_TEST_BUILDS: list[list[str]] = [
     ['ios.pylibs.debug', 'android.pylibs.arm'],
     ['linux.package', 'android.pylibs.arm64'],
@@ -82,8 +82,8 @@ SPARSE_TEST_BUILDS: list[list[str]] = [
     ['mac.pylibs.debug', 'android.package'],
 ]
 
-# Currently only doing sparse-tests in core; not spinoffs.
-# (whole word will get subbed out in spinoffs so this will be false)
+# Currently only doing sparse-tests in core; not spinoffs (whole word
+# will get subbed out in spinoffs so this will evaluate to False).
 DO_SPARSE_TEST_BUILDS = 'ballistica' + 'kit' == 'ballisticakit'
 
 
@@ -115,8 +115,9 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
         LazyBuildContext(
             target=target,
             command=command,
-            # Since this category can kick off cleans and blow things away,
-            # its not safe to have multiple builds going with it at once.
+            # Since this category can kick off cleans and blow things
+            # away, its not safe to have multiple builds going with it
+            # at once.
             buildlockname=category.value,
             # Regular paths; changes to these will trigger meta build.
             srcpaths=[
@@ -124,12 +125,14 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/meta',
                 'src/ballistica/shared/foundation/types.h',
             ],
-            # Our meta Makefile targets generally don't list tools scripts
-            # that can affect their creation as sources, so let's set up
-            # a catch-all here: when any of our tools stuff changes we'll
-            # blow away all existing meta builds.
-            # Update: also including featureset-defs here; any time we're
-            # mucking with those it's good to start fresh to be sure.
+            # Our meta Makefile targets generally don't list tools
+            # scripts that can affect their creation as sources, so
+            # let's set up a catch-all here: when any of our tools stuff
+            # changes we'll blow away all existing meta builds.
+            #
+            # Update: also including featureset-defs here; any time
+            # we're mucking with those it's good to start fresh to be
+            # sure.
             srcpaths_fullclean=[
                 'tools/efrotools',
                 'tools/efrotoolsinternal',
@@ -198,9 +201,9 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.RESOURCES:
         LazyBuildContext(
             target=target,
-            # Even though this category currently doesn't run any
-            # clean commands, going to restrict to one use at a time for
-            # now in case we want to add that.
+            # Even though this category currently doesn't run any clean
+            # commands, going to restrict to one use at a time for now
+            # in case we want to add that.
             buildlockname=category.value,
             srcpaths=[
                 'Makefile',
@@ -214,18 +217,18 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.ASSETS:
 
         def _filefilter(root: str, filename: str) -> bool:
-            # Exclude tools/spinoff; it doesn't affect asset builds
-            # and we don't want to break if it is a symlink pointing
-            # to a not-present parent repo.
+            # Exclude tools/spinoff; it doesn't affect asset builds and
+            # we don't want to break if it is a symlink pointing to a
+            # not-present parent repo.
             if root == 'tools' and filename == 'spinoff':
                 return False
             return True
 
         LazyBuildContext(
             target=target,
-            # Even though this category currently doesn't run any
-            # clean commands, going to restrict to one use at a time for
-            # now in case we want to add that.
+            # Even though this category currently doesn't run any clean
+            # commands, going to restrict to one use at a time for now
+            # in case we want to add that.
             buildlockname=category.value,
             srcpaths=[
                 'Makefile',
@@ -240,8 +243,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.DUMMYMODULES:
 
         def _filefilter(root: str, filename: str) -> bool:
-            # In our C++ sources, only look at stuff with 'python' in the
-            # name.
+            # In our C++ sources, only look at stuff with 'python' in
+            # the name.
             if root.startswith('ballistica'):
                 return 'python' in filename
 
@@ -250,8 +253,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
 
         LazyBuildContext(
             target=target,
-            # This category builds binaries and other crazy stuff
-            # so we definitely want to restrict to one at a time.
+            # This category builds binaries and other crazy stuff so we
+            # definitely want to restrict to one at a time.
             buildlockname=category.value,
             srcpaths=[
                 'config/featuresets',
@@ -313,26 +316,28 @@ def gen_fulltest_buildfile_android() -> None:
     """
     # pylint: disable=too-many-branches
 
-    # Its a pretty big time-suck building all architectures for
-    # all of our subplatforms, so lets usually just build a single one.
-    # We'll rotate it though and occasionally do all 4 at once just to
-    # be safe.
+    # Its a pretty big time-suck building all architectures for all of
+    # our subplatforms, so lets usually just build a single one. We'll
+    # rotate it though and occasionally do all 4 at once just to be
+    # safe.
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
     # Let's only do a full 'prod' once every two times through the loop.
-    # (it really should never catch anything that individual platforms don't)
+    # (it really should never catch anything that individual platforms
+    # don't)
     modes = ['arm', 'arm64', 'x86', 'x86_64']
     modes += modes
     modes.append('prod')
 
     # By default we cycle through build architectures for each flavor.
-    # However, for minor flavor with low risk of platform-dependent breakage
-    # we stick to a single one to keep disk space costs lower. (build files
-    # amount to several gigs per mode per flavor)
-    # UPDATE: Now that we have CPU time to spare, we simply always do 'arm64'
-    # or 'prod' depending on build type; this results in 1 or 4 architectures
-    # worth of build files per flavor instead of 8 (prod + 4 singles) and
-    # keeps our daily runs identical.
+    # However, for minor flavor with low risk of platform-dependent
+    # breakage we stick to a single one to keep disk space costs lower.
+    # (build files amount to several gigs per mode per flavor)
+    #
+    # UPDATE: Now that we have CPU time to spare, we simply always do
+    # 'arm64' or 'prod' depending on build type; this results in 1 or 4
+    # architectures worth of build files per flavor instead of 8 (prod +
+    # 4 singles) and keeps our daily runs identical.
     lightweight_flavors = {'template', 'arcade', 'demo', 'iircade'}
 
     lines = []
@@ -433,10 +438,10 @@ def gen_fulltest_buildfile_windows() -> None:
 
     lines: list[str] = []
 
-    # We want to do one regular, one headless, and one oculus build,
-    # but let's switch up 32 or 64 bit based on the day.
-    # Also occasionally throw a release build in but stick to
-    # mostly debug builds to keep build times speedier.
+    # We want to do one regular, one headless, and one oculus build, but
+    # let's switch up 32 or 64 bit based on the day. Also occasionally
+    # throw a release build in but stick to mostly debug builds to keep
+    # build times speedier.
     pval1 = 'Win32' if dayoffset % 2 == 0 else 'x64'
     pval2 = 'Win32' if (dayoffset + 1) % 2 == 0 else 'x64'
     pval3 = 'Win32' if (dayoffset + 2) % 2 == 0 else 'x64'
@@ -692,10 +697,11 @@ def checkenv() -> None:
         )
 
     # Make sure rsync is version 3.1.0 or newer.
-    # Macs come with ancient rsync versions with significant downsides such
-    # as single second file mod time resolution which has started to cause
-    # problems with build setups. So now am trying to make sure my Macs
-    # have an up-to-date one installed (via homebrew).
+    #
+    # Macs come with ancient rsync versions with significant downsides
+    # such as single second file mod time resolution which has started
+    # to cause problems with build setups. So now am trying to make sure
+    # my Macs have an up-to-date one installed (via homebrew).
     rsyncver = tuple(
         int(s)
         for s in subprocess.run(
@@ -772,8 +778,10 @@ def checkenv() -> None:
             ) from exc
 
     # Check for some required python modules.
+    #
     # FIXME: since all of these come from pip now, we should just use
-    # pip --list to check versions on everything instead of doing it ad-hoc.
+    #  pip --list to check versions on everything instead of doing it
+    #  ad-hoc.
     for req in PY_REQUIREMENTS:
         try:
             modname = req.modulename

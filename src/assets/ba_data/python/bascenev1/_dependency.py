@@ -7,7 +7,8 @@ from __future__ import annotations
 import weakref
 from typing import Generic, TypeVar, TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
 
 if TYPE_CHECKING:
@@ -304,7 +305,7 @@ class AssetPackage(DependencyComponent):
         super().__init__()
 
         # This is used internally by the get_package_xxx calls.
-        self.context = _babase.ContextRef()
+        self.context = babase.ContextRef()
 
         entry = self._dep_entry()
         assert entry is not None
@@ -424,7 +425,7 @@ def test_depset() -> None:
         # To test this, add prints on __del__ for stuff used above;
         # everything should be dead at this point if we have no cycles.
         print('everything should be cleaned up...')
-        _babase.quit()
+        babase.quit()
 
 
 class DependencyError(Exception):

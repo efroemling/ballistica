@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bascenev1
 
 if TYPE_CHECKING:
@@ -17,9 +18,9 @@ if TYPE_CHECKING:
 
 
 def launch_main_menu_session() -> None:
-    assert _babase.app.classic is not None
+    assert babase.app.classic is not None
 
-    _bascenev1.new_host_session(_babase.app.classic.get_main_menu_session())
+    _bascenev1.new_host_session(babase.app.classic.get_main_menu_session())
 
 
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:
@@ -45,7 +46,7 @@ def filter_chat_message(msg: str, client_id: int) -> str | None:
 
 
 def local_chat_message(msg: str) -> None:
-    classic = _babase.app.classic
+    classic = babase.app.classic
     assert classic is not None
     party_window = (
         None if classic.party_window is None else classic.party_window()

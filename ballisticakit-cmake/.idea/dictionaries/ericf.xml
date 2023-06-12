@@ -649,8 +649,11 @@
       <w>fsetname</w>
       <w>fsets</w>
       <w>fsmetapackagename</w>
+      <w>fsmodulename</w>
+      <w>fsmodulepath</w>
       <w>fsname</w>
       <w>fspackagename</w>
+      <w>fspackagesroot</w>
       <w>fstestspackagename</w>
       <w>fsum</w>
       <w>ftos</w>
@@ -799,6 +802,7 @@
       <w>imagewidget</w>
       <w>imayushsaini</w>
       <w>importlines</w>
+      <w>importparts</w>
       <w>incentivized</w>
       <w>includelines</w>
       <w>indata</w>
@@ -907,6 +911,8 @@
       <w>linebegin</w>
       <w>linemax</w>
       <w>linestart</w>
+      <w>linestripped</w>
+      <w>linewords</w>
       <w>linkstoryboards</w>
       <w>listobj</w>
       <w>llock</w>
@@ -1013,6 +1019,7 @@
       <w>modetype</w>
       <w>modstr</w>
       <w>modtime</w>
+      <w>modulenames</w>
       <w>moduletype</w>
       <w>momemtary</w>
       <w>morecnt</w>

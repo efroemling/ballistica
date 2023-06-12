@@ -10,7 +10,7 @@ from typing import cast
 from typing import TYPE_CHECKING
 
 import babase
-from _babase import screenmessage
+
 import _bauiv1
 from bauiv1._uitypes import Window
 
@@ -379,12 +379,12 @@ class OnScreenKeyboardWindow(Window):
         self._load_keyboard()
         if len(kbexports) < 2:
             _bauiv1.getsound('error').play()
-            screenmessage(
+            babase.screenmessage(
                 babase.Lstr(resource='keyboardNoOthersAvailableText'),
                 color=(1, 0, 0),
             )
         else:
-            screenmessage(
+            babase.screenmessage(
                 babase.Lstr(
                     resource='keyboardSwitchText',
                     subs=[('${NAME}', self._keyboard.name)],

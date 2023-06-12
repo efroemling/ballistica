@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -196,8 +196,17 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
                         pass
                     else:
                         codefilenames.append(path)
-    codefilenames.sort()
-    return codefilenames
+    out = sorted(codefilenames)
+
+    # Watch for breakage.
+    if not out:
+        print(
+            'WARNING: get_code_filename returning no results;'
+            ' is something broken?',
+            file=sys.stderr,
+        )
+
+    return out
 
 
 def black_base_args() -> list[str]:
@@ -291,20 +300,33 @@ def get_script_filenames(projroot: Path) -> list[str]:
     """Return the Python filenames to lint-check or auto-format."""
     from efrotools import getconfig
 
+    proot = f'{projroot}/'
+
     filenames = set()
     places = getconfig(projroot).get('python_source_dirs', None)
     if places is None:
         raise RuntimeError('python_source_dirs not declared in config')
     for place in places:
-        for root, _dirs, files in os.walk(place):
+        for root, _dirs, files in os.walk(os.path.join(projroot, place)):
             for fname in files:
                 fnamefull = os.path.join(root, fname)
                 # Skip symlinks (we conceivably operate on the original too)
                 if os.path.islink(fnamefull):
                     continue
                 if _should_include_script(fnamefull):
-                    filenames.add(fnamefull)
-    return sorted(list(f for f in filenames if 'flycheck_' not in f))
+                    assert fnamefull.startswith(proot)
+                    filenames.add(fnamefull.removeprefix(proot))
+    out = sorted(list(f for f in filenames if 'flycheck_' not in f))
+
+    # Watch for breakage.
+    if not out:
+        print(
+            'WARNING: get_script_filename returning no results;'
+            ' is something broken?',
+            file=sys.stderr,
+        )
+
+    return out
 
 
 def runpylint(projroot: Path, filenames: list[str]) -> None:

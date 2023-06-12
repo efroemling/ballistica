@@ -9,7 +9,8 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import _babase
+import babase
+
 import _bauiv1
 
 if TYPE_CHECKING:
@@ -199,8 +200,8 @@ def uicleanupcheck(obj: Any, widget: bauiv1.Widget) -> None:
 
         widget.add_delete_callback(foobar)
 
-    assert _babase.app.classic is not None
-    _babase.app.ui_v1.cleanupchecks.append(
+    assert babase.app.classic is not None
+    babase.app.ui_v1.cleanupchecks.append(
         UICleanupCheck(
             obj=weakref.ref(obj), widget=widget, widget_death_time=None
         )
@@ -209,10 +210,10 @@ def uicleanupcheck(obj: Any, widget: bauiv1.Widget) -> None:
 
 def ui_upkeep() -> None:
     """Run UI cleanup checks, etc. should be called periodically."""
-    assert _babase.app.classic is not None
-    ui = _babase.app.ui_v1
+    assert babase.app.classic is not None
+    ui = babase.app.ui_v1
     remainingchecks = []
-    now = _babase.apptime()
+    now = babase.apptime()
     for check in ui.cleanupchecks:
         obj = check.obj()
 

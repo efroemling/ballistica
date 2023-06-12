@@ -1093,8 +1093,11 @@
       <w>fsets</w>
       <w>fsettings</w>
       <w>fsmetapackagename</w>
+      <w>fsmodulename</w>
+      <w>fsmodulepath</w>
       <w>fsname</w>
       <w>fspackagename</w>
+      <w>fspackagesroot</w>
       <w>fsplit</w>
       <w>fsrc</w>
       <w>fstab</w>
@@ -1359,6 +1362,7 @@
       <w>imghdr</w>
       <w>imgw</w>
       <w>importlines</w>
+      <w>importparts</w>
       <w>incentivized</w>
       <w>includelines</w>
       <w>includetest</w>
@@ -1574,8 +1578,10 @@
       <w>linenumber</w>
       <w>linenums</w>
       <w>linestart</w>
+      <w>linestripped</w>
       <w>linetype</w>
       <w>linetypes</w>
+      <w>linewords</w>
       <w>linflav</w>
       <w>linkstoryboards</w>
       <w>linkto</w>
@@ -1765,6 +1771,7 @@
       <w>moduledir</w>
       <w>modulefinder</w>
       <w>modulename</w>
+      <w>modulenames</w>
       <w>modulepath</w>
       <w>modutils</w>
       <w>moola</w>
