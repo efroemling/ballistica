@@ -159,8 +159,14 @@ dummymodules-clean:
 	rm -f $(LAZYBUILDDIR)/dummymodules
 	rm -rf build/dummymodules
 
-# Generate docs.
-docs: assets-cmake
+# Generate all docs.
+#
+# IMPORTANT: Docs generation targets may themselves run builds, so they should
+#  be run alone serially.
+docs:
+	$(MAKE) docs-pdoc
+
+docs-pdoc:
 	@tools/pcommand gen_docs_pdoc
 
 # Tell make which of these targets don't represent files.

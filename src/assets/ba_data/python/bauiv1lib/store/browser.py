@@ -1405,4 +1405,8 @@ def _check_merch_availability_in_bg_thread() -> None:
         time.sleep(1.1934)  # A bit randomized to avoid aliasing.
 
 
-Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()
+# Slight hack; start checking merch availability in the bg
+# (but only if it looks like we're part of a running app; don't want to
+# do this during docs generation/etc.)
+if bui.app.state is not bui.app.State.INITIAL:
+    Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()

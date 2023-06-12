@@ -53,8 +53,8 @@ class Actor:
     ... self.flag = None
 
     This is in contrast to the behavior of the more low level
-    bascenev1.Nodes, which are always explicitly created and destroyed
-    and don't care how many Python references to them exist.
+    bascenev1.Node, which is always explicitly created and destroyed
+    and doesn't care how many Python references to it exist.
 
     Note, however, that you can use the bascenev1.Actor.autoretain() method
     if you want an Actor to stick around until explicitly killed

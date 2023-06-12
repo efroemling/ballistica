@@ -40,17 +40,33 @@ def acquire_binary_for_python_command(purpose: str) -> str:
     return acquire_binary(assets=True, purpose=purpose)
 
 
-def python_command(cmd: str, purpose: str) -> None:
-    """Run a cmd with a built bin and PYTHONPATH set to its scripts dir."""
+def python_command(
+    cmd: str, purpose: str, include_project_tools: bool = False
+) -> None:
+    """Run a cmd with a built bin and PYTHONPATH set to its scripts."""
 
     binpath = acquire_binary_for_python_command(purpose=purpose)
     bindir = os.path.dirname(binpath)
 
+    # We'll set both the app python dir and its site-python-dir. This
+    # should let us get at most engine stuff. We could also just use
+    # baenv to set up app paths, but that might be overkill and could
+    # unintentionally bring in stuff like local mods.
+    pydir = f'{bindir}/ba_data/python'
+    assert os.path.isdir(pydir)
+    pysitedir = f'{bindir}/ba_data/python-site-packages'
+    assert os.path.isdir(pysitedir)
+
+    # Make our tools dir available if asked.
+    tools_path_extra = ':tools' if include_project_tools else ''
+
     cmdargs = [binpath, '--command', cmd]
-    print(f'Running command: {cmdargs}...')
+    print(f"apprun: Running with Python command: '{cmdargs}'...", flush=True)
     subprocess.run(
         cmdargs,
-        env=dict(os.environ, PYTHONPATH=f'{bindir}/ba_data/python'),
+        env=dict(
+            os.environ, PYTHONPATH=f'{pydir}:{pysitedir}{tools_path_extra}'
+        ),
         check=True,
     )
 
@@ -160,4 +176,3 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             f"Binary not found at expected path '{binary_path}'."
         )
     return binary_path
-    # subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)

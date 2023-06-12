@@ -4,13 +4,11 @@
 
 from __future__ import annotations
 
-import sys
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
@@ -76,54 +74,47 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
 
 
 def generate_pdoc(projroot: str) -> None:
-    """Main entry point."""
+    """Generate a set of pdoc documentation."""
+    from batools import apprun
+
     del projroot  # Unused.
-    print('WOULD DO DOCS')
+
+    # Assemble and launch an app and do our docs generation from there.
+    apprun.python_command(
+        'import batools.docs; batools.docs._run_pdoc_in_engine()',
+        purpose='pdocs generation',
+        include_project_tools=True,
+    )
 
 
-def do_generate_pdoc(projroot: str) -> None:
-    """Main entry point."""
-    from batools.version import get_current_version
+def _run_pdoc_in_engine() -> None:
+    import time
+
     import pdoc
+    import babase
 
-    # Since we're operating on source dirs, suppress .pyc generation.
-    # (__pycache__ dirs accumulating in source dirs causes some subtle
-    # headaches)
-    sys.dont_write_bytecode = True
+    starttime = time.monotonic()
 
-    # Make sure we're running from the dir above this script.
-    os.chdir(projroot)
+    # Tell pdoc to go through all the modules we've got in
+    # ba_data/python.
+    modulenames = sorted(
+        n.removesuffix('.py')
+        for n in os.listdir('src/assets/ba_data/python')
+        if not n.startswith('.')
+    )
+    assert modulenames
 
-    templatesdir = (
-        Path(projroot) / 'assets' / 'src' / 'pdoc' / 'templates'
-    ).absolute()
-    pythondir = (
-        Path(projroot) / 'assets' / 'src' / 'ba_data' / 'python'
-    ).absolute()
-    outdirname = (Path(projroot) / 'build' / 'docs_html').absolute()
-    sys.path.append(str(pythondir))
+    templatesdir = Path('src/assets/pdoc/templates')
+    assert templatesdir.is_dir()
 
-    version, build_number = get_current_version()
+    pdoc.render.env.globals['ba_version'] = babase.app.version
+    pdoc.render.env.globals['ba_build'] = babase.app.build_number
+    pdoc.render.configure(
+        search=True,
+        show_source=True,
+        template_directory=Path('src/assets/pdoc/templates'),
+    )
+    pdoc.pdoc(*modulenames, output_directory=Path('build/docs_pdoc'))
 
-    try:
-        os.environ['BA_DOCS_GENERATION'] = '1'
-        pdoc.render.env.globals['ba_version'] = version
-        pdoc.render.env.globals['ba_build'] = build_number
-        pdoc.render.configure(
-            search=True, show_source=True, template_directory=templatesdir
-        )
-        pdoc.pdoc(
-            'babase',
-            'bascenev1lib',
-            'baclassic',
-            'bascenev1',
-            'bauiv1',
-            output_directory=outdirname,
-        )
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise CleanError('Docs generation failed') from exc
-
-    print(f'{Clr.GRN}Docs generation complete.{Clr.RST}')
+    duration = time.monotonic() - starttime
+    print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')

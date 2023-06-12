@@ -85,6 +85,7 @@
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
+      <w>apprun</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>appsubsystem</w>
@@ -1333,6 +1334,7 @@
       <w>pymodulenames</w>
       <w>pyobj</w>
       <w>pyobjs</w>
+      <w>pysitedir</w>
       <w>pythondevmode</w>
       <w>pythonenumsmodule</w>
       <w>pytype</w>

@@ -127,6 +127,7 @@
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
+      <w>apprun</w>
       <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
@@ -2323,6 +2324,7 @@
       <w>pyobjc</w>
       <w>pyoffs</w>
       <w>pypaths</w>
+      <w>pysitedir</w>
       <w>pysources</w>
       <w>pytest</w>
       <w>pythondevmode</w>
