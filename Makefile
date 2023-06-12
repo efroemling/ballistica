@@ -161,7 +161,7 @@ dummymodules-clean:
 
 # Generate docs.
 docs: assets-cmake
-	@tools/pcommand gendocs
+	@tools/pcommand gen_docs_pdoc
 
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake \

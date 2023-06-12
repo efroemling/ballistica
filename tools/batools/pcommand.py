@@ -518,13 +518,13 @@ def warm_start_asset_build() -> None:
         )
 
 
-def gendocs() -> None:
-    """Generate docs html."""
+def gen_docs_pdoc() -> None:
+    """Generate pdoc documentation."""
     from efro.terminal import Clr
     import batools.docs
 
     print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
-    batools.docs.generate(projroot=str(PROJROOT))
+    batools.docs.generate_pdoc(projroot=str(PROJROOT))
 
 
 def list_pip_reqs() -> None:

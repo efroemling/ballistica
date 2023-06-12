@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """Generates dummy .py modules based on binary modules.
 
 This allows us to use code introspection tools such as pylint without spinning
@@ -914,6 +913,7 @@ def generate_dummy_modules(projroot: str) -> None:
     # pylint: disable=cyclic-import
 
     from batools.featureset import FeatureSet
+    from batools import apprun
 
     toolsdir = os.path.abspath(os.path.join(projroot, 'tools'))
 
@@ -924,63 +924,9 @@ def generate_dummy_modules(projroot: str) -> None:
             f" but cwd is '{os.getcwd()}'."
         )
 
-    # WARNING: this builds cmake-binary. This could cause problems in
-    # parallel builds containing checks plus actual builds of cmake-binary.
-    # The upside is during iteration this will often just use the same binary
-    # we are iterating with, reducing redundant compiles.
-
-    # Normally here we download a prefab binary to use when generating
-    # dummy modules. This allows people without full compiler setups to
-    # still get dummy modules made so they can check their Python code.
-    # However someone who *is* able to compile their own binaries might want
-    # to go with those so any changes they make to the binary are reflected
-    # in the dummy-modules. Set BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS=1 to
-    # enable that.
-    binary_build_command: list[str]
-    if os.environ.get('BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS') == '1':
-        # Default to gui binary since that's what people are most likely
-        # to be iterating with anyway (minimizing redundant builds), but
-        # allow using headless builds which may work better in CI
-        # situations and whatnot due to fewer build requirements.
-        if os.environ.get('BA_DUMMY_MODULE_BINARY_BUILDS_USE_HEADLESS') == '1':
-            print(
-                f'{Clr.SMAG}Building (headless) binary to generate'
-                f' dummy-modules...{Clr.RST}',
-                flush=True,
-            )
-            binary_build_command = ['make', 'cmake-server-binary']
-            binary_path = 'build/cmake/server-debug/dist/ballisticakit_headless'
-        else:
-            print(
-                f'{Clr.SMAG}Building (gui) binary to generate'
-                f' dummy-modules...{Clr.RST}',
-                flush=True,
-            )
-            binary_build_command = ['make', 'cmake-binary']
-            binary_path = 'build/cmake/debug/ballisticakit'
-    else:
-        print(
-            f'{Clr.SMAG}Fetching prefab binary to'
-            f' generate dummy-modules...{Clr.RST}',
-            flush=True,
-        )
-        binary_path = (
-            subprocess.run(
-                ['tools/pcommand', 'prefab_binary_path', 'server-release'],
-                check=True,
-                capture_output=True,
-            )
-            .stdout.decode()
-            .strip()
-        )
-        binary_build_command = ['make', binary_path]
-
-    subprocess.run(binary_build_command, check=True)
-    if not os.path.exists(binary_path):
-        raise RuntimeError(
-            f"Binary not found at expected path '{binary_path}'."
-        )
-    subprocess.run(['make', 'scripts-cmake'], cwd='src/assets', check=True)
+    binary_path = apprun.acquire_binary(
+        assets=True, purpose='dummy modules generation'
+    )
 
     pycmd = (
         f'import sys\n'

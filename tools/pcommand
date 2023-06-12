@@ -89,7 +89,7 @@ from batools.pcommand import (
     efrocache_get,
     get_modern_make,
     warm_start_asset_build,
-    gendocs,
+    gen_docs_pdoc,
     list_pip_reqs,
     install_pip_reqs,
     checkenv,

@@ -150,8 +150,8 @@ def spinoff_test(args: list[str]) -> None:
             cwd=path,
             env=dict(
                 os.environ,
-                BA_ENABLE_DUMMY_MODULE_BINARY_BUILDS='1',
-                BA_DUMMY_MODULE_BINARY_BUILDS_USE_HEADLESS='1',
+                BA_APP_RUN_ENABLE_BUILDS='1',
+                BA_APP_RUN_BUILD_HEADLESS='1',
             ),
             check=True,
         )

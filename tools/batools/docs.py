@@ -75,14 +75,20 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
     return docs
 
 
-def generate(projroot: str) -> None:
+def generate_pdoc(projroot: str) -> None:
+    """Main entry point."""
+    del projroot  # Unused.
+    print('WOULD DO DOCS')
+
+
+def do_generate_pdoc(projroot: str) -> None:
     """Main entry point."""
     from batools.version import get_current_version
     import pdoc
 
     # Since we're operating on source dirs, suppress .pyc generation.
-    # (__pycache__ dirs in source dirs causes some subtle headaches in
-    # the private repo)
+    # (__pycache__ dirs accumulating in source dirs causes some subtle
+    # headaches)
     sys.dont_write_bytecode = True
 
     # Make sure we're running from the dir above this script.
