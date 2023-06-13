@@ -385,8 +385,9 @@ static auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
-  if (dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession())) {
+  auto* appmode = SceneV1AppMode::GetActive();
+  if (appmode
+      && dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession())) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
