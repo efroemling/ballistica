@@ -91,7 +91,7 @@ def _run_pdoc_in_engine() -> None:
     import time
 
     import pdoc
-    import babase
+    from batools.version import get_current_version
 
     starttime = time.monotonic()
 
@@ -107,8 +107,10 @@ def _run_pdoc_in_engine() -> None:
     templatesdir = Path('src/assets/pdoc/templates')
     assert templatesdir.is_dir()
 
-    pdoc.render.env.globals['ba_version'] = babase.app.version
-    pdoc.render.env.globals['ba_build'] = babase.app.build_number
+    version, buildnum = get_current_version()
+
+    pdoc.render.env.globals['ba_version'] = version
+    pdoc.render.env.globals['ba_build'] = buildnum
     pdoc.render.configure(
         search=True,
         show_source=True,
