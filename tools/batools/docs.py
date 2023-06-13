@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import os
+import sys
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,6 +24,9 @@ class AttributeInfo:
     name: str
     attr_type: str | None = None
     docs: str | None = None
+
+
+_g_genned_pdoc_with_dummy_modules = False  # pylint: disable=invalid-name
 
 
 def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
@@ -75,9 +80,29 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
 
 def generate_pdoc(projroot: str) -> None:
     """Generate a set of pdoc documentation."""
-    from batools import apprun
-
     del projroot  # Unused.
+
+    if bool(False):
+        _run_pdoc_in_engine()
+    else:
+        _run_pdoc_with_dummy_modules()
+
+
+def _run_pdoc_in_engine() -> None:
+    """Generate docs from within the running engine.
+
+    The upside of this way is we have all built-in native modules
+    available. The downside is that we don't have typing information
+    for those modules aside from what's embedded in their docstrings
+    (which is not parsed by pdoc). So we get lots of ugly 'unknown'
+    arg types in docs/etc.
+
+    The ideal solution might be to start writing .pyi files for
+    our native modules to provide their type information instead
+    of or in addition to our dummy-module approach. Just need to
+    see how that works with our pipeline.
+    """
+    from batools import apprun
 
     # Assemble and launch an app and do our docs generation from there.
     # Note: we set EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES because pdoc
@@ -86,44 +111,67 @@ def generate_pdoc(projroot: str) -> None:
     # it makes in the output though. Basically the canonical names stuff
     # makes things like bascenev1._actor.Actor show up as
     # bascenev1.Actor instead.
-    if bool(True):
-        # Gen docs from the engine.
-        apprun.python_command(
-            'import batools.docs; batools.docs._run_pdoc_in_engine()',
-            purpose='pdocs generation',
-            include_project_tools=True,
-            env=dict(os.environ, EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1'),
-        )
-    else:
-        # Gen docs using dummy modules.
-        _run_pdoc_with_dummy_modules()
+
+    # Grab names from live objects so things don't break if names
+    # change.
+    pycmd = f'import {__name__}; {__name__}.{_run_pdoc.__name__}()'
+    apprun.python_command(
+        pycmd,
+        purpose='pdocs generation',
+        include_project_tools=True,
+        env=dict(os.environ, EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1'),
+    )
 
 
 def _run_pdoc_with_dummy_modules() -> None:
     """Generate docs outside of the engine using our dummy modules.
 
-    Dummy modules stand in for native engine modules, and should be
-    just intact enough for us to spit out docs from. The upside is
-    that they have full typing information about arguments/etc. so our
-    docs will be more complete than if we talk to the live engine.
+    Dummy modules stand in for native engine modules, and should be just
+    intact enough for us to spit out docs from.
+
+    The upside is that dummy modules have full typing information about
+    arguments/etc. so some docs will be more complete than if we talk to
+    the live engine.
+
+    The downside is that we have to hack the engine a bit to be able to
+    spin itself up this way and there may be bits missing that would
+    otherwise not be when running in a live engine.
     """
-    raise RuntimeError('UNDER CONSTRUCTION')
+
+    # Not that this is likely to happen, but we muck with sys paths and
+    # whatnot here so let's make sure we only do this once.
+    global _g_genned_pdoc_with_dummy_modules  # pylint: disable=global-statement
+    if _g_genned_pdoc_with_dummy_modules:
+        raise RuntimeError(
+            'Can only run this once; it mucks with the environment.'
+        )
+    _g_genned_pdoc_with_dummy_modules = True
+
+    # Make sure dummy-modules are up to date and make them discoverable
+    # to Python.
+    subprocess.run(['make', 'dummymodules'], check=True)
+    sys.path.append('build/dummymodules')
+
+    # Turn off canonical module name muckery (see longer note above).
+    os.environ['EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES'] = '1'
+
+    # Short circuits a few things in our Python code allowing this to
+    # work.
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
+
+    # Use raw sources for our other stuff.
+    sys.path.append('src/assets/ba_data/python')
+
+    # We're using raw source dirs in this case, and we don't want Python
+    # dumping .pyc files there as it causes various small headaches with
+    # build pipeline stuff.
+    sys.dont_write_bytecode = True
+
+    _run_pdoc()
 
 
-def _run_pdoc_in_engine() -> None:
-    """Generate docs from within the running engine.
-
-    The upside of this way is we have all built-in native modules
-    available. The downside is that we don't have typing information for
-    those modules aside from what's embedded in their docstrings (which
-    is not parsed by pdoc). So we get lots of 'unknown' arg types in
-    docs/etc.
-
-    The ideal solution might be to start writing .pyi files for our
-    native modules to provide their type information instead of or in
-    addition to our dummy-module approach. Just need to see how that
-    works with our pipeline.
-    """
+def _run_pdoc() -> None:
+    """Do the actual docs generation with pdoc."""
     import time
 
     import pdoc

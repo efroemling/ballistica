@@ -4,6 +4,7 @@
 # pylint: disable=too-many-lines
 from __future__ import annotations
 
+import os
 import time
 import copy
 import math
@@ -1408,5 +1409,8 @@ def _check_merch_availability_in_bg_thread() -> None:
 # Slight hack; start checking merch availability in the bg
 # (but only if it looks like we're part of a running app; don't want to
 # do this during docs generation/etc.)
-if bui.app.state is not bui.app.State.INITIAL:
+if (
+    os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
+    and bui.app.state is not bui.app.State.INITIAL
+):
     Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()

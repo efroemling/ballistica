@@ -3,6 +3,7 @@
 """Functionality related to the high level state of the app."""
 from __future__ import annotations
 
+import os
 from enum import Enum
 import logging
 from typing import TYPE_CHECKING
@@ -230,6 +231,9 @@ class App:
         the single shared instance.
         """
 
+        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
+            return
+
         self.state = self.State.INITIAL
 
         self._subsystems: list[AppSubsystem] = []
@@ -294,6 +298,9 @@ class App:
 
     def postinit(self) -> None:
         """Called after we are inited and assigned to babase.app."""
+
+        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
+            return
 
         # NOTE: the reason we need a postinit here is that
         # some of this stuff accesses babase.app and that doesn't
