@@ -162,7 +162,7 @@ dummymodules-clean:
 # Generate all docs.
 #
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
-#  be run alone serially.
+#  be run alone serially and never in parallel alongside other builds.
 docs:
 	$(MAKE) docs-pdoc
 
@@ -301,11 +301,11 @@ prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 	@tools/pcommand ensure_prefab_platform mac_arm64
 	@$(RUN_PREFAB_MAC_ARM64_SERVER_DEBUG)
 
-prefab-mac-x86-64-server-debug-build: prereqs assets-cmake \
+prefab-mac-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -debug build/prefab/full/mac_x86_64_server/debug
 
-prefab-mac-arm64-server-debug-build: prereqs assets-cmake \
+prefab-mac-arm64-server-debug-build: prereqs assets-server \
    build/prefab/full/mac_arm64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
 
@@ -331,12 +331,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@tools/pcommand ensure_prefab_platform mac_arm64
 	@$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
-prefab-mac-x86-64-server-release-build: prereqs assets-cmake \
+prefab-mac-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
-prefab-mac-arm64-server-release-build: prereqs assets-cmake \
+prefab-mac-arm64-server-release-build: prereqs assets-server \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
@@ -423,12 +423,12 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 	@tools/pcommand ensure_prefab_platform linux_arm64
 	@$(RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG)
 
-prefab-linux-x86-64-server-debug-build: prereqs assets-cmake \
+prefab-linux-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -debug \
  build/prefab/full/linux_x86_64_server/debug
 
-prefab-linux-arm64-server-debug-build: prereqs assets-cmake \
+prefab-linux-arm64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_arm64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -debug \
  build/prefab/full/linux_arm64_server/debug
@@ -455,12 +455,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 	@tools/pcommand ensure_prefab_platform linux_arm64
 	@$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
-prefab-linux-x86-64-server-release-build: prereqs assets-cmake \
+prefab-linux-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
-prefab-linux-arm64-server-release-build: prereqs assets-cmake \
+prefab-linux-arm64-server-release-build: prereqs assets-server \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_ASSETS) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release

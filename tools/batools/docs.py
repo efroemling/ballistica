@@ -116,7 +116,7 @@ def _run_pdoc_in_engine() -> None:
         show_source=True,
         template_directory=Path('src/assets/pdoc/templates'),
     )
-    pdoc.pdoc(*modulenames, output_directory=Path('build/docs_pdoc'))
+    pdoc.pdoc(*modulenames, output_directory=Path('build/docs_pdoc_html'))
 
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
