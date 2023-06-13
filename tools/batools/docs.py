@@ -80,14 +80,50 @@ def generate_pdoc(projroot: str) -> None:
     del projroot  # Unused.
 
     # Assemble and launch an app and do our docs generation from there.
-    apprun.python_command(
-        'import batools.docs; batools.docs._run_pdoc_in_engine()',
-        purpose='pdocs generation',
-        include_project_tools=True,
-    )
+    # Note: we set EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES because pdoc
+    # spits out lots of "UserWarning: cannot determine where FOO was
+    # taken from" warnings if not. Haven't actually seen what difference
+    # it makes in the output though. Basically the canonical names stuff
+    # makes things like bascenev1._actor.Actor show up as
+    # bascenev1.Actor instead.
+    if bool(True):
+        # Gen docs from the engine.
+        apprun.python_command(
+            'import batools.docs; batools.docs._run_pdoc_in_engine()',
+            purpose='pdocs generation',
+            include_project_tools=True,
+            env=dict(os.environ, EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1'),
+        )
+    else:
+        # Gen docs using dummy modules.
+        _run_pdoc_with_dummy_modules()
+
+
+def _run_pdoc_with_dummy_modules() -> None:
+    """Generate docs outside of the engine using our dummy modules.
+
+    Dummy modules stand in for native engine modules, and should be
+    just intact enough for us to spit out docs from. The upside is
+    that they have full typing information about arguments/etc. so our
+    docs will be more complete than if we talk to the live engine.
+    """
+    raise RuntimeError('UNDER CONSTRUCTION')
 
 
 def _run_pdoc_in_engine() -> None:
+    """Generate docs from within the running engine.
+
+    The upside of this way is we have all built-in native modules
+    available. The downside is that we don't have typing information for
+    those modules aside from what's embedded in their docstrings (which
+    is not parsed by pdoc). So we get lots of 'unknown' arg types in
+    docs/etc.
+
+    The ideal solution might be to start writing .pyi files for our
+    native modules to provide their type information instead of or in
+    addition to our dummy-module approach. Just need to see how that
+    works with our pipeline.
+    """
     import time
 
     import pdoc
@@ -95,8 +131,7 @@ def _run_pdoc_in_engine() -> None:
 
     starttime = time.monotonic()
 
-    # Tell pdoc to go through all the modules we've got in
-    # ba_data/python.
+    # Tell pdoc to go through all the modules in ba_data/python.
     modulenames = sorted(
         n.removesuffix('.py')
         for n in os.listdir('src/assets/ba_data/python')

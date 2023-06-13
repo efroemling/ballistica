@@ -708,6 +708,9 @@ def unchanging_hostname() -> str:
 
 def set_canonical_module_names(module_globals: dict[str, Any]) -> None:
     """Do the thing."""
+    if os.environ.get('EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES') == '1':
+        return
+
     modulename = module_globals.get('__name__')
     if not isinstance(modulename, str):
         raise RuntimeError('Unable to get module name.')

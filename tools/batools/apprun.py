@@ -15,7 +15,7 @@ import os
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    pass
+    from typing import Mapping
 
 
 def test_runs_disabled() -> bool:
@@ -41,7 +41,10 @@ def acquire_binary_for_python_command(purpose: str) -> str:
 
 
 def python_command(
-    cmd: str, purpose: str, include_project_tools: bool = False
+    cmd: str,
+    purpose: str,
+    include_project_tools: bool = False,
+    env: Mapping[str, str] | None = None,
 ) -> None:
     """Run a cmd with a built bin and PYTHONPATH set to its scripts."""
 
@@ -60,15 +63,12 @@ def python_command(
     # Make our tools dir available if asked.
     tools_path_extra = ':tools' if include_project_tools else ''
 
+    env_final = {} if env is None else dict(env)
+    env_final['PYTHONPATH'] = f'{pydir}:{pysitedir}{tools_path_extra}'
+
     cmdargs = [binpath, '--command', cmd]
     print(f"apprun: Running with Python command: '{cmdargs}'...", flush=True)
-    subprocess.run(
-        cmdargs,
-        env=dict(
-            os.environ, PYTHONPATH=f'{pydir}:{pysitedir}{tools_path_extra}'
-        ),
-        check=True,
-    )
+    subprocess.run(cmdargs, env=env_final, check=True)
 
 
 def acquire_binary(assets: bool, purpose: str) -> str:
