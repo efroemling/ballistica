@@ -87,8 +87,9 @@ void UIV1Python::HandleDeviceMenuPress(base::InputDevice* device) {
   assert(device);
   assert(objs().Exists(ObjID::kDeviceMenuPressCall));
 
-  // Ignore if input is locked...
-  if (g_base->input->IsInputLocked()) {
+  // Ignore if input is locked or we've not yet got a root widget.
+  if (g_base->input->IsInputLocked() || g_ui_v1 == nullptr
+      || g_ui_v1->root_widget() == nullptr) {
     return;
   }
   base::ScopedSetContext ssc(nullptr);

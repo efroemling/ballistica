@@ -1,4 +1,4 @@
-### 1.7.20 (build 21096, api 8, 2023-06-13)
+### 1.7.20 (build 21098, api 8, 2023-06-13)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -317,8 +317,8 @@
   Android would not show correctly under the player.
 - (build 21084) Plugin UI now has a categories dropdown for showing only enabled
   or disabled plugins (Thanks vishal332008!)
-- (build 21095) Fixed an issue where certain buttons such as map selection
-  buttons would not draw correctly.
+- (build 21095) Fixed an issue where certain buttons such as map selection buttons
+  would draw incorrectly.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 
