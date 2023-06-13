@@ -92,11 +92,12 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     BA_APP_RUN_ENABLE_BUILDS=1 to enable that.
 
     When local builds are enabled, we use the same gui build targets as
-    the 'make cmake' command. This works well if you are iterating using
-    that build target anyway, minimizing redundant rebuilds. You may,
-    however, prefer to assemble headless builds for various reasons
-    including faster build times and fewer dependencies. To do so, set
-    environment variable BA_APP_RUN_BUILD_HEADLESS=1.
+    the 'make cmake-build' command. This works well if you are iterating
+    using that build target anyway, minimizing redundant rebuilds. You
+    may, however, prefer to instead assemble headless builds for various
+    reasons including faster build times and fewer dependencies
+    (equivalent to 'make cmake-server-build'). To do so, set environment
+    variable BA_APP_RUN_BUILD_HEADLESS=1.
     """
 
     binary_build_command: list[str]

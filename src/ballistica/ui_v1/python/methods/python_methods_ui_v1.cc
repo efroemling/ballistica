@@ -320,8 +320,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->set_show_buffer_top(Python::GetPyFloat(show_buffer_top_obj));
   }
   if (mesh_opaque_obj != Py_None) {
-    b->SetMeshTransparent(
-        &PythonClassUIMesh::FromPyObj(mesh_opaque_obj).mesh());
+    b->SetMeshOpaque(&PythonClassUIMesh::FromPyObj(mesh_opaque_obj).mesh());
   }
   if (on_select_call_obj != Py_None) {
     b->SetOnSelectCall(on_select_call_obj);
