@@ -169,7 +169,7 @@ class PrivateGatherTab(GatherTab):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
-        from bascenev1.internal import filter_playlist
+        from bascenev1 import filter_playlist
 
         hcfg = PrivateHostingConfig()
         cfg = bui.app.config

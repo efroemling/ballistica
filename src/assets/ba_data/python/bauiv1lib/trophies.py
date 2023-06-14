@@ -136,7 +136,7 @@ class TrophiesWindow(popup.PopupWindow):
         sub_width: int,
         trophy_types: list[list[str]],
     ) -> int:
-        from bascenev1.internal import get_trophy_string
+        from bascenev1 import get_trophy_string
 
         total_pts = 0
         for i, trophy_type in enumerate(trophy_types):

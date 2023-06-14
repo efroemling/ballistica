@@ -343,7 +343,7 @@ class ProfileBrowserWindow(bui.Window):
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
         from efro.util import asserttype
-        from bascenev1.internal import PlayerProfilesChangedMessage
+        from bascenev1 import PlayerProfilesChangedMessage
 
         assert bui.app.classic is not None
 

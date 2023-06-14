@@ -18,7 +18,7 @@ class TeamNamesColorsWindow(PopupWindow):
     """A popup window for customizing team names and colors."""
 
     def __init__(self, scale_origin: tuple[float, float]):
-        from bascenev1.internal import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
+        from bascenev1 import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 
         self._width = 500
         self._height = 330
@@ -147,7 +147,7 @@ class TeamNamesColorsWindow(PopupWindow):
         self._update()
 
     def _reset(self) -> None:
-        from bascenev1.internal import DEFAULT_TEAM_NAMES, DEFAULT_TEAM_COLORS
+        from bascenev1 import DEFAULT_TEAM_NAMES, DEFAULT_TEAM_COLORS
 
         for i in range(2):
             self._colors[i] = DEFAULT_TEAM_COLORS[i]
@@ -167,7 +167,7 @@ class TeamNamesColorsWindow(PopupWindow):
             )
 
     def _ok(self) -> None:
-        from bascenev1.internal import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
+        from bascenev1 import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 
         cfg = bui.app.config
 

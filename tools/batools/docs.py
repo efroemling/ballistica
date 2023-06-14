@@ -180,12 +180,19 @@ def _run_pdoc() -> None:
     starttime = time.monotonic()
 
     # Tell pdoc to go through all the modules in ba_data/python.
-    modulenames = sorted(
+    modulenames = [
         n.removesuffix('.py')
         for n in os.listdir('src/assets/ba_data/python')
         if not n.startswith('.')
-    )
+    ]
     assert modulenames
+
+    # Also add in a few common ones from tools.
+    for mname in ['efro', 'bacommon']:
+        assert mname not in modulenames
+        modulenames.append(mname)
+
+    modulenames.sort()  # Just in case it matters.
 
     templatesdir = Path('src/assets/pdoc/templates')
     assert templatesdir.is_dir()

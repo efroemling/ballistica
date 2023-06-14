@@ -7,9 +7,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from bauiv1lib.popup import PopupWindow
 import bascenev1 as bs
 import bauiv1 as bui
+
+from bauiv1lib.popup import PopupWindow
 
 if TYPE_CHECKING:
     from typing import Any
@@ -29,7 +30,7 @@ class PlayOptionsWindow(PopupWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from bascenev1.internal import filter_playlist, get_map_class
+        from bascenev1 import filter_playlist, get_map_class
         from bauiv1lib.playlist import PlaylistTypeVars
 
         self._r = 'gameListWindow'

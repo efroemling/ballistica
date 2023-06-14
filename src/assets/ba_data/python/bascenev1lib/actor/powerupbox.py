@@ -86,7 +86,7 @@ class PowerupBoxFactory:
         You shouldn't need to do this; call Powerup.get_factory()
         to get a shared instance.
         """
-        from bascenev1.internal import get_default_powerup_distribution
+        from bascenev1 import get_default_powerup_distribution
 
         shared = SharedObjects.get()
         self._lastpoweruptype: str | None = None

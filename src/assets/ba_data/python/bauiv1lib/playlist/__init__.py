@@ -18,7 +18,7 @@ class PlaylistTypeVars:
     """Defines values for a playlist type (config names to use, etc)."""
 
     def __init__(self, sessiontype: type[bs.Session]):
-        from bascenev1.internal import (
+        from bascenev1 import (
             get_default_teams_playlist,
             get_default_free_for_all_playlist,
         )

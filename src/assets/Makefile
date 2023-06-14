@@ -230,7 +230,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_stats.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/internal.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -501,7 +500,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_stats.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_team.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_teamgame.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/internal.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/coopjoin.cpython-311.opt-1.pyc \

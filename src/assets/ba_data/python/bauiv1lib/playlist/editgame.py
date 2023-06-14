@@ -32,7 +32,7 @@ class PlaylistEditGameWindow(bui.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from bascenev1.internal import (
+        from bascenev1 import (
             get_filtered_map_name,
             get_map_class,
             get_map_display_string,

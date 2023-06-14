@@ -167,7 +167,13 @@ from bascenev1._gameutils import (
 )
 from bascenev1._level import Level
 from bascenev1._lobby import Lobby, Chooser
-from bascenev1._map import Map, register_map, get_map_display_string
+from bascenev1._map import (
+    get_filtered_map_name,
+    get_map_class,
+    get_map_display_string,
+    Map,
+    register_map,
+)
 from bascenev1._messages import (
     CelebrateMessage,
     DeathType,
@@ -181,20 +187,31 @@ from bascenev1._messages import (
     PickedUpMessage,
     PickUpMessage,
     PlayerDiedMessage,
+    PlayerProfilesChangedMessage,
     ShouldShatterMessage,
     StandMessage,
     ThawMessage,
     UNHANDLED,
 )
-from bascenev1._multiteamsession import MultiTeamSession
+from bascenev1._multiteamsession import (
+    MultiTeamSession,
+    DEFAULT_TEAM_COLORS,
+    DEFAULT_TEAM_NAMES,
+)
 from bascenev1._music import MusicType, setmusic
 from bascenev1._nodeactor import NodeActor
+from bascenev1._powerup import get_default_powerup_distribution
 from bascenev1._profile import (
     get_player_colors,
     get_player_profile_icon,
     get_player_profile_colors,
 )
 from bascenev1._player import PlayerInfo, Player, EmptyPlayer, StandLocation
+from bascenev1._playlist import (
+    get_default_free_for_all_playlist,
+    get_default_teams_playlist,
+    filter_playlist,
+)
 from bascenev1._powerup import PowerupMessage, PowerupAcceptMessage
 from bascenev1._score import ScoreType, ScoreConfig
 from bascenev1._settings import (
@@ -252,6 +269,8 @@ __all__ = [
     'CoopSession',
     'Data',
     'DeathType',
+    'DEFAULT_TEAM_COLORS',
+    'DEFAULT_TEAM_NAMES',
     'Dependency',
     'DependencyComponent',
     'DependencySet',
@@ -271,6 +290,7 @@ __all__ = [
     'end_host_scanning',
     'existing',
     'fade_screen',
+    'filter_playlist',
     'FloatChoiceSetting',
     'FloatSetting',
     'FreeForAllSession',
@@ -280,12 +300,17 @@ __all__ = [
     'GameTip',
     'get_chat_messages',
     'get_connection_to_host_info',
+    'get_default_free_for_all_playlist',
+    'get_default_teams_playlist',
+    'get_default_powerup_distribution',
+    'get_filtered_map_name',
     'get_foreground_host_activity',
     'get_foreground_host_session',
     'get_game_port',
     'get_game_roster',
     'get_game_roster',
     'get_local_active_input_devices_count',
+    'get_map_class',
     'get_map_display_string',
     'get_player_colors',
     'get_player_profile_colors',
@@ -346,6 +371,7 @@ __all__ = [
     'PickUpMessage',
     'Player',
     'PlayerDiedMessage',
+    'PlayerProfilesChangedMessage',
     'PlayerInfo',
     'PlayerRecord',
     'PlayerScoredMessage',

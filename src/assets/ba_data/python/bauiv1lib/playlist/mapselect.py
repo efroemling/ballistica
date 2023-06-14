@@ -27,7 +27,7 @@ class PlaylistMapSelectWindow(bui.Window):
         completion_call: Callable[[dict[str, Any] | None], Any],
         transition: str = 'in_right',
     ):
-        from bascenev1.internal import get_filtered_map_name
+        from bascenev1 import get_filtered_map_name
 
         self._gametype = gametype
         self._sessiontype = sessiontype
@@ -119,7 +119,7 @@ class PlaylistMapSelectWindow(bui.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from bascenev1.internal import (
+        from bascenev1 import (
             get_map_class,
             get_map_display_string,
         )

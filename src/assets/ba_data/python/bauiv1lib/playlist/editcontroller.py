@@ -25,7 +25,7 @@ class PlaylistEditController:
         playlist: list[dict[str, Any]] | None = None,
         playlist_name: str | None = None,
     ):
-        from bascenev1.internal import filter_playlist
+        from bascenev1 import filter_playlist
         from bauiv1lib.playlist import PlaylistTypeVars
         from bauiv1lib.playlist.edit import PlaylistEditWindow
 

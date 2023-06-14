@@ -329,8 +329,7 @@ class PlaylistBrowserWindow(bui.Window):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
         from efro.util import asserttype
-        from bascenev1.internal import get_map_class
-        from bascenev1.internal import filter_playlist
+        from bascenev1 import get_map_class, filter_playlist
 
         if not self._root_widget:
             return
