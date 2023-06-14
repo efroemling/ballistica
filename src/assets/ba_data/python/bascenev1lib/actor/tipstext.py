@@ -68,7 +68,7 @@ class TipsText(bs.Actor):
 
     def change_phrase(self) -> None:
         """Switch the visible tip phrase."""
-        from babase.internal import get_remote_app_name
+        from babase import get_remote_app_name
 
         next_tip = babase.Lstr(
             translate=(

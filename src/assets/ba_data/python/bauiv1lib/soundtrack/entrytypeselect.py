@@ -185,7 +185,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         )
 
     def _on_music_file_press(self) -> None:
-        from babase.internal import android_get_external_files_dir
+        from babase import android_get_external_files_dir
         from baclassic.osmusic import OSMusicPlayer
         from bauiv1lib.fileselector import FileSelectorWindow
 
@@ -206,7 +206,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
 
     def _on_music_folder_press(self) -> None:
         from bauiv1lib.fileselector import FileSelectorWindow
-        from babase.internal import android_get_external_files_dir
+        from babase import android_get_external_files_dir
 
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()

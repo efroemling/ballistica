@@ -145,7 +145,7 @@ from babase._mgen.enums import (
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
-from babase._net import get_ip_address_type
+from babase._net import get_ip_address_type, DEFAULT_REQUEST_TIMEOUT_SECONDS
 from babase._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from babase._text import timestring
 
@@ -282,6 +282,7 @@ __all__ = [
     'WeakCall',
     'WidgetNotFoundError',
     'workspaces_in_use',
+    'DEFAULT_REQUEST_TIMEOUT_SECONDS',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.

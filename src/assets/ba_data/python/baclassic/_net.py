@@ -10,7 +10,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import babase
-from babase.internal import DEFAULT_REQUEST_TIMEOUT_SECONDS
+from babase import DEFAULT_REQUEST_TIMEOUT_SECONDS
 import bascenev1
 
 if TYPE_CHECKING:
