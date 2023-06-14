@@ -53,6 +53,7 @@ from efrotools.pcommand import (
 )
 from efrotools.pcommand2 import (
     with_build_lock,
+    sortlines,
 )
 from batools.pcommand import (
     resize_image,

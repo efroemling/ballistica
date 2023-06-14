@@ -2,18 +2,18 @@
 #
 """Classic ballistica components.
 
-This stuff is mostly used in the classic app-mode, old UIs, etc.
-The app should be able to function cleanly without this package present
-(just lacking classic mode functionality).
+This package is used as a 'dumping ground' for functionality that is
+necessary to keep legacy parts of the app working, but which may no
+longer be the best way to do things going forward.
 
-New code should try to avoid using code here if it wants to be usable
-with newer more modern app-modes/etc.
+New code should try to avoid using code from here when possible.
 
-Functionality in this package should be exposed through the ClassicSubsystem
-class instance whenever possible. This will allow type-checked code to
-go through babase.app.classic which will force it to properly handle the case
-where babase.app.classic is None. When code instead imports classic submodules
-directly, it will most likely not work without classic present.
+Functionality in this package should be exposed through the
+ClassicSubsystem. This allows type-checked code to go through the
+babase.app.classic singleton which forces it to explicitly handle the
+possibility of babase.app.classic being None. When code instead imports
+classic submodules directly, it is much harder to make it cleanly handle
+classic not being present.
 """
 
 # ba_meta require api 8

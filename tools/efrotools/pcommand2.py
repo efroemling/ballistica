@@ -29,3 +29,14 @@ def with_build_lock() -> None:
         )
     with BuildLock(args[0]):
         subprocess.run(' '.join(args[1:]), check=True, shell=True)
+
+
+def sortlines() -> None:
+    """Sort provided lines. For tidying import lists, etc."""
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg.')
+    val = sys.argv[2]
+    lines = val.splitlines()
+    print('\n'.join(sorted(lines, key=lambda l: l.lower())))

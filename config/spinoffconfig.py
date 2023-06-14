@@ -97,6 +97,8 @@ ctx.src_unchecked_paths = {
     'ballisticakit-android/BallisticaKit/src/*/assets',
     'ballisticakit-android/local.properties',
     'ballisticakit-android/.gradle',
+    'ballisticakit-android/build',
+    'ballisticakit-android/BallisticaKit/build',
 }
 
 # Paths/names/suffixes we consider 'project' files.
