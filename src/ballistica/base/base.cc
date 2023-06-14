@@ -621,10 +621,16 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id) {
   // should fix them at the source.
   assert(IsAppRunning());
 
-  logic->event_loop()->PushCall([objset, id] {
-    ScopedSetContext ssc(nullptr);
-    objset->Obj(id).Call();
-  });
+  if (auto* loop = logic->event_loop()) {
+    logic->event_loop()->PushCall([objset, id] {
+      ScopedSetContext ssc(nullptr);
+      objset->Obj(id).Call();
+    });
+  } else {
+    BA_LOG_ONCE(
+        LogLevel::kError,
+        "BaseFeatureSet::DoPushObjCall called before event loop created.");
+  }
 }
 
 void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,

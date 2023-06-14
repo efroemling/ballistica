@@ -21,9 +21,23 @@ namespace ballistica::base {
 
 Input::Input() = default;
 
+template <typename F>
+void SafePushCall(const char* desc, const F& lambda) {
+  if (!g_base) {
+    BA_LOG_ONCE(LogLevel::kError,
+                std::string(desc) + " called with null g_base.");
+    return;
+  }
+  if (auto* loop = g_base->logic->event_loop()) {
+    loop->PushCall(lambda);
+  } else {
+    BA_LOG_ONCE(LogLevel::kError,
+                std::string(desc) + " called before logic event loop created.");
+  }
+}
+
 void Input::PushCreateKeyboardInputDevices() {
-  g_base->logic->event_loop()->PushCall(
-      [this] { CreateKeyboardInputDevices(); });
+  SafePushCall(__func__, [this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
@@ -40,8 +54,7 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  g_base->logic->event_loop()->PushCall(
-      [this] { DestroyKeyboardInputDevices(); });
+  SafePushCall(__func__, [this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
@@ -254,7 +267,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  g_base->logic->event_loop()->PushCall([this, input_device, standard_message] {
+  SafePushCall(__func__, [this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -338,7 +351,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  g_base->logic->event_loop()->PushCall([this, input_device, standard_message] {
+  SafePushCall(__func__, [this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -795,7 +808,7 @@ void Input::ProcessStressTesting(int player_count) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  g_base->logic->event_loop()->PushCall([this, text] {
+  SafePushCall(__func__, [this, text] {
     mark_input_active();
 
     // Ignore  if input is locked.
@@ -813,7 +826,7 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 void Input::PushJoystickEvent(const SDL_Event& event,
                               InputDevice* input_device) {
-  g_base->logic->event_loop()->PushCall([this, event, input_device] {
+  SafePushCall(__func__, [this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -847,13 +860,11 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  g_base->logic->event_loop()->PushCall(
-      [this, keysym] { HandleKeyPress(&keysym); });
+  SafePushCall(__func__, [this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  g_base->logic->event_loop()->PushCall(
-      [this, keysym] { HandleKeyRelease(&keysym); });
+  SafePushCall(__func__, [this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
@@ -924,10 +935,11 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       case SDLK_RETURN:
       case SDLK_KP_ENTER:
       case SDLK_BACKSPACE: {
-        // FIXME: I don't remember what this was put here for, but now that we
+        // FIXME: I don't remember what this was put here for, but now that
+        // we
         //  have hardware keyboards it crashes text fields by sending them a
-        //  TEXT_INPUT message with no string.. I made them resistant to that
-        //  case but wondering if we can take this out?...
+        //  TEXT_INPUT message with no string.. I made them resistant to
+        //  that case but wondering if we can take this out?...
         g_base->ui->SendWidgetMessage(
             WidgetMessage(WidgetMessage::Type::kTextInput, keysym));
         break;
@@ -1004,14 +1016,13 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       }
 
       case SDLK_F7:
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleManualCamera(); });
+        SafePushCall(__func__, [] { g_base->graphics->ToggleManualCamera(); });
         handled = true;
         break;
 
       case SDLK_F8:
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+        SafePushCall(__func__,
+                     [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
         handled = true;
         break;
 
@@ -1022,8 +1033,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F10:
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleDebugDraw(); });
+        SafePushCall(__func__, [] { g_base->graphics->ToggleDebugDraw(); });
         handled = true;
         break;
 
@@ -1032,8 +1042,8 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         if (!g_base->ui->MainMenuVisible()) {
           // There's no main menu up. Ask for one.
 
-          // Note: keyboard_input_ may be nullptr but escape key should still
-          // function for menus; it just won't claim ownership.
+          // Note: keyboard_input_ may be nullptr but escape key should
+          // still function for menus; it just won't claim ownership.
           g_base->ui->PushMainMenuPressCall(keyboard_input_);
         } else {
           // Ok there *is* a main menu up. Send it a cancel message.
@@ -1132,8 +1142,7 @@ void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
 }
 
 void Input::PushMouseScrollEvent(const Vector2f& amount) {
-  g_base->logic->event_loop()->PushCall(
-      [this, amount] { HandleMouseScroll(amount); });
+  SafePushCall(__func__, [this, amount] { HandleMouseScroll(amount); });
 }
 
 void Input::HandleMouseScroll(const Vector2f& amount) {
@@ -1165,7 +1174,7 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
 
 void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
                                        bool momentum) {
-  g_base->logic->event_loop()->PushCall([this, velocity, momentum] {
+  SafePushCall(__func__, [this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
@@ -1197,8 +1206,7 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  g_base->logic->event_loop()->PushCall(
-      [this, position] { HandleMouseMotion(position); });
+  SafePushCall(__func__, [this, position] { HandleMouseMotion(position); });
 }
 
 void Input::HandleMouseMotion(const Vector2f& position) {
@@ -1250,8 +1258,8 @@ void Input::HandleMouseMotion(const Vector2f& position) {
 }
 
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
-  g_base->logic->event_loop()->PushCall(
-      [this, button, position] { HandleMouseDown(button, position); });
+  SafePushCall(__func__,
+               [this, button, position] { HandleMouseDown(button, position); });
 }
 
 void Input::HandleMouseDown(int button, const Vector2f& position) {
@@ -1326,8 +1334,8 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
 }
 
 void Input::PushMouseUpEvent(int button, const Vector2f& position) {
-  g_base->logic->event_loop()->PushCall(
-      [this, button, position] { HandleMouseUp(button, position); });
+  SafePushCall(__func__,
+               [this, button, position] { HandleMouseUp(button, position); });
 }
 
 void Input::HandleMouseUp(int button, const Vector2f& position) {
@@ -1378,7 +1386,7 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent(e); });
+  SafePushCall(__func__, [e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {
@@ -1412,8 +1420,9 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
                   "Got touch labeled first but will not be our single.");
     }
 
-    // Also: if the OS tells us that this is the end of an overall multi-touch
-    // gesture, it should mean that our single_touch_ has ended or will be.
+    // Also: if the OS tells us that this is the end of an overall
+    // multi-touch gesture, it should mean that our single_touch_ has ended
+    // or will be.
     if ((e.type == TouchEvent::Type::kUp
          || e.type == TouchEvent::Type::kCanceled)
         && single_touch_ != nullptr && single_touch_ != e.touch) {

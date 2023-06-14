@@ -49,7 +49,6 @@ ctx.cruft_file_names = {'.DS_Store'}
 ctx.src_omit_paths = {
     '.gitignore',
     'config/spinoffconfig.py',
-    'ballisticakit-android/build',
     'tools/spinoff',
     '.editorconfig',
     'src/assets/workspace',
