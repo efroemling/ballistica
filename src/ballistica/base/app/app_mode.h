@@ -94,7 +94,7 @@ class AppMode {
   virtual auto GetNetworkDebugString() -> std::string;
 
   /// Get a string for current ping display.
-  virtual auto GetPingString() -> std::string;
+  virtual auto GetDisplayPing() -> std::optional<float>;
 };
 
 }  // namespace ballistica::base

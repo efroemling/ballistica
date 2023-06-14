@@ -46,7 +46,7 @@ auto AppMode::GetPartySize() const -> int { return 0; }
 
 auto AppMode::GetNetworkDebugString() -> std::string { return ""; }
 
-auto AppMode::GetPingString() -> std::string { return ""; }
+auto AppMode::GetDisplayPing() -> std::optional<float> { return {}; }
 
 auto AppMode::HasConnectionToHost() const -> bool { return false; }
 

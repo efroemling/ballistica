@@ -1,4 +1,4 @@
-### 1.7.20 (build 21105, api 8, 2023-06-14)
+### 1.7.20 (build 21107, api 8, 2023-06-14)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -319,6 +319,8 @@
   or disabled plugins (Thanks vishal332008!)
 - (build 21095) Fixed an issue where certain buttons such as map selection buttons
   would draw incorrectly.
+- (build 21106) Fixed an issue where in-game ping would always display green no
+  matter how bad the ping was.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

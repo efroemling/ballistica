@@ -66,7 +66,7 @@ class SceneV1AppMode : public base::AppMode {
   void LaunchClientSession();
 
   auto GetNetworkDebugString() -> std::string override;
-  auto GetPingString() -> std::string override;
+  auto GetDisplayPing() -> std::optional<float> override;
   auto HasConnectionToHost() const -> bool override;
   auto HasConnectionToClients() const -> bool override;
   auto connections() const -> ConnectionSet* {

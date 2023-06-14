@@ -413,9 +413,10 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
   }
 
   if (show_ping_) {
-    std::string ping_str = g_base->app_mode()->GetPingString();
-    float ping{};
-    if (!ping_str.empty()) {
+    auto ping = g_base->app_mode()->GetDisplayPing();
+    if (ping.has_value()) {
+      char ping_str[32];
+      snprintf(ping_str, sizeof(ping_str), "%.0f ms", *ping);
       if (ping_str != ping_string_) {
         ping_string_ = ping_str;
         if (!ping_text_group_.Exists()) {
@@ -426,10 +427,10 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(0.5f, 0.9f, 0.5f, 1.0f);
-      if (ping > 100.0f) {
+      if (*ping > 100.0f) {
         c.SetColor(0.8f, 0.8f, 0.0f, 1.0f);
       }
-      if (ping > 500.0f) {
+      if (*ping > 500.0f) {
         c.SetColor(0.9f, 0.2f, 0.2f, 1.0f);
       }
 
