@@ -1,4 +1,4 @@
-### 1.7.20 (build 21110, api 8, 2023-06-14)
+### 1.7.20 (build 21112, api 8, 2023-06-14)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -327,6 +327,8 @@
   This should fix the issue where 1.7.20 servers would have 100ms of lag by
   default. Server performance should now be equal to or better than 1.7.19.
   Please holler if not.
+- (build 21111) Fixed a server crash when an individual client player leaves the
+  game but doesn't disconnect from the server.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

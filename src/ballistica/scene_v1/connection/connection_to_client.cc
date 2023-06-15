@@ -616,7 +616,7 @@ void ConnectionToClient::HandleMessagePacket(
                 dynamic_cast<ClientInputDeviceDelegate*>(&cid->delegate())) {
           if (Player* player = cid_delegate->GetPlayer()) {
             HostSession* host_session = player->GetHostSession();
-            if (host_session) {
+            if (!host_session) {
               throw Exception("Player's host-session not found");
             }
             host_session->RemovePlayer(player);
