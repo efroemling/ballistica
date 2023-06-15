@@ -19,7 +19,7 @@ class AppTimer : public Object {
     timer_id_ = base::g_base->logic->NewAppTimer(length, repeat, runnable);
   }
 
-  void SetLength(uint32_t length) {
+  void SetLength(millisecs_t length) {
     assert(g_base->InLogicThread());
     base::g_base->logic->SetAppTimerLength(timer_id_, length);
   }

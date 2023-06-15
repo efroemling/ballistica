@@ -31,6 +31,8 @@ class Logic {
   void OnAppResume();
   void OnAppShutdown();
 
+  void OnAppModeChanged();
+
   void ApplyAppConfig();
   void OnScreenSizeChange(float virtual_width, float virtual_height,
                           float pixel_width, float pixel_height);
@@ -58,34 +60,47 @@ class Logic {
   void DeleteAppTimer(int timer_id);
   void SetAppTimerLength(int timer_id, millisecs_t length);
 
-  auto NewDisplayTimer(millisecs_t length, bool repeat,
+  auto NewDisplayTimer(microsecs_t length, bool repeat,
                        const Object::Ref<Runnable>& runnable) -> int;
   void DeleteDisplayTimer(int timer_id);
-  void SetDisplayTimerLength(int timer_id, millisecs_t length);
+  void SetDisplayTimerLength(int timer_id, microsecs_t length);
 
-  /// Get current display-time for the app (in seconds).
-  /// Display-time is a seconds value that increments smoothly with
-  /// frame draws.
+  /// Get current display-time for the app in seconds.
   auto display_time() { return display_time_; }
 
-  /// Return current display-time increment (in seconds). This can shift with
-  /// framerate changes but should remain mostly constant.
+  /// Get current display-time for the app in microseconds.
+  auto display_time_microsecs() { return display_time_microsecs_; }
+
+  /// Return current display-time increment in seconds.
   auto display_time_increment() -> double { return display_time_increment_; }
+
+  /// Return current display-time increment in microseconds.
+  auto display_time_increment_microsecs() -> double {
+    return display_time_increment_microsecs_;
+  }
 
   auto applied_app_config() const { return applied_app_config_; }
 
  private:
-  void UpdateDisplayTime();
+  void UpdateDisplayTimeForFrameDraw();
+  void UpdateDisplayTimeForHeadlessMode();
+  void PostUpdateDisplayTimeForHeadlessMode();
   void CompleteAppBootstrapping();
   void ProcessPendingWork();
   void UpdatePendingWorkTimer();
   void StepDisplayTime();
 
   double display_time_{};
+  microsecs_t display_time_microsecs_{};
   double display_time_increment_{1.0 / 60.0};
+  microsecs_t display_time_increment_microsecs_{1000000 / 60};
+
+  // GUI scheduling.
   double last_display_time_update_app_time_{-1.0};
   double recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
+
+  // Headless scheduling.
 
   std::unique_ptr<TimerList> display_timers_;
   EventLoop* event_loop_{};

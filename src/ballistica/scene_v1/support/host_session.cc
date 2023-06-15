@@ -578,6 +578,14 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
   assert(test_ref.Exists());
 }
 
+auto HostSession::TimeToNextEvent() -> std::optional<microsecs_t> {
+  if (base_timers_.Empty()) {
+    return {};
+  }
+  auto to_next_ms = base_timers_.TimeToNextExpire(base_time_millisecs_);
+  return to_next_ms * 1000;  // to microsecs.
+}
+
 HostSession::~HostSession() {
   assert(g_base->InLogicThread());
   try {

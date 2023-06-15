@@ -220,8 +220,10 @@ void Logic::CompleteAppBootstrapping() {
   // rate (10hz) to keep things efficient. Anyone dealing in display-time
   // should be able to handle a wide variety of rates anyway.
   if (g_core->HeadlessMode()) {
+    // NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
-        1000 / 10, true, NewLambdaRunnable([this] { StepDisplayTime(); }));
+        kAppModeMinHeadlessDisplayStep / 1000, true,
+        NewLambdaRunnable([this] { StepDisplayTime(); }));
   }
   // Let our initial app-mode know it has become active.
   g_base->app_mode()->OnActivate();
@@ -267,7 +269,17 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
 void Logic::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  UpdateDisplayTime();
+  // We have two different modes of operation here. When running in headless
+  // mode, display time is driven by upcoming events such as sim steps; we
+  // basically want to sleep as long as we can and run steps exactly when
+  // events occur. When running with a gui, our display-time is driven by
+  // real draw times and is intended to keep frame intervals as visually
+  // consistent and smooth looking as possible.
+  if (g_core->HeadlessMode()) {
+    UpdateDisplayTimeForHeadlessMode();
+  } else {
+    UpdateDisplayTimeForFrameDraw();
+  }
 
   // Give all our subsystems some update love.
   // Note: keep these in the same order as OnAppStart.
@@ -285,10 +297,86 @@ void Logic::StepDisplayTime() {
 
   // Let's run display-timers *after* we step everything else so most things
   // they interact with will be in an up-to-date state.
-  display_timers_->Run(g_core->GetAppTimeMillisecs());
+  display_timers_->Run(display_time_microsecs_);
+
+  if (g_core->HeadlessMode()) {
+    PostUpdateDisplayTimeForHeadlessMode();
+  }
 }
 
-void Logic::UpdateDisplayTime() {
+void Logic::OnAppModeChanged() {
+  assert(g_base->InLogicThread());
+
+  // Kick our headless stepping into high gear; this will snap us out of
+  // any long sleep we're currently in the middle of.
+  if (g_core->HeadlessMode()) {
+    if (debug_log_display_time_) {
+      Log(LogLevel::kDebug,
+          "Resetting headless display step timer due to app-mode change.");
+    }
+    assert(headless_display_time_step_timer_);
+    // NOTE: This is currently milliseconds.
+    headless_display_time_step_timer_->SetLength(kAppModeMinHeadlessDisplayStep
+                                                 / 1000);
+  }
+}
+
+void Logic::UpdateDisplayTimeForHeadlessMode() {
+  assert(g_base->InLogicThread());
+  // In this case we just keep display time synced up with app time; we don't
+  // care about keeping the increments smooth or consistent.
+
+  // The one thing we *do* try to do, however, is keep our timer length
+  // updated so that we fire exactly when the app mode has events scheduled
+  // (or at least close enough so we can fudge it and tell them its that exact
+  // time).
+
+  auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
+
+  auto old_display_time_microsecs = display_time_microsecs_;
+  display_time_microsecs_ = app_time_microsecs;
+  display_time_increment_microsecs_ =
+      display_time_microsecs_ - old_display_time_microsecs;
+
+  // In this path our float values are driven by our int ones.
+  display_time_ = static_cast<double>(display_time_microsecs_) / 1000000.0;
+  display_time_increment_ =
+      static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
+
+  if (debug_log_display_time_) {
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
+             static_cast<double>(app_time_microsecs) / 1000000.0);
+    Log(LogLevel::kDebug, buffer);
+  }
+}
+
+void Logic::PostUpdateDisplayTimeForHeadlessMode() {
+  assert(g_base->InLogicThread());
+  // At this point we've stepped our app-mode, so let's ask it how
+  // long we've got until the next event. We'll plug this into our
+  // display-update timer so we can try to sleep until that point.
+  auto headless_display_step_microsecs =
+      std::max(std::min(g_base->app_mode()->GetHeadlessDisplayStep(),
+                        kAppModeMaxHeadlessDisplayStep),
+               kAppModeMinHeadlessDisplayStep);
+
+  if (debug_log_display_time_) {
+    auto sleepsecs =
+        static_cast<double>(headless_display_step_microsecs) / 1000000.0;
+    auto apptimesecs = g_core->GetAppTimeSeconds();
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "will try to sleep for %.4f at app-time %.4f (until %.4f)",
+             sleepsecs, apptimesecs, apptimesecs + sleepsecs);
+    Log(LogLevel::kDebug, buffer);
+  }
+
+  auto sleep_millisecs = headless_display_step_microsecs / 1000;
+  headless_display_time_step_timer_->SetLength(sleep_millisecs);
+}
+
+void Logic::UpdateDisplayTimeForFrameDraw() {
   // Here we update our smoothed display-time-increment based on how fast
   // we are currently rendering frames. We want display-time to basically
   // be progressing at the same rate as app-time but in as constant
@@ -371,13 +459,14 @@ void Logic::UpdateDisplayTime() {
     avg /= count;
     double range = max - min;
 
-    // If our range of recent increment values is somewhat large relative to an
-    // average value, things are probably chaotic so just use the current value
-    // to respond quickly to changes. If things are more calm, use our nice
-    // smoothed value.
+    // If our range of recent increment values is somewhat large relative to
+    // an average value, things are probably chaotic, so just use the
+    // current value to respond quickly to changes. If things are more calm,
+    // use our nice smoothed value.
+
     // So in a case where we're seeing an average increment of 16ms, we snap
-    // out of avg mode if there's more than 8ms between the longest and shortest
-    // increments.
+    // out of avg mode if there's more than 8ms between the longest and
+    // shortest increments.
     double chaos = range / avg;
     bool use_avg = chaos < 0.5;
     auto used = use_avg ? avg : this_increment;
@@ -388,14 +477,14 @@ void Logic::UpdateDisplayTime() {
     // range.
 
     // How far the smoothed increment value needs to get away from the final
-    // value to actually start moving it.
-    // Example: If our avg increment is 16.6ms (60fps), don't change our
-    // increment until the 'used' value is more than 0.5ms (16.6 * 0.03) from it
-    // in either direction.
-    // Note: In practice I'm seeing that higher framerates
-    // like 120 need buffers that are larger relative to avg to remain stable.
-    // Though perhaps a bit of jitter is not noticeable at high frame rates;
-    // just something to keep an eye on.
+    // value to actually start moving it. Example: If our avg increment is
+    // 16.6ms (60fps), don't change our increment until the 'used' value is
+    // more than 0.5ms (16.6 * 0.03) from it in either direction.
+
+    // Note: In practice I'm seeing that higher framerates like 120 need
+    // buffers that are larger relative to avg to remain stable. Though
+    // perhaps a bit of jitter is not noticeable at high frame rates; just
+    // something to keep an eye on.
     auto trail_buffer{avg * 0.03};
 
     auto trailing_diff = used - display_time_increment_;
@@ -424,6 +513,11 @@ void Logic::UpdateDisplayTime() {
   }
   // Lastly, apply our updated increment value to our time.
   display_time_ += display_time_increment_;
+
+  // In this path, our integer values just follow our float ones.
+  auto prev_microsecs = display_time_microsecs_;
+  display_time_microsecs_ = static_cast<microsecs_t>(display_time_ * 1000000.0);
+  display_time_increment_microsecs_ = display_time_microsecs_ - prev_microsecs;
 }
 
 // Set up our sleeping based on what we're doing.
@@ -521,13 +615,13 @@ void Logic::SetAppTimerLength(int timer_id, millisecs_t length) {
   }
 }
 
-auto Logic::NewDisplayTimer(millisecs_t length, bool repeat,
+auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
                             const Object::Ref<Runnable>& runnable) -> int {
   // Display-Timers go into a timer-list that we exec explicitly when we
   // step display-time.
   assert(g_base->InLogicThread());
   int offset = 0;
-  Timer* t = display_timers_->NewTimer(g_core->GetAppTimeMillisecs(), length,
+  Timer* t = display_timers_->NewTimer(g_core->GetAppTimeMicrosecs(), length,
                                        offset, repeat ? -1 : 0, runnable);
   return t->id();
 }
@@ -537,7 +631,7 @@ void Logic::DeleteDisplayTimer(int timer_id) {
   display_timers_->DeleteTimer(timer_id);
 }
 
-void Logic::SetDisplayTimerLength(int timer_id, millisecs_t length) {
+void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   assert(g_base->InLogicThread());
   Timer* t = display_timers_->GetTimer(timer_id);
   if (t) {

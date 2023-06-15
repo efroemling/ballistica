@@ -19,6 +19,12 @@ Session::~Session() { g_core->session_count--; }
 
 void Session::Update(int time_advance_millisecs, double time_advance) {}
 
+auto Session::TimeToNextEvent() -> std::optional<microsecs_t> {
+  BA_LOG_ONCE(LogLevel::kError,
+              "Session::TimeToNextEvent() being called; should not happen.");
+  return 5000000;
+}
+
 auto Session::GetForegroundContext() -> base::ContextRef { return {}; }
 
 void Session::Draw(base::FrameDef*) {}

@@ -103,7 +103,7 @@ auto PythonClassDisplayTimer::tp_new(PyTypeObject* type, PyObject* args,
     return nullptr;
   }
   self->timer_id_ = g_base->logic->NewDisplayTimer(
-      static_cast<millisecs_t>(length * 1000.0), repeat,
+      static_cast<microsecs_t>(length * 1000000.0), repeat,
       Object::New<Runnable, PythonContextCallRunnable>(call_obj));
 
   self->have_timer_ = true;

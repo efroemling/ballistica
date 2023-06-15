@@ -238,6 +238,9 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     input->RebuildInputDeviceDelegates();
 
     app_mode_->OnActivate();
+
+    // Let some stuff know.
+    logic->OnAppModeChanged();
   } catch (const Exception& exc) {
     // Anything going wrong while switching app-modes leaves us in an
     // undefined state; don't try to continue.

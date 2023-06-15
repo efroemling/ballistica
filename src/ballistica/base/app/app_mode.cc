@@ -42,6 +42,10 @@ void AppMode::ChangeGameSpeed(int offs) {}
 
 void AppMode::StepDisplayTime() {}
 
+auto AppMode::GetHeadlessDisplayStep() -> microsecs_t {
+  return kAppModeMaxHeadlessDisplayStep;
+}
+
 auto AppMode::GetPartySize() const -> int { return 0; }
 
 auto AppMode::GetNetworkDebugString() -> std::string { return ""; }

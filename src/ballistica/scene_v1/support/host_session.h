@@ -103,6 +103,7 @@ class HostSession : public Session {
   auto GetUnusedPlayerName(Player* p, const std::string& base_name)
       -> std::string;
   auto ContextAllowsDefaultTimerTypes() -> bool override;
+  auto TimeToNextEvent() -> std::optional<microsecs_t> override;
 
  private:
   void StepScene();

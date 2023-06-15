@@ -341,7 +341,7 @@ static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
   if (length < 0) {
     throw Exception("Timer length cannot be < 0.", PyExcType::kValue);
   }
-  g_base->logic->NewDisplayTimer(
+  g_base->logic->NewAppTimer(
       static_cast<millisecs_t>(length * 1000.0), false,
       Object::New<Runnable, PythonContextCallRunnable>(call_obj));
   Py_RETURN_NONE;
@@ -376,9 +376,9 @@ static PyMethodDef PyAppTimerDef = {
     "##### Examples\n"
     "Print some stuff through time:\n"
     ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.apptimer(1.0, ba.Call(ba.screenmessage,\n"
+    ">>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
     "                          'hello from the future!'))\n"
-    ">>> babase.apptimer(2.0, ba.Call(ba.screenmessage,\n"
+    ">>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
     "...                       'hello from the future 2!'))\n",
 };
 
@@ -434,8 +434,8 @@ static auto PyDisplayTimer(PyObject* self, PyObject* args, PyObject* keywds)
   if (length < 0) {
     throw Exception("Timer length cannot be < 0.", PyExcType::kValue);
   }
-  g_base->logic->NewAppTimer(
-      static_cast<millisecs_t>(length * 1000.0), false,
+  g_base->logic->NewDisplayTimer(
+      static_cast<microsecs_t>(length * 1000000.0), false,
       Object::New<Runnable, PythonContextCallRunnable>(call_obj));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -474,9 +474,9 @@ static PyMethodDef PyDisplayTimerDef = {
     "##### Examples\n"
     "Print some stuff through time:\n"
     ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.displaytimer(1.0, ba.Call(ba.screenmessage,\n"
+    ">>> babase.displaytimer(1.0, babase.Call(babase.screenmessage,\n"
     "...                       'hello from the future!'))\n"
-    ">>> babase.displaytimer(2.0, ba.Call(ba.screenmessage,\n"
+    ">>> babase.displaytimer(2.0, babase.Call(babase.screenmessage,\n"
     "...                       'hello from the future 2!'))\n",
 };
 

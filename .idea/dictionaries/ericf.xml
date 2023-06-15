@@ -135,6 +135,7 @@
       <w>apptime</w>
       <w>apptimer</w>
       <w>apptimers</w>
+      <w>apptimesecs</w>
       <w>apputils</w>
       <w>archbase</w>
       <w>archivepath</w>
@@ -2595,6 +2596,7 @@
       <w>sirplus</w>
       <w>sitebuiltins</w>
       <w>skey</w>
+      <w>sleepsecs</w>
       <w>sline</w>
       <w>slist</w>
       <w>slists</w>

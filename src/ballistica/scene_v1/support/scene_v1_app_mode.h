@@ -182,6 +182,7 @@ class SceneV1AppMode : public base::AppMode {
   auto buffer_time() const { return buffer_time_; }
   void set_buffer_time(int val) { buffer_time_ = val; }
   void OnActivate() override;
+  auto GetHeadlessDisplayStep() -> microsecs_t override;
 
  private:
   void PruneScanResults();

@@ -401,7 +401,7 @@ void FlagNode::Step() {
   dBodyID b = body_->body();
   assert(b);
 
-  if (g_core->HeadlessMode()) {
+  if (!g_core->HeadlessMode()) {
     dVector3 p;
     FullShadowSet* full_shadows = full_shadow_set_.Get();
     if (full_shadows) {

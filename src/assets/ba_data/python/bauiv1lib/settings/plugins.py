@@ -386,6 +386,8 @@ class PluginWindow(bui.Window):
                 sel_name = 'Settings'
             elif sel == self._back_button:
                 sel_name = 'Back'
+            elif sel == self._scrollwidget:
+                sel_name = 'Scroll'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None

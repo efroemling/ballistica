@@ -408,6 +408,25 @@ auto SceneV1AppMode::GetPartySize() const -> int {
   return cJSON_GetArraySize(game_roster_);
 }
 
+auto SceneV1AppMode::GetHeadlessDisplayStep() -> microsecs_t {
+  std::optional<microsecs_t> min_time_to_next;
+  for (auto&& i : sessions_) {
+    if (!i.Exists()) {
+      continue;
+    }
+    auto this_time_to_next = i->TimeToNextEvent();
+    if (this_time_to_next.has_value()) {
+      if (!min_time_to_next.has_value()) {
+        min_time_to_next = *this_time_to_next;
+      } else {
+        min_time_to_next = std::min(*min_time_to_next, *this_time_to_next);
+      }
+    }
+  }
+  return min_time_to_next.has_value() ? *min_time_to_next
+                                      : base::kAppModeMaxHeadlessDisplayStep;
+}
+
 void SceneV1AppMode::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
@@ -426,7 +445,8 @@ void SceneV1AppMode::StepDisplayTime() {
   // each time).
   millisecs_t legacy_display_time_millisecs_inc;
   if (legacy_display_time_millisecs_prev_ < 0) {
-    // Convert directly *only* the first time when we don't have prev available.
+    // Convert directly *only* the first time when we don't have prev
+    // available.
     legacy_display_time_millisecs_inc = static_cast<millisecs_t>(
         g_base->logic->display_time_increment() * 1000.0);
 
@@ -677,8 +697,8 @@ void SceneV1AppMode::UpdateKickVote() {
                                               1, 1, 0);
     kick_vote_in_progress_ = false;
 
-    // Disallow kicking for a while for everyone.. but ESPECIALLY so for the guy
-    // who launched the failed vote.
+    // Disallow kicking for a while for everyone.. but ESPECIALLY so for the
+    // guy who launched the failed vote.
     for (ConnectionToClient* client :
          connections()->GetConnectionsToClients()) {
       millisecs_t delay = kKickVoteFailRetryDelay;

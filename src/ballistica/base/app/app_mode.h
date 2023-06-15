@@ -9,6 +9,15 @@
 
 namespace ballistica::base {
 
+/// The max amount of time a headless app can sleep if no events are pending.
+/// This should not be *too* high or it might cause delays when going from
+/// no events present to events present.
+const microsecs_t kAppModeMaxHeadlessDisplayStep{500000};
+
+/// The min amount of time a headless app can sleep. This provides an upper
+/// limit on stepping overhead in cases where events are densely packed.
+const microsecs_t kAppModeMinHeadlessDisplayStep{1000};
+
 /// Represents 'what the app is doing'. The global app-mode can be switched
 /// as the app is running. Be aware that, unlike the App/App classes
 /// which operate in the main thread, most functionality here is based in the
@@ -32,9 +41,19 @@ class AppMode {
   /// Apply the app config.
   virtual void ApplyAppConfig();
 
-  /// Update the logic thread. Can be called at any frequency; generally
-  /// corresponds to frame draws or a fixed timer.
+  /// Update the logic thread for a new display-time. Can be called at any
+  /// frequency. In gui builds, generally corresponds with frame drawing. In
+  /// headless builds, generally corresponds with scene stepping or other
+  /// scheduled events. Check values on g_base->logic to see current
+  /// display-time and most recent step size applied.
   virtual void StepDisplayTime();
+
+  /// Called right after stepping; should return the exact microseconds
+  /// between the current display time and the next event the app-mode has
+  /// scheduled. If no events are pending, should return
+  /// kAppModeMaxHeadlessDisplayStep. This will only be called on headless
+  /// builds.
+  virtual auto GetHeadlessDisplayStep() -> microsecs_t;
 
   /// Create a delegate for an input-device.
   /// Return a raw pointer allocated using Object::NewDeferred.
