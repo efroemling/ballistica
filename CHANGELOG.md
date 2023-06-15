@@ -1,4 +1,4 @@
-### 1.7.20 (build 21114, api 8, 2023-06-15)
+### 1.7.20 (build 21116, api 8, 2023-06-15)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -332,6 +332,8 @@
 - (build 21113) Linux builds now use the '-rdynamic' flag which means stack
   traces we capture in the engine are more readable; they at least show mangled
   c++ symbols instead of just addresses.
+- (build 21114) Fixed a bug where new chat messages would not properly appear in
+  the chat window while it is open. (Thanks for the heads-up SatSriyakaal!)
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

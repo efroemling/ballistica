@@ -112,7 +112,7 @@ void UI::ActivatePartyIcon() {
 
 auto UI::PartyWindowOpen() -> bool {
   if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->PartyWindowOpen();
+    return g_base->ui_v1()->PartyWindowOpen();
   }
   return false;
 }
