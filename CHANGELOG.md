@@ -1,4 +1,4 @@
-### 1.7.20 (build 21112, api 8, 2023-06-14)
+### 1.7.20 (build 21114, api 8, 2023-06-15)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -329,6 +329,9 @@
   Please holler if not.
 - (build 21111) Fixed a server crash when an individual client player leaves the
   game but doesn't disconnect from the server.
+- (build 21113) Linux builds now use the '-rdynamic' flag which means stack
+  traces we capture in the engine are more readable; they at least show mangled
+  c++ symbols instead of just addresses.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

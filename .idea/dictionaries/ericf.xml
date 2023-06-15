@@ -2363,6 +2363,7 @@
       <w>rcvs</w>
       <w>rdict</w>
       <w>rdir</w>
+      <w>rdynamic</w>
       <w>readexactly</w>
       <w>readline</w>
       <w>readlines</w>

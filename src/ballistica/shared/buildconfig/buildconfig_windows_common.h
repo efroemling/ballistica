@@ -39,6 +39,11 @@
 #define BA_SOCKET_SEND_LENGTH_TYPE int
 #define BA_SOCKET_SETSOCKOPT_VAL_TYPE char
 
+#define BA_SOCKET_POLL WSAPoll
+#define BA_SOCKET_POLL_FD POLLFD
+
+#define BA_SOCKET_ERROR_RETURN SOCKET_ERROR
+
 // On windows we always bundle python.
 #define BA_CONTAINS_PYTHON_DIST 1
 

@@ -34,6 +34,8 @@ class NetworkReader {
 
  private:
   void CheckFDThreshold(int val);
+  void DoSelect(bool* can_read_4, bool* can_read_6);
+  void DoPoll(bool* can_read_4, bool* can_read_6);
   void OpenSockets();
   void PokeSelf();
   auto RunThread() -> int;

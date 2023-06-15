@@ -926,14 +926,10 @@ auto SceneV1AppMode::GetNetworkDebugString() -> std::string {
   return net_info_str;
 }
 auto SceneV1AppMode::GetDisplayPing() -> std::optional<float> {
-  float ping{};
-  char ping_str[32];
   if (ConnectionToHost* connection_to_host =
           connections()->connection_to_host()) {
     if (connection_to_host->can_communicate()) {
       return connection_to_host->current_ping();
-      // snprintf(ping_str, sizeof(ping_str), "%.0f ms", ping);
-      // return ping_str;
     }
   }
   return {};

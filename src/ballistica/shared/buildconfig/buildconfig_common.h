@@ -185,6 +185,18 @@ namespace ballistica {
 #define BA_ARCADE_BUILD 0
 #endif
 
+#ifndef BA_SOCKET_POLL_FD
+#define BA_SOCKET_POLL_FD pollfd
+#endif
+
+#ifndef BA_SOCKET_ERROR_RETURN
+#define BA_SOCKET_ERROR_RETURN -1
+#endif
+
+#ifndef BA_SOCKET_POLL
+#define BA_SOCKET_POLL poll
+#endif
+
 #ifndef BA_SOCKET_SEND_DATA_TYPE
 #define BA_SOCKET_SEND_DATA_TYPE uint8_t
 #endif

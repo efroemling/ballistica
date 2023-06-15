@@ -89,6 +89,91 @@ void NetworkReader::PokeSelf() {
   }
 }
 
+void NetworkReader::DoPoll(bool* can_read_4, bool* can_read_6) {
+  struct pollfd fds[2]{};
+  int i{};
+  int index_4{-1};
+  int index_6{-1};
+
+  if (sd4_ != -1) {
+    fds[i].fd = sd4_;
+    fds[i].events = POLLIN;
+    index_4 = i++;
+  }
+  if (sd6_ != -1) {
+    fds[i].fd = sd6_;
+    fds[i].events = POLLIN;
+    index_6 = i++;
+  }
+  if (i > 0) {
+    int result = BA_SOCKET_POLL(fds, i, -1);
+    if (result == BA_SOCKET_ERROR_RETURN) {
+      // No big deal if we get interrupted occasionally.
+      if (g_core->platform->GetSocketError() == EINTR) {
+        // Aint no thang.
+      } else {
+        // Let's complain for anything else though.
+        Log(LogLevel::kError,
+            "Error on select: " + g_core->platform->GetSocketErrorString());
+      }
+    } else {
+      *can_read_4 = index_4 != -1 && fds[index_4].revents & POLLIN;
+      *can_read_6 = index_6 != -1 && fds[index_6].revents & POLLIN;
+    }
+  } else {
+    BA_LOG_ONCE(LogLevel::kError, "DoPoll called with neither sd4 or sd6 set.");
+  }
+}
+
+void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
+  fd_set readset;
+  FD_ZERO(&readset);
+  if (sd4_ != -1) {
+    if (!g_buildconfig.ostype_windows()) {
+      // Try to get a clean error instead of a crash if we exceed our
+      // open file descriptor limit (except on windows where FD_SETSIZE
+      // is apparently a dummy value).
+      CheckFDThreshold(sd4_);
+      if (sd4_ < 0 || sd4_ >= FD_SETSIZE) {
+        FatalError("Socket/File Descriptor Overflow (sd4="
+                   + std::to_string(sd4_) + ", FD_SETSIZE="
+                   + std::to_string(FD_SETSIZE) + "). Please report this.");
+      }
+    }
+
+    FD_SET(sd4_, &readset);  // NOLINT
+  }
+  if (sd6_ != -1) {
+    if (!g_buildconfig.ostype_windows()) {
+      // Try to get a clean error instead of a crash if we exceed our
+      // open file descriptor limit (except on windows where FD_SETSIZE
+      // is apparently a dummy value).
+      CheckFDThreshold(sd6_);
+      if (sd6_ < 0 || sd6_ >= FD_SETSIZE) {
+        FatalError("Socket/File Descriptor Overflow (sd6="
+                   + std::to_string(sd6_) + ", FD_SETSIZE="
+                   + std::to_string(FD_SETSIZE) + "). Please report this.");
+      }
+    }
+    FD_SET(sd6_, &readset);  // NOLINT
+  }
+  int maxfd = std::max(sd4_, sd6_);
+  int sresult = select(maxfd + 1, &readset, nullptr, nullptr, nullptr);
+  if (sresult == BA_SOCKET_ERROR_RETURN) {
+    // No big deal if we get interrupted occasionally.
+    if (g_core->platform->GetSocketError() == EINTR) {
+      // Aint no thang.
+    } else {
+      // Let's complain for anything else though.
+      Log(LogLevel::kError,
+          "Error on select: " + g_core->platform->GetSocketErrorString());
+    }
+  } else {
+    *can_read_4 = sd4_ != -1 && FD_ISSET(sd4_, &readset);
+    *can_read_6 = sd6_ != -1 && FD_ISSET(sd6_, &readset);
+  }
+}
+
 void NetworkReader::CheckFDThreshold(int val) {
   if (passed_fd_threshold_) {
     return;
@@ -130,67 +215,67 @@ auto NetworkReader::RunThread() -> int {
     while (true) {
       sockaddr_storage from{};
       socklen_t from_size = sizeof(from);
-      fd_set readset;
-      FD_ZERO(&readset);
-      if (sd4_ != -1) {
-        if (!g_buildconfig.ostype_windows()) {
-          // Try to get a clean error instead of a crash if we exceed our
-          // open file descriptor limit (except on windows where FD_SETSIZE
-          // is apparently a dummy value).
-          CheckFDThreshold(sd4_);
-          if (sd4_ < 0 || sd4_ >= FD_SETSIZE) {
-            FatalError("Socket/File Descriptor Overflow (sd4="
-                       + std::to_string(sd4_) + ", FD_SETSIZE="
-                       + std::to_string(FD_SETSIZE) + "). Please report this.");
-          }
-        }
 
-        FD_SET(sd4_, &readset);  // NOLINT
-      }
-      if (sd6_ != -1) {
-        if (!g_buildconfig.ostype_windows()) {
-          // Try to get a clean error instead of a crash if we exceed our
-          // open file descriptor limit (except on windows where FD_SETSIZE
-          // is apparently a dummy value).
-          CheckFDThreshold(sd6_);
-          if (sd6_ < 0 || sd6_ >= FD_SETSIZE) {
-            FatalError("Socket/File Descriptor Overflow (sd6="
-                       + std::to_string(sd6_) + ", FD_SETSIZE="
-                       + std::to_string(FD_SETSIZE) + "). Please report this.");
-          }
-        }
-        FD_SET(sd6_, &readset);  // NOLINT
-      }
-      int maxfd = std::max(sd4_, sd6_);
-      int sresult = select(maxfd + 1, &readset, nullptr, nullptr, nullptr);
-      if (sresult == -1) {
-        // No big deal if we get interrupted occasionally.
-        if (g_core->platform->GetSocketError() == EINTR) {
-          // Aint no thang.
-        } else {
-          // Let's complain for anything else though.
-          Log(LogLevel::kError,
-              "Error on select: " + g_core->platform->GetSocketErrorString());
-        }
+      bool can_read_4{};
+      bool can_read_6{};
+
+      // A bit of history here: Had been using select() to wait for input
+      // here, but recently I've started seeing newer versions of android
+      // crashing due to file descriptor counts going over the standard set
+      // limit size of ~1000 or whatnot. So switching to poll() instead which
+      // sounds like it
+      if (explicit_bool(true)) {
+        DoPoll(&can_read_4, &can_read_6);
       } else {
-        // Wait for any data on either of our sockets.
-        for (int sd : {sd4_, sd6_}) {
-          if (sd == -1 || !(FD_ISSET(sd, &readset))) {
-            continue;
+        DoSelect(&can_read_4, &can_read_6);
+      }
+
+      for (int s_index : {0, 1}) {
+        int sd;
+        bool can_read;
+        if (s_index == 0) {
+          sd = sd4_;
+          can_read = can_read_4;
+        } else if (s_index == 1) {
+          sd = sd6_;
+          can_read = can_read_6;
+        } else {
+          FatalError("Should not get here.");
+          sd = -1;
+          can_read = false;
+        }
+        if (!can_read) {
+          continue;
+        }
+        ssize_t rresult =
+            recvfrom(sd, buffer, sizeof(buffer), 0,
+                     reinterpret_cast<sockaddr*>(&from), &from_size);
+        if (rresult == 0) {
+          Log(LogLevel::kError,
+              "NetworkReader Recv got length 0; this shouldn't "
+              "happen");
+        } else if (rresult == -1) {
+          // This needs to be locked during any sd changes/writes.
+          std::scoped_lock lock(sd_mutex_);
+
+          // If either of our sockets goes down lets close *both* of
+          // them.
+          if (sd4_ != -1) {
+            g_core->platform->CloseSocket(sd4_);
+            sd4_ = -1;
           }
-          ssize_t rresult =
-              recvfrom(sd, buffer, sizeof(buffer), 0,
-                       reinterpret_cast<sockaddr*>(&from), &from_size);
-          if (rresult == 0) {
-            Log(LogLevel::kError,
-                "NetworkReader Recv got length 0; this shouldn't "
-                "happen");
-          } else if (rresult == -1) {
+          if (sd6_ != -1) {
+            g_core->platform->CloseSocket(sd6_);
+            sd6_ = -1;
+          }
+        } else {
+          assert(from_size >= 0);
+          auto rresult2{static_cast<size_t>(rresult)};
+          // If we get *any* data while paused, kill both our
+          // sockets (we ping ourself for this purpose).
+          if (paused_) {
             // This needs to be locked during any sd changes/writes.
             std::scoped_lock lock(sd_mutex_);
-
-            // If either of our sockets goes down lets close *both* of
-            // them.
             if (sd4_ != -1) {
               g_core->platform->CloseSocket(sd4_);
               sd4_ = -1;
@@ -199,118 +284,101 @@ auto NetworkReader::RunThread() -> int {
               g_core->platform->CloseSocket(sd6_);
               sd6_ = -1;
             }
-          } else {
-            assert(from_size >= 0);
-            auto rresult2{static_cast<size_t>(rresult)};
-            // If we get *any* data while paused, kill both our
-            // sockets (we ping ourself for this purpose).
-            if (paused_) {
+            break;
+          }
+          switch (buffer[0]) {
+            case BA_PACKET_POKE:
+              break;
+            case BA_PACKET_SIMPLE_PING: {
               // This needs to be locked during any sd changes/writes.
               std::scoped_lock lock(sd_mutex_);
-              if (sd4_ != -1) {
-                g_core->platform->CloseSocket(sd4_);
-                sd4_ = -1;
-              }
-              if (sd6_ != -1) {
-                g_core->platform->CloseSocket(sd6_);
-                sd6_ = -1;
+              char msg[1] = {BA_PACKET_SIMPLE_PONG};
+              sendto(sd, msg, 1, 0, reinterpret_cast<sockaddr*>(&from),
+                     from_size);
+              break;
+            }
+            case BA_PACKET_JSON_PING: {
+              if (rresult2 > 1) {
+                std::vector<char> s_buffer(rresult2);
+                memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
+                s_buffer[rresult2 - 1] = 0;  // terminate string
+                std::string response =
+                    g_base->app_mode()->HandleJSONPing(s_buffer.data());
+                if (!response.empty()) {
+                  std::vector<char> msg(1 + response.size());
+                  msg[0] = BA_PACKET_JSON_PONG;
+                  memcpy(msg.data() + 1, response.c_str(), response.size());
+                  std::scoped_lock lock(sd_mutex_);
+                  sendto(
+                      sd, msg.data(),
+                      static_cast_check_fit<socket_send_length_t>(msg.size()),
+                      0, reinterpret_cast<sockaddr*>(&from), from_size);
+                }
               }
               break;
             }
-            switch (buffer[0]) {
-              case BA_PACKET_POKE:
-                break;
-              case BA_PACKET_SIMPLE_PING: {
-                // This needs to be locked during any sd changes/writes.
-                std::scoped_lock lock(sd_mutex_);
-                char msg[1] = {BA_PACKET_SIMPLE_PONG};
-                sendto(sd, msg, 1, 0, reinterpret_cast<sockaddr*>(&from),
-                       from_size);
-                break;
-              }
-              case BA_PACKET_JSON_PING: {
-                if (rresult2 > 1) {
-                  std::vector<char> s_buffer(rresult2);
-                  memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
-                  s_buffer[rresult2 - 1] = 0;  // terminate string
-                  std::string response =
-                      g_base->app_mode()->HandleJSONPing(s_buffer.data());
-                  if (!response.empty()) {
-                    std::vector<char> msg(1 + response.size());
-                    msg[0] = BA_PACKET_JSON_PONG;
-                    memcpy(msg.data() + 1, response.c_str(), response.size());
-                    std::scoped_lock lock(sd_mutex_);
-                    sendto(
-                        sd, msg.data(),
-                        static_cast_check_fit<socket_send_length_t>(msg.size()),
-                        0, reinterpret_cast<sockaddr*>(&from), from_size);
-                  }
+            case BA_PACKET_JSON_PONG: {
+              if (rresult2 > 1) {
+                std::vector<char> s_buffer(rresult2);
+                memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
+                s_buffer[rresult2 - 1] = 0;  // terminate string
+                cJSON* data = cJSON_Parse(s_buffer.data());
+                if (data != nullptr) {
+                  cJSON_Delete(data);
                 }
-                break;
               }
-              case BA_PACKET_JSON_PONG: {
-                if (rresult2 > 1) {
-                  std::vector<char> s_buffer(rresult2);
-                  memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
-                  s_buffer[rresult2 - 1] = 0;  // terminate string
-                  cJSON* data = cJSON_Parse(s_buffer.data());
-                  if (data != nullptr) {
-                    cJSON_Delete(data);
-                  }
-                }
-                break;
-              }
-              case BA_PACKET_REMOTE_PING:
-              case BA_PACKET_REMOTE_PONG:
-              case BA_PACKET_REMOTE_ID_REQUEST:
-              case BA_PACKET_REMOTE_ID_RESPONSE:
-              case BA_PACKET_REMOTE_DISCONNECT:
-              case BA_PACKET_REMOTE_STATE:
-              case BA_PACKET_REMOTE_STATE2:
-              case BA_PACKET_REMOTE_STATE_ACK:
-              case BA_PACKET_REMOTE_DISCONNECT_ACK:
-              case BA_PACKET_REMOTE_GAME_QUERY:
-              case BA_PACKET_REMOTE_GAME_RESPONSE:
-                // These packets are associated with the remote app; let the
-                // remote server handle them.
-                if (remote_server_) {
-                  remote_server_->HandleData(
-                      sd, reinterpret_cast<uint8_t*>(buffer), rresult2,
-                      reinterpret_cast<sockaddr*>(&from),
-                      static_cast<size_t>(from_size));
-                }
-                break;
-
-              case BA_PACKET_CLIENT_REQUEST:
-              case BA_PACKET_CLIENT_ACCEPT:
-              case BA_PACKET_CLIENT_DENY:
-              case BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY:
-              case BA_PACKET_CLIENT_DENY_VERSION_MISMATCH:
-              case BA_PACKET_CLIENT_DENY_PARTY_FULL:
-              case BA_PACKET_DISCONNECT_FROM_CLIENT_REQUEST:
-              case BA_PACKET_DISCONNECT_FROM_CLIENT_ACK:
-              case BA_PACKET_DISCONNECT_FROM_HOST_REQUEST:
-              case BA_PACKET_DISCONNECT_FROM_HOST_ACK:
-              case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED:
-              case BA_PACKET_HOST_GAMEPACKET_COMPRESSED: {
-                // These messages are associated with udp host/client
-                // connections.. pass them to the logic thread to wrangle.
-                std::vector<uint8_t> msg_buffer(rresult2);
-                memcpy(msg_buffer.data(), buffer, rresult2);
-                PushIncomingUDPPacketCall(msg_buffer, SockAddr(from));
-                break;
-              }
-
-              case BA_PACKET_HOST_QUERY: {
-                g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
-
-                // HandleGameQuery(buffer, rresult2, &from);
-                break;
-              }
-
-              default:
-                break;
+              break;
             }
+            case BA_PACKET_REMOTE_PING:
+            case BA_PACKET_REMOTE_PONG:
+            case BA_PACKET_REMOTE_ID_REQUEST:
+            case BA_PACKET_REMOTE_ID_RESPONSE:
+            case BA_PACKET_REMOTE_DISCONNECT:
+            case BA_PACKET_REMOTE_STATE:
+            case BA_PACKET_REMOTE_STATE2:
+            case BA_PACKET_REMOTE_STATE_ACK:
+            case BA_PACKET_REMOTE_DISCONNECT_ACK:
+            case BA_PACKET_REMOTE_GAME_QUERY:
+            case BA_PACKET_REMOTE_GAME_RESPONSE:
+              // These packets are associated with the remote app; let the
+              // remote server handle them.
+              if (remote_server_) {
+                remote_server_->HandleData(
+                    sd, reinterpret_cast<uint8_t*>(buffer), rresult2,
+                    reinterpret_cast<sockaddr*>(&from),
+                    static_cast<size_t>(from_size));
+              }
+              break;
+
+            case BA_PACKET_CLIENT_REQUEST:
+            case BA_PACKET_CLIENT_ACCEPT:
+            case BA_PACKET_CLIENT_DENY:
+            case BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY:
+            case BA_PACKET_CLIENT_DENY_VERSION_MISMATCH:
+            case BA_PACKET_CLIENT_DENY_PARTY_FULL:
+            case BA_PACKET_DISCONNECT_FROM_CLIENT_REQUEST:
+            case BA_PACKET_DISCONNECT_FROM_CLIENT_ACK:
+            case BA_PACKET_DISCONNECT_FROM_HOST_REQUEST:
+            case BA_PACKET_DISCONNECT_FROM_HOST_ACK:
+            case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED:
+            case BA_PACKET_HOST_GAMEPACKET_COMPRESSED: {
+              // These messages are associated with udp host/client
+              // connections.. pass them to the logic thread to wrangle.
+              std::vector<uint8_t> msg_buffer(rresult2);
+              memcpy(msg_buffer.data(), buffer, rresult2);
+              PushIncomingUDPPacketCall(msg_buffer, SockAddr(from));
+              break;
+            }
+
+            case BA_PACKET_HOST_QUERY: {
+              g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
+
+              // HandleGameQuery(buffer, rresult2, &from);
+              break;
+            }
+
+            default:
+              break;
           }
         }
       }
