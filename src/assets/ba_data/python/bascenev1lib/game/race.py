@@ -260,7 +260,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                 if player.is_alive():
                     assert player.actor
                     player.actor.handlemessage(bs.DieMessage())
-                    bs.screenmessage(
+                    bs.broadcastmessage(
                         bs.Lstr(
                             translate=(
                                 'statements',
@@ -392,7 +392,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             isinstance(self.session, bs.DualTeamSession)
             and self._entire_team_must_finish
         ):
-            bs.screenmessage(
+            bs.broadcastmessage(
                 bs.Lstr(
                     translate=(
                         'statements',

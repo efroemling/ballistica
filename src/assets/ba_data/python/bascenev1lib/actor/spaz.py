@@ -278,7 +278,7 @@ class Spaz(bs.Actor):
                 )
                 self._turbo_filter_times[source] = t_ms
                 # (uncomment to debug; prints what this count is at)
-                # bs.screenmessage( str(source) + " "
+                # bs.broadcastmessage( str(source) + " "
                 #                   + str(self._turbo_filter_counts[source]))
                 if self._turbo_filter_counts[source] == 15:
                     # Knock 'em out.  That'll learn 'em.
@@ -290,7 +290,7 @@ class Spaz(bs.Actor):
                     assert bs.app.classic is not None
                     if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
                         bs.app.classic.last_spaz_turbo_warn_time = now
-                        bs.screenmessage(
+                        bs.broadcastmessage(
                             bs.Lstr(
                                 translate=(
                                     'statements',

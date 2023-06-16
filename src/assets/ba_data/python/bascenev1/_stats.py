@@ -437,7 +437,7 @@ class Stats:
         # Report non-kill scorings.
         try:
             if screenmessage and not kill:
-                _bascenev1.screenmessage(
+                _bascenev1.broadcastmessage(
                     babase.Lstr(
                         resource='nameScoresText', subs=[('${NAME}', name)]
                     ),
@@ -475,7 +475,7 @@ class Stats:
         try:
             if killed and _bascenev1.getactivity().announce_player_deaths:
                 if killer is player:
-                    _bascenev1.screenmessage(
+                    _bascenev1.broadcastmessage(
                         babase.Lstr(
                             resource='nameSuicideText', subs=[('${NAME}', name)]
                         ),
@@ -485,7 +485,7 @@ class Stats:
                     )
                 elif killer is not None:
                     if killer.team is player.team:
-                        _bascenev1.screenmessage(
+                        _bascenev1.broadcastmessage(
                             babase.Lstr(
                                 resource='nameBetrayedText',
                                 subs=[
@@ -498,7 +498,7 @@ class Stats:
                             image=killer.get_icon(),
                         )
                     else:
-                        _bascenev1.screenmessage(
+                        _bascenev1.broadcastmessage(
                             babase.Lstr(
                                 resource='nameKilledText',
                                 subs=[
@@ -511,7 +511,7 @@ class Stats:
                             image=killer.get_icon(),
                         )
                 else:
-                    _bascenev1.screenmessage(
+                    _bascenev1.broadcastmessage(
                         babase.Lstr(
                             resource='nameDiedText', subs=[('${NAME}', name)]
                         ),

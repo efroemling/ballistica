@@ -29,21 +29,6 @@ namespace ballistica::base {
 /// extra functionality.
 class ContextRef {
  public:
-  /// The current global context-ref;
-  // static auto Current() -> const ContextRef& {
-  //   assert(g_base);
-  //   assert(g_base->InLogicThread());  // Up to caller to ensure this.
-  //   return *g_base->context_ref;
-  // }
-
-  /// Set the current global context from this one.
-  // static void SetCurrent(const ContextRef& context) {
-  //   assert(g_base);
-  //   // Context system is currently limited to logic-thread.
-  //   BA_PRECONDITION(g_base->InLogicThread());
-  //   g_base->context_ref->SetTarget(context.Get());
-  // }
-
   /// Return a description of the context we're pointing at.
   auto GetDescription() const -> std::string;
 

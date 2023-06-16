@@ -35,6 +35,34 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
                                    &color_obj, &log)) {
     return nullptr;
   }
+
+  // TEMP - we used to have a single ba.screenmessage() call that would
+  // broadcast messages to all clients when called by a server in a game context
+  // and simply print them locally in other cases. In 1.7.20 the broadcast form
+  // has been moved to bascenev1.broadcastmessage(). But there's probably lots
+  // of code out there using screenmessage() not realizing it won't do what they
+  // intended anymore. So for now let's issue a warning when it *would* have
+  // done the broadcast thing. (just assuming that's the case any time there's a
+  // non-empty context)
+  static bool did_warning{};
+  if (!did_warning && !g_base->CurrentContext().IsEmpty()) {
+    did_warning = true;
+    auto* envval = getenv("BA_SUPPRESS_SCREEN_MESSAGE_WARNING");
+    bool suppress = (envval && strcmp(envval, "1") == 0);
+    if (!suppress) {
+      Log(LogLevel::kWarning,
+          "FIXME! screenmessage() is being called in a gameplay situation.\n"
+          "The screenmessage call used to send messages to all players but now "
+          "only prints them locally.\n"
+          "Please change your code to use bascenev1.broadcastmessage() to get "
+          "the old behavior.\n"
+          "You can set env var BA_SUPPRESS_SCREEN_MESSAGE_WARNING=1 to "
+          "suppress "
+          "this warning.");
+      g_base->PrintPythonStackTrace();
+    }
+  }
+
   std::string message_str = g_base->python->GetPyLString(message_obj);
   Vector3f color{1, 1, 1};
   if (color_obj != Py_None) {
@@ -66,8 +94,8 @@ static PyMethodDef PyScreenMessageDef = {
     "Category: **General Utility Functions**\n"
     "\n"
     "Note that this version of the function is purely for local display.\n"
-    "To broadcast screen messages in network play, see the versions of\n"
-    "this call provided by the scene-version packages.",
+    "To broadcast screen messages in network play, look for methods such as\n"
+    "broadcastmessage() provided by the scene-version packages.",
 };
 
 // -------------------------- get_camera_position ------------------------------

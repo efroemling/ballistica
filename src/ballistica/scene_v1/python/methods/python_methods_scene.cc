@@ -621,9 +621,9 @@ static PyMethodDef PyGetActivityDef = {
     "If doraise is False, None will be returned instead in that case.",
 };
 
-// ---------------------------- screenmessage ----------------------------------
+// -------------------------- broadcastmessage ---------------------------------
 
-static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   const char* message = nullptr;
@@ -732,6 +732,7 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
         texture = SceneV1Python::GetPySceneTexture(image_obj);
       }
     }
+
     if (output_stream) {
       // FIXME: for now we just do bottom messages.
       if (texture == nullptr && !top) {
@@ -766,12 +767,12 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyScreenMessageDef = {
-    "screenmessage",               // name
-    (PyCFunction)PyScreenMessage,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyBroadcastMessageDef = {
+    "broadcastmessage",               // name
+    (PyCFunction)PyBroadcastMessage,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "screenmessage(message: str | babase.Lstr,\n"
+    "broadcastmessage(message: str | babase.Lstr,\n"
     "  color: Sequence[float] | None = None,\n"
     "  top: bool = False,\n"
     "  image: dict[str, Any] | None = None,\n"
@@ -780,7 +781,7 @@ static PyMethodDef PyScreenMessageDef = {
     "  transient: bool = False)"
     " -> None\n"
     "\n"
-    "Print a message to the local client's screen, in a given color.\n"
+    "Broadcast a screen-message to clients in the current session.\n"
     "\n"
     "Category: **General Utility Functions**\n"
     "\n"
@@ -1730,7 +1731,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterActivityDef,
       PyRegisterSessionDef,
       PyIsInReplayDef,
-      PyScreenMessageDef,
+      PyBroadcastMessageDef,
       PyGetRandomNamesDef,
       PyResetRandomPlayerNamesDef,
       PySetReplaySpeedExponentDef,

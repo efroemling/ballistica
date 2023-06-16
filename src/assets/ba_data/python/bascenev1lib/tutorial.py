@@ -459,7 +459,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         assert isinstance(tval, int)
                         diff = tval
                         a.cycle_times.append(diff)
-                        bs.screenmessage(
+                        bs.broadcastmessage(
                             'cycle time: '
                             + str(diff)
                             + ' (average: '

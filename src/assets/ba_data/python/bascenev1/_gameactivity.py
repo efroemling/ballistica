@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING, TypeVar
 
 import babase
+
 import _bascenev1
 from bascenev1._activity import Activity
 from bascenev1._player import PlayerInfo
@@ -1315,7 +1316,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 if m not in unowned_maps
             ]
             if not valid_maps:
-                babase.screenmessage(
+                _bascenev1.broadcastmessage(
                     babase.Lstr(resource='noValidMapsErrorText')
                 )
                 raise RuntimeError('No valid maps')

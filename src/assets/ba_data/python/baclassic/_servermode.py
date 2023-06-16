@@ -60,7 +60,7 @@ def _cmd(command_data: bytes) -> None:
         # Note: we have to do transient messages if
         # clients is specified, so they won't show up
         # in replays.
-        bascenev1.screenmessage(
+        bascenev1.broadcastmessage(
             command.message,
             color=command.color,
             clients=command.clients,

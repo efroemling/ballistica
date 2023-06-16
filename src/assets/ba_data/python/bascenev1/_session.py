@@ -242,7 +242,7 @@ class Session:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _bascenev1.getsound('error').play()
-                _bascenev1.screenmessage(
+                _bascenev1.broadcastmessage(
                     babase.Lstr(
                         resource='playerLimitReachedText',
                         subs=[('${COUNT}', str(self.max_players))],
@@ -283,7 +283,7 @@ class Session:
             sessionteam = sessionplayer.sessionteam
             assert sessionteam is not None
 
-            babase.screenmessage(
+            _bascenev1.broadcastmessage(
                 babase.Lstr(
                     resource='playerLeftText',
                     subs=[('${PLAYER}', sessionplayer.getname(full=True))],
@@ -655,7 +655,7 @@ class Session:
                 # Get our next activity going.
                 self._complete_end_activity(activity, {})
             else:
-                babase.screenmessage(
+                _bascenev1.broadcastmessage(
                     babase.Lstr(
                         resource='notEnoughPlayersText',
                         subs=[('${COUNT}', str(min_players))],
@@ -721,7 +721,7 @@ class Session:
             ):
                 pass_to_activity = False
                 with self.context:
-                    babase.screenmessage(
+                    _bascenev1.broadcastmessage(
                         babase.Lstr(
                             resource='playerDelayedJoinText',
                             subs=[
