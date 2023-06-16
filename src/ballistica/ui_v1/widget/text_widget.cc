@@ -301,7 +301,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     text_group_ = Object::New<base::TextGroup>();
   }
   if (text_group_dirty_) {
-    text_group_->SetText(text_translated_, align_h, align_v, big_, res_scale_);
+    text_group_->set_text(text_translated_, align_h, align_v, big_, res_scale_);
     text_width_ = g_base->text_graphics->GetStringWidth(text_translated_, big_);
 
     // FIXME: doesnt support big.

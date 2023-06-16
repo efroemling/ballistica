@@ -8,9 +8,9 @@
 
 namespace ballistica::base {
 
-void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
-                        TextMesh::VAlign alignment_v, bool big,
-                        float resolution_scale) {
+void TextGroup::set_text(const std::string& text, TextMesh::HAlign alignment_h,
+                         TextMesh::VAlign alignment_v, bool big,
+                         float resolution_scale) {
   text_ = text;
 
   // In order to *actually* draw big, all our letters

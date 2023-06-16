@@ -389,7 +389,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       if (!fps_text_group_.Exists()) {
         fps_text_group_ = Object::New<TextGroup>();
       }
-      fps_text_group_->SetText(fps_string_);
+      fps_text_group_->set_text(fps_string_);
     }
     SimpleComponent c(pass);
     c.SetTransparent(true);
@@ -422,7 +422,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         if (!ping_text_group_.Exists()) {
           ping_text_group_ = Object::New<TextGroup>();
         }
-        ping_text_group_->SetText(ping_string_);
+        ping_text_group_->set_text(ping_string_);
       }
       SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -457,7 +457,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         if (!net_info_text_group_.Exists()) {
           net_info_text_group_ = Object::New<TextGroup>();
         }
-        net_info_text_group_->SetText(net_info_string_);
+        net_info_text_group_->set_text(net_info_string_);
       }
       SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -1914,7 +1914,7 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = true;
   }
   if (mesh_dirty) {
-    s_mesh_->SetText(
+    s_mesh_->set_text(
         s_translated,
         align_left ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
         TextMesh::VAlign::kBottom);

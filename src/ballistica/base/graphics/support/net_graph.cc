@@ -152,8 +152,8 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
     snprintf(val_str, sizeof(val_str), "%.3f",
              impl_->smoothed ? impl_->v_smoothed : val);
   }
-  impl_->max_vel_text.SetText(val_str, TextMesh::HAlign::kLeft,
-                              TextMesh::VAlign::kTop);
+  impl_->max_vel_text.set_text(val_str, TextMesh::HAlign::kLeft,
+                               TextMesh::VAlign::kTop);
 
   SimpleComponent c2(pass);
   c2.SetTransparent(true);

@@ -265,10 +265,10 @@ void RootUI::Draw(base::FrameDef* frame_def) {
             if (!party_button_text_group_.Exists()) {
               party_button_text_group_ = Object::New<base::TextGroup>();
             }
-            if (party_button_name != party_button_text_group_->getText()) {
-              party_button_text_group_->SetText(party_button_name,
-                                                base::TextMesh::HAlign::kCenter,
-                                                base::TextMesh::VAlign::kTop);
+            if (party_button_name != party_button_text_group_->text()) {
+              party_button_text_group_->set_text(
+                  party_button_name, base::TextMesh::HAlign::kCenter,
+                  base::TextMesh::VAlign::kTop);
             }
             int text_elem_count = party_button_text_group_->GetElementCount();
             for (int e = 0; e < text_elem_count; e++) {
@@ -302,7 +302,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
           if (!party_size_text_group_.Exists()) {
             party_size_text_group_ = Object::New<base::TextGroup>();
           }
-          party_size_text_group_->SetText(
+          party_size_text_group_->set_text(
               std::to_string(party_size_text_group_num_));
 
           // ..we also may want to update our 'someone joined' message if we're
@@ -312,12 +312,12 @@ void RootUI::Draw(base::FrameDef* frame_def) {
               start_a_game_text_group_ = Object::New<base::TextGroup>();
             }
             if (party_size == 2) {  // (includes us as host)
-              start_a_game_text_group_->SetText(
+              start_a_game_text_group_->set_text(
                   g_base->assets->GetResourceString(
                       "joinedPartyInstructionsText"),
                   base::TextMesh::HAlign::kRight, base::TextMesh::VAlign::kTop);
             } else if (party_size > 2) {
-              start_a_game_text_group_->SetText(
+              start_a_game_text_group_->set_text(
                   std::to_string(party_size - 1) +
                       " friends have joined your party.\nGo to 'Play' to start "
                       "a game.",

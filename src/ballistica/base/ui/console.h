@@ -50,7 +50,7 @@ class Console {
     auto GetText() -> TextGroup& {
       if (!s_mesh_.Exists()) {
         s_mesh_ = Object::New<TextGroup>();
-        s_mesh_->SetText(s);
+        s_mesh_->set_text(s);
       }
       return *s_mesh_;
     }

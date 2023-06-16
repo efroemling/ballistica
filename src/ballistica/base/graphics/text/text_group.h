@@ -55,11 +55,11 @@ class TextGroup : public Object {
                                           ? SysTextureID::kSoftRect2
                                           : SysTextureID::kSoftRect);
   }
-  void SetText(const std::string& text,
-               TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,
-               TextMesh::VAlign alignment_v = TextMesh::VAlign::kNone,
-               bool big = false, float resolution_scale = 1.0f);
-  auto getText() const -> const std::string& { return text_; }
+  void set_text(const std::string& text,
+                TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,
+                TextMesh::VAlign alignment_v = TextMesh::VAlign::kNone,
+                bool big = false, float resolution_scale = 1.0f);
+  auto text() const -> const std::string& { return text_; }
   void GetCaratPts(const std::string& text_in, TextMesh::HAlign alignment_h,
                    TextMesh::VAlign alignment_v, int carat_pos, float* carat_x,
                    float* carat_y);

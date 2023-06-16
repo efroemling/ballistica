@@ -37,9 +37,9 @@ Console::Console() {
     title += " (test)";
   }
 
-  title_text_group_.SetText(title);
-  built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
-  prompt_text_group_.SetText(">");
+  title_text_group_.set_text(title);
+  built_text_group_.set_text("Built: " __DATE__ " " __TIME__);
+  prompt_text_group_.set_text(">");
 }
 
 Console::~Console() = default;
@@ -292,7 +292,7 @@ void Console::Draw(RenderPass* pass) {
       c.Submit();
     }
     if (input_text_dirty_) {
-      input_text_group_.SetText(input_string_);
+      input_text_group_.set_text(input_string_);
       input_text_dirty_ = false;
       last_input_text_change_time_ = pass->frame_def()->real_time();
     }
@@ -372,7 +372,7 @@ void Console::Draw(RenderPass* pass) {
           if (!last_line_mesh_group_.Exists()) {
             last_line_mesh_group_ = Object::New<TextGroup>();
           }
-          last_line_mesh_group_->SetText(last_line_);
+          last_line_mesh_group_->set_text(last_line_);
           last_line_mesh_dirty_ = false;
         }
         int elem_count = last_line_mesh_group_->GetElementCount();
