@@ -103,7 +103,7 @@ def handle_v1_cloud_log() -> None:
                 'log': _babase.get_v1_cloud_log(),
                 'version': app.version,
                 'build': app.build_number,
-                'userAgentString': app.classic.user_agent_string,
+                'userAgentString': app.classic.legacy_user_agent_string,
                 'session': sessionname,
                 'activity': activityname,
                 'fatal': 0,
@@ -339,10 +339,14 @@ def log_dumped_app_state() -> None:
             _tb_held_files.clear()
 
             with open(mdpath, 'r', encoding='utf-8') as infile:
-                metadata = dataclass_from_json(
-                    DumpedAppStateMetadata, infile.read()
-                )
+                appstatedata = infile.read()
+
+            # Kill the file first in case we can't parse the data; don't
+            # want to get stuck doing this repeatedly.
             os.unlink(mdpath)
+
+            metadata = dataclass_from_json(DumpedAppStateMetadata, appstatedata)
+
             out += (
                 f'App state dump:\nReason: {metadata.reason}\n'
                 f'Time: {metadata.app_time:.2f}'

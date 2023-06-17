@@ -139,10 +139,10 @@ class ClassicSubsystem(babase.AppSubsystem):
         return self._env['subplatform']
 
     @property
-    def user_agent_string(self) -> str:
+    def legacy_user_agent_string(self) -> str:
         """String containing various bits of info about OS/device/etc."""
-        assert isinstance(self._env['user_agent_string'], str)
-        return self._env['user_agent_string']
+        assert isinstance(self._env['legacy_user_agent_string'], str)
+        return self._env['legacy_user_agent_string']
 
     def on_app_loading(self) -> None:
         from bascenev1lib.actor import spazappearance

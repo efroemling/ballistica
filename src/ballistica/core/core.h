@@ -100,6 +100,14 @@ class CoreFeatureSet {
   /// any source file paths we print.
   auto build_src_dir() const { return build_src_dir_; }
 
+  const auto& legacy_user_agent_string() const {
+    return legacy_user_agent_string_;
+  }
+
+  void set_legacy_user_agent_string(const std::string& val) {
+    legacy_user_agent_string_ = val;
+  }
+
   // Subsystems.
   CorePython* const python;
   CorePlatform* const platform;
@@ -121,7 +129,6 @@ class CoreFeatureSet {
   bool should_pause{};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
-  std::string user_agent_string{"BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
   int return_value{};
   bool debug_timing{};
   std::thread::id main_thread_id{};
@@ -149,6 +156,8 @@ class CoreFeatureSet {
   microsecs_t app_time_microsecs_{};
   microsecs_t last_app_time_measure_microsecs_;
   std::mutex app_time_mutex_;
+  std::string legacy_user_agent_string_{
+      "BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
 };
 
 }  // namespace ballistica::core

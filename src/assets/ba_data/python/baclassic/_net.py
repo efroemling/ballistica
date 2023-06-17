@@ -81,7 +81,8 @@ class MasterServerV1CallThread(threading.Thread):
         response_data: Any = None
         url: str | None = None
         try:
-            assert babase.app.classic is not None
+            classic = babase.app.classic
+            assert classic is not None
             self._data = babase.utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
@@ -97,7 +98,7 @@ class MasterServerV1CallThread(threading.Thread):
                     urllib.request.Request(
                         url,
                         None,
-                        {'User-Agent': babase.app.classic.user_agent_string},
+                        {'User-Agent': classic.legacy_user_agent_string},
                     ),
                     context=babase.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,
@@ -109,7 +110,7 @@ class MasterServerV1CallThread(threading.Thread):
                     urllib.request.Request(
                         url,
                         urllib.parse.urlencode(self._data).encode(),
-                        {'User-Agent': babase.app.classic.user_agent_string},
+                        {'User-Agent': classic.legacy_user_agent_string},
                     ),
                     context=babase.app.net.sslcontext,
                     timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS,

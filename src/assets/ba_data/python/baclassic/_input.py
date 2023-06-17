@@ -26,7 +26,7 @@ def get_input_device_mapped_value(
 
     app = babase.app
     assert app.classic is not None
-    useragentstring = app.classic.user_agent_string
+    useragentstring = app.classic.legacy_user_agent_string
     platform = app.classic.platform
     subplatform = app.classic.subplatform
     appconfig = babase.app.config

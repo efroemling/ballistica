@@ -165,7 +165,7 @@ class MusicSubsystem:
 
     def supports_soundtrack_entry_type(self, entry_type: str) -> bool:
         """Return whether provided soundtrack entry type is supported here."""
-        uas = babase.env()['user_agent_string']
+        uas = babase.env()['legacy_user_agent_string']
         assert isinstance(uas, str)
 
         # FIXME: Generalize this.

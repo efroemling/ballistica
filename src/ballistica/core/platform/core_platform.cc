@@ -573,7 +573,7 @@ auto CorePlatform::GetIsStdinATerminal() -> bool {
 
 auto CorePlatform::GetOSVersionString() -> std::string { return ""; }
 
-auto CorePlatform::GetUserAgentString() -> std::string {
+auto CorePlatform::GetLegacyUserAgentString() -> std::string {
   std::string device = GetDeviceName();
   std::string version = GetOSVersionString();
   if (!version.empty()) {

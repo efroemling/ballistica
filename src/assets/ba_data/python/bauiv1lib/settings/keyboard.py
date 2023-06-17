@@ -299,7 +299,7 @@ class ConfigKeyboardWindow(bui.Window):
             bui.app.classic.master_server_v1_post(
                 'controllerConfig',
                 {
-                    'ua': bui.app.classic.user_agent_string,
+                    'ua': bui.app.classic.legacy_user_agent_string,
                     'name': self._name,
                     'b': bui.app.build_number,
                     'config': dst2,

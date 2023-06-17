@@ -828,7 +828,7 @@ class GamepadSettingsWindow(bui.Window):
             classic.master_server_v1_post(
                 'controllerConfig',
                 {
-                    'ua': classic.user_agent_string,
+                    'ua': classic.legacy_user_agent_string,
                     'b': bui.app.build_number,
                     'name': self._name,
                     'inputMapHash': inputhash,

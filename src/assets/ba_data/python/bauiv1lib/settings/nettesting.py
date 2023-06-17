@@ -200,7 +200,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
 
         _print(
             f'Running network diagnostics...\n'
-            f'ua: {bui.app.classic.user_agent_string}\n'
+            f'ua: {bui.app.classic.legacy_user_agent_string}\n'
             f'time: {utc_now()}.'
         )
 
@@ -414,7 +414,7 @@ def _test_fetch(baseaddr: str) -> None:
         urllib.request.Request(
             f'{baseaddr}/ping',
             None,
-            {'User-Agent': bui.app.classic.user_agent_string},
+            {'User-Agent': bui.app.classic.legacy_user_agent_string},
         ),
         context=bui.app.net.sslcontext,
         timeout=MAX_TEST_SECONDS,

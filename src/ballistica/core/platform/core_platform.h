@@ -187,7 +187,10 @@ class CorePlatform {
   /// Return en_US or whatnot.
   virtual auto GetLocale() -> std::string;
 
-  virtual auto GetUserAgentString() -> std::string;
+  /// Get the older more complex user-agent-string, used for communication
+  /// with v1 servers/etc. This can go away eventually.
+  auto GetLegacyUserAgentString() -> std::string;
+
   virtual auto GetOSVersionString() -> std::string;
 
   /// Set an environment variable as utf8, overwriting if it already exists.

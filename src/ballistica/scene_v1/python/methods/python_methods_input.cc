@@ -222,12 +222,14 @@ static auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
             dynamic_cast<SceneV1InputDeviceDelegate*>(delegate)) {
       return c_delegate->NewPyRef();
     } else {
-      // Perhaps will want to return None in this case once we've got
-      // newer versions of InputDevice; we'll see...
-      throw Exception(
-          "Unexpected delegate "
-          + (delegate ? delegate->GetObjectDescription() : "(nullptr)")
-          + " for ui-input-device " + d->GetObjectDescription() + ".");
+      // Assuming this would be due to getting called in another app-mode.
+      // Wonder if it would be wise to error in that case...
+      BA_LOG_ONCE(
+          LogLevel::kWarning,
+          "scene_v1: Found unexpected delegate "
+              + (delegate ? delegate->GetObjectDescription() : "(nullptr)")
+              + " for ui-input-device " + d->GetObjectDescription() + ".");
+      Py_RETURN_NONE;
     }
   } else {
     Py_RETURN_NONE;
@@ -240,7 +242,7 @@ static PyMethodDef PyGetUIInputDeviceDef = {
     (PyCFunction)PyGetUIInputDevice,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "get_ui_input_device() -> bascenev1.InputDevice\n"
+    "get_ui_input_device() -> bascenev1.InputDevice | None\n"
     "\n"
     "(internal)\n"
     "\n"

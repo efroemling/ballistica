@@ -648,7 +648,7 @@ static PyMethodDef PyCommitConfigDef = {
     "(internal)",
 };
 
-// --------------------------------- env ---------------------------------------
+// ------------------------------- pre_env -------------------------------------
 
 static auto PyPreEnv(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
@@ -726,7 +726,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "si"  // build_number
         "ss"  // config_file_path
         "ss"  // locale
-        "ss"  // user_agent_string
+        "ss"  // legacy_user_agent_string
         "ss"  // version
         "sO"  // debug_build
         "sO"  // test_build
@@ -750,7 +750,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "build_number", kEngineBuildNumber,
         "config_file_path", g_core->platform->GetConfigFilePath().c_str(),
         "locale", g_core->platform->GetLocale().c_str(),
-        "user_agent_string", g_core->user_agent_string.c_str(),
+        "legacy_user_agent_string", g_core->legacy_user_agent_string().c_str(),
         "version", kEngineVersion,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
         "test_build", g_buildconfig.test_build() ? Py_True : Py_False,
@@ -1330,6 +1330,27 @@ static PyMethodDef PyReachedEndOfBaBaseDef = {
 
     "reached_end_of_babase() -> None\n"
     "\n"
+    "A simple user-agent-string that should be used in any web requests made\n"
+    "on behalf of the engine.",
+};
+
+// --------------------------- user_agent_string -------------------------------
+
+static auto PyUserAgentString(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "Ballistica/%s", kEngineVersion);
+  return PyUnicode_FromString(buffer);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUserAgentStringDef = {
+    "user_agent_string",             // name
+    (PyCFunction)PyUserAgentString,  // method
+    METH_NOARGS,                     // flags
+
+    "user_agent_string() -> str\n"
+    "\n"
     "(internal)\n",
 };
 
@@ -1375,6 +1396,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,
       PyReachedEndOfBaBaseDef,
+      PyUserAgentStringDef,
   };
 }
 

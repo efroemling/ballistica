@@ -381,7 +381,7 @@ class MainMenuWindow(bui.Window):
                     resource=self._r
                     + (
                         '.quitText'
-                        if 'Mac' in app.classic.user_agent_string
+                        if 'Mac' in app.classic.legacy_user_agent_string
                         else '.exitGameText'
                     )
                 ),

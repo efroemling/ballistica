@@ -36,7 +36,8 @@ void App::PostInit() {
   assert(true);
 #endif  // !BA_DEBUG_BUILD
 
-  g_core->user_agent_string = g_core->platform->GetUserAgentString();
+  g_core->set_legacy_user_agent_string(
+      g_core->platform->GetLegacyUserAgentString());
 }
 
 void App::LogicThreadApplyAppConfig() {

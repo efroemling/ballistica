@@ -81,6 +81,7 @@ from _babase import (
     show_progress_bar,
     SimpleSound,
     unlock_all_input,
+    user_agent_string,
     Vec3,
     workspaces_in_use,
 )
@@ -275,6 +276,7 @@ __all__ = [
     'timestring',
     'UIScale',
     'unlock_all_input',
+    'user_agent_string',
     'utf8_all',
     'Vec3',
     'vec3validate',

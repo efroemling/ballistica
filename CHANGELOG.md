@@ -1,4 +1,4 @@
-### 1.7.20 (build 21121, api 8, 2023-06-16)
+### 1.7.20 (build 21122, api 8, 2023-06-16)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -340,13 +340,18 @@
   its working.
 - (build 21118) Fixed an issue where certain messages such as player-left
   weren't being send to clients.
-- (build 21118) renamed `bascenev1.screenmessage()` to
+- (build 21118) Renamed `bascenev1.screenmessage()` to
   `bascenev1.broadcastmessage()` to make it more clear that it behaves
   differently (sending messages to all connected clients instead of just the
   local screen). There is still a `bascenev1.screenmessage()` but that is now
   the same local-only version available in babase. Added a temporary warning if
   calling screenmessage() in a situation that in previous versions would have
   done a broadcast.
+- (build 21121) The old app `user_agent_string` which was very ugly and
+  cluttered and nonstandard has been renamed to `legacy_user_agent_string`. A
+  newer simpler one is now available from `babase.user_agent_string()`. It looks
+  like `Ballistica/1.7.20`. If OS version or platform or whatever else needs to
+  be communicated to a server, it should be passed explicitly as extra data.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 
