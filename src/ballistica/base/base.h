@@ -745,6 +745,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool called_run_app_to_completion_{};
   bool base_import_completed_{};
   bool base_native_import_completed_{};
+  bool basn_log_behavior_{};
 };
 
 }  // namespace ballistica::base

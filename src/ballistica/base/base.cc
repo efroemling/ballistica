@@ -65,6 +65,7 @@ BaseFeatureSet::BaseFeatureSet()
       audio_server{new AudioServer()},
       assets{new Assets()},
       app_mode_{AppModeEmpty::GetSingleton()},
+      basn_log_behavior_{g_core->platform->GetEnv("BASNLOG") == "1"},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr} {
   // We're a singleton. If there's already one of us, something's wrong.
@@ -480,7 +481,6 @@ void BaseFeatureSet::V1CloudLog(const std::string& msg) {
   // handle this. It will group log messages intelligently and ship them
   // to the master server with various other context info included.
 
-  // We currently need both plus and classic for this system to function.
   if (!IsBaseCompletelyImported()) {
     printf(
         "WARNING: V1CloudLog called before babase import complete; will be "
@@ -488,13 +488,17 @@ void BaseFeatureSet::V1CloudLog(const std::string& msg) {
     return;
   }
 
+  // PushCall functionality requires the app to be running.
   if (app_running_) {
     python->objs().PushCall(BasePython::ObjID::kHandleV1CloudLogCall);
   } else {
     if (HavePlus()) {
       // For log messages before that time we ship them immediately since
       // we don't know if the Python layer is (or will be) able to.
-      if (g_early_v1_cloud_log_writes > 0) {
+      // NOTE: Currently short-circuiting this for basn to avoid
+      // shipping early logs that have no errors/warnings. Should clean
+      // this up.
+      if (g_early_v1_cloud_log_writes > 0 && !basn_log_behavior_) {
         g_early_v1_cloud_log_writes -= 1;
         std::string logprefix = "EARLY-LOG:";
         std::string logsuffix;

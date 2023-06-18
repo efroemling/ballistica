@@ -354,6 +354,7 @@ class LogHandler(logging.Handler):
                     self._echofile.write(f'{ends[0]}{msg}{ends[1]}\n')
                 else:
                     self._echofile.write(f'{msg}\n')
+                self._echofile.flush()
 
             if __debug__:
                 echotime = time.monotonic()
