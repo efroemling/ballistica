@@ -147,21 +147,21 @@ void Logic::ApplyAppConfig() {
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.
-  g_base->graphics->ApplyAppConfig();
-  g_base->audio->ApplyAppConfig();
-  g_base->input->ApplyAppConfig();
-  g_base->ui->ApplyAppConfig();
-  g_core->platform->ApplyAppConfig();
-  g_base->app_mode()->ApplyAppConfig();
+  g_base->graphics->DoApplyAppConfig();
+  g_base->audio->DoApplyAppConfig();
+  g_base->input->DoApplyAppConfig();
+  g_base->ui->DoApplyAppConfig();
+  g_core->platform->DoApplyAppConfig();
+  g_base->app_mode()->DoApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->plus()->ApplyAppConfig();
+    g_base->plus()->DoApplyAppConfig();
   }
-  g_base->python->ApplyAppConfig();
+  g_base->python->DoApplyAppConfig();
 
   // Give the app subsystem a chance too even though its main-thread based.
   // We call it here in the logic thread, allowing it to read whatever
   // it needs and pass it to itself in the main thread.
-  g_base->app->LogicThreadApplyAppConfig();
+  g_base->app->DoLogicThreadApplyAppConfig();
 
   applied_app_config_ = true;
 }

@@ -83,10 +83,10 @@ void UI::OnAppResume() {
 
 void UI::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
-void UI::ApplyAppConfig() {
+void UI::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
   if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->ApplyAppConfig();
+    g_base->ui_v1()->DoApplyAppConfig();
   }
 }
 

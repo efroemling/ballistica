@@ -22,7 +22,7 @@ class PlusSoftInterface {
   virtual void OnAppPause() = 0;
   virtual void OnAppResume() = 0;
   virtual void OnAppShutdown() = 0;
-  virtual void ApplyAppConfig() = 0;
+  virtual void DoApplyAppConfig() = 0;
   virtual void OnScreenSizeChange() = 0;
   virtual void StepDisplayTime() = 0;
 

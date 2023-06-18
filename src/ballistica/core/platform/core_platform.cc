@@ -718,7 +718,7 @@ void CorePlatform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
 
-void CorePlatform::ApplyAppConfig() {}
+void CorePlatform::DoApplyAppConfig() {}
 
 void CorePlatform::AndroidSynthesizeBackPress() {
   Log(LogLevel::kError, "AndroidSynthesizeBackPress() unimplemented");

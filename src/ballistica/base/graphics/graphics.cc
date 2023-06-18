@@ -102,7 +102,7 @@ void Graphics::OnAppResume() {
 
 void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
-void Graphics::ApplyAppConfig() {
+void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // Not relevant for fullscreen anymore

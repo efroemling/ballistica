@@ -26,11 +26,11 @@ class App {
   /// should go here.
   void PostInit();
 
-  /// Gets called when the app config is being read.
+  /// Gets called when the app config is being applied.
   /// Note that this call happens in the logic thread, so we should
   /// do any reading that needs to happen in the logic thread and then
   /// forward the values to ourself back in our main thread.
-  void LogicThreadApplyAppConfig();
+  void DoLogicThreadApplyAppConfig();
 
   /// Return whether this class runs its own event loop.
   /// If true, MonolithicMain() will continuously ask the app for events

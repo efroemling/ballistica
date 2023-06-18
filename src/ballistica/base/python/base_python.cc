@@ -160,7 +160,7 @@ void BasePython::OnAppShutdown() {
   objs().Get(BasePython::ObjID::kShutdownCall).Call();
 }
 
-void BasePython::ApplyAppConfig() { assert(g_base->InLogicThread()); }
+void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 

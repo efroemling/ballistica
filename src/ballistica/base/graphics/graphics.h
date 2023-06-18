@@ -54,7 +54,7 @@ class Graphics {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
-  void ApplyAppConfig();
+  void DoApplyAppConfig();
   void OnScreenSizeChange(float virtual_width, float virtual_height,
                           float physical_width, float physical_height);
   void StepDisplayTime();

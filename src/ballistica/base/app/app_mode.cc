@@ -56,7 +56,7 @@ auto AppMode::HasConnectionToHost() const -> bool { return false; }
 
 auto AppMode::HasConnectionToClients() const -> bool { return false; }
 
-void AppMode::ApplyAppConfig() {}
+void AppMode::DoApplyAppConfig() {}
 
 auto AppMode::GetForegroundContext() -> ContextRef { return {}; }
 

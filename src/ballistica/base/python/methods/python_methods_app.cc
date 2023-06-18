@@ -553,7 +553,7 @@ static PyMethodDef PyQuitDef = {
 static auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
 
-  // Hmm; python runs in the logic thread; technically we could just run
+  // Hmm; Python runs in the logic thread; technically we could just run
   // ApplyAppConfig() immediately (though pushing is probably safer).
   g_base->logic->event_loop()->PushCall(
       [] { g_base->logic->ApplyAppConfig(); });

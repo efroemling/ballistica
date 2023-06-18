@@ -458,6 +458,8 @@ void SceneV1AppMode::StepDisplayTime() {
 
   UpdateKickVote();
 
+  HandleQuitOnIdle();
+
   // Send the game roster to our clients if it's changed recently.
   if (game_roster_dirty_) {
     if (app_time > last_game_roster_send_time_ + 2500) {
@@ -1149,7 +1151,7 @@ void SceneV1AppMode::LocalDisplayChatMessage(
   }
 }
 
-void SceneV1AppMode::ApplyAppConfig() {
+void SceneV1AppMode::DoApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
   auto* host_session = dynamic_cast<HostSession*>(foreground_session_.Get());
   kick_idle_players_ =
@@ -1367,11 +1369,9 @@ void SceneV1AppMode::HandleQuitOnIdle() {
     if (!idle_exiting_ && idle_seconds > (idle_exit_minutes_.value() * 60.0f)) {
       idle_exiting_ = true;
 
+      Log(LogLevel::kInfo, "Quitting due to reaching idle-exit-minutes.");
       g_base->logic->event_loop()->PushCall([] {
         assert(g_base->InLogicThread());
-
-        // Just go through _babase.quit()
-        // FIXME: Shouldn't need to go out to the python layer here...
         g_base->python->objs().Get(base::BasePython::ObjID::kQuitCall).Call();
       });
     }

@@ -25,7 +25,7 @@ class Input {
   void OnAppShutdown();
   void StepDisplayTime();
 
-  void ApplyAppConfig();
+  void DoApplyAppConfig();
 
   void OnScreenSizeChange();
 

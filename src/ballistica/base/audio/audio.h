@@ -24,7 +24,7 @@ class Audio {
   virtual void OnAppPause();
   virtual void OnAppResume();
   virtual void OnAppShutdown();
-  virtual void ApplyAppConfig();
+  virtual void DoApplyAppConfig();
   virtual void OnScreenSizeChange();
   virtual void StepDisplayTime();
 

@@ -188,7 +188,7 @@ class ServerController:
         self._executing_shutdown = True
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
-            babase.screenmessage(
+            bascenev1.broadcastmessage(
                 babase.Lstr(resource='internal.serverRestartingText'),
                 color=(1, 0.5, 0.0),
             )
@@ -197,7 +197,7 @@ class ServerController:
                 f' at {timestrval}.{Clr.RST}'
             )
         else:
-            babase.screenmessage(
+            bascenev1.broadcastmessage(
                 babase.Lstr(resource='internal.serverShuttingDownText'),
                 color=(1, 0.5, 0.0),
             )

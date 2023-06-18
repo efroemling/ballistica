@@ -1,4 +1,4 @@
-### 1.7.20 (build 21125, api 8, 2023-06-18)
+### 1.7.20 (build 21126, api 8, 2023-06-18)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -356,6 +356,10 @@
   use log calls instead of prints. The environment vars to enable them are now
   `BA_DEBUG_LOG_CONNECTIVITY` and `BA_DEBUG_LOG_V2_TRANSPORT`. Set either to '1'
   to enable debug logging.
+- (build 21125) Fixed a bug where feature-sets would not have their
+  DoApplyConfig callbacks called in C++, which was causing the server-mode
+  `idle_exit_minutes` value to be ignored. Servers should now properly exit
+  after being idle for this length of time.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

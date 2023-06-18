@@ -40,7 +40,7 @@ void App::PostInit() {
       g_core->platform->GetLegacyUserAgentString());
 }
 
-void App::LogicThreadApplyAppConfig() {
+void App::DoLogicThreadApplyAppConfig() {
   // Note: this gets called in the logic thread since that's where
   // config reading happens. We should grab whatever values we need
   // and then forward them to ourself in the main thread.
@@ -48,7 +48,7 @@ void App::LogicThreadApplyAppConfig() {
   // to do the same.
   assert(g_base->InLogicThread());
 
-  g_base->networking->ApplyAppConfig();
+  g_base->networking->DoApplyAppConfig();
 }
 
 void App::LogicThreadStepDisplayTime() { assert(g_base->InLogicThread()); }

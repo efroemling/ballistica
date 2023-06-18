@@ -240,6 +240,11 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
     app_mode_->OnActivate();
 
+    // Since app-modes will mostly become active after the initial global
+    // apply-app-config happens, we need to tell them to do so explicitly when
+    // they spin up.
+    app_mode_->DoApplyAppConfig();
+
     // Let some stuff know.
     logic->OnAppModeChanged();
   } catch (const Exception& exc) {

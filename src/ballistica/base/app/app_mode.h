@@ -39,7 +39,7 @@ class AppMode {
   virtual void OnAppShutdown();
 
   /// Apply the app config.
-  virtual void ApplyAppConfig();
+  virtual void DoApplyAppConfig();
 
   /// Update the logic thread for a new display-time. Can be called at any
   /// frequency. In gui builds, generally corresponds with frame drawing. In

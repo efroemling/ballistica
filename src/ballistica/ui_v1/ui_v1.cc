@@ -279,7 +279,7 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
   }
 }
 
-void UIV1FeatureSet::ApplyAppConfig() {
+void UIV1FeatureSet::DoApplyAppConfig() {
   TextWidget::set_always_use_internal_keyboard(g_base->app_config->Resolve(
       base::AppConfig::BoolID::kAlwaysUseInternalKeyboard));
 }

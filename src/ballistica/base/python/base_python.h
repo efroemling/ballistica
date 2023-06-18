@@ -18,7 +18,7 @@ class BasePython {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
-  void ApplyAppConfig();
+  void DoApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();
 

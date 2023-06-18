@@ -101,7 +101,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
-  void ApplyAppConfig() override;
+  void DoApplyAppConfig() override;
 
  private:
   UIV1FeatureSet();
