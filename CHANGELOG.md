@@ -1,4 +1,4 @@
-### 1.7.20 (build 21126, api 8, 2023-06-18)
+### 1.7.20 (build 21127, api 8, 2023-06-19)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -360,6 +360,14 @@
   DoApplyConfig callbacks called in C++, which was causing the server-mode
   `idle_exit_minutes` value to be ignored. Servers should now properly exit
   after being idle for this length of time.
+- (build 21126) Reworked the efrocache system used by public builds for
+  downloading built assets and binaries. It should now be faster and more
+  efficient (though I have not tested this). Most importantly, it now supports
+  spinoff, which means that spinoff projects created from the public github repo
+  should now build and run. So if you run `make spinoff-test-base` and then `cd
+  build/spinofftest/base`, you should be able to do `make cmake` from that
+  spinoff project and get a running app (though it will be just a blank window).
+  But the app at that point *is* 100% open source; woohoo!
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

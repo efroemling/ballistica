@@ -4,6 +4,7 @@
 
 #include "ballistica/base/app/app.h"
 #include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
@@ -13,6 +14,7 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
@@ -1354,6 +1356,102 @@ static PyMethodDef PyUserAgentStringDef = {
     "(internal)\n",
 };
 
+// ----------------------- empty_app_mode_activate -----------------------------
+
+static auto PyEmptyAppModeActivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->set_app_mode(AppModeEmpty::GetSingleton());
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyEmptyAppModeActivateDef = {
+    "empty_app_mode_activate",            // name
+    (PyCFunction)PyEmptyAppModeActivate,  // method
+    METH_NOARGS,                          // flags
+
+    "empty_app_mode_activate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------- empty_app_mode_deactivate ---------------------------
+
+static auto PyEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  // Currently doing nothing.
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyEmptyAppModeDeactivateDef = {
+    "empty_app_mode_deactivate",            // name
+    (PyCFunction)PyEmptyAppModeDeactivate,  // method
+    METH_NOARGS,                            // flags
+
+    "empty_app_mode_deactivate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------- empty_app_mode_handle_intent_default ----------------------
+
+static auto PyEmptyAppModeHandleIntentDefault(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  AppModeEmpty::GetSingleton()->Reset();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyEmptyAppModeHandleIntentDefaultDef = {
+    "empty_app_mode_handle_intent_default",          // name
+    (PyCFunction)PyEmptyAppModeHandleIntentDefault,  // method
+    METH_NOARGS,                                     // flags
+
+    "empty_app_mode_handle_intent_default() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------ empty_app_mode_handle_intent_exec ------------------------
+
+static auto PyEmptyAppModeHandleIntentExec(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* command;
+  static const char* kwlist[] = {"command", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &command)) {
+    return nullptr;
+  }
+  // Simply run the command.
+  if (g_core->core_config().exec_command.has_value()) {
+    bool success = PythonCommand(*g_core->core_config().exec_command,
+                                 BA_BUILD_COMMAND_FILENAME)
+                       .Exec(true, nullptr, nullptr);
+    if (!success) {
+      // TODO(ericf): what should we do in this case?
+      //  Obviously if we add return/success values for intents we should set
+      //  that here.
+    }
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyEmptyAppModeHandleIntentExecDef = {
+    "empty_app_mode_handle_intent_exec",          // name
+    (PyCFunction)PyEmptyAppModeHandleIntentExec,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
+
+    "empty_app_mode_handle_intent_exec(command: str) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1397,6 +1495,10 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyOnInitialAppModeSetDef,
       PyReachedEndOfBaBaseDef,
       PyUserAgentStringDef,
+      PyEmptyAppModeActivateDef,
+      PyEmptyAppModeDeactivateDef,
+      PyEmptyAppModeHandleIntentDefaultDef,
+      PyEmptyAppModeHandleIntentExecDef,
   };
 }
 

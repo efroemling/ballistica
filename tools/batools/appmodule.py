@@ -3,7 +3,7 @@
 """Generates parts of babase._app.py.
 
 This includes things like subsystem attributes for all feature-sets that
-define them.
+want them and default app-intent handling.
 """
 
 from __future__ import annotations
@@ -160,11 +160,19 @@ def generate_app_module(
         '# order?\n'
     )
     if 'scene_v1' in fsets:
+        contents += 'import bascenev1\n\n'
+    if 'base' in fsets:
+        contents += 'import babase\n\n'
+
+    if 'scene_v1' in fsets:
         contents += (
-            'import bascenev1\n'
-            '\n'
             'if bascenev1.SceneV1AppMode.supports_intent(intent):\n'
             '    return bascenev1.SceneV1AppMode\n\n'
+        )
+    if 'base' in fsets:
+        contents += (
+            'if babase.EmptyAppMode.supports_intent(intent):\n'
+            '    return babase.EmptyAppMode\n\n'
         )
     contents += (
         "raise RuntimeError(f'No handler found for"

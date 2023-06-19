@@ -221,7 +221,9 @@ void BaseFeatureSet::LogVersionInfo() {
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
   assert(InLogicThread());
 
-  if (mode == app_mode_) {
+  // Make an exception here for empty mode since that's in place before an
+  // app mode is officially set.
+  if (mode == app_mode_ && mode != AppModeEmpty::GetSingleton()) {
     Log(LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }

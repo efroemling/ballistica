@@ -14,6 +14,7 @@ class AppModeEmpty : public AppMode {
   AppModeEmpty();
 
   static auto GetSingleton() -> AppModeEmpty*;
+  void Reset();
 };
 
 }  // namespace ballistica::base

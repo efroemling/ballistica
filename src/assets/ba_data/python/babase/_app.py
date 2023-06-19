@@ -651,8 +651,13 @@ class App:
             # order?
             import bascenev1
 
+            import babase
+
             if bascenev1.SceneV1AppMode.supports_intent(intent):
                 return bascenev1.SceneV1AppMode
+
+            if babase.EmptyAppMode.supports_intent(intent):
+                return babase.EmptyAppMode
 
             raise RuntimeError(f'No handler found for intent {type(intent)}.')
 

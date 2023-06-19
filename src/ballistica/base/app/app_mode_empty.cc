@@ -17,4 +17,8 @@ auto AppModeEmpty::GetSingleton() -> AppModeEmpty* {
   return g_app_mode_empty;
 }
 
+void AppModeEmpty::Reset() {
+  // Nothing here currently.
+}
+
 }  // namespace ballistica::base

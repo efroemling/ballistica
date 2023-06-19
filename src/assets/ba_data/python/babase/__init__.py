@@ -100,6 +100,7 @@ from babase._apputils import (
     get_remote_app_name,
 )
 from babase._cloud import CloudSubsystem
+from babase._emptyappmode import EmptyAppMode
 from babase._error import (
     print_exception,
     print_error,
@@ -193,6 +194,7 @@ __all__ = [
     'displaytimer',
     'DisplayTimer',
     'do_once',
+    'EmptyAppMode',
     'env',
     'Existable',
     'existing',
