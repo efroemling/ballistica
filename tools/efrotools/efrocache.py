@@ -153,15 +153,6 @@ def get_target(path: str) -> None:
     # Ok we should have a valid file in our cache dir at this point.
     # Just expand it to the target path.
 
-    # UPDATE: Should not be a problem anymore; waiting to see...
-    # Strangely, decompressing lots of these simultaneously leads to
-    # occasional "File does not exist" errors when running on Windows
-    # Subsystem for Linux. There should be no overlap in files getting
-    # written, but perhaps something about how tar rebuilds the
-    # directory structure causes clashes. It seems that just explicitly
-    # creating necessary directories first prevents the problem.
-    # os.makedirs(os.path.dirname(path), exist_ok=True)
-
     print(f'Extracting: {path}')
 
     try:
@@ -188,13 +179,6 @@ def get_target(path: str) -> None:
         if os.path.exists(path):
             os.remove(path)
         raise
-
-    # The file will wind up with the timestamp it was compressed with,
-    # so let's update its timestamp or else it will still be considered
-    # dirty.
-    # UPDATE - shouldn't be a problem anymore since we're writing things
-    # ourselves.
-    # subprocess.run(f'touch {path}', shell=True, check=True)
 
     if not os.path.exists(path):
         raise RuntimeError(f'File {path} did not wind up as expected.')
@@ -504,45 +488,10 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     return (fname, hashpath)
 
 
-def _write_cache_file_old(staging_dir: str, fname: str) -> tuple[str, str]:
-    import hashlib
-
-    print(f'Caching {fname}')
-    if ' ' in fname:
-        raise RuntimeError('Spaces in paths not supported.')
-
-    # Just going with ol' md5 here; we're the only ones creating these
-    # so security isn't a concern.
-    md5 = hashlib.md5()
-    with open(fname, 'rb') as infile:
-        md5.update(infile.read())
-    md5.update(fname.encode())
-    finalhash = md5.hexdigest()
-    hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
-    path = os.path.join(staging_dir, hashpath)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    # Fancy pipe stuff which will give us deterministic tar.gz files
-    # with no embedded timestamps. Note: The 'COPYFILE_DISABLE' prevents
-    # mac tar from adding file attributes/resource-forks to the archive
-    # as as ._filename.
-    subprocess.run(
-        f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}',
-        shell=True,
-        check=True,
-    )
-    return fname, hashpath
-
-
 def _check_warm_start_entry(entry: tuple[str, str]) -> None:
     # import hashlib
 
     fname, filehash = entry
-    # md5 = hashlib.md5()
-    # with open(fname, 'rb') as infile:
-    #     md5.update(infile.read())
-    # md5.update(fname.encode())
-    # finalhash = md5.hexdigest()
 
     # If the file still matches the hash value we have for it,
     # go ahead and update its timestamp.
