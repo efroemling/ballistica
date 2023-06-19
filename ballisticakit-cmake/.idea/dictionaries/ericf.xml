@@ -396,6 +396,7 @@
       <w>cvar</w>
       <w>data</w>
       <w>databytes</w>
+      <w>datac</w>
       <w>dataclassio</w>
       <w>datadata</w>
       <w>dataout</w>
@@ -506,6 +507,7 @@
       <w>echofile</w>
       <w>echotime</w>
       <w>edef</w>
+      <w>efca</w>
       <w>effmult</w>
       <w>efro</w>
       <w>efrocaching</w>
@@ -519,6 +521,7 @@
       <w>embconnect</w>
       <w>emitfx</w>
       <w>emojis</w>
+      <w>emptyappmode</w>
       <w>enablexinput</w>
       <w>endblock</w>
       <w>endcall</w>
@@ -581,6 +584,7 @@
       <w>fcntl</w>
       <w>fcodefin</w>
       <w>fdata</w>
+      <w>fdataraw</w>
       <w>fdcount</w>
       <w>fdirs</w>
       <w>fdirx</w>
@@ -996,6 +1000,9 @@
       <w>meshdata</w>
       <w>messagebox</w>
       <w>messagetype</w>
+      <w>metabytes</w>
+      <w>metajson</w>
+      <w>metalen</w>
       <w>metallink</w>
       <w>metamakefile</w>
       <w>meth</w>
@@ -1098,6 +1105,7 @@
       <w>noassets</w>
       <w>nodename</w>
       <w>nodetype</w>
+      <w>noexec</w>
       <w>nofilename</w>
       <w>noglobs</w>
       <w>nointhash</w>
@@ -1851,6 +1859,7 @@
       <w>xmax</w>
       <w>xmin</w>
       <w>xmmintrin</w>
+      <w>xoffs</w>
       <w>xoffset</w>
       <w>xors</w>
       <w>xtweak</w>

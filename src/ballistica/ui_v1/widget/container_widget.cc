@@ -783,7 +783,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   BA_DEBUG_UI_READ_LOCK;
 
   CheckLayout();
-  millisecs_t net_time = pass->frame_def()->base_time();
+  millisecs_t net_time = pass->frame_def()->display_time_millisecs();
   float offset_h = 0.0f;
 
   // If we're transitioning, update our offsets in the first (opaque) pass.

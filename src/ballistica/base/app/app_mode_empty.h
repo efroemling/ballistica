@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/app/app_mode.h"
+#include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
 
@@ -15,6 +16,11 @@ class AppModeEmpty : public AppMode {
 
   static auto GetSingleton() -> AppModeEmpty*;
   void Reset();
+  void DrawWorld(base::FrameDef* frame_def) override;
+
+ private:
+  Object::Ref<TextGroup> hello_text_group_;
+  bool hello_mode_{};
 };
 
 }  // namespace ballistica::base

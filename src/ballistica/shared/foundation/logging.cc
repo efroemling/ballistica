@@ -58,7 +58,7 @@ void Logging::V1CloudLog(const std::string& msg) {
 
   // If the base feature-set is up, ship it off there for further handling.
   if (g_base_soft) {
-    g_base_soft->V1CloudLog(msg);
+    g_base_soft->DoV1CloudLog(msg);
   }
 }
 

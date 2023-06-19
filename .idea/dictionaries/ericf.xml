@@ -660,6 +660,7 @@
       <w>darwiinremote</w>
       <w>datab</w>
       <w>databytes</w>
+      <w>datac</w>
       <w>dataclassio</w>
       <w>dataclassutils</w>
       <w>datamodule</w>
@@ -836,6 +837,7 @@
       <w>editcontroller</w>
       <w>editgame</w>
       <w>editorconfig</w>
+      <w>efca</w>
       <w>effmult</w>
       <w>efgrd</w>
       <w>efile</w>
@@ -861,6 +863,7 @@
       <w>emitfx</w>
       <w>emoji</w>
       <w>emojis</w>
+      <w>emptyappmode</w>
       <w>enablexinput</w>
       <w>ename</w>
       <w>encerr</w>
@@ -971,6 +974,7 @@
       <w>fcontents</w>
       <w>fcount</w>
       <w>fdata</w>
+      <w>fdataraw</w>
       <w>fdcount</w>
       <w>fdesc</w>
       <w>fdict</w>
@@ -1721,6 +1725,9 @@
       <w>meryu</w>
       <w>mesh</w>
       <w>messagetype</w>
+      <w>metabytes</w>
+      <w>metajson</w>
+      <w>metalen</w>
       <w>metallink</w>
       <w>metamakefile</w>
       <w>metaprogramming</w>
@@ -1897,6 +1904,7 @@
       <w>nodename</w>
       <w>nodepos</w>
       <w>nodpi</w>
+      <w>noexec</w>
       <w>nofiles</w>
       <w>noinspect</w>
       <w>nondeterministic</w>

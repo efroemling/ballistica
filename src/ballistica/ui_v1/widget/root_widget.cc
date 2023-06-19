@@ -800,7 +800,7 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
   if (!transparent) {
-    millisecs_t current_time = pass->frame_def()->base_time();
+    millisecs_t current_time = pass->frame_def()->display_time_millisecs();
     millisecs_t time_diff =
         std::min(millisecs_t{100}, current_time - update_time_);
     StepPositions(static_cast<float>(time_diff));

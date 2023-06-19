@@ -1362,6 +1362,8 @@ static auto PyEmptyAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   g_base->set_app_mode(AppModeEmpty::GetSingleton());
+  AppModeEmpty::GetSingleton()->Reset();
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1401,7 +1403,6 @@ static PyMethodDef PyEmptyAppModeDeactivateDef = {
 static auto PyEmptyAppModeHandleIntentDefault(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  AppModeEmpty::GetSingleton()->Reset();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

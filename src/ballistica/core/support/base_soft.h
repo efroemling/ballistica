@@ -33,7 +33,7 @@ class BaseSoftInterface {
       -> PyObject* = 0;
   virtual auto FeatureSetFromData(PyObject* obj)
       -> FeatureSetNativeComponent* = 0;
-  virtual void V1CloudLog(const std::string& msg) = 0;
+  virtual void DoV1CloudLog(const std::string& msg) = 0;
   virtual void PushConsolePrintCall(const std::string& msg) = 0;
   virtual auto GetPyExceptionType(PyExcType exctype) -> PyObject* = 0;
   virtual auto PrintPythonStackTrace() -> bool = 0;

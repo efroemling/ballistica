@@ -1081,7 +1081,7 @@ void Graphics::UpdateGyro(millisecs_t real_time, millisecs_t elapsed) {
 }
 
 void Graphics::ApplyCamera(FrameDef* frame_def) {
-  camera_->Update(frame_def->base_time_elapsed());
+  camera_->Update(frame_def->display_time_elapsed_millisecs());
   camera_->UpdatePosition();
   camera_->ApplyToFrameDef(frame_def);
 }
@@ -1133,9 +1133,9 @@ void Graphics::BuildAndPushFrameDef() {
 
   FrameDef* frame_def = GetEmptyFrameDef();
   frame_def->set_app_time_millisecs(app_time_millisecs);
-  frame_def->set_base_time(
+  frame_def->set_display_time_millisecs(
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0));
-  frame_def->set_base_time_elapsed(elapsed);
+  frame_def->set_display_time_elapsed_millisecs(elapsed);
   frame_def->set_frame_number(frame_def_count_++);
 
   if (!internal_components_inited_) {
@@ -1158,9 +1158,7 @@ void Graphics::BuildAndPushFrameDef() {
   } else {
     // Ok, we're drawing a real frame.
 
-    bool session_fills_screen = g_base->app_mode()->DoesWorldFillScreen();
-
-    frame_def->set_needs_clear(!session_fills_screen);
+    frame_def->set_needs_clear(!g_base->app_mode()->DoesWorldFillScreen());
     DrawWorld(frame_def);
 
     DrawUI(frame_def);
@@ -1393,8 +1391,10 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       cam_pt =
           Vector3f(frame_def->cam_original().x, frame_def->cam_original().y,
                    frame_def->cam_original().z);
-      // in vr follow-mode the cam point gets tweaked.. (fixme should probably
-      // just do this on the camera end)
+
+      // In vr follow-mode the cam point gets tweaked.
+      //
+      // FIXME: should probably just do this on the camera end.
       if (frame_def->camera_mode() == CameraMode::kOrbit) {
         // fudge this one up a bit; looks better that way..
         cam_target_pt = Vector3f(frame_def->cam_target_original().x,
@@ -1425,9 +1425,9 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVRFade));
       c.PopTransform();
       c.Submit();
-#else   // BA_VR_BUILD
+#else  // BA_VR_BUILD
       throw Exception();
-#endif  // BA_VR_BUILD
+#endif
     } else {
       SimpleComponent c(overlay_pass);
       c.SetTransparent(a < 1.0f);
@@ -1493,45 +1493,43 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
 }
 
 void Graphics::DrawBlotches(FrameDef* frame_def) {
-  if (!this->blotch_verts_.empty()) {
-    if (!this->shadow_blotch_mesh_.Exists())
-      this->shadow_blotch_mesh_ = Object::New<SpriteMesh>();
-    this->shadow_blotch_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
-        this->blotch_indices_.size(), &this->blotch_indices_[0]));
-    this->shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
-        this->blotch_verts_.size(), &this->blotch_verts_[0]));
+  if (!blotch_verts_.empty()) {
+    if (!shadow_blotch_mesh_.Exists()) {
+      shadow_blotch_mesh_ = Object::New<SpriteMesh>();
+    }
+    shadow_blotch_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
+        blotch_indices_.size(), &blotch_indices_[0]));
+    shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
+        blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLight));
-    c.DrawMesh(this->shadow_blotch_mesh_.Get());
+    c.DrawMesh(shadow_blotch_mesh_.Get());
     c.Submit();
   }
-  if (!this->blotch_soft_verts_.empty()) {
-    if (!this->shadow_blotch_soft_mesh_.Exists())
-      this->shadow_blotch_soft_mesh_ = Object::New<SpriteMesh>();
-    this->shadow_blotch_soft_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
-        this->blotch_soft_indices_.size(), &this->blotch_soft_indices_[0]));
-    this->shadow_blotch_soft_mesh_->SetData(
-        Object::New<MeshBuffer<VertexSprite>>(this->blotch_soft_verts_.size(),
-                                              &this->blotch_soft_verts_[0]));
+  if (!blotch_soft_verts_.empty()) {
+    if (!shadow_blotch_soft_mesh_.Exists()) {
+      shadow_blotch_soft_mesh_ = Object::New<SpriteMesh>();
+    }
+    shadow_blotch_soft_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
+        blotch_soft_indices_.size(), &blotch_soft_indices_[0]));
+    shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
+        blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
-    c.DrawMesh(this->shadow_blotch_soft_mesh_.Get());
+    c.DrawMesh(shadow_blotch_soft_mesh_.Get());
     c.Submit();
   }
-  if (!this->blotch_soft_obj_verts_.empty()) {
-    if (!this->shadow_blotch_soft_obj_mesh_.Exists()) {
-      this->shadow_blotch_soft_obj_mesh_ = Object::New<SpriteMesh>();
+  if (!blotch_soft_obj_verts_.empty()) {
+    if (!shadow_blotch_soft_obj_mesh_.Exists()) {
+      shadow_blotch_soft_obj_mesh_ = Object::New<SpriteMesh>();
     }
-    this->shadow_blotch_soft_obj_mesh_->SetIndexData(
-        Object::New<MeshIndexBuffer16>(this->blotch_soft_obj_indices_.size(),
-                                       &this->blotch_soft_obj_indices_[0]));
-    this->shadow_blotch_soft_obj_mesh_->SetData(
-        Object::New<MeshBuffer<VertexSprite>>(
-            this->blotch_soft_obj_verts_.size(),
-            &this->blotch_soft_obj_verts_[0]));
+    shadow_blotch_soft_obj_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
+        blotch_soft_obj_indices_.size(), &blotch_soft_obj_indices_[0]));
+    shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
+        blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
-    c.DrawMesh(this->shadow_blotch_soft_obj_mesh_.Get());
+    c.DrawMesh(shadow_blotch_soft_obj_mesh_.Get());
     c.Submit();
   }
 }

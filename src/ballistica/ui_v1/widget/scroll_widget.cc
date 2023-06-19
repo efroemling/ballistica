@@ -591,7 +591,7 @@ void ScrollWidget::UpdateLayout() {
 
 void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   have_drawn_ = true;
-  millisecs_t current_time = pass->frame_def()->base_time();
+  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
   float prev_child_offset_v_smoothed = child_offset_v_smoothed_;
 
   // ok lets update our inertial scrolling during the opaque pass

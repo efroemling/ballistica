@@ -21,7 +21,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     return;
   }
 
-  millisecs_t current_time = pass->frame_def()->base_time();
+  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
   Vector3f tilt = tilt_scale_ * 0.01f * g_base->graphics->tilt();
   if (draw_control_parent()) tilt += 0.02f * g_base->graphics->tilt();

@@ -1325,8 +1325,6 @@ auto SceneV1AppMode::DoesWorldFillScreen() -> bool {
 }
 
 void SceneV1AppMode::DrawWorld(base::FrameDef* frame_def) {
-  AppMode::DrawWorld(frame_def);
-
   if (auto* session = GetForegroundSession()) {
     session->Draw(frame_def);
     frame_def->set_benchmark_type(session->benchmark_type());

@@ -68,34 +68,36 @@ def should_submit_debug_info() -> bool:
 
 
 def handle_v1_cloud_log() -> None:
-    """Called on debug log prints.
+    """Called when new messages have been added to v1-cloud-log.
 
-    When this happens, we can upload our log to the server
-    after a short bit if desired.
+    When this happens, we can upload our log to the server after a short
+    bit if desired.
     """
 
     app = _babase.app
+    classic = app.classic
+    plus = app.plus
 
-    if app.classic is None or app.plus is None:
+    if classic is None or plus is None:
         if _babase.do_once():
             logging.warning(
-                'handle_v1_cloud_log should not be called'
+                'handle_v1_cloud_log should not be getting called'
                 ' without classic and plus present.'
             )
         return
 
-    app.classic.log_have_new = True
-    if not app.classic.log_upload_timer_started:
+    classic.log_have_new = True
+    if not classic.log_upload_timer_started:
 
         def _put_log() -> None:
-            assert app.plus is not None
-            assert app.classic is not None
+            assert plus is not None
+            assert classic is not None
             try:
-                sessionname = str(app.classic.get_foreground_host_session())
+                sessionname = str(classic.get_foreground_host_session())
             except Exception:
                 sessionname = 'unavailable'
             try:
-                activityname = str(app.classic.get_foreground_host_activity())
+                activityname = str(classic.get_foreground_host_activity())
             except Exception:
                 activityname = 'unavailable'
 
@@ -103,28 +105,28 @@ def handle_v1_cloud_log() -> None:
                 'log': _babase.get_v1_cloud_log(),
                 'version': app.version,
                 'build': app.build_number,
-                'userAgentString': app.classic.legacy_user_agent_string,
+                'userAgentString': classic.legacy_user_agent_string,
                 'session': sessionname,
                 'activity': activityname,
                 'fatal': 0,
                 'userRanCommands': _babase.has_user_run_commands(),
                 'time': _babase.apptime(),
                 'userModded': _babase.workspaces_in_use(),
-                'newsShow': app.plus.get_news_show(),
+                'newsShow': plus.get_news_show(),
             }
 
             def response(data: Any) -> None:
-                assert app.classic is not None
+                assert classic is not None
                 # A non-None response means success; lets
                 # take note that we don't need to report further
                 # log info this run
                 if data is not None:
-                    app.classic.log_have_new = False
+                    classic.log_have_new = False
                     _babase.mark_log_sent()
 
-            app.classic.master_server_v1_post('bsLog', info, response)
+            classic.master_server_v1_post('bsLog', info, response)
 
-        app.classic.log_upload_timer_started = True
+        classic.log_upload_timer_started = True
 
         # Delay our log upload slightly in case other
         # pertinent info gets printed between now and then.
@@ -133,9 +135,9 @@ def handle_v1_cloud_log() -> None:
 
         # After a while, allow another log-put.
         def _reset() -> None:
-            assert app.classic is not None
-            app.classic.log_upload_timer_started = False
-            if app.classic.log_have_new:
+            assert classic is not None
+            classic.log_upload_timer_started = False
+            if classic.log_have_new:
                 handle_v1_cloud_log()
 
         if not _babase.is_log_full():

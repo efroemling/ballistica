@@ -249,7 +249,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
                       + connected_client_extra_offset_smoothed_,
                   height - menu_button_size_ * 0.35f, kMenuButtonDrawDepth);
       c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
-      if (flash && frame_def->base_time() % 250 < 125) {
+      if (flash && frame_def->display_time_millisecs() % 250 < 125) {
         c.SetColor(1.0f, 1.4f, 1.0f);
       }
       c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
@@ -336,7 +336,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
                       -0.003f * party_size_text_group_->GetElementVScale(e),
                       0.0f, 1.0f);
           c.SetFlatness(1.0f);
-          if (flash && frame_def->base_time() % 250 < 125) {
+          if (flash && frame_def->display_time_millisecs() % 250 < 125) {
             c.SetColor(1, 1, 0);
           } else {
             if (party_size > 0) {
@@ -379,7 +379,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
                         -0.003f * start_a_game_text_group_->GetElementVScale(e),
                         0.0f, 1.0f);
             c.SetFlatness(1.0f);
-            if (flash && frame_def->base_time() % 250 < 125) {
+            if (flash && frame_def->display_time_millisecs() % 250 < 125) {
               c.SetColor(1, 1, 0);
             } else {
               c.SetColor(0, 1, 0);

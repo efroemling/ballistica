@@ -50,8 +50,8 @@ auto FrameDef::GetOverlayFlatPass() -> RenderPass* {
 void FrameDef::Reset() {
   assert(g_base->InLogicThread());
   app_time_millisecs_ = 0;
-  base_time_ = 0;
-  base_time_elapsed_ = 0;
+  display_time_millisecs_ = 0;
+  display_time_elapsed_millisecs_ = 0;
   frame_number_ = 0;
 
 #if BA_DEBUG_BUILD

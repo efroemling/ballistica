@@ -89,7 +89,7 @@ void TextWidget::SetEnabled(bool val) {
 }
 
 void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  millisecs_t current_time = pass->frame_def()->base_time();
+  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
   // All our stuff currently happens in the transparent pass.
   if (!draw_transparent) {

@@ -46,10 +46,14 @@ class FrameDef {
   // Returns the bsGame master-net-time when this was made
   // (tries to match real time but is incremented more smoothly
   // so is better for drawing purposes)
-  auto base_time() const -> millisecs_t { return base_time_; }
+  auto display_time_millisecs() const -> millisecs_t {
+    return display_time_millisecs_;
+  }
 
   // How much base time does this frame-def represent.
-  auto base_time_elapsed() const -> millisecs_t { return base_time_elapsed_; }
+  auto display_time_elapsed_millisecs() const -> millisecs_t {
+    return display_time_elapsed_millisecs_;
+  }
 
   auto quality() const -> GraphicsQuality { return quality_; }
   auto orbiting() const -> bool { return orbiting_; }
@@ -105,9 +109,13 @@ class FrameDef {
   void Reset();
   void Finalize();
 
-  void set_base_time_elapsed(millisecs_t val) { base_time_elapsed_ = val; }
+  void set_display_time_elapsed_millisecs(millisecs_t val) {
+    display_time_elapsed_millisecs_ = val;
+  }
   void set_app_time_millisecs(millisecs_t val) { app_time_millisecs_ = val; }
-  void set_base_time(millisecs_t val) { base_time_ = val; }
+  void set_display_time_millisecs(millisecs_t val) {
+    display_time_millisecs_ = val;
+  }
   void set_frame_number(int64_t val) { frame_number_ = val; }
 
   auto overlay_flat_pass() const -> RenderPass* {
@@ -198,8 +206,8 @@ class FrameDef {
   GraphicsQuality quality_{GraphicsQuality::kLow};
   bool orbiting_{};
   millisecs_t app_time_millisecs_{};
-  millisecs_t base_time_{};
-  millisecs_t base_time_elapsed_{};
+  millisecs_t display_time_millisecs_{};
+  millisecs_t display_time_elapsed_millisecs_{};
   int64_t frame_number_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
