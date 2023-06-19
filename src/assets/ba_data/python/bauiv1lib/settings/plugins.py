@@ -180,7 +180,8 @@ class PluginWindow(bui.Window):
             )
             bui.getsound('error').play()
         pluglist = bui.app.plugins.potential_plugins
-        self.plugstates: dict[str, dict] = bui.app.config.copy().setdefault('Plugins', {})
+        configcopy = bui.app.config.copy()
+        self.plugstates: dict[str, dict] = configcopy.setdefault('Plugins', {})
         assert isinstance(self.plugstates, dict)
 
         plug_line_height = 50
@@ -267,7 +268,7 @@ class PluginWindow(bui.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         pluglist = bui.app.plugins.potential_plugins
-        
+
         assert isinstance(self.plugstates, dict)
 
         plug_line_height = 50
