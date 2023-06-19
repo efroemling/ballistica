@@ -186,6 +186,7 @@ ctx.filter_file_names = {
     'cloudtool',
     'bacloud',
     'config_template.yaml',
+    '.efrocachemap',
 }
 
 # ELSE files matching these exact base names will NOT be filtered.
@@ -206,7 +207,6 @@ ctx.no_filter_file_names = {
     '.pylintrc',
     'CPPLINT.cfg',
     '.mypy.ini',
-    '.efrocachemap',
     '._ba_sources_hash',
     '._baplus_sources_hash',
     '._bascenev1_sources_hash',
