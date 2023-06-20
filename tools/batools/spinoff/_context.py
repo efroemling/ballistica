@@ -801,27 +801,14 @@ class SpinoffContext:
             and src_path.startswith('ballisticakit-windows/')
             and src_path.endswith('.vcxproj')
         ):
-            sstr = (
-                '  <ItemGroup>\n'
-                '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
-                '\\$(Configuration)_$(Platform)\\'
-                '$(MSBuildProjectName)Plus.lib" />\n'
-                '  </ItemGroup>\n'
-            )
-
-            if sstr not in text:
-                print(
-                    'WTF2\n',
-                    text,
-                    '\n',
-                    [x in text for x in sstr.splitlines()],
-                    sstr.replace('\n', '\r\n') in text,
-                )
-
             # Strip precompiled plus library out of visual studio projects.
             text = replace_exact(
                 text,
-                sstr,
+                '  <ItemGroup>\r\n'
+                '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
+                '\\$(Configuration)_$(Platform)\\'
+                '$(MSBuildProjectName)Plus.lib" />\r\n'
+                '  </ItemGroup>\r\n',
                 '',
                 label=src_path,
             )
