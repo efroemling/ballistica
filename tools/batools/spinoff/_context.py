@@ -810,7 +810,13 @@ class SpinoffContext:
             )
 
             if sstr not in text:
-                print('WTF\n', text)
+                print(
+                    'WTF2\n',
+                    text,
+                    '\n',
+                    [x in text for x in sstr.splitlines()],
+                    sstr.replace('\n', '\r\n') in text,
+                )
 
             # Strip precompiled plus library out of visual studio projects.
             text = replace_exact(
