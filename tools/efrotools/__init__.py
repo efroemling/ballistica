@@ -194,17 +194,20 @@ def writefile(path: str | Path, txt: str) -> None:
         outfile.write(txt)
 
 
-def replace_exact(opstr: str, old: str, new: str, count: int = 1) -> str:
+def replace_exact(
+    opstr: str, old: str, new: str, count: int = 1, label: str | None = None
+) -> str:
     """Replace text ensuring that exactly x occurrences are replaced.
 
     Useful when filtering data in some predefined way to ensure the original
     has not changed.
     """
     found = opstr.count(old)
+    label_str = f'in {label}' if label is not None else ''
     if found != count:
         raise RuntimeError(
-            f'Expected {count} string occurrence(s);'
-            f' found {found}. String = {old}'
+            f'Expected {count} string occurrence(s){label_str};'
+            f' found {found}. String: {repr(old)}'
         )
     return opstr.replace(old, new)
 

@@ -788,11 +788,12 @@ class SpinoffContext:
             and src_path == 'ballisticakit-cmake/CMakeLists.txt'
         ):
             # Strip precompiled plus library out of the cmake file.
-            replace_exact(
+            text = replace_exact(
                 text,
                 '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a'
                 ' ode ',
                 'ode ',
+                label=src_path,
             )
         if (
             self._public
@@ -801,7 +802,7 @@ class SpinoffContext:
             and src_path.endswith('.vcxproj')
         ):
             # Strip precompiled plus library out of visual studio projects.
-            replace_exact(
+            text = replace_exact(
                 text,
                 '  <ItemGroup>\n'
                 '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
@@ -809,6 +810,7 @@ class SpinoffContext:
                 '$(MSBuildProjectName)Plus.lib" />\n'
                 '  </ItemGroup>\n',
                 '',
+                label=src_path,
             )
 
         return self.default_filter_text(text)
