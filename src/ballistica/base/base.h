@@ -689,7 +689,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void OnReachedEndOfBaBaseImport();
 
   /// Called in the logic thread once our screen is up and assets are loading.
-  void OnScreenAndAssetsReady();
+  void OnAssetsAvailable();
 
   // Const subsystems.
   App* const app;

@@ -95,6 +95,7 @@ endif
 # FontData.
 ifeq ($(MAKE_FONTS),1)
 ASSET_TARGETS_COMMON_GUI += $(FONT_TARGETS)
+ASSET_TARGETS_COMMON_SERVER += $(FONT_TARGETS)
 endif
 
 # Data.

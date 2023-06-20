@@ -147,15 +147,19 @@ auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
   return base_import_completed_ && base_native_import_completed_;
 }
 
-void BaseFeatureSet::OnScreenAndAssetsReady() {
+void BaseFeatureSet::OnAssetsAvailable() {
   assert(InLogicThread());
   assert(console_ == nullptr);
-  console_ = new Console();
 
-  // Print any messages that have built up.
-  if (!console_startup_messages_.empty()) {
-    console_->Print(console_startup_messages_);
-    console_startup_messages_.clear();
+  // Spin up the in-app console.
+  if (!g_core->HeadlessMode()) {
+    console_ = new Console();
+
+    // Print any messages that have built up.
+    if (!console_startup_messages_.empty()) {
+      console_->Print(console_startup_messages_);
+      console_startup_messages_.clear();
+    }
   }
 }
 

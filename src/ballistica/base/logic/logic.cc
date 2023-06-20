@@ -206,7 +206,7 @@ void Logic::CompleteAppBootstrapping() {
   g_base->assets->StartLoading();
 
   // Let base know it can create the console or other asset-dependent things.
-  g_base->OnScreenAndAssetsReady();
+  g_base->OnAssetsAvailable();
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(

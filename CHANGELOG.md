@@ -1,4 +1,4 @@
-### 1.7.20 (build 21129, api 8, 2023-06-19)
+### 1.7.20 (build 21130, api 8, 2023-06-19)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -368,6 +368,9 @@
   build/spinofftest/base`, you should be able to do `make cmake` from that
   spinoff project and get a running app (though it will be just a blank window).
   But the app at that point *is* 100% open source; woohoo!
+- (build 20129) Fixed an issue where server builds would not build font assets
+  (though it would install them if any recent gui builds had built them) which
+  could lead to obscure crashing.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 
