@@ -722,6 +722,7 @@ class SpinoffContext:
 
     def default_filter_file(self, src_path: str, text: str) -> str:
         """Run default filtering on a file."""
+        # pylint: disable=too-many-branches
 
         # Strip out any sections frames by our strip-begin/end tags.
         if any(t[0] in text for t in STRIP_TAG_PAIRS):
@@ -778,40 +779,71 @@ class SpinoffContext:
 
             return sort_jetbrains_dict(self.default_filter_text(text))
 
-        # In our public repo, if the plus featureset is not included, we don't
-        # want to link against the precompiled plus library.
-        # (pylint false positive)
+        # In our public repo, if the plus featureset is not included, we
+        # don't want to fetch or link against the precompiled plus
+        # library.
         assert 'plus' in self._src_all_feature_sets
-        if (
-            self._public
-            and 'plus' in self._src_omit_feature_sets
-            and src_path == 'ballisticakit-cmake/CMakeLists.txt'
-        ):
-            # Strip precompiled plus library out of the cmake file.
-            text = replace_exact(
-                text,
-                '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a'
-                ' ode ',
-                'ode ',
-                label=src_path,
-            )
-        if (
-            self._public
-            and 'plus' in self._src_omit_feature_sets
-            and src_path.startswith('ballisticakit-windows/')
-            and src_path.endswith('.vcxproj')
-        ):
-            # Strip precompiled plus library out of visual studio projects.
-            text = replace_exact(
-                text,
-                '  <ItemGroup>\r\n'
-                '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
-                '\\$(Configuration)_$(Platform)\\'
-                '$(MSBuildProjectName)Plus.lib" />\r\n'
-                '  </ItemGroup>\r\n',
-                '',
-                label=src_path,
-            )
+        if self._public and 'plus' in self._src_omit_feature_sets:
+            if src_path == 'ballisticakit-cmake/CMakeLists.txt':
+                # Strip precompiled plus library out of the cmake file.
+                text = replace_exact(
+                    text,
+                    '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a'
+                    ' ode ',
+                    'ode ',
+                    label=src_path,
+                )
+            if src_path.startswith(
+                'ballisticakit-windows/'
+            ) and src_path.endswith('.vcxproj'):
+                # Strip precompiled plus library out of visual studio projects.
+                text = replace_exact(
+                    text,
+                    '  <ItemGroup>\r\n'
+                    '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
+                    '\\$(Configuration)_$(Platform)\\'
+                    '$(MSBuildProjectName)Plus.lib" />\r\n'
+                    '  </ItemGroup>\r\n',
+                    '',
+                    label=src_path,
+                )
+            if src_path == 'Makefile':
+                # Remove downloads of prebuilt plus lib for win builds.
+                text = replace_exact(
+                    text,
+                    '   build/prefab/lib/windows/Debug_Win32/'
+                    'BallisticaKitGenericPlus.lib \\\n'
+                    '   build/prefab/lib/windows/Debug_Win32/'
+                    'BallisticaKitGenericPlus.pdb\n',
+                    '',
+                    count=2,
+                    label=src_path,
+                )
+                text = replace_exact(
+                    text,
+                    '   build/prefab/lib/windows/Release_Win32/'
+                    'BallisticaKitGenericPlus.lib \\\n'
+                    '   build/prefab/lib/windows/Release_Win32/'
+                    'BallisticaKitGenericPlus.pdb\n',
+                    '',
+                    count=2,
+                    label=src_path,
+                )
+                # Remove prebuilt lib download for cmake targets.
+                text = replace_exact(
+                    text,
+                    '\t@tools/pcommand update_cmake_prefab_lib standard'
+                    ' $(CM_BT_LC) build/cmake/$(CM_BT_LC)\n',
+                    '',
+                    label=src_path,
+                )
+                text = replace_exact(
+                    text,
+                    '\t@tools/pcommand update_cmake_prefab_lib server'
+                    ' $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist\n',
+                    '',
+                    label=src_path,
+                )
 
         return self.default_filter_text(text)
 
