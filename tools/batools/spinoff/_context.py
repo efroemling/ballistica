@@ -15,9 +15,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
 from efrotools.code import format_python_str, format_cpp_str
+from efrotools import getconfig, replace_exact
 from efro.error import CleanError
 from efro.terminal import Clr
 from efro.util import timedelta_str
+
 from batools.featureset import FeatureSet
 from batools.spinoff._state import (
     EntityType,
@@ -95,7 +97,7 @@ class SpinoffContext:
         if not os.path.isdir(dst_root):
             raise CleanError(f"Spinoff dst dir not found: '{dst_root}'.")
 
-        # FeatureSet names we should include
+        # The requested set of FeatureSet names (or None to include all).
         self.src_feature_sets: set[str] | None = None
 
         # Just to be safe, make sure we're working with abs paths.
@@ -110,6 +112,9 @@ class SpinoffContext:
         self._auto_backport_fail_count = 0
 
         self._src_name = 'BallisticaKit'
+
+        self._public: bool = getconfig(Path(self._src_root))['public']
+        assert isinstance(self._public, bool)
 
         self._src_all_feature_sets = {
             f.name: f for f in FeatureSet.get_all_for_project(self._src_root)
@@ -285,6 +290,7 @@ class SpinoffContext:
         self._generate_env_hash()
 
     def _calc_src_omit_feature_sets(self) -> set[str]:
+        # If they want everything, omit nothing.
         if self.src_feature_sets is None:
             return set()
 
@@ -771,6 +777,39 @@ class SpinoffContext:
             from efrotools.code import sort_jetbrains_dict
 
             return sort_jetbrains_dict(self.default_filter_text(text))
+
+        # In our public repo, if the plus featureset is not included, we don't
+        # want to link against the precompiled plus library.
+        # (pylint false positive)
+        assert 'plus' in self._src_all_feature_sets
+        if (
+            self._public
+            and 'plus' in self._src_omit_feature_sets
+            and src_path == 'ballisticakit-cmake/CMakeLists.txt'
+        ):
+            # Strip precompiled plus library out of the cmake file.
+            replace_exact(
+                text,
+                '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a'
+                ' ode ',
+                'ode ',
+            )
+        if (
+            self._public
+            and 'plus' in self._src_omit_feature_sets
+            and src_path.startswith('ballisticakit-windows/')
+            and src_path.endswith('.vcxproj')
+        ):
+            # Strip precompiled plus library out of visual studio projects.
+            replace_exact(
+                text,
+                '  <ItemGroup>\n'
+                '    <Library Include="..\\..\\build\\prefab\\lib\\windows'
+                '\\$(Configuration)_$(Platform)\\'
+                '$(MSBuildProjectName)Plus.lib" />\n'
+                '  </ItemGroup>\n',
+                '',
+            )
 
         return self.default_filter_text(text)
 
