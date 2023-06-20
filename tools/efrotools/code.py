@@ -7,9 +7,14 @@ from __future__ import annotations
 
 import os
 import sys
+import time
+import tempfile
+import datetime
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from efro.error import CleanError
 
 from efrotools.filecache import FileCache
 
@@ -26,33 +31,65 @@ def format_cpp_str(
     Note that some cpp formatting keys off the filename, so a fake one can
     be optionally provided.
     """
-    import tempfile
+
+    # Note: previously was explicitly passing the config path from
+    # toolconfigsrc so we didn't require running from the project root
+    # dir, but this doesn't work on older clang-format versions. So now
+    # just parsing and passing the values itself which should do the
+    # same thing. Once most people have newer clang-format we can go
+    # back to just passing the path.
+    use_built_config = True
+
+    cfconfig = os.path.join(projroot, '.clang-format')
+
+    if not os.path.isfile(cfconfig):
+        raise CleanError(
+            f".clang-format file not found in '{projroot}';"
+            " do 'make prereqs' to generate it."
+        )
 
     with tempfile.TemporaryDirectory() as tempdir:
         filename = os.path.join(tempdir, filename)
         with open(filename, 'w', encoding='utf-8') as outfile:
             outfile.write(text)
-        cfg = os.path.join(projroot, 'config/toolconfigsrc/clang-format')
-        subprocess.run(
-            ['clang-format', f'--style=file:{cfg}', '-i', filename], check=True
-        )
+        if use_built_config:
+            import yaml
+            import json
+
+            # clang-format uses yaml but seems passing our raw yaml
+            # config contents doesn't work; converting to json seems to
+            # work though.
+            with open(cfconfig, encoding='utf-8') as infile:
+                cfconfigdata = json.dumps(yaml.safe_load(infile.read()))
+            style_arg = f'--style={cfconfigdata}'
+        else:
+            style_arg = f'--style=file:{cfconfig}'
+        subprocess.run(['clang-format', style_arg, '-i', filename], check=True)
         with open(filename, encoding='utf-8') as infile:
             return infile.read()
 
 
 def format_project_cpp_files(projroot: Path, full: bool) -> None:
     """Run clang-format on all of our source code (multithreaded)."""
-    import time
     import concurrent.futures
     from multiprocessing import cpu_count
+
     from efrotools import get_files_hash
 
-    os.chdir(projroot)
+    if os.path.abspath(projroot) != os.getcwd():
+        raise RuntimeError('We expect to be running from project root.')
+
     cachepath = Path(projroot, '.cache/format_project_cpp_files')
     if full and cachepath.exists():
         cachepath.unlink()
     cache = FileCache(cachepath)
-    cfconfig = Path(projroot, '.clang-format')
+    cfconfig = '.clang-format'
+
+    if not os.path.isfile(cfconfig):
+        raise CleanError(
+            f".clang-format file not found in '{os.getcwd()}';"
+            " do 'make prereqs' to generate it."
+        )
 
     # Exclude generated files or else we could mess up dependencies
     # by mucking with their modtimes.
@@ -99,7 +136,6 @@ def check_cpplint(projroot: Path, full: bool) -> None:
 
     from efrotools import getconfig, PYVER
     from efro.terminal import Clr
-    from efro.error import CleanError
 
     os.chdir(projroot)
     filenames = get_code_filenames(projroot, include_generated=True)
@@ -232,7 +268,6 @@ def black_base_args() -> list[str]:
 def format_project_python_files(projroot: Path, full: bool) -> None:
     """Runs formatting on all of our Python code."""
     from efrotools import get_string_hash
-    from efro.error import CleanError
 
     os.chdir(projroot)
     cachepath = Path(projroot, '.cache/format_project_python_files')
@@ -471,9 +506,7 @@ def _run_pylint(
     dirtyfiles: list[str],
     allfiles: list[str] | None,
 ) -> dict[str, Any]:
-    import time
     from pylint import lint
-    from efro.error import CleanError
     from efro.terminal import Clr
 
     start_time = time.time()
@@ -521,9 +554,10 @@ def _apply_pylint_run_to_cache(
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
+
     from astroid import modutils
+
     from efrotools import getconfig
-    from efro.error import CleanError
 
     # First off, build a map of dirtyfiles to module names
     # (and the corresponding reverse map).
@@ -752,9 +786,7 @@ def mypy_files(
 
 def mypy(projroot: Path, full: bool) -> None:
     """Type check all of our scripts using mypy."""
-    import time
     from efro.terminal import Clr
-    from efro.error import CleanError
 
     filenames = get_script_filenames(projroot)
     desc = '(full)' if full else '(incremental)'
@@ -772,9 +804,7 @@ def mypy(projroot: Path, full: bool) -> None:
 
 def dmypy(projroot: Path) -> None:
     """Type check all of our scripts using mypy in daemon mode."""
-    import time
     from efro.terminal import Clr
-    from efro.error import CleanError
 
     filenames = get_script_filenames(projroot)
 
@@ -855,10 +885,7 @@ def _run_idea_inspections(
     """
     # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
-    import tempfile
-    import time
-    import datetime
-    from efro.error import CleanError
+
     from efro.terminal import Clr
 
     start_time = time.time()
@@ -933,6 +960,7 @@ def _run_idea_inspections_cached(
     # pylint: disable=too-many-locals
     import hashlib
     import json
+
     from efro.terminal import Clr
 
     md5 = hashlib.md5()
@@ -984,8 +1012,6 @@ def _run_idea_inspections_cached(
 
 def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
     """Run pycharm inspections on all our scripts."""
-
-    import time
 
     # FIXME: Generalize this to work with at least linux, possibly windows.
     cachepath = Path('.cache/check_pycharm')
@@ -1047,7 +1073,6 @@ def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
 
 def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     """Run clion inspections on all our code."""
-    import time
 
     cachepath = Path('.cache/check_clioncode')
     filenames = get_code_filenames(projroot, include_generated=True)
