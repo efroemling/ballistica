@@ -203,7 +203,7 @@ def replace_exact(
     has not changed.
     """
     found = opstr.count(old)
-    label_str = f'in {label}' if label is not None else ''
+    label_str = f' in {label}' if label is not None else ''
     if found != count:
         raise RuntimeError(
             f'Expected {count} string occurrence(s){label_str};'
