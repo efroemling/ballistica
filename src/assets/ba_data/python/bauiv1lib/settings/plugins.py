@@ -272,16 +272,16 @@ class PluginWindow(bui.Window):
 
         plug_line_height = 50
         sub_width = self._scroll_width
-        num_active = 0
+        num_enabled = 0
         num_disabled = 0
 
         for i, availplug in enumerate(pluglist):
             # counting number of enabled and disabled plugins
-            plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
-            active = plugin is not None
-            if active:
-                num_active += 1
-            elif availplug.available and not active:
+            plugstate = plugstates.setdefault(availplug.class_path, {})
+            enabled = plugstate.get('enabled', False)
+            if enabled:
+                num_enabled += 1
+            elif availplug.available and not enabled:
                 num_disabled += 1
 
         if self._category is Category.ALL:
@@ -290,7 +290,7 @@ class PluginWindow(bui.Window):
                 edit=self._subcontainer, size=(self._scroll_width, sub_height)
             )
         elif self._category is Category.ENABLED:
-            sub_height = num_active * plug_line_height
+            sub_height = num_enabled * plug_line_height
             bui.containerwidget(
                 edit=self._subcontainer, size=(self._scroll_width, sub_height)
             )
@@ -316,9 +316,9 @@ class PluginWindow(bui.Window):
             if self._category is Category.ALL:
                 show = True
             elif self._category is Category.ENABLED:
-                show = active
+                show = checked
             elif self._category is Category.DISABLED:
-                show = availplug.available and not active
+                show = availplug.available and not checked
             else:
                 assert_never(self._category)
                 show = False
@@ -342,7 +342,9 @@ class PluginWindow(bui.Window):
                     (0.8, 0.3, 0.3)
                     if not availplug.available
                     else (0, 1, 0)
-                    if active
+                    if active and checked
+                    else (0.8, 0.3, 0.3)
+                    if checked
                     else (0.6, 0.6, 0.6)
                 ),
             )
