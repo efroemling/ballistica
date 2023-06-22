@@ -28,6 +28,7 @@ void Logic::OnMainThreadStartApp() {
   event_loop_ = new EventLoop(EventLoopID::kLogic);
   g_core->pausable_event_loops.push_back(event_loop_);
 
+  g_core->LifecycleLog("will push logic on-app-start");
   // Sit and wait for our logic thread to run its startup stuff.
   event_loop_->PushCallSynchronous([this] { OnAppStart(); });
 }

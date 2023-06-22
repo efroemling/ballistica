@@ -176,6 +176,8 @@ void BaseFeatureSet::StartApp() {
 
   LogVersionInfo();
 
+  g_core->LifecycleLog("will read config");
+
   // Read the app config.
   g_base->python->ReadConfig();
 
@@ -186,7 +188,10 @@ void BaseFeatureSet::StartApp() {
   // devices with the logic thread before the logic thread applies the
   // current config to them).
 
+  g_core->LifecycleLog("will call python on-main-thread");
+
   python->OnMainThreadStartApp();
+  g_core->LifecycleLog("will call logic on-main-thread");
   logic->OnMainThreadStartApp();
   graphics_server->OnMainThreadStartApp();
   if (bg_dynamics_server) {
