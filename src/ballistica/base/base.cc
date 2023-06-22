@@ -193,6 +193,7 @@ void BaseFeatureSet::StartApp() {
   python->OnMainThreadStartApp();
   g_core->LifecycleLog("will call logic on-main-thread");
   logic->OnMainThreadStartApp();
+  g_core->LifecycleLog("will call graphics-server on-main-thread");
   graphics_server->OnMainThreadStartApp();
   if (bg_dynamics_server) {
     bg_dynamics_server->OnMainThreadStartApp();

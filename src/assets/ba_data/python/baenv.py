@@ -28,8 +28,8 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21140
-TARGET_BALLISTICA_VERSION = '1.7.20'
+TARGET_BALLISTICA_BUILD = 21142
+TARGET_BALLISTICA_VERSION = '1.7.21'
 
 _g_env_config: EnvConfig | None = None
 g_paths_set_failed = False  # pylint: disable=invalid-name

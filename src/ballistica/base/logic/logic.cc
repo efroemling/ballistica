@@ -25,6 +25,8 @@ Logic::Logic() : display_timers_(new TimerList()) {
 }
 
 void Logic::OnMainThreadStartApp() {
+  g_core->LifecycleLog("will create logic loop");
+
   event_loop_ = new EventLoop(EventLoopID::kLogic);
   g_core->pausable_event_loops.push_back(event_loop_);
 

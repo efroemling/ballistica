@@ -76,8 +76,15 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       // Block until the thread is bootstrapped.
       // (maybe not necessary, but let's be cautious in case we'd
       // try to use things like thread_id before they're known).
+      if (identifier_ == EventLoopID::kLogic) {
+        g_core->LifecycleLog("logic thread bootstrap wait begin");
+      }
       std::unique_lock lock(client_listener_mutex_);
       client_listener_cv_.wait(lock, [this] { return bootstrapped_; });
+
+      if (identifier_ == EventLoopID::kLogic) {
+        g_core->LifecycleLog("logic thread bootstrap wait end");
+      }
 
       break;
     }
