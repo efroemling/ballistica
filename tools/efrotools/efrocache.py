@@ -485,7 +485,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     with open(path, 'wb') as outfile:
         outfile.write(prefix + zlib.compress(fdataraw))
 
-    return (fname, hashpath)
+    return fname, hashpath
 
 
 def _check_warm_start_entry(entry: tuple[str, str]) -> None:

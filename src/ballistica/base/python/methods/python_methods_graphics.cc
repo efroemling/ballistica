@@ -51,14 +51,13 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     bool suppress = (envval && strcmp(envval, "1") == 0);
     if (!suppress) {
       Log(LogLevel::kWarning,
-          "FIXME! screenmessage() is being called in a gameplay situation.\n"
-          "The screenmessage call used to send messages to all players but now "
-          "only prints them locally.\n"
-          "Please change your code to use bascenev1.broadcastmessage() to get "
-          "the old behavior.\n"
-          "You can set env var BA_SUPPRESS_SCREEN_MESSAGE_WARNING=1 to "
-          "suppress "
-          "this warning.");
+          "WARNING! screenmessage() is being called in a gameplay situation.\n"
+          "Previously this would send a message to all connected clients,"
+          " but as of 1.7.20 it only shows a message on the local device.\n"
+          "To get the old behavior, change your code to use"
+          " bascenev1.broadcastmessage() instead.\n"
+          "You can set env var BA_SUPPRESS_SCREEN_MESSAGE_WARNING=1 to"
+          " suppress this warning.");
       g_base->PrintPythonStackTrace();
     }
   }

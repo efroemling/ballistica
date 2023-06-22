@@ -16,7 +16,11 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 
+# WTF Pylint. This is our package. It goes last.
+# pylint: disable=useless-suppression, wrong-import-order
 from efrotools.filecache import FileCache
+
+# pylint: enable=useless-suppression, wrong-import-order
 
 
 if TYPE_CHECKING:

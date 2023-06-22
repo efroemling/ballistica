@@ -48,7 +48,7 @@ def is_browser_likely_available() -> bool:
     # assume no browser.
     # FIXME: Might not be the case anymore; should make this definable
     #  at the platform level.
-    if app.vr_mode or (platform == 'android' and hastouchscreen):
+    if app.vr_mode or (platform == 'android' and not hastouchscreen):
         return False
 
     # Anywhere else assume we've got one.

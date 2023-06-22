@@ -119,7 +119,14 @@ class InputDevice : public Object {
 
   void UpdateLastInputTime();
 
-  auto delegate() -> InputDeviceDelegate& { return *delegate_; }
+  auto delegate() -> InputDeviceDelegate& {
+    // TEMP - Tracking down a crash in the wild.
+    // Delegate should always exist any time we're accessing it.
+    if (!delegate_.Exists()) {
+      FatalError("Input-device delegate unexpectedly invalid.");
+    }
+    return *delegate_;
+  }
   auto set_delegate(const Object::Ref<InputDeviceDelegate>& delegate) {
     delegate_ = delegate;
   }
