@@ -280,6 +280,8 @@ void Assets::StartLoading() {
   LoadSystemMesh(SysMeshID::kLocatorCircleOutline, "locatorCircleOutline");
   LoadSystemMesh(SysMeshID::kCrossOut, "crossOut");
   LoadSystemMesh(SysMeshID::kWing, "wing");
+
+  sys_assets_loaded_ = true;
 }
 
 void Assets::PrintLoadInfo() {
@@ -1597,30 +1599,47 @@ Assets::AssetListLock::~AssetListLock() {
 }
 
 auto Assets::SysTexture(SysTextureID id) -> TextureAsset* {
-  assert(asset_loads_allowed_);
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_textures_.size());
+  // TEMP - tracking down some crashes in the wild.
+  if (!sys_assets_loaded_) {
+    FatalError("SysTexture called before sys assets loaded.");
+  }
   return system_textures_[static_cast<int>(id)].Get();
 }
 
 auto Assets::SysCubeMapTexture(SysCubeMapTextureID id) -> TextureAsset* {
-  assert(asset_loads_allowed_);
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_cube_map_textures_.size());
+  // TEMP - tracking down some crashes in the wild.
+  if (!sys_assets_loaded_) {
+    FatalError("SysCubeMapTexture called before sys assets loaded.");
+  }
   return system_cube_map_textures_[static_cast<int>(id)].Get();
 }
 
 auto Assets::SysSound(SysSoundID id) -> SoundAsset* {
-  assert(asset_loads_allowed_);
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_sounds_.size());
+  // TEMP - tracking down some crashes in the wild.
+  if (!sys_assets_loaded_) {
+    FatalError("SysSound called before sys assets loaded.");
+  }
   return system_sounds_[static_cast<int>(id)].Get();
 }
 
 auto Assets::SysMesh(SysMeshID id) -> MeshAsset* {
-  assert(asset_loads_allowed_);
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_meshes_.size());
+
+  // TEMP - tracking down some crashes in the wild.
+  if (!sys_assets_loaded_) {
+    FatalError("SysMesh called before sys assets loaded.");
+  }
   return system_meshes_[static_cast<int>(id)].Get();
 }
 

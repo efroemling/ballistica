@@ -1,4 +1,4 @@
-### 1.7.20 (build 21130, api 8, 2023-06-19)
+### 1.7.20 (build 21132, api 8, 2023-06-21)
 
 - This seems like a good time for a `refactoring` release in anticipation of
   changes coming in 1.8. Basically this means that a lot of things will be
@@ -371,6 +371,10 @@
 - (build 20129) Fixed an issue where server builds would not build font assets
   (though it would install them if any recent gui builds had built them) which
   could lead to obscure crashing.
+- (build 21131) Fixed a bug where `is_browser_likely_available()` would
+  incorrectly return False on Android, causing certain things such as the v2
+  login screen to merely display URLs onscreen and not offer to open them in a
+  browser.
 
 ### 1.7.19 (build 20997, api 7, 2023-01-19)
 

@@ -113,6 +113,8 @@ class Assets {
   auto CompileResourceString(const std::string& s, const std::string& loc,
                              bool* valid = nullptr) -> std::string;
 
+  auto sys_assets_loaded() const { return sys_assets_loaded_; }
+
  private:
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemTexture(SysTextureID id, const char* name);
@@ -145,6 +147,7 @@ class Assets {
 
   // 'hard-wired' internal assets
   bool asset_loads_allowed_{};
+  bool sys_assets_loaded_{};
   std::vector<Object::Ref<TextureAsset> > system_textures_;
   std::vector<Object::Ref<TextureAsset> > system_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > system_sounds_;
