@@ -1,5 +1,7 @@
 ### 1.7.21 (build 21143, api 8, 2023-06-25)
 
+- Fixed an issue where server builds would not always include collision meshes.
+
 ### 1.7.20 (build 21140, api 8, 2023-06-22)
 
 - This seems like a good time for a `refactoring` release in anticipation of

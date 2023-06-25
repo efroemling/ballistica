@@ -2605,8 +2605,6 @@
  "ba_data/textures/zoeIconColorMask.pvr",
  "ba_data/textures/zoeIconColorMask_preview.png",
  "ba_data/textures/zoeIcon_preview.png",
- "mac_disk_image/__pycache__/dmgbuild_settings.cpython-311.opt-1.pyc",
- "mac_disk_image/dmgbuild_settings.py",
  "pylib-android/__future__.py",
  "pylib-android/__hello__.py",
  "pylib-android/__pycache__/__future__.cpython-311.opt-1.pyc",
@@ -6489,11 +6487,5 @@
  "windows/x64/ucrtbased.dll",
  "windows/x64/vc_redist.x64.exe",
  "windows/x64/vcruntime140_1d.dll",
- "windows/x64/vcruntime140d.dll",
- "workspace/__pycache__/ninjafightplug.cpython-311.opt-1.pyc",
- "workspace/__pycache__/onslaughtplug.cpython-311.opt-1.pyc",
- "workspace/__pycache__/runaroundplug.cpython-311.opt-1.pyc",
- "workspace/ninjafightplug.py",
- "workspace/onslaughtplug.py",
- "workspace/runaroundplug.py"
+ "windows/x64/vcruntime140d.dll"
 ]

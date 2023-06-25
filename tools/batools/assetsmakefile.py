@@ -74,8 +74,12 @@ def _get_py_targets(
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
     ) -> None:
-        # Special case: ignore temp py files in data src.
-        if proot == f'{ASSETS_SRC}/ba_data/data/maps':
+        # Special case: don't make targets for stuff in specific dirs.
+        if proot in {
+            f'{ASSETS_SRC}/ba_data/data/maps',
+            f'{ASSETS_SRC}/mac_disk_image',
+            f'{ASSETS_SRC}/workspace',
+        }:
             return
         assert proot.startswith(src), f'{proot} does not start with {src}'
         assert dst.startswith(BUILD_DIR)
