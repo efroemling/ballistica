@@ -1,6 +1,9 @@
-### 1.7.21 (build 21143, api 8, 2023-06-25)
+### 1.7.21 (build 21147, api 8, 2023-06-26)
 
 - Fixed an issue where server builds would not always include collision meshes.
+- Upgraded Python to 3.11.4 on Android builds.
+- Cleaned up the language subsystem and the process for applying app-config
+  changes a bit. Please holler if you see weirdness in either.
 
 ### 1.7.20 (build 21140, api 8, 2023-06-22)
 
@@ -360,8 +363,8 @@
   use log calls instead of prints. The environment vars to enable them are now
   `BA_DEBUG_LOG_CONNECTIVITY` and `BA_DEBUG_LOG_V2_TRANSPORT`. Set either to '1'
   to enable debug logging.
-- (build 21125) Fixed a bug where feature-sets would not have their
-  DoApplyConfig callbacks called in C++, which was causing the server-mode
+- (build 21125) Fixed a bug where app-modes would not have their
+  DoApplyAppConfig callbacks called in C++, which was causing the server-mode
   `idle_exit_minutes` value to be ignored. Servers should now properly exit
   after being idle for this length of time.
 - (build 21126) Reworked the efrocache system used by public builds for

@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING, overload
 
 import _babase
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -16,44 +17,21 @@ if TYPE_CHECKING:
     import babase
 
 
-class LanguageSubsystem:
-    """Wraps up language related app functionality.
+class LanguageSubsystem(AppSubsystem):
+    """Language functionality for the app.
 
     Category: **App Classes**
 
-    To use this class, access the single instance of it at 'ba.app.lang'.
+    Access the single instance of this class at 'babase.app.lang'.
     """
 
     def __init__(self) -> None:
-        self.language_target: AttrDict | None = None
-        self.language_merged: AttrDict | None = None
-        self.default_language = self._get_default_language()
+        super().__init__()
+        self.default_language: str = self._get_default_language()
 
-    def _can_display_language(self, language: str) -> bool:
-        """Tell whether we can display a particular language.
-
-        On some platforms we don't have unicode rendering yet
-        which limits the languages we can draw.
-        """
-
-        # We don't yet support full unicode display on windows or linux :-(.
-        if (
-            language
-            in {
-                'Chinese',
-                'ChineseTraditional',
-                'Persian',
-                'Korean',
-                'Arabic',
-                'Hindi',
-                'Vietnamese',
-                'Thai',
-                'Tamil',
-            }
-            and not _babase.can_display_full_unicode()
-        ):
-            return False
-        return True
+        self._language: str | None = None
+        self._language_target: AttrDict | None = None
+        self._language_merged: AttrDict | None = None
 
     @property
     def locale(self) -> str:
@@ -67,62 +45,16 @@ class LanguageSubsystem:
         assert isinstance(env['locale'], str)
         return env['locale']
 
-    def _get_default_language(self) -> str:
-        languages = {
-            'ar': 'Arabic',
-            'be': 'Belarussian',
-            'zh': 'Chinese',
-            'hr': 'Croatian',
-            'cs': 'Czech',
-            'da': 'Danish',
-            'nl': 'Dutch',
-            'eo': 'Esperanto',
-            'fil': 'Filipino',
-            'fr': 'French',
-            'de': 'German',
-            'el': 'Greek',
-            'hi': 'Hindi',
-            'hu': 'Hungarian',
-            'id': 'Indonesian',
-            'it': 'Italian',
-            'ko': 'Korean',
-            'ms': 'Malay',
-            'fa': 'Persian',
-            'pl': 'Polish',
-            'pt': 'Portuguese',
-            'ro': 'Romanian',
-            'ru': 'Russian',
-            'sr': 'Serbian',
-            'es': 'Spanish',
-            'sk': 'Slovak',
-            'sv': 'Swedish',
-            'ta': 'Tamil',
-            'th': 'Thai',
-            'tr': 'Turkish',
-            'uk': 'Ukrainian',
-            'vec': 'Venetian',
-            'vi': 'Vietnamese',
-        }
-
-        # Special case for Chinese: map specific variations to traditional.
-        # (otherwise will map to 'Chinese' which is simplified)
-        if self.locale in ('zh_HANT', 'zh_TW'):
-            language = 'ChineseTraditional'
-        else:
-            language = languages.get(self.locale[:2], 'English')
-        if not self._can_display_language(language):
-            language = 'English'
-        return language
-
     @property
     def language(self) -> str:
-        """The name of the language the game is running in.
+        """The current active language for the app.
 
         This can be selected explicitly by the user or may be set
-        automatically based on babase.App.locale or other factors.
+        automatically based on locale or other factors.
         """
-        assert isinstance(_babase.app.config, dict)
-        return _babase.app.config.get('Lang', self.default_language)
+        if self._language is None:
+            raise RuntimeError('App language is not yet set.')
+        return self._language
 
     @property
     def available_languages(self) -> list[str]:
@@ -164,13 +96,14 @@ class LanguageSubsystem:
         print_change: bool = True,
         store_to_config: bool = True,
     ) -> None:
-        """Set the active language used for the game.
+        """Set the active app language.
 
         Pass None to use OS default language.
         """
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
+        assert _babase.in_logic_thread()
         cfg = _babase.app.config
         cur_language = cfg.get('Lang', None)
 
@@ -215,38 +148,36 @@ class LanguageSubsystem:
                 with open(lmodfile, encoding='utf-8') as infile:
                     lmodvalues = json.loads(infile.read())
         except Exception:
-            from babase import _error
-
-            _error.print_exception('Exception importing language:', language)
+            logging.exception("Error importing language '%s'.", language)
             _babase.screenmessage(
-                "Error setting language to '"
-                + language
-                + "'; see log for details",
+                f"Error setting language to '{language}'; see log for details.",
                 color=(1, 0, 0),
             )
             switched = False
             lmodvalues = None
 
+        self._language = language
+
         # Create an attrdict of *just* our target language.
-        self.language_target = AttrDict()
-        langtarget = self.language_target
+        self._language_target = AttrDict()
+        langtarget = self._language_target
         assert langtarget is not None
         _add_to_attr_dict(
             langtarget, lmodvalues if lmodvalues is not None else lenglishvalues
         )
 
-        # Create an attrdict of our target language overlaid
-        # on our base (english).
+        # Create an attrdict of our target language overlaid on our base
+        # (english).
         languages = [lenglishvalues]
         if lmodvalues is not None:
             languages.append(lmodvalues)
         lfull = AttrDict()
         for lmod in languages:
             _add_to_attr_dict(lfull, lmod)
-        self.language_merged = lfull
+        self._language_merged = lfull
 
-        # Pass some keys/values in for low level code to use;
-        # start with everything in their 'internal' section.
+        # Pass some keys/values in for low level code to use; start with
+        # everything in their 'internal' section.
         internal_vals = [
             v for v in list(lfull['internal'].items()) if isinstance(v[1], str)
         ]
@@ -265,7 +196,7 @@ class LanguageSubsystem:
             ('axisText', lfull['configGamepadWindow']['axisText'])
         )
         internal_vals.append(('buttonText', lfull['buttonText']))
-        lmerged = self.language_merged
+        lmerged = self._language_merged
         assert lmerged is not None
         random_names = [
             n.strip() for n in lmerged['randomPlayerNamesText'].split(',')
@@ -283,6 +214,13 @@ class LanguageSubsystem:
                 color=(0, 1, 0),
             )
 
+    def do_apply_app_config(self) -> None:
+        assert _babase.in_logic_thread()
+        assert isinstance(_babase.app.config, dict)
+        lang = _babase.app.config.get('Lang', self.default_language)
+        if lang != self._language:
+            self.setlanguage(lang, print_change=False, store_to_config=False)
+
     def get_resource(
         self,
         resource: str,
@@ -294,38 +232,30 @@ class LanguageSubsystem:
         DEPRECATED; use babase.Lstr functionality for these purposes.
         """
         try:
-            # If we have no language set, go ahead and set it.
-            if self.language_merged is None:
-                language = self.language
+            # If we have no language set, try and set it to english.
+            # Also make a fuss because we should try to avoid this.
+            if self._language_merged is None:
                 try:
+                    if _babase.do_once():
+                        logging.warning(
+                            'get_resource() called before language'
+                            ' set; falling back to english.'
+                        )
                     self.setlanguage(
-                        language, print_change=False, store_to_config=False
+                        'English', print_change=False, store_to_config=False
                     )
                 except Exception:
-                    from babase import _error
-
-                    logging.exception('Error setting language to %s.', language)
-
-                    # Try english as a fallback.
-                    if language != 'English':
-                        print('Resorting to fallback language (English)')
-                        try:
-                            self.setlanguage(
-                                'English',
-                                print_change=False,
-                                store_to_config=False,
-                            )
-                        except Exception:
-                            _error.print_exception(
-                                'error setting language to english fallback'
-                            )
+                    logging.exception(
+                        'Error setting fallback english language.'
+                    )
+                    raise
 
             # If they provided a fallback_resource value, try the
-            # target-language-only dict first and then fall back to trying the
-            # fallback_resource value in the merged dict.
+            # target-language-only dict first and then fall back to
+            # trying the fallback_resource value in the merged dict.
             if fallback_resource is not None:
                 try:
-                    values = self.language_target
+                    values = self._language_target
                     splits = resource.split('.')
                     dicts = splits[:-1]
                     key = splits[-1]
@@ -336,11 +266,11 @@ class LanguageSubsystem:
                     val = values[key]
                     return val
                 except Exception:
-                    # FIXME: Shouldn't we try the fallback resource in the
-                    #  merged dict AFTER we try the main resource in the
-                    #  merged dict?
+                    # FIXME: Shouldn't we try the fallback resource in
+                    #  the merged dict AFTER we try the main resource in
+                    #  the merged dict?
                     try:
-                        values = self.language_merged
+                        values = self._language_merged
                         splits = fallback_resource.split('.')
                         dicts = splits[:-1]
                         key = splits[-1]
@@ -352,14 +282,15 @@ class LanguageSubsystem:
                         return val
 
                     except Exception:
-                        # If we got nothing for fallback_resource, default
-                        # to the normal code which checks or primary
-                        # value in the merge dict; there's a chance we can
-                        # get an english value for it (which we weren't
-                        # looking for the first time through).
+                        # If we got nothing for fallback_resource,
+                        # default to the normal code which checks or
+                        # primary value in the merge dict; there's a
+                        # chance we can get an english value for it
+                        # (which we weren't looking for the first time
+                        # through).
                         pass
 
-            values = self.language_merged
+            values = self._language_merged
             splits = resource.split('.')
             dicts = splits[:-1]
             key = splits[-1]
@@ -371,9 +302,9 @@ class LanguageSubsystem:
             return val
 
         except Exception:
-            # Ok, looks like we couldn't find our main or fallback resource
-            # anywhere. Now if we've been given a fallback value, return it;
-            # otherwise fail.
+            # Ok, looks like we couldn't find our main or fallback
+            # resource anywhere. Now if we've been given a fallback
+            # value, return it; otherwise fail.
             from babase import _error
 
             if fallback_value is not None:
@@ -426,18 +357,93 @@ class LanguageSubsystem:
             raise ValueError('Invalid Input; must be length 1')
         return 0xE000 <= ord(char) <= 0xF8FF
 
+    def _can_display_language(self, language: str) -> bool:
+        """Tell whether we can display a particular language.
+
+        On some platforms we don't have unicode rendering yet which
+        limits the languages we can draw.
+        """
+
+        # We don't yet support full unicode display on windows or linux :-(.
+        if (
+            language
+            in {
+                'Chinese',
+                'ChineseTraditional',
+                'Persian',
+                'Korean',
+                'Arabic',
+                'Hindi',
+                'Vietnamese',
+                'Thai',
+                'Tamil',
+            }
+            and not _babase.can_display_full_unicode()
+        ):
+            return False
+        return True
+
+    def _get_default_language(self) -> str:
+        languages = {
+            'ar': 'Arabic',
+            'be': 'Belarussian',
+            'zh': 'Chinese',
+            'hr': 'Croatian',
+            'cs': 'Czech',
+            'da': 'Danish',
+            'nl': 'Dutch',
+            'eo': 'Esperanto',
+            'fil': 'Filipino',
+            'fr': 'French',
+            'de': 'German',
+            'el': 'Greek',
+            'hi': 'Hindi',
+            'hu': 'Hungarian',
+            'id': 'Indonesian',
+            'it': 'Italian',
+            'ko': 'Korean',
+            'ms': 'Malay',
+            'fa': 'Persian',
+            'pl': 'Polish',
+            'pt': 'Portuguese',
+            'ro': 'Romanian',
+            'ru': 'Russian',
+            'sr': 'Serbian',
+            'es': 'Spanish',
+            'sk': 'Slovak',
+            'sv': 'Swedish',
+            'ta': 'Tamil',
+            'th': 'Thai',
+            'tr': 'Turkish',
+            'uk': 'Ukrainian',
+            'vec': 'Venetian',
+            'vi': 'Vietnamese',
+        }
+
+        # Special case for Chinese: map specific variations to
+        # traditional. (otherwise will map to 'Chinese' which is
+        # simplified)
+        if self.locale in ('zh_HANT', 'zh_TW'):
+            language = 'ChineseTraditional'
+        else:
+            language = languages.get(self.locale[:2], 'English')
+        if not self._can_display_language(language):
+            language = 'English'
+        return language
+
 
 class Lstr:
     """Used to define strings in a language-independent way.
 
     Category: **General Utility Classes**
 
-    These should be used whenever possible in place of hard-coded strings
-    so that in-game or UI elements show up correctly on all clients in their
-    currently-active language.
+    These should be used whenever possible in place of hard-coded
+    strings so that in-game or UI elements show up correctly on all
+    clients in their currently-active language.
 
-    To see available resource keys, look at any of the bs_language_*.py files
-    in the game or the translations pages at legacy.ballistica.net/translate.
+    To see available resource keys, look at any of the bs_language_*.py
+    files in the game or the translations pages at
+    legacy.ballistica.net/translate.
 
     ##### Examples
     EXAMPLE 1: specify a string from a resource path
@@ -573,10 +579,10 @@ class Lstr:
     def is_flat_value(self) -> bool:
         """Return whether the Lstr is a 'flat' value.
 
-        This is defined as a simple string value incorporating no translations,
-        resources, or substitutions.  In this case it may be reasonable to
-        replace it with a raw string value, perform string manipulation on it,
-        etc.
+        This is defined as a simple string value incorporating no
+        translations, resources, or substitutions. In this case it may
+        be reasonable to replace it with a raw string value, perform
+        string manipulation on it, etc.
         """
         return bool('v' in self.args and not self.args.get('s', []))
 

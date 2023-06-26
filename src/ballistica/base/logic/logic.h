@@ -33,7 +33,7 @@ class Logic {
 
   void OnAppModeChanged();
 
-  void ApplyAppConfig();
+  void DoApplyAppConfig();
   void OnScreenSizeChange(float virtual_width, float virtual_height,
                           float pixel_width, float pixel_height);
 

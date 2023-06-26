@@ -103,6 +103,7 @@ class BasePython {
     kOpenURLWithWebBrowserModuleCall,
     kOnNativeModuleImportCall,
     kSetupEnvForAppRunCall,
+    kPushApplyAppConfigCall,
     kLast  // Sentinel; must be at end.
   };
 

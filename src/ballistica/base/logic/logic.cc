@@ -25,12 +25,9 @@ Logic::Logic() : display_timers_(new TimerList()) {
 }
 
 void Logic::OnMainThreadStartApp() {
-  g_core->LifecycleLog("will create logic loop");
-
   event_loop_ = new EventLoop(EventLoopID::kLogic);
   g_core->pausable_event_loops.push_back(event_loop_);
 
-  g_core->LifecycleLog("will push logic on-app-start");
   // Sit and wait for our logic thread to run its startup stuff.
   event_loop_->PushCallSynchronous([this] { OnAppStart(); });
 }
@@ -144,9 +141,8 @@ void Logic::OnAppShutdown() {
       [] { g_base->app->LogicThreadShutdownComplete(); });
 }
 
-void Logic::ApplyAppConfig() {
+void Logic::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("apply-app-config");
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.

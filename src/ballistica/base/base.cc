@@ -176,10 +176,9 @@ void BaseFeatureSet::StartApp() {
 
   LogVersionInfo();
 
-  g_core->LifecycleLog("will read config");
-
-  // Read the app config.
-  g_base->python->ReadConfig();
+  // Read in ba.app.config for anyone who wants to start looking at it
+  // (though we don't explicitly ask anyone to apply it until later).
+  python->ReadConfig();
 
   // Allow our subsystems to start doing work in their own threads and
   // communicating with other subsystems. Note that we may still want to run
@@ -188,12 +187,8 @@ void BaseFeatureSet::StartApp() {
   // devices with the logic thread before the logic thread applies the
   // current config to them).
 
-  g_core->LifecycleLog("will call python on-main-thread");
-
   python->OnMainThreadStartApp();
-  g_core->LifecycleLog("will call logic on-main-thread");
   logic->OnMainThreadStartApp();
-  g_core->LifecycleLog("will call graphics-server on-main-thread");
   graphics_server->OnMainThreadStartApp();
   if (bg_dynamics_server) {
     bg_dynamics_server->OnMainThreadStartApp();
@@ -209,10 +204,14 @@ void BaseFeatureSet::StartApp() {
   // if called early.
   app_running_ = true;
 
-  // As the last step of this phase, tell the logic thread to apply
-  // the app config which will kick off screen creation and otherwise
-  // get the ball rolling.
-  logic->event_loop()->PushCall([this] { logic->ApplyAppConfig(); });
+  // As the last step of this phase, tell the logic thread to apply the app
+  // config which will kick off screen creation and otherwise get the ball
+  // rolling.
+  {
+    Python::ScopedInterpreterLock gil;
+    python->objs().Get(BasePython::ObjID::kPushApplyAppConfigCall).Call();
+  }
+
   g_core->LifecycleLog("start-app end (main thread)");
 }
 
@@ -251,11 +250,6 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     input->RebuildInputDeviceDelegates();
 
     app_mode_->OnActivate();
-
-    // Since app-modes will mostly become active after the initial global
-    // apply-app-config happens, we need to tell them to do so explicitly when
-    // they spin up.
-    app_mode_->DoApplyAppConfig();
 
     // Let some stuff know.
     logic->OnAppModeChanged();

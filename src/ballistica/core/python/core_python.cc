@@ -27,7 +27,7 @@ void CorePython::InitPython() {
 
   // Pre-config as isolated if we include our own Python and as standard
   // otherwise.
-  PyPreConfig preconfig;
+  PyPreConfig preconfig{};
   if (g_buildconfig.contains_python_dist()) {
     PyPreConfig_InitIsolatedConfig(&preconfig);
   } else {
@@ -44,7 +44,7 @@ void CorePython::InitPython() {
 
   // Configure as isolated if we include our own Python and as standard
   // otherwise.
-  PyConfig config;
+  PyConfig config{};
   if (g_buildconfig.contains_python_dist()) {
     PyConfig_InitIsolatedConfig(&config);
     // We manage paths 100% ourself in this case and don't want any site
@@ -113,6 +113,7 @@ void CorePython::InitPython() {
   // Init Python.
   status = Py_InitializeFromConfig(&config);
   BA_PRECONDITION_FATAL(!PyStatus_Exception(status));
+  PyConfig_Clear(&config);
 }
 
 void CorePython::EnablePythonLoggingCalls() {

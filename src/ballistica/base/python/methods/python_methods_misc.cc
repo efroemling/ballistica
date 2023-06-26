@@ -1170,6 +1170,7 @@ static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
   BA_PRECONDITION(PyList_Check(random_names_list_obj));
   std::unordered_map<std::string, std::string> language;
   int size = static_cast<int>(PyList_GET_SIZE(list_obj));
+
   for (int i = 0; i < size; i++) {
     PyObject* entry = PyList_GET_ITEM(list_obj, i);
     if (!PyTuple_Check(entry) || PyTuple_GET_SIZE(entry) != 2
@@ -1180,6 +1181,7 @@ static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
     language[PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 0))] =
         PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 1));
   }
+
   size = static_cast<int>(PyList_GET_SIZE(random_names_list_obj));
   std::list<std::string> random_names;
   for (int i = 0; i < size; i++) {
@@ -1189,6 +1191,7 @@ static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
     }
     random_names.emplace_back(PyUnicode_AsUTF8(entry));
   }
+
   Utils::SetRandomNameList(random_names);
   assert(g_base->logic);
   g_base->assets->SetLanguageKeys(language);

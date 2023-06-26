@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.11'
-PY_VER_EXACT_ANDROID = '3.11.3'
+PY_VER_EXACT_ANDROID = '3.11.4'
 PY_VER_APPLE = '3.11'
 PY_VER_EXACT_APPLE = '3.11.3'
 

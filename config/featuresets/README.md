@@ -21,14 +21,14 @@ with specific naming conventions:
   in this directory called `featureset_foo_bar.py`.
 - **Python Package**: If feature set `foo_bar` provides a Python package, it
   should be a directory named `bafoobar` ('ba' prefix, name with spaces removed)
-  that lives under [Python source files](../../src/assets/ba_data/python).
+  that lives under [src/assets/ba_data/python](../../src/assets/ba_data/python).
 - **Native Code**: If feature set `foo_bar` provides a native component (C++
   code or otherwise) it should live in a directory named `foo_bar` (unmodified
-  feature set name) under [native source files](../../src/ballistica).
+  feature set name) under [src/ballistica](../../src/ballistica).
 - **Meta Package**: If feature set `foo_bar` provides a meta package (that is,
   code or data used to generate other source code), it should be a directory
   named `bafoobarmeta` ('ba' prefix, name with spaces removed, 'meta' suffix)
-  that lives under [meta source files](../../src/meta).
+  that lives under [src/meta](../../src/meta).
 - **Test Package**: If feature set `foo_bar` provides a set of tests, it should
   be a directory named `test_foo_bar` ('test_' prefix, unmodified feature set
   name) under [tests](../../tests).

@@ -76,15 +76,8 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       // Block until the thread is bootstrapped.
       // (maybe not necessary, but let's be cautious in case we'd
       // try to use things like thread_id before they're known).
-      if (identifier_ == EventLoopID::kLogic) {
-        g_core->LifecycleLog("logic thread bootstrap wait begin");
-      }
       std::unique_lock lock(client_listener_mutex_);
       client_listener_cv_.wait(lock, [this] { return bootstrapped_; });
-
-      if (identifier_ == EventLoopID::kLogic) {
-        g_core->LifecycleLog("logic thread bootstrap wait end");
-      }
 
       break;
     }
@@ -512,7 +505,7 @@ void EventLoop::PushThreadMessage(const ThreadMessage& t) {
   // So tally up any logs and send them after.
   std::vector<std::pair<LogLevel, std::string>> log_entries;
   {
-    std::unique_lock<std::mutex> lock(thread_message_mutex_);
+    std::unique_lock lock(thread_message_mutex_);
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
@@ -742,11 +735,11 @@ auto EventLoop::CheckPushSafety() -> bool {
   }
 }
 auto EventLoop::CheckPushRunnableSafety() -> bool {
-  std::scoped_lock lock(client_listener_mutex_);
+  std::unique_lock lock(thread_message_mutex_);
 
   // We first complain when we get to 1000 queued messages so
   // let's consider things unsafe when we're halfway there.
-  return (thread_messages_.size() < kThreadMessageSafetyThreshold);
+  return thread_messages_.size() < kThreadMessageSafetyThreshold;
 }
 
 }  // namespace ballistica

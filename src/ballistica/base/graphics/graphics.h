@@ -432,6 +432,7 @@ class Graphics {
   int64_t frame_def_count_{1};
   bool gyro_enabled_{true};
   millisecs_t last_suppress_gyro_time_{};
+  int building_frame_def_{};
 };
 
 }  // namespace ballistica::base

@@ -12,4 +12,5 @@ values = [
     babase.app.handle_deep_link,  # kDeepLinkCall
     babase.app.lang.get_resource,  # kGetResourceCall
     babase.app.lang.translate,  # kTranslateCall
+    babase.app.push_apply_app_config,  # kPushApplyAppConfigCall
 ]

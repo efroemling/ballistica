@@ -1111,6 +1111,11 @@ void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
   assert(camera_.Exists());
 
+  // Keep track of when we're in here; can be useful for making sure stuff
+  // doesn't muck with our lists/etc. while we're using them.
+  assert(!building_frame_def_);
+  building_frame_def_ = true;
+
   // We should not be building/pushing any frames until after
   // app-launch-commands have been run.
   BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
@@ -1234,6 +1239,9 @@ void Graphics::BuildAndPushFrameDef() {
   blotch_soft_verts_.clear();
   blotch_soft_obj_indices_.clear();
   blotch_soft_obj_verts_.clear();
+
+  assert(building_frame_def_);
+  building_frame_def_ = false;
 }
 
 void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
@@ -1541,7 +1549,6 @@ void Graphics::SetSupportsHighQualityGraphics(bool s) {
 
 void Graphics::ClearScreenMessageTranslations() {
   assert(g_base && g_base->InLogicThread());
-
   for (auto&& i : screen_messages_) {
     i.translation_dirty = true;
   }
@@ -2017,6 +2024,10 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 
 void Graphics::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
+  if (building_frame_def_) {
+    Log(LogLevel::kWarning,
+        "Graphics::LanguageChanged() called during draw; should not happen.");
+  }
   // Also clear translations on all screen-messages.
   ClearScreenMessageTranslations();
 }

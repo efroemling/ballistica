@@ -54,8 +54,8 @@ class App:
     # pylint: disable=too-many-public-methods
 
     plugins: PluginSubsystem
+    lang: LanguageSubsystem
 
-    # log_handler: LogHandler
     health_monitor: AppHealthMonitor
 
     class State(Enum):
@@ -247,6 +247,7 @@ class App:
         self._called_on_app_running = False
         self._app_paused = False
         self._subsystem_registration_ended = False
+        self._pending_apply_app_config = False
 
         # Config.
         self.config_file_healthy = False
@@ -281,7 +282,6 @@ class App:
 
         self.components = AppComponentSubsystem()
         self.meta = MetadataSubsystem()
-        self.lang = LanguageSubsystem()
         self.net = NetworkSubsystem()
         self.workspaces = WorkspaceSubsystem()
         self._pending_intent: AppIntent | None = None
@@ -297,7 +297,7 @@ class App:
         self._asyncio_timer: babase.AppTimer | None = None
 
     def postinit(self) -> None:
-        """Called after we are inited and assigned to babase.app."""
+        """Called after we've been inited and assigned to babase.app."""
 
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
@@ -306,6 +306,7 @@ class App:
         # some of this stuff accesses babase.app and that doesn't
         # exist yet as of our __init__() call.
 
+        self.lang = LanguageSubsystem()
         self.plugins = PluginSubsystem()
 
     def register_subsystem(self, subsystem: AppSubsystem) -> None:
@@ -621,6 +622,39 @@ class App:
             # Otherwise tell the app to do its default thing *only* if a
             # plugin hasn't already told it to do something.
             self.set_intent(AppIntentDefault())
+
+    def push_apply_app_config(self) -> None:
+        """Internal. Use app.config.apply() to apply app config changes."""
+        # To be safe, let's run this by itself in the event loop.
+        # This avoids potential trouble if this gets called mid-draw or
+        # something like that.
+        self._pending_apply_app_config = True
+        _babase.pushcall(self._apply_app_config, raw=True)
+
+    def _apply_app_config(self) -> None:
+        assert _babase.in_logic_thread()
+
+        _babase.lifecyclelog('apply-app-config')
+
+        # If multiple apply calls have been made, only actually apply once.
+        if not self._pending_apply_app_config:
+            return
+
+        _pending_apply_app_config = False
+
+        # Inform all app subsystems in the same order they were inited.
+        # Operate on a copy here because subsystems may still be able to
+        # be added at this point.
+        for subsystem in self._subsystems.copy():
+            try:
+                subsystem.do_apply_app_config()
+            except Exception:
+                logging.exception(
+                    'Error in do_apply_app_config for subsystem %s.', subsystem
+                )
+
+        # Let the native layer do its thing.
+        _babase.do_apply_app_config()
 
     class DefaultAppModeSelector(AppModeSelector):
         """Decides which app modes to use to handle intents.

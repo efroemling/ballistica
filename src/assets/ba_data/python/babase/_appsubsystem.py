@@ -47,3 +47,6 @@ class AppSubsystem:
 
     def on_app_shutdown(self) -> None:
         """Called when the app is shutting down."""
+
+    def do_apply_app_config(self) -> None:
+        """Called when the app config should be applied."""

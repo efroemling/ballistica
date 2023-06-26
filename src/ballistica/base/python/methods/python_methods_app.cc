@@ -552,24 +552,22 @@ static PyMethodDef PyQuitDef = {
 
 // ----------------------------- apply_config ----------------------------------
 
-static auto PyApplyConfig(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyDoApplyAppConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
 
-  // Hmm; Python runs in the logic thread; technically we could just run
-  // ApplyAppConfig() immediately (though pushing is probably safer).
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->logic->ApplyAppConfig(); });
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->logic->DoApplyAppConfig();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyApplyConfigDef = {
-    "apply_config",  // name
-    PyApplyConfig,   // method
-    METH_VARARGS,    // flags
+static PyMethodDef PyDoApplyAppConfigDef = {
+    "do_apply_app_config",  // name
+    PyDoApplyAppConfig,     // method
+    METH_VARARGS,           // flags
 
-    "apply_config() -> None\n"
+    "do_apply_app_config() -> None\n"
     "\n"
     "(internal)",
 };
@@ -1468,7 +1466,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyEnvDef,
       PyPreEnvDef,
       PyCommitConfigDef,
-      PyApplyConfigDef,
+      PyDoApplyAppConfigDef,
       PyQuitDef,
       PyAppTimerDef,
       PyAppTimeDef,

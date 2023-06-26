@@ -77,7 +77,14 @@ bool SceneV1AppMode::InMainMenu() const {
 
 static SceneV1AppMode* g_scene_v1_app_mode{};
 
-void SceneV1AppMode::OnActivate() { Reset(); }
+void SceneV1AppMode::OnActivate() {
+  Reset();
+
+  // To set initial states, explicitly fire some of our 'On-Foo-Changed'
+  // callbacks.
+  DoApplyAppConfig();
+  LanguageChanged();
+}
 
 void SceneV1AppMode::OnAppStart() { assert(g_base->InLogicThread()); }
 
@@ -1197,6 +1204,7 @@ void SceneV1AppMode::PruneSessions() {
 }
 
 void SceneV1AppMode::LanguageChanged() {
+  assert(g_base && g_base->InLogicThread());
   if (Session* session = GetForegroundSession()) {
     session->LanguageChanged();
   }

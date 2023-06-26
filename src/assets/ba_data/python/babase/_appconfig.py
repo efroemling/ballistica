@@ -10,6 +10,8 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
 
+_g_pending_apply = False  # pylint: disable=invalid-name
+
 
 class AppConfig(dict):
     """A special dict that holds the game's persistent configuration values.
@@ -74,8 +76,12 @@ class AppConfig(dict):
         return _babase.get_appconfig_builtin_keys()
 
     def apply(self) -> None:
-        """Apply config values to the running app."""
-        _babase.apply_config()
+        """Apply config values to the running app.
+
+        This call is thread-safe and asynchronous; changes will happen
+        in the next logic event loop cycle.
+        """
+        _babase.app.push_apply_app_config()
 
     def commit(self) -> None:
         """Commits the config to local storage.
