@@ -59,6 +59,23 @@ TextureAsset::TextureAsset(TextPacker* packer) : packer_(packer) {
 }
 
 TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
+  int hard_limit{96};
+  int soft_limit{64};
+  if (qr_url.size() > hard_limit) {
+    char buffer[512];
+    snprintf(buffer, sizeof(buffer),
+             "QR code url byte length %zu exceeds hard-limit of %d;"
+             " please use shorter urls. (url=%s)",
+             qr_url.size(), hard_limit, qr_url.c_str());
+    throw Exception(buffer, PyExcType::kValue);
+  } else if (qr_url.size() > soft_limit) {
+    char buffer[512];
+    snprintf(buffer, sizeof(buffer),
+             "QR code url byte length %zu exceeds soft-limit of %d;"
+             " please use shorter urls. (url=%s)",
+             qr_url.size(), soft_limit, qr_url.c_str());
+    Log(LogLevel::kWarning, buffer);
+  }
   file_name_ = qr_url;
   valid_ = true;
 }

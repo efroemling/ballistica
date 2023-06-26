@@ -146,7 +146,9 @@ static PyMethodDef PyGetQRCodeTextureDef = {
 
     "get_qrcode_texture(url: str) -> bauiv1.Texture\n"
     "\n"
-    "(internal)",
+    "Return a QR code texture.\n"
+    "\n"
+    "The provided url must be 64 bytes or less.",
 };
 
 // ----------------------------- buttonwidget ----------------------------------
@@ -2305,7 +2307,7 @@ static PyMethodDef PyUIBoundsDef = {
     "Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) "
     "representing\n"
     "the range of values that can be plugged into a root level\n"
-    "babase.ContainerWidget's stack_offset value while guaranteeing that its\n"
+    "bauiv1.ContainerWidget's stack_offset value while guaranteeing that its\n"
     "center remains onscreen.",
 };
 

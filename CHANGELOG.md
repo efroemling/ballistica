@@ -1,9 +1,14 @@
-### 1.7.21 (build 21147, api 8, 2023-06-26)
+### 1.7.21 (build 21148, api 8, 2023-06-26)
 
 - Fixed an issue where server builds would not always include collision meshes.
 - Upgraded Python to 3.11.4 on Android builds.
 - Cleaned up the language subsystem and the process for applying app-config
   changes a bit. Please holler if you see weirdness in either.
+- QR code textures now have a soft limit of 64 bytes for their addresses.
+  Warnings will be given for longer addresses up to 96 bytes at which point qr
+  code creation will fail. This should keep the images reasonably readable and
+  avoids a crash that could occur when more data was provided than could
+  physically fit in the qr code.
 
 ### 1.7.20 (build 21140, api 8, 2023-06-22)
 

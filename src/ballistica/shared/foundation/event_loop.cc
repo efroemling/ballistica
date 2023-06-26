@@ -130,6 +130,7 @@ auto EventLoop::ThreadMainLogicP(void* data) -> void* {
 auto EventLoop::ThreadMainAudio(void* data) -> int {
   return static_cast<EventLoop*>(data)->ThreadMain();
 }
+
 auto EventLoop::ThreadMainAudioP(void* data) -> void* {
   static_cast<EventLoop*>(data)->ThreadMain();
   return nullptr;
@@ -439,9 +440,6 @@ void EventLoop::Quit() {
 
 EventLoop::~EventLoop() = default;
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantConditionsOC"
-
 void EventLoop::LogThreadMessageTally(
     std::vector<std::pair<LogLevel, std::string>>* log_entries) {
   assert(g_core);
@@ -494,7 +492,6 @@ void EventLoop::LogThreadMessageTally(
     writing_tally_ = false;
   }
 }
-#pragma clang diagnostic pop
 
 void EventLoop::PushThreadMessage(const ThreadMessage& t) {
   assert(g_core);
@@ -736,9 +733,6 @@ auto EventLoop::CheckPushSafety() -> bool {
 }
 auto EventLoop::CheckPushRunnableSafety() -> bool {
   std::unique_lock lock(thread_message_mutex_);
-
-  // We first complain when we get to 1000 queued messages so
-  // let's consider things unsafe when we're halfway there.
   return thread_messages_.size() < kThreadMessageSafetyThreshold;
 }
 
