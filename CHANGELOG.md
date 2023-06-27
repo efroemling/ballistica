@@ -1,4 +1,4 @@
-### 1.7.21 (build 21148, api 8, 2023-06-26)
+### 1.7.21 (build 21150, api 8, 2023-06-26)
 
 - Fixed an issue where server builds would not always include collision meshes.
 - Upgraded Python to 3.11.4 on Android builds.
@@ -9,6 +9,27 @@
   code creation will fail. This should keep the images reasonably readable and
   avoids a crash that could occur when more data was provided than could
   physically fit in the qr code.
+- `PotentialPlugin` has been renamed to `PluginSpec` and the list of them
+  renamed from `babase.app.plugins.potential_plugins` to
+  `babase.app.plugins.plugin_specs`.
+- Added a simpler warning message when plugins are found that need to be updated
+  for the new api version.
+- Previously, the app would only check api version on plugins when initially
+  registering them. This meant that once a plugin was enabled, the app would
+  always try to load it even if api version stopped matching. This has been
+  corrected; now if the api version doesn't match it will never be loaded.
+- Fixed an error where plugins nested more than one level such as
+  `mypackage.myplugin.MyPlugin` would fail to load.
+- Removed the `display_name` attr from the `PluginSpec` class, as it was simply
+  set to `class_path`. It seems that referring to plugins simply by their
+  class-paths is a reasonable system for now.
+- Added `enabled`, `loadable`, `attempted_load` and `plugin` attrs to the
+  `PluginSpec` class. This should make it easier to interact with the overall
+  app plugin situation without having to do hacky raw config wrangling.
+- Plugins should now show up more sensibly in the plugins UI in some cases. For
+  example, a plugin which was previously loading but no longer is after an
+  api-version change will still show up in the list as red instead of not
+  showing up at all.
 
 ### 1.7.20 (build 21140, api 8, 2023-06-22)
 

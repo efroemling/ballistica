@@ -179,13 +179,13 @@ class PluginWindow(bui.Window):
                 'Still scanning plugins; please try again.', color=(1, 0, 0)
             )
             bui.getsound('error').play()
-        pluglist = bui.app.plugins.potential_plugins
-        plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
+        plugspecs = bui.app.plugins.plugin_specs
+        plugstates: dict[str, dict] = bui.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
 
         plug_line_height = 50
         sub_width = self._scroll_width
-        sub_height = len(pluglist) * plug_line_height
+        sub_height = len(plugspecs) * plug_line_height
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(sub_width, sub_height),
@@ -197,9 +197,7 @@ class PluginWindow(bui.Window):
         )
         self._restore_state()
 
-    def _check_value_changed(
-        self, plug: bui.PotentialPlugin, value: bool
-    ) -> None:
+    def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
             bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
             color=(1.0, 0.5, 0.0),
@@ -266,7 +264,7 @@ class PluginWindow(bui.Window):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        pluglist = bui.app.plugins.potential_plugins
+        plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
 
@@ -275,17 +273,18 @@ class PluginWindow(bui.Window):
         num_enabled = 0
         num_disabled = 0
 
-        for i, availplug in enumerate(pluglist):
+        plugspecs_sorted = sorted(plugspecs.items())
+
+        for _classpath, plugspec in plugspecs_sorted:
             # counting number of enabled and disabled plugins
-            plugstate = plugstates.setdefault(availplug.class_path, {})
-            enabled = plugstate.get('enabled', False)
-            if enabled:
+            # plugstate = plugstates.setdefault(plugspec[0], {})
+            if plugspec.enabled:
                 num_enabled += 1
-            elif availplug.available and not enabled:
+            else:
                 num_disabled += 1
 
         if self._category is Category.ALL:
-            sub_height = len(pluglist) * plug_line_height
+            sub_height = len(plugspecs) * plug_line_height
             bui.containerwidget(
                 edit=self._subcontainer, size=(self._scroll_width, sub_height)
             )
@@ -305,20 +304,16 @@ class PluginWindow(bui.Window):
             sub_height = 0
 
         num_shown = 0
-        for i, availplug in enumerate(pluglist):
-            plugin = bui.app.plugins.active_plugins.get(availplug.class_path)
-            active = plugin is not None
-
-            plugstate = plugstates.setdefault(availplug.class_path, {})
-            checked = plugstate.get('enabled', False)
-            assert isinstance(checked, bool)
+        for classpath, plugspec in plugspecs_sorted:
+            plugin = plugspec.plugin
+            enabled = plugspec.enabled
 
             if self._category is Category.ALL:
                 show = True
             elif self._category is Category.ENABLED:
-                show = checked
+                show = enabled
             elif self._category is Category.DISABLED:
-                show = availplug.available and not checked
+                show = not enabled
             else:
                 assert_never(self._category)
                 show = False
@@ -329,25 +324,24 @@ class PluginWindow(bui.Window):
             item_y = sub_height - (num_shown + 1) * plug_line_height
             check = bui.checkboxwidget(
                 parent=self._subcontainer,
-                text=availplug.display_name,
+                text=bui.Lstr(value=classpath),
                 autoselect=True,
-                value=checked,
+                value=enabled,
                 maxwidth=self._scroll_width - 200,
                 position=(10, item_y),
                 size=(self._scroll_width - 40, 50),
                 on_value_change_call=bui.Call(
-                    self._check_value_changed, availplug
+                    self._check_value_changed, plugspec
                 ),
                 textcolor=(
                     (0.8, 0.3, 0.3)
-                    if not availplug.available
-                    else (0, 1, 0)
-                    if active and checked
-                    else (0.8, 0.3, 0.3)
-                    if checked
+                    if (plugspec.attempted_load and plugspec.plugin is None)
                     else (0.6, 0.6, 0.6)
+                    if plugspec.plugin is None
+                    else (0, 1, 0)
                 ),
             )
+            # noinspection PyUnresolvedReferences
             if plugin is not None and plugin.has_settings_ui():
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
@@ -356,6 +350,7 @@ class PluginWindow(bui.Window):
                     size=(100, 40),
                     position=(sub_width - 130, item_y + 6),
                 )
+                # noinspection PyUnresolvedReferences
                 bui.buttonwidget(
                     edit=button,
                     on_activate_call=bui.Call(plugin.show_settings_ui, button),
@@ -364,7 +359,7 @@ class PluginWindow(bui.Window):
                 button = None
 
             # Allow getting back to back button.
-            if i == 0:
+            if num_shown == 0:
                 bui.widget(
                     edit=check,
                     up_widget=self._back_button,

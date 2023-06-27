@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 import importlib.util
 from typing import TYPE_CHECKING
-from dataclasses import dataclass
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -31,14 +30,21 @@ class PluginSubsystem(AppSubsystem):
 
     def __init__(self) -> None:
         super().__init__()
-        self.potential_plugins: list[babase.PotentialPlugin] = []
-        self.active_plugins: dict[str, babase.Plugin] = {}
+
+        # Info about plugins that we are aware of. This may include
+        # plugins discovered through meta-scanning as well as plugins
+        # registered in the app-config. This may include plugins that
+        # cannot be loaded for various reasons or that have been
+        # intentionally disabled.
+        self.plugin_specs: dict[str, babase.PluginSpec] = {}
+
+        # The set of live active plugin objects.
+        self.active_plugins: list[babase.Plugin] = []
 
     def on_meta_scan_complete(self) -> None:
-        """Should be called when meta-scanning is complete."""
+        """Called when meta-scanning is complete."""
         from babase._language import Lstr
 
-        plugs = _babase.app.plugins
         config_changed = False
         found_new = False
         plugstates: dict[str, dict] = _babase.app.config.setdefault(
@@ -56,145 +62,74 @@ class PluginSubsystem(AppSubsystem):
             )
             is True
         )
-        # Create a potential-plugin for each class we found in the scan.
+
+        assert not self.plugin_specs
+        assert not self.active_plugins
+
+        # Create a plugin-spec for each plugin class we found in the
+        # meta-scan.
         for class_path in results.exports_of_class(Plugin):
-            plugs.potential_plugins.append(
-                PotentialPlugin(
-                    display_name=Lstr(value=class_path),
-                    class_path=class_path,
-                    available=True,
-                )
+            assert class_path not in self.plugin_specs
+            plugspec = self.plugin_specs[class_path] = PluginSpec(
+                class_path=class_path, loadable=True
             )
+
+            # Auto-enable new ones if desired.
             if auto_enable_new_plugins:
                 if class_path not in plugstates:
-                    # Go ahead and enable new plugins by default, but we'll
-                    # inform the user that they need to restart to pick them up.
-                    # they can also disable them in settings so they never load.
-                    plugstates[class_path] = {'enabled': True}
+                    plugspec.enabled = True
                     config_changed = True
                     found_new = True
 
-        plugs.potential_plugins.sort(key=lambda p: p.class_path)
-
-        # If we're *not* auto-enabling new plugins, at least let the
-        # user know we found something new.
+        # If we're *not* auto-enabling, just let the user know if we
+        # found new ones.
         if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
                 Lstr(resource='pluginsDetectedText'), color=(0, 1, 0)
             )
             _babase.getsimplesound('ding').play()
 
-        if config_changed:
-            _babase.app.config.commit()
-
-    def on_app_running(self) -> None:
-        # Load up our plugins and go ahead and call their on_app_running calls.
-        self.load_plugins()
-        for plugin in self.active_plugins.values():
-            try:
-                plugin.on_app_running()
-            except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_running()')
-
-    def on_app_pause(self) -> None:
-        for plugin in self.active_plugins.values():
-            try:
-                plugin.on_app_pause()
-            except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_pause()')
-
-    def on_app_resume(self) -> None:
-        for plugin in self.active_plugins.values():
-            try:
-                plugin.on_app_resume()
-            except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_resume()')
-
-    def on_app_shutdown(self) -> None:
-        for plugin in self.active_plugins.values():
-            try:
-                plugin.on_app_shutdown()
-            except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_shutdown()')
-
-    def load_plugins(self) -> None:
-        """(internal)"""
-        from babase._general import getclass
-        from babase._language import Lstr
-
-        # Note: the plugins we load is purely based on what's enabled
-        # in the app config. Its not our job to look at meta stuff here.
-        plugstates: dict[str, dict] = _babase.app.config.get('Plugins', {})
+        # Ok, now go through all plugins registered in the app-config
+        # that weren't covered by the meta stuff above, either creating
+        # plugin-specs for them or clearing them out. This covers
+        # plugins with api versions not matching ours, plugins without
+        # ba_meta tags, and plugins that have since disappeared.
         assert isinstance(plugstates, dict)
-        plugkeys: list[str] = sorted(
-            key for key, val in plugstates.items() if val.get('enabled', False)
-        )
+        wrong_api_prefixes = [f'{m}.' for m in results.incorrect_api_modules]
+
         disappeared_plugs: set[str] = set()
-        for plugkey in plugkeys:
-            # Originally I was just catching ModuleNotFoundError on the
-            # getclass() call to detect plugins disappearing. However
-            # this breaks if the module *does* exist but itself imports
-            # something that does not exist; in that case we would
-            # incorrectly show that the plugin had disappeared.
-            #
-            # So now we're first explicitly asking Python if it can
-            # locate the module, and if it can then we treat any further
-            # errors including ModuleNotFound as problems with the
-            # module's code; not ours.
+
+        for class_path in sorted(plugstates.keys()):
+            # Already have a spec for it; nothing to be done.
+            if class_path in self.plugin_specs:
+                continue
+
+            # If this plugin corresponds to any modules that we've
+            # identified as having incorrect api versions, we'll take
+            # note of its existence but we won't try to load it.
+            if any(
+                class_path.startswith(prefix) for prefix in wrong_api_prefixes
+            ):
+                plugspec = self.plugin_specs[class_path] = PluginSpec(
+                    class_path=class_path, loadable=False
+                )
+                continue
+
+            # Ok, it seems to be a class we have no metadata for. Look
+            # to see if it appears to be an actual class we could
+            # theoretically load. If so, we'll try. If not, we consider
+            # the plugin to have disappeared and inform the user as
+            # such.
             try:
-                spec = importlib.util.find_spec(plugkey.split('.')[0])
+                spec = importlib.util.find_spec(
+                    '.'.join(class_path.split('.')[:-1])
+                )
             except Exception:
                 spec = None
 
             if spec is None:
-                disappeared_plugs.add(plugkey)
+                disappeared_plugs.add(class_path)
                 continue
-
-            # Ok; it seems that there's *something* there. Now try to load
-            # it and treat any further errors as the module's fault.
-            try:
-                cls = getclass(plugkey, Plugin)
-            except Exception as exc:
-                _babase.getsimplesound('error').play()
-                _babase.screenmessage(
-                    Lstr(
-                        resource='pluginClassLoadErrorText',
-                        subs=[
-                            ('${PLUGIN}', plugkey),
-                            ('${ERROR}', str(exc)),
-                        ],
-                    ),
-                    color=(1, 0, 0),
-                )
-                logging.exception("Error loading plugin class '%s'.", plugkey)
-                continue
-            try:
-                plugin = cls()
-                assert plugkey not in self.active_plugins
-                self.active_plugins[plugkey] = plugin
-            except Exception as exc:
-                from babase import _error
-
-                _babase.getsimplesound('error').play()
-                _babase.screenmessage(
-                    Lstr(
-                        resource='pluginInitErrorText',
-                        subs=[
-                            ('${PLUGIN}', plugkey),
-                            ('${ERROR}', str(exc)),
-                        ],
-                    ),
-                    color=(1, 0, 0),
-                )
-                _error.print_exception(f"Error initing plugin: '{plugkey}'.")
 
         # If plugins disappeared, let the user know gently and remove them
         # from the config so we'll again let the user know if they later
@@ -220,22 +155,151 @@ class PluginSubsystem(AppSubsystem):
                 del _babase.app.config['Plugins'][goneplug]
             _babase.app.config.commit()
 
+        if config_changed:
+            _babase.app.config.commit()
 
-@dataclass
-class PotentialPlugin:
-    """Represents a babase.Plugin which can potentially be loaded.
+    def on_app_running(self) -> None:
+        # Load up our plugins and go ahead and call their on_app_running
+        # calls.
+        self.load_plugins()
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_running()
+            except Exception:
+                from babase import _error
+
+                _error.print_exception('Error in plugin on_app_running()')
+
+    def on_app_pause(self) -> None:
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_pause()
+            except Exception:
+                from babase import _error
+
+                _error.print_exception('Error in plugin on_app_pause()')
+
+    def on_app_resume(self) -> None:
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_resume()
+            except Exception:
+                from babase import _error
+
+                _error.print_exception('Error in plugin on_app_resume()')
+
+    def on_app_shutdown(self) -> None:
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_shutdown()
+            except Exception:
+                from babase import _error
+
+                _error.print_exception('Error in plugin on_app_shutdown()')
+
+    def load_plugins(self) -> None:
+        """(internal)"""
+
+        # Load plugins from any specs that are enabled & able to.
+        for _class_path, plug_spec in sorted(self.plugin_specs.items()):
+            plugin = plug_spec.attempt_load_if_enabled()
+            if plugin is not None:
+                self.active_plugins.append(plugin)
+
+
+class PluginSpec:
+    """Represents a plugin the engine knows about.
 
     Category: **App Classes**
 
-    These generally represent plugins which were detected by the
-    meta-tag scan. However they may also represent plugins which
-    were previously set to be loaded but which were unable to be
-    for some reason. In that case, 'available' will be set to False.
+    The 'enabled' attr represents whether this plugin is set to load.
+    Getting or setting that attr affects the corresponding app-config
+    key. Remember to commit the app-config after making any changes.
+
+    The 'attempted_load' attr will be True if the engine has attempted
+    to load the plugin. If 'attempted_load' is True for a plugin-spec
+    but the 'plugin' attr is None, it means there was an error loading
+    the plugin. If a plugin's api-version does not match the running
+    app, if a new plugin is detected with auto-enable-plugins disabled,
+    or if the user has explicitly disabled a plugin, the engine will not
+    even attempt to load it.
     """
 
-    display_name: babase.Lstr
-    class_path: str
-    available: bool
+    def __init__(self, class_path: str, loadable: bool):
+        self.class_path = class_path
+        self.loadable = loadable
+        self.attempted_load = False
+        self.plugin: Plugin | None = None
+
+    @property
+    def enabled(self) -> bool:
+        """Whether the user wants this plugin to load."""
+        plugstates: dict[str, dict] = _babase.app.config.get('Plugins', {})
+        assert isinstance(plugstates, dict)
+        val = plugstates.get(self.class_path, {}).get('enabled', False) is True
+        return val
+
+    @enabled.setter
+    def enabled(self, val: bool) -> None:
+        plugstates: dict[str, dict] = _babase.app.config.setdefault(
+            'Plugins', {}
+        )
+        assert isinstance(plugstates, dict)
+        plugstate = plugstates.setdefault(self.class_path, {})
+        plugstate['enabled'] = val
+
+    def attempt_load_if_enabled(self) -> Plugin | None:
+        """Possibly load the plugin and report errors."""
+        from babase._general import getclass
+        from babase._language import Lstr
+
+        assert not self.attempted_load
+        assert self.plugin is None
+
+        if not self.enabled:
+            return None
+        self.attempted_load = True
+        if not self.loadable:
+            return None
+        try:
+            cls = getclass(self.class_path, Plugin)
+        except Exception as exc:
+            _babase.getsimplesound('error').play()
+            _babase.screenmessage(
+                Lstr(
+                    resource='pluginClassLoadErrorText',
+                    subs=[
+                        ('${PLUGIN}', self.class_path),
+                        ('${ERROR}', str(exc)),
+                    ],
+                ),
+                color=(1, 0, 0),
+            )
+            logging.exception(
+                "Error loading plugin class '%s'.", self.class_path
+            )
+            return None
+        try:
+            self.plugin = cls()
+            return self.plugin
+        except Exception as exc:
+            from babase import _error
+
+            _babase.getsimplesound('error').play()
+            _babase.screenmessage(
+                Lstr(
+                    resource='pluginInitErrorText',
+                    subs=[
+                        ('${PLUGIN}', self.class_path),
+                        ('${ERROR}', str(exc)),
+                    ],
+                ),
+                color=(1, 0, 0),
+            )
+            logging.exception(
+                "Error initing plugin class: '%s'.", self.class_path
+            )
+        return None
 
 
 class Plugin:
