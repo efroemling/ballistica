@@ -1,4 +1,4 @@
-### 1.7.21 (build 21150, api 8, 2023-06-26)
+### 1.7.21 (build 21152, api 8, 2023-06-27)
 
 - Fixed an issue where server builds would not always include collision meshes.
 - Upgraded Python to 3.11.4 on Android builds.
