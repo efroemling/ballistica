@@ -19,6 +19,15 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
     : source_(source), identifier_(identifier_in) {
   switch (source_) {
     case ThreadSource::kCreate: {
+      // IMPORTANT: We grab this lock *before* kicking off our thread, and
+      // we hold it until we're actively listening for the completion
+      // notification. The new thread also grabs the lock before notifying
+      // us, which ensures that we've reached the waiting state before the
+      // notification happens. Otherwise it is possible for them to push out
+      // a notification before we start waiting for it, which means we hang
+      // when we do start listening and nothing comes in.
+      std::unique_lock lock(client_listener_mutex_);
+
       int (*func)(void*);
       void* (*funcp)(void*);
       switch (identifier_) {
@@ -80,7 +89,6 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
         g_core->LifecycleLog("logic thread bootstrap wait begin");
       }
 
-      std::unique_lock lock(client_listener_mutex_);
       client_listener_cv_.wait(lock, [this] { return bootstrapped_; });
 
       if (identifier_ == EventLoopID::kLogic) {
@@ -392,6 +400,14 @@ auto EventLoop::ThreadMain() -> int {
     // Mark ourself as bootstrapped and signal listeners so
     // anyone waiting for us to spin up can move along.
     bootstrapped_ = true;
+
+    {
+      // Momentarily grab this lock. This ensures that whoever launched us
+      // is now actively waiting for this notification. If we skipped this
+      // it would be possible to notify before they start listening which
+      // leads to a hang.
+      std::unique_lock lock(client_listener_mutex_);
+    }
     client_listener_cv_.notify_all();
 
     // Now just run our loop until we die.
@@ -663,6 +679,13 @@ void EventLoop::RunPendingRunnables() {
     }
   }
   if (do_notify_listeners) {
+    {
+      // Momentarily grab this lock. This ensures that whoever pushed us is
+      // now actively waiting for completion notification. If we skipped
+      // this it would be possible to notify before they start listening
+      // which leads to a hang.
+      std::unique_lock lock(client_listener_mutex_);
+    }
     client_listener_cv_.notify_all();
   }
 }
@@ -714,6 +737,16 @@ void EventLoop::PushRunnable(Runnable* runnable) {
 void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
   bool complete{};
   bool* complete_ptr{&complete};
+
+  // IMPORTANT: We grab this lock *before* pushing our runnable, and we hold
+  // it until we're actively listening for the completion notification. The
+  // receiver also grabs the lock before notifying us, which ensures that
+  // we've reached the waiting state before the notification happens.
+  // Otherwise it is possible for them to push out a notification before we
+  // start waiting for it, which means we hang when we do start listening
+  // and nothing comes in.
+  std::unique_lock lock(client_listener_mutex_);
+
   if (std::this_thread::get_id() == thread_id()) {
     FatalError(
         "PushRunnableSynchronous called from target thread;"
@@ -727,7 +760,6 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
   }
 
   // Now listen until our completion flag gets set.
-  std::unique_lock lock(client_listener_mutex_);
   client_listener_cv_.wait(lock, [complete_ptr] {
     // Go back to sleep on spurious wakeups
     // (if we're not actually complete yet).

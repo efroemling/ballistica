@@ -49,9 +49,15 @@ void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
     TooSlow();
   }
 
-  // If we're slightly behind, just don't send this step;
-  // the bg dynamics will slow down a bit but nothing will disappear this way.
-  if (step_count > 1) return;
+  // If we're slightly behind, just don't send this step; the bg dynamics
+  // will slow down a bit but nothing will disappear this way, which should
+  // be less jarring.
+  //
+  // HMMM; wondering if this should be limited in some way; it might lead to
+  // oddly slow feeling bg sims if things are consistently slow.
+  if (step_count > 1) {
+    return;
+  }
 
   // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes care
   // of disposing it when done.

@@ -72,10 +72,10 @@ class Logic {
   auto display_time_microsecs() { return display_time_microsecs_; }
 
   /// Return current display-time increment in seconds.
-  auto display_time_increment() -> double { return display_time_increment_; }
+  auto display_time_increment() { return display_time_increment_; }
 
   /// Return current display-time increment in microseconds.
-  auto display_time_increment_microsecs() -> double {
+  auto display_time_increment_microsecs() {
     return display_time_increment_microsecs_;
   }
 

@@ -2281,7 +2281,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // data.
   auto ref(Object::CompleteDeferred(step_data));
 
-  // Keep this in sync with the game thread's.
+  // Keep our quality in sync with the graphics thread's.
   graphics_quality_ = g_base->graphics_server->graphics_quality();
 
   cam_pos_ = step_data->cam_pos;
@@ -2352,6 +2352,13 @@ void BGDynamicsServer::Step(StepData* step_data) {
     step_count_--;
   }
   assert(step_count_ >= 0);
+
+  // Math sanity check.
+  if (step_count_ < 0) {
+    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too low ("
+                                        + std::to_string(step_count_)
+                                        + "); should not happen.");
+  }
 }
 
 void BGDynamicsServer::PushStep(StepData* data) {
@@ -2359,6 +2366,13 @@ void BGDynamicsServer::PushStep(StepData* data) {
   {
     std::scoped_lock lock(step_count_mutex_);
     step_count_++;
+  }
+
+  // Client thread should stop feeding us if we get clogged up.
+  if (step_count_ > 5) {
+    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too high ("
+                                        + std::to_string(step_count_)
+                                        + "); should not happen.");
   }
 
   event_loop()->PushCall([this, data] { Step(data); });

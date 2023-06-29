@@ -1,3 +1,9 @@
+### 1.7.22 (build 21154, api 8, 2023-06-28)
+
+- Fixed a very rare race condition when launching threads or sending synchronous
+  cross-thread messages. This was manifesting as one out of several thousand
+  server launches hanging.
+
 ### 1.7.21 (build 21152, api 8, 2023-06-27)
 
 - Fixed an issue where server builds would not always include collision meshes.
@@ -102,7 +108,7 @@
   to the local device.
 - The `ba.Context` class has been reworked a bit and is now `ba.ContextRef` to
   more accurately describe what it actually is. The default constructor
-  (`ba.ContextRef()`) will grab a reference to the current context.  To get a
+  (`ba.ContextRef()`) will grab a reference to the current context. To get a
   context-ref pointing to *no* context, do `ba.ContextRef.empty()`. UI stuff
   will now insist on being run with no context set. To get references to
   Activity/Session contexts, use the context() methods they provide.
@@ -127,7 +133,7 @@
   conversions' may want to keep an eye on this.
 - There is no longer a standalone `ba.playsound()` function. Both ui-sounds (
   acquired via `bauiv1.getsound()` and scene-sounds (acquired via
-  `bascenev1.getsound()`) now have a play() method on them for this purpose.  So
+  `bascenev1.getsound()`) now have a play() method on them for this purpose. So
   just search for any instances of 'playsound' in your code and change stuff
   like `ba.playsound(ba.getsound('error'))` to `bs.getsound('error').play()`.
   Playing sounds in timers is now especially nicer looking; instead of
@@ -303,8 +309,10 @@
   instances of `bastd.ui` with `bauiv1lib` and all other instances of `bastd`
   with `bascenev1lib`. That should mostly do it. Random tip: check out the
   `tools/pcommand mypy_files` as a handy tool to help get your mods updated.
-- (build 21057) Fixed an issue with news items erroring on the main menu (thanks for the heads up Rikko)
-- (build 21059) Fixed an issue where trying to add a new playlist would error (thanks for the heads up SEBASTIAN2059)
+- (build 21057) Fixed an issue with news items erroring on the main menu (thanks
+  for the heads up Rikko)
+- (build 21059) Fixed an issue where trying to add a new playlist would error (
+  thanks for the heads up SEBASTIAN2059)
 - (build 21059) Fixed meta scanning which was coming up empty. Note that games
   must now tag themselves via `ba_meta export bascenev1.GameActivity` instead of
   `ba_meta export game` to be discovered. Warnings will be issued if the old tag
@@ -350,7 +358,8 @@
   Android would not show correctly under the player.
 - (build 21084) Plugin UI now has a categories dropdown for showing only enabled
   or disabled plugins (Thanks vishal332008!)
-- (build 21095) Fixed an issue where certain buttons such as map selection buttons
+- (build 21095) Fixed an issue where certain buttons such as map selection
+  buttons
   would draw incorrectly.
 - (build 21106) Fixed an issue where in-game ping would always display green no
   matter how bad the ping was.
@@ -1235,7 +1244,7 @@
   cause a crash.
 - Fixed a case where an early fatal error could lead to a hung app and no error
   dialog.
-- Added environment variables which can override UI scale for testing.  Set
+- Added environment variables which can override UI scale for testing. Set
   `BA_FORCE_UI_SCALE` to small, medium or large.
 - Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old
   `ba.app.interface_type`, `ba.app.small_ui`, and `ba.app.med_ui` values.
