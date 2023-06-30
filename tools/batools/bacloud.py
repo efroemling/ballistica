@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.11
 # Released under the MIT License. See LICENSE for details.
 #
 """A tool for interacting with ballistica's cloud services.
@@ -37,7 +36,7 @@ TOOL_NAME = 'bacloud'
 TIMEOUT_SECONDS = 60 * 5
 
 # Server we talk to (can override via env var).
-BACLOUD_SERVER_URL = os.getenv('BACLOUD_SERVER_URL', 'https://ballistica.net')
+BACLOUD_SERVER = os.getenv('BACLOUD_SERVER', 'ballistica.net')
 
 
 @ioprepped
@@ -134,7 +133,7 @@ class App:
 
         response_content: str | None = None
 
-        url = f'{BACLOUD_SERVER_URL}/bacloudcmd'
+        url = f'https://{BACLOUD_SERVER}/bacloudcmd'
         headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
 
         rdata = {
@@ -369,15 +368,3 @@ class App:
                 for key, val in self._end_command_args.items():
                     # noinspection PyUnresolvedReferences
                     nextcall[1][key] = val
-
-
-if __name__ == '__main__':
-    try:
-        App().run()
-    except KeyboardInterrupt:
-        # Let's do a clean fail on keyboard interrupt.
-        # Can make this optional if a backtrace is ever useful.
-        sys.exit(1)
-    except CleanError as clean_exc:
-        clean_exc.pretty_print()
-        sys.exit(1)
