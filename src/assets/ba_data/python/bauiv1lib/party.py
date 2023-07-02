@@ -225,7 +225,10 @@ class PartyWindow(bui.Window):
     def _copy_msg(self, msg: str) -> None:
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(msg)
-            bui.screenmessage(bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+            bui.screenmessage(
+                bui.Lstr(resource='copyConfirmText'),
+                color=(0, 1, 0)
+            )
 
     def _on_menu_button_press(self) -> None:
         is_muted = bui.app.config.resolve('Chat Muted')
