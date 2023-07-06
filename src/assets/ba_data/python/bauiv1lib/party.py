@@ -226,7 +226,7 @@ class PartyWindow(bui.Window):
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(msg)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'), 
+                bui.Lstr(resource='copyConfirmText'),
                 color=(0, 1, 0)
             )
 
