@@ -11,7 +11,7 @@ import datetime
 import itertools
 from enum import Enum
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
 from threading import Thread, current_thread, Lock
 
@@ -91,6 +91,14 @@ class LogEntry:
     message: Annotated[str, IOAttrs('m')]
     level: Annotated[LogLevel, IOAttrs('l')]
     time: Annotated[datetime.datetime, IOAttrs('t')]
+
+    # We support arbitrary string labels per log entry which can be
+    # incorporated into custom log processing. To populate this, our
+    # LogHandler class looks for a 'labels' dict passed in the optional
+    # 'extra' dict arg to standard Python log calls.
+    labels: Annotated[
+        dict[str, str], IOAttrs('la', store_default=False)
+    ] = field(default_factory=dict)
 
 
 @ioprepped
@@ -300,6 +308,7 @@ class LogHandler(logging.Handler):
         return False
 
     def emit(self, record: logging.LogRecord) -> None:
+        # pylint: disable=too-many-branches
         if __debug__:
             starttime = time.monotonic()
 
@@ -324,6 +333,12 @@ class LogHandler(logging.Handler):
             record.args
         )
 
+        # Note: just assuming types are correct here, but they'll be
+        # checked properly when the resulting LogEntry gets exported.
+        labels: dict[str, str] | None = getattr(record, 'labels', None)
+        if labels is None:
+            labels = {}
+
         if fast_path:
             if __debug__:
                 formattime = echotime = time.monotonic()
@@ -334,6 +349,7 @@ class LogHandler(logging.Handler):
                     record.levelno,
                     record.created,
                     record,
+                    labels,
                 )
             )
         else:
@@ -366,6 +382,7 @@ class LogHandler(logging.Handler):
                     record.levelno,
                     record.created,
                     msg,
+                    labels,
                 )
             )
 
@@ -408,6 +425,7 @@ class LogHandler(logging.Handler):
         levelno: int,
         created: float,
         message: str | logging.LogRecord,
+        labels: dict[str, str],
     ) -> None:
         try:
             # If they passed a raw record here, bake it down to a string.
@@ -422,6 +440,7 @@ class LogHandler(logging.Handler):
                     time=datetime.datetime.fromtimestamp(
                         created, datetime.timezone.utc
                     ),
+                    labels=labels,
                 )
             )
         except Exception:

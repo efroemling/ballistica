@@ -1,8 +1,10 @@
-### 1.7.22 (build 21154, api 8, 2023-06-28)
+### 1.7.22 (build 21156, api 8, 2023-07-08)
 
 - Fixed a very rare race condition when launching threads or sending synchronous
   cross-thread messages. This was manifesting as one out of several thousand
   server launches hanging.
+- Changed health box from a red cross to a green cross (turns out games aren't
+  supposed to use red crosses for health for legal reasons).
 
 ### 1.7.21 (build 21152, api 8, 2023-06-27)
 

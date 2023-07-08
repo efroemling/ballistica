@@ -8,12 +8,10 @@ from __future__ import annotations
 import os
 import logging
 import asyncio
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, assert_type
 from dataclasses import dataclass
 
-from typing_extensions import assert_type
 import pytest
-
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
 from efro.message import (
