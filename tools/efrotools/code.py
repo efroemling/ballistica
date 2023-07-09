@@ -24,7 +24,7 @@ from efrotools.filecache import FileCache
 
 # pylint: enable=useless-suppression, wrong-import-order
 
-black_mode = black.Mode(line_length=80)
+black_mode = black.Mode(line_length=80)  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
     from typing import Any
@@ -312,7 +312,7 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
 def format_python_str(code: str) -> str:
     """Run our Python formatting on the provided inline code."""
 
-    return black.format_str(code, mode=black_mode)  # type: ignore
+    return black.format_str(code, mode=black_mode)
 
 
 def _should_include_script(fnamefull: str) -> bool:
