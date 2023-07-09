@@ -14,6 +14,8 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import black
+
 from efro.error import CleanError
 
 # WTF Pylint. This is our package. It goes last.
@@ -22,6 +24,7 @@ from efrotools.filecache import FileCache
 
 # pylint: enable=useless-suppression, wrong-import-order
 
+black_mode = black.Mode(line_length=80)
 
 if TYPE_CHECKING:
     from typing import Any
@@ -309,11 +312,7 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
 def format_python_str(code: str) -> str:
     """Run our Python formatting on the provided inline code."""
 
-    return subprocess.run(
-        black_base_args() + ['--code', code],
-        capture_output=True,
-        check=True,
-    ).stdout.decode()
+    return black.format_str(code, mode=black_mode)
 
 
 def _should_include_script(fnamefull: str) -> bool:
