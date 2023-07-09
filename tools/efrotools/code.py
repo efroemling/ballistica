@@ -312,7 +312,7 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
 def format_python_str(code: str) -> str:
     """Run our Python formatting on the provided inline code."""
 
-    return black.format_str(code, mode=black_mode)  # type: ignore[attr-defined]
+    return black.format_str(code, mode=black_mode)  # type: ignore
 
 
 def _should_include_script(fnamefull: str) -> bool:
