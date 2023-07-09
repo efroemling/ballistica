@@ -614,6 +614,9 @@ def _apply_pylint_run_to_cache(
     # Add a few that this package itself triggers.
     ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
 
+    # Add black
+    ignored_untracked_deps |= {'black'}
+
     # EW; as of Python 3.9, suddenly I'm seeing system modules showing up
     # here where I wasn't before. I wonder what changed. Anyway, explicitly
     # suppressing them here but should come up with a more robust system
