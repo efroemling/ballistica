@@ -21,6 +21,12 @@ class BasePlatform {
   /// Instantiate the appropriate Graphics subclass for the current environment.
   static auto CreateGraphics() -> Graphics*;
 
+#pragma mark APP LIFECYCLE -----------------------------------------------------
+
+  /// Inform the platform that all subsystems are up and running and it can
+  /// start talking to them.
+  virtual void OnMainThreadStartAppComplete();
+
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
   void Purchase(const std::string& item);

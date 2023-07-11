@@ -23,16 +23,20 @@ Input::Input() = default;
 
 template <typename F>
 void SafePushCall(const char* desc, const F& lambda) {
+  // Note: originally this call was created to silently ignore early events
+  // coming in before app stuff was up and running, but that was a bad idea,
+  // as it caused us to ignore device-create messages sometimes which lead
+  // to other issues later. So now I'm trying to fix those problems at the
+  // source, but am leaving this intact for now as a clean way to catch
+  // anything that needs fixing.
   if (!g_base) {
-    BA_LOG_ONCE(LogLevel::kError,
-                std::string(desc) + " called with null g_base.");
+    FatalError(std::string(desc) + " called with null g_base.");
     return;
   }
   if (auto* loop = g_base->logic->event_loop()) {
     loop->PushCall(lambda);
   } else {
-    BA_LOG_ONCE(LogLevel::kError,
-                std::string(desc) + " called before logic event loop created.");
+    FatalError(std::string(desc) + " called before logic event loop created.");
   }
 }
 
@@ -322,7 +326,9 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   // based off how many are connected.
   device->set_number(GetNewNumberedIdentifier(device->GetRawDeviceName(),
                                               device->GetDeviceIdentifier()));
-  device->ConnectionComplete();  // Let it do any announcing it wants to.
+
+  // Let the device know it's been added (for custom announcements, etc.)
+  device->OnAdded();
 
   // Immediately apply controls if initial app-config has already been
   // applied; otherwise it'll happen as part of that.

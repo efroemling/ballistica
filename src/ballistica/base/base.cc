@@ -73,45 +73,45 @@ BaseFeatureSet::BaseFeatureSet()
 }
 
 void BaseFeatureSet::OnModuleExec(PyObject* module) {
-  // Ok, our feature-set's Python module is getting imported.
-  // Like any normal Python module, we take this opportunity to
-  // import/create the stuff we use.
+  // Ok, our feature-set's Python module is getting imported. Like any
+  // normal Python module, we take this opportunity to import/create the
+  // stuff we use.
 
-  // Importing core should always be the first thing we do.
-  // Various ballistica functionality will fail if this has not been done.
+  // Importing core should always be the first thing we do. Various
+  // ballistica functionality will fail if this has not been done.
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
   g_core->LifecycleLog("_babase exec begin");
 
-  // Want to run this at the last possible moment before spinning up
-  // our BaseFeatureSet. This locks in baenv customizations.
+  // Want to run this at the last possible moment before spinning up our
+  // BaseFeatureSet. This locks in baenv customizations.
   g_core->python->ApplyBaEnvConfig();
 
   // Create our feature-set's C++ front-end.
   assert(g_base == nullptr);
   g_base = new BaseFeatureSet();
 
-  // Core uses some of our functionality when we're present. Let them
-  // know we're now present.
+  // Core uses some of our functionality when we're present. Let them know
+  // we're now present.
   core::g_base_soft = g_base;
 
-  // Define our classes.
-  // NOTE: Normally we'd define our classes *after* we import stuff
-  // (like a regular Python module generally would) but for now we need
-  // FeatureSetData to exist or no modules can call StoreOnPythonModule
-  // which causes problems so we have to do this early. Maybe can revisit
-  // later when things are more untangled.
+  // Define our native Python classes.
+  //
+  // NOTE: Normally we'd define our classes *after* we import stuff (like a
+  // regular Python module generally would) but we need FeatureSetData to
+  // exist *before* we call StoreOnPythonModule, so we have to do this
+  // early.
   g_base->python->AddPythonClasses(module);
 
-  // Store our C++ front-end with our Python module.
-  // This is what allows others to 'import' our C++ front end.
+  // Store our C++ front-end with our Python module. This is what allows
+  // others to 'import' our C++ front end.
   g_base->StoreOnPythonModule(module);
 
   // Import all the Python stuff we use.
   g_base->python->ImportPythonObjs();
 
-  // Run some sanity checks/etc.
+  // Run some sanity checks, wire up our log handler, etc.
   auto result = g_base->python->objs()
                     .Get(BasePython::ObjID::kOnNativeModuleImportCall)
                     .Call();
@@ -119,8 +119,9 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
 
-  // ..and because baenv is now feeding us logs, we can push any logs through
-  // that we've been holding on to.
+  // ..and because Python is now feeding us logs, we can push any logs
+  // through that we've been holding on to and start forwarding log calls as
+  // they happen.
   g_core->python->EnablePythonLoggingCalls();
 
   // Marker we pop down at the very end so other modules can run sanity
@@ -170,7 +171,7 @@ void BaseFeatureSet::StartApp() {
   // Currently limiting this to once per process.
   BA_PRECONDITION(!called_start_app_);
   called_start_app_ = true;
-  assert(!app_running_);  // Shouldn't be possible.
+  assert(!app_started_);  // Shouldn't be possible.
 
   g_core->LifecycleLog("start-app begin (main thread)");
 
@@ -196,13 +197,15 @@ void BaseFeatureSet::StartApp() {
   network_writer->OnMainThreadStartApp();
   audio_server->OnMainThreadStartApp();
   assets_server->OnMainThreadStartApp();
-  g_core->platform->OnMainThreadStartApp();  // FIXME SHOULD NOT NEED THIS
   app->OnMainThreadStartApp();
 
   // Take note that we're now 'running'. Various code such as anything that
   // pushes messages to threads can watch for this state to avoid crashing
   // if called early.
-  app_running_ = true;
+  app_started_ = true;
+
+  // Inform anyone who wants to know that we're done starting.
+  platform->OnMainThreadStartAppComplete();
 
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation and otherwise get the ball
@@ -504,7 +507,7 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
 
   // Let the Python layer handle this if possible. PushCall functionality
   // requires the app to be running, and the call itself requires plus.
-  if (app_running_ && HavePlus()) {
+  if (app_started_ && HavePlus()) {
     python->objs().PushCall(BasePython::ObjID::kHandleV1CloudLogCall);
     return;
   }
@@ -654,7 +657,7 @@ void BaseFeatureSet::PrintContextUnavailable() {
 void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id) {
   // Watch for uses before we've created our event loop;
   // should fix them at the source.
-  assert(IsAppRunning());
+  assert(IsAppStarted());
 
   if (auto* loop = logic->event_loop()) {
     logic->event_loop()->PushCall([objset, id] {
@@ -672,7 +675,7 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
                                    const std::string& arg) {
   // Watch for uses before we've created our event loop;
   // should fix them at the source.
-  assert(IsAppRunning());
+  assert(IsAppStarted());
 
   logic->event_loop()->PushCall([objset, id, arg] {
     ScopedSetContext ssc(nullptr);
@@ -682,6 +685,6 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
   });
 }
 
-auto BaseFeatureSet::IsAppRunning() const -> bool { return app_running_; }
+auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
 
 }  // namespace ballistica::base

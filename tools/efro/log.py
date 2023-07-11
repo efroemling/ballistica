@@ -17,7 +17,7 @@ from threading import Thread, current_thread, Lock
 
 from efro.util import utc_now
 from efro.call import tpartial
-from efro.terminal import TerminalColor
+from efro.terminal import Clr
 from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 
 if TYPE_CHECKING:
@@ -69,16 +69,11 @@ LEVELNO_LOG_LEVELS = {
 }
 
 LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
-    logging.DEBUG: (TerminalColor.CYAN.value, TerminalColor.RESET.value),
+    logging.DEBUG: (Clr.CYN, Clr.RST),
     logging.INFO: ('', ''),
-    logging.WARNING: (TerminalColor.YELLOW.value, TerminalColor.RESET.value),
-    logging.ERROR: (TerminalColor.RED.value, TerminalColor.RESET.value),
-    logging.CRITICAL: (
-        TerminalColor.STRONG_MAGENTA.value
-        + TerminalColor.BOLD.value
-        + TerminalColor.BG_BLACK.value,
-        TerminalColor.RESET.value,
-    ),
+    logging.WARNING: (Clr.YLW, Clr.RST),
+    logging.ERROR: (Clr.RED, Clr.RST),
+    logging.CRITICAL: (Clr.SMAG + Clr.BLD + Clr.BLK, Clr.RST),
 }
 
 
@@ -365,10 +360,7 @@ class LogHandler(logging.Handler):
             # make tight debugging harder.
             if self._echofile is not None:
                 ends = LEVELNO_COLOR_CODES.get(record.levelno)
-                namepre = (
-                    f'{TerminalColor.WHITE.value}{record.name}:'
-                    f'{TerminalColor.RESET.value} '
-                )
+                namepre = f'{Clr.WHT}{record.name}:{Clr.RST} '
                 if ends is not None:
                     self._echofile.write(f'{namepre}{ends[0]}{msg}{ends[1]}\n')
                 else:

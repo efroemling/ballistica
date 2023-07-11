@@ -296,4 +296,6 @@ void BasePlatform::GetCursorPosition(float* x, float* y) {
   *y = g_base->input->cursor_pos_y();
 }
 
+void BasePlatform::OnMainThreadStartAppComplete() {}
+
 }  // namespace ballistica::base

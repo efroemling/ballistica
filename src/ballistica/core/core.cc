@@ -110,6 +110,7 @@ void CoreFeatureSet::PostInit() {
   }
 
   // Enable extra timing logs via env var.
+  // FIXME: Kill this or move it to CoreConfig.
   const char* debug_timing_env = getenv("BA_DEBUG_TIMING");
   if (debug_timing_env != nullptr && !strcmp(debug_timing_env, "1")) {
     debug_timing = true;

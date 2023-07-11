@@ -669,8 +669,6 @@ auto CorePlatform::GetTextTextureData(void* tex) -> uint8_t* {
   throw Exception();
 }
 
-void CorePlatform::OnMainThreadStartApp() {}
-
 void CorePlatform::OnAppStart() {
   // assert(g_base_soft && g_base_soft->InLogicThread());
 }

@@ -43,7 +43,7 @@ class BaseSoftInterface {
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id) = 0;
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                              const std::string& arg) = 0;
-  virtual auto IsAppRunning() const -> bool = 0;
+  virtual auto IsAppStarted() const -> bool = 0;
 };
 
 }  // namespace ballistica::core

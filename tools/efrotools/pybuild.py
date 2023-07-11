@@ -717,9 +717,11 @@ def _patch_py_wreadlink_test() -> None:
         txt,
         "    cbuf[res] = '\\0'; /* buf will be null terminated */",
         (
-            '    char dlog[256];\n'
-            '    snprintf(dlog, sizeof(dlog), "hello world res=%d mpl=%d",'
-            ' (int)res, (int)MAXPATHLEN);\n'
+            '    char dlog[512];\n'
+            '    snprintf(dlog, sizeof(dlog), "hello world1 res=%d mpl=%d'
+            ' eq1=%d eq2=%d slen=%d path=\'%s\'",'
+            ' (int)res, (int)MAXPATHLEN, (int)(res == -1),'
+            ' (int)((size_t)res == cbuf_len), strlen(cpath), cpath);\n'
             '    Py_BallisticaLowLevelDebugLog(dlog);\n'
             "    cbuf[res] = '\\0'; /* buf will be null terminated */"
         ),

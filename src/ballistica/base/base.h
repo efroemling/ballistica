@@ -665,10 +665,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
 
-  /// Have we bootstrapped and started running an app?
+  /// Has StartApp been called (and completely finished its work)?
   /// Code that sends calls/messages to other threads or otherwise uses
   /// app functionality may want to check this to avoid crashes.
-  auto IsAppRunning() const -> bool override;
+  auto IsAppStarted() const -> bool override;
 
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,
@@ -741,7 +741,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool tried_importing_classic_{};
   bool tried_importing_ui_v1_{};
   bool called_start_app_{};
-  bool app_running_{};
+  bool app_started_{};
   bool called_run_app_to_completion_{};
   bool base_import_completed_{};
   bool base_native_import_completed_{};

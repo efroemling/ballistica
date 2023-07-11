@@ -113,9 +113,9 @@ class InputDevice : public Object {
   /// a string.
   virtual auto GetDeviceIdentifier() -> std::string { return ""; }
 
-  /// Called for all devices when they've successfully been added
-  /// to the input-device list, have a valid ID, name, etc.
-  virtual void ConnectionComplete() {}
+  /// Called for all devices in the logic thread when they've successfully
+  /// been added to the input-device list, have a valid ID, name, etc.
+  virtual void OnAdded() {}
 
   void UpdateLastInputTime();
 

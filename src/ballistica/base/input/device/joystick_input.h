@@ -77,7 +77,7 @@ class JoystickInput : public InputDevice {
   auto GetRawDeviceName() -> std::string override;
   auto GetDeviceExtraDescription() -> std::string override;
   auto GetDeviceIdentifier() -> std::string override;
-  void ConnectionComplete() override;
+  void OnAdded() override;
 
   auto start_button_activates_default_widget() -> bool override {
     return start_button_activates_default_widget_;

@@ -51,10 +51,6 @@ class CorePlatform {
 
   virtual void WillExitMain(bool errored);
 
-  /// Inform the platform that all subsystems are up and running and it can
-  /// start talking to them.
-  virtual void OnMainThreadStartApp();
-
   virtual void OnAppStart();
   virtual void OnAppPause();
   virtual void OnAppResume();

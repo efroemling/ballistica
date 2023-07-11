@@ -317,7 +317,7 @@ JoystickInput::~JoystickInput() {
   }
 }
 
-void JoystickInput::ConnectionComplete() { assert(g_base->InLogicThread()); }
+void JoystickInput::OnAdded() { assert(g_base->InLogicThread()); }
 
 auto JoystickInput::ShouldBeHiddenFromUser() -> bool {
   std::string d_name = GetDeviceName();
