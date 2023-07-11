@@ -646,7 +646,13 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
     patch_modules_setup('.', 'android')
-    # _patch_setup_file('android', '?', '?')
+
+    # Add our low level debug call.
+    _patch_py_h()
+
+    # Use that call...
+    _patch_py_wreadlink_test()
+
     # _patch_py_ssl()
 
 
@@ -702,6 +708,51 @@ def android_patch_ssl() -> None:
             '# endif // 0\n',
         )
         writefile(fname, txt)
+
+
+def _patch_py_wreadlink_test() -> None:
+    fname = 'Python/fileutils.c'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        "    cbuf[res] = '\\0'; /* buf will be null terminated */",
+        (
+            '    char dlog[256];\n'
+            '    snprintf(dlog, sizeof(dlog), "hello world res=%d mpl=%d",'
+            ' (int)res, (int)MAXPATHLEN);\n'
+            '    Py_BallisticaLowLevelDebugLog(dlog);\n'
+            "    cbuf[res] = '\\0'; /* buf will be null terminated */"
+        ),
+    )
+    writefile(fname, txt)
+
+
+def _patch_py_h() -> None:
+    fname = 'Include/fileutils.h'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        '\n#ifdef __cplusplus\n}\n',
+        (
+            '\n'
+            '/* ericf hack for debugging */\n'
+            '#define PY_HAVE_BALLISTICA_LOW_LEVEL_DEBUG_LOG\n'
+            'extern void (*Py_BallisticaLowLevelDebugLog)(const char* msg);\n'
+            '\n'
+            '#ifdef __cplusplus\n}\n'
+        ),
+    )
+    writefile(fname, txt)
+
+    fname = 'Python/fileutils.c'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        '    _Py_END_SUPPRESS_IPH\n}',
+        '    _Py_END_SUPPRESS_IPH\n}\n\n'
+        'void (*Py_BallisticaLowLevelDebugLog)(const char* msg) = NULL;\n',
+    )
+    writefile(fname, txt)
 
 
 def _patch_py_ssl() -> None:

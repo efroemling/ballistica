@@ -212,7 +212,7 @@ enum class SpecialChar {
   kTrophy0b,
   kTrophy4,
   kLocalAccount,
-  kAlibabaLogo,
+  kExplodinaryLogo,
   kFlagUnitedStates,
   kFlagMexico,
   kFlagGermany,

@@ -56,18 +56,30 @@ void InputDevice::RequestPlayer() {
   last_input_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
+  // Tracking down a bug.
+  BA_PRECONDITION_FATAL(delegate_.Exists());
   delegate_->RequestPlayer();
 }
 
 // If we're attached to a remote player, ship completed packets every now and
 // then.
-void InputDevice::Update() { delegate_->Update(); }
+void InputDevice::Update() {
+  // Tracking down a bug.
+  BA_PRECONDITION_FATAL(delegate_.Exists());
+  delegate_->Update();
+}
 
 auto InputDevice::AttachedToPlayer() const -> bool {
+  // Tracking down a bug.
+  BA_PRECONDITION_FATAL(delegate_.Exists());
   return delegate_->AttachedToPlayer();
 }
 
-void InputDevice::DetachFromPlayer() { delegate_->DetachFromPlayer(); }
+void InputDevice::DetachFromPlayer() {
+  // Tracking down a bug.
+  BA_PRECONDITION_FATAL(delegate_.Exists());
+  delegate_->DetachFromPlayer();
+}
 
 void InputDevice::UpdateLastInputTime() {
   // Keep our own individual time, and also let
@@ -83,6 +95,8 @@ void InputDevice::InputCommand(InputType type, float value) {
   // Make note that we're being used in some way.
   UpdateLastInputTime();
 
+  // Tracking down a bug.
+  BA_PRECONDITION_FATAL(delegate_.Exists());
   delegate_->InputCommand(type, value);
 }
 

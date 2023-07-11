@@ -1,10 +1,16 @@
-### 1.7.22 (build 21156, api 8, 2023-07-08)
+### 1.7.22 (build 21159, api 8, 2023-07-10)
 
 - Fixed a very rare race condition when launching threads or sending synchronous
   cross-thread messages. This was manifesting as one out of several thousand
   server launches hanging.
 - Changed health box from a red cross to a green cross (turns out games aren't
   supposed to use red crosses for health for legal reasons).
+- Cleaned up how Android sets up its OpenGL context; it should be more flexible
+  with the config formats it allows may might fix rare cases of graphics setup
+  failing (such as with latest Android emulator for me). Please holler if you
+  see any graphics wonkiness with this update.
+- Added SoK's explodinary icon to the game's custom text drawing because SoK is
+  awesome.
 
 ### 1.7.21 (build 21152, api 8, 2023-06-27)
 

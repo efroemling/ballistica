@@ -525,9 +525,9 @@ class EditProfileWindow(bui.Window):
                     bui.SpecialChar.GAME_CIRCLE_LOGO,
                     bui.SpecialChar.OUYA_LOGO,
                     bui.SpecialChar.LOCAL_ACCOUNT,
-                    bui.SpecialChar.ALIBABA_LOGO,
                     bui.SpecialChar.OCULUS_LOGO,
                     bui.SpecialChar.NVIDIA_LOGO,
+                    bui.SpecialChar.V2_LOGO,
                 ]
             ]
         )

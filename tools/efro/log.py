@@ -314,8 +314,7 @@ class LogHandler(logging.Handler):
 
         # Called by logging to send us records.
 
-        # Special case: filter out this common extra-chatty category.
-        # TODO - perhaps should use a standard logging.Filter for this.
+        # TODO - kill this.
         if (
             self._suppress_non_root_debug
             and record.name != 'root'
@@ -366,10 +365,14 @@ class LogHandler(logging.Handler):
             # make tight debugging harder.
             if self._echofile is not None:
                 ends = LEVELNO_COLOR_CODES.get(record.levelno)
+                namepre = (
+                    f'{TerminalColor.WHITE.value}{record.name}:'
+                    f'{TerminalColor.RESET.value} '
+                )
                 if ends is not None:
-                    self._echofile.write(f'{ends[0]}{msg}{ends[1]}\n')
+                    self._echofile.write(f'{namepre}{ends[0]}{msg}{ends[1]}\n')
                 else:
-                    self._echofile.write(f'{msg}\n')
+                    self._echofile.write(f'{namepre}{msg}\n')
                 self._echofile.flush()
 
             if __debug__:
@@ -659,6 +662,9 @@ def setup_logging(
     had_previous_handlers = bool(logging.root.handlers)
     logging.basicConfig(
         level=lmap[level],
+        # format='%(name)s: %(message)s',
+        # We dump *only* the message here. We pass various log record bits
+        # around and format things fancier where they end up.
         format='%(message)s',
         handlers=[loghandler],
         force=True,

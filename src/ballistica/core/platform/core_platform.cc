@@ -83,6 +83,15 @@
 #error no BA_PLATFORM_CLASS defined for this platform
 #endif
 
+// A call that can be used by custom built native libraries (Python, etc.)
+// to forward along debug messages to us.
+// FIXME: Reconcile this with our existing C++ version. This one does not
+//  require the engine to be spun up so it better suited for things like
+//  debugging native libs.
+extern "C" {
+void BallisticaLowLevelDebugLog(const char* msg) {}
+}
+
 namespace ballistica::core {
 
 auto CorePlatform::Create() -> CorePlatform* {

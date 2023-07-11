@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21156;
+const int kEngineBuildNumber = 21159;
 const char* kEngineVersion = "1.7.22";
 
 auto MonolithicMain(const core::CoreConfig& core_config) -> int {
@@ -63,6 +63,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
+    // TEMP - bug hunting.
+    l_core->platform->DebugLog("mm1");
+
     // If a command was passed, simply run it and exit. We want to act
     // simply as a Python interpreter in that case; we don't do any
     // environment setup (aside from the bits core does automatically such
@@ -74,6 +77,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
                          .Exec(true, nullptr, nullptr);
       exit(success ? 0 : 1);
     }
+
+    // TEMP - bug hunting.
+    l_core->platform->DebugLog("mm2");
 
     // Ok, looks like we're doing a standard monolithic-mode app run.
 
@@ -87,6 +93,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // those modules get loaded from in the first place.
     l_core->python->MonolithicModeBaEnvConfigure();
 
+    // TEMP - bug hunting.
+    l_core->platform->DebugLog("mm3");
+
     // We need the base feature-set to run a full app but we don't have a hard
     // dependency to it. Let's see if it's available.
     l_base = l_core->SoftImportBase();
@@ -98,6 +107,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // Phase 2: "The pieces are moving."
     // -------------------------------------------------------------------------
 
+    // TEMP - bug hunting.
+    l_core->platform->DebugLog("mm4");
+
     // Spin up all app machinery such as threads and subsystems. This gets
     // things ready to rock, but there's no actual rocking quite yet.
     l_base->StartApp();
@@ -105,6 +117,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // -------------------------------------------------------------------------
     // Phase 3: "We come to it at last; the great battle of our time."
     // -------------------------------------------------------------------------
+
+    // TEMP - bug hunting.
+    l_core->platform->DebugLog("mm5");
 
     // At this point we unleash the beast and then simply process events
     // until the app exits (or we return from this function and let the
