@@ -422,6 +422,7 @@
       <w>cbresults</w>
       <w>cbtn</w>
       <w>cbtnoffs</w>
+      <w>cbuf</w>
       <w>ccfgs</w>
       <w>ccind</w>
       <w>ccode</w>
@@ -939,6 +940,7 @@
       <w>expectedsig</w>
       <w>explodable</w>
       <w>explodey</w>
+      <w>explodinary</w>
       <w>exportlist</w>
       <w>exportoptions</w>
       <w>exportoptionspath</w>
@@ -1861,6 +1863,7 @@
       <w>namecap</w>
       <w>namedarg</w>
       <w>namel</w>
+      <w>namepre</w>
       <w>nametext</w>
       <w>nameu</w>
       <w>nameval</w>
@@ -2867,6 +2870,7 @@
       <w>termcolors</w>
       <w>termios</w>
       <w>testbuffer</w>
+      <w>testbuild</w>
       <w>testcall</w>
       <w>testcallable</w>
       <w>testcapi</w>
@@ -3190,6 +3194,7 @@
       <w>wintdir</w>
       <w>wintype</w>
       <w>wmsbe</w>
+      <w>wonkiness</w>
       <w>wonkypaths</w>
       <w>wonkysuffix</w>
       <w>woohoo</w>
@@ -3201,6 +3206,7 @@
       <w>woutdir</w>
       <w>wpath</w>
       <w>wprjp</w>
+      <w>wreadlink</w>
       <w>wref</w>
       <w>writeauxiliaryfile</w>
       <w>writeclasses</w>

@@ -44,7 +44,10 @@ class InputDeviceDelegate : public Object {
   /// An input-device-delegate should never outlive its input_device;
   /// our accessor returns a reference to show this does not need
   /// to be checked.
-  auto input_device() const -> InputDevice& { return *input_device_; }
+  auto input_device() const -> InputDevice& {
+    BA_PRECONDITION_FATAL(input_device_.Exists());
+    return *input_device_;
+  }
   void set_input_device(InputDevice* device);
   auto InputDeviceExists() const -> bool { return input_device_.Exists(); }
 

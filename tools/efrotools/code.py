@@ -239,7 +239,7 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     out = sorted(codefilenames)
 
     # Watch for breakage.
-    if not out:
+    if places and not out:
         print(
             'WARNING: get_code_filename returning no results;'
             ' is something broken?',
@@ -358,7 +358,7 @@ def get_script_filenames(projroot: Path) -> list[str]:
     out = sorted(list(f for f in filenames if 'flycheck_' not in f))
 
     # Watch for breakage.
-    if not out:
+    if places and not out:
         print(
             'WARNING: get_script_filename returning no results;'
             ' is something broken?',

@@ -10,6 +10,11 @@
 
 namespace ballistica::core {
 
+static void LowLevelPythonDebugLog(const char* msg) {
+  assert(g_core);
+  g_core->platform->DebugLog(msg);
+}
+
 void CorePython::ApplyBaEnvConfig() {
   // Fetch the env-config (creates it if need be).
   auto envcfg = objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
@@ -20,6 +25,11 @@ void CorePython::ApplyBaEnvConfig() {
 void CorePython::InitPython() {
   assert(g_core->InMainThread());
   assert(g_buildconfig.monolithic_build());
+
+  // Install our low level logger in our custom Python builds.
+#ifdef PY_HAVE_BALLISTICA_LOW_LEVEL_DEBUG_LOG
+  Py_BallisticaLowLevelDebugLog = LowLevelPythonDebugLog;
+#endif
 
   // Flip on some extra runtime debugging options in debug builds.
   // https://docs.python.org/3/library/devmode.html#devmode

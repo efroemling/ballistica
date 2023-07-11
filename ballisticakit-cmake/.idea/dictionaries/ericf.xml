@@ -277,6 +277,7 @@
       <w>cbgn</w>
       <w>cbresults</w>
       <w>cbtnoffs</w>
+      <w>cbuf</w>
       <w>ccdd</w>
       <w>ccind</w>
       <w>ccontext</w>
@@ -562,6 +563,7 @@
       <w>expbool</w>
       <w>expectedsig</w>
       <w>expl</w>
+      <w>explodinary</w>
       <w>exportlist</w>
       <w>exporttypestr</w>
       <w>expsrc</w>
@@ -1071,6 +1073,7 @@
       <w>mywidget</w>
       <w>namecap</w>
       <w>namel</w>
+      <w>namepre</w>
       <w>nameu</w>
       <w>nameval</w>
       <w>nbuffer</w>
@@ -1648,6 +1651,7 @@
       <w>templatefs</w>
       <w>tempvec</w>
       <w>tenum</w>
+      <w>testbuild</w>
       <w>testclinic</w>
       <w>testint</w>
       <w>testinternalcapi</w>
@@ -1841,6 +1845,7 @@
       <w>worldspace</w>
       <w>woutdir</w>
       <w>wprjp</w>
+      <w>wreadlink</w>
       <w>writeauxiliaryfile</w>
       <w>wspath</w>
       <w>wsroot</w>

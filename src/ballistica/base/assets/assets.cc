@@ -1259,7 +1259,7 @@ void Assets::InitSpecialChars() {
   special_char_strings_[SpecialChar::kTrophy0b] = "\xee\x80\xAE";
   special_char_strings_[SpecialChar::kTrophy4] = "\xee\x80\xAF";
   special_char_strings_[SpecialChar::kLocalAccount] = "\xee\x80\xB0";
-  special_char_strings_[SpecialChar::kAlibabaLogo] = "\xee\x80\xB1";
+  special_char_strings_[SpecialChar::kExplodinaryLogo] = "\xee\x80\xB1";
 
   special_char_strings_[SpecialChar::kFlagUnitedStates] = "\xee\x80\xB2";
   special_char_strings_[SpecialChar::kFlagMexico] = "\xee\x80\xB3";
