@@ -1,4 +1,5 @@
 ### 1.7.23 (build 21164, api 8, 2023-07-11)
+- Network security improvements.
 
 ### 1.7.22 (build 21162, api 8, 2023-07-11)
 
