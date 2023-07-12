@@ -128,7 +128,7 @@ class PartyWindow(bui.Window):
             color=(0.4, 0.6, 0.3),
         )
         self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, left_border=-200,  margin=0
+            parent=self._scrollwidget, border=2, left_border=-200, margin=0
         )
         bui.widget(edit=self._menu_button, down_widget=self._columnwidget)
 
@@ -226,8 +226,7 @@ class PartyWindow(bui.Window):
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(msg)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'),
-                color=(0, 1, 0)
+                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
             )
 
     def _on_menu_button_press(self) -> None:
