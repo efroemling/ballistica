@@ -317,7 +317,7 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
 
 void CorePython::AcquireGIL() {
   assert(g_base_soft && g_base_soft->InLogicThread());
-  auto debug_timing{g_core->debug_timing};
+  auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startms{debug_timing ? CorePlatform::GetCurrentMillisecs() : 0};
 
   if (logic_thread_state_) {

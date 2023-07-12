@@ -13,6 +13,7 @@ namespace ballistica::core {
 // Kicks out of arg processing and tells the app to return an error code.
 class BadArgsException : public ::std::exception {};
 
+/// Look for a special case such as --help.
 static auto IsSingleArgSpecialCase(int argc, char** argv, const char* arg_long,
                                    const char* arg_short = nullptr) -> bool {
   // See if the args exists *anywhere*.
@@ -88,6 +89,11 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
   if (auto* envval = getenv("BA_DEBUGGER_ATTACHED")) {
     if (!strcmp(envval, "1")) {
       cfg.debugger_attached = true;
+    }
+  }
+  if (auto* envval = getenv("BA_DEBUG_TIMING")) {
+    if (!strcmp(envval, "1")) {
+      cfg.debug_timing = true;
     }
   }
 

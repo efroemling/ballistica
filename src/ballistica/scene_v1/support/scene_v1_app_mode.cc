@@ -501,7 +501,8 @@ void SceneV1AppMode::StepDisplayTime() {
   in_update_ = false;
 
   // Report excessively long updates.
-  if (g_core->debug_timing && app_time >= next_long_update_report_time_) {
+  if (g_core->core_config().debug_timing
+      && app_time >= next_long_update_report_time_) {
     auto duration{core::CorePlatform::GetCurrentMillisecs() - startms};
 
     // Complain when our full update takes longer than 1/60th second.

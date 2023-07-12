@@ -64,9 +64,58 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
 }
 
 void CoreFeatureSet::PostInit() {
-  // Some of this stuff accesses g_core so we need to run it *after*
-  // assigning our singleton.
+  // Some of this stuff might access g_core so we run most of our init
+  // *after* assigning our singleton to be safe.
 
+  RunSanityChecks();
+
+  build_src_dir_ = CalcBuildSrcDir();
+
+  // Note: this checks g_core->main_thread_id which is why it must run in
+  // PostInit and not our constructor.
+  main_event_loop_ = new EventLoop(EventLoopID::kMain, ThreadSource::kWrapMain);
+
+  // On monolithic builds we need to bring up Python itself.
+  if (g_buildconfig.monolithic_build()) {
+    python->InitPython();
+  }
+
+  // Make sure we're running an acceptable Python version/etc.
+  python->VerifyPythonEnvironment();
+
+  // Grab whatever Python stuff we use.
+  python->ImportPythonObjs();
+
+  // Normally we wait until later to start pushing logs through to Python
+  // (so that our log handling system is fully bootstrapped), but
+  // technically we can push our log calls out to Python any time now since
+  // we grabbed the logging calls above. Do so immediately here if asked.
+  if (!g_core->core_config().hold_early_logs) {
+    python->EnablePythonLoggingCalls();
+  }
+
+  // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
+  //  For now it does the right thing here since all we have is monolithic
+  //  builds but this will need to account for more situations later.
+  python->ReleaseMainThreadGIL();
+}
+
+auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {
+  // Let's grab a string of the portion of __FILE__ before our project root.
+  // We can use it to make error messages/etc. more pretty by stripping out
+  // all but sub-project paths.
+  const char* f = __FILE__;
+  auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
+                          "core" BA_DIRSLASH "core.cc");
+  if (!f_end) {
+    Log(LogLevel::kWarning, "Unable to calc build source dir from __FILE__.");
+    return "";
+  } else {
+    return std::string(f).substr(0, f_end - f);
+  }
+}
+
+void CoreFeatureSet::RunSanityChecks() {
   // Test our static-type-name functionality. This code runs at compile time
   // and extracts human readable type names using __PRETTY_FUNCTION__ type
   // functionality. However, it is dependent on specific compiler output and
@@ -109,56 +158,9 @@ void CoreFeatureSet::PostInit() {
             + static_type_name<decltype(testrunnable)>(true) + "'");
   }
 
-  // Enable extra timing logs via env var.
-  // FIXME: Kill this or move it to CoreConfig.
-  const char* debug_timing_env = getenv("BA_DEBUG_TIMING");
-  if (debug_timing_env != nullptr && !strcmp(debug_timing_env, "1")) {
-    debug_timing = true;
-  }
-
   if (vr_mode && !g_buildconfig.vr_build()) {
     FatalError("vr_mode enabled in core-config but we are not a vr build.");
   }
-
-  // Let's grab a string of the portion of __FILE__ before our project root.
-  // We can use it to make error messages/etc. more pretty by stripping out
-  // all but sub-project paths.
-  const char* f = __FILE__;
-  auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
-                          "core" BA_DIRSLASH "core.cc");
-  if (!f_end) {
-    Log(LogLevel::kWarning, "Unable to calc build source dir from __FILE__.");
-  } else {
-    build_src_dir_ = std::string(f).substr(0, f_end - f);
-  }
-
-  // Note: this checks g_core->main_thread_id which is why it must run in
-  // PostInit and not our constructor.
-  main_event_loop_ = new EventLoop(EventLoopID::kMain, ThreadSource::kWrapMain);
-
-  // On monolithic builds we need to bring up Python itself.
-  if (g_buildconfig.monolithic_build()) {
-    python->InitPython();
-  }
-
-  // Make sure we're running an acceptable Python version/etc.
-  python->VerifyPythonEnvironment();
-
-  // Grab whatever Python stuff we use.
-  python->ImportPythonObjs();
-
-  // Normally we wait until babase is imported to push early logs through to
-  // Python (so that our log handling system is fully bootstrapped), but
-  // technically we can push our log calls out to Python any time now since
-  // we grabbed the logging calls above. Do so immediately here if asked.
-  if (!g_core->core_config().hold_early_logs) {
-    python->EnablePythonLoggingCalls();
-  }
-
-  // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
-  //  For now it does the right thing here since all we have is monolithic
-  //  builds but this will need to account for more situations later.
-  python->ReleaseMainThreadGIL();
 }
 
 auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
