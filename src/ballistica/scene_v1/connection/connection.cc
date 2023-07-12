@@ -439,6 +439,10 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         Log(LogLevel::kError, "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
+        if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
+          BA_LOG_ONCE(LogLevel::kError, "nested multipart message detected; kicking");
+          Error("");
+        }
         HandleMessagePacket(multipart_buffer_);
         multipart_buffer_.clear();
       }
