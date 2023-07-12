@@ -58,6 +58,7 @@
       <w>alsa</w>
       <w>alsoft</w>
       <w>anchorx</w>
+      <w>andrarch</w>
       <w>androideabi</w>
       <w>animcurve</w>
       <w>aniso</w>
@@ -396,6 +397,7 @@
       <w>curv</w>
       <w>cutef</w>
       <w>cvar</w>
+      <w>dandroid</w>
       <w>data</w>
       <w>databytes</w>
       <w>datac</w>
@@ -457,6 +459,7 @@
       <w>displaytime</w>
       <w>displaytimer</w>
       <w>dlfcn</w>
+      <w>dlibtype</w>
       <w>dlife</w>
       <w>dliwk</w>
       <w>dllpath</w>
@@ -913,6 +916,7 @@
       <w>libballistica</w>
       <w>libbz</w>
       <w>libbzip</w>
+      <w>libfile</w>
       <w>libutf</w>
       <w>libuuid</w>
       <w>lifecyclelog</w>
@@ -934,6 +938,7 @@
       <w>lockstr</w>
       <w>locktype</w>
       <w>logcallobj</w>
+      <w>loggingpath</w>
       <w>logincode</w>
       <w>loginid</w>
       <w>logmsg</w>
@@ -1177,7 +1182,9 @@
       <w>ooooooooooooooooooooooooooooooooooo</w>
       <w>ooooooooooooooooooooooooooooooooooooo</w>
       <w>opcode</w>
+      <w>opealsoft</w>
       <w>openal</w>
+      <w>openalsoft</w>
       <w>opengl</w>
       <w>opensl</w>
       <w>oper</w>

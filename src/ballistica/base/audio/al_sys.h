@@ -17,6 +17,10 @@
 #include <AL/alc.h>
 #endif
 
+#if BA_OSTYPE_ANDROID
+#include <AL/alext.h>
+#endif
+
 #define CHECK_AL_ERROR _check_al_error(__FILE__, __LINE__)
 #if BA_DEBUG_BUILD
 #define DEBUG_CHECK_AL_ERROR CHECK_AL_ERROR

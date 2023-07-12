@@ -25,9 +25,10 @@ namespace ballistica::base {
 extern std::string g_rift_audio_device_name;
 #endif
 
-// FIXME:  move these to platform.
-extern "C" void opensl_pause_playback();
-extern "C" void opensl_resume_playback();
+#if BA_OSTYPE_ANDROID
+LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
+LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
+#endif
 
 const int kAudioProcessIntervalNormal{500};
 const int kAudioProcessIntervalFade{50};
@@ -41,7 +42,7 @@ struct AudioServer::Impl {
   ~Impl() = default;
 
 #if BA_ENABLE_AUDIO
-  ALCcontext* alc_context_{};
+  ALCcontext* alc_context{};
 #endif
 };
 
@@ -203,10 +204,21 @@ void AudioServer::OnAppStartInThread() {
           "No audio devices found. Do you have speakers/headphones/etc. "
           "connected?");
     }
-    impl_->alc_context_ = alcCreateContext(device, nullptr);
-    BA_PRECONDITION(impl_->alc_context_);
-    BA_PRECONDITION(alcMakeContextCurrent(impl_->alc_context_));
+    impl_->alc_context = alcCreateContext(device, nullptr);
+    BA_PRECONDITION(impl_->alc_context);
+    BA_PRECONDITION(alcMakeContextCurrent(impl_->alc_context));
     CHECK_AL_ERROR;
+
+#if BA_OSTYPE_ANDROID
+    if (alcIsExtensionPresent(device, "ALC_SOFT_pause_device")) {
+      alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT>(
+          alcGetProcAddress(device, "alcDevicePauseSOFT"));
+      alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT>(
+          alcGetProcAddress(device, "alcDeviceResumeSOFT"));
+    } else {
+      FatalError("ALC_SOFT pause/resume functionality not found.");
+    }
+#endif
   }
 
   ALfloat listener_pos[] = {0.0f, 0.0f, 0.0f};
@@ -250,8 +262,8 @@ AudioServer::~AudioServer() {
   {
     ALCdevice* device;
     BA_PRECONDITION_LOG(alcMakeContextCurrent(nullptr));
-    device = alcGetContextsDevice(impl_->alc_context_);
-    alcDestroyContext(impl_->alc_context_);
+    device = alcGetContextsDevice(impl_->alc_context);
+    alcDestroyContext(impl_->alc_context);
     assert(alcGetError(device) == ALC_NO_ERROR);
     alcCloseDevice(device);
   }
@@ -288,7 +300,7 @@ void AudioServer::SetPaused(bool pause) {
 
 // On android lets tell open-sl to stop its processing.
 #if BA_OSTYPE_ANDROID
-      opensl_pause_playback();
+      alcDevicePauseSOFT(alcGetContextsDevice(impl_->alc_context));
 #endif  // BA_OSTYPE_ANDROID
 
       paused_ = true;
@@ -304,12 +316,12 @@ void AudioServer::SetPaused(bool pause) {
       // Conceptual/AudioSessionProgrammingGuide/Cookbook/
       // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
 #if BA_ENABLE_AUDIO
-      alcMakeContextCurrent(impl_->alc_context_);  // hmm is this necessary?..
+      alcMakeContextCurrent(impl_->alc_context);  // hmm is this necessary?..
 #endif
 #endif
 // On android lets tell openal-soft to stop processing.
 #if BA_OSTYPE_ANDROID
-      opensl_resume_playback();
+      alcDeviceResumeSOFT(alcGetContextsDevice(impl_->alc_context));
 #endif  // BA_OSTYPE_ANDROID
 
       paused_ = false;

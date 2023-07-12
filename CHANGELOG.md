@@ -1,5 +1,13 @@
+### 1.7.22 (build 21167, api 8, 2023-07-12)
+
 ### 1.7.23 (build 21165, api 8, 2023-07-11)
-- Network security improvements.
+- Network security improvements. (Thanks Dliwk!)
+- You can now double click a chat message to copy it (Thanks Vishal332008!)
+- Android's audio library has been updated to the latest version (and is now
+  much easier for me to keep up to date). Please holler if you run into anything
+  wonky related to audio.
+- Updated our C json handling code to the latest version of cJSON. Should fix
+  some potential vulnerabilities.
 
 ### 1.7.22 (build 21165, api 8, 2023-07-11)
 

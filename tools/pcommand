@@ -54,6 +54,8 @@ from efrotools.pcommand import (
 from efrotools.pcommand2 import (
     with_build_lock,
     sortlines,
+    openal_build_android,
+    openal_gather,
 )
 from batools.pcommand import (
     resize_image,
@@ -64,11 +66,6 @@ from batools.pcommand import (
     androidaddr,
     push_ipa,
     printcolors,
-    gen_fulltest_buildfile_android,
-    gen_fulltest_buildfile_windows,
-    gen_fulltest_buildfile_apple,
-    gen_fulltest_buildfile_linux,
-    gen_fulltest_buildfile_spinoff,
     prune_includes,
     python_version_android,
     python_version_apple,

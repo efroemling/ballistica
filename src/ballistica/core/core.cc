@@ -178,7 +178,6 @@ void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
     return;
   }
   char buffer[128];
-  // It's not safe to use Log until
   snprintf(buffer, sizeof(buffer), "LIFE: %s @ %.3fs.", msg,
            g_core->GetAppTimeSeconds() + offset_seconds);
   Log(LogLevel::kInfo, buffer);

@@ -82,6 +82,7 @@
       <w>aname</w>
       <w>anamorphosis</w>
       <w>andr</w>
+      <w>andrarch</w>
       <w>androidaddr</w>
       <w>androideabi</w>
       <w>androidstudiocode</w>
@@ -658,6 +659,7 @@
       <w>cyaml</w>
       <w>cycledelay</w>
       <w>cygwinccompiler</w>
+      <w>dandroid</w>
       <w>darwiin</w>
       <w>darwiinremote</w>
       <w>datab</w>
@@ -743,6 +745,7 @@
       <w>distro</w>
       <w>distroot</w>
       <w>distros</w>
+      <w>dlibtype</w>
       <w>dline</w>
       <w>dliwk</w>
       <w>dlldir</w>
@@ -1555,6 +1558,7 @@
       <w>libegl</w>
       <w>libext</w>
       <w>libffi</w>
+      <w>libfile</w>
       <w>libgen</w>
       <w>libinst</w>
       <w>liblzma</w>
@@ -1634,6 +1638,7 @@
       <w>locs</w>
       <w>logcallobj</w>
       <w>logcat</w>
+      <w>loggingpath</w>
       <w>logincode</w>
       <w>loginid</w>
       <w>logintoken</w>
@@ -1989,6 +1994,8 @@
       <w>onslaughtplug</w>
       <w>opcode</w>
       <w>opdir</w>
+      <w>opealsoft</w>
+      <w>openalsoft</w>
       <w>opendiff</w>
       <w>openssh</w>
       <w>operasinger</w>

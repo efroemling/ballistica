@@ -22,6 +22,13 @@ void CorePython::ApplyBaEnvConfig() {
   g_core->platform->SetBaEnvVals(envcfg);
 }
 
+static void CheckPyInitStatus(const char* where, const PyStatus& status) {
+  if (PyStatus_Exception(status)) {
+    FatalError(std::string("Error in ") + where + ": "
+               + (status.err_msg ? status.err_msg : "(nullptr err_msg)") + ".");
+  }
+}
+
 void CorePython::InitPython() {
   assert(g_core->InMainThread());
   assert(g_buildconfig.monolithic_build());
@@ -49,8 +56,7 @@ void CorePython::InitPython() {
   // windows-specific file encodings, etc.)
   preconfig.utf8_mode = 1;
 
-  PyStatus status = Py_PreInitialize(&preconfig);
-  BA_PRECONDITION(!PyStatus_Exception(status));
+  CheckPyInitStatus("Py_PreInitialize", Py_PreInitialize(&preconfig));
 
   // Configure as isolated if we include our own Python and as standard
   // otherwise.
@@ -71,12 +77,22 @@ void CorePython::InitPython() {
   // In cases where we bundle Python, set up all paths explicitly.
   // https://docs.python.org/3/c-api/init_config.html#path-configuration
   if (g_buildconfig.contains_python_dist()) {
-    PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
-    PyConfig_SetBytesString(&config, &config.base_executable, "");
-    PyConfig_SetBytesString(&config, &config.base_prefix, "");
-    PyConfig_SetBytesString(&config, &config.exec_prefix, "");
-    PyConfig_SetBytesString(&config, &config.executable, "");
-    PyConfig_SetBytesString(&config, &config.prefix, "");
+    CheckPyInitStatus(
+        "pyconfig base_exec_prefix set",
+        PyConfig_SetBytesString(&config, &config.base_exec_prefix, ""));
+    CheckPyInitStatus(
+        "pyconfig base_executable set",
+        PyConfig_SetBytesString(&config, &config.base_executable, ""));
+    CheckPyInitStatus(
+        "pyconfig base_prefix set",
+        PyConfig_SetBytesString(&config, &config.base_prefix, ""));
+    CheckPyInitStatus(
+        "pyconfig exec_prefix set",
+        PyConfig_SetBytesString(&config, &config.exec_prefix, ""));
+    CheckPyInitStatus("pyconfig executable set",
+                      PyConfig_SetBytesString(&config, &config.executable, ""));
+    CheckPyInitStatus("pyconfig prefix set",
+                      PyConfig_SetBytesString(&config, &config.prefix, ""));
 
     // Note: we're using utf-8 mode above so Py_DecodeLocale will convert
     // from utf-8.
@@ -121,8 +137,8 @@ void CorePython::InitPython() {
   }
 
   // Init Python.
-  status = Py_InitializeFromConfig(&config);
-  BA_PRECONDITION_FATAL(!PyStatus_Exception(status));
+  CheckPyInitStatus("Py_InitializeFromConfig",
+                    Py_InitializeFromConfig(&config));
   PyConfig_Clear(&config);
 }
 
