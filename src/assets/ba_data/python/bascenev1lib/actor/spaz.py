@@ -630,7 +630,7 @@ class Spaz(bs.Actor):
         Give this spaz some boxing gloves.
         """
         assert self.node
-        self.node.boxing_gloves = True
+        self.node.boxing_gloves = 1
         self._has_boxing_gloves = True
         if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.7
