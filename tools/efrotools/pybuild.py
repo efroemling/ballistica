@@ -713,15 +713,39 @@ def android_patch_ssl() -> None:
 def _patch_py_wreadlink_test() -> None:
     fname = 'Python/fileutils.c'
     txt = readfile(fname)
+
+    txt = replace_exact(
+        txt,
+        '    res = readlink(cpath, cbuf, cbuf_len);\n',
+        (
+            '    res = readlink(cpath, cbuf, cbuf_len);\n'
+            '    const wchar_t *path2 = path;\n'
+            '    int path2len = 0;\n'
+            '    while (*path2) {\n'
+            '        path2++;\n'
+            '        path2len++;\n'
+            '    }\n'
+            '    char dlog1[512];\n'
+            '    if (res >= 0) {\n'
+            '        snprintf(dlog1, sizeof(dlog1), "ValsA1 pathlen=%d slen=%d'
+            ' path=\'%s\'", path2len, strlen(cpath), cpath);\n'
+            '    } else {\n'
+            '        snprintf(dlog1, sizeof(dlog1), "ValsA2 pathlen=%d",'
+            ' path2len);\n'
+            '    }\n'
+            '    Py_BallisticaLowLevelDebugLog(dlog1);\n'
+        ),
+    )
+
     txt = replace_exact(
         txt,
         "    cbuf[res] = '\\0'; /* buf will be null terminated */",
         (
             '    char dlog[512];\n'
-            '    snprintf(dlog, sizeof(dlog), "hello world1 res=%d mpl=%d'
-            ' eq1=%d eq2=%d slen=%d path=\'%s\'",'
-            ' (int)res, (int)MAXPATHLEN, (int)(res == -1),'
-            ' (int)((size_t)res == cbuf_len), strlen(cpath), cpath);\n'
+            '    snprintf(dlog, sizeof(dlog), "ValsB res=%d resx=%X'
+            ' eq1=%d eq2=%d",'
+            ' (int)res, res, (int)(res == -1),'
+            ' (int)((size_t)res == cbuf_len));\n'
             '    Py_BallisticaLowLevelDebugLog(dlog);\n'
             "    cbuf[res] = '\\0'; /* buf will be null terminated */"
         ),
