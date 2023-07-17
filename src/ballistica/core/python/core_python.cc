@@ -10,7 +10,7 @@
 
 namespace ballistica::core {
 
-static void LowLevelPythonDebugLog(const char* msg) {
+void LowLevelPythonDebugLog(const char* msg) {
   assert(g_core);
   g_core->platform->DebugLog(msg);
 }
@@ -20,6 +20,13 @@ void CorePython::ApplyBaEnvConfig() {
   auto envcfg = objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
   BA_PRECONDITION(envcfg.Exists());
   g_core->platform->SetBaEnvVals(envcfg);
+}
+
+static void CheckPyInitStatus(const char* where, const PyStatus& status) {
+  if (PyStatus_Exception(status)) {
+    FatalError(std::string("Error in ") + where + ": "
+               + (status.err_msg ? status.err_msg : "(nullptr err_msg)") + ".");
+  }
 }
 
 void CorePython::InitPython() {
@@ -49,8 +56,7 @@ void CorePython::InitPython() {
   // windows-specific file encodings, etc.)
   preconfig.utf8_mode = 1;
 
-  PyStatus status = Py_PreInitialize(&preconfig);
-  BA_PRECONDITION(!PyStatus_Exception(status));
+  CheckPyInitStatus("Py_PreInitialize", Py_PreInitialize(&preconfig));
 
   // Configure as isolated if we include our own Python and as standard
   // otherwise.
@@ -64,28 +70,53 @@ void CorePython::InitPython() {
     PyConfig_InitPythonConfig(&config);
   }
   config.dev_mode = dev_mode;
-  if (!g_buildconfig.debug_build()) {
-    config.optimization_level = 1;
-  }
+  config.optimization_level = g_buildconfig.debug_build() ? 0 : 1;
 
   // In cases where we bundle Python, set up all paths explicitly.
   // https://docs.python.org/3/c-api/init_config.html#path-configuration
   if (g_buildconfig.contains_python_dist()) {
-    PyConfig_SetBytesString(&config, &config.base_exec_prefix, "");
-    PyConfig_SetBytesString(&config, &config.base_executable, "");
-    PyConfig_SetBytesString(&config, &config.base_prefix, "");
-    PyConfig_SetBytesString(&config, &config.exec_prefix, "");
-    PyConfig_SetBytesString(&config, &config.executable, "");
-    PyConfig_SetBytesString(&config, &config.prefix, "");
+    std::string root = g_buildconfig.ostype_windows() ? "C:\\" : "/";
+
+    // In our embedded case, none of these paths are really meaningful, but
+    // we want to explicitly provide them so Python doesn't try to calc its
+    // own. So let's set them to obvious dummy ones so its clear if they
+    // show up anywhere important.
+    CheckPyInitStatus(
+        "pyconfig home set",
+        PyConfig_SetBytesString(&config, &config.home,
+                                (root + "dummy_py_home").c_str()));
+    CheckPyInitStatus(
+        "pyconfig base_exec_prefix set",
+        PyConfig_SetBytesString(&config, &config.base_exec_prefix,
+                                (root + "dummy_py_base_exec_prefix").c_str()));
+    CheckPyInitStatus(
+        "pyconfig base_executable set",
+        PyConfig_SetBytesString(&config, &config.base_executable,
+                                (root + "dummy_py_base_executable").c_str()));
+    CheckPyInitStatus(
+        "pyconfig base_prefix set",
+        PyConfig_SetBytesString(&config, &config.base_prefix,
+                                (root + "dummy_py_base_prefix").c_str()));
+    CheckPyInitStatus(
+        "pyconfig exec_prefix set",
+        PyConfig_SetBytesString(&config, &config.exec_prefix,
+                                (root + "dummy_py_exec_prefix").c_str()));
+    CheckPyInitStatus(
+        "pyconfig executable set",
+        PyConfig_SetBytesString(&config, &config.executable,
+                                (root + "dummy_py_executable").c_str()));
+    CheckPyInitStatus(
+        "pyconfig prefix set",
+        PyConfig_SetBytesString(&config, &config.prefix,
+                                (root + "dummy_py_prefix").c_str()));
 
     // Note: we're using utf-8 mode above so Py_DecodeLocale will convert
     // from utf-8.
 
-    // Interesting note: it seems we can pass relative paths here but
-    // they wind up in sys.path as absolute paths (unlike entries we add
-    // to sys.path *after* things are up and running).
-    // Though nowadays we want to use abs paths anyway to avoid doing chdir
-    // so its a moot point.
+    // Interesting note: it seems we can pass relative paths here but they
+    // wind up in sys.path as absolute paths (unlike entries we add to
+    // sys.path *after* things are up and running). Though nowadays we want
+    // to use abs paths anyway to avoid needing chdir so its a moot point.
     if (g_buildconfig.ostype_windows()) {
       // Windows Python looks for Lib and DLLs dirs by default, along with
       // some others, but we want to be more explicit in limiting to these. It
@@ -112,17 +143,16 @@ void CorePython::InitPython() {
     config.module_search_paths_set = 1;
   }
 
-  // In monolithic builds, let Python know how to import all our built in
-  // modules.
+  // In monolithic builds, let Python know how to import all our built-in
+  // modules. In other builds, everything will be expected to live on disk
+  // as .so files (or symlinks to them).
   if (g_buildconfig.monolithic_build()) {
     MonolithicRegisterPythonModules();
-  } else {
-    FatalError("FIXME UNIMPLEMENTED");
   }
 
   // Init Python.
-  status = Py_InitializeFromConfig(&config);
-  BA_PRECONDITION_FATAL(!PyStatus_Exception(status));
+  CheckPyInitStatus("Py_InitializeFromConfig",
+                    Py_InitializeFromConfig(&config));
   PyConfig_Clear(&config);
 }
 
@@ -317,7 +347,7 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
 
 void CorePython::AcquireGIL() {
   assert(g_base_soft && g_base_soft->InLogicThread());
-  auto debug_timing{g_core->debug_timing};
+  auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startms{debug_timing ? CorePlatform::GetCurrentMillisecs() : 0};
 
   if (logic_thread_state_) {

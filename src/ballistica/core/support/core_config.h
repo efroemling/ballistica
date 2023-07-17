@@ -54,6 +54,9 @@ class CoreConfig {
   /// Let the engine know there's a debugger attached so it should do things
   /// like abort() instead of exiting with error codes.
   bool debugger_attached{};
+
+  /// Enables some extra timing logs/prints.
+  bool debug_timing{};
 };
 
 }  // namespace ballistica::core

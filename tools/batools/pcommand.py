@@ -240,56 +240,6 @@ def printcolors() -> None:
         )
 
 
-def gen_fulltest_buildfile_android() -> None:
-    """Generate fulltest command list for jenkins.
-
-    (so we see nice pretty split-up build trees)
-    """
-    import batools.build
-
-    batools.build.gen_fulltest_buildfile_android()
-
-
-def gen_fulltest_buildfile_windows() -> None:
-    """Generate fulltest command list for jenkins.
-
-    (so we see nice pretty split-up build trees)
-    """
-    import batools.build
-
-    batools.build.gen_fulltest_buildfile_windows()
-
-
-def gen_fulltest_buildfile_apple() -> None:
-    """Generate fulltest command list for jenkins.
-
-    (so we see nice pretty split-up build trees)
-    """
-    import batools.build
-
-    batools.build.gen_fulltest_buildfile_apple()
-
-
-def gen_fulltest_buildfile_linux() -> None:
-    """Generate fulltest command list for jenkins.
-
-    (so we see nice pretty split-up build trees)
-    """
-    import batools.build
-
-    batools.build.gen_fulltest_buildfile_linux()
-
-
-def gen_fulltest_buildfile_spinoff() -> None:
-    """Generate fulltest command list for jenkins.
-
-    (so we see nice pretty split-up build trees)
-    """
-    import batools.build
-
-    batools.build.gen_fulltest_buildfile_spinoff()
-
-
 def python_version_android_base() -> None:
     """Print built Python base version."""
     from efrotools.pybuild import PY_VER_ANDROID

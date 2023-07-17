@@ -130,7 +130,6 @@ class CoreFeatureSet {
   bool reset_vr_orientation{};
   bool user_ran_commands{};
   int return_value{};
-  bool debug_timing{};
   std::thread::id main_thread_id{};
 
   bool vr_mode;
@@ -144,6 +143,8 @@ class CoreFeatureSet {
 #endif
 
  private:
+  static auto CalcBuildSrcDir() -> std::string;
+  void RunSanityChecks();
   static void DoImport(const CoreConfig& config);
   void UpdateAppTime();
   explicit CoreFeatureSet(CoreConfig config);

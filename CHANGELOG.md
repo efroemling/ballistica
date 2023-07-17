@@ -1,6 +1,14 @@
-### 1.7.23 (build 21164, api 8, 2023-07-11)
+### 1.7.23 (build 21171, api 8, 2023-07-16)
 
-### 1.7.22 (build 21162, api 8, 2023-07-11)
+- Network security improvements. (Thanks Dliwk!)
+- You can now double click a chat message to copy it. (Thanks Vishal332008!)
+- Android's audio library has been updated to the latest version (and is now
+  much easier for me to keep up to date). Please holler if you run into anything
+  wonky related to audio.
+- Updated our C json handling code to the latest version of cJSON. Should fix
+  some potential vulnerabilities.
+
+### 1.7.22 (build 21165, api 8, 2023-07-11)
 
 - Fixed a very rare race condition when launching threads or sending synchronous
   cross-thread messages. This was manifesting as one out of several thousand
@@ -13,7 +21,7 @@
   see any graphics wonkiness with this update.
 - Added SoK's explodinary icon to the game's custom text drawing because SoK is
   awesome.
-- (build 21161) Fixed an issue on Android that could lead to crashes if device
+- (build 21165) Fixed an issue on Android that could lead to crashes if device
   events occurred very early at launch (button presses, joystick movement, etc.)
 
 ### 1.7.21 (build 21152, api 8, 2023-06-27)

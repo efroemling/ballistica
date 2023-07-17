@@ -109,7 +109,7 @@ def _main() -> None:
             if '--soft' in sys.argv:
                 return
             raise CleanError(
-                'This only works on dst projects;'
+                'Spinoff only works from dst projects;'
                 ' you appear to be in a src project.'
                 " To silently no-op in this case, pass '--soft'."
             )

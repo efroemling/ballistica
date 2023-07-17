@@ -128,7 +128,7 @@ class PartyWindow(bui.Window):
             color=(0.4, 0.6, 0.3),
         )
         self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, margin=0
+            parent=self._scrollwidget, border=2, left_border=-200, margin=0
         )
         bui.widget(edit=self._menu_button, down_widget=self._columnwidget)
 
@@ -177,6 +177,7 @@ class PartyWindow(bui.Window):
             down_widget=self._text_field,
         )
         bui.containerwidget(edit=self._root_widget, selected_child=txt)
+
         btn = bui.buttonwidget(
             parent=self._root_widget,
             size=(50, 35),
@@ -186,6 +187,7 @@ class PartyWindow(bui.Window):
             position=(self._width - 70, 35),
             on_activate_call=self._send_chat_message,
         )
+
         bui.textwidget(edit=txt, on_return_press_call=btn.activate)
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
@@ -202,19 +204,30 @@ class PartyWindow(bui.Window):
     def _add_msg(self, msg: str) -> None:
         txt = bui.textwidget(
             parent=self._columnwidget,
-            text=msg,
             h_align='left',
             v_align='center',
-            size=(0, 13),
             scale=0.55,
+            size=(900, 13),
+            text=msg,
+            autoselect=True,
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,
             flatness=1.0,
+            on_activate_call=bui.Call(self._copy_msg, msg),
+            selectable=True,
         )
+
         self._chat_texts.append(txt)
         while len(self._chat_texts) > 40:
             self._chat_texts.pop(0).delete()
         bui.containerwidget(edit=self._columnwidget, visible_child=txt)
+
+    def _copy_msg(self, msg: str) -> None:
+        if bui.clipboard_is_supported():
+            bui.clipboard_set_text(msg)
+            bui.screenmessage(
+                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
+            )
 
     def _on_menu_button_press(self) -> None:
         is_muted = bui.app.config.resolve('Chat Muted')

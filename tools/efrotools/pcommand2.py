@@ -40,3 +40,30 @@ def sortlines() -> None:
     val = sys.argv[2]
     lines = val.splitlines()
     print('\n'.join(sorted(lines, key=lambda l: l.lower())))
+
+
+def openal_build_android() -> None:
+    """Build openalsoft for android."""
+    from efro.error import CleanError
+    from efrotools.openalbuild import build
+
+    args = sys.argv[2:]
+    if len(args) != 2:
+        raise CleanError(
+            'Expected one <ARCH> arg: arm, arm64, x86, x86_64'
+            ' and one <MODE> arg: debug, release'
+        )
+
+    build(args[0], args[1])
+
+
+def openal_gather() -> None:
+    """Gather built opealsoft libs into src."""
+    from efro.error import CleanError
+    from efrotools.openalbuild import gather
+
+    args = sys.argv[2:]
+    if args:
+        raise CleanError('No args expected.')
+
+    gather()

@@ -14,7 +14,7 @@
   with these routines reserved for higher performance on data known to be
   valid.
 */
-#include "utf8.h"
+#include "ballistica/shared/generic/utf8.h"
 
 #if _WIN32 || _WIN64
 #include <malloc.h>

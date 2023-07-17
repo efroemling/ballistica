@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21164;
+const int kEngineBuildNumber = 21171;
 const char* kEngineVersion = "1.7.23";
 
 auto MonolithicMain(const core::CoreConfig& core_config) -> int {
