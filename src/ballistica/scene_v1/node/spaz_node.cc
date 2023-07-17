@@ -1088,6 +1088,10 @@ void SpazNode::SetJumpPressed(bool val) {
   }
   jump_pressed_ = val;
   if (jump_pressed_) {
+    if (frozen_ || knockout_) {
+      return;
+    }
+
     if (!can_fly_ && !knockout_ && !frozen_) {
       if (SceneSound* sound = GetRandomMedia(jump_sounds_)) {
         if (auto* source = g_base->audio->SourceBeginNew()) {
