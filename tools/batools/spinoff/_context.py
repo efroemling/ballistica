@@ -779,6 +779,44 @@ class SpinoffContext:
 
             return sort_jetbrains_dict(self.default_filter_text(text))
 
+        # baenv.py will run a standard app loop if exec'ed, but this
+        # requires base. Error instead if base is missing.
+        if src_path == 'src/assets/ba_data/python/baenv.py':
+            assert 'base' in self._src_all_feature_sets
+            if 'base' in self._src_omit_feature_sets:
+                text = replace_exact(
+                    text,
+                    (
+                        'def _main() -> None:\n'
+                        '    # Run a default configure BEFORE importing'
+                        ' babase.\n'
+                        '    # (may affect where babase comes from).\n'
+                        '    configure()\n'
+                        '\n'
+                        '    import babase\n'
+                        '\n'
+                        '    babase.app.run()\n'
+                        '\n'
+                    ),
+                    (
+                        'def _main() -> None:\n'
+                        '    # DISABLED; REQUIRES BASE FEATURE SET.\n'
+                        '    # Run a default configure BEFORE importing'
+                        ' babase.\n'
+                        '    # (may affect where babase comes from).\n'
+                        '    # configure()\n'
+                        '\n'
+                        '    # import babase\n'
+                        '\n'
+                        '    # babase.app.run()\n'
+                        '\n'
+                        "    raise RuntimeError('App-exec requires"
+                        " base feature set.')\n"
+                        '\n'
+                    ),
+                    label=src_path,
+                )
+
         # In our public repo, if the plus featureset is not included, we
         # don't want to fetch or link against the precompiled plus
         # library.
@@ -829,7 +867,8 @@ class SpinoffContext:
                     count=2,
                     label=src_path,
                 )
-                # Remove prebuilt lib download for cmake targets.
+                # Remove prebuilt lib download for cmake & cmake-modular
+                # targets.
                 text = replace_exact(
                     text,
                     '\t@tools/pcommand update_cmake_prefab_lib standard'
@@ -841,6 +880,13 @@ class SpinoffContext:
                     text,
                     '\t@tools/pcommand update_cmake_prefab_lib server'
                     ' $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist\n',
+                    '',
+                    label=src_path,
+                )
+                text = replace_exact(
+                    text,
+                    '\t@tools/pcommand update_cmake_prefab_lib standard'
+                    ' $(CM_BT_LC) build/cmake/modular-$(CM_BT_LC)\n',
                     '',
                     label=src_path,
                 )
