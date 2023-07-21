@@ -137,6 +137,8 @@
       <w>ballistica</w>
       <w>ballistica's</w>
       <w>ballisticakit</w>
+      <w>ballisticakitso</w>
+      <w>ballisticaplus</w>
       <w>bamasteraddr</w>
       <w>bamasterlegacy</w>
       <w>bameta</w>
@@ -206,6 +208,7 @@
       <w>bmas</w>
       <w>bmasl</w>
       <w>bmcjphh</w>
+      <w>bmodfeaturesets</w>
       <w>bname</w>
       <w>bodyid</w>
       <w>bodypart</w>
@@ -324,6 +327,7 @@
       <w>clipcount</w>
       <w>cloudtoba</w>
       <w>cmakelist</w>
+      <w>cmakemodular</w>
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdspath</w>
@@ -454,6 +458,7 @@
       <w>diesound</w>
       <w>diffbit</w>
       <w>dinl</w>
+      <w>dir's</w>
       <w>dirfilter</w>
       <w>dirslash</w>
       <w>displaytime</w>
@@ -507,6 +512,7 @@
       <w>dusing</w>
       <w>dval</w>
       <w>dxgi</w>
+      <w>dylibdir</w>
       <w>dynamicdata</w>
       <w>echidna</w>
       <w>echofile</w>
@@ -539,6 +545,7 @@
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
+      <w>envglobals</w>
       <w>envs</w>
       <w>envval</w>
       <w>ericf</w>
@@ -558,6 +565,7 @@
       <w>exargs</w>
       <w>exctype</w>
       <w>exec'ed</w>
+      <w>exec'ing</w>
       <w>execed</w>
       <w>execinfo</w>
       <w>execing</w>
@@ -592,6 +600,7 @@
       <w>fdata</w>
       <w>fdataraw</w>
       <w>fdcount</w>
+      <w>fdcwd</w>
       <w>fdirs</w>
       <w>fdirx</w>
       <w>fdiry</w>
@@ -660,6 +669,8 @@
       <w>fsarg</w>
       <w>fsconfigpath</w>
       <w>fset</w>
+      <w>fsetmfilenames</w>
+      <w>fsetmfilenamevals</w>
       <w>fsetname</w>
       <w>fsets</w>
       <w>fsmetapackagename</w>
@@ -673,6 +684,7 @@
       <w>ftos</w>
       <w>ftou</w>
       <w>fullpath</w>
+      <w>fullstr</w>
       <w>funcname</w>
       <w>funcp</w>
       <w>fval</w>
@@ -826,10 +838,12 @@
       <w>inides</w>
       <w>initguid</w>
       <w>initing</w>
+      <w>initname</w>
       <w>inittab</w>
       <w>inputdevice</w>
       <w>inputter</w>
       <w>insta</w>
+      <w>instpath</w>
       <w>intercollide</w>
       <w>internalformat</w>
       <w>internalmodule</w>
@@ -914,6 +928,7 @@
       <w>lgui</w>
       <w>lhalf</w>
       <w>libballistica</w>
+      <w>libballisticaplus</w>
       <w>libbz</w>
       <w>libbzip</w>
       <w>libfile</w>
@@ -998,6 +1013,7 @@
       <w>maxtries</w>
       <w>maxwait</w>
       <w>maxwidth</w>
+      <w>mbstowcs</w>
       <w>mdpath</w>
       <w>mediump</w>
       <w>memalign</w>
@@ -1014,6 +1030,7 @@
       <w>metallink</w>
       <w>metamakefile</w>
       <w>meth</w>
+      <w>mfilename</w>
       <w>mhbegin</w>
       <w>mhend</w>
       <w>microsecs</w>
@@ -1164,6 +1181,7 @@
       <w>olde</w>
       <w>oldname</w>
       <w>oldpath</w>
+      <w>oldpaths</w>
       <w>oldtoken</w>
       <w>olduuid</w>
       <w>olduuids</w>
@@ -1192,6 +1210,8 @@
       <w>opposingbody</w>
       <w>opposingnode</w>
       <w>optin</w>
+      <w>optnm</w>
+      <w>optstuff</w>
       <w>ortho</w>
       <w>osis</w>
       <w>ossaudiodev</w>
@@ -1201,6 +1221,7 @@
       <w>ourcode</w>
       <w>ourname</w>
       <w>ourpackage</w>
+      <w>ourpaths</w>
       <w>ourself</w>
       <w>ourstanding</w>
       <w>outdict</w>
@@ -1223,6 +1244,7 @@
       <w>pathbar</w>
       <w>pathcapture</w>
       <w>pathdst</w>
+      <w>pathlen</w>
       <w>pathlist</w>
       <w>pathparts</w>
       <w>pathsegs</w>
@@ -1362,6 +1384,8 @@
       <w>pysitedir</w>
       <w>pythondevmode</w>
       <w>pythonenumsmodule</w>
+      <w>pythonoptimize</w>
+      <w>pythonutf</w>
       <w>pytype</w>
       <w>qerr</w>
       <w>qrcode</w>
@@ -1386,6 +1410,8 @@
       <w>rdynamic</w>
       <w>reaaaly</w>
       <w>readexactly</w>
+      <w>readlink</w>
+      <w>readlinkat</w>
       <w>readset</w>
       <w>realloc</w>
       <w>reallocations</w>
@@ -1579,6 +1605,7 @@
       <w>sssssssi</w>
       <w>ssssssssssss</w>
       <w>ssval</w>
+      <w>stager</w>
       <w>standin</w>
       <w>startedptr</w>
       <w>startms</w>
@@ -1635,6 +1662,7 @@
       <w>swiftgeneratepch</w>
       <w>swiftmergegeneratedheaders</w>
       <w>symbolification</w>
+      <w>syscall</w>
       <w>syscalls</w>
       <w>sysresponse</w>
       <w>tabdefs</w>
@@ -1839,6 +1867,7 @@
       <w>wiimote</w>
       <w>wiimotes</w>
       <w>winapi</w>
+      <w>wincfglc</w>
       <w>windowshade</w>
       <w>winmm</w>
       <w>winsock</w>

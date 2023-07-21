@@ -14,7 +14,7 @@ fset = FeatureSet.get_active()
 
 fset.requirements = set()
 
-fset.has_native_python_module = False
+fset.has_python_binary_module = False
 
 # Bits of code we're using that don't conform to our feature-set based
 # namespace scheme.

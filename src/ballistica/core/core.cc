@@ -97,7 +97,7 @@ void CoreFeatureSet::PostInit() {
   // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
   //  For now it does the right thing here since all we have is monolithic
   //  builds but this will need to account for more situations later.
-  python->ReleaseMainThreadGIL();
+  // python->ReleaseMainThreadGIL();
 }
 
 auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {

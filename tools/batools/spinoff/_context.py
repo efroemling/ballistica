@@ -788,7 +788,7 @@ class SpinoffContext:
                 # Strip precompiled plus library out of the cmake file.
                 text = replace_exact(
                     text,
-                    '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballistica_plus.a'
+                    '${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a'
                     ' ode ',
                     'ode ',
                     label=src_path,

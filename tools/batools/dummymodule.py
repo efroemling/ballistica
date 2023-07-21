@@ -937,7 +937,7 @@ def generate_dummy_modules(projroot: str) -> None:
 
     # Generate a dummy module for each featureset that has a binary module.
     featuresets = FeatureSet.get_all_for_project(project_root=projroot)
-    featuresets = [f for f in featuresets if f.has_native_python_module]
+    featuresets = [f for f in featuresets if f.has_python_binary_module]
     mnames: list[str] = [fs.name_python_binary_module for fs in featuresets]
 
     builddir = 'build/dummymodules'

@@ -233,6 +233,8 @@
       <w>ballistica's</w>
       <w>ballisticakit</w>
       <w>ballisticakitcb</w>
+      <w>ballisticakitso</w>
+      <w>ballisticaplus</w>
       <w>bamaster</w>
       <w>bamasteraddr</w>
       <w>bamasterlegacy</w>
@@ -318,6 +320,7 @@
       <w>bmas</w>
       <w>bmasl</w>
       <w>bmcjphh</w>
+      <w>bmodfeaturesets</w>
       <w>bname</w>
       <w>bndl</w>
       <w>boffs</w>
@@ -522,6 +525,7 @@
       <w>clrred</w>
       <w>cmakelist</w>
       <w>cmakelists</w>
+      <w>cmakemodular</w>
       <w>cmakeserver</w>
       <w>cmath</w>
       <w>cmathmodule</w>
@@ -729,6 +733,7 @@
       <w>dingsound</w>
       <w>dingsoundhigh</w>
       <w>dinl</w>
+      <w>dir's</w>
       <w>dirfilter</w>
       <w>dirmanifest</w>
       <w>dirname</w>
@@ -832,6 +837,7 @@
       <w>dusing</w>
       <w>dval</w>
       <w>dxml</w>
+      <w>dylibdir</w>
       <w>dynload</w>
       <w>eachother</w>
       <w>eaddrnotavail</w>
@@ -894,6 +900,7 @@
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
+      <w>envglobals</w>
       <w>envhash</w>
       <w>envname</w>
       <w>envs</w>
@@ -930,6 +937,7 @@
       <w>excludetypes</w>
       <w>excstr</w>
       <w>exec'ed</w>
+      <w>exec'ing</w>
       <w>execcode</w>
       <w>execed</w>
       <w>execing</w>
@@ -982,6 +990,7 @@
       <w>fdata</w>
       <w>fdataraw</w>
       <w>fdcount</w>
+      <w>fdcwd</w>
       <w>fdesc</w>
       <w>fdict</w>
       <w>fdirs</w>
@@ -1103,6 +1112,8 @@
       <w>fsconfigpath</w>
       <w>fsdf</w>
       <w>fset</w>
+      <w>fsetmfilenames</w>
+      <w>fsetmfilenamevals</w>
       <w>fsetname</w>
       <w>fsets</w>
       <w>fsettings</w>
@@ -1130,6 +1141,7 @@
       <w>fullpath</w>
       <w>fullprice</w>
       <w>fullscreen</w>
+      <w>fullstr</w>
       <w>fulltest</w>
       <w>funcname</w>
       <w>funcnames</w>
@@ -1403,6 +1415,7 @@
       <w>initializers</w>
       <w>initialplayerinfos</w>
       <w>initing</w>
+      <w>initname</w>
       <w>inits</w>
       <w>inittab</w>
       <w>inmobi</w>
@@ -1419,6 +1432,7 @@
       <w>insta</w>
       <w>installdir</w>
       <w>instancer</w>
+      <w>instpath</w>
       <w>interfacetype</w>
       <w>internalmodule</w>
       <w>internalsrc</w>
@@ -1551,6 +1565,7 @@
       <w>lfval</w>
       <w>libballistica</w>
       <w>libballisticakit</w>
+      <w>libballisticaplus</w>
       <w>libbz</w>
       <w>libbzip</w>
       <w>libcrypto</w>
@@ -1721,6 +1736,7 @@
       <w>maxw</w>
       <w>maxwait</w>
       <w>maxwidth</w>
+      <w>mbstowcs</w>
       <w>mbytecount</w>
       <w>mdiv</w>
       <w>mdocs</w>
@@ -1741,6 +1757,7 @@
       <w>metaprogramming</w>
       <w>metascan</w>
       <w>meteorshower</w>
+      <w>mfilename</w>
       <w>mfpath</w>
       <w>mhash</w>
       <w>mhbegin</w>
@@ -1984,6 +2001,7 @@
       <w>olde</w>
       <w>oldlady</w>
       <w>oldpath</w>
+      <w>oldpaths</w>
       <w>oldtoken</w>
       <w>olduuid</w>
       <w>olduuids</w>
@@ -2003,7 +2021,9 @@
       <w>opposingbody</w>
       <w>opposingnode</w>
       <w>opstr</w>
+      <w>optnm</w>
       <w>optparse</w>
+      <w>optstuff</w>
       <w>orchestrahitsound</w>
       <w>origwrapper</w>
       <w>ortho</w>
@@ -2019,6 +2039,7 @@
       <w>ourhash</w>
       <w>ourname</w>
       <w>ourpackage</w>
+      <w>ourpaths</w>
       <w>ourself</w>
       <w>outdata</w>
       <w>outdelay</w>
@@ -2065,6 +2086,7 @@
       <w>pathbar</w>
       <w>pathcapture</w>
       <w>pathdst</w>
+      <w>pathlen</w>
       <w>pathlib</w>
       <w>pathlist</w>
       <w>pathnames</w>
@@ -2357,8 +2379,10 @@
       <w>pythondontwritebytecode</w>
       <w>pythonenumsmodule</w>
       <w>pythonhashseed</w>
+      <w>pythonoptimize</w>
       <w>pythonpath</w>
       <w>pythonpaths</w>
+      <w>pythonutf</w>
       <w>pythonw</w>
       <w>pytree</w>
       <w>pytz</w>
@@ -2390,6 +2414,8 @@
       <w>readexactly</w>
       <w>readline</w>
       <w>readlines</w>
+      <w>readlink</w>
+      <w>readlinkat</w>
       <w>realpath</w>
       <w>realsies</w>
       <w>recache</w>
@@ -2708,10 +2734,12 @@
       <w>sred</w>
       <w>sriyakaal</w>
       <w>sshd</w>
+      <w>ssize</w>
       <w>sslcontext</w>
       <w>sslproto</w>
       <w>ssval</w>
       <w>stackstr</w>
+      <w>stager</w>
       <w>standin</w>
       <w>starscale</w>
       <w>startercache</w>
@@ -2820,6 +2848,7 @@
       <w>syncitem</w>
       <w>syncitems</w>
       <w>synclist</w>
+      <w>syscall</w>
       <w>sysconfigdata</w>
       <w>sysctl</w>
       <w>syslogmodule</w>
@@ -3186,6 +3215,7 @@
       <w>winapi</w>
       <w>winbeast</w>
       <w>wincfg</w>
+      <w>wincfglc</w>
       <w>wincount</w>
       <w>winempty</w>
       <w>winnergroup</w>

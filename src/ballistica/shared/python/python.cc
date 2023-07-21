@@ -377,21 +377,16 @@ void Python::MarkReachedEndOfModule(PyObject* module) {
 class Python::ScopedInterpreterLock::Impl {
  public:
   Impl() {
-    if (need_lock_) {
-      // Grab the python GIL.
-      gstate_ = PyGILState_Ensure();
-    }
+    // Grab the python GIL.
+    gil_state_ = PyGILState_Ensure();
   }
   ~Impl() {
-    if (need_lock_) {
-      // Release the python GIL.
-      PyGILState_Release(gstate_);
-    }
+    // Release the python GIL.
+    PyGILState_Release(gil_state_);
   }
 
  private:
-  bool need_lock_{true};
-  PyGILState_STATE gstate_{PyGILState_UNLOCKED};
+  PyGILState_STATE gil_state_{PyGILState_UNLOCKED};
 };
 
 Python::ScopedInterpreterLock::ScopedInterpreterLock()
@@ -400,6 +395,31 @@ Python::ScopedInterpreterLock::ScopedInterpreterLock()
 {}
 
 Python::ScopedInterpreterLock::~ScopedInterpreterLock() { delete impl_; }
+
+class Python::ScopedInterpreterLockRelease::Impl {
+ public:
+  Impl() {
+    assert(HaveGIL());
+    // Release the GIL.
+    thread_state_ = PyEval_SaveThread();
+  }
+  ~Impl() {
+    // Restore the GIL.
+    PyEval_RestoreThread(thread_state_);
+  }
+
+ private:
+  PyThreadState* thread_state_{};
+};
+
+Python::ScopedInterpreterLockRelease::ScopedInterpreterLockRelease()
+    : impl_{new Python::ScopedInterpreterLockRelease::Impl()}
+// impl_{std::make_unique<Python::ScopedInterpreterLock::Impl>()}
+{}
+
+Python::ScopedInterpreterLockRelease::~ScopedInterpreterLockRelease() {
+  delete impl_;
+}
 
 // (some stuff borrowed from python's source code - used in our overriding of
 // objects' dir() results)

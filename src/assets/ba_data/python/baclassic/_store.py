@@ -267,6 +267,9 @@ class StoreSubsystem:
                 'icons.mikirog': {
                     'icon': babase.charstr(babase.SpecialChar.MIKIROG)
                 },
+                'icons.explodinary': {
+                    'icon': babase.charstr(babase.SpecialChar.EXPLODINARY_LOGO)
+                },
             }
         return babase.app.classic.store_items
 

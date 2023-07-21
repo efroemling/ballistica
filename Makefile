@@ -243,16 +243,16 @@ prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
 
 prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/mac_x86_64_gui/debug
+	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/mac_x86_64_gui/debug
 
 prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/mac_arm64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/mac_arm64_gui/debug
+	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/mac_arm64_gui/debug
 
 build/prefab/full/mac_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_gui/debug/libballistica_plus.a: .efrocachemap
+build/prefab/lib/mac_%_gui/debug/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac gui release:
@@ -273,16 +273,16 @@ prefab-mac-arm64-gui-release: prefab-mac-arm64-gui_release-build
 
 prefab-mac-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/mac_x86_64_gui/release
+	@$(STAGE_ASSETS) -cmake -release build/prefab/full/mac_x86_64_gui/release
 
 prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/mac_arm64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/mac_arm64_gui/release
+	@$(STAGE_ASSETS) -cmake -release build/prefab/full/mac_arm64_gui/release
 
 build/prefab/full/mac_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_gui/release/libballistica_plus.a: .efrocachemap
+build/prefab/lib/mac_%_gui/release/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac server debug:
@@ -312,7 +312,7 @@ prefab-mac-arm64-server-debug-build: prereqs assets-server \
 build/prefab/full/mac_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_server/debug/libballistica_plus.a: .efrocachemap
+build/prefab/lib/mac_%_server/debug/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Mac server release:
@@ -344,7 +344,7 @@ prefab-mac-arm64-server-release-build: prereqs assets-server \
 build/prefab/full/mac_%_server/release/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/mac_%_server/release/libballistica_plus.a: .efrocachemap
+build/prefab/lib/mac_%_server/release/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux gui debug:
@@ -365,16 +365,16 @@ prefab-linux-arm64-gui-debug: prefab-linux-arm64-gui-debug-build
 
 prefab-linux-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/linux_x86_64_gui/debug
+	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/linux_x86_64_gui/debug
 
 prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_arm64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/linux_arm64_gui/debug
+	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/linux_arm64_gui/debug
 
 build/prefab/full/linux_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_gui/debug/libballistica_plus.a: .efrocachemap
+build/prefab/lib/linux_%_gui/debug/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux gui release:
@@ -395,16 +395,16 @@ prefab-linux-arm64-gui-release: prefab-linux-arm64-gui-release-build
 
 prefab-linux-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/linux_x86_64_gui/release
+	@$(STAGE_ASSETS) -cmake -release build/prefab/full/linux_x86_64_gui/release
 
 prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/linux_arm64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake build/prefab/full/linux_arm64_gui/release
+	@$(STAGE_ASSETS) -cmake -release build/prefab/full/linux_arm64_gui/release
 
 build/prefab/full/linux_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_gui/release/libballistica_plus.a: .efrocachemap
+build/prefab/lib/linux_%_gui/release/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux server debug:
@@ -436,7 +436,7 @@ prefab-linux-arm64-server-debug-build: prereqs assets-server \
 build/prefab/full/linux_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_server/debug/libballistica_plus.a: .efrocachemap
+build/prefab/lib/linux_%_server/debug/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Linux server release:
@@ -468,7 +468,7 @@ prefab-linux-arm64-server-release-build: prereqs assets-server \
 build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/lib/linux_%_server/release/libballistica_plus.a: .efrocachemap
+build/prefab/lib/linux_%_server/release/libballisticaplus.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows gui debug:
@@ -482,7 +482,7 @@ prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
 
 prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
-	@$(STAGE_ASSETS) -win-$(WINPLAT_X86)-Debug \
+	@$(STAGE_ASSETS) -win-$(WINPLAT_X86) -debug \
    build/prefab/full/windows_x86_gui/debug
 
 build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
@@ -506,7 +506,7 @@ prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
 prefab-windows-x86-gui-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/release/BallisticaKit.exe
-	@$(STAGE_ASSETS) -win-$(WINPLAT_X86)-Release \
+	@$(STAGE_ASSETS) -win-$(WINPLAT_X86) -release \
 build/prefab/full/windows_x86_gui/release
 
 build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
@@ -531,7 +531,7 @@ prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe
-	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86)-Debug \
+	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86) -debug \
  build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
@@ -556,7 +556,7 @@ prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
 prefab-windows-x86-server-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe
-	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86)-Release \
+	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86) -release \
    build/prefab/full/windows_x86_server/release
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
@@ -931,7 +931,7 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_ASSETS) -win-$(WINPLT)-$(WINCFG) \
+	$(STAGE_ASSETS) -win-$(WINPLT) -$(WINCFGLC) \
    build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
@@ -1026,7 +1026,7 @@ cmake-lldb: cmake-build
 
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
-	@$(STAGE_ASSETS) -cmake build/cmake/$(CM_BT_LC)
+	@$(STAGE_ASSETS) -cmake -$(CM_BT_LC) build/cmake/$(CM_BT_LC)
 	@tools/pcommand echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)
 
 cmake-binary: meta
@@ -1046,25 +1046,43 @@ cmake-server: cmake-server-build
 cmake-server-build: assets-server meta cmake-server-binary
 	@$(STAGE_ASSETS) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
 	@tools/pcommand echo BLD \
- Server build complete: BLU build/cmake/server-$(CM_BT_LC)
+      Server build complete: BLU build/cmake/server-$(CM_BT_LC)
 
-# Build just the headless binary.
-# Note: We currently symlink FOO_headless. In packaged builds we rename it.
 cmake-server-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist
-	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS)
+	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS) \
+      ballisticakit
 
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)
 
+cmake-modular-build: assets-cmake meta cmake-modular-binary
+	@$(STAGE_ASSETS) -cmakemodular -$(CM_BT_LC) \
+      build/cmake/modular-$(CM_BT_LC)/staged
+	@tools/pcommand echo BLD \
+      Modular build complete: BLU build/cmake/modular-$(CM_BT_LC)/staged
+
+cmake-modular: cmake-modular-build
+	@cd build/cmake/modular-$(CM_BT_LC)/staged && ./ballisticakit
+
+cmake-modular-binary: meta
+	@tools/pcommand cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
+	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+      $(shell pwd)/ballisticakit-cmake
+	@cd build/cmake/modular-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitso
+
+cmake-modular-clean:
+	rm -rf build/cmake/modular-$(CM_BT_LC)
+
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
-	$(STAGE_ASSETS) -cmake build/clion_debug
-	$(STAGE_ASSETS) -cmake build/clion_release
+	$(STAGE_ASSETS) -cmake -debug build/clion_debug
+	$(STAGE_ASSETS) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
@@ -1162,6 +1180,7 @@ WIN_MSBUILD_EXE_B = "$(_WMSBE_1B)$(_WMSBE_2B)"
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
+WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
 
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticakit-cmake/.clang-format: .clang-format

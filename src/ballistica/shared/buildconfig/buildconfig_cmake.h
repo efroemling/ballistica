@@ -64,7 +64,9 @@
 // Allow stdin commands too.
 #define BA_ENABLE_STDIO_CONSOLE 1
 
+#ifndef BA_DEFINE_MAIN
 #define BA_DEFINE_MAIN 1
+#endif
 
 #if !BA_DEBUG_BUILD
 

@@ -52,19 +52,14 @@ class CorePython {
   /// logging is available, logs locally using Logging::DisplayLog()
   /// (with an added warning).
   void LoggingCall(LogLevel loglevel, const std::string& msg);
-  void AcquireGIL();
-  void ReleaseGIL();
   void ImportPythonObjs();
   void VerifyPythonEnvironment();
-  void ReleaseMainThreadGIL();
   void SoftImportBase();
 
   const auto& objs() { return objs_; }
 
  private:
   PythonObjectSet<ObjID> objs_;
-
-  PyThreadState* logic_thread_state_{};
 
   // Log calls we make before we're set up to ship logs through Python
   // go here. They all get shipped at once as soon as it is possible.

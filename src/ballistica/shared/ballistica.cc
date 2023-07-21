@@ -22,7 +22,7 @@
 #endif
 
 // If desired, define main() in the global namespace.
-#if BA_DEFINE_MAIN
+#if BA_MONOLITHIC_BUILD && BA_DEFINE_MAIN
 auto main(int argc, char** argv) -> int {
   auto core_config =
       ballistica::core::CoreConfig::FromCommandLineAndEnv(argc, argv);
@@ -39,8 +39,10 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21171;
-const char* kEngineVersion = "1.7.23";
+const int kEngineBuildNumber = 21183;
+const char* kEngineVersion = "1.7.24";
+
+#if BA_MONOLITHIC_BUILD
 
 auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   // This code is meant to be run standalone so won't inherit any
@@ -170,6 +172,8 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   }
   return -1;  // Didn't even get core; something clearly wrong.
 }
+
+#endif  // BA_MONOLITHIC_BUILD
 
 void FatalError(const std::string& message) {
   // Let the user and/or master-server know we're dying.

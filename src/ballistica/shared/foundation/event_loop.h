@@ -164,6 +164,9 @@ class EventLoop {
   void RunPauseCallbacks();
   void RunResumeCallbacks();
 
+  void AcquireGIL();
+  void ReleaseGIL();
+
   bool bootstrapped_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> pause_callbacks_;
@@ -174,6 +177,7 @@ class EventLoop {
   std::condition_variable client_listener_cv_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;
+  PyThreadState* py_thread_state_{};
   TimerList timers_;
 };
 

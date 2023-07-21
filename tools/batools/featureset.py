@@ -54,7 +54,7 @@ class FeatureSet:
         # its C++ code. The build process will try to create dummy
         # modules for all native modules, so to avoid errors you must
         # tell it if you don't have one.
-        self.has_native_python_module = True
+        self.has_python_binary_module = True
 
         # If True, for feature-set 'foo_bar', the build system will
         # define a 'babase.app.foo_bar' attr which points to a lazy

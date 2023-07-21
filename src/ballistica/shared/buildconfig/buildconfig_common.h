@@ -23,8 +23,10 @@ namespace ballistica {
 // can override any of these before this is included.
 
 // Monolithic builds consist of a single binary that inits and manages
-// Python itself, as opposed to modular builds which are made up of
-// Python binary modules which are run under a standard Python runtime.
+// Python itself, as opposed to modular builds which are made up of Python
+// binary modules which are run under a standard Python runtime. This will
+// be 0 for both modular (.so) builds of the engine as well as for static
+// libraries such as baplus intended to be linked to either version.
 #ifndef BA_MONOLITHIC_BUILD
 #define BA_MONOLITHIC_BUILD 1
 #endif

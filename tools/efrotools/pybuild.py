@@ -714,42 +714,77 @@ def _patch_py_wreadlink_test() -> None:
     fname = 'Python/fileutils.c'
     txt = readfile(fname)
 
+    # Final fix for this problem.
+    # It seems that readlink() might be broken in android at the moment,
+    # returning an int while claiming it to be a ssize_t value. This makes
+    # the error case (-1) actually come out as 4294967295. When cast back
+    # to an int it is -1, so that's what we do. This should be fine to do
+    # even on a fixed version.
     txt = replace_exact(
         txt,
         '    res = readlink(cpath, cbuf, cbuf_len);\n',
-        (
-            '    res = readlink(cpath, cbuf, cbuf_len);\n'
-            '    const wchar_t *path2 = path;\n'
-            '    int path2len = 0;\n'
-            '    while (*path2) {\n'
-            '        path2++;\n'
-            '        path2len++;\n'
-            '    }\n'
-            '    char dlog1[512];\n'
-            '    if (res >= 0) {\n'
-            '        snprintf(dlog1, sizeof(dlog1), "ValsA1 pathlen=%d slen=%d'
-            ' path=\'%s\'", path2len, strlen(cpath), cpath);\n'
-            '    } else {\n'
-            '        snprintf(dlog1, sizeof(dlog1), "ValsA2 pathlen=%d",'
-            ' path2len);\n'
-            '    }\n'
-            '    Py_BallisticaLowLevelDebugLog(dlog1);\n'
-        ),
+        '    res = (int)readlink(cpath, cbuf, cbuf_len);\n',
     )
 
-    txt = replace_exact(
-        txt,
-        "    cbuf[res] = '\\0'; /* buf will be null terminated */",
-        (
-            '    char dlog[512];\n'
-            '    snprintf(dlog, sizeof(dlog), "ValsB res=%d resx=%X'
-            ' eq1=%d eq2=%d",'
-            ' (int)res, res, (int)(res == -1),'
-            ' (int)((size_t)res == cbuf_len));\n'
-            '    Py_BallisticaLowLevelDebugLog(dlog);\n'
-            "    cbuf[res] = '\\0'; /* buf will be null terminated */"
-        ),
-    )
+    # Verbose problem exploration:
+    # txt = replace_exact(
+    #     txt,
+    #     '#include <stdlib.h>               // mbstowcs()\n',
+    #     '#include <stdlib.h>               // mbstowcs()\n'
+    #     '#include <sys/syscall.h>\n',
+    # )
+
+    # txt = replace_exact(txt, '    Py_ssize_t res;\n', '')
+
+    # txt = replace_exact(
+    #     txt,
+    #     '    res = readlink(cpath, cbuf, cbuf_len);\n',
+    #     (
+    #         '    Py_ssize_t res = readlink(cpath, cbuf, cbuf_len);\n'
+    #         '    Py_ssize_t res2 = readlink(cpath, cbuf, cbuf_len);\n'
+    #         '    ssize_t res3 = readlink(cpath, cbuf, cbuf_len);\n'
+    #         '    ssize_t res4 = readlinkat(AT_FDCWD, cpath,
+    # cbuf, cbuf_len);\n'
+    #         '    int res5 = syscall(SYS_readlinkat, AT_FDCWD, cpath,'
+    #         ' cbuf, cbuf_len);\n'
+    #         '    ssize_t res6 = syscall(SYS_readlinkat, AT_FDCWD, cpath,'
+    #         ' cbuf, cbuf_len);\n'
+    #         '    char dlog[512];\n'
+    #         '    snprintf(dlog, sizeof(dlog),'
+    #         ' "res=%zd res2=%zd res3=%zd res4=%zd res5=%d res6=%zd"\n'
+    #         '             " (res == -1)=%d (res2 == -1)=%d (res3 == -1)=%d'
+    #         ' (res4 == -1)=%d (res5 == -1)=%d (res6 == -1)=%d",\n'
+    #         '             res, res2, res3, res4, res5, res6,\n'
+    #         '             (res == -1), (res2 == -1), (res3 == -1),'
+    #         ' (res4 == -1), (res5 == -1), (res6 == -1));\n'
+    #         '    Py_BallisticaLowLevelDebugLog(dlog);\n'
+    #         '\n'
+    #         '    char dlog1[512];\n'
+    #         '    ssize_t st1;\n'
+    #         '    Py_ssize_t st2;\n'
+    #         '    snprintf(dlog1, sizeof(dlog1),
+    # "ValsA1 sz1=%zu sz2=%zu res=%zd'
+    #         ' res_hex=%lX res_cmp=%d res_cmp_2=%d pathlen=%d slen=%d'
+    #         ' path=\'%s\'", sizeof(st1), sizeof(st2), res,'
+    #         ' res, (int)(res == -1), (int)((int)res == -1),'
+    #         ' (int)wcslen(path), (int)strlen(cpath), cpath);\n'
+    #         '    Py_BallisticaLowLevelDebugLog(dlog1);\n'
+    #     ),
+    # )
+
+    # txt = replace_exact(
+    #     txt,
+    #     "    cbuf[res] = '\\0'; /* buf will be null terminated */",
+    #     (
+    #         '    char dlog[512];\n'
+    #         '    snprintf(dlog, sizeof(dlog), "ValsB res=%d resx=%lX'
+    #         ' eq1=%d eq2=%d",'
+    #         ' (int)res, res, (int)(res == -1),'
+    #         ' (int)((size_t)res == cbuf_len));\n'
+    #         '    Py_BallisticaLowLevelDebugLog(dlog);\n'
+    #         "    cbuf[res] = '\\0'; /* buf will be null terminated */"
+    #     ),
+    # )
     writefile(fname, txt)
 
 

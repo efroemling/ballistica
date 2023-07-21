@@ -39,9 +39,9 @@ class Python {
     BA_DISALLOW_CLASS_COPIES(ScopedCallLabel);
   };
 
-  /// Use this to protect Python code that may be run in cases where we don't
-  /// hold the Global Interpreter Lock (GIL) (basically anything outside of the
-  /// logic thread).
+  /// Use this to protect Python code that may be run in cases where we
+  /// don't hold the Global Interpreter Lock (GIL). (Basically anything
+  /// outside of the logic thread).
   class ScopedInterpreterLock {
    public:
     ScopedInterpreterLock();
@@ -55,7 +55,20 @@ class Python {
     Impl* impl_{};
   };
 
-  // static auto Create() -> Python*;
+  /// Use this for cases where we *do* hold the GIL but want to release
+  /// it for some operation.
+  class ScopedInterpreterLockRelease {
+   public:
+    ScopedInterpreterLockRelease();
+    ~ScopedInterpreterLockRelease();
+
+   private:
+    class Impl;
+    // Note: should use unique_ptr for this, but build fails on raspberry pi
+    // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
+    // std::unique_ptr<Impl> impl_{};
+    Impl* impl_{};
+  };
 
   /// Return whether the current thread holds the global-interpreter-lock.
   /// We must always hold the GIL while running python code.

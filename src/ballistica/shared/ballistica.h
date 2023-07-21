@@ -104,8 +104,10 @@ class CoreConfig;
 // enough that avoiding the extra class includes seems like an overall
 // compile-time/convenience win.
 
+#if BA_MONOLITHIC_BUILD
 /// Entry point for standard monolithic builds. Handles all initing and running.
 auto MonolithicMain(const core::CoreConfig& config) -> int;
+#endif  // BA_MONOLITHIC_BUILD
 
 // Print a momentary message on the screen.
 void ScreenMessage(const std::string& msg);

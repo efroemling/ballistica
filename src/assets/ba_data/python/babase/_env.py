@@ -54,8 +54,10 @@ def on_native_module_import() -> None:
     # make noise if that's not the case.
     if debug_build != sys.flags.dev_mode:
         logging.warning(
-            'Mismatch in ballistica debug_build %s'
-            ' and sys.flags.dev_mode %s; this may cause problems.',
+            'Ballistica was built with debug-mode %s'
+            ' but Python is running with dev-mode %s;'
+            ' this mismatch may cause problems.'
+            ' See https://docs.python.org/3/library/devmode.html',
             debug_build,
             sys.flags.dev_mode,
         )
@@ -75,11 +77,11 @@ def setup_env_for_app_run() -> None:
     assert baenv.config_exists()
 
     # If we were unable to set paths earlier, complain now.
-    if baenv.g_paths_set_failed:
+    if baenv.did_paths_set_fail():
         logging.warning(
             'Ballistica Python paths have not been set. This may cause'
             ' problems. To ensure paths are set, run baenv.configure()'
-            ' before importing any ballistica modules.'
+            ' BEFORE importing any Ballistica modules.'
         )
 
     # Set up interrupt-signal handling.
@@ -144,9 +146,10 @@ def on_app_launching() -> None:
     assert _babase.in_logic_thread()
 
     # Let the user know if the app python dir is a custom one.
-    if baenv.g_user_system_scripts_dir is not None:
+    user_sys_scripts_dir = baenv.get_user_system_scripts_dir()
+    if user_sys_scripts_dir is not None:
         _babase.screenmessage(
-            f"Using user system scripts: '{baenv.g_user_system_scripts_dir}'",
+            f"Using user system scripts: '{user_sys_scripts_dir}'",
             color=(0.6, 0.6, 1.0),
         )
 

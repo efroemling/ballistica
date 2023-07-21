@@ -7,6 +7,7 @@
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 
@@ -224,7 +225,7 @@ void EventLoop::WaitForNextEvent(bool single_cycle) {
 
   // While we're waiting, allow other python threads to run.
   if (acquires_python_gil_) {
-    g_core->python->ReleaseGIL();
+    ReleaseGIL();
   }
 
   // If we've got active timers, wait for messages with a timeout so we can
@@ -257,7 +258,7 @@ void EventLoop::WaitForNextEvent(bool single_cycle) {
   }
 
   if (acquires_python_gil_) {
-    g_core->python->AcquireGIL();
+    AcquireGIL();
   }
 }
 
@@ -451,7 +452,7 @@ void EventLoop::SetAcquiresPythonGIL() {
   assert(!acquires_python_gil_);  // This should be called exactly once.
   assert(ThreadIsCurrent());
   acquires_python_gil_ = true;
-  g_core->python->AcquireGIL();
+  AcquireGIL();
 }
 
 // Explicitly kill the main thread.
@@ -782,6 +783,32 @@ auto EventLoop::CheckPushSafety() -> bool {
 auto EventLoop::CheckPushRunnableSafety() -> bool {
   std::unique_lock lock(thread_message_mutex_);
   return thread_messages_.size() < kThreadMessageSafetyThreshold;
+}
+
+void EventLoop::AcquireGIL() {
+  assert(g_base_soft && g_base_soft->InLogicThread());
+  auto debug_timing{g_core->core_config().debug_timing};
+  millisecs_t startms{debug_timing ? core::CorePlatform::GetCurrentMillisecs()
+                                   : 0};
+
+  if (py_thread_state_) {
+    PyEval_RestoreThread(py_thread_state_);
+    py_thread_state_ = nullptr;
+  }
+
+  if (debug_timing) {
+    auto duration{core::CorePlatform::GetCurrentMillisecs() - startms};
+    if (duration > (1000 / 120)) {
+      Log(LogLevel::kInfo,
+          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
+    }
+  }
+}
+
+void EventLoop::ReleaseGIL() {
+  assert(g_base_soft && g_base_soft->InLogicThread());
+  assert(py_thread_state_ == nullptr);
+  py_thread_state_ = PyEval_SaveThread();
 }
 
 }  // namespace ballistica

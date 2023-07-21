@@ -177,6 +177,11 @@ void BaseFeatureSet::StartApp() {
 
   LogVersionInfo();
 
+  // The logic thread (or maybe other things) need to run Python as
+  // we're bringing them up, so let it go for the duration of this call.
+  // We'll explicitly grab it if/when we need it.
+  Python::ScopedInterpreterLockRelease gil_release;
+
   // Read in ba.app.config for anyone who wants to start looking at it
   // (though we don't explicitly ask anyone to apply it until later).
   python->ReadConfig();
@@ -279,6 +284,10 @@ void BaseFeatureSet::RunAppToCompletion() {
   if (!called_start_app_) {
     StartApp();
   }
+
+  // Let go of the GIL while we're running. The logic thread or other things
+  // will grab it when needed.
+  Python::ScopedInterpreterLockRelease gil_release;
 
   // On our event-loop-managing platforms we now simply sit in our event
   // loop until the app is quit.
@@ -494,8 +503,13 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   // We may attempt to import stuff and that should *never* happen before
   // base is fully imported.
   if (!IsBaseCompletelyImported()) {
-    printf(
-        "WARNING: V1CloudLog called before babase fully imported; ignoring.\n");
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      printf(
+          "WARNING: V1CloudLog called before babase fully imported; "
+          "ignoring.\n");
+    }
     return;
   }
 
@@ -523,7 +537,11 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
 
   // Need plus for direct sends.
   if (!HavePlus()) {
-    printf("WARNING: V1CloudLog direct-sends not available; ignoring.\n");
+    static bool did_warn = false;
+    if (!did_warn) {
+      did_warn = true;
+      printf("WARNING: V1CloudLog direct-sends not available; ignoring.\n");
+    }
     return;
   }
 

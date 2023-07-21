@@ -202,14 +202,6 @@ void CorePython::ImportPythonObjs() {
   }
 }
 
-void CorePython::ReleaseMainThreadGIL() {
-  assert(g_core->InMainThread());
-  // After we bootstrap Python here in the main thread we release the GIL.
-  // We'll explicitly reacquire it anytime we need it (mainly in the logic
-  // thread once that comes up later).
-  PyEval_SaveThread();
-}
-
 void CorePython::SoftImportBase() {
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_babase"));
@@ -343,31 +335,6 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
 
   PythonRef args(Py_BuildValue("(s)", msg.c_str()), PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
-}
-
-void CorePython::AcquireGIL() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-  auto debug_timing{g_core->core_config().debug_timing};
-  millisecs_t startms{debug_timing ? CorePlatform::GetCurrentMillisecs() : 0};
-
-  if (logic_thread_state_) {
-    PyEval_RestoreThread(logic_thread_state_);
-    logic_thread_state_ = nullptr;
-  }
-
-  if (debug_timing) {
-    auto duration{CorePlatform::GetCurrentMillisecs() - startms};
-    if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo,
-          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
-    }
-  }
-}
-
-void CorePython::ReleaseGIL() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-  assert(logic_thread_state_ == nullptr);
-  logic_thread_state_ = PyEval_SaveThread();
 }
 
 }  // namespace ballistica::core

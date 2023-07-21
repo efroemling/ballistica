@@ -385,16 +385,18 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_CLIENT_INFO: {
       if (buffer.size() > 1) {
+        // Make a null-terminated copy of the string data.
         std::vector<char> str_buffer(buffer.size());
-        memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
+        memcpy(str_buffer.data(), buffer.data() + 1, buffer.size() - 1);
         str_buffer[str_buffer.size() - 1] = 0;
-        cJSON* info = cJSON_Parse(reinterpret_cast<const char*>(&(buffer[1])));
+
+        cJSON* info = cJSON_Parse(str_buffer.data());
         if (info) {
           cJSON* b = cJSON_GetObjectItem(info, "b");
           if (b) {
             build_number_ = b->valueint;
           } else {
-            Log(LogLevel::kError, "no buildnumber in clientinfo msg");
+            Log(LogLevel::kError, "No buildnumber in clientinfo msg.");
           }
 
           // Grab their token (we use this to ask the
@@ -403,7 +405,7 @@ void ConnectionToClient::HandleMessagePacket(
           if (t) {
             token_ = t->valuestring;
           } else {
-            Log(LogLevel::kError, "no token in clientinfo msg");
+            Log(LogLevel::kError, "No token in clientinfo msg.");
           }
 
           // Newer clients also pass a peer-hash, which
@@ -423,9 +425,9 @@ void ConnectionToClient::HandleMessagePacket(
           cJSON_Delete(info);
         } else {
           Log(LogLevel::kError,
-              "got invalid json in clientinfo message: '"
+              "Got invalid json in clientinfo message: '"
                   + std::string(reinterpret_cast<const char*>(&(buffer[1])))
-                  + "'");
+                  + "'.");
         }
       }
       got_client_info_ = true;

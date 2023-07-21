@@ -806,11 +806,13 @@ def efro_gradle() -> None:
 
 def stage_assets() -> None:
     """Stage assets for a build."""
-    from batools.assetstaging import main
+    import batools.assetstaging
     from efro.error import CleanError
 
     try:
-        main(projroot=str(PROJROOT), args=sys.argv[2:])
+        batools.assetstaging.stage_assets(
+            projroot=str(PROJROOT), args=sys.argv[2:]
+        )
     except CleanError as exc:
         exc.pretty_print()
         sys.exit(1)

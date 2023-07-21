@@ -1,4 +1,38 @@
-### 1.7.23 (build 21171, api 8, 2023-07-16)
+### 1.7.24 (build 21183, api 8, 2023-07-21)
+
+- Due to the cleanup done in 1.7.20, it is now possible to build and run
+  Ballistica as a 'pure' Python app consisting of binary Python modules loaded
+  by a standard Python interpreter. This new build style is referred to as
+  'modular'. The traditional form of the app, where we bootstrap Python
+  ourselves inside a standalone binary, is called 'monolithic'. To build and run
+  Ballistica in modular form, you can do `make cmake-modular`. This should make
+  it easier to use certain things like Python debuggers with Ballistica. While I
+  expect most builds of the game to remain monolithic, this may become the
+  default for certain situations such as server builds or possibly Linux builds
+  if it seems beneficial. We'll see. Modular mode should work on Linux and Mac
+  currently; other platforms remain monolithic-only for now.
+- Changed path wrangling a bit in baenv.py. All ballistica Python paths
+  (including python-site-packages) are now placed before any other existing
+  Python paths. This should provide a more consistent environment and means
+  Ballistica will always use its own version of things like yaml or certifi or
+  typing_extensions instead of one the user has installed via pip. Holler if you
+  run into any problems because of this and we can make an option to use the old
+  behavior where Ballistica's app and site paths get placed at the end.
+- It is now possible to manually run the app loop even on monolithic builds;
+  just do `PYTHONPATH=ba_data/python ./ballisticacore -c "import baenv;
+  baenv.configure(); import babase; babase.app.run()"`. This is basically the
+  same thing modular builds are doing except that they use a regular Python
+  interpreter instead of the ballisticakit binary.
+- Cleaned up the `tools/pcommand stage_assets` command. It now always expects a
+  separate `-debug` or `-release` arg. So old commands such as `tools/pcommand
+  stage_assets -win-Win32-Debug .` now look like `tools/pcommand stage_assets
+  -win-Win32 -debug .`. Please holler if you run into any broken asset-staging
+  calls in the Makefile/etc.
+- `FeatureSet.has_native_python_module` has been renamed to
+  `FeatureSet.has_python_binary_module` for better consistency with related
+  functionality.
+  
+### 1.7.23 (build 21178, api 8, 2023-07-19)
 
 - Network security improvements. (Thanks Dliwk!)
 - You can now double click a chat message to copy it. (Thanks Vishal332008!)
