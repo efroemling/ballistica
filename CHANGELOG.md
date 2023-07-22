@@ -1,4 +1,4 @@
-### 1.7.24 (build 21185, api 8, 2023-07-21)
+### 1.7.24 (build 21186, api 8, 2023-07-21)
 
 - Due to the cleanup done in 1.7.20, it is now possible to build and run
   Ballistica as a 'pure' Python app consisting of binary Python modules loaded
@@ -31,6 +31,9 @@
 - `FeatureSet.has_native_python_module` has been renamed to
   `FeatureSet.has_python_binary_module` for better consistency with related
   functionality.
+- Renamed `stage_assets` to `stage_build` and the module it lives in from
+  `assetstaging` to simply `staging`. The staging stuff now covers more things
+  than simply asset files so this is a more accurate name.
   
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 

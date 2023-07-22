@@ -97,7 +97,7 @@ from batools.pcommand import (
     make_prefab,
     lazybuild,
     efro_gradle,
-    stage_assets,
+    stage_build,
     update_project,
     cmake_prep_dir,
     gen_binding_code,

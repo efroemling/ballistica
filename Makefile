@@ -243,11 +243,11 @@ prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
 
 prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/mac_x86_64_gui/debug
+	@$(STAGE_BUILD) -cmake -debug build/prefab/full/mac_x86_64_gui/debug
 
 prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/mac_arm64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/mac_arm64_gui/debug
+	@$(STAGE_BUILD) -cmake -debug build/prefab/full/mac_arm64_gui/debug
 
 build/prefab/full/mac_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -273,11 +273,11 @@ prefab-mac-arm64-gui-release: prefab-mac-arm64-gui_release-build
 
 prefab-mac-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake -release build/prefab/full/mac_x86_64_gui/release
+	@$(STAGE_BUILD) -cmake -release build/prefab/full/mac_x86_64_gui/release
 
 prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/mac_arm64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake -release build/prefab/full/mac_arm64_gui/release
+	@$(STAGE_BUILD) -cmake -release build/prefab/full/mac_arm64_gui/release
 
 build/prefab/full/mac_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -303,11 +303,11 @@ prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 
 prefab-mac-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/debug/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -debug build/prefab/full/mac_x86_64_server/debug
+	@$(STAGE_BUILD) -cmakeserver -debug build/prefab/full/mac_x86_64_server/debug
 
 prefab-mac-arm64-server-debug-build: prereqs assets-server \
    build/prefab/full/mac_arm64_server/debug/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
+	@$(STAGE_BUILD) -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
 
 build/prefab/full/mac_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -333,12 +333,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 
 prefab-mac-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -release \
+	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
 prefab-mac-arm64-server-release-build: prereqs assets-server \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -release \
+	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
 
 build/prefab/full/mac_%_server/release/dist/ballisticakit_headless: .efrocachemap
@@ -365,11 +365,11 @@ prefab-linux-arm64-gui-debug: prefab-linux-arm64-gui-debug-build
 
 prefab-linux-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/linux_x86_64_gui/debug
+	@$(STAGE_BUILD) -cmake -debug build/prefab/full/linux_x86_64_gui/debug
 
 prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_arm64_gui/debug/ballisticakit
-	@$(STAGE_ASSETS) -cmake -debug build/prefab/full/linux_arm64_gui/debug
+	@$(STAGE_BUILD) -cmake -debug build/prefab/full/linux_arm64_gui/debug
 
 build/prefab/full/linux_%_gui/debug/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -395,11 +395,11 @@ prefab-linux-arm64-gui-release: prefab-linux-arm64-gui-release-build
 
 prefab-linux-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake -release build/prefab/full/linux_x86_64_gui/release
+	@$(STAGE_BUILD) -cmake -release build/prefab/full/linux_x86_64_gui/release
 
 prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/linux_arm64_gui/release/ballisticakit
-	@$(STAGE_ASSETS) -cmake -release build/prefab/full/linux_arm64_gui/release
+	@$(STAGE_BUILD) -cmake -release build/prefab/full/linux_arm64_gui/release
 
 build/prefab/full/linux_%_gui/release/ballisticakit: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -425,12 +425,12 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 
 prefab-linux-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -debug \
+	@$(STAGE_BUILD) -cmakeserver -debug \
  build/prefab/full/linux_x86_64_server/debug
 
 prefab-linux-arm64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_arm64_server/debug/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -debug \
+	@$(STAGE_BUILD) -cmakeserver -debug \
  build/prefab/full/linux_arm64_server/debug
 
 build/prefab/full/linux_%_server/debug/dist/ballisticakit_headless: .efrocachemap
@@ -457,12 +457,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 
 prefab-linux-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -release \
+	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
 prefab-linux-arm64-server-release-build: prereqs assets-server \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
-	@$(STAGE_ASSETS) -cmakeserver -release \
+	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
 
 build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocachemap
@@ -482,7 +482,7 @@ prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
 
 prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
-	@$(STAGE_ASSETS) -win-$(WINPLAT_X86) -debug \
+	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -debug \
    build/prefab/full/windows_x86_gui/debug
 
 build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
@@ -506,7 +506,7 @@ prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
 prefab-windows-x86-gui-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/release/BallisticaKit.exe
-	@$(STAGE_ASSETS) -win-$(WINPLAT_X86) -release \
+	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -release \
 build/prefab/full/windows_x86_gui/release
 
 build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
@@ -531,7 +531,7 @@ prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe
-	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86) -debug \
+	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -debug \
  build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
@@ -556,7 +556,7 @@ prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
 prefab-windows-x86-server-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe
-	@$(STAGE_ASSETS) -winserver-$(WINPLAT_X86) -release \
+	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -release \
    build/prefab/full/windows_x86_server/release
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
@@ -931,7 +931,7 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_ASSETS) -win-$(WINPLT) -$(WINCFGLC) \
+	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) \
    build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
@@ -1026,7 +1026,7 @@ cmake-lldb: cmake-build
 
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
-	@$(STAGE_ASSETS) -cmake -$(CM_BT_LC) build/cmake/$(CM_BT_LC)
+	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) build/cmake/$(CM_BT_LC)
 	@tools/pcommand echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)
 
 cmake-binary: meta
@@ -1044,7 +1044,7 @@ cmake-server: cmake-server-build
 	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticakit_server
 
 cmake-server-build: assets-server meta cmake-server-binary
-	@$(STAGE_ASSETS) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
+	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
 	@tools/pcommand echo BLD \
       Server build complete: BLU build/cmake/server-$(CM_BT_LC)
 
@@ -1061,7 +1061,8 @@ cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)
 
 cmake-modular-build: assets-cmake meta cmake-modular-binary
-	@$(STAGE_ASSETS) -cmakemodular -$(CM_BT_LC) \
+	@$(STAGE_BUILD) -cmakemodular -$(CM_BT_LC) \
+      -builddir build/cmake/modular-$(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)/staged
 	@tools/pcommand echo BLD \
       Modular build complete: BLU build/cmake/modular-$(CM_BT_LC)/staged
@@ -1082,8 +1083,8 @@ cmake-modular-clean:
 
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
-	$(STAGE_ASSETS) -cmake -debug build/clion_debug
-	$(STAGE_ASSETS) -cmake -release build/clion_release
+	$(STAGE_BUILD) -cmake -debug build/clion_debug
+	$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
@@ -1114,7 +1115,7 @@ VERSION = $(shell tools/pcommand version version)
 BUILD_NUMBER = $(shell tools/pcommand version build)
 BUILD_DIR = $(PROJ_DIR)/build
 LAZYBUILDDIR = .cache/lazybuild
-STAGE_ASSETS = $(PROJ_DIR)/tools/pcommand stage_assets
+STAGE_BUILD = $(PROJ_DIR)/tools/pcommand stage_build
 
 # Things to ignore when doing root level cleans. Note that we exclude build
 # and just blow that away manually; it might contain git repos or other things

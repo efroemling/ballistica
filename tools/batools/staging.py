@@ -11,7 +11,7 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
-from efrotools import PYVER
+from efrotools import PYVER, extract_arg, extract_flag
 
 if TYPE_CHECKING:
     pass
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 OPT_PYC_SUFFIX = 'cpython-' + PYVER.replace('.', '') + '.opt-1.pyc'
 
 
-def stage_assets(projroot: str, args: list[str] | None = None) -> None:
+def stage_build(projroot: str, args: list[str] | None = None) -> None:
     """Stage assets for a build."""
 
     if args is None:
@@ -62,6 +62,8 @@ class AssetStager:
         self.tex_suffix: str | None = None
         self.is_payload_full = False
         self.debug: bool | None = None
+        self.builddir: str | None = None
+        self.dist_mode: bool = False
 
     def run(self, args: list[str]) -> None:
         """Do the thing."""
@@ -104,6 +106,17 @@ class AssetStager:
         if len(args) < 1:
             raise RuntimeError('Expected at least one argument.')
         platform_arg = args[0]
+
+        # First, look for a few optional args:
+
+        # Some build types require a build dir to pull stuff from beyond
+        # the normal assets dir.
+        self.builddir = extract_arg(args, '-builddir')
+
+        # In some cases we behave differently when building a 'dist'
+        # version compared to a regular version; copying files in instead
+        # of symlinking them/etc.
+        self.dist_mode = extract_flag(args, '-dist')
 
         # Require either -debug or -release in args.
         if '-debug' in args:
@@ -512,18 +525,31 @@ class AssetStager:
         if not os.path.exists(dylib_staging_dir):
             os.makedirs(dylib_staging_dir, exist_ok=True)
 
-        # Create a symlink to our original built so. NOTE: Anyone
-        # building final app packages/etc. should replace this with the
-        # actual file. This is just for development.
+        # Create a symlink to our original built so. (or copy the actual
+        # file for dist mode)
 
-        # FIXME - currently assuming our built .so lives one dir above
-        # our staging dir; should not be making that assumption.
-        built_so_path = f'{self.dst}/../{soname}'
+        if self.builddir is None:
+            raise RuntimeError("This staging type requires '-builddir' arg.")
+
+        built_so_path = f'{self.builddir}/{soname}'
         staged_so_path = f'{dylib_staging_dir}/{soname}'
 
-        if not os.path.islink(staged_so_path):
-            relpath = os.path.relpath(built_so_path, dylib_staging_dir)
-            subprocess.run(['ln', '-sf', relpath, staged_so_path], check=True)
+        # Copy the file in for dist mode; otherwise set up a symlink for
+        # faster iteration.
+        if self.dist_mode:
+            # Blow away any symlink.
+            if os.path.islink(staged_so_path):
+                os.unlink(staged_so_path)
+            if not os.path.isfile(staged_so_path):
+                subprocess.run(
+                    ['cp', built_so_path, staged_so_path], check=True
+                )
+        else:
+            if not os.path.islink(staged_so_path):
+                relpath = os.path.relpath(built_so_path, dylib_staging_dir)
+                subprocess.run(
+                    ['ln', '-sf', relpath, staged_so_path], check=True
+                )
 
         # Ok, now we want to create symlinks for each of our featureset
         # Python modules. All of our stuff lives in the same .so and we
