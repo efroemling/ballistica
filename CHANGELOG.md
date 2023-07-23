@@ -1,4 +1,4 @@
-### 1.7.24 (build 21186, api 8, 2023-07-21)
+### 1.7.24 (build 21188, api 8, 2023-07-22)
 
 - Due to the cleanup done in 1.7.20, it is now possible to build and run
   Ballistica as a 'pure' Python app consisting of binary Python modules loaded

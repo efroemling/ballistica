@@ -692,7 +692,10 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         name: str
         current_value: str
 
-    entries: list[Entry] = []
+    # Start with an entry we can explicitly increment if we want to blow
+    # away all cmake builds everywhere (for if we change something in
+    # the CMakeList that cmake doesn't properly handle itself, etc.).
+    entries: list[Entry] = [Entry('explicit cmake rebuild', '1')]
 
     # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(

@@ -830,6 +830,7 @@ class SpinoffContext:
                     ' ode ',
                     'ode ',
                     label=src_path,
+                    count=2,
                 )
             if src_path.startswith(
                 'ballisticakit-windows/'

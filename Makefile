@@ -426,12 +426,12 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 prefab-linux-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug \
- build/prefab/full/linux_x86_64_server/debug
+      build/prefab/full/linux_x86_64_server/debug
 
 prefab-linux-arm64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_arm64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug \
- build/prefab/full/linux_arm64_server/debug
+      build/prefab/full/linux_arm64_server/debug
 
 build/prefab/full/linux_%_server/debug/dist/ballisticakit_headless: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -483,7 +483,7 @@ prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
 prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
 	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -debug \
-   build/prefab/full/windows_x86_gui/debug
+      build/prefab/full/windows_x86_gui/debug
 
 build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -507,7 +507,7 @@ prefab-windows-x86-gui-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/release/BallisticaKit.exe
 	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -release \
-build/prefab/full/windows_x86_gui/release
+      build/prefab/full/windows_x86_gui/release
 
 build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -532,7 +532,7 @@ prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -debug \
- build/prefab/full/windows_x86_server/debug
+      build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -557,7 +557,7 @@ prefab-windows-x86-server-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -release \
-   build/prefab/full/windows_x86_server/release
+      build/prefab/full/windows_x86_server/release
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -932,7 +932,7 @@ WINDOWS_CONFIGURATION ?= Debug
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
 	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) \
-   build/windows/$(WINCFG)_$(WINPLT)
+      build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
@@ -1035,7 +1035,7 @@ cmake-binary: meta
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) build/cmake/$(CM_BT_LC)
-	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakit
+	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)
@@ -1055,7 +1055,7 @@ cmake-server-binary: meta
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist
 	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS) \
-      ballisticakit
+      ballisticakitbin
 
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)

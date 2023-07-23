@@ -750,29 +750,32 @@ set(BALLISTICA_SOURCES
 )
 
 # BallisticaKit monolithic binary.
-add_executable(ballisticakit ${BALLISTICA_SOURCES})
+add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
 # Gets -rdynamic added when linking gcc builds which exports all symbols
 # which gives us more meaningful stack traces using backtrace_symbols().  
-set_target_properties(ballisticakit PROPERTIES ENABLE_EXPORTS 1)
+set_target_properties(ballisticakitbin PROPERTIES ENABLE_EXPORTS 1)
   
 if (HEADLESS)
-  set_target_properties(ballisticakit
+  set_target_properties(ballisticakitbin
     PROPERTIES OUTPUT_NAME "ballisticakit_headless")
+else ()
+  set_target_properties(ballisticakitbin
+    PROPERTIES OUTPUT_NAME "ballisticakit")
 endif ()
 
-target_include_directories(ballisticakit PRIVATE
+target_include_directories(ballisticakitbin PRIVATE
   ${Python_INCLUDE_DIRS}
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
   ${EXTRA_INCLUDE_DIRS})
 
-target_link_libraries(ballisticakit PRIVATE
+target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
 
 # Hack for building on rpi; need to update my pi so I can remove this.
 if(EXISTS "/home/pi")
-target_link_libraries(ballisticakit PRIVATE dl util stdc++fs)
+target_link_libraries(ballisticakitbin PRIVATE dl util stdc++fs)
 endif()
 
 
