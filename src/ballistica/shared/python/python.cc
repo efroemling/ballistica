@@ -399,16 +399,21 @@ Python::ScopedInterpreterLock::~ScopedInterpreterLock() { delete impl_; }
 class Python::ScopedInterpreterLockRelease::Impl {
  public:
   Impl() {
-    assert(HaveGIL());
-    // Release the GIL.
-    thread_state_ = PyEval_SaveThread();
+    had_gil_ = HaveGIL();
+    if (had_gil_) {
+      // Release the GIL.
+      thread_state_ = PyEval_SaveThread();
+    }
   }
   ~Impl() {
-    // Restore the GIL.
-    PyEval_RestoreThread(thread_state_);
+    if (had_gil_) {
+      // Restore the GIL.
+      PyEval_RestoreThread(thread_state_);
+    }
   }
 
  private:
+  bool had_gil_{};
   PyThreadState* thread_state_{};
 };
 

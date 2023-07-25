@@ -31,7 +31,6 @@ values = [
     _hooks.error_message,  # kErrorMessageCall
     _hooks.purchase_not_valid_error,  # kPurchaseNotValidErrorCall
     _hooks.purchase_already_in_progress_error,  # kPurchaseAlreadyInProgressErrorCall
-    _hooks.gear_vr_controller_warning,  # kGearVRControllerWarningCall
     _hooks.orientation_reset_cb_message,  # kVROrientationResetCBMessageCall
     _hooks.orientation_reset_message,  # kVROrientationResetMessageCall
     _apputils.handle_v1_cloud_log,  # kHandleV1CloudLogCall
@@ -44,7 +43,6 @@ values = [
     _hooks.purchases_restored_message,  # kPurchasesRestoredMessageCall
     _hooks.unavailable_message,  # kUnavailableMessageCall
     _hooks.set_last_ad_network,  # kSetLastAdNetworkCall
-    _hooks.no_game_circle_message,  # kNoGameCircleMessageCall
     _hooks.google_play_purchases_not_available_message,  # kGooglePlayPurchasesNotAvailableMessageCall
     _hooks.google_play_services_not_available_message,  # kGooglePlayServicesNotAvailableMessageCall
     _hooks.empty_call,  # kEmptyCall
@@ -85,7 +83,6 @@ values = [
     _hooks.implicit_sign_out,  # kImplicitSignOutCall
     _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     _hooks.open_url_with_webbrowser_module,  # kOpenURLWithWebBrowserModuleCall
-    _apputils.on_too_many_file_descriptors,  # kOnTooManyFileDescriptorsCall
     _env.on_native_module_import,  # kOnNativeModuleImportCall
-    _env.setup_env_for_app_run,  # kSetupEnvForAppRunCall
+    _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
 ]

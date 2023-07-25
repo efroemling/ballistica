@@ -248,7 +248,6 @@ class CorePlatform {
   virtual void AndroidShowAppInvite(const std::string& title,
                                     const std::string& message,
                                     const std::string& code);
-  virtual void AndroidShowWifiSettings();
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
 #pragma mark PERMISSIONS -------------------------------------------------------

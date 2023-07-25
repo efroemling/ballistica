@@ -149,16 +149,6 @@ def purchase_already_in_progress_error() -> None:
         )
 
 
-def gear_vr_controller_warning() -> None:
-    from babase._language import Lstr
-
-    if not _babase.app.headless_mode:
-        _babase.getsimplesound('error').play()
-        _babase.screenmessage(
-            Lstr(resource='usesExternalControllerText'), color=(1, 0, 0)
-        )
-
-
 def uuid_str() -> str:
     import uuid
 
@@ -247,12 +237,6 @@ def set_last_ad_network(sval: str) -> None:
     if _babase.app.classic is not None:
         _babase.app.classic.ads.last_ad_network = sval
         _babase.app.classic.ads.last_ad_network_set_time = time.time()
-
-
-def no_game_circle_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(Lstr(resource='noGameCircleText'), color=(1, 0, 0))
 
 
 def google_play_purchases_not_available_message() -> None:

@@ -1254,31 +1254,6 @@ static PyMethodDef PyAndroidGetExternalFilesDirDef = {
 
 #pragma clang diagnostic pop
 
-// --------------------- android_show_wifi_settings ----------------------------
-
-static auto PyAndroidShowWifiSettings(PyObject* self, PyObject* args,
-                                      PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  g_core->platform->AndroidShowWifiSettings();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyAndroidShowWifiSettingsDef = {
-    "android_show_wifi_settings",            // name
-    (PyCFunction)PyAndroidShowWifiSettings,  // method
-    METH_VARARGS | METH_KEYWORDS,            // flags
-
-    "android_show_wifi_settings() -> None\n"
-    "\n"
-    "(internal)",
-};
-
 // ------------------------------- do_once -------------------------------------
 
 static auto PyDoOnce(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1445,6 +1420,36 @@ static PyMethodDef PyOpenDirExternallyDef = {
     "Open the provided dir in the default external app.",
 };
 
+// ----------------------------- fatal_error -----------------------------------
+
+static auto PyFatalError(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* message;
+  static const char* kwlist[] = {"message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &message)) {
+    return nullptr;
+  }
+  FatalError(message);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyFatalErrorDef = {
+    "fatal_error",                 // name
+    (PyCFunction)PyFatalError,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "fatal_error(message: str) -> None\n"
+    "\n"
+    "Trigger a fatal error. Use this in situations where it is not possible\n"
+    "for the engine to continue on in a useful way. This can sometimes\n"
+    "help provide more clear information at the exact source of a problem\n"
+    "as compared to raising an Exception. In the vast majority of cases,\n"
+    "however, Exceptions should be preferred.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1456,7 +1461,6 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyDoOnceDef,
       PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
-      PyAndroidShowWifiSettingsDef,
       PySetInternalLanguageKeysDef,
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
@@ -1500,6 +1504,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyHasTouchScreenDef,
       PyNativeStackTraceDef,
       PyOpenDirExternallyDef,
+      PyFatalErrorDef,
   };
 }
 

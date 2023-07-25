@@ -99,6 +99,7 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     (equivalent to 'make cmake-server-build'). To do so, set environment
     variable BA_APP_RUN_BUILD_HEADLESS=1.
     """
+    import textwrap
 
     binary_build_command: list[str]
     if os.environ.get('BA_APP_RUN_ENABLE_BUILDS') == '1':
@@ -120,7 +121,9 @@ def acquire_binary(assets: bool, purpose: str) -> str:
                     flush=True,
                 )
                 binary_build_command = ['make', 'cmake-server-binary']
-            binary_path = 'build/cmake/server-debug/dist/ballisticakit_headless'
+            binary_path = (
+                'build/cmake/server-debug/staged/dist/ballisticakit_headless'
+            )
         else:
             # Using default gui builds.
             if assets:
@@ -136,13 +139,22 @@ def acquire_binary(assets: bool, purpose: str) -> str:
                     flush=True,
                 )
                 binary_build_command = ['make', 'cmake-binary']
-            binary_path = 'build/cmake/debug/ballisticakit'
+            binary_path = 'build/cmake/debug/staged/ballisticakit'
     else:
         # Ok; going with prefab headless stuff.
+
+        # Let the user know how to use their own binaries instead.
+        note = '\n' + textwrap.fill(
+            'NOTE: You can set env-var BA_APP_RUN_ENABLE_BUILDS=1'
+            f' to use locally-built binaries for {purpose}'
+            ' instead of prefab ones. This will properly reflect any changes'
+            ' you\'ve made to the C/C++ layer.',
+            80,
+        )
         if assets:
             print(
                 f'{Clr.SMAG}Fetching prefab binary & assets for'
-                f' {purpose}...{Clr.RST}',
+                f' {purpose}...{note}{Clr.RST}',
                 flush=True,
             )
             binary_path = (
@@ -157,7 +169,8 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             binary_build_command = ['make', 'prefab-server-release-build']
         else:
             print(
-                f'{Clr.SMAG}Fetching prefab binary for {purpose}...{Clr.RST}',
+                f'{Clr.SMAG}Fetching prefab binary for {purpose}...'
+                f'{note}{Clr.RST}',
                 flush=True,
             )
             binary_path = (

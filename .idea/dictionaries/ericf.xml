@@ -538,8 +538,10 @@
       <w>cmodel</w>
       <w>cmodule</w>
       <w>cmodules</w>
+      <w>cmpbd</w>
       <w>cmpf</w>
       <w>cmplen</w>
+      <w>cmpnf</w>
       <w>cnode</w>
       <w>codecsmodule</w>
       <w>codedata</w>
@@ -1737,6 +1739,7 @@
       <w>maxw</w>
       <w>maxwait</w>
       <w>maxwidth</w>
+      <w>mbname</w>
       <w>mbstowcs</w>
       <w>mbytecount</w>
       <w>mdiv</w>
@@ -1778,6 +1781,7 @@
       <w>miniplayer</w>
       <w>minlog</w>
       <w>minping</w>
+      <w>minsizerel</w>
       <w>minusbutton</w>
       <w>minval</w>
       <w>minver</w>
@@ -2434,6 +2438,7 @@
       <w>reimported</w>
       <w>relfut</w>
       <w>relpath</w>
+      <w>relwithdebinfo</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
       <w>rendertarget</w>

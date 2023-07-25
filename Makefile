@@ -1005,29 +1005,32 @@ windows-clean-list:
 
 # Set the following from the command line to influence the build:
 
-# This can be Debug or Release.
+# This can be Debug, Release, RelWithDebInfo, or MinSizeRel.
 CMAKE_BUILD_TYPE ?= Debug
 
 # Build and run the cmake build.
 cmake: cmake-build
-	@cd build/cmake/$(CM_BT_LC) && ./ballisticakit
+	@cd build/cmake/$(CM_BT_LC)/staged && ./ballisticakit
 
 # Build and run the cmake build under the gdb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-gdb: cmake-build
-	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
+	@cd build/cmake/$(CM_BT_LC)/staged && \
+      BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
 # Build and run the cmake build under the lldb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-lldb: cmake-build
-	@cd build/cmake/$(CM_BT_LC) && BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
+	@cd build/cmake/$(CM_BT_LC)/staged && \
+      BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
-	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) build/cmake/$(CM_BT_LC)
-	@tools/pcommand echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)
+	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir build/cmake/$(CM_BT_LC) \
+      build/cmake/$(CM_BT_LC)/staged
+	@tools/pcommand echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)/staged
 
 cmake-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
@@ -1041,21 +1044,22 @@ cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)
 
 cmake-server: cmake-server-build
-	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticakit_server
+	@cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
 cmake-server-build: assets-server meta cmake-server-binary
-	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
+	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
+      -builddir build/cmake/server-$(CM_BT_LC) \
+      build/cmake/server-$(CM_BT_LC)/staged
 	@tools/pcommand echo BLD \
-      Server build complete: BLU build/cmake/server-$(CM_BT_LC)
+      Server build complete: BLU build/cmake/server-$(CM_BT_LC)/staged
 
 cmake-server-binary: meta
-	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
-	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
+	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)
+	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
-	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist
-	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS) \
-      ballisticakitbin
+	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
+	@cd build/cmake/server-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)

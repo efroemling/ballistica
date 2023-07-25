@@ -33,7 +33,6 @@ class NetworkReader {
   auto sd6() const { return sd6_; }
 
  private:
-  void CheckFDThreshold(int val);
   void DoSelect(bool* can_read_4, bool* can_read_6);
   void DoPoll(bool* can_read_4, bool* can_read_6);
   void OpenSockets();

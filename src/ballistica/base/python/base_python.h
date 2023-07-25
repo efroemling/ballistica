@@ -48,7 +48,6 @@ class BasePython {
     kErrorMessageCall,
     kPurchaseNotValidErrorCall,
     kPurchaseAlreadyInProgressErrorCall,
-    kGearVRControllerWarningCall,
     kVROrientationResetCBMessageCall,
     kVROrientationResetMessageCall,
     kHandleV1CloudLogCall,
@@ -62,7 +61,6 @@ class BasePython {
     kDismissWiiRemotesWindowCall,
     kUnavailableMessageCall,
     kSetLastAdNetworkCall,
-    kNoGameCircleMessageCall,
     kGooglePlayPurchasesNotAvailableMessageCall,
     kGooglePlayServicesNotAvailableMessageCall,
     kEmptyCall,
@@ -98,11 +96,10 @@ class BasePython {
     kImplicitSignInCall,
     kImplicitSignOutCall,
     kLoginAdapterGetSignInTokenResponseCall,
-    kOnTooManyFileDescriptorsCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,
     kOnNativeModuleImportCall,
-    kSetupEnvForAppRunCall,
+    kOnMainThreadStartAppCall,
     kPushApplyAppConfigCall,
     kLast  // Sentinel; must be at end.
   };

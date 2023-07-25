@@ -5,8 +5,11 @@
 ((c++-mode (eval . (flycheck-mode)))
 
  
- (python-mode (jedi:server-args . ("--sys-path" "__EFRO_PROJECT_ROOT__/tools"
-                                   "--sys-path" "__EFRO_PROJECT_ROOT__/src/assets/ba_data/python"))
+ (python-ts-mode (jedi:server-args . ("--sys-path" "__EFRO_PROJECT_ROOT__/tools"
+                                      "--sys-path" "__EFRO_PROJECT_ROOT__/src/assets/ba_data/python"
+                                      "--sys-path" "__EFRO_PROJECT_ROOT__/build/dummymodules"
+                                      ;; "--log-level" "DEBUG" "--log" "/Users/ericf/Desktop/jedilog"
+                                      ))
               (python-black-extra-args . __PYTHON_BLACK_EXTRA_ARGS__))
  
  ;; Shorter name in projectile status bar to save valuable space.

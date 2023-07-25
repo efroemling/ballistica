@@ -1,4 +1,4 @@
-### 1.7.24 (build 21188, api 8, 2023-07-22)
+### 1.7.24 (build 21195, api 8, 2023-07-25)
 
 - Due to the cleanup done in 1.7.20, it is now possible to build and run
   Ballistica as a 'pure' Python app consisting of binary Python modules loaded
@@ -11,6 +11,13 @@
   default for certain situations such as server builds or possibly Linux builds
   if it seems beneficial. We'll see. Modular mode should work on Linux and Mac
   currently; other platforms remain monolithic-only for now.
+- Changed builds such as `cmake` and `cmake-server` to be more like the new
+  `cmake-monolithic` setup; there is now a `staged` dir that built binaries are
+  symlinked into instead of just dumping a `ba_data` into the cmake build dir.
+  This keeps things a bit cleaner with fewer build-related files interspersed
+  with the stuff that Ballistica expects to be there at runtime. This also
+  allows an elegant `-dist` flag to be used with the staging command to copy
+  files instead of symlinking them.
 - Changed path wrangling a bit in baenv.py. All ballistica Python paths
   (including python-site-packages) are now placed before any other existing
   Python paths. This should provide a more consistent environment and means
@@ -29,11 +36,14 @@
   -win-Win32 -debug .`. Please holler if you run into any broken asset-staging
   calls in the Makefile/etc.
 - `FeatureSet.has_native_python_module` has been renamed to
-  `FeatureSet.has_python_binary_module` for better consistency with related
+  `FeatureSet.has_python_binary_module` to be more consistently with related
   functionality.
 - Renamed `stage_assets` to `stage_build` and the module it lives in from
   `assetstaging` to simply `staging`. The staging stuff now covers more things
   than simply asset files so this is a more accurate name.
+- Added `babase.fatal_error()`. Mod code should generally never use this, but it
+  can be useful for core engine code to directly and clearly point out problems
+  that cannot be recovered from.
   
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 

@@ -136,10 +136,10 @@ void BasePython::OnMainThreadStartApp() {
   auto gil{Python::ScopedInterpreterLock()};
   // Set up some env stuff (interrupt handlers, etc.)
   auto result = g_base->python->objs()
-                    .Get(BasePython::ObjID::kSetupEnvForAppRunCall)
+                    .Get(BasePython::ObjID::kOnMainThreadStartAppCall)
                     .Call();
   if (!result.Exists()) {
-    FatalError("babase._env.setup_env_for_app_run() failed.");
+    FatalError("babase._env.on_main_thread_start_app() failed.");
   }
 }
 

@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Stage assets for a build."""
+"""Stage files for builds."""
 
 from __future__ import annotations
 
@@ -19,9 +19,9 @@ if TYPE_CHECKING:
 # Suffix for the pyc files we include in stagings. We're using
 # deterministic opt pyc files; see PEP 552.
 #
-# Note: this means anyone
-# wanting to modify .py files in a build will need to wipe out the
-# existing .pyc files first or the changes will be ignored.
+# Note: this means anyone wanting to modify .py files in a build will
+# need to wipe out the existing .pyc files first or the changes will be
+# ignored.
 OPT_PYC_SUFFIX = 'cpython-' + PYVER.replace('.', '') + '.opt-1.pyc'
 
 
@@ -57,6 +57,8 @@ class AssetStager:
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
+        self.include_monolithic_binary = False
+        self.monolithic_binary_name: str | None = None
         self.pylib_src_name: str | None = None
         self.include_payload_file = False
         self.tex_suffix: str | None = None
@@ -74,7 +76,7 @@ class AssetStager:
 
         # We can now use simple speedy timestamp based updates since we no
         # longer have to try to preserve timestamps to get .pyc files to
-        # behave (hooray!)
+        # behave (hooray!).
 
         # Do our stripped down pylib dir for platforms that use that.
         if self.include_pylib:
@@ -119,14 +121,19 @@ class AssetStager:
         self.dist_mode = extract_flag(args, '-dist')
 
         # Require either -debug or -release in args.
+        # (or a few common variants from cmake, etc.)
         if '-debug' in args:
             self.debug = True
             assert '-release' not in args
-        elif '-release' in args:
+        elif any(
+            val in args
+            for val in ['-release', '-minsizerel', '-relwithdebinfo']
+        ):
             self.debug = False
         else:
             raise RuntimeError(
-                "Expected either '-debug' or '-release' in args."
+                "Expected some form of '-debug' or '-release' in args"
+                f' ({args=}).'
             )
 
         if platform_arg == '-android':
@@ -136,6 +143,9 @@ class AssetStager:
         elif platform_arg == '-cmake':
             self.dst = args[-1]
             self.tex_suffix = '.dds'
+            # Link/copy in a binary *if* builddir is provided.
+            self.include_monolithic_binary = self.builddir is not None
+            self.monolithic_binary_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
             self.dst = args[-1]
             self.tex_suffix = '.dds'
@@ -147,6 +157,9 @@ class AssetStager:
             self.include_textures = False
             self.include_audio = False
             self.include_meshes = False
+            # Link/copy in a binary *if* builddir is provided.
+            self.include_monolithic_binary = self.builddir is not None
+            self.monolithic_binary_name = 'ballisticakit_headless'
 
         elif platform_arg == '-xcode-mac':
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
@@ -455,6 +468,9 @@ class AssetStager:
         ]
         subprocess.run(cmd, check=True)
 
+        if self.include_monolithic_binary:
+            self._sync_monolithic_binary()
+
         if self.include_python_dylib:
             self._sync_python_dylib()
 
@@ -493,6 +509,31 @@ class AssetStager:
                 'python3.11 ba_data/python/baenv.py $@\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
+
+    def _copy_or_symlink_file(self, srcpath: str, dstpath: str) -> None:
+        # Copy the file in for dist mode; otherwise set up a symlink for
+        # faster iteration.
+        if self.dist_mode:
+            # Blow away any symlink.
+            if os.path.islink(dstpath):
+                os.unlink(dstpath)
+            if not os.path.isfile(dstpath):
+                subprocess.run(['cp', srcpath, dstpath], check=True)
+        else:
+            if not os.path.islink(dstpath):
+                relpath = os.path.relpath(srcpath, os.path.dirname(dstpath))
+                subprocess.run(['ln', '-sf', relpath, dstpath], check=True)
+
+    def _sync_monolithic_binary(self) -> None:
+        if self.builddir is None:
+            raise RuntimeError("This staging type requires '-builddir' arg.")
+        if self.monolithic_binary_name is None:
+            raise RuntimeError('monolithic-binary-name is not set.')
+
+        mbname = self.monolithic_binary_name
+        self._copy_or_symlink_file(
+            f'{self.builddir}/{mbname}', f'{self.dst}/{mbname}'
+        )
 
     def _sync_python_dylib(self) -> None:
         # pylint: disable=too-many-locals
@@ -534,22 +575,7 @@ class AssetStager:
         built_so_path = f'{self.builddir}/{soname}'
         staged_so_path = f'{dylib_staging_dir}/{soname}'
 
-        # Copy the file in for dist mode; otherwise set up a symlink for
-        # faster iteration.
-        if self.dist_mode:
-            # Blow away any symlink.
-            if os.path.islink(staged_so_path):
-                os.unlink(staged_so_path)
-            if not os.path.isfile(staged_so_path):
-                subprocess.run(
-                    ['cp', built_so_path, staged_so_path], check=True
-                )
-        else:
-            if not os.path.islink(staged_so_path):
-                relpath = os.path.relpath(built_so_path, dylib_staging_dir)
-                subprocess.run(
-                    ['ln', '-sf', relpath, staged_so_path], check=True
-                )
+        self._copy_or_symlink_file(built_so_path, staged_so_path)
 
         # Ok, now we want to create symlinks for each of our featureset
         # Python modules. All of our stuff lives in the same .so and we

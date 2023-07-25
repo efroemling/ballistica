@@ -19,7 +19,12 @@ _g_babase_app_started = False  # pylint: disable=invalid-name
 
 
 def on_native_module_import() -> None:
-    """Called by _babase when it is imported; does some sanity checking/etc."""
+    """Called when _babase is being imported.
+
+    This code should do as little as possible; we want to defer all
+    environment modifications until we actually commit to running an
+    app.
+    """
     import _babase
     import baenv
 
@@ -28,7 +33,8 @@ def on_native_module_import() -> None:
     assert not _g_babase_imported
     _g_babase_imported = True
 
-    # If we have a log_handler set up, wire it up to feed _babase its output.
+    # If we have a log_handler set up, wire it up to feed _babase its
+    # output.
     envconfig = baenv.get_config()
     if envconfig.log_handler is not None:
         _feed_logs_to_babase(envconfig.log_handler)
@@ -63,8 +69,13 @@ def on_native_module_import() -> None:
         )
 
 
-def setup_env_for_app_run() -> None:
-    """Set stuff such as interrupt handlers for a run of the app."""
+def on_main_thread_start_app() -> None:
+    """Called in the main thread when we're starting an app.
+
+    We use this opportunity to set up the Python runtime environment
+    as we like it for running our app stuff. This includes things like
+    signal-handling, garbage-collection, and logging.
+    """
     import gc
     import baenv
     import _babase
@@ -145,7 +156,7 @@ def on_app_launching() -> None:
 
     assert _babase.in_logic_thread()
 
-    # Let the user know if the app python dir is a custom one.
+    # Let the user know if the app Python dir is a custom one.
     user_sys_scripts_dir = baenv.get_user_system_scripts_dir()
     if user_sys_scripts_dir is not None:
         _babase.screenmessage(

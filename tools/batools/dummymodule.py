@@ -925,7 +925,7 @@ def generate_dummy_modules(projroot: str) -> None:
         )
 
     binary_path = apprun.acquire_binary(
-        assets=True, purpose='dummy modules generation'
+        assets=True, purpose='dummy-module generation'
     )
 
     pycmd = (
@@ -961,8 +961,8 @@ def generate_dummy_modules(projroot: str) -> None:
         flush=True,
     )
     try:
-        # Note: ask Python to not scatter __pycache__ files throughout
-        # our build output.
+        # Note: Ask Python to kindly not scatter __pycache__ files
+        # throughout our build output.
         subprocess.run(
             [binary_path, '--command', pycmd],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),

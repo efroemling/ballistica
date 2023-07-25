@@ -1,10 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Common shared ballistica components.
+"""Common shared Ballistica components.
 
-Often this package does not need to be used directly. Instead one can
-use versioned packages such as bascenev1 or bauiv1 which reexpose a more
-focused set of the stuff contained here.
+For modding purposes, this package should generally not be used directly.
+Instead one should use purpose-built packages such as bascenev1 or bauiv1
+which themselves import various functionality from here and reexpose it in
+a more focused way.
 """
 # pylint: disable=redefined-builtin
 
@@ -38,6 +39,7 @@ from _babase import (
     do_once,
     env,
     fade_screen,
+    fatal_error,
     get_display_resolution,
     get_low_level_config_value,
     get_max_graphics_quality,
@@ -199,6 +201,7 @@ __all__ = [
     'Existable',
     'existing',
     'fade_screen',
+    'fatal_error',
     'garbage_collect',
     'get_display_resolution',
     'get_ip_address_type',

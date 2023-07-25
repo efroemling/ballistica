@@ -55,8 +55,8 @@ class Python {
     Impl* impl_{};
   };
 
-  /// Use this for cases where we *do* hold the GIL but want to release
-  /// it for some operation.
+  /// Use this for cases where, if we *do* hold the Python GIL, we want to
+  /// temporarily release it.
   class ScopedInterpreterLockRelease {
    public:
     ScopedInterpreterLockRelease();
