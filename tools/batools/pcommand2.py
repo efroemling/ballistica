@@ -264,9 +264,7 @@ def update_cmake_prefab_lib() -> None:
         wsl_gives_windows=False
     )
     suffix = '_server' if buildtype == 'server' else '_gui'
-    target = (
-        f'build/prefab/lib/{platform}{suffix}/{mode}/' f'libballisticaplus.a'
-    )
+    target = f'build/prefab/lib/{platform}{suffix}/{mode}/libballisticaplus.a'
 
     # Build the target and then copy it to dst if it doesn't exist there yet
     # or the existing one is older than our target.

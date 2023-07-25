@@ -1037,7 +1037,8 @@ cmake-binary: meta
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
       $(shell pwd)/ballisticakit-cmake
-	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) build/cmake/$(CM_BT_LC)
+	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
+      build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-clean:
@@ -1058,7 +1059,8 @@ cmake-server-binary: meta
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
-	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)
+	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
+      build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-server-clean:
@@ -1079,7 +1081,8 @@ cmake-modular-binary: meta
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
       $(shell pwd)/ballisticakit-cmake
-	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) build/cmake/modular-$(CM_BT_LC)
+	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
+      build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitso
 
 cmake-modular-clean:

@@ -128,6 +128,7 @@ void NetworkReader::DoPoll(bool* can_read_4, bool* can_read_6) {
 void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
   fd_set readset;
   FD_ZERO(&readset);
+
   if (sd4_ != -1) {
     if (!g_buildconfig.ostype_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
@@ -139,9 +140,9 @@ void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
                    + std::to_string(FD_SETSIZE) + "). Please report this.");
       }
     }
-
     FD_SET(sd4_, &readset);  // NOLINT
   }
+
   if (sd6_ != -1) {
     if (!g_buildconfig.ostype_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
@@ -155,6 +156,7 @@ void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
     }
     FD_SET(sd6_, &readset);  // NOLINT
   }
+
   int maxfd = std::max(sd4_, sd6_);
   int sresult = select(maxfd + 1, &readset, nullptr, nullptr, nullptr);
   if (sresult == BA_SOCKET_ERROR_RETURN) {

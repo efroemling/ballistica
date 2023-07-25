@@ -873,21 +873,24 @@ class SpinoffContext:
                 text = replace_exact(
                     text,
                     '\t@tools/pcommand update_cmake_prefab_lib standard'
-                    ' $(CM_BT_LC) build/cmake/$(CM_BT_LC)\n',
+                    ' $(CM_BT_LC) \\\n'
+                    '      build/cmake/$(CM_BT_LC)\n',
                     '',
                     label=src_path,
                 )
                 text = replace_exact(
                     text,
                     '\t@tools/pcommand update_cmake_prefab_lib server'
-                    ' $(CM_BT_LC) build/cmake/server-$(CM_BT_LC)/dist\n',
+                    ' $(CM_BT_LC) \\\n'
+                    '      build/cmake/server-$(CM_BT_LC)\n',
                     '',
                     label=src_path,
                 )
                 text = replace_exact(
                     text,
                     '\t@tools/pcommand update_cmake_prefab_lib standard'
-                    ' $(CM_BT_LC) build/cmake/modular-$(CM_BT_LC)\n',
+                    ' $(CM_BT_LC) \\\n'
+                    '      build/cmake/modular-$(CM_BT_LC)\n',
                     '',
                     label=src_path,
                 )
