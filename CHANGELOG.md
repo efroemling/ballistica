@@ -5,26 +5,27 @@
   by a standard Python interpreter. This new build style is referred to as
   'modular'. The traditional form of the app, where we bootstrap Python
   ourselves inside a standalone binary, is called 'monolithic'. To build and run
-  Ballistica in modular form, you can do `make cmake-modular`. This should make
-  it easier to use certain things like Python debuggers with Ballistica. While I
-  expect most builds of the game to remain monolithic, this may become the
-  default for certain situations such as server builds or possibly Linux builds
-  if it seems beneficial. We'll see. Modular mode should work on Linux and Mac
-  currently; other platforms remain monolithic-only for now.
+  Ballistica in modular form, you can do `make cmake-modular` or `make
+  cmake-modular-server`. This should make it easier to use certain things like
+  Python debuggers with Ballistica. While I expect most builds of the game to
+  remain monolithic, this may become the default for certain situations such as
+  server builds or possibly Linux builds if it seems beneficial. We'll see.
+  Modular mode should work on Linux and Mac currently; other platforms remain
+  monolithic-only for now.
 - Changed builds such as `cmake` and `cmake-server` to be more like the new
-  `cmake-monolithic` setup; there is now a `staged` dir that built binaries are
-  symlinked into instead of just dumping a `ba_data` into the cmake build dir.
-  This keeps things a bit cleaner with fewer build-related files interspersed
-  with the stuff that Ballistica expects to be there at runtime. This also
-  allows an elegant `-dist` flag to be used with the staging command to copy
-  files instead of symlinking them.
+  `cmake-monolithic-*` builds; there is now a `staged` dir that built binaries
+  are symlinked into instead of just dumping a `ba_data` into the cmake build
+  dir. This keeps things a bit cleaner with fewer build-related files
+  interspersed with the stuff that Ballistica expects to be there at runtime.
+  This also allows an elegant `-dist` flag to be used with the staging command
+  to copy files instead of symlinking them.
 - Changed path wrangling a bit in baenv.py. All ballistica Python paths
-  (including python-site-packages) are now placed before any other existing
+  (including python-site-packages) are now placed *before* any other existing
   Python paths. This should provide a more consistent environment and means
   Ballistica will always use its own version of things like yaml or certifi or
-  typing_extensions instead of one the user has installed via pip. Holler if you
-  run into any problems because of this and we can make an option to use the old
-  behavior where Ballistica's app and site paths get placed at the end.
+  typing_extensions instead of ones the user has installed via pip. Holler if
+  you run into any problems because of this and we can make an option to use the
+  old behavior where Ballistica's app and site paths get placed at the end.
 - It is now possible to manually run the app loop even on monolithic builds;
   just do `PYTHONPATH=ba_data/python ./ballisticacore -c "import baenv;
   baenv.configure(); import babase; babase.app.run()"`. This is basically the
@@ -43,7 +44,8 @@
   than simply asset files so this is a more accurate name.
 - Added `babase.fatal_error()`. Mod code should generally never use this, but it
   can be useful for core engine code to directly and clearly point out problems
-  that cannot be recovered from.
+  that cannot be recovered from (Exceptions in such cases can tend to be
+  'handled' which leads to a broken or crashing app).
   
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 

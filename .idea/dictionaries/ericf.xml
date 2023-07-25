@@ -527,6 +527,7 @@
       <w>cmakelist</w>
       <w>cmakelists</w>
       <w>cmakemodular</w>
+      <w>cmakemodularserver</w>
       <w>cmakeserver</w>
       <w>cmath</w>
       <w>cmathmodule</w>

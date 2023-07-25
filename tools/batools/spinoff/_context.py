@@ -894,6 +894,14 @@ class SpinoffContext:
                     '',
                     label=src_path,
                 )
+                text = replace_exact(
+                    text,
+                    '\t@tools/pcommand update_cmake_prefab_lib server'
+                    ' $(CM_BT_LC) \\\n'
+                    '      build/cmake/modular-server-$(CM_BT_LC)\n',
+                    '',
+                    label=src_path,
+                )
 
         return self.default_filter_text(text)
 

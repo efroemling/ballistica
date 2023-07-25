@@ -1088,14 +1088,39 @@ cmake-modular-binary: meta
 cmake-modular-clean:
 	rm -rf build/cmake/modular-$(CM_BT_LC)
 
+cmake-modular-server: cmake-modular-server-build
+	@cd build/cmake/modular-server-$(CM_BT_LC)/staged && ./ballisticakit_server
+
+cmake-modular-server-build: assets-server meta cmake-modular-server-binary
+	@$(STAGE_BUILD) -cmakemodularserver -$(CM_BT_LC) \
+      -builddir build/cmake/modular-server-$(CM_BT_LC) \
+      build/cmake/modular-server-$(CM_BT_LC)/staged
+	@tools/pcommand echo BLD \
+      Server build complete: BLU build/cmake/modular-server-$(CM_BT_LC)/staged
+
+cmake-modular-server-binary: meta
+	@tools/pcommand cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
+	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
+      $(shell pwd)/ballisticakit-cmake
+	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
+      build/cmake/modular-server-$(CM_BT_LC)
+	@cd build/cmake/modular-server-$(CM_BT_LC) && $(MAKE) \
+      -j$(CPUS) ballisticakitso
+
+cmake-modular-server-clean:
+	rm -rf build/cmake/modular-server-$(CM_BT_LC)
+
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
 	$(STAGE_BUILD) -cmake -debug build/clion_debug
 	$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
-.PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
- cmake-server-clean
+.PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build				\
+ cmake-server-clean cmake-modular-build cmake-modular cmake-modular-binary	\
+ cmake-modular-clean cmake-modular-server cmake-modular-server-build				\
+ cmake-modular-server-binary cmake-modular-server-clean clion-staging
 
 
 ################################################################################

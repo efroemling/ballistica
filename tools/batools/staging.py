@@ -47,7 +47,7 @@ class AssetStager:
         self.win_platform: str | None = None
         self.win_type: str | None = None
         self.include_python_dylib = False
-        self.include_shell_launcher = False
+        self.include_shell_executable = False
         self.include_audio = True
         self.include_meshes = True
         self.include_collision_meshes = True
@@ -57,8 +57,8 @@ class AssetStager:
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
-        self.include_monolithic_binary = False
-        self.monolithic_binary_name: str | None = None
+        self.include_binary_executable = False
+        self.executable_name: str | None = None
         self.pylib_src_name: str | None = None
         self.include_payload_file = False
         self.tex_suffix: str | None = None
@@ -105,6 +105,9 @@ class AssetStager:
 
     def _parse_args(self, args: list[str]) -> None:
         """Parse args and apply to ourself."""
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
+
         if len(args) < 1:
             raise RuntimeError('Expected at least one argument.')
         platform_arg = args[0]
@@ -144,13 +147,14 @@ class AssetStager:
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             # Link/copy in a binary *if* builddir is provided.
-            self.include_monolithic_binary = self.builddir is not None
-            self.monolithic_binary_name = 'ballisticakit'
+            self.include_binary_executable = self.builddir is not None
+            self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             self.include_python_dylib = True
-            self.include_shell_launcher = True
+            self.include_shell_executable = True
+            self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakeserver':
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
@@ -158,8 +162,17 @@ class AssetStager:
             self.include_audio = False
             self.include_meshes = False
             # Link/copy in a binary *if* builddir is provided.
-            self.include_monolithic_binary = self.builddir is not None
-            self.monolithic_binary_name = 'ballisticakit_headless'
+            self.include_binary_executable = self.builddir is not None
+            self.executable_name = 'ballisticakit_headless'
+        elif platform_arg == '-cmakemodularserver':
+            self.dst = os.path.join(args[-1], 'dist')
+            self.serverdst = args[-1]
+            self.include_textures = False
+            self.include_audio = False
+            self.include_meshes = False
+            self.include_python_dylib = True
+            self.include_shell_executable = True
+            self.executable_name = 'ballisticakit_headless'
 
         elif platform_arg == '-xcode-mac':
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
@@ -398,6 +411,7 @@ class AssetStager:
         subprocess.run(cmd, check=True)
 
     def _sync_ba_data(self) -> None:
+        # pylint: disable=too-many-branches
         assert self.dst is not None
         os.makedirs(f'{self.dst}/ba_data', exist_ok=True)
         cmd: list[str] = [
@@ -417,14 +431,17 @@ class AssetStager:
             cmd.append('--delete-excluded')
         else:
             # Shouldn't be trying to do sparse stuff.
-            assert (
-                self.include_textures
-                and self.include_audio
-                and self.include_fonts
-                and self.include_json
-                and self.include_meshes
-                and self.include_collision_meshes
-            )
+            if self.serverdst is not None:
+                assert self.include_json and self.include_collision_meshes
+            else:
+                assert (
+                    self.include_textures
+                    and self.include_audio
+                    and self.include_fonts
+                    and self.include_json
+                    and self.include_meshes
+                    and self.include_collision_meshes
+                )
             # Keep rsync from trying to prune this as an 'empty' dir.
             cmd += ['--exclude', '/python-dylib']
 
@@ -468,17 +485,20 @@ class AssetStager:
         ]
         subprocess.run(cmd, check=True)
 
-        if self.include_monolithic_binary:
-            self._sync_monolithic_binary()
+        if self.include_binary_executable:
+            self._sync_binary_executable()
 
         if self.include_python_dylib:
             self._sync_python_dylib()
 
-        if self.include_shell_launcher:
-            self._sync_shell_launcher()
+        if self.include_shell_executable:
+            self._sync_shell_executable()
 
-    def _sync_shell_launcher(self) -> None:
-        path = f'{self.dst}/ballisticakit'
+    def _sync_shell_executable(self) -> None:
+        if self.executable_name is None:
+            raise RuntimeError('Executable name must be set for this staging.')
+
+        path = f'{self.dst}/{self.executable_name}'
 
         # For now this is so simple we just do an ad-hoc write each time;
         # not worth setting up files and syncs.
@@ -503,10 +523,10 @@ class AssetStager:
                 f'{optstuff}'
                 '\n'
                 '# Run the app, forwarding along all arguments.\n'
-                '# Basically this does:\n'
+                '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'python3.11 ba_data/python/baenv.py $@\n'
+                'exec python3.11 ba_data/python/baenv.py $@\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 
@@ -524,13 +544,13 @@ class AssetStager:
                 relpath = os.path.relpath(srcpath, os.path.dirname(dstpath))
                 subprocess.run(['ln', '-sf', relpath, dstpath], check=True)
 
-    def _sync_monolithic_binary(self) -> None:
+    def _sync_binary_executable(self) -> None:
         if self.builddir is None:
             raise RuntimeError("This staging type requires '-builddir' arg.")
-        if self.monolithic_binary_name is None:
+        if self.executable_name is None:
             raise RuntimeError('monolithic-binary-name is not set.')
 
-        mbname = self.monolithic_binary_name
+        mbname = self.executable_name
         self._copy_or_symlink_file(
             f'{self.builddir}/{mbname}', f'{self.dst}/{mbname}'
         )
@@ -544,8 +564,11 @@ class AssetStager:
 
         dylib_staging_dir = f'{self.dst}/ba_data/python-dylib'
 
+        if self.executable_name is None:
+            raise RuntimeError('executable_name is not set.')
+
         # Name of our single shared library containing all our stuff.
-        soname = 'ballisticakit.so'
+        soname = f'{self.executable_name}.so'
 
         # All featuresets in the project with binary modules.
         bmodfeaturesets = {
