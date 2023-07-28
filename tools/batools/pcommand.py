@@ -446,9 +446,9 @@ def warm_start_asset_build() -> None:
     import os
     import subprocess
     from pathlib import Path
-    from efrotools import getconfig
+    from efrotools import getprojectconfig
 
-    public: bool = getconfig(PROJROOT)['public']
+    public: bool = getprojectconfig(PROJROOT)['public']
 
     if public:
         from efrotools.efrocache import warm_start_cache

@@ -1,5 +1,16 @@
-### 1.7.25 (build 21202, api 8, 2023-07-28)
+### 1.7.25 (build 21204, api 8, 2023-07-28)
 
+- `getconfig` and `setconfig` in `efrotools` are now `getprojectconfig` and
+  `setprojectconfig` (to reflect the file name changes that happened in 1.7.20).
+- The efrocache system (how assets and prebuilt binaries are downloaded during
+  builds) now uses a `efrocache_repository_url` value in
+  `config/projectconfig.json` instead of being hard-coded to my server. This
+  makes it possible to theoretically set up mirror servers. I currently keep the
+  cache pruned to the last few months worth of files but theoretically someone
+  could set up a server that never gets pruned and contains all history from now
+  until forever. Efrocache is basically just a big pile of files organized by
+  their hashes (see `tools/efrotools/efrocache.py` for details).
+  
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
 - Fixed an issue where respawn icons could disappear in epic mode (Thanks for

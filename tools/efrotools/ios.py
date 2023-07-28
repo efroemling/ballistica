@@ -9,7 +9,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-from efrotools import getlocalconfig, getconfig
+from efrotools import getprojectconfig, getlocalconfig
 
 MODES = {
     'debug': {'configuration': 'Debug'},
@@ -59,7 +59,8 @@ def push_ipa(
     from efrotools.xcodebuild import project_build_path
 
     # Load both the local and project config data.
-    cfg = Config(**getconfig(root)['push_ipa_config'])
+    # FIXME: switch this to use dataclassio.
+    cfg = Config(**getprojectconfig(root)['push_ipa_config'])
     lcfg = LocalConfig(**getlocalconfig(root)['push_ipa_local_config'])
 
     if modename not in MODES:

@@ -18,6 +18,7 @@
     "src/ballistica/base/platform/oculus/main_rift.cc",
     "src/ballistica/core/platform/android/android_gl3.c"
   ],
+  "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
   "name": "BallisticaKit",
   "public": true,
   "pylint_ignored_untracked_deps": [

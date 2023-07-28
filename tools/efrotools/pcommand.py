@@ -491,7 +491,7 @@ def tool_config_install() -> None:
 def _filter_tool_config(cfg: str) -> str:
     import textwrap
 
-    from efrotools import getconfig
+    from efrotools import getprojectconfig
 
     # Stick project-root wherever they want.
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
@@ -499,7 +499,7 @@ def _filter_tool_config(cfg: str) -> str:
     # Stick a colon-separated list of project Python paths wherever they want.
     name = '__EFRO_PYTHON_PATHS__'
     if name in cfg:
-        pypaths = getconfig(PROJROOT).get('python_paths')
+        pypaths = getprojectconfig(PROJROOT).get('python_paths')
         if pypaths is None:
             raise RuntimeError('python_paths not set in project config')
         assert not any(' ' in p for p in pypaths)
@@ -560,7 +560,7 @@ truthy-function, unused-awaitable
     # Gen a pylint init hook which sets up our python paths.
     pylint_init_tag = '__EFRO_PYLINT_INIT__'
     if pylint_init_tag in cfg:
-        pypaths = getconfig(PROJROOT).get('python_paths')
+        pypaths = getprojectconfig(PROJROOT).get('python_paths')
         if pypaths is None:
             raise RuntimeError('python_paths not set in project config')
         cstr = 'init-hook=import sys;'
@@ -633,14 +633,14 @@ def sync_all() -> None:
 
 def sync() -> None:
     """Runs standard syncs between this project and others."""
-    from efrotools import getconfig
+    from efrotools import getprojectconfig
     from efrotools.sync import Mode, SyncItem, run_standard_syncs
 
     mode = Mode(sys.argv[2]) if len(sys.argv) > 2 else Mode.PULL
 
     # Load sync-items from project config and run them
     sync_items = [
-        SyncItem(**i) for i in getconfig(PROJROOT).get('sync_items', [])
+        SyncItem(**i) for i in getprojectconfig(PROJROOT).get('sync_items', [])
     ]
     run_standard_syncs(PROJROOT, mode, sync_items)
 
@@ -674,11 +674,11 @@ def pytest() -> None:
     import os
     import platform
     import subprocess
-    from efrotools import getconfig, PYTHON_BIN
+    from efrotools import getprojectconfig, PYTHON_BIN
     from efro.error import CleanError
 
     # Grab our python paths for the project and stuff them in PYTHONPATH.
-    pypaths = getconfig(PROJROOT).get('python_paths')
+    pypaths = getprojectconfig(PROJROOT).get('python_paths')
     if pypaths is None:
         raise CleanError('python_paths not found in project config.')
 

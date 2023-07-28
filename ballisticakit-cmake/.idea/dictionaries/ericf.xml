@@ -3,6 +3,7 @@
     <words>
       <w>NOMINMAX</w>
       <w>_babase</w>
+      <w>aaaand</w>
       <w>aabb</w>
       <w>aate</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
@@ -745,6 +746,7 @@
       <w>getpackagemodel</w>
       <w>getpackagesound</w>
       <w>getpackagetexture</w>
+      <w>getprojectconfig</w>
       <w>getpublicpartyenabled</w>
       <w>getpublicpartymaxsize</w>
       <w>getqrcodetexture</w>
@@ -1444,6 +1446,7 @@
       <w>reimported</w>
       <w>relfut</w>
       <w>reloadmedia</w>
+      <w>relurl</w>
       <w>relwithdebinfo</w>
       <w>rendererdata</w>
       <w>rendertarget</w>
@@ -1538,6 +1541,7 @@
       <w>setdata</w>
       <w>setname</w>
       <w>setnode</w>
+      <w>setprojectconfig</w>
       <w>setpublicpartyenabled</w>
       <w>setpublicpartymaxsize</w>
       <w>setpublicpartyname</w>

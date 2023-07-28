@@ -20,7 +20,7 @@ def spinoff_test(args: list[str]) -> None:
     import subprocess
 
     from batools.featureset import FeatureSet
-    from efrotools import extract_flag, getconfig
+    from efrotools import extract_flag, getprojectconfig
     from efro.terminal import Clr
     from efro.error import CleanError
 
@@ -31,7 +31,7 @@ def spinoff_test(args: list[str]) -> None:
             "spinoff-test: can't pass both submodule parent"
             ' and shared test parent.'
         )
-    public = getconfig(Path('.'))['public']
+    public = getprojectconfig(Path('.'))['public']
     if shared_test_parent and public:
         raise CleanError('--shared-test-parent not available in public repo.')
 

@@ -34,7 +34,7 @@ def explicit_bool(value: bool) -> bool:
     return value
 
 
-def getlocalconfig(projroot: Path) -> dict[str, Any]:
+def getlocalconfig(projroot: Path | str) -> dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
     localconfig: dict[str, Any]
 
@@ -51,7 +51,7 @@ def getlocalconfig(projroot: Path) -> dict[str, Any]:
     return localconfig
 
 
-def getconfig(projroot: Path) -> dict[str, Any]:
+def getprojectconfig(projroot: Path | str) -> dict[str, Any]:
     """Return a project's projectconfig contents (or default if missing)."""
     config: dict[str, Any]
     try:
@@ -64,7 +64,7 @@ def getconfig(projroot: Path) -> dict[str, Any]:
     return config
 
 
-def setconfig(projroot: Path, config: dict[str, Any]) -> None:
+def setprojectconfig(projroot: Path | str, config: dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot, 'config/projectconfig.json').open(

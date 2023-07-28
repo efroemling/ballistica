@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
 from efrotools.code import format_python_str, format_cpp_str
-from efrotools import getconfig, replace_exact
+from efrotools import getprojectconfig, replace_exact
 from efro.error import CleanError
 from efro.terminal import Clr
 from efro.util import timedelta_str
@@ -113,7 +113,7 @@ class SpinoffContext:
 
         self._src_name = 'BallisticaKit'
 
-        self._public: bool = getconfig(Path(self._src_root))['public']
+        self._public: bool = getprojectconfig(Path(self._src_root))['public']
         assert isinstance(self._public, bool)
 
         self._src_all_feature_sets = {

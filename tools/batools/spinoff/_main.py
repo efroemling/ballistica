@@ -97,9 +97,9 @@ def _main() -> None:
     elif cmd is Command.CREATE:
         _do_create(src_root, dst_root)
     elif cmd is Command.ADD_SUBMODULE_PARENT:
-        from efrotools import getconfig
+        from efrotools import getprojectconfig
 
-        public = getconfig(Path(dst_root))['public']
+        public = getprojectconfig(Path(dst_root))['public']
         _do_add_submodule_parent(dst_root, is_new=False, public=public)
     else:
         assert_never(cmd)
@@ -130,7 +130,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     # pylint: disable=too-many-locals, cyclic-import
     from efrotools import extract_arg, extract_flag
     from efrotools.code import format_python_str
-    from efrotools import getconfig
+    from efrotools import getprojectconfig
     import batools.spinoff
 
     # Note: in our case dst_root is actually what becomes the src project
@@ -204,7 +204,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     # on git so its best to always do this.
     subprocess.run(['git', 'init'], cwd=path, check=True, capture_output=True)
 
-    public = getconfig(Path(dst_root))['public']
+    public = getprojectconfig(Path(dst_root))['public']
 
     if submodule_parent:
         _do_add_submodule_parent(path, is_new=True, public=public)

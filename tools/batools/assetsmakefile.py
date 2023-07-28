@@ -404,10 +404,10 @@ def generate_assets_makefile(
 ) -> dict[str, str]:
     """Main script entry point."""
     # pylint: disable=too-many-locals
-    from efrotools import getconfig
+    from efrotools import getprojectconfig
     from pathlib import Path
 
-    public = getconfig(Path(projroot))['public']
+    public = getprojectconfig(Path(projroot))['public']
     assert isinstance(public, bool)
 
     original = existing_data

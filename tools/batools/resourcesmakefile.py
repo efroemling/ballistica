@@ -57,9 +57,9 @@ class ResourcesMakefileGenerator:
         existing_data: str,
         projname: str,
     ) -> None:
-        from efrotools import getconfig
+        from efrotools import getprojectconfig
 
-        self.public = getconfig(Path(projroot))['public']
+        self.public = getprojectconfig(Path(projroot))['public']
         assert isinstance(self.public, bool)
         self.existing_data = existing_data
         self.projroot = projroot

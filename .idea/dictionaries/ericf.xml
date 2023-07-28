@@ -3,6 +3,7 @@
     <words>
       <w>_babase</w>
       <w>aaaa</w>
+      <w>aaaand</w>
       <w>aaab</w>
       <w>aaac</w>
       <w>aaad</w>
@@ -1234,6 +1235,7 @@
       <w>getobjs</w>
       <w>getopt</w>
       <w>getplayer</w>
+      <w>getprojectconfig</w>
       <w>getpt</w>
       <w>getr</w>
       <w>getrefs</w>
@@ -2443,6 +2445,7 @@
       <w>reimported</w>
       <w>relfut</w>
       <w>relpath</w>
+      <w>relurl</w>
       <w>relwithdebinfo</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
@@ -2623,6 +2626,7 @@
       <w>setmusic</w>
       <w>setname</w>
       <w>setnode</w>
+      <w>setprojectconfig</w>
       <w>setsticky</w>
       <w>settingname</w>
       <w>setversion</w>

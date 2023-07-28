@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from efrotools import getconfig, getlocalconfig
+from efrotools import getprojectconfig, getlocalconfig
 from efro.error import CleanError
 from efro.terminal import Clr
 
@@ -60,7 +60,9 @@ class ProjectUpdater:
             raise RuntimeError('fix and check cannot both be enabled')
 
         # We behave a bit differently in the public repo.
-        self.public: bool = getconfig(Path(projroot)).get('public', False)
+        self.public: bool = getprojectconfig(Path(projroot)).get(
+            'public', False
+        )
         assert isinstance(self.public, bool)
 
         self._source_files: list[str] | None = None
@@ -191,7 +193,7 @@ class ProjectUpdater:
             if self.public:
                 sources = []
             else:
-                sources = getconfig(Path(self.projroot)).get(
+                sources = getprojectconfig(Path(self.projroot)).get(
                     'internal_source_files', []
                 )
             if not isinstance(sources, list):
@@ -209,7 +211,7 @@ class ProjectUpdater:
             if self.public:
                 sources = []
             else:
-                sources = getconfig(Path(self.projroot)).get(
+                sources = getprojectconfig(Path(self.projroot)).get(
                     'internal_source_dirs', []
                 )
             if not isinstance(sources, list):

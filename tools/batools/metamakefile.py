@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 from efro.error import CleanError
-from efrotools import getconfig
+from efrotools import getprojectconfig
 
 if TYPE_CHECKING:
     pass
@@ -81,7 +81,7 @@ class MetaMakefileGenerator:
         """Do the thing."""
         # pylint: disable=too-many-locals
 
-        public = getconfig(Path(self._projroot))['public']
+        public = getprojectconfig(Path(self._projroot))['public']
         assert isinstance(public, bool)
 
         fname = 'src/meta/Makefile'

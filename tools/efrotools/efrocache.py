@@ -31,8 +31,6 @@ from efro.terminal import Clr
 if TYPE_CHECKING:
     pass
 
-BASE_URL = 'https://files.ballistica.net/cache/ba1/'
-
 TARGET_TAG = '# __EFROCACHE_TARGET__'
 
 CACHE_DIR_NAME = '.efrocache'
@@ -55,6 +53,21 @@ class CacheMetadata:
 
 g_cache_prefix_noexec: bytes | None = None
 g_cache_prefix_exec: bytes | None = None
+
+
+def get_repository_base_url() -> str:
+    """Return the base repository url (assumes cwd is project root)."""
+    # from efrotools import getprojectconfig
+    import efrotools
+
+    pconfig = efrotools.getprojectconfig('.')
+    name = 'efrocache_repository_url'
+    val = pconfig.get(name)
+    if not isinstance(val, str):
+        raise RuntimeError(f"'{name}' was not found in projectconfig.")
+    if val.endswith('/'):
+        raise RuntimeError('Repository string should not end in a slash.')
+    return val
 
 
 def get_existing_file_hash(path: str) -> str:
@@ -95,7 +108,15 @@ def get_target(path: str) -> None:
         efrocachemap = json.loads(infile.read())
     if path not in efrocachemap:
         raise RuntimeError(f'Path not found in efrocache: {path}')
-    url = efrocachemap[path]
+    relurl = efrocachemap[path]
+
+    # These used to be abs paths but are now relative.
+    assert not relurl.startswith('https:')
+    assert not relurl.startswith('/')
+
+    repo = get_repository_base_url()
+    url = f'{repo}/{relurl}'
+
     subpath = '/'.join(url.split('/')[-3:])
     local_cache_path = os.path.join(CACHE_DIR_NAME, subpath)
     local_cache_path_dl = local_cache_path + '.download'
@@ -198,7 +219,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
     lines = contents.splitlines()
     pcommand = 'tools/pcommand'
 
-    # Replace cachable targets with cache lookups
+    # Replace cachable targets with cache lookups.
     while TARGET_TAG in lines:
         index = lines.index(TARGET_TAG)
         endindex = index
@@ -378,14 +399,16 @@ def _write_cache_files(
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         results = executor.map(call, fnames1)
     for result in results:
-        mapping[result[0]] = BASE_URL + result[1]
+        # mapping[result[0]] = f'{base_url}/{result[1]}'
+        mapping[result[0]] = result[1]
         fhashes1.add(result[1])
 
     # Now finish up with the second set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         results = executor.map(call, fnames2)
     for result in results:
-        mapping[result[0]] = BASE_URL + result[1]
+        # mapping[result[0]] = f'{base_url}/result[1]'
+        mapping[result[0]] = result[1]
         fhashes2.add(result[1])
 
     # We want the server to have a startercache.tar.xz file which
@@ -395,8 +418,8 @@ def _write_cache_files(
     # upload that.
 
     # Also let's have the script touch both sets of files so we can use
-    # mod-times to prune older files. (otherwise files that never change
-    # might have very old mod times)
+    # mod-times to prune older files. Otherwise files that never change
+    # might have very old mod times.
     script = (
         'import os\n'
         'import pathlib\n'
@@ -508,6 +531,8 @@ def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
 def warm_start_cache() -> None:
     """Run a pre-pass on the efrocache to improve efficiency."""
 
+    base_url = get_repository_base_url()
+
     # We maintain a starter-cache on the staging server, which is simply
     # the latest set of cache entries compressed into a single
     # compressed archive. If we have no local cache yet we can download
@@ -518,7 +543,7 @@ def warm_start_cache() -> None:
     if not os.path.exists(CACHE_DIR_NAME):
         print('Downloading asset starter-cache...', flush=True)
         subprocess.run(
-            f'curl --fail {BASE_URL}startercache.tar.xz'
+            f'curl --fail {base_url}/startercache.tar.xz'
             f' --output startercache.tar.xz',
             shell=True,
             check=True,
