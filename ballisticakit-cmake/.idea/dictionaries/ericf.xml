@@ -6,7 +6,9 @@
       <w>aaaand</w>
       <w>aabb</w>
       <w>aate</w>
+      <w>abcdefghijkl</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
+      <w>abcdefghijlk</w>
       <w>abcdefghjkmnpqrtuvwxy</w>
       <w>abouttab</w>
       <w>absval</w>
@@ -526,6 +528,7 @@
       <w>edef</w>
       <w>efca</w>
       <w>effmult</w>
+      <w>efghijkl</w>
       <w>efro</w>
       <w>efrocaching</w>
       <w>efrohack</w>
@@ -1900,6 +1903,7 @@
       <w>wprjp</w>
       <w>wreadlink</w>
       <w>writeauxiliaryfile</w>
+      <w>writecall</w>
       <w>wspath</w>
       <w>wsroot</w>
       <w>wtfslice</w>

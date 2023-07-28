@@ -16,7 +16,9 @@
       <w>aaak</w>
       <w>aarch</w>
       <w>aate</w>
+      <w>abcdefghijkl</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
+      <w>abcdefghijlk</w>
       <w>abcdefghjkmnpqrtuvwxy</w>
       <w>abeb</w>
       <w>abishort</w>
@@ -856,6 +858,7 @@
       <w>editorconfig</w>
       <w>efca</w>
       <w>effmult</w>
+      <w>efghijkl</w>
       <w>efgrd</w>
       <w>efile</w>
       <w>efro</w>
@@ -3263,6 +3266,7 @@
       <w>wreadlink</w>
       <w>wref</w>
       <w>writeauxiliaryfile</w>
+      <w>writecall</w>
       <w>writeclasses</w>
       <w>writefuncs</w>
       <w>wslpath</w>

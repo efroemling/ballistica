@@ -128,18 +128,20 @@ def get_target(path: str) -> None:
         efrocachemap = json.loads(infile.read())
     if path not in efrocachemap:
         raise RuntimeError(f'Path not found in efrocache: {path}')
-    relurl = efrocachemap[path]
 
-    # These used to be abs paths but are now relative.
-    assert not relurl.startswith('https:')
-    assert not relurl.startswith('/')
+    hashval = efrocachemap[path]
+
+    # These used to be url paths but now they're just hashes.
+    assert not hashval.startswith('https:')
+    assert '/' not in hashval
+
+    # If our hash is 'abcdefghijkl', our subpath is 'ab/cd/efghijkl'.
+    subpath = '/'.join([hashval[:2], hashval[2:4], hashval[4:]])
 
     repo = get_repository_base_url()
-    url = f'{repo}/{relurl}'
+    url = f'{repo}/{subpath}'
 
-    subpath = '/'.join(url.split('/')[-3:])
     local_cache_path = os.path.join(local_cache_dir, subpath)
-    hashval = ''.join(subpath.split('/'))
 
     # First off: if there's already a cache file in place, check its
     # hash. If its calced hash matches its path, we can just update its
@@ -436,7 +438,7 @@ def _write_cache_files(
     for result in results:
         # mapping[result[0]] = f'{base_url}/{result[1]}'
         mapping[result[0]] = result[1]
-        fhashes1.add(result[1])
+        fhashes1.add(result[2])
 
     # Now finish up with the second set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
@@ -444,7 +446,7 @@ def _write_cache_files(
     for result in results:
         # mapping[result[0]] = f'{base_url}/result[1]'
         mapping[result[0]] = result[1]
-        fhashes2.add(result[1])
+        fhashes2.add(result[2])
 
     # We want the server to have a startercache.tar.xz file which
     # contains the entire first set. It is much more efficient to build
@@ -490,7 +492,7 @@ def _write_cache_files(
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
 
-def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
+def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str, str]:
     import hashlib
 
     print(f'Caching {fname}')
@@ -505,7 +507,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     # lots of existing files when seeing if they need to be updated.
 
     # Just going with ol' md5 here; we're the only ones creating these
-    # so security isn't a concern.
+    # so security isn't a concern currently.
     md5 = hashlib.md5()
     md5.update(prefix + fdataraw)
     finalhash = md5.hexdigest()
@@ -516,7 +518,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     with open(path, 'wb') as outfile:
         outfile.write(prefix + zlib.compress(fdataraw))
 
-    return fname, hashpath
+    return fname, finalhash, hashpath
 
 
 def _cache_prefix_for_file(fname: str) -> bytes:

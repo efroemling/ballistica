@@ -10,6 +10,8 @@
   could set up a server that never gets pruned and contains all history from now
   until forever. Efrocache is basically just a big pile of files organized by
   their hashes (see `tools/efrotools/efrocache.py` for details).
+- On a related note, the .efrocachemap file now just contains hashes instead of
+  full urls per file (which were based on those hashes anyway).
 - The default efrocache file location is now `.cache/efrocache` instead of
   `.efrocache`. Feel free to blow away any `.efrocache` dir if you still have
   one (or move it to the new path to avoid having to download things again).
