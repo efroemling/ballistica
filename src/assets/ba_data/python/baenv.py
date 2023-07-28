@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21201
+TARGET_BALLISTICA_BUILD = 21202
 TARGET_BALLISTICA_VERSION = '1.7.25'
 
 
@@ -405,24 +405,34 @@ def extract_arg(args: list[str], names: list[str], is_dir: bool) -> str | None:
 def _modular_main() -> None:
     from efro.error import CleanError
 
+    # Fundamentally, running a Ballistica app consists of the following:
+    # import baenv; baenv.configure(); import babase; babase.app.run()
+    #
+    # First baenv sets up things like Python paths the way the engine
+    # needs them, and then we import and run the engine.
+    #
+    # Below we're doing a slightly fancier version of that. Namely we do
+    # some processing of command line args to allow overriding of paths
+    # or running explicit commands or whatever else. Our goal is that
+    # this modular form of the app should be basically indistinguishable
+    # from the monolithic form when used from the command line.
+
     try:
-        # Take note that we're running via modular-main.
-        # The native layer can key off this to know whether it
-        # should apply sys.argv or not.
+        # Take note that we're running via modular-main. The native
+        # layer can key off this to know whether it should apply
+        # sys.argv or not.
         _EnvGlobals.get().modular_main_called = True
 
-        # We run configure() BEFORE importing babase. (part of its job
-        # is to set up where babase and everything else gets loaded
-        # from).
+        # Deal with a few key things here ourself before even running
+        # configure.
 
-        # We deal with a few key ours here ourself before spinning up
-        # any engine stuff.
-
-        # NOTE: Need to keep these arg long/short versions synced to
-        # those in core_config.cc since they parse the same values (they
-        # just don't handle them).
-
+        # Extract stuff below modifies this so work with a copy.
         args = sys.argv.copy()
+
+        # NOTE: We need to keep these arg long/short arg versions synced
+        # to those in core_config.cc. That code parses these same args
+        # (even if it doesn't handle them in our case) and will complain
+        # if unrecognized args come through.
 
         # Our -c arg basically mirrors Python's -c arg. If we get that,
         # simply exec it and return; no engine stuff.
@@ -434,6 +444,10 @@ def _modular_main() -> None:
         config_dir = extract_arg(args, ['--config-dir', '-C'], is_dir=True)
         data_dir = extract_arg(args, ['--data-dir', '-d'], is_dir=True)
         mods_dir = extract_arg(args, ['--mods-dir', '-m'], is_dir=True)
+
+        # We run configure() BEFORE importing babase. (part of its job
+        # is to wrangle paths to determine where babase and everything
+        # else gets loaded from).
         configure(
             config_dir=config_dir,
             data_dir=data_dir,
@@ -444,12 +458,16 @@ def _modular_main() -> None:
 
         # The engine will have parsed and processed all other args as
         # part of the above import. If there were errors or args such as
-        # --help which should lead to immediate returns, do so.
+        # --help which should lead to us immediately returning, do so.
         code = babase.get_immediate_return_code()
         if code is not None:
             sys.exit(code)
 
+        # Aaaand we're off!
         babase.app.run()
+
+    # Code wanting us to die with a clean error message instead of an
+    # ugly stack trace can raise one of these.
     except CleanError as clean_exc:
         clean_exc.pretty_print()
         sys.exit(1)
