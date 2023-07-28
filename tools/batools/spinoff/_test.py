@@ -163,7 +163,8 @@ def spinoff_test(args: list[str]) -> None:
         if bool(False):
             help_output = subprocess.run(
                 [
-                    'build/cmake/server-debug/dist/spinofftest_headless',
+                    'build/cmake/server-debug/staged/dist/'
+                    'spinofftest_headless',
                     '--help',
                 ],
                 cwd=path,

@@ -1,3 +1,5 @@
+### 1.7.25 (build 21201, api 8, 2023-07-28)
+
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
 - Fixed an issue where respawn icons could disappear in epic mode (Thanks for
