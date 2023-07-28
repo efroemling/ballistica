@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 
 TARGET_TAG = '# __EFROCACHE_TARGET__'
 
-CACHE_DIR_NAME = '.efrocache'
 CACHE_MAP_NAME = '.efrocachemap'
 
 UPLOAD_STATE_CACHE_FILE = '.cache/efrocache_upload_state'
@@ -53,6 +52,23 @@ class CacheMetadata:
 
 g_cache_prefix_noexec: bytes | None = None
 g_cache_prefix_exec: bytes | None = None
+
+
+def get_local_cache_dir() -> str:
+    """Where we store local efrocache files we've downloaded.
+
+    Rebuilds will be able to access the local cache instead of re-downloading.
+    By default each project has its own cache dir but this can be shared
+    between projects by setting the EFROCACHE_DIR environment variable.
+    """
+    envval = os.environ.get('EFROCACHE_DIR')
+    if not isinstance(envval, str):
+        envval = '.cache/efrocache'
+    if not envval:
+        raise RuntimeError('efrocache-local-dir cannot be an empty string.')
+    if envval.endswith('/') or envval.endswith('\\'):
+        raise RuntimeError('efrocache-local-dir must not end with a slash.')
+    return envval
 
 
 def get_repository_base_url() -> str:
@@ -100,7 +116,11 @@ def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+    import tempfile
+
     from efro.error import CleanError
+
+    local_cache_dir = get_local_cache_dir()
 
     path = _project_centric_path(path)
 
@@ -118,13 +138,12 @@ def get_target(path: str) -> None:
     url = f'{repo}/{relurl}'
 
     subpath = '/'.join(url.split('/')[-3:])
-    local_cache_path = os.path.join(CACHE_DIR_NAME, subpath)
-    local_cache_path_dl = local_cache_path + '.download'
+    local_cache_path = os.path.join(local_cache_dir, subpath)
     hashval = ''.join(subpath.split('/'))
 
-    # First off: if there's already a file in place, check its hash. If
-    # it matches the cache, we can just update its timestamp and call it
-    # a day.
+    # First off: if there's already a cache file in place, check its
+    # hash. If its calced hash matches its path, we can just update its
+    # timestamp and call it a day.
     if os.path.isfile(path):
         existing_hash = get_existing_file_hash(path)
         if existing_hash == hashval:
@@ -132,51 +151,61 @@ def get_target(path: str) -> None:
             print(f'Refreshing from cache: {path}')
             return
 
+    # Ok we need to download the cache file.
     # Ok there's not a valid file in place already. Clear out whatever
     # is there to start with.
     if os.path.exists(path):
-        os.unlink(path)
+        os.remove(path)
 
-    # Now if we don't have this entry in our local cache,
-    # download it.
+    # Now, if we don't have this entry in our local cache, download it.
     if not os.path.exists(local_cache_path):
-        os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
-        print(f'Downloading: {Clr.BLU}{path}{Clr.RST}')
-        result = subprocess.run(
-            f'curl --fail --silent {url} --output {local_cache_path_dl}',
-            shell=True,
-            check=False,
-        )
-
-        # We prune old cache files on the server, so its possible for
-        # one to be trying to build something the server can no longer
-        # provide. try to explain the situation.
-        if result.returncode == 22:
-            raise CleanError(
-                'Server gave an error. Old build files may no longer'
-                ' be available on the server; make sure you are using'
-                ' a recent commit.\n'
-                'Note that build files will remain available'
-                ' indefinitely once downloaded, even if deleted by the'
-                f' server. So as long as your {CACHE_DIR_NAME} directory'
-                ' stays intact you should be able to repeat any builds you'
-                ' have run before.'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            local_cache_dl_path = os.path.join(tmpdir, 'dl')
+            print(f'Downloading: {Clr.BLU}{path}{Clr.RST}')
+            result = subprocess.run(
+                [
+                    'curl',
+                    '--fail',
+                    '--silent',
+                    url,
+                    '--output',
+                    local_cache_dl_path,
+                ],
+                check=False,
             )
-        if result.returncode != 0:
-            raise CleanError('Download failed; is your internet working?')
 
-        subprocess.run(
-            f'mv {local_cache_path_dl} {local_cache_path}',
-            shell=True,
-            check=True,
-        )
+            # We prune old cache files on the server, so its possible for
+            # one to be trying to build something the server can no longer
+            # provide. try to explain the situation.
+            if result.returncode == 22:
+                raise CleanError(
+                    'Server gave an error. Old build files may no longer'
+                    ' be available on the server; make sure you are using'
+                    ' a recent commit.\n'
+                    'Note that build files will remain available'
+                    ' indefinitely once downloaded, even if deleted by the'
+                    f' server. So as long as your {local_cache_dir} directory'
+                    ' stays intact you should be able to repeat any builds you'
+                    ' have run before.'
+                )
+            if result.returncode != 0:
+                raise CleanError('Download failed; is your internet working?')
+
+            # Ok; cache download finished. Lastly move it in place to be as
+            # atomic as possible.
+            os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
+            subprocess.run(
+                ['mv', local_cache_dl_path, local_cache_path], check=True
+            )
 
     # Ok we should have a valid file in our cache dir at this point.
     # Just expand it to the target path.
 
     print(f'Extracting: {path}')
 
-    try:
+    # Extract and stage the file in a temp dir before doing
+    # a final move to the target location to be as atomic as possible.
+    with tempfile.TemporaryDirectory() as tmpdir:
         with open(local_cache_path, 'rb') as infile:
             data = infile.read()
         header = data[:4]
@@ -188,18 +217,16 @@ def get_target(path: str) -> None:
         metajson = metabytes.decode()
         metadata = dataclass_from_json(CacheMetadata, metajson)
         data = zlib.decompress(datac)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'wb') as outfile:
+
+        tmppath = os.path.join(tmpdir, 'out')
+        with open(tmppath, 'wb') as outfile:
             outfile.write(data)
         if metadata.executable:
-            subprocess.run(['chmod', '+x', path], check=True)
-    except Exception:
-        # If something goes wrong, try to make sure we don't leave a
-        # half decompressed file lying around or whatnot.
-        print(f"Error expanding cache archive for '{path}'.")
-        if os.path.exists(path):
-            os.remove(path)
-        raise
+            subprocess.run(['chmod', '+x', tmppath], check=True)
+
+        # Ok; we wrote the file. Now move it into its final place.
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        subprocess.run(['mv', tmppath, path], check=True)
 
     if not os.path.exists(path):
         raise RuntimeError(f'File {path} did not wind up as expected.')
@@ -340,8 +367,8 @@ def _upload_cache(
     # Now do the thing.
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
-    subprocess.run(f'rm -rf {staging_dir}', shell=True, check=True)
-    subprocess.run(f'mkdir -p {staging_dir}', shell=True, check=True)
+    subprocess.run(['rm', '-rf', staging_dir], check=True)
+    subprocess.run(['mkdir', '-p', staging_dir], check=True)
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
@@ -353,18 +380,26 @@ def _upload_cache(
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
     subprocess.run(
-        'rsync --progress --recursive --human-readable build/efrocache/'
-        ' ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
-        shell=True,
+        [
+            'rsync',
+            '--progress',
+            '--recursive',
+            '--human-readable',
+            'build/efrocache/',
+            'ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
+        ],
         check=True,
     )
 
     # Now generate the starter cache on the server..
     subprocess.run(
-        'ssh -oBatchMode=yes -oStrictHostKeyChecking=yes '
-        'ubuntu@staging.ballistica.net'
-        ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"',
-        shell=True,
+        [
+            'ssh',
+            '-oBatchMode=yes',
+            '-oStrictHostKeyChecking=yes',
+            'ubuntu@staging.ballistica.net',
+            'cd files.ballistica.net/cache/ba1 && python3 genstartercache.py',
+        ],
         check=True,
     )
 
@@ -393,11 +428,11 @@ def _write_cache_files(
     fhashes1: set[str] = set()
     fhashes2: set[str] = set()
     mapping: dict[str, str] = {}
-    call = functools.partial(_write_cache_file, staging_dir)
+    writecall = functools.partial(_write_cache_file, staging_dir)
 
     # Do the first set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-        results = executor.map(call, fnames1)
+        results = executor.map(writecall, fnames1)
     for result in results:
         # mapping[result[0]] = f'{base_url}/{result[1]}'
         mapping[result[0]] = result[1]
@@ -405,7 +440,7 @@ def _write_cache_files(
 
     # Now finish up with the second set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-        results = executor.map(call, fnames2)
+        results = executor.map(writecall, fnames2)
     for result in results:
         # mapping[result[0]] = f'{base_url}/result[1]'
         mapping[result[0]] = result[1]
@@ -455,33 +490,6 @@ def _write_cache_files(
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
 
-def _cache_prefix_for_file(fname: str) -> bytes:
-    # pylint: disable=global-statement
-    global g_cache_prefix_exec
-    global g_cache_prefix_noexec
-
-    # We'll be calling this a lot when checking existing files, so we
-    # want it to be efficient. Let's cache the two options there are at
-    # the moment.
-    executable = os.access(fname, os.X_OK)
-    if executable:
-        if g_cache_prefix_exec is None:
-            metadata = dataclass_to_json(
-                CacheMetadata(executable=True)
-            ).encode()
-            assert len(metadata) < 256
-            g_cache_prefix_exec = (
-                CACHE_HEADER + len(metadata).to_bytes() + metadata
-            )
-        return g_cache_prefix_exec
-
-    # Ok; non-executable it is.
-    metadata = dataclass_to_json(CacheMetadata(executable=False)).encode()
-    assert len(metadata) < 256
-    g_cache_prefix_noexec = CACHE_HEADER + len(metadata).to_bytes() + metadata
-    return g_cache_prefix_noexec
-
-
 def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     import hashlib
 
@@ -511,6 +519,33 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str]:
     return fname, hashpath
 
 
+def _cache_prefix_for_file(fname: str) -> bytes:
+    # pylint: disable=global-statement
+    global g_cache_prefix_exec
+    global g_cache_prefix_noexec
+
+    # We'll be calling this a lot when checking existing files, so we
+    # want it to be efficient. Let's cache the two options there are at
+    # the moment.
+    executable = os.access(fname, os.X_OK)
+    if executable:
+        if g_cache_prefix_exec is None:
+            metadata = dataclass_to_json(
+                CacheMetadata(executable=True)
+            ).encode()
+            assert len(metadata) < 256
+            g_cache_prefix_exec = (
+                CACHE_HEADER + len(metadata).to_bytes() + metadata
+            )
+        return g_cache_prefix_exec
+
+    # Ok; non-executable it is.
+    metadata = dataclass_to_json(CacheMetadata(executable=False)).encode()
+    assert len(metadata) < 256
+    g_cache_prefix_noexec = CACHE_HEADER + len(metadata).to_bytes() + metadata
+    return g_cache_prefix_noexec
+
+
 def _check_warm_start_entry(entry: tuple[str, str]) -> None:
     # import hashlib
 
@@ -530,40 +565,58 @@ def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
 
 def warm_start_cache() -> None:
     """Run a pre-pass on the efrocache to improve efficiency."""
+    import tempfile
 
     base_url = get_repository_base_url()
+    local_cache_dir = get_local_cache_dir()
 
     # We maintain a starter-cache on the staging server, which is simply
-    # the latest set of cache entries compressed into a single
-    # compressed archive. If we have no local cache yet we can download
-    # and expand this to give us a nice head start and greatly reduce
-    # the initial set of individual files we have to fetch. (downloading
-    # a single compressed archive is much more efficient than
-    # downloading thousands)
-    if not os.path.exists(CACHE_DIR_NAME):
-        print('Downloading asset starter-cache...', flush=True)
-        subprocess.run(
-            f'curl --fail {base_url}/startercache.tar.xz'
-            f' --output startercache.tar.xz',
-            shell=True,
-            check=True,
-        )
-        print('Decompressing starter-cache...', flush=True)
-        subprocess.run('tar -xf startercache.tar.xz', shell=True, check=True)
-        subprocess.run(f'mv efrocache {CACHE_DIR_NAME}', shell=True, check=True)
-        subprocess.run('rm startercache.tar.xz', shell=True, check=True)
-        print(
-            'Starter-cache fetched successfully!'
-            ' (should speed up asset builds)'
-        )
+    # a set of commonly used recent cache entries compressed into a
+    # single archive. If we have no local cache yet we can download and
+    # expand this to give us a nice head start and greatly reduce the
+    # initial set of individual files we have to fetch. (downloading a
+    # single compressed archive is much more efficient than downloading
+    # thousands)
+    if not os.path.exists(local_cache_dir):
+        print('Downloading efrocache starter-cache...', flush=True)
 
-    # In the public build, let's scan through all files managed by
-    # efrocache and update any with timestamps older than the latest
-    # cache-map that we already have the data for. Otherwise those files
-    # will update individually the next time they are 'built'. Even
-    # though that only takes a fraction of a second per file, it adds up
-    # when done for thousands of assets each time the cache map changes.
-    # It is much more efficient to do it in one go here.
+        # Download and decompress the starter-cache into a temp dir
+        # and then move it into place as our shiny new cache dir.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            starter_cache_file_path = os.path.join(
+                tmpdir, 'startercache.tar.xz'
+            )
+            subprocess.run(
+                [
+                    'curl',
+                    '--fail',
+                    f'{base_url}/startercache.tar.xz',
+                    '--output',
+                    starter_cache_file_path,
+                ],
+                check=True,
+            )
+            print('Decompressing starter-cache...', flush=True)
+            subprocess.run(
+                ['tar', '-xf', starter_cache_file_path], cwd=tmpdir, check=True
+            )
+            os.makedirs(os.path.dirname(local_cache_dir), exist_ok=True)
+            subprocess.run(
+                ['mv', os.path.join(tmpdir, 'efrocache'), local_cache_dir],
+                check=True,
+            )
+            print(
+                'Starter-cache fetched successfully! (should speed up builds).'
+            )
+
+    # In the public project, let's also scan through all project files
+    # managed by efrocache and update timestamps on any that we already
+    # have the data for to match the latest map. Otherwise those files
+    # will update their own timestamps individually the next time they
+    # are 'built'. Even though that only takes a fraction of a second
+    # per file, it adds up when done for thousands of files each time
+    # the cache map changes. It is much more efficient to do it all in
+    # one go here.
     cachemap: dict[str, str]
     with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
         cachemap = json.loads(infile.read())
@@ -580,7 +633,7 @@ def warm_start_cache() -> None:
             continue
 
         # Don't have the cache source file for this guy = ignore.
-        cachefile = CACHE_DIR_NAME + '/' + '/'.join(url.split('/')[-3:])
+        cachefile = local_cache_dir + '/' + '/'.join(url.split('/')[-3:])
         if not os.path.exists(cachefile):
             continue
 

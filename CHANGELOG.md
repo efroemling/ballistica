@@ -10,6 +10,25 @@
   could set up a server that never gets pruned and contains all history from now
   until forever. Efrocache is basically just a big pile of files organized by
   their hashes (see `tools/efrotools/efrocache.py` for details).
+- The default efrocache file location is now `.cache/efrocache` instead of
+  `.efrocache`. Feel free to blow away any `.efrocache` dir if you still have
+  one (or move it to the new path to avoid having to download things again).
+- It is now possible to set an `EFROCACHE_DIR` env var to tell efrocache to
+  store its local files somewhere besides the per-project default of
+  `.cache/efrocache`. This can save a lot of download time if you want to share
+  it between multiple repos or are doing full cleans/rebuilds a lot (if it is
+  outside the project dir it won't get blown away during cleans). Efrocache dirs
+  are universal (again its just a big pile of files organized by hash) so there
+  should be no issues sharing cache dirs. Another nice side effect of
+  maintaining a single local efrocache dir is that anything you've ever built
+  will still be buildable; otherwise if your build tries to download very old
+  cache files they may no longer be available on my efrocache server.
+- Hardened efrocache code a bit so that failures during downloads or
+  decompresses are less likely to leave problematic half-made stuff lying
+  around. Namely, things are now always downloaded or decompressed into temp
+  dirs and only moved into their final locations once that completes
+  successfully. Its extra important to be safe now that its possible to share
+  local efrocache dirs between projects or otherwise keep them around longer.
   
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
