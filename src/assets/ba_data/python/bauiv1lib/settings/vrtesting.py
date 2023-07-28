@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import babase
+import bauiv1 as bui
 from bauiv1lib.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
@@ -18,10 +18,10 @@ class VRTestingWindow(TestingWindow):
 
     def __init__(self, transition: str = 'in_right'):
         entries: list[dict[str, Any]] = []
-        app = babase.app
+        app = bui.app
         assert app.classic is not None
 
-        # these are gear-vr only
+        # These are gear-vr only.
         if (
             app.classic.platform == 'android'
             and app.classic.subplatform == 'oculus'
@@ -44,16 +44,19 @@ class VRTestingWindow(TestingWindow):
                 },
                 # {'name':'eyeOffsX','label':'Eye IPD','increment':0.001}
             ]
-        # cardboard/gearvr get eye offset controls..
+
+        # Cardboard/gearvr get eye offset controls.
         # if app.platform == 'android':
         #     entries += [
         #         {'name':'eyeOffsY','label':'Eye Offset Y','increment':0.01},
         #         {'name':'eyeOffsZ','label':'Eye Offset Z','increment':0.005}]
-        # everyone gets head-scale
+
+        # Everyone gets head-scale.
         entries += [
             {'name': 'headScale', 'label': 'Head Scale', 'increment': 1.0}
         ]
-        # and everyone gets all these..
+
+        # And everyone gets all these.
         entries += [
             {
                 'name': 'vrCamOffsetY',
@@ -88,7 +91,7 @@ class VRTestingWindow(TestingWindow):
         ]
 
         super().__init__(
-            babase.Lstr(resource='settingsWindowAdvanced.vrTestingText'),
+            bui.Lstr(resource='settingsWindowAdvanced.vrTestingText'),
             entries,
             transition,
         )

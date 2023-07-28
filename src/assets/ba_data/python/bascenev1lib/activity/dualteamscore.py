@@ -4,15 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
 import bascenev1 as bs
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
-
-if TYPE_CHECKING:
-    pass
 
 
 class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -24,7 +18,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         assert isinstance(self._winner, bs.SessionTeam)
 
     def on_begin(self) -> None:
-        babase.set_analytics_screen('Teams Score Screen')
+        bs.set_analytics_screen('Teams Score Screen')
         super().on_begin()
 
         height = 130
@@ -37,13 +31,13 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # 'First to 4'.
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        if babase.app.lang.get_resource('bestOfUseFirstToInstead'):
-            best_txt = babase.Lstr(
+        if bs.app.lang.get_resource('bestOfUseFirstToInstead'):
+            best_txt = bs.Lstr(
                 resource='firstToSeriesText',
                 subs=[('${COUNT}', str(session.get_series_length() / 2 + 1))],
             )
         else:
-            best_txt = babase.Lstr(
+            best_txt = bs.Lstr(
                 resource='bestOfSeriesText',
                 subs=[('${COUNT}', str(session.get_series_length()))],
             )
@@ -63,7 +57,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         for team in self.session.sessionteams:
             bs.timer(
                 i * 0.15 + 0.15,
-                babase.WeakCall(
+                bs.WeakCall(
                     self._show_team_name,
                     vval - i * height,
                     team,
@@ -78,7 +72,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 delay = 1.2
                 bs.timer(
                     i * 0.150 + 0.2,
-                    babase.WeakCall(
+                    bs.WeakCall(
                         self._show_team_old_score,
                         vval - i * height,
                         team,
@@ -89,7 +83,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
             bs.timer(
                 i * 0.150 + delay,
-                babase.WeakCall(
+                bs.WeakCall(
                     self._show_team_score,
                     vval - i * height,
                     team,
@@ -110,7 +104,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     ) -> None:
         del kill_delay  # Unused arg.
         ZoomText(
-            babase.Lstr(value='${A}:', subs=[('${A}', team.name)]),
+            bs.Lstr(value='${A}:', subs=[('${A}', team.name)]),
             position=(100, pos_v),
             shiftposition=(-150, pos_v),
             shiftdelay=shiftdelay,

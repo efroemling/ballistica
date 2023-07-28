@@ -39,7 +39,7 @@ static const bool kShowPruningInfo = false;
 #define PENDING_LOAD_PROCESS_TIME 5
 
 Assets::Assets() {
-  asset_paths_.emplace_back(g_core->platform->GetDataDirectory() + BA_DIRSLASH
+  asset_paths_.emplace_back(g_core->GetDataDirectory() + BA_DIRSLASH
                             + "ba_data");
   for (bool& have_pending_load : have_pending_loads_) {
     have_pending_load = false;

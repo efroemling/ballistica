@@ -7,7 +7,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -56,7 +55,7 @@ class Text(bs.Actor):
 
     def __init__(
         self,
-        text: str | babase.Lstr,
+        text: str | bs.Lstr,
         position: tuple[float, float] = (0.0, 0.0),
         h_align: HAlign = HAlign.LEFT,
         v_align: VAlign = VAlign.NONE,
@@ -219,7 +218,7 @@ class Text(bs.Actor):
         if transition_out_delay is not None:
             bs.timer(
                 transition_delay + transition_out_delay + 1.0,
-                babase.WeakCall(self.handlemessage, bs.DieMessage()),
+                bs.WeakCall(self.handlemessage, bs.DieMessage()),
             )
 
     def handlemessage(self, msg: Any) -> Any:

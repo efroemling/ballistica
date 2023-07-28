@@ -12,14 +12,14 @@ namespace ballistica {
 
 // String based Python commands.
 
-// Note to self:  originally I though I'd be using this in a lot of places,
-// so I added the ability to compile once and run repeatedly, quietly capture
-// output instead of printing it, etc.  Now, however, its usage is pretty
-// much limited to a few places such as handling stdin and the in-game console.
-// (Most places it is much cleaner to work with proper python modules and just
-// interact with PyObject* refs to them)
-// I should look and see if python's default high level calls would suffice
-// for these purposes and potentially kill this off.
+// Note to self: Originally I though I'd be using this in a lot of places,
+// so I added the ability to compile once and run repeatedly, quietly
+// capture output instead of printing it, etc. Now, however, its usage is
+// pretty much limited to a few places such as handling stdin and the
+// in-app console. (Most places it is much cleaner to work with proper
+// python modules and just interact with PyObject* refs to them) I should
+// look and see if python's default high level calls would suffice for these
+// purposes and potentially kill this off.
 class PythonCommand {
  public:
   PythonCommand();

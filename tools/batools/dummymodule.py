@@ -271,6 +271,8 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
+            elif returns == 'int | None':
+                returnstr = 'return 0'
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':

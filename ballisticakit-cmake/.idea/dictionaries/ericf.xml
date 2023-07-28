@@ -83,6 +83,7 @@
       <w>appletvsimulator</w>
       <w>appmode</w>
       <w>appmodeselector</w>
+      <w>appmodule</w>
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
@@ -549,6 +550,7 @@
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
+      <w>envconfig</w>
       <w>envglobals</w>
       <w>envs</w>
       <w>envval</w>
@@ -1102,6 +1104,7 @@
       <w>namecap</w>
       <w>namel</w>
       <w>namepre</w>
+      <w>namepretty</w>
       <w>nameu</w>
       <w>nameval</w>
       <w>nbuffer</w>
@@ -1430,6 +1433,7 @@
       <w>recvfrom</w>
       <w>redundants</w>
       <w>reenabled</w>
+      <w>reexpose</w>
       <w>refcounted</w>
       <w>refl</w>
       <w>regionid</w>

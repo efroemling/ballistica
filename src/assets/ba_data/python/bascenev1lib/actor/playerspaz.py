@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, overload
 
-import babase
 import bascenev1 as bs
 from bascenev1lib.actor.spaz import Spaz
 
@@ -99,7 +98,7 @@ class PlayerSpaz(Spaz):
         player: Any = self._player
         assert isinstance(player, playertype)
         if not player.exists() and doraise:
-            raise babase.PlayerNotFoundError()
+            raise bs.PlayerNotFoundError()
         return player if player.exists() else None
 
     def connect_controls_to_player(
@@ -129,16 +128,16 @@ class PlayerSpaz(Spaz):
         else:
             player.resetinput()
 
-        player.assigninput(babase.InputType.UP_DOWN, self.on_move_up_down)
-        player.assigninput(babase.InputType.LEFT_RIGHT, self.on_move_left_right)
+        player.assigninput(bs.InputType.UP_DOWN, self.on_move_up_down)
+        player.assigninput(bs.InputType.LEFT_RIGHT, self.on_move_left_right)
         player.assigninput(
-            babase.InputType.HOLD_POSITION_PRESS, self.on_hold_position_press
+            bs.InputType.HOLD_POSITION_PRESS, self.on_hold_position_press
         )
         player.assigninput(
-            babase.InputType.HOLD_POSITION_RELEASE,
+            bs.InputType.HOLD_POSITION_RELEASE,
             self.on_hold_position_release,
         )
-        intp = babase.InputType
+        intp = bs.InputType
         if enable_jump:
             player.assigninput(intp.JUMP_PRESS, self.on_jump_press)
             player.assigninput(intp.JUMP_RELEASE, self.on_jump_release)
@@ -210,7 +209,7 @@ class PlayerSpaz(Spaz):
             picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_attacked_by = picked_up_by
-                self.last_attacked_time = babase.apptime()
+                self.last_attacked_time = bs.apptime()
                 self.last_attacked_type = ('picked_up', 'default')
         elif isinstance(msg, bs.StandMessage):
             super().handlemessage(msg)  # Augment standard behavior.
@@ -248,7 +247,7 @@ class PlayerSpaz(Spaz):
                         #  something like last_actor_attacked_by to fix that.
                         if (
                             self.last_player_attacked_by
-                            and babase.apptime() - self.last_attacked_time < 4.0
+                            and bs.apptime() - self.last_attacked_time < 4.0
                         ):
                             killerplayer = self.last_player_attacked_by
                         else:
@@ -279,7 +278,7 @@ class PlayerSpaz(Spaz):
             source_player = msg.get_source_player(type(self._player))
             if source_player:
                 self.last_player_attacked_by = source_player
-                self.last_attacked_time = babase.apptime()
+                self.last_attacked_time = bs.apptime()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.
             activity = self._activity()

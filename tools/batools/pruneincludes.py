@@ -105,7 +105,7 @@ class Pruner:
             self.paths = [os.path.abspath(p) for p in self.paths]
 
     def _get_entries(self) -> list[_CompileCommandsEntry]:
-        cmdspath = '.cache/irony/compile_commands.json'
+        cmdspath = '.cache/compile_commands_db/compile_commands.json'
         if not os.path.isfile(cmdspath):
             raise CleanError(
                 f'Compile-commands not found at "{cmdspath}".'

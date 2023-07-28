@@ -4,14 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
 import bascenev1 as bs
 from bascenev1lib.actor.text import Text
-
-if TYPE_CHECKING:
-    pass
 
 
 class MultiTeamJoinActivity(bs.JoinActivity):
@@ -32,10 +26,10 @@ class MultiTeamJoinActivity(bs.JoinActivity):
 
         # Show info about the next up game.
         self._next_up_text = Text(
-            babase.Lstr(
+            bs.Lstr(
                 value='${1} ${2}',
                 subs=[
-                    ('${1}', babase.Lstr(resource='upFirstText')),
+                    ('${1}', bs.Lstr(resource='upFirstText')),
                     ('${2}', session.get_next_game_description()),
                 ],
             ),
@@ -72,12 +66,12 @@ class MultiTeamJoinActivity(bs.JoinActivity):
                     ).autoretain()
 
         Text(
-            babase.Lstr(
+            bs.Lstr(
                 resource='mustInviteFriendsText',
                 subs=[
                     (
                         '${GATHER}',
-                        babase.Lstr(resource='gatherWindow.titleText'),
+                        bs.Lstr(resource='gatherWindow.titleText'),
                     )
                 ],
             ),

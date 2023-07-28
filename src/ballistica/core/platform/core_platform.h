@@ -141,34 +141,15 @@ class CorePlatform {
   /// etc).
   virtual auto GetUIScale() -> UIScale;
 
-  /// Get the data directory. This dir contains ba_data and possibly other
-  /// platform-specific bits needed for the app to function.
-  auto GetDataDirectory() -> std::string;
-
   /// Return default DataDirectory value for monolithic builds.
   auto GetDataDirectoryMonolithicDefault() -> std::string;
 
-  /// Get the root config directory. This dir contains the app config file
-  /// and other data considered essential to the app install. This directory
-  /// should be included in OS backups.
-  auto GetConfigDirectory() -> std::string;
   auto GetConfigDirectoryMonolithicDefault() -> std::optional<std::string>;
 
   /// Get the path of the app config file.
   auto GetConfigFilePath() -> std::string;
 
-  /// Return a directory where the local user can manually place Python
-  /// files where they will be accessible by the app. When possible, this
-  /// directory should be in a place easily accessible to the user.
-  auto GetUserPythonDirectory() -> std::optional<std::string>;
   auto GetUserPythonDirectoryMonolithicDefault() -> std::optional<std::string>;
-
-  /// Return the directory where the app expects to find its bundled Python
-  /// files.
-  auto GetAppPythonDirectory() -> std::optional<std::string>;
-
-  /// Return the directory where bundled 3rd party Python files live.
-  auto GetSitePythonDirectory() -> std::optional<std::string>;
 
   /// Get a directory where the app can store internal generated data. This
   /// directory should not be included in backups and the app should remain
@@ -470,19 +451,8 @@ class CorePlatform {
   // return true and set the native full res here.  Otherwise return false;
   virtual auto GetDisplayResolution(int* x, int* y) -> bool;
 
-  auto using_custom_app_python_dir() const {
-    return using_custom_app_python_dir_;
-  }
-
   /// Are we being run from a terminal? (should we show prompts, etc?).
   auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
-
-  void SetBaEnvVals(const PythonRef& ref);
-
-  /// Return true if baenv values have been locked in: python paths, log
-  /// handling, etc. Early-running code may wish to explicitly avoid making log
-  /// calls until this condition is met to ensure predictable behavior.
-  auto HaveBaEnvVals() const { return have_ba_env_vals_; }
 
  protected:
   /// Are we being run from a terminal? (should we show prompts, etc?).
@@ -544,7 +514,6 @@ class CorePlatform {
 
  private:
   bool is_stdin_a_terminal_{};
-  bool using_custom_app_python_dir_{};
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
   bool is_tegra_k1_{};
@@ -553,17 +522,11 @@ class CorePlatform {
   bool made_volatile_data_dir_{};
   bool have_device_uuid_{};
   bool ran_base_post_init_{};
-  bool have_ba_env_vals_{};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
   std::string legacy_device_uuid_;
   std::string volatile_data_dir_;
   std::string replays_dir_;
-  std::string ba_env_config_dir_;
-  std::string ba_env_data_dir_;
-  std::optional<std::string> ba_env_app_python_dir_;
-  std::optional<std::string> ba_env_user_python_dir_;
-  std::optional<std::string> ba_env_site_python_dir_;
 };
 
 }  // namespace ballistica::core

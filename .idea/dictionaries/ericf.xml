@@ -125,6 +125,7 @@
       <w>appletvsimulator</w>
       <w>appmode</w>
       <w>appmodeselector</w>
+      <w>appmodule</w>
       <w>appname</w>
       <w>appnameupper</w>
       <w>appnow</w>
@@ -904,6 +905,7 @@
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
+      <w>envconfig</w>
       <w>envglobals</w>
       <w>envhash</w>
       <w>envname</w>
@@ -1892,6 +1894,7 @@
       <w>namedarg</w>
       <w>namel</w>
       <w>namepre</w>
+      <w>namepretty</w>
       <w>nametext</w>
       <w>nameu</w>
       <w>nameval</w>
@@ -2432,6 +2435,7 @@
       <w>redist</w>
       <w>redistributables</w>
       <w>reenabled</w>
+      <w>reexpose</w>
       <w>regionid</w>
       <w>registerexecutionpolicyexception</w>
       <w>registerwithlaunchservices</w>

@@ -4,6 +4,7 @@
 
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -13,7 +14,6 @@ namespace ballistica {
 // Note: implicitly using core globals here; our behavior is undefined
 // if core has not been imported by anyone yet.
 using core::g_base_soft;
-using core::g_core;
 
 // Ignore a few things that python macros do.
 #pragma clang diagnostic push
@@ -179,6 +179,16 @@ auto PythonRef::ValueAsOptionalString() const -> std::optional<std::string> {
   return Python::GetPyString(obj_);
 }
 
+auto PythonRef::ValueAsOptionalStringSequence() const
+    -> std::optional<std::list<std::string>> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  if (obj_ == Py_None) {
+    return {};
+  }
+  return Python::GetPyStrings(obj_);
+}
+
 auto PythonRef::ValueAsInt() const -> int64_t {
   assert(Python::HaveGIL());
   ThrowIfUnset();
@@ -238,15 +248,8 @@ auto PythonRef::UnicodeCheck() const -> bool {
   return static_cast<bool>(PyUnicode_Check(obj_));
 }
 
-auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
-    -> PythonRef {
-  assert(obj_);
-  assert(Python::HaveGIL());
-  assert(CallableCheck());
-  assert(args);
-  assert(PyTuple_Check(args));              // NOLINT (signed bitwise stuff)
-  assert(!keywds || PyDict_Check(keywds));  // NOLINT (signed bitwise)
-  PyObject* out = PyObject_Call(obj_, args, keywds);
+static inline auto _HandleCallResults(PyObject* out, bool print_errors)
+    -> PyObject* {
   if (!out) {
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
@@ -262,20 +265,36 @@ auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
     }
     PyErr_Clear();
   }
+  return out;
+}
+
+auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
+    -> PythonRef {
+  assert(obj_);
+  assert(Python::HaveGIL());
+  assert(CallableCheck());
+  assert(args);
+  assert(PyTuple_Check(args));              // NOLINT (signed bitwise stuff)
+  assert(!keywds || PyDict_Check(keywds));  // NOLINT (signed bitwise)
+  PyObject* out = PyObject_Call(obj_, args, keywds);
+  out = _HandleCallResults(out, print_errors);
   return out ? PythonRef(out, PythonRef::kSteal) : PythonRef();
 }
 
-auto PythonRef::Call() const -> PythonRef {
-  // NOTE: Using core globals directly here; normally don't do this.
-  assert(g_core);
-  return Call(
-      g_core->python->objs().Get(core::CorePython::ObjID::kEmptyTuple).Get());
+auto PythonRef::Call(bool print_errors) const -> PythonRef {
+  assert(obj_);
+  assert(Python::HaveGIL());
+  assert(CallableCheck());
+  PyObject* out = PyObject_CallNoArgs(obj_);
+  out = _HandleCallResults(out, print_errors);
+  return out ? PythonRef(out, PythonRef::kSteal) : PythonRef();
 }
 
-auto PythonRef::Call(const Vector2f& val) const -> PythonRef {
+auto PythonRef::Call(const Vector2f& val, bool print_errors) const
+    -> PythonRef {
   assert(Python::HaveGIL());
   PythonRef args(Py_BuildValue("((ff))", val.x, val.y), PythonRef::kSteal);
-  return Call(args);
+  return Call(args.Get(), nullptr, print_errors);
 }
 
 PythonRef::~PythonRef() { Release(); }

@@ -3,15 +3,9 @@
 """Functionality related to teams mode score screen."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
 import bascenev1 as bs
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
-
-if TYPE_CHECKING:
-    pass
 
 
 class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
@@ -28,12 +22,12 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         super().on_begin()
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
-            txt = babase.Lstr(
+            txt = bs.Lstr(
                 value='${A}   ${B}',
                 subs=[
                     (
                         '${A}',
-                        babase.Lstr(
+                        bs.Lstr(
                             resource='upNextText',
                             subs=[
                                 ('${COUNT}', str(session.get_game_number() + 1))
@@ -84,7 +78,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 return val
             return p_rec.accumscore
 
-        def _get_prec_score_str(p_rec: bs.PlayerRecord) -> str | babase.Lstr:
+        def _get_prec_score_str(p_rec: bs.PlayerRecord) -> str | bs.Lstr:
             if is_free_for_all and results is not None:
                 assert isinstance(results, bs.GameResults)
                 assert p_rec.team.activityteam is not None
@@ -135,7 +129,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         def _txt(
             xoffs: float,
             yoffs: float,
-            text: babase.Lstr,
+            text: bs.Lstr,
             h_align: Text.HAlign = Text.HAlign.RIGHT,
             extrascale: float = 1.0,
             maxwidth: float | None = 120.0,
@@ -157,7 +151,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        tval = babase.Lstr(
+        tval = bs.Lstr(
             resource='gameLeadersText',
             subs=[('${COUNT}', str(session.get_game_number()))],
         )
@@ -169,14 +163,12 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             extrascale=1.4,
             maxwidth=None,
         )
-        _txt(
-            -15, 4, babase.Lstr(resource='playerText'), h_align=Text.HAlign.LEFT
-        )
-        _txt(180, 4, babase.Lstr(resource='killsText'))
-        _txt(280, 4, babase.Lstr(resource='deathsText'), maxwidth=100)
+        _txt(-15, 4, bs.Lstr(resource='playerText'), h_align=Text.HAlign.LEFT)
+        _txt(180, 4, bs.Lstr(resource='killsText'))
+        _txt(280, 4, bs.Lstr(resource='deathsText'), maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
-        translated = babase.Lstr(translate=('scoreNames', score_label))
+        translated = bs.Lstr(translate=('scoreNames', score_label))
 
         _txt(390, 0, translated)
 
@@ -191,7 +183,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             topkilledcount = min(topkilledcount, prec.accum_killed_count)
 
         def _scoretxt(
-            text: str | babase.Lstr,
+            text: str | bs.Lstr,
             x_offs: float,
             highlight: bool,
             delay2: float,
@@ -228,7 +220,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                babase.Lstr(value=playerrec.getname(full=True)),
+                bs.Lstr(value=playerrec.getname(full=True)),
                 maxwidth=160,
                 scale=0.75 * scale,
                 position=(
@@ -237,7 +229,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 ),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
-                color=babase.safecolor(playerrec.team.color + (1,)),
+                color=bs.safecolor(playerrec.team.color + (1,)),
                 transition=Text.Transition.IN_LEFT,
                 transition_delay=tdelay,
             ).autoretain()

@@ -826,8 +826,8 @@ void TextGraphics::LoadGlyphPage(uint32_t index) {
   if (g_glyph_pages[index] == nullptr) {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "%s%sba_data%sfonts%sfontSmall%d.fdata",
-             g_core->platform->GetDataDirectory().c_str(), BA_DIRSLASH,
-             BA_DIRSLASH, BA_DIRSLASH, index);
+             g_core->GetDataDirectory().c_str(), BA_DIRSLASH, BA_DIRSLASH,
+             BA_DIRSLASH, index);
     FILE* f = g_core->platform->FOpen(buffer, "rb");
     BA_PRECONDITION(f);
     BA_PRECONDITION(sizeof(TextGraphics::Glyph[2]) == sizeof(float[18]));

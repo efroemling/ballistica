@@ -25,16 +25,18 @@ class CleanError(Exception):
     more descriptive exception types.
     """
 
-    def pretty_print(self, flush: bool = False) -> None:
+    def pretty_print(self, flush: bool = True, prefix: str = 'Error') -> None:
         """Print the error to stdout, using red colored output if available.
 
         If the error has an empty message, prints nothing (not even a newline).
         """
         from efro.terminal import Clr
 
+        if prefix:
+            prefix = f'{prefix}: '
         errstr = str(self)
         if errstr:
-            print(f'{Clr.SRED}{errstr}{Clr.RST}', flush=flush)
+            print(f'{Clr.SRED}{prefix}{errstr}{Clr.RST}', flush=flush)
 
 
 class CommunicationError(Exception):

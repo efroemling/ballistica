@@ -113,6 +113,8 @@
           <option value="typing_extensions.assert_type" />
           <option value="float.__getitem__" />
           <option value="pbxproj.pbxsections.PBXGroup.PBXGroup.children" />
+          <option value="bascenev1lib.game.race.Player.__getitem__" />
+          <option value="batools.project._updater._LineChange.__getitem__" />
         </list>
       </option>
     </inspection_tool>

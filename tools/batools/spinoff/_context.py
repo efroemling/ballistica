@@ -786,34 +786,16 @@ class SpinoffContext:
             if 'base' in self._src_omit_feature_sets:
                 text = replace_exact(
                     text,
-                    (
-                        'def _main() -> None:\n'
-                        '    # Run a default configure BEFORE importing'
-                        ' babase.\n'
-                        '    # (may affect where babase comes from).\n'
-                        '    configure()\n'
-                        '\n'
-                        '    import babase\n'
-                        '\n'
-                        '    babase.app.run()\n'
-                        '\n'
-                    ),
-                    (
-                        'def _main() -> None:\n'
-                        '    # DISABLED; REQUIRES BASE FEATURE SET.\n'
-                        '    # Run a default configure BEFORE importing'
-                        ' babase.\n'
-                        '    # (may affect where babase comes from).\n'
-                        '    # configure()\n'
-                        '\n'
-                        '    # import babase\n'
-                        '\n'
-                        '    # babase.app.run()\n'
-                        '\n'
-                        "    raise RuntimeError('App-exec requires"
-                        " base feature set.')\n"
-                        '\n'
-                    ),
+                    '        import babase\n',
+                    '        # (Hack; spinoff disabled babase).\n'
+                    '        if TYPE_CHECKING:\n'
+                    '            from typing import Any\n'
+                    '\n'
+                    '        # import babase\n'
+                    '\n'
+                    '        babase: Any = None\n'
+                    '        if bool(True):\n'
+                    "            raise CleanError('babase not present')\n",
                     label=src_path,
                 )
 
@@ -1587,7 +1569,7 @@ class SpinoffContext:
                 os.chmod(dst_path_full, mode)
             else:
                 raise RuntimeError(
-                    f"Invalid entity type: '{src_entity['type']}'."
+                    f"Invalid entity type: '{src_entity.entity_type}'."
                 )
 
             # NOTE TO SELF - was using lchmod here but it doesn't exist

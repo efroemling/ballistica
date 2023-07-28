@@ -2,7 +2,8 @@
 ;;; For more information see (info "(emacs) Directory Variables")
 
 ;;; Turn flycheck mode on for our c++ stuff and tell jedi where to look for our python stuff.
-((c++-mode (eval . (flycheck-mode)))
+(
+ ;; (c++-mode (eval . (flycheck-mode)))
 
  
  (python-ts-mode (jedi:server-args . ("--sys-path" "__EFRO_PROJECT_ROOT__/tools"
@@ -22,8 +23,18 @@
  (nil . ((projectile-globally-ignored-directories . ("docs"
                                                      "submodules"
                                                      "src/external"
+                                                     "src/assets/ba_data/python-site-packages"
                                                      "src/assets/pylib-android"
                                                      "src/assets/pylib-apple"
                                                      "src/assets/windows"))))
+ 
+ ;; Trying to get project.el to work the same as projectile since its built in.
+ (nil . ((project-vc-ignores . ("docs"
+                                "submodules"
+                                "src/external"
+                                "src/assets/ba_data/python-site-packages"
+                                "src/assets/pylib-android"
+                                "src/assets/pylib-apple"
+                                "src/assets/windows"))))
  
  )

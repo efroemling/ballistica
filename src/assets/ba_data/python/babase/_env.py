@@ -156,11 +156,11 @@ def on_app_launching() -> None:
 
     assert _babase.in_logic_thread()
 
-    # Let the user know if the app Python dir is a custom one.
-    user_sys_scripts_dir = baenv.get_user_system_scripts_dir()
-    if user_sys_scripts_dir is not None:
+    # Let the user know if the app Python dir is a 'user' one.
+    envconfig = baenv.get_config()
+    if envconfig.is_user_app_python_dir:
         _babase.screenmessage(
-            f"Using user system scripts: '{user_sys_scripts_dir}'",
+            f"Using user system scripts: '{envconfig.app_python_dir}'",
             color=(0.6, 0.6, 1.0),
         )
 

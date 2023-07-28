@@ -105,7 +105,8 @@ auto Python::GetPyString(PyObject* o) -> std::string {
     return PyUnicode_AsUTF8(o);
   }
   throw Exception(
-      "Can't get string from value: " + Python::ObjToString(o) + ".", exctype);
+      "Expected a string object; got type " + Python::ObjTypeToString(o) + ".",
+      exctype);
 }
 
 template <typename T>
@@ -216,6 +217,24 @@ auto Python::GetPyFloats(PyObject* o) -> std::vector<float> {
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
     vals[i] = Python::GetPyFloat(py_objects[i]);
+  }
+  return vals;
+}
+
+auto Python::GetPyStrings(PyObject* o) -> std::list<std::string> {
+  assert(HaveGIL());
+  BA_PRECONDITION_FATAL(o != nullptr);
+
+  if (!PySequence_Check(o)) {
+    throw Exception("Object is not a sequence.", PyExcType::kType);
+  }
+  PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
+  assert(sequence.Exists());
+  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.Get());
+  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.Get());
+  std::list<std::string> vals;
+  for (Py_ssize_t i = 0; i < size; i++) {
+    vals.emplace_back(Python::GetPyString(py_objects[i]));
   }
   return vals;
 }

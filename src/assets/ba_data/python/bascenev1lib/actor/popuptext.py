@@ -7,7 +7,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -22,7 +21,7 @@ class PopupText(bs.Actor):
 
     def __init__(
         self,
-        text: str | babase.Lstr,
+        text: str | bs.Lstr,
         position: Sequence[float] = (0.0, 0.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
         random_offset: float = 0.5,
@@ -116,7 +115,7 @@ class PopupText(bs.Actor):
 
         # kill ourself
         self._die_timer = bs.Timer(
-            lifespan, babase.WeakCall(self.handlemessage, bs.DieMessage())
+            lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage())
         )
 
     def handlemessage(self, msg: Any) -> Any:

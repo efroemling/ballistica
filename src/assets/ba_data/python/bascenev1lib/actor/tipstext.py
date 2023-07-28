@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -34,8 +33,8 @@ class TipsText(bs.Actor):
                 'v_attach': 'bottom',
             },
         )
-        tval = babase.Lstr(
-            value='${A}:', subs=[('${A}', babase.Lstr(resource='tipText'))]
+        tval = bs.Lstr(
+            value='${A}:', subs=[('${A}', bs.Lstr(resource='tipText'))]
         )
         self.title_node = bs.newnode(
             'text',
@@ -54,7 +53,7 @@ class TipsText(bs.Actor):
         self._message_spacing = 3000
         self._change_timer = bs.Timer(
             0.001 * (self._message_duration + self._message_spacing),
-            babase.WeakCall(self.change_phrase),
+            bs.WeakCall(self.change_phrase),
             repeat=True,
         )
         self._combine = bs.newnode(
@@ -70,11 +69,11 @@ class TipsText(bs.Actor):
         """Switch the visible tip phrase."""
         from babase import get_remote_app_name
 
-        next_tip = babase.Lstr(
+        next_tip = bs.Lstr(
             translate=(
                 'tips',
-                babase.app.classic.get_next_tip()
-                if babase.app.classic is not None
+                bs.app.classic.get_next_tip()
+                if bs.app.classic is not None
                 else '',
             ),
             subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],

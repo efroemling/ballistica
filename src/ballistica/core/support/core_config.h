@@ -14,7 +14,17 @@ namespace ballistica::core {
 /// when initing the core feature-set.
 class CoreConfig {
  public:
-  static auto FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig;
+  static auto ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig;
+
+  static auto ForEnvVars() -> CoreConfig;
+
+  /// Build a core-config for a modular app being run from the command-line.
+  /// In this case, Python has already been inited and Ballistica has
+  /// already been imported (since that's where this code lives) so there is
+  /// less that can be affected by a core-config.
+
+  void ApplyEnvVars();
+  void ApplyArgs(int argc, char** argv);
 
   /// Enable vr mode on supported platforms.
   bool vr_mode{};
@@ -26,19 +36,19 @@ class CoreConfig {
   std::optional<int> immediate_return_code{};
 
   /// If set, this single Python command will be run instead of the
-  /// normal app loop.
+  /// normal app loop (monolithic builds only).
   std::optional<std::string> call_command{};
 
   /// Python command to be run within the normal app loop.
   std::optional<std::string> exec_command{};
 
-  /// Explicitly set config dir.
+  /// Explicitly passed config dir.
   std::optional<std::string> config_dir{};
 
-  /// Explicitly set data dir.
+  /// Explicitly passed data dir.
   std::optional<std::string> data_dir{};
 
-  /// Explicitly set user-python (mods) dir.
+  /// Explicitly passed user-python (mods) dir.
   std::optional<std::string> user_python_dir{};
 
   /// Log various stages/times in the bootstrapping process.

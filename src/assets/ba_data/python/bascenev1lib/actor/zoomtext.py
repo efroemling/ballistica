@@ -5,9 +5,9 @@
 from __future__ import annotations
 
 import random
+import logging
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class ZoomText(bs.Actor):
 
     def __init__(
         self,
-        text: str | babase.Lstr,
+        text: str | bs.Lstr,
         position: tuple[float, float] = (0.0, 0.0),
         shiftposition: tuple[float, float] | None = None,
         shiftdelay: float | None = None,
@@ -47,7 +47,7 @@ class ZoomText(bs.Actor):
         if shiftdelay is None:
             shiftdelay = 2.500
         if shiftdelay < 0.0:
-            babase.print_error('got shiftdelay < 0')
+            logging.error('got shiftdelay < 0')
             shiftdelay = 0.0
         self._project_scale = project_scale
         self.node = bs.newnode(
@@ -69,7 +69,7 @@ class ZoomText(bs.Actor):
         )
 
         # we never jitter in vr mode..
-        if babase.app.vr_mode:
+        if bs.app.vr_mode:
             jitter = 0.0
 
         # if they want jitter, animate its position slightly...
@@ -82,14 +82,12 @@ class ZoomText(bs.Actor):
             positionadjusted2 = (shiftposition[0], shiftposition[1] - 100)
             bs.timer(
                 shiftdelay,
-                babase.WeakCall(
-                    self._shift, positionadjusted, positionadjusted2
-                ),
+                bs.WeakCall(self._shift, positionadjusted, positionadjusted2),
             )
             if jitter > 0.0:
                 bs.timer(
                     shiftdelay + 0.25,
-                    babase.WeakCall(
+                    bs.WeakCall(
                         self._jitter, positionadjusted2, jitter * scale
                     ),
                 )
@@ -158,9 +156,7 @@ class ZoomText(bs.Actor):
 
         # if they give us a lifespan, kill ourself down the line
         if lifespan is not None:
-            bs.timer(
-                lifespan, babase.WeakCall(self.handlemessage, bs.DieMessage())
-            )
+            bs.timer(lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage()))
 
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired

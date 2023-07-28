@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 
+#include <list>
 #include <optional>
 #include <string>
 
@@ -166,6 +167,8 @@ class PythonRef {
 
   auto ValueAsString() const -> std::string;
   auto ValueAsOptionalString() const -> std::optional<std::string>;
+  auto ValueAsOptionalStringSequence() const
+      -> std::optional<std::list<std::string>>;
 
   auto ValueAsInt() const -> int64_t;
 
@@ -185,10 +188,10 @@ class PythonRef {
             bool print_errors = true) const -> PythonRef {
     return Call(args.Get(), keywds.Get(), print_errors);
   }
-  auto Call() const -> PythonRef;
+  auto Call(bool print_errors = true) const -> PythonRef;
 
   /// Call with Vector2f passed as a tuple.
-  auto Call(const Vector2f& val) const -> PythonRef;
+  auto Call(const Vector2f& val, bool print_errors = true) const -> PythonRef;
 
  private:
   void ThrowIfUnset() const;

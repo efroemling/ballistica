@@ -526,7 +526,7 @@ class AssetStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.11 ba_data/python/baenv.py $@\n'
+                'exec python3.11 ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 

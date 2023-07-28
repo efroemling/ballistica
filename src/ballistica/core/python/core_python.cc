@@ -15,13 +15,6 @@ void LowLevelPythonDebugLog(const char* msg) {
   g_core->platform->DebugLog(msg);
 }
 
-void CorePython::ApplyBaEnvConfig() {
-  // Fetch the env-config (creates it if need be).
-  auto envcfg = objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
-  BA_PRECONDITION(envcfg.Exists());
-  g_core->platform->SetBaEnvVals(envcfg);
-}
-
 static void CheckPyInitStatus(const char* where, const PyStatus& status) {
   if (PyStatus_Exception(status)) {
     FatalError(std::string("Error in ") + where + ": "
@@ -335,6 +328,78 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
 
   PythonRef args(Py_BuildValue("(s)", msg.c_str()), PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
+}
+
+auto CorePython::WasModularMainCalled() -> bool {
+  assert(!g_buildconfig.monolithic_build());
+
+  // This gets called in modular builds before anything is inited, so we need to
+  // avoid using anything from g_core or whatnot here; only raw Python stuff.
+
+  PyObject* baenv = PyImport_ImportModule("baenv");
+  if (!baenv) {
+    FatalError("Unable to import baenv module.");
+  }
+  PyObject* env_globals_class = PyObject_GetAttrString(baenv, "_EnvGlobals");
+  if (!env_globals_class) {
+    FatalError("_EnvGlobals class not found in baenv.");
+  }
+  PyObject* get_call = PyObject_GetAttrString(env_globals_class, "get");
+  if (!get_call) {
+    FatalError("get() call not found on baenv._EnvGlobals.");
+  }
+  PyObject* env_globals_instance = PyObject_CallNoArgs(get_call);
+  if (!get_call) {
+    FatalError("baenv._EnvGlobals.get() call failed.");
+  }
+  PyObject* modular_main_called =
+      PyObject_GetAttrString(env_globals_instance, "modular_main_called");
+  if (!modular_main_called || !PyBool_Check(modular_main_called)) {
+    FatalError("modular_main_called bool not found on baenv _EnvGlobals.");
+  }
+  assert(modular_main_called == Py_True || modular_main_called == Py_False);
+  bool val = modular_main_called == Py_True;
+
+  Py_DECREF(baenv);
+  Py_DECREF(env_globals_class);
+  Py_DECREF(get_call);
+  Py_DECREF(env_globals_instance);
+  Py_DECREF(modular_main_called);
+
+  return val;
+}
+
+auto CorePython::FetchPythonArgs(std::vector<std::string>* buffer)
+    -> std::vector<char*> {
+  // This gets called in modular builds before anything is inited, so we need to
+  // avoid using anything from g_core or whatnot here; only raw Python stuff.
+
+  assert(buffer && buffer->empty());
+  PyObject* sys = PyImport_ImportModule("sys");
+  if (!sys) {
+    FatalError("Unable to import sys module.");
+  }
+  PyObject* argv = PyObject_GetAttrString(sys, "argv");
+  if (!argv || !PyList_Check(argv)) {
+    FatalError("Unable to fetch sys.argv list.");
+  }
+  Py_ssize_t listlen = PyList_GET_SIZE(argv);
+  for (Py_ssize_t i = 0; i < listlen; ++i) {
+    PyObject* arg = PyList_GET_ITEM(argv, i);
+    BA_PRECONDITION_FATAL(PyUnicode_Check(arg));
+    buffer->push_back(PyUnicode_AsUTF8(arg));
+  }
+  Py_DECREF(sys);
+  Py_DECREF(argv);
+
+  // Ok, we've filled the buffer so it won't be resizing anymore. Now set up
+  // argv pointers to it.
+  std::vector<char*> out;
+  out.reserve(buffer->size());
+  for (int i = 0; i < buffer->size(); ++i) {
+    out.push_back(const_cast<char*>((*buffer)[i].c_str()));
+  }
+  return out;
 }
 
 }  // namespace ballistica::core

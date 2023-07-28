@@ -28,11 +28,11 @@
 help:
 	@tools/pcommand makefile_target_list Makefile
 
-# Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a cmake
-# compile-commands database for use with irony for emacs (and possibly other
-# tools).
-ifeq ($(BA_ENABLE_IRONY_BUILD_DB),1)
- PREREQ_IRONY_BUILD_DB = .cache/irony/compile_commands.json
+# Set env-var BA_ENABLE_COMPILE_COMMANDS_DB=1 to enable creating/updating a
+# cmake compile-commands database for use with irony for emacs (and possibly
+# other tools).
+ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
+ PREREQ_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
 # Prereq targets that should be safe to run anytime; even if project-files
@@ -45,7 +45,7 @@ PREREQS_SAFE = .cache/checkenv .dir-locals.el .mypy.ini .pycheckers .pylintrc \
 # fail if the CMakeList files don't match what's on disk. If such a target was
 # included in PREREQS_SAFE it would try to build *before* project updates
 # which would leave us stuck in a broken state.
-PREREQS_POST_UPDATE_ONLY = $(PREREQ_IRONY_BUILD_DB)
+PREREQS_POST_UPDATE_ONLY = $(PREREQ_COMPILE_COMMANDS_DB)
 
 # Target that should be built before running most any other build.
 # This installs tool config files, runs environment checks, etc.
@@ -1010,20 +1010,20 @@ CMAKE_BUILD_TYPE ?= Debug
 
 # Build and run the cmake build.
 cmake: cmake-build
-	@cd build/cmake/$(CM_BT_LC)/staged && ./ballisticakit
+	cd build/cmake/$(CM_BT_LC)/staged && ./ballisticakit
 
 # Build and run the cmake build under the gdb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-gdb: cmake-build
-	@cd build/cmake/$(CM_BT_LC)/staged && \
+	cd build/cmake/$(CM_BT_LC)/staged && \
       BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
 # Build and run the cmake build under the lldb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-lldb: cmake-build
-	@cd build/cmake/$(CM_BT_LC)/staged && \
+	cd build/cmake/$(CM_BT_LC)/staged && \
       BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
@@ -1045,7 +1045,7 @@ cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)
 
 cmake-server: cmake-server-build
-	@cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
+	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
 cmake-server-build: assets-server meta cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
@@ -1074,7 +1074,7 @@ cmake-modular-build: assets-cmake meta cmake-modular-binary
       Modular build complete: BLU build/cmake/modular-$(CM_BT_LC)/staged
 
 cmake-modular: cmake-modular-build
-	@cd build/cmake/modular-$(CM_BT_LC)/staged && ./ballisticakit
+	cd build/cmake/modular-$(CM_BT_LC)/staged && ./ballisticakit
 
 cmake-modular-binary: meta
 	@tools/pcommand cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
@@ -1089,7 +1089,7 @@ cmake-modular-clean:
 	rm -rf build/cmake/modular-$(CM_BT_LC)
 
 cmake-modular-server: cmake-modular-server-build
-	@cd build/cmake/modular-server-$(CM_BT_LC)/staged && ./ballisticakit_server
+	cd build/cmake/modular-server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
 cmake-modular-server-build: assets-server meta cmake-modular-server-binary
 	@$(STAGE_BUILD) -cmakemodularserver -$(CM_BT_LC) \
@@ -1221,21 +1221,21 @@ ballisticakit-cmake/.clang-format: .clang-format
 	@mkdir -p ballisticakit-cmake
 	@cd ballisticakit-cmake && ln -sf ../.clang-format .
 
-# Irony in emacs requires us to use cmake to generate a full
-# list of compile commands for all files; lets try to keep it up to date
+# Various tools such as Irony for Emacs or clangd make use of a list of
+# compile commands for all files; lets try to keep it up to date
 # whenever CMakeLists changes.
-.cache/irony/compile_commands.json: ballisticakit-cmake/CMakeLists.txt
-	@tools/pcommand echo BLU Updating Irony build commands db...
-	@echo Generating Irony compile-commands-list...
-	@mkdir -p .cache/irony
-	@cd .cache/irony \
+.cache/compile_commands_db/compile_commands.json: \
+      ballisticakit-cmake/CMakeLists.txt
+	@tools/pcommand echo BLU Updating compile commands db...
+	@mkdir -p .cache/compile_commands_db
+	@cd .cache/compile_commands_db \
       && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
       $(shell pwd)/ballisticakit-cmake
-	@mv .cache/irony/compile_commands.json . \
-      && rm -rf .cache/irony \
-      && mkdir .cache/irony \
-      && mv compile_commands.json .cache/irony
-	@tools/pcommand echo BLU Created Irony build db at $@
+	@mv .cache/compile_commands_db/compile_commands.json . \
+      && rm -rf .cache/compile_commands_db \
+      && mkdir .cache/compile_commands_db \
+      && mv compile_commands.json .cache/compile_commands_db
+	@tools/pcommand echo BLU Created compile commands db at $@
 
 _windows-wsl-build:
 	@tools/pcommand wsl_build_check_win_drive

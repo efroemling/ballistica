@@ -4,14 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
 import bascenev1 as bs
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
-
-if TYPE_CHECKING:
-    pass
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -35,25 +29,25 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image
 
-        babase.set_analytics_screen(
+        bs.set_analytics_screen(
             'FreeForAll Series Victory Screen'
             if self._is_ffa
             else 'Teams Series Victory Screen'
         )
-        assert babase.app.classic is not None
-        if babase.app.ui_v1.uiscale is babase.UIScale.LARGE:
-            sval = babase.Lstr(resource='pressAnyKeyButtonPlayAgainText')
+        assert bs.app.classic is not None
+        if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
+            sval = bs.Lstr(resource='pressAnyKeyButtonPlayAgainText')
         else:
-            sval = babase.Lstr(resource='pressAnyButtonPlayAgainText')
+            sval = bs.Lstr(resource='pressAnyButtonPlayAgainText')
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
         winning_sessionteam = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
-        bs.timer(0.6, babase.WeakCall(self._play_victory_music))
+        bs.timer(0.6, bs.WeakCall(self._play_victory_music))
         bs.timer(
-            4.4, babase.WeakCall(self._show_winner, self.settings_raw['winner'])
+            4.4, bs.WeakCall(self._show_winner, self.settings_raw['winner'])
         )
         bs.timer(4.6, self._score_display_sound.play)
 
@@ -82,19 +76,19 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         tval = 6.4
         t_incr = 0.12
 
-        always_use_first_to = babase.app.lang.get_resource(
+        always_use_first_to = bs.app.lang.get_resource(
             'bestOfUseFirstToInstead'
         )
 
         session = self.session
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
-            txt = babase.Lstr(
+            txt = bs.Lstr(
                 value='${A}:',
                 subs=[
                     (
                         '${A}',
-                        babase.Lstr(
+                        bs.Lstr(
                             resource='firstToFinalText',
                             subs=[
                                 (
@@ -115,12 +109,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  they're not using this language. Should try to come up
             #  with a wording that works everywhere.
             if always_use_first_to:
-                txt = babase.Lstr(
+                txt = bs.Lstr(
                     value='${A}:',
                     subs=[
                         (
                             '${A}',
-                            babase.Lstr(
+                            bs.Lstr(
                                 resource='firstToFinalText',
                                 subs=[
                                     (
@@ -135,12 +129,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     ],
                 )
             else:
-                txt = babase.Lstr(
+                txt = bs.Lstr(
                     value='${A}:',
                     subs=[
                         (
                             '${A}',
-                            babase.Lstr(
+                            bs.Lstr(
                                 resource='bestOfFinalText',
                                 subs=[
                                     (
@@ -173,7 +167,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         if not self._is_ffa:
             Text(
-                babase.Lstr(
+                bs.Lstr(
                     resource='gamesToText',
                     subs=[
                         ('${WINCOUNT}', str(win_score)),
@@ -208,7 +202,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    babase.Lstr(resource='mostValuablePlayerText'),
+                    bs.Lstr(resource='mostValuablePlayerText'),
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -228,13 +222,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ).autoretain()
                 assert mvp_name is not None
                 Text(
-                    babase.Lstr(value=mvp_name),
+                    bs.Lstr(value=mvp_name),
                     position=(280, ts_height / 2 - 55 + 15 - 5),
                     h_align=Text.HAlign.LEFT,
                     v_align=Text.VAlign.CENTER,
                     maxwidth=170,
                     scale=1.3,
-                    color=babase.safecolor(mvp.team.color + (1,)),
+                    color=bs.safecolor(mvp.team.color + (1,)),
                     transition=Text.Transition.IN_LEFT,
                     transition_delay=tval,
                 ).autoretain()
@@ -249,7 +243,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                babase.Lstr(resource='mostViolentPlayerText'),
+                bs.Lstr(resource='mostViolentPlayerText'),
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -259,12 +253,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                babase.Lstr(
+                bs.Lstr(
                     value='(${A})',
                     subs=[
                         (
                             '${A}',
-                            babase.Lstr(
+                            bs.Lstr(
                                 resource='killsTallyText',
                                 subs=[('${COUNT}', str(most_kills))],
                             ),
@@ -289,12 +283,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mvp_name is not None
             Text(
-                babase.Lstr(value=mvp_name),
+                bs.Lstr(value=mvp_name),
                 position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
                 maxwidth=180,
-                color=babase.safecolor(mvp.team.color + (1,)),
+                color=bs.safecolor(mvp.team.color + (1,)),
                 transition=Text.Transition.IN_LEFT,
                 transition_delay=tval,
             ).autoretain()
@@ -310,7 +304,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                babase.Lstr(resource='mostViolatedPlayerText'),
+                bs.Lstr(resource='mostViolatedPlayerText'),
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -320,12 +314,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                babase.Lstr(
+                bs.Lstr(
                     value='(${A})',
                     subs=[
                         (
                             '${A}',
-                            babase.Lstr(
+                            bs.Lstr(
                                 resource='deathsTallyText',
                                 subs=[('${COUNT}', str(most_killed))],
                             ),
@@ -349,11 +343,11 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mkp_name is not None
             Text(
-                babase.Lstr(value=mkp_name),
+                bs.Lstr(value=mkp_name),
                 position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
-                color=babase.safecolor(mkp.team.color + (1,)),
+                color=bs.safecolor(mkp.team.color + (1,)),
                 maxwidth=180,
                 transition=Text.Transition.IN_LEFT,
                 transition_delay=tval,
@@ -363,7 +357,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            babase.Lstr(resource='finalScoresText'),
+            bs.Lstr(resource='finalScoresText'),
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -396,17 +390,17 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                babase.Lstr(value=name),
+                bs.Lstr(value=name),
                 position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
                 maxwidth=180,
-                color=babase.safecolor(prec.team.color + (1,)),
+                color=bs.safecolor(prec.team.color + (1,)),
                 transition=Text.Transition.IN_RIGHT,
                 transition_delay=tdelay,
             ).autoretain()
 
-        bs.timer(15.0, babase.WeakCall(self._show_tips))
+        bs.timer(15.0, bs.WeakCall(self._show_tips))
 
     def _show_tips(self) -> None:
         from bascenev1lib.actor.tipstext import TipsText
@@ -443,7 +437,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 assert i.node
                 bs.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
                 ZoomText(
-                    babase.Lstr(
+                    bs.Lstr(
                         value=team.players[0].getname(full=True, icon=False)
                     ),
                     position=(0, 97 + offs_v),
@@ -460,7 +454,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             wins_resource = 'seriesWinLine1PlayerText'
         else:
             wins_resource = 'seriesWinLine1TeamText'
-        wins_text = babase.Lstr(resource=wins_resource)
+        wins_text = bs.Lstr(resource=wins_resource)
 
         # Temp - if these come up as the english default, fall-back to the
         # unified old form which is more likely to be translated.
@@ -473,7 +467,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            babase.Lstr(resource='seriesWinLine2Text'),
+            bs.Lstr(resource='seriesWinLine2Text'),
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

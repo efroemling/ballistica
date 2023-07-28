@@ -43,10 +43,6 @@ class CorePython {
   /// pent up ones) to Python.
   void EnablePythonLoggingCalls();
 
-  /// Should be called just before base feature set import; locks in the
-  /// baenv environment and runs some checks.
-  void ApplyBaEnvConfig();
-
   /// Calls Python logging function (logging.error, logging.warning, etc.)
   /// Can be called from any thread at any time. If called before Python
   /// logging is available, logs locally using Logging::DisplayLog()
@@ -55,6 +51,13 @@ class CorePython {
   void ImportPythonObjs();
   void VerifyPythonEnvironment();
   void SoftImportBase();
+
+  static auto WasModularMainCalled() -> bool;
+
+  /// Builds a vector of strings out of Python's sys.argv. Returns an argv
+  /// array pointing to them.
+  static auto FetchPythonArgs(std::vector<std::string>* buffer)
+      -> std::vector<char*>;
 
   const auto& objs() { return objs_; }
 

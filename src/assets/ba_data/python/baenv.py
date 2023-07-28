@@ -24,20 +24,19 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import __main__
 
-from efro.log import setup_logging, LogLevel
-
 if TYPE_CHECKING:
     from efro.log import LogHandler
 
 # IMPORTANT - It is likely (and in some cases expected) that this
 # module's code will be exec'ed multiple times. This is because it is
-# the job of this module to set up paths for an engine run, and that may
-# involve modifying sys.path in such a way that this module resolves to
-# a different path afterwards (for example from
+# the job of this module to set up Python paths for an engine run, and
+# that may involve modifying sys.path in such a way that this module
+# resolves to a different path afterwards (for example from
 # /abs/path/to/ba_data/scripts/babase.py to ba_data/scripts/babase.py).
 # This can result in the next import of baenv loading us from our 'new'
 # location, which may or may not actually be the same file on disk as
-# the old. Either way, however, multiple execs will happen in some form.
+# the last load. Either way, however, multiple execs will happen in some
+# form.
 #
 # So we need to do a few things to handle that situation gracefully.
 #
@@ -51,13 +50,13 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21196
+TARGET_BALLISTICA_BUILD = 21199
 TARGET_BALLISTICA_VERSION = '1.7.24'
 
 
 @dataclass
 class EnvConfig:
-    """Environment put together by the configure call."""
+    """Environment values put together by the configure call."""
 
     config_dir: str
     data_dir: str
@@ -66,49 +65,45 @@ class EnvConfig:
     standard_app_python_dir: str
     site_python_dir: str | None
     log_handler: LogHandler | None
+    is_user_app_python_dir: bool
 
 
 @dataclass
-class EnvGlobals:
+class _EnvGlobals:
     """Our globals we store in the main module."""
 
     config: EnvConfig | None = None
-    config_called: bool = False
+    called_configure: bool = False
     paths_set_failed: bool = False
-    user_system_scripts_dir: str | None = None
+    modular_main_called: bool = False
 
     @classmethod
-    def get(cls) -> EnvGlobals:
+    def get(cls) -> _EnvGlobals:
         """Create/return our singleton."""
         name = '_baenv_globals'
-        envglobals: EnvGlobals | None = getattr(__main__, name, None)
+        envglobals: _EnvGlobals | None = getattr(__main__, name, None)
         if envglobals is None:
-            envglobals = EnvGlobals()
+            envglobals = _EnvGlobals()
             setattr(__main__, name, envglobals)
         return envglobals
+
+
+def did_paths_set_fail() -> bool:
+    """Did we try to set paths and failed?"""
+    return _EnvGlobals.get().paths_set_failed
 
 
 def config_exists() -> bool:
     """Has a config been created?"""
 
-    return EnvGlobals.get().config is not None
-
-
-def did_paths_set_fail() -> bool:
-    """Did we try to set paths and failed?"""
-    return EnvGlobals.get().paths_set_failed
-
-
-def get_user_system_scripts_dir() -> str | None:
-    """If there's a custom user system scripts dir in play, return it."""
-    return EnvGlobals.get().user_system_scripts_dir
+    return _EnvGlobals.get().config is not None
 
 
 def get_config() -> EnvConfig:
     """Return the active config, creating a default if none exists."""
-    envglobals = EnvGlobals.get()
+    envglobals = _EnvGlobals.get()
 
-    if not envglobals.config_called:
+    if not envglobals.called_configure:
         configure()
 
     config = envglobals.config
@@ -128,7 +123,7 @@ def configure(
     site_python_dir: str | None = None,
     contains_python_dist: bool = False,
 ) -> None:
-    """Set up the Python environment for running a ballistica app.
+    """Set up the Python environment for running a Ballistica app.
 
     This includes things such as Python path wrangling and app directory
     creation. This should be called before any other ballistica modules
@@ -136,14 +131,14 @@ def configure(
     where those modules get loaded from.
     """
 
-    envglobals = EnvGlobals.get()
+    envglobals = _EnvGlobals.get()
 
-    if envglobals.config_called:
+    if envglobals.called_configure:
         raise RuntimeError(
             'baenv.configure() has already been called;'
             ' it can only be called once.'
         )
-    envglobals.config_called = True
+    envglobals.called_configure = True
 
     # The very first thing we do is set up our logging system and pipe
     # Python's stdout/stderr into it. Then we can at least debug
@@ -167,6 +162,7 @@ def configure(
         data_dir,
         config_dir,
         standard_app_python_dir,
+        is_user_app_python_dir,
     ) = _setup_paths(
         user_python_dir,
         app_python_dir,
@@ -190,6 +186,7 @@ def configure(
         standard_app_python_dir=standard_app_python_dir,
         site_python_dir=site_python_dir,
         log_handler=log_handler,
+        is_user_app_python_dir=is_user_app_python_dir,
     )
 
 
@@ -215,6 +212,8 @@ def _calc_data_dir(data_dir: str | None) -> str:
 
 
 def _setup_logging() -> LogHandler:
+    from efro.log import setup_logging, LogLevel
+
     log_handler = setup_logging(
         log_path=None,
         level=LogLevel.DEBUG,
@@ -249,11 +248,11 @@ def _setup_paths(
     site_python_dir: str | None,
     data_dir: str | None,
     config_dir: str | None,
-) -> tuple[str | None, str | None, str | None, str, str, str]:
+) -> tuple[str | None, str | None, str | None, str, str, str, bool]:
     # First a few paths we can ALWAYS calculate since they don't affect
     # Python imports:
 
-    envglobals = EnvGlobals.get()
+    envglobals = _EnvGlobals.get()
 
     data_dir = _calc_data_dir(data_dir)
 
@@ -263,6 +262,9 @@ def _setup_paths(
 
     # Standard app-python-dir is simply ba_data/python under data-dir.
     standard_app_python_dir = str(Path(data_dir, 'ba_data', 'python'))
+
+    # Whether the final app-dir we're returning is a custom user-owned one.
+    is_user_app_python_dir = False
 
     # If _babase has already been imported, there's not much we can do
     # at this point aside from complain and inform for next time.
@@ -299,7 +301,8 @@ def _setup_paths(
         # stuff.
         check_dir = Path(user_python_dir, 'sys', TARGET_BALLISTICA_VERSION)
         if check_dir.is_dir():
-            envglobals.user_system_scripts_dir = app_python_dir = str(check_dir)
+            app_python_dir = str(check_dir)
+            is_user_app_python_dir = True
 
         # Ok, now apply these to sys.path.
 
@@ -342,6 +345,7 @@ def _setup_paths(
         data_dir,
         config_dir,
         standard_app_python_dir,
+        is_user_app_python_dir,
     )
 
 
@@ -361,16 +365,96 @@ def _setup_dirs(config_dir: str | None, user_python_dir: str | None) -> None:
                 )
 
 
-def _main() -> None:
-    # Run a default configure BEFORE importing babase.
-    # (may affect where babase comes from).
-    configure()
+def extract_arg(args: list[str], names: list[str], is_dir: bool) -> str | None:
+    """Given a list of args and an arg name, returns a value.
 
-    import babase
+    The arg flag and value are removed from the arg list. We also check
+    to make sure the path exists.
 
-    babase.app.run()
+    raises CleanErrors on any problems.
+    """
+    from efro.error import CleanError
+
+    count = sum(args.count(n) for n in names)
+    if not count:
+        return None
+
+    if count > 1:
+        raise CleanError(f'Arg {names} passed multiple times.')
+
+    for name in names:
+        if name not in args:
+            continue
+        argindex = args.index(name)
+        if argindex + 1 >= len(args):
+            raise CleanError(f'No value passed after {name} arg.')
+
+        val = args[argindex + 1]
+        del args[argindex : argindex + 2]
+
+        if is_dir and not os.path.isdir(val):
+            namepretty = names[0].removeprefix('--')
+            raise CleanError(
+                f"Provided {namepretty} path '{val}' is not a directory."
+            )
+        return val
+
+    raise RuntimeError(f'Expected arg name not found from {names}')
 
 
-# Allow exec'ing this module directly to do a standard app run.
+def _modular_main() -> None:
+    from efro.error import CleanError
+
+    try:
+        # Take note that we're running via modular-main.
+        # The native layer can key off this to know whether it
+        # should apply sys.argv or not.
+        _EnvGlobals.get().modular_main_called = True
+
+        # We run configure() BEFORE importing babase. (part of its job
+        # is to set up where babase and everything else gets loaded
+        # from).
+
+        # We deal with a few key ours here ourself before spinning up
+        # any engine stuff.
+
+        # NOTE: Need to keep these arg long/short versions synced to
+        # those in core_config.cc since they parse the same values (they
+        # just don't handle them).
+
+        args = sys.argv.copy()
+
+        # Our -c arg basically mirrors Python's -c arg. If we get that,
+        # simply exec it and return; no engine stuff.
+        command = extract_arg(args, ['--command', '-c'], is_dir=False)
+        if command is not None:
+            exec(command)  # pylint: disable=exec-used
+            return
+
+        config_dir = extract_arg(args, ['--config-dir', '-C'], is_dir=True)
+        data_dir = extract_arg(args, ['--data-dir', '-d'], is_dir=True)
+        mods_dir = extract_arg(args, ['--mods-dir', '-m'], is_dir=True)
+        configure(
+            config_dir=config_dir,
+            data_dir=data_dir,
+            user_python_dir=mods_dir,
+        )
+
+        import babase
+
+        # The engine will have parsed and processed all other args as
+        # part of the above import. If there were errors or args such as
+        # --help which should lead to immediate returns, do so.
+        code = babase.get_immediate_return_code()
+        if code is not None:
+            sys.exit(code)
+
+        babase.app.run()
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
+        sys.exit(1)
+
+
+# Exec'ing this module directly will do a standard app run.
 if __name__ == '__main__':
-    _main()
+    _modular_main()

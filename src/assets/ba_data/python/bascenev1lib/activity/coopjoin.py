@@ -4,13 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
 import bascenev1 as bs
-
-if TYPE_CHECKING:
-    pass
 
 
 class CoopJoinActivity(bs.JoinActivity):
@@ -46,7 +40,7 @@ class CoopJoinActivity(bs.JoinActivity):
         ).autoretain()
         ControlsGuide(delay=1.0).autoretain()
 
-        babase.pushcall(self._show_remaining_achievements)
+        bs.pushcall(self._show_remaining_achievements)
 
     def _show_remaining_achievements(self) -> None:
         from bascenev1lib.actor.text import Text
@@ -70,22 +64,22 @@ class CoopJoinActivity(bs.JoinActivity):
         ts_h_offs = 60
 
         # Show remaining achievements in some cases.
-        if babase.app.classic is not None and not (
-            babase.app.demo_mode or babase.app.arcade_mode
+        if bs.app.classic is not None and not (
+            bs.app.demo_mode or bs.app.arcade_mode
         ):
             achievements = [
                 a
-                for a in babase.app.classic.ach.achievements_for_coop_level(
+                for a in bs.app.classic.ach.achievements_for_coop_level(
                     levelname
                 )
                 if not a.complete
             ]
             have_achievements = bool(achievements)
             achievements = [a for a in achievements if not a.complete]
-            vrmode = babase.app.vr_mode
+            vrmode = bs.app.vr_mode
             if have_achievements:
                 Text(
-                    babase.Lstr(resource='achievementsRemainingText'),
+                    bs.Lstr(resource='achievementsRemainingText'),
                     host_only=True,
                     position=(ts_h_offs - 10, vpos),
                     transition=Text.Transition.FADE_IN,
@@ -105,7 +99,7 @@ class CoopJoinActivity(bs.JoinActivity):
                     vpos -= 55
                 if not achievements:
                     Text(
-                        babase.Lstr(resource='noAchievementsRemainingText'),
+                        bs.Lstr(resource='noAchievementsRemainingText'),
                         host_only=True,
                         position=(ts_h_offs + 15, vpos + 10),
                         transition=Text.Transition.FADE_IN,

@@ -5,13 +5,8 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
-
-if TYPE_CHECKING:
-    pass
 
 
 class RespawnIcon:
@@ -22,11 +17,11 @@ class RespawnIcon:
     This is used to indicate that a bascenev1.Player is waiting to respawn.
     """
 
-    _MASKTEXSTORENAME = babase.storagename('masktex')
-    _ICONSSTORENAME = babase.storagename('icons')
+    _MASKTEXSTORENAME = bs.storagename('masktex')
+    _ICONSSTORENAME = bs.storagename('icons')
 
     def __init__(self, player: bs.Player, respawn_time: float):
-        """Instantiate with a bascenev1.Player and respawn_time (in seconds)."""
+        """Instantiate with a Player and respawn_time (in seconds)."""
         self._visible = True
 
         on_right, offs_extra, respawn_icons = self._get_context(player)
@@ -81,13 +76,13 @@ class RespawnIcon:
                 attrs={
                     'v_attach': 'top',
                     'h_attach': 'right' if on_right else 'left',
-                    'text': babase.Lstr(value=player.getname()),
+                    'text': bs.Lstr(value=player.getname()),
                     'maxwidth': 100,
                     'h_align': 'center',
                     'v_align': 'center',
                     'shadow': 1.0,
                     'flatness': 1.0,
-                    'color': babase.safecolor(icon['tint_color']),
+                    'color': bs.safecolor(icon['tint_color']),
                     'scale': 0.5,
                     'position': npos,
                 },
@@ -109,7 +104,7 @@ class RespawnIcon:
                     'shadow': 0.5,
                     'flatness': 0.5,
                     'v_attach': 'top',
-                    'color': babase.safecolor(icon['tint_color']),
+                    'color': bs.safecolor(icon['tint_color']),
                     'text': '',
                 },
             )
@@ -118,10 +113,10 @@ class RespawnIcon:
         assert self._text.node
         bs.animate(self._text.node, 'scale', {0: 0, 0.1: 0.9})
 
-        self._respawn_time = babase.apptime() + respawn_time
+        self._respawn_time = bs.time() + respawn_time
         self._update()
         self._timer: bs.Timer | None = bs.Timer(
-            1.0, babase.WeakCall(self._update), repeat=True
+            1.0, bs.WeakCall(self._update), repeat=True
         )
 
     @property
@@ -159,7 +154,7 @@ class RespawnIcon:
         return on_right, offs_extra, icons
 
     def _update(self) -> None:
-        remaining = int(round(self._respawn_time - babase.apptime()))
+        remaining = int(round(self._respawn_time - bs.time()))
         if remaining > 0:
             assert self._text is not None
             if self._text.node:

@@ -4,15 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import babase
+import bascenev1 as bs
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
-import bascenev1 as bs
-
-if TYPE_CHECKING:
-    pass
 
 
 class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -21,10 +15,10 @@ class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
     default_music = None  # Awkward silence...
 
     def on_begin(self) -> None:
-        babase.set_analytics_screen('Draw Score Screen')
+        bs.set_analytics_screen('Draw Score Screen')
         super().on_begin()
         ZoomText(
-            babase.Lstr(resource='drawText'),
+            bs.Lstr(resource='drawText'),
             position=(0, 0),
             maxwidth=400,
             shiftposition=(-220, 0),

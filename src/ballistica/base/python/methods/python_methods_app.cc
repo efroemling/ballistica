@@ -711,12 +711,9 @@ static auto PyEnv(PyObject* self) -> PyObject* {
       default:
         throw Exception();
     }
-    std::optional<std::string> user_py_dir =
-        g_core->platform->GetUserPythonDirectory();
-    std::optional<std::string> app_py_dir =
-        g_core->platform->GetAppPythonDirectory();
-    std::optional<std::string> site_py_dir =
-        g_core->platform->GetSitePythonDirectory();
+    std::optional<std::string> user_py_dir = g_core->GetUserPythonDirectory();
+    std::optional<std::string> app_py_dir = g_core->GetAppPythonDirectory();
+    std::optional<std::string> site_py_dir = g_core->GetSitePythonDirectory();
 
     // clang-format off
     PyObject* env = Py_BuildValue(
@@ -772,7 +769,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "device_name",
         g_core->platform->GetDeviceName().c_str(),
         "data_directory",
-        g_core->platform->GetDataDirectory().c_str());
+        g_core->GetDataDirectory().c_str());
     // clang-format on
     g_base->python->StoreEnv(env);
   }
@@ -1449,6 +1446,29 @@ static PyMethodDef PyEmptyAppModeHandleIntentExecDef = {
     "(internal)",
 };
 
+// ---------------------- get_immediate_return_code ----------------------------
+
+static auto PyGetImmediateReturnCode(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_core);
+  auto val = g_core->core_config().immediate_return_code;
+  if (!val.has_value()) {
+    Py_RETURN_NONE;
+  }
+  return PyLong_FromLong(*val);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetImmediateReturnCodeDef = {
+    "get_immediate_return_code",            // name
+    (PyCFunction)PyGetImmediateReturnCode,  // method
+    METH_NOARGS,                            // flags
+
+    "get_immediate_return_code() -> int | None\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1496,6 +1516,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeDeactivateDef,
       PyEmptyAppModeHandleIntentDefaultDef,
       PyEmptyAppModeHandleIntentExecDef,
+      PyGetImmediateReturnCodeDef,
   };
 }
 

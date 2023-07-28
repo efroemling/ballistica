@@ -1,5 +1,11 @@
-### 1.7.24 (build 21196, api 8, 2023-07-25)
+### 1.7.24 (build 21199, api 8, 2023-07-27)
 
+- Fixed an issue where respawn icons could disappear in epic mode (Thanks for
+  the heads-up Rikko!)
+- The `BA_ENABLE_IRONY_BUILD_DB` optional build env-var is now
+  `BA_ENABLE_COMPILE_COMMANDS_DB` since this same functionality can be used by
+  clangd or other tools. Originally I was using it for Irony for Emacs; hence
+  the old name.
 - Due to the cleanup done in 1.7.20, it is now possible to build and run
   Ballistica as a 'pure' Python app consisting of binary Python modules loaded
   by a standard Python interpreter. This new build style is referred to as

@@ -15,21 +15,46 @@ CoreFeatureSet* g_core{};
 BaseSoftInterface* g_base_soft{};
 
 auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
-  // Only accept a config in monolithic builds if this is the first import.
-  if (config != nullptr) {
-    if (!g_buildconfig.monolithic_build()) {
-      FatalError("CoreConfig can only be passed in monolithic builds.");
-    }
-    if (g_core != nullptr) {
-      FatalError("CoreConfig can only be passed on the first import call.");
-    }
-
-    if (g_core == nullptr) {
-      DoImport(*config);
+  // In monolithic builds we can accept an explicit core-config the first
+  // time we're imported.
+  if (g_buildconfig.monolithic_build()) {
+    if (config != nullptr) {
+      if (g_core != nullptr) {
+        FatalError(
+            "CoreConfig can only be passed on the first CoreFeatureSet::Import "
+            "call.");
+      }
+      if (g_core == nullptr) {
+        DoImport(*config);
+      }
+    } else {
+      // No config passed; use a default.
+      if (g_core == nullptr) {
+        DoImport({});
+      }
     }
   } else {
+    // In modular builds we autogenerate a CoreConfig that takes into
+    // account only env-vars (or env-vars plus Python args if we're being
+    // run via the baenv script).
+    if (config != nullptr) {
+      FatalError("CoreConfig can't be explicitly passed in modular builds.");
+    }
     if (g_core == nullptr) {
-      DoImport({});
+      bool can_do_args = CorePython::WasModularMainCalled();
+      if (can_do_args) {
+        // Wrangle Python's sys.argv into a standard C-style argc/argv so we
+        // can pass to the same handler as the monolithic C route. Note that
+        // a few of the values we parse here (--command, etc) have already
+        // been handled at the Python layer, but we parse them here just the
+        // same so that we have uniform records and invalid-value handling
+        // between monolithic and modular.
+        std::vector<std::string> argbuffer;
+        std::vector<char*> argv = CorePython::FetchPythonArgs(&argbuffer);
+        DoImport(CoreConfig::ForArgsAndEnvVars(argv.size(), argv.data()));
+      } else {
+        DoImport(CoreConfig::ForEnvVars());
+      }
     }
   }
   return g_core;
@@ -90,14 +115,88 @@ void CoreFeatureSet::PostInit() {
   // (so that our log handling system is fully bootstrapped), but
   // technically we can push our log calls out to Python any time now since
   // we grabbed the logging calls above. Do so immediately here if asked.
-  if (!g_core->core_config().hold_early_logs) {
+  if (!core_config_.hold_early_logs) {
     python->EnablePythonLoggingCalls();
   }
+}
 
-  // FIXME: MOVE THIS TO A RUN_APP_TO_COMPLETION() SORT OF PLACE.
-  //  For now it does the right thing here since all we have is monolithic
-  //  builds but this will need to account for more situations later.
-  // python->ReleaseMainThreadGIL();
+auto CoreFeatureSet::core_config() const -> const CoreConfig& {
+  // Try to make a bit of noise if we're accessed in modular builds before
+  // baenv values are set, since in that case we won't yet have our final
+  // core-config values. Though we want to keep this to a minimal printf so
+  // we don't interfere with low-level stuff like FatalError handling that
+  // might need core_config access at any time.
+  if (!g_buildconfig.monolithic_build()) {
+    if (!HaveBaEnvVals()) {
+      static bool did_warn = false;
+      if (!did_warn) {
+        did_warn = true;
+        printf(
+            "WARNING: accessing core_config() before baenv values have been "
+            "applied to it.\n");
+      }
+    }
+  }
+  return core_config_;
+}
+
+void CoreFeatureSet::ApplyBaEnvConfig() {
+  auto envcfg =
+      python->objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
+  BA_PRECONDITION_FATAL(envcfg.Exists());
+
+  assert(!have_ba_env_vals_);
+  have_ba_env_vals_ = true;
+
+  // Grab everything baenv shipped us.
+  ba_env_config_dir_ = envcfg.GetAttr("config_dir").ValueAsString();
+  ba_env_data_dir_ = envcfg.GetAttr("data_dir").ValueAsString();
+  ba_env_app_python_dir_ =
+      envcfg.GetAttr("app_python_dir").ValueAsOptionalString();
+  ba_env_user_python_dir_ =
+      envcfg.GetAttr("user_python_dir").ValueAsOptionalString();
+  ba_env_site_python_dir_ =
+      envcfg.GetAttr("site_python_dir").ValueAsOptionalString();
+
+  // Consider app-python-dir to be 'custom' if baenv provided a value for it
+  // AND that value differs from baenv's default.
+  auto standard_app_python_dir =
+      envcfg.GetAttr("standard_app_python_dir").ValueAsString();
+  using_custom_app_python_dir_ =
+      ba_env_app_python_dir_.has_value()
+      && *ba_env_app_python_dir_ != standard_app_python_dir;
+
+  // Ok, now look for the existence of ba_data in the dir we've got.
+  auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
+  if (!platform->FilePathExists(fullpath)) {
+    FatalError("ba_data directory not found at '" + fullpath + "'.");
+  }
+}
+
+auto CoreFeatureSet::GetAppPythonDirectory() -> std::optional<std::string> {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_app_python_dir_;
+}
+
+auto CoreFeatureSet::GetUserPythonDirectory() -> std::optional<std::string> {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_user_python_dir_;
+}
+
+// Return the ballisticakit config dir. This does not vary across versions.
+auto CoreFeatureSet::GetConfigDirectory() -> std::string {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_config_dir_;
+}
+
+auto CoreFeatureSet::GetDataDirectory() -> std::string {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_data_dir_;
+}
+
+auto CoreFeatureSet::GetSitePythonDirectory() -> std::optional<std::string> {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_site_python_dir_;
 }
 
 auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {

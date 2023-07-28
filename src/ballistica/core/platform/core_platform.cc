@@ -144,7 +144,7 @@ auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
     // in our config dir. This should be globally-unique, but the downside is
     // the user can tamper with it.
     if (!have_real_unique_uuid) {
-      std::string path = GetConfigDirectory() + BA_DIRSLASH + ".bsuuid";
+      std::string path = g_core->GetConfigDirectory() + BA_DIRSLASH + ".bsuuid";
 
       if (FILE* f = FOpen(path.c_str(), "rb")) {
         // There's an existing one; read it.
@@ -201,13 +201,14 @@ auto CorePlatform::DoGetConfigDirectoryMonolithicDefault()
 }
 
 auto CorePlatform::GetConfigFilePath() -> std::string {
-  return GetConfigDirectory() + BA_DIRSLASH + "config.json";
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + "config.json";
 }
 
 // FIXME: should make this unnecessary.
 auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
     -> int {
-  std::string path = GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
+  std::string path =
+      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
   int val = default_value;
   FILE* f = FOpen(path.c_str(), "r");
   if (f) {
@@ -225,7 +226,8 @@ auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
 
 // FIXME: should make this unnecessary.
 void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
-  std::string path = GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
+  std::string path =
+      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
   std::string out = std::to_string(value);
   FILE* f = FOpen(path.c_str(), "w");
   if (f) {
@@ -236,11 +238,6 @@ void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
   } else {
     Log(LogLevel::kError, "unable to open low level config file for writing.");
   }
-}
-
-auto CorePlatform::GetUserPythonDirectory() -> std::optional<std::string> {
-  BA_PRECONDITION(have_ba_env_vals_);
-  return ba_env_user_python_dir_;
 }
 
 auto CorePlatform::GetVolatileDataDirectory() -> std::string {
@@ -254,23 +251,13 @@ auto CorePlatform::GetVolatileDataDirectory() -> std::string {
 
 auto CorePlatform::GetDefaultVolatileDataDirectory() -> std::string {
   // By default, stuff this in a subdir under our config dir.
-  return GetConfigDirectory() + BA_DIRSLASH + "vdata";
-}
-
-auto CorePlatform::GetAppPythonDirectory() -> std::optional<std::string> {
-  BA_PRECONDITION(have_ba_env_vals_);
-  return ba_env_app_python_dir_;
-}
-
-auto CorePlatform::GetSitePythonDirectory() -> std::optional<std::string> {
-  BA_PRECONDITION(have_ba_env_vals_);
-  return ba_env_site_python_dir_;
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + "vdata";
 }
 
 auto CorePlatform::GetReplaysDir() -> std::string {
   static bool made_dir = false;
   if (!made_dir) {
-    replays_dir_ = GetConfigDirectory() + BA_DIRSLASH + "replays";
+    replays_dir_ = g_core->GetConfigDirectory() + BA_DIRSLASH + "replays";
     MakeDir(replays_dir_);
     made_dir = true;
   }
@@ -355,13 +342,6 @@ auto CorePlatform::GetErrnoString() -> std::string {
 #endif
 }
 
-// Return the ballisticakit config dir
-// This does not vary across versions.
-auto CorePlatform::GetConfigDirectory() -> std::string {
-  BA_PRECONDITION(have_ba_env_vals_);
-  return ba_env_config_dir_;
-}
-
 auto CorePlatform::GetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   // CoreConfig value trumps all. Otherwise go with platform-specific default.
@@ -369,11 +349,6 @@ auto CorePlatform::GetConfigDirectoryMonolithicDefault()
     return *g_core->core_config().config_dir;
   }
   return DoGetConfigDirectoryMonolithicDefault();
-}
-
-auto CorePlatform::GetDataDirectory() -> std::string {
-  BA_PRECONDITION(have_ba_env_vals_);
-  return ba_env_data_dir_;
 }
 
 auto CorePlatform::GetDataDirectoryMonolithicDefault() -> std::string {
@@ -1214,34 +1189,6 @@ auto CorePlatform::System(const char* cmd) -> int {
 #else
   return system(cmd);
 #endif
-}
-
-void CorePlatform::SetBaEnvVals(const PythonRef& ref) {
-  assert(!have_ba_env_vals_);
-  have_ba_env_vals_ = true;
-
-  ba_env_config_dir_ = ref.GetAttr("config_dir").ValueAsString();
-  ba_env_data_dir_ = ref.GetAttr("data_dir").ValueAsString();
-  ba_env_app_python_dir_ =
-      ref.GetAttr("app_python_dir").ValueAsOptionalString();
-  ba_env_user_python_dir_ =
-      ref.GetAttr("user_python_dir").ValueAsOptionalString();
-  ba_env_site_python_dir_ =
-      ref.GetAttr("site_python_dir").ValueAsOptionalString();
-
-  // Consider app-python-dir 'custom' if baenv provided a value
-  // for it AND that value differs from baenv's default.
-  auto standard_app_python_dir =
-      ref.GetAttr("standard_app_python_dir").ValueAsString();
-  using_custom_app_python_dir_ =
-      ba_env_app_python_dir_.has_value()
-      && *ba_env_app_python_dir_ != standard_app_python_dir;
-
-  // Ok, now look for the existence of ba_data in the dir we've got.
-  auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
-  if (!FilePathExists(fullpath)) {
-    FatalError("ba_data directory not found at '" + fullpath + "'.");
-  }
 }
 
 }  // namespace ballistica::core

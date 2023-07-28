@@ -75,45 +75,36 @@ static auto ParseArgValue(int argc, char** argv, int* i, const char* arg_long,
   return {};
 }
 
-auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
-  auto cfg = CoreConfig();
-
-  // First set any values we allow env-vars for.
-  // We want explicitly passed values to override these in any cases where both
-  // forms are accepted.
+void CoreConfig::ApplyEnvVars() {
   if (auto* envval = getenv("BA_LIFECYCLE_LOG")) {
     if (!strcmp(envval, "1")) {
-      cfg.lifecycle_log = true;
+      lifecycle_log = true;
     }
   }
   if (auto* envval = getenv("BA_DEBUGGER_ATTACHED")) {
     if (!strcmp(envval, "1")) {
-      cfg.debugger_attached = true;
+      debugger_attached = true;
     }
   }
   if (auto* envval = getenv("BA_DEBUG_TIMING")) {
     if (!strcmp(envval, "1")) {
-      cfg.debug_timing = true;
+      debug_timing = true;
     }
   }
+}
 
-  // REMOVE ME FOR 1.7.20 FINAL.
-  if (explicit_bool(false)) {
-    printf("TEMP: forcing BA_LIFECYCLE_LOG=1 during 1.7.20 development.\n");
-    cfg.lifecycle_log = true;
-  }
-
+void CoreConfig::ApplyArgs(int argc, char** argv) {
   try {
     // First handle single-arg special cases like --help or --version.
     if (IsSingleArgSpecialCase(argc, argv, "--help", "-h")) {
       PrintHelp();
-      cfg.immediate_return_code = 0;
-      return cfg;
+      immediate_return_code = 0;
+      return;
     }
     if (IsSingleArgSpecialCase(argc, argv, "--version", "-v")) {
       printf("BallisticaKit %s build %d\n", kEngineVersion, kEngineBuildNumber);
-      cfg.immediate_return_code = 0;
-      return cfg;
+      immediate_return_code = 0;
+      return;
     }
     if (IsSingleArgSpecialCase(argc, argv, "--crash")) {
       int dummyval{};
@@ -126,7 +117,7 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
       if (explicit_bool(true)) {
         *invalid_ptr = 1;
       }
-      return cfg;
+      return;
     }
 
     // Ok, all single-arg cases handled; now go through everything else
@@ -135,35 +126,35 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
     std::optional<std::string> value;
     while (i < argc) {
       if ((value = ParseArgValue(argc, argv, &i, "--command", "-c"))) {
-        cfg.call_command = *value;
+        call_command = *value;
       } else if ((value = ParseArgValue(argc, argv, &i, "--exec", "-e"))) {
-        cfg.exec_command = *value;
+        exec_command = *value;
       } else if ((value =
                       ParseArgValue(argc, argv, &i, "--config-dir", "-C"))) {
-        cfg.config_dir = *value;
+        config_dir = *value;
         // Make sure what they passed exists.
         // Note: Normally baenv will try to create whatever the config dir is;
         // do we just want to allow that to happen in this case? But perhaps
         // being more strict is ok when accepting user input.
-        if (!std::filesystem::exists(*cfg.config_dir)) {
-          printf("Error: Provided config dir does not exist: '%s'.",
-                 cfg.config_dir->c_str());
+        if (!std::filesystem::is_directory(*config_dir)) {
+          printf("Error: Provided config-dir path '%s' is not a directory.",
+                 config_dir->c_str());
           throw BadArgsException();
         }
       } else if ((value = ParseArgValue(argc, argv, &i, "--data-dir", "-d"))) {
-        cfg.data_dir = *value;
+        data_dir = *value;
         // Make sure what they passed exists.
-        if (!std::filesystem::exists(*cfg.data_dir)) {
-          printf("Error: Provided data dir does not exist: '%s'.",
-                 cfg.data_dir->c_str());
+        if (!std::filesystem::is_directory(*data_dir)) {
+          printf("Error: Provided data-dir path '%s' is not a directory.",
+                 data_dir->c_str());
           throw BadArgsException();
         }
       } else if ((value = ParseArgValue(argc, argv, &i, "--mods-dir", "-m"))) {
-        cfg.user_python_dir = *value;
+        user_python_dir = *value;
         // Make sure what they passed exists.
-        if (!std::filesystem::exists(*cfg.user_python_dir)) {
-          printf("Error: Provided mods dir does not exist: '%s'.",
-                 cfg.user_python_dir->c_str());
+        if (!std::filesystem::is_directory(*user_python_dir)) {
+          printf("Error: Provided mods-dir path '%s' is not a directory.",
+                 user_python_dir->c_str());
           throw BadArgsException();
         }
       } else {
@@ -175,8 +166,25 @@ auto CoreConfig::FromCommandLineAndEnv(int argc, char** argv) -> CoreConfig {
       }
     }
   } catch (const BadArgsException&) {
-    cfg.immediate_return_code = 1;
+    immediate_return_code = 1;
   }
+}
+
+auto CoreConfig::ForEnvVars() -> CoreConfig {
+  CoreConfig cfg{};
+
+  cfg.ApplyEnvVars();
+
+  return cfg;
+}
+
+auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig {
+  CoreConfig cfg{};
+
+  // Apply env-vars first. We want explicit args to override these.
+  cfg.ApplyEnvVars();
+  cfg.ApplyArgs(argc, argv);
+
   return cfg;
 }
 

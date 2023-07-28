@@ -854,7 +854,7 @@ static PyMethodDef PySetPlatformMiscReadValsDef = {
 
 static auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  std::string config_dir = g_core->platform->GetConfigDirectory();
+  std::string config_dir = g_core->GetConfigDirectory();
   std::string logpath = config_dir + BA_DIRSLASH + "log.json";
   return PyUnicode_FromString(logpath.c_str());
   BA_PYTHON_CATCH;

@@ -86,7 +86,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
 
   // Want to run this at the last possible moment before spinning up our
   // BaseFeatureSet. This locks in baenv customizations.
-  g_core->python->ApplyBaEnvConfig();
+  g_core->ApplyBaEnvConfig();
 
   // Create our feature-set's C++ front-end.
   assert(g_base == nullptr);

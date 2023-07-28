@@ -7,7 +7,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-import babase
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -35,7 +34,7 @@ class TabRow(Generic[T]):
     def __init__(
         self,
         parent: bui.Widget,
-        tabdefs: list[tuple[T, babase.Lstr]],
+        tabdefs: list[tuple[T, bui.Lstr]],
         pos: tuple[float, float],
         size: tuple[float, float],
         on_select_call: Callable[[T], None] | None = None,
@@ -58,7 +57,7 @@ class TabRow(Generic[T]):
                 size=size,
                 label=tab_label,
                 enable_sound=False,
-                on_activate_call=babase.Call(
+                on_activate_call=bui.Call(
                     self._tick_and_call, on_select_call, tab_id
                 ),
             )

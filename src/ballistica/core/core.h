@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_CORE_CORE_H_
 #define BALLISTICA_CORE_CORE_H_
 
+#include <list>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -54,12 +55,14 @@ class CoreFeatureSet {
   auto SoftImportBase() -> BaseSoftInterface*;
 
   /// The core-config we were inited with.
-  const auto& core_config() const { return core_config_; }
+  auto core_config() const -> const CoreConfig&;
 
   /// Start a timer to force-kill our process after the set length of time.
   /// Can be used during shutdown or when trying to send a crash-report to
   /// ensure we don't hang indefinitely.
   void StartSuicideTimer(const std::string& action, millisecs_t delay);
+
+  void ApplyBaEnvConfig();
 
   // Call this if the main thread changes.
   // Fixme: Should come up with something less hacky feeling.
@@ -106,6 +109,38 @@ class CoreFeatureSet {
 
   void set_legacy_user_agent_string(const std::string& val) {
     legacy_user_agent_string_ = val;
+  }
+
+  /// Return true if baenv values have been locked in: python paths, log
+  /// handling, etc. Early-running code may wish to explicitly avoid making log
+  /// calls until this condition is met to ensure predictable behavior.
+  auto HaveBaEnvVals() const { return have_ba_env_vals_; }
+
+  /// Return the directory where the app expects to find its bundled Python
+  /// files.
+  auto GetAppPythonDirectory() -> std::optional<std::string>;
+
+  /// Return a directory where the local user can manually place Python
+  /// files where they will be accessible by the app. When possible, this
+  /// directory should be in a place easily accessible to the user.
+  auto GetUserPythonDirectory() -> std::optional<std::string>;
+
+  /// Get the root config directory. This dir contains the app config file
+  /// and other data considered essential to the app install. This directory
+  /// should be included in OS backups.
+  auto GetConfigDirectory() -> std::string;
+
+  /// Get the data directory. This dir contains ba_data and possibly other
+  /// platform-specific bits needed for the app to function.
+  auto GetDataDirectory() -> std::string;
+
+  /// Return the directory where bundled 3rd party Python files live.
+  auto GetSitePythonDirectory() -> std::optional<std::string>;
+
+  // Are we using a non-standard app python dir (such as a 'sys' dir within a
+  // user-python-dir).
+  auto using_custom_app_python_dir() const {
+    return using_custom_app_python_dir_;
   }
 
   // Subsystems.
@@ -159,6 +194,13 @@ class CoreFeatureSet {
   std::mutex app_time_mutex_;
   std::string legacy_user_agent_string_{
       "BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
+  bool have_ba_env_vals_{};
+  std::optional<std::string> ba_env_app_python_dir_;
+  std::string ba_env_config_dir_;
+  std::optional<std::string> ba_env_user_python_dir_;
+  std::optional<std::string> ba_env_site_python_dir_;
+  std::string ba_env_data_dir_;
+  bool using_custom_app_python_dir_{};
 };
 
 }  // namespace ballistica::core

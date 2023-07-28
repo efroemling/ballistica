@@ -45,7 +45,7 @@ void StressTest::Update() {
     if (t - last_stress_test_update_time_ >= 10000) {
       if (stress_test_stats_file_ == nullptr) {
         assert(g_core);
-        auto user_python_dir = g_core->platform->GetUserPythonDirectory();
+        auto user_python_dir = g_core->GetUserPythonDirectory();
         if (user_python_dir) {
           std::string f_name = *user_python_dir + "/stress_test_stats.csv";
           stress_test_stats_file_ =

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -23,7 +22,7 @@ class SharedObjects:
     standard materials.
     """
 
-    _STORENAME = babase.storagename()
+    _STORENAME = bs.storagename()
 
     def __init__(self) -> None:
         activity = bs.getactivity()
