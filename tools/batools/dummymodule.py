@@ -972,7 +972,7 @@ def generate_dummy_modules(projroot: str) -> None:
         )
         print(
             f'{Clr.BLD}{Clr.BLU}Generated {gencount} dummy-modules'
-            f' {Clr.RST}(in {builddir}){Clr.RST}{Clr.BLD}{Clr.BLU}.',
+            f' {Clr.RST}(in {builddir}){Clr.RST}{Clr.BLD}{Clr.BLU}.{Clr.RST}',
             flush=True,
         )
 

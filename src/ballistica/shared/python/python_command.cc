@@ -8,8 +8,9 @@
 
 // Save/restore current command for logging/etc.
 // this isn't exception-safe, but we should never let
-// exceptions bubble up through python api calls anyway
+// exceptions bubble up through Python api calls anyway
 // or we'll have bigger problems on our hands.
+// FIXME: What about thread safety? Seems like this isn't.
 #define PUSH_PYCOMMAND(OBJ)                     \
   PythonCommand* prev_pycmd = current_command_; \
   current_command_ = OBJ
@@ -180,11 +181,8 @@ auto PythonCommand::Eval(bool print_errors, PyObject* globals, PyObject* locals)
                  .Get();
   }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "RedundantCast"
   assert(PyDict_Check(globals));
   assert(PyDict_Check(locals));
-#pragma clang diagnostic pop
 
   if (!eval_code_obj_.Get()) {
     CompileForEval(print_errors);

@@ -67,3 +67,20 @@ def openal_gather() -> None:
         raise CleanError('No args expected.')
 
     gather()
+
+
+def pyright() -> None:
+    """Run Pyright checks on project Python code."""
+    import subprocess
+
+    from efro.terminal import Clr
+
+    from efro.error import CleanError
+
+    print(f'{Clr.BLU}Running Pyright (experimental)...{Clr.RST}')
+    try:
+        subprocess.run(
+            ['pyright', '--project', '.pyrightconfig.json'], check=True
+        )
+    except Exception as exc:
+        raise CleanError('Pyright failed.') from exc

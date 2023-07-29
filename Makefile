@@ -37,8 +37,9 @@ endif
 
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
-PREREQS_SAFE = .cache/checkenv .dir-locals.el .mypy.ini .pycheckers .pylintrc \
- .style.yapf .clang-format ballisticakit-cmake/.clang-format .editorconfig
+PREREQS_SAFE = .cache/checkenv .dir-locals.el .mypy.ini .pyrightconfig.json	\
+ .pycheckers .pylintrc .style.yapf .clang-format														\
+ ballisticakit-cmake/.clang-format .editorconfig
 
 # Prereq targets that may break if the project needs updating should go here.
 # An example is compile-command-databases; these might try to run cmake and
@@ -798,6 +799,10 @@ dmypy: py_check_prereqs
 dmypy-stop: py_check_prereqs
 	@tools/pcommand dmypy -stop
 
+# Run Pyright checks on all Python code.
+pyright: py_check_prereqs
+	@tools/pcommand pyright
+
 # Run PyCharm checks on all Python code.
 pycharm: py_check_prereqs
 	@tools/pcommand pycharm
@@ -1186,6 +1191,9 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 	@$(TOOL_CFG_INST) $< $@
 
 .mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
+	@$(TOOL_CFG_INST) $< $@
+
+.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.json $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 .pycheckers: config/toolconfigsrc/pycheckers $(TOOL_CFG_SRC)

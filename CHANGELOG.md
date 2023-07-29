@@ -1,4 +1,4 @@
-### 1.7.25 (build 21204, api 8, 2023-07-28)
+### 1.7.25 (build 21206, api 8, 2023-07-29)
 
 - `getconfig` and `setconfig` in `efrotools` are now `getprojectconfig` and
   `setprojectconfig` (to reflect the file name changes that happened in 1.7.20).
@@ -47,7 +47,7 @@
   ourselves inside a standalone binary, is called 'monolithic'. To build and run
   Ballistica in modular form, you can do `make cmake-modular` or `make
   cmake-modular-server`. This should make it easier to use certain things like
-  Python debuggers with Ballistica. While I expect most builds of the game to
+  Python debuggers with Ballistica. While I expect most builds of the engine to
   remain monolithic, this may become the default for certain situations such as
   server builds or possibly Linux builds if it seems beneficial. We'll see.
   Modular mode should work on Linux and Mac currently; other platforms remain

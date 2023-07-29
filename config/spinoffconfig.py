@@ -217,6 +217,7 @@ ctx.no_filter_file_names = {
 # ELSE files with these extensions WILL be filtered.
 ctx.filter_file_extensions = {
     '.py',
+    '.pyi',
     '.md',
     '.cpp',
     '.cc',

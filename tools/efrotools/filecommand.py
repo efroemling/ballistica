@@ -37,7 +37,7 @@ class _FileBatchesRun:
             # pylint: disable=useless-suppression
             # pylint: disable=no-name-in-module, import-error
             # noinspection PyUnresolvedReferences
-            from Cocoa import NSWorkspace
+            from Cocoa import NSWorkspace  # pyright: ignore
 
             self._shared_nsworkspace = NSWorkspace.sharedWorkspace()
             # pylint: enable=useless-suppression
@@ -85,6 +85,7 @@ class _FileBatchesRun:
                     # them out of the dir list we'll dive into and pass
                     # them directly to our batch for processing.
                     if self._include_mac_packages:
+                        assert self._shared_nsworkspace is not None
                         for dirname in list(dirs):
                             fullpath = os.path.join(root, dirname)
                             if self._shared_nsworkspace.isFilePackageAtPath_(

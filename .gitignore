@@ -19,6 +19,7 @@ local.properties
 .mypy_cache
 .pytest_cache
 .mypy.ini
+.pyrightconfig.json
 .pycheckers
 .flycheck-dir-locals.el
 .pylintrc

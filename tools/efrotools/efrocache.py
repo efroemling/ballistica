@@ -572,7 +572,7 @@ def warm_start_cache() -> None:
     base_url = get_repository_base_url()
     local_cache_dir = get_local_cache_dir()
 
-    # We maintain a starter-cache on the staging server, which is simply
+    # We maintain a starter archive on the staging server, which is simply
     # a set of commonly used recent cache entries compressed into a
     # single archive. If we have no local cache yet we can download and
     # expand this to give us a nice head start and greatly reduce the
@@ -580,7 +580,7 @@ def warm_start_cache() -> None:
     # single compressed archive is much more efficient than downloading
     # thousands)
     if not os.path.exists(local_cache_dir):
-        print('Downloading efrocache starter-cache...', flush=True)
+        print('Downloading efrocache starter-archive...', flush=True)
 
         # Download and decompress the starter-cache into a temp dir
         # and then move it into place as our shiny new cache dir.

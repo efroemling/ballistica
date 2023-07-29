@@ -13,7 +13,7 @@ import dataclasses
 import typing
 import types
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, Any
 
 from efro.util import check_utc
 from efro.dataclassio._base import (
@@ -29,7 +29,6 @@ from efro.dataclassio._base import (
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
-    from typing import Any
     from efro.dataclassio._base import IOAttrs
 
 
@@ -302,7 +301,7 @@ class _Outputter:
             return self._process_dict(cls, fieldpath, anntype, value, ioattrs)
 
         if dataclasses.is_dataclass(origin):
-            if not isinstance(value, origin):
+            if not isinstance(value, cast(Any, origin)):
                 raise TypeError(
                     f'Expected a {origin} for {fieldpath};'
                     f' found a {type(value)}.'

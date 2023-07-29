@@ -388,11 +388,11 @@ class LogHandler(logging.Handler):
             # warning log which results in another, etc.
             now = time.monotonic()
             # noinspection PyUnboundLocalVariable
-            duration = now - starttime
+            duration = now - starttime  # pyright: ignore
             # noinspection PyUnboundLocalVariable
-            format_duration = formattime - starttime
+            format_duration = formattime - starttime  # pyright: ignore
             # noinspection PyUnboundLocalVariable
-            echo_duration = echotime - formattime
+            echo_duration = echotime - formattime  # pyright: ignore
             if duration > 0.05 and (
                 self._last_slow_emit_warning_time is None
                 or now > self._last_slow_emit_warning_time + 10.0
