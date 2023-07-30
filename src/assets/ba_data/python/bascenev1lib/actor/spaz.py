@@ -189,7 +189,7 @@ class Spaz(bs.Actor):
         self.land_mine_count = 0
         self.blast_radius = 2.0
         self.powerups_expire = powerups_expire
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_cooldown = BASE_PUNCH_COOLDOWN
         else:
             self._punch_cooldown = factory.punch_cooldown
@@ -520,9 +520,9 @@ class Spaz(bs.Actor):
         self.last_run_time_ms = t_ms
         self.node.run = value
 
-        # filtering these events would be tough since its an analog
+        # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing
+        # the turbo filter to punish players if it looks like they're turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
@@ -898,12 +898,12 @@ class Spaz(bs.Actor):
                 return True
 
             # If we were recently hit, don't count this as another.
-            # (so punch flurries and bomb pileups essentially count as 1 hit)
+            # (so punch flurries and bomb pileups essentially count as 1 hit).
             local_time = int(bs.time() * 1000.0)
             assert isinstance(local_time, int)
             if (
                 self._last_hit_time is None
-                or local_time - self._last_hit_time > 1000
+                or local_time - self._last_hit_time >= 1000
             ):
                 self._num_times_hit += 1
                 self._last_hit_time = local_time
@@ -1133,11 +1133,11 @@ class Spaz(bs.Actor):
                 )
             if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
-                # impact damage by a reasonable amount *if* it'll keep us alive
-                if msg.hit_type == 'impact' and damage > self.hitpoints:
+                # impact damage by a reasonable amount *if* it'll keep us alive.
+                if msg.hit_type == 'impact' and damage >= self.hitpoints:
                     # Drop damage to whatever puts us at 10 hit points,
                     # or 200 less than it used to be whichever is greater
-                    # (so it *can* still kill us if its high enough)
+                    # (so it *can* still kill us if its high enough).
                     newdamage = max(damage - 200, self.hitpoints - 10)
                     damage = newdamage
                 self.node.handlemessage('flash')
