@@ -1131,7 +1131,7 @@ class Spaz(bs.Actor):
                     scale=0.4,
                     spread=0.1,
                 )
-            if self.hitpoints >= 0:
+            if self.hitpoints >= 1:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive.
                 if msg.hit_type == 'impact' and damage >= self.hitpoints:
