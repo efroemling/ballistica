@@ -1160,7 +1160,7 @@ class Spaz(bs.Actor):
                     )
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
-                if self.frozen and (damage > 200 or self.hitpoints <= 0):
+                if self.frozen and (damage >= 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
