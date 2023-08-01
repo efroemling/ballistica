@@ -1,4 +1,4 @@
-### 1.7.25 (build 21206, api 8, 2023-07-29)
+### 1.7.25 (build 21208, api 8, 2023-07-31)
 
 - `getconfig` and `setconfig` in `efrotools` are now `getprojectconfig` and
   `setprojectconfig` (to reflect the file name changes that happened in 1.7.20).
@@ -31,6 +31,12 @@
   dirs and only moved into their final locations once that completes
   successfully. Its extra important to be safe now that its possible to share
   local efrocache dirs between projects or otherwise keep them around longer.
+- Experimenting a bit with adding support for
+  [Pyright](https://github.com/microsoft/pyright) type-checking. This could
+  theoretically allow for a really great interactive Python environment in
+  Visual Studio Code (and potentially other editors), so am seeing if it is
+  worth officially supporting in addition to or as a replacement for Mypy. See
+  `tools/pcommand pyright`
   
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 

@@ -566,7 +566,11 @@ def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
 
 
 def warm_start_cache() -> None:
-    """Run a pre-pass on the efrocache to improve efficiency."""
+    """Run a pre-pass on the efrocache to improve efficiency.
+
+    This may fetch an initial cache archive, batch update mod times
+    to reflect new cache maps, etc.
+    """
     import tempfile
 
     base_url = get_repository_base_url()

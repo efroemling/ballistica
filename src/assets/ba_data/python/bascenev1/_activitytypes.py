@@ -15,6 +15,7 @@ from bascenev1._player import EmptyPlayer  # pylint: disable=W0611
 from bascenev1._team import EmptyTeam  # pylint: disable=W0611
 from bascenev1._music import MusicType, setmusic
 
+
 if TYPE_CHECKING:
     import bascenev1
     from bascenev1._lobby import JoinInfo

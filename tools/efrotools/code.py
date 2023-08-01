@@ -22,7 +22,6 @@ from efrotools.filecache import FileCache
 
 # pylint: enable=useless-suppression, wrong-import-order
 
-
 if TYPE_CHECKING:
     from typing import Any
 
