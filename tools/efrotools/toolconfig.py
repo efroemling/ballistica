@@ -57,6 +57,51 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
 
     from efrotools import getprojectconfig, PYVER
 
+    # Emacs dir-locals defaults. Note that these contain other
+    # replacements so need to be at the top.
+
+    name = '__EFRO_EMACS_STANDARD_CPP_LSP_SETUP__'
+    if name in cfg:
+        cfg = cfg.replace(
+            name,
+            ';; Set up clangd as our C++ language server.\n'
+            ' (c++-ts-mode . ((eglot-server-programs'
+            ' . ((c++-ts-mode . ("clangd"'
+            ' "--compile-commands-dir=.cache/compile_commands_db"))))))',
+        )
+
+    name = '__EFRO_EMACS_STANDARD_PYTHON_LSP_SETUP__'
+    if name in cfg:
+        cfg = cfg.replace(
+            name,
+            ';; Set up python-lsp-server as our Python language server.\n'
+            ' (python-ts-mode . (\n'
+            '     (eglot-server-programs . (\n'
+            '         (python-ts-mode . ("__EFRO_PY_BIN__" "-m" "pylsp"))))\n'
+            '     (python-shell-interpreter . "__EFRO_PY_BIN__")\n'
+            '     (eglot-workspace-configuration . (\n'
+            '         (:pylsp . (:plugins (\n'
+            '             :pylint (:enabled t)\n'
+            '             :flake8 (:enabled :json-false)\n'
+            '             :pycodestyle (:enabled :json-false)\n'
+            '             :mccabe (:enabled :json-false)\n'
+            '             :autopep8 (:enabled :json-false)\n'
+            '             :pyflakes (:enabled :json-false)\n'
+            '             :rope_autoimport (:enabled :json-false)\n'
+            '             :rope_completion (:enabled :json-false)\n'
+            '             :rope_rename (:enabled :json-false)\n'
+            '             :yapf (:enabled :json-false)\n'
+            '             :black (:enabled t\n'
+            '                     :skip_string_normalization t\n'
+            '                     :line_length 80\n'
+            '                     :cache_config t)\n'
+            '             :jedi (:extra_paths'
+            ' [__EFRO_PYTHON_PATHS_Q_REL_STR__])\n'
+            '             :pylsp_mypy (:enabled t\n'
+            '                          :live_mode nil\n'
+            '                          :dmypy t))))))))\n',
+        )
+
     # Stick project-root wherever they want.
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(projroot))
 
