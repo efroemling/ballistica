@@ -1193,7 +1193,7 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 .mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.json $(TOOL_CFG_SRC)
+.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.yaml $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 .pycheckers: config/toolconfigsrc/pycheckers $(TOOL_CFG_SRC)

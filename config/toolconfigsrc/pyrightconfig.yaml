@@ -1,0 +1,19 @@
+# Pyright's actual config is a json file but we're using yaml here so we can
+# include lovely comments (yaml is a superset of json) and then we bake it down
+# into a json file.
+{
+
+  # For now I'm listing explicit things here. Once we get everything passing we
+  # can autogenerate the include list like we do for other checkers.
+  "include": [
+    "tools"
+  ],
+
+  # Ideally we should get to 'strict' for everying if we want to consider
+  # leaning on this as much as we do mypy. But 
+  "typeCheckingMode": "basic",
+  
+  "reportMissingTypeStubs": true,
+  "stubPath": "src/stubs",
+  "pythonPlatform": "Linux"
+}

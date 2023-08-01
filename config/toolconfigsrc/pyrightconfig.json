@@ -1,9 +1,0 @@
-{
-  "include": [
-    "tools"
-  ],
-  "typeCheckingMode": "basic", 
-  "reportMissingTypeStubs": true,
-  "stubPath": "src/stubs",
-  "pythonPlatform": "Linux"
-}
