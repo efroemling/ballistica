@@ -1,3 +1,5 @@
+### 1.7.26 (build 21212, api 8, 2023-08-03)
+
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 
 - Fixed an issue where the main thread was holding the Python GIL by default in
