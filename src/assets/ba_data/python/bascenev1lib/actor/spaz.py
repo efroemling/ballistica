@@ -523,7 +523,7 @@ class Spaz(bs.Actor):
         # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
         # the turbo filter to punish players if it looks like they're turbo-ing.
-        if self._last_run_value <= 0.01 and value >= 0.99:
+        if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
         self._last_run_value = value
@@ -903,7 +903,7 @@ class Spaz(bs.Actor):
             assert isinstance(local_time, int)
             if (
                 self._last_hit_time is None
-                or local_time - self._last_hit_time >= 1000
+                or local_time - self._last_hit_time > 1000
             ):
                 self._num_times_hit += 1
                 self._last_hit_time = local_time
@@ -1131,7 +1131,8 @@ class Spaz(bs.Actor):
                     scale=0.4,
                     spread=0.1,
                 )
-            if self.hitpoints >= 1:
+
+            if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
                 # impact damage by a reasonable amount *if* it'll keep us alive.
                 if msg.hit_type == 'impact' and damage >= self.hitpoints:
@@ -1160,17 +1161,16 @@ class Spaz(bs.Actor):
                     )
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
-                if self.frozen and (damage >= 200 or self.hitpoints <= 0):
+                if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
-                elif self.hitpoints <= 0:
-                    self.node.handlemessage(
-                        bs.DieMessage(how=bs.DeathType.IMPACT)
-                    )
-
-            # If we're dead, take a look at the smoothed damage value
-            # (which gives us a smoothed average of recent damage) and shatter
-            # us if its grown high enough.
+                    
             if self.hitpoints <= 0:
+                self.node.handlemessage(
+                    bs.DieMessage(how=bs.DeathType.IMPACT)
+                )
+                # If we're dead, take a look at the smoothed damage value
+                # (which gives us a smoothed average of recent damage) and shatter
+                # us if its grown high enough.
                 damage_avg = self.node.damage_smoothed * damage_scale
                 if damage_avg >= 1000:
                     self.shatter()
