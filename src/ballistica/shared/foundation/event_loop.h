@@ -19,7 +19,6 @@ namespace ballistica {
 
 const int kThreadMessageSafetyThreshold{500};
 
-// A thread with a built-in event loop.
 class EventLoop {
  public:
   explicit EventLoop(EventLoopID id,
@@ -51,7 +50,9 @@ class EventLoop {
   // rendering contexts are recreated in new threads/etc.)
   void set_thread_id(std::thread::id id) { thread_id_ = id; }
 
-  auto RunEventLoop(bool single_cycle = false) -> int;
+  void RunToCompletion();
+  void RunSingleCycle();
+
   auto identifier() const -> EventLoopID { return identifier_; }
 
   // Register a timer to run on the thread.
@@ -101,26 +102,55 @@ class EventLoop {
   auto paused() { return paused_; }
 
  private:
-  struct ThreadMessage {
+  struct ThreadMessage_ {
     enum class Type { kShutdown = 999, kRunnable, kPause, kResume };
     Type type;
     union {
       Runnable* runnable{};
     };
     bool* completion_flag{};
-    explicit ThreadMessage(Type type_in) : type(type_in) {}
-    explicit ThreadMessage(Type type, Runnable* runnable, bool* completion_flag)
+    explicit ThreadMessage_(Type type_in) : type(type_in) {}
+    explicit ThreadMessage_(Type type, Runnable* runnable,
+                            bool* completion_flag)
         : type(type), runnable(runnable), completion_flag{completion_flag} {}
   };
-  auto CheckPushRunnableSafety() -> bool;
-  void SetInternalThreadName(const std::string& name);
-  void WaitForNextEvent(bool single_cycle);
-  void LoopUpkeep(bool once);
-  void LogThreadMessageTally(
+  auto CheckPushRunnableSafety_() -> bool;
+  void SetInternalThreadName_(const std::string& name);
+  void WaitForNextEvent_(bool single_cycle);
+  void LoopUpkeep_(bool once);
+  void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);
-  void PushLocalRunnable(Runnable* runnable, bool* completion_flag);
-  void PushCrossThreadRunnable(Runnable* runnable, bool* completion_flag);
-  void NotifyClientListeners();
+  void PushLocalRunnable_(Runnable* runnable, bool* completion_flag);
+  void PushCrossThreadRunnable_(Runnable* runnable, bool* completion_flag);
+  void NotifyClientListeners_();
+  void Run_(bool single_cycle);
+
+  // These are all exactly the same, but running different ones for
+  // different threads can help identify threads in profilers, backtraces,
+  // etc.
+  static auto ThreadMainLogic_(void* data) -> int;
+  static auto ThreadMainLogicP_(void* data) -> void*;
+  static auto ThreadMainAudio_(void* data) -> int;
+  static auto ThreadMainAudioP_(void* data) -> void*;
+  static auto ThreadMainBGDynamics_(void* data) -> int;
+  static auto ThreadMainBGDynamicsP_(void* data) -> void*;
+  static auto ThreadMainNetworkWrite_(void* data) -> int;
+  static auto ThreadMainNetworkWriteP_(void* data) -> void*;
+  static auto ThreadMainStdInput_(void* data) -> int;
+  static auto ThreadMainStdInputP_(void* data) -> void*;
+  static auto ThreadMainAssets_(void* data) -> int;
+  static auto ThreadMainAssetsP_(void* data) -> void*;
+
+  auto ThreadMain_() -> int;
+  void GetThreadMessages_(std::list<ThreadMessage_>* messages);
+  void PushThreadMessage_(const ThreadMessage_& t);
+
+  void RunPendingRunnables_();
+  void RunPauseCallbacks_();
+  void RunResumeCallbacks_();
+
+  void AcquireGIL_();
+  void ReleaseGIL_();
 
   bool writing_tally_{};
   bool paused_{};
@@ -140,40 +170,13 @@ class EventLoop {
   void* auto_release_pool_{};
 #endif
 
-  // These are all exactly the same, but running different ones for
-  // different threads can help identify threads in profilers, backtraces,
-  // etc.
-  static auto ThreadMainLogic(void* data) -> int;
-  static auto ThreadMainLogicP(void* data) -> void*;
-  static auto ThreadMainAudio(void* data) -> int;
-  static auto ThreadMainAudioP(void* data) -> void*;
-  static auto ThreadMainBGDynamics(void* data) -> int;
-  static auto ThreadMainBGDynamicsP(void* data) -> void*;
-  static auto ThreadMainNetworkWrite(void* data) -> int;
-  static auto ThreadMainNetworkWriteP(void* data) -> void*;
-  static auto ThreadMainStdInput(void* data) -> int;
-  static auto ThreadMainStdInputP(void* data) -> void*;
-  static auto ThreadMainAssets(void* data) -> int;
-  static auto ThreadMainAssetsP(void* data) -> void*;
-
-  auto ThreadMain() -> int;
-  void GetThreadMessages(std::list<ThreadMessage>* messages);
-  void PushThreadMessage(const ThreadMessage& t);
-
-  void RunPendingRunnables();
-  void RunPauseCallbacks();
-  void RunResumeCallbacks();
-
-  void AcquireGIL();
-  void ReleaseGIL();
-
   bool bootstrapped_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> pause_callbacks_;
   std::list<Runnable*> resume_callbacks_;
   std::condition_variable thread_message_cv_;
   std::mutex thread_message_mutex_;
-  std::list<ThreadMessage> thread_messages_;
+  std::list<ThreadMessage_> thread_messages_;
   std::condition_variable client_listener_cv_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;

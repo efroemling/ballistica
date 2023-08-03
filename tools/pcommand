@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 # Pull in commands we want to expose. Its more efficient to define them in
 # modules rather than inline here because we'll be able to load them via pyc.
 # pylint: disable=unused-import

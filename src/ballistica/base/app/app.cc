@@ -87,7 +87,7 @@ void App::RunRenderUpkeepCycle() {
 
   // Pump thread messages (we're being driven by frame-draw callbacks
   // so this is the only place that it gets done at).
-  event_loop()->RunEventLoop(true);  // Single pass only.
+  event_loop()->RunSingleCycle();
 
   // Now do the general app event cycle for whoever needs to process things.
   RunEvents();
@@ -301,10 +301,14 @@ void App::DidFinishRenderingFrame(FrameDef* frame) {}
 void App::PrimeMainThreadEventPump() {
   assert(!ManagesEventLoop());
 
+  // Need to release the GIL while we're doing this so other thread
+  // can do their Python-y stuff.
+  Python::ScopedInterpreterLockRelease release;
+
   // Pump events manually until a screen gets created.
   // At that point we use frame-draws to drive our event loop.
   while (!g_base->graphics_server->initial_screen_created()) {
-    event_loop()->RunEventLoop(true);
+    event_loop()->RunSingleCycle();
     core::CorePlatform::SleepMillisecs(1);
   }
 }

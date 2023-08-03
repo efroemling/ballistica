@@ -33,31 +33,31 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       void* (*funcp)(void*);
       switch (identifier_) {
         case EventLoopID::kLogic:
-          func = ThreadMainLogic;
-          funcp = ThreadMainLogicP;
+          func = ThreadMainLogic_;
+          funcp = ThreadMainLogicP_;
           break;
         case EventLoopID::kAssets:
-          func = ThreadMainAssets;
-          funcp = ThreadMainAssetsP;
+          func = ThreadMainAssets_;
+          funcp = ThreadMainAssetsP_;
           break;
         case EventLoopID::kMain:
           // Shouldn't happen; this thread gets wrapped; not launched.
           throw Exception();
         case EventLoopID::kAudio:
-          func = ThreadMainAudio;
-          funcp = ThreadMainAudioP;
+          func = ThreadMainAudio_;
+          funcp = ThreadMainAudioP_;
           break;
         case EventLoopID::kBGDynamics:
-          func = ThreadMainBGDynamics;
-          funcp = ThreadMainBGDynamicsP;
+          func = ThreadMainBGDynamics_;
+          funcp = ThreadMainBGDynamicsP_;
           break;
         case EventLoopID::kNetworkWrite:
-          func = ThreadMainNetworkWrite;
-          funcp = ThreadMainNetworkWriteP;
+          func = ThreadMainNetworkWrite_;
+          funcp = ThreadMainNetworkWriteP_;
           break;
         case EventLoopID::kStdin:
-          func = ThreadMainStdInput;
-          funcp = ThreadMainStdInputP;
+          func = ThreadMainStdInput_;
+          funcp = ThreadMainStdInputP_;
           break;
         default:
           throw Exception();
@@ -105,7 +105,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       thread_id_ = std::this_thread::get_id();
 
       // Set our own thread-id-to-name mapping.
-      SetInternalThreadName("main");
+      SetInternalThreadName_("main");
 
       // Hmmm we might want to set our OS thread name here,
       // as we do for other threads? (SetCurrentThreadName).
@@ -116,7 +116,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
   }
 }
 
-void EventLoop::SetInternalThreadName(const std::string& name) {
+void EventLoop::SetInternalThreadName_(const std::string& name) {
   assert(g_core);
   std::scoped_lock lock(g_core->thread_name_map_mutex);
   g_core->thread_name_map[std::this_thread::get_id()] = name;
@@ -135,57 +135,57 @@ void EventLoop::ClearCurrentThreadName() {
 // in stack traces which thread is running in case it is not otherwise
 // evident.
 
-auto EventLoop::ThreadMainLogic(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainLogic_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainLogicP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainLogicP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
-auto EventLoop::ThreadMainAudio(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainAudio_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainAudioP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainAudioP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
-auto EventLoop::ThreadMainBGDynamics(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainBGDynamics_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainBGDynamicsP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainBGDynamicsP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
-auto EventLoop::ThreadMainNetworkWrite(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainNetworkWrite_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainNetworkWriteP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainNetworkWriteP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
-auto EventLoop::ThreadMainStdInput(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainStdInput_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainStdInputP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainStdInputP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
-auto EventLoop::ThreadMainAssets(void* data) -> int {
-  return static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainAssets_(void* data) -> int {
+  return static_cast<EventLoop*>(data)->ThreadMain_();
 }
 
-auto EventLoop::ThreadMainAssetsP(void* data) -> void* {
-  static_cast<EventLoop*>(data)->ThreadMain();
+auto EventLoop::ThreadMainAssetsP_(void* data) -> void* {
+  static_cast<EventLoop*>(data)->ThreadMain_();
   return nullptr;
 }
 
@@ -193,11 +193,11 @@ void EventLoop::PushSetPaused(bool paused) {
   assert(g_core);
   // Can be toggled from the main thread only.
   assert(std::this_thread::get_id() == g_core->main_thread_id);
-  PushThreadMessage(ThreadMessage(paused ? ThreadMessage::Type::kPause
-                                         : ThreadMessage::Type::kResume));
+  PushThreadMessage_(ThreadMessage_(paused ? ThreadMessage_::Type::kPause
+                                           : ThreadMessage_::Type::kResume));
 }
 
-void EventLoop::WaitForNextEvent(bool single_cycle) {
+void EventLoop::WaitForNextEvent_(bool single_cycle) {
   assert(g_core);
 
   // If we're running a single cycle we never stop to wait.
@@ -225,7 +225,7 @@ void EventLoop::WaitForNextEvent(bool single_cycle) {
 
   // While we're waiting, allow other python threads to run.
   if (acquires_python_gil_) {
-    ReleaseGIL();
+    ReleaseGIL_();
   }
 
   // If we've got active timers, wait for messages with a timeout so we can
@@ -258,11 +258,11 @@ void EventLoop::WaitForNextEvent(bool single_cycle) {
   }
 
   if (acquires_python_gil_) {
-    AcquireGIL();
+    AcquireGIL_();
   }
 }
 
-void EventLoop::LoopUpkeep(bool single_cycle) {
+void EventLoop::LoopUpkeep_(bool single_cycle) {
   assert(g_core);
   // Keep our autorelease pool clean on mac/ios
   // FIXME: Should define a CorePlatform::ThreadHelper or something
@@ -281,38 +281,41 @@ void EventLoop::LoopUpkeep(bool single_cycle) {
 #endif
 }
 
-auto EventLoop::RunEventLoop(bool single_cycle) -> int {
+void EventLoop::RunToCompletion() { Run_(false); }
+void EventLoop::RunSingleCycle() { Run_(true); }
+
+void EventLoop::Run_(bool single_cycle) {
   assert(g_core);
   while (true) {
-    LoopUpkeep(single_cycle);
+    LoopUpkeep_(single_cycle);
 
-    WaitForNextEvent(single_cycle);
+    WaitForNextEvent_(single_cycle);
 
     // Process all queued thread messages.
-    std::list<ThreadMessage> thread_messages;
-    GetThreadMessages(&thread_messages);
+    std::list<ThreadMessage_> thread_messages;
+    GetThreadMessages_(&thread_messages);
     for (auto& thread_message : thread_messages) {
       switch (thread_message.type) {
-        case ThreadMessage::Type::kRunnable: {
-          PushLocalRunnable(thread_message.runnable,
-                            thread_message.completion_flag);
+        case ThreadMessage_::Type::kRunnable: {
+          PushLocalRunnable_(thread_message.runnable,
+                             thread_message.completion_flag);
           break;
         }
-        case ThreadMessage::Type::kShutdown: {
+        case ThreadMessage_::Type::kShutdown: {
           done_ = true;
           break;
         }
-        case ThreadMessage::Type::kPause: {
+        case ThreadMessage_::Type::kPause: {
           assert(!paused_);
-          RunPauseCallbacks();
+          RunPauseCallbacks_();
           paused_ = true;
           last_pause_time_ = g_core->GetAppTimeMillisecs();
           messages_since_paused_ = 0;
           break;
         }
-        case ThreadMessage::Type::kResume: {
+        case ThreadMessage_::Type::kResume: {
           assert(paused_);
-          RunResumeCallbacks();
+          RunResumeCallbacks_();
           paused_ = false;
           break;
         }
@@ -328,17 +331,16 @@ auto EventLoop::RunEventLoop(bool single_cycle) -> int {
 
     if (!paused_) {
       timers_.Run(g_core->GetAppTimeMillisecs());
-      RunPendingRunnables();
+      RunPendingRunnables_();
     }
 
     if (done_ || single_cycle) {
       break;
     }
   }
-  return 0;
 }
 
-void EventLoop::GetThreadMessages(std::list<ThreadMessage>* messages) {
+void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
   assert(messages);
   assert(std::this_thread::get_id() == thread_id());
 
@@ -350,7 +352,7 @@ void EventLoop::GetThreadMessages(std::list<ThreadMessage>* messages) {
   }
 }
 
-auto EventLoop::ThreadMain() -> int {
+auto EventLoop::ThreadMain_() -> int {
   assert(g_core);
   try {
     assert(source_ == ThreadSource::kCreate);
@@ -395,7 +397,7 @@ auto EventLoop::ThreadMain() -> int {
         throw Exception();
     }
     assert(name && id_string);
-    SetInternalThreadName(name);
+    SetInternalThreadName_(name);
     g_core->platform->SetCurrentThreadName(id_string);
 
     // Mark ourself as bootstrapped and signal listeners so
@@ -403,19 +405,19 @@ auto EventLoop::ThreadMain() -> int {
     bootstrapped_ = true;
 
     {
-      // Momentarily grab this lock. This ensures that whoever launched us
-      // is now actively waiting for this notification. If we skipped this
-      // it would be possible to notify before they start listening which
-      // leads to a hang.
+      // Momentarily grab this lock. This pauses if need be until whoever
+      // launched us releases their lock, which means they're now actively
+      // waiting for our notification. If we skipped this, it would be
+      // possible to zip through and send the notification before they
+      // start listening for it which would lead to a hang.
       std::unique_lock lock(client_listener_mutex_);
     }
     client_listener_cv_.notify_all();
 
-    // Now just run our loop until we die.
-    int result = RunEventLoop();
+    RunToCompletion();
 
     ClearCurrentThreadName();
-    return result;
+    return 0;
   } catch (const std::exception& e) {
     auto error_msg = std::string("Unhandled exception in ")
                      + CurrentThreadName() + " thread:\n" + e.what();
@@ -452,7 +454,7 @@ void EventLoop::SetAcquiresPythonGIL() {
   assert(!acquires_python_gil_);  // This should be called exactly once.
   assert(ThreadIsCurrent());
   acquires_python_gil_ = true;
-  AcquireGIL();
+  AcquireGIL_();
 }
 
 // Explicitly kill the main thread.
@@ -465,7 +467,7 @@ void EventLoop::Quit() {
 
 EventLoop::~EventLoop() = default;
 
-void EventLoop::LogThreadMessageTally(
+void EventLoop::LogThreadMessageTally_(
     std::vector<std::pair<LogLevel, std::string>>* log_entries) {
   assert(g_core);
   // Prevent recursion.
@@ -480,23 +482,23 @@ void EventLoop::LogThreadMessageTally(
     for (auto&& m : thread_messages_) {
       std::string s;
       switch (m.type) {
-        case ThreadMessage::Type::kShutdown:
+        case ThreadMessage_::Type::kShutdown:
           s += "kShutdown";
           break;
-        case ThreadMessage::Type::kRunnable:
+        case ThreadMessage_::Type::kRunnable:
           s += "kRunnable";
           break;
-        case ThreadMessage::Type::kPause:
+        case ThreadMessage_::Type::kPause:
           s += "kPause";
           break;
-        case ThreadMessage::Type::kResume:
+        case ThreadMessage_::Type::kResume:
           s += "kResume";
           break;
         default:
           s += "UNKNOWN(" + std::to_string(static_cast<int>(m.type)) + ")";
           break;
       }
-      if (m.type == ThreadMessage::Type::kRunnable) {
+      if (m.type == ThreadMessage_::Type::kRunnable) {
         std::string m_name =
             g_core->platform->DemangleCXXSymbol(typeid(*(m.runnable)).name());
         s += std::string(": ") + m_name;
@@ -518,7 +520,7 @@ void EventLoop::LogThreadMessageTally(
   }
 }
 
-void EventLoop::PushThreadMessage(const ThreadMessage& t) {
+void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   assert(g_core);
   // We don't want to make log calls while holding this mutex;
   // log calls acquire the GIL and if the GIL-holder (generally
@@ -562,7 +564,7 @@ void EventLoop::PushThreadMessage(const ThreadMessage& t) {
             LogLevel::kError,
             "ThreadMessage list > 1000 in thread: " + CurrentThreadName());
 
-        LogThreadMessageTally(&log_entries);
+        LogThreadMessageTally_(&log_entries);
       }
     }
 
@@ -661,7 +663,7 @@ auto EventLoop::CurrentThreadName() -> std::string {
 #endif
 }
 
-void EventLoop::RunPendingRunnables() {
+void EventLoop::RunPendingRunnables_() {
   // Pull all runnables off the list first (its possible for one of these
   // runnables to add more) and then process them.
   assert(std::this_thread::get_id() == thread_id());
@@ -691,27 +693,27 @@ void EventLoop::RunPendingRunnables() {
   }
 }
 
-void EventLoop::RunPauseCallbacks() {
+void EventLoop::RunPauseCallbacks_() {
   for (Runnable* i : pause_callbacks_) {
     i->Run();
   }
 }
 
-void EventLoop::RunResumeCallbacks() {
+void EventLoop::RunResumeCallbacks_() {
   for (Runnable* i : resume_callbacks_) {
     i->Run();
   }
 }
 
-void EventLoop::PushLocalRunnable(Runnable* runnable, bool* completion_flag) {
+void EventLoop::PushLocalRunnable_(Runnable* runnable, bool* completion_flag) {
   assert(std::this_thread::get_id() == thread_id());
   runnables_.emplace_back(runnable, completion_flag);
 }
 
-void EventLoop::PushCrossThreadRunnable(Runnable* runnable,
-                                        bool* completion_flag) {
-  PushThreadMessage(EventLoop::ThreadMessage(
-      EventLoop::ThreadMessage::Type::kRunnable, runnable, completion_flag));
+void EventLoop::PushCrossThreadRunnable_(Runnable* runnable,
+                                         bool* completion_flag) {
+  PushThreadMessage_(EventLoop::ThreadMessage_(
+      EventLoop::ThreadMessage_::Type::kRunnable, runnable, completion_flag));
 }
 
 void EventLoop::AddPauseCallback(Runnable* runnable) {
@@ -729,9 +731,9 @@ void EventLoop::PushRunnable(Runnable* runnable) {
   // If we're being called from withing our thread, just drop it in the list.
   // otherwise send it as a message to the other thread.
   if (std::this_thread::get_id() == thread_id()) {
-    PushLocalRunnable(runnable, nullptr);
+    PushLocalRunnable_(runnable, nullptr);
   } else {
-    PushCrossThreadRunnable(runnable, nullptr);
+    PushCrossThreadRunnable_(runnable, nullptr);
   }
 }
 
@@ -753,7 +755,7 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
         "PushRunnableSynchronous called from target thread;"
         " would deadlock.");
   } else {
-    PushCrossThreadRunnable(runnable, &complete);
+    PushCrossThreadRunnable_(runnable, &complete);
   }
 
   if (identifier_ == EventLoopID::kLogic) {
@@ -777,15 +779,15 @@ auto EventLoop::CheckPushSafety() -> bool {
     // behave the same as the thread-message safety check.
     return (runnables_.size() < kThreadMessageSafetyThreshold);
   } else {
-    return CheckPushRunnableSafety();
+    return CheckPushRunnableSafety_();
   }
 }
-auto EventLoop::CheckPushRunnableSafety() -> bool {
+auto EventLoop::CheckPushRunnableSafety_() -> bool {
   std::unique_lock lock(thread_message_mutex_);
   return thread_messages_.size() < kThreadMessageSafetyThreshold;
 }
 
-void EventLoop::AcquireGIL() {
+void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startms{debug_timing ? core::CorePlatform::GetCurrentMillisecs()
@@ -805,7 +807,7 @@ void EventLoop::AcquireGIL() {
   }
 }
 
-void EventLoop::ReleaseGIL() {
+void EventLoop::ReleaseGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   assert(py_thread_state_ == nullptr);
   py_thread_state_ = PyEval_SaveThread();

@@ -16,7 +16,8 @@ BaseSoftInterface* g_base_soft{};
 
 auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
   // In monolithic builds we can accept an explicit core-config the first
-  // time we're imported.
+  // time we're imported. In this case, Python is not even spun up yet so
+  // it can influence even that.
   if (g_buildconfig.monolithic_build()) {
     if (config != nullptr) {
       if (g_core != nullptr) {
@@ -36,7 +37,9 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
   } else {
     // In modular builds we autogenerate a CoreConfig that takes into
     // account only env-vars (or env-vars plus Python args if we're being
-    // run via the baenv script).
+    // run via the baenv script). In this case, Python is already spun up
+    // and baenv already handled any Python environment stuff so we have
+    // less to do.
     if (config != nullptr) {
       FatalError("CoreConfig can't be explicitly passed in modular builds.");
     }

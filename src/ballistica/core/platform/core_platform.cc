@@ -464,8 +464,6 @@ auto CorePlatform::IsRunningOnDesktop() -> bool {
 }
 
 void CorePlatform::SleepMillisecs(millisecs_t ms) {
-  // If we're holding the Python GIL, release it while we sleep.
-  Python::ScopedInterpreterLockRelease release;
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 

@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21208;
+const int kEngineBuildNumber = 21211;
 const char* kEngineVersion = "1.7.25";
 
 #if BA_MONOLITHIC_BUILD
@@ -116,13 +116,18 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       // In environments where we control the event loop... do that.
       l_base->RunAppToCompletion();
     } else {
-      // Under managed environments we now simply return and let the
-      // environment feed us events until the app exits. However, we may
-      // need to first 'prime the pump' here for our main thread event loop.
-      // For instance, if our event loop is driven by frame draws, we may
-      // need to manually pump events until we receive the 'create-screen'
-      // message from the logic thread which gets our frame draws going.
+      // If the environment is managing events, we now simply return and let
+      // it feed us those events. However, we may first need to 'prime the
+      // pump'. For instance, if the work we do here in the main thread is
+      // driven by frame draws, we may need to manually pump events until we
+      // receive a 'create-screen' message from the logic thread which
+      // gets those frame draws going.
       l_base->PrimeAppMainThreadEventPump();
+
+      // IMPORTANT - We're still holding the GIL at this point, so we need
+      // to permanently release it to avoid starving the app. Any of our
+      // callback code that needs it will need to acquire it.
+      Python::PermanentlyReleaseGIL();
     }
   } catch (const std::exception& exc) {
     std::string error_msg =

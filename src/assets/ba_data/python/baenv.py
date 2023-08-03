@@ -24,8 +24,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import __main__
 
-
 if TYPE_CHECKING:
+    from typing import Any
+
     from efro.log import LogHandler
 
 # IMPORTANT - It is likely (and in some cases expected) that this
@@ -51,27 +52,59 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21208
+TARGET_BALLISTICA_BUILD = 21211
 TARGET_BALLISTICA_VERSION = '1.7.25'
 
 
 @dataclass
 class EnvConfig:
-    """Environment values put together by the configure call."""
+    """Final config values we provide to the engine."""
 
+    # Where app config/state data lives.
     config_dir: str
+
+    # Directory containing ba_data and any other platform-specific data.
     data_dir: str
-    user_python_dir: str | None
+
+    # Where the app's built-in Python stuff lives.
     app_python_dir: str | None
+
+    # Where the app's built-in Python stuff lives in the default case.
     standard_app_python_dir: str
+
+    # Where the app's bundled third party Python stuff lives.
     site_python_dir: str | None
-    log_handler: LogHandler | None
+
+    # Custom Python provided by the user (mods).
+    user_python_dir: str | None
+
+    # We have a mechanism allowing app scripts to be overridden by
+    # placing a specially named directory in a user-scripts dir.
+    # This is true if that is enabled.
     is_user_app_python_dir: bool
+
+    # Our fancy app log handler. This handles feeding logs, stdout, and
+    # stderr into the engine so they show up on in-app consoles, etc.
+    log_handler: LogHandler | None
+
+    # Initial data from the ballisticakit-config.json file. This is
+    # passed mostly as an optimization to avoid reading the same config
+    # file twice, since config data is first needed in baenv and next in
+    # the engine. It will be cleared after passing it to the app's
+    # config management subsystem and should not be accessed by any
+    # other code.
+    initial_app_config: Any
 
 
 @dataclass
 class _EnvGlobals:
-    """Our globals we store in the main module."""
+    """Globals related to baenv's operation.
+
+    We store this in __main__ instead of in our own module because it
+    is likely that multiple versions of our module will be spun up
+    and we want a single set of globals (see notes at top of our module
+    code).
+    """
 
     config: EnvConfig | None = None
     called_configure: bool = False
@@ -90,7 +123,7 @@ class _EnvGlobals:
 
 
 def did_paths_set_fail() -> bool:
-    """Did we try to set paths and failed?"""
+    """Did we try to set paths and fail?"""
     return _EnvGlobals.get().paths_set_failed
 
 
@@ -104,8 +137,14 @@ def get_config() -> EnvConfig:
     """Return the active config, creating a default if none exists."""
     envglobals = _EnvGlobals.get()
 
+    # If configure() has not been explicitly called, set up a
+    # minimally-intrusive default config. We want Ballistica to default
+    # to being a good citizen when imported into alien environments and
+    # not blow away logging or otherwise muck with stuff. All official
+    # paths to run Ballistica apps should be explicitly calling
+    # configure() first to get a full featured setup.
     if not envglobals.called_configure:
-        configure()
+        configure(setup_logging=False)
 
     config = envglobals.config
     if config is None:
@@ -123,17 +162,20 @@ def configure(
     app_python_dir: str | None = None,
     site_python_dir: str | None = None,
     contains_python_dist: bool = False,
+    setup_logging: bool = True,
 ) -> None:
-    """Set up the Python environment for running a Ballistica app.
+    """Set up the environment for running a Ballistica app.
 
     This includes things such as Python path wrangling and app directory
-    creation. This should be called before any other ballistica modules
-    are imported since it may make changes to sys.path which can affect
-    where those modules get loaded from.
+    creation. This must be called before any actual Ballistica modules
+    are imported; the environment is locked in as soon as that happens.
     """
 
     envglobals = _EnvGlobals.get()
 
+    # Keep track of whether we've been *called*, not whether a config
+    # has been created. Otherwise its possible to get multiple
+    # overlapping configure calls going.
     if envglobals.called_configure:
         raise RuntimeError(
             'baenv.configure() has already been called;'
@@ -141,21 +183,12 @@ def configure(
         )
     envglobals.called_configure = True
 
-    # The very first thing we do is set up our logging system and pipe
-    # Python's stdout/stderr into it. Then we can at least debug
-    # problems on systems where native stdout/stderr is not easily
-    # accessible such as Android.
-    log_handler = _setup_logging()
-
-    # We want to always be run in UTF-8 mode; complain if we're not.
-    if sys.flags.utf8_mode != 1:
-        logging.warning(
-            "Python's UTF-8 mode is not set. Running ballistica without"
-            ' it may lead to errors.'
-        )
-
-    # Attempt to set up Python paths and our own data paths so that
-    # engine modules, mods, etc. are pulled from predictable places.
+    # The very first thing we do is setup Python paths (while also
+    # calculating some engine paths). This code needs to be bulletproof
+    # since we have no logging yet at this point. We used to set up
+    # logging first, but this way logging stuff will get loaded from its
+    # proper final path (otherwise we might wind up using two different
+    # versions of efro.logging in a single engine run).
     (
         user_python_dir,
         app_python_dir,
@@ -171,6 +204,19 @@ def configure(
         data_dir,
         config_dir,
     )
+
+    # The second thing we do is set up our logging system and pipe
+    # Python's stdout/stderr into it. At this point we can at least
+    # debug problems on systems where native stdout/stderr is not easily
+    # accessible such as Android.
+    log_handler = _setup_logging() if setup_logging else None
+
+    # We want to always be run in UTF-8 mode; complain if we're not.
+    if sys.flags.utf8_mode != 1:
+        logging.warning(
+            "Python's UTF-8 mode is not set. Running Ballistica without"
+            ' it may lead to errors.'
+        )
 
     # Attempt to create dirs that we'll write stuff to.
     _setup_dirs(config_dir, user_python_dir)
@@ -188,6 +234,7 @@ def configure(
         site_python_dir=site_python_dir,
         log_handler=log_handler,
         is_user_app_python_dir=is_user_app_python_dir,
+        initial_app_config=None,
     )
 
 
@@ -198,11 +245,13 @@ def _calc_data_dir(data_dir: str | None) -> str:
         assert Path(__file__).parts[-3:-1] == ('ba_data', 'python')
         data_dir_path = Path(__file__).parents[2]
 
-        # Prefer tidy relative paths like '.' if possible so that things
-        # like stack traces are easier to read.
-
-        # NOTE: Perhaps we should have an option to disable this
-        # behavior for cases where the user might be doing chdir stuff.
+        # Prefer tidy relative paths like './ba_data' if possible so
+        # that things like stack traces are easier to read. For best
+        # results, platforms where CWD doesn't matter can chdir to where
+        # ba_data lives before calling configure().
+        #
+        # NOTE: If there's ever a case where the user is chdir'ing at
+        # runtime we might want an option to use only abs paths here.
         cwd_path = Path.cwd()
         data_dir = str(
             data_dir_path.relative_to(cwd_path)
@@ -226,7 +275,7 @@ def _setup_logging() -> LogHandler:
 
 
 def _setup_certs(contains_python_dist: bool) -> None:
-    # In situations where we're bringing our own Python let's also
+    # In situations where we're bringing our own Python, let's also
     # provide our own root certs so ssl works. We can consider
     # overriding this in particular embedded cases if we can verify that
     # system certs are working. We also allow forcing this via an env
@@ -279,7 +328,7 @@ def _setup_paths(
         envglobals.paths_set_failed = True
 
     else:
-        # Ok; _babase hasn't been imported yet so we can muck with
+        # Ok; _babase hasn't been imported yet, so we can muck with
         # Python paths.
 
         if app_python_dir is None:

@@ -84,8 +84,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
 
   g_core->LifecycleLog("_babase exec begin");
 
-  // Want to run this at the last possible moment before spinning up our
-  // BaseFeatureSet. This locks in baenv customizations.
+  // This locks in a baenv configuration.
   g_core->ApplyBaEnvConfig();
 
   // Create our feature-set's C++ front-end.
@@ -280,18 +279,14 @@ void BaseFeatureSet::RunAppToCompletion() {
   BA_PRECONDITION(!called_run_app_to_completion_);
   called_run_app_to_completion_ = true;
 
-  // Start things moving if not done yet.
   if (!called_start_app_) {
     StartApp();
   }
 
-  // Let go of the GIL while we're running. The logic thread or other things
-  // will grab it when needed.
+  // Let go of the GIL while we're running.
   Python::ScopedInterpreterLockRelease gil_release;
 
-  // On our event-loop-managing platforms we now simply sit in our event
-  // loop until the app is quit.
-  g_core->main_event_loop()->RunEventLoop(false);
+  g_core->main_event_loop()->RunToCompletion();
 }
 
 void BaseFeatureSet::PrimeAppMainThreadEventPump() {

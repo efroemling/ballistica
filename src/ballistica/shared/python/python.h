@@ -76,7 +76,11 @@ class Python {
   /// sanity checking that.
   static auto HaveGIL() -> bool;
 
-  /// Attempt to print the python stack trace.
+  /// For use in specific cases when a thread exits our control. In most
+  /// cases Scoped Locks/Unlocks should be used.
+  static void PermanentlyReleaseGIL();
+
+  /// Attempt to print the Python stack trace.
   static void PrintStackTrace();
 
   /// Pass any PyObject* (including nullptr) to get a readable string

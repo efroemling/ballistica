@@ -77,6 +77,11 @@ const char* Python::ScopedCallLabel::current_label_ = nullptr;
 
 auto Python::HaveGIL() -> bool { return static_cast<bool>(PyGILState_Check()); }
 
+void Python::PermanentlyReleaseGIL() {
+  assert(HaveGIL());
+  PyEval_SaveThread();
+}
+
 void Python::PrintStackTrace() {
   bool available{};
   if (g_base_soft) {

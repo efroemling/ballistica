@@ -1,10 +1,15 @@
 ;; -*- lexical-binding: t; -*-
 
 (
- 
- ;; Specify some extra paths that project.el searches and whatnot should ignore.
- ;; Note that gitignored stuff is ignored implicitly.
- (nil . ((project-vc-ignores . ("docs"
+
+ ;; Stuff that applies everywhere.
+ (nil . (
+         ;; Short project name to save some space in mode-lines/messages/etc.
+         (project-vc-name . "bainternal")
+
+         ;; Extra paths that searches and whatnot should ignore. Note that
+         ;; gitignored stuff is ignored implicitly.
+         (project-vc-ignores . ("docs"
                                 "submodules"
                                 "src/external"
                                 "src/assets/ba_data/python-site-packages"

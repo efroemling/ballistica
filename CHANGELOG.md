@@ -1,5 +1,10 @@
-### 1.7.25 (build 21208, api 8, 2023-07-31)
+### 1.7.25 (build 21211, api 8, 2023-08-03)
 
+- Fixed an issue where the main thread was holding the Python GIL by default in
+  monolithic builds with environment-managed event loops. This theoretically
+  could have lead to stuttery performanace in the Android or Mac builds.
+- Did a bit of cleanup on `baenv.py` in preparation for some additional setup it
+  will soon be doing to give users more control over logging.
 - `getconfig` and `setconfig` in `efrotools` are now `getprojectconfig` and
   `setprojectconfig` (to reflect the file name changes that happened in 1.7.20).
 - The efrocache system (how assets and prebuilt binaries are downloaded during

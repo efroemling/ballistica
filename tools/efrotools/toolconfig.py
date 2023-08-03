@@ -111,8 +111,9 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
             '             :jedi (:extra_paths'
             ' [__EFRO_PYTHON_PATHS_Q_REL_STR__])\n'
             '             :pylsp_mypy (:enabled t\n'
-            '                          :live_mode nil\n'
-            '                          :dmypy t))))))))\n',
+            '                          :live_mode :json-false\n'
+            '                          :report_progress t\n'
+            '                          :dmypy :json-false))))))))\n',
         )
 
     # Stick project-root wherever they want.

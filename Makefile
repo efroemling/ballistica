@@ -1167,7 +1167,7 @@ CHECK_CLEAN_SAFETY = tools/pcommand check_clean_safety
 TOOL_CFG_INST = tools/pcommand tool_config_install
 
 # Anything that affects tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/pcommand.py config/projectconfig.json
+TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json
 
 # Anything that should trigger an environment-check when changed.
 ENV_SRC = tools/pcommand tools/batools/build.py
