@@ -1163,14 +1163,14 @@ class Spaz(bs.Actor):
                 # If we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
-                    
+
             if self.hitpoints <= 0:
                 self.node.handlemessage(
                     bs.DieMessage(how=bs.DeathType.IMPACT)
                 )
                 # If we're dead, take a look at the smoothed damage value
-                # (which gives us a smoothed average of recent damage) and shatter
-                # us if its grown high enough.
+                # (which gives us a smoothed average of recent damage) 
+                # and shatter us if its grown high enough.
                 damage_avg = self.node.damage_smoothed * damage_scale
                 if damage_avg >= 1000:
                     self.shatter()
