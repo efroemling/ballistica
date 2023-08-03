@@ -98,6 +98,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src/meta',
                 'src/ballistica/shared/foundation/types.h',
+                '.efrocachemap',
             ],
             # Our meta Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so
@@ -105,8 +106,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # changes we'll blow away all existing meta builds.
             #
             # Update: also including featureset-defs here; any time
-            # we're mucking with those it's good to start fresh to be
-            # sure.
+            # we're mucking with those it's good to start things fresh
+            # to be safe.
             srcpaths_fullclean=[
                 'tools/efrotools',
                 'tools/efrotoolsinternal',
@@ -135,6 +136,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src',
                 'ballisticakit-cmake/CMakeLists.txt',
+                '.efrocachemap',
             ],
             dirfilter=(
                 lambda root, dirname: not (
@@ -166,6 +168,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src',
                 'ballisticakit-windows',
+                '.efrocachemap',
             ],
             dirfilter=_win_dirfilter,
             command=command,
@@ -183,6 +186,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'tools/pcommand',
                 'src/resources',
+                '.efrocachemap',
             ],
             command=command,
         ).run()
@@ -208,6 +212,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'tools',
                 'src/assets',
+                '.efrocachemap',
             ],
             command=command,
             filefilter=_filefilter,
@@ -234,6 +239,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'config/featuresets',
                 'tools/batools/dummymodule.py',
                 'src/ballistica',
+                '.efrocachemap',
             ],
             command=command,
             filefilter=_filefilter,

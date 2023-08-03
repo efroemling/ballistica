@@ -143,9 +143,9 @@ def get_target(path: str) -> None:
 
     local_cache_path = os.path.join(local_cache_dir, subpath)
 
-    # First off: if there's already a cache file in place, check its
-    # hash. If its calced hash matches its path, we can just update its
-    # timestamp and call it a day.
+    # First off: if there's already a file in place, check its hash. If
+    # its calced hash matches the hash-map's value for it, we can just
+    # update its timestamp and call it a day.
     if os.path.isfile(path):
         existing_hash = get_existing_file_hash(path)
         if existing_hash == hashval:
@@ -492,6 +492,10 @@ def _write_cache_files(
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
 
+def _path_from_hash(hashstr: str) -> str:
+    return os.path.join(hashstr[:2], hashstr[2:4], hashstr[4:])
+
+
 def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str, str]:
     import hashlib
 
@@ -511,7 +515,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str, str]:
     md5 = hashlib.md5()
     md5.update(prefix + fdataraw)
     finalhash = md5.hexdigest()
-    hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
+    hashpath = _path_from_hash(finalhash)
     path = os.path.join(staging_dir, hashpath)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -623,13 +627,19 @@ def warm_start_cache() -> None:
     # per file, it adds up when done for thousands of files each time
     # the cache map changes. It is much more efficient to do it all in
     # one go here.
+    #
+    # Note to self: it could be nice to put together a lightweight build
+    # server system of some sort so we don't have to spin up a full
+    # Python process for each and every file we need to touch. In that
+    # case, this optimization would probably be unnecessary.
     cachemap: dict[str, str]
     with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
         cachemap = json.loads(infile.read())
     assert isinstance(cachemap, dict)
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
     entries: list[tuple[str, str]] = []
-    for fname, url in cachemap.items():
+    for fname, filehash in cachemap.items():
+
         # File hasn't been pulled from cache yet = ignore.
         if not os.path.exists(fname):
             continue
@@ -638,14 +648,15 @@ def warm_start_cache() -> None:
         if cachemap_mtime < os.path.getmtime(fname):
             continue
 
-        # Don't have the cache source file for this guy = ignore.
-        cachefile = local_cache_dir + '/' + '/'.join(url.split('/')[-3:])
+        # Don't have the cache source file for this guy = ignore. This
+        # can happen if cache files have been blown away since the last
+        # time this was built.
+        cachefile = os.path.join(local_cache_dir, _path_from_hash(filehash))
         if not os.path.exists(cachefile):
             continue
 
         # Ok, add it to the list of files we can potentially update
         # timestamps on once we check its hash.
-        filehash = ''.join(url.split('/')[-3:])
         entries.append((fname, filehash))
 
     if entries:
