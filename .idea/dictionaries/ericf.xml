@@ -202,6 +202,7 @@
       <w>autodetected</w>
       <w>autogenerate</w>
       <w>autonoassets</w>
+      <w>autopep</w>
       <w>autopoint</w>
       <w>autoremove</w>
       <w>autoretain</w>
@@ -229,6 +230,7 @@
       <w>bacoremeta</w>
       <w>badguy</w>
       <w>baenv</w>
+      <w>baenv's</w>
       <w>bafoobar</w>
       <w>bafoobarmeta</w>
       <w>bafoundation</w>
@@ -420,6 +422,7 @@
       <w>cancelbtn</w>
       <w>capb</w>
       <w>caplog</w>
+      <w>capturable</w>
       <w>capturetheflag</w>
       <w>carentity</w>
       <w>casefix</w>
@@ -471,6 +474,7 @@
       <w>charstr</w>
       <w>chatmessage</w>
       <w>chdir</w>
+      <w>chdir'ing</w>
       <w>cheadersline</w>
       <w>checkarg</w>
       <w>checkarglist</w>
@@ -875,6 +879,7 @@
       <w>efrotoolsinternal</w>
       <w>eftools</w>
       <w>efxjtp</w>
+      <w>eglot</w>
       <w>eids</w>
       <w>elapsedf</w>
       <w>elementtree</w>
@@ -1035,6 +1040,7 @@
       <w>filelist</w>
       <w>filelock</w>
       <w>filenames</w>
+      <w>fileno</w>
       <w>filepath</w>
       <w>fileselector</w>
       <w>filesize</w>
@@ -2121,7 +2127,10 @@
       <w>pcall</w>
       <w>pchild</w>
       <w>pcommand</w>
+      <w>pcommandbatch</w>
+      <w>pcommandbatchbin</w>
       <w>pcommands</w>
+      <w>pcommandserver</w>
       <w>pcstr</w>
       <w>pdataclass</w>
       <w>pdoc</w>
@@ -2203,6 +2212,7 @@
       <w>popupscale</w>
       <w>popupstr</w>
       <w>popuptext</w>
+      <w>portfile</w>
       <w>positionadjusted</w>
       <w>posixpath</w>
       <w>posixshmem</w>
@@ -2381,6 +2391,7 @@
       <w>pylintscripts</w>
       <w>pylintscriptsfast</w>
       <w>pylintscriptsfull</w>
+      <w>pylsp</w>
       <w>pymodulenames</w>
       <w>pyobjc</w>
       <w>pyoffs</w>
@@ -2474,6 +2485,7 @@
       <w>responsetype</w>
       <w>responsetypes</w>
       <w>responsetypevar</w>
+      <w>resultcode</w>
       <w>resultstr</w>
       <w>retcode</w>
       <w>retrysecs</w>
@@ -2725,6 +2737,7 @@
       <w>spinoffs</w>
       <w>spinofftest</w>
       <w>spinup</w>
+      <w>spinups</w>
       <w>splayer</w>
       <w>splitlen</w>
       <w>splitnumstr</w>
@@ -2868,6 +2881,7 @@
       <w>syncitem</w>
       <w>syncitems</w>
       <w>synclist</w>
+      <w>sysargv</w>
       <w>syscall</w>
       <w>sysconfigdata</w>
       <w>sysctl</w>
@@ -3138,6 +3152,7 @@
       <w>unstrl</w>
       <w>unsubscriptable</w>
       <w>untracked</w>
+      <w>unwritable</w>
       <w>upcase</w>
       <w>updatecheck</w>
       <w>updatethencheck</w>

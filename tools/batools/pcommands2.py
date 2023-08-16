@@ -7,7 +7,7 @@ from __future__ import annotations
 # keep launch times fast for small snippets.
 import sys
 
-from efrotools.pcommand import PROJROOT
+from efrotools import pcommand
 
 
 def gen_monolithic_register_modules() -> None:
@@ -18,11 +18,13 @@ def gen_monolithic_register_modules() -> None:
     from efro.error import CleanError
     from batools.featureset import FeatureSet
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg.')
     outpath = sys.argv[2]
 
-    featuresets = FeatureSet.get_all_for_project(str(PROJROOT))
+    featuresets = FeatureSet.get_all_for_project(str(pcommand.PROJROOT))
 
     # Filter out ones without native modules.
     featuresets = [f for f in featuresets if f.has_python_binary_module]
@@ -124,6 +126,8 @@ def py_examine() -> None:
     from pathlib import Path
     import efrotools
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 7:
         print('ERROR: expected 7 args')
         sys.exit(255)
@@ -134,7 +138,7 @@ def py_examine() -> None:
     operation = sys.argv[6]
 
     # This stuff assumes it is being run from project root.
-    os.chdir(PROJROOT)
+    os.chdir(pcommand.PROJROOT)
 
     # Set up pypaths so our main distro stuff works.
     scriptsdir = os.path.abspath(
@@ -149,7 +153,9 @@ def py_examine() -> None:
         sys.path.append(scriptsdir)
     if toolsdir not in sys.path:
         sys.path.append(toolsdir)
-    efrotools.py_examine(PROJROOT, filename, line, column, selection, operation)
+    efrotools.py_examine(
+        pcommand.PROJROOT, filename, line, column, selection, operation
+    )
 
 
 def clean_orphaned_assets() -> None:
@@ -158,8 +164,10 @@ def clean_orphaned_assets() -> None:
     import json
     import subprocess
 
+    pcommand.disallow_in_batch()
+
     # Operate from dist root..
-    os.chdir(PROJROOT)
+    os.chdir(pcommand.PROJROOT)
 
     # Our manifest is split into 2 files (public and private)
     with open(
@@ -190,6 +198,8 @@ def win_ci_install_prereqs() -> None:
     """Install bits needed for basic win ci."""
     import json
     from efrotools.efrocache import get_target
+
+    pcommand.disallow_in_batch()
 
     # We'll need to pull a handful of things out of efrocache for the
     # build to succeed. Normally this would happen through our Makefile
@@ -227,6 +237,8 @@ def win_ci_binary_build() -> None:
     """Simple windows binary build for ci."""
     import subprocess
 
+    pcommand.disallow_in_batch()
+
     # Do the thing.
     subprocess.run(
         [
@@ -248,6 +260,8 @@ def update_cmake_prefab_lib() -> None:
     import os
     from efro.error import CleanError
     import batools.build
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 5:
         raise CleanError(
@@ -293,6 +307,8 @@ def android_archive_unstripped_libs() -> None:
     from efro.error import CleanError
     from efro.terminal import Clr
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args; src-dir and dst-dir')
     src = Path(sys.argv[2])
@@ -334,6 +350,8 @@ def spinoff_check_submodule_parent() -> None:
     import os
     from efro.error import CleanError
 
+    pcommand.disallow_in_batch()
+
     # Make sure we're a spinoff dst project. The spinoff command will be
     # a symlink if this is the case.
     if not os.path.exists('tools/spinoff'):
@@ -353,14 +371,21 @@ def spinoff_check_submodule_parent() -> None:
 def gen_python_init_module() -> None:
     """Generate a basic __init__.py."""
     import os
+
+    from efro.error import CleanError
     from efro.terminal import Clr
+
     from batools.project import project_centric_path
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 3:
-        raise RuntimeError('Expected an outfile arg.')
+        raise CleanError('Expected an outfile arg.')
     outfilename = sys.argv[2]
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-    prettypath = project_centric_path(projroot=str(PROJROOT), path=outfilename)
+    prettypath = project_centric_path(
+        projroot=str(pcommand.PROJROOT), path=outfilename
+    )
     print(f'Meta-building {Clr.BLD}{prettypath}{Clr.RST}')
     with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(
@@ -379,7 +404,136 @@ def tests_warm_start() -> None:
     """
     from batools import apprun
 
+    pcommand.disallow_in_batch()
+
     # We do lots of apprun.python_command() within test. Pre-build the
     # binary that they need to do their thing.
     if not apprun.test_runs_disabled():
         apprun.acquire_binary_for_python_command(purpose='running tests')
+
+
+def wsl_build_check_win_drive() -> None:
+    """Make sure we're building on a windows drive."""
+    import os
+    import subprocess
+    import textwrap
+    from efro.error import CleanError
+
+    pcommand.disallow_in_batch()
+
+    if (
+        subprocess.run(
+            ['which', 'wslpath'], check=False, capture_output=True
+        ).returncode
+        != 0
+    ):
+        raise CleanError(
+            'wslpath not found; you must run this from a WSL environment'
+        )
+
+    if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
+        return
+
+    # Get a windows path to the current dir.
+    path = (
+        subprocess.run(
+            ['wslpath', '-w', '-a', os.getcwd()],
+            capture_output=True,
+            check=True,
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    # If we're sitting under the linux filesystem, our path
+    # will start with \\wsl$; fail in that case and explain why.
+    if not path.startswith('\\\\wsl$'):
+        return
+
+    def _wrap(txt: str) -> str:
+        return textwrap.fill(txt, 76)
+
+    raise CleanError(
+        '\n\n'.join(
+            [
+                _wrap(
+                    'ERROR: This project appears to live'
+                    ' on the Linux filesystem.'
+                ),
+                _wrap(
+                    'Visual Studio compiles will error here for reasons related'
+                    ' to Linux filesystem case-sensitivity, and thus are'
+                    ' disallowed.'
+                    ' Clone the repo to a location that maps to a native'
+                    ' Windows drive such as \'/mnt/c/ballistica\''
+                    ' and try again.'
+                ),
+                _wrap(
+                    'Note that WSL2 filesystem performance'
+                    ' is poor when accessing'
+                    ' native Windows drives, so if Visual Studio builds are not'
+                    ' needed it may be best to keep things'
+                    ' on the Linux filesystem.'
+                    ' This behavior may differ under WSL1 (untested).'
+                ),
+                _wrap(
+                    'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
+                    ' this check.'
+                ),
+            ]
+        )
+    )
+
+
+def wsl_path_to_win() -> None:
+    """Forward escape slashes in a provided win path arg."""
+    import subprocess
+    import logging
+    import os
+    from efro.error import CleanError
+
+    pcommand.disallow_in_batch()
+
+    try:
+        create = False
+        escape = False
+        if len(sys.argv) < 3:
+            raise CleanError('Expected at least 1 path arg.')
+        wsl_path: str | None = None
+        for arg in sys.argv[2:]:
+            if arg == '--create':
+                create = True
+            elif arg == '--escape':
+                escape = True
+            else:
+                if wsl_path is not None:
+                    raise CleanError('More than one path provided.')
+                wsl_path = arg
+        if wsl_path is None:
+            raise CleanError('No path provided.')
+
+        # wslpath fails on nonexistent paths; make it clear when that happens.
+        if create:
+            os.makedirs(wsl_path, exist_ok=True)
+        if not os.path.exists(wsl_path):
+            raise CleanError(f'Path \'{wsl_path}\' does not exist.')
+
+        results = subprocess.run(
+            ['wslpath', '-w', '-a', wsl_path], capture_output=True, check=True
+        )
+    except Exception:
+        # This gets used in a makefile so our returncode is ignored;
+        # let's try to make our failure known in other ways.
+        logging.exception('wsl_to_escaped_win_path failed.')
+        print('wsl_to_escaped_win_path_error_occurred', end='')
+        return
+
+    out = results.stdout.decode().strip()
+
+    # If our input ended with a slash, match in the output.
+    if wsl_path.endswith('/') and not out.endswith('\\'):
+        out += '\\'
+
+    if escape:
+        out = out.replace('\\', '\\\\')
+    print(out, end='')

@@ -40,7 +40,8 @@
     "psutil",
     "pbxproj.XcodeProject",
     "pbxproj.pbxextensions",
-    "openstep_parser"
+    "openstep_parser",
+    "daemon"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

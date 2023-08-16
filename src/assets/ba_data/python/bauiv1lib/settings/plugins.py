@@ -263,7 +263,6 @@ class PluginWindow(bui.Window):
     def _show_plugins(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
@@ -301,7 +300,6 @@ class PluginWindow(bui.Window):
         else:
             # Make sure we handle all cases.
             assert_never(self._category)
-            sub_height = 0
 
         num_shown = 0
         for classpath, plugspec in plugspecs_sorted:
@@ -316,7 +314,7 @@ class PluginWindow(bui.Window):
                 show = not enabled
             else:
                 assert_never(self._category)
-                show = False
+                # show = False
 
             if not show:
                 continue

@@ -1,10 +1,15 @@
 ### 1.7.26 (build 21212, api 8, 2023-08-03)
 
+- Various general improvements to the pcommand (project command) system.
+- Modules containing pcommand functions are now named with an 's' - so
+  `pcommands.py` instead of `pcommand.py`. `pcommand.py` in efrotools is now
+  solely related to the functioning of the pcommand system.
+
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 
 - Fixed an issue where the main thread was holding the Python GIL by default in
   monolithic builds with environment-managed event loops. This theoretically
-  could have lead to stuttery performanace in the Android or Mac builds.
+  could have lead to stuttery performance in the Android or Mac builds.
 - Did a bit of cleanup on `baenv.py` in preparation for some additional setup it
   will soon be doing to give users more control over logging.
 - `getconfig` and `setconfig` in `efrotools` are now `getprojectconfig` and

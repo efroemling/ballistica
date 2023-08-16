@@ -58,6 +58,51 @@ def spinoff_test(args: list[str]) -> None:
             flush=True,
         )
 
+        # Normally we spin the project off from where we currently
+        # are, but for cloud builds we may want to use a dedicated
+        # shared source instead. (since we need a git managed source
+        # we need to pull *something* fresh from git instead of just
+        # using the files that were synced up by cloudshell).
+        # Here we make sure that shared source is up to date.
+        spinoff_src = '.'
+        spinoff_path = path
+        if shared_test_parent:
+            spinoff_src = 'build/spinoff_shared_test_parent'
+            # Need an abs target path since we change cwd in this case.
+            spinoff_path = os.path.abspath(path)
+            if bool(False):
+                print('TEMP BLOWING AWAY')
+                subprocess.run(['rm', '-rf', spinoff_src], check=True)
+            if os.path.exists(spinoff_src):
+                print(
+                    'Pulling latest spinoff_shared_test_parent...',
+                    flush=True,
+                )
+                subprocess.run(
+                    ['git', 'pull', '--ff-only'],
+                    check=True,
+                    cwd=spinoff_src,
+                )
+            else:
+                os.makedirs(spinoff_src, exist_ok=True)
+                cmd = [
+                    'git',
+                    'clone',
+                    'git@github.com:efroemling/ballistica-internal.git',
+                    spinoff_src,
+                ]
+
+                print(
+                    f'{Clr.BLU}Creating spinoff shared test parent'
+                    f" at '{spinoff_src}' with command {cmd}...{Clr.RST}"
+                )
+                subprocess.run(
+                    cmd,
+                    check=True,
+                )
+
+        # If the spinoff project already exists and is submodule-based,
+        # bring the submodule up to date.
         if os.path.exists(path):
             if bool(False):
                 subprocess.run(['rm', '-rf', path], check=True)
@@ -73,51 +118,8 @@ def spinoff_test(args: list[str]) -> None:
                     shell=True,
                     check=True,
                 )
-
         else:
-            # Normally we spin the project off from where we currently
-            # are, but for cloud builds we may want to use a dedicated
-            # shared source instead. (since we need a git managed source
-            # we need to pull something fresh from git instead of just
-            # using the files that were synced up by cloudshell).
-            spinoff_src = '.'
-            spinoff_path = path
-            if shared_test_parent:
-                spinoff_src = 'build/spinoff_shared_test_parent'
-                # Need an abs target path since we change cwd in this case.
-                spinoff_path = os.path.abspath(path)
-                if bool(False):
-                    print('TEMP BLOWING AWAY')
-                    subprocess.run(['rm', '-rf', spinoff_src], check=True)
-                if os.path.exists(spinoff_src):
-                    print(
-                        'Pulling latest spinoff_shared_test_parent...',
-                        flush=True,
-                    )
-                    subprocess.run(
-                        ['git', 'pull', '--ff-only'],
-                        check=True,
-                        cwd=spinoff_src,
-                    )
-                else:
-                    os.makedirs(spinoff_src, exist_ok=True)
-                    cmd = [
-                        'git',
-                        'clone',
-                        'git@github.com:efroemling/ballistica-internal.git',
-                        spinoff_src,
-                    ]
-
-                    print(
-                        f'{Clr.BLU}Creating spinoff shared test parent'
-                        f" at '{spinoff_src}' with command {cmd}...{Clr.RST}"
-                    )
-                    subprocess.run(
-                        cmd,
-                        check=True,
-                    )
-                # raise CleanError('SO FAR SO GOOD5')
-
+            # No spinoff project there yet; create it.
             cmd = [
                 './tools/spinoff',
                 'create',

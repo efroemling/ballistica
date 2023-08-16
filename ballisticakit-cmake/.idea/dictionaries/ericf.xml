@@ -116,6 +116,7 @@
       <w>audiocache</w>
       <w>autodetected</w>
       <w>automagically</w>
+      <w>autopep</w>
       <w>autoselect</w>
       <w>availmins</w>
       <w>avel</w>
@@ -135,6 +136,7 @@
       <w>baclassicmeta</w>
       <w>bacoremeta</w>
       <w>baenv</w>
+      <w>baenv's</w>
       <w>bafoobar</w>
       <w>bafoobarmeta</w>
       <w>bainternal</w>
@@ -280,6 +282,7 @@
       <w>cancelbtn</w>
       <w>capitan</w>
       <w>caplog</w>
+      <w>capturable</w>
       <w>cargs</w>
       <w>casefix</w>
       <w>cbegin</w>
@@ -308,6 +311,7 @@
       <w>charstr</w>
       <w>chatmessage</w>
       <w>chdir</w>
+      <w>chdir'ing</w>
       <w>checkarglist</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
@@ -534,6 +538,7 @@
       <w>efrohack</w>
       <w>efrohome</w>
       <w>efrotoolsinternal</w>
+      <w>eglot</w>
       <w>elapsedf</w>
       <w>elems</w>
       <w>elevenbase</w>
@@ -634,6 +639,7 @@
       <w>fifteenbits</w>
       <w>filefilter</w>
       <w>filelock</w>
+      <w>fileno</w>
       <w>filt</w>
       <w>filterdoc</w>
       <w>filterstr</w>
@@ -1268,7 +1274,10 @@
       <w>pbasename</w>
       <w>pbxgrp</w>
       <w>pbxgrps</w>
+      <w>pcommandbatch</w>
+      <w>pcommandbatchbin</w>
       <w>pcommands</w>
+      <w>pcommandserver</w>
       <w>pdataclass</w>
       <w>pdoc</w>
       <w>pdst</w>
@@ -1302,6 +1311,7 @@
       <w>podcasts</w>
       <w>popd</w>
       <w>portaudio</w>
+      <w>portfile</w>
       <w>positivex</w>
       <w>positivey</w>
       <w>positivez</w>
@@ -1392,6 +1402,7 @@
       <w>pyhome</w>
       <w>pylib</w>
       <w>pylibpath</w>
+      <w>pylsp</w>
       <w>pymodulenames</w>
       <w>pyobj</w>
       <w>pyobjs</w>
@@ -1467,6 +1478,7 @@
       <w>responsecount</w>
       <w>responsetypes</w>
       <w>responsetypevar</w>
+      <w>resultcode</w>
       <w>resync</w>
       <w>retcode</w>
       <w>retrysecs</w>
@@ -1595,6 +1607,7 @@
       <w>spinoffconfig</w>
       <w>spinofftest</w>
       <w>spinup</w>
+      <w>spinups</w>
       <w>spivak</w>
       <w>spwd</w>
       <w>srcabs</w>
@@ -1682,6 +1695,7 @@
       <w>swiftmergegeneratedheaders</w>
       <w>symbolification</w>
       <w>symlinking</w>
+      <w>sysargv</w>
       <w>syscall</w>
       <w>syscalls</w>
       <w>sysresponse</w>
@@ -1824,6 +1838,7 @@
       <w>unsignaled</w>
       <w>unstuff</w>
       <w>unsynchronized</w>
+      <w>unwritable</w>
       <w>uppercased</w>
       <w>userspace</w>
       <w>usid</w>

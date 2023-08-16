@@ -7,12 +7,14 @@ from __future__ import annotations
 # keep launch times fast for small snippets.
 import sys
 
-from efrotools.pcommand import PROJROOT
+from efrotools import pcommand
 
 
 def prune_includes() -> None:
     """Check for unnecessary includes in C++ files."""
     from batools.pruneincludes import Pruner
+
+    pcommand.disallow_in_batch()
 
     args = sys.argv.copy()[2:]
     commit = False
@@ -31,6 +33,8 @@ def resize_image() -> None:
     """
     import os
     import subprocess
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 6:
         raise RuntimeError('Expected 5 args.')
@@ -61,18 +65,21 @@ def check_clean_safety() -> None:
 
     from efro.terminal import Clr
     from efro.error import CleanError
-    import efrotools.pcommand
+
+    import efrotools.pcommands
+
+    pcommand.disallow_in_batch()
 
     ignorevar = 'BA_IGNORE_CLEAN_SAFETY_CHECK'
     if os.environ.get(ignorevar) == '1':
         return
     try:
         # First do standard checks.
-        efrotools.pcommand.check_clean_safety()
+        efrotools.pcommands.check_clean_safety()
 
         # Then also make sure there are no untracked changes to core files
         # (since we may be blowing core away here).
-        spinoff_bin = os.path.join(str(PROJROOT), 'tools', 'spinoff')
+        spinoff_bin = os.path.join(str(pcommand.PROJROOT), 'tools', 'spinoff')
         if os.path.exists(spinoff_bin):
             result = subprocess.run(
                 [spinoff_bin, 'cleancheck', '--soft'], check=False
@@ -93,6 +100,8 @@ def archive_old_builds() -> None:
     (called after we push newer ones)
     """
     import batools.build
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) < 3:
         raise RuntimeError('Invalid arguments.')
@@ -117,10 +126,12 @@ def lazy_increment_build() -> None:
     from efrotools import get_files_hash
     from efrotools.code import get_code_filenames
 
+    pcommand.disallow_in_batch()
+
     if sys.argv[2:] not in [[], ['--update-hash-only']]:
         raise CleanError('Invalid arguments')
     update_hash_only = '--update-hash-only' in sys.argv
-    codefiles = get_code_filenames(PROJROOT, include_generated=False)
+    codefiles = get_code_filenames(pcommand.PROJROOT, include_generated=False)
     codehash = get_files_hash(codefiles)
     hashfilename = '.cache/lazy_increment_build'
     try:
@@ -150,6 +161,8 @@ def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
     import subprocess
     import os
+
+    pcommand.disallow_in_batch()
 
     master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
     dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
@@ -188,6 +201,8 @@ def androidaddr() -> None:
     import batools.android
     from efro.error import CleanError
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 5:
         raise CleanError(
             f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
@@ -206,19 +221,25 @@ def push_ipa() -> None:
     from efrotools import extract_arg
     import efrotools.ios
 
+    pcommand.disallow_in_batch()
+
     args = sys.argv[2:]
     signing_config = extract_arg(args, '--signing-config')
 
     if len(args) != 1:
         raise RuntimeError('Expected 1 mode arg (debug or release).')
     modename = args[0].lower()
-    efrotools.ios.push_ipa(PROJROOT, modename, signing_config=signing_config)
+    efrotools.ios.push_ipa(
+        pcommand.PROJROOT, modename, signing_config=signing_config
+    )
 
 
 def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
     from efro.error import CleanError
     from efro.terminal import TerminalColor, Clr
+
+    pcommand.disallow_in_batch()
 
     if Clr.RED == '':
         raise CleanError('Efro color terminal output is disabled.')
@@ -244,12 +265,16 @@ def python_version_android_base() -> None:
     """Print built Python base version."""
     from efrotools.pybuild import PY_VER_ANDROID
 
+    pcommand.disallow_in_batch()
+
     print(PY_VER_ANDROID, end='')
 
 
 def python_version_android() -> None:
     """Print Android embedded Python version."""
     from efrotools.pybuild import PY_VER_EXACT_ANDROID
+
+    pcommand.disallow_in_batch()
 
     print(PY_VER_EXACT_ANDROID, end='')
 
@@ -258,16 +283,24 @@ def python_version_apple() -> None:
     """Print Apple embedded Python version."""
     from efrotools.pybuild import PY_VER_EXACT_APPLE
 
+    pcommand.disallow_in_batch()
+
     print(PY_VER_EXACT_APPLE, end='')
 
 
 def python_build_apple() -> None:
     """Build an embeddable python for mac/ios/tvos."""
+
+    pcommand.disallow_in_batch()
+
     _python_build_apple(debug=False)
 
 
 def python_build_apple_debug() -> None:
     """Build embeddable python for mac/ios/tvos (dbg ver)."""
+
+    pcommand.disallow_in_batch()
+
     _python_build_apple(debug=True)
 
 
@@ -277,7 +310,9 @@ def _python_build_apple(debug: bool) -> None:
     from efro.error import CleanError
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     archs = ('mac', 'ios', 'tvos')
     if len(sys.argv) != 3:
         raise CleanError('Error: expected one <ARCH> arg: ' + ', '.join(archs))
@@ -291,11 +326,17 @@ def _python_build_apple(debug: bool) -> None:
 
 def python_build_android() -> None:
     """Build an embeddable Python lib for Android."""
+
+    pcommand.disallow_in_batch()
+
     _python_build_android(debug=False)
 
 
 def python_build_android_debug() -> None:
     """Build embeddable Android Python lib (debug ver)."""
+
+    pcommand.disallow_in_batch()
+
     _python_build_android(debug=True)
 
 
@@ -304,7 +345,9 @@ def _python_build_android(debug: bool) -> None:
     from efro.error import CleanError
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
     if len(sys.argv) != 3:
         raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
@@ -313,13 +356,15 @@ def _python_build_android(debug: bool) -> None:
         raise CleanError(
             'Error: invalid arch. valid values are: ' + ', '.join(archs)
         )
-    pybuild.build_android(str(PROJROOT), arch, debug=debug)
+    pybuild.build_android(str(pcommand.PROJROOT), arch, debug=debug)
 
 
 def python_android_patch() -> None:
     """Patches Python to prep for building for Android."""
     import os
     from efrotools import pybuild
+
+    pcommand.disallow_in_batch()
 
     os.chdir(sys.argv[2])
     pybuild.android_patch()
@@ -329,6 +374,8 @@ def python_android_patch_ssl() -> None:
     """Patches Python ssl to prep for building for Android."""
     from efrotools import pybuild
 
+    pcommand.disallow_in_batch()
+
     pybuild.android_patch_ssl()
 
 
@@ -336,6 +383,8 @@ def python_apple_patch() -> None:
     """Patches Python to prep for building for Apple platforms."""
     from efro.error import CleanError
     from efrotools import pybuild
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg.')
@@ -357,7 +406,9 @@ def python_gather() -> None:
     import os
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     pybuild.gather(do_android=True, do_apple=True)
 
 
@@ -366,7 +417,9 @@ def python_gather_android() -> None:
     import os
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     pybuild.gather(do_android=True, do_apple=False)
 
 
@@ -375,7 +428,9 @@ def python_gather_apple() -> None:
     import os
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     pybuild.gather(do_android=False, do_apple=True)
 
 
@@ -384,23 +439,33 @@ def python_winprune() -> None:
     import os
     from efrotools import pybuild
 
-    os.chdir(PROJROOT)
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
     pybuild.winprune()
 
 
 def capitalize() -> None:
     """Print args capitalized."""
+
+    pcommand.disallow_in_batch()
+
     print(' '.join(w.capitalize() for w in sys.argv[2:]), end='')
 
 
 def upper() -> None:
     """Print args uppercased."""
+
+    pcommand.disallow_in_batch()
+
     print(' '.join(w.upper() for w in sys.argv[2:]), end='')
 
 
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
+
+    pcommand.disallow_in_batch()
 
     makefile_dirs = ['', 'src/assets', 'src/resources', 'src/meta']
     update_cache(makefile_dirs)
@@ -409,6 +474,8 @@ def efrocache_update() -> None:
 def efrocache_get() -> None:
     """Get a file from efrocache."""
     from efrotools.efrocache import get_target
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected exactly 1 arg')
@@ -419,6 +486,8 @@ def get_modern_make() -> None:
     """Print name of a modern make command."""
     import platform
     import subprocess
+
+    pcommand.disallow_in_batch()
 
     # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
     # so let's return 'gmake' there which will point to homebrew make which
@@ -448,19 +517,21 @@ def warm_start_asset_build() -> None:
     from pathlib import Path
     from efrotools import getprojectconfig
 
-    public: bool = getprojectconfig(PROJROOT)['public']
+    pcommand.disallow_in_batch()
+
+    public: bool = getprojectconfig(pcommand.PROJROOT)['public']
 
     if public:
         from efrotools.efrocache import warm_start_cache
 
-        os.chdir(PROJROOT)
+        os.chdir(pcommand.PROJROOT)
         warm_start_cache()
     else:
         # For internal builds we don't use efrocache but we do use an
         # internal build cache. Download an initial cache/etc. if need be.
         subprocess.run(
             [
-                str(Path(PROJROOT, 'tools/pcommand')),
+                str(Path(pcommand.PROJROOT, 'tools/pcommand')),
                 'convert_util',
                 '--init-asset-cache',
             ],
@@ -473,13 +544,17 @@ def gen_docs_pdoc() -> None:
     from efro.terminal import Clr
     import batools.docs
 
+    pcommand.disallow_in_batch()
+
     print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
-    batools.docs.generate_pdoc(projroot=str(PROJROOT))
+    batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
 
 
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
     from batools.build import get_pip_reqs
+
+    pcommand.disallow_in_batch()
 
     print(' '.join(get_pip_reqs()))
 
@@ -490,6 +565,8 @@ def install_pip_reqs() -> None:
     from efrotools import PYTHON_BIN
     from efro.terminal import Clr
     from batools.build import get_pip_reqs
+
+    pcommand.disallow_in_batch()
 
     # Make sure pip itself is up to date first.
     subprocess.run(
@@ -507,130 +584,9 @@ def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
 
+    pcommand.disallow_in_batch()
+
     batools.build.checkenv()
-
-
-def wsl_build_check_win_drive() -> None:
-    """Make sure we're building on a windows drive."""
-    import os
-    import subprocess
-    import textwrap
-    from efro.error import CleanError
-
-    if (
-        subprocess.run(
-            ['which', 'wslpath'], check=False, capture_output=True
-        ).returncode
-        != 0
-    ):
-        raise CleanError(
-            'wslpath not found; you must run this from a WSL environment'
-        )
-
-    if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
-        return
-
-    # Get a windows path to the current dir.
-    path = (
-        subprocess.run(
-            ['wslpath', '-w', '-a', os.getcwd()],
-            capture_output=True,
-            check=True,
-        )
-        .stdout.decode()
-        .strip()
-    )
-
-    # If we're sitting under the linux filesystem, our path
-    # will start with \\wsl$; fail in that case and explain why.
-    if not path.startswith('\\\\wsl$'):
-        return
-
-    def _wrap(txt: str) -> str:
-        return textwrap.fill(txt, 76)
-
-    raise CleanError(
-        '\n\n'.join(
-            [
-                _wrap(
-                    'ERROR: This project appears to live'
-                    ' on the Linux filesystem.'
-                ),
-                _wrap(
-                    'Visual Studio compiles will error here for reasons related'
-                    ' to Linux filesystem case-sensitivity, and thus are'
-                    ' disallowed.'
-                    ' Clone the repo to a location that maps to a native'
-                    ' Windows drive such as \'/mnt/c/ballistica\''
-                    ' and try again.'
-                ),
-                _wrap(
-                    'Note that WSL2 filesystem performance'
-                    ' is poor when accessing'
-                    ' native Windows drives, so if Visual Studio builds are not'
-                    ' needed it may be best to keep things'
-                    ' on the Linux filesystem.'
-                    ' This behavior may differ under WSL1 (untested).'
-                ),
-                _wrap(
-                    'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
-                    ' this check.'
-                ),
-            ]
-        )
-    )
-
-
-def wsl_path_to_win() -> None:
-    """Forward escape slashes in a provided win path arg."""
-    import subprocess
-    import logging
-    import os
-    from efro.error import CleanError
-
-    try:
-        create = False
-        escape = False
-        if len(sys.argv) < 3:
-            raise CleanError('Expected at least 1 path arg.')
-        wsl_path: str | None = None
-        for arg in sys.argv[2:]:
-            if arg == '--create':
-                create = True
-            elif arg == '--escape':
-                escape = True
-            else:
-                if wsl_path is not None:
-                    raise CleanError('More than one path provided.')
-                wsl_path = arg
-        if wsl_path is None:
-            raise CleanError('No path provided.')
-
-        # wslpath fails on nonexistent paths; make it clear when that happens.
-        if create:
-            os.makedirs(wsl_path, exist_ok=True)
-        if not os.path.exists(wsl_path):
-            raise CleanError(f'Path \'{wsl_path}\' does not exist.')
-
-        results = subprocess.run(
-            ['wslpath', '-w', '-a', wsl_path], capture_output=True, check=True
-        )
-    except Exception:
-        # This gets used in a makefile so our returncode is ignored;
-        # let's try to make our failure known in other ways.
-        logging.exception('wsl_to_escaped_win_path failed.')
-        print('wsl_to_escaped_win_path_error_occurred', end='')
-        return
-
-    out = results.stdout.decode().strip()
-
-    # If our input ended with a slash, match in the output.
-    if wsl_path.endswith('/') and not out.endswith('\\'):
-        out += '\\'
-
-    if escape:
-        out = out.replace('\\', '\\\\')
-    print(out, end='')
 
 
 def ensure_prefab_platform() -> None:
@@ -643,6 +599,8 @@ def ensure_prefab_platform() -> None:
     """
     import batools.build
     from efro.error import CleanError
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 platform name arg.')
@@ -658,6 +616,8 @@ def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
     import batools.build
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
     base = sys.argv[2].replace('-', '_').upper()
@@ -668,6 +628,8 @@ def prefab_run_var() -> None:
 def prefab_binary_path() -> None:
     """Print the current platform prefab binary path."""
     import batools.build
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
@@ -689,6 +651,8 @@ def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
     import batools.build
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
@@ -713,6 +677,8 @@ def lazybuild() -> None:
     import batools.build
     from efro.error import CleanError
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) < 5:
         raise CleanError('Expected at least 3 args')
     try:
@@ -732,6 +698,8 @@ def logcat() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
+
+    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args')
@@ -754,6 +722,8 @@ def logcat() -> None:
 
 
 def _camel_case_split(string: str) -> list[str]:
+    pcommand.disallow_in_batch()
+
     words = [[string[0]]]
     for char in string[1:]:
         if words[-1][-1].islower() and char.isupper():
@@ -768,6 +738,8 @@ def efro_gradle() -> None:
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
+
+    pcommand.disallow_in_batch()
 
     args = ['./gradlew'] + sys.argv[2:]
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
@@ -809,8 +781,12 @@ def stage_build() -> None:
     import batools.staging
     from efro.error import CleanError
 
+    pcommand.disallow_in_batch()
+
     try:
-        batools.staging.stage_build(projroot=str(PROJROOT), args=sys.argv[2:])
+        batools.staging.stage_build(
+            projroot=str(pcommand.PROJROOT), args=sys.argv[2:]
+        )
     except CleanError as exc:
         exc.pretty_print()
         sys.exit(1)
@@ -835,6 +811,8 @@ def update_project() -> None:
     import os
     from batools.project import ProjectUpdater
 
+    pcommand.disallow_in_batch()
+
     check = '--check' in sys.argv
     fix = '--fix' in sys.argv
 
@@ -856,6 +834,8 @@ def cmake_prep_dir() -> None:
     from efro.error import CleanError
     import batools.build
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]
@@ -869,11 +849,13 @@ def gen_binding_code() -> None:
     from efro.error import CleanError
     import batools.metabuild
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
-    batools.metabuild.gen_binding_code(str(PROJROOT), inpath, outpath)
+    batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
 
 
 def gen_flat_data_code() -> None:
@@ -881,13 +863,15 @@ def gen_flat_data_code() -> None:
     from efro.error import CleanError
     import batools.metabuild
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
     varname = sys.argv[4]
     batools.metabuild.gen_flat_data_code(
-        str(PROJROOT), inpath, outpath, varname
+        str(pcommand.PROJROOT), inpath, outpath, varname
     )
 
 
@@ -895,24 +879,32 @@ def genchangelog() -> None:
     """Gen a pretty html changelog."""
     from batools.changelog import generate
 
-    generate(projroot=str(PROJROOT))
+    pcommand.disallow_in_batch()
+
+    generate(projroot=str(pcommand.PROJROOT))
 
 
 def android_sdk_utils() -> None:
     """Wrangle android sdk stuff."""
     from batools.androidsdkutils import run
 
-    run(projroot=str(PROJROOT), args=sys.argv[2:])
+    pcommand.disallow_in_batch()
+
+    run(projroot=str(pcommand.PROJROOT), args=sys.argv[2:])
 
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
     from batools.pythonenumsmodule import generate
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 4:
         raise RuntimeError('Expected infile and outfile args.')
     generate(
-        projroot=str(PROJROOT), infilename=sys.argv[2], outfilename=sys.argv[3]
+        projroot=str(pcommand.PROJROOT),
+        infilename=sys.argv[2],
+        outfilename=sys.argv[3],
     )
 
 
@@ -921,14 +913,18 @@ def gen_dummy_modules() -> None:
     from efro.error import CleanError
     from batools.dummymodule import generate_dummy_modules
 
+    pcommand.disallow_in_batch()
+
     if len(sys.argv) != 2:
         raise CleanError(f'Expected no args; got {len(sys.argv)-2}.')
 
-    generate_dummy_modules(projroot=str(PROJROOT))
+    generate_dummy_modules(projroot=str(pcommand.PROJROOT))
 
 
 def version() -> None:
     """Check app versions."""
     from batools.version import run
 
-    run(projroot=str(PROJROOT), args=sys.argv[2:])
+    pcommand.disallow_in_batch()
+
+    run(projroot=str(pcommand.PROJROOT), args=sys.argv[2:])

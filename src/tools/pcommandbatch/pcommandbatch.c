@@ -1,0 +1,464 @@
+// Released under the MIT License. See LICENSE for details.
+
+// An ultra-simple client app to forward commands to a pcommand server. This
+// lets us run *lots* of small pcommands very fast. Normally the limiting
+// factor in such cases is the startup time of Python which this mostly
+// eliminates. See tools/efrotools/pcommandbatch.py for more info.
+
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "cJSON.h"
+
+struct Context_ {
+  const char* state_dir_path;
+  const char* instance_prefix;
+  int instance_num;
+  int pid;
+  int verbose;
+  int debug;
+  int server_idle_seconds;
+  const char* pcommandpath;
+  int sockfd;
+};
+
+int path_exists_(const char* path);
+int establish_connection_(const struct Context_* ctx);
+int calc_paths_(struct Context_* ctx);
+int send_command_(struct Context_* ctx, int argc, char** argv);
+int handle_response_(const struct Context_* ctx);
+int get_running_server_port_(const struct Context_* ctx,
+                             const char* state_file_path_full);
+
+int main(int argc, char** argv) {
+  struct Context_ ctx;
+  memset(&ctx, 0, sizeof(ctx));
+
+  ctx.state_dir_path = NULL;
+  ctx.instance_prefix = NULL;
+  ctx.pcommandpath = NULL;
+  ctx.server_idle_seconds = 5;
+  ctx.pid = getpid();
+
+  // Verbose mode enables more printing here. Debug mode enables that plus
+  // extra stuff. The extra stuff is mostly the server side though.
+  {
+    const char* debug_env = getenv("BA_PCOMMANDBATCH_DEBUG");
+    ctx.debug = debug_env && !strcmp(debug_env, "1");
+    const char* verbose_env = getenv("BA_PCOMMANDBATCH_VERBOSE");
+    ctx.verbose = ctx.debug || (verbose_env && !strcmp(verbose_env, "1"));
+  }
+
+  // Seed rand() using the current time in microseconds.
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  unsigned int seed = tv.tv_usec;
+  srand(seed);
+
+  // Figure our which file path we'll use to get server state.
+  if (calc_paths_(&ctx) != 0) {
+    return 1;
+  }
+
+  // Establish communication with said server (spinning it up if needed).
+  ctx.sockfd = establish_connection_(&ctx);
+  if (ctx.sockfd == -1) {
+    return 1;
+  }
+
+  if (send_command_(&ctx, argc, argv) != 0) {
+    return 1;
+  }
+
+  int result_val = handle_response_(&ctx);
+  if (result_val != 0) {
+    return 1;
+  }
+
+  if (close(ctx.sockfd) != 0) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): error on socket close.\n",
+        ctx.instance_prefix, ctx.instance_num, ctx.pid);
+    return 1;
+  }
+  return result_val;
+}
+
+// If a valid state file is present at the provided path and not older than
+// server_idle_seconds, return said port as an int. Otherwise return -1;
+int get_running_server_port_(const struct Context_* ctx,
+                             const char* state_file_path_full) {
+  struct stat file_stat;
+
+  time_t current_time = time(NULL);
+  if (current_time == -1) {
+    perror("time");
+    return -1;
+  }
+
+  int fd = open(state_file_path_full, O_RDONLY);
+  if (fd < 0) {
+    return -1;
+  }
+
+  if (fstat(fd, &file_stat) == -1) {
+    close(fd);
+    return -1;
+  }
+
+  int age_seconds = current_time - file_stat.st_mtime;
+  if (ctx->verbose) {
+    if (age_seconds <= ctx->server_idle_seconds) {
+      fprintf(
+          stderr,
+          "pcommandbatch client %s_%d (pid %d) found state file with age %d at "
+          "time %ld.\n",
+          ctx->instance_prefix, ctx->instance_num, ctx->pid, age_seconds,
+          time(NULL));
+    }
+  }
+
+  if (age_seconds > ctx->server_idle_seconds) {
+    close(fd);
+    return -1;
+  } else if (age_seconds < 0) {
+    fprintf(stderr, "pcommandbatch got negative age; unexpected.");
+  }
+
+  char buf[256];
+  ssize_t amt = read(fd, buf, sizeof(buf) - 1);
+  close(fd);
+
+  if (amt == -1 || amt == sizeof(buf) - 1) {
+    return -1;
+  }
+  buf[amt] = 0;  // Null-terminate it.
+
+  cJSON* state_dict = cJSON_Parse(buf);
+  if (!state_dict) {
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): failed to parse state "
+            "value.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+  // If results included output, print it.
+  cJSON* port_obj = cJSON_GetObjectItem(state_dict, "p");
+  if (!port_obj || !cJSON_IsNumber(port_obj)) {
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): failed to get port "
+            "value from state.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    cJSON_Delete(state_dict);
+    return -1;
+  }
+  int port = cJSON_GetNumberValue(port_obj);
+  cJSON_Delete(state_dict);
+  return port;
+
+  // return val;
+}
+
+int path_exists_(const char* path) {
+  struct stat file_stat;
+  return (stat(path, &file_stat) != -1);
+}
+
+int establish_connection_(const struct Context_* ctx) {
+  char state_file_path_full[256];
+  snprintf(state_file_path_full, sizeof(state_file_path_full),
+           "%s/worker_state_%s_%d", ctx->state_dir_path, ctx->instance_prefix,
+           ctx->instance_num);
+
+  int sockfd = 0;
+
+  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): could not create "
+            "socket.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+
+  // On Mac I'm running into EADDRNOTAVAIL errors if I spit out too many
+  // requests in a short enough period of time. I'm guessing its exhausting
+  // free ports when cooldown time is taken into account. Sleeping and
+  // trying again in a moment seems to work.
+  int retry_attempt = 0;
+  int retry_sleep_secs = 1;
+  while (1) {
+    // First look for an already-running batch server.
+    int port = get_running_server_port_(ctx, state_file_path_full);
+    if (port == -1) {
+      // Ok; no running server. Spin one up.
+      if (ctx->verbose) {
+        fprintf(stderr,
+                "pcommandbatch client %s_%d (pid %d) requesting batch server "
+                "spinup...\n",
+                ctx->instance_prefix, ctx->instance_num, ctx->pid);
+      }
+
+      // In non-debug-mode, route to a log file.
+      char endbuf[512];
+      if (ctx->debug) {
+        snprintf(endbuf, sizeof(endbuf), " &");
+      } else {
+        snprintf(endbuf, sizeof(endbuf), " >>%s/worker_log_%s_%d 2>&1 &",
+                 ctx->state_dir_path, ctx->instance_prefix, ctx->instance_num);
+      }
+      char buf[512];
+      snprintf(buf, sizeof(buf),
+               "%s run_pcommandbatch_server --timeout %d --state-dir %s "
+               "--instance %s_%d %s",
+               ctx->pcommandpath, ctx->server_idle_seconds, ctx->state_dir_path,
+               ctx->instance_prefix, ctx->instance_num, endbuf);
+      system(buf);
+
+      // Spin and wait up to a few seconds for the file to appear.
+      time_t start_time = time(NULL);
+      int cycles = 0;
+      while (time(NULL) - start_time < 5) {
+        port = get_running_server_port_(ctx, state_file_path_full);
+        if (port != -1) {
+          break;
+        }
+        usleep(10000);
+        cycles += 1;
+      }
+      if (ctx->verbose) {
+        fprintf(stderr,
+                "pcommandbatch client %s_%d (pid %d) waited %d"
+                " cycles for state file to appear at '%s'.\n",
+                ctx->instance_prefix, ctx->instance_num, ctx->pid, cycles,
+                state_file_path_full);
+      }
+
+      if (port == -1) {
+        // We failed but we can retry.
+        if (ctx->verbose) {
+          fprintf(stderr,
+                  "Error: pcommandbatch client %s_%d (pid %d): failed to open "
+                  "server on attempt %d.\n",
+                  ctx->instance_prefix, ctx->instance_num, ctx->pid,
+                  retry_attempt);
+        }
+      }
+    }
+
+    // Ok we got a port; now try to connect to it.
+    if (port != -1) {
+      if (ctx->verbose) {
+        fprintf(
+            stderr,
+            "pcommandbatch client %s_%d (pid %d) will use server on port %d at "
+            "time %ld.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, port,
+            time(NULL));
+      }
+
+      struct sockaddr_in serv_addr;
+      memset(&serv_addr, '0', sizeof(serv_addr));
+      serv_addr.sin_family = AF_INET;
+      serv_addr.sin_port = htons(port);
+      serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+      int cresult =
+          connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+      if (cresult == 0) {
+        break;
+      } else if (errno == EADDRNOTAVAIL) {
+        if (ctx->verbose) {
+          fprintf(stderr,
+                  "pcommandbatch client %s_%d (pid %d): got EADDRNOTAVAIL"
+                  " on connect attempt %d.\n",
+                  ctx->instance_prefix, ctx->instance_num, ctx->pid,
+                  retry_attempt + 1);
+        }
+      } else {
+        // Currently not retrying on other errors.
+        fprintf(
+            stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): connect failed (errno "
+            "%d).\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
+        close(sockfd);
+        return -1;
+      }
+    }
+    if (retry_attempt >= 10) {
+      fprintf(stderr,
+              "Error: pcommandbatch client %s_%d (pid %d): too many "
+              "retry attempts; giving up.\n",
+              ctx->instance_prefix, ctx->instance_num, ctx->pid);
+      close(sockfd);
+      return -1;
+    }
+    if (ctx->verbose) {
+      fprintf(
+          stderr,
+          "pcommandbatch client %s_%d (pid %d) connection attempt %d failed;"
+          " will sleep %d secs and try again.\n",
+          ctx->instance_prefix, ctx->instance_num, ctx->pid, retry_attempt + 1,
+          retry_sleep_secs);
+    }
+    sleep(retry_sleep_secs);
+    retry_attempt += 1;
+    retry_sleep_secs *= 2;
+  }
+  return sockfd;
+}
+
+int calc_paths_(struct Context_* ctx) {
+  // Because the server needs to be in the same cwd as we are for things to
+  // work, we only support a specific few locations to run from. Currently
+  // this is project-root and src/assets
+  if (path_exists_("config/projectconfig.json")) {
+    // Looks like we're in project root.
+    ctx->state_dir_path = ".cache/pcommandbatch";
+    ctx->instance_prefix = "root";
+    ctx->pcommandpath = "tools/pcommand";
+  } else if (path_exists_("ba_data")
+             && path_exists_("../../config/projectconfig.json")) {
+    // Looks like we're in src/assets.
+    ctx->state_dir_path = "../../.cache/pcommandbatch";
+    ctx->instance_prefix = "assets";
+    ctx->pcommandpath = "../../tools/pcommand";
+  }
+  if (ctx->state_dir_path == NULL) {
+    char cwdbuf[MAXPATHLEN];
+    if (getcwd(cwdbuf, sizeof(cwdbuf)) < 0) {
+      fprintf(stderr,
+              "Error: pcommandbatch client %s (pid %d): unable to get cwd.\n",
+              ctx->instance_prefix, ctx->pid);
+      return -1;
+    }
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s (pid %d): pcommandbatch from cwd '%s' "
+        "is not supported.\n",
+        ctx->instance_prefix, ctx->pid, cwdbuf);
+    return -1;
+  }
+  assert(ctx->pcommandpath != NULL);
+  assert(ctx->instance_prefix != NULL);
+
+  // Spread requests for each location out randomly across a few instances.
+  // This greatly increases scalability though is probably wasteful when
+  // running just a few commands. Maybe there's some way to smartly scale
+  // this. The best setup might be to have a single 'controller' server
+  // instance that spins up worker instances as needed. Though such a fancy
+  // setup might be overkill.
+  ctx->instance_num = rand() % 6;
+  return 0;
+}
+
+int send_command_(struct Context_* ctx, int argc, char** argv) {
+  // Build a json array of our args.
+  cJSON* array = cJSON_CreateArray();
+  for (int i = 0; i < argc; ++i) {
+    cJSON_AddItemToArray(array, cJSON_CreateString(argv[i]));
+  }
+  char* json_out = cJSON_Print(array);
+
+  // Send our command.
+  int msglen = strlen(json_out);
+  if (write(ctx->sockfd, json_out, msglen) != msglen) {
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): write failed.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+
+  // Issue a write shutdown so they get EOF on the other end.
+  if (shutdown(ctx->sockfd, SHUT_WR) < 0) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): write shutdown failed.\n",
+        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+
+  // Clean up our mess after we've sent them on their way.
+  free(json_out);
+  cJSON_Delete(array);
+
+  return 0;
+}
+
+int handle_response_(const struct Context_* ctx) {
+  // Read the response. Currently expecting short-ish responses only; will
+  // have to revisit this if/when they get long.
+  char inbuf[512];
+  ssize_t result = read(ctx->sockfd, inbuf, sizeof(inbuf) - 1);
+  if (result < 0 || result == sizeof(inbuf) - 1) {
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): failed to read result "
+            "(errno %d).\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
+    close(ctx->sockfd);
+    return -1;
+  }
+  if (ctx->verbose) {
+    fprintf(stderr,
+            "pcommandbatch client %s_%d (pid %d) read %zd byte response.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, result);
+  }
+  inbuf[result] = 0;  // null terminate result str.
+
+  cJSON* result_dict = cJSON_Parse(inbuf);
+  if (!result_dict) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
+        "value.\n",
+        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+
+  // If results included output, print it.
+  cJSON* result_output = cJSON_GetObjectItem(result_dict, "o");
+  if (!result_output || !cJSON_IsString(result_output)) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
+        "output value.\n",
+        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+  char* output_str = cJSON_GetStringValue(result_output);
+  assert(output_str);
+  if (output_str[0] != 0) {
+    printf("%s", output_str);
+  }
+
+  cJSON* result_code = cJSON_GetObjectItem(result_dict, "r");
+  if (!result_code || !cJSON_IsNumber(result_code)) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
+        "code value.\n",
+        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    return -1;
+  }
+  int result_val = cJSON_GetNumberValue(result_code);
+  if (ctx->verbose) {
+    fprintf(stderr, "pcommandbatch client %s_%d (pid %d) final result is %d.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, result_val);
+  }
+  cJSON_Delete(result_dict);
+
+  return result_val;
+}

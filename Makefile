@@ -35,10 +35,21 @@ ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
  PREREQ_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
+# Support for running pcommands in 'batch' mode in which a simple local server
+# handles command requests from a lightweight client binary. This largely
+# takes Python's startup time out of the equation, which can add up when
+# running lots of small pcommands in cases such as asset builds.
+PCOMMANDBATCHBIN := .cache/pcommandbatch/pcommandbatch
+ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
+ PCOMMANDBATCH = tools/pcommand
+else
+ PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
+endif
+
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
-PREREQS_SAFE = .cache/checkenv .dir-locals.el .mypy.ini .pyrightconfig.json	\
- .pycheckers .pylintrc .style.yapf .clang-format														\
+PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCH) .dir-locals.el .mypy.ini	\
+ .pyrightconfig.json .pycheckers .pylintrc .style.yapf .clang-format			\
  ballisticakit-cmake/.clang-format .editorconfig
 
 # Prereq targets that may break if the project needs updating should go here.
@@ -170,11 +181,15 @@ docs:
 docs-pdoc:
 	@tools/pcommand gen_docs_pdoc
 
+pcommandbatch_speed_test: prereqs
+	@tools/pcommand pcommandbatch_speed_test $(PCOMMANDBATCH)
+
 # Tell make which of these targets don't represent files.
-.PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake \
- assets-cmake-scripts assets-windows assets-windows-Win32 assets-windows-x64 \
- assets-mac assets-ios assets-android assets-clean resources resources-clean \
- meta meta-clean clean clean-list dummymodules docs
+.PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake			\
+ assets-cmake-scripts assets-windows assets-windows-Win32 assets-windows-x64	\
+ assets-mac assets-ios assets-android assets-clean resources resources-clean	\
+ meta meta-clean clean clean-list dummymodules docs docs-pdoc									\
+ pcommandbatch_speed_test
 
 
 ################################################################################
@@ -1206,6 +1221,14 @@ SKIP_ENV_CHECKS ?= 0
 	@if [ $(SKIP_ENV_CHECKS) -ne 1 ]; then \
       tools/pcommand checkenv && mkdir -p .cache && touch .cache/checkenv; \
   fi
+
+foof: CHANGELOG.md CONTRIBUTORS.md Makefile
+	echo OUT IS $@
+	echo IN IS $^
+
+$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c \
+                     src/tools/pcommandbatch/cJSON.c
+	@tools/pcommand build_pcommandbatch $^ $@
 
 # CMake build-type lowercase
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)

@@ -242,7 +242,7 @@ class MetaMakefileGenerator:
     ) -> None:
         targets.append(
             Target(
-                src=['$(TOOLS_DIR)/batools/pcommand.py'],
+                src=['$(TOOLS_DIR)/batools/pcommands.py'],
                 dst=os.path.join(moduledir, '__init__.py'),
                 cmd='$(PCOMMAND) gen_python_init_module $@',
             )

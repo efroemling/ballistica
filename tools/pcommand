@@ -4,23 +4,22 @@
 """A collection of commands for use with this project.
 
 All top level functions here can be run by passing them as the first
-argument on the command line. (or pass no arguments to get a list of them).
+argument on the command line. (or pass no arguments to get a list of
+them).
 """
 
-# Note: we import as little as possible here at the module level to
-# keep launch times fast; most imports should happen within individual command
-# functions.
+# Note: we import as little as possible here at the module level to keep
+# launch times fast; most imports should happen within individual
+# command functions.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from efrotools import pcommand
 
-# Pull in commands we want to expose. Its more efficient to define them in
-# modules rather than inline here because we'll be able to load them via pyc.
-# pylint: disable=unused-import
-from efrotools.pcommand import (
-    PROJROOT,
-    pcommand_main,
+# Pull in commands we want to expose. Its more efficient to define them
+# in modules rather than inline here because we'll be able to load them
+# via pyc. pylint: disable=unused-import
+from efrotools.pcommands import (
     formatcode,
     formatscripts,
     formatmakefile,
@@ -42,7 +41,8 @@ from efrotools.pcommand import (
     spelling_all,
     pytest,
     echo,
-    compile_python_files,
+    compile_python_file,
+    copy_python_file,
     pyver,
     try_repeat,
     xcodebuild,
@@ -51,14 +51,18 @@ from efrotools.pcommand import (
     make_ensure,
     make_target_debug,
 )
-from efrotools.pcommand2 import (
+from efrotools.pcommands2 import (
     with_build_lock,
     sortlines,
     openal_build_android,
     openal_gather,
     pyright,
+    build_pcommandbatch,
+    run_pcommandbatch_server,
+    pcommandbatch_speed_test,
+    null,
 )
-from batools.pcommand import (
+from batools.pcommands import (
     resize_image,
     check_clean_safety,
     archive_old_builds,
@@ -103,8 +107,6 @@ from batools.pcommand import (
     cmake_prep_dir,
     gen_binding_code,
     gen_flat_data_code,
-    wsl_path_to_win,
-    wsl_build_check_win_drive,
     genchangelog,
     android_sdk_utils,
     logcat,
@@ -112,7 +114,7 @@ from batools.pcommand import (
     gen_dummy_modules,
     version,
 )
-from batools.pcommand2 import (
+from batools.pcommands2 import (
     gen_python_init_module,
     gen_monolithic_register_modules,
     py_examine,
@@ -124,12 +126,12 @@ from batools.pcommand2 import (
     spinoff_test,
     spinoff_check_submodule_parent,
     tests_warm_start,
+    wsl_path_to_win,
+    wsl_build_check_win_drive,
 )
 
 # pylint: enable=unused-import
 
-if TYPE_CHECKING:
-    pass
 
 if __name__ == '__main__':
-    pcommand_main(globals())
+    pcommand.pcommand_main(globals())

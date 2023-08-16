@@ -172,7 +172,7 @@ ctx.filter_file_names = {
     'assets_phase_xcode',
     'ballistica_maya_tools.mel',
     'check_python_syntax',
-    'compile_python_files',
+    'compile_python_file',
     'pcommand',
     'vmshell',
     'cloudshell',

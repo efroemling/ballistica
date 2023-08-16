@@ -32,32 +32,37 @@ class PyRequirement:
 # entries; this accounts for manual installations or other nonstandard
 # setups.
 
-# Note 2: That is probably overkill. We can probably just replace this
-# with a simple requirements.txt file, can't we? Feels like we're mostly
-# reinventing the wheel here. We just need a clean way to check/list
-# missing stuff without necessarily installing it. And as far as
-# manually-installed bits, pip itself must have some way to allow for
-# that, right?...
+# Note 2: That is probably unnecessary. I'm certainly not using it. We
+# can probably just replace this with a simple requirements.txt file,
+# can't we? Feels like we're mostly reinventing the wheel here. We just
+# need a clean way to check/list missing stuff without necessarily
+# installing it. And as far as manually-installed bits, pip itself must
+# have some way to allow for that, right?...
+
+# Note 3: Have transitioned all these to pipname only; can at least
+# remove our custom module based stuff soon if nobody complains, which
+# would free us to theoretically move to a requirements.txt based setup.
 PY_REQUIREMENTS = [
-    PyRequirement(modulename='pylint', minversion=[2, 17, 3]),
-    PyRequirement(modulename='mypy', minversion=[1, 2, 0]),
-    PyRequirement(modulename='cpplint', minversion=[1, 6, 1]),
-    PyRequirement(modulename='pytest', minversion=[7, 3, 1]),
-    PyRequirement(modulename='pytz'),
-    PyRequirement(modulename='ansiwrap'),
-    PyRequirement(modulename='yaml', pipname='PyYAML'),
-    PyRequirement(modulename='requests'),
-    PyRequirement(modulename='pdoc'),
-    PyRequirement(pipname='black', minversion=[23, 3, 0]),
-    PyRequirement(pipname='typing_extensions', minversion=[4, 5, 0]),
+    PyRequirement(pipname='pylint', minversion=[2, 17, 5]),
+    PyRequirement(pipname='mypy', minversion=[1, 4, 1]),
+    PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
+    PyRequirement(pipname='pytest', minversion=[7, 4, 0]),
+    PyRequirement(pipname='pytz', minversion=[2023, 3]),
+    PyRequirement(pipname='ansiwrap', minversion=[0, 8, 4]),
+    PyRequirement(pipname='requests', minversion=[2, 31, 0]),
+    PyRequirement(pipname='pdoc', minversion=[14, 0, 0]),
+    PyRequirement(pipname='PyYAML', minversion=[6, 0, 1]),
+    PyRequirement(pipname='black', minversion=[23, 7, 0]),
+    PyRequirement(pipname='typing_extensions', minversion=[4, 7, 1]),
     PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PyRequirement(pipname='types-requests', minversion=[2, 28, 11, 17]),
+    PyRequirement(pipname='types-requests', minversion=[2, 31, 0, 2]),
     PyRequirement(pipname='types-pytz', minversion=[2023, 3, 0, 0]),
-    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 9]),
-    PyRequirement(pipname='certifi', minversion=[2022, 12, 7]),
+    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 11]),
+    PyRequirement(pipname='certifi', minversion=[2023, 7, 22]),
     PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
     PyRequirement(pipname='pbxproj', minversion=[3, 5, 0]),
-    PyRequirement(pipname='filelock', minversion=[3, 12, 0]),
+    PyRequirement(pipname='filelock', minversion=[3, 12, 2]),
+    PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
 ]
 
 
@@ -207,7 +212,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # Even though this category currently doesn't run any clean
             # commands, going to restrict to one use at a time for now
             # in case we want to add that.
-            buildlockname=category.value,
+            # buildlockname=category.value,
             srcpaths=[
                 'Makefile',
                 'tools',

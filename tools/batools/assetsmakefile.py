@@ -265,12 +265,21 @@ def _get_py_targets_subset(
         '# (and make non-writable so I\'m less likely to '
         'accidentally edit them there)\n'
         f'{efc}$(SCRIPT_TARGETS_PY{suffix}) : {copyrule}\n'
-        '\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
-        '\t@mkdir -p $(dir $@)\n'
-        '\t@rm -f $@\n'
-        '\t@cp $^ $@\n'
-        '\t@chmod 444 $@\n'
+        '#\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
+        '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
     )
+
+    # out += (
+    #     '\n# Rule to copy src asset scripts to dst.\n'
+    #     '# (and make non-writable so I\'m less likely to '
+    #     'accidentally edit them there)\n'
+    #     f'{efc}$(SCRIPT_TARGETS_PY{suffix}) : {copyrule}\n'
+    #     '\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
+    #     '\t@mkdir -p $(dir $@)\n'
+    #     '\t@rm -f $@\n'
+    #     '\t@cp $^ $@\n'
+    #     '\t@chmod 444 $@\n'
+    # )
 
     # Fancy new simple loop-based target generation.
     out += (
@@ -301,7 +310,7 @@ def _get_py_targets_subset(
                 + py_targets[i]
                 + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
                 '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
-                ' compile_python_files $^'
+                ' compile_python_file $^'
                 ' && chmod 444 $@\n'
             )
 

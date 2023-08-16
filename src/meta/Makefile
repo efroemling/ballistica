@@ -61,7 +61,7 @@ $(PROJ_SRC_DIR)/ballistica/template_fs/mgen/pyembed/binding_template_fs.inc : ba
 $(PROJ_SRC_DIR)/ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc : bauiv1meta/pyembed/binding_ui_v1.py
 	@$(PCOMMAND) gen_binding_code $< $@
 
-$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/__init__.py : $(TOOLS_DIR)/batools/pcommand.py
+$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/__init__.py : $(TOOLS_DIR)/batools/pcommands.py
 	@$(PCOMMAND) gen_python_init_module $@
 
 $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen/enums.py : $(PROJ_DIR)/src/ballistica/shared/foundation/types.h $(TOOLS_DIR)/batools/pythonenumsmodule.py
