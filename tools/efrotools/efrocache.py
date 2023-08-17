@@ -29,7 +29,8 @@ from efro.dataclassio import (
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    pass
+    import efro.terminal
+
 
 TARGET_TAG = '# __EFROCACHE_TARGET__'
 
@@ -112,13 +113,16 @@ def _project_centric_path(path: str) -> str:
     return abspath[len(projpath) :]
 
 
-def get_target(path: str) -> None:
+def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     """Fetch a target path from the cache, downloading if need be."""
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+    # pylint: disable=too-many-branches
     import tempfile
 
     from efro.error import CleanError
+
+    output_lines: list[str] = []
 
     local_cache_dir = get_local_cache_dir()
 
@@ -150,8 +154,12 @@ def get_target(path: str) -> None:
         existing_hash = get_existing_file_hash(path)
         if existing_hash == hashval:
             os.utime(path, None)
-            print(f'Refreshing from cache: {path}')
-            return
+            msg = f'Refreshing from cache: {path}'
+            if batch:
+                output_lines.append(msg)
+            else:
+                print(msg)
+            return '\n'.join(output_lines)
 
     # Ok we need to download the cache file.
     # Ok there's not a valid file in place already. Clear out whatever
@@ -163,7 +171,11 @@ def get_target(path: str) -> None:
     if not os.path.exists(local_cache_path):
         with tempfile.TemporaryDirectory() as tmpdir:
             local_cache_dl_path = os.path.join(tmpdir, 'dl')
-            print(f'Downloading: {Clr.BLU}{path}{Clr.RST}')
+            msg = f'Downloading: {clr.BLU}{path}{clr.RST}'
+            if batch:
+                output_lines.append(msg)
+            else:
+                print(msg)
             result = subprocess.run(
                 [
                     'curl',
@@ -203,7 +215,11 @@ def get_target(path: str) -> None:
     # Ok we should have a valid file in our cache dir at this point.
     # Just expand it to the target path.
 
-    print(f'Extracting: {path}')
+    msg = f'Extracting: {path}'
+    if batch:
+        output_lines.append(msg)
+    else:
+        print(msg)
 
     # Extract and stage the file in a temp dir before doing
     # a final move to the target location to be as atomic as possible.
@@ -232,6 +248,8 @@ def get_target(path: str) -> None:
 
     if not os.path.exists(path):
         raise RuntimeError(f'File {path} did not wind up as expected.')
+
+    return '\n'.join(output_lines)
 
 
 def filter_makefile(makefile_dir: str, contents: str) -> str:
@@ -632,33 +650,38 @@ def warm_start_cache() -> None:
     # server system of some sort so we don't have to spin up a full
     # Python process for each and every file we need to touch. In that
     # case, this optimization would probably be unnecessary.
-    cachemap: dict[str, str]
-    with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
-        cachemap = json.loads(infile.read())
-    assert isinstance(cachemap, dict)
-    cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
-    entries: list[tuple[str, str]] = []
-    for fname, filehash in cachemap.items():
-        # File hasn't been pulled from cache yet = ignore.
-        if not os.path.exists(fname):
-            continue
+    #
+    # UPDATE - we now have that lightweight build system (pcommandbatch)
+    # which means individual refreshes are now much less expensive than
+    # before, so disabling this for now.
+    if bool(False):
+        cachemap: dict[str, str]
+        with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
+            cachemap = json.loads(infile.read())
+        assert isinstance(cachemap, dict)
+        cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
+        entries: list[tuple[str, str]] = []
+        for fname, filehash in cachemap.items():
+            # File hasn't been pulled from cache yet = ignore.
+            if not os.path.exists(fname):
+                continue
 
-        # File is newer than the cache map = ignore.
-        if cachemap_mtime < os.path.getmtime(fname):
-            continue
+            # File is newer than the cache map = ignore.
+            if cachemap_mtime < os.path.getmtime(fname):
+                continue
 
-        # Don't have the cache source file for this guy = ignore. This
-        # can happen if cache files have been blown away since the last
-        # time this was built.
-        cachefile = os.path.join(local_cache_dir, _path_from_hash(filehash))
-        if not os.path.exists(cachefile):
-            continue
+            # Don't have the cache source file for this guy = ignore. This
+            # can happen if cache files have been blown away since the last
+            # time this was built.
+            cachefile = os.path.join(local_cache_dir, _path_from_hash(filehash))
+            if not os.path.exists(cachefile):
+                continue
 
-        # Ok, add it to the list of files we can potentially update
-        # timestamps on once we check its hash.
-        entries.append((fname, filehash))
+            # Ok, add it to the list of files we can potentially update
+            # timestamps on once we check its hash.
+            entries.append((fname, filehash))
 
-    if entries:
-        # Now fire off a multithreaded executor to check hashes and
-        # update timestamps.
-        _check_warm_start_entries(entries)
+        if entries:
+            # Now fire off a multithreaded executor to check hashes and
+            # update timestamps.
+            _check_warm_start_entries(entries)

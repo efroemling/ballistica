@@ -197,6 +197,7 @@ def clean_orphaned_assets() -> None:
 def win_ci_install_prereqs() -> None:
     """Install bits needed for basic win ci."""
     import json
+
     from efrotools.efrocache import get_target
 
     pcommand.disallow_in_batch()
@@ -230,7 +231,7 @@ def win_ci_install_prereqs() -> None:
             needed_targets.add(target)
 
     for target in needed_targets:
-        get_target(target)
+        get_target(target, batch=pcommand.is_batch(), clr=pcommand.clr())
 
 
 def win_ci_binary_build() -> None:

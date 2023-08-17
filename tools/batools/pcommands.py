@@ -475,11 +475,13 @@ def efrocache_get() -> None:
     """Get a file from efrocache."""
     from efrotools.efrocache import get_target
 
-    pcommand.disallow_in_batch()
-
-    if len(sys.argv) != 3:
+    args = pcommand.get_args()
+    if len(args) != 1:
         raise RuntimeError('Expected exactly 1 arg')
-    get_target(sys.argv[2])
+
+    output = get_target(args[0], batch=pcommand.is_batch(), clr=pcommand.clr())
+    if pcommand.is_batch():
+        pcommand.set_output(output)
 
 
 def get_modern_make() -> None:
