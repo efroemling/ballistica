@@ -266,10 +266,10 @@ prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/mac_arm64_gui/debug
 
 build/prefab/full/mac_%_gui/debug/ballisticakit: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/mac_%_gui/debug/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Mac gui release:
 
@@ -296,10 +296,10 @@ prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/mac_arm64_gui/release
 
 build/prefab/full/mac_%_gui/release/ballisticakit: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/mac_%_gui/release/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Mac server debug:
 
@@ -326,10 +326,10 @@ prefab-mac-arm64-server-debug-build: prereqs assets-server \
 	@$(STAGE_BUILD) -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
 
 build/prefab/full/mac_%_server/debug/dist/ballisticakit_headless: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/mac_%_server/debug/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Mac server release:
 
@@ -358,10 +358,10 @@ prefab-mac-arm64-server-release-build: prereqs assets-server \
       build/prefab/full/mac_arm64_server/release
 
 build/prefab/full/mac_%_server/release/dist/ballisticakit_headless: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/mac_%_server/release/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Linux gui debug:
 
@@ -388,10 +388,10 @@ prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/linux_arm64_gui/debug
 
 build/prefab/full/linux_%_gui/debug/ballisticakit: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/linux_%_gui/debug/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Linux gui release:
 
@@ -418,10 +418,10 @@ prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/linux_arm64_gui/release
 
 build/prefab/full/linux_%_gui/release/ballisticakit: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/linux_%_gui/release/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Linux server debug:
 
@@ -450,10 +450,10 @@ prefab-linux-arm64-server-debug-build: prereqs assets-server \
       build/prefab/full/linux_arm64_server/debug
 
 build/prefab/full/linux_%_server/debug/dist/ballisticakit_headless: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/linux_%_server/debug/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Linux server release:
 
@@ -482,10 +482,10 @@ prefab-linux-arm64-server-release-build: prereqs assets-server \
       build/prefab/full/linux_arm64_server/release
 
 build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/linux_%_server/release/libballisticaplus.a: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Windows gui debug:
 
@@ -502,13 +502,13 @@ prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
       build/prefab/full/windows_x86_gui/debug
 
 build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.lib: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.pdb: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Windows gui release:
 
@@ -526,13 +526,13 @@ prefab-windows-x86-gui-release-build: prereqs \
       build/prefab/full/windows_x86_gui/release
 
 build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.lib: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.pdb: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Windows server debug:
 
@@ -551,13 +551,13 @@ prefab-windows-x86-server-debug-build: prereqs \
       build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Windows server release:
 
@@ -576,13 +576,13 @@ prefab-windows-x86-server-release-build: prereqs \
       build/prefab/full/windows_x86_server/release
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
-	@tools/pcommand efrocache_get $@
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-gui-debug prefab-gui-release prefab-gui-debug-build \

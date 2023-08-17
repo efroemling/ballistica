@@ -1,4 +1,4 @@
-### 1.7.26 (build 21212, api 8, 2023-08-03)
+### 1.7.26 (build 21213, api 8, 2023-08-17)
 
 - Various general improvements to the pcommand (project command) system.
 - Modules containing pcommand functions are now named with an 's' - so

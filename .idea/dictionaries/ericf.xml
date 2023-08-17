@@ -2129,6 +2129,7 @@
       <w>pcommand</w>
       <w>pcommandbatch</w>
       <w>pcommandbatchbin</w>
+      <w>pcommandbatchfromroot</w>
       <w>pcommands</w>
       <w>pcommandserver</w>
       <w>pcstr</w>

@@ -264,7 +264,21 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
     cachemap = os.path.join(to_proj_root, CACHE_MAP_NAME)
     lines = contents.splitlines()
-    pcommand = 'tools/pcommand'
+
+    if makefile_dir == '':
+        # In root makefile just use standard pcommandbatch var.
+        pcommand = '$(PCOMMANDBATCH)'
+    elif makefile_dir == 'src/assets':
+        # Currently efrocache_get needs to be run from project-root so
+        # we can't just use $(PCOMMANDBATCH); need a special from-root
+        # var.
+        pcommand = '$(PCOMMANDBATCHFROMROOT)'
+    elif makefile_dir == 'src/resources':
+        # Not yet enough stuff in resources to justify supporting
+        # pcommandbatch there; sticking with regular for now.
+        pcommand = 'tools/pcommand'
+    else:
+        raise RuntimeError(f"Unsupported makefile_dir: '{makefile_dir}'.")
 
     # Replace cachable targets with cache lookups.
     while TARGET_TAG in lines:
