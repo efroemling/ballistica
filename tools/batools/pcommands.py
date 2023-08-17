@@ -785,7 +785,7 @@ def stage_build() -> None:
 
     try:
         batools.staging.stage_build(
-            projroot=str(pcommand.PROJROOT), args=sys.argv[2:]
+            projroot=str(pcommand.PROJROOT), args=pcommand.get_args()
         )
     except CleanError as exc:
         exc.pretty_print()

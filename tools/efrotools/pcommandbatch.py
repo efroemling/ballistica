@@ -117,7 +117,7 @@ def build_pcommandbatch(inpaths: list[str], outpath: str) -> None:
 
 
 def run_pcommandbatch_server(
-    idle_timeout_secs: int, state_dir: str, instance: str
+    idle_timeout_secs: int, project_dir: str, state_dir: str, instance: str
 ) -> None:
     """Run a server for handling batches of pcommands.
 
@@ -135,6 +135,7 @@ def run_pcommandbatch_server(
     # just keep the existing ones.
     server = Server(
         idle_timeout_secs=idle_timeout_secs,
+        project_dir=project_dir,
         state_dir=state_dir,
         instance=instance,
         daemon=use_daemon,
@@ -159,11 +160,13 @@ class Server:
     def __init__(
         self,
         idle_timeout_secs: int,
+        project_dir: str,
         state_dir: str,
         instance: str,
         daemon: bool,
     ) -> None:
         self._daemon = daemon
+        self._project_dir = project_dir
         self._state_dir = state_dir
         self._idle_timeout_secs = idle_timeout_secs
         self._worker_state_file_path = f'{state_dir}/worker_state_{instance}'
@@ -177,11 +180,6 @@ class Server:
         self._spinup_lock_path = f'{self._state_dir}/lock'
         self._spinup_lock = filelock.FileLock(self._spinup_lock_path)
         self._server_error: str | None = None
-
-    # def __del__(self) -> None:
-    # if self._spinup_lock.is_locked:
-    # self._spinup_lock.release()
-    # pass
 
     def run(self) -> None:
         """Do the thing."""
@@ -310,9 +308,13 @@ class Server:
         self._client_count_since_last_check += 1
         self._running_client_count += 1
         try:
-            argv: list[str] = json.loads((await reader.read()).decode())
+            reqdata: dict = json.loads((await reader.read()).decode())
+            assert isinstance(reqdata, dict)
+            argv: list[str] = reqdata['a']
             assert isinstance(argv, list)
             assert all(isinstance(i, str) for i in argv)
+            isatty: bool = reqdata['t']
+            assert isinstance(isatty, bool)
 
             print(
                 f'pcommandbatch server {self._instance} (pid {self._pid})'
@@ -332,7 +334,12 @@ class Server:
                     ) = await asyncio.get_running_loop().run_in_executor(
                         None,
                         lambda: run_client_pcommand(
-                            argv, self._worker_log_file_path
+                            argv,
+                            # Show log file path relative to project.
+                            self._worker_log_file_path.removeprefix(
+                                f'{self._project_dir}/'
+                            ),
+                            isatty,
                         ),
                     )
                     if VERBOSE:

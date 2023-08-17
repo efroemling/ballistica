@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     import threading
     from typing import Any
 
+    from efro.terminal import ClrBase
+
 # Absolute path of the project root.
 PROJROOT = Path(__file__).resolve().parents[2]
 
@@ -76,6 +78,22 @@ def get_args() -> list[str]:
     return argv[2:]
 
 
+def clr() -> type[ClrBase]:
+    """Like efro.terminal.Clr but works correctly under pcommandbatch."""
+    import efro.terminal
+
+    # Note: currently just using the 'isatty' value from the client.
+    # ideally should expand the client-side logic to exactly match what
+    # efro.terminal.Clr does locally.
+    if _g_batch_server_mode:
+        assert _g_thread_local_storage is not None
+        isatty = _g_thread_local_storage.isatty
+        assert isinstance(isatty, bool)
+        return efro.terminal.ClrAlways if isatty else efro.terminal.ClrNever
+
+    return efro.terminal.Clr
+
+
 def set_output(output: str, newline: bool = True) -> None:
     """Set an output string for the current pcommand.
 
@@ -102,12 +120,6 @@ def _run_pcommand(sysargv: list[str]) -> int:
     from efro.terminal import Clr
 
     assert _g_funcs is not None
-
-    # If we're in batch mode, stuff these args into our thread-local
-    # storage.
-    if _g_batch_server_mode:
-        assert _g_thread_local_storage is not None
-        _g_thread_local_storage.argv = sysargv
 
     retval = 0
     show_help = False
@@ -192,7 +204,9 @@ def is_batch() -> bool:
     return _g_batch_server_mode
 
 
-def run_client_pcommand(args: list[str], log_path: str) -> tuple[int, str]:
+def run_client_pcommand(
+    args: list[str], log_path: str, isatty: bool
+) -> tuple[int, str]:
     """Call a pcommand function when running as a batch server."""
     assert _g_batch_server_mode
     assert _g_thread_local_storage is not None
@@ -202,6 +216,11 @@ def run_client_pcommand(args: list[str], log_path: str) -> tuple[int, str]:
         delattr(_g_thread_local_storage, 'output')
     if hasattr(_g_thread_local_storage, 'output'):
         delattr(_g_thread_local_storage, 'output')
+
+    # Stuff args into our thread-local storage so the user can get at
+    # them.
+    _g_thread_local_storage.argv = args
+    _g_thread_local_storage.isatty = isatty
 
     # Run the command.
     resultcode: int = _run_pcommand(args)
@@ -214,7 +233,8 @@ def run_client_pcommand(args: list[str], log_path: str) -> tuple[int, str]:
             output += '\n'
         output += (
             f'Error: pcommandbatch command failed: {args}.'
-            f" See '{log_path}' for more info.\n"
+            f" For more info, see '{log_path}', or rerun with"
+            ' env var BA_PCOMMANDBATCH_DISABLE=1 to see all output here.\n'
         )
 
     assert isinstance(output, str)

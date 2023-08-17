@@ -265,7 +265,7 @@ def _get_py_targets_subset(
         '# (and make non-writable so I\'m less likely to '
         'accidentally edit them there)\n'
         f'{efc}$(SCRIPT_TARGETS_PY{suffix}) : {copyrule}\n'
-        '#\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
+        # '#\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
         '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
     )
 
@@ -395,10 +395,11 @@ def _get_extras_targets_win(
         f'# __EFROCACHE_TARGET__\n'
         f'$(EXTRAS_TARGETS_WIN_{p_up}) : $(BUILD_DIR)/% :'
         ' %\n'
-        '\t@echo Copying file: $(subst $(BUILD_DIR)/,,$@)\n'
-        '\t@mkdir -p $(dir $@)\n'
-        '\t@rm -f $@\n'
-        '\t@cp $^ $@\n'
+        '\t@$(PCOMMANDBATCH) copy_win_extra_file $^ $@\n'
+        # '\t@echo Copying file: $(subst $(BUILD_DIR)/,,$@)\n'
+        # '\t@mkdir -p $(dir $@)\n'
+        # '\t@rm -f $@\n'
+        # '\t@cp $^ $@\n'
     )
 
     return out

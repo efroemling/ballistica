@@ -130,6 +130,7 @@ def run_pcommandbatch_server() -> None:
     args = pcommand.get_args()
 
     idle_timeout_secs = int(extract_arg(args, '--timeout', required=True))
+    project_dir = extract_arg(args, '--project-dir', required=True)
     state_dir = extract_arg(args, '--state-dir', required=True)
     instance = extract_arg(args, '--instance', required=True)
 
@@ -138,6 +139,7 @@ def run_pcommandbatch_server() -> None:
 
     pcb.run_pcommandbatch_server(
         idle_timeout_secs=idle_timeout_secs,
+        project_dir=project_dir,
         state_dir=state_dir,
         instance=instance,
     )

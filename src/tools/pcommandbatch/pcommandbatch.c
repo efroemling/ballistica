@@ -24,6 +24,7 @@
 
 struct Context_ {
   const char* state_dir_path;
+  const char* project_dir_path;
   const char* instance_prefix;
   int instance_num;
   int pid;
@@ -46,9 +47,6 @@ int main(int argc, char** argv) {
   struct Context_ ctx;
   memset(&ctx, 0, sizeof(ctx));
 
-  ctx.state_dir_path = NULL;
-  ctx.instance_prefix = NULL;
-  ctx.pcommandpath = NULL;
   ctx.server_idle_seconds = 5;
   ctx.pid = getpid();
 
@@ -221,10 +219,11 @@ int establish_connection_(const struct Context_* ctx) {
       }
       char buf[512];
       snprintf(buf, sizeof(buf),
-               "%s run_pcommandbatch_server --timeout %d --state-dir %s "
-               "--instance %s_%d %s",
-               ctx->pcommandpath, ctx->server_idle_seconds, ctx->state_dir_path,
-               ctx->instance_prefix, ctx->instance_num, endbuf);
+               "%s run_pcommandbatch_server --timeout %d --project-dir %s"
+               " --state-dir %s --instance %s_%d %s",
+               ctx->pcommandpath, ctx->server_idle_seconds, ctx->project_dir_path,
+               ctx->state_dir_path, ctx->instance_prefix, ctx->instance_num,
+               endbuf);
       system(buf);
 
       // Spin and wait up to a few seconds for the file to appear.
@@ -327,12 +326,14 @@ int calc_paths_(struct Context_* ctx) {
   // this is project-root and src/assets
   if (path_exists_("config/projectconfig.json")) {
     // Looks like we're in project root.
+    ctx->project_dir_path = ".";
     ctx->state_dir_path = ".cache/pcommandbatch";
     ctx->instance_prefix = "root";
     ctx->pcommandpath = "tools/pcommand";
   } else if (path_exists_("ba_data")
              && path_exists_("../../config/projectconfig.json")) {
     // Looks like we're in src/assets.
+    ctx->project_dir_path = "../..";
     ctx->state_dir_path = "../../.cache/pcommandbatch";
     ctx->instance_prefix = "assets";
     ctx->pcommandpath = "../../tools/pcommand";
@@ -362,16 +363,27 @@ int calc_paths_(struct Context_* ctx) {
   // instance that spins up worker instances as needed. Though such a fancy
   // setup might be overkill.
   ctx->instance_num = rand() % 6;
+
+  // I was wondering if using pid would lead to a more even distribution,
+  // but it didn't make a significant difference in my tests. And I worry
+  // there would be some odd corner case where pid isn't going up evenly, so
+  // sticking with rand() for now. ctx->instance_num = ctx->pid % 6;
   return 0;
 }
 
 int send_command_(struct Context_* ctx, int argc, char** argv) {
   // Build a json array of our args.
+  cJSON* req = cJSON_CreateObject();
   cJSON* array = cJSON_CreateArray();
   for (int i = 0; i < argc; ++i) {
     cJSON_AddItemToArray(array, cJSON_CreateString(argv[i]));
   }
-  char* json_out = cJSON_Print(array);
+  cJSON_AddItemToObject(req, "a", array);
+  cJSON_AddItemToObject(req, "t",
+                        isatty(1) ? cJSON_CreateTrue() : cJSON_CreateFalse());
+  cJSON_AddItemToObject(req, "t",
+                        isatty(1) ? cJSON_CreateTrue() : cJSON_CreateFalse());
+  char* json_out = cJSON_Print(req);
 
   // Send our command.
   int msglen = strlen(json_out);
@@ -393,7 +405,7 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
 
   // Clean up our mess after we've sent them on their way.
   free(json_out);
-  cJSON_Delete(array);
+  cJSON_Delete(req);
 
   return 0;
 }

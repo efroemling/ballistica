@@ -479,6 +479,60 @@ def sync() -> None:
     run_standard_syncs(pcommand.PROJROOT, mode, sync_items)
 
 
+def copy_win_extra_file() -> None:
+    """Copy a windows extra file."""
+    _simple_file_copy('Copying file')
+
+
+def compile_language_file() -> None:
+    """Compile a language file."""
+    _simple_file_copy('Compiling language json')
+
+
+def compile_mesh_file() -> None:
+    """Compile a mesh file."""
+    import os
+    import subprocess
+    from efro.error import CleanError
+
+    args = pcommand.get_args()
+    if len(args) != 3:
+        raise CleanError('Expected 3 args.')
+
+    src, dst, makebob = args
+
+    # Show project-relative paths when possible.
+    relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
+    pcommand.set_output(f'Compiling mesh: {relpath}')
+
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    subprocess.run([makebob, src, dst], check=True)
+
+    assert os.path.exists(dst)
+
+
+def compile_collision_mesh_file() -> None:
+    """Compile a mesh file."""
+    import os
+    import subprocess
+    from efro.error import CleanError
+
+    args = pcommand.get_args()
+    if len(args) != 3:
+        raise CleanError('Expected 3 args.')
+
+    src, dst, makebob = args
+
+    # Show project-relative paths when possible.
+    relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
+    pcommand.set_output(f'Compiling collision mesh: {relpath}')
+
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    subprocess.run([makebob, src, dst], check=True)
+
+    assert os.path.exists(dst)
+
+
 def compile_python_file() -> None:
     """Compile pyc files for packaging.
 
@@ -499,9 +553,11 @@ def compile_python_file() -> None:
     if len(args) != 1:
         raise CleanError('Expected a single arg.')
     fname = args[0]
-    # Print project-relative path when possible.
+
+    # Show project-relative path when possible.
     relpath = os.path.abspath(fname).removeprefix(f'{pcommand.PROJROOT}/')
     pcommand.set_output(f'Compiling script: {relpath}')
+
     py_compile.compile(
         fname,
         doraise=True,
@@ -512,6 +568,10 @@ def compile_python_file() -> None:
 
 def copy_python_file() -> None:
     """Copy Python files for packaging."""
+    _simple_file_copy('Copying script', make_unwritable=True)
+
+
+def _simple_file_copy(msg: str, make_unwritable: bool = False) -> None:
     import os
     import shutil
     from efro.error import CleanError
@@ -523,21 +583,28 @@ def copy_python_file() -> None:
     src, dst = args
 
     relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
-    pcommand.set_output(f'Copying script: {relpath}')
+    pcommand.set_output(f'{msg}: {relpath}')
 
-    # Since we're making built files unwritable, we need to blow
+    # If we're making built files unwritable, we need to blow
     # away exiting ones to allow this to succeed.
-    if os.path.exists(dst):
-        os.unlink(dst)
+    if make_unwritable:
+        if os.path.exists(dst):
+            os.unlink(dst)
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copyfile(src, dst)
 
+    assert os.path.exists(dst)
+
     # Make built files unwritable to save myself from accidentally
     # doing editing there and then blowing away my work.
-    os.chmod(dst, 0o444)
+    if make_unwritable:
+        os.chmod(dst, 0o444)
 
-    assert os.path.exists(dst)
+
+def compile_font_file() -> None:
+    """Compile a font file."""
+    _simple_file_copy('Compiling font')
 
 
 def pytest() -> None:

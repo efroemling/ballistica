@@ -150,7 +150,6 @@ ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 # Note: Code below needs updating when Python version changes (currently 3.11)
 define make-opt-pyc-target
 $1: $$(subst /__pycache__,,$$(subst .cpython-311.opt-1.pyc,.py,$1))
-#	@echo Compiling script: $$(subst $(BUILD_DIR)/,,$$^)
 	@$$(PCOMMANDBATCH) compile_python_file $$^
 endef
 
@@ -702,7 +701,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_PUBLIC) : $(BUILD_DIR)/%.py : %.py
-#	@echo Copying script: $(subst $(BUILD_DIR)/,,$@)
 	@$(PCOMMANDBATCH) copy_python_file $^ $@
 
 # These are too complex to define in a pattern rule;
@@ -781,7 +779,6 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_PUBLIC_TOOLS) : $(BUILD_DIR)/ba_data/python/%.py : $(TOOLS_DIR)/%.py
-#	@echo Copying script: $(subst $(BUILD_DIR)/,,$@)
 	@$(PCOMMANDBATCH) copy_python_file $^ $@
 
 # These are too complex to define in a pattern rule;
@@ -7421,6 +7418,21 @@ ba_data/%.tex2d.png : ../../.efrocachemap
 	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
 
 ba_data/%_+x.tex2d.png : ../../.efrocachemap
+	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
+
+ba_data/%_-x.tex2d.png: ../../.efrocachemap
+	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
+
+ba_data/%_+y.tex2d.png: ../../.efrocachemap
+	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
+
+ba_data/%_-y.tex2d.png: ../../.efrocachemap
+	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
+
+ba_data/%_+z.tex2d.png: ../../.efrocachemap
+	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
+
+ba_data/%_-z.tex2d.png: ../../.efrocachemap
 	@cd ../.. && tools/pcommand efrocache_get src/assets/$@
 
 $(BUILD_DIR)/ba_data/%_preview.png : ../../.efrocachemap
