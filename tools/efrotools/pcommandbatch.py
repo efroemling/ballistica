@@ -57,6 +57,7 @@ import time
 import json
 import asyncio
 import tempfile
+import traceback
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -343,14 +344,14 @@ class Server:
                             f' {resultcode}.',
                             file=sys.stderr,
                         )
-            except Exception as exc:
-                if VERBOSE:
-                    print(
-                        f'pcommandbatch server {self._instance}'
-                        f' (pid {self._pid}):'
-                        f'error on request {request_id}: {exc}.',
-                        file=sys.stderr,
-                    )
+            except Exception:
+                print(
+                    f'pcommandbatch server {self._instance}'
+                    f' (pid {self._pid}):'
+                    f' error on request {request_id}:',
+                    file=sys.stderr,
+                )
+                traceback.print_exc()
                 resultcode = 1
                 logpath = self._worker_log_file_path.removeprefix(
                     f'{self._project_dir}/'
