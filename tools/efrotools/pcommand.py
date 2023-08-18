@@ -212,8 +212,6 @@ def run_client_pcommand(args: list[str], isatty: bool) -> tuple[int, str]:
     # Clear any output from previous commands on this thread.
     if hasattr(_g_thread_local_storage, 'output'):
         delattr(_g_thread_local_storage, 'output')
-    if hasattr(_g_thread_local_storage, 'output'):
-        delattr(_g_thread_local_storage, 'output')
 
     # Stuff args into our thread-local storage so the user can get at
     # them.
@@ -229,8 +227,8 @@ def run_client_pcommand(args: list[str], isatty: bool) -> tuple[int, str]:
         raise RuntimeError(f'client pcommand returned error code {resultcode}.')
 
     output = getattr(_g_thread_local_storage, 'output', '')
-
     assert isinstance(output, str)
+
     return (resultcode, output)
 
 
@@ -253,8 +251,8 @@ def _trim_docstring(docstring: str) -> str:
     if not docstring:
         return ''
 
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines.
+    # Convert tabs to spaces (following the normal Python rules) and
+    # split into a list of lines.
     lines = docstring.expandtabs().splitlines()
 
     # Determine minimum indentation (first line doesn't count).
