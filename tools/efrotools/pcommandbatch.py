@@ -333,14 +333,7 @@ class Server:
                         output,
                     ) = await asyncio.get_running_loop().run_in_executor(
                         None,
-                        lambda: run_client_pcommand(
-                            argv,
-                            # Show log file path relative to project.
-                            self._worker_log_file_path.removeprefix(
-                                f'{self._project_dir}/'
-                            ),
-                            isatty,
-                        ),
+                        lambda: run_client_pcommand(argv, isatty),
                     )
                     if VERBOSE:
                         print(
@@ -359,7 +352,15 @@ class Server:
                         file=sys.stderr,
                     )
                 resultcode = 1
-                output = ''
+                logpath = self._worker_log_file_path.removeprefix(
+                    f'{self._project_dir}/'
+                )
+                output = (
+                    f'Error: pcommandbatch command failed: {argv}.'
+                    f" For more info, see '{logpath}', or rerun with"
+                    ' env var BA_PCOMMANDBATCH_DISABLE=1 to see'
+                    ' all output here.\n'
+                )
 
             writer.write(json.dumps({'r': resultcode, 'o': output}).encode())
             writer.close()

@@ -204,9 +204,7 @@ def is_batch() -> bool:
     return _g_batch_server_mode
 
 
-def run_client_pcommand(
-    args: list[str], log_path: str, isatty: bool
-) -> tuple[int, str]:
+def run_client_pcommand(args: list[str], isatty: bool) -> tuple[int, str]:
     """Call a pcommand function when running as a batch server."""
     assert _g_batch_server_mode
     assert _g_thread_local_storage is not None
@@ -222,20 +220,15 @@ def run_client_pcommand(
     _g_thread_local_storage.argv = args
     _g_thread_local_storage.isatty = isatty
 
-    # Run the command.
+    # Run the command. This may return an explicit code or may throw an
+    # exception.
     resultcode: int = _run_pcommand(args)
 
-    # Return the result code and any output the command provided.
-    output = getattr(_g_thread_local_storage, 'output', '')
-
+    # Handle error result-codes consistently with exceptions.
     if resultcode != 0:
-        if output:
-            output += '\n'
-        output += (
-            f'Error: pcommandbatch command failed: {args}.'
-            f" For more info, see '{log_path}', or rerun with"
-            ' env var BA_PCOMMANDBATCH_DISABLE=1 to see all output here.\n'
-        )
+        raise RuntimeError(f'client pcommand returned error code {resultcode}.')
+
+    output = getattr(_g_thread_local_storage, 'output', '')
 
     assert isinstance(output, str)
     return (resultcode, output)
