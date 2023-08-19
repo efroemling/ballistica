@@ -602,11 +602,10 @@ def ensure_prefab_platform() -> None:
     import batools.build
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
-    if len(sys.argv) != 3:
+    args = pcommand.get_args()
+    if len(args) != 1:
         raise CleanError('Expected 1 platform name arg.')
-    needed = sys.argv[2]
+    needed = args[0]
     current = batools.build.get_current_prefab_platform()
     if current != needed:
         raise CleanError(

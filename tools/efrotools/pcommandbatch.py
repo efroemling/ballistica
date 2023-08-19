@@ -12,27 +12,30 @@ hundreds or thousands of pcommands are being run.
 
 To help fight that problem, pcommandbatch introduces a way to run
 pcommands by submitting requests to temporary local server daemons.
-This allows individual pcommand calls to go through a very lightweight
-client binary that simply forwards the command to a running server.
-This cuts minimal client runtime down greatly. Building and managing
-the server and client are handled automatically, and systems which are
-unable to compile a client binary can fall back to using vanilla
-pcommand in those cases.
+This allows individual pcommand calls to go through a lightweight client
+binary that simply forwards the command to a running server. This cuts
+minimum pcommand runtimes down greatly. Building and managing the server
+and client are handled automatically, and systems which are unable to
+compile a client binary can fall back to using vanilla pcommand in those
+cases.
 
-A few considerations must be made when using pcommands with batch mode.
-By default, all existing pcommands have been fitted with a
-disallow_in_batch() call which triggers an error under batch mode.
-These calls should be removed if/when each call is updated to work
-cleanly in batch mode. Requirements for batch-friendly pcommands follow:
+A few considerations must be made when using pcommandbatch. By default,
+all existing pcommands have been fitted with a disallow_in_batch() call
+which triggers an error under batch mode. These calls should be removed
+if/when each call is updated to work cleanly in batch mode. Guidelines
+for batch-friendly pcommands follow:
 
 - Batch mode runs parallel pcommands in different background threads
-  and may run thousands of commands throughout the duration of the
-  server process. Batch-friendly pcommands must behave reasonably in
-  such an environment.
+  and may process thousands of commands in a single process.
+  Batch-friendly pcommands must behave reasonably in such an environment.
 
 - Batch-enabled pcommands must not call os.chdir() or sys.exit() or
   anything else having global effects. This should be self-explanatory
   considering the shared server model in use.
+
+- Batch-enabled pcommands must not use environment-variables to
+  influence their behavior. In batch mode this would unintuitively use
+  the environment of the server and not of the client.
 
 - Batch-enabled pcommands should not look at sys.argv. They should
   instead use pcommand.get_args(). Be aware that this value does not

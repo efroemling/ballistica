@@ -420,6 +420,8 @@ def wsl_build_check_win_drive() -> None:
     import textwrap
     from efro.error import CleanError
 
+    # We use env vars to influence our behavior and thus can't support
+    # batch.
     pcommand.disallow_in_batch()
 
     if (

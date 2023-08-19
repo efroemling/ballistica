@@ -1,9 +1,11 @@
-### 1.7.26 (build 21213, api 8, 2023-08-17)
+### 1.7.26 (build 21215, api 8, 2023-08-18)
 
 - Various general improvements to the pcommand (project command) system.
 - Modules containing pcommand functions are now named with an 's' - so
   `pcommands.py` instead of `pcommand.py`. `pcommand.py` in efrotools is now
   solely related to the functioning of the pcommand system.
+- Switched various build stuff to use `pcommandbatch` instead of regular
+  pcommand. In some cases this can speed things up by 5x or so.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 

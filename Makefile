@@ -29,17 +29,16 @@ help:
 	@$(PCOMMAND) makefile_target_list Makefile
 
 # Set env-var BA_ENABLE_COMPILE_COMMANDS_DB=1 to enable creating/updating a
-# cmake compile-commands database for use with irony for emacs (and possibly
-# other tools).
+# cmake compile-commands database for use with things like clangd.
 ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
  PREREQ_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
+# pcommandbatch can be much faster when running hundreds or thousands of
+# commands, but has some downsides and limitations compared to regular
+# pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
+# which.
 PCOMMAND = tools/pcommand
-# Support for running pcommands in 'batch' mode in which a simple local server
-# handles command requests from a lightweight client binary. This largely
-# takes Python's startup time out of the equation, which can add up when
-# running lots of small pcommands in cases such as asset builds.
 PCOMMANDBATCHBIN = .cache/pcommandbatch/pcommandbatch
 ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
  PCOMMANDBATCH = $(PCOMMAND)
@@ -49,8 +48,8 @@ endif
 
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
-PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCH) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pycheckers .pylintrc .style.yapf .clang-format			\
+PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
+ .pyrightconfig.json .pycheckers .pylintrc .style.yapf .clang-format				\
  ballisticakit-cmake/.clang-format .editorconfig
 
 # Prereq targets that may break if the project needs updating should go here.
@@ -203,11 +202,11 @@ pcommandbatch_speed_test: prereqs
 
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
-	$($(shell $(PCOMMANDBATCH) prefab_run_var gui-debug))
+	$($(shell $(PCOMMAND) prefab_run_var gui-debug))
 
 # Assemble & run a gui release build for this platform.
 prefab-gui-release: prefab-gui-release-build
-	$($(shell $(PCOMMANDBATCH) prefab_run_var gui-release))
+	$($(shell $(PCOMMAND) prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
 prefab-gui-debug-build:
@@ -219,11 +218,11 @@ prefab-gui-release-build:
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
-	$($(shell $(PCOMMANDBATCH) prefab_run_var server-debug))
+	$($(shell $(PCOMMAND) prefab_run_var server-debug))
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
-	$($(shell $(PCOMMANDBATCH) prefab_run_var server-release))
+	$($(shell $(PCOMMAND) prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:

@@ -23,11 +23,11 @@ BUILD_DIR = $(PROJ_DIR)/build/assets
 
 PCOMMAND = $(TOOLS_DIR)/pcommand
 
-# Support for running pcommands in 'batch' mode in which a simple local server
-# handles command requests from a lightweight client binary. This largely
-# takes Python's startup time out of the equation, which can add up when
-# running lots of small pcommands in cases such as asset builds.
-PCOMMANDBATCHBIN := $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
+# pcommandbatch can be much faster when running hundreds or thousands of
+# commands, but has some downsides and limitations compared to regular
+# pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
+# which.
+PCOMMANDBATCHBIN = $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
 ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
  PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
  PCOMMANDBATCHFROMROOT = tools/pcommand
