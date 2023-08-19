@@ -138,12 +138,5 @@ from batools.pcommands2 import (
 # pylint: enable=unused-import
 
 
-def foof() -> None:
-    """test."""
-    from efro.error import CleanError
-
-    raise CleanError('foo')
-
-
 if __name__ == '__main__':
     pcommand.pcommand_main(globals())
