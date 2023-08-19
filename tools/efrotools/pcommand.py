@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import io
     import threading
     from typing import Any
 
@@ -28,7 +29,7 @@ PROJROOT = Path(__file__).resolve().parents[2]
 # the name of the pcommand; only the arguments *to* the command.
 _g_thread_local_storage: threading.local | None = None
 
-# Discovered functions for the currently running pcommand instance.
+# Discovered functions for the current project.
 _g_funcs: dict | None = None
 
 # Are we running as a server?
@@ -42,6 +43,9 @@ def pcommand_main(globs: dict[str, Any]) -> None:
     the one corresponding to the first passed arg.
     """
     import types
+
+    from efro.terminal import Clr
+    from efro.error import CleanError
 
     global _g_funcs  # pylint: disable=global-statement
     assert _g_funcs is None
@@ -57,8 +61,14 @@ def pcommand_main(globs: dict[str, Any]) -> None:
         )
     )
 
-    # Call the one based on sys args.
-    sys.exit(_run_pcommand(sys.argv))
+    try:
+        _run_pcommand(sys.argv)
+    except KeyboardInterrupt as exc:
+        print(f'{Clr.RED}{exc}{Clr.RST}')
+        sys.exit(1)
+    except CleanError as exc:
+        exc.pretty_print()
+        sys.exit(1)
 
 
 def get_args() -> list[str]:
@@ -79,104 +89,99 @@ def get_args() -> list[str]:
 
 
 def clr() -> type[ClrBase]:
-    """Like efro.terminal.Clr but works correctly under pcommandbatch."""
+    """Like efro.terminal.Clr but for use with pcommand.clientprint().
+
+    This properly colorizes or doesn't colorize based on whether the
+    *client* where output will be displayed is running on a terminal.
+    Regular print() output should still use efro.terminal.Clr for this
+    purpose.
+    """
     import efro.terminal
 
-    # Note: currently just using the 'isatty' value from the client.
-    # ideally should expand the client-side logic to exactly match what
-    # efro.terminal.Clr does locally.
     if _g_batch_server_mode:
         assert _g_thread_local_storage is not None
-        isatty = _g_thread_local_storage.isatty
-        assert isinstance(isatty, bool)
-        return efro.terminal.ClrAlways if isatty else efro.terminal.ClrNever
+        clrtp: type[ClrBase] = _g_thread_local_storage.clr
+        assert issubclass(clrtp, efro.terminal.ClrBase)
+        return clrtp
 
     return efro.terminal.Clr
 
 
-def set_output(output: str, newline: bool = True) -> None:
-    """Set an output string for the current pcommand.
+def clientprint(
+    *args: Any, stderr: bool = False, end: str | None = None
+) -> None:
+    """Print to client stdout.
 
-    This will be printed to stdout on the client even in batch mode.
+    Note that, in batch mode, the results of all clientprints will show
+    up only after the command completes. In regular mode, clientprint()
+    simply passes through to regular print().
     """
-    if newline:
-        output = f'{output}\n'
-
-    if not _g_batch_server_mode:
-        print(output, end='')
-        return
-
-    # Ok, we're in batch mode. Stuff this into thread-local storage to
-    # be returned once we're done.
-    assert _g_thread_local_storage is not None
-    if hasattr(_g_thread_local_storage, 'output'):
-        raise RuntimeError('Output is already set for this pcommand.')
-    _g_thread_local_storage.output = output
+    if _g_batch_server_mode:
+        assert _g_thread_local_storage is not None
+        print(
+            *args,
+            file=_g_thread_local_storage.stderr
+            if stderr
+            else _g_thread_local_storage.stdout,
+            end=end,
+        )
+    else:
+        print(*args, end=end)
 
 
-def _run_pcommand(sysargv: list[str]) -> int:
-    """Do the thing."""
+def _run_pcommand(sysargv: list[str]) -> None:
+    """Run a pcommand given raw sys args."""
     from efro.error import CleanError
-    from efro.terminal import Clr
 
     assert _g_funcs is not None
 
-    retval = 0
+    clrtp = clr()
+    error = False
     show_help = False
     if len(sysargv) < 2:
-        print(f'{Clr.RED}ERROR: command expected.{Clr.RST}')
+        clientprint(f'{clrtp.SRED}Error: Command expected.{clrtp.RST}')
         show_help = True
-        retval = 1
+        error = True
     else:
         if sysargv[1] == 'help':
             if len(sysargv) == 2:
                 show_help = True
             elif sysargv[2] not in _g_funcs:
-                print('Invalid help command.')
-                retval = 1
+                raise CleanError('Invalid help command.')
             else:
                 docs = _trim_docstring(
                     getattr(_g_funcs[sysargv[2]], '__doc__', '<no docs>')
                 )
-                print(
-                    f'\n{Clr.MAG}{Clr.BLD}pcommand {sysargv[2]}:{Clr.RST}\n'
-                    f'{Clr.MAG}{docs}{Clr.RST}\n'
+                clientprint(
+                    f'\n{clrtp.MAG}{clrtp.BLD}'
+                    f'pcommand {sysargv[2]}:{clrtp.RST}\n'
+                    f'{clrtp.MAG}{docs}{clrtp.RST}\n'
                 )
         elif sysargv[1] in _g_funcs:
-            try:
-                _g_funcs[sysargv[1]]()
-            except KeyboardInterrupt as exc:
-                print(f'{Clr.RED}{exc}{Clr.RST}')
-                retval = 1
-            except CleanError as exc:
-                exc.pretty_print()
-                retval = 1
+            _g_funcs[sysargv[1]]()
         else:
-            print(
-                f'{Clr.RED}Unknown pcommand: "{sysargv[1]}"{Clr.RST}',
-                file=sys.stderr,
-            )
-            retval = 1
+            raise CleanError(f"Unknown pcommand '{sysargv[1]}'.")
 
     if show_help:
-        print(
-            f'The {Clr.MAG}{Clr.BLD}pcommand{Clr.RST} script encapsulates'
+        clientprint(
+            f'The {clrtp.MAG}{clrtp.BLD}pcommand{clrtp.RST} script encapsulates'
             f' a collection of project-related commands.'
         )
-        print(
-            f"Run {Clr.MAG}{Clr.BLD}'pcommand [COMMAND] ...'"
-            f'{Clr.RST} to run a command.'
+        clientprint(
+            f"Run {clrtp.MAG}{clrtp.BLD}'pcommand [COMMAND] ...'"
+            f'{clrtp.RST} to run a command.'
         )
-        print(
-            f"Run {Clr.MAG}{Clr.BLD}'pcommand help [COMMAND]'"
-            f'{Clr.RST} for full documentation for a command.'
+        clientprint(
+            f"Run {clrtp.MAG}{clrtp.BLD}'pcommand help [COMMAND]'"
+            f'{clrtp.RST} for full documentation for a command.'
         )
-        print('Available commands:')
+        clientprint('Available commands:')
         for func, obj in sorted(_g_funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
-            print(f'{Clr.MAG}{func}{Clr.BLU} - {doc}{Clr.RST}')
+            clientprint(f'{clrtp.MAG}{func}{clrtp.BLU} - {doc}{clrtp.RST}')
 
-    return retval
+    if error:
+        raise CleanError()
 
 
 def enter_batch_server_mode() -> None:
@@ -204,32 +209,49 @@ def is_batch() -> bool:
     return _g_batch_server_mode
 
 
-def run_client_pcommand(args: list[str], isatty: bool) -> tuple[int, str]:
-    """Call a pcommand function when running as a batch server."""
+def run_client_pcommand(
+    args: list[str], clrtp: type[ClrBase], logpath: str
+) -> tuple[int, str, str]:
+    """Call a pcommand function as a server.
+
+    Returns a result code and stdout output.
+    """
+    import io
+    import traceback
+
+    from efro.error import CleanError
+
     assert _g_batch_server_mode
     assert _g_thread_local_storage is not None
 
-    # Clear any output from previous commands on this thread.
-    if hasattr(_g_thread_local_storage, 'output'):
-        delattr(_g_thread_local_storage, 'output')
+    with io.StringIO() as stdout, io.StringIO() as stderr:
+        # Stuff some state into thread-local storage for the handler thread
+        # to access.
+        _g_thread_local_storage.stdout = stdout
+        _g_thread_local_storage.stderr = stderr
+        _g_thread_local_storage.argv = args
+        _g_thread_local_storage.clr = clrtp
 
-    # Stuff args into our thread-local storage so the user can get at
-    # them.
-    _g_thread_local_storage.argv = args
-    _g_thread_local_storage.isatty = isatty
+        try:
+            _run_pcommand(args)
+            resultcode = 0
+        except KeyboardInterrupt as exc:
+            clientprint(f'{clrtp.RED}{exc}{clrtp.RST}')
+            resultcode = 1
+        except CleanError as exc:
+            exc.pretty_print(file=stderr, clr=clrtp)
+            resultcode = 1
+        except Exception:
+            traceback.print_exc(file=stderr)
+            print(
+                f'More error output may be available at {logpath}', file=stderr
+            )
+            resultcode = 1
 
-    # Run the command. This may return an explicit code or may throw an
-    # exception.
-    resultcode: int = _run_pcommand(args)
+        stdout_str = stdout.getvalue()
+        stderr_str = stderr.getvalue()
 
-    # Handle error result-codes consistently with exceptions.
-    if resultcode != 0:
-        raise RuntimeError(f'client pcommand returned error code {resultcode}.')
-
-    output = getattr(_g_thread_local_storage, 'output', '')
-    assert isinstance(output, str)
-
-    return (resultcode, output)
+    return resultcode, stdout_str, stderr_str
 
 
 def disallow_in_batch() -> None:

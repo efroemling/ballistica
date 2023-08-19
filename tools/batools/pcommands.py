@@ -456,9 +456,9 @@ def capitalize() -> None:
 def upper() -> None:
     """Print args uppercased."""
 
-    pcommand.disallow_in_batch()
-
-    print(' '.join(w.upper() for w in sys.argv[2:]), end='')
+    pcommand.clientprint(
+        ' '.join(w.upper() for w in pcommand.get_args()), end=''
+    )
 
 
 def efrocache_update() -> None:
@@ -481,7 +481,7 @@ def efrocache_get() -> None:
 
     output = get_target(args[0], batch=pcommand.is_batch(), clr=pcommand.clr())
     if pcommand.is_batch():
-        pcommand.set_output(output)
+        pcommand.clientprint(output)
 
 
 def get_modern_make() -> None:
@@ -618,13 +618,12 @@ def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
     import batools.build
 
-    pcommand.disallow_in_batch()
-
-    if len(sys.argv) != 3:
+    args = pcommand.get_args()
+    if len(args) != 1:
         raise RuntimeError('Expected 1 arg.')
-    base = sys.argv[2].replace('-', '_').upper()
+    base = args[0].replace('-', '_').upper()
     platform = batools.build.get_current_prefab_platform().upper()
-    print(f'RUN_PREFAB_{platform}_{base}', end='')
+    pcommand.clientprint(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
 def prefab_binary_path() -> None:
@@ -679,16 +678,19 @@ def lazybuild() -> None:
     import batools.build
     from efro.error import CleanError
 
+    # This command is not a good candidate for batch since it can be
+    # long running and prints various stuff throughout the process.
     pcommand.disallow_in_batch()
+    args = pcommand.get_args()
 
-    if len(sys.argv) < 5:
+    if len(args) < 3:
         raise CleanError('Expected at least 3 args')
     try:
-        category = batools.build.LazyBuildCategory(sys.argv[2])
+        category = batools.build.LazyBuildCategory(args[0])
     except ValueError as exc:
         raise CleanError(exc) from exc
-    target = sys.argv[3]
-    command = ' '.join(sys.argv[4:])
+    target = args[1]
+    command = ' '.join(args[2:])
     try:
         batools.build.lazybuild(target, category, command)
     except subprocess.CalledProcessError as exc:

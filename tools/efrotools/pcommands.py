@@ -503,7 +503,7 @@ def compile_mesh_file() -> None:
 
     # Show project-relative paths when possible.
     relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
-    pcommand.set_output(f'Compiling mesh: {relpath}')
+    pcommand.clientprint(f'Compiling mesh: {relpath}')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     subprocess.run([makebob, src, dst], check=True)
@@ -525,7 +525,7 @@ def compile_collision_mesh_file() -> None:
 
     # Show project-relative paths when possible.
     relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
-    pcommand.set_output(f'Compiling collision mesh: {relpath}')
+    pcommand.clientprint(f'Compiling collision mesh: {relpath}')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     subprocess.run([makebob, src, dst], check=True)
@@ -556,7 +556,7 @@ def compile_python_file() -> None:
 
     # Show project-relative path when possible.
     relpath = os.path.abspath(fname).removeprefix(f'{pcommand.PROJROOT}/')
-    pcommand.set_output(f'Compiling script: {relpath}')
+    pcommand.clientprint(f'Compiling script: {relpath}')
 
     py_compile.compile(
         fname,
@@ -583,7 +583,7 @@ def _simple_file_copy(msg: str, make_unwritable: bool = False) -> None:
     src, dst = args
 
     relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
-    pcommand.set_output(f'{msg}: {relpath}')
+    pcommand.clientprint(f'{msg}: {relpath}')
 
     # If we're making built files unwritable, we need to blow
     # away exiting ones to allow this to succeed.
@@ -723,23 +723,21 @@ def echo() -> None:
 
     Prints a Clr.RST at the end so that can be omitted.
     """
-    from efro.terminal import Clr
+    clr = pcommand.clr()
 
-    pcommand.disallow_in_batch()
-
-    clrnames = {n for n in dir(Clr) if n.isupper() and not n.startswith('_')}
+    clrnames = {n for n in dir(clr) if n.isupper() and not n.startswith('_')}
     first = True
     out: list[str] = []
-    for arg in sys.argv[2:]:
+    for arg in pcommand.get_args():
         if arg in clrnames:
-            out.append(getattr(Clr, arg))
+            out.append(getattr(clr, arg))
         else:
             if not first:
                 out.append(' ')
             first = False
             out.append(arg)
-    out.append(Clr.RST)
-    print(''.join(out))
+    out.append(clr.RST)
+    pcommand.clientprint(''.join(out))
 
 
 def urandom_pretty() -> None:

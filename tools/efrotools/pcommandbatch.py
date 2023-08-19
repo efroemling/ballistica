@@ -11,42 +11,48 @@ a minimal set of modules. This can add up for large builds where
 hundreds or thousands of pcommands are being run.
 
 To help fight that problem, pcommandbatch introduces a way to run
-pcommands by submitting requests to a temporary local server daemon.
+pcommands by submitting requests to temporary local server daemons.
 This allows individual pcommand calls to go through a very lightweight
 client binary that simply forwards the command to a running server.
-This cuts minimal client runtime down to nearly zero. Building and
-managing the server and client are handled automatically, and systems
-which are unable to compile a client binary can fall back to using
-vanilla pcommand in those cases.
+This cuts minimal client runtime down greatly. Building and managing
+the server and client are handled automatically, and systems which are
+unable to compile a client binary can fall back to using vanilla
+pcommand in those cases.
 
-A few considerations must be made when writing pcommands that work
-in batch mode. By default, all existing pcommands have been fitted with
-a disallow_in_batch() call which triggers an error under batch mode.
+A few considerations must be made when using pcommands with batch mode.
+By default, all existing pcommands have been fitted with a
+disallow_in_batch() call which triggers an error under batch mode.
 These calls should be removed if/when each call is updated to work
 cleanly in batch mode. Requirements for batch-friendly pcommands follow:
 
-- Batch mode runs parallel pcommands in different background threads.
-  Commands must be ok with that.
+- Batch mode runs parallel pcommands in different background threads
+  and may run thousands of commands throughout the duration of the
+  server process. Batch-friendly pcommands must behave reasonably in
+  such an environment.
 
-- Batch-enabled pcommands must not look at sys.argv. They should instead
-  use pcommand.get_args(). Be aware that this value does not include
-  the first two values from sys.argv (executable path and pcommand name)
-  so is generally cleaner to use anyway. Also be aware that args are
-  thread-local, so only call get_args() from the thread your pcommand
-  was called in.
-
-- Batch-enabled pcommands should not call os.chdir() or sys.exit() or
+- Batch-enabled pcommands must not call os.chdir() or sys.exit() or
   anything else having global effects. This should be self-explanatory
   considering the shared server model in use.
 
-- Standard print and log calls will wind up in the pcommandbatch server
-  log and will not be seen by the user or capturable by the calling
-  process. By default, only a return code is passed back to the client,
-  where an error messages instructs the user to refer to the log or run
-  again with batch mode disabled. Commands that should print some output
-  even in batch mode can use pcommand.set_output() to do so. Note that
-  this is currently limited to small bits of output (but that can be
-  changed).
+- Batch-enabled pcommands should not look at sys.argv. They should
+  instead use pcommand.get_args(). Be aware that this value does not
+  include the first two values from sys.argv (executable path and
+  pcommand name) so is generally cleaner to use anyway. Also be aware
+  that args are thread-local, so only call get_args() from the thread
+  your pcommand was called in.
+
+- Batch-enabled pcommands should not use efro.terminal.Clr for coloring
+  terminal output; instead they should use pcommand.clr() which properly
+  takes into account whether the *client* is running on a tty/etc.
+
+- Standard print and log calls (as well as those of child processes)
+  will wind up in the pcommandbatch server log and will not be seen by
+  the user or capturable by the calling process. For batch-friendly
+  printing, use pcommand.clientprint(). Note that, in batch mode, all
+  output will be printed on the client after the command completes and
+  stderr and stdout will be printed separately instead of intermingled.
+  If a pcommand is long-running and prints at multiple times while doing
+  its thing, it is probably not a good fit for batch-mode.
 
 """
 from __future__ import annotations
@@ -302,6 +308,7 @@ class Server:
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
         """Handle a client."""
+        import efro.terminal
         from efrotools.pcommand import run_client_pcommand
 
         request_id = self._next_request_id
@@ -309,6 +316,9 @@ class Server:
         self._client_count_since_last_check += 1
         self._running_client_count += 1
         try:
+            logpath = self._worker_log_file_path.removeprefix(
+                f'{self._project_dir}/'
+            )
             reqdata: dict = json.loads((await reader.read()).decode())
             assert isinstance(reqdata, dict)
             argv: list[str] = reqdata['a']
@@ -324,17 +334,26 @@ class Server:
                 file=sys.stderr,
             )
 
+            # Note: currently just using the 'isatty' value from the
+            # client. ideally should expand the client-side logic to
+            # exactly match what efro.terminal.Clr does locally.
+            clr: type[efro.terminal.ClrBase] = (
+                efro.terminal.ClrAlways if isatty else efro.terminal.ClrNever
+            )
+
             try:
                 if self._server_error is not None:
                     resultcode = 1
-                    output = self._server_error
+                    stdout_output = ''
+                    stderr_output = self._server_error
                 else:
                     (
                         resultcode,
-                        output,
+                        stdout_output,
+                        stderr_output,
                     ) = await asyncio.get_running_loop().run_in_executor(
                         None,
-                        lambda: run_client_pcommand(argv, isatty),
+                        lambda: run_client_pcommand(argv, clr, logpath),
                     )
                     if VERBOSE:
                         print(
@@ -352,18 +371,17 @@ class Server:
                     file=sys.stderr,
                 )
                 traceback.print_exc()
+                stdout_output = ''
+                stderr_output = (
+                    f"internal pcommandbatch error; see log at '{logpath}'."
+                )
                 resultcode = 1
-                logpath = self._worker_log_file_path.removeprefix(
-                    f'{self._project_dir}/'
-                )
-                output = (
-                    f'Error: pcommandbatch command failed: {argv}.'
-                    f" For more info, see '{logpath}', or rerun with"
-                    ' env var BA_PCOMMANDBATCH_DISABLE=1 to see'
-                    ' all output here.\n'
-                )
 
-            writer.write(json.dumps({'r': resultcode, 'o': output}).encode())
+            writer.write(
+                json.dumps(
+                    {'r': resultcode, 'o': stdout_output, 'e': stderr_output}
+                ).encode()
+            )
             writer.close()
             await writer.wait_closed()
 

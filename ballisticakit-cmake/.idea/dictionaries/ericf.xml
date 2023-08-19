@@ -332,9 +332,12 @@
       <w>clearsign</w>
       <w>clientid</w>
       <w>clientinfo</w>
+      <w>clientprint</w>
+      <w>clientprints</w>
       <w>clienttobasn</w>
       <w>clipcount</w>
       <w>cloudtoba</w>
+      <w>clrtp</w>
       <w>cmakelist</w>
       <w>cmakemodular</w>
       <w>cmakemodularserver</w>

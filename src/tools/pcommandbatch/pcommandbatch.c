@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/_types/_ssize_t.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -40,6 +41,16 @@ int establish_connection_(const struct Context_* ctx);
 int calc_paths_(struct Context_* ctx);
 int send_command_(struct Context_* ctx, int argc, char** argv);
 int handle_response_(const struct Context_* ctx);
+
+// Read all data from a socket and return as a malloc'ed null-terminated
+// string.
+char* read_string_from_socket_(const struct Context_* ctx);
+
+// Tear down context (closing socket, etc.) before closing app.
+void tear_down_context_(struct Context_* ctx);
+
+// If a valid state file is present at the provided path and not older than
+// server_idle_seconds, return said port as an int. Otherwise return -1;
 int get_running_server_port_(const struct Context_* ctx,
                              const char* state_file_path_full);
 
@@ -49,6 +60,7 @@ int main(int argc, char** argv) {
 
   ctx.server_idle_seconds = 5;
   ctx.pid = getpid();
+  ctx.sockfd = -1;
 
   // Verbose mode enables more printing here. Debug mode enables that plus
   // extra stuff. The extra stuff is mostly the server side though.
@@ -67,36 +79,43 @@ int main(int argc, char** argv) {
 
   // Figure our which file path we'll use to get server state.
   if (calc_paths_(&ctx) != 0) {
+    tear_down_context_(&ctx);
     return 1;
   }
 
   // Establish communication with said server (spinning it up if needed).
   ctx.sockfd = establish_connection_(&ctx);
   if (ctx.sockfd == -1) {
+    tear_down_context_(&ctx);
     return 1;
   }
 
   if (send_command_(&ctx, argc, argv) != 0) {
+    tear_down_context_(&ctx);
     return 1;
   }
 
   int result_val = handle_response_(&ctx);
   if (result_val != 0) {
+    tear_down_context_(&ctx);
     return 1;
   }
 
-  if (close(ctx.sockfd) != 0) {
-    fprintf(
-        stderr,
-        "Error: pcommandbatch client %s_%d (pid %d): error on socket close.\n",
-        ctx.instance_prefix, ctx.instance_num, ctx.pid);
-    return 1;
-  }
+  tear_down_context_(&ctx);
   return result_val;
 }
 
-// If a valid state file is present at the provided path and not older than
-// server_idle_seconds, return said port as an int. Otherwise return -1;
+void tear_down_context_(struct Context_* ctx) {
+  if (ctx->sockfd != -1) {
+    if (close(ctx->sockfd) != 0) {
+      fprintf(stderr,
+              "Error: pcommandbatch client %s_%d (pid %d): error %d closing "
+              "socket.\n",
+              ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
+    }
+  }
+}
+
 int get_running_server_port_(const struct Context_* ctx,
                              const char* state_file_path_full) {
   struct stat file_stat;
@@ -120,12 +139,12 @@ int get_running_server_port_(const struct Context_* ctx,
   int age_seconds = current_time - file_stat.st_mtime;
   if (ctx->verbose) {
     if (age_seconds <= ctx->server_idle_seconds) {
-      fprintf(
-          stderr,
-          "pcommandbatch client %s_%d (pid %d) found state file with age %d at "
-          "time %ld.\n",
-          ctx->instance_prefix, ctx->instance_num, ctx->pid, age_seconds,
-          time(NULL));
+      fprintf(stderr,
+              "pcommandbatch client %s_%d (pid %d) found state file with age "
+              "%d at "
+              "time %ld.\n",
+              ctx->instance_prefix, ctx->instance_num, ctx->pid, age_seconds,
+              time(NULL));
     }
   }
 
@@ -153,6 +172,7 @@ int get_running_server_port_(const struct Context_* ctx,
             ctx->instance_prefix, ctx->instance_num, ctx->pid);
     return -1;
   }
+
   // If results included output, print it.
   cJSON* port_obj = cJSON_GetObjectItem(state_dict, "p");
   if (!port_obj || !cJSON_IsNumber(port_obj)) {
@@ -166,8 +186,6 @@ int get_running_server_port_(const struct Context_* ctx,
   int port = cJSON_GetNumberValue(port_obj);
   cJSON_Delete(state_dict);
   return port;
-
-  // return val;
 }
 
 int path_exists_(const char* path) {
@@ -221,9 +239,9 @@ int establish_connection_(const struct Context_* ctx) {
       snprintf(buf, sizeof(buf),
                "%s run_pcommandbatch_server --timeout %d --project-dir %s"
                " --state-dir %s --instance %s_%d %s",
-               ctx->pcommandpath, ctx->server_idle_seconds, ctx->project_dir_path,
-               ctx->state_dir_path, ctx->instance_prefix, ctx->instance_num,
-               endbuf);
+               ctx->pcommandpath, ctx->server_idle_seconds,
+               ctx->project_dir_path, ctx->state_dir_path, ctx->instance_prefix,
+               ctx->instance_num, endbuf);
       system(buf);
 
       // Spin and wait up to a few seconds for the file to appear.
@@ -260,12 +278,12 @@ int establish_connection_(const struct Context_* ctx) {
     // Ok we got a port; now try to connect to it.
     if (port != -1) {
       if (ctx->verbose) {
-        fprintf(
-            stderr,
-            "pcommandbatch client %s_%d (pid %d) will use server on port %d at "
-            "time %ld.\n",
-            ctx->instance_prefix, ctx->instance_num, ctx->pid, port,
-            time(NULL));
+        fprintf(stderr,
+                "pcommandbatch client %s_%d (pid %d) will use server on port "
+                "%d at "
+                "time %ld.\n",
+                ctx->instance_prefix, ctx->instance_num, ctx->pid, port,
+                time(NULL));
       }
 
       struct sockaddr_in serv_addr;
@@ -288,11 +306,11 @@ int establish_connection_(const struct Context_* ctx) {
         }
       } else {
         // Currently not retrying on other errors.
-        fprintf(
-            stderr,
-            "Error: pcommandbatch client %s_%d (pid %d): connect failed (errno "
-            "%d).\n",
-            ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
+        fprintf(stderr,
+                "Error: pcommandbatch client %s_%d (pid %d): connect failed "
+                "(errno "
+                "%d).\n",
+                ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
         close(sockfd);
         return -1;
       }
@@ -346,11 +364,11 @@ int calc_paths_(struct Context_* ctx) {
               ctx->instance_prefix, ctx->pid);
       return -1;
     }
-    fprintf(
-        stderr,
-        "Error: pcommandbatch client %s (pid %d): pcommandbatch from cwd '%s' "
-        "is not supported.\n",
-        ctx->instance_prefix, ctx->pid, cwdbuf);
+    fprintf(stderr,
+            "Error: pcommandbatch client %s (pid %d): pcommandbatch from cwd "
+            "'%s' "
+            "is not supported.\n",
+            ctx->instance_prefix, ctx->pid, cwdbuf);
     return -1;
   }
   assert(ctx->pcommandpath != NULL);
@@ -358,10 +376,11 @@ int calc_paths_(struct Context_* ctx) {
 
   // Spread requests for each location out randomly across a few instances.
   // This greatly increases scalability though is probably wasteful when
-  // running just a few commands. Maybe there's some way to smartly scale
-  // this. The best setup might be to have a single 'controller' server
-  // instance that spins up worker instances as needed. Though such a fancy
-  // setup might be overkill.
+  // running just a few commands since we likely spin up a new server for
+  // each. Maybe there's some way to smartly scale this. The best setup
+  // might be to have a single 'controller' server instance that spins up
+  // worker instances as needed. Though such a fancy setup might be
+  // overkill.
   ctx->instance_num = rand() % 6;
 
   // I was wondering if using pid would lead to a more even distribution,
@@ -396,10 +415,10 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
 
   // Issue a write shutdown so they get EOF on the other end.
   if (shutdown(ctx->sockfd, SHUT_WR) < 0) {
-    fprintf(
-        stderr,
-        "Error: pcommandbatch client %s_%d (pid %d): write shutdown failed.\n",
-        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    fprintf(stderr,
+            "Error: pcommandbatch client %s_%d (pid %d): write shutdown "
+            "failed.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid);
     return -1;
   }
 
@@ -411,26 +430,18 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
 }
 
 int handle_response_(const struct Context_* ctx) {
-  // Read the response. Currently expecting short-ish responses only; will
-  // have to revisit this if/when they get long.
-  char inbuf[512];
-  ssize_t result = read(ctx->sockfd, inbuf, sizeof(inbuf) - 1);
-  if (result < 0 || result == sizeof(inbuf) - 1) {
+  char* inbuf = read_string_from_socket_(ctx);
+  if (!inbuf) {
     fprintf(stderr,
             "Error: pcommandbatch client %s_%d (pid %d): failed to read result "
             "(errno %d).\n",
             ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
-    close(ctx->sockfd);
     return -1;
   }
-  if (ctx->verbose) {
-    fprintf(stderr,
-            "pcommandbatch client %s_%d (pid %d) read %zd byte response.\n",
-            ctx->instance_prefix, ctx->instance_num, ctx->pid, result);
-  }
-  inbuf[result] = 0;  // null terminate result str.
 
   cJSON* result_dict = cJSON_Parse(inbuf);
+  free(inbuf);
+
   if (!result_dict) {
     fprintf(
         stderr,
@@ -440,7 +451,7 @@ int handle_response_(const struct Context_* ctx) {
     return -1;
   }
 
-  // If results included output, print it.
+  // If results included stdout output, print it.
   cJSON* result_output = cJSON_GetObjectItem(result_dict, "o");
   if (!result_output || !cJSON_IsString(result_output)) {
     fprintf(
@@ -448,12 +459,30 @@ int handle_response_(const struct Context_* ctx) {
         "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
         "output value.\n",
         ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    cJSON_Delete(result_dict);
     return -1;
   }
   char* output_str = cJSON_GetStringValue(result_output);
   assert(output_str);
   if (output_str[0] != 0) {
     printf("%s", output_str);
+  }
+
+  // If results included stderr output, print it.
+  result_output = cJSON_GetObjectItem(result_dict, "e");
+  if (!result_output || !cJSON_IsString(result_output)) {
+    fprintf(
+        stderr,
+        "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
+        "output value.\n",
+        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    cJSON_Delete(result_dict);
+    return -1;
+  }
+  output_str = cJSON_GetStringValue(result_output);
+  assert(output_str);
+  if (output_str[0] != 0) {
+    fprintf(stderr, "%s", output_str);
   }
 
   cJSON* result_code = cJSON_GetObjectItem(result_dict, "r");
@@ -463,6 +492,7 @@ int handle_response_(const struct Context_* ctx) {
         "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
         "code value.\n",
         ctx->instance_prefix, ctx->instance_num, ctx->pid);
+    cJSON_Delete(result_dict);
     return -1;
   }
   int result_val = cJSON_GetNumberValue(result_code);
@@ -473,4 +503,58 @@ int handle_response_(const struct Context_* ctx) {
   cJSON_Delete(result_dict);
 
   return result_val;
+}
+
+char* read_string_from_socket_(const struct Context_* ctx) {
+  const size_t initial_buffer_size = 1024 * 10;
+  char* buffer = NULL;
+  size_t buffer_size = 0;
+  size_t data_received = 0;
+
+  // Allocate initial memory for the buffer
+  buffer = malloc(initial_buffer_size);
+  if (!buffer) {
+    perror("Failed to allocate memory for buffer");
+    return NULL;
+  }
+  buffer_size = initial_buffer_size;
+
+  while (1) {
+    // Read data from the socket.
+    ssize_t bytes_read = recv(ctx->sockfd, buffer + data_received,
+                              buffer_size - data_received - 1, 0);
+    if (bytes_read == -1) {
+      perror("Error reading socket data");
+      free(buffer);
+      return NULL;
+    } else if (bytes_read == 0) {
+      // Connection closed.
+      break;
+    }
+
+    data_received += bytes_read;
+
+    // Check if buffer is full (reserving space for term char); resize if
+    // necessary.
+    if (data_received + 1 >= buffer_size) {
+      buffer_size *= 2;
+      char* rbuffer = (char*)realloc(buffer, buffer_size);
+      if (rbuffer) {
+        buffer = rbuffer;
+      } else {
+        perror("Failed to resize buffer");
+        free(buffer);
+        return NULL;
+      }
+    }
+  }
+  assert(data_received + 1 < buffer_size);
+  if (ctx->verbose) {
+    fprintf(stderr,
+            "pcommandbatch client %s_%d (pid %d) read %zu byte response.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, data_received);
+  }
+
+  buffer[data_received] = 0;  // Null terminator.
+  return buffer;
 }

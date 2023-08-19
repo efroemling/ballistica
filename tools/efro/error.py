@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING
 import errno
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
+
+    from efro.terminal import ClrBase
 
 
 class CleanError(Exception):
@@ -25,18 +27,29 @@ class CleanError(Exception):
     more descriptive exception types.
     """
 
-    def pretty_print(self, flush: bool = True, prefix: str = 'Error') -> None:
+    def pretty_print(
+        self,
+        flush: bool = True,
+        prefix: str = 'Error',
+        file: Any = None,
+        clr: type[ClrBase] | None = None,
+    ) -> None:
         """Print the error to stdout, using red colored output if available.
 
         If the error has an empty message, prints nothing (not even a newline).
         """
         from efro.terminal import Clr
 
+        if clr is None:
+            clr = Clr
+
         if prefix:
             prefix = f'{prefix}: '
         errstr = str(self)
         if errstr:
-            print(f'{Clr.SRED}{prefix}{errstr}{Clr.RST}', flush=flush)
+            print(
+                f'{clr.SRED}{prefix}{errstr}{clr.RST}', flush=flush, file=file
+            )
 
 
 class CommunicationError(Exception):

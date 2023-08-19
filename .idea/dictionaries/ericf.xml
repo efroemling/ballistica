@@ -515,6 +515,8 @@
       <w>clearsign</w>
       <w>clientid</w>
       <w>clientlist</w>
+      <w>clientprint</w>
+      <w>clientprints</w>
       <w>clienttobasn</w>
       <w>clionbin</w>
       <w>clioncode</w>
@@ -532,6 +534,7 @@
       <w>clrhdr</w>
       <w>clrnames</w>
       <w>clrred</w>
+      <w>clrtp</w>
       <w>cmakelist</w>
       <w>cmakelists</w>
       <w>cmakemodular</w>
