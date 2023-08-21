@@ -4,8 +4,13 @@
 - Modules containing pcommand functions are now named with an 's' - so
   `pcommands.py` instead of `pcommand.py`. `pcommand.py` in efrotools is now
   solely related to the functioning of the pcommand system.
-- Switched various build stuff to use `pcommandbatch` instead of regular
-  pcommand. In some cases this can speed things up by 5x or so.
+- Implemented the `pcommandbatch` system, which is a way to run pcommands using
+  a simple local server/client architecture, and set up key build targets to use
+  it instead of regular pcommand. In some cases, such as when assembling build
+  assets, this can speed things up by 5x or so. If you run into any problems
+  that seem to be related to this, you can disable it by setting env var
+  `BA_PCOMMANDBATCH_DISABLE=1`. See docs in `tools/efrotools/pcommandbatch.py`
+  for more info.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 
