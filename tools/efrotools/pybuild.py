@@ -34,6 +34,7 @@ PY_VER_EXACT_APPLE = '3.11.3'
 OPENSSL_VER_APPLE = '3.0.8'
 OPENSSL_VER_ANDROID = '3.0.8'
 
+ZLIB_VER_ANDROID = '1.3'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
 PRUNE_LIB_NAMES = [
@@ -289,6 +290,14 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         "source = 'https://www.openssl.org/source/openssl-3.0.7.tar.gz'",
         f"source = 'https://www.openssl.org/"
         f"source/openssl-{OPENSSL_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific ZLib version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://www.zlib.net/zlib-1.2.13.tar.gz'",
+        f"source = 'https://www.zlib.net/zlib-{ZLIB_VER_ANDROID}.tar.gz'",
         count=1,
     )
 
