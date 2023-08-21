@@ -227,14 +227,14 @@ int establish_connection_(const struct Context_* ctx) {
       }
 
       // In non-debug-mode, route to a log file.
-      char endbuf[512];
+      char endbuf[1024];
       if (ctx->debug) {
         snprintf(endbuf, sizeof(endbuf), " &");
       } else {
         snprintf(endbuf, sizeof(endbuf), " >>%s/worker_log_%s_%d 2>&1 &",
                  ctx->state_dir_path, ctx->instance_prefix, ctx->instance_num);
       }
-      char buf[512];
+      char buf[2048];
       snprintf(buf, sizeof(buf),
                "%s batchserver --timeout %d --project-dir %s"
                " --instance %s_%d %s",
