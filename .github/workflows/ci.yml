@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
     - name: Run checks
-      run: make check
+      run: BA_PCOMMANDBATCH_BUILD_VERBOSE=1 make check
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
