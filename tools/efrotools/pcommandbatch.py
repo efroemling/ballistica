@@ -98,7 +98,7 @@ def build_pcommandbatch(inpaths: list[str], outpath: str) -> None:
 
     # Options to show build output or to fail if the build fails.
     verbose = os.environ.get('BA_PCOMMANDBATCH_BUILD_VERBOSE') == '1'
-    require = os.environ.get('BA_PCOMMANDBATCH_REQUIRE') == '1'
+    require = os.environ.get('BA_PCOMMANDBATCH_BUILD_REQUIRE') == '1'
 
     try:
         if os.path.islink(outpath):
