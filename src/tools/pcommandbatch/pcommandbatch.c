@@ -237,11 +237,11 @@ int establish_connection_(const struct Context_* ctx) {
       }
       char buf[512];
       snprintf(buf, sizeof(buf),
-               "%s run_pcommandbatch_server --timeout %d --project-dir %s"
-               " --state-dir %s --instance %s_%d %s",
+               "%s batchserver --timeout %d --project-dir %s"
+               " --instance %s_%d %s",
                ctx->pcommandpath, ctx->server_idle_seconds,
-               ctx->project_dir_path, ctx->state_dir_path, ctx->instance_prefix,
-               ctx->instance_num, endbuf);
+               ctx->project_dir_path, ctx->instance_prefix, ctx->instance_num,
+               endbuf);
       system(buf);
 
       // Spin and wait up to a few seconds for the file to appear.

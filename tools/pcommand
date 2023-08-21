@@ -63,7 +63,7 @@ from efrotools.pcommands2 import (
     openal_gather,
     pyright,
     build_pcommandbatch,
-    run_pcommandbatch_server,
+    batchserver,
     pcommandbatch_speed_test,
     null,
 )

@@ -126,8 +126,8 @@ def build_pcommandbatch(inpaths: list[str], outpath: str) -> None:
         )
 
 
-def run_pcommandbatch_server(
-    idle_timeout_secs: int, project_dir: str, state_dir: str, instance: str
+def batchserver(
+    idle_timeout_secs: int, project_dir: str, instance: str
 ) -> None:
     """Run a server for handling batches of pcommands.
 
@@ -146,7 +146,6 @@ def run_pcommandbatch_server(
     server = Server(
         idle_timeout_secs=idle_timeout_secs,
         project_dir=project_dir,
-        state_dir=state_dir,
         instance=instance,
         daemon=use_daemon,
     )
@@ -171,15 +170,16 @@ class Server:
         self,
         idle_timeout_secs: int,
         project_dir: str,
-        state_dir: str,
         instance: str,
         daemon: bool,
     ) -> None:
         self._daemon = daemon
         self._project_dir = project_dir
-        self._state_dir = state_dir
+        self._state_dir = f'{project_dir}/.cache/pcommandbatch'
         self._idle_timeout_secs = idle_timeout_secs
-        self._worker_state_file_path = f'{state_dir}/worker_state_{instance}'
+        self._worker_state_file_path = (
+            f'{self._state_dir}/worker_state_{instance}'
+        )
         self._worker_log_file_path = f'{self._state_dir}/worker_log_{instance}'
         self._client_count_since_last_check = 0
         self._running_client_count = 0

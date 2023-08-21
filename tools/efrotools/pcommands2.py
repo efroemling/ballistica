@@ -118,7 +118,7 @@ def build_pcommandbatch() -> None:
     pcb.build_pcommandbatch(inpaths, outpath)
 
 
-def run_pcommandbatch_server() -> None:
+def batchserver() -> None:
     """Run a server for handling pcommands."""
     from efro.error import CleanError
 
@@ -131,16 +131,14 @@ def run_pcommandbatch_server() -> None:
 
     idle_timeout_secs = int(extract_arg(args, '--timeout', required=True))
     project_dir = extract_arg(args, '--project-dir', required=True)
-    state_dir = extract_arg(args, '--state-dir', required=True)
     instance = extract_arg(args, '--instance', required=True)
 
     if args:
         raise CleanError(f'Unexpected args: {args}.')
 
-    pcb.run_pcommandbatch_server(
+    pcb.batchserver(
         idle_timeout_secs=idle_timeout_secs,
         project_dir=project_dir,
-        state_dir=state_dir,
         instance=instance,
     )
 
