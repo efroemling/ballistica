@@ -3,7 +3,7 @@
 #include "ballistica/base/logic/logic.h"
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
@@ -168,23 +168,33 @@ void Logic::DoApplyAppConfig() {
 void Logic::OnInitialScreenCreated() {
   assert(g_base->InLogicThread());
 
-  // Ok; graphics-server is telling us we've got a screen
-  // (or no screen in the case of headless-mode).
-  // We use this as a cue to kick off our business logic.
+  // Ok; graphics-server is telling us we've got a screen (or no screen in
+  // the case of headless-mode). We use this as a cue to kick off our
+  // business logic.
 
-  // Let the Python layer know what's up. It will probably flip to
-  // 'Launching' state.
+  // Let the Python layer know the native layer is now fully functional.
+  // This will probably result in the Python layer flipping to the LAUNCHING
+  // state.
   CompleteAppBootstrapping();
 
-  // Push an initial frame to the graphics thread. From this point it will be
-  // self-sustaining; sending us a request for a new one each time it receives
-  // one we send it.
   if (!g_core->HeadlessMode()) {
+    // In gui mode, push an initial frame to the graphics server. From this
+    // point it will be self-sustaining, sending us a frame request each
+    // time it receives a new frame from us.
     g_base->graphics->BuildAndPushFrameDef();
+  } else {
+    // Normally we step display-time as part of our frame-drawing process.
+    // If we're headless, we're not drawing any frames, but we still want to
+    // do minimal processing on any display-time timers. Let's run at a
+    // low-ish rate (10hz) to keep things efficient. Anyone dealing in
+    // display-time should be able to handle a wide variety of rates anyway.
+    // NOTE: This length is currently milliseconds.
+    headless_display_time_step_timer_ = event_loop()->NewTimer(
+        kAppModeMinHeadlessDisplayStep / 1000, true,
+        NewLambdaRunnable([this] { StepDisplayTime(); }));
   }
 }
 
-// Launch into main menu or whatever else.
 void Logic::CompleteAppBootstrapping() {
   assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
@@ -201,7 +211,7 @@ void Logic::CompleteAppBootstrapping() {
   //  the renderer is ready and then seamlessly create renderer-specific
   //  ones once the renderer is up. We could likely at least get a lot
   //  of preloads done in the meantime. Though this would require preloads
-  //  to be renderer-agnostic; not sure if that's the case.
+  //  to be renderer-agnostic; not sure if that will always be the case.
   g_base->assets->StartLoading();
 
   // Let base know it can create the console or other asset-dependent things.
@@ -213,17 +223,6 @@ void Logic::CompleteAppBootstrapping() {
   asset_prune_timer_ = event_loop()->NewTimer(
       2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
 
-  // Normally we step display-time as part of our frame-drawing process. If
-  // we're headless, we're not drawing any frames, but we still want to do
-  // minimal processing on any display-time timers. Let's run at a low-ish
-  // rate (10hz) to keep things efficient. Anyone dealing in display-time
-  // should be able to handle a wide variety of rates anyway.
-  if (g_core->HeadlessMode()) {
-    // NOTE: This length is currently milliseconds.
-    headless_display_time_step_timer_ = event_loop()->NewTimer(
-        kAppModeMinHeadlessDisplayStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime(); }));
-  }
   // Let our initial app-mode know it has become active.
   g_base->app_mode()->OnActivate();
 
@@ -247,10 +246,10 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
                                float pixel_width, float pixel_height) {
   assert(g_base->InLogicThread());
 
-  // First, pass the new values to the graphics subsystem.
-  // Then inform everyone else simply that they changed; they can ask
-  // g_graphics for whatever specific values they need.
-  // Note: keep these in the same order as OnAppStart.
+  // First, pass the new values to the graphics subsystem. Then inform
+  // everyone else simply that they changed; they can ask g_graphics for
+  // whatever specific values they need. Note: keep these in the same order
+  // as OnAppStart.
   g_base->graphics->OnScreenSizeChange(virtual_width, virtual_height,
                                        pixel_width, pixel_height);
   g_base->audio->OnScreenSizeChange();
@@ -306,8 +305,8 @@ void Logic::StepDisplayTime() {
 void Logic::OnAppModeChanged() {
   assert(g_base->InLogicThread());
 
-  // Kick our headless stepping into high gear; this will snap us out of
-  // any long sleep we're currently in the middle of.
+  // Kick our headless stepping into high gear; this will snap us out of any
+  // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
     if (debug_log_display_time_) {
       Log(LogLevel::kDebug,
@@ -322,13 +321,13 @@ void Logic::OnAppModeChanged() {
 
 void Logic::UpdateDisplayTimeForHeadlessMode() {
   assert(g_base->InLogicThread());
-  // In this case we just keep display time synced up with app time; we don't
-  // care about keeping the increments smooth or consistent.
+  // In this case we just keep display time synced up with app time; we
+  // don't care about keeping the increments smooth or consistent.
 
   // The one thing we *do* try to do, however, is keep our timer length
   // updated so that we fire exactly when the app mode has events scheduled
-  // (or at least close enough so we can fudge it and tell them its that exact
-  // time).
+  // (or at least close enough so we can fudge it and tell them its that
+  // exact time).
 
   auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
 
@@ -352,9 +351,9 @@ void Logic::UpdateDisplayTimeForHeadlessMode() {
 
 void Logic::PostUpdateDisplayTimeForHeadlessMode() {
   assert(g_base->InLogicThread());
-  // At this point we've stepped our app-mode, so let's ask it how
-  // long we've got until the next event. We'll plug this into our
-  // display-update timer so we can try to sleep until that point.
+  // At this point we've stepped our app-mode, so let's ask it how long
+  // we've got until the next event. We'll plug this into our display-update
+  // timer so we can try to sleep until that point.
   auto headless_display_step_microsecs =
       std::max(std::min(g_base->app_mode()->GetHeadlessDisplayStep(),
                         kAppModeMaxHeadlessDisplayStep),
@@ -376,14 +375,14 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode() {
 }
 
 void Logic::UpdateDisplayTimeForFrameDraw() {
-  // Here we update our smoothed display-time-increment based on how fast
-  // we are currently rendering frames. We want display-time to basically
-  // be progressing at the same rate as app-time but in as constant
-  // of a manner as possible so that animations, simulation-stepping/etc.
-  // appears smooth (app-time measurements at render times exhibit quite a bit
-  // of jitter). Though we also don't want it to be *too* smooth; drops in
-  // framerate should still be reflected quickly in display-time-increment
-  // otherwise it can look like the game is slowing down or speeding up.
+  // Here we update our smoothed display-time-increment based on how fast we
+  // are currently rendering frames. We want display-time to basically be
+  // progressing at the same rate as app-time but in as constant of a manner
+  // as possible so that animations, simulation-stepping/etc. appears smooth
+  // (app-time measurements at render times exhibit quite a bit of jitter).
+  // Though we also don't want it to be *too* smooth; drops in framerate
+  // should still be reflected quickly in display-time-increment otherwise
+  // it can look like the game is slowing down or speeding up.
 
   // Flip this on to debug this stuff.
   // Things to look for:
@@ -417,9 +416,9 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
     }
 
     // It seems that when things get thrown off it is often due to a single
-    // rogue sample being unusually long and often the next one being unusually
-    // short. Let's try to filter out some of these cases by ignoring both
-    // the longest and shortest sample in our set.
+    // rogue sample being unusually long and often the next one being
+    // unusually short. Let's try to filter out some of these cases by
+    // ignoring both the longest and shortest sample in our set.
     int max_index{};
     int min_index{};
     double max_val{recent_display_time_increments_[0]};
@@ -523,8 +522,8 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
 void Logic::UpdatePendingWorkTimer() {
   assert(g_base->InLogicThread());
 
-  // This might get called before we set up our timer in some cases. (such as
-  // very early) should be safe to ignore since we update the interval
+  // This might get called before we set up our timer in some cases. (such
+  // as very early) should be safe to ignore since we update the interval
   // explicitly after creating the timers.
   if (!process_pending_work_timer_) {
     return;
@@ -535,7 +534,8 @@ void Logic::UpdatePendingWorkTimer() {
     assert(process_pending_work_timer_);
     process_pending_work_timer_->SetLength(1);
   } else {
-    // Otherwise we've got nothing to do; go to sleep until something changes.
+    // Otherwise we've got nothing to do; go to sleep until something
+    // changes.
     assert(process_pending_work_timer_);
     process_pending_work_timer_->SetLength(-1);
   }
@@ -550,9 +550,9 @@ void Logic::HandleInterruptSignal() {
     return;
   }
 
-  // Go with a low level process shutdown here. In situations
-  // where we're getting interrupt signals I don't think we'd ever want
-  // high level 'soft' quits.
+  // Go with a low level process shutdown here. In situations where we're
+  // getting interrupt signals I don't think we'd ever want high level
+  // 'soft' quits.
   Shutdown();
 }
 
@@ -560,17 +560,18 @@ void Logic::Draw() {
   assert(g_base->InLogicThread());
   assert(!g_core->HeadlessMode());
 
-  // Push a snapshot of our current state to be rendered in the graphics thread.
+  // Push a snapshot of our current state to be rendered in the graphics
+  // thread.
   g_base->graphics->BuildAndPushFrameDef();
 
-  // Now bring logic up to date.
-  // By doing this *after* fulfilling the draw request, we're minimizing the
-  // chance of long logic updates leading to delays in frame-def delivery
-  // leading to frame drops. The downside is that when logic updates are fast
-  // then logic is basically sitting around twiddling its thumbs and getting
-  // a full frame out of date before being drawn. But as high frame rates are
-  // becoming more normal this becomes less and less meaningful and its probably
-  // best to prioritize smooth visuals.
+  // Now bring logic up to date. By doing this *after* fulfilling the draw
+  // request, we're minimizing the chance of long logic updates leading to
+  // delays in frame-def delivery leading to frame drops. The downside is
+  // that when logic updates are fast then logic is basically sitting around
+  // twiddling its thumbs and getting a full frame out of date before being
+  // drawn. But as high frame rates are becoming more normal this becomes
+  // less and less meaningful and its probably best to prioritize smooth
+  // visuals.
   StepDisplayTime();
 }
 

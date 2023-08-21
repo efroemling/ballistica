@@ -2,7 +2,6 @@
 
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
-#include "ballistica/base/app/app_config.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
@@ -10,6 +9,7 @@
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"

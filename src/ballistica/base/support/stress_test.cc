@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/app/stress_test.h"
+#include "ballistica/base/support/stress_test.h"
 
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"

@@ -3,7 +3,7 @@
 #include "ballistica/base/input/device/joystick_input.h"
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/input.h"

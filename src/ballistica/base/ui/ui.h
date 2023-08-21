@@ -10,9 +10,9 @@
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/generic/timer_list.h"
 
-// UI-Locks: make sure widget-lists don't change under you.
-// Use a read-lock if you just need to ensure lists remain intact but won't be
-// changing anything. Use a write-lock whenever modifying a list.
+// UI-Locks: make sure widget-lists don't change under you. Use a read-lock
+// if you just need to ensure lists remain intact but won't be changing
+// anything. Use a write-lock whenever modifying a list.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_UI_READ_LOCK ::ballistica::base::UI::UILock ui_lock(false)
 #define BA_DEBUG_UI_WRITE_LOCK ::ballistica::base::UI::UILock ui_lock(true)
@@ -30,7 +30,8 @@ class Widget;
 
 namespace ballistica::base {
 
-// Our global UI subsystem. This wrangles all app
+// Our global UI subsystem. This acts as a manager/wrapper for individual UI
+// feature-sets that provide specific UI functionality.
 class UI {
  public:
   UI();
@@ -47,12 +48,12 @@ class UI {
 
   void Reset();
 
-  /// Pop up an in-game window to show a url (NOT in a browser).
-  /// Can be called from any thread.
+  /// Pop up an in-app window to show a url (NOT in a browser). Can be
+  /// called from any thread.
   void ShowURL(const std::string& url);
 
-  /// High level call to request a quit ui (or in some cases quit immediately).
-  /// This can be called from any thread.
+  /// High level call to request a quit ui (or in some cases quit
+  /// immediately). This can be called from any thread.
   void ConfirmQuit();
 
   /// Return whether there is UI present in either the main or overlay
@@ -67,9 +68,9 @@ class UI {
 
   void Draw(FrameDef* frame_def);
 
-  // Returns the widget an input should send commands to, if any.
-  // Also potentially locks other inputs out of controlling the UI,
-  // so only call this if you intend on sending a message to that widget.
+  // Returns the widget an input should send commands to, if any. Also
+  // potentially locks other inputs out of controlling the UI, so only call
+  // this if you intend on sending a message to that widget.
   auto GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget*;
 
   // Send message to the active widget.
@@ -77,18 +78,19 @@ class UI {
 
   void SetUIInputDevice(InputDevice* input_device);
 
-  // Returns the input-device that currently owns the menu; otherwise nullptr.
+  // Returns the input-device that currently owns the menu; otherwise
+  // nullptr.
   auto GetUIInputDevice() const -> InputDevice*;
 
   void PushBackButtonCall(InputDevice* input_device);
 
-  // Returns whether currently selected widgets should flash.
-  // This will be false in some situations such as when only touch screen
-  // control is active.
+  // Returns whether currently selected widgets should flash. This will be
+  // false in some situations such as when only touch screen control is
+  // active.
   auto ShouldHighlightWidgets() const -> bool;
 
-  // Same except for button shortcuts; these generally only get shown
-  // if a joystick of some form is present.
+  // Same except for button shortcuts; these generally only get shown if a
+  // joystick of some form is present.
   auto ShouldShowButtonShortcuts() const -> bool;
 
   // Used to ensure widgets are not created or destroyed at certain times
@@ -111,7 +113,7 @@ class UI {
   void PushMainMenuPressCall(InputDevice* device);
 
  private:
-  void MainMenuPress(InputDevice* device);
+  void MainMenuPress_(InputDevice* device);
   Object::WeakRef<InputDevice> ui_input_device_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};

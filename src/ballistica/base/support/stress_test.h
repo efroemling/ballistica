@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_STRESS_TEST_H_
-#define BALLISTICA_BASE_APP_STRESS_TEST_H_
+#ifndef BALLISTICA_BASE_SUPPORT_STRESS_TEST_H_
+#define BALLISTICA_BASE_SUPPORT_STRESS_TEST_H_
 
 #include "ballistica/shared/ballistica.h"
 
@@ -22,4 +22,4 @@ class StressTest {
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_APP_STRESS_TEST_H_
+#endif  // BALLISTICA_BASE_SUPPORT_STRESS_TEST_H_

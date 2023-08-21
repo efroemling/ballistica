@@ -2,7 +2,7 @@
 
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/shared/generic/runnable.h"
 #include "ballistica/shared/python/python_sys.h"

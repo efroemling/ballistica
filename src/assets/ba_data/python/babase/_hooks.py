@@ -301,7 +301,7 @@ def do_quit() -> None:
 
 
 def shutdown() -> None:
-    _babase.app.on_app_shutdown()
+    _babase.app.shutdown()
 
 
 def hash_strings(inputs: list[str]) -> str:

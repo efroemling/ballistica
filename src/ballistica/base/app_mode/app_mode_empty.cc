@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/app/app_mode_empty.h"
+#include "ballistica/base/app_mode/app_mode_empty.h"
 
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -23,9 +23,9 @@ auto AppModeEmpty::GetSingleton() -> AppModeEmpty* {
 }
 
 void AppModeEmpty::Reset() {
-  // When we are first created (for use as a placeholder before any app-modes
-  // are set) we just draw nothing. However once we actually get reset for use
-  // as a an explicit app mode, we do our hello thing.
+  // When we are first created (for use as a placeholder before any
+  // app-modes are set) we just draw nothing. However once we actually get
+  // reset for use as a an explicit app mode, we do our hello thing.
   hello_mode_ = true;
 
   // Fade in if we currently aren't.
@@ -37,7 +37,7 @@ void AppModeEmpty::DrawWorld(base::FrameDef* frame_def) {
     return;
   }
 
-  // Just draw our spinning hello text.
+  // Draw some lovely spinning text.
   if (!hello_text_group_.Exists()) {
     hello_text_group_ = Object::New<TextGroup>();
     hello_text_group_->set_text("Potato!");

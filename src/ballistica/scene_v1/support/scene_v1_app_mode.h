@@ -10,7 +10,7 @@
 #include <optional>
 #include <set>
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"

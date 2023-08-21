@@ -2,7 +2,7 @@
 
 #include "ballistica/base/assets/assets.h"
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/assets/data_asset.h"

@@ -62,6 +62,7 @@ class CoreFeatureSet {
   /// ensure we don't hang indefinitely.
   void StartSuicideTimer(const std::string& action, millisecs_t delay);
 
+  /// Apply the config set up by baenv to the engine.
   void ApplyBaEnvConfig();
 
   // Call this if the main thread changes.

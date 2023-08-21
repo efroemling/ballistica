@@ -2,8 +2,7 @@
 
 #include "ballistica/base/input/input.h"
 
-#include "ballistica/base/app/app_config.h"
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
@@ -12,6 +11,7 @@
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -819,7 +819,7 @@ void Input::ProcessStressTesting(int player_count) {
 
 void Input::PushTextInputEvent(const std::string& text) {
   SafePushCall(__func__, [this, text] {
-    mark_input_active();
+    MarkInputActive();
 
     // Ignore  if input is locked.
     if (IsInputLocked()) {
@@ -854,7 +854,7 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
   }
 
   // Make note that we're not idle.
-  mark_input_active();
+  MarkInputActive();
 
   // And that this particular device isn't idle either.
   input_device->UpdateLastInputTime();
@@ -909,7 +909,7 @@ void Input::ReleaseJoystickInput() {
 void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   assert(g_base->InLogicThread());
 
-  mark_input_active();
+  MarkInputActive();
 
   // Ignore all key presses if input is locked.
   if (IsInputLocked()) {
@@ -1081,7 +1081,7 @@ void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
 
   // Note: we want to let these through even if input is locked.
 
-  mark_input_active();
+  MarkInputActive();
 
   // If someone is capturing these events, give them a crack at it.
   if (keyboard_input_capture_release_) {
@@ -1160,7 +1160,7 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
   if (IsInputLocked()) {
     return;
   }
-  mark_input_active();
+  MarkInputActive();
 
   if (std::abs(amount.y) > 0.0001f) {
     g_base->ui->SendWidgetMessage(
@@ -1194,7 +1194,7 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
   if (IsInputLocked()) {
     return;
   }
-  mark_input_active();
+  MarkInputActive();
 
   bool handled = false;
   handled = g_base->ui->SendWidgetMessage(
@@ -1222,7 +1222,7 @@ void Input::PushMouseMotionEvent(const Vector2f& position) {
 void Input::HandleMouseMotion(const Vector2f& position) {
   assert(g_base->graphics);
   assert(g_base->InLogicThread());
-  mark_input_active();
+  MarkInputActive();
 
   float old_cursor_pos_x = cursor_pos_x_;
   float old_cursor_pos_y = cursor_pos_y_;
@@ -1285,7 +1285,7 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   //    return;
   //  }
 
-  mark_input_active();
+  MarkInputActive();
 
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
@@ -1350,7 +1350,7 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
 
 void Input::HandleMouseUp(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
-  mark_input_active();
+  MarkInputActive();
 
   // Convert normalized view coords to our virtual ones.
   cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
@@ -1407,7 +1407,7 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     return;
   }
 
-  mark_input_active();
+  MarkInputActive();
 
   // float x = e.x;
   // float y = e.y;

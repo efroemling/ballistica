@@ -64,13 +64,14 @@ class App:
         # The app launch process has not yet begun.
         INITIAL = 0
 
-        # Our app subsystems are being inited but should not yet interact.
+        # Our app subsystems are being inited but should not yet
+        # interact.
         LAUNCHING = 1
 
         # App subsystems are inited and interacting, but the app has not
-        # yet embarked on a high level course of action. It is doing initial
-        # account logins, workspace & asset downloads, etc. in order to
-        # prepare for this.
+        # yet embarked on a high level course of action. It is doing
+        # initial account logins, workspace & asset downloads, etc. in
+        # order to prepare for this.
         LOADING = 2
 
         # All pieces are in place and the app is now doing its thing.
@@ -158,7 +159,7 @@ class App:
 
     @property
     def python_directory_user(self) -> str | None:
-        """Path where ballistica expects its custom user scripts (mods) to live.
+        """Path where ballistica expects its user scripts (mods) to live.
 
         Be aware that this value may be None if ballistica is running in
         a non-standard environment, and that python-path modifications may
@@ -248,13 +249,14 @@ class App:
         self._app_paused = False
         self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
+        self._shutdown_called = False
 
         # Config.
         self.config_file_healthy = False
 
-        # This is incremented any time the app is backgrounded/foregrounded;
-        # can be a simple way to determine if network data should be
-        # refreshed/etc.
+        # This is incremented any time the app is
+        # backgrounded/foregrounded; can be a simple way to determine if
+        # network data should be refreshed/etc.
         self.fg_state = 0
 
         self._aioloop: asyncio.AbstractEventLoop | None = None
@@ -273,9 +275,10 @@ class App:
         self.iircade_mode: bool = self._env['iircade_mode']
         assert isinstance(self.iircade_mode, bool)
 
-        # Default executor which can be used for misc background processing.
-        # It should also be passed to any additional asyncio loops we create
-        # so that everything shares the same single set of worker threads.
+        # Default executor which can be used for misc background
+        # processing. It should also be passed to any additional asyncio
+        # loops we create so that everything shares the same single set
+        # of worker threads.
         self.threadpool = ThreadPoolExecutor(thread_name_prefix='baworker')
 
         self._config: babase.AppConfig | None = None
@@ -288,10 +291,10 @@ class App:
         self._intent: AppIntent | None = None
         self._mode: AppMode | None = None
 
-        # Controls which app-modes we use for handling given app-intents.
-        # Plugins can override this to change high level app behavior and
-        # spinoff projects can change the default implementation for the
-        # same effect.
+        # Controls which app-modes we use for handling given
+        # app-intents. Plugins can override this to change high level
+        # app behavior and spinoff projects can change the default
+        # implementation for the same effect.
         self.mode_selector: AppModeSelector | None = None
 
         self._asyncio_timer: babase.AppTimer | None = None
@@ -492,7 +495,7 @@ class App:
         self._app_bootstrapping_complete = True
         self._update_state()
 
-    def on_app_launching(self) -> None:
+    def _on_app_launching(self) -> None:
         """Called when the app enters the launching state.
 
         Here we can put together subsystems and other pieces for the
@@ -520,8 +523,8 @@ class App:
                     return
 
             # For now on other systems we just overwrite the bum config.
-            # At this point settings are already set; lets just commit them
-            # to disk.
+            # At this point settings are already set; lets just commit
+            # them to disk.
             _appconfig.commit_app_config(force=True)
 
         # __FEATURESET_APP_SUBSYSTEM_CREATE_BEGIN__
@@ -537,7 +540,7 @@ class App:
         self._launch_completed = True
         self._update_state()
 
-    def on_app_loading(self) -> None:
+    def _on_app_loading(self) -> None:
         """Called when the app enters the loading state.
 
         At this point, all built-in pieces of the app should be in place
@@ -551,7 +554,7 @@ class App:
         assert _babase.in_logic_thread()
 
         # Get meta-system scanning built-in stuff in the bg.
-        self.meta.start_scan(scan_complete_cb=self.on_meta_scan_complete)
+        self.meta.start_scan(scan_complete_cb=self._on_meta_scan_complete)
 
         # If any traceback dumps happened last run, log and clear them.
         log_dumped_app_state()
@@ -567,13 +570,13 @@ class App:
                     'Error in on_app_loading for subsystem %s.', subsystem
                 )
 
-        # Normally plus tells us when initial sign-in is done. If it's
-        # not present, however, we just do that ourself so we can
+        # Normally plus tells us when initial sign-in is done. If plus
+        # is not present, however, we just do it ourself so we can
         # proceed on to the running state.
         if self.plus is None:
             _babase.pushcall(self.on_initial_sign_in_completed)
 
-    def on_meta_scan_complete(self) -> None:
+    def _on_meta_scan_complete(self) -> None:
         """Called when meta-scan is done doing its thing."""
         assert _babase.in_logic_thread()
 
@@ -584,7 +587,7 @@ class App:
         self._meta_scan_completed = True
         self._update_state()
 
-    def on_app_running(self) -> None:
+    def _on_app_running(self) -> None:
         """Called when the app enters the running state.
 
         At this point, all workspaces, initial accounts, etc. are in place
@@ -636,7 +639,8 @@ class App:
 
         _babase.lifecyclelog('apply-app-config')
 
-        # If multiple apply calls have been made, only actually apply once.
+        # If multiple apply calls have been made, only actually apply
+        # once.
         if not self._pending_apply_app_config:
             return
 
@@ -701,15 +705,22 @@ class App:
         # pylint: disable=too-many-branches
         assert _babase.in_logic_thread()
 
-        if self._app_paused:
+        if self._shutdown_called:
+            # Entering shutdown state:
+            if self.state is not self.State.SHUTTING_DOWN:
+                self.state = self.State.SHUTTING_DOWN
+                _babase.lifecyclelog('app state shutting down')
+                self._on_app_shutdown()
+
+        elif self._app_paused:
             # Entering paused state:
             if self.state is not self.State.PAUSED:
                 self.state = self.State.PAUSED
-                self.on_app_pause()
+                self._on_app_pause()
         else:
             # Leaving paused state:
             if self.state is self.State.PAUSED:
-                self.on_app_resume()
+                self._on_app_resume()
 
             # Handle initially entering or returning to other states.
             if self._initial_sign_in_completed and self._meta_scan_completed:
@@ -718,14 +729,14 @@ class App:
                     _babase.lifecyclelog('app state running')
                     if not self._called_on_app_running:
                         self._called_on_app_running = True
-                        self.on_app_running()
+                        self._on_app_running()
             elif self._launch_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
                     _babase.lifecyclelog('app state loading')
                     if not self._called_on_app_loading:
                         self._called_on_app_loading = True
-                        self.on_app_loading()
+                        self._on_app_loading()
             else:
                 # Only thing left is launching. We shouldn't be getting
                 # called before at least that is complete.
@@ -735,7 +746,7 @@ class App:
                     _babase.lifecyclelog('app state launching')
                     if not self._called_on_app_launching:
                         self._called_on_app_launching = True
-                        self.on_app_launching()
+                        self._on_app_launching()
 
     def pause(self) -> None:
         """Should be called by the native layer when the app pauses."""
@@ -749,7 +760,12 @@ class App:
         self._app_paused = False
         self._update_state()
 
-    def on_app_pause(self) -> None:
+    def shutdown(self) -> None:
+        """Should be called by the native layer when the app wants to quit."""
+        self._shutdown_called = True
+        self._update_state()
+
+    def _on_app_pause(self) -> None:
         """Called when the app goes to a paused state."""
         assert _babase.in_logic_thread()
 
@@ -762,7 +778,7 @@ class App:
                     'Error in on_app_pause for subsystem %s.', subsystem
                 )
 
-    def on_app_resume(self) -> None:
+    def _on_app_resume(self) -> None:
         """Called when resuming."""
         assert _babase.in_logic_thread()
         self.fg_state += 1
@@ -776,13 +792,12 @@ class App:
                     'Error in on_app_resume for subsystem %s.', subsystem
                 )
 
-    def on_app_shutdown(self) -> None:
+    def _on_app_shutdown(self) -> None:
         """(internal)"""
         assert _babase.in_logic_thread()
-        self.state = self.State.SHUTTING_DOWN
 
-        # Shutdown all app subsystems in the opposite order they were
-        # inited.
+        # Inform app subsystems that we're shutting down in the opposite
+        # order they were inited.
         for subsystem in reversed(self._subsystems):
             try:
                 subsystem.on_app_shutdown()
@@ -821,16 +836,16 @@ class App:
         """Callback to be run after initial sign-in (or lack thereof).
 
         This normally gets called by the plus subsystem.
-        This period includes things such as syncing account workspaces
-        or other data so it may take a substantial amount of time.
-        This should also run after a short amount of time if no login
-        has occurred.
+        The initial-sign-in process may include tasks such as syncing
+        account workspaces or other data so it may take a substantial
+        amount of time. This should also run after a short amount of
+        time if no login is occurring.
         """
         assert _babase.in_logic_thread()
         assert not self._initial_sign_in_completed
 
-        # Tell meta it can start scanning extra stuff that just showed up
-        # (namely account workspaces).
+        # Tell meta it can start scanning extra stuff that just showed
+        # up (namely account workspaces).
         self.meta.start_extra_scan()
 
         self._initial_sign_in_completed = True

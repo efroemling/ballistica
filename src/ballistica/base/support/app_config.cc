@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/app/app_config.h"
+#include "ballistica/base/support/app_config.h"
 
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"

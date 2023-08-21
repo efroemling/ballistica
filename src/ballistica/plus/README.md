@@ -1,6 +1,8 @@
 # Plus Feature Set
 
-Bits of the engine related to accounts and cloud functionality. In prefab builds
-the compiled code for this feature set is contained in the pre-compiled static
-ballisticaplus library. The plus feature set can also be removed from
-spinoff projects if desired to remove the need for that library.
+Bits of the engine related to things like Ballistica accounts and cloud
+functionality. Due to its sensitive nature, source code to this part of the
+engine is not available publicly. It is instead distributed as precompiled
+static libraries which can be linked in with the rest of the open sourced
+engine. The Plus feature can be removed from spinoff projects in order to create
+a 100% open-source project.

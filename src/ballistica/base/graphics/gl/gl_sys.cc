@@ -3,7 +3,7 @@
 #if BA_ENABLE_OPENGL
 #include "ballistica/base/graphics/gl/gl_sys.h"
 
-#include "ballistica/base/app/sdl_app.h"
+#include "ballistica/base/app/app_sdl.h"
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
 
@@ -149,7 +149,7 @@ GLContext::GLContext(int target_res_x, int target_res_y, bool fullscreen)
     // devices.
     int win_size_x, win_size_y;
     SDL_GetWindowSize(sdl_window_, &win_size_x, &win_size_y);
-    SDLApp::get()->SetInitialScreenDimensions(Vector2f(
+    AppSDL::get()->SetInitialScreenDimensions(Vector2f(
         static_cast<float>(win_size_x), static_cast<float>(win_size_y)));
 #if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
     res_x_ = win_size_x;
@@ -188,7 +188,7 @@ GLContext::GLContext(int target_res_x, int target_res_y, bool fullscreen)
     }
     res_x_ = surface_->w;
     res_y_ = surface_->h;
-    SDLApp::get()->SetInitialScreenDimensions(Vector2f(res_x_, res_y_));
+    AppSDL::get()->SetInitialScreenDimensions(Vector2f(res_x_, res_y_));
     SDL_WM_SetCaption("BallisticaKit", "BallisticaKit");
 #elif BA_OSTYPE_ANDROID
     // On Android the Java layer creates a GL setup before even calling us.

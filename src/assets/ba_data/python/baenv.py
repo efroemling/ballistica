@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21215
+TARGET_BALLISTICA_BUILD = 21221
 TARGET_BALLISTICA_VERSION = '1.7.26'
 
 
@@ -476,7 +476,8 @@ def _modular_main() -> None:
         # Deal with a few key things here ourself before even running
         # configure.
 
-        # Extract stuff below modifies this so work with a copy.
+        # The extract_arg stuff below modifies this so we work with a
+        # copy.
         args = sys.argv.copy()
 
         # NOTE: We need to keep these arg long/short arg versions synced
@@ -496,8 +497,8 @@ def _modular_main() -> None:
         mods_dir = extract_arg(args, ['--mods-dir', '-m'], is_dir=True)
 
         # We run configure() BEFORE importing babase. (part of its job
-        # is to wrangle paths to determine where babase and everything
-        # else gets loaded from).
+        # is to wrangle paths which can affect where babase and
+        # everything else gets loaded from).
         configure(
             config_dir=config_dir,
             data_dir=data_dir,

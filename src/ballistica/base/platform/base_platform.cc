@@ -25,7 +25,7 @@
 #endif
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/sdl_app.h"
+#include "ballistica/base/app/app_sdl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_vr.h"
 
@@ -113,7 +113,7 @@ auto BasePlatform::CreateApp() -> App* {
 // TEMP - need to init sdl on our legacy mac build even though its not
 // technically an SDL app. Kill this once the old mac build is gone.
 #if BA_LEGACY_MACOS_BUILD
-  SDLApp::InitSDL();
+  AppSDL::InitSDL();
 #endif
 
   App* app{};
@@ -125,12 +125,12 @@ auto BasePlatform::CreateApp() -> App* {
   if (g_core->vr_mode) {
     app = new AppVR(g_core->main_event_loop());
   } else {
-    app = new SDLApp(g_core->main_event_loop());
+    app = new AppSDL(g_core->main_event_loop());
   }
 #elif BA_CARDBOARD_BUILD
   app = new AppVR(g_core->main_event_loop());
 #elif BA_SDL_BUILD
-  app = new SDLApp(g_core->main_event_loop());
+  app = new AppSDL(g_core->main_event_loop());
 #else
   app = new App(g_core->main_event_loop());
 #endif

@@ -3,8 +3,7 @@
 #include "ballistica/base/graphics/graphics.h"
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_config.h"
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/object_component.h"
@@ -20,6 +19,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
@@ -1116,8 +1116,8 @@ void Graphics::BuildAndPushFrameDef() {
   assert(!building_frame_def_);
   building_frame_def_ = true;
 
-  // We should not be building/pushing any frames until after
-  // app-launch-commands have been run.
+  // We should not be building/pushing any frames until the native
+  // layer is fully bootstrapped.
   BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
 
   // This should no longer be necessary..

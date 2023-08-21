@@ -10,8 +10,8 @@
 
 namespace ballistica::base {
 
-// Given geoms, creates/samples a height map on the fly
-// which can be used for very fast AABB tests against the geometry.
+// Given geoms, creates/samples a height map on the fly which can be used
+// for very fast AABB tests against the geometry.
 class CollisionCache {
  public:
   CollisionCache();
@@ -23,8 +23,8 @@ class CollisionCache {
   void CollideAgainstSpace(dSpaceID space, void* data, dNearCallback* callback);
   void CollideAgainstGeom(dGeomID geom, void* data, dNearCallback* callback);
 
-  // Call this periodically (once per cycle or so) to slowly fill in
-  // the cache so there's less to do during spurts of activity;
+  // Call this periodically (once per sim step or so) to slowly fill in
+  // the cache so there's less to do during spurts of activity.
   void Precalc();
 
  private:

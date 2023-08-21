@@ -2,7 +2,6 @@
 
 #include "ballistica/base/app/app.h"
 
-#include "ballistica/base/app/stress_test.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/device/touch_input.h"
@@ -12,6 +11,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/support/stdio_console.h"
+#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -134,7 +134,7 @@ void App::LogicThreadShutdownComplete() {
 
   done_ = true;
 
-  // Kill our own event loop (or tell the OS to kill its).
+  // Flag our own event loop to exit (or tell the OS to do so for its own).
   if (ManagesEventLoop()) {
     event_loop()->Quit();
   } else {
@@ -147,28 +147,29 @@ void App::RunEvents() {
   stress_test_->Update();
 
   // Give platforms a chance to pump/handle their own events.
-  // FIXME: now that we have app class overrides, platform should really
-  //  not be doing event handling. (need to fix rift build).
+  //
+  // FIXME: now that we have app class overrides, platform should really not
+  // be doing event handling. (need to fix Rift build in this regard).
   g_core->platform->RunEvents();
 }
 
-void App::UpdatePauseResume() {
+void App::UpdatePauseResume_() {
   if (actually_paused_) {
     // Unpause if no one wants pause.
     if (!sys_paused_app_) {
-      OnAppResume();
+      OnAppResume_();
       actually_paused_ = false;
     }
   } else {
     // OnAppPause if anyone wants.
     if (sys_paused_app_) {
-      OnAppPause();
+      OnAppPause_();
       actually_paused_ = true;
     }
   }
 }
 
-void App::OnAppPause() {
+void App::OnAppPause_() {
   assert(g_core->InMainThread());
 
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
@@ -186,7 +187,7 @@ void App::OnAppPause() {
   g_core->platform->OnAppPause();
 }
 
-void App::OnAppResume() {
+void App::OnAppResume_() {
   assert(g_core->InMainThread());
   last_app_resume_time_ = g_core->GetAppTimeMillisecs();
 
@@ -244,7 +245,7 @@ void App::PauseApp() {
       "PauseApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
   assert(!sys_paused_app_);
   sys_paused_app_ = true;
-  UpdatePauseResume();
+  UpdatePauseResume_();
 
   // We assume that the OS will completely suspend our process the moment
   // we return from this call (though this is not technically true on all
@@ -286,7 +287,7 @@ void App::ResumeApp() {
       "ResumeApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
   assert(sys_paused_app_);
   sys_paused_app_ = false;
-  UpdatePauseResume();
+  UpdatePauseResume_();
   if (g_buildconfig.debug_build()) {
     Log(LogLevel::kDebug,
         "ResumeApp() completed in "

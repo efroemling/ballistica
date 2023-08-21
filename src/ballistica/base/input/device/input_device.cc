@@ -86,7 +86,7 @@ void InputDevice::UpdateLastInputTime() {
   // the overall input system know something happened.
   last_input_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-  g_base->input->mark_input_active();
+  g_base->input->MarkInputActive();
 }
 
 void InputDevice::InputCommand(InputType type, float value) {

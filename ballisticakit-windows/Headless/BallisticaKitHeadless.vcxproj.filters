@@ -7,28 +7,16 @@
     <ClInclude Include="..\..\src\ballistica\base\app\app.h">
       <Filter>ballistica\base\app</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_config.cc">
-      <Filter>ballistica\base\app</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_config.h">
-      <Filter>ballistica\base\app</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\app\app_headless.cc">
       <Filter>ballistica\base\app</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\app\app_headless.h">
       <Filter>ballistica\base\app</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_mode.cc">
+    <ClCompile Include="..\..\src\ballistica\base\app\app_sdl.cc">
       <Filter>ballistica\base\app</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_mode.h">
-      <Filter>ballistica\base\app</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_mode_empty.cc">
-      <Filter>ballistica\base\app</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_mode_empty.h">
+    <ClInclude Include="..\..\src\ballistica\base\app\app_sdl.h">
       <Filter>ballistica\base\app</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\app\app_vr.cc">
@@ -37,17 +25,17 @@
     <ClInclude Include="..\..\src\ballistica\base\app\app_vr.h">
       <Filter>ballistica\base\app</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\sdl_app.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc">
+      <Filter>ballistica\base\app_mode</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\sdl_app.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h">
+      <Filter>ballistica\base\app_mode</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\stress_test.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode_empty.cc">
+      <Filter>ballistica\base\app_mode</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\stress_test.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode_empty.h">
+      <Filter>ballistica\base\app_mode</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc">
       <Filter>ballistica\base\assets</Filter>
@@ -628,6 +616,12 @@
     <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call_runnable.h">
       <Filter>ballistica\base\python\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\app_config.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\app_config.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
@@ -653,6 +647,12 @@
       <Filter>ballistica\base\support</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\stress_test.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h">
@@ -1866,6 +1866,7 @@
     <Filter Include="ballistica" />
     <Filter Include="ballistica\base" />
     <Filter Include="ballistica\base\app" />
+    <Filter Include="ballistica\base\app_mode" />
     <Filter Include="ballistica\base\assets" />
     <Filter Include="ballistica\base\audio" />
     <Filter Include="ballistica\base\dynamics" />

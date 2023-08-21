@@ -192,8 +192,8 @@ void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
     collideAABBs(g1, g2, data, callback);
   }
 
-  // While we're here, lets run one pass of tests on these cells to zero in on
-  // the actual collide/empty cutoff.
+  // While we're here, lets run one pass of tests on these cells to zero in
+  // on the actual collide/empty cutoff.
   for (int z = z_min; z <= z_max; z++) {
     int base_index = z * grid_width_;
     for (int x = x_min; x <= x_max; x++) {

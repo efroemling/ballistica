@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_SDL_APP_H_
-#define BALLISTICA_BASE_APP_SDL_APP_H_
+#ifndef BALLISTICA_BASE_APP_APP_SDL_H_
+#define BALLISTICA_BASE_APP_APP_SDL_H_
 
 #if BA_SDL_BUILD
 
@@ -12,10 +12,10 @@
 
 namespace ballistica::base {
 
-class SDLApp : public App {
+class AppSDL : public App {
  public:
   static void InitSDL();
-  explicit SDLApp(EventLoop* event_loop);
+  explicit AppSDL(EventLoop* event_loop);
   void HandleSDLEvent(const SDL_Event& event);
   void RunEvents() override;
   void DidFinishRenderingFrame(FrameDef* frame) override;
@@ -24,12 +24,12 @@ class SDLApp : public App {
   static void SDLJoystickDisconnected(int index);
   void OnMainThreadStartApp() override;
 
-  /// Return g_base->app as a SDLApp. (assumes it actually is one).
-  static SDLApp* get() {
+  /// Return g_base->app as a AppSDL. (assumes it actually is one).
+  static AppSDL* get() {
     assert(g_base && g_base->app != nullptr);
-    assert(dynamic_cast<SDLApp*>(g_base->app)
-           == static_cast<SDLApp*>(g_base->app));
-    return static_cast<SDLApp*>(g_base->app);
+    assert(dynamic_cast<AppSDL*>(g_base->app)
+           == static_cast<AppSDL*>(g_base->app));
+    return static_cast<AppSDL*>(g_base->app);
   }
   void SetInitialScreenDimensions(const Vector2f& dimensions);
 
@@ -63,4 +63,4 @@ class SDLApp : public App {
 
 #endif  // BA_SDL_BUILD
 
-#endif  // BALLISTICA_BASE_APP_SDL_APP_H_
+#endif  // BALLISTICA_BASE_APP_APP_SDL_H_

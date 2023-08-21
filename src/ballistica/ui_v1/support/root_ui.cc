@@ -2,7 +2,7 @@
 
 #include "ballistica/ui_v1/support/root_ui.h"
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/device/touch_input.h"

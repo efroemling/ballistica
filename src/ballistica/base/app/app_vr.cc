@@ -23,8 +23,8 @@ void AppVR::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
     s.l.tz = -0.3f;
 
     // Hmm; for now lets always assign this as right hand even when its in
-    // left-handed mode to keep things simple on the back-end.  Can change later
-    // if there's a downside to that.
+    // left-handed mode to keep things simple on the back-end. Can change
+    // later if there's a downside to that.
     s.r.type = VRHandType::kDaydreamRemote;
     s.r.tx = 0.2f;
     s.r.ty = -0.2f;
@@ -47,9 +47,9 @@ void AppVR::VRPreDraw() {
   }
   assert(g_base->InGraphicsThread());
   if (FrameDef* frame_def = g_base->graphics_server->GetRenderFrameDef()) {
-    // Note: this could be part of PreprocessRenderFrameDef but
-    // the non-vr path needs it to be separate since preprocess doesn't
-    // happen sometimes. Should probably clean that up.
+    // Note: this could be part of PreprocessRenderFrameDef but the non-vr
+    // path needs it to be separate since preprocess doesn't happen
+    // sometimes. Should probably clean that up.
     g_base->graphics_server->RunFrameDefMeshUpdates(frame_def);
 
     // store this for the duration of this frame
@@ -82,8 +82,8 @@ void AppVR::VRSetHead(float tx, float ty, float tz, float yaw, float pitch,
 void AppVR::VRSetHands(const VRHandsState& state) {
   assert(g_base->InGraphicsThread());
 
-  // Pass this along to the renderer (in this same thread) for drawing
-  // (so hands can be drawn at their absolute most up-to-date positions, etc).
+  // Pass this along to the renderer (in this same thread) for drawing (so
+  // hands can be drawn at their absolute most up-to-date positions, etc).
   Renderer* renderer = g_base->graphics_server->renderer();
   if (renderer == nullptr) {
     return;
@@ -91,10 +91,10 @@ void AppVR::VRSetHands(const VRHandsState& state) {
   renderer->VRSetHands(state);
 
   // ALSO ship it off to the logic thread to actually handle input from it.
+  //
   // FIXME: This should get shipped to a logic or input variant once we have
-  // that for vr; not the graphics variant.
-  //  Shipping it to the renderer above covers graphics needs in a lower
-  // latency way.
+  // that for vr; not the graphics variant. Shipping it to the renderer
+  // above covers graphics needs in a lower latency way.
   g_base->logic->event_loop()->PushCall(
       [state] { GraphicsVR::get()->set_vr_hands_state(state); });
 }

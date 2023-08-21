@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_APP_MODE_H_
-#define BALLISTICA_BASE_APP_APP_MODE_H_
+#ifndef BALLISTICA_BASE_APP_MODE_APP_MODE_H_
+#define BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 
 #include <vector>
 
@@ -19,9 +19,9 @@ const microsecs_t kAppModeMaxHeadlessDisplayStep{500000};
 const microsecs_t kAppModeMinHeadlessDisplayStep{1000};
 
 /// Represents 'what the app is doing'. The global app-mode can be switched
-/// as the app is running. Be aware that, unlike the App/App classes
-/// which operate in the main thread, most functionality here is based in the
-/// logic thread.
+/// as the app is running. Be aware that, unlike the App classes which
+/// primarily operate in the main thread, most functionality here is based
+/// in the logic thread.
 class AppMode {
  public:
   AppMode();
@@ -118,4 +118,4 @@ class AppMode {
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_APP_APP_MODE_H_
+#endif  // BALLISTICA_BASE_APP_MODE_APP_MODE_H_

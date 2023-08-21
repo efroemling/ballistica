@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/platform/core_platform.h"

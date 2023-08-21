@@ -3,8 +3,8 @@
 #include "ballistica/base/python/methods/python_methods_app.h"
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_mode.h"
-#include "ballistica/base/app/app_mode_empty.h"
+#include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"

@@ -2,10 +2,10 @@
 
 #include "ballistica/base/audio/audio.h"
 
-#include "ballistica/base/app/app_config.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {

@@ -8,48 +8,44 @@
 #include <string>
 #include <unordered_map>
 
-#include "ballistica/base/app/stress_test.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/support/stress_test.h"
 
 namespace ballistica::base {
 
-/// Encapsulates high level app behavior based on platform, build type, or
-/// other factors determined at launch. A single binary can support multiple
-/// app-flavors (standard, vr, headless, etc.), but the app will always have
-/// a single constant flavor for a given run.
+/// Encapsulates high level app behavior for regular apps, vr apps,
+/// headless apps, etc.
 class App {
  public:
   explicit App(EventLoop* event_loop);
 
-  /// Should be run after the instance is created and assigned.
-  /// Any setup that may trigger virtual methods or lookups via global
-  /// should go here.
+  /// Should be run after the instance is created and assigned. Any setup
+  /// that may trigger virtual methods or lookups via global should go here.
   void PostInit();
 
-  /// Gets called when the app config is being applied.
-  /// Note that this call happens in the logic thread, so we should
-  /// do any reading that needs to happen in the logic thread and then
-  /// forward the values to ourself back in our main thread.
+  /// Gets called when the app config is being applied. Note that this call
+  /// happens in the logic thread, so we should do any reading that needs to
+  /// happen in the logic thread and then forward the values to ourself back
+  /// in our main thread.
   void DoLogicThreadApplyAppConfig();
 
-  /// Return whether this class runs its own event loop.
-  /// If true, MonolithicMain() will continuously ask the app for events
-  /// until the app is quit, at which point MonolithicMain() returns.
-  /// If false, MonolithicMain returns immediately and it is assumed
-  /// that the OS handles the app lifecycle and pushes events to the app
-  /// via callbacks/etc.
+  /// Return whether this class runs its own event loop. If true,
+  /// MonolithicMain() will continuously ask the app for events until the
+  /// app is quit, at which point MonolithicMain() returns. If false,
+  /// MonolithicMain returns immediately and it is assumed that the OS
+  /// handles the app lifecycle and pushes events to the app via
+  /// callbacks/etc.
   auto ManagesEventLoop() const -> bool;
 
-  /// Called for non-event-loop apps to give them an opportunity to
-  /// ensure they are self-sustaining. For instance, an app relying on
-  /// frame-draws for its main thread event processing may need to
-  /// manually pump events until frame rendering begins.
+  /// Called for non-event-loop apps to give them an opportunity to ensure
+  /// they are self-sustaining. For instance, an app relying on frame-draws
+  /// for its main thread event processing may need to manually pump events
+  /// until frame rendering begins.
   virtual void PrimeMainThreadEventPump();
 
-  /// Handle any pending OS events.
-  /// On normal graphical builds this is triggered by RunRenderUpkeepCycle();
-  /// timer intervals for headless builds, etc.
-  /// Should process any pending OS events, etc.
+  /// Handle any pending OS events. On normal graphical builds this is
+  /// triggered by RunRenderUpkeepCycle(); timer intervals for headless
+  /// builds, etc. Should process any pending OS events, etc.
   virtual void RunEvents();
 
   /// Put the app into a paused state. Should be called from the main
@@ -62,8 +58,8 @@ class App {
 
   auto paused() const -> bool { return actually_paused_; }
 
-  /// OnAppResume the app; corresponds to returning to foreground on mobile/etc.
-  /// Spins threads back up, re-opens network sockets, etc.
+  /// OnAppResume the app; corresponds to returning to foreground on
+  /// mobile/etc. Spins threads back up, re-opens network sockets, etc.
   void ResumeApp();
 
   /// The last time the app was resumed (uses GetAppTimeMillisecs() value).
@@ -77,21 +73,20 @@ class App {
   /// Attempt to draw a frame.
   void DrawFrame(bool during_resize = false);
 
-  /// Run updates in the logic thread. Generally called once per frame rendered
-  /// or at some fixed rate for headless builds.
+  /// Run updates in the logic thread. Generally called once per frame
+  /// rendered or at some fixed rate for headless builds.
   void LogicThreadStepDisplayTime();
 
   /// Used on platforms where our main thread event processing is driven by
-  /// frame-draw commands given to us. This should be called after drawing
-  /// a frame in order to bring game state up to date and process OS events.
+  /// frame-draw commands given to us. This should be called after drawing a
+  /// frame in order to bring game state up to date and process OS events.
   void RunRenderUpkeepCycle();
 
   /// Called by the graphics-server when drawing completes for a frame.
   virtual void DidFinishRenderingFrame(FrameDef* frame);
 
-  /// Return the price of an IAP product as a human-readable string,
-  /// or an empty string if not found.
-  /// FIXME: move this to platform.
+  /// Return the price of an IAP product as a human-readable string, or an
+  /// empty string if not found. FIXME: move this to platform.
   auto GetProductPrice(const std::string& product) -> std::string;
   void SetProductPrice(const std::string& product, const std::string& price);
 
@@ -124,15 +119,18 @@ class App {
   void PushPurchaseAckCall(const std::string& purchase,
                            const std::string& order_id);
   auto event_loop() const -> EventLoop* { return event_loop_; }
+
+  /// Called by the logic thread when all shutdown-related tasks are done
+  /// and it is safe to exit the main event loop.
   void LogicThreadShutdownComplete();
 
   void LogicThreadOnAppRunning();
   void LogicThreadOnInitialAppModeSet();
 
  private:
-  void UpdatePauseResume();
-  void OnAppPause();
-  void OnAppResume();
+  void UpdatePauseResume_();
+  void OnAppPause_();
+  void OnAppResume_();
   EventLoop* event_loop_{};
   bool done_{};
   bool server_wrapper_managed_{};

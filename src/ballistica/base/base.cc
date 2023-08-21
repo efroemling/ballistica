@@ -3,8 +3,7 @@
 #include "ballistica/base/base.h"
 
 #include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_config.h"
-#include "ballistica/base/app/app_mode_empty.h"
+#include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
@@ -22,6 +21,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
@@ -237,8 +237,8 @@ void BaseFeatureSet::LogVersionInfo() {
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
   assert(InLogicThread());
 
-  // Make an exception here for empty mode since that's in place before an
-  // app mode is officially set.
+  // Redundant sets should not happen (make an exception here for empty mode
+  // since that's in place before any app mode is officially set).
   if (mode == app_mode_ && mode != AppModeEmpty::GetSingleton()) {
     Log(LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");

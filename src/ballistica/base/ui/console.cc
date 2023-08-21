@@ -2,7 +2,7 @@
 
 #include "ballistica/base/ui/console.h"
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"

@@ -49,6 +49,7 @@ class Logic {
   /// FIXME: I feel like this should be in one of the App classes.
   void Shutdown();
 
+  /// Has CompleteAppBootstrapping been called?
   auto app_bootstrapping_complete() const {
     return app_bootstrapping_complete_;
   }

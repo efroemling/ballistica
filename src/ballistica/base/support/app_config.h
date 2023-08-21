@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_APP_CONFIG_H_
-#define BALLISTICA_BASE_APP_APP_CONFIG_H_
+#ifndef BALLISTICA_BASE_SUPPORT_APP_CONFIG_H_
+#define BALLISTICA_BASE_SUPPORT_APP_CONFIG_H_
 
 #include <map>
 #include <memory>
@@ -139,4 +139,4 @@ class AppConfig {
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_APP_APP_CONFIG_H_
+#endif  // BALLISTICA_BASE_SUPPORT_APP_CONFIG_H_

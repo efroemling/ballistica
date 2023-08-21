@@ -2,11 +2,11 @@
 
 #include "ballistica/base/input/device/touch_input.h"
 
-#include "ballistica/base/app/app_config.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
 
 namespace ballistica::base {

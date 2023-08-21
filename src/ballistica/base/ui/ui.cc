@@ -2,12 +2,12 @@
 
 #include "ballistica/base/ui/ui.h"
 
-#include "ballistica/base/app/app_config.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/ui_v1_soft.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -147,17 +147,17 @@ void UI::PushBackButtonCall(InputDevice* input_device) {
     } else {
       // If there's no main screen or overlay windows, ask for a menu owned by
       // this device.
-      MainMenuPress(input_device);
+      MainMenuPress_(input_device);
     }
   });
 }
 
 void UI::PushMainMenuPressCall(InputDevice* device) {
   g_base->logic->event_loop()->PushCall(
-      [this, device] { MainMenuPress(device); });
+      [this, device] { MainMenuPress_(device); });
 }
 
-void UI::MainMenuPress(InputDevice* device) {
+void UI::MainMenuPress_(InputDevice* device) {
   assert(g_base->InLogicThread());
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->DoHandleDeviceMenuPress(device);

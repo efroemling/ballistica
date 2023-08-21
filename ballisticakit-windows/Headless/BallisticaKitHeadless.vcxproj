@@ -186,20 +186,16 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\ballistica\base\app\app.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app\app.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_config.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_config.h" />
     <ClCompile Include="..\..\src\ballistica\base\app\app_headless.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app\app_headless.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_mode.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_mode.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_mode_empty.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_mode_empty.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app\app_sdl.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app\app_sdl.h" />
     <ClCompile Include="..\..\src\ballistica\base\app\app_vr.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app\app_vr.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\sdl_app.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\sdl_app.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\stress_test.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\stress_test.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode_empty.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode_empty.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc" />
@@ -393,6 +389,8 @@
     <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call.h" />
     <ClInclude Include="..\..\src\ballistica\base\python\support\python_context_call_runnable.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\app_config.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\app_config.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\classic_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
@@ -402,6 +400,8 @@
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\stdio_console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\stress_test.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\console.h" />

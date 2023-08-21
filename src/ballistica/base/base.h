@@ -99,7 +99,7 @@ class RenderTarget;
 class RemoteAppServer;
 class RemoteControlInput;
 class ScoreToBeat;
-class SDLApp;
+class AppSDL;
 class SDLContext;
 class SoundAsset;
 class SpriteMesh;
@@ -688,7 +688,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
                      const std::string& arg) override;
   void OnReachedEndOfBaBaseImport();
 
-  /// Called in the logic thread once our screen is up and assets are loading.
+  /// Called in the logic thread once our screen is up and assets are
+  /// loading.
   void OnAssetsAvailable();
 
   // Const subsystems.

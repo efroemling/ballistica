@@ -2,7 +2,7 @@
 
 #include "ballistica/base/networking/network_reader.h"
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/input/support/remote_app_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"

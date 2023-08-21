@@ -96,7 +96,7 @@ class Input {
 
   // Should be called whenever user-input of some form comes through.
   // void ResetIdleTime() { last_input_time_ = GetAppTimeMillisecs(); }
-  auto mark_input_active() { input_active_ = true; }
+  auto MarkInputActive() { input_active_ = true; }
 
   // returns true if more than one non-keyboard device has been active recently
   // ..this is used to determine whether we need to have strict menu ownership

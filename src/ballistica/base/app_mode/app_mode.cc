@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/app/app_mode.h"
+#include "ballistica/base/app_mode/app_mode.h"
 
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/base/support/context.h"
