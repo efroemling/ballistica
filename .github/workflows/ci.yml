@@ -40,7 +40,7 @@ jobs:
     - name: Compile binary
       run: make cmake-server-build
     - name: Run tests
-      run: BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
+      run: BA_PCOMMANDBATCH_REQUIRE=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.

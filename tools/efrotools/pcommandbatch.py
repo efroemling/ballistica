@@ -95,25 +95,29 @@ def build_pcommandbatch(inpaths: list[str], outpath: str) -> None:
     # Make an quiet attempt to build a batch binary, but just symlink
     # the plain old pcommand if anything goes wrong. That should work in
     # all cases; it'll just be slower.
-    try:
-        # TEMP - clean up old path (our dir used to be just a binary).
-        if os.path.isfile(os.path.dirname(outpath)):
-            os.remove(os.path.dirname(outpath))
 
+    # Options to show build output or to fail if the build fails.
+    verbose = os.environ.get('BA_PCOMMANDBATCH_BUILD_VERBOSE') == '1'
+    require = os.environ.get('BA_PCOMMANDBATCH_REQUIRE') == '1'
+
+    try:
         if os.path.islink(outpath):
             os.unlink(outpath)
 
         os.makedirs(os.path.dirname(outpath), exist_ok=True)
 
-        # Note: this is kinda a project-specific path; perhaps we'd
-        # want to specify this in project-config?
+        # Let compile output show if they want verbose OR if they're
+        # requiring batch to succeed.
         subprocess.run(
             ['cc'] + inpaths + ['-o', outpath],
             check=True,
-            capture_output=os.environ.get('BA_PCOMMANDBATCH_BUILD_VERBOSE')
-            != '1',
+            capture_output=not (verbose or require),
         )
-    except Exception:
+    except Exception as exc:
+        if require:
+            raise CleanError('pcommandbatch build failed.') from exc
+
+        # No biggie; we'll just use regular pcommand.
         print(
             f'{Clr.YLW}Warning: Unable to build pcommandbatch executable;'
             f' falling back to regular pcommand. Build with env var'
