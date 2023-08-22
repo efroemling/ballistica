@@ -6,7 +6,6 @@
 #include "ballistica/classic/support/v1_account.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
-#include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/shared/generic/utils.h"
 

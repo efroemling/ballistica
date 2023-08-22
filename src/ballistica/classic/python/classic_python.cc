@@ -2,7 +2,6 @@
 
 #include "ballistica/classic/python/classic_python.h"
 
-#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/python/python_command.h"

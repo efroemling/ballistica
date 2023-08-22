@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\src\ballistica\base\app\app.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter.h">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_headless.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_headless.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_headless.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_headless.h">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_sdl.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_sdl.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.h">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app\app_vr.cc">
-      <Filter>ballistica\base\app</Filter>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app\app_vr.h">
-      <Filter>ballistica\base\app</Filter>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.h">
+      <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc">
       <Filter>ballistica\base\app_mode</Filter>
@@ -1865,7 +1865,7 @@
   <ItemGroup>
     <Filter Include="ballistica" />
     <Filter Include="ballistica\base" />
-    <Filter Include="ballistica\base\app" />
+    <Filter Include="ballistica\base\app_adapter" />
     <Filter Include="ballistica\base\app_mode" />
     <Filter Include="ballistica\base\assets" />
     <Filter Include="ballistica\base\audio" />

@@ -2,7 +2,7 @@
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"

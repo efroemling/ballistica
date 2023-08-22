@@ -32,7 +32,8 @@ const int kGameStepMilliseconds = 8;
 const float kGameStepSeconds =
     (static_cast<float>(kGameStepMilliseconds) / 1000.0f);
 
-// Predeclared types our feature-set provides.
+// Predeclare types we use throughout our FeatureSet so most headers can get
+// away with just including this header.
 class ClientControllerInterface;
 class ClientInputDevice;
 class ClientSession;

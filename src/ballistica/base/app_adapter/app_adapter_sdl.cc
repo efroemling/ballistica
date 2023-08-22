@@ -2,7 +2,7 @@
 
 #if BA_SDL_BUILD
 
-#include "ballistica/base/app/app_sdl.h"
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
@@ -18,9 +18,7 @@
 
 namespace ballistica::base {
 
-// NOTE TO SELF: slowly try to phase everything out from here and into
-// non-sdl event/call pushes.
-void AppSDL::HandleSDLEvent(const SDL_Event& event) {
+void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
   assert(g_core->InMainThread());
 
   switch (event.type) {
@@ -135,8 +133,8 @@ void AppSDL::HandleSDLEvent(const SDL_Event& event) {
     }
 #endif
 
-    // Currently used in our some of our heavily customized builds.
-    // Should replace this with some sort of PushDrawEvent() thing.
+    // Currently used in our some of our heavily customized builds. Should
+    // replace this with some sort of PushDrawEvent() thing.
 #if BA_XCODE_BUILD
     case SDL_RESIZEDRAWEVENT:
     case SDL_DRAWEVENT: {
@@ -242,7 +240,7 @@ auto FilterSDLEvent(const SDL_Event* event) -> int {
   try {
     // If this event is coming from this thread, handle it immediately.
     if (std::this_thread::get_id() == g_core->main_thread_id) {
-      auto app = static_cast_check_type<AppSDL*>(g_base->app);
+      auto app = static_cast_check_type<AppAdapterSDL*>(g_base->app_adapter);
       assert(app);
       if (app) {
         app->HandleSDLEvent(*event);
@@ -266,9 +264,9 @@ inline auto FilterSDL2Event(void* user_data, SDL_Event* event) -> int {
 }
 #endif
 
-// Note: can move this to AppSDL::AppSDL() once it is no longer needed by
-// the legacy mac build.
-void AppSDL::InitSDL() {
+// Note: can move this to AppAdapterSDL::AppAdapterSDL() once it is no longer
+// needed by the legacy mac build.
+void AppAdapterSDL::InitSDL() {
   assert(g_core);
 
   if (g_buildconfig.ostype_macos()) {
@@ -293,14 +291,14 @@ void AppSDL::InitSDL() {
       // KILL THIS ONCE MAC SDL1.2 BUILD IS DEAD.
       // Register our hotplug callbacks in our funky custom mac build.
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-      SDL_JoystickSetHotPlugCallbacks(AppSDL::SDLJoystickConnected_,
-                                      AppSDL::SDLJoystickDisconnected_);
+      SDL_JoystickSetHotPlugCallbacks(AppAdapterSDL::SDLJoystickConnected_,
+                                      AppAdapterSDL::SDLJoystickDisconnected_);
 #endif
     }
   }
 
-  // Whatever fancy-pants stuff SDL is trying to do with catching signals/etc,
-  // we don't want it.
+  // Whatever fancy-pants stuff SDL is trying to do with catching
+  // signals/etc, we don't want it.
   sdl_flags |= SDL_INIT_NOPARACHUTE;
 
   // We may or may not want xinput on windows.
@@ -328,7 +326,7 @@ void AppSDL::InitSDL() {
 #endif
 }
 
-AppSDL::AppSDL() {
+AppAdapterSDL::AppAdapterSDL() {
   InitSDL();
 
   // If we're not running our own even loop, we set up a filter to intercept
@@ -352,14 +350,14 @@ AppSDL::AppSDL() {
     // much doing that same thing, except that we're free to handle other
     // matters concurrently instead of being locked in a delay call.
     g_core->main_event_loop()->NewTimer(10, true, NewLambdaRunnable([this] {
-                                          assert(g_base->app);
-                                          g_base->app->RunEvents();
+                                          assert(g_base->app_adapter);
+                                          g_base->app_adapter->RunEvents();
                                         }));
   }
 }
 
-void AppSDL::OnMainThreadStartApp() {
-  App::OnMainThreadStartApp();
+void AppAdapterSDL::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
 
   if (!g_core->HeadlessMode() && g_buildconfig.enable_sdl_joysticks()) {
     // Add initial sdl joysticks. any added/removed after this will be
@@ -369,7 +367,7 @@ void AppSDL::OnMainThreadStartApp() {
     if (explicit_bool(true)) {
       int joystick_count = SDL_NumJoysticks();
       for (int i = 0; i < joystick_count; i++) {
-        AppSDL::SDLJoystickConnected_(i);
+        AppAdapterSDL::SDLJoystickConnected_(i);
       }
 
       // We want events from joysticks.
@@ -378,8 +376,8 @@ void AppSDL::OnMainThreadStartApp() {
   }
 }
 
-void AppSDL::RunEvents() {
-  App::RunEvents();
+void AppAdapterSDL::RunEvents() {
+  AppAdapter::RunEvents();
 
   // Now run all pending SDL events until we run out or we're told to quit.
   SDL_Event event;
@@ -388,12 +386,12 @@ void AppSDL::RunEvents() {
   }
 }
 
-void AppSDL::DidFinishRenderingFrame(FrameDef* frame) {
-  App::DidFinishRenderingFrame(frame);
+void AppAdapterSDL::DidFinishRenderingFrame(FrameDef* frame) {
+  AppAdapter::DidFinishRenderingFrame(frame);
   SwapBuffers_();
 }
 
-void AppSDL::DoSwap_() {
+void AppAdapterSDL::DoSwap_() {
   assert(g_base->InGraphicsThread());
 
   if (g_buildconfig.debug_build()) {
@@ -440,7 +438,7 @@ void AppSDL::DoSwap_() {
   last_swap_time_ = cur_time;
 }
 
-void AppSDL::SwapBuffers_() {
+void AppAdapterSDL::SwapBuffers_() {
   swap_start_time_ = g_core->GetAppTimeMillisecs();
   assert(g_core->main_event_loop()->ThreadIsCurrent());
   DoSwap_();
@@ -457,7 +455,7 @@ void AppSDL::SwapBuffers_() {
   }
 }
 
-void AppSDL::UpdateAutoVSync_(int diff) {
+void AppAdapterSDL::UpdateAutoVSync_(int diff) {
   assert(auto_vsync_);
 
   // If we're currently vsyncing, watch for slow frames.
@@ -525,7 +523,7 @@ void AppSDL::UpdateAutoVSync_(int diff) {
   }
 }
 
-void AppSDL::SetAutoVSync(bool enable) {
+void AppAdapterSDL::SetAutoVSync(bool enable) {
   auto_vsync_ = enable;
   // If we're doing auto, start with vsync on.
   if (enable) {
@@ -536,7 +534,7 @@ void AppSDL::SetAutoVSync(bool enable) {
   }
 }
 
-void AppSDL::SDLJoystickConnected_(int device_index) {
+void AppAdapterSDL::SDLJoystickConnected_(int device_index) {
   assert(g_core && g_core->InMainThread());
 
   // We add all existing inputs when bootstrapping is complete; we should
@@ -562,17 +560,17 @@ void AppSDL::SDLJoystickConnected_(int device_index) {
   }
 }
 
-void AppSDL::SDLJoystickDisconnected_(int index) {
+void AppAdapterSDL::SDLJoystickDisconnected_(int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
   Get()->RemoveSDLInputDevice_(index);
 }
 
-void AppSDL::SetInitialScreenDimensions(const Vector2f& dimensions) {
+void AppAdapterSDL::SetInitialScreenDimensions(const Vector2f& dimensions) {
   screen_dimensions_ = dimensions;
 }
 
-void AppSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
+void AppAdapterSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
   assert(g_base && g_base->input != nullptr);
   assert(input != nullptr);
   assert(g_core->InMainThread());
@@ -587,7 +585,7 @@ void AppSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
   g_base->input->PushAddInputDeviceCall(input, true);
 }
 
-void AppSDL::RemoveSDLInputDevice_(int index) {
+void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
@@ -602,7 +600,8 @@ void AppSDL::RemoveSDLInputDevice_(int index) {
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
 
-auto AppSDL::GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput* {
+auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
+    -> JoystickInput* {
   assert(g_core->InMainThread());
   int joy_id;
 
@@ -627,7 +626,8 @@ auto AppSDL::GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput* {
   return GetSDLJoystickInput_(joy_id);
 }
 
-auto AppSDL::GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput* {
+auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
+    -> JoystickInput* {
   assert(g_core->InMainThread());
   for (auto sdl_joystick : sdl_joysticks_) {
     if ((sdl_joystick != nullptr) && (*sdl_joystick).sdl_joystick_id() >= 0

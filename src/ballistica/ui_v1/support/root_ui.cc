@@ -7,7 +7,6 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/input/input.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 

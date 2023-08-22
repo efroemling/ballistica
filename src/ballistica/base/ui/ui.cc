@@ -7,7 +7,6 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/ui_v1_soft.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/shared/foundation/event_loop.h"

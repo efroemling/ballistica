@@ -1,4 +1,4 @@
-### 1.7.26 (build 21232, api 8, 2023-08-22)
+### 1.7.26 (build 21241, api 8, 2023-08-22)
 
 - Various general improvements to the pcommand (project command) system.
 - Modules containing pcommand functions are now named with an 's' - so
@@ -11,6 +11,11 @@
   that seem to be related to this, you can disable it by setting env var
   `BA_PCOMMANDBATCH_DISABLE=1`. See docs in `tools/efrotools/pcommandbatch.py`
   for more info.
+- Renamed the various `App` C++ classes to `AppAdapter` which better represents
+  their current intended role. They are not a general interface to app
+  functionality, but rather adapt the app to a particular paradigm or api (VR,
+  Headless, SDL GUI, etc.). Am trying to move any functionality out of those
+  classes that does not fit that definition.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 

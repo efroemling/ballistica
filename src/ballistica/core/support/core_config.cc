@@ -178,7 +178,7 @@ auto CoreConfig::ForEnvVars() -> CoreConfig {
   return cfg;
 }
 
-auto CoreConfig::ForArgsAndEnvVars(size_t argc, char** argv) -> CoreConfig {
+auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig {
   CoreConfig cfg{};
 
   // Apply env-vars first. We want explicit args to override these.

@@ -17,15 +17,15 @@
 #include "ballistica/shared/python/python_sys.h"
 
 #if BA_VR_BUILD
-#include "ballistica/base/app/app_vr.h"
+#include "ballistica/base/app_adapter/app_adapter_vr.h"
 #endif
 
 #if BA_HEADLESS_BUILD
-#include "ballistica/base/app/app_headless.h"
+#include "ballistica/base/app_adapter/app_adapter_headless.h"
 #endif
 
-#include "ballistica/base/app/app.h"
-#include "ballistica/base/app/app_sdl.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_vr.h"
 
@@ -105,39 +105,36 @@ void BasePlatform::PostInit() {
 
 BasePlatform::~BasePlatform() = default;
 
-auto BasePlatform::CreateApp() -> App* {
+auto BasePlatform::CreateAppAdapter() -> AppAdapter* {
   assert(g_core);
-  // assert(InMainThread());
-  // assert(g_main_thread);
 
 // TEMP - need to init sdl on our legacy mac build even though its not
 // technically an SDL app. Kill this once the old mac build is gone.
 #if BA_LEGACY_MACOS_BUILD
-  AppSDL::InitSDL();
+  AppAdapterSDL::InitSDL();
 #endif
 
-  App* app{};
+  AppAdapter* app_adapter{};
 
 #if BA_HEADLESS_BUILD
-  app = new AppHeadless();
+  app_adapter = new AppAdapterHeadless();
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
   if (g_core->vr_mode) {
-    app = new AppVR();
+    app_adapter = new AppAdapterVR();
   } else {
-    app = new AppSDL();
+    app_adapter = new AppAdapterSDL();
   }
 #elif BA_CARDBOARD_BUILD
-  app = new AppVR();
+  app_adapter = new AppAdapterVR();
 #elif BA_SDL_BUILD
-  app = new AppSDL();
+  app_adapter = new AppAdapterSDL();
 #else
-  app = new App();
+  app_adapter = new AppAdapter();
 #endif
 
-  assert(app);
-  app->PostInit();
-  return app;
+  assert(app_adapter);
+  return app_adapter;
 }
 
 auto BasePlatform::CreateGraphics() -> Graphics* {

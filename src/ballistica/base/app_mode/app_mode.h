@@ -19,9 +19,9 @@ const microsecs_t kAppModeMaxHeadlessDisplayStep{500000};
 const microsecs_t kAppModeMinHeadlessDisplayStep{1000};
 
 /// Represents 'what the app is doing'. The global app-mode can be switched
-/// as the app is running. Be aware that, unlike the App classes which
-/// primarily operate in the main thread, most functionality here is based
-/// in the logic thread.
+/// as the app is running. Be aware that, unlike the AppAdapter classes
+/// which primarily deal with the main thread, most functionality here is
+/// based in the logic thread.
 class AppMode {
  public:
   AppMode();

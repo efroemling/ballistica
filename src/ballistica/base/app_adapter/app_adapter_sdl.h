@@ -1,43 +1,44 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_APP_SDL_H_
-#define BALLISTICA_BASE_APP_APP_SDL_H_
+#ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_SDL_H_
+#define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_SDL_H_
 
 #if BA_SDL_BUILD
 
 #include <vector>
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/shared/math/vector2f.h"
 
 namespace ballistica::base {
 
-class AppSDL : public App {
+class AppAdapterSDL : public AppAdapter {
  public:
   static void InitSDL();
-  AppSDL();
+  AppAdapterSDL();
   void HandleSDLEvent(const SDL_Event& event);
   void RunEvents() override;
   void DidFinishRenderingFrame(FrameDef* frame) override;
   void SetAutoVSync(bool enable);
   void OnMainThreadStartApp() override;
 
-  /// Return g_base->app as an AppSDL. (assumes it actually is one).
-  static AppSDL* Get() {
-    assert(g_base && g_base->app != nullptr);
-    assert(dynamic_cast<AppSDL*>(g_base->app)
-           == static_cast<AppSDL*>(g_base->app));
-    return static_cast<AppSDL*>(g_base->app);
+  /// Return g_base->app_adapter as an AppAdapterSDL. (assumes it actually is
+  /// one).
+  static AppAdapterSDL* Get() {
+    assert(g_base && g_base->app_adapter != nullptr);
+    assert(dynamic_cast<AppAdapterSDL*>(g_base->app_adapter)
+           == static_cast<AppAdapterSDL*>(g_base->app_adapter));
+    return static_cast<AppAdapterSDL*>(g_base->app_adapter);
   }
   void SetInitialScreenDimensions(const Vector2f& dimensions);
 
  private:
-  // Given an sdl joystick ID, returns our Ballistica input for it.
+  static void SDLJoystickConnected_(int index);
+  static void SDLJoystickDisconnected_(int index);
+  // Given an SDL joystick ID, returns our Ballistica input for it.
   auto GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput*;
   // The same but using sdl events.
   auto GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput*;
-  static void SDLJoystickConnected_(int index);
-  static void SDLJoystickDisconnected_(int index);
   void DoSwap_();
   void SwapBuffers_();
   void UpdateAutoVSync_(int diff);
@@ -60,4 +61,4 @@ class AppSDL : public App {
 
 #endif  // BA_SDL_BUILD
 
-#endif  // BALLISTICA_BASE_APP_APP_SDL_H_
+#endif  // BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_SDL_H_

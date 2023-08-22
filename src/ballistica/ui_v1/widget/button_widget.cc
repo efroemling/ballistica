@@ -5,10 +5,8 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::ui_v1 {

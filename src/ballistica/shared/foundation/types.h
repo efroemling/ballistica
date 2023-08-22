@@ -59,7 +59,7 @@ class Vector4f;
 
 // FIXME: remove this - a few base things we need.
 namespace base {
-class App;
+class AppAdapter;
 class Graphics;
 }  // namespace base
 

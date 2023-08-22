@@ -2,7 +2,7 @@
 
 #include "ballistica/base/graphics/graphics.h"
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/component/empty_component.h"

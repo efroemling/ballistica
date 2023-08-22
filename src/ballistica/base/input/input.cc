@@ -22,7 +22,7 @@ namespace ballistica::base {
 Input::Input() = default;
 
 template <typename F>
-void SafePushCall(const char* desc, const F& lambda) {
+void SafePushLogicCall(const char* desc, const F& lambda) {
   // Note: originally this call was created to silently ignore early events
   // coming in before app stuff was up and running, but that was a bad idea,
   // as it caused us to ignore device-create messages sometimes which lead
@@ -41,7 +41,7 @@ void SafePushCall(const char* desc, const F& lambda) {
 }
 
 void Input::PushCreateKeyboardInputDevices() {
-  SafePushCall(__func__, [this] { CreateKeyboardInputDevices(); });
+  SafePushLogicCall(__func__, [this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
@@ -58,7 +58,7 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  SafePushCall(__func__, [this] { DestroyKeyboardInputDevices(); });
+  SafePushLogicCall(__func__, [this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
@@ -275,7 +275,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  SafePushCall(__func__, [this, input_device, standard_message] {
+  SafePushLogicCall(__func__, [this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -301,8 +301,8 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   device->set_delegate(delegate);
   delegate->set_input_device(device);
 
-  // Lets go through and find the first unused input-device id and use that
-  // (might as well keep our list small if we can).
+  // Find the first unused input-device id and use that (might as well keep
+  // our list small if we can).
   int index = 0;
   bool found_slot = false;
   for (auto& input_device : input_devices_) {
@@ -361,7 +361,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  SafePushCall(__func__, [this, input_device, standard_message] {
+  SafePushLogicCall(__func__, [this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -818,7 +818,7 @@ void Input::ProcessStressTesting(int player_count) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  SafePushCall(__func__, [this, text] {
+  SafePushLogicCall(__func__, [this, text] {
     MarkInputActive();
 
     // Ignore  if input is locked.
@@ -836,7 +836,7 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 void Input::PushJoystickEvent(const SDL_Event& event,
                               InputDevice* input_device) {
-  SafePushCall(__func__, [this, event, input_device] {
+  SafePushLogicCall(__func__, [this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -870,11 +870,11 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  SafePushCall(__func__, [this, keysym] { HandleKeyPress(&keysym); });
+  SafePushLogicCall(__func__, [this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  SafePushCall(__func__, [this, keysym] { HandleKeyRelease(&keysym); });
+  SafePushLogicCall(__func__, [this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
@@ -1026,13 +1026,14 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       }
 
       case SDLK_F7:
-        SafePushCall(__func__, [] { g_base->graphics->ToggleManualCamera(); });
+        SafePushLogicCall(__func__,
+                          [] { g_base->graphics->ToggleManualCamera(); });
         handled = true;
         break;
 
       case SDLK_F8:
-        SafePushCall(__func__,
-                     [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+        SafePushLogicCall(
+            __func__, [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
         handled = true;
         break;
 
@@ -1043,7 +1044,8 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F10:
-        SafePushCall(__func__, [] { g_base->graphics->ToggleDebugDraw(); });
+        SafePushLogicCall(__func__,
+                          [] { g_base->graphics->ToggleDebugDraw(); });
         handled = true;
         break;
 
@@ -1152,7 +1154,7 @@ void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
 }
 
 void Input::PushMouseScrollEvent(const Vector2f& amount) {
-  SafePushCall(__func__, [this, amount] { HandleMouseScroll(amount); });
+  SafePushLogicCall(__func__, [this, amount] { HandleMouseScroll(amount); });
 }
 
 void Input::HandleMouseScroll(const Vector2f& amount) {
@@ -1184,7 +1186,7 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
 
 void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
                                        bool momentum) {
-  SafePushCall(__func__, [this, velocity, momentum] {
+  SafePushLogicCall(__func__, [this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
@@ -1216,7 +1218,8 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  SafePushCall(__func__, [this, position] { HandleMouseMotion(position); });
+  SafePushLogicCall(__func__,
+                    [this, position] { HandleMouseMotion(position); });
 }
 
 void Input::HandleMouseMotion(const Vector2f& position) {
@@ -1268,8 +1271,9 @@ void Input::HandleMouseMotion(const Vector2f& position) {
 }
 
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
-  SafePushCall(__func__,
-               [this, button, position] { HandleMouseDown(button, position); });
+  SafePushLogicCall(__func__, [this, button, position] {
+    HandleMouseDown(button, position);
+  });
 }
 
 void Input::HandleMouseDown(int button, const Vector2f& position) {
@@ -1344,8 +1348,8 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
 }
 
 void Input::PushMouseUpEvent(int button, const Vector2f& position) {
-  SafePushCall(__func__,
-               [this, button, position] { HandleMouseUp(button, position); });
+  SafePushLogicCall(
+      __func__, [this, button, position] { HandleMouseUp(button, position); });
 }
 
 void Input::HandleMouseUp(int button, const Vector2f& position) {
@@ -1396,7 +1400,7 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  SafePushCall(__func__, [e, this] { HandleTouchEvent(e); });
+  SafePushLogicCall(__func__, [e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {

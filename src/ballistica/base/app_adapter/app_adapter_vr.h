@@ -1,15 +1,15 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_APP_VR_H_
-#define BALLISTICA_BASE_APP_APP_VR_H_
+#ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_VR_H_
+#define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_VR_H_
 
 #if BA_VR_BUILD
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 
 namespace ballistica::base {
 
-class AppVR : public App {
+class AppAdapterVR : public AppAdapter {
  public:
   /// For passing in state of Daydream remote (and maybe gear vr?..).
   struct VRSimpleRemoteState {
@@ -19,15 +19,15 @@ class AppVR : public App {
     float r2 = 0.0f;
   };
 
-  /// Return g_app as a AppVR. (assumes it actually is one).
-  static auto get() -> AppVR* {
-    assert(g_base != nullptr && g_base->app != nullptr);
-    assert(dynamic_cast<AppVR*>(g_base->app)
-           == static_cast<AppVR*>(g_base->app));
-    return static_cast<AppVR*>(g_base->app);
+  /// Return g_app as a AppAdapterVR. (assumes it actually is one).
+  static auto get() -> AppAdapterVR* {
+    assert(g_base != nullptr && g_base->app_adapter != nullptr);
+    assert(dynamic_cast<AppAdapterVR*>(g_base->app_adapter)
+           == static_cast<AppAdapterVR*>(g_base->app_adapter));
+    return static_cast<AppAdapterVR*>(g_base->app_adapter);
   }
 
-  AppVR();
+  AppAdapterVR();
   void PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state);
   void VRSetDrawDimensions(int w, int h);
   void VRPreDraw();
@@ -46,4 +46,4 @@ class AppVR : public App {
 }  // namespace ballistica::base
 
 #endif  // BA_VR_BUILD
-#endif  // BALLISTICA_BASE_APP_APP_VR_H_
+#endif  // BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_VR_H_

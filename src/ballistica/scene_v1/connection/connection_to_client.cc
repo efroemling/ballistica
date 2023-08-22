@@ -17,7 +17,6 @@
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {

@@ -4,7 +4,6 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"

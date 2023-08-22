@@ -14,7 +14,7 @@ namespace ballistica::core {
 /// when initing the core feature-set.
 class CoreConfig {
  public:
-  static auto ForArgsAndEnvVars(size_t argc, char** argv) -> CoreConfig;
+  static auto ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig;
 
   static auto ForEnvVars() -> CoreConfig;
 

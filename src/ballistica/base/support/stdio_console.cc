@@ -4,7 +4,6 @@
 
 #include <cstring>
 
-#include "ballistica/base/app/app.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
@@ -129,7 +128,7 @@ void StdioConsole::PushCommand(const std::string& command) {
         // Print the value if we're running directly from a terminal
         // (or being run under the server-manager)
         if ((g_core->platform->is_stdin_a_terminal()
-             || g_base->app->server_wrapper_managed())
+             || g_base->server_wrapper_managed())
             && obj.Get() != Py_None) {
           printf("%s\n", obj.Repr().c_str());
           fflush(stdout);

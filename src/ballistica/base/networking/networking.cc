@@ -2,7 +2,6 @@
 
 #include "ballistica/base/networking/networking.h"
 
-#include "ballistica/base/app/app.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/foundation/event_loop.h"

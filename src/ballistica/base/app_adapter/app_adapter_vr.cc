@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 #if BA_VR_BUILD
 
-#include "ballistica/base/app/app_vr.h"
+#include "ballistica/base/app_adapter/app_adapter_vr.h"
 
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/graphics_vr.h"
@@ -11,9 +11,10 @@
 
 namespace ballistica::base {
 
-AppVR::AppVR() {}
+AppAdapterVR::AppAdapterVR() {}
 
-void AppVR::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
+void AppAdapterVR::PushVRSimpleRemoteStateCall(
+    const VRSimpleRemoteState& state) {
   g_core->main_event_loop()->PushCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
@@ -36,11 +37,11 @@ void AppVR::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
   });
 }
 
-void AppVR::VRSetDrawDimensions(int w, int h) {
+void AppAdapterVR::VRSetDrawDimensions(int w, int h) {
   g_base->graphics_server->SetScreenResolution(w, h);
 }
 
-void AppVR::VRPreDraw() {
+void AppAdapterVR::VRPreDraw() {
   if (!g_base || !g_base->graphics_server
       || !g_base->graphics_server->renderer()) {
     return;
@@ -58,7 +59,7 @@ void AppVR::VRPreDraw() {
   }
 }
 
-void AppVR::VRPostDraw() {
+void AppAdapterVR::VRPostDraw() {
   assert(g_base->InGraphicsThread());
   if (!g_base || !g_base->graphics_server
       || !g_base->graphics_server->renderer()) {
@@ -71,15 +72,15 @@ void AppVR::VRPostDraw() {
   RunRenderUpkeepCycle();
 }
 
-void AppVR::VRSetHead(float tx, float ty, float tz, float yaw, float pitch,
-                      float roll) {
+void AppAdapterVR::VRSetHead(float tx, float ty, float tz, float yaw,
+                             float pitch, float roll) {
   assert(g_base->InGraphicsThread());
   Renderer* renderer = g_base->graphics_server->renderer();
   if (renderer == nullptr) return;
   renderer->VRSetHead(tx, ty, tz, yaw, pitch, roll);
 }
 
-void AppVR::VRSetHands(const VRHandsState& state) {
+void AppAdapterVR::VRSetHands(const VRHandsState& state) {
   assert(g_base->InGraphicsThread());
 
   // Pass this along to the renderer (in this same thread) for drawing (so
@@ -99,10 +100,10 @@ void AppVR::VRSetHands(const VRHandsState& state) {
       [state] { GraphicsVR::get()->set_vr_hands_state(state); });
 }
 
-void AppVR::VRDrawEye(int eye, float yaw, float pitch, float roll, float tan_l,
-                      float tan_r, float tan_b, float tan_t, float eye_x,
-                      float eye_y, float eye_z, int viewport_x,
-                      int viewport_y) {
+void AppAdapterVR::VRDrawEye(int eye, float yaw, float pitch, float roll,
+                             float tan_l, float tan_r, float tan_b, float tan_t,
+                             float eye_x, float eye_y, float eye_z,
+                             int viewport_x, int viewport_y) {
   if (!g_base || !g_base->graphics_server
       || !g_base->graphics_server->renderer()) {
     return;

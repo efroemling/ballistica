@@ -17,18 +17,20 @@ namespace ballistica::base {
 class BaseFeatureSet;
 }
 
-// Feature-sets have their own unique namespace under the ballistica namespace.
+// Feature-sets have their own unique namespace under the ballistica
+// namespace.
 namespace ballistica::template_fs {
 
-// Predeclared types our feature-set provides.
+// Predeclare types we use throughout our FeatureSet so most headers can get
+// away with just including this header.
 class TemplateFsFeatureSet;
 class TemplateFsPython;
 
-// Our feature-set's globals.
-// Feature-sets should NEVER directly access globals in another feature-set's
-// namespace. All functionality we need from other feature-sets should be
-// imported into globals in our own namespace. Generally we do this when we
-// are initially imported (just as regular Python modules do).
+// Our feature-set's globals. Feature-sets should NEVER directly access
+// globals in another feature-set's namespace. All functionality we need
+// from other feature-sets should be imported into globals in our own
+// namespace. Generally we do this when we are initially imported (just as
+// regular Python modules do).
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern TemplateFsFeatureSet* g_template_fs;
@@ -38,8 +40,8 @@ extern TemplateFsFeatureSet* g_template_fs;
 /// exposing functionality though a Python api.
 class TemplateFsFeatureSet : public FeatureSetNativeComponent {
  public:
-  /// Instantiate and return our singleton instance.
-  /// Basically a Python import statement.
+  /// Instantiate and return our singleton instance. Basically a Python
+  /// import statement.
   static auto Import() -> TemplateFsFeatureSet*;
 
   /// Called when our binary Python module first gets imported.

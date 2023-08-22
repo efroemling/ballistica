@@ -2,16 +2,17 @@
 
 #include "ballistica/base/logic/logic.h"
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
@@ -25,65 +26,76 @@ Logic::Logic() : display_timers_(new TimerList()) {
 }
 
 void Logic::OnMainThreadStartApp() {
+  // Spin up our logic thread and sit and wait for it to init.
   event_loop_ = new EventLoop(EventLoopID::kLogic);
   g_core->pausable_event_loops.push_back(event_loop_);
-
-  // Sit and wait for our logic thread to run its startup stuff.
   event_loop_->PushCallSynchronous([this] { OnAppStart(); });
 }
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
   g_core->LifecycleLog("on-app-start begin (logic thread)");
-  try {
-    // Our thread should not be holding the GIL here at the start (and
-    // probably not have any Python state at all). So here we set both
-    // of those up.
-    assert(!PyGILState_Check());
-    PyGILState_Ensure();
 
-    // Code running in the logic thread holds the GIL by default.
-    event_loop_->SetAcquiresPythonGIL();
+  // Our thread should not be holding the GIL here at the start (and
+  // probably will not have any Python state at all). So here we set both
+  // of those up.
+  assert(!PyGILState_Check());
+  PyGILState_Ensure();
 
-    // Keep informed when our thread's event loop is pausing/unpausing.
-    event_loop_->AddPauseCallback(
-        NewLambdaRunnableUnmanaged([this] { OnAppPause(); }));
-    event_loop_->AddResumeCallback(
-        NewLambdaRunnableUnmanaged([this] { OnAppResume(); }));
+  // Code running in the logic thread holds the GIL by default.
+  event_loop_->SetAcquiresPythonGIL();
 
-    // Running in a specific order here and should try to stick to it in
-    // other OnAppXXX callbacks so any subsystem interdependencies behave
-    // consistently. When pausing or shutting-down we use the opposite order for
-    // the same reason. Let's do Python last (or first when pausing, etc) since
-    // it will be the most variable; that way it will interact with other
-    // subsystems in their normal states which is less likely to lead to
-    // problems.
-    g_base->graphics->OnAppStart();
-    g_base->audio->OnAppStart();
-    g_base->input->OnAppStart();
-    g_base->ui->OnAppStart();
-    g_core->platform->OnAppStart();
-    g_base->app_mode()->OnAppStart();
-    if (g_base->HavePlus()) {
-      g_base->plus()->OnAppStart();
-    }
-    g_base->python->OnAppStart();
-  } catch (const std::exception& e) {
-    // If anything went wrong, trigger a deferred error.
-    // This way it is more likely we can show a fatal error dialog
-    // since the main thread won't be blocking waiting for us to init.
-    std::string what = e.what();
-    this->event_loop()->PushCall([what] {
-      // Just throw a std exception since our 'what' probably already
-      // contains a stack trace; if we throw a ballistica Exception we
-      // wind up with a useless second one.
-      throw std::logic_error(what.c_str());
-    });
+  // Stay informed when our event loop is pausing/unpausing.
+  event_loop_->AddPauseCallback(
+      NewLambdaRunnableUnmanaged([this] { OnAppPause(); }));
+  event_loop_->AddResumeCallback(
+      NewLambdaRunnableUnmanaged([this] { OnAppResume(); }));
+
+  // Running in a specific order here and should try to stick to it in
+  // other OnAppXXX callbacks so any subsystem interdependencies behave
+  // consistently. When pausing or shutting-down we use the opposite order for
+  // the same reason. Let's do Python last (or first when pausing, etc) since
+  // it will be the most variable; that way it will interact with other
+  // subsystems in their normal states which is less likely to lead to
+  // problems.
+  g_base->graphics->OnAppStart();
+  g_base->audio->OnAppStart();
+  g_base->input->OnAppStart();
+  g_base->ui->OnAppStart();
+  g_core->platform->OnAppStart();
+  g_base->app_mode()->OnAppStart();
+  if (g_base->HavePlus()) {
+    g_base->plus()->OnAppStart();
   }
+  g_base->python->OnAppStart();
+
   g_core->LifecycleLog("on-app-start end (logic thread)");
 }
 
+void Logic::OnAppRunning() {
+  assert(g_base->InLogicThread());
+  assert(g_base->CurrentContext().IsEmpty());
+
+  // Currently don't do anything here.
+}
+
+void Logic::OnInitialAppModeSet() {
+  assert(g_base->InLogicThread());
+  assert(g_base->CurrentContext().IsEmpty());
+
+  // We want any sort of raw Python input to only start accepting commands
+  // once we've got an initial app-mode set. Generally said commands will
+  // assume we're running in that mode and will fail if run before it is set.
+  if (auto* console = g_base->console()) {
+    console->EnableInput();
+  }
+  if (g_base->stdio_console) {
+    g_base->stdio_console->Start();
+  }
+}
+
 void Logic::OnAppPause() {
+  assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in opposite order of OnAppStart.
@@ -100,6 +112,7 @@ void Logic::OnAppPause() {
 }
 
 void Logic::OnAppResume() {
+  assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in the same order as OnAppStart.
@@ -137,8 +150,7 @@ void Logic::OnAppShutdown() {
   // FIXME: Should add a mechanism where we give the above subsystems
   //  a short bit of time to complete shutdown if they need it.
   //  For now just completing instantly.
-  g_core->main_event_loop()->PushCall(
-      [] { g_base->app->LogicThreadShutdownComplete(); });
+  g_core->main_event_loop()->PushCall([] { g_base->OnAppShutdownComplete(); });
 }
 
 void Logic::DoApplyAppConfig() {
@@ -157,10 +169,10 @@ void Logic::DoApplyAppConfig() {
   }
   g_base->python->DoApplyAppConfig();
 
-  // Give the app subsystem a chance too even though its main-thread based.
-  // We call it here in the logic thread, allowing it to read whatever
-  // it needs and pass it to itself in the main thread.
-  g_base->app->DoLogicThreadApplyAppConfig();
+  // Inform some other subsystems even though they're not our standard
+  // set of logic-thread-based ones.
+  g_base->app_adapter->LogicThreadDoApplyAppConfig();
+  g_base->networking->DoApplyAppConfig();
 
   applied_app_config_ = true;
 }
@@ -223,7 +235,7 @@ void Logic::CompleteAppBootstrapping() {
   asset_prune_timer_ = event_loop()->NewTimer(
       2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
 
-  // Let our initial app-mode know it has become active.
+  // Let our initial dummy app-mode know it has become active.
   g_base->app_mode()->OnActivate();
 
   // Reset our various subsystems to a default state.
@@ -291,7 +303,6 @@ void Logic::StepDisplayTime() {
     g_base->plus()->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
-  g_base->app->LogicThreadStepDisplayTime();
 
   // Let's run display-timers *after* we step everything else so most things
   // they interact with will be in an up-to-date state.
@@ -546,7 +557,7 @@ void Logic::HandleInterruptSignal() {
 
   // Special case; when running under the server-wrapper, we completely
   // ignore interrupt signals (the wrapper acts on them).
-  if (g_base->app->server_wrapper_managed()) {
+  if (g_base->server_wrapper_managed()) {
     return;
   }
 

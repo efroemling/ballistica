@@ -26,7 +26,6 @@
 #include "ballistica/scene_v1/node/texture_sequence_node.h"
 #include "ballistica/scene_v1/node/time_display_node.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {

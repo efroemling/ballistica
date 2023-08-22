@@ -11,7 +11,10 @@ from efrotools import pcommand
 
 
 def prune_includes() -> None:
-    """Check for unnecessary includes in C++ files."""
+    """Check for unnecessary includes in C++ files.
+
+    Pass --commit to actually modify files.
+    """
     from batools.pruneincludes import Pruner
 
     pcommand.disallow_in_batch()

@@ -21,9 +21,9 @@ class CoreFeatureSet;
 
 namespace ballistica::base {
 
-// Predeclare types we use throughout our FeatureSet so most
-// headers can get away with just including this header.
-class App;
+// Predeclare types we use throughout our FeatureSet so most headers can get
+// away with just including this header.
+class AppAdapter;
 class AppConfig;
 class AppTimer;
 class AppMode;
@@ -99,7 +99,7 @@ class RenderTarget;
 class RemoteAppServer;
 class RemoteControlInput;
 class ScoreToBeat;
-class AppSDL;
+class AppAdapterSDL;
 class SDLContext;
 class SoundAsset;
 class SpriteMesh;
@@ -117,7 +117,7 @@ class TextureAssetRendererData;
 class TouchInput;
 class UI;
 class UIV1SoftInterface;
-class AppVR;
+class AppAdapterVR;
 class GraphicsVR;
 
 enum class AssetType {
@@ -600,6 +600,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Start app systems in motion.
   void StartApp() override;
 
+  /// Called when app shutdown process completes. Sets app to exit.
+  void OnAppShutdownComplete();
+
   auto AppManagesEventLoop() -> bool override;
 
   /// Run app event loop to completion (only applies to flavors which manage
@@ -693,7 +696,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void OnAssetsAvailable();
 
   // Const subsystems.
-  App* const app;
+  AppAdapter* const app_adapter;
   AppConfig* const app_config;
   Assets* const assets;
   AssetsServer* const assets_server;
@@ -717,10 +720,15 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   UI* const ui;
   Utils* const utils;
 
+  // Variable subsystems.
   auto* console() const { return console_; }
   auto* app_mode() const { return app_mode_; }
   auto* stress_test() const { return stress_test_; }
   void set_app_mode(AppMode* mode);
+
+  /// Whether we're running under ballisticakit_server.py
+  /// (affects some app behavior).
+  auto server_wrapper_managed() { return server_wrapper_managed_; }
 
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
@@ -749,6 +757,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_import_completed_{};
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
+  bool server_wrapper_managed_{};
 };
 
 }  // namespace ballistica::base

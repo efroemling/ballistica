@@ -3,7 +3,6 @@
 #include "ballistica/shared/python/python.h"
 
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
 
 // Sanity test: our XCode, Android, and Windows builds should be

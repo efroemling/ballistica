@@ -15,8 +15,8 @@
 
 namespace ballistica::core {
 
-// Predeclare types we use throughout our FeatureSet so most
-// headers can get away with just including this header.
+// Predeclare types we use throughout our FeatureSet so most headers can get
+// away with just including this header.
 class CoreConfig;
 class CorePython;
 class CorePlatform;

@@ -5,7 +5,6 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"
-#include "ballistica/base/ui/ui.h"
 
 namespace ballistica::ui_v1 {
 

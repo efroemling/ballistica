@@ -23,7 +23,8 @@ struct WidgetMessage;
 
 namespace ballistica::ui_v1 {
 
-// Predeclared types our feature-set provides.
+// Predeclare types we use throughout our FeatureSet so most headers can get
+// away with just including this header.
 class UIV1FeatureSet;
 class UIV1Python;
 class Widget;
@@ -35,11 +36,11 @@ class RootWidget;
 class StackWidget;
 class TextWidget;
 
-// Our feature-set's globals.
-// Feature-sets should NEVER directly access globals in another feature-set's
-// namespace. All functionality we need from other feature-sets should be
-// imported into globals in our own namespace. Generally we do this when we
-// are initially imported (just as regular Python modules do).
+// Our feature-set's globals. Feature-sets should NEVER directly access
+// globals in another feature-set's namespace. All functionality we need
+// from other feature-sets should be imported into globals in our own
+// namespace. Generally we do this when we are initially imported (just as
+// regular Python modules do).
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern UIV1FeatureSet* g_ui_v1;
@@ -49,8 +50,8 @@ extern UIV1FeatureSet* g_ui_v1;
 class UIV1FeatureSet : public FeatureSetNativeComponent,
                        public base::UIV1SoftInterface {
  public:
-  /// Instantiate our FeatureSet if needed and return the single
-  /// instance of it. Basically a Python import statement.
+  /// Instantiate our FeatureSet if needed and return the single instance of
+  /// it. Basically a Python import statement.
   static auto Import() -> UIV1FeatureSet*;
 
   /// Called when our associated Python module is instantiated.
@@ -76,8 +77,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void OnAppStart() override;
   auto PartyWindowOpen() -> bool override;
 
-  // Return the root widget containing all windows & dialogs
-  // Whenever this contains children, the UI is considered to be in focus
+  // Return the root widget containing all windows & dialogs. Whenever this
+  // contains children, the UI is considered to be in focus
   auto screen_root_widget() -> ui_v1::ContainerWidget* {
     return screen_root_widget_.Get();
   }
@@ -86,14 +87,13 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
     return overlay_root_widget_.Get();
   }
 
-  // Return the absolute root widget; this includes persistent UI
-  // bits such as the top/bottom bars
+  // Return the absolute root widget; this includes persistent UI bits such
+  // as the top/bottom bars
   auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
   void Reset() override;
 
-  // Add a widget to a container.
-  // If a parent is provided, the widget is added to it; otherwise it is added
-  // to the root widget.
+  // Add a widget to a container. If a parent is provided, the widget is
+  // added to it; otherwise it is added to the root widget.
   void AddWidget(Widget* w, ContainerWidget* to);
   void DeleteWidget(Widget* widget);
 

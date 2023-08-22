@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 #define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 
-#include <list>
-
 #include "ballistica/base/base.h"
 
 namespace ballistica::base {
@@ -16,9 +14,10 @@ class BasePlatform {
   static auto CreatePlatform() -> BasePlatform*;
 
   /// Instantiate the appropriate App subclass for the current environment.
-  static auto CreateApp() -> App*;
+  static auto CreateAppAdapter() -> AppAdapter*;
 
-  /// Instantiate the appropriate Graphics subclass for the current environment.
+  /// Instantiate the appropriate Graphics subsystem for the current
+  /// environment.
   static auto CreateGraphics() -> Graphics*;
 
 #pragma mark APP LIFECYCLE -----------------------------------------------------

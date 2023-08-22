@@ -2,14 +2,12 @@
 
 #include "ballistica/base/base.h"
 
-#include "ballistica/base/app/app.h"
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
-#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
@@ -28,12 +26,10 @@
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
@@ -42,36 +38,40 @@ core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 
 BaseFeatureSet::BaseFeatureSet()
-    : python{new BasePython()},
-      platform{BasePlatform::CreatePlatform()},
-      audio{new Audio()},
-      utils{new Utils()},
-      logic{new Logic()},
-      huffman{new Huffman()},
-      stress_test_{new StressTest()},
-      ui{new UI()},
-      networking{new Networking()},
-      app{BasePlatform::CreateApp()},
-      context_ref{new ContextRef(nullptr)},
-      network_reader{new NetworkReader()},
-      network_writer{new NetworkWriter()},
+    : app_adapter{BasePlatform::CreateAppAdapter()},
+      app_config{new AppConfig()},
+      app_mode_{AppModeEmpty::GetSingleton()},
+      assets{new Assets()},
       assets_server{new AssetsServer()},
+      audio{new Audio()},
+      audio_server{new AudioServer()},
+      basn_log_behavior_{g_core->platform->GetEnv("BASNLOG") == "1"},
       bg_dynamics{g_core->HeadlessMode() ? nullptr : new BGDynamics},
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
-      app_config{new AppConfig()},
+      context_ref{new ContextRef(nullptr)},
       graphics{BasePlatform::CreateGraphics()},
       graphics_server{new GraphicsServer()},
+      huffman{new Huffman()},
       input{new Input()},
-      text_graphics{new TextGraphics()},
-      audio_server{new AudioServer()},
-      assets{new Assets()},
-      app_mode_{AppModeEmpty::GetSingleton()},
-      basn_log_behavior_{g_core->platform->GetEnv("BASNLOG") == "1"},
+      logic{new Logic()},
+      network_reader{new NetworkReader()},
+      network_writer{new NetworkWriter()},
+      networking{new Networking()},
+      platform{BasePlatform::CreatePlatform()},
+      python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
-                                                         : nullptr} {
+                                                         : nullptr},
+      stress_test_{new StressTest()},
+      text_graphics{new TextGraphics()},
+      ui{new UI()},
+      utils{new Utils()} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
+
+  // We modify some app behavior when run under the server manager.
+  auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
+  server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
 }
 
 void BaseFeatureSet::OnModuleExec(PyObject* module) {
@@ -203,7 +203,7 @@ void BaseFeatureSet::StartApp() {
   network_writer->OnMainThreadStartApp();
   audio_server->OnMainThreadStartApp();
   assets_server->OnMainThreadStartApp();
-  app->OnMainThreadStartApp();
+  app_adapter->OnMainThreadStartApp();
 
   // Take note that we're now 'running'. Various code such as anything that
   // pushes messages to threads can watch for this state to avoid crashing
@@ -222,6 +222,19 @@ void BaseFeatureSet::StartApp() {
   }
 
   g_core->LifecycleLog("start-app end (main thread)");
+}
+
+void BaseFeatureSet::OnAppShutdownComplete() {
+  assert(g_core->InMainThread());
+  assert(g_core);
+  assert(g_base);
+
+  // Flag our own event loop to exit (or ask the OS to if they're managing).
+  if (app_adapter->ManagesEventLoop()) {
+    g_core->main_event_loop()->Quit();
+  } else {
+    g_core->platform->QuitApp();
+  }
 }
 
 void BaseFeatureSet::LogVersionInfo_() {
@@ -271,13 +284,13 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 }
 
 auto BaseFeatureSet::AppManagesEventLoop() -> bool {
-  return app->ManagesEventLoop();
+  return app_adapter->ManagesEventLoop();
 }
 
 void BaseFeatureSet::RunAppToCompletion() {
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
-  BA_PRECONDITION(g_base->app->ManagesEventLoop());
+  BA_PRECONDITION(g_base->app_adapter->ManagesEventLoop());
   BA_PRECONDITION(!called_run_app_to_completion_);
   called_run_app_to_completion_ = true;
 
@@ -292,7 +305,7 @@ void BaseFeatureSet::RunAppToCompletion() {
 }
 
 void BaseFeatureSet::PrimeAppMainThreadEventPump() {
-  app->PrimeMainThreadEventPump();
+  app_adapter->PrimeMainThreadEventPump();
 }
 
 auto BaseFeatureSet::HavePlus() -> bool {

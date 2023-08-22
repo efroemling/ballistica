@@ -13,7 +13,6 @@
 #include "ballistica/base/python/methods/python_methods_app.h"
 #include "ballistica/base/python/methods/python_methods_graphics.h"
 #include "ballistica/base/python/methods/python_methods_misc.h"
-#include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_module_builder.h"
 

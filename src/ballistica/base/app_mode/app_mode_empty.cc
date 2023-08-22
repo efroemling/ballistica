@@ -3,9 +3,6 @@
 #include "ballistica/base/app_mode/app_mode_empty.h"
 
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/support/frame_def.h"
-#include "ballistica/base/graphics/text/text_group.h"
 
 namespace ballistica::base {
 

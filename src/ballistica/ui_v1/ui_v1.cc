@@ -4,13 +4,10 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/graphics/component/empty_component.h"
-#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
-#include "ballistica/ui_v1/widget/container_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 #include "ballistica/ui_v1/widget/text_widget.h"

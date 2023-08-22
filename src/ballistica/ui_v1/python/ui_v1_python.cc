@@ -4,7 +4,6 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
-#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"

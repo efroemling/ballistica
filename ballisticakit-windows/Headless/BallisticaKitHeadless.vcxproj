@@ -184,14 +184,14 @@
     <Library Include="..\..\build\prefab\lib\windows\$(Configuration)_$(Platform)\$(MSBuildProjectName)Plus.lib" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\ballistica\base\app\app.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_headless.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_headless.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_sdl.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_sdl.h" />
-    <ClCompile Include="..\..\src\ballistica\base\app\app_vr.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\app\app_vr.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_headless.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_headless.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode_empty.cc" />

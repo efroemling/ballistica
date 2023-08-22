@@ -54,7 +54,8 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         // between monolithic and modular.
         std::vector<std::string> argbuffer;
         std::vector<char*> argv = CorePython::FetchPythonArgs(&argbuffer);
-        DoImport(CoreConfig::ForArgsAndEnvVars(argv.size(), argv.data()));
+        DoImport(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
+                                               argv.data()));
       } else {
         DoImport(CoreConfig::ForEnvVars());
       }
@@ -94,6 +95,9 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
 void CoreFeatureSet::PostInit() {
   // Some of this stuff might access g_core so we run most of our init
   // *after* assigning our singleton to be safe.
+
+  // Should migrate this to classic.
+  set_legacy_user_agent_string(platform->GetLegacyUserAgentString());
 
   RunSanityChecks();
 
@@ -218,6 +222,16 @@ auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {
 }
 
 void CoreFeatureSet::RunSanityChecks() {
+  // Sanity check: make sure asserts are stripped out of release builds
+  // (NDEBUG should do this).
+#if !BA_DEBUG_BUILD
+#ifndef NDEBUG
+#error Expected NDEBUG to be defined for release builds.
+#endif
+  // If this kills the app, something's wrong.
+  assert(false);
+#endif  // !BA_DEBUG_BUILD
+
   // Test our static-type-name functionality. This code runs at compile time
   // and extracts human readable type names using __PRETTY_FUNCTION__ type
   // functionality. However, it is dependent on specific compiler output and

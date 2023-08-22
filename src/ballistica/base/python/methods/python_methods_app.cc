@@ -2,8 +2,6 @@
 
 #include "ballistica/base/python/methods/python_methods_app.h"
 
-#include "ballistica/base/app/app.h"
-#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
@@ -1275,7 +1273,7 @@ static PyMethodDef PyExecArgDef = {
 static auto PyOnAppRunning(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base && g_base->InLogicThread());
-  g_base->app->LogicThreadOnAppRunning();
+  g_base->logic->OnAppRunning();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1295,7 +1293,7 @@ static PyMethodDef PyOnAppRunningDef = {
 static auto PyOnInitialAppModeSet(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base && g_base->InLogicThread());
-  g_base->app->LogicThreadOnInitialAppModeSet();
+  g_base->logic->OnInitialAppModeSet();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

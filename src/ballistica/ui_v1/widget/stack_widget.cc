@@ -2,8 +2,6 @@
 
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
-#include "ballistica/base/ui/ui.h"
-
 namespace ballistica::ui_v1 {
 
 StackWidget::StackWidget() {

@@ -10,7 +10,6 @@
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
-#include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::scene_v1 {
