@@ -27,7 +27,7 @@ class AppVR : public App {
     return static_cast<AppVR*>(g_base->app);
   }
 
-  explicit AppVR(EventLoop* event_loop);
+  AppVR();
   void PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state);
   void VRSetDrawDimensions(int w, int h);
   void VRPreDraw();

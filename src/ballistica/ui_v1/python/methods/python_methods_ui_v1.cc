@@ -6,10 +6,12 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
@@ -2366,7 +2368,10 @@ static auto PyShowOnlineScoreUI(PyObject* self, PyObject* args,
   if (game_version_obj != Py_None) {
     game_version = Python::GetPyString(game_version_obj);
   }
-  g_base->app->PushShowOnlineScoreUICall(show, game, game_version);
+  g_core->main_event_loop()->PushCall([show, game, game_version] {
+    assert(g_core->InMainThread());
+    g_core->platform->ShowOnlineScoreUI(show, game, game_version);
+  });
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2726,7 +2731,8 @@ static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
   if (force_internal) {
     g_base->ui->ShowURL(address);
   } else {
-    g_base->app->PushOpenURLCall(address);
+    g_core->main_event_loop()->PushCall(
+        [address] { g_base->platform->OpenURL(address); });
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

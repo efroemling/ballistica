@@ -719,6 +719,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   auto* console() const { return console_; }
   auto* app_mode() const { return app_mode_; }
+  auto* stress_test() const { return stress_test_; }
   void set_app_mode(AppMode* mode);
 
   // Non-const bits (fixme: clean up access to these).
@@ -726,16 +727,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
  private:
   BaseFeatureSet();
-  void LogVersionInfo();
-  void PrintContextNonLogicThread();
-  void PrintContextForCallableLabel(const char* label);
-  void PrintContextUnavailable();
+  void LogVersionInfo_();
+  void PrintContextNonLogicThread_();
+  void PrintContextForCallableLabel_(const char* label);
+  void PrintContextUnavailable_();
 
   AppMode* app_mode_;
   Console* console_{};
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   UIV1SoftInterface* ui_v1_soft_{};
+  StressTest* stress_test_;
 
   std::string console_startup_messages_;
   bool tried_importing_plus_{};

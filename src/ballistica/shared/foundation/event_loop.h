@@ -100,6 +100,10 @@ class EventLoop {
   static auto GetStillPausingThreads() -> std::vector<EventLoop*>;
 
   auto paused() { return paused_; }
+  auto done() -> bool {
+    assert(source_ == ThreadSource::kWrapMain);
+    return done_;
+  }
 
  private:
   struct ThreadMessage_ {
@@ -117,7 +121,7 @@ class EventLoop {
   auto CheckPushRunnableSafety_() -> bool;
   void SetInternalThreadName_(const std::string& name);
   void WaitForNextEvent_(bool single_cycle);
-  void LoopUpkeep_(bool once);
+  void LoopUpkeep_(bool single_cycle);
   void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);
   void PushLocalRunnable_(Runnable* runnable, bool* completion_flag);

@@ -307,7 +307,7 @@ JoystickInput::~JoystickInput() {
 #if BA_ENABLE_SDL_JOYSTICKS
     assert(g_base->app);
     auto joystick = sdl_joystick_;
-    g_base->app->event_loop()->PushCall(
+    g_core->main_event_loop()->PushCall(
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else

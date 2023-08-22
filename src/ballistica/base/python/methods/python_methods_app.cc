@@ -9,6 +9,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
+#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -796,13 +797,14 @@ static PyMethodDef PyEnvDef = {
 
 static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  int testing;
+  int enable;
   int player_count;
-  if (!PyArg_ParseTuple(args, "pi", &testing, &player_count)) {
+  if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
     return nullptr;
   }
-  g_base->app->PushSetStressTestingCall(static_cast<bool>(testing),
-                                        player_count);
+  g_core->main_event_loop()->PushCall([enable, player_count] {
+    g_base->stress_test()->Set(enable, player_count);
+  });
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

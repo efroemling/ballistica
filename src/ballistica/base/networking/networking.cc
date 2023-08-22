@@ -20,7 +20,7 @@ void Networking::DoApplyAppConfig() {
   // Grab network settings from config and kick them over to the main
   // thread to be applied.
   int port = g_base->app_config->Resolve(AppConfig::IntID::kPort);
-  g_base->app->event_loop()->PushCall([port] {
+  g_core->main_event_loop()->PushCall([port] {
     assert(g_core->InMainThread());
     g_base->network_reader->SetPort(port);
   });

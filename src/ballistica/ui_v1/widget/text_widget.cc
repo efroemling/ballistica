@@ -13,6 +13,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
@@ -559,7 +560,20 @@ void TextWidget::BringUpEditDialog() {
         use_internal_dialog = false;
         // store ourself as the current text-widget and kick off an edit
         android_string_edit_widget_ = this;
-        g_base->app->PushStringEditCall(description_, text_raw_, max_chars_);
+        g_core->main_event_loop()->PushCall(
+            [name = description_, value = text_raw_, max_chars = max_chars_] {
+              static millisecs_t last_edit_time = 0;
+              millisecs_t t = g_core->GetAppTimeMillisecs();
+
+              // Ignore if too close together.
+              // (in case second request comes in before first takes effect).
+              if (t - last_edit_time < 1000) {
+                return;
+              }
+              last_edit_time = t;
+              assert(g_core->InMainThread());
+              g_core->platform->EditText(name, value, max_chars);
+            });
       }
     }
   }

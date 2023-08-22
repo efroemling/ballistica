@@ -19,8 +19,7 @@
 
 namespace ballistica::base {
 
-App::App(EventLoop* event_loop)
-    : event_loop_(event_loop), stress_test_(std::make_unique<StressTest>()) {
+App::App() {
   // We modify some app behavior when run under the server manager.
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
@@ -39,6 +38,8 @@ void App::PostInit() {
   g_core->set_legacy_user_agent_string(
       g_core->platform->GetLegacyUserAgentString());
 }
+
+App::~App() = default;
 
 void App::DoLogicThreadApplyAppConfig() {
   // Note: this gets called in the logic thread since that's where
@@ -87,7 +88,7 @@ void App::RunRenderUpkeepCycle() {
 
   // Pump thread messages (we're being driven by frame-draw callbacks
   // so this is the only place that it gets done at).
-  event_loop()->RunSingleCycle();
+  g_core->main_event_loop()->RunSingleCycle();
 
   // Now do the general app event cycle for whoever needs to process things.
   RunEvents();
@@ -132,19 +133,17 @@ void App::LogicThreadShutdownComplete() {
   assert(g_core->InMainThread());
   assert(g_core);
 
-  done_ = true;
-
   // Flag our own event loop to exit (or tell the OS to do so for its own).
   if (ManagesEventLoop()) {
-    event_loop()->Quit();
+    g_core->main_event_loop()->Quit();
   } else {
     g_core->platform->QuitApp();
   }
 }
 
 void App::RunEvents() {
-  // there's probably a better place for this...
-  stress_test_->Update();
+  // There's probably a better place for this.
+  g_base->stress_test()->Update();
 
   // Give platforms a chance to pump/handle their own events.
   //
@@ -214,22 +213,6 @@ void App::OnAppResume_() {
       g_base->ui->PushMainMenuPressCall(nullptr);
     }
   }
-}
-
-auto App::GetProductPrice(const std::string& product) -> std::string {
-  std::scoped_lock lock(product_prices_mutex_);
-  auto i = product_prices_.find(product);
-  if (i == product_prices_.end()) {
-    return "";
-  } else {
-    return i->second;
-  }
-}
-
-void App::SetProductPrice(const std::string& product,
-                          const std::string& price) {
-  std::scoped_lock lock(product_prices_mutex_);
-  product_prices_[product] = price;
 }
 
 void App::PauseApp() {
@@ -309,85 +292,37 @@ void App::PrimeMainThreadEventPump() {
   // Pump events manually until a screen gets created.
   // At that point we use frame-draws to drive our event loop.
   while (!g_base->graphics_server->initial_screen_created()) {
-    event_loop()->RunSingleCycle();
+    g_core->main_event_loop()->RunSingleCycle();
     core::CorePlatform::SleepMillisecs(1);
   }
 }
 
 #pragma mark Push-Calls
 
-// FIXME - move this call to Platform.
-void App::PushShowOnlineScoreUICall(const std::string& show,
-                                    const std::string& game,
-                                    const std::string& game_version) {
-  event_loop()->PushCall([show, game, game_version] {
-    assert(g_core->InMainThread());
-    g_core->platform->ShowOnlineScoreUI(show, game, game_version);
-  });
-}
-
 void App::PushPurchaseAckCall(const std::string& purchase,
                               const std::string& order_id) {
-  event_loop()->PushCall([purchase, order_id] {
+  g_core->main_event_loop()->PushCall([purchase, order_id] {
     g_base->platform->PurchaseAck(purchase, order_id);
   });
 }
 
 void App::PushPurchaseCall(const std::string& item) {
-  event_loop()->PushCall([item] {
+  g_core->main_event_loop()->PushCall([item] {
     assert(g_core->InMainThread());
     g_base->platform->Purchase(item);
   });
 }
 
 void App::PushRestorePurchasesCall() {
-  event_loop()->PushCall([] {
+  g_core->main_event_loop()->PushCall([] {
     assert(g_core->InMainThread());
     g_base->platform->RestorePurchases();
   });
 }
 
-void App::PushOpenURLCall(const std::string& url) {
-  event_loop()->PushCall([url] { g_base->platform->OpenURL(url); });
-}
-
-void App::PushSubmitScoreCall(const std::string& game,
-                              const std::string& game_version, int64_t score) {
-  event_loop()->PushCall([game, game_version, score] {
-    g_core->platform->SubmitScore(game, game_version, score);
-  });
-}
-
-void App::PushAchievementReportCall(const std::string& achievement) {
-  event_loop()->PushCall(
-      [achievement] { g_core->platform->ReportAchievement(achievement); });
-}
-
-void App::PushStringEditCall(const std::string& name, const std::string& value,
-                             int max_chars) {
-  event_loop()->PushCall([name, value, max_chars] {
-    static millisecs_t last_edit_time = 0;
-    millisecs_t t = g_core->GetAppTimeMillisecs();
-
-    // Ignore if too close together.
-    // (in case second request comes in before first takes effect).
-    if (t - last_edit_time < 1000) {
-      return;
-    }
-    last_edit_time = t;
-    assert(g_core->InMainThread());
-    g_core->platform->EditText(name, value, max_chars);
-  });
-}
-
-void App::PushSetStressTestingCall(bool enable, int player_count) {
-  event_loop()->PushCall([this, enable, player_count] {
-    stress_test_->Set(enable, player_count);
-  });
-}
-
 void App::PushResetAchievementsCall() {
-  event_loop()->PushCall([] { g_core->platform->ResetAchievements(); });
+  g_core->main_event_loop()->PushCall(
+      [] { g_core->platform->ResetAchievements(); });
 }
 
 void App::OnMainThreadStartApp() {
@@ -414,13 +349,6 @@ void App::OnMainThreadStartApp() {
       g_base->input->CreateTouchInput();
     }
   }
-}
-
-void App::PushCursorUpdate(bool vis) {
-  event_loop()->PushCall([vis] {
-    assert(g_core && g_core->InMainThread());
-    g_core->platform->SetHardwareCursorVisible(vis);
-  });
 }
 
 }  // namespace ballistica::base

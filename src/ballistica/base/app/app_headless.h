@@ -11,7 +11,7 @@ namespace ballistica::base {
 
 class AppHeadless : public App {
  public:
-  explicit AppHeadless(EventLoop* event_loop);
+  AppHeadless();
 };
 
 }  // namespace ballistica::base

@@ -42,6 +42,9 @@ class PlusSoftInterface {
       const std::vector<std::string>& friends) = 0;
   virtual void DispatchRemoteAchievementList(
       const std::set<std::string>& achs) = 0;
+  virtual void SetProductPrice(const std::string& product,
+                               const std::string& price) = 0;
+
   virtual void PushAnalyticsCall(const std::string& type, int increment) = 0;
   virtual void PushPurchaseTransactionCall(const std::string& item,
                                            const std::string& receipt,

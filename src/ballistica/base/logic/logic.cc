@@ -137,7 +137,7 @@ void Logic::OnAppShutdown() {
   // FIXME: Should add a mechanism where we give the above subsystems
   //  a short bit of time to complete shutdown if they need it.
   //  For now just completing instantly.
-  g_base->app->event_loop()->PushCall(
+  g_core->main_event_loop()->PushCall(
       [] { g_base->app->LogicThreadShutdownComplete(); });
 }
 

@@ -1476,7 +1476,10 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
         || real_time - last_cursor_visibility_event_time_ > 2000) {
       hardware_cursor_visible_ = new_cursor_visibility;
       last_cursor_visibility_event_time_ = real_time;
-      g_base->app->PushCursorUpdate(hardware_cursor_visible_);
+      g_core->main_event_loop()->PushCall([this] {
+        assert(g_core && g_core->InMainThread());
+        g_core->platform->SetHardwareCursorVisible(hardware_cursor_visible_);
+      });
     }
   } else {
     // Draw software cursor.

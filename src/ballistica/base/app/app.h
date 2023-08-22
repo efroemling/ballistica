@@ -3,21 +3,18 @@
 #ifndef BALLISTICA_BASE_APP_APP_H_
 #define BALLISTICA_BASE_APP_APP_H_
 
-#include <memory>
-#include <mutex>
 #include <string>
-#include <unordered_map>
 
 #include "ballistica/base/base.h"
-#include "ballistica/base/support/stress_test.h"
 
 namespace ballistica::base {
 
-/// Encapsulates high level app behavior for regular apps, vr apps,
-/// headless apps, etc.
+/// Defines app behavior for a particular paradigm (regular gui, vr,
+/// headless) and/or top level api (SDL, UIKit, etc.).
 class App {
  public:
-  explicit App(EventLoop* event_loop);
+  App();
+  virtual ~App();
 
   /// Should be run after the instance is created and assigned. Any setup
   /// that may trigger virtual methods or lookups via global should go here.
@@ -29,12 +26,7 @@ class App {
   /// in our main thread.
   void DoLogicThreadApplyAppConfig();
 
-  /// Return whether this class runs its own event loop. If true,
-  /// MonolithicMain() will continuously ask the app for events until the
-  /// app is quit, at which point MonolithicMain() returns. If false,
-  /// MonolithicMain returns immediately and it is assumed that the OS
-  /// handles the app lifecycle and pushes events to the app via
-  /// callbacks/etc.
+  /// Return whether this class runs its own event loop.
   auto ManagesEventLoop() const -> bool;
 
   /// Called for non-event-loop apps to give them an opportunity to ensure
@@ -85,13 +77,6 @@ class App {
   /// Called by the graphics-server when drawing completes for a frame.
   virtual void DidFinishRenderingFrame(FrameDef* frame);
 
-  /// Return the price of an IAP product as a human-readable string, or an
-  /// empty string if not found. FIXME: move this to platform.
-  auto GetProductPrice(const std::string& product) -> std::string;
-  void SetProductPrice(const std::string& product, const std::string& price);
-
-  auto done() const -> bool { return done_; }
-
   /// Whether we're running under ballisticakit_server.py
   /// (affects some app behavior).
   auto server_wrapper_managed() const -> bool {
@@ -102,26 +87,13 @@ class App {
 
   // Deferred calls that can be made from other threads.
 
-  void PushCursorUpdate(bool vis);
-  void PushShowOnlineScoreUICall(const std::string& show,
-                                 const std::string& game,
-                                 const std::string& game_version);
-  void PushSubmitScoreCall(const std::string& game,
-                           const std::string& game_version, int64_t score);
-  void PushAchievementReportCall(const std::string& achievement);
-  void PushOpenURLCall(const std::string& url);
-  void PushStringEditCall(const std::string& name, const std::string& value,
-                          int max_chars);
-  void PushSetStressTestingCall(bool enable, int player_count);
   void PushPurchaseCall(const std::string& item);
   void PushRestorePurchasesCall();
   void PushResetAchievementsCall();
   void PushPurchaseAckCall(const std::string& purchase,
                            const std::string& order_id);
-  auto event_loop() const -> EventLoop* { return event_loop_; }
 
-  /// Called by the logic thread when all shutdown-related tasks are done
-  /// and it is safe to exit the main event loop.
+  /// Called by the logic thread when all shutdown-related tasks are done.
   void LogicThreadShutdownComplete();
 
   void LogicThreadOnAppRunning();
@@ -131,16 +103,11 @@ class App {
   void UpdatePauseResume_();
   void OnAppPause_();
   void OnAppResume_();
-  EventLoop* event_loop_{};
-  bool done_{};
   bool server_wrapper_managed_{};
   bool sys_paused_app_{};
   bool actually_paused_{};
-  std::unique_ptr<StressTest> stress_test_;
   millisecs_t last_resize_draw_event_time_{};
   millisecs_t last_app_resume_time_{};
-  std::unordered_map<std::string, std::string> product_prices_;
-  std::mutex product_prices_mutex_;
 };
 
 }  // namespace ballistica::base

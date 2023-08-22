@@ -11,10 +11,10 @@
 
 namespace ballistica::base {
 
-AppVR::AppVR(EventLoop* event_loop) : App(event_loop) {}
+AppVR::AppVR() {}
 
 void AppVR::PushVRSimpleRemoteStateCall(const VRSimpleRemoteState& state) {
-  event_loop()->PushCall([this, state] {
+  g_core->main_event_loop()->PushCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
     VRHandsState s;

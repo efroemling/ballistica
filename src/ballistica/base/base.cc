@@ -25,6 +25,7 @@
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
+#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -47,6 +48,7 @@ BaseFeatureSet::BaseFeatureSet()
       utils{new Utils()},
       logic{new Logic()},
       huffman{new Huffman()},
+      stress_test_{new StressTest()},
       ui{new UI()},
       networking{new Networking()},
       app{BasePlatform::CreateApp()},
@@ -174,7 +176,7 @@ void BaseFeatureSet::StartApp() {
 
   g_core->LifecycleLog("start-app begin (main thread)");
 
-  LogVersionInfo();
+  LogVersionInfo_();
 
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
@@ -222,7 +224,7 @@ void BaseFeatureSet::StartApp() {
   g_core->LifecycleLog("start-app end (main thread)");
 }
 
-void BaseFeatureSet::LogVersionInfo() {
+void BaseFeatureSet::LogVersionInfo_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
     snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
@@ -635,24 +637,24 @@ std::string BaseFeatureSet::DoGetContextBaseString() {
 }
 void BaseFeatureSet::DoPrintContextAuto() {
   if (!InLogicThread()) {
-    PrintContextNonLogicThread();
+    PrintContextNonLogicThread_();
   } else if (const char* label = Python::ScopedCallLabel::current_label()) {
-    PrintContextForCallableLabel(label);
+    PrintContextForCallableLabel_(label);
   } else if (PythonCommand* cmd = PythonCommand::current_command()) {
     cmd->PrintContext();
   } else if (PythonContextCall* call = PythonContextCall::current_call()) {
     call->PrintContext();
   } else {
-    PrintContextUnavailable();
+    PrintContextUnavailable_();
   }
 }
-void BaseFeatureSet::PrintContextNonLogicThread() {
+void BaseFeatureSet::PrintContextNonLogicThread_() {
   std::string s = std::string(
       "  root call: <not in logic thread; context_ref unavailable>");
   PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void BaseFeatureSet::PrintContextForCallableLabel(const char* label) {
+void BaseFeatureSet::PrintContextForCallableLabel_(const char* label) {
   assert(InLogicThread());
   assert(label);
   std::string s = std::string("  root call: ") + label + "\n";
@@ -660,7 +662,7 @@ void BaseFeatureSet::PrintContextForCallableLabel(const char* label) {
   PySys_WriteStderr("%s\n", s.c_str());
 }
 
-void BaseFeatureSet::PrintContextUnavailable() {
+void BaseFeatureSet::PrintContextUnavailable_() {
   // (no logic-thread-check here; can be called early or from other threads)
   std::string s = std::string("  root call: <unavailable>\n");
   s += Python::GetContextBaseString();

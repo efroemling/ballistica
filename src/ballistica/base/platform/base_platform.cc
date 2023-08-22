@@ -119,20 +119,20 @@ auto BasePlatform::CreateApp() -> App* {
   App* app{};
 
 #if BA_HEADLESS_BUILD
-  app = new AppHeadless(g_core->main_event_loop());
+  app = new AppHeadless();
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
   if (g_core->vr_mode) {
-    app = new AppVR(g_core->main_event_loop());
+    app = new AppVR();
   } else {
-    app = new AppSDL(g_core->main_event_loop());
+    app = new AppSDL();
   }
 #elif BA_CARDBOARD_BUILD
-  app = new AppVR(g_core->main_event_loop());
+  app = new AppVR();
 #elif BA_SDL_BUILD
-  app = new AppSDL(g_core->main_event_loop());
+  app = new AppSDL();
 #else
-  app = new App(g_core->main_event_loop());
+  app = new App();
 #endif
 
   assert(app);
