@@ -693,7 +693,6 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """
     # pylint: disable=too-many-locals
     import json
-    import platform
     from efrotools import PYVER
 
     @dataclass
@@ -744,17 +743,13 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     entries.append(Entry('python_path', python_path))
 
     # ...or if mac xcode sdk paths change
+    mac_xcode_sdks_dir = (
+        '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/'
+        'Developer/SDKs/'
+    )
     mac_xcode_sdks = (
-        ','.join(
-            sorted(
-                os.listdir(
-                    '/Applications/Xcode.app/Contents/'
-                    'Developer/Platforms/MacOSX.platform/'
-                    'Developer/SDKs/'
-                )
-            )
-        )
-        if platform.system() == 'Darwin'
+        ','.join(sorted(os.listdir(mac_xcode_sdks_dir)))
+        if os.path.isdir(mac_xcode_sdks_dir)
         else ''
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
