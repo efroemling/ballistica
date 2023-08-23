@@ -342,29 +342,24 @@ void UI::ShowURL(const std::string& url) {
 void UI::ConfirmQuit() {
   g_base->logic->event_loop()->PushCall([] {
     assert(g_base->InLogicThread());
-    if (g_core->HeadlessMode()) {
-      Log(LogLevel::kError, "UI::ConfirmQuit() unhandled on headless.");
+    // If we're headless or input is locked or the in-app-console is up or
+    // we don't have ui-v1, just quit immediately; a confirm screen
+    // wouldn't work anyway.
+    if (g_core->HeadlessMode() || g_base->input->IsInputLocked()
+        || !g_base->HaveUIV1()
+        || (g_base->console() != nullptr && g_base->console()->active())) {
+      g_base->logic->Shutdown();
+      // g_base->python->objs().Get(BasePython::ObjID::kQuitCall).Call();
+      return;
     } else {
-      // If input is locked or the in-app-console is up or we don't have ui-v1,
-      // just quit immediately; a confirm screen wouldn't work anyway.
-      if (g_base->input->IsInputLocked() || !g_base->HaveUIV1()
-          || (g_base->console() != nullptr && g_base->console()->active())) {
-        // Just go through _babase.quit().
-        // FIXME: Shouldn't need to go out to the Python layer here;
-        //  once we've got a high level quit call in platform we can use
-        //  that directly.
-        g_base->python->objs().Get(BasePython::ObjID::kQuitCall).Call();
-        return;
-      } else {
-        ScopedSetContext ssc(nullptr);
-        g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kSwish));
-        g_base->ui_v1()->DoQuitWindow();
+      ScopedSetContext ssc(nullptr);
+      g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kSwish));
+      g_base->ui_v1()->DoQuitWindow();
 
-        // If we have a keyboard, give it UI ownership.
-        InputDevice* keyboard = g_base->input->keyboard_input();
-        if (keyboard) {
-          g_base->ui->SetUIInputDevice(keyboard);
-        }
+      // If we have a keyboard, give it UI ownership.
+      InputDevice* keyboard = g_base->input->keyboard_input();
+      if (keyboard) {
+        g_base->ui->SetUIInputDevice(keyboard);
       }
     }
   });

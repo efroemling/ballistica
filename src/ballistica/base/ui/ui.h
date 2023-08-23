@@ -52,13 +52,14 @@ class UI {
   /// called from any thread.
   void ShowURL(const std::string& url);
 
-  /// High level call to request a quit ui (or in some cases quit
-  /// immediately). This can be called from any thread.
+  /// High level call to request a quit ui. When a UI can't be shown,
+  /// triggers an immediate shutdown. This can be called from any thread.
   void ConfirmQuit();
 
   /// Return whether there is UI present in either the main or overlay
   /// stacks. Generally this implies the focus should be on the UI.
   auto MainMenuVisible() const -> bool;
+
   auto PartyIconVisible() -> bool;
   void ActivatePartyIcon();
   void HandleLegacyRootUIMouseMotion(float x, float y);

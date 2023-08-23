@@ -1,21 +1,34 @@
-### 1.7.26 (build 21241, api 8, 2023-08-22)
+### 1.7.26 (build 21244, api 8, 2023-08-23)
 
+- Android should now be better at detecting hardware keyboards (you will see
+  'Configure Keyboard' and 'Configure Keyboard P2' buttons under
+  Settings->Controllers if a hardware keyboard is detected). It can be a bit
+  tricky distinguishing between gamepad type devices and keyboards on Android,
+  so please holler if you have a gamepad that now suddenly thinks it is a
+  keyboard or anything like that.
 - Various general improvements to the pcommand (project command) system.
 - Modules containing pcommand functions are now named with an 's' - so
   `pcommands.py` instead of `pcommand.py`. `pcommand.py` in efrotools is now
   solely related to the functioning of the pcommand system.
 - Implemented the `pcommandbatch` system, which is a way to run pcommands using
   a simple local server/client architecture, and set up key build targets to use
-  it instead of regular pcommand. In some cases, such as when assembling build
-  assets, this can speed things up by 5x or so. If you run into any problems
-  that seem to be related to this, you can disable it by setting env var
-  `BA_PCOMMANDBATCH_DISABLE=1`. See docs in `tools/efrotools/pcommandbatch.py`
-  for more info.
+  that by default instead of regular pcommand. In some cases, such as when
+  assembling build assets, this can speed things up by 5x or so. Run `make
+  pcommandbatch_speed_test` to see what the theoretical biggest speedup is on
+  your system. If you run into any problems that seem to be related to this, you
+  can disable it by setting env var `BA_PCOMMANDBATCH_DISABLE=1` which will
+  cause everything to go use regular old pcommand. See docs in
+  `tools/efrotools/pcommandbatch.py` for more info.
 - Renamed the various `App` C++ classes to `AppAdapter` which better represents
   their current intended role. They are not a general interface to app
   functionality, but rather adapt the app to a particular paradigm or api (VR,
-  Headless, SDL GUI, etc.). Am trying to move any functionality out of those
-  classes that does not fit that definition.
+  Headless, SDL GUI, etc.). Also am trying to move any functionality out of
+  those classes that does not fit that definition.
+- Started cleaning up the app exit process. This will allow the app to
+  gracefully run tasks such as syncing account data to the cloud or disk or
+  properly closing the audio system when shutting down. It also means there
+  should be more consistent use of the 'Quit?' confirm window. Please holler if
+  you see any odd behavior when trying to quit the app.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 

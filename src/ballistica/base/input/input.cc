@@ -14,6 +14,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -963,16 +964,16 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   if (!g_buildconfig.ostype_ios_tvos() && !g_buildconfig.ostype_android()) {
     // Command-F or Control-F toggles full-screen.
     if (!repeat_press && keysym->sym == SDLK_f
-        && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
+        && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {
       g_base->python->objs()
           .Get(BasePython::ObjID::kToggleFullscreenCall)
           .Call();
       return;
     }
 
-    // Command-Q or Control-Q quits.
-    if (!repeat_press && keysym->sym == SDLK_q
-        && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
+    // Control-Q quits. On mac, the usual cmd-q gets handled by SDL/etc.
+    // implicitly.
+    if (!repeat_press && keysym->sym == SDLK_q && (keysym->mod & KMOD_CTRL)) {
       g_base->ui->ConfirmQuit();
       return;
     }
@@ -987,7 +988,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
   // Command-Q or Control-Q quits.
   if (!repeat_press && keysym->sym == SDLK_v
-      && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
+      && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {
     g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
     return;
   }

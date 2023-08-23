@@ -128,28 +128,58 @@ void Logic::OnAppResume() {
   g_base->python->OnAppResume();
 }
 
+void Logic::Shutdown() {
+  assert(g_base->InLogicThread());
+  assert(g_base->IsAppStarted());
+
+  if (!shutting_down_) {
+    shutting_down_ = true;
+    OnAppShutdown();
+  }
+}
+
 void Logic::OnAppShutdown() {
   assert(g_core);
   assert(g_base->CurrentContext().IsEmpty());
+  assert(shutting_down_);
+
+  g_core->LifecycleLog("app state shutting down");
 
   // Nuke the app from orbit if we get stuck while shutting down.
   g_core->StartSuicideTimer("shutdown", 10000);
 
-  // Note: keep these in opposite order of OnAppStart.
+  // Let our subsystems know we're shutting down.
+  // Note: Keep these in opposite order of OnAppStart.
+  // Note2: Any shutdown processes that take a non-zero amount of time
+  // should be registered as shutdown-tasks
   g_base->python->OnAppShutdown();
   if (g_base->HavePlus()) {
     g_base->plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
-  g_core->platform->OnAppResume();
+  g_core->platform->OnAppShutdown();
   g_base->ui->OnAppShutdown();
   g_base->input->OnAppShutdown();
   g_base->audio->OnAppShutdown();
   g_base->graphics->OnAppShutdown();
+}
 
-  // FIXME: Should add a mechanism where we give the above subsystems
-  //  a short bit of time to complete shutdown if they need it.
-  //  For now just completing instantly.
+void Logic::CompleteShutdown() {
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(shutting_down_);
+  BA_PRECONDITION(!shutdown_completed_);
+
+  shutdown_completed_ = true;
+  OnAppShutdownComplete();
+}
+
+void Logic::OnAppShutdownComplete() {
+  assert(g_base->InLogicThread());
+
+  // Wrap up any last business here in the logic thread and then
+  // kick things over to the main thread to exit out of the main loop.
+  g_core->LifecycleLog("app shutdown complete");
+
   g_core->main_event_loop()->PushCall([] { g_base->OnAppShutdownComplete(); });
 }
 
@@ -590,15 +620,6 @@ void Logic::NotifyOfPendingAssetLoads() {
   assert(g_base->InLogicThread());
   have_pending_loads_ = true;
   UpdatePendingWorkTimer();
-}
-
-void Logic::Shutdown() {
-  assert(g_base->InLogicThread());
-
-  if (!g_core->shutting_down) {
-    g_core->shutting_down = true;
-    OnAppShutdown();
-  }
 }
 
 auto Logic::NewAppTimer(millisecs_t length, bool repeat,

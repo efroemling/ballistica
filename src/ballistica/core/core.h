@@ -160,7 +160,6 @@ class CoreFeatureSet {
   bool v1_cloud_log_full{};
   int master_server_source{};
   int session_count{};
-  bool shutting_down{};
   bool have_incentivized_ad{false};
   bool should_pause{};
   bool reset_vr_orientation{};

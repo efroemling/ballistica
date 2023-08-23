@@ -44,6 +44,7 @@ class Logic {
   void OnAppResume();
 
   void OnAppShutdown();
+  void OnAppShutdownComplete();
 
   void OnAppModeChanged();
 
@@ -55,13 +56,13 @@ class Logic {
   /// graphical builds we also use this opportunity to step our logic.
   void Draw();
 
-  /// Kick off a low level app shutdown which will result in the process
-  /// exiting. Platform-agnostic code should generally not call this
-  /// directly and should instead use high level calls like babase.quit().
-  /// This allows platforms such as mobile to take alternate actions which
-  /// may involve leaving the underlying process running. FIXME: I feel like
-  /// this should be in one of the App classes.
+  /// Kick off an app shutdown. Shutdown is an asynchronous process which
+  /// may take a bit of time to complete. Safe to call repeatedly.
   void Shutdown();
+
+  /// Should be called by the Python layer when it has completed all
+  /// shutdown related tasks.
+  void CompleteShutdown();
 
   /// Has CompleteAppBootstrapping been called?
   auto app_bootstrapping_complete() const {
@@ -95,6 +96,8 @@ class Logic {
   }
 
   auto applied_app_config() const { return applied_app_config_; }
+  auto shutting_down() const { return shutting_down_; }
+  auto shutdown_completed() const { return shutdown_completed_; }
 
  private:
   void UpdateDisplayTimeForFrameDraw();
@@ -127,6 +130,8 @@ class Logic {
   bool have_pending_loads_{};
   bool debug_log_display_time_{};
   bool applied_app_config_{};
+  bool shutting_down_{};
+  bool shutdown_completed_{};
 };
 
 }  // namespace ballistica::base

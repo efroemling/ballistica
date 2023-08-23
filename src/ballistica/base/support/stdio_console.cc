@@ -42,7 +42,7 @@ void StdioConsole::StartInMainThread() {
       // results of the last script-command message we may have just sent.
       if (stdin_is_terminal) {
         g_base->logic->event_loop()->PushCall([] {
-          if (!g_core->shutting_down) {
+          if (!g_base->logic->shutting_down()) {
             printf(">>> ");
             fflush(stdout);
           }
@@ -97,7 +97,7 @@ void StdioConsole::StartInMainThread() {
             if (g_buildconfig.windows_console_build()) {
               core::CorePlatform::SleepMillisecs(250);
             }
-            if (!g_core->shutting_down) {
+            if (!g_base->logic->shutting_down()) {
               printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
               fflush(stdout);
             }

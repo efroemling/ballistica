@@ -290,6 +290,7 @@ class App:
         self._pending_intent: AppIntent | None = None
         self._intent: AppIntent | None = None
         self._mode: AppMode | None = None
+        self._shutdown_task: asyncio.Task[None] | None = None
 
         # Controls which app-modes we use for handling given
         # app-intents. Plugins can override this to change high level
@@ -705,11 +706,11 @@ class App:
         # pylint: disable=too-many-branches
         assert _babase.in_logic_thread()
 
-        if self._shutdown_called:
+        # Can't shut down until we've got our asyncio machinery spun up.
+        if self._shutdown_called and self._aioloop is not None:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
-                _babase.lifecyclelog('app state shutting down')
                 self._on_app_shutdown()
 
         elif self._app_paused:
@@ -748,6 +749,17 @@ class App:
                         self._called_on_app_launching = True
                         self._on_app_launching()
 
+    async def _shutdown(self) -> None:
+        import asyncio
+
+        try:
+            # print('SHUTDOWN BEGIN')
+            await asyncio.sleep(0.0)
+            # print('SHUTDOWN END')
+        except Exception:
+            logging.exception('Error during shutdown.')
+        _babase.complete_shutdown()
+
     def pause(self) -> None:
         """Should be called by the native layer when the app pauses."""
         assert not self._app_paused  # Should avoid redundant calls.
@@ -761,7 +773,13 @@ class App:
         self._update_state()
 
     def shutdown(self) -> None:
-        """Should be called by the native layer when the app wants to quit."""
+        """Called by the native layer when the app wants to quit.
+
+        The app should use this notice to start cleaning up and shutting
+        down. Once shutdown is complete, it should call
+        _babase.complete_shutdown() which will trigger an actual exit
+        from the app.
+        """
         self._shutdown_called = True
         self._update_state()
 
@@ -805,6 +823,10 @@ class App:
                 logging.exception(
                     'Error in on_app_shutdown for subsystem %s.', subsystem
                 )
+
+        # Now kick off any async shutdown task(s).
+        assert self._aioloop is not None
+        self._shutdown_task = self._aioloop.create_task(self._shutdown())
 
     def read_config(self) -> None:
         """(internal)"""

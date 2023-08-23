@@ -1470,7 +1470,7 @@ void SceneV1AppMode::HandleGameQuery(const char* buffer, size_t size,
 
 void SceneV1AppMode::RunMainMenu() {
   assert(g_base->InLogicThread());
-  if (g_core->shutting_down) {
+  if (g_base->logic->shutting_down()) {
     return;
   }
   assert(g_base->InLogicThread());

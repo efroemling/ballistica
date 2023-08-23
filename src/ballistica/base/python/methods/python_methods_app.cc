@@ -68,6 +68,28 @@ static PyMethodDef PyRunAppDef = {
     "manages its own event loop.",
 };
 
+// --------------------------- complete_shutdown -------------------------------
+
+static auto PyCompleteShutdown(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  assert(g_base);
+  g_base->logic->CompleteShutdown();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCompleteShutdownDef = {
+    "complete_shutdown",              // name
+    (PyCFunction)PyCompleteShutdown,  // method
+    METH_NOARGS,                      // flags
+
+    "complete_shutdown() -> None\n"
+    "\n"
+    "Complete the shutdown process, triggering the app to exit.\n",
+};
+
 // -------------------------------- appnameupper -------------------------------
 
 static auto PyAppNameUpper(PyObject* self) -> PyObject* {
@@ -484,6 +506,8 @@ static PyMethodDef PyDisplayTimerDef = {
 static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->IsAppStarted());
+
   static const char* kwlist[] = {"soft", "back", nullptr};
   int soft = 0;
   int back = 0;
@@ -492,7 +516,7 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  // FIXME this should all just go through platform.
+  // FIXME this should all just go through platform and/or app-adapter.
 
   if (g_buildconfig.ostype_ios_tvos()) {
     // This should never be called on iOS
@@ -503,9 +527,6 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
 
   // A few types get handled specially on Android.
   if (g_buildconfig.ostype_android()) {
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantConditionsOC"
-
     if (!handled && back) {
       // Back-quit simply synthesizes a back press.
       // Note to self: I remember this behaved slightly differently than
@@ -513,8 +534,6 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
       g_core->platform->AndroidSynthesizeBackPress();
       handled = true;
     }
-
-#pragma clang diagnostic pop
 
     if (!handled && soft) {
       // Soft-quit just kills our activity but doesn't run app shutdown.
@@ -1517,6 +1536,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeHandleIntentDefaultDef,
       PyEmptyAppModeHandleIntentExecDef,
       PyGetImmediateReturnCodeDef,
+      PyCompleteShutdownDef,
   };
 }
 

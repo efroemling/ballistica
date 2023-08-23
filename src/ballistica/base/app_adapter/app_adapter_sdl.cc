@@ -12,6 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/stress_test.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
@@ -159,7 +160,9 @@ void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
 #endif
 
     case SDL_QUIT:
-      g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown(); });
+      // g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown();
+      // });
+      g_base->logic->event_loop()->PushCall([] { g_base->ui->ConfirmQuit(); });
       break;
 
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD

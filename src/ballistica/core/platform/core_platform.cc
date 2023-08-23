@@ -645,19 +645,19 @@ auto CorePlatform::GetTextTextureData(void* tex) -> uint8_t* {
 }
 
 void CorePlatform::OnAppStart() {
-  // assert(g_base_soft && g_base_soft->InLogicThread());
+  assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
 void CorePlatform::OnAppPause() {
-  // assert(g_base_soft && g_base_soft->InLogicThread());
+  assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
 void CorePlatform::OnAppResume() {
-  // assert(g_base_soft && g_base_soft->InLogicThread());
+  assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
 void CorePlatform::OnAppShutdown() {
-  // assert(g_base_soft && g_base_soft->InLogicThread());
+  assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
 void CorePlatform::OnScreenSizeChange() {
