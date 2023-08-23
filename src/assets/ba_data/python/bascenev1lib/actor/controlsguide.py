@@ -58,45 +58,11 @@ class ControlsGuide(bs.Actor):
         self._update_timer: bs.Timer | None = None
         self._title_text: bs.Node | None
         clr: Sequence[float]
-        extra_pos_1: tuple[float, float] | None
-        extra_pos_2: tuple[float, float] | None
-        if bs.app.iircade_mode:
-            xtweak = 0.2
-            ytweak = 0.2
-            jump_pos = (
-                position[0] + offs * (-1.2 + xtweak),
-                position[1] + offs * (0.1 + ytweak),
-            )
-            bomb_pos = (
-                position[0] + offs * (0.0 + xtweak),
-                position[1] + offs * (0.5 + ytweak),
-            )
-            punch_pos = (
-                position[0] + offs * (1.2 + xtweak),
-                position[1] + offs * (0.5 + ytweak),
-            )
-
-            pickup_pos = (
-                position[0] + offs * (-1.4 + xtweak),
-                position[1] + offs * (-1.2 + ytweak),
-            )
-            extra_pos_1 = (
-                position[0] + offs * (-0.2 + xtweak),
-                position[1] + offs * (-0.8 + ytweak),
-            )
-            extra_pos_2 = (
-                position[0] + offs * (1.0 + xtweak),
-                position[1] + offs * (-0.8 + ytweak),
-            )
-            self._force_hide_button_names = True
-        else:
-            punch_pos = (position[0] - offs * 1.1, position[1])
-            jump_pos = (position[0], position[1] - offs)
-            bomb_pos = (position[0] + offs * 1.1, position[1])
-            pickup_pos = (position[0], position[1] + offs)
-            extra_pos_1 = None
-            extra_pos_2 = None
-            self._force_hide_button_names = False
+        punch_pos = (position[0] - offs * 1.1, position[1])
+        jump_pos = (position[0], position[1] - offs)
+        bomb_pos = (position[0] + offs * 1.1, position[1])
+        pickup_pos = (position[0], position[1] + offs)
+        self._force_hide_button_names = False
 
         if show_title:
             self._title_text_pos_top = (
@@ -271,36 +237,8 @@ class ControlsGuide(bs.Actor):
             },
         )
 
-        if extra_pos_1 is not None:
-            self._extra_image_1: bs.Node | None = bs.newnode(
-                'image',
-                attrs={
-                    'texture': bs.gettexture('nub'),
-                    'absolute_scale': True,
-                    'host_only': True,
-                    'vr_depth': 10,
-                    'position': extra_pos_1,
-                    'scale': (image_size, image_size),
-                    'color': (0.5, 0.5, 0.5),
-                },
-            )
-        else:
-            self._extra_image_1 = None
-        if extra_pos_2 is not None:
-            self._extra_image_2: bs.Node | None = bs.newnode(
-                'image',
-                attrs={
-                    'texture': bs.gettexture('nub'),
-                    'absolute_scale': True,
-                    'host_only': True,
-                    'vr_depth': 10,
-                    'position': extra_pos_2,
-                    'scale': (image_size, image_size),
-                    'color': (0.5, 0.5, 0.5),
-                },
-            )
-        else:
-            self._extra_image_2 = None
+        self._extra_image_1 = None
+        self._extra_image_2 = None
 
         self._nodes = [
             self._bomb_image,
@@ -317,10 +255,6 @@ class ControlsGuide(bs.Actor):
         if show_title:
             assert self._title_text
             self._nodes.append(self._title_text)
-        if self._extra_image_1 is not None:
-            self._nodes.append(self._extra_image_1)
-        if self._extra_image_2 is not None:
-            self._nodes.append(self._extra_image_2)
 
         # Start everything invisible.
         for node in self._nodes:

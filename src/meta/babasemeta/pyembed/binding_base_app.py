@@ -3,14 +3,18 @@
 # Python objects should be added here along with their associated c++ enum.
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 from __future__ import annotations
-import babase
-
+from babase import app
 
 # The C++ layer looks for this variable:
 values = [
-    babase.app,  # kApp
-    babase.app.handle_deep_link,  # kDeepLinkCall
-    babase.app.lang.get_resource,  # kGetResourceCall
-    babase.app.lang.translate,  # kTranslateCall
-    babase.app.push_apply_app_config,  # kPushApplyAppConfigCall
+    app,  # kApp
+    app.handle_deep_link,  # kAppHandleDeepLinkCall
+    app.lang.get_resource,  # kGetResourceCall
+    app.lang.translate,  # kTranslateCall
+    app.push_apply_app_config,  # kAppPushApplyAppConfigCall
+    app.on_native_bootstrapped,  # kAppOnNativeBootstrappedCall
+    app.on_native_pause,  # kAppOnNativePauseCall
+    app.on_native_resume,  # kAppOnNativeResumeCall
+    app.on_native_shutdown,  # kAppOnNativeShutdownCall
+    app.read_config,  # kAppReadConfigCall
 ]

@@ -23,11 +23,6 @@ if TYPE_CHECKING:
     pass
 
 
-def on_app_bootstrapping_complete() -> None:
-    """Called by C++ layer when bootstrapping finishes."""
-    _babase.app.on_app_bootstrapping_complete()
-
-
 def reset_to_main_menu() -> None:
     # Some high-level event wants us to return to the main menu.
     # an example of this is re-opening the game after we 'soft' quit it
@@ -172,14 +167,6 @@ def orientation_reset_message() -> None:
     )
 
 
-def on_app_pause() -> None:
-    _babase.app.pause()
-
-
-def on_app_resume() -> None:
-    _babase.app.resume()
-
-
 def show_post_purchase_message() -> None:
     assert _babase.app.classic is not None
     _babase.app.classic.accounts.show_post_purchase_message()
@@ -272,10 +259,6 @@ def toggle_fullscreen() -> None:
     cfg.apply_and_commit()
 
 
-def read_config() -> None:
-    _babase.app.read_config()
-
-
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
     from babase._language import Lstr
@@ -298,10 +281,6 @@ def remove_in_game_ads_message() -> None:
 
 def do_quit() -> None:
     _babase.quit()
-
-
-def shutdown() -> None:
-    _babase.app.shutdown()
 
 
 def hash_strings(inputs: list[str]) -> str:

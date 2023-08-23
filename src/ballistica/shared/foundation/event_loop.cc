@@ -585,7 +585,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   }
 }
 
-void EventLoop::SetThreadsPaused(bool paused) {
+void EventLoop::SetEventLoopsPaused(bool paused) {
   assert(g_core);
   assert(std::this_thread::get_id() == g_core->main_thread_id);
   g_core->threads_paused = paused;
@@ -610,7 +610,7 @@ auto EventLoop::GetStillPausingThreads() -> std::vector<EventLoop*> {
   return threads;
 }
 
-auto EventLoop::AreThreadsPaused() -> bool {
+auto EventLoop::AreEventLoopsPaused() -> bool {
   assert(g_core);
   return g_core->threads_paused;
 }

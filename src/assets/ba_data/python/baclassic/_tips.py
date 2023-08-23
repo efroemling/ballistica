@@ -106,16 +106,14 @@ def get_all_tips() -> list[str]:
         ),
     ]
     app = babase.app
-    if not app.iircade_mode:
-        tips += [
-            'If your framerate is choppy, try turning down resolution\nor '
-            'visuals in the game\'s graphics settings.'
-        ]
+    tips += [
+        'If your framerate is choppy, try turning down resolution\nor '
+        'visuals in the game\'s graphics settings.'
+    ]
     if (
         app.classic is not None
         and app.classic.platform in ('android', 'ios')
         and not app.on_tv
-        and not app.iircade_mode
     ):
         tips += [
             (
@@ -124,11 +122,7 @@ def get_all_tips() -> list[str]:
                 'in Settings->Graphics'
             ),
         ]
-    if (
-        app.classic is not None
-        and app.classic.platform in ['mac', 'android']
-        and not app.iircade_mode
-    ):
+    if app.classic is not None and app.classic.platform in ['mac', 'android']:
         tips += [
             'Tired of the soundtrack?  Replace it with your own!'
             '\nSee Settings->Audio->Soundtrack'
@@ -136,11 +130,11 @@ def get_all_tips() -> list[str]:
 
     # Hot-plugging is currently only on some platforms.
     # FIXME: Should add a platform entry for this so don't forget to update it.
-    if (
-        app.classic is not None
-        and app.classic.platform in ['mac', 'android', 'windows']
-        and not app.iircade_mode
-    ):
+    if app.classic is not None and app.classic.platform in [
+        'mac',
+        'android',
+        'windows',
+    ]:
         tips += [
             'Players can join and leave in the middle of most games,\n'
             'and you can also plug and unplug controllers on the fly.',

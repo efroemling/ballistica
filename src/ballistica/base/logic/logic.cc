@@ -72,6 +72,83 @@ void Logic::OnAppStart() {
   g_core->LifecycleLog("on-app-start end (logic thread)");
 }
 
+void Logic::OnInitialScreenCreated() {
+  assert(g_base->InLogicThread());
+
+  // Ok; graphics-server is telling us we've got a screen (or no screen in
+  // the case of headless-mode). We use this as a cue to kick off our
+  // business logic.
+
+  // Let the Python layer know the native layer is now fully functional.
+  // This will probably result in the Python layer flipping to the LAUNCHING
+  // state.
+  CompleteAppBootstrapping();
+
+  if (!g_core->HeadlessMode()) {
+    // In gui mode, push an initial frame to the graphics server. From this
+    // point it will be self-sustaining, sending us a frame request each
+    // time it receives a new frame from us.
+    g_base->graphics->BuildAndPushFrameDef();
+  } else {
+    // Normally we step display-time as part of our frame-drawing process.
+    // If we're headless, we're not drawing any frames, but we still want to
+    // do minimal processing on any display-time timers. Let's run at a
+    // low-ish rate (10hz) to keep things efficient. Anyone dealing in
+    // display-time should be able to handle a wide variety of rates anyway.
+    // NOTE: This length is currently milliseconds.
+    headless_display_time_step_timer_ = event_loop()->NewTimer(
+        kAppModeMinHeadlessDisplayStep / 1000, true,
+        NewLambdaRunnable([this] { StepDisplayTime(); }));
+  }
+}
+
+void Logic::CompleteAppBootstrapping() {
+  assert(g_base->InLogicThread());
+  assert(g_base->CurrentContext().IsEmpty());
+
+  assert(!app_bootstrapping_complete_);
+  app_bootstrapping_complete_ = true;
+
+  g_core->LifecycleLog("app bootstrapping complete");
+
+  // Let the assets system know it can start loading stuff now that
+  // we have a screen and thus know texture formats/etc.
+  // TODO(ericf): It might be nice to kick this off earlier if our logic is
+  //  robust enough to create some sort of 'null' textures/meshes before
+  //  the renderer is ready and then seamlessly create renderer-specific
+  //  ones once the renderer is up. We could likely at least get a lot
+  //  of preloads done in the meantime. Though this would require preloads
+  //  to be renderer-agnostic; not sure if that will always be the case.
+  g_base->assets->StartLoading();
+
+  // Let base know it can create the console or other asset-dependent things.
+  g_base->OnAssetsAvailable();
+
+  // Set up our timers.
+  process_pending_work_timer_ = event_loop()->NewTimer(
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork(); }));
+  asset_prune_timer_ = event_loop()->NewTimer(
+      2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
+
+  // Let our initial dummy app-mode know it has become active.
+  g_base->app_mode()->OnActivate();
+
+  // Reset our various subsystems to a default state.
+  g_base->ui->Reset();
+  g_base->input->Reset();
+  g_base->graphics->Reset();
+  g_base->python->Reset();
+  g_base->audio->Reset();
+
+  // Let Python know we're done bootstrapping so it can flip the app
+  // into the 'launching' state.
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppOnNativeBootstrappedCall)
+      .Call();
+
+  UpdatePendingWorkTimer();
+}
+
 void Logic::OnAppRunning() {
   assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
@@ -205,83 +282,6 @@ void Logic::DoApplyAppConfig() {
   g_base->networking->DoApplyAppConfig();
 
   applied_app_config_ = true;
-}
-
-void Logic::OnInitialScreenCreated() {
-  assert(g_base->InLogicThread());
-
-  // Ok; graphics-server is telling us we've got a screen (or no screen in
-  // the case of headless-mode). We use this as a cue to kick off our
-  // business logic.
-
-  // Let the Python layer know the native layer is now fully functional.
-  // This will probably result in the Python layer flipping to the LAUNCHING
-  // state.
-  CompleteAppBootstrapping();
-
-  if (!g_core->HeadlessMode()) {
-    // In gui mode, push an initial frame to the graphics server. From this
-    // point it will be self-sustaining, sending us a frame request each
-    // time it receives a new frame from us.
-    g_base->graphics->BuildAndPushFrameDef();
-  } else {
-    // Normally we step display-time as part of our frame-drawing process.
-    // If we're headless, we're not drawing any frames, but we still want to
-    // do minimal processing on any display-time timers. Let's run at a
-    // low-ish rate (10hz) to keep things efficient. Anyone dealing in
-    // display-time should be able to handle a wide variety of rates anyway.
-    // NOTE: This length is currently milliseconds.
-    headless_display_time_step_timer_ = event_loop()->NewTimer(
-        kAppModeMinHeadlessDisplayStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime(); }));
-  }
-}
-
-void Logic::CompleteAppBootstrapping() {
-  assert(g_base->InLogicThread());
-  assert(g_base->CurrentContext().IsEmpty());
-
-  assert(!app_bootstrapping_complete_);
-  app_bootstrapping_complete_ = true;
-
-  g_core->LifecycleLog("app bootstrapping complete");
-
-  // Let the assets system know it can start loading stuff now that
-  // we have a screen and thus know texture formats/etc.
-  // TODO(ericf): It might be nice to kick this off earlier if our logic is
-  //  robust enough to create some sort of 'null' textures/meshes before
-  //  the renderer is ready and then seamlessly create renderer-specific
-  //  ones once the renderer is up. We could likely at least get a lot
-  //  of preloads done in the meantime. Though this would require preloads
-  //  to be renderer-agnostic; not sure if that will always be the case.
-  g_base->assets->StartLoading();
-
-  // Let base know it can create the console or other asset-dependent things.
-  g_base->OnAssetsAvailable();
-
-  // Set up our timers.
-  process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork(); }));
-  asset_prune_timer_ = event_loop()->NewTimer(
-      2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
-
-  // Let our initial dummy app-mode know it has become active.
-  g_base->app_mode()->OnActivate();
-
-  // Reset our various subsystems to a default state.
-  g_base->ui->Reset();
-  g_base->input->Reset();
-  g_base->graphics->Reset();
-  g_base->python->Reset();
-  g_base->audio->Reset();
-
-  // Let Python know we're done bootstrapping so it can flip the app
-  // into the 'launching' state.
-  g_base->python->objs()
-      .Get(BasePython::ObjID::kOnAppBootstrappingCompleteCall)
-      .Call();
-
-  UpdatePendingWorkTimer();
 }
 
 void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,

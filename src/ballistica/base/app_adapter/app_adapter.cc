@@ -134,7 +134,7 @@ void AppAdapter::OnAppPause_() {
   // their event-loop is actually paused.
 
   // Pause all event loops.
-  EventLoop::SetThreadsPaused(true);
+  EventLoop::SetEventLoopsPaused(true);
 
   if (g_base->network_reader) {
     g_base->network_reader->OnAppPause();
@@ -148,7 +148,7 @@ void AppAdapter::OnAppResume_() {
   last_app_resume_time_ = g_core->GetAppTimeMillisecs();
 
   // Spin all event-loops back up.
-  EventLoop::SetThreadsPaused(false);
+  EventLoop::SetEventLoopsPaused(false);
 
   // Run resumes that expect to happen in the main thread.
   g_core->platform->OnAppResume();

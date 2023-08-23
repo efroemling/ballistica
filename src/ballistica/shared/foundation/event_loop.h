@@ -29,8 +29,8 @@ class EventLoop {
 
   static auto CurrentThreadName() -> std::string;
 
-  static void SetThreadsPaused(bool enable);
-  static auto AreThreadsPaused() -> bool;
+  static void SetEventLoopsPaused(bool enable);
+  static auto AreEventLoopsPaused() -> bool;
 
   auto ThreadIsCurrent() const -> bool {
     return std::this_thread::get_id() == thread_id();

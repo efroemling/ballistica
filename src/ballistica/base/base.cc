@@ -218,7 +218,7 @@ void BaseFeatureSet::StartApp() {
   // rolling.
   {
     Python::ScopedInterpreterLock gil;
-    python->objs().Get(BasePython::ObjID::kPushApplyAppConfigCall).Call();
+    python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
   }
 
   g_core->LifecycleLog("start-app end (main thread)");

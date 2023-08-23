@@ -88,9 +88,7 @@ class AdvancedSettingsWindow(bui.Window):
 
         # In vr-mode, the internal keyboard is currently the *only* option,
         # so no need to show this.
-        self._show_always_use_internal_keyboard = (
-            not app.vr_mode and not app.iircade_mode
-        )
+        self._show_always_use_internal_keyboard = not app.vr_mode
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0

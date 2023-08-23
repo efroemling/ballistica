@@ -5763,7 +5763,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/hockeyStadiumPreview.dds \
   $(BUILD_DIR)/ba_data/textures/iconOnslaught.dds \
   $(BUILD_DIR)/ba_data/textures/iconRunaround.dds \
-  $(BUILD_DIR)/ba_data/textures/iircadeLogo.dds \
   $(BUILD_DIR)/ba_data/textures/impactBombColor.dds \
   $(BUILD_DIR)/ba_data/textures/impactBombColorLit.dds \
   $(BUILD_DIR)/ba_data/textures/inventoryIcon.dds \
@@ -6169,7 +6168,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/hockeyStadiumPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/iconOnslaught.pvr \
   $(BUILD_DIR)/ba_data/textures/iconRunaround.pvr \
-  $(BUILD_DIR)/ba_data/textures/iircadeLogo.pvr \
   $(BUILD_DIR)/ba_data/textures/impactBombColor.pvr \
   $(BUILD_DIR)/ba_data/textures/impactBombColorLit.pvr \
   $(BUILD_DIR)/ba_data/textures/inventoryIcon.pvr \
@@ -6575,7 +6573,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/hockeyStadiumPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/iconOnslaught.ktx \
   $(BUILD_DIR)/ba_data/textures/iconRunaround.ktx \
-  $(BUILD_DIR)/ba_data/textures/iircadeLogo.ktx \
   $(BUILD_DIR)/ba_data/textures/impactBombColor.ktx \
   $(BUILD_DIR)/ba_data/textures/impactBombColorLit.ktx \
   $(BUILD_DIR)/ba_data/textures/inventoryIcon.ktx \
@@ -6981,7 +6978,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/hockeyStadium_preview.png \
   $(BUILD_DIR)/ba_data/textures/iconOnslaught_preview.png \
   $(BUILD_DIR)/ba_data/textures/iconRunaround_preview.png \
-  $(BUILD_DIR)/ba_data/textures/iircadeLogo_preview.png \
   $(BUILD_DIR)/ba_data/textures/impactBombColorLit_preview.png \
   $(BUILD_DIR)/ba_data/textures/impactBombColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/inventoryIcon_preview.png \

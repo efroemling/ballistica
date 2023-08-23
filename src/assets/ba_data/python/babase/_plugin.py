@@ -317,13 +317,13 @@ class Plugin:
         """Called when the app reaches the running state."""
 
     def on_app_pause(self) -> None:
-        """Called after pausing game activity."""
+        """Called when the app is switching to a paused state."""
 
     def on_app_resume(self) -> None:
-        """Called after the game continues."""
+        """Called when the app is resuming from a paused state."""
 
     def on_app_shutdown(self) -> None:
-        """Called before closing the application."""
+        """Called when the app is beginning the shutdown process."""
 
     def has_settings_ui(self) -> bool:
         """Called to ask if we have settings UI we can show."""

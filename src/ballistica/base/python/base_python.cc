@@ -119,7 +119,7 @@ void BasePython::SoftImportUIV1() {
 void BasePython::ReadConfig() {
   auto gil{Python::ScopedInterpreterLock()};
   // Read the config file and store the config dict for easy access.
-  objs().Get(ObjID::kReadConfigCall).Call();
+  objs().Get(ObjID::kAppReadConfigCall).Call();
   objs_.Store(ObjID::kConfig, *objs().Get(ObjID::kApp).GetAttr("config"));
   assert(PyDict_Check(*objs().Get(ObjID::kConfig)));
 }
@@ -146,17 +146,17 @@ void BasePython::OnAppStart() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnAppPause() {
   assert(g_base->InLogicThread());
-  objs().Get(BasePython::ObjID::kOnAppPauseCall).Call();
+  objs().Get(BasePython::ObjID::kAppOnNativePauseCall).Call();
 }
 
 void BasePython::OnAppResume() {
   assert(g_base->InLogicThread());
-  objs().Get(BasePython::ObjID::kOnAppResumeCall).Call();
+  objs().Get(BasePython::ObjID::kAppOnNativeResumeCall).Call();
 }
 
 void BasePython::OnAppShutdown() {
   assert(g_base->InLogicThread());
-  objs().Get(BasePython::ObjID::kShutdownCall).Call();
+  objs().Get(BasePython::ObjID::kAppOnNativeShutdownCall).Call();
 }
 
 void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
@@ -549,11 +549,12 @@ auto BasePython::GetTranslation(const char* category, const char* s)
 
 void BasePython::RunDeepLink(const std::string& url) {
   BA_PRECONDITION(g_base->InLogicThread());
-  if (g_base->python->objs().Exists(base::BasePython::ObjID::kDeepLinkCall)) {
+  if (g_base->python->objs().Exists(
+          base::BasePython::ObjID::kAppHandleDeepLinkCall)) {
     ScopedSetContext ssc(nullptr);
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     g_base->python->objs()
-        .Get(base::BasePython::ObjID::kDeepLinkCall)
+        .Get(base::BasePython::ObjID::kAppHandleDeepLinkCall)
         .Call(args);
   } else {
     Log(LogLevel::kError, "Error on deep-link call");

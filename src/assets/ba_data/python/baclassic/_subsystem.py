@@ -73,7 +73,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.value_test_defaults: dict = {}
         self.special_offer: dict | None = None
         self.ping_thread_count = 0
-        self.allow_ticket_purchases: bool = not babase.app.iircade_mode
+        self.allow_ticket_purchases: bool = True
 
         # Main Menu.
         self.main_menu_did_initial_transition = False

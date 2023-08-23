@@ -373,11 +373,7 @@ class HelpWindow(bui.Window):
 
             txt_scale = 0.7
             if not app.vr_mode:
-                infotxt = (
-                    '.controllersInfoTextRemoteOnly'
-                    if app.iircade_mode
-                    else '.controllersInfoText'
-                )
+                infotxt = '.controllersInfoText'
                 txt = bui.Lstr(
                     resource=self._r + infotxt,
                     fallback_resource=self._r + '.controllersInfoText',

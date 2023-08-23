@@ -33,15 +33,11 @@ class JoinInfo:
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | bascenev1.Lstr = (
-            'C'
-            if babase.app.iircade_mode
-            else babase.charstr(babase.SpecialChar.LEFT_BUTTON)
+        self._press_to_punch: str | bascenev1.Lstr = babase.charstr(
+            babase.SpecialChar.LEFT_BUTTON
         )
-        self._press_to_bomb: str | bascenev1.Lstr = (
-            'B'
-            if babase.app.iircade_mode
-            else babase.charstr(babase.SpecialChar.RIGHT_BUTTON)
+        self._press_to_bomb: str | bascenev1.Lstr = babase.charstr(
+            babase.SpecialChar.RIGHT_BUTTON
         )
         self._joinmsg = babase.Lstr(resource='pressAnyButtonToJoinText')
         can_switch_teams = len(lobby.sessionteams) > 1

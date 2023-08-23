@@ -142,7 +142,7 @@ void BGDynamics::SetDrawSnapshot(BGDynamicsDrawSnapshot* s) {
 }
 
 void BGDynamics::TooSlow() {
-  if (!EventLoop::AreThreadsPaused()) {
+  if (!EventLoop::AreEventLoopsPaused()) {
     g_base->bg_dynamics_server->PushTooSlowCall();
   }
 }

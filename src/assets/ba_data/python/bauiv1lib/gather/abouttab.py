@@ -32,11 +32,7 @@ class AboutGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
-        party_button_label = (
-            'X'
-            if bui.app.iircade_mode
-            else bui.charstr(bui.SpecialChar.TOP_BUTTON)
-        )
+        party_button_label = bui.charstr(bui.SpecialChar.TOP_BUTTON)
         message = bui.Lstr(
             resource='gatherWindow.aboutDescriptionText',
             subs=[

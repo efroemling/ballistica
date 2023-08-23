@@ -52,7 +52,6 @@ class MainMenuWindow(bui.Window):
         # Grab this stuff in case it changes.
         self._is_demo = bui.app.demo_mode
         self._is_arcade = bui.app.arcade_mode
-        self._is_iircade = bui.app.iircade_mode
 
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
@@ -221,7 +220,7 @@ class MainMenuWindow(bui.Window):
 
         self._have_settings_button = (
             not self._in_game or not app.toolbar_test
-        ) and not (self._is_demo or self._is_arcade or self._is_iircade)
+        ) and not (self._is_demo or self._is_arcade)
 
         self._input_device = input_device = bs.get_ui_input_device()
 
