@@ -23,7 +23,7 @@ from babase._appintent import AppIntentDefault, AppIntentExec
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Callable
+    from typing import Any, Callable, Coroutine
     from concurrent.futures import Future
 
     import babase
@@ -241,16 +241,16 @@ class App:
         self._subsystems: list[AppSubsystem] = []
 
         self._native_bootstrapped = False
-        self._called_on_app_launching = False
+        self._native_paused = False
+        self._native_shutdown_called = False
         self._launch_completed = False
         self._initial_sign_in_completed = False
         self._meta_scan_completed = False
+        self._called_on_app_launching = False
         self._called_on_app_loading = False
         self._called_on_app_running = False
-        self._paused = False
         self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
-        self._shutdown_called = False
 
         # Config.
         self.config_file_healthy = False
@@ -290,6 +290,7 @@ class App:
         self._intent: AppIntent | None = None
         self._mode: AppMode | None = None
         self._shutdown_task: asyncio.Task[None] | None = None
+        self._shutdown_tasks: list[Coroutine[None, None, None]] = []
 
         # Controls which app-modes we use for handling given
         # app-intents. Plugins can override this to change high level
@@ -704,13 +705,13 @@ class App:
         assert _babase.in_logic_thread()
 
         # Can't shut down until we've got our asyncio machinery spun up.
-        if self._shutdown_called and self._aioloop is not None:
+        if self._native_shutdown_called and self._aioloop is not None:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
                 self._on_app_shutdown()
 
-        elif self._paused:
+        elif self._native_paused:
             # Entering paused state:
             if self.state is not self.State.PAUSED:
                 self.state = self.State.PAUSED
@@ -746,16 +747,42 @@ class App:
                         self._called_on_app_launching = True
                         self._on_app_launching()
 
+    def add_shutdown_task(self, coro: Coroutine[None, None, None]) -> None:
+        """Add a task to be run on app shutdown."""
+        if self.state is self.State.SHUTTING_DOWN:
+            raise RuntimeError(
+                'Cannot add shutdown tasks with state SHUTTING_DOWN.'
+            )
+        self._shutdown_tasks.append(coro)
+
     async def _shutdown(self) -> None:
         import asyncio
 
         try:
-            # print('SHUTDOWN BEGIN')
-            await asyncio.sleep(0.0)
-            # print('SHUTDOWN END')
-        except Exception:
-            logging.exception('Error during shutdown.')
+            async with asyncio.TaskGroup() as task_group:
+                for task_coro in self._shutdown_tasks:
+                    # Note: Mypy currently complains if we don't take
+                    # this return value, but we don't actually need to.
+                    # https://github.com/python/mypy/issues/15036
+                    _ = task_group.create_task(
+                        self._run_shutdown_task(task_coro)
+                    )
+        except* Exception:
+            logging.exception('Unexpected error(s) in shutdown.')
+
         _babase.complete_shutdown()
+
+    async def _run_shutdown_task(
+        self, coro: Coroutine[None, None, None]
+    ) -> None:
+        """Run a shutdown task; report errors and abort if taking too long."""
+        import asyncio
+
+        task = asyncio.create_task(coro)
+        try:
+            await asyncio.wait_for(task, 5.0)
+        except Exception:
+            logging.exception('Error in shutdown task.')
 
     def on_native_bootstrapped(self) -> None:
         """Called by the native layer once its ready to rock."""
@@ -767,21 +794,21 @@ class App:
     def on_native_pause(self) -> None:
         """Called by the native layer when the app pauses."""
         assert _babase.in_logic_thread()
-        assert not self._paused  # Should avoid redundant calls.
-        self._paused = True
+        assert not self._native_paused  # Should avoid redundant calls.
+        self._native_paused = True
         self._update_state()
 
     def on_native_resume(self) -> None:
         """Called by the native layer when the app resumes."""
         assert _babase.in_logic_thread()
-        assert self._paused  # Should avoid redundant calls.
-        self._paused = False
+        assert self._native_paused  # Should avoid redundant calls.
+        self._native_paused = False
         self._update_state()
 
     def on_native_shutdown(self) -> None:
         """Called by the native layer when the app starts shutting down."""
         assert _babase.in_logic_thread()
-        self._shutdown_called = True
+        self._native_shutdown_called = True
         self._update_state()
 
     def _on_app_pause(self) -> None:

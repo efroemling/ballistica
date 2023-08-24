@@ -1,4 +1,4 @@
-### 1.7.26 (build 21248, api 8, 2023-08-23)
+### 1.7.26 (build 21250, api 8, 2023-08-23)
 
 - Android should now be better at detecting hardware keyboards (you will see
   'Configure Keyboard' and 'Configure Keyboard P2' buttons under
@@ -29,6 +29,8 @@
   properly closing the audio system when shutting down. It also means there
   should be more consistent use of the 'Quit?' confirm window. Please holler if
   you see any odd behavior when trying to quit the app.
+- Added `ba.app.add_shutdown_task()` to register coroutines to be run as part of
+  shutdown.
 - Removed `babase.app.iircade_mode`. RIP iiRcade :(.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
